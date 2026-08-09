@@ -466,6 +466,19 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+
+/* WHERE A DOOR WOULD BE, IF THERE WERE ONE. A link table is offered
+   neither of the two sub-doors; drawn in the same place and the same
+   indent, in quiet ink and without the hairline, this says why rather
+   than leaving the row silent. */
+.shell-tbl-note {
+  margin: 2px var(--sp-3) var(--sp-2) var(--sp-3);
+  padding: 4px 0 4px 9px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+  animation: door-in var(--t-fast) var(--ease-draft) both;
+}
 @keyframes door-in {
   from {
     opacity: 0;
@@ -666,6 +679,143 @@
   font-size: 13px;
   line-height: 1.7;
   color: var(--ink-soft);
+}
+
+/* ============================================================
+   THE DESIGN STAGE — the box around `@/features/designer`.
+
+   The designer is a FORM, and `.ds-root` has no width of its own:
+   dropped into a full-bleed stage on a wide screen its labelled
+   controls stretch to 1300px and reading one row becomes a scan
+   across a desk. So the stage gives it a reading column and does
+   the scrolling, which the deleted right rail used to do.
+   ============================================================ */
+.shell-design-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+}
+.shell-design-col {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  padding-bottom: var(--sp-6);
+}
+
+/* ============================================================
+   THE FLOW STAGE — the box around `@/features/rules`.
+
+   Three columns INSIDE the stage: the index of rules, the drawing,
+   and one side column that is the inspector or the results of a
+   run. This is not the right rail coming back — the rail sat beside
+   the sheet permanently; these live inside a stage that covers it
+   and closes.
+   ============================================================ */
+.shell-flow-rail {
+  /* narrower than the view stage's row rail: this lists a handful of
+     rules, not several hundred variants — and every pixel it does not
+     take is a pixel of drawing. On a 1280 screen the two side columns
+     and the panel already leave the canvas under 600px, which is the
+     exact complaint that removed the old right rail. */
+  flex: 0 0 192px;
+  width: 192px;
+}
+
+/* The drawing. `position: relative` is load-bearing twice over: the
+   palette strip and the instrument bar are both absolutely positioned
+   and the strip's own stylesheet says it must sit in a relative box. */
+.shell-flow-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  /* the same lamp-on-a-drafting-table paper the sheet uses, so a rule
+     is drawn on the same material the tables are */
+  background:
+    radial-gradient(
+      132% 104% at 50% 36%,
+      var(--canvas-bg) 46%,
+      var(--canvas-bg-deep) 100%
+    );
+}
+.shell-flow-rf {
+  width: 100%;
+  height: 100%;
+}
+/* a palette chip is over the paper — the same hairline answer the
+   sheet gives a dragged table type */
+.shell-flow-canvas.is-dropping::after {
+  content: '';
+  position: absolute;
+  inset: var(--sp-2);
+  z-index: 5;
+  border: 1px dashed var(--blue);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+
+/* RUN and the validity stamp, floated on the paper rather than given
+   a band of their own — the drawing is the hero here too. */
+/* Centred by an auto margin between two pinned edges, not by
+   `left: 50%`: a box offset from one edge only may be no wider than
+   the room left of that offset — half the canvas — which is how RUN
+   ended up outside a canvas that is `overflow: hidden`. */
+.shell-flow-tools {
+  position: absolute;
+  top: var(--sp-3);
+  left: 0;
+  right: 0;
+  width: fit-content;
+  margin: 0 auto;
+  z-index: 6;
+  max-width: calc(100% - var(--sp-6));
+}
+
+/* The one side column: inspector, or the results of the last run. */
+.shell-flow-side {
+  flex: 0 0 304px;
+  width: 304px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper-high);
+  border-left: 1px solid var(--hairline);
+}
+
+/* THE ANSWER GETS THE ROOM. A result table is as wide as the columns
+   the Output node was given — the seeded motor rule comes back with
+   eight, about 1050px of them. In a 304px column five were off screen,
+   the motor among them, and the table's own horizontal scrollbar sat
+   four thousand pixels below the fold because nothing capped its
+   height. So: while results are up this column takes half the stage,
+   and it does NOT scroll — the table inside it does, on both axes,
+   with its scrollbars where a hand can reach them. */
+.shell-flow-side.is-results {
+  flex: 0 1 clamp(320px, 56%, 660px);
+  width: auto;
+  overflow: hidden;
+}
+.shell-flow-side.is-results > .rl-results {
+  height: 100%;
+  overflow: hidden;
+}
+/* the results rail draws its own left hairline for the layout it was
+   born in; inside this column that is the same line twice */
+.shell-flow-side > .rl-results {
+  border-left: 0;
+}
+
+.shell-flow-void {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--paper);
 }
 
 /* ============================================================

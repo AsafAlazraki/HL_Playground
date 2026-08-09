@@ -11,7 +11,15 @@
 
    Drag a chip onto the sheet (same dataTransfer payload the old
    palette wrote, so `onPaletteDrop` is untouched), or click it to
-   drop one at the viewport centre — see `dropPoint` below.
+   add the NEXT step after the one you are looking at — see
+   `anchorNodeId` below.
+
+   A CLICKED CHIP USED TO LAND ON THE VIEWPORT CENTRE, and the camera
+   does not move when a node is added, so every click landed on the
+   same 16px cell: four steps added, one plate visible, three buried
+   under it, no undo. Clicks now go through `addRuleNodeAfter`, which
+   places the plate after the anchor and steps clear of anything
+   already there.
    ============================================================ */
 
 import { useCallback } from 'react'
@@ -20,7 +28,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { RULE_NODE_KINDS } from '@/types/model'
 import type { RuleNode, RuleNodeKind, XY } from '@/types/model'
 import { kindInk } from './describe'
-import { addRuleNodeAt, nextNodePosition, setPaletteDragData } from './drop'
+import { addRuleNodeAfter, setPaletteDragData } from './drop'
 import './rules.css'
 
 const ORDER: RuleNodeKind[] = [
@@ -48,8 +56,9 @@ const SHORT_LABEL: Record<RuleNodeKind, string> = {
 
 export interface RulePaletteStripProps {
   /**
-   * Flow-space point a CLICKED chip should land on, centred and snapped.
-   * The whiteboard passes the centre of its own viewport:
+   * Flow-space point the FIRST plate of an empty rule should land on —
+   * the centre of the host's viewport, so the one plate on the paper is
+   * where the reader is looking:
    *
    * ```ts
    * const dropPoint = useCallback(() => {
@@ -58,10 +67,18 @@ export interface RulePaletteStripProps {
    * }, [rf])
    * ```
    *
-   * Omit it and clicked chips fall back to `nextNodePosition` — one plate
-   * pitch to the right of the last node drafted.
+   * Once the rule HAS plates the point is not used: a clicked chip lands
+   * after `anchorNodeId`, never on the camera centre. Omit it and the
+   * first plate lands at the flow origin.
    */
   dropPoint?: () => XY
+  /**
+   * The plate the reader is on — the one the inspector is open on. A
+   * clicked chip lands one pitch to its right and is wired to it when
+   * that wire is unambiguous. Omit it and the anchor is the last plate
+   * drafted.
+   */
+  anchorNodeId?: string | null
   /**
    * Fired after a chip creates a node. The whiteboard uses this to select
    * the new plate and to mark the camera as user-touched, exactly as it
@@ -78,6 +95,7 @@ export interface RulePaletteStripProps {
  */
 export function RulePaletteStrip({
   dropPoint,
+  anchorNodeId = null,
   onNodeAdded,
   className,
 }: RulePaletteStripProps) {
@@ -91,15 +109,15 @@ export function RulePaletteStrip({
   const add = useCallback(
     (kind: RuleNodeKind) => {
       if (!activeRuleId) return
-      const point = dropPoint ? dropPoint() : null
-      const node = point
-        ? addRuleNodeAt(activeRuleId, kind, point)
-        : useProjectStore
-            .getState()
-            .addRuleNode(activeRuleId, kind, nextNodePosition(activeRuleId))
+      const node = addRuleNodeAfter(
+        activeRuleId,
+        kind,
+        anchorNodeId,
+        dropPoint ? dropPoint() : undefined,
+      )
       if (node) onNodeAdded?.(node)
     },
-    [activeRuleId, dropPoint, onNodeAdded],
+    [activeRuleId, anchorNodeId, dropPoint, onNodeAdded],
   )
 
   return (

@@ -1,7 +1,16 @@
 /* ============================================================
-   EntityDesigner — the schema sheet for one entity.
-   Renders inside the shell's right inspector (SCHEMA tab).
+   EntityDesigner — THE COLUMN SETUP for one table.
    Public contract: <EntityDesigner entityId="…" />
+
+   IT SAYS TABLE AND COLUMN, NEVER ENTITY, SCHEMA OR FIELD. Those
+   are the words the code uses; they are not the words on the sheet,
+   and this surface was the only place in the app that said them out
+   loud. A person who has just renamed "Dunbier Trailers" on the
+   blueprint should not have to work out that the "entity" being
+   described here is the same thing.
+
+   THE REVIEWER IS NOT DRAWN HERE — see the note where `<EntityMarks>`
+   used to be, below.
    ============================================================ */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -14,11 +23,13 @@ import {
   type FieldType,
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
-import { EntityMarks } from './EntityMarks'
 import { FieldRow } from './FieldRow'
 import { GuardNote } from './GuardNote'
 import { useNameGuard } from './useNameGuard'
-import { PencilGlyph, PlusGlyph } from './glyphs'
+/* Phosphor only, through the house icon module — this folder used to
+   hand-draw its own SVGs and drifted off the app's hairline weight. */
+import { PencilSimple, Plus } from '@phosphor-icons/react'
+import { ICON_SIZE } from '@/lib/icons'
 import './designer.css'
 
 export function EntityDesigner({ entityId }: { entityId: string }) {
@@ -39,8 +50,8 @@ const TYPE_HINTS: Record<FieldType, string> = {
   boolean: 'A single yes / no mark',
   date: 'A point on the calendar',
   select: 'One choice from a fixed list',
-  reference: 'Link to a row of another entity',
-  formula: 'Computed live from other fields',
+  reference: 'Link to a row of another table',
+  formula: 'Computed live from other columns',
   image: 'Pictures — the first one is the primary',
 }
 
@@ -77,7 +88,7 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
     taken: takenNames,
     allowEmpty: false,
     message: (n) =>
-      `An entity named “${n}” is already on this sheet — two entities with one name make every link, export and rule ambiguous.`,
+      `A table named “${n}” is already on this sheet — two tables with one name make every link, export and rule ambiguous.`,
     onCommit: (name) => updateEntity(entity.id, { name }),
   })
 
@@ -144,7 +155,7 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
     const rows = rowCount === 1 ? 'its 1 row' : `its ${rowCount} rows`
     if (
       window.confirm(
-        `Delete entity "${entity.name}"?\n\nThis strikes it from the sheet — ${rows} and any link fields pointing at it are removed too.`,
+        `Delete the table "${entity.name}"?\n\nThis strikes it from the sheet — ${rows} and any link columns pointing at it are removed too.`,
       )
     ) {
       deleteEntity(entity.id)
@@ -162,7 +173,7 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
       {/* ==================== title block ==================== */}
       <header className="ds-titleblock">
         <div className="ds-titleblock-row ds-tag-row">
-          <span className="mono-label ds-sheet-tag">Entity · schema sheet</span>
+          <span className="mono-label ds-sheet-tag">Table · column setup</span>
           <span className={saving ? 'ds-saved mono-label ds-saved-show' : 'ds-saved mono-label'} role="status">
             Saved
           </span>
@@ -174,11 +185,11 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
               type="button"
               className="ds-name-view block-heading"
               onClick={() => nameGuard.begin()}
-              title="Rename entity"
+              title="Rename this table"
             >
               <span className="ds-name-text">{entity.name}</span>
               <span className="ds-name-pencil" aria-hidden="true">
-                <PencilGlyph />
+                <PencilSimple size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
               </span>
             </button>
           ) : (
@@ -190,7 +201,7 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
               }
               value={nameGuard.draft}
               autoFocus
-              aria-label="Entity name"
+              aria-label="Table name"
               aria-invalid={nameGuard.invalid || undefined}
               onFocus={(e) => e.currentTarget.select()}
               onChange={(e) => nameGuard.change(e.target.value)}
@@ -228,9 +239,9 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             ref={descRef}
             rows={1}
             className="ds-desc"
-            placeholder="Describe this entity — purpose, provenance, notes…"
+            placeholder="Describe this table — what it holds, where it came from…"
             value={entity.description ?? ''}
-            aria-label="Entity description"
+            aria-label="Table description"
             onChange={(e) => updateEntity(entity.id, { description: e.target.value })}
           />
         </div>
@@ -260,7 +271,7 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
 
         <div className="ds-titleblock-row ds-dfield">
           <label className="mono-label ds-lab" htmlFor="ds-display-field">
-            Display field
+            Which column names a row
           </label>
           <select
             id="ds-display-field"
@@ -272,13 +283,13 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             }
           >
             {eligibleDisplay.length === 0 ? (
-              <option value="">— no eligible fields —</option>
+              <option value="">— no eligible columns —</option>
             ) : (
-              <option value="">Auto — first field</option>
+              <option value="">Auto — the first column</option>
             )}
             {eligibleDisplay.map((f) => (
               <option key={f.id} value={f.id}>
-                {f.name || 'untitled field'}
+                {f.name || 'untitled column'}
               </option>
             ))}
           </select>
@@ -286,13 +297,20 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
         </div>
       </header>
 
-      {/* ============ reviewer marks (entity level) =========== */}
-      <EntityMarks entityId={entity.id} />
+      {/* THE REVIEWER USED TO BE DRAWN HERE, and taking it out is a
+          decision rather than an omission. Its rules predate table
+          kinds and roles: on the real sheet `entity-plural` fires on
+          eleven brand price files and offers a ONE-CLICK rename of
+          "Surtees" to "Surtee", and `island-entity` tells a person
+          their Stabicraft catalogue may not belong on the sheet. There
+          is no undo behind any of those buttons. The data reviewer
+          gets its own door once its rules know what a brand table is;
+          until then the column setup must not be the back way in. */}
 
       {/* ==================== fields ========================= */}
       <section className="ds-fields-sect">
         <div className="ds-sect">
-          <span className="mono-label ds-sect-label">Fields</span>
+          <span className="mono-label ds-sect-label">Columns</span>
           <span className="ds-sect-rule" aria-hidden="true" />
           <span className="mono-label ds-sect-meta">
             {String(entity.fields.length).padStart(2, '0')}
@@ -302,7 +320,7 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
         {entity.fields.length === 0 ? (
           <div className="ds-empty-fields">
             <span className="mono-label">No columns drafted</span>
-            <p>Every entity needs at least one field — add the first below.</p>
+            <p>Every table needs at least one column — add the first below.</p>
           </div>
         ) : (
           <div className="ds-fields">
@@ -332,10 +350,10 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             aria-haspopup="menu"
             onClick={() => setMenuOpen((v) => !v)}
           >
-            <PlusGlyph /> Add field
+            <Plus size={ICON_SIZE.tiny} weight="light" aria-hidden="true" /> Add column
           </button>
           {menuOpen ? (
-            <div className="ds-add-menu" role="menu" aria-label="Field type">
+            <div className="ds-add-menu" role="menu" aria-label="Column type">
               {TYPE_ORDER.map((t) => {
                 const meta = FIELD_TYPES[t]
                 return (
@@ -368,14 +386,14 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
           <span className="ds-sect-rule" aria-hidden="true" />
         </div>
         <p className="ds-danger-note mono-label">
-          Deleting removes its rows and any link fields aimed at it.
+          Deleting removes its rows and any link columns aimed at it.
         </p>
         <button
           type="button"
           className="btn btn-danger ds-danger-btn"
           onClick={handleDeleteEntity}
         >
-          Delete entity
+          Delete this table
         </button>
       </footer>
     </div>

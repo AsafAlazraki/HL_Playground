@@ -14,7 +14,8 @@
      RuleToolbar        RUN + validity stamp (layer-agnostic)
      useRuleRun         run / clear / applyEffects
      onPaletteDrop      canvas drop handler (drag)
-     addRuleNodeAt      canvas drop at a point (click)
+     addRuleNodeAt      canvas drop at a point (drag)
+     addRuleNodeAfter   the next step after a plate (click)
    ============================================================ */
 
 export { ruleNodeTypes, RULE_NODE_COMPONENTS } from './RuleNodes'
@@ -38,6 +39,7 @@ export type { IssueSummary } from './useRuleIssues'
 
 export {
   RULE_DND_MIME,
+  addRuleNodeAfter,
   addRuleNodeAt,
   isPaletteDrag,
   nextNodePosition,

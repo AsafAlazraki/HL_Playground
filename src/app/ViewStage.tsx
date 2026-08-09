@@ -113,6 +113,15 @@ export function ViewStage({ entityId, onClose }: ViewStageProps): ReactElement {
     <div
       className="shell-viewstage"
       style={{ '--view-accent': accentVar(entity.accent) } as CSSProperties}
+      /* KEYSTROKES STOP AT THIS ROOT, the same line the design and flow
+         stages carry. The whiteboard is still mounted underneath and
+         still holds a window-level keydown handler: Delete or Backspace
+         with a table selected offers to delete that whole table, and it
+         only skips INPUT/TEXTAREA/SELECT — a stage made of buttons is
+         not exempt. The door that opens this stage sits under the
+         selected table, so without this a Backspace aimed at a row
+         offers to delete the table being looked at. */
+      onKeyDown={(e) => e.stopPropagation()}
     >
       <div className="shell-view-bar">
         {back}

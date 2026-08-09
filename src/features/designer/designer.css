@@ -401,6 +401,38 @@
   color: var(--red);
   font-weight: 700;
 }
+
+/* WHAT THE SHEET ALREADY KNOWS ABOUT THIS COLUMN — the band it sits
+   in and whether the sheet groups on it. Read-only stamps, quiet
+   enough to scan past: without them a person reordering columns here
+   cannot see that they are pulling a run of columns out of its band,
+   and the sheet draws the same band header twice.
+
+   ELEVEN CHARACTERS WAS NOT ENOUGH FOR ANY OF THEM. At 8.5px, uppercase
+   and letterspaced, `max-width: 11ch` measured 55px against 60px of
+   text, so every stamp on every row read IDENTI…, CAPACI…, CONSTR… —
+   the whole point of the stamp, defeated by five pixels, on a 620px
+   column with room to spare. The stamps hold their size now and the
+   column NAME gives way first: a name is ellipsised beside its own
+   full-width input, a band name is ellipsised into nothing. */
+.ds-frow-band,
+.ds-frow-level {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 1px 5px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+.ds-frow-level {
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
 .ds-frow-caret {
   display: inline-flex;
   flex: none;

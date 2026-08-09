@@ -22,13 +22,21 @@
    arrows and the plain words BOATS ↔ MOTORS underneath its name.
 
    TWO THINGS A ROW DOES. Clicking it aims the sheet at that table
-   (unchanged). Selecting it also opens ONE quiet line beneath it —
-   "What goes with each one?" — which is the door to the view page.
-   It is a sentence rather than an icon on purpose: a person who has
-   never seen this app cannot guess a glyph, and the whole feature
-   was unreachable until this line existed. It is phrased without
+   (unchanged). Selecting it also opens two quiet lines beneath it —
+   "What goes with each one?" and "What is each column allowed to
+   hold?" — the doors to the view page and to the column setup. They
+   are sentences rather than icons on purpose: a person who has never
+   seen this app cannot guess a glyph, and both features were
+   unreachable until these lines existed. They are phrased without
    the table's name because a name may be plural ("Parts") and
-   "what goes with a Parts?" is not English.
+   "what goes with a Parts?" is not English — the NAME is carried in
+   `aria-label` instead, where two doors a line apart have to be told
+   apart without looking.
+
+   DOORS ABOUT THE WHOLE SHEET HANG ABOVE THE LIST, not on a row:
+   "Business rules" (what has to be true) and "Work out what fits
+   what" (walk every row, collect the matches). They appear only once
+   there is a table to act on.
 
    EVERY TABLE ROW IS DRAGGABLE. The view page accepts a table
    dragged onto it; `setTableDragData` is the payload the page
@@ -79,19 +87,31 @@ interface PanelGroup {
 export interface LeftPanelProps {
   /** open the "what goes with this?" page for a table */
   onOpenView: (entityId: string) => void
+  /** open the column setup for a table */
+  onOpenDesign?: (entityId: string) => void
   /** the table whose page is open, so the row can say so */
   openViewEntityId?: string | null
+  /** the table whose column setup is open, same reason */
+  openDesignEntityId?: string | null
   /** open the sentence-rules pane */
   onOpenRules?: () => void
   /** whether that pane is open, so the door can say so */
   rulesOpen?: boolean
+  /** open the flow builder — the rules that walk rows and collect matches */
+  onOpenFlow?: () => void
+  /** whether that stage is open, so the door can say so */
+  flowOpen?: boolean
 }
 
 export function LeftPanel({
   onOpenView,
+  onOpenDesign,
   openViewEntityId = null,
+  openDesignEntityId = null,
   onOpenRules,
   rulesOpen = false,
+  onOpenFlow,
+  flowOpen = false,
 }: LeftPanelProps) {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -138,25 +158,59 @@ export function LeftPanel({
     <nav className="shell-panel" aria-label="Tables">
       <TableTypeRail />
 
-      {/* THE DOOR TO THE RULES. A rule is written about the whole sheet
-          rather than about one table, so it hangs here rather than on a
-          row — and it only appears once there is something to write a
-          rule against. */}
+      {/* THE DOOR TO THE FLOW BUILDER, AND IT GOES FIRST.
+          Two doors about rules sat here in the other order, and the
+          empty one was on top: "Business rules / what has to be true"
+          opens a pane reading "No rules yet", while this one opens two
+          rules that already answer the question a person came with. A
+          sales manager asking which motors fit a hull clicked the first
+          sentence, found nothing, and had no reason to try the second.
+          The one that answers something is the one you meet first.
+
+          Deliberately NOT a second name for the door below. That one
+          states a constraint — something that has to be true of any
+          answer. This one PRODUCES an answer: it walks every row of a
+          table and hands back the list of matches. Two different jobs,
+          so two sentences, and neither of them says node, graph, flow
+          or engine — words nobody selling boats has a use for. */}
+      {tables.length > 0 && onOpenFlow ? (
+        <button
+          type="button"
+          className={`shell-panel-rules${flowOpen ? ' is-open' : ''}`}
+          /* NAMED AND PRESSED EXPLICITLY. The label is built from two
+             spans, one of them a 10px uppercase aside, and a reader
+             announcing them run together is not a name — so it is
+             stated once, plainly. `aria-pressed` is the honest
+             semantic: this is a toggle, not a link. */
+          aria-label="Work out what fits what"
+          aria-pressed={flowOpen}
+          onClick={onOpenFlow}
+        >
+          <span className="shell-panel-rules-text">Work out what fits what</span>
+          <span className="shell-panel-rules-say mono-label">
+            walk every row, collect the matches
+          </span>
+        </button>
+      ) : null}
+
+      {/* THE DOOR TO THE CONSTRAINTS PANE. A constraint is written
+          about the whole sheet rather than about one table, so it hangs
+          here rather than on a row — and it only appears once there is
+          something to write one against. Its aside no longer reads
+          "what has to be true", which was too close to the sentence
+          above it to choose between; it says what a constraint IS. */}
       {tables.length > 0 && onOpenRules ? (
         <button
           type="button"
           className={`shell-panel-rules${rulesOpen ? ' is-open' : ''}`}
-          /* NAMED AND PRESSED EXPLICITLY. The label is built from two
-             spans, one of them a 10px uppercase aside, and a reader
-             announcing "Business ruleswhat has to be true" is not a
-             name — so it is stated once, plainly. `aria-pressed` is
-             the honest semantic: this is a toggle, not a link. */
           aria-label="Business rules"
           aria-pressed={rulesOpen}
           onClick={onOpenRules}
         >
           <span className="shell-panel-rules-text">Business rules</span>
-          <span className="shell-panel-rules-say mono-label">what has to be true</span>
+          <span className="shell-panel-rules-say mono-label">
+            limits every row must keep
+          </span>
         </button>
       ) : null}
 
@@ -215,15 +269,69 @@ export function LeftPanel({
                         </span>
                       </button>
 
+                      {/* WHY THIS ROW OFFERS NOTHING. Selecting a link
+                          table used to open no doors at all and say
+                          nothing about it — one click earlier a product
+                          table had offered two, so the app simply
+                          stopped answering. Neither door fits a join
+                          (see the two notes below), so the row says so
+                          instead of going quiet. */}
+                      {isSel && group.isJoin ? (
+                        <p className="shell-tbl-note">
+                          A link table records pairs, so it has no setup of its own —
+                          open one of the tables it links.
+                        </p>
+                      ) : null}
+
                       {/* THE DOOR TO THE VIEW PAGE. One sentence, only on
                           the table you just clicked, never on a join. */}
                       {isSel && !group.isJoin ? (
                         <button
                           type="button"
                           className={`shell-tbl-door${isOpen ? ' is-open' : ''}`}
+                          /* named and pressed like the door under it —
+                             two sentences a line apart have to be told
+                             apart without looking */
+                          aria-label={`What goes with each ${e.name} row`}
+                          aria-pressed={isOpen}
                           onClick={() => onOpenView(e.id)}
                         >
                           <span className="shell-tbl-door-text">What goes with each one?</span>
+                          <CaretRight
+                            size={ICON_SIZE.tiny}
+                            weight="bold"
+                            aria-hidden="true"
+                          />
+                        </button>
+                      ) : null}
+
+                      {/* THE DOOR TO THE COLUMN SETUP. Also per table, so
+                          it sits with the other one under the row you just
+                          clicked — and also NEVER ON A JOIN. A join built
+                          in the app carries system columns the grid keeps
+                          locked, and the designer draws every column as an
+                          ordinary renameable, retypeable, deletable field:
+                          it would happily delete the column the pairs page
+                          addresses by id. The sentence avoids "field",
+                          "schema" and "type" as nouns — a person who has
+                          never seen the app is being asked what a column is
+                          ALLOWED to hold, which is the actual question. */}
+                      {isSel && !group.isJoin && onOpenDesign ? (
+                        <button
+                          type="button"
+                          className={`shell-tbl-door${
+                            openDesignEntityId === e.id ? ' is-open' : ''
+                          }`}
+                          /* the two doors under one row say different
+                             things but sit one line apart, so each states
+                             its own name and which table it belongs to */
+                          aria-label={`What is each column of ${e.name} allowed to hold`}
+                          aria-pressed={openDesignEntityId === e.id}
+                          onClick={() => onOpenDesign(e.id)}
+                        >
+                          <span className="shell-tbl-door-text">
+                            What is each column allowed to hold?
+                          </span>
                           <CaretRight
                             size={ICON_SIZE.tiny}
                             weight="bold"

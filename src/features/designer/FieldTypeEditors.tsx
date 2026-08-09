@@ -13,14 +13,11 @@ import {
 import { useProjectStore } from '@/store/useProjectStore'
 import { FORMULA_FUNCTIONS, validateFormula } from '@/lib/formula'
 import { GuardNote } from './GuardNote'
-import {
-  CheckGlyph,
-  ChevronDownGlyph,
-  ChevronRightGlyph,
-  ChevronUpGlyph,
-  PlusGlyph,
-  XGlyph,
-} from './glyphs'
+/* Phosphor only, through the house icon module — see the note in
+   FieldRow.tsx: this folder used to draw its own SVGs at its own
+   stroke weight, a few hundred pixels from the app's. */
+import { CaretDown, CaretRight, CaretUp, Check, Plus, X } from '@phosphor-icons/react'
+import { ICON_SIZE } from '@/lib/icons'
 
 /* ------------------------------------------------------------ */
 /* select — options editor                                      */
@@ -96,7 +93,7 @@ export function SelectOptionsEditor({
           disabled={!draft.trim()}
           aria-label="Add option"
         >
-          <PlusGlyph />
+          <Plus size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
         </button>
       </div>
 
@@ -116,7 +113,7 @@ export function SelectOptionsEditor({
                   onClick={() => move(i, -1)}
                   aria-label={`Move ${opt} up`}
                 >
-                  <ChevronUpGlyph />
+                  <CaretUp size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -125,7 +122,7 @@ export function SelectOptionsEditor({
                   onClick={() => move(i, 1)}
                   aria-label={`Move ${opt} down`}
                 >
-                  <ChevronDownGlyph />
+                  <CaretDown size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -133,7 +130,7 @@ export function SelectOptionsEditor({
                   onClick={() => remove(i)}
                   aria-label={`Remove ${opt}`}
                 >
-                  <XGlyph />
+                  <X size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
                 </button>
               </span>
             </li>
@@ -207,10 +204,10 @@ export function ReferenceEditor({
       {others.length === 0 ? (
         <div className="ds-ref-empty">
           <span className="mono-label">Nothing to link</span>
-          <p>Draft another entity on the sheet to link to.</p>
+          <p>Draft another table on the sheet to link to.</p>
         </div>
       ) : (
-        <div className="ds-ref-list" role="radiogroup" aria-label="Target entity">
+        <div className="ds-ref-list" role="radiogroup" aria-label="Target table">
           {others.map((e) => {
             const sel = field.refEntityId === e.id
             return (
@@ -230,7 +227,7 @@ export function ReferenceEditor({
                 <span className="ds-ref-name">{e.name}</span>
                 {sel ? (
                   <span className="ds-ref-check" aria-hidden="true">
-                    <CheckGlyph />
+                    <Check size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
                   </span>
                 ) : null}
               </button>
@@ -243,7 +240,7 @@ export function ReferenceEditor({
         <p className="ds-warn">re-pointing this link clears the column’s data</p>
       ) : null}
 
-      <p className="ds-caption mono-label">a link draws an edge on the sheet</p>
+      <p className="ds-caption mono-label">a link draws a line on the sheet</p>
     </div>
   )
 }
@@ -423,7 +420,12 @@ export function FormulaEditor({
         rows={3}
         spellCheck={false}
         value={src}
-        placeholder="[Price] * [Qty] * (1 - [Discount])"
+        /* AN INSTRUCTION, NEVER AN EXAMPLE VALUE. The old placeholder
+           named three columns — Price, Qty, Discount — that exist on no
+           real table here, so it read as a formula someone had already
+           written for this table rather than as a prompt. A placeholder
+           that could be mistaken for content is worse than none. */
+        placeholder="Write an expression — column names in [square brackets]"
         aria-label="Formula expression"
         aria-invalid={check ? !check.ok : undefined}
         onChange={(e) => write(e.target.value)}
@@ -456,7 +458,7 @@ export function FormulaEditor({
       ) : null}
 
       {check === null ? (
-        <p className="ds-hint">Write an expression — reference fields as {'[Field Name]'}.</p>
+        <p className="ds-hint">Write an expression — name a column as {'[Column Name]'}.</p>
       ) : check.ok ? (
         <div className="ds-fx-ok">
           <span className="ds-fx-stamp mono-label" role="status">
@@ -472,7 +474,7 @@ export function FormulaEditor({
               ))}
             </span>
           ) : (
-            <span className="mono-label ds-fx-dep-label">no field references</span>
+            <span className="mono-label ds-fx-dep-label">names no columns</span>
           )}
         </div>
       ) : (
@@ -484,7 +486,7 @@ export function FormulaEditor({
 
       {insertable.length > 0 ? (
         <div className="ds-fx-insert">
-          <span className="mono-label ds-lab">Insert field</span>
+          <span className="mono-label ds-lab">Insert column</span>
           <div className="ds-fx-insert-row">
             {insertable.map((f) => (
               <button
@@ -512,7 +514,7 @@ export function FormulaEditor({
           onClick={() => setShowFns((v) => !v)}
         >
           <span className={showFns ? 'ds-fx-caret ds-fx-caret-open' : 'ds-fx-caret'}>
-            <ChevronRightGlyph />
+            <CaretRight size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
           </span>
           <span className="mono-label ds-fx-fns-label">Functions</span>
         </button>
@@ -520,7 +522,7 @@ export function FormulaEditor({
         {showFns ? (
           <div className="ds-fx-fns">
             <p className="ds-fx-hint">
-              Reference fields as <code>{'[Field Name]'}</code>.
+              Name a column as <code>{'[Column Name]'}</code>.
               <br />
               Operators: <code>{'+ - * / % ^'}</code> · <code>&amp;</code> joins text ·{' '}
               <code>{'= <> < <= > >='}</code>

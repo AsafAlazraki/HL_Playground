@@ -58,6 +58,7 @@ import { MAX_DEPTH, removeBlock, setBlockFilters, setBlockRule, updateBlock } fr
 import { AddPanel } from './AddPanel'
 import { RuleOffer } from './RuleOffer'
 import { KindMark } from './marks'
+import { RowPicture, pictureField } from './pictures'
 import { SPRING, SPRING_SOFT, transitionFor, useStillness } from './stillness'
 import { isRowDrag, isTableDrag, readRowDrag, readTableDrag, setRowDragData } from './dnd'
 
@@ -155,6 +156,12 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     () => (target ? (block.columns ?? defaultColumns(target)) : []),
     [target, block.columns],
   )
+
+  /* THE PICTURE TRACK IS A PROPERTY OF THE BLOCK, NOT OF THE ROW.
+     Resolved once here: if it were decided per row, a block where
+     only some rows carry a photograph would draw its names at two
+     different left edges and stop reading as a table. */
+  const picField = useMemo(() => pictureField(target), [target])
 
   const filters = useMemo(() => block.filters ?? [], [block.filters])
   const readRelated = useMemo(
@@ -336,6 +343,9 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
           /* the tag track is only worth its width when something is in
              it — an empty one was eating the row's name */
           '--vw-tags': result.addedCount > 0 ? 'auto' : '0px',
+          /* the same costs-nothing-when-unused deal: a table with no
+             picture column never pays for a picture column */
+          '--vw-pic': picField ? '24px' : '0px',
         } as CSSProperties
       }
       aria-label={`${target.name} for ${rowLabel(sourceEntity, sourceRow)}`}
@@ -475,6 +485,8 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       {result.rows.length > 0 ? (
         <div className="vw-cols" aria-hidden="true">
           <span className="vw-col-grip" />
+          {/* no word above a photograph — the track is held, not labelled */}
+          <span className="vw-col-pic" />
           <span className="vw-col-name mono-label">
             {displayFieldOf(target)?.name ?? target.name}
           </span>
@@ -547,6 +559,15 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                   aria-hidden="true"
                 >
                   {configuring ? <DotsSixVertical size={14} weight="light" /> : null}
+                </span>
+
+                {/* The span is drawn whether or not this row has a
+                    picture: the track is the block's, so an empty one
+                    keeps the row aligned with the rest. Read-only —
+                    the strip in the table is where order is changed,
+                    and this is where the change is seen. */}
+                <span className="vw-pic">
+                  {picField ? <RowPicture row={r.row} field={picField} /> : null}
                 </span>
 
                 {r.recommended ? (

@@ -10,6 +10,7 @@
 
 import { useMemo } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import type { RuleDef } from '@/types/model'
 import { validateRule } from './engine'
 import type { RuleIssue, RuleRunContext } from './engine'
 
@@ -36,6 +37,72 @@ function summarise(issues: RuleIssue[]): IssueSummary {
   const blockedNodeIds = new Set<string>()
   for (const b of blockers) if (b.nodeId) blockedNodeIds.add(b.nodeId)
   return { issues, blockers, advisories, blockedNodeIds, ok: blockers.length === 0 }
+}
+
+/* ------------------------------------------------------------ */
+/* What the Start node can actually get to                      */
+/* ------------------------------------------------------------ */
+
+export interface RuleReach {
+  /** every node the Start node can reach, Start included */
+  reached: ReadonlySet<string>
+  /** an Output node is on a path from Start — the run makes a table */
+  reachesOutput: boolean
+  /** an Action node is on a path from Start — the run writes something */
+  reachesAction: boolean
+  /** plates on the paper that nothing on the path can get to */
+  stranded: number
+}
+
+const NO_REACH: RuleReach = {
+  reached: new Set(),
+  reachesOutput: false,
+  reachesAction: false,
+  stranded: 0,
+}
+
+/**
+ * A WALK, NOT A VERDICT. `validateRule` reports an unwired plate as an
+ * advisory, on purpose — a half-drawn scratch node must not stop a
+ * working flow. But "no blockers" was being STAMPED as "this rule can
+ * run", beside a note saying the only Output is not connected to
+ * anything: the app told a person their rule was fine and broken in the
+ * same 40 pixels. This says which of the two the stamp should read.
+ */
+export function ruleReach(rule: RuleDef | undefined): RuleReach {
+  if (!rule || rule.nodes.length === 0) return NO_REACH
+  const byId = new Map(rule.nodes.map((n) => [n.id, n]))
+  const out = new Map<string, string[]>()
+  for (const e of rule.edges) {
+    if (!byId.has(e.source) || !byId.has(e.target)) continue
+    const list = out.get(e.source)
+    if (list) list.push(e.target)
+    else out.set(e.source, [e.target])
+  }
+  const reached = new Set<string>()
+  const queue = rule.nodes.filter((n) => n.kind === 'start').map((n) => n.id)
+  for (const id of queue) reached.add(id)
+  while (queue.length > 0) {
+    const id = queue.shift() as string
+    for (const next of out.get(id) ?? []) {
+      if (reached.has(next)) continue
+      reached.add(next)
+      queue.push(next)
+    }
+  }
+  let reachesOutput = false
+  let reachesAction = false
+  for (const id of reached) {
+    const kind = byId.get(id)?.kind
+    if (kind === 'output') reachesOutput = true
+    if (kind === 'action') reachesAction = true
+  }
+  return {
+    reached,
+    reachesOutput,
+    reachesAction,
+    stranded: rule.nodes.length - reached.size,
+  }
 }
 
 export function useRuleIssues(ruleId: string | null): IssueSummary {

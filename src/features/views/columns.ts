@@ -159,7 +159,13 @@ export function formatCell(
   resolveRef?: (refEntityId: string | undefined, rowId: string) => string,
 ): string {
   if (value === null || value === undefined) return ''
-  if (isImageValue(value)) return value.length === 0 ? '' : `${value.length}`
+  /* A PICTURE IS NEVER A NUMBER. This used to return the count, so a
+     picture column that ever reached a page printed the numeral `1`
+     where a customer expected a photograph. SHOWABLE keeps image
+     columns off a page today, but that is a guard somewhere else and
+     this is the line that would print it. Pictures are drawn by
+     pictures.tsx, in the two places §4 puts them. */
+  if (isImageValue(value)) return ''
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   if (typeof value === 'number') return formatNumber(value, field?.name ?? '')
   const text = String(value).trim()

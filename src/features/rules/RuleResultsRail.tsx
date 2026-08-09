@@ -47,7 +47,7 @@ function emptyReason(rule: RuleDef | undefined, entities: EntityMap): string {
   if (match) {
     return `Nothing reached the output. Check the conditions on the match against real ${match.name} rows.`
   }
-  return 'Nothing reached the output. Check that every node is connected and that the entity has rows.'
+  return 'Nothing reached the output. Check that every step is joined up and that the table has rows.'
 }
 
 /** A reference cell carries a raw row id — show the row's own label. */
@@ -101,24 +101,45 @@ function ViewTable({
             <th className="rl-th rl-th--gutter" scope="col">
               #
             </th>
+            {/* THE STAMP IS SAID ONCE PER RUN OF COLUMNS. Repeating
+                "HIGHFIELD INFLATABLES" over three consecutive columns
+                sets a 146px floor under each of them — the eight
+                columns of the seeded motor rule came to 1,081px, and
+                the one a person ran the rule to see, Motor, was off
+                the right-hand edge. Said once where the row it reads
+                from CHANGES, it is the same information in a third of
+                the width. */}
             {columns.map((c, i) => {
               const entity = scopeEntity(c.scope, rule, entities)
               const head = columnHeader(c, rule, entities)
+              const opensRun =
+                i === 0 || columnHeader(columns[i - 1], rule, entities).stamp !== head.stamp
               return (
-                <th className="rl-th" scope="col" key={`${cellKey(c)}-${i}`}>
-                  <span
-                    className="rl-stamp rl-stamp--sm"
-                    style={
-                      {
-                        '--rl-stamp-ink': entity
-                          ? accentVar(entity.accent)
-                          : 'var(--ink-faint)',
-                      } as CSSProperties
-                    }
-                  >
-                    {head.stamp}
+                <th
+                  className={`rl-th${opensRun ? ' is-runhead' : ''}`}
+                  scope="col"
+                  key={`${cellKey(c)}-${i}`}
+                >
+                  {opensRun ? (
+                    <span
+                      className="rl-stamp rl-stamp--sm"
+                      style={
+                        {
+                          '--rl-stamp-ink': entity
+                            ? accentVar(entity.accent)
+                            : 'var(--ink-faint)',
+                        } as CSSProperties
+                      }
+                    >
+                      {head.stamp}
+                    </span>
+                  ) : (
+                    /* the same box, empty: the labels stay on one line */
+                    <span className="rl-stamp rl-stamp--sm rl-stamp--ditto" aria-hidden="true" />
+                  )}
+                  <span className="rl-th-label" title={`${head.stamp} · ${head.label}`}>
+                    {head.label}
                   </span>
-                  <span className="rl-th-label">{head.label}</span>
                 </th>
               )
             })}
@@ -193,7 +214,7 @@ export function RuleResultsRail({
       {running ? (
         <div className="rl-empty">
           <span className="rl-empty-title">Running…</span>
-          <span className="rl-empty-hint">Walking every row of the rule's entity.</span>
+          <span className="rl-empty-hint">Walking every row of the rule's table.</span>
         </div>
       ) : error ? (
         <div className="rl-empty rl-empty--bad">

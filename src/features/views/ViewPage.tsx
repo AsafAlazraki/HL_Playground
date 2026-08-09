@@ -39,6 +39,7 @@ import { addBlock, setBlockRule, useViewDef, walkBlocks } from './viewDefs'
 import { BlockCard, type PendingDrop } from './BlockCard'
 import { RuleOffer } from './RuleOffer'
 import { KindMark } from './marks'
+import { SubjectPicture } from './pictures'
 import { SPRING, SPRING_SOFT, StillnessProvider, transitionFor, useStillness } from './stillness'
 import { isTableDrag, readTableDrag } from './dnd'
 import './views.css'
@@ -217,6 +218,13 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
         <span className="vw-tick vw-tick--tr" aria-hidden="true" />
 
         <header className="vw-head">
+          {/* THE PHOTOGRAPH THE CELL ELECTED. It is a flex item of its
+              own, ahead of the identity block, so when there is no
+              picture — or the host will not serve it — the header
+              renders exactly as it did before pictures existed.
+              Nothing collapses, because nothing was reserved. */}
+          <SubjectPicture entity={root} row={row} />
+
           <div className="vw-head-id">
             {trail.length > 0 ? (
               <p className="vw-trail mono-label">

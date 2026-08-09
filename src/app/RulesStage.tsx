@@ -23,7 +23,16 @@ export interface RulesStageProps {
 
 export function RulesStage({ onClose }: RulesStageProps): ReactElement {
   return (
-    <div className="shell-viewstage" role="region" aria-label="Business rules">
+    <div
+      className="shell-viewstage"
+      role="region"
+      aria-label="Business rules"
+      /* KEYSTROKES STOP AT THIS ROOT, the same line the design and flow
+         stages carry: the whiteboard underneath still deletes the
+         SELECTED TABLE on Delete or Backspace, and it only skips
+         INPUT/TEXTAREA/SELECT. */
+      onKeyDown={(e) => e.stopPropagation()}
+    >
       <div className="shell-view-bar">
         <button type="button" className="btn shell-view-back" onClick={onClose}>
           <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
@@ -34,7 +43,10 @@ export function RulesStage({ onClose }: RulesStageProps): ReactElement {
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>
-          <span className="shell-view-what-say">what has to be true</span>
+          {/* the same aside the door in the panel carries — see
+              LeftPanel: "what has to be true" was indistinguishable
+              from the door beside it, which opens the flow builder */}
+          <span className="shell-view-what-say">limits every row must keep</span>
         </p>
       </div>
 

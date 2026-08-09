@@ -10,7 +10,9 @@
 
 import { applyLintFix, type LintFinding } from '@/lib/lint'
 import { useEntityFindings } from '@/features/review'
-import { MarkGlyph } from './glyphs'
+/* Phosphor only — the double caret a reviewer leaves in a margin. */
+import { CaretDoubleRight } from '@phosphor-icons/react'
+import { ICON_SIZE } from '@/lib/icons'
 
 /** the whole-entity rules — everything else is a field's business */
 const ENTITY_RULES = new Set([
@@ -63,7 +65,7 @@ function MarkRow({ finding }: { finding: LintFinding }) {
   return (
     <li className={finding.severity === 'blocker' ? 'ds-mark ds-mark-blocker' : 'ds-mark'}>
       <span className="ds-mark-gut" aria-hidden="true">
-        <MarkGlyph />
+        <CaretDoubleRight size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
       </span>
       <div className="ds-mark-body">
         <span className="mono-label ds-mark-title">{finding.title}</span>

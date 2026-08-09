@@ -40,14 +40,26 @@
    and asking for one outright from the invitation (no kind yet,
    so the dialog opens on its first question).
 
-   THE VIEW PAGE IS MOUNTED HERE TOO, over the sheet rather than
-   instead of it. `@/features/views` was complete and reachable
-   from nowhere: it needs a table and a row, and only the shell
-   knows which one a person is pointing at. The panel opens it;
-   `ViewStage` picks the row and gives the page its box; the canvas
-   stays alive underneath, so closing is instant and the sheet has
-   not moved. A page whose table is struck from the sheet closes
-   itself — the stage must never outlive its subject.
+   DOORS OPEN STAGES, and there is exactly ONE STAGE. Four finished
+   features needed a table, or a rule, or nothing at all, and none of
+   them knew which one a person was pointing at — only the shell does.
+   So the panel draws a door, the door names a stage, and the stage is
+   mounted OVER the sheet rather than instead of it: the canvas stays
+   alive underneath, so closing is instant and the sheet has not moved.
+
+   ONE STATE, NOT FOUR BOOLEANS. `viewing` and `rulesOpen` began as two
+   flags that each had to remember to clear the other; a third and a
+   fourth of those is a truth table nobody can hold, and the first
+   mistake draws two stages on top of each other. `stage` is one
+   nullable value — opening anything closes everything else because
+   there is nowhere else for the old value to live.
+
+   A STAGE MUST NEVER OUTLIVE ITS SUBJECT. A view or a design stage
+   whose table is struck from the sheet, or a flow stage after the
+   rules are swapped out, would otherwise sit there as a white
+   rectangle with a back button in it. Each stage checks its own
+   subject; the two that name a table are also checked here, so the
+   door in the panel and the stage agree about what is open.
    ============================================================ */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -65,8 +77,18 @@ import { LeftPanel } from './LeftPanel'
 import { EmptyState } from './EmptyState'
 import { ViewStage } from './ViewStage'
 import { RulesStage } from './RulesStage'
+import { DesignStage } from './DesignStage'
+import { FlowStage } from './FlowStage'
 import { useViewPersistence } from './viewPersistence'
 import './shell.css'
+
+/** Everything that can cover the sheet. Two of them name a table; the
+ *  other two are about the whole drawing. There is never more than one. */
+type Stage =
+  | { kind: 'view'; entityId: string }
+  | { kind: 'design'; entityId: string }
+  | { kind: 'rules' }
+  | { kind: 'flow' }
 
 export function Shell() {
   const org = useProjectStore((s) => s.meta.org)
@@ -77,11 +99,25 @@ export function Shell() {
   /* view pages survive a refresh — see viewPersistence.ts */
   useViewPersistence()
 
-  /* the table whose "what goes with this?" page is open, or null */
-  const [viewing, setViewing] = useState<string | null>(null)
-  /* the sentence-rules pane, over the sheet */
-  const [rulesOpen, setRulesOpen] = useState(false)
-  const openViewId = viewing && entities[viewing] ? viewing : null
+  /* what is over the sheet right now, or null for the sheet itself */
+  const [stage, setStage] = useState<Stage | null>(null)
+
+  /* A STAGE ABOUT A TABLE THAT IS GONE IS NOT OPEN. Deleting a table
+     from the sheet, an import or a demo swap all leave the id behind;
+     resolving it here is what closes the stage and un-lights the door
+     in the same frame, rather than leaving a page pointing at nothing. */
+  const stagedEntityId =
+    (stage?.kind === 'view' || stage?.kind === 'design') && entities[stage.entityId]
+      ? stage.entityId
+      : null
+  const open: Stage | null =
+    stage === null
+      ? null
+      : stage.kind === 'view' || stage.kind === 'design'
+        ? stagedEntityId
+          ? stage
+          : null
+        : stage
 
   /* the last organisation we saw, kept across a swap that drops it */
   const knownOrg = useRef<OrgProfile | null>(null)
@@ -123,17 +159,17 @@ export function Shell() {
           it a panel that cannot fold below its min-content width pushes
           the row past the window and shoves the sheet off screen. */}
       <div className="shell-body">
+        {/* Every door hands the panel one value back. Nothing has to be
+            cleared on the way in, because there is only one slot. */}
         <LeftPanel
-          onOpenView={(id) => {
-            setRulesOpen(false)
-            setViewing(id)
-          }}
-          openViewEntityId={openViewId}
-          onOpenRules={() => {
-            setViewing(null)
-            setRulesOpen(true)
-          }}
-          rulesOpen={rulesOpen}
+          onOpenView={(id) => setStage({ kind: 'view', entityId: id })}
+          onOpenDesign={(id) => setStage({ kind: 'design', entityId: id })}
+          onOpenRules={() => setStage({ kind: 'rules' })}
+          onOpenFlow={() => setStage({ kind: 'flow' })}
+          openViewEntityId={open?.kind === 'view' ? open.entityId : null}
+          openDesignEntityId={open?.kind === 'design' ? open.entityId : null}
+          rulesOpen={open?.kind === 'rules'}
+          flowOpen={open?.kind === 'flow'}
         />
 
         <main className="shell-stage" aria-label="Sheet">
@@ -145,11 +181,28 @@ export function Shell() {
               switch — the rail's find box still held the last table's
               word, so a 43-row table opened saying "nothing here
               matches", and SET UP mode carried over, handing the next
-              table's page to a customer covered in handles. */}
-          {openViewId ? (
-            <ViewStage key={openViewId} entityId={openViewId} onClose={() => setViewing(null)} />
+              table's page to a customer covered in handles. The design
+              stage is keyed for the same reason: `DesignerSheet` resets
+              itself on a new entity, but the stage's own chrome does
+              not, so the open accordion row would follow the reader
+              from one table to a completely different one. */}
+          {open?.kind === 'view' ? (
+            <ViewStage
+              key={open.entityId}
+              entityId={open.entityId}
+              onClose={() => setStage(null)}
+            />
+          ) : open?.kind === 'design' ? (
+            <DesignStage
+              key={open.entityId}
+              entityId={open.entityId}
+              onClose={() => setStage(null)}
+            />
+          ) : open?.kind === 'rules' ? (
+            <RulesStage onClose={() => setStage(null)} />
+          ) : open?.kind === 'flow' ? (
+            <FlowStage onClose={() => setStage(null)} />
           ) : null}
-          {rulesOpen ? <RulesStage onClose={() => setRulesOpen(false)} /> : null}
         </main>
       </div>
 

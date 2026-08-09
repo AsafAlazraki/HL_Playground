@@ -128,6 +128,27 @@
   color: var(--ink);
 }
 
+/* THE SUBJECT'S PHOTOGRAPH — the first picture in its picture column.
+   `flex: none` at a fixed 120×90: the identity block beside it runs
+   100–110px (trail, 38px display name, spec strip), so at 90px the
+   header's height is still set by the WORDS and adding a picture never
+   moves the name down. Horizontally it takes 120px + one --sp-5 from a
+   940px sheet that also carries the ~80px gear, which leaves ~700px for
+   a name that wraps rather than truncates.
+   There is no rule for "no picture": the element is simply absent, so
+   the header is byte-for-byte the one it was before. */
+.vw-portrait {
+  flex: none;
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  /* the sheet's own sunken paper while the bytes are in flight — a
+     white hole would read as a missing picture rather than a late one */
+  background: var(--paper-sunken);
+}
+
 .vw-specs {
   display: flex;
   flex-wrap: wrap;
@@ -249,6 +270,7 @@
   --vw-grip: 0px;
   --vw-acts: 0px;
   --vw-tags: 0px;
+  --vw-pic: 0px;
   position: relative;
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
@@ -409,9 +431,16 @@
      squeezed the name to a single pixel, so every row lost its name at
      laptop width. Now the name has a floor, the value tracks give way
      ahead of it, and the tag track costs nothing when no row carries a
-     tag (--vw-tags, set on the block). */
+     tag (--vw-tags, set on the block).
+
+     --vw-pic is the same bargain for the picture mark: 24px when the
+     related table HAS a picture column, 0px when it does not. It is
+     safe against the name for the reason above — the 24px and its gap
+     come out of the value tracks, which give way at minmax(44px, …),
+     long before the name reaches its 96px floor. */
   grid-template-columns:
     var(--vw-grip)
+    var(--vw-pic)
     minmax(clamp(96px, 22%, 190px), 1fr)
     repeat(var(--vw-cols), minmax(44px, 104px))
     var(--vw-tags)
@@ -489,6 +518,26 @@
 }
 .vw-block.is-config .vw-grip:active {
   cursor: grabbing;
+}
+
+/* THE ROW'S MARK. `.vw-row-line` is min-height 34px with 5px of padding
+   top and bottom, and box-sizing is border-box everywhere, so the
+   content box is EXACTLY 24px — the same 24px as the thumbnail slot in
+   the table. The mark fits with nothing to spare, and the row height
+   does not move. The wrapper is always drawn so a row with no picture
+   still holds the track and the names stay in one line. */
+.vw-pic {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.vw-pic-img {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
 }
 
 .vw-row-name {

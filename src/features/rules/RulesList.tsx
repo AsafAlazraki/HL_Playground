@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar } from '@/types/model'
-import { useAllRuleIssues } from './useRuleIssues'
+import { ruleReach, useAllRuleIssues } from './useRuleIssues'
 import './rules.css'
 
 const pad2 = (n: number): string => String(n).padStart(2, '0')
@@ -81,7 +81,7 @@ export function RulesList() {
         <div className="rl-empty">
           <span className="rl-empty-title">Nothing to reason about yet</span>
           <span className="rl-empty-hint">
-            Draft an entity on the sheet first — a rule always walks the rows of one.
+            Draft a table on the sheet first — a rule always walks the rows of one.
           </span>
         </div>
       ) : (
@@ -90,7 +90,7 @@ export function RulesList() {
             <div className="rl-empty">
               <span className="rl-empty-title">No rules drawn</span>
               <span className="rl-empty-hint">
-                A rule walks every row of one entity and matches, routes or writes from there.
+                A rule walks every row of one table and matches, routes or writes from there.
               </span>
             </div>
           ) : null}
@@ -102,6 +102,9 @@ export function RulesList() {
               const summary = issuesByRule[r.id]
               const ok = summary?.ok ?? false
               const blockers = summary?.blockers.length ?? 0
+              /* "no blockers" is not "ready" — see RuleToolbar */
+              const reach = ruleReach(r)
+              const wired = reach.reachesOutput || reach.reachesAction
               return (
                 <li key={r.id} className={`rl-ruleitem${isActive ? ' is-active' : ''}`}>
                   {renaming === r.id ? (
@@ -131,9 +134,13 @@ export function RulesList() {
                       aria-current={isActive || undefined}
                       onClick={() => openRule(r.id)}
                       onDoubleClick={() => setRenaming(r.id)}
-                      title={`${r.nodes.length} node${r.nodes.length === 1 ? '' : 's'}${
-                        root ? ` · walks ${root.name}` : ''
-                      }`}
+                      /* THE NAME IS IN THE TITLE because the rail is
+                         192px wide and two rules named after the same
+                         brand are told apart by their last few words —
+                         which are exactly the words the ellipsis eats. */
+                      title={`${r.name} — ${r.nodes.length} step${
+                        r.nodes.length === 1 ? '' : 's'
+                      }${root ? `, walks every row of ${root.name}` : ''}`}
                     >
                       <span
                         className="rl-ruledot"
@@ -147,15 +154,32 @@ export function RulesList() {
                         aria-hidden="true"
                       />
                       <span className="rl-rulename">{r.name}</span>
+                      {/* A STATE, SAID OUT LOUD. Unlabelled, this read
+                          as a checkbox to tick — and it said "Ready to
+                          run" about rules whose steps join up to
+                          nothing. It now says the same thing the
+                          toolbar's stamp says, in the same words. */}
                       <span
-                        className={`rl-dotstamp${ok ? ' is-ok' : ' is-blocked'}`}
+                        className={`rl-dotstamp${
+                          !ok ? ' is-blocked' : wired ? ' is-ok' : ' is-adrift'
+                        }`}
+                        role="img"
+                        aria-label={
+                          !ok
+                            ? `${blockers} thing${blockers === 1 ? '' : 's'} to fix`
+                            : wired
+                              ? 'Ready to run'
+                              : 'Steps not joined up yet'
+                        }
                         title={
-                          ok
-                            ? 'Ready to run'
-                            : `${blockers} blocker${blockers === 1 ? '' : 's'}`
+                          !ok
+                            ? `${blockers} thing${blockers === 1 ? '' : 's'} to fix before this can run`
+                            : wired
+                              ? 'Ready to run'
+                              : 'Nothing set up wrongly, but the steps do not join up to an answer yet'
                         }
                       >
-                        {ok ? '✓' : blockers || '!'}
+                        {!ok ? blockers || '!' : wired ? '✓' : '–'}
                       </span>
                     </button>
                   )}
@@ -190,7 +214,7 @@ export function RulesList() {
               <span className="mono-label rl-block-lab">Walks every row of</span>
               <select
                 className="rl-select rl-select--wide"
-                aria-label="Root entity for the new rule"
+                aria-label="The table the new rule walks"
                 value={draftRoot}
                 autoFocus
                 onChange={(e) => setDraftRoot(e.currentTarget.value)}

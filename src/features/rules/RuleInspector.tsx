@@ -70,7 +70,7 @@ function EntityPicker({
   entities,
   onChange,
   ariaLabel,
-  placeholder = 'Pick an entity',
+  placeholder = 'Pick a table',
   exclude,
 }: {
   value: string
@@ -98,7 +98,7 @@ function EntityPicker({
       <option value="" disabled>
         {placeholder}
       </option>
-      {value && !known ? <option value={value}>(entity removed)</option> : null}
+      {value && !known ? <option value={value}>(table removed)</option> : null}
       {list.map((e) => (
         <option key={e.id} value={e.id}>
           {e.name}
@@ -237,10 +237,10 @@ function StartPanel({ rule, entities }: PanelProps<'start'>) {
   return (
     <Block
       label="Walks every row of"
-      hint="Change this and every condition below is re-read against the new entity — check them after."
+      hint="Change this and every condition below is re-read against the new table — check them after."
     >
       <EntityPicker
-        ariaLabel="Root entity"
+        ariaLabel="The table this rule walks"
         value={rule.rootEntityId}
         entities={entities}
         onChange={(rootEntityId) => updateRule(rule.id, { rootEntityId })}
@@ -310,7 +310,7 @@ function MatchPanel({ rule, node, entities, setConfig }: PanelProps<'match'>) {
     <>
       <Block label="Rows that must fit">
         <EntityPicker
-          ariaLabel="Entity to match against"
+          ariaLabel="Table to match against"
           value={node.config.targetEntityId}
           entities={entities}
           onChange={(targetEntityId) => setConfig({ ...node.config, targetEntityId })}
@@ -347,9 +347,9 @@ function MatchPanel({ rule, node, entities, setConfig }: PanelProps<'match'>) {
         </Block>
       ) : (
         <div className="rl-empty">
-          <span className="rl-empty-title">Pick an entity first</span>
+          <span className="rl-empty-title">Pick a table first</span>
           <span className="rl-empty-hint">
-            A match scans every row of another entity and keeps the ones that fit
+            A match scans every row of another table and keeps the ones that fit
             the row you are on.
           </span>
         </div>
@@ -560,8 +560,8 @@ function FindPanel({ rule, node, entities, setConfig }: PanelProps<'find'>) {
           <span className="rl-empty-title">No links to follow</span>
           <span className="rl-empty-hint">
             {scopes.source
-              ? `${scopes.source.name} has no link (REF) fields yet — add one in the entity designer.`
-              : 'This rule has no root entity.'}
+              ? `${scopes.source.name} has no link (REF) columns yet — add one in that table's column setup.`
+              : 'This rule has no table to walk yet.'}
           </span>
         </div>
       ) : (
@@ -627,7 +627,7 @@ function LoopPanel({ rule, node, entities, setConfig }: PanelProps<'loop'>) {
             })
           }
           options={[
-            { value: 'entity', label: 'Every row of', title: 'Walk a whole entity' },
+            { value: 'entity', label: 'Every row of', title: 'Walk a whole table' },
             {
               value: 'linked',
               label: 'Rows linked to this one',
@@ -643,7 +643,7 @@ function LoopPanel({ rule, node, entities, setConfig }: PanelProps<'loop'>) {
       >
         {src.kind === 'entity' ? (
           <EntityPicker
-            ariaLabel="Entity to loop over"
+            ariaLabel="Table to loop over"
             value={src.entityId}
             entities={entities}
             onChange={(entityId) => setConfig({ source: { kind: 'entity', entityId } })}
@@ -652,7 +652,7 @@ function LoopPanel({ rule, node, entities, setConfig }: PanelProps<'loop'>) {
           <div className="rl-empty">
             <span className="rl-empty-title">Nothing links back</span>
             <span className="rl-empty-hint">
-              No entity has a link field pointing at {source?.name ?? 'this entity'} yet.
+              No table has a link column pointing at {source?.name ?? 'this table'} yet.
             </span>
           </div>
         ) : (
@@ -776,7 +776,7 @@ function ActionPanel({ rule, node, entities, setConfig }: PanelProps<'action'>) 
         <>
           <Block label="Create a row in">
             <EntityPicker
-              ariaLabel="Entity to create a row in"
+              ariaLabel="Table to create a row in"
               value={action.entityId}
               entities={entities}
               onChange={(entityId) => setAction({ ...action, entityId })}
@@ -819,11 +819,11 @@ function ActionPanel({ rule, node, entities, setConfig }: PanelProps<'action'>) 
       {action.op === 'link' ? (
         <>
           <Block
-            label="Join entity"
+            label="Link table"
             hint="The pairing itself becomes a row, so it can carry its own values — a fitment note, a recommended flag."
           >
             <EntityPicker
-              ariaLabel="Join entity"
+              ariaLabel="Link table"
               value={action.joinEntityId}
               entities={entities}
               onChange={(joinEntityId) =>
@@ -843,7 +843,7 @@ function ActionPanel({ rule, node, entities, setConfig }: PanelProps<'action'>) 
                       : 'A match node must name the other side first'
                   }
                 >
-                  + Create a join entity
+                  + Create a link table
                 </button>
                 {!match ? (
                   <p className="rl-hint">

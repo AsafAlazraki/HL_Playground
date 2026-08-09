@@ -167,6 +167,24 @@
   flex: 1;
   min-width: 0;
 }
+/* THE STAMP MUST NOT EAT THE CONTROL BESIDE IT. A stamp is an entity
+   name — "HIGHFIELD INFLATABLES" is 21 characters — and it is
+   `white-space: nowrap`, so beside a picker in a 304px column it took
+   every pixel and left the select fifteen wide: a naked chevron, with
+   both conditions of the seeded rule therefore looking identical. The
+   name gives way first, and the control keeps a floor it cannot be
+   squeezed below. */
+.rl-side > .rl-stamp {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rl-side > .rl-fieldpick {
+  flex: 1 1 62%;
+  min-width: 108px;
+}
 
 /* -- segmented controls -------------------------------------- */
 .rl-seg {
@@ -398,19 +416,28 @@
   outline-offset: 1px;
 }
 
-/* -- value editor -------------------------------------------- */
+/* -- value editor --------------------------------------------
+   TWO LINES, NOT ONE. The right-hand side of a condition carries a
+   stamp, a picker AND the FLD/VAL/ƒx switch. Three things on one line
+   inside a 304px column leaves the picker unreadable, so the switch
+   takes the line above and the side of the clause gets the full
+   width beneath it. */
 .rl-value {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 4px var(--sp-2);
   min-width: 0;
 }
 .rl-value > .rl-side {
-  flex: 1;
+  order: 2;
+  flex: 1 1 100%;
   min-width: 0;
 }
 .rl-modes {
+  order: 1;
   flex: none;
+  margin-left: auto;
   display: inline-flex;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
@@ -740,13 +767,29 @@
 /* wrapper it is mounted in. Total height stays under 56px.      */
 /* ------------------------------------------------------------ */
 
+/* IT WRAPS RATHER THAN SHRINKS. Eight chips at 76px plus two labels
+   need about 780px; on the 524px canvas a 1280 screen leaves, every
+   chip shrank to 38px and every label was cut to three characters —
+   `Ma… Ro… Lin… Fo… Ac… Ou…`, eight unreadable stubs on the one
+   instrument that teaches the vocabulary. A second row of chips costs
+   40px of paper and keeps every word. */
+/* CENTRED BY MARGINS, NOT BY `left: 50%`. An absolutely positioned box
+   with a left offset and no right offset may only be as wide as what is
+   LEFT of that offset — half the canvas — so on a 524px canvas the
+   strip was given 262px whatever it asked for, and quietly wrapped
+   itself into three rows inside it. Pinned to both edges with an auto
+   margin, it centres on the same axis and may use the whole width. */
 .rl-strip {
   position: absolute;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: var(--sp-4);
-  transform: translateX(-50%);
+  width: fit-content;
+  margin: 0 auto;
   z-index: 6;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: stretch;
   gap: var(--sp-2);
   max-width: calc(100% - var(--sp-6));
@@ -792,11 +835,13 @@
 }
 
 /* No overflow on the list, on either axis: the tooltip lifts clear of the
-   strip, and a scroll container would clip it. Narrow canvases shrink the
-   chips instead — their labels ellipsize. */
+   strip, and a scroll container would clip it. Narrow canvases wrap the
+   chips onto a second row rather than squeezing their labels away. */
 .rl-strip-list {
   list-style: none;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: stretch;
   gap: var(--sp-1);
   margin: 0;
@@ -805,7 +850,7 @@
 }
 .rl-strip-item {
   position: relative;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
@@ -815,7 +860,7 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  width: 76px;
+  width: 72px;
   max-width: 100%;
   padding: 4px 5px;
   border: 1px solid var(--hairline);
@@ -955,13 +1000,15 @@
   padding: var(--sp-1) var(--sp-2);
 }
 .rl-ruleitem {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2px;
   border-radius: var(--radius-sm);
   transition: background var(--t-fast) var(--ease-draft);
 }
-.rl-ruleitem:hover {
+.rl-ruleitem:hover,
+.rl-ruleitem:focus-within {
   background: var(--blue-wash);
 }
 .rl-ruleitem.is-active {
@@ -991,27 +1038,39 @@
   border-radius: 1px;
   background: var(--rl-stamp-ink, var(--ink-faint));
 }
+/* TWO LINES BEFORE AN ELLIPSIS. "Trailer fitment — Highfield" is 142px
+   of text and this rail is 192px wide: on one line it was cut to
+   "Trailer fitme…", which is also what the OTHER seeded rule was cut
+   to. A rule index whose entries cannot be told apart is not an index.
+   Rules are counted in handfuls, so the row can afford a second line. */
 .rl-rulename {
   flex: 1;
   min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: 12.5px;
+  line-height: 1.35;
   color: var(--ink);
 }
 .rl-ruleitem.is-active .rl-rulename {
   font-weight: 600;
 }
+/* A STAMP, NOT A CHECKBOX. A square outline with a tick in it beside a
+   name reads as "tick this to switch it on"; this is a state, and the
+   only thing it can do is be looked at. Round, no box, and it says out
+   loud what it means. */
 .rl-dotstamp {
   flex: none;
   min-width: 16px;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  border: 1px solid currentColor;
-  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  border: 0;
+  border-radius: 999px;
   line-height: 1.5;
 }
 .rl-dotstamp.is-ok {
@@ -1020,17 +1079,32 @@
 .rl-dotstamp.is-blocked {
   color: var(--red);
 }
+.rl-dotstamp.is-adrift {
+  color: var(--accent-ochre);
+}
+/* THEY HOVER OVER THE ROW, THEY DO NOT SIT IN IT. Laid out in the row
+   these two 20px buttons held 47px of a 192px rail permanently, even at
+   `opacity: 0` — which is why both seeded rules read as "Motor fitme…"
+   and "Trailer fitme…", told apart by eleven characters. Lifted out of
+   the flow they cost nothing until a pointer or the keyboard arrives. */
 .rl-ruleacts {
-  flex: none;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   gap: 1px;
-  padding-right: 4px;
+  padding-left: var(--sp-2);
+  border-radius: var(--radius-sm);
+  background-color: inherit;
   opacity: 0;
+  pointer-events: none;
   transition: opacity var(--t-fast) var(--ease-draft);
 }
 .rl-ruleitem:hover .rl-ruleacts,
 .rl-ruleitem:focus-within .rl-ruleacts {
   opacity: 1;
+  pointer-events: auto;
 }
 .rl-rename {
   margin: 4px 6px;
@@ -1060,10 +1134,20 @@
 /* Toolbar                                                      */
 /* ------------------------------------------------------------ */
 
+/* IT WRAPS, AND THE NAME KEEPS A FLOOR. A run adds "173 ROWS · 1 VIEW"
+   and CLEAR to this bar; over a 524px canvas that put RUN half outside
+   the canvas, which is `overflow: hidden`, so the control that had just
+   been used could not be used again. And because the name is
+   `overflow: hidden` its automatic minimum size is zero — it collapsed
+   to "R.." with 380px of clear space beside it. Wrapping costs a line
+   and clips nothing. */
 .rl-toolbar {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
+  justify-content: center;
+  gap: 6px var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius);
@@ -1074,6 +1158,8 @@
   color: var(--ink-faint);
 }
 .rl-toolbar-name {
+  flex: 0 1 auto;
+  min-width: 104px;
   max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1082,7 +1168,62 @@
   color: var(--ink);
 }
 .rl-toolbar-gap {
-  flex: 1;
+  flex: 1 1 0;
+}
+
+/* -- the notes, on a click rather than on a hover -------------
+   `CHECKS ✓` and `6 NOTES` sat side by side saying opposite things,
+   and the notes were readable only by resting a pointer on a chip
+   that looks exactly like a button. It is a button now. */
+.rl-notebtn {
+  appearance: none;
+  cursor: pointer;
+  background: transparent;
+}
+.rl-notebtn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.rl-notelist {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  width: min(420px, 78vw);
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--sp-3);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-popover);
+  text-align: left;
+}
+.rl-noteitem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.rl-noteitem-tag {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-ochre);
+}
+.rl-noteitem.is-blocker .rl-noteitem-tag {
+  color: var(--red);
 }
 
 .rl-check {
@@ -1224,9 +1365,24 @@
   color: var(--ink-faint);
 }
 
+/* THE TABLE SCROLLS, NOT THE RAIL. Uncapped, this box grew to the full
+   height of the result — 173 rows is 4,500px — and took its own
+   horizontal scrollbar down there with it, so the columns that ran off
+   the right-hand edge could not be reached at all. Given a height by
+   the flex column it sits in, both scrollbars stay on screen. */
 .rl-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: var(--sp-3);
+}
+/* what the run wants to WRITE, and what it complained about, stay
+   beneath the table rather than pushing it off the bottom */
+.rl-effects,
+.rl-warnings {
+  flex: 0 0 auto;
+  max-height: 42%;
+  overflow-y: auto;
 }
 .rl-table {
   width: 100%;
@@ -1242,6 +1398,18 @@
   text-align: left;
   vertical-align: bottom;
   white-space: nowrap;
+}
+/* the empty stamp box on a column that carries on from the one before:
+   it holds the line, so every label still sits on the same baseline */
+.rl-stamp--ditto {
+  border-color: transparent;
+  visibility: hidden;
+}
+/* where the columns start reading a different row, a hairline says so
+   (nth-child(n+3): the gutter is 1 and the first column needs no rule
+   against the gutter) */
+.rl-th.is-runhead:nth-child(n + 3) {
+  border-left: 1px solid var(--hairline);
 }
 .rl-th-label {
   display: block;

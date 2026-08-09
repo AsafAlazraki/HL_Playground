@@ -14,6 +14,8 @@ import {
   FIELD_TYPES,
   UNARY_OPS,
   displayFieldOf,
+  imageCellText,
+  isImageValue,
 } from '@/types/model'
 import type {
   AccentKey,
@@ -260,6 +262,14 @@ export function fieldOptions(
   const { includeFormula = true, includeVia = true, types } = opts
   const allow = (f: FieldDef): boolean => {
     if (!includeFormula && f.type === 'formula') return false
+    /* AN IMAGE COLUMN IS NOT A VALUE TO REASON ABOUT. Its cell holds an
+       ImageRef[], and the engine's `compareValues` falls through arrays
+       to a string compare — so two different image columns test EQUAL
+       and a rule quietly matches every row. Real boat tables ship an
+       Image column, so this is reachable on the seeded sheet. Closed off
+       at the picker: a comparison that cannot be right is better never
+       offered than offered and silently wrong. */
+    if (f.type === 'image') return false
     if (types && !types.includes(f.type)) return false
     return true
   }
@@ -312,6 +322,12 @@ export function fieldOptionsIn(
 
 export function formatCell(v: CellValue | undefined): string {
   if (v === null || v === undefined || v === '') return '—'
+  /* CellValue stopped being all-primitive when images arrived: an image
+     cell is an ImageRef[], and `String(v)` on it prints
+     "[object Object]" straight into a results table. Rules can no longer
+     PICK an image column, but a run's output columns can still carry one
+     from the row it walked. */
+  if (isImageValue(v)) return imageCellText(v) || '—'
   if (typeof v === 'boolean') return v ? 'Yes' : 'No'
   if (typeof v === 'number') {
     if (!Number.isFinite(v)) return String(v)
@@ -508,7 +524,7 @@ export function describeAction(
     }
     case 'create': {
       const target = entities[action.entityId]
-      if (!target) return { title: 'Create', summary: 'Pick an entity', configured: false }
+      if (!target) return { title: 'Create', summary: 'Pick a table', configured: false }
       const n = Object.keys(action.values ?? {}).length
       return {
         title: 'Create',
@@ -524,7 +540,7 @@ export function describeAction(
       }
     case 'link': {
       const join = entities[action.joinEntityId]
-      if (!join) return { title: 'Link', summary: 'Pick or create a join entity', configured: false }
+      if (!join) return { title: 'Link', summary: 'Pick or create a link table', configured: false }
       const ok = !!action.sourceFieldId && !!action.matchFieldId
       return {
         title: 'Link',
@@ -563,12 +579,12 @@ export function describeNode(
     case 'start':
       return source
         ? { title: source.name, summary: 'Walks every row', configured: true }
-        : { title: 'No entity', summary: 'This rule has no root entity', configured: false }
+        : { title: 'No table', summary: 'This rule has no table to walk', configured: false }
 
     case 'match': {
       const target = entities[node.config.targetEntityId]
       if (!target) {
-        return { title: 'Pick an entity', summary: 'Which rows should fit?', configured: false }
+        return { title: 'Pick a table', summary: 'Which rows should fit?', configured: false }
       }
       /* strict convention inside a match: left is the candidate row,
          a field right-hand side is the source row */
@@ -858,7 +874,7 @@ function actionPlate(
 
     case 'create': {
       const target = entities[action.entityId]
-      if (!target) return { subject: 'Create', lines: [miss('cr', 'pick an entity to create')] }
+      if (!target) return { subject: 'Create', lines: [miss('cr', 'pick a table to create a row in')] }
       return {
         subject: 'Create',
         lines: [
@@ -887,7 +903,7 @@ function actionPlate(
         chunks: [word('link'), stampChunk(source), word('↔'), stampChunk(match, 'match')],
       }
       if (!join) {
-        return { subject: 'Link', lines: [pair, miss('join', 'pick or create a join entity')] }
+        return { subject: 'Link', lines: [pair, miss('join', 'pick or create a link table')] }
       }
       if (!action.sourceFieldId || !action.matchFieldId) {
         return {
@@ -931,7 +947,7 @@ export function plateSpec(
               { id: 'walk', chunks: [word('walk every'), stampChunk(source), word('row')] },
             ],
           }
-        : { lines: [miss('root', 'give this rule a root entity')] }
+        : { lines: [miss('root', 'give this rule a table to walk')] }
 
     case 'match': {
       const target = entities[node.config.targetEntityId]
@@ -939,7 +955,7 @@ export function plateSpec(
         node.config.emptyBehavior === 'passThrough'
           ? 'no match → carry on'
           : 'no match → skip row'
-      if (!target) return { lines: [miss('tgt', 'pick an entity to match')], footer }
+      if (!target) return { lines: [miss('tgt', 'pick a table to match')], footer }
       const group = node.config.group
       const ctx: ClauseContext = { left: [target], right: [source], entities }
       return {

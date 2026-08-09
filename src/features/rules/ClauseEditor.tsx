@@ -582,7 +582,7 @@ export function ClauseEditor({
         className="btn rl-add"
         onClick={addClause}
         disabled={!canAdd}
-        title={canAdd ? undefined : 'This entity has no fields to compare yet'}
+        title={canAdd ? undefined : 'This table has no columns to compare yet'}
       >
         + {addLabel}
       </button>

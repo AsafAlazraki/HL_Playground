@@ -1,11 +1,17 @@
 /* ============================================================
-   One field of the schema — collapsed card row + accordion
-   editor (name / type / required / default + per-type editor).
+   ONE COLUMN of a table — collapsed card row + accordion editor
+   (name / type / required / default + per-type editor).
+
+   IT SAYS COLUMN, NEVER FIELD OR SCHEMA. The rest of the app calls
+   this thing a column because that is what a person sees on the
+   sheet; a surface that renames it halfway through the sentence
+   makes the reader wonder whether they are editing something else.
    ============================================================ */
 
 import { useEffect, useMemo, useRef } from 'react'
 import {
   FIELD_TYPES,
+  UID_FIELD,
   rowLabel,
   type CellValue,
   type EntityDef,
@@ -13,17 +19,15 @@ import {
   type FieldType,
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
-import { FieldMark } from '@/features/review'
 import { FormulaEditor, ReferenceEditor, SelectOptionsEditor } from './FieldTypeEditors'
 import { GuardNote } from './GuardNote'
 import { useNameGuard } from './useNameGuard'
-import {
-  CheckGlyph,
-  ChevronDownGlyph,
-  ChevronRightGlyph,
-  ChevronUpGlyph,
-  XGlyph,
-} from './glyphs'
+/* PHOSPHOR ONLY, THROUGH `@/lib/icons`. This folder used to hand-draw
+   eight SVGs of its own, so the same caret appeared here at 1.4px and
+   everywhere else in the app at Phosphor's 'light' weight — a hairline
+   language that disagrees with itself a few hundred pixels apart. */
+import { CaretDown, CaretRight, CaretUp, Check, X } from '@phosphor-icons/react'
+import { ICON_SIZE } from '@/lib/icons'
 
 const TYPE_ORDER = Object.keys(FIELD_TYPES) as FieldType[]
 
@@ -63,28 +67,70 @@ export function FieldRow({
     }
   }, [expanded, autoFocusName])
 
-  /* -- guardrail 1: no two columns share a name --------------- */
+  /* BRING THE EDITOR YOU JUST OPENED ONTO THE SCREEN. The row expands
+     in place, and a column two thirds of the way down a 26-column table
+     opens its whole editor below the fold: you click, the caret turns,
+     and nothing you can see has changed. `block: 'nearest'` scrolls by
+     the least that makes the panel whole — a row already fully visible
+     does not move at all. Deferred one frame, because the panel does
+     not exist to be measured until after this render. */
+  const rowRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!expanded) return
+    const id = requestAnimationFrame(() => {
+      rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [expanded])
+
+  /* -- guardrail 1: no two columns share a name ---------------
+     UID IS ON THE LIST THOUGH IT IS NOT IN `entity.fields`. The grid
+     always draws a system UID column and refuses a second one by that
+     name; this surface used to accept it, so the same table could be
+     given two columns headed UID depending on which screen you were
+     standing on. */
   const takenNames = useMemo(
-    () => entity.fields.filter((f) => f.id !== field.id).map((f) => f.name),
+    () => [
+      UID_FIELD.name,
+      ...entity.fields.filter((f) => f.id !== field.id).map((f) => f.name),
+    ],
     [entity.fields, field.id],
   )
   const nameGuard = useNameGuard({
     current: field.name,
     taken: takenNames,
-    allowEmpty: true,
+    /* A NAMELESS COLUMN IS NOT A COLUMN. The table refuses to blank a
+       header for the plain reason that nothing can then refer to it —
+       no formula, no import, no rule — and the two surfaces edit the
+       same column, so they cannot disagree about that. */
+    allowEmpty: false,
     message: (n) =>
-      `A field named “${n}” already exists on this entity — two columns with the same name make every formula and import ambiguous.`,
+      `A column named “${n}” already exists on this table — two columns with the same name make every formula and import ambiguous.`,
     onCommit: (name) => updateField(entity.id, field.id, { name }),
   })
 
   /* -- guardrail 4: a list with nothing on it ----------------- */
   const emptyList = field.type === 'select' && (field.options?.length ?? 0) === 0
 
+  /* WHAT THE TABLE KNOWS AND THIS SHEET DID NOT SAY.
+     A band is a named run of consecutive columns and the grid draws its
+     header from `sectionId`; a grouping level is a column the grid
+     drawers open on. Both were invisible here, so a person reordering
+     columns or deleting one could not see they were taking apart the
+     structure of the sheet they were looking at. Named, not editable —
+     editing them belongs to the table. */
+  const band = entity.sections?.find((s) => s.id === field.sectionId)
+  const groupLevel = (entity.hierarchy ?? []).indexOf(field.id)
+
   const handleRemove = () => {
-    const label = field.name.trim() || 'this untitled field'
+    const label = field.name.trim() || 'this untitled column'
+    const warning =
+      groupLevel >= 0
+        ? `\n\nIt is also a grouping level, so ${entity.name} loses that drawer on the sheet.`
+        : ''
     if (
       window.confirm(
-        `Remove field "${label}" from ${entity.name}?\nIts column of data goes with it.`,
+        `Remove the column "${label}" from ${entity.name}?\nIts column of data goes with it.${warning}`,
       )
     ) {
       removeField(entity.id, field.id)
@@ -92,7 +138,7 @@ export function FieldRow({
   }
 
   return (
-    <div className={expanded ? 'ds-frow ds-frow-open' : 'ds-frow'}>
+    <div className={expanded ? 'ds-frow ds-frow-open' : 'ds-frow'} ref={rowRef}>
       <div className="ds-frow-head">
         <div className="ds-frow-arrows" aria-hidden={count < 2 || undefined}>
           <button
@@ -100,40 +146,58 @@ export function FieldRow({
             className="ds-arrow-btn"
             disabled={index === 0}
             onClick={() => moveField(entity.id, field.id, -1)}
-            aria-label={`Move ${field.name || 'field'} up`}
+            aria-label={`Move the column ${field.name || 'untitled'} up`}
           >
-            <ChevronUpGlyph />
+            <CaretUp size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
           </button>
           <button
             type="button"
             className="ds-arrow-btn"
             disabled={index === count - 1}
             onClick={() => moveField(entity.id, field.id, 1)}
-            aria-label={`Move ${field.name || 'field'} down`}
+            aria-label={`Move the column ${field.name || 'untitled'} down`}
           >
-            <ChevronDownGlyph />
+            <CaretDown size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
           </button>
         </div>
 
+        {/* THE NAME OF THIS CONTROL WAS "TXT SERIES GROUPS IDENTITY" —
+            three stamps read out in a row, with no verb and no hint
+            that pressing it opens anything. It is stated plainly here;
+            `aria-expanded` carries the open/shut state. */}
         <button
           type="button"
           className="ds-frow-main"
           aria-expanded={expanded}
+          aria-label={`Set up the column ${field.name || 'untitled'}`}
           onClick={onToggle}
         >
           <span className="type-tag" style={{ color: meta.cssVar }}>
             {meta.tag}
           </span>
           <span className={field.name ? 'ds-frow-name' : 'ds-frow-name ds-frow-untitled'}>
-            {field.name || 'untitled field'}
+            {field.name || 'untitled column'}
             {field.required ? (
               <span className="ds-req" title="Required">
                 *
               </span>
             ) : null}
           </span>
+          {groupLevel >= 0 ? (
+            <span
+              className="mono-label ds-frow-level"
+              title={`Grouping level ${groupLevel + 1} — the sheet opens a drawer on this column`}
+            >
+              Groups
+            </span>
+          ) : null}
+          {band ? (
+            <span className="mono-label ds-frow-band" title={`Band: ${band.name}`}>
+              {band.name}
+            </span>
+          ) : null}
           <span className="ds-frow-caret" aria-hidden="true">
-            <ChevronRightGlyph />
+            <CaretRight size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
           </span>
         </button>
 
@@ -141,18 +205,25 @@ export function FieldRow({
           type="button"
           className="ds-frow-del"
           onClick={handleRemove}
-          aria-label={`Delete field ${field.name || 'untitled'}`}
-          title="Delete field"
+          aria-label={`Delete the column ${field.name || 'untitled'}`}
+          title="Delete this column"
         >
-          <XGlyph />
+          <X size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
         </button>
       </div>
 
-      {/* the reviewer's mark, written in this row's margin — shown
-          whether the row is open or shut, never as a form error */}
-      <div className="ds-frow-mark">
-        <FieldMark entityId={entity.id} fieldId={field.id} />
-      </div>
+      {/* THE REVIEWER IS NOT DRAWN HERE, and this is a decision rather
+          than an omission. `<FieldMark>` puts a one-click "Apply fix"
+          in this margin with no confirmation, and this app has no undo.
+          On the real sheet its commonest suggestion — "this column only
+          ever holds one value, make it a choice list" — fires on 26
+          columns where the fix would LOCK the column to that single
+          value, and `updateField` wipes every cell in the column on the
+          way through. The lint rules also predate table kinds and
+          roles, so they read a brand price file as a mis-named entity.
+          The reviewer gets its own door once its rules know what a
+          brand table is and its fixes are confirm-gated; until then the
+          column setup must not be the back way in. */}
 
       {/* stays put whether the row is open or shut — the column cannot
           hold a value until the list has something on it */}
@@ -173,14 +244,14 @@ export function FieldRow({
         <div className="ds-frow-body">
           <div className="ds-ctl-block">
             <label className="mono-label ds-lab" htmlFor={`ds-fname-${field.id}`}>
-              Field name
+              Column name
             </label>
             <input
               id={`ds-fname-${field.id}`}
               ref={nameRef}
               className={nameGuard.invalid ? 'field-input ds-input-refused' : 'field-input'}
               value={nameGuard.draft ?? field.name}
-              placeholder="Untitled field"
+              placeholder="Name this column"
               aria-invalid={nameGuard.invalid || undefined}
               onChange={(e) => nameGuard.change(e.target.value)}
               onBlur={nameGuard.settle}
@@ -231,7 +302,7 @@ export function FieldRow({
                      exists it must be confirm-gated like every other
                      destructive action */
                   if (hasRows) {
-                    const label = field.name.trim() || 'this untitled field'
+                    const label = field.name.trim() || 'this untitled column'
                     const rows = rowCount === 1 ? 'its 1 row' : `its ${rowCount} rows`
                     if (
                       !window.confirm(
@@ -269,7 +340,7 @@ export function FieldRow({
               }
             />
             <span className="ds-check-box" aria-hidden="true">
-              <CheckGlyph />
+              <Check size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
             </span>
             <span className="mono-label ds-check-label">Required</span>
             <span className="ds-req ds-check-req" aria-hidden="true">
@@ -277,7 +348,13 @@ export function FieldRow({
             </span>
           </label>
 
-          {field.type !== 'formula' ? (
+          {/* NO DEFAULT BLOCK WITHOUT A CONTROL UNDER IT. A formula
+              column computes its value, and a picture column has no
+              value to pre-set — `DefaultValueInput` renders nothing for
+              either, so drawing the label over them left a heading with
+              empty space beneath it, which reads as a control that
+              failed to load. */}
+          {field.type !== 'formula' && field.type !== 'image' ? (
             <div className="ds-ctl-block">
               <span className="mono-label ds-lab">Default value</span>
               <DefaultValueInput entityId={entity.id} field={field} />
