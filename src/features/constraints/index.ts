@@ -48,7 +48,8 @@
 
    Until then, `resetProject()` should also call `clearConstraints()`
    (exported below) or a wiped project comes back with the old
-   organisation's rules still in it.
+   organisation's rules still in it — and `forgetWorkbookSeeds()` with
+   it, or the workbook rules will not be offered to the fresh project.
 
    Two smaller notes for whoever writes that slice:
 
@@ -145,6 +146,21 @@ export {
 export type { ColumnConcept, ValueControl, ValueDomain } from './columns'
 
 export { useSentenceCtx } from './useCtx'
+
+/* -- the workbook's own rules, and the ones it cannot yet state ---- */
+
+export {
+  WORKBOOK,
+  WORKBOOK_RULES,
+  WORKBOOK_RULES_BLOCKED,
+  buildWorkbookConstraints,
+  clauseId,
+  forgetWorkbookSeeds,
+  seedClause,
+  seedFieldId,
+  seedWorkbookConstraints,
+} from './workbookRules'
+export type { ResolvedColumns, SeedReport, WorkbookRuleSeed } from './workbookRules'
 
 export {
   addOneOfValue,
