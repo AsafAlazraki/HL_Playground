@@ -1,0 +1,608 @@
+/* ============================================================
+   DataGrid — chart-room data entry (prefix: dg-).
+   White instrument chrome; colors come from tokens.css (washes
+   derived with color-mix over token vars only). Cells run 36px
+   tall with --sp-2 vertical / --sp-3 horizontal padding so
+   entries breathe; header cells share the same left edge.
+   ============================================================ */
+
+.dg-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: var(--paper);
+  animation: sheet-in var(--t-med) var(--ease-draft);
+}
+
+/* -- header strip: dimension annotation + ADD ROW ----------- */
+
+.dg-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* |— 12 ROWS —| drawn with real hairlines, ticks + arrowheads */
+.dg-dim {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.dg-dim-tick {
+  flex: none;
+  width: 1px;
+  height: 11px;
+  background: var(--hairline-strong);
+}
+.dg-dim-line {
+  flex: 1;
+  min-width: 10px;
+  height: 1px;
+  background: var(--hairline-strong);
+  position: relative;
+}
+.dg-dim-line-l::before,
+.dg-dim-line-r::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+}
+.dg-dim-line-l::before {
+  left: 0;
+  border-right: 5px solid var(--hairline-strong);
+}
+.dg-dim-line-r::after {
+  right: 0;
+  border-left: 5px solid var(--hairline-strong);
+}
+.dg-dim-label {
+  flex: none;
+  padding: 0 var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.dg-add-btn {
+  flex: none;
+}
+
+/* -- scroll region ------------------------------------------ */
+
+.dg-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* -- table -------------------------------------------------- */
+
+.dg-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* column headers (sticky) — same --sp-3 left edge as the cells */
+.dg-th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  text-align: left;
+  vertical-align: top;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline-strong);
+  border-right: 1px solid var(--hairline);
+}
+.dg-th-name {
+  display: block;
+  max-width: 190px;
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dg-th-req {
+  margin-left: 2px;
+  color: var(--red);
+}
+.dg-th-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+.dg-th-ro {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent-teal);
+}
+.dg-th-fx {
+  background: color-mix(in srgb, var(--accent-teal) 6%, var(--paper-high));
+}
+
+/* row-number gutter (sticky left) */
+.dg-th-gutter {
+  z-index: 4;
+  left: 0;
+  width: 38px;
+  min-width: 38px;
+  max-width: 38px;
+  text-align: center;
+  padding: var(--sp-2) var(--sp-1);
+  border-right: 1px solid var(--hairline-strong);
+}
+.dg-gutter-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* -- cells -------------------------------------------------- */
+
+.dg-cell {
+  position: relative;
+  height: 36px; /* breathing room: --sp-2 above + below the entry */
+  padding: 0;
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline);
+  border-right: 1px solid var(--hairline);
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.dg-row:hover .dg-cell {
+  background: var(--paper-sunken);
+}
+
+.dg-cell-gutter {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 38px;
+  min-width: 38px;
+  max-width: 38px;
+  text-align: center;
+  border-right: 1px solid var(--hairline-strong);
+}
+.dg-rownum {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.dg-row:hover .dg-rownum,
+.dg-row-armed .dg-rownum {
+  opacity: 0;
+}
+
+/* delete: hidden until row hover; two-step red-pencil strike */
+.dg-del {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--red);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.dg-del svg {
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+.dg-row:hover .dg-del,
+.dg-del:focus-visible,
+.dg-del-armed {
+  opacity: 1;
+}
+.dg-del:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+}
+.dg-del-armed,
+.dg-del-armed:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--paper-high);
+}
+
+/* armed row: red-pencil strike across the entry
+   (background override lives at the end of this file so it
+   outranks the hover tints) */
+.dg-row-armed .dg-cell:not(.dg-cell-gutter)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--red);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* required + empty: subtle red-pencil left tick */
+.dg-cell-req::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 13px;
+  border-radius: 1px;
+  background: var(--red);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* formula column: teal FX wash, values in teal mono */
+.dg-cell-fx {
+  background: color-mix(in srgb, var(--accent-teal) 5%, var(--paper-high));
+}
+.dg-row:hover .dg-cell-fx {
+  background: color-mix(in srgb, var(--accent-teal) 9%, var(--paper-high));
+}
+
+/* -- inputs: quiet until focused ---------------------------- */
+
+.dg-input {
+  width: 100%;
+  height: 100%;
+  min-height: 35px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink);
+  caret-color: var(--blue);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.dg-input:hover {
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+.dg-input:focus,
+.dg-input:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+  background: var(--paper-high);
+}
+
+/* invalid number: red-pencil border until fixed or cleared */
+.dg-input.dg-input-invalid,
+.dg-input.dg-input-invalid:focus,
+.dg-input.dg-input-invalid:focus-visible {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-wash);
+  background: var(--paper-high);
+  color: var(--red);
+  caret-color: var(--red);
+}
+
+.dg-input-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+}
+.dg-input-date {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.dg-input-date::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  cursor: pointer;
+}
+.dg-input-date::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* -- selects (list + reference) ----------------------------- */
+
+.dg-selectwrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.dg-selectwrap::after {
+  content: '';
+  position: absolute;
+  right: var(--sp-3);
+  top: 50%;
+  transform: translateY(-40%);
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 4.5px solid var(--ink-soft);
+  pointer-events: none;
+  transition: border-top-color var(--t-fast) var(--ease-draft);
+}
+.dg-selectwrap:hover::after {
+  border-top-color: var(--ink);
+}
+.dg-selectwrap-warn::after {
+  border-top-color: var(--red);
+}
+.dg-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: var(--sp-5); /* clearance for the chevron */
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* stale option / deleted reference: red-pencil warning tint */
+.dg-select-warn,
+.dg-select-warn:focus,
+.dg-select-warn:focus-visible {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 6%, transparent);
+}
+.dg-select-warn:focus,
+.dg-select-warn:focus-visible {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-wash);
+}
+
+/* reference whose target entity was deleted */
+.dg-refbroken {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 35px;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--red);
+  background: var(--red-wash);
+  cursor: help;
+}
+
+/* -- boolean: drafting checkbox ----------------------------- */
+
+.dg-boolwrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 35px;
+}
+.dg-check {
+  width: 17px;
+  height: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  color: transparent;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.dg-check:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+.dg-check-mark {
+  width: 12px;
+  height: 12px;
+  overflow: visible;
+  display: block;
+}
+/* the tick overshoots the box, like a pen mark */
+.dg-check-on {
+  color: var(--blue-deep);
+  border-color: var(--hairline-strong);
+}
+.dg-check-on:hover {
+  color: var(--blue);
+}
+
+/* -- formula display ---------------------------------------- */
+
+.dg-fx {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 35px;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-teal);
+  white-space: nowrap;
+}
+.dg-fx-num {
+  justify-content: flex-end;
+}
+.dg-fx-empty {
+  color: var(--ink-faint);
+}
+.dg-fx-err {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--red);
+  cursor: help;
+}
+
+/* -- ghost append row --------------------------------------- */
+
+.dg-addrow td {
+  padding: 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.dg-addrow-btn {
+  width: 100%;
+  padding: var(--sp-2) 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+/* keep the label in view while the sheet scrolls sideways */
+.dg-addrow-label {
+  display: inline-block;
+  position: sticky;
+  left: var(--sp-3);
+}
+.dg-addrow-btn:hover {
+  color: var(--blue);
+  background: var(--blue-wash);
+}
+.dg-addrow-btn:focus-visible {
+  color: var(--blue);
+}
+
+/* -- empty-state plates ------------------------------------- */
+
+.dg-platewrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: var(--sp-5) var(--sp-4);
+  overflow: auto;
+}
+.dg-plate {
+  position: relative;
+  margin: auto;
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-5);
+  text-align: center;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  animation: fade-in var(--t-med) var(--ease-draft);
+}
+.dg-plate-glyph {
+  width: 56px;
+  height: 34px;
+  color: var(--ink-faint);
+  margin-bottom: 2px;
+}
+.dg-plate-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.dg-plate-sub {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 230px;
+}
+.dg-plate .btn {
+  margin-top: var(--sp-2);
+}
+
+/* corner registration ticks */
+.dg-tick {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+}
+.dg-tick-tl {
+  top: -6px;
+  left: -6px;
+  border-top: 1.5px solid var(--hairline-strong);
+  border-left: 1.5px solid var(--hairline-strong);
+}
+.dg-tick-tr {
+  top: -6px;
+  right: -6px;
+  border-top: 1.5px solid var(--hairline-strong);
+  border-right: 1.5px solid var(--hairline-strong);
+}
+.dg-tick-bl {
+  bottom: -6px;
+  left: -6px;
+  border-bottom: 1.5px solid var(--hairline-strong);
+  border-left: 1.5px solid var(--hairline-strong);
+}
+.dg-tick-br {
+  bottom: -6px;
+  right: -6px;
+  border-bottom: 1.5px solid var(--hairline-strong);
+  border-right: 1.5px solid var(--hairline-strong);
+}
+
+/* rows draw in softly */
+.dg-row {
+  animation: fade-in var(--t-med) var(--ease-draft);
+}
+
+/* -- late overrides (must outrank the hover tints above) ---- */
+
+.dg-row.dg-row-armed .dg-cell,
+.dg-row.dg-row-armed:hover .dg-cell {
+  background: color-mix(in srgb, var(--red) 7%, var(--paper-high));
+}

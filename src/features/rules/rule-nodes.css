@@ -1,0 +1,425 @@
+/* ============================================================
+   RULE PLATES — the logic material ON the blueprint  (rl-node)
+
+   Everything in this file is drawn on the navy canvas, so it uses
+   --canvas-* inks and the BRIGHT accent variants only. White paper
+   belongs to entities; logic is a tinted plate with a notched left
+   edge, fed by dashed, arrowed flow lines.
+   ============================================================ */
+
+.rl-node {
+  position: relative;
+  /* 280px: the width a full clause row needs — `MOTOR HP ≥ BOAT Min HP` —
+     without wrapping. The plate then grows DOWN to fit its own logic. */
+  width: 280px;
+  /* the notch bites into the left edge; the incoming arrow lands in it */
+  --rl-notch: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 calc(50% + 10px),
+    10px 50%,
+    0 calc(50% - 10px)
+  );
+  --rl-notch-inner: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 calc(50% + 9px),
+    9px 50%,
+    0 calc(50% - 9px)
+  );
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+/* -- the two clipped layers: 1px accent outline + tinted fill -- */
+.rl-plate,
+.rl-plate-fill {
+  position: absolute;
+  pointer-events: none;
+}
+.rl-plate {
+  inset: 0;
+  background: color-mix(in srgb, var(--rl-ink) 62%, transparent);
+  clip-path: var(--rl-notch);
+  filter: drop-shadow(0 10px 18px var(--canvas-bg-deep));
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.rl-plate-fill {
+  inset: 1px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--rl-ink) 22%, var(--canvas-bg-deep)),
+    color-mix(in srgb, var(--rl-ink) 11%, var(--canvas-bg-deep))
+  );
+  clip-path: var(--rl-notch-inner);
+}
+
+.rl-node:hover .rl-plate {
+  background: color-mix(in srgb, var(--rl-ink) 85%, transparent);
+}
+
+/* selection reads exactly as it does on an entity card: a white
+   drafting outline, so one selection language covers both layers */
+.rl-node.is-selected .rl-plate {
+  background: var(--canvas-edge-selected);
+}
+.rl-node.is-selected::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1.5px solid var(--canvas-edge-selected);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.react-flow__node:focus-visible {
+  outline: none;
+}
+.react-flow__node:focus-visible .rl-plate {
+  background: var(--canvas-edge-selected);
+}
+.react-flow__node:focus-visible .rl-node::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1.5px dashed var(--canvas-edge-selected);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* -- content ------------------------------------------------- */
+/* interior padding (11px) clears the 10px notch; the content box itself
+   stays flush so the header band reaches both edges of the plate */
+.rl-node-content {
+  position: relative;
+}
+
+/* rows came through here on the last run */
+.rl-node.is-hit .rl-node-head {
+  background: color-mix(in srgb, var(--rl-ink) 38%, transparent);
+}
+
+.rl-node-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 6px 8px 5px 11px;
+  background: color-mix(in srgb, var(--rl-ink) 26%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--rl-ink) 45%, transparent);
+}
+
+.rl-node-tag {
+  flex: none;
+  padding: 1px 4px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  color: var(--rl-ink);
+}
+
+.rl-node-kind {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--canvas-ink-soft);
+}
+
+.rl-node-hits {
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid color-mix(in srgb, var(--rl-ink) 55%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--rl-ink) 22%, transparent);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--canvas-ink);
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+
+.rl-mark {
+  flex: none;
+  display: inline-flex;
+  color: var(--accent-carmine-bright);
+}
+
+/* the reviewer has marked this plate: the rule under the header goes
+   red pencil, and the row that says what is missing does the rest */
+.rl-node.is-flagged .rl-node-head {
+  border-bottom-color: color-mix(in srgb, var(--accent-carmine-bright) 55%, transparent);
+}
+
+/* -- the logic itself, stated in full ------------------------ */
+/* One row per clause. Mono, so the columns of a two-clause match line
+   up and the shape of the test is readable before you read the words. */
+.rl-lines {
+  padding: 2px 0 3px;
+}
+.rl-line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  /* left padding clears the 10px notch; right clears the out-handle */
+  padding: 3px 11px 3px 11px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+.rl-line + .rl-line {
+  border-top: 1px solid color-mix(in srgb, var(--rl-ink) 16%, transparent);
+}
+.rl-line-lead {
+  flex: none;
+  align-self: center;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--rl-ink) 75%, transparent);
+}
+.rl-line-body {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 5px;
+  min-width: 0;
+}
+.rl-line--muted {
+  color: var(--canvas-ink-faint);
+}
+.rl-line--muted .rl-ck {
+  color: var(--canvas-ink-faint);
+}
+
+/* red pencil: the row NAMES what the node is still missing */
+.rl-line--missing .rl-ck {
+  color: var(--accent-carmine-bright);
+  font-style: italic;
+}
+
+/* -- clause tokens ------------------------------------------- */
+.rl-ck {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* WHOSE row this side reads — the entity's own bright accent */
+.rl-ck--stamp {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.rl-ck--field {
+  color: var(--canvas-ink);
+}
+.rl-ck--op {
+  flex: none;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--rl-ink) 85%, var(--canvas-ink));
+}
+.rl-ck--value {
+  color: var(--canvas-ink);
+}
+.rl-ck--word {
+  color: var(--canvas-ink-soft);
+}
+
+/* -- output columns as stamped chips -------------------------- */
+.rl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 5px 11px 7px;
+}
+.rl-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  max-width: 100%;
+  padding: 1px 5px;
+  border: 1px solid color-mix(in srgb, var(--rl-ink) 38%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--rl-ink) 12%, transparent);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+.rl-chip-stamp {
+  flex: none;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.rl-chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--canvas-ink);
+}
+.rl-chip--more {
+  color: var(--canvas-ink-faint);
+  border-style: dashed;
+  background: none;
+}
+
+/* -- the closing sentence: what happens when nothing fits ------ */
+.rl-node-foot {
+  padding: 4px 11px 5px;
+  border-top: 1px solid color-mix(in srgb, var(--rl-ink) 30%, transparent);
+  background: color-mix(in srgb, var(--rl-ink) 10%, transparent);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  color: var(--canvas-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* -- routes (condition branches, loop body/next) -------------- */
+/* Each branch is drawn LEVEL WITH THE HANDLE IT LEAVES BY, with its own
+   test underneath, so you can read a fork without opening it. */
+.rl-routes {
+  border-top: 1px solid color-mix(in srgb, var(--rl-ink) 32%, transparent);
+  padding: 2px 0 3px;
+}
+.rl-route {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  /* right padding clears the diamond that straddles the plate edge */
+  padding: 4px 13px 4px 11px;
+}
+.rl-route + .rl-route {
+  border-top: 1px solid color-mix(in srgb, var(--rl-ink) 18%, transparent);
+}
+.rl-route-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--canvas-ink);
+}
+.rl-route-test {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 5px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+.rl-route--muted .rl-route-label {
+  color: var(--canvas-ink-faint);
+}
+.rl-route--muted .rl-route-test .rl-ck {
+  color: var(--canvas-ink-faint);
+}
+.rl-route--missing .rl-route-test .rl-ck {
+  color: var(--accent-carmine-bright);
+  font-style: italic;
+}
+/* the route's diamond is the handle itself — see .rl-port--route below */
+
+/* -- ports --------------------------------------------------- */
+.rl-node .rl-port.react-flow__handle {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--canvas-bg-deep);
+  border-radius: 1px;
+  background: var(--rl-ink);
+  transition:
+    transform var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.rl-node .rl-port.react-flow__handle:hover {
+  background: var(--canvas-edge-selected);
+  transform: scale(1.25);
+}
+/* the target sits in the mouth of the notch */
+.rl-node .rl-port--in.react-flow__handle {
+  left: 3px;
+  background: transparent;
+  border-color: var(--rl-ink);
+}
+/* a diamond on the plate's edge, one per route; the transform keeps React
+   Flow's own vertical centring while turning the square on its point */
+.rl-node .rl-port--route.react-flow__handle {
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border: none;
+  transform: translate(0, -50%) rotate(45deg);
+}
+.rl-node .rl-port--route.react-flow__handle:hover {
+  transform: translate(0, -50%) rotate(45deg) scale(1.3);
+}
+.rl-route--muted .rl-port--route.react-flow__handle {
+  background: var(--canvas-ink-faint);
+}
+
+/* ============================================================
+   Flow edges — DASHED, arrowed, tinted by the node they leave
+   ============================================================ */
+.rl-edge .react-flow__edge-path {
+  stroke-linecap: round;
+}
+.rl-edge.selected .react-flow__edge-path,
+.rl-edge:hover .react-flow__edge-path {
+  stroke: var(--canvas-edge-selected) !important;
+  stroke-width: 2;
+}
+
+/* a run advances the dash offset along every edge that carried rows */
+.rl-edge--live .react-flow__edge-path {
+  animation: rl-flow 900ms linear infinite;
+}
+@keyframes rl-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rl-edge--live .react-flow__edge-path {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   Ghosted entity cards — the ERD dropping back on the RULES
+   layer. The shell adds `rl-ghosts` to the canvas wrapper.
+   ============================================================ */
+.rl-ghosts .wb-entity {
+  opacity: 0.28;
+  filter: saturate(0.35);
+  transition: opacity var(--t-med) var(--ease-draft);
+}
+.rl-ghosts .wb-entity:hover {
+  opacity: 0.6;
+}

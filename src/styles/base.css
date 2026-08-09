@@ -1,0 +1,220 @@
+/* ============================================================
+   Base — reset, typography, shared primitives.
+   Every feature styles itself with these + tokens.css.
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--blue-wash-strong);
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* -- scrollbars --------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 37, 49, 0.28) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(28, 37, 49, 0.28);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* -- shared primitives -------------------------------------- */
+
+/* Engineering micro-label: 10px mono, uppercase, letterspaced */
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* Title-block heading: semi-expanded Archivo, uppercase */
+.block-heading {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hairline-b {
+  border-bottom: 1px solid var(--hairline);
+}
+.hairline-r {
+  border-right: 1px solid var(--hairline);
+}
+
+/* -- buttons ------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+  user-select: none;
+}
+.btn:hover {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn.btn-primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-high);
+}
+.btn.btn-primary:hover {
+  background: var(--blue-deep);
+  border-color: var(--blue-deep);
+}
+.btn.btn-danger:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+  color: var(--red);
+}
+.btn.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+.btn.btn-ghost:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper-high);
+}
+.btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* -- inputs ------------------------------------------------- */
+.field-input {
+  width: 100%;
+  padding: 6px 9px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-size: 13px;
+  transition: border-color var(--t-fast) var(--ease-draft);
+}
+.field-input:hover {
+  border-color: var(--hairline-strong);
+}
+.field-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.field-input::placeholder {
+  color: var(--ink-faint);
+}
+
+/* -- field-type tag (TXT / NUM / REF / FX …) ---------------- */
+.type-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+}
+
+/* -- entrance animations ------------------------------------ */
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,2617 @@
+/* ============================================================
+   TABLE — the Excel-grade data workspace (prefix: tb-).
+
+   Material: CHROME. White nautical instrument panels, marine-navy
+   ink, 1px hairline rules, mono micro-labels. No canvas-navy tokens
+   live here — this view is the instrument, not the blueprint.
+
+   Rhythm: 34px rows, 44px header, --sp-3 horizontal cell padding
+   (--sp-2 vertical clearance inside a 34px row), and one shared left
+   edge for a column's header name, its type tag and its values.
+   ============================================================ */
+
+.tb-root {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+  animation: fade-in var(--t-med) var(--ease-draft);
+}
+
+/* ============================================================
+   ENTITY TABS
+   ============================================================ */
+
+.tb-tabs {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) 0;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline-strong);
+}
+
+.tb-tabs-label {
+  flex: none;
+  padding-bottom: 11px;
+}
+
+.tb-tabs-strip {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0;
+}
+
+.tb-tab {
+  flex: none;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: -1px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.tb-tab:hover {
+  background: var(--paper-high);
+  border-color: var(--hairline);
+}
+.tb-tab:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-tab-on,
+.tb-tab-on:hover {
+  background: var(--paper-high);
+  border-color: var(--hairline-strong);
+  box-shadow: inset 0 -2px 0 var(--ink);
+}
+
+.tb-tab-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.tb-tab-name {
+  /* entity names are unbounded free text — clip like every other
+     name-bearing surface; the tab's title carries the full name */
+  min-width: 0;
+  max-width: 180px;
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-tab-on .tb-tab-name {
+  color: var(--ink);
+}
+
+.tb-tab-count {
+  flex: none;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+  /* micro-labels that carry meaning read at --ink-soft; --ink-faint is
+     reserved for rules, glyph strokes and placeholders */
+  color: var(--ink-soft);
+}
+.tb-tab-on .tb-tab-count {
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+
+/* ============================================================
+   SHEET SHELL + TOOLBAR
+   ============================================================ */
+
+.tb-sheet-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+.tb-toolbar {
+  flex: none;
+  display: flex;
+  /* the stage narrows when the review rail opens — the actions drop to
+     a second line rather than being amputated by .tb-root's overflow */
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* -- search ------------------------------------------------- */
+
+.tb-search {
+  flex: 0 1 236px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 130px;
+  height: 30px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.tb-search:hover {
+  border-color: var(--hairline-strong);
+}
+.tb-search:focus-within {
+  border-color: var(--blue);
+  background: var(--paper-high);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.tb-search-icon {
+  flex: none;
+  display: flex;
+  color: var(--ink-faint);
+}
+.tb-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--sp-2);
+  border: none;
+  background: transparent;
+  font-size: 12.5px;
+  outline: none;
+}
+.tb-search-input::placeholder {
+  color: var(--ink-faint);
+}
+.tb-search-clear {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+/* the cross stays 16px — a search box is not the place for a button
+   the size of a cell — but the POINTER gets 24×24 of it */
+.tb-search-clear::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.tb-search-clear:hover {
+  color: var(--red);
+  background: var(--red-wash);
+}
+
+/* -- filter chips ------------------------------------------- */
+
+.tb-chips {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tb-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 24px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--blue);
+  border-radius: var(--radius-sm);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-chip:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+  color: var(--red);
+}
+.tb-chip-key {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+.tb-chip-val {
+  max-width: 220px;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-chip .tb-glyph {
+  width: 8px;
+  height: 8px;
+  opacity: 0.7;
+}
+.tb-chip-sort {
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+  color: var(--ink-soft);
+}
+
+/* -- seeing the whole table ---------------------------------
+   Two controls, and they are the answer to "I want to see the entire
+   table". COLLAPSE ALL is the primary one — it is the only thing that
+   gets fifty-eight columns onto one screen — so it carries the ink
+   border while FIT sits quietly beside it in the toolbar's own
+   hairline weight. Both latch: pressed reads as pressed. */
+
+.tb-whole {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--hairline);
+}
+
+.tb-whole-btn {
+  min-height: 24px;
+  padding: 5px 10px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.tb-whole-btn svg {
+  flex: none;
+  opacity: 0.72;
+}
+.tb-whole-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+/* the loudest thing in the toolbar that is not the primary action */
+.tb-whole-lead {
+  border-color: var(--ink);
+}
+.tb-whole-btn[aria-pressed='true'] {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
+.tb-whole-btn[aria-pressed='true']:hover {
+  background: var(--blue-wash-strong);
+}
+
+/* -- count read-out ----------------------------------------- */
+
+.tb-count {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-2);
+  border-left: 1px solid var(--hairline);
+}
+/* both axes, side by side: a reader must never have to wonder whether
+   there is more table off to the right */
+.tb-count-grp {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+.tb-count-rule {
+  align-self: stretch;
+  width: 1px;
+  min-height: 14px;
+  background: var(--hairline);
+}
+.tb-count-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.tb-count-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.tb-count-sep,
+.tb-count-tot {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.tb-count-clear {
+  align-self: center;
+  min-height: 24px;
+  padding: 2px 7px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.tb-count-clear:hover {
+  background: var(--blue-wash);
+}
+
+.tb-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  /* keeps the actions in the same right-hand corner once they wrap */
+  margin-left: auto;
+}
+.tb-del-btn:disabled {
+  opacity: 0.4;
+}
+
+/* ============================================================
+   BAND STRIP — the map of the sheet, above the sheet
+   ============================================================ */
+
+/* Eleven bands means "Hull Only Pricing" is forty columns to the right
+   of wherever you are. The strip is how you get there without
+   traversing them. It is a MAP, not a second toolbar: no buttons that
+   look like actions, no borders, no fill — mono micro-labels separated
+   by hairlines, and the drafting bracket under an open band exactly as
+   the band header draws it over its columns. */
+.tb-strip {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-3);
+  height: 28px;
+  padding: 0 var(--sp-4);
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tb-strip-label {
+  flex: none;
+  align-self: center;
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+.tb-strip-rail {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.tb-strip-rail::-webkit-scrollbar {
+  height: 0;
+}
+
+/* The map has to stay COMPLETE. When the window is too narrow for
+   eleven chips at their natural width they give up letters rather than
+   running off the edge — a strip you have to scroll to see all of is
+   not a map of anything. The count never shrinks: `· 7` is the half of
+   the chip that cannot be inferred. */
+.tb-strip-chip {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 200px;
+  padding: 0 var(--sp-3);
+  border: none;
+  border-left: 1px solid var(--hairline);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.tb-strip-chip:first-child {
+  border-left: none;
+}
+.tb-strip-chip:hover {
+  background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 8%, transparent);
+}
+.tb-strip-chip:focus-visible {
+  outline: 2px solid var(--tb-band-ink, var(--blue));
+  outline-offset: -2px;
+}
+
+.tb-strip-name {
+  flex: 0 1 auto;
+  min-width: 14px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tb-band-ink, var(--ink-soft));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-strip-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+/* open: the band's hairline bracket, the same notation the spanning
+   header draws over the columns themselves */
+.tb-strip-rule {
+  position: absolute;
+  right: var(--sp-2);
+  bottom: 4px;
+  left: var(--sp-2);
+  height: 3px;
+  border-top: 1px solid var(--tb-band-ink, var(--hairline));
+  border-right: 1px solid var(--tb-band-ink, var(--hairline));
+  border-left: 1px solid var(--tb-band-ink, var(--hairline));
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.tb-strip-chip:hover .tb-strip-rule,
+.tb-strip-chip:focus-visible .tb-strip-rule {
+  opacity: 0.9;
+}
+
+/* folded: a solid chip in the band's own ink — the same reading as the
+   folded band on the sheet, so the two can never look like different
+   states of different things */
+.tb-strip-chip-shut {
+  background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 10%, var(--paper-high));
+}
+.tb-strip-chip-shut .tb-strip-name {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.tb-strip-chip-shut .tb-strip-count {
+  color: var(--tb-band-ink, var(--ink-soft));
+}
+.tb-strip-chip-shut .tb-strip-rule {
+  border: none;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--tb-band-ink, var(--ink));
+  opacity: 0.85;
+}
+
+/* ============================================================
+   GRID
+   ============================================================ */
+
+.tb-grid {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  outline: none;
+  background: var(--paper-high);
+}
+.tb-grid:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.tb-scroll {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.tb-sheet {
+  position: relative;
+  min-width: 100%;
+}
+
+/* -- frozen header ------------------------------------------- */
+
+/* Bands and headings freeze as ONE block. A section's name has to
+   stay directly above the columns it names — pinning the two rows
+   separately would let them drift apart by a pixel on every scroll,
+   which is exactly the thing a spanning header exists to prevent. */
+.tb-headstack {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+}
+
+.tb-head {
+  display: flex;
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline-strong);
+}
+
+/* ============================================================
+   COLUMN BANDS — reading forty columns as blocks
+   ============================================================ */
+
+/* A real price file is forty columns wide; read as one undifferentiated
+   run it is hopeless. The band row names each run of columns in the
+   section's own ink and brackets them together, so the eye lands on
+   PRICING or DIMENSIONS before it lands on a single figure. */
+.tb-bands {
+  display: flex;
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tb-bandcorner {
+  position: sticky;
+  left: 0;
+  z-index: 7;
+  flex: none;
+  background: var(--paper-sunken);
+  border-right: 1px solid var(--hairline-strong);
+}
+.tb-bandend {
+  position: sticky;
+  right: 0;
+  z-index: 5;
+  flex: none;
+  background: var(--paper-sunken);
+  border-left: 1px solid var(--hairline);
+}
+
+.tb-band {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+/* columns in no band: nothing is drawn over them at all. An empty
+   header above four unbanded columns reads as a bug, not a section. */
+.tb-band-plain {
+  flex: none;
+}
+
+.tb-band-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--sp-2) 5px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.tb-band-btn:hover {
+  background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 8%, transparent);
+}
+.tb-band-btn:focus-visible {
+  outline: 2px solid var(--tb-band-ink, var(--blue));
+  outline-offset: -3px;
+}
+
+.tb-band-name {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tb-band-ink, var(--ink-soft));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* the hairline bracket: a rule with a tick descending at either end,
+   drawn in the band's ink — the drafting notation for "these belong
+   together", and the reason the band needs no box around it */
+.tb-band-rule {
+  position: absolute;
+  right: 6px;
+  bottom: 0;
+  left: 6px;
+  height: 5px;
+  border-top: 1px solid var(--tb-band-ink, var(--hairline));
+  border-right: 1px solid var(--tb-band-ink, var(--hairline));
+  border-left: 1px solid var(--tb-band-ink, var(--hairline));
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.tb-band-btn:hover ~ .tb-band-rule,
+.tb-band-btn:focus-visible ~ .tb-band-rule {
+  opacity: 1;
+}
+
+/* -- a folded band ------------------------------------------- */
+
+/* Folded, a band becomes one chip — PRICING · 4 — and its columns
+   leave the sheet entirely. This is the control that makes a forty
+   column register usable, so it is the loudest thing in the row. */
+.tb-band-shut .tb-band-btn {
+  padding-bottom: 0;
+  background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 10%, var(--paper-high));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tb-band-ink, var(--ink)) 40%, transparent);
+}
+.tb-band-shut .tb-band-btn:hover {
+  background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 18%, var(--paper-high));
+}
+.tb-band-shut .tb-band-name {
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+/* the heading row and the rows beneath keep the chip's width, so the
+   three rows can never drift out of alignment — the column is simply
+   drawn as a quiet fold rather than as data (see .tb-th-fold below,
+   with the rest of the heading styles) */
+.tb-foldcell {
+  flex: none;
+  border-right: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+
+/* The width of the columns the window skipped, held open so the row
+   is still exactly as wide as the sheet says it is. It draws nothing:
+   it is the paper under columns that are off screen, and the moment
+   it comes on screen it is a column again. One per side, per row,
+   instead of the fifty-three cells it stands in for. */
+.tb-colgap {
+  flex: none;
+  align-self: stretch;
+  pointer-events: none;
+}
+
+.tb-corner {
+  position: sticky;
+  left: 0;
+  z-index: 7;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-right: 1px solid var(--hairline-strong);
+  background: var(--paper-sunken);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.tb-corner:hover {
+  background: var(--blue-wash);
+}
+.tb-corner:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -3px;
+}
+.tb-corner-mark {
+  width: 11px;
+  height: 11px;
+  border-right: 1.5px solid var(--ink-faint);
+  border-bottom: 1.5px solid var(--ink-faint);
+  transform: translate(-1px, -1px);
+  transition: border-color var(--t-fast) var(--ease-draft);
+}
+.tb-corner:hover .tb-corner-mark {
+  border-color: var(--blue);
+}
+
+.tb-th {
+  position: relative;
+  flex: none;
+  background: var(--paper-sunken);
+  border-right: 1px solid var(--hairline);
+  transition: background var(--t-fast) var(--ease-draft);
+}
+/* a banded column carries the faintest wash of its band's ink, so the
+   block still reads as a block all the way down the heading row.
+   Declared FIRST on purpose: calculated, sorted and selected are facts
+   about this one column, and they must win over the block wash. */
+.tb-th-banded {
+  background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 4%, var(--paper-sunken));
+}
+.tb-th-fx {
+  background: color-mix(in srgb, var(--accent-teal) 7%, var(--paper-sunken));
+}
+.tb-th-sorted {
+  background: var(--blue-wash);
+}
+.tb-th-selected {
+  background: var(--blue-wash-strong);
+}
+
+/* the heading above a folded band: no name (the chip above it has the
+   name), just the drafting mark for "columns live here, folded" */
+.tb-th-fold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ink) 5%, var(--paper-sunken));
+}
+.tb-th-foldmark {
+  width: 14px;
+  height: 1px;
+  background: var(--ink-faint);
+  box-shadow:
+    0 -4px 0 0 var(--ink-faint),
+    0 4px 0 0 var(--ink-faint);
+}
+
+.tb-th-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-1);
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.tb-th-main:hover .tb-th-name {
+  color: var(--blue-deep);
+}
+.tb-th-main:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -3px;
+}
+.tb-th-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-right: 18px; /* clearance for the filter button */
+}
+.tb-th-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.tb-th-req {
+  margin-left: 2px;
+  color: var(--red);
+}
+.tb-th-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.tb-th-ro {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent-teal);
+}
+
+/* -- a column narrower than its own inset --------------------
+   FIT shares the window out between every column, which on a
+   fifty-eight column register leaves each one a stripe. At that width
+   --sp-3 of padding either side IS the column, so a tight column drops
+   to a hairline inset and gives up the heading's stamps — the band
+   above it is doing the naming anyway. Keyed on WIDTH, not on fit, so
+   a column dragged down to 80px reads exactly the same way. */
+.tb-th-tight .tb-th-main {
+  padding: var(--sp-2) var(--sp-1);
+}
+.tb-th-tight .tb-th-top {
+  gap: 3px;
+  /* the ⌄ menu is absolute and surfaces on hover — at this width it
+     covers the heading rather than sitting beside it, which is the
+     right trade: the name is already unreadable, the menu is not */
+  padding-right: 0;
+}
+.tb-th-tight .tb-th-meta {
+  display: none;
+}
+.tb-cell-tight {
+  padding: 0 var(--sp-1);
+}
+
+/* -- system column (UID) -------------------------------------
+   The app's own ink, not the user's: a slightly deeper well, a
+   padlock, and mono type throughout. Still sortable, filterable
+   and searchable, so every interactive affordance stays. */
+.tb-th-sys {
+  background: color-mix(in srgb, var(--ink) 6%, var(--paper-sunken));
+}
+.tb-th-sys.tb-th-sorted {
+  background: var(--blue-wash);
+}
+.tb-th-sys.tb-th-selected {
+  background: var(--blue-wash-strong);
+}
+.tb-th-lock {
+  flex: none;
+  display: flex;
+  align-items: center;
+  color: var(--ink-faint);
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.tb-th-main:hover .tb-th-lock,
+.tb-th-main:focus-visible .tb-th-lock {
+  color: var(--ink-soft);
+}
+.tb-th-sys .tb-th-name {
+  font-family: var(--font-mono);
+  font-variation-settings: normal;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+.tb-th-sys-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.tb-glyph {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  display: block;
+}
+.tb-sortglyph {
+  color: var(--ink-faint);
+  opacity: 0.5;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.tb-th-main:hover .tb-sortglyph {
+  opacity: 1;
+}
+.tb-sortglyph-on {
+  color: var(--blue);
+  opacity: 1;
+}
+
+/* -- one control per heading ---------------------------------
+   Ordering, narrowing, changing and removing all live behind this
+   single wedge, so a heading carries a name and nothing else until
+   you go looking. It surfaces on hover, on focus, and permanently
+   once the column is doing something (sorted or narrowed). */
+/* 24×24, and sat 12px in from the edge so it and the resize grip
+   beside it are two separate targets that never overlap. */
+.tb-th-menu {
+  position: absolute;
+  top: var(--sp-2);
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.tb-th:hover .tb-th-menu,
+.tb-th-menu:focus-visible,
+.tb-th-menu-on {
+  opacity: 1;
+}
+.tb-th-menu:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: var(--paper-high);
+}
+.tb-th-menu:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-th-menu-on {
+  color: var(--blue);
+}
+
+/* renaming happens in place, in the heading's own well */
+.tb-th-edit {
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--sp-3);
+  border: none;
+  background: var(--paper-high);
+  box-shadow: inset 0 0 0 2px var(--blue);
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink);
+  caret-color: var(--blue);
+  outline: none;
+}
+
+/* -- + COLUMN, where the next column would go ----------------- */
+.tb-th-add {
+  position: sticky;
+  right: 0;
+  z-index: 5;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--hairline);
+  background: var(--paper-sunken);
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.tb-th-add:hover {
+  color: var(--blue-deep);
+  background: var(--blue-wash);
+}
+.tb-th-add:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -3px;
+}
+.tb-th-add .tb-glyph {
+  width: 12px;
+  height: 12px;
+}
+
+/* THE GRIP IS INVISIBLE, SO IT HAS TO BE BIG.
+   A 7px band on a column boundary is a target you hunt for. The band
+   is now 24px, straddling the boundary exactly as a spreadsheet's
+   does — and the hairline it shows on hover has NOT moved, because
+   the rule is positioned against the boundary, not against the band.
+   It clears the heading's own menu (12px in, 24 wide) by construction,
+   so the two never fight over a pointer. */
+.tb-grip {
+  position: absolute;
+  top: 0;
+  right: -12px;
+  bottom: 0;
+  z-index: 3;
+  width: 24px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.tb-grip::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: 11px;
+  width: 1px;
+  background: var(--blue);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.tb-grip:hover::after {
+  opacity: 1;
+}
+
+/* -- body ---------------------------------------------------- */
+
+.tb-body {
+  position: relative;
+  width: 100%;
+}
+
+.tb-row {
+  position: absolute;
+  left: 0;
+  display: flex;
+  min-width: 100%; /* stripes reach the edge on a narrow sheet */
+  background: var(--paper-high);
+}
+/* A catalogue is read by its rules, not by its stripes: the alternate
+   band is barely there, and the hover band is what actually tells you
+   which line you are on. */
+.tb-row-alt {
+  background: color-mix(in srgb, var(--ink) 1.6%, var(--paper-high));
+}
+.tb-row:hover {
+  background: color-mix(in srgb, var(--blue) 5%, var(--paper-high));
+}
+
+/* ============================================================
+   NESTING — structure drawn as structure, never as data
+   ============================================================ */
+
+/* the whole run of leaf rows sits one step in from its drawer, so the
+   eye reads the indent as "these belong to that" — and because every
+   leaf is at the same depth, the columns stay perfectly aligned */
+.tb-grid-grouped .tb-cell-lead {
+  padding-left: calc(var(--sp-3) + 18px);
+}
+
+.tb-grpline,
+.tb-addline {
+  position: absolute;
+  left: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+/* the label and the count pin themselves to the left edge of what is
+   actually on screen, so scrolling the data columns sideways never
+   scrolls a group's name out of sight */
+.tb-grp,
+.tb-addrow {
+  position: sticky;
+  left: 0;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-right: var(--sp-3);
+}
+
+.tb-grpline {
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline);
+}
+.tb-grpline::before {
+  /* the drawer's own rule — a hair heavier than a cell rule, and the
+     only heavy line in the whole table */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--hairline-strong);
+}
+.tb-grpline:first-child::before {
+  display: none;
+}
+
+/* A DRAWER'S CATCH IS PRESSED ALL DAY. It was an 18px square inside a
+   36px line: a smaller target than the text beside it, on the control
+   this whole table is organised around. 24×24 is the floor everything
+   pressable on this sheet now works to, and the line is tall enough to
+   hold it without moving a single row. */
+.tb-grp-tw {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.tb-grp-tw:hover {
+  color: var(--blue);
+  background: var(--blue-wash);
+}
+.tb-grp-tw:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-discglyph {
+  transition: transform var(--t-fast) var(--ease-draft);
+}
+
+/* the level's own word — BRAND, RANGE. A micro-label in the annotation
+   face, so it reads as the sheet talking about the line rather than as
+   another value on it. It is the only thing on the line that says
+   WHICH level you are naming, so it reads at --ink-soft: the quiet
+   comes from the size and the tracking, never from the contrast. */
+.tb-grp-lab {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* THE NAME TAKES THE LINE IT IS ON. A drawer's name is the only thing
+   on the sheet that says which one you are looking at, and what tells
+   two of them apart is almost always the END of the name — "… BOW
+   RIDER SERIES" against "… FISHING SERIES". A fixed cap cut exactly
+   that off and drew three different drawers as one identical line, so
+   there is no cap: the name takes whatever the sticky lead columns
+   have, and the rule beside it (flex-basis 0) gives its space up
+   first. It still shrinks and ellipsises on a narrow card — that is
+   what `min-width: 0` is for — but only once there is genuinely no
+   room left to give it. */
+.tb-grp-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 2px 5px;
+  margin-left: -3px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+/* the outermost level is the one you navigate by — give it the ink */
+.tb-grp-name-top {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+/* A level nobody has filled in yet is not a state to report — it is a
+   FIELD WAITING. Drawn as one: a dashed well with the invitation
+   inside it, so it reads as somewhere to type at a glance and not as
+   a grey word in the margin. */
+.tb-grp-name-none {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: var(--ink-soft);
+  border-style: dashed;
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+}
+.tb-grp-name:hover {
+  border-color: var(--hairline);
+  background: var(--paper-sunken);
+  color: var(--blue-deep);
+}
+.tb-grp-name-none:hover {
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
+.tb-grp-name:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.tb-grp-edit {
+  flex: none;
+  width: 22ch;
+  padding: 2px 5px;
+  border: 1px solid var(--blue);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  caret-color: var(--blue);
+  outline: none;
+}
+.tb-grp-edit::placeholder {
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.tb-grp-rule {
+  flex: 1;
+  min-width: var(--sp-4);
+  height: 1px;
+  background: var(--hairline);
+}
+
+.tb-grp-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.tb-grpline-shut {
+  background: var(--paper-sunken);
+}
+
+/* -- the + ROW at a drawer's foot ------------------------------
+   The single most important control on a nested table, and therefore
+   the quietest: it waits at the end of the group it fills, says what
+   it will add, and never shouts. */
+.tb-addline {
+  background: var(--paper-high);
+}
+
+.tb-addbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  /* the quietest control on the sheet is still pressed constantly —
+     24px tall inside a 28px line, without a pixel of visual weight
+     added to it */
+  min-height: 24px;
+  padding: 2px 10px 2px 7px;
+  border: 1px dashed transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.tb-addbtn:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.tb-addbtn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-addbtn .tb-glyph {
+  width: 8px;
+  height: 8px;
+}
+.tb-addbtn-text::before {
+  content: 'add ';
+  opacity: 0.75;
+}
+
+.tb-gut {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper-sunken);
+  border-right: 1px solid var(--hairline-strong);
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  /* the row number is how a row is identified and the gutter is the only
+     way to select whole rows — it must be legible, not decorative */
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-gut:hover {
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.tb-gut-on {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--blue) 12%, var(--paper-sunken));
+}
+
+.tb-cell {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-3);
+  border-right: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  overflow: hidden;
+}
+.tb-cell-fx {
+  background: color-mix(in srgb, var(--accent-teal) 6%, transparent);
+}
+/* system column: reads as chrome, not as data you may type over */
+.tb-cell-sys {
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  border-right: 1px solid var(--hairline-strong);
+}
+.tb-cell-editing {
+  z-index: 3;
+  background: var(--paper-high);
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+/* pictures take the cell's full width and set their own padding, so
+   a strip can run edge to edge without the text inset */
+.tb-cell-img {
+  padding: 0;
+}
+
+/* required + empty: a red-pencil tick against the left rule */
+.tb-cell-req::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 13px;
+  border-radius: 1px;
+  background: var(--red);
+  opacity: 0.55;
+  pointer-events: none;
+}
+/* paste could not read this value: red-pencil corner tick */
+.tb-cell-mark::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-top: 7px solid var(--red);
+  border-left: 7px solid transparent;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* ============================================================
+   PICTURE COLUMNS
+   ============================================================ */
+
+/* A table full of photographs must still read as a TABLE. So the
+   thumbs are small, square and on the row's own baseline; the row
+   height never changes; and every control stays invisible until the
+   cell is the one being worked in. */
+.tb-imgcell {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--sp-2);
+  overflow: hidden;
+}
+.tb-imgcell-over {
+  box-shadow: inset 0 0 0 2px var(--blue);
+  background: var(--blue-wash);
+}
+
+.tb-imgstrip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tb-imgslot {
+  position: relative;
+  flex: none;
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+.tb-imgslot[draggable='true'] {
+  cursor: grab;
+}
+.tb-imgslot-drop {
+  outline: 1.5px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.tb-imgthumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease-draft);
+}
+.tb-imgthumb:hover {
+  border-color: var(--blue);
+}
+.tb-imgthumb:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.tb-imgpic {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ------------------------------------------------------------
+   A PICTURE WE ONLY HOLD THE ADDRESS OF.
+
+   The catalogue carries links, not photographs, and a link is only a
+   photograph where the browser is allowed to fetch it. Rather than a
+   broken glyph (and a console error nobody can catch), the cell draws
+   the drawing office's own answer: a hairline frame with the kind's
+   mark inside it. Same footprint, same baseline, no request made.
+   ------------------------------------------------------------ */
+.tb-imgmiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: var(--paper-sunken);
+  /* the drafting hatch: a quiet diagonal, the notation for "nothing
+     drawn here yet" — never a grey box */
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 3px,
+    color-mix(in srgb, var(--ink) 7%, transparent) 3px 4px
+  );
+  color: var(--ink-faint);
+}
+.tb-imgthumb-ref {
+  border-style: dashed;
+}
+.tb-imgthumb-ref:hover .tb-imgmiss,
+.tb-imgthumb-ref:focus-visible .tb-imgmiss {
+  color: var(--blue);
+}
+
+/* ORDER IS THE PRIORITY: index 0 is the one a catalogue tile shows,
+   and this corner tick is the only place that has to say so. Drag a
+   different picture to the front and the mark moves with it. */
+.tb-imgmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-top: 8px solid var(--blue);
+  border-right: 8px solid transparent;
+  pointer-events: none;
+}
+.tb-imgslot-first .tb-imgthumb {
+  border-color: var(--blue);
+}
+
+.tb-imgx {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 50%;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+/* ============================================================
+   THE ONE CONTROL THAT MUST NOT BE 24×24.
+
+   A thumbnail is 24×24 and the strip's gap is 3px, so a 24×24 remove
+   target laid over the corner of one covers the CENTRE of the picture
+   it belongs to — press the photograph to open it and you delete it
+   instead — or reaches into the next picture along and deletes the
+   wrong one. Two 24px targets do not fit on one 24px square. The
+   badge therefore stays 14px, on the corner, exactly as drawn.
+
+   What it does get is the thing it never had: SHOWN AND PRESSABLE ARE
+   NOW THE SAME STATE. An invisible remove button used to sit over
+   every thumbnail's top-right corner, on every row of the table, and
+   take the click with nothing on screen to say so. Now it is drawn
+   and armed together, on the cell being worked in and nowhere else —
+   so a badge you can see is a badge you can press, and a badge you
+   cannot see cannot take a click meant for the picture.
+   ============================================================ */
+.tb-imgx {
+  pointer-events: none;
+}
+.tb-imgcell-live .tb-imgx,
+.tb-imgx:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tb-imgx .tb-glyph {
+  width: 7px;
+  height: 7px;
+}
+.tb-imgx:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+.tb-imgx:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
+}
+
+.tb-imgadd {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  opacity: 0;
+  /* invisible is not pressable — see the note on .tb-imgx above */
+  pointer-events: none;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tb-imgcell:hover .tb-imgadd,
+.tb-imgcell-live .tb-imgadd,
+.tb-imgadd:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tb-imgadd:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  border-style: solid;
+}
+.tb-imgadd:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.tb-imgadd .tb-glyph {
+  width: 9px;
+  height: 9px;
+}
+
+/* the count is the honest read-out — the same one search, sort, copy
+   and export see, because a clipboard full of data URLs is not a
+   price list */
+.tb-imgcount {
+  flex: none;
+  margin-left: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+
+/* the chooser is a real input, kept out of the layout and out of the
+   tab order — the + plate and Enter are its only doors */
+.tb-filein {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* -- one picture, full size ---------------------------------- */
+
+.tb-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+  background: color-mix(in srgb, var(--canvas-bg-deep) 82%, transparent);
+}
+
+.tb-lightbox-plate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: min(880px, 100%);
+  max-height: 100%;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-popover);
+  outline: none;
+  overflow: hidden;
+}
+
+.tb-lightbox-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+.tb-lightbox-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-lightbox-of {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.tb-lightbox-x {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tb-lightbox-x:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+.tb-lightbox-x:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.tb-lightbox-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: var(--sp-4);
+  background: var(--paper-sunken);
+}
+.tb-lightbox-pic {
+  display: block;
+  max-width: 100%;
+  max-height: 62vh;
+  object-fit: contain;
+}
+
+/* the enlarged form of a referenced picture: the same hairline frame
+   the thumbnail draws, at plate size, saying what it is and where it
+   lives. A dead end explains itself; a broken glyph does not. */
+.tb-missplate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  width: min(460px, 100%);
+  min-height: 240px;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1px dashed var(--hairline-strong);
+  background-color: var(--paper-high);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 7px,
+    color-mix(in srgb, var(--ink) 4%, transparent) 7px 8px
+  );
+  text-align: center;
+}
+.tb-missplate-mark {
+  display: flex;
+  color: var(--ink-faint);
+}
+.tb-missplate-name {
+  max-width: 100%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.tb-missplate-note {
+  max-width: 34ch;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.tb-lightbox-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+.tb-lightbox-dot {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease-draft);
+}
+.tb-lightbox-dot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tb-lightbox-dot:hover {
+  border-color: var(--blue);
+}
+.tb-lightbox-dot:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.tb-lightbox-dot-on {
+  border-color: var(--blue);
+  box-shadow: inset 0 0 0 1px var(--blue);
+}
+
+.tb-lightbox-dim {
+  position: absolute;
+  right: var(--sp-4);
+  bottom: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+/* -- painted values ------------------------------------------ */
+
+.tb-val {
+  width: 100%;
+  font-size: 12.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+}
+.tb-date {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.tb-pick {
+  padding-right: var(--sp-2);
+}
+.tb-sys {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+.tb-empty {
+  display: block;
+  width: 100%;
+}
+
+.tb-fx {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-teal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-fx-empty {
+  color: var(--ink-faint);
+}
+.tb-fx-err {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--red);
+  cursor: help;
+}
+
+.tb-refbroken {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--red);
+  cursor: help;
+}
+
+.tb-hit {
+  background: var(--blue-wash-strong);
+  border-radius: 1px;
+  color: inherit;
+}
+
+/* -- boolean ------------------------------------------------- */
+
+.tb-boolwrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.tb-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  color: transparent;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-check:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+.tb-check-on {
+  color: var(--blue-deep);
+}
+.tb-check-on:hover {
+  color: var(--blue);
+}
+.tb-tickglyph {
+  width: 12px;
+  height: 12px;
+  overflow: visible;
+  display: block;
+}
+
+/* -- the one live editor ------------------------------------- */
+
+.tb-editor {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--sp-3);
+  border: none;
+  border-radius: 0;
+  background: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink);
+  caret-color: var(--blue);
+  outline: none;
+}
+.tb-editor-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+}
+.tb-editor-date {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.tb-editor-pick {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.tb-editor-date::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  cursor: pointer;
+}
+.tb-editor-date::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* -- selection overlays -------------------------------------- */
+
+.tb-rangebox {
+  position: absolute;
+  z-index: 2;
+  background: var(--blue-wash);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blue) 45%, transparent);
+  pointer-events: none;
+}
+.tb-rangebox-main {
+  box-shadow: inset 0 0 0 1.5px var(--blue);
+}
+.tb-fillbox {
+  position: absolute;
+  z-index: 2;
+  border: 1px dashed var(--blue);
+  pointer-events: none;
+}
+.tb-ring {
+  position: absolute;
+  z-index: 3;
+  box-shadow: inset 0 0 0 2px var(--blue);
+  pointer-events: none;
+}
+.tb-ring-edit {
+  display: none;
+}
+.tb-fillhandle {
+  position: absolute;
+  z-index: 4;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--paper-high);
+  background: var(--blue);
+  cursor: crosshair;
+}
+/* the mark is 8px because a selection's corner is a MARK. The grab
+   area around it is 24×24, so the drag starts where you aim rather
+   than where you land. */
+.tb-fillhandle::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+.tb-fillhandle:hover {
+  transform: scale(1.25);
+}
+
+/* while a drag is live nothing may select text under the pointer */
+body.tb-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+}
+body.tb-resizing {
+  cursor: col-resize;
+}
+
+/* ============================================================
+   COLUMN FILTER MENU
+   ============================================================ */
+
+/* ABOVE THE FOCUSED SHEET, OR IT IS NOT A MENU AT ALL.
+   Every one of these sheets is portalled to the document body, so it
+   stacks against the other document-level layers rather than against
+   the table it belongs to. At 40 it sat UNDER the focused sheet (60):
+   in the full window the column menu, the narrowing sheet and + COLUMN
+   all opened behind the register — visible to a screen reader, dead to
+   a pointer, and the first click anywhere on them dismissed them by
+   landing on a row instead. 75 puts them over the focused sheet and
+   still under the new-table sheet (80) and the enlarged picture (90). */
+.tb-menu {
+  position: fixed;
+  z-index: 75;
+  display: flex;
+  flex-direction: column;
+  max-height: min(380px, 70vh);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-popover);
+  animation: sheet-in var(--t-fast) var(--ease-draft);
+}
+.tb-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+.tb-menu-title {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tb-menu-bulk {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3) 0;
+}
+.tb-menu-dot {
+  color: var(--ink-faint);
+}
+.tb-menu-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 1px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.tb-menu-link:hover {
+  background: var(--blue-wash);
+}
+.tb-menu-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--sp-2) var(--sp-2);
+}
+.tb-menu-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 24px;
+  padding: var(--sp-1) var(--sp-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.tb-menu-row:hover {
+  background: var(--blue-wash);
+}
+.tb-menu-box {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  color: transparent;
+}
+.tb-menu-box-on {
+  color: var(--blue-deep);
+}
+.tb-menu-box .tb-tickglyph {
+  width: 10px;
+  height: 10px;
+}
+.tb-menu-val {
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tb-menu-empty {
+  padding: var(--sp-2);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.tb-menu-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+}
+.tb-menu-lab {
+  display: block;
+}
+.tb-menu-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+/* ============================================================
+   COLUMN MENU + ADD COLUMN
+   ============================================================ */
+
+.tb-pop {
+  overflow: hidden;
+}
+
+.tb-menu-kind {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.tb-menu-more {
+  border-top: 1px solid var(--hairline);
+}
+
+.tb-menu-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.tb-area {
+  resize: vertical;
+  min-height: 68px;
+  font-family: var(--font-ui);
+  line-height: 1.5;
+}
+.tb-mono-input {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* -- the action list ------------------------------------------ */
+
+.tb-acts {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2);
+}
+
+.tb-act {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 12.5px;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-act:hover {
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.tb-act:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-act-on {
+  color: var(--blue-deep);
+  font-weight: 600;
+}
+.tb-act-danger:hover {
+  background: var(--red-wash);
+  color: var(--red);
+}
+.tb-act-rule {
+  display: block;
+  height: 1px;
+  margin: var(--sp-2) var(--sp-3);
+  background: var(--hairline);
+}
+
+/* -- what a column holds -------------------------------------- */
+
+.tb-kinds {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+  max-height: 232px;
+  overflow-y: auto;
+}
+
+/* -- which band the new column joins -------------------------
+   Shown already answered, and only on a table that HAS bands. */
+.tb-bands-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.tb-bandpick {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-bandpick:hover {
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
+.tb-bandpick:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-bandpick-on,
+.tb-bandpick-on:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+
+.tb-kind {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 6px var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tb-kind:hover {
+  background: var(--paper-sunken);
+}
+.tb-kind:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-kind-on,
+.tb-kind-on:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+.tb-kind-label {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.tb-kind-hint {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   EMPTY-STATE PLATES
+   ============================================================ */
+
+.tb-platewrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: var(--sp-6) var(--sp-4);
+  overflow: auto;
+}
+.tb-plate {
+  position: relative;
+  margin: auto;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-5);
+  text-align: center;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-sheet);
+  animation: sheet-in var(--t-med) var(--ease-draft);
+}
+.tb-plate-glyph {
+  width: 64px;
+  height: 40px;
+  margin-bottom: var(--sp-1);
+  color: var(--ink-faint);
+}
+.tb-plate-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.tb-plate-sub {
+  max-width: 300px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.tb-plate-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.tb-tick {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+}
+.tb-tick-tl {
+  top: -6px;
+  left: -6px;
+  border-top: 1.5px solid var(--hairline-strong);
+  border-left: 1.5px solid var(--hairline-strong);
+}
+.tb-tick-tr {
+  top: -6px;
+  right: -6px;
+  border-top: 1.5px solid var(--hairline-strong);
+  border-right: 1.5px solid var(--hairline-strong);
+}
+.tb-tick-bl {
+  bottom: -6px;
+  left: -6px;
+  border-bottom: 1.5px solid var(--hairline-strong);
+  border-left: 1.5px solid var(--hairline-strong);
+}
+.tb-tick-br {
+  bottom: -6px;
+  right: -6px;
+  border-bottom: 1.5px solid var(--hairline-strong);
+  border-right: 1.5px solid var(--hairline-strong);
+}
+
+/* ============================================================
+   CONFIRM + TOASTS
+   ============================================================ */
+
+.tb-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: color-mix(in srgb, var(--ink) 26%, transparent);
+  animation: fade-in var(--t-fast) var(--ease-draft);
+}
+.tb-confirm {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-popover);
+  animation: sheet-in var(--t-med) var(--ease-draft);
+}
+.tb-confirm-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+.tb-confirm-sub {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.tb-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.tb-confirm-go {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.tb-toasts {
+  position: absolute;
+  left: 50%;
+  bottom: var(--sp-5);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.tb-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper-high);
+  box-shadow: var(--shadow-popover);
+  pointer-events: auto;
+  animation: sheet-in var(--t-med) var(--ease-draft);
+}
+.tb-toast-warn {
+  background: var(--red);
+}
+.tb-toast-rule {
+  width: 12px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+.tb-toast-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tb-toast-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: currentColor;
+  opacity: 0.6;
+  cursor: pointer;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.tb-toast-x:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--paper-high) 18%, transparent);
+}
+.tb-toast-x:focus-visible {
+  outline: 2px solid var(--paper-high);
+  outline-offset: 1px;
+  opacity: 1;
+}

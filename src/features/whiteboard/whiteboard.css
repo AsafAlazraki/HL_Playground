@@ -1,0 +1,1266 @@
+/* ============================================================
+   Whiteboard — THE BLUEPRINT CANVAS (wb-)
+   Deep Prussian-navy sheet, fine light gridlines, white tables
+   pinned to it. Everything that floats over the sheet is either
+   canvas-material (navy, --canvas-*) or chrome-material (white
+   instrument panels). Nothing here assumes a light canvas.
+
+   OFF THE DEFAULT PATH: the rules further down still style the
+   schema card (.wb-entity*), the zone frame (.wb-zone*), the
+   instrument panel that carried the LAYER / CARDS switchers
+   (.wb-tools, .wb-seg*, .wb-pin-btn, .wb-fit-btn), the rule
+   readout and RUN (.wb-readout*, .wb-run*), the palette berth
+   (.wb-strip) and the "no flow" plate (.wb-noflow*). None of it
+   is drawn today; all of it is left intact so restoring the
+   markup restores the drawing. See the "OFF THE DEFAULT PATH"
+   block at the top of Whiteboard.tsx.
+   ============================================================ */
+
+.wb-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* THE SHEET. Two stops of light: a broad pool a little above
+     centre, the way a lamp falls on a drafting table, easing into
+     the deeper navy at the edges. The vignette is in the paper —
+     never an overlay, which would put a film over the tables. */
+  background:
+    radial-gradient(
+      132% 104% at 50% 36%,
+      var(--canvas-bg) 46%,
+      var(--canvas-bg-deep) 100%
+    );
+  overflow: hidden;
+}
+
+/* ============================================================
+   A TABLE TYPE IS OVER THE SHEET.
+
+   One hairline, printed inside the edge of the paper: the sheet
+   says "yes, here" and nothing more. It appears for the length of
+   a drag and takes no room on the screen the rest of the time.
+   ============================================================ */
+.wb-root--drop::after {
+  content: '';
+  position: absolute;
+  inset: var(--sp-3);
+  z-index: 4;
+  border: 1px dashed var(--canvas-ink-faint);
+  border-radius: var(--radius);
+  pointer-events: none;
+  animation: fade-in var(--t-fast) var(--ease-draft) both;
+}
+
+/* -- pane ---------------------------------------------------- */
+/* the React Flow surface must stay transparent so the sheet
+   gradient above shows through */
+.wb-canvas.react-flow {
+  background: transparent;
+}
+/* the sheet is panned, not drawn on — a crosshair used to promise a
+   double-click would draft something, and nothing is drafted here
+   without being asked how it is structured first */
+.wb-canvas .react-flow__pane {
+  cursor: grab;
+}
+.wb-canvas .react-flow__pane.dragging {
+  cursor: grabbing;
+}
+.wb-canvas .react-flow__node {
+  cursor: grab;
+}
+.wb-canvas .react-flow__node.dragging {
+  cursor: grabbing;
+}
+
+.wb-canvas .react-flow__attribution {
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: var(--canvas-ink-faint);
+}
+.wb-canvas .react-flow__attribution a {
+  color: var(--canvas-ink-faint);
+}
+
+/* ============================================================
+   Corner registration ticks — shared drafting motif.
+   Color comes from --wb-tick: soft canvas ink by default (marks
+   printed on the blueprint around the corners), the zone's BRIGHT
+   accent for member cards, white handles when selected.
+   ============================================================ */
+.wb-tick {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  pointer-events: none;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.wb-tick--tl {
+  top: -4px;
+  left: -4px;
+  border-top: 1.5px solid var(--wb-tick, var(--canvas-ink-soft));
+  border-left: 1.5px solid var(--wb-tick, var(--canvas-ink-soft));
+}
+.wb-tick--tr {
+  top: -4px;
+  right: -4px;
+  border-top: 1.5px solid var(--wb-tick, var(--canvas-ink-soft));
+  border-right: 1.5px solid var(--wb-tick, var(--canvas-ink-soft));
+}
+.wb-tick--bl {
+  bottom: -4px;
+  left: -4px;
+  border-bottom: 1.5px solid var(--wb-tick, var(--canvas-ink-soft));
+  border-left: 1.5px solid var(--wb-tick, var(--canvas-ink-soft));
+}
+.wb-tick--br {
+  bottom: -4px;
+  right: -4px;
+  border-bottom: 1.5px solid var(--wb-tick, var(--canvas-ink-soft));
+  border-right: 1.5px solid var(--wb-tick, var(--canvas-ink-soft));
+}
+
+/* ============================================================
+   Entity card — white paper pinned to the navy sheet
+   ============================================================ */
+.wb-entity {
+  position: relative;
+  width: 240px;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card-canvas);
+  transition: box-shadow var(--t-fast) var(--ease-draft);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+.wb-entity::before {
+  /* accent ink strip across the top edge */
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--wb-accent);
+  border-radius: 2px 2px 0 0;
+}
+.wb-entity:hover {
+  box-shadow: var(--shadow-card-canvas-raised);
+}
+
+/* selected: 1.5px white outline — instant read on navy —
+   and the ticks become white corner handles */
+.wb-entity--selected {
+  outline: 1.5px solid var(--canvas-edge-selected);
+  outline-offset: 5px;
+  box-shadow: var(--shadow-card-canvas-raised);
+}
+.wb-entity--selected .wb-tick {
+  width: 6px;
+  height: 6px;
+  border: 1.5px solid var(--canvas-edge-selected);
+  background: var(--canvas-bg);
+}
+.wb-entity--selected .wb-tick--tl {
+  top: -8px;
+  left: -8px;
+}
+.wb-entity--selected .wb-tick--tr {
+  top: -8px;
+  right: -8px;
+}
+.wb-entity--selected .wb-tick--bl {
+  bottom: -8px;
+  left: -8px;
+}
+.wb-entity--selected .wb-tick--br {
+  bottom: -8px;
+  right: -8px;
+}
+
+/* DATA mode gives the mini-table room to breathe — a deliberate,
+   fixed step up from the 240px schema card, never elastic */
+.wb-entity--data {
+  width: 300px;
+}
+
+/* -- red-pencil edge treatment: this card carries a BLOCKER ---
+   a rail down the binding edge, readable at any canvas zoom
+   without having to read the badge */
+.wb-entity--flagged {
+  border-color: color-mix(in srgb, var(--red) 45%, var(--hairline-strong));
+}
+.wb-entity--flagged::after {
+  content: '';
+  position: absolute;
+  top: 3px; /* clears the accent ink strip */
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--red);
+  border-radius: 0 0 0 var(--radius-sm);
+  pointer-events: none;
+}
+
+/* -- header (WHITE interior — chrome inks throughout) -------- */
+.wb-entity-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--hairline);
+}
+.wb-entity-chip {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  background: var(--wb-accent);
+  border-radius: 1px;
+}
+.wb-entity-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.wb-entity-rows {
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+/* the header's right-hand instrument cluster:
+   mode control · reviewer's mark · row count */
+.wb-entity-meta {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* the reviewer's mark is another module's element — we only give it
+   a slot with clearance for its hand-drawn ring, never a style of
+   its own. The slot collapses entirely on a clean card. */
+.wb-entity-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  margin-inline: 1px;
+}
+.wb-entity-mark:empty {
+  display: none;
+}
+
+/* ============================================================
+   Per-card mode control — S / D / C
+   Reserved in the header at all times so the card never reflows,
+   but inked in only on hover, focus or selection: an untouched
+   sheet stays quiet.
+   ============================================================ */
+.wb-modes {
+  flex: none;
+  display: inline-flex;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.wb-entity:hover .wb-modes,
+.wb-entity:focus-within .wb-modes,
+.wb-entity--selected .wb-modes {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* pinned = this card holds its own mode, against the sheet default */
+.wb-modes--pinned {
+  border-color: var(--ink);
+}
+
+.wb-mode-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 15px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.wb-mode-btn + .wb-mode-btn {
+  border-left: 1px solid var(--hairline);
+}
+.wb-mode-btn:hover {
+  background: var(--blue-wash);
+  color: var(--blue);
+}
+.wb-mode-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+  border-radius: 1px;
+}
+.wb-mode-btn--on,
+.wb-mode-btn--on:hover {
+  background: var(--ink);
+  color: var(--paper-high);
+}
+
+/* -- field list ---------------------------------------------- */
+.wb-entity-fields {
+  list-style: none;
+  margin: 0;
+  padding: 3px 0 5px;
+}
+.wb-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+}
+.wb-field + .wb-field {
+  border-top: 1px solid color-mix(in srgb, var(--hairline) 45%, transparent);
+}
+.wb-field-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink);
+}
+.wb-field-req {
+  margin-left: 3px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--red);
+}
+.wb-field .type-tag {
+  flex: none;
+  background: var(--paper-high);
+}
+
+/* -- the locked UID system column (UX_REWORK §8b) --------------
+   Column one on every card: the row's own id, drawn in soft ink
+   behind a small padlock so it reads as the app's row, not the
+   reader's. Drawn in CSS, so it needs no glyph the mono face
+   might not carry. */
+.wb-field--sys {
+  gap: 6px;
+  background: color-mix(in srgb, var(--ink) 2.5%, transparent);
+}
+.wb-field--sys .wb-field-name {
+  color: var(--ink-soft);
+}
+.wb-field-lock {
+  position: relative;
+  flex: none;
+  width: 7px;
+  height: 6px;
+  margin: 3px 0 0 1px;
+  border: 1px solid var(--ink-faint);
+  border-radius: 1px;
+}
+.wb-field-lock::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 1px;
+  right: 1px;
+  height: 4px;
+  border: 1px solid var(--ink-faint);
+  border-bottom: none;
+  border-radius: 2px 2px 0 0;
+}
+
+/* overflow row — a designed mono hairline row, not an afterthought */
+.wb-field-more {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  padding: 6px 10px 4px;
+  border-top: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.wb-field-more::after {
+  content: '';
+  flex: 1;
+  min-width: 12px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+/* designed empty state: an entity with no fields yet */
+.wb-entity-nofields {
+  margin: 9px 10px 11px;
+  padding: 8px 10px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   DATA mode — a compact live mini-table INSIDE the white card.
+   Chrome material throughout: hairline rules, a sunken header
+   row, zebra at ~2% ink. Read-only, mono, ellipsized.
+   ============================================================ */
+.wb-data {
+  display: flex;
+  flex-direction: column;
+}
+.wb-data-row {
+  display: flex;
+  align-items: stretch;
+}
+.wb-data-row + .wb-data-row {
+  border-top: 1px solid color-mix(in srgb, var(--hairline) 45%, transparent);
+}
+.wb-data-row--head {
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
+}
+.wb-data-row--head + .wb-data-row {
+  border-top: none;
+}
+/* zebra — barely there, just enough to track a row across */
+.wb-data-row--alt {
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+}
+
+.wb-data-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.wb-data-cell + .wb-data-cell {
+  border-left: 1px solid color-mix(in srgb, var(--hairline) 45%, transparent);
+}
+.wb-data-row--head .wb-data-cell {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.wb-data-cell--r {
+  text-align: right;
+}
+.wb-data-cell--c {
+  text-align: center;
+}
+/* the UID system column: narrow, soft, and never competing with the
+   reader's own data for width (UX_REWORK §8b) */
+.wb-data-cell--sys {
+  flex: 0 0 62px;
+  background: color-mix(in srgb, var(--ink) 2.5%, transparent);
+  color: var(--ink-soft);
+}
+.wb-data-row--head .wb-data-cell--sys {
+  color: var(--ink-faint);
+}
+
+/* boolean marks + the faint dash for a cell holding nothing */
+.wb-data-yes {
+  font-weight: 600;
+  color: var(--type-boolean);
+}
+.wb-data-no {
+  color: var(--ink-soft);
+}
+.wb-data-nil {
+  color: var(--ink-faint);
+}
+
+/* footer — same designed hairline row as "+N more fields" */
+.wb-data-foot {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px 5px;
+  border-top: 1px solid var(--hairline);
+}
+.wb-data-foot-cell {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.wb-data-foot-cell::after {
+  content: '';
+  flex: 1;
+  min-width: 12px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+/* -- compact mode: field count as a dimension-line annotation - */
+.wb-dim {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 12px;
+}
+.wb-dim-end {
+  flex: none;
+  width: 1px;
+  height: 11px;
+  background: var(--ink-soft);
+}
+.wb-dim-line {
+  position: relative;
+  flex: 1;
+  min-width: 14px;
+  height: 1px;
+  background: var(--ink-soft);
+}
+.wb-dim-line::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+}
+.wb-dim-line--l::after {
+  left: 0;
+  border-bottom: 1px solid var(--ink-soft);
+  border-left: 1px solid var(--ink-soft);
+  transform: rotate(45deg);
+  transform-origin: 15% 85%;
+}
+.wb-dim-line--r::after {
+  right: 0;
+  border-top: 1px solid var(--ink-soft);
+  border-right: 1px solid var(--ink-soft);
+  transform: rotate(45deg);
+  transform-origin: 85% 15%;
+}
+.wb-dim-label {
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* -- edge ports (edges are derived, never hand-drawn) -------- */
+.wb-canvas .wb-port {
+  width: 4px;
+  height: 4px;
+  min-width: 4px;
+  min-height: 4px;
+  border: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* ============================================================
+   Zone frame — a bright-accent region printed on the sheet
+   (--wb-accent is set to the zone's BRIGHT accent variant)
+   ============================================================ */
+.wb-zone {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--wb-accent);
+  border-radius: var(--radius-sm);
+  background: var(--canvas-wash);
+  transition: background var(--t-fast) var(--ease-draft);
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+.wb-zone:hover {
+  background: color-mix(in srgb, var(--wb-accent) 7%, var(--canvas-wash));
+}
+.wb-zone--selected {
+  background: color-mix(in srgb, var(--wb-accent) 11%, var(--canvas-wash));
+}
+.wb-zone--selected .wb-tick {
+  opacity: 0; /* the resizer handles take over the corners */
+}
+
+/* name stamp — bright accent, mono uppercase, punched through
+   the frame line on a patch of the sheet */
+.wb-zone > .wb-zone-name {
+  position: absolute;
+  top: -9px;
+  left: 14px;
+  max-width: calc(100% - 48px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 9px;
+  background: var(--canvas-bg);
+  border: 1px solid var(--wb-accent);
+  border-radius: var(--radius-sm);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--wb-accent);
+}
+.wb-zone > .wb-zone-count {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--wb-accent) 72%, var(--canvas-ink-soft));
+}
+
+/* -- NodeResizer — white handles, instant read on navy ------- */
+.wb-canvas .wb-rs-line {
+  border-color: var(--canvas-edge-selected);
+}
+.wb-canvas .wb-rs-handle {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--canvas-edge-selected);
+  border-radius: 1px;
+  background: var(--canvas-bg);
+}
+
+/* ============================================================
+   LINKS — a line between two tables, and nothing more.
+
+   A Link column genuinely means one table points at another, so the
+   line stays. It is drawn quieter than it used to be: the tables are
+   the drawing now, and a link is an annotation on it. It brightens
+   under the cursor, so following one is still easy.
+   ============================================================ */
+.wb-canvas .react-flow__edge .react-flow__edge-path {
+  stroke: color-mix(in srgb, var(--canvas-edge) 62%, transparent);
+  stroke-width: 1.25;
+  transition:
+    stroke var(--t-fast) var(--ease-draft),
+    stroke-width var(--t-fast) var(--ease-draft);
+}
+.wb-canvas .react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--canvas-edge-selected);
+  stroke-width: 1.5;
+}
+.wb-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--canvas-edge-selected);
+  stroke-width: 1.75;
+}
+/* label: a small white chip pinned to the sheet, naming the column
+   that draws the line */
+.wb-canvas .react-flow__edge-text {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  fill: var(--ink-soft);
+}
+.wb-canvas .react-flow__edge-textbg {
+  fill: var(--paper-high);
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+.wb-canvas .react-flow__edge:hover .react-flow__edge-text {
+  fill: var(--ink);
+}
+.wb-canvas .react-flow__edge.selected .react-flow__edge-text {
+  fill: var(--ink);
+}
+.wb-canvas .react-flow__edge.selected .react-flow__edge-textbg {
+  stroke: var(--ink);
+}
+
+/* ============================================================
+   View tools (top-left): a white instrument panel on the navy
+   ============================================================ */
+.wb-tools {
+  display: flex;
+  align-items: center;
+  /* every control in here wraps rather than runs off the sheet */
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: var(--sp-3);
+  padding: 6px 10px;
+  max-width: calc(100% - var(--sp-6));
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sheet);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+/* ============================================================
+   THE RULE READOUT — name · root entity · validity, folded into
+   the instrument panel instead of eating a whole row above the
+   workspace (UX_REWORK §1).
+   ============================================================ */
+.wb-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 6px 2px 8px;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+}
+.wb-readout-name {
+  max-width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+/* the entity the rule walks, stamped in that entity's ink */
+.wb-readout-root {
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid color-mix(in srgb, var(--wb-accent) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--wb-accent) 8%, transparent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wb-accent);
+}
+.wb-readout-root--none {
+  border-color: var(--hairline);
+  background: transparent;
+  color: var(--ink-faint);
+}
+.wb-readout-check {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.wb-readout-check.is-ok {
+  color: var(--accent-viridian);
+}
+.wb-readout-check.is-blocked {
+  color: var(--red);
+}
+/* ============================================================
+   THE RUN INSTRUMENT — the only control that executes a rule,
+   berthed beside the readout of the flow it walks. Never behind
+   a menu, never on a row of its own (UX_REWORK §1).
+   ============================================================ */
+.wb-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.wb-run-btn {
+  appearance: none;
+  flex: none;
+  margin: 0;
+  padding: 4px 12px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-high);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.wb-run-btn:hover:not(:disabled) {
+  background: var(--blue-deep);
+  border-color: var(--blue-deep);
+}
+.wb-run-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.wb-run-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* blocked, or already running: still legible, plainly not pressable */
+.wb-run-btn:disabled {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+.wb-run-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.wb-run-n {
+  font-weight: 600;
+  color: var(--ink);
+}
+.wb-run-sep {
+  color: var(--ink-faint);
+}
+.wb-run-warn {
+  font-weight: 600;
+  color: var(--red);
+}
+.wb-run-clear {
+  appearance: none;
+  flex: none;
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.wb-run-clear:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+  color: var(--red);
+}
+.wb-run-clear:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.wb-tools-label {
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+/* compartment divider between the two instrument groups */
+.wb-tools-sep {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  background: var(--hairline);
+}
+.wb-seg {
+  display: inline-flex;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.wb-seg-btn {
+  appearance: none;
+  margin: 0;
+  border: none;
+  padding: 4px 10px;
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.wb-seg-btn + .wb-seg-btn {
+  border-left: 1px solid var(--hairline-strong);
+}
+.wb-seg-btn:hover {
+  background: var(--blue-wash);
+  color: var(--ink);
+}
+/* .wb-seg clips overflow, so the focus ring has to sit inside the button */
+.wb-seg-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.wb-seg-btn--on,
+.wb-seg-btn--on:hover {
+  background: var(--ink);
+  color: var(--paper-high);
+}
+/* release-all for per-card mode overrides — appears only while
+   at least one card is pinned, so the panel stays quiet otherwise */
+.wb-pin-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.wb-pin-btn:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+  color: var(--red);
+}
+.wb-pin-x {
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+.wb-pin-btn:hover .wb-pin-x {
+  color: var(--red);
+}
+
+.wb-fit-btn {
+  appearance: none;
+  margin: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.wb-fit-btn:hover {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.wb-fit-btn:active {
+  transform: translateY(1px);
+}
+
+/* ============================================================
+   THE PALETTE STRIP'S BERTH
+
+   The strip itself belongs to the rules module and positions
+   itself bottom-centre. All the sheet does is tell it where
+   there is actually room: clear of the zoom controls on the
+   left, clear of the minimap on the right, centred in what is
+   left over. Nothing else about it is ours to style.
+   ============================================================ */
+.wb-root .wb-strip {
+  left: 52px;
+  right: 200px;
+  transform: none;
+  width: fit-content;
+  max-width: calc(100% - 252px);
+  margin-inline: auto;
+}
+
+/* ============================================================
+   THE ONE INSTRUMENT ON THE SHEET
+
+   Zoom out · zoom in · FIT, in a single white cluster bottom-left.
+   Nothing else floats on the blueprint — no layer switcher, no
+   card toggle, no palette, no minimap — so this cluster can be
+   quiet and still be found instantly.
+   ============================================================ */
+.wb-canvas .react-flow__controls {
+  margin: var(--sp-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sheet);
+  overflow: hidden;
+}
+.wb-canvas .react-flow__controls-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.wb-canvas .react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+.wb-canvas .react-flow__controls-button:hover {
+  background: var(--blue-wash);
+  color: var(--blue);
+}
+/* the cluster clips overflow, so the ring has to sit inside the button */
+.wb-canvas .react-flow__controls-button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.wb-canvas .react-flow__controls-button svg {
+  fill: currentColor;
+  max-width: 11px;
+  max-height: 11px;
+}
+/* FIT is drawn, not filled — four corner brackets at the hairline
+   weight the rest of the app is drawn in */
+.wb-canvas .wb-ctl-fit svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linecap: square;
+  max-width: 12px;
+  max-height: 12px;
+}
+
+/* ============================================================
+   THE EMPTY SHEET is not drawn here.
+
+   The shell pins exactly ONE invitation to the blueprint
+   (`.shell-invite` in shell.css): the organisation's name, one
+   sentence, one button, and the line about dragging a type from
+   the left. A second plate printed by the canvas would land right
+   on top of it. What the canvas answers instead is the DRAG —
+   `.wb-root--drop`, above.
+   ============================================================ */
+
+/* ============================================================
+   RULES LAYER — drawing a flow line
+   Dashed while it is being pulled: it is logic before it is
+   anything else, and it says so from the first pixel.
+   ============================================================ */
+.wb-canvas .react-flow__connectionline .react-flow__connection-path {
+  stroke: var(--canvas-edge-selected);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  stroke-linecap: round;
+}
+
+/* ============================================================
+   THE UNDERLAY — the entity layer on the RULES layer.
+
+   Not a faded card and not a muddy ghost: the paper is taken
+   away entirely and what is left is a silhouette printed on the
+   sheet in canvas ink — outline, accent tab, name. No field
+   rows, so nothing of the flow can ever land on top of data;
+   no shadow, so nothing competes with the plates for lift.
+   The card gives you your bearings and then gets out of the way.
+   (UX_REWORK §3)
+   ============================================================ */
+.wb-entity--underlay {
+  background: transparent;
+  border-color: var(--canvas-hairline);
+  box-shadow: none;
+  transition:
+    background var(--t-med) var(--ease-draft),
+    border-color var(--t-med) var(--ease-draft);
+}
+.wb-entity--underlay:hover {
+  background: color-mix(in srgb, var(--canvas-ink) 7%, transparent);
+  border-color: var(--canvas-ink-faint);
+  box-shadow: none;
+}
+/* the accent tab stays — the fastest way to tell two silhouettes apart */
+.wb-entity--underlay::before {
+  opacity: 0.55;
+}
+/* header only, so it must not draw a rule under itself */
+.wb-entity--underlay .wb-entity-head {
+  padding: 8px 10px;
+  border-bottom: none;
+}
+.wb-entity--underlay .wb-entity-name {
+  color: var(--canvas-ink-soft);
+}
+.wb-entity--underlay.wb-entity--selected {
+  background: color-mix(in srgb, var(--canvas-ink) 9%, transparent);
+  box-shadow: none;
+}
+.wb-entity--underlay.wb-entity--selected .wb-entity-name {
+  color: var(--canvas-ink);
+}
+.wb-entity--underlay .wb-entity-chip {
+  opacity: 0.8;
+}
+
+/* a blocker still reads through the underlay — the red pencil never
+   goes quiet — but it is a bright canvas ink now, not chrome red */
+.wb-entity--underlay.wb-entity--flagged {
+  border-color: color-mix(in srgb, var(--accent-carmine-bright) 45%, transparent);
+}
+.wb-entity--underlay.wb-entity--flagged::after {
+  background: var(--accent-carmine-bright);
+}
+
+/* zones and relationship lines drop back with the cards */
+.wb-root--ghost .wb-zone {
+  opacity: 0.45;
+}
+.wb-root--ghost .wb-canvas .react-flow__edge.wb-edge {
+  opacity: 0.32;
+}
+
+/* ============================================================
+   No rule chosen — a designed prompt aimed at the RULES index.
+   A leader line runs off toward the left panel, the way a note
+   on a drawing points at the part it is about.
+   ============================================================ */
+.wb-noflow {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  pointer-events: none;
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+/* a drafting leader: arrowhead, rule, terminator tick — the note on a
+   drawing that points at the part it is about (here: the RULES index) */
+.wb-noflow-lead {
+  display: flex;
+  align-items: center;
+}
+.wb-noflow-arrow {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-bottom: 1.5px solid var(--canvas-ink-soft);
+  border-left: 1.5px solid var(--canvas-ink-soft);
+  transform: rotate(45deg);
+}
+.wb-noflow-line {
+  flex: none;
+  width: 132px;
+  height: 1px;
+  margin-left: -4px;
+  background: var(--canvas-ink-soft);
+}
+.wb-noflow-tick {
+  flex: none;
+  width: 1px;
+  height: 11px;
+  background: var(--canvas-ink-soft);
+}
+.wb-noflow-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 340px;
+  padding: var(--sp-5) var(--sp-6);
+  border: 1px solid var(--canvas-ink-faint);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--canvas-bg-deep) 60%, transparent);
+  --wb-tick: var(--canvas-ink-faint);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+.wb-noflow-stamp {
+  font-size: 9px;
+  color: var(--canvas-ink-faint);
+}
+.wb-noflow-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em; /* optically re-centre the tracked text */
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--canvas-ink-soft);
+}
+.wb-noflow-rule {
+  width: 64px;
+  height: 1px;
+  background: var(--canvas-ink-faint);
+}
+.wb-noflow-sub {
+  max-width: 30ch;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--canvas-ink-soft);
+}

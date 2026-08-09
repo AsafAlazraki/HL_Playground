@@ -1,0 +1,848 @@
+/* ============================================================
+   ENTITY-TABLE NODE — a data sheet pinned to the blueprint.
+
+   Material: CHROME on CANVAS. The sheet itself is white nautical
+   paper with real lift (--shadow-card-canvas), exactly like an
+   entity card; everything INSIDE it is the ordinary chrome grid
+   (table.css), because it is the same grid. Only the frame, the
+   accent header bar, the footer instrument strip and the resize
+   marks are drawn here.
+
+   `--tbn-accent` is set per node from the entity's accent.
+   ============================================================ */
+
+/* The unclipped shell: React Flow's own node box. The resize marks and
+   the edge anchors live on this outline, so they must not be cut off
+   by the paper frame's own overflow rule. */
+.tb-node-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tb-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-card-canvas);
+  overflow: hidden;
+  transition:
+    box-shadow var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tb-node:hover {
+  box-shadow: var(--shadow-card-canvas-raised);
+}
+.tb-node--selected {
+  border-color: var(--tbn-accent);
+  box-shadow:
+    var(--shadow-card-canvas-raised),
+    0 0 0 1px var(--tbn-accent);
+}
+/* while its FOCUS lens is open the sheet on the canvas is the thing
+   you came back to — mark it, do not hide it */
+.tb-node--focused {
+  border-color: var(--blue);
+}
+
+/* ============================================================
+   EXPANDED — the card that claimed the sheet
+
+   Still a card: same paper, same accent header, same hairlines. It
+   is simply large, so it is given the lift of a sheet lying ON TOP
+   of the others (it overlaps them; nothing is ever shoved aside) and
+   a slightly heavier edge so its boundary reads against whatever it
+   happens to be covering.
+   ============================================================ */
+.tb-node--expanded {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--shadow-card-canvas-raised);
+}
+.tb-node--expanded.tb-node--selected {
+  border-color: var(--tbn-accent);
+}
+
+/* ============================================================
+   THE INSTRUMENT BAND — only on an expanded card
+
+   The same two components the full-window toolbar draws
+   (`WholeTableControls`, `DimensionReadout`), on the card's own
+   sunken strip. They are restyled from here rather than parameterised
+   — one control, one source, two hosts.
+   ============================================================ */
+
+/* THE STRIP HAS TO STAY REACHABLE.
+
+   COLLAPSE ALL, FIT COLUMNS and the ROWS / COLUMNS read-out are all
+   `flex: none` by design — none of them may give up letters. On a card
+   narrower than their combined width that used to mean the read-out
+   was simply cut off the right-hand edge: the reader could see two
+   controls and had no way of reaching the third. So the strip WRAPS
+   instead of clipping. Above ~440px nothing changes at all; below it
+   the read-out drops to a second line and stays exactly as pressable
+   as it was. */
+.tb-node-band {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--sp-3);
+  min-height: 34px;
+  padding: 3px var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper-sunken);
+  cursor: default;
+}
+
+/* first thing on the strip: no leading rule, and no dead air */
+.tb-node-band .tb-whole {
+  padding-left: 0;
+  border-left: none;
+}
+.tb-node-band .tb-whole-btn {
+  padding: 4px 9px;
+  font-size: 9.5px;
+}
+
+/* the read-out sits at the far end, where a reader's eye lands after
+   the controls — and it is the answer to "how much am I seeing".
+   Wrapped onto its own line it keeps that end; the leading hairline
+   goes, because on a line of its own it would be a rule to nowhere. */
+.tb-node-band .tb-count {
+  margin-left: auto;
+  padding-right: 0;
+  border-left: none;
+}
+.tb-node-band .tb-count-label {
+  font-size: 9px;
+}
+.tb-node-band .tb-count-num {
+  font-size: 12px;
+}
+
+/* the map of the sheet, on the card. Slightly tighter than the
+   full-window strip; identical notation. */
+.tb-node .tb-strip {
+  height: 26px;
+  padding: 0 var(--sp-3);
+  background: var(--paper);
+}
+
+/* React Flow gives the node its own box; ports are anchors only */
+.tb-node-wrap .tb-node-port {
+  width: 4px;
+  height: 4px;
+  min-width: 4px;
+  min-height: 4px;
+  border: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* ============================================================
+   HEADER — the accent bar, and the drag handle
+   ============================================================ */
+
+.tb-node-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 34px;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border-bottom: 1px solid var(--hairline-strong);
+  border-top: 3px solid var(--tbn-accent);
+  background: color-mix(in srgb, var(--tbn-accent) 8%, var(--paper-high));
+  cursor: grab;
+  user-select: none;
+}
+.tb-node-head:active {
+  cursor: grabbing;
+}
+
+/* the kind's symbol — how a table is recognised before its name is
+   even read */
+.tb-node-mark {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tbn-accent);
+}
+
+/* the name is also the rename control, so it earns the same 24px —
+   taken as line-height and padding, never as flex, because the name
+   still has to be able to truncate with an ellipsis */
+.tb-node-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  line-height: 18px;
+  padding: 3px 6px;
+  margin-left: -2px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 11.5px;
+  text-align: left;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-node-name:hover {
+  border-color: var(--hairline);
+  background: var(--paper-high);
+  color: var(--blue-deep);
+}
+.tb-node-name:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.tb-node-nameedit {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--blue);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  caret-color: var(--blue);
+  outline: none;
+}
+
+
+.tb-node-filtered {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 1px 7px;
+  border: 1px solid var(--blue);
+  border-radius: var(--radius-sm);
+  background: var(--blue-wash);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue-deep);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-node-filtered:hover {
+  border-color: var(--red);
+  background: var(--red-wash);
+  color: var(--red);
+}
+.tb-node-filtered:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+/* the count is the last thing on the bar, and the auto margin is what
+   keeps the name from ever crowding it */
+.tb-node-rows {
+  flex: none;
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   BODY — the grid, scrolling inside the frame
+   ============================================================ */
+
+/* CONTAINMENT. The register is the heaviest thing on the sheet and it
+   is entirely self-contained: it paints inside its own scroller, it
+   lays out inside its own frame, and every menu it opens is portalled
+   to the document (see `Popover.tsx`), so nothing inside it can ever
+   need to escape. Saying so lets the browser skip layout and paint for
+   a card that is clipped or off screen instead of doing the work and
+   throwing it away.
+
+   `contain-intrinsic-size` is the frame a skipped body should be
+   assumed to have: `auto` so the last real measurement is remembered,
+   with the default card's body as the opening guess. */
+.tb-node-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  background: var(--paper-high);
+  cursor: default;
+  contain: content;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 460px auto 250px;
+}
+
+/* the cross-fade back from the plate — see `.tb-node--plate` below.
+   Mounts once per transition, so it can never fire mid-edit. */
+.tb-node-body--in {
+  animation: fade-in var(--t-med) var(--ease-draft);
+}
+
+/* the grid inside a node is a slightly tighter instrument than the
+   full-window one: the header carries the name, so the column heads
+   need less air */
+.tb-node-body .tb-grid {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ============================================================
+   THE SPEC PLATE — the card, read from across the room
+
+   Below the zoom at which a cell can be read (0.6 — the measurement
+   is in `tableLod.ts`) the card stops drawing a register it cannot
+   show and draws this instead. It is not a fallback and it is not a
+   grey box: it is the plate a drawing office pins to a drawing, and
+   the sheet is MORE readable with it than without.
+
+   Every size here is chosen against the zoom it will be seen at. The
+   name is 30px drawn, so at 0.5 zoom it is 15px seen — where the card
+   header's 11.5px was 5.7px, i.e. nothing at all. The figures are
+   22px drawn / 11px seen. The band names and the units are 11px: at
+   this distance they are texture that says "eleven sections", and at
+   0.6 they resolve into words just as the grid comes back.
+   ============================================================ */
+
+.tb-node--plate {
+  /* the accent bar the header used to carry stays — a card must be
+     recognisable as the same card at either level of detail */
+  border-top: 3px solid var(--tbn-accent);
+  cursor: grab;
+  user-select: none;
+  animation: fade-in var(--t-med) var(--ease-draft);
+}
+.tb-node--plate:active {
+  cursor: grabbing;
+}
+
+/* THE PLATE IS THE PRESS. A card at this distance draws no grid, and
+   with no grid there is no footer either — EXPAND, FOCUS and + ROW all
+   live in the register. So the plate itself is the way in, and it is a
+   real button: press it and the camera walks to this card at a size
+   its register can be read at. It is still the node's drag surface —
+   hence pointer under the cursor and grabbing once held, and the two
+   readings told apart by whether the pointer travelled (see
+   `SheetPlate.tsx`). */
+.tb-lod {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  appearance: none;
+  border: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--tbn-accent) 5%, var(--paper-high)),
+      var(--paper-high) 44%
+    );
+  transition: background var(--t-fast) var(--ease-draft);
+}
+/* the one hint a plate can give at a fifth of full size: under the
+   cursor its wash deepens and its registration ticks take the card's
+   own accent — the plate lights up as the thing that answers */
+.tb-lod:hover,
+.tb-lod:focus-visible {
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--tbn-accent) 14%, var(--paper-high)),
+      var(--paper-high) 62%
+    );
+}
+.tb-lod:hover .tb-lod-ticks i,
+.tb-lod:focus-visible .tb-lod-ticks i {
+  border-color: var(--tbn-accent);
+}
+.tb-lod:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -3px;
+}
+.tb-lod:active {
+  cursor: grabbing;
+}
+
+/* pinned: four registration ticks, inset so the card's own edge still
+   reads as the card's edge */
+.tb-lod-ticks i {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 0 solid var(--hairline-strong);
+  pointer-events: none;
+}
+.tb-lod-ticks i:nth-child(1) {
+  top: 8px;
+  left: 8px;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.tb-lod-ticks i:nth-child(2) {
+  top: 8px;
+  right: 8px;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+.tb-lod-ticks i:nth-child(3) {
+  bottom: 8px;
+  left: 8px;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.tb-lod-ticks i:nth-child(4) {
+  bottom: 8px;
+  right: 8px;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
+}
+
+/* the field takes whatever the card has, so the mark and the name sit
+   in the middle of it and the title block below stays on the plate's
+   foot — a large card reads as a drawing sheet, not as a small plate
+   marooned in white */
+.tb-lod-field {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  text-align: center;
+}
+
+.tb-lod-mark {
+  display: flex;
+  color: var(--tbn-accent);
+}
+
+/* the one display line on the card — what makes the sheet readable at
+   a distance instead of a field of grey stripes */
+.tb-lod-name {
+  max-width: 18ch;
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.06;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* the sections, named — the shape of a wide register, without it */
+.tb-lod-bands {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 3px var(--sp-2);
+  max-width: 100%;
+  overflow: hidden;
+}
+.tb-lod-band,
+.tb-lod-more {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tb-lod-band {
+  padding-bottom: 3px;
+  border-bottom: 1.5px solid var(--tb-band-ink, var(--hairline-strong));
+  color: var(--ink-soft);
+}
+.tb-lod-more {
+  color: var(--ink-faint);
+}
+
+/* the title block: the two figures, on the plate's own ruled foot */
+.tb-lod-block {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+.tb-lod-fig {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.tb-lod-num {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink);
+}
+.tb-lod-unit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-lod-rule {
+  align-self: stretch;
+  width: 1px;
+  min-height: 18px;
+  background: var(--hairline);
+}
+
+/* ============================================================
+   COMPACT PLATES — the node's designed empty states
+   ============================================================ */
+
+.tb-node-plate {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5);
+  text-align: center;
+  background: var(--paper);
+}
+
+.tb-node-plate-marks {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  margin-bottom: var(--sp-1);
+}
+.tb-node-plate-marks i {
+  display: block;
+  width: 16px;
+  height: 1px;
+  background: var(--ink-faint);
+}
+.tb-node-plate-marks i:nth-child(2) {
+  width: 26px;
+}
+.tb-node-plate-marks i:nth-child(3) {
+  width: 10px;
+}
+
+.tb-node-plate-title {
+  color: var(--ink);
+}
+
+.tb-node-plate-sub {
+  max-width: 32ch;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.tb-node-plate-btn {
+  margin-top: var(--sp-2);
+  padding: 5px 10px;
+  font-size: 10px;
+}
+
+/* ============================================================
+   FOOTER — the sheet's instrument strip
+   ============================================================ */
+
+.tb-node-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 30px;
+  padding: 0 var(--sp-2);
+  border-top: 1px solid var(--hairline);
+  background: var(--paper-sunken);
+  cursor: default;
+}
+
+/* THE STRIP IS THE CARD'S INSTRUMENT PANEL, and every one of these
+   was 21px tall. The footer is 30px, so 24 costs nothing and no
+   control on it moves: only the box around the words grows. */
+.tb-node-act {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-node-act:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.tb-node-act:focus-visible {
+  /* the node clips its overflow — an outset ring would be amputated */
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-node-act:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* the sheet's one plain action, in the accent it belongs to */
+.tb-node-act--add {
+  border-color: var(--hairline);
+  background: var(--paper-high);
+  color: var(--ink);
+}
+
+/* THE OBVIOUS ONE. "Show me the whole table" is answered on the
+   blueprint, so this is the loudest thing on the strip — ink border,
+   ink text — and FOCUS beside it drops to the ordinary hairline
+   weight. Pressed, it latches, exactly like COLLAPSE ALL above it. */
+.tb-node-act--expand {
+  border-color: var(--ink);
+  background: var(--paper-high);
+  color: var(--ink);
+}
+.tb-node-act--expand svg {
+  flex: none;
+  opacity: 0.72;
+}
+.tb-node-act--expand[aria-pressed='true'] {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.tb-node-act--expand[aria-pressed='true']:hover {
+  background: var(--blue-wash-strong);
+}
+
+.tb-node-act--focus {
+  margin-left: 0;
+  border-color: var(--hairline);
+  background: transparent;
+  color: var(--ink-soft);
+}
+.tb-node-act-mark {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  opacity: 0.7;
+}
+
+.tb-node-tally {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* toasts belong to the sheet they were raised on — seat them just
+   above the footer instead of the full-window position */
+.tb-node .tb-toasts {
+  bottom: 38px;
+}
+.tb-node .tb-toast {
+  padding: 4px 4px 4px var(--sp-2);
+}
+.tb-node .tb-toast-text {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+/* ============================================================
+   NodeResizer — white marks that read on navy
+   ============================================================ */
+
+/* React Flow's own `.react-flow__resize-control.handle` is a two-class
+   selector — these must out-specify it or the marks come out in the
+   library's default blue instead of the chart room's white */
+.tb-node-wrap .react-flow__resize-control.tb-rs-line {
+  border-color: var(--canvas-edge-selected);
+}
+.tb-node-wrap .react-flow__resize-control.tb-rs-handle {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--canvas-edge-selected);
+  border-radius: 1px;
+  background: var(--canvas-bg);
+}
+
+/* ============================================================
+   FOCUS LENS — one sheet, full window
+   ============================================================ */
+
+.tb-focus {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  animation: fade-in var(--t-fast) var(--ease-draft);
+}
+.tb-focus:focus {
+  outline: none;
+}
+
+.tb-focus-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--hairline-strong);
+  background: var(--paper-high);
+}
+
+.tb-focus-stamp {
+  flex: none;
+  padding: 2px 6px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+}
+
+.tb-focus-chip {
+  flex: none;
+  width: 3px;
+  height: 16px;
+  border-radius: 1px;
+  background: var(--tbn-accent);
+}
+
+.tb-focus-name {
+  flex: none;
+  max-width: 40ch;
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb-focus-tally {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.tb-focus-rule {
+  flex: 1;
+  min-width: var(--sp-3);
+  height: 1px;
+  background: var(--hairline);
+}
+
+.tb-focus-hint {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb-focus-close {
+  flex: none;
+}
+
+.tb-focus-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+}
+.tb-focus-body > .tb-root {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .tb-focus-hint {
+    display: none;
+  }
+}

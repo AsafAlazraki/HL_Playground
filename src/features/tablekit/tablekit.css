@@ -1,0 +1,713 @@
+/* ============================================================
+   TABLEKIT — the seven marks, the two-question sheet, the rail.
+
+   Chrome material throughout: white sheets, marine-navy ink,
+   hairlines, mono micro-labels. `--tk-ink` carries the current
+   kind's accent down each subtree so a card, a chip and a chosen
+   structure all speak in the same colour without a single hex
+   living in here.
+   ============================================================ */
+
+/* ---------------------------------------------------------- */
+/* The marks                                                  */
+/* ---------------------------------------------------------- */
+
+/* Phosphor marks (see symbols.tsx). They are filled paths, not strokes,
+   and their line weight is set in React by `weightFor(size)` — nothing
+   here may push a stroke onto them or the whole weight scale collapses
+   to one thickness. This rule does layout only. */
+.tk-symbol {
+  display: block;
+  flex: none;
+}
+
+/* ---------------------------------------------------------- */
+/* Overlay + sheet                                            */
+/* ---------------------------------------------------------- */
+
+.tk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+}
+
+.tk-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--canvas-bg-deep);
+  /* enough to push the sheet forward, little enough that the blueprint
+     is still visibly underneath — the dialog sits ON the drawing */
+  opacity: 0.44;
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+
+.tk-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(880px, 100%);
+  max-height: calc(100vh - var(--sp-6) * 2);
+  min-height: 0;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-popover);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+/* -- header ------------------------------------------------- */
+
+.tk-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-6) var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tk-head-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 24px;
+}
+
+.tk-eyebrow {
+  color: var(--ink-faint);
+}
+
+.tk-question {
+  font-size: 21px;
+  line-height: 1.2;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.tk-kind-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--tk-ink, var(--ink));
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tk-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: calc(var(--sp-2) * -1);
+  padding: 4px var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tk-back:hover {
+  color: var(--ink);
+  border-color: var(--hairline);
+}
+.tk-back:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+  color: var(--ink);
+}
+
+.tk-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tk-close:hover {
+  color: var(--ink);
+  background: var(--paper-sunken);
+  border-color: var(--hairline);
+}
+.tk-close:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------- */
+/* Question one — the kinds                                   */
+/* ---------------------------------------------------------- */
+
+.tk-step1 {
+  min-height: 340px;
+  padding: var(--sp-6);
+  overflow-y: auto;
+}
+
+.tk-kinds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.tk-kinds .tk-kind-card--custom {
+  grid-column: span 2;
+}
+
+@media (min-width: 720px) {
+  .tk-kinds {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .tk-kinds .tk-kind-card--custom {
+    grid-column: span 3;
+  }
+}
+
+@media (min-width: 940px) {
+  .tk-kinds {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .tk-kinds .tk-kind-card--custom {
+    grid-column: span 2;
+  }
+}
+
+.tk-kind-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-height: 142px;
+  padding: var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.tk-kind-card:hover {
+  border-color: var(--tk-ink);
+  background: var(--paper);
+  box-shadow: var(--shadow-sheet);
+  transform: translateY(-1px);
+}
+.tk-kind-card:active {
+  transform: none;
+}
+.tk-kind-card:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+  border-color: var(--tk-ink);
+}
+
+.tk-kind-sym {
+  display: flex;
+  color: var(--tk-ink);
+  margin-bottom: var(--sp-1);
+}
+
+.tk-kind-label {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 620;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.tk-kind-blurb {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------- */
+/* Question two — structure, preview, name                    */
+/* ---------------------------------------------------------- */
+
+.tk-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.tk-step2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+  min-height: 300px;
+  padding: var(--sp-6);
+  overflow-y: auto;
+}
+
+@media (min-width: 780px) {
+  .tk-step2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.tk-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.tk-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.tk-opt:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper);
+}
+.tk-opt:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tk-opt.is-on {
+  border-color: var(--tk-ink);
+  background: var(--paper-sunken);
+  background: color-mix(in srgb, var(--tk-ink) 6%, var(--paper-high));
+  box-shadow: inset 3px 0 0 var(--tk-ink);
+}
+
+.tk-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.tk-chain-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.tk-chain-arrow {
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+.tk-opt.is-on .tk-chain-arrow {
+  color: var(--tk-ink);
+}
+
+.tk-plate {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.tk-opt.is-on .tk-plate {
+  border-color: var(--tk-ink);
+  background: var(--paper-high);
+  color: var(--tk-ink);
+}
+
+.tk-opt-cap {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* -- the chosen chain, typed in ------------------------------ */
+
+/* A level plate you can put a caret in and take out again. It wears
+   .tk-plate like every other plate on the chain — same border, same
+   ink — so the row still reads as one chain and not as a form; it
+   only parts company on hover and focus, where it picks up the
+   kind's colour. */
+.tk-lvl {
+  gap: 2px;
+  padding-right: 3px;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.tk-lvl:hover,
+.tk-lvl:focus-within {
+  border-color: var(--tk-ink);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+/* emptied, and CREATE was pressed — said on the plate, not in a window */
+.tk-lvl.is-blank,
+.tk-opt.is-on .tk-lvl.is-blank {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-wash);
+}
+
+/* The caret's half of the plate: no chrome of its own, the shell has it. */
+.tk-lvl-in {
+  min-width: 0;
+  padding: 0;
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: text;
+}
+.tk-lvl-in:focus {
+  outline: none;
+}
+
+/* Take this level out. Faint until the plate is under the pointer or
+   holds focus — five live × marks in a row reads as a warning strip,
+   not a chain — but always in the tab order, and always at the same
+   size, so nothing moves when it lights up. */
+.tk-lvl-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink-faint);
+  opacity: 0.5;
+  cursor: pointer;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.tk-lvl:hover .tk-lvl-x,
+.tk-lvl:focus-within .tk-lvl-x {
+  opacity: 1;
+}
+.tk-lvl-x:hover {
+  color: var(--red);
+  background: var(--red-wash);
+  opacity: 1;
+}
+.tk-lvl-x:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+  color: var(--red);
+}
+
+/* The empty slot at the end of the chain: dashed, because nothing is
+   in it yet. */
+.tk-plate-add {
+  border-style: dashed;
+  border-color: var(--hairline-strong);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tk-opt.is-on .tk-plate-add {
+  border-color: var(--hairline-strong);
+  background: transparent;
+  color: var(--ink-faint);
+}
+.tk-plate-add:hover,
+.tk-opt.is-on .tk-plate-add:hover {
+  border-color: var(--tk-ink);
+  color: var(--tk-ink);
+}
+.tk-plate-add:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+  color: var(--tk-ink);
+}
+
+/* Said once, under the whole list — not once per row. */
+.tk-lvl-hint {
+  padding-top: var(--sp-1);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+/* One short sentence, under the chain it is about. Sentence case and
+   the same size as the caption beside it: a correction, not an alarm. */
+.tk-lvl-note {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--red);
+}
+
+/* -- the live preview --------------------------------------- */
+
+.tk-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-self: start;
+  padding: var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-sunken);
+}
+
+.tk-preview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tk-preview-sub {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.tk-prev-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tk-prev-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 0 4px calc(var(--tk-d, 0) * 16px);
+  min-height: 22px;
+}
+
+.tk-prev-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  color: var(--ink-faint);
+}
+
+.tk-prev-label {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 620;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* deeper groups step back down to sentence case — the outermost level
+   is the loudest, exactly as it is on the finished sheet */
+.tk-prev-line.tk-d1 .tk-prev-label,
+.tk-prev-line.tk-d2 .tk-prev-label,
+.tk-prev-line.tk-d3 .tk-prev-label {
+  font-weight: 560;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+.tk-prev-line.is-leaf .tk-prev-label {
+  font-family: var(--font-mono);
+  font-weight: 450;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+.tk-prev-line.is-more .tk-prev-label {
+  color: var(--ink-faint);
+  letter-spacing: 0.2em;
+}
+
+.tk-prev-count {
+  margin-left: auto;
+  padding-left: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.tk-preview-note {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* -- footer ------------------------------------------------- */
+
+.tk-foot {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-6) var(--sp-5);
+  border-top: 1px solid var(--hairline);
+  background: var(--paper-high);
+}
+
+.tk-name {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  max-width: 300px;
+}
+.tk-name .mono-label {
+  color: var(--ink-faint);
+}
+
+.tk-create {
+  margin-left: auto;
+  padding: 9px 20px;
+  font-size: 11px;
+}
+
+/* ---------------------------------------------------------- */
+/* The rail                                                   */
+/* ---------------------------------------------------------- */
+
+/* Ruled off at the bottom: the tray of types and the list of tables the
+   user actually has are two different registers sharing one column. */
+.tk-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-4) var(--sp-4) var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tk-rail-create {
+  width: 100%;
+  justify-content: center;
+  padding: 9px var(--sp-3);
+}
+
+.tk-rail-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.tk-rail-head {
+  color: var(--ink-faint);
+}
+
+.tk-rail-hint {
+  margin-bottom: var(--sp-2);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.tk-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* On an empty sheet the hint line is not drawn (the invitation card
+   carries it), so the tray keeps its own breathing room. */
+.tk-rail-head + .tk-chips {
+  margin-top: var(--sp-2);
+}
+
+.tk-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 7px var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: grab;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tk-chip:hover {
+  background: var(--paper-high);
+  border-color: var(--hairline);
+}
+.tk-chip:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+  background: var(--paper-high);
+}
+.tk-chip:active {
+  cursor: grabbing;
+  background: var(--blue-wash);
+}
+
+.tk-chip-sym {
+  display: flex;
+  flex: none;
+  color: var(--tk-ink);
+}
+
+.tk-chip-label {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

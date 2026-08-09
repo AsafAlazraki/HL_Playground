@@ -1,0 +1,17 @@
+# dependencies and build output
+node_modules
+dist
+
+# TypeScript incremental build state — machine-specific, never shared
+*.tsbuildinfo
+
+# local tool output
+.playwright-mcp
+*.local
+
+# per-machine editor/agent settings (launch.json IS committed — it is how a
+# collaborator starts the dev server on the right port)
+.claude/settings.local.json
+
+.DS_Store
+Thumbs.db

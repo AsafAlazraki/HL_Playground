@@ -1,0 +1,120 @@
+/* ============================================================
+   HelmLogic Dynamic Config — design tokens
+   Art direction: THE CHART ROOM
+   Two materials, sharply separated:
+   1. CHROME — white nautical panels, marine-navy ink, precise
+      hairlines. Calm, bright, instrument-like.
+   2. CANVAS — true blueprint: deep Prussian navy sheet with fine
+      light gridlines; white entity cards pinned to it.
+   Engineering title-block typography throughout. Crisp, no fluff.
+   ============================================================ */
+
+:root {
+  /* -- chrome surfaces (white nautical) --------------------- */
+  --paper: #f2f6fb;          /* app background */
+  --paper-high: #ffffff;     /* panels, cards, sheets */
+  --paper-sunken: #e7edf5;   /* wells, inputs, recessed areas */
+  --paper-overlay: rgba(255, 255, 255, 0.9);
+
+  /* -- ink (marine navy) ------------------------------------ */
+  --ink: #12283f;            /* primary text / drawing ink */
+  --ink-soft: #4c617a;       /* secondary text */
+  --ink-faint: #8598ad;      /* tertiary, placeholders */
+
+  /* -- nautical blue (the pen) ------------------------------ */
+  --blue: #1d55c4;
+  --blue-deep: #143c8f;
+  --blue-wash: rgba(29, 85, 196, 0.08);
+  --blue-wash-strong: rgba(29, 85, 196, 0.16);
+
+  /* -- red pencil (the reviewer) ---------------------------- */
+  --red: #c2402f;
+  --red-wash: rgba(194, 64, 47, 0.09);
+
+  /* -- THE BLUEPRINT CANVAS --------------------------------- */
+  --canvas-bg: #123252;            /* Prussian blueprint sheet */
+  --canvas-bg-deep: #0d2740;      /* vignette / edge of table */
+  --canvas-grid-minor: rgba(214, 230, 248, 0.055);
+  --canvas-grid-major: rgba(214, 230, 248, 0.11);
+  --canvas-ink: #d9e6f7;           /* labels & strokes on navy */
+  --canvas-ink-soft: rgba(217, 230, 247, 0.6);
+  --canvas-ink-faint: rgba(217, 230, 247, 0.34);
+  --canvas-edge: #9fc0e8;          /* relationship lines */
+  --canvas-edge-selected: #ffffff;
+  --canvas-wash: rgba(217, 230, 247, 0.05); /* zone fills */
+  --canvas-hairline: rgba(217, 230, 247, 0.22);
+
+  /* -- entity accent inks (read on white AND navy) ---------- */
+  --accent-blue: #1d55c4;
+  --accent-carmine: #c2402f;
+  --accent-viridian: #157a52;
+  --accent-ochre: #a87a18;
+  --accent-violet: #6a4bc4;
+  --accent-teal: #0e7d8a;
+  --accent-graphite: #51607a;
+  /* bright variants for strokes/labels ON the navy canvas */
+  --accent-blue-bright: #6f9df0;
+  --accent-carmine-bright: #f0836f;
+  --accent-viridian-bright: #5fc99a;
+  --accent-ochre-bright: #e0b25a;
+  --accent-violet-bright: #a98ff0;
+  --accent-teal-bright: #58c2d0;
+  --accent-graphite-bright: #9fb0c8;
+
+  /* -- field-type inks -------------------------------------- */
+  --type-text: #4c617a;      /* TXT */
+  --type-number: #1d55c4;    /* NUM */
+  --type-boolean: #157a52;   /* Y/N */
+  --type-date: #a87a18;      /* DAT */
+  --type-select: #6a4bc4;    /* LST */
+  --type-reference: #c2402f; /* REF */
+  --type-formula: #0e7d8a;   /* FX  */
+  --type-image: #b0538a;     /* IMG */
+
+  /* -- lines (chrome) --------------------------------------- */
+  --hairline: rgba(18, 40, 63, 0.16);
+  --hairline-strong: rgba(18, 40, 63, 0.36);
+  /* legacy grid names — chrome-side ruled paper, rarely used */
+  --grid-minor: rgba(29, 85, 196, 0.06);
+  --grid-major: rgba(29, 85, 196, 0.12);
+
+  /* -- depth ------------------------------------------------ */
+  --shadow-sheet: 0 1px 0 rgba(18, 40, 63, 0.05),
+    0 8px 20px -10px rgba(18, 40, 63, 0.2);
+  --shadow-sheet-raised: 0 1px 0 rgba(18, 40, 63, 0.07),
+    0 16px 34px -14px rgba(18, 40, 63, 0.3);
+  --shadow-popover: 0 2px 6px rgba(18, 40, 63, 0.1),
+    0 20px 44px -16px rgba(18, 40, 63, 0.32);
+  /* cards pinned to the navy canvas need real lift */
+  --shadow-card-canvas: 0 1px 0 rgba(6, 16, 28, 0.35),
+    0 10px 24px -8px rgba(4, 12, 22, 0.55);
+  --shadow-card-canvas-raised: 0 2px 0 rgba(6, 16, 28, 0.4),
+    0 18px 40px -10px rgba(3, 10, 20, 0.65);
+
+  /* -- type -------------------------------------------------
+     Three faces, one job each (see ART_DIRECTION.md):
+     display = the big moments only, never below 22px, never chrome;
+     ui      = buttons, labels, table text (use 'wdth' 118 for stamps);
+     mono    = every number, code, SKU and micro-label. */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-ui: 'Archivo Variable', 'Archivo', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* -- geometry --------------------------------------------- */
+  --radius: 3px;
+  --radius-sm: 2px;
+  --grid-unit: 16px; /* canvas snap grid */
+
+  /* -- spacing scale (use these, not ad-hoc px) ------------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* -- motion ----------------------------------------------- */
+  --ease-draft: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 120ms;
+  --t-med: 220ms;
+}

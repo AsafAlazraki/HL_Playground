@@ -1,0 +1,765 @@
+/* ============================================================
+   Red-pencil review — all surfaces   (prefix: rv-)
+
+   CHART ROOM chrome only: white instrument panels, marine-navy
+   ink, hairlines, mono micro-stamps, corner registration ticks.
+   The reviewer's ink is --red / --red-wash; a cleared mark is
+   confirmed in --accent-viridian. No --canvas-* tokens live here
+   — even FindingBadge sits on a WHITE card, never on the navy
+   sheet itself. Rhythm on the --sp scale throughout.
+   ============================================================ */
+
+/* ---------------------------------------------------------- */
+/* Shared motifs                                              */
+/* ---------------------------------------------------------- */
+
+/* corner registration ticks — inherit the plate's own ink */
+.rv-tick {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+}
+.rv-tick-tl {
+  top: -4px;
+  left: -4px;
+  border-top: 1px solid currentColor;
+  border-left: 1px solid currentColor;
+}
+.rv-tick-br {
+  bottom: -4px;
+  right: -4px;
+  border-bottom: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+}
+
+.rv-sr-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes rv-cleared {
+  0% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  12% {
+    opacity: 1;
+    transform: none;
+  }
+  74% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes rv-flash {
+  0%,
+  72% {
+    border-color: var(--accent-viridian);
+  }
+  100% {
+    border-color: var(--hairline);
+  }
+}
+
+/* ============================================================
+   The rail — same 340px geometry as the inspector
+   ============================================================ */
+
+.rv-rail {
+  flex: 0 0 340px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--paper-high);
+  border-left: 1px solid var(--hairline);
+  box-shadow: var(--shadow-sheet);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+  z-index: 20;
+}
+
+/* -- head + sheet-health stamp ------------------------------ */
+
+.rv-head {
+  position: relative;
+  flex: 0 0 auto;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper-high);
+}
+
+.rv-head-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.rv-eyebrow {
+  flex: 0 0 auto;
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--ink-faint);
+}
+
+.rv-head-rule {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.rv-close {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.rv-close:hover {
+  color: var(--red);
+  border-color: var(--red);
+  background: var(--red-wash);
+}
+.rv-close:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.rv-stamp {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  background: var(--paper-high);
+}
+/* rubber-stamp double rule */
+.rv-stamp::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  opacity: 0.24;
+  pointer-events: none;
+}
+.rv-stamp.is-marked {
+  color: var(--red);
+  background: var(--red-wash);
+}
+.rv-stamp.is-clean {
+  color: var(--accent-viridian);
+}
+
+.rv-stamp-mark {
+  position: relative;
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: currentColor;
+}
+
+.rv-stamp-split {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.rv-seg {
+  color: var(--ink-faint);
+}
+.rv-seg.is-live {
+  color: currentColor;
+}
+.rv-seg-sep {
+  color: var(--ink-faint);
+}
+
+/* -- body ---------------------------------------------------- */
+
+.rv-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-4) var(--sp-4) var(--sp-6);
+}
+
+/* -- entity group -------------------------------------------- */
+
+.rv-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.rv-group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.rv-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rv-accent, var(--ink));
+}
+
+.rv-group-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.2;
+  letter-spacing: 0.09em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rv-group-count {
+  flex: 0 0 auto;
+  min-width: 14px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--red);
+}
+
+.rv-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* -- review card --------------------------------------------- */
+
+.rv-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+/* the pencil rule down the margin: solid for blockers, dashed for advisories */
+.rv-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: -1px;
+  width: 2px;
+  border-radius: var(--radius) 0 0 var(--radius);
+  background: var(--red);
+}
+.rv-card[data-severity='advisory']::before {
+  background: repeating-linear-gradient(var(--red) 0 5px, transparent 5px 9px);
+  opacity: 0.6;
+}
+.rv-card[data-severity='blocker'] {
+  background: var(--red-wash);
+}
+.rv-card:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--shadow-sheet);
+}
+.rv-card:focus-within {
+  border-color: var(--blue);
+}
+.rv-card.is-flashing {
+  animation:
+    fade-in var(--t-med) var(--ease-draft) both,
+    rv-flash 1500ms var(--ease-draft) both;
+}
+
+.rv-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.rv-card-head:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.rv-card-titlerow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.rv-card-mark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--red);
+}
+
+.rv-card-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rv-card[data-severity='blocker'] .rv-card-title {
+  color: var(--red);
+}
+
+.rv-card-sev {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.rv-card[data-severity='blocker'] .rv-card-sev {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.rv-card-target {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.rv-card-arrow {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--ink-faint);
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.rv-card-address {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.rv-card-head:hover .rv-card-address,
+.rv-card-head:hover .rv-card-arrow,
+.rv-card-head:focus-visible .rv-card-address,
+.rv-card-head:focus-visible .rv-card-arrow {
+  color: var(--blue);
+}
+
+/* the teaching moment — give the prose room to breathe */
+.rv-why {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.62;
+  letter-spacing: 0.004em;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.rv-fix {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+  padding-top: var(--sp-2);
+  border-top: 1px dashed var(--hairline);
+}
+.rv-fix-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rv-apply {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--red);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.rv-apply:hover {
+  background: var(--red);
+  color: var(--paper-high);
+}
+.rv-apply:active {
+  transform: translateY(1px);
+}
+.rv-apply:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* -- cleared mark (the brief confirmation) ------------------- */
+
+/* doubled class keeps this ahead of the [data-severity] card rules */
+.rv-card.rv-ghost {
+  gap: var(--sp-1);
+  border-style: dashed;
+  border-color: var(--accent-viridian);
+  background: var(--paper-high);
+  box-shadow: none;
+  animation: rv-cleared 1500ms var(--ease-draft) both;
+}
+.rv-card.rv-ghost::before {
+  background: var(--accent-viridian);
+  opacity: 0.7;
+}
+.rv-ghost-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.rv-ghost-mark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--accent-viridian);
+}
+.rv-ghost-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent-viridian);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rv-ghost-note {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* -- clean-sheet plate --------------------------------------- */
+
+.rv-clean {
+  display: flex;
+  padding: var(--sp-4) var(--sp-1) var(--sp-2);
+}
+.rv-clean-plate {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-sheet);
+  color: var(--accent-viridian);
+}
+.rv-clean-stamp {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-viridian);
+}
+.rv-clean-rule {
+  display: block;
+  height: 1px;
+  background: var(--hairline);
+}
+.rv-clean-prose {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* ============================================================
+   FindingBadge — the margin mark on a white entity card
+   ============================================================ */
+
+.rv-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  /* hand-drawn pencil circle: deliberately irregular */
+  border: 1px solid var(--red);
+  border-radius: 52% 48% 47% 53% / 48% 52% 48% 52%;
+  background: var(--red-wash);
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  user-select: none;
+  cursor: default;
+}
+/* the second, looser pencil stroke around the first */
+.rv-badge-tick {
+  position: absolute;
+  inset: -3px;
+  border: 1px solid var(--red);
+  border-radius: 47% 53% 52% 48% / 53% 47% 52% 48%;
+  opacity: 0.34;
+  pointer-events: none;
+}
+.rv-badge[data-severity='blocker'] {
+  background: var(--red);
+  color: var(--paper-high);
+}
+.rv-badge[data-severity='blocker'] .rv-badge-tick {
+  opacity: 0.5;
+}
+.rv-badge-count {
+  position: relative;
+}
+
+/* ============================================================
+   FieldMark — the inline mark on a designer field row
+   ============================================================ */
+
+.rv-fm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.rv-fm-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 5px 2px 4px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.rv-fm-trigger:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.rv-fm-glyph {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--red);
+}
+
+.rv-fm-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rv-fm-more {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+
+.rv-fm-caret {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+
+/* blockers carry the wash; advisories are quieter but still marks */
+.rv-fm[data-severity='blocker'] .rv-fm-trigger {
+  border-color: var(--red);
+  background: var(--red-wash);
+  color: var(--red);
+}
+.rv-fm[data-severity='advisory'] .rv-fm-trigger {
+  color: var(--ink-soft);
+}
+.rv-fm-trigger:hover {
+  border-color: var(--red);
+  background: var(--red-wash);
+  color: var(--red);
+}
+.rv-fm-trigger:hover .rv-fm-caret,
+.rv-fm.is-open .rv-fm-caret {
+  color: var(--red);
+}
+
+.rv-fm-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--red);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--paper-sunken);
+  animation: fade-in var(--t-fast) var(--ease-draft) both;
+}
+.rv-fm-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+.rv-fm-item-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+.rv-fm-why {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.58;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+.rv-apply-sm {
+  padding: 3px 7px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+}
+
+.rv-fm-flash {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-viridian);
+  animation: rv-cleared 1500ms var(--ease-draft) both;
+}
+.rv-fm-cleared {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+.rv-fm-cleared .rv-fm-glyph {
+  color: var(--accent-viridian);
+}

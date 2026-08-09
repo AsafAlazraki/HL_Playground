@@ -1,0 +1,415 @@
+/* ============================================================
+   Onboarding (ob-) — two calm screens on the blueprint field.
+   The navy sheet is the room; a single white instrument sits on
+   it. Chrome material (white, --ink) for anything you touch;
+   canvas material (--canvas-*) for anything printed on the navy.
+   ============================================================ */
+
+.ob-root {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow: auto;
+  background: radial-gradient(
+    120% 90% at 50% 38%,
+    var(--canvas-bg) 55%,
+    var(--canvas-bg-deep) 100%
+  );
+  color: var(--canvas-ink);
+}
+
+/* the blueprint ruling — 16px minor, 96px major, pinned to the
+   viewport so the sheet stays still while content scrolls */
+.ob-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--canvas-grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--canvas-grid-major) 1px, transparent 1px),
+    linear-gradient(var(--canvas-grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--canvas-grid-minor) 1px, transparent 1px);
+  background-size:
+    96px 96px,
+    96px 96px,
+    16px 16px,
+    16px 16px;
+}
+
+.ob-screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: calc(var(--sp-6) + var(--sp-5)) var(--sp-6);
+}
+
+/* auto margins centre safely — content taller than the window
+   still starts at the top instead of being clipped */
+.ob-card,
+.ob-col {
+  margin: auto;
+}
+
+/* -- corner registration ticks ------------------------------ */
+.ob-tick {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+}
+.ob-tick--tl {
+  top: -5px;
+  left: -5px;
+  border-top: 1.5px solid var(--canvas-ink-faint);
+  border-left: 1.5px solid var(--canvas-ink-faint);
+}
+.ob-tick--tr {
+  top: -5px;
+  right: -5px;
+  border-top: 1.5px solid var(--canvas-ink-faint);
+  border-right: 1.5px solid var(--canvas-ink-faint);
+}
+.ob-tick--bl {
+  bottom: -5px;
+  left: -5px;
+  border-bottom: 1.5px solid var(--canvas-ink-faint);
+  border-left: 1.5px solid var(--canvas-ink-faint);
+}
+.ob-tick--br {
+  bottom: -5px;
+  right: -5px;
+  border-bottom: 1.5px solid var(--canvas-ink-faint);
+  border-right: 1.5px solid var(--canvas-ink-faint);
+}
+
+/* ============================================================
+   STEP 1 — name the organisation.
+   One white card with real presence: the cover of a logbook.
+   ============================================================ */
+
+.ob-card {
+  --ob-pad: calc(var(--sp-6) + var(--sp-2));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 460px;
+  padding: calc(var(--sp-6) + var(--sp-3)) var(--ob-pad) var(--ob-pad);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card-canvas-raised);
+  color: var(--ink);
+  animation: sheet-in 340ms var(--ease-draft) both;
+}
+
+.ob-mark {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--blue);
+}
+.ob-mark-word {
+  font-size: 15px;
+  letter-spacing: 0.2em;
+  color: var(--ink);
+}
+
+/* full-bleed rule under the mark — the logbook's ruled header */
+.ob-rule {
+  margin: var(--sp-5) calc(-1 * var(--ob-pad)) 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* THE DISPLAY FACE, used where ART_DIRECTION.md says it earns its place:
+   one beautiful serif line against a field of precise technical type. This
+   is the first sentence anyone reads in the product, so it gets the voice. */
+.ob-ask {
+  margin-top: calc(var(--sp-6) + var(--sp-1));
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.16;
+  /* Instrument Serif is drawn tight; a hair of tracking opens it up */
+  letter-spacing: 0.006em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.ob-input {
+  width: 100%;
+  margin-top: var(--sp-5);
+  padding: var(--sp-3) 0;
+  border: 0;
+  border-bottom: 1.5px solid var(--hairline-strong);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 19px;
+  font-weight: 450;
+  color: var(--ink);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.ob-input::placeholder {
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+.ob-input:hover {
+  border-bottom-color: var(--ink-soft);
+}
+.ob-input:focus,
+.ob-input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--blue);
+  box-shadow: 0 1.5px 0 var(--blue);
+}
+
+.ob-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 46px;
+  margin-top: calc(var(--sp-6) + var(--sp-2));
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.ob-primary:not(:disabled):hover {
+  background: var(--blue-deep);
+  border-color: var(--blue-deep);
+}
+.ob-primary:not(:disabled):active {
+  transform: translateY(1px);
+}
+.ob-primary:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* waiting, not broken — a sunken well until a name is typed, so it
+   still reads as the button rather than a second empty field */
+.ob-primary:disabled {
+  background: var(--paper-sunken);
+  border-color: var(--hairline);
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+/* ============================================================
+   STEP 2 — pick an industry.
+   ============================================================ */
+
+.ob-col {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 760px;
+}
+
+.ob-nav {
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+
+.ob-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: calc(-1 * var(--sp-3));
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--canvas-ink-soft);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.ob-back:hover {
+  color: var(--canvas-ink);
+  border-color: var(--canvas-hairline);
+}
+.ob-back:focus-visible {
+  outline: 2px solid var(--canvas-edge);
+  outline-offset: 2px;
+  color: var(--canvas-ink);
+}
+
+.ob-head {
+  margin-top: calc(var(--sp-6) + var(--sp-4));
+  text-align: center;
+  animation: fade-in var(--t-med) var(--ease-draft) 60ms both;
+}
+.ob-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: 0.006em;
+  color: var(--canvas-ink);
+  text-wrap: balance;
+}
+.ob-sub {
+  margin-top: var(--sp-3);
+  font-size: 14px;
+  color: var(--canvas-ink-soft);
+}
+
+.ob-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5);
+  margin-top: calc(var(--sp-6) + var(--sp-5));
+}
+
+/* -- one choice -------------------------------------------- */
+.ob-kind {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-5) calc(var(--sp-5) + var(--sp-1));
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-card-canvas);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+  transition:
+    transform var(--t-med) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+/* accent ink strip along the top edge — solid on the live card,
+   a plain hairline on the ones that are not built yet */
+.ob-kind::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-blue);
+}
+
+.ob-kind-sym {
+  display: block;
+  margin-bottom: var(--sp-2);
+  color: var(--ink);
+  transition: color var(--t-med) var(--ease-draft);
+}
+.ob-kind-sym svg {
+  display: block;
+  width: 96px;
+  height: 59px;
+}
+
+.ob-kind-label {
+  font-size: 14px;
+  color: var(--ink);
+}
+.ob-kind-blurb {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* live card: hover and focus both lift it off the sheet */
+.ob-kind:not(:disabled):hover,
+.ob-kind:not(:disabled):focus-visible {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-canvas-raised);
+  border-color: var(--accent-blue);
+}
+.ob-kind:not(:disabled):hover .ob-kind-sym,
+.ob-kind:not(:disabled):focus-visible .ob-kind-sym {
+  color: var(--accent-blue);
+}
+.ob-kind:not(:disabled):focus-visible {
+  outline: 2px solid var(--canvas-edge-selected);
+  outline-offset: 3px;
+}
+.ob-kind:not(:disabled):active {
+  transform: translateY(-1px);
+}
+
+/* -- not yet drawn ----------------------------------------- */
+.ob-kind--soon {
+  background: var(--paper);
+  border-color: var(--hairline);
+  cursor: default;
+}
+.ob-kind--soon::before {
+  background: var(--hairline);
+}
+.ob-kind--soon .ob-kind-sym {
+  color: var(--ink-faint);
+}
+.ob-kind--soon .ob-kind-label {
+  color: var(--ink-soft);
+}
+.ob-kind--soon .ob-kind-blurb {
+  color: var(--ink-faint);
+}
+
+.ob-kind-stamp {
+  position: absolute;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* -- wide: all four in a row -------------------------------- */
+@media (min-width: 1180px) {
+  .ob-col {
+    max-width: 1120px;
+  }
+  .ob-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* base.css zeroes durations for reduced motion but not delays —
+   without this the staggered cards would sit invisible first */
+@media (prefers-reduced-motion: reduce) {
+  .ob-card,
+  .ob-kind,
+  .ob-nav,
+  .ob-head {
+    animation-delay: 0ms !important;
+  }
+}

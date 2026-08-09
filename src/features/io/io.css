@@ -1,0 +1,427 @@
+/* ============================================================
+   io — import/export popover, chart-room chrome styled.
+   All classes are io- prefixed; colors come from tokens.css.
+   Sections share the --sp-4 left edge; internals on --sp-2/-3.
+   ============================================================ */
+
+.io-root {
+  position: relative;
+  display: inline-flex;
+}
+
+.io-trigger[aria-expanded='true'] {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
+
+.io-glyph {
+  flex: none;
+  display: block;
+}
+
+/* -- the popover sheet -------------------------------------- */
+.io-pop {
+  position: absolute;
+  top: calc(100% + var(--sp-3));
+  right: 0;
+  width: 348px;
+  display: flex;
+  flex-direction: column;
+  /* the title block and CLEAR SHEET stay put on a short screen; only the
+     sections between them scroll */
+  max-height: calc(100vh - 96px);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-popover);
+  z-index: 60;
+  animation: sheet-in var(--t-med) var(--ease-draft);
+  outline: none;
+}
+
+.io-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* corner registration ticks */
+.io-tick {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 0 solid var(--blue);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.io-tick-tl { top: 4px; left: 4px; border-top-width: 1px; border-left-width: 1px; }
+.io-tick-tr { top: 4px; right: 4px; border-top-width: 1px; border-right-width: 1px; }
+.io-tick-bl { bottom: 4px; left: 4px; border-bottom-width: 1px; border-left-width: 1px; }
+.io-tick-br { bottom: 4px; right: 4px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* -- head --------------------------------------------------- */
+.io-head {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+.io-head-title {
+  color: var(--ink);
+}
+.io-head-rev {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+/* -- sections ----------------------------------------------- */
+.io-section {
+  padding: var(--sp-4);
+}
+.io-section-t {
+  border-top: 1px solid var(--hairline);
+}
+
+/* caption with a trailing dimension line */
+.io-caption {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.io-caption::after {
+  content: '';
+  flex: 1;
+  height: 5px;
+  border-bottom: 1px solid var(--hairline);
+  border-right: 1px solid var(--hairline-strong);
+}
+
+/* -- export choice cards ------------------------------------ */
+.io-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.io-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  text-align: left;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.io-card .io-glyph {
+  color: var(--blue);
+  margin-bottom: 2px;
+}
+.io-card:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  transform: translateY(-1px);
+}
+.io-card:active {
+  transform: none;
+}
+.io-card:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.io-card-title {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.io-card-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.io-card-meta {
+  /* auto, so the dashed rule sits on the same line in both cards even when
+     one sub-label wraps to two lines */
+  margin-top: auto;
+  padding-top: var(--sp-2);
+  align-self: stretch;
+  border-top: 1px dashed var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.io-blank-note {
+  margin-top: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+/* -- import dropzone ---------------------------------------- */
+.io-drop {
+  margin-top: var(--sp-3);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-3);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-sunken);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.io-drop:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.io-drop.is-over {
+  border-style: solid;
+  border-color: var(--blue);
+  background: var(--blue-wash-strong);
+  color: var(--blue-deep);
+}
+.io-drop .io-glyph {
+  margin-bottom: 2px;
+}
+.io-drop-main {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+.io-drop.is-over .io-drop-main,
+.io-drop:hover .io-drop-main {
+  color: var(--blue-deep);
+}
+.io-drop-sub {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: currentColor;
+  opacity: 0.75;
+}
+
+.io-file {
+  display: none;
+}
+
+/* -- red-pencil rejection note ------------------------------ */
+.io-error {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: var(--red-wash);
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+  animation: fade-in var(--t-fast) var(--ease-draft);
+}
+.io-error strong {
+  font-weight: 700;
+}
+
+/* -- import preview plate ----------------------------------- */
+.io-plate {
+  margin-top: var(--sp-3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  overflow: hidden;
+  animation: sheet-in var(--t-med) var(--ease-draft);
+}
+.io-plate-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
+}
+.io-plate-name {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.io-plate-rev {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--blue-deep);
+}
+.io-plate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.io-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px; /* number to its label — optical, below the scale */
+  padding: var(--sp-3) var(--sp-2);
+  border-right: 1px solid var(--hairline);
+}
+.io-stat:last-child {
+  border-right: none;
+}
+.io-stat-num {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+.io-stat-lbl {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.io-plate-src {
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.io-plate-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.io-grow {
+  flex: 1;
+}
+.io-replace:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* -- footer ------------------------------------------------- */
+.io-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-4);
+  border-top: 1px solid var(--hairline);
+  background: var(--paper-sunken);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.io-clear {
+  padding: var(--sp-1) var(--sp-2);
+  margin-left: calc(-1 * var(--sp-2)); /* keeps its label on the x=16 line */
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.io-clear:hover {
+  color: var(--red);
+  background: var(--red-wash);
+}
+.io-foot-sig {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+/* -- stamp toast -------------------------------------------- */
+.io-stamp {
+  position: absolute;
+  top: calc(100% + var(--sp-3));
+  right: 0;
+  z-index: 70;
+  padding: var(--sp-2) var(--sp-3);
+  border: 2px solid var(--blue);
+  border-radius: var(--radius-sm);
+  background: var(--paper-overlay);
+  box-shadow: inset 0 0 0 2px var(--paper-high), inset 0 0 0 3px var(--blue);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--blue-deep);
+  white-space: nowrap;
+  transform: rotate(-2deg);
+  animation: io-stamp-in 240ms var(--ease-draft);
+  pointer-events: none;
+}
+
+@keyframes io-stamp-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-2deg) scale(1.3);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(-2deg) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-2deg) scale(1);
+  }
+}

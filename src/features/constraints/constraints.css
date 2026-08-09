@@ -1,0 +1,655 @@
+/* ============================================================
+   CONSTRAINTS (cn-) — business rules as editable English.
+
+   THE DRAWING OFFICE, chrome side: white sheet on the paper field,
+   marine-navy ink, hairlines, registration ticks, IBM Plex Mono for
+   every micro-label, one accent. Near-monochrome, so the sentence
+   itself is the only thing with colour in it.
+
+   The whole visual idea is in ONE rule: `.cn-tok.is-live` carries an
+   inset hairline underline. Underlined = you can change this word.
+   Not underlined = prose. Nothing else distinguishes the collapsed
+   card from the open editor, because nothing else needs to.
+
+   Every measurement is on the --sp scale and every colour is a
+   token. There is not a raw hex in this file.
+   ============================================================ */
+
+.cn-root {
+  height: 100%;
+  overflow: auto;
+  background: var(--paper);
+  padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) * 2);
+}
+
+.cn-sheet {
+  position: relative;
+  max-width: 840px;
+  margin: 0 auto;
+  padding: calc(var(--sp-6) + var(--sp-2)) var(--sp-6) var(--sp-6);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sheet);
+}
+
+/* -- corner registration ticks ------------------------------ */
+.cn-tick {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+}
+.cn-tick--tl {
+  top: -1px;
+  left: -1px;
+  border-top: 1.25px solid var(--hairline-strong);
+  border-left: 1.25px solid var(--hairline-strong);
+}
+.cn-tick--tr {
+  top: -1px;
+  right: -1px;
+  border-top: 1.25px solid var(--hairline-strong);
+  border-right: 1.25px solid var(--hairline-strong);
+}
+
+/* ============================================================
+   THE HEAD
+   ============================================================ */
+
+.cn-head {
+  padding-bottom: var(--sp-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.cn-eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* the one display moment on the page */
+.cn-title {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.08;
+  color: var(--ink);
+}
+
+.cn-lede {
+  margin: var(--sp-3) 0 0;
+  max-width: 62ch;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.cn-count {
+  margin: var(--sp-3) 0 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.cn-count-bad {
+  color: var(--red);
+}
+
+/* ============================================================
+   THE SENTENCE — three token roles, one underline
+   ============================================================ */
+
+.cn-sentence {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  /* inline controls need the leading or the sentence turns to mush.
+     This one number is the difference between prose and a mess. */
+  line-height: 2.3;
+  color: var(--ink);
+}
+.cn-sentence.is-big {
+  font-size: 15.5px;
+  line-height: 2.45;
+}
+
+/* the connective tissue — "When", "and", the comma */
+.cn-word {
+  color: var(--ink-faint);
+  margin: 0 2px;
+}
+.cn-word.is-tight {
+  margin-left: -3px;
+}
+
+.cn-tok {
+  position: relative;
+  display: inline-block;
+  /* the token hugs its own word — the paragraph keeps the leading, so
+     the underline sits under the text and not at the foot of the line */
+  line-height: 1.6;
+  padding: 0 1px;
+  margin: 0 1px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+/* colour carries grammar, so the eye parses the sentence before it
+   reads it: subject in ink, verb quiet, value in the pen's blue */
+.cn-tok--field {
+  color: var(--ink);
+  font-weight: 500;
+}
+.cn-tok--op {
+  color: var(--ink-soft);
+}
+.cn-tok--value {
+  color: var(--blue-deep);
+  font-weight: 500;
+}
+
+/* THE affordance: an editable word is underlined, and nothing else is.
+   Drawn as a background rule rather than a border or an inset shadow —
+   a border would change the line's metrics and an inset shadow paints
+   a hairline all the way round the token in Chrome. */
+.cn-tok.is-live {
+  padding: 1px 5px;
+  cursor: pointer;
+  background-color: transparent;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-size: 100% 1.5px;
+  background-position: left bottom;
+  transition: background-color var(--t-fast) var(--ease-draft);
+}
+.cn-tok.is-live:hover {
+  background-color: var(--blue-wash);
+}
+.cn-tok.is-live:has(.cn-tok-input:focus-visible),
+.cn-tok.is-live:has(.cn-tok-typed:focus-visible) {
+  background-color: var(--blue-wash);
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* the native control, stretched over the word and invisible */
+.cn-tok-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+  appearance: none;
+}
+
+.cn-tok-face {
+  font-style: normal;
+  pointer-events: none;
+}
+
+/* a number is typed, never picked off a list of every number
+   anyone has ever entered */
+.cn-tok-typed {
+  min-width: 3ch;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+.cn-tok-typed::placeholder {
+  color: var(--ink-faint);
+}
+.cn-tok-typed[type='date'] {
+  min-width: 10ch;
+}
+.cn-tok-typed[type='number'] {
+  appearance: textfield;
+}
+.cn-tok-typed[type='number']::-webkit-inner-spin-button,
+.cn-tok-typed[type='number']::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+/* -- the "is one of" set ------------------------------------ */
+
+.cn-chip {
+  margin: 0 1px;
+  padding: 1px 6px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+}
+/* a chip is already a box, so it does not take the underline too */
+.cn-chip.is-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-image: none;
+}
+.cn-chip--add.is-live {
+  background-image: none;
+}
+.cn-chip--add {
+  display: inline-block;
+  border-style: dashed;
+  color: var(--ink-faint);
+}
+
+.cn-chip-text {
+  pointer-events: none;
+}
+
+.cn-chip-x {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.cn-chip-x:hover {
+  color: var(--red);
+}
+.cn-chip-x:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   WRITE A NEW RULE
+   ============================================================ */
+
+.cn-new {
+  position: relative;
+  margin-top: var(--sp-5);
+  padding: var(--sp-5);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+}
+.cn-new::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 2px;
+  background: var(--ink);
+}
+
+.cn-new-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0 var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.cn-new-mark {
+  display: inline-flex;
+  color: var(--ink-soft);
+}
+.cn-new-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cn-new-cap {
+  grid-column: 2;
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.cn-new-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.cn-add {
+  padding: 8px 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.cn-add:hover:not(:disabled) {
+  background: var(--blue-deep);
+  border-color: var(--blue-deep);
+}
+.cn-add:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.cn-add:disabled {
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   THE LIST
+   ============================================================ */
+
+.cn-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+}
+.cn-list-item {
+  list-style: none;
+}
+
+.cn-card {
+  position: relative;
+  padding: var(--sp-3) var(--sp-4) var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  transition: border-color var(--t-fast) var(--ease-draft);
+}
+.cn-card.is-open {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--shadow-sheet);
+}
+.cn-card.is-conflict {
+  border-color: var(--red);
+  box-shadow: inset 2px 0 0 var(--red);
+}
+/* switched off is dimmed, never hidden — the authoring survives */
+.cn-card.is-off .cn-card-open,
+.cn-card.is-off .cn-card-body,
+.cn-card.is-off .cn-because {
+  opacity: 0.5;
+}
+
+.cn-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 22px;
+}
+
+.cn-badges {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+}
+
+.cn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+.cn-badge--active {
+  color: var(--accent-teal);
+}
+.cn-badge--conflict {
+  color: var(--red);
+  background: var(--red-wash);
+}
+.cn-badge--off {
+  color: var(--ink-faint);
+}
+.cn-badge--edited {
+  color: var(--accent-violet);
+}
+
+/* -- the switch, never a delete ----------------------------- */
+
+.cn-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+  padding: 3px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.cn-switch:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.cn-switch-track {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.cn-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  background: var(--ink-faint);
+  transition:
+    transform var(--t-med) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.cn-switch.is-on .cn-switch-track {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+.cn-switch.is-on .cn-switch-knob {
+  background: var(--blue);
+  transform: translateX(16px);
+}
+.cn-switch:hover .cn-switch-track {
+  border-color: var(--blue);
+}
+
+.cn-switch-word {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+.cn-switch.is-on .cn-switch-word {
+  color: var(--blue-deep);
+}
+
+/* -- the sentence, collapsed and open ----------------------- */
+
+.cn-card-open {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: var(--sp-1) 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.cn-card-open:hover {
+  background: var(--blue-wash);
+}
+.cn-card-open:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.cn-card-body {
+  padding: var(--sp-1) 0;
+}
+
+/* -- the reason -------------------------------------------- */
+
+.cn-because {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: var(--sp-1) 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.cn-because-kw {
+  flex: 0 0 auto;
+  color: var(--ink-faint);
+}
+.cn-because-none {
+  color: var(--ink-faint);
+}
+.cn-because.is-editing {
+  margin-top: var(--sp-3);
+}
+.cn-because-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 3px 0;
+  border: none;
+  border-bottom: 1px solid var(--hairline-strong);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink);
+}
+.cn-because-input::placeholder {
+  color: var(--ink-faint);
+}
+.cn-because-input:focus {
+  outline: none;
+  border-bottom-color: var(--blue);
+}
+.cn-because-input:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* -- the foot ---------------------------------------------- */
+
+.cn-card-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+}
+
+.cn-meta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.cn-meta--dim {
+  color: var(--ink-faint);
+}
+
+.cn-done {
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.cn-done:hover {
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
+.cn-done:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   EMPTY STATES — both say what to do next
+   ============================================================ */
+
+.cn-void {
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+}
+.cn-void--small {
+  padding: var(--sp-5) var(--sp-4);
+}
+.cn-void-mark {
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+.cn-void-title {
+  margin: var(--sp-3) 0 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--ink);
+}
+.cn-void-note {
+  margin: var(--sp-2) auto 0;
+  max-width: 46ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+}

@@ -1,0 +1,1209 @@
+/* ============================================================
+   Entity Designer — schema sheet styles   (prefix: ds-)
+   CHART ROOM chrome: white instrument panel, marine-navy ink,
+   hairlines, red-pencil marks, mono micro-labels, corner ticks.
+   Rhythm on the --sp scale: sections gap --sp-5, related
+   controls --sp-2/-3, micro-label to value --sp-1.
+   ============================================================ */
+
+.ds-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-4) var(--sp-4) var(--sp-5);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+/* ---------------------------------------------------------- */
+/* micro-labels & captions                                    */
+/* ---------------------------------------------------------- */
+
+.ds-lab {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+}
+
+.ds-lab-inline {
+  font-size: 9.5px;
+  color: var(--ink-faint);
+}
+
+.ds-caption {
+  margin-top: var(--sp-1);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.ds-hint {
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------- */
+/* title block                                                */
+/* ---------------------------------------------------------- */
+
+.ds-titleblock {
+  position: relative;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-sheet);
+}
+
+/* corner registration ticks */
+.ds-titleblock::before,
+.ds-titleblock::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+}
+.ds-titleblock::before {
+  top: -4px;
+  left: -4px;
+  border-top: 2px solid var(--ink);
+  border-left: 2px solid var(--ink);
+}
+.ds-titleblock::after {
+  bottom: -4px;
+  right: -4px;
+  border-bottom: 2px solid var(--ink);
+  border-right: 2px solid var(--ink);
+}
+
+/* every row shares the same 12px inner left edge */
+.ds-titleblock-row {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+.ds-titleblock-row:last-child {
+  border-bottom: 0;
+}
+
+.ds-tag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ds-sheet-tag {
+  color: var(--ink-faint);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+}
+
+/* SAVED stamp — lights while mutations land, fades after */
+.ds-saved {
+  color: var(--accent-viridian);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  transform: rotate(-2deg);
+  opacity: 0;
+  transition: opacity 420ms var(--ease-draft);
+}
+.ds-saved-show {
+  opacity: 1;
+  transition: opacity 90ms var(--ease-draft);
+}
+
+/* -- entity name (inline edit) ------------------------------ */
+
+.ds-name-view {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 100%;
+  margin: -2px -5px;
+  padding: 2px 5px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--ink);
+  text-align: left;
+  cursor: text;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.ds-name-view:hover {
+  background: var(--blue-wash);
+}
+.ds-name-text {
+  overflow-wrap: anywhere;
+}
+.ds-name-pencil {
+  display: inline-flex;
+  flex: none;
+  color: var(--ink-faint);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.ds-name-view:hover .ds-name-pencil,
+.ds-name-view:focus-visible .ds-name-pencil {
+  opacity: 1;
+}
+
+.ds-name-input {
+  width: calc(100% + 10px);
+  margin: -2px -5px;
+  padding: 2px 5px;
+  border: 0;
+  border-bottom: 1.5px solid var(--blue);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--blue-wash);
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.ds-name-input:focus {
+  outline: none;
+}
+
+/* -- description (quiet, auto-growing) ---------------------- */
+
+.ds-desc-row {
+  transition: box-shadow var(--t-fast) var(--ease-draft);
+}
+.ds-desc-row:focus-within {
+  box-shadow: inset 2px 0 0 var(--blue);
+}
+
+.ds-desc {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.ds-desc::placeholder {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.ds-desc:focus {
+  outline: none;
+}
+
+/* -- accent ink picker -------------------------------------- */
+
+.ds-inkrow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.ds-swatches {
+  display: flex;
+  gap: var(--sp-2);
+}
+.ds-swatch {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    transform var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.ds-swatch:hover {
+  transform: scale(1.18);
+}
+.ds-swatch-sel {
+  box-shadow:
+    0 0 0 2px var(--paper-high),
+    0 0 0 3.5px currentColor;
+}
+.ds-ink-name {
+  padding-bottom: 2px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------- */
+/* section rules (dimension-line motif)                       */
+/* ---------------------------------------------------------- */
+
+.ds-sect {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.ds-sect-label {
+  color: var(--ink);
+}
+.ds-sect-rule {
+  position: relative;
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+.ds-sect-rule::before,
+.ds-sect-rule::after {
+  content: '';
+  position: absolute;
+  top: -2.5px;
+  width: 1px;
+  height: 6px;
+  background: var(--hairline-strong);
+}
+.ds-sect-rule::before {
+  left: 0;
+}
+.ds-sect-rule::after {
+  right: 0;
+}
+.ds-sect-meta {
+  color: var(--blue);
+}
+.ds-sect-danger .ds-sect-label {
+  color: var(--red);
+}
+.ds-sect-danger .ds-sect-rule {
+  background: color-mix(in srgb, var(--red) 30%, transparent);
+}
+.ds-sect-danger .ds-sect-rule::before,
+.ds-sect-danger .ds-sect-rule::after {
+  background: var(--red);
+}
+
+/* ---------------------------------------------------------- */
+/* fields list                                                */
+/* ---------------------------------------------------------- */
+
+.ds-fields-sect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.ds-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.ds-empty-fields {
+  padding: var(--sp-4);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  text-align: center;
+}
+.ds-empty-fields .mono-label {
+  color: var(--ink-faint);
+}
+.ds-empty-fields p {
+  margin-top: var(--sp-1);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* -- one field row ------------------------------------------ */
+
+.ds-frow {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.ds-frow:hover {
+  border-color: var(--hairline-strong);
+}
+.ds-frow-open {
+  border-color: var(--blue);
+  box-shadow: var(--shadow-sheet);
+}
+
+.ds-frow-head {
+  display: flex;
+  align-items: stretch;
+}
+
+.ds-frow-arrows {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--hairline);
+}
+.ds-arrow-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.ds-arrow-btn + .ds-arrow-btn {
+  border-top: 1px solid var(--hairline);
+}
+.ds-arrow-btn:hover:not(:disabled) {
+  color: var(--blue);
+  background: var(--blue-wash);
+}
+.ds-arrow-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.ds-frow-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 0;
+  background: none;
+  font-size: 13px;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.ds-frow-main .type-tag {
+  flex: none;
+}
+.ds-frow-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.ds-frow-untitled {
+  color: var(--ink-faint);
+  font-style: italic;
+  font-weight: 400;
+}
+.ds-req {
+  margin-left: 2px;
+  color: var(--red);
+  font-weight: 700;
+}
+.ds-frow-caret {
+  display: inline-flex;
+  flex: none;
+  color: var(--ink-faint);
+  transition:
+    transform var(--t-med) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.ds-frow-main:hover .ds-frow-caret {
+  color: var(--blue);
+}
+.ds-frow-open .ds-frow-caret {
+  transform: rotate(90deg);
+  color: var(--blue);
+}
+
+.ds-frow-del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  border: 0;
+  border-left: 1px solid var(--hairline);
+  background: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.ds-frow-del:hover {
+  color: var(--red);
+  background: var(--red-wash);
+}
+
+/* -- expanded editor ---------------------------------------- */
+
+/* --sp-3 all around: every label/input inside the accordion
+   shares one 12px left edge */
+.ds-frow-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+.ds-ctl-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-type-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.ds-type-row .type-tag {
+  flex: none;
+}
+
+.ds-warn {
+  margin-top: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--red);
+}
+.ds-warn::before {
+  content: '▲ ';
+  font-size: 7px;
+  vertical-align: 1px;
+}
+
+/* -- drafting checkbox -------------------------------------- */
+
+.ds-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: fit-content;
+  cursor: pointer;
+  user-select: none;
+}
+.ds-check-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.ds-check-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  color: transparent;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.ds-check:hover .ds-check-box {
+  border-color: var(--blue);
+}
+.ds-check-input:checked + .ds-check-box {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue);
+}
+.ds-check-input:focus-visible + .ds-check-box {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.ds-check-label {
+  color: var(--ink-soft);
+}
+.ds-check-req {
+  margin-left: -4px;
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.ds-check-input:checked ~ .ds-check-req {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------- */
+/* sub-editors (options / reference / formula)                */
+/* ---------------------------------------------------------- */
+
+.ds-sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px dashed var(--hairline);
+}
+.ds-sub-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ds-sub-count {
+  color: var(--blue);
+}
+
+/* -- mini icon buttons -------------------------------------- */
+
+.ds-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.ds-mini-btn:hover:not(:disabled) {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+.ds-mini-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ds-mini-danger:hover:not(:disabled) {
+  color: var(--red);
+  border-color: var(--red);
+  background: var(--red-wash);
+}
+
+/* -- options editor ----------------------------------------- */
+
+.ds-opt-addrow {
+  display: flex;
+  gap: var(--sp-2);
+}
+.ds-opt-addbtn {
+  width: 30px;
+  height: auto;
+  align-self: stretch;
+}
+
+.ds-opt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ds-opt-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 2px;
+  border-bottom: 1px solid var(--hairline);
+}
+.ds-opt-row:last-child {
+  border-bottom: 0;
+}
+.ds-opt-idx {
+  flex: none;
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+.ds-opt-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+.ds-opt-btns {
+  display: flex;
+  gap: var(--sp-1);
+  opacity: 0.55;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.ds-opt-row:hover .ds-opt-btns,
+.ds-opt-row:focus-within .ds-opt-btns {
+  opacity: 1;
+}
+
+/* -- reference editor --------------------------------------- */
+
+.ds-ref-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.ds-ref-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-size: 12.5px;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.ds-ref-item:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+.ds-ref-item-sel {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  box-shadow: inset 0 0 0 1px var(--blue);
+}
+.ds-ref-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.ds-ref-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-ref-check {
+  display: inline-flex;
+  flex: none;
+  color: var(--blue);
+}
+
+.ds-ref-empty {
+  padding: var(--sp-4) var(--sp-3);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  text-align: center;
+}
+.ds-ref-empty .mono-label {
+  color: var(--ink-faint);
+}
+.ds-ref-empty p {
+  margin-top: var(--sp-1);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* -- formula workbench -------------------------------------- */
+
+.ds-fx-tag {
+  color: var(--type-formula);
+}
+
+.ds-fx-ta {
+  width: 100%;
+  min-height: 64px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ink);
+  resize: vertical;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.ds-fx-ta:hover {
+  border-color: var(--hairline-strong);
+}
+.ds-fx-ta:focus {
+  outline: none;
+  border-color: var(--type-formula);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--type-formula) 12%, transparent);
+}
+.ds-fx-ta::placeholder {
+  color: var(--ink-faint);
+}
+
+.ds-fx-ok {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.ds-fx-stamp {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  color: var(--accent-viridian);
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  transform: rotate(-1.5deg);
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+.ds-fx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.ds-fx-dep-label {
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+.ds-fx-chip {
+  padding: 1px 7px;
+  border: 1px solid color-mix(in srgb, var(--type-formula) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--type-formula) 7%, transparent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--type-formula);
+}
+
+.ds-fx-err {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--red);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--red-wash);
+  animation: fade-in var(--t-fast) var(--ease-draft) both;
+}
+.ds-fx-err-label {
+  font-size: 8.5px;
+  color: var(--red);
+}
+.ds-fx-err-msg {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.ds-fx-insert-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.ds-fx-insert-chip {
+  padding: 2px 6px;
+  border: 1px dashed currentColor;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.ds-fx-insert-chip:hover {
+  background: var(--blue-wash);
+  transform: translateY(-1px);
+}
+
+.ds-fx-fns-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.ds-fx-fns-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: fit-content;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.ds-fx-fns-toggle:hover {
+  color: var(--blue);
+}
+.ds-fx-fns-label {
+  color: inherit;
+}
+.ds-fx-caret {
+  display: inline-flex;
+  color: inherit;
+  transition: transform var(--t-med) var(--ease-draft);
+}
+.ds-fx-caret-open {
+  transform: rotate(90deg);
+}
+
+.ds-fx-fns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+.ds-fx-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.ds-fx-hint code {
+  color: var(--type-formula);
+}
+.ds-fx-fn-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ds-fx-fn {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--sp-1) 0;
+  border-bottom: 1px dashed var(--hairline);
+}
+.ds-fx-fn:last-child {
+  border-bottom: 0;
+}
+.ds-fx-fn-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--type-formula);
+}
+.ds-fx-fn-desc {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------- */
+/* add-field tray                                             */
+/* ---------------------------------------------------------- */
+
+.ds-add-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.ds-add-btn {
+  justify-content: center;
+  border-style: dashed;
+}
+.ds-add-btn[aria-expanded='true'] {
+  border-style: solid;
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+
+.ds-add-menu {
+  overflow: hidden;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-popover);
+  animation: sheet-in var(--t-fast) var(--ease-draft) both;
+}
+.ds-add-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.ds-add-item:last-child {
+  border-bottom: 0;
+}
+.ds-add-item:hover {
+  background: var(--blue-wash);
+}
+.ds-add-item .type-tag {
+  flex: none;
+}
+.ds-add-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ds-add-item-name {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.ds-add-item-desc {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------- */
+/* guardrail notes — red pencil, written in the margin        */
+/* ---------------------------------------------------------- */
+
+.ds-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid color-mix(in srgb, var(--red) 40%, transparent);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--red-wash);
+  animation: fade-in var(--t-fast) var(--ease-draft) both;
+}
+.ds-note-tag {
+  flex: none;
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  color: var(--red);
+}
+.ds-note-text {
+  flex: 1 1 12ch;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.ds-note-detail {
+  flex: 1 1 100%;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--red);
+  overflow-wrap: anywhere;
+}
+.ds-note-action {
+  flex: none;
+  margin-left: auto;
+  padding: 1px 7px;
+  border: 1px dashed color-mix(in srgb, var(--red) 55%, transparent);
+  border-radius: var(--radius-sm);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.ds-note-action:hover,
+.ds-note-action:focus-visible {
+  border-style: solid;
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+}
+
+/* where notes sit relative to the control they answer for */
+.ds-name-note,
+.ds-ctl-note {
+  margin-top: var(--sp-2);
+}
+.ds-frow-guard {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+/* a refused input keeps the red pencil on its edge */
+.ds-input-refused,
+.ds-input-refused:hover {
+  border-color: var(--red);
+}
+.ds-input-refused:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-wash);
+}
+.ds-name-input-refused {
+  border-bottom-color: var(--red);
+  background: var(--red-wash);
+}
+.ds-fx-ta-refused,
+.ds-fx-ta-refused:hover {
+  border-color: color-mix(in srgb, var(--red) 55%, transparent);
+}
+.ds-fx-ta-refused:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-wash);
+}
+
+/* ---------------------------------------------------------- */
+/* reviewer marks — annotations, not form errors              */
+/* ---------------------------------------------------------- */
+
+.ds-marks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ds-sect-mark .ds-sect-label,
+.ds-sect-mark .ds-sect-meta {
+  color: var(--red);
+}
+.ds-sect-mark .ds-sect-rule {
+  background: color-mix(in srgb, var(--red) 28%, transparent);
+}
+.ds-sect-mark .ds-sect-rule::before,
+.ds-sect-mark .ds-sect-rule::after {
+  background: var(--red);
+}
+
+.ds-mark-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* no box, no icon-in-a-circle: a pencil rule down the margin */
+.ds-mark {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
+  border-left: 2px solid color-mix(in srgb, var(--red) 45%, transparent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: color-mix(in srgb, var(--red) 4%, transparent);
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+.ds-mark-blocker {
+  border-left-color: var(--red);
+  background: var(--red-wash);
+}
+
+.ds-mark-gut {
+  display: inline-flex;
+  flex: none;
+  margin-top: 3px;
+  color: var(--red);
+  opacity: 0.75;
+}
+
+.ds-mark-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.ds-mark-title {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--red);
+}
+.ds-mark-why {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.ds-mark-fixrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+.ds-mark-fix {
+  flex: none;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--red) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--red);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.ds-mark-fix:hover,
+.ds-mark-fix:focus-visible {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+}
+.ds-mark-fix:active {
+  transform: translateY(1px);
+}
+.ds-mark-fixlabel {
+  min-width: 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+/* the per-field mark, written in this row's own margin — indented
+   to the field name's left edge (arrows column + the head's inset) */
+.ds-frow-mark {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) calc(21px + var(--sp-2));
+  border-top: 1px dashed var(--hairline);
+}
+.ds-frow-mark:empty {
+  display: none;
+}
+
+/* ---------------------------------------------------------- */
+/* danger strip                                               */
+/* ---------------------------------------------------------- */
+
+.ds-danger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.ds-danger-note {
+  font-size: 9px;
+  line-height: 1.7;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.ds-danger-btn {
+  align-self: flex-start;
+  color: var(--red);
+  border-color: color-mix(in srgb, var(--red) 40%, transparent);
+}

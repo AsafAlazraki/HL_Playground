@@ -1,0 +1,1425 @@
+/* ============================================================
+   shell — the configurator frame: masthead, panel, sheet.
+   THE CHART ROOM: white nautical chrome (bright instrument
+   panels, marine-navy ink, hairline separations) wrapped around
+   the dark blueprint canvas. All rhythm on the --sp scale.
+   Panel left edge: every label / value sits on x=16 (--sp-4)
+   unless it is an optical lockup.
+
+   Everything below the OFF THE DEFAULT PATH rule at the foot of
+   this file styles components that are no longer mounted. They
+   are kept, and kept working, so they can be reintroduced
+   deliberately rather than rebuilt.
+   ============================================================ */
+
+/* -- root: the chart table ---------------------------------- */
+.shell-root {
+  position: relative;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+
+/* THE FLEX CHAIN — .shell-root › .shell-body › panel | stage.
+   Every box on it carries `min-width: 0`. A flex item defaults to
+   `min-width: auto`, which floors its used width at its MIN-CONTENT
+   size: a panel whose contents cannot fold silently becomes wider
+   than its track, the stage will not shrink to pay for it, and the
+   whole row grows past the window — which is exactly how a rail
+   ended up cut off by the right edge of the screen. With the floor
+   removed the panel is 260px whatever it holds, and anything that
+   genuinely cannot fold scrolls inside its own column instead of
+   pushing the sheet off the drawing.
+   Invariant: .shell-root scrollWidth == clientWidth. */
+.shell-body {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* THE SHEET IS THE STAGE — everything under the masthead and right
+   of the panel, with no third column ever taking a slice of it. */
+.shell-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.shell-stage > * {
+  width: 100%;
+  height: 100%;
+}
+
+/* registration cross ticks — the invitation card pins itself with
+   these; the decorative full-window .shell-frame stays removed */
+.shell-tick {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+}
+.shell-tick::before,
+.shell-tick::after {
+  content: '';
+  position: absolute;
+  background: var(--hairline-strong);
+}
+.shell-tick::before {
+  left: 0;
+  right: 0;
+  top: 5px;
+  height: 1px;
+}
+.shell-tick::after {
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 1px;
+}
+.shell-tick-tl { top: -6px; left: -6px; }
+.shell-tick-tr { top: -6px; right: -6px; }
+.shell-tick-bl { bottom: -6px; left: -6px; }
+.shell-tick-br { bottom: -6px; right: -6px; }
+
+/* ============================================================
+   MASTHEAD — mark · organisation · industry · I/O
+   ============================================================ */
+.shell-masthead {
+  flex: 0 0 56px;
+  height: 56px;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline-strong);
+  /* 12 + 4 (mark pad) puts the brand on the shared x=16 line */
+  padding-left: var(--sp-3);
+  z-index: 40;
+}
+
+.shell-mark {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px; /* optical lockup, tighter than the sp scale */
+  padding: 0 var(--sp-5) 0 var(--sp-1);
+  border-right: 1px solid var(--hairline);
+  user-select: none;
+}
+.shell-mark-brand {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+.shell-mark-product {
+  font-size: 13px;
+  line-height: 1.1;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* -- the organisation --------------------------------------- */
+.shell-org {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  /* 2px of the gutter moves into the name's own padding so its text
+     sits on the compartment line WITHOUT negative margins */
+  padding: 0 var(--sp-5) 0 calc(var(--sp-5) - 2px);
+}
+
+.shell-org-name {
+  min-width: 0;
+  border: none;
+  background: none;
+  margin: 0;
+  padding: 3px 2px;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--ink);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(320px, 100%);
+  cursor: text;
+  border-radius: var(--radius-sm);
+  border-bottom: 1px dashed transparent;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.shell-org-name:hover {
+  background: var(--blue-wash);
+  border-bottom-color: var(--blue);
+}
+
+.shell-org-input {
+  width: 320px;
+  max-width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--blue);
+  background: var(--blue-wash);
+  margin: 0;
+  padding: 3px 2px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.shell-org-input:focus {
+  outline: none;
+}
+
+/* the industry — a stamp, not a control: it is set once, in
+   onboarding, and only ever read here */
+.shell-org-industry {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  user-select: none;
+}
+.shell-org-mark {
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+
+/* -- actions ------------------------------------------------- */
+.shell-masthead-actions {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4);
+}
+
+/* the stamp is the first thing to go when the window narrows —
+   the name and the one action never are */
+@media (max-width: 900px) {
+  .shell-org-industry {
+    display: none;
+  }
+}
+
+/* ============================================================
+   PANEL — the table types, then your tables. One scroll.
+   ============================================================ */
+.shell-panel {
+  flex: 0 0 260px;
+  width: 260px;
+  min-width: 0;
+  min-height: 0;
+  /* ONE region: the type rail and the list scroll together, so the
+     column never nests a scrollbar inside a scrollbar */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: var(--sp-6);
+  background: var(--paper-high);
+  border-right: 1px solid var(--hairline);
+}
+.shell-panel:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+/* THE RULES DOOR — a rule is about the whole sheet, so it sits above
+   the table list rather than inside it. Quiet at rest; it is a place
+   to go, not an action to take. */
+.shell-panel-rules {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: calc(100% - var(--sp-4) * 2);
+  margin: var(--sp-2) var(--sp-4) 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.shell-panel-rules:hover {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+}
+.shell-panel-rules:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.shell-panel-rules.is-open {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+}
+.shell-panel-rules-text {
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.shell-panel-rules-say {
+  color: var(--ink-soft);
+}
+
+.shell-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-4) var(--sp-2);
+}
+.shell-panel-count {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* nothing to list yet — the sheet is already saying what to do, so
+   this stays a whisper */
+.shell-panel-none {
+  margin: var(--sp-5) var(--sp-4) 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.8;
+  color: var(--ink-faint);
+}
+
+.shell-tbl-list {
+  list-style: none;
+  margin: 0;
+  /* rows inset from the column edge: the accent bar of a selected row
+     needs air around it or it reads as a border on the panel */
+  padding: 0 var(--sp-2);
+}
+
+.shell-tbl {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  margin: 0;
+  padding: 9px var(--sp-2) 9px var(--sp-3);
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.shell-tbl:hover {
+  background: var(--blue-wash);
+}
+.shell-tbl.is-selected {
+  background: var(--blue-wash);
+  box-shadow: inset 2px 0 0 var(--row-accent, var(--ink));
+}
+/* the row clips its own rounded corners — keep the ring inside */
+.shell-tbl:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.shell-tbl-glyph {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  color: var(--row-accent, var(--ink));
+}
+.shell-tbl-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 560;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-tbl-rows {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* -- kind subheads ------------------------------------------
+   The list is cut by KIND — Boats, Motors, Trailers,
+   Accessories, then Relationships. These are paragraphs in the
+   one scrolling column, NOT panes: nothing here scrolls on its
+   own, so the panel keeps exactly one scrollbar however many
+   groups there are. */
+.shell-grp {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding: 0 var(--sp-4) 5px;
+  border-bottom: 1px solid var(--hairline);
+}
+/* the first group sits under the TABLES head, which already
+   opened the space — do not open it twice */
+.shell-panel-head + .shell-grp {
+  margin-top: var(--sp-1);
+}
+.shell-grp-label {
+  color: var(--ink-soft);
+}
+.shell-grp-count {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+/* said once, under the relationships head: a join is not stock */
+.shell-grp-note {
+  margin: 6px var(--sp-4) 0;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+.shell-grp + .shell-tbl-list,
+.shell-grp-note + .shell-tbl-list {
+  padding-top: 5px;
+}
+
+/* -- the door to the view page ------------------------------
+   Only ever drawn under the table you just clicked, and never
+   under a relationship. A SENTENCE, not a glyph: this is the
+   only way into the page, and nobody guesses an icon. */
+.shell-tbl-door {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: calc(100% - var(--sp-3));
+  margin: 2px 0 var(--sp-2) var(--sp-3);
+  padding: 6px var(--sp-2) 6px 9px;
+  border: 0;
+  border-left: 1px solid var(--hairline-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 560;
+  letter-spacing: 0.01em;
+  color: var(--blue-deep);
+  animation: door-in var(--t-fast) var(--ease-draft) both;
+}
+.shell-tbl-door:hover {
+  background: var(--blue-wash);
+  border-left-color: var(--blue);
+}
+.shell-tbl-door:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.shell-tbl-door.is-open {
+  background: var(--blue-wash-strong);
+  border-left-color: var(--blue);
+}
+.shell-tbl-door-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+@keyframes door-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+/* ============================================================
+   THE VIEW STAGE — the box around `@/features/views`.
+
+   It covers the sheet instead of replacing it, so React Flow
+   keeps its viewport and closing costs nothing. Three parts: a
+   bar carrying the one way back, a rail of rows, and the page.
+   The page brings its own stylesheet; nothing here reaches
+   inside it.
+   ============================================================ */
+.shell-viewstage {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--paper);
+  animation: fade-in var(--t-fast) var(--ease-draft) both;
+}
+
+.shell-view-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+  padding: 9px var(--sp-4);
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline);
+}
+.btn.shell-view-back {
+  flex: 0 0 auto;
+  padding: 6px 11px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.shell-view-what {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink-faint);
+}
+.shell-view-what-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--view-accent, var(--ink));
+}
+.shell-view-what-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+.shell-view-what-sep {
+  flex: 0 0 auto;
+}
+.shell-view-what-say {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shell-view-split {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* -- the rail of rows --------------------------------------- */
+.shell-view-rail {
+  flex: 0 0 232px;
+  width: 232px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: var(--sp-5);
+  background: var(--paper-high);
+  border-right: 1px solid var(--hairline);
+}
+
+.shell-view-find {
+  position: relative;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+}
+.shell-view-find-mark {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--sp-3) + 9px);
+  transform: translateY(-42%);
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+.field-input.shell-view-find-input {
+  padding-left: 26px;
+  font-size: 12px;
+}
+.shell-view-find-input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.shell-view-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--sp-2);
+}
+.shell-view-row {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 7px var(--sp-2) 8px var(--sp-3);
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.shell-view-row:hover {
+  background: var(--blue-wash);
+}
+.shell-view-row.is-open {
+  background: var(--blue-wash);
+  box-shadow: inset 2px 0 0 var(--view-accent, var(--ink));
+}
+.shell-view-row:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.shell-view-row-trail {
+  display: block;
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-view-row-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 560;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-view-row-trail + .shell-view-row-name {
+  margin-top: 1px;
+}
+
+.shell-view-rail-none {
+  margin: var(--sp-2) var(--sp-4) 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+.shell-view-rail-more {
+  margin: var(--sp-3) var(--sp-4) 0;
+  font-size: 9px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+}
+
+/* -- the page's box, and nothing else ----------------------- */
+.shell-view-page {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.shell-view-void {
+  margin: var(--sp-6) auto 0;
+  max-width: 44ch;
+  padding: 0 var(--sp-5);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   THE INVITATION — org named, one action, one quiet second door
+   ============================================================ */
+.shell-invite {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-6);
+  /* no dim wash: the navy blueprint sheet IS the backdrop. And no
+     pointer events either — pan, zoom and dropping a type from the
+     panel onto the sheet all stay live; only the card is live. */
+  background: none;
+  pointer-events: none;
+}
+
+.shell-invite-card {
+  position: relative;
+  pointer-events: auto;
+  max-width: 480px;
+  width: 100%;
+  padding: 40px 48px 36px;
+  text-align: center;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  /* a white card pinned to the navy canvas needs real lift */
+  box-shadow: var(--shadow-card-canvas-raised);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+/* the card's registration ticks overhang onto the navy sheet —
+   draw them in canvas ink or they vanish against the blueprint */
+.shell-invite .shell-tick::before,
+.shell-invite .shell-tick::after {
+  background: var(--canvas-hairline);
+}
+
+.shell-invite-kicker {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* THE DISPLAY FACE, second and last time it appears in the product:
+   onboarding asks the question in Instrument Serif, this answers it in
+   the same voice. Never below 22px (ART_DIRECTION.md) — the floor of
+   the clamp is 28, and the short-window rule below keeps it at 26. Set
+   as drawn: no uppercase, no stamp tracking, just a hair to open it. */
+.shell-invite-title {
+  margin-top: var(--sp-3);
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.4vw, 38px);
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: 0.006em;
+  color: var(--ink);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* dimension line — a ruled measure under the name, end ticks only */
+.shell-dimline {
+  display: flex;
+  align-items: center;
+  margin-top: var(--sp-4);
+}
+.shell-dimline::before {
+  content: '';
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--hairline);
+}
+.shell-dimline-tick {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 9px;
+  background: var(--hairline-strong);
+}
+.shell-dimline-tick:first-child {
+  order: -1;
+}
+
+/* THE one action on this screen — bigger than a toolbar button, so
+   there is never a question about where to go next */
+.btn.shell-invite-go {
+  margin-top: var(--sp-5);
+  padding: 10px 22px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+/* THE SECOND DOOR — real data, one press. Deliberately NOT shaped like
+   a button: two buttons stacked read as two decisions, and there is
+   only one decision on this screen. A ruled line of text that lights up
+   is enough, and it keeps the navy CREATE button the only solid mass
+   on the card. */
+.shell-invite-alt {
+  display: block;
+  width: 100%;
+  margin-top: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3) 9px;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.shell-invite-alt:hover {
+  background: var(--blue-wash);
+}
+.shell-invite-alt:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* EXAMPLE DATA — read BEFORE the label, which is the whole point.
+   A user who has just named their business Northside Marine must
+   not be able to mistake a bundled workbook for their own file, so
+   the disclaimer is the first thing on the control, not a footnote
+   under it. Boxed, so it reads as a stamp rather than a heading. */
+.shell-invite-alt-tag {
+  display: inline-block;
+  margin-bottom: 7px;
+  padding: 2px 6px 1px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+.shell-invite-alt:hover .shell-invite-alt-tag,
+.shell-invite-alt:focus-visible .shell-invite-alt-tag {
+  border-color: var(--hairline-strong);
+  color: var(--ink-soft);
+}
+
+.shell-invite-alt-label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 560;
+  letter-spacing: 0.02em;
+  color: var(--blue-deep);
+  /* underlined from rest, so it reads as a way through before the
+     pointer ever finds it */
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--hairline-strong);
+  transition: text-decoration-color var(--t-fast) var(--ease-draft);
+}
+.shell-invite-alt:hover .shell-invite-alt-label,
+.shell-invite-alt:focus-visible .shell-invite-alt-label {
+  text-decoration-color: currentColor;
+}
+
+/* WHERE THE NUMBERS COME FROM, in one quiet line. This set is the real
+   Master Price File, and a person deciding whether to press it needs to
+   know that without being sold it. */
+.shell-invite-alt-note {
+  display: block;
+  max-width: 40ch;
+  margin: 5px auto 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.65;
+  color: var(--ink-faint);
+}
+
+.shell-invite-hint {
+  margin-top: var(--sp-4);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.7;
+  color: var(--ink-faint);
+}
+
+@media (max-height: 680px) {
+  .shell-invite {
+    padding: var(--sp-5);
+  }
+  .shell-invite-card {
+    padding: 28px 40px 26px;
+  }
+  .shell-invite-title {
+    font-size: clamp(26px, 2.8vw, 32px);
+  }
+}
+
+/* ============================================================
+   OFF THE DEFAULT PATH
+   ------------------------------------------------------------
+   Nothing below here is mounted by the shell. The components it
+   dresses — Rails.tsx (inspector / review / rule-results track),
+   Inspector.tsx, ViewSwitch.tsx, CheckStamp.tsx — are all still
+   importable and still correct; they are simply not on screen,
+   because a rail of schema controls beside a table you can type
+   into is the clutter this pass removed. Keeping their rules
+   here means reintroducing one is one line of JSX, not a
+   rebuild. Delete a block only when its component goes.
+   ============================================================ */
+
+/* -- title-block compartments (ViewSwitch / CheckStamp) ------ */
+.shell-cell {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 var(--sp-4);
+  border-right: 1px solid var(--hairline);
+  min-width: 0;
+}
+.shell-cell-caption {
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.shell-cell-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* -- VIEW switch — SHEET / TABLE instrument toggle ----------- */
+.shell-viewswitch {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: stretch;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  overflow: hidden;
+}
+.shell-viewbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
+  margin: 0;
+  padding: 3px var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.shell-viewbtn + .shell-viewbtn {
+  border-left: 1px solid var(--hairline);
+}
+.shell-viewbtn:hover {
+  background: var(--blue-wash);
+  color: var(--ink);
+}
+.shell-viewbtn.is-active {
+  background: var(--ink);
+  color: var(--paper-high);
+}
+.shell-viewbtn.is-active:hover {
+  background: var(--blue-deep);
+}
+.shell-viewbtn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.shell-viewbtn-glyph {
+  flex: 0 0 auto;
+  opacity: 0.7;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.shell-viewbtn:hover .shell-viewbtn-glyph,
+.shell-viewbtn.is-active .shell-viewbtn-glyph {
+  opacity: 1;
+}
+
+/* -- CHECK compartment — the reviewer's live tally ----------- */
+.shell-cell-check {
+  padding: 0 calc(var(--sp-4) - 5px);
+}
+.shell-cell-check .shell-cell-caption {
+  padding-left: 5px;
+}
+.shell-check {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  margin: 0;
+  padding: 1px 4px;
+  font-family: var(--font-mono);
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.shell-check:hover {
+  background: var(--blue-wash);
+  border-color: var(--hairline-strong);
+}
+.shell-check.has-marks:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+}
+.shell-check.is-open {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+}
+.shell-check.is-open:hover {
+  background: var(--blue-wash);
+}
+.shell-check.is-open.has-marks:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+}
+.shell-check-clean {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-viridian);
+}
+.shell-check-count {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--red);
+}
+.shell-check-unit {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--red);
+  opacity: 0.75;
+}
+.shell-check-blockers {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  padding: 0 3px;
+  border-radius: var(--radius-sm);
+  background: var(--red);
+  color: var(--paper-high);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* -- the right rail — one 340px track, three claimants -------- */
+.shell-rail {
+  flex: 0 0 340px;
+  width: 340px;
+  min-width: 0;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+  background: var(--paper-high);
+  border-left: 1px solid var(--hairline);
+  box-shadow: var(--shadow-sheet);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+  z-index: 20;
+}
+.shell-rail > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+.shell-rail > *:not(.shell-yield) {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.shell-rail--flush {
+  border-left-color: transparent;
+}
+.shell-rail-scroll {
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+}
+
+/* -- yield strip — what this rail is standing on ------------- */
+.shell-yield {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 7px var(--sp-3) 7px var(--sp-4);
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
+}
+.shell-yield-kicker {
+  flex: 0 0 auto;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+.shell-yield-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--row-accent, var(--ink-faint));
+}
+.shell-yield-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 560;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.shell-yield-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  margin: 0;
+  padding: 2px 7px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.shell-yield-btn:hover {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+  color: var(--ink);
+}
+.shell-yield-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* -- RUN instrument — the rule's own controls, on the rail ---- */
+.shell-run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 7px var(--sp-3) 8px var(--sp-4);
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
+}
+.shell-rail > .shell-run {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+.shell-run-kicker {
+  flex: 0 0 auto;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+.shell-run-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 560;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.shell-run-go {
+  flex: 0 0 auto;
+  padding: 4px 13px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+}
+.shell-run-meta {
+  flex: 1 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.shell-run-check {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: rotate(-1.2deg);
+}
+.shell-run-check.is-ok {
+  color: var(--accent-viridian);
+}
+.shell-run-check.is-blocked {
+  color: var(--red);
+}
+.shell-run-note {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.shell-run-note.is-idle {
+  color: var(--ink-faint);
+}
+.shell-run-note.is-bad {
+  color: var(--red);
+}
+.shell-run-n {
+  font-weight: 700;
+  color: var(--ink);
+}
+.shell-run-clear {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+/* -- Inspector — right sheet --------------------------------- */
+.shell-inspector {
+  flex: 0 0 340px;
+  width: 340px;
+  min-width: 0;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--paper-high);
+  border-left: 1px solid var(--hairline);
+  box-shadow: var(--shadow-sheet);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+  z-index: 20;
+}
+.shell-inspector-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+.shell-inspector-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-inspector-kind {
+  flex: 0 0 auto;
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: var(--ink-faint);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: 2px 5px;
+}
+.shell-inspector-close {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ink-soft);
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.shell-inspector-close:hover {
+  color: var(--red);
+  border-color: var(--red);
+  background: var(--red-wash);
+}
+
+.shell-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  min-width: 0;
+  padding: 0 var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper-high);
+}
+.shell-tab {
+  position: relative;
+  border: none;
+  background: none;
+  margin: 0;
+  padding: var(--sp-3) 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.shell-tab:hover {
+  color: var(--ink);
+}
+.shell-tab.is-active {
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--ink);
+}
+.shell-tab:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.shell-inspector-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+}
+
+/* -- accent dots (inspector heads) --------------------------- */
+.shell-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--row-accent, var(--ink));
+}
+.shell-dot-zone {
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1.5px solid var(--row-accent, var(--ink));
+}
+.shell-dot-lg {
+  width: 10px;
+  height: 10px;
+}
+
+/* -- zone card ----------------------------------------------- */
+.shell-zone-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-4);
+}
+.shell-zone-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.shell-zone-caption {
+  font-size: 9px;
+}
+.shell-zone-swatches {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 2px 1px;
+}
+.shell-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: var(--swatch);
+  transition:
+    transform var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.shell-swatch:hover {
+  transform: scale(1.15);
+}
+.shell-swatch.is-active {
+  box-shadow:
+    0 0 0 2px var(--paper-high),
+    0 0 0 3.5px var(--swatch);
+}
+.shell-zone-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border-top: 1px dashed var(--hairline);
+  padding-top: var(--sp-3);
+}
+.shell-zone-footer {
+  display: flex;
+}
+.shell-zone-footer .btn {
+  color: var(--red);
+  border-color: var(--red);
+}

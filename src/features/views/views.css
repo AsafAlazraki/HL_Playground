@@ -1,0 +1,984 @@
+/* ============================================================
+   VIEWS (vw-) — the configurable page.
+
+   THE DRAWING OFFICE, chrome side: a white sheet on the paper
+   field, marine-navy ink, hairlines, corner registration ticks,
+   mono for every number and micro-label, one accent per block.
+
+   Two states of ONE drawing:
+     read      — nothing but the specification
+     configure — the same drawing with handles, added by
+                 `.is-config`; no box changes position between them.
+
+   Every measurement is on the --sp scale and every colour is a
+   token. There is not a raw hex in this file.
+   ============================================================ */
+
+.vw-root {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  background: var(--paper);
+  padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) * 2);
+}
+
+/* the whole page answers a table drag, so a drop is never a
+   question of hitting a small target */
+.vw-root.is-drop::after {
+  content: '';
+  position: absolute;
+  inset: var(--sp-3);
+  border: 1px dashed var(--blue);
+  border-radius: var(--radius);
+  background: var(--blue-wash);
+  pointer-events: none;
+}
+
+/* ONE target is lit at a time. Once a block has claimed the drag —
+   which means the drop will NEST — the page stops offering itself,
+   so the answer to "where is this going?" is never two answers. */
+.vw-root.is-drop:has(.vw-block.is-drop)::after {
+  content: none;
+}
+.vw-root:has(.vw-block.is-drop) .vw-dropzone.is-over {
+  border-color: var(--hairline-strong);
+  border-style: dashed;
+  background: var(--paper);
+  color: var(--ink-faint);
+}
+
+.vw-sheet {
+  position: relative;
+  max-width: 940px;
+  margin: 0 auto;
+  padding: calc(var(--sp-6) + var(--sp-2)) var(--sp-6) var(--sp-6);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sheet);
+}
+
+/* -- corner registration ticks ------------------------------ */
+.vw-tick {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+}
+.vw-tick--tl {
+  top: -1px;
+  left: -1px;
+  border-top: 1.25px solid var(--hairline-strong);
+  border-left: 1.25px solid var(--hairline-strong);
+}
+.vw-tick--tr {
+  top: -1px;
+  right: -1px;
+  border-top: 1.25px solid var(--hairline-strong);
+  border-right: 1.25px solid var(--hairline-strong);
+}
+
+.vw-void {
+  padding: var(--sp-6) 0;
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   THE HEAD — what this page is for
+   ============================================================ */
+
+.vw-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.vw-head-id {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.vw-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-faint);
+}
+.vw-trail-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.vw-trail-sep {
+  color: var(--hairline-strong);
+}
+
+/* the one display moment on the page */
+.vw-name {
+  margin-top: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+}
+
+.vw-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  margin: var(--sp-4) 0 0;
+}
+.vw-spec {
+  min-width: 0;
+}
+.vw-spec dt {
+  margin-bottom: 2px;
+}
+.vw-spec-val {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* -- the one control ---------------------------------------- */
+.vw-gear {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.vw-gear:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.vw-gear.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-high);
+}
+.vw-gear.is-on:hover {
+  background: var(--blue-deep);
+  border-color: var(--blue-deep);
+  color: var(--paper-high);
+}
+
+/* ============================================================
+   WHICH LEVEL AM I EDITING — configure mode only
+   ============================================================ */
+
+.vw-levels {
+  overflow: hidden;
+}
+.vw-levels-lab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+}
+.vw-levels-note {
+  margin-top: var(--sp-2);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.vw-select {
+  width: auto;
+  min-width: 200px;
+  padding: 5px 8px;
+  font-size: 13px;
+  background: var(--paper-high);
+}
+
+/* ============================================================
+   A REFUSAL — one plain sentence, never a silent no-op
+   ============================================================ */
+
+.vw-refusal {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: var(--red-wash);
+  font-size: 13px;
+  color: var(--ink);
+}
+.vw-refusal-text {
+  flex: 1 1 auto;
+}
+
+/* ============================================================
+   BLOCKS
+   ============================================================ */
+
+.vw-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  margin-top: var(--sp-5);
+}
+
+.vw-block {
+  --vw-cols: 3;
+  --vw-grip: 0px;
+  --vw-acts: 0px;
+  --vw-tags: 0px;
+  position: relative;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+}
+.vw-block.is-drop {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.vw-block--gone {
+  padding: var(--sp-4);
+  background: var(--paper-sunken);
+}
+.vw-gone {
+  margin-bottom: var(--sp-3);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.vw-block-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+}
+/* the accent is a hairline of ink at the head, not a filled bar */
+.vw-block-head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 2px;
+  background: var(--vw-accent, var(--ink-soft));
+}
+
+.vw-mark {
+  display: inline-flex;
+  color: var(--vw-accent, var(--ink-soft));
+}
+
+.vw-block-name {
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.vw-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.vw-forwhom {
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+
+/* -- the handle strip (configure only) ---------------------- */
+
+.vw-strip {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-1);
+  overflow: hidden;
+  padding: 0 var(--sp-3) var(--sp-2);
+}
+.vw-strip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.vw-strip-btn:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+.vw-strip-btn.is-on {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.vw-strip-btn--end {
+  margin-left: auto;
+}
+.vw-strip-btn--end:hover {
+  border-color: var(--red);
+  background: var(--red-wash);
+  color: var(--red);
+}
+/* the rule, said in words, right on the handle that changes it */
+.vw-strip-note {
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.vw-strip-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+/* -- confirm ------------------------------------------------- */
+
+.vw-confirm {
+  margin: 0 var(--sp-3) var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: var(--red-wash);
+}
+.vw-confirm-ask {
+  font-size: 13px;
+  color: var(--ink);
+}
+.vw-confirm-acts {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* ============================================================
+   THE TABLE OF RELATED ROWS
+   One track declaration, shared by the header hairline and every
+   row, so a column can never drift out of line.
+   ============================================================ */
+
+.vw-cols,
+.vw-row-line {
+  display: grid;
+  /* THE NAME IS THE COLUMN THAT MATTERS, so it is the last thing to
+     give way, not the first. It used to be the only flexible track
+     against fixed value tracks and a fixed 132px tag track: entering
+     configure mode added the grip and the actions on top of those and
+     squeezed the name to a single pixel, so every row lost its name at
+     laptop width. Now the name has a floor, the value tracks give way
+     ahead of it, and the tag track costs nothing when no row carries a
+     tag (--vw-tags, set on the block). */
+  grid-template-columns:
+    var(--vw-grip)
+    minmax(clamp(96px, 22%, 190px), 1fr)
+    repeat(var(--vw-cols), minmax(44px, 104px))
+    var(--vw-tags)
+    var(--vw-acts);
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4);
+}
+
+.vw-cols {
+  padding-top: var(--sp-1);
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-faint);
+}
+.vw-col,
+.vw-col-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.vw-col {
+  text-align: right;
+}
+
+.vw-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.vw-row {
+  overflow: hidden;
+  border-bottom: 1px solid var(--hairline);
+}
+.vw-row:last-child {
+  border-bottom: none;
+}
+.vw-row-line {
+  position: relative;
+  min-height: 34px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.vw-row-line:hover {
+  background: var(--paper-sunken);
+}
+.vw-row.is-droptarget .vw-row-line {
+  box-shadow: inset 0 2px 0 var(--blue);
+}
+.vw-row.is-star .vw-row-line {
+  background: var(--blue-wash);
+}
+
+/* the star lives in the gutter so it never shifts a column */
+/* the star sits in the row's own left padding — inside the block in
+   both modes, and never in a column, so no cell ever shifts for it */
+.vw-star {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--accent-ochre);
+}
+
+.vw-grip {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-faint);
+}
+.vw-block.is-config .vw-grip {
+  cursor: grab;
+}
+.vw-block.is-config .vw-grip:active {
+  cursor: grabbing;
+}
+
+.vw-row-name {
+  overflow: hidden;
+  font-size: 13.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vw-cell {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vw-row-tags {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+  overflow: hidden;
+}
+
+.vw-row-acts {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+/* -- tags ---------------------------------------------------- */
+
+.vw-tag {
+  flex: 0 0 auto;
+  max-width: 100%;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vw-tag--added {
+  color: var(--accent-ochre);
+}
+.vw-tag--out {
+  color: var(--red);
+}
+.vw-tag--quiet {
+  color: var(--ink-faint);
+  border-color: var(--hairline-strong);
+}
+
+/* -- small round handles ------------------------------------- */
+
+.vw-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.vw-icon-btn:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper-high);
+  color: var(--ink);
+}
+.vw-icon-btn.is-on {
+  color: var(--accent-ochre);
+}
+.vw-icon-btn--drop:hover {
+  border-color: var(--red);
+  background: var(--red-wash);
+  color: var(--red);
+}
+
+/* ============================================================
+   NESTING — what goes with the thing that goes with it
+   ============================================================ */
+
+.vw-nest {
+  margin: 0 var(--sp-4) var(--sp-3) calc(var(--sp-6) + var(--sp-2));
+  border-left: 1px solid var(--hairline);
+  padding-left: var(--sp-4);
+}
+.vw-nest .vw-block {
+  border-color: var(--hairline);
+  background: var(--paper);
+}
+.vw-nest--offer {
+  margin-top: var(--sp-3);
+}
+
+/* ============================================================
+   EMPTY, REMOVED, ADD
+   ============================================================ */
+
+.vw-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.vw-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.vw-linkbtn:hover {
+  color: var(--blue-deep);
+}
+
+.vw-removed {
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+.vw-removed-chip {
+  padding: 2px 7px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.vw-removed-chip:disabled {
+  cursor: default;
+}
+.vw-removed-chip:not(:disabled) {
+  cursor: pointer;
+}
+.vw-removed-chip:not(:disabled):hover {
+  border-color: var(--blue);
+  border-style: solid;
+  color: var(--blue-deep);
+}
+
+.vw-removed-list {
+  list-style: none;
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+}
+.vw-removed-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.vw-removed-row:last-child {
+  border-bottom: none;
+}
+.vw-removed-row .vw-row-name {
+  flex: 1 1 auto;
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--hairline-strong);
+}
+
+.vw-block-foot {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
+.vw-add-btn {
+  color: var(--ink-soft);
+}
+
+/* -- the add panel ------------------------------------------- */
+
+.vw-add {
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+.vw-add-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-faint);
+}
+.vw-add-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: var(--ink);
+}
+.vw-add-input:focus {
+  outline: none;
+}
+.vw-add-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.vw-add-none {
+  padding: var(--sp-4);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.vw-add-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow: auto;
+}
+.vw-add-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 5px var(--sp-3);
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.vw-add-row:hover {
+  background: var(--blue-wash);
+}
+.vw-add-row:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.vw-add-row:disabled:hover {
+  background: transparent;
+}
+.vw-add-plus {
+  display: inline-flex;
+  color: var(--blue);
+}
+.vw-add-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.vw-add-cells {
+  display: flex;
+  gap: var(--sp-3);
+}
+.vw-add-cell {
+  min-width: 56px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+/* -- filters ------------------------------------------------- */
+
+.vw-filter {
+  margin: 0 var(--sp-3) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+.vw-filter-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-faint);
+}
+.vw-filter-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+.vw-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.vw-fchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  background: var(--paper-high);
+  font-size: 12px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.vw-fchip:hover {
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
+.vw-fchip.is-on {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+
+/* ============================================================
+   THE OFFER — the sentence and the three buttons
+   ============================================================ */
+
+.vw-offer {
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-sheet-raised);
+}
+.vw-block .vw-offer,
+.vw-nest--offer .vw-offer {
+  margin: var(--sp-3) 0 0;
+}
+
+.vw-offer-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-faint);
+}
+
+.vw-offer-now {
+  margin-top: var(--sp-3);
+  color: var(--ink-faint);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.vw-offer-ask {
+  margin-top: var(--sp-4);
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.vw-offer-why {
+  margin-top: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.vw-offer-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+.vw-offer-cancel {
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+
+.vw-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+}
+.vw-pick-leg {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* ============================================================
+   THE FOOT — where a table lands
+   ============================================================ */
+
+/* the foot holds ONE of two things — the way in, or the list it opens */
+.vw-foot {
+  overflow: hidden;
+}
+
+/* A REAL BUTTON, not a target you can only reach by dragging. The drag
+   still lands here; this is what a person can press when it does not. */
+.vw-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  overflow: hidden;
+  margin-top: var(--sp-5);
+  padding: var(--sp-6) var(--sp-4);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font: inherit;
+  color: var(--ink-faint);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.vw-dropzone:hover {
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
+.vw-dropzone.is-over {
+  border-color: var(--blue);
+  border-style: solid;
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+
+.vw-pickzone {
+  margin-top: var(--sp-5);
+}
+.vw-add-lead {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vw-nothing {
+  padding: calc(var(--sp-6) * 1.5) var(--sp-4);
+  text-align: center;
+}
+.vw-nothing-line {
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--ink-soft);
+}
+.vw-nothing-sub {
+  margin-top: var(--sp-2);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   REDUCED MOTION — base.css already cuts CSS transitions; the
+   `motion` springs are cut in stillness.tsx. This is belt and
+   braces for anything that arrives later.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .vw-root *,
+  .vw-root *::before,
+  .vw-root *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
