@@ -41,6 +41,27 @@ npm run dev
 The dev server binds **port 5090**, not Vite's default — `.claude/launch.json`
 is committed so agent tooling starts it on the right one.
 
+### You will land on an empty screen, and that is correct
+
+This app is **local-first**: everything lives in your browser's IndexedDB, so
+nothing about a project travels in the repository. A fresh clone opens on
+onboarding with nothing drawn. Three clicks gets you to the same 21 tables the
+screenshots show:
+
+1. type a business name → **Continue**
+2. pick **Marine**
+3. **Load a worked example — another dealer's price file**
+
+Two consequences worth knowing. Each *origin* has its own database, so running
+the same code on a different port gives you a fresh empty one — useful for
+testing onboarding, surprising the first time. And the sheet you build is not
+in git: use **I/O** in the masthead to export a project file if you want to hand
+one to somebody.
+
+Verified end to end: clone → `npm install` → `npx tsc --noEmit -p tsconfig.app.json`
+→ `npm run build` → `python tools/seed/gen_all.py`, all green, working tree
+still clean, and the seed byte-identical to the committed one.
+
 ```bash
 npx tsc --noEmit -p tsconfig.app.json
 ```
