@@ -15,3 +15,7 @@ dist
 
 .DS_Store
 Thumbs.db
+
+# Python bytecode from the seed generator — machine and version specific
+__pycache__/
+*.pyc
