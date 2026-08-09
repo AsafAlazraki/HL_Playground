@@ -1,0 +1,27 @@
+# LINE ENDINGS ARE PART OF THE CONTRACT HERE, because one file in this repo is
+# GENERATED and its generator writes LF.
+#
+# Without this file, Git on Windows checks everything out as CRLF. A
+# collaborator would then clone, run `python tools/seed/gen_all.py` exactly as
+# the README tells them to, and watch git report all ~6,000 lines of
+# src/demos/northside.ts as modified — because the generator writes LF and the
+# checkout was CRLF. The README's promise that the pipeline reproduces the seed
+# byte for byte would be false for them, on the very first thing they tried.
+# Caught by cloning the repo and diffing, not by reasoning about it.
+#
+# `eol=lf` (not just `text=auto`) forces LF in the WORKING TREE too, on every
+# platform, so what Python writes and what Git stores are the same bytes.
+* text=auto eol=lf
+
+# Binary: never touched, never diffed as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.woff2 binary
+*.xlsx binary
+
+# The seed and its extracts are generated. Marking them keeps a diff of the
+# whole file out of a pull request that only meant to change the generator.
+src/demos/northside.ts linguist-generated=true
+tools/seed/extracts/*.json linguist-generated=true
