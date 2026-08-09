@@ -690,10 +690,15 @@ export interface ConstraintDef {
   /** approved combinations for kind 'table': fieldId -> allowed value */
   combinations?: Array<Record<string, CellValue>>
 
-  /** A short lower-case clause written to read after "because…":
-   *  "an aluminium propeller corrodes away in salt water".
+  /** A short lower-case clause written to read after "because…" —
+   *  e.g. "the hull is not rated for that much power".
    *  NOT the rule name and NOT the expression — this is what a person
-   *  sees when an option is unavailable, so it has to be human. */
+   *  sees when an option is unavailable, so it has to be human.
+   *
+   *  It must state a REASON THAT IS TRUE. The example that used to sit
+   *  in this comment was invented, and invented reasons propagate: it
+   *  reached the UI as placeholder text and read, on screen, as a rule
+   *  the business had written. Nothing here is decorative. */
   because: string
   /** optional longer explanation for the why panel */
   why?: string
