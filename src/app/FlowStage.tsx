@@ -181,6 +181,15 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
               Pick a rule on the left to see how it works out its answer, or draft
               a new one.
             </p>
+            {/* NAME THE OTHER SURFACE — the mirror of the line in
+                RulesPane. A rule here DERIVES a list; a rule there states
+                a LIMIT. Someone who opens the wrong one does not realise
+                they opened the wrong one, they conclude the thing they
+                wanted is impossible. */}
+            <p className="shell-flow-void-other">
+              These rules produce answers. For a limit every row must keep — a
+              maximum, a required value — use <b>Business rules</b> on the left.
+            </p>
           </div>
         )}
 

@@ -1,11 +1,24 @@
 /* ============================================================
    CONSTRAINTS — business rules as editable English sentences.
 
-   This is the DEFAULT rule surface. It replaces the flow-chart rule
-   builder on the default path (CONFIGURATOR_SPEC §4b, MOCKUP_FINDINGS
-   §1.1–1.3). `src/features/rules/` stays in the repo, still works,
-   and is still the right answer for the procedural flows that
-   genuinely need a graph — it is simply not what a person meets.
+   ONE OF TWO RULE SURFACES, AND THEY DO DIFFERENT JOBS. This one
+   states LIMITS: things that must be true of every row, whatever else
+   happens — "a boat's motor may not exceed its rated Max HP". The
+   other, `src/features/rules/` behind "Work out what fits what",
+   DERIVES: it walks the rows and hands back a list — "for this hull,
+   these are the Yamahas that fit".
+
+   The distinction is not decorative. A limit has no output; you can
+   only ever break it. A derivation has no truth value; it just
+   produces rows. Trying to write either one in the other's surface is
+   how people end up with rules that cannot say what they mean.
+
+   This file used to claim the sentence pane REPLACED the flow builder
+   (CONFIGURATOR_SPEC §4b, MOCKUP_FINDINGS §1.1–1.3). That was written
+   when the flow builder was unreachable, and it stopped being true the
+   moment `src/app/FlowStage.tsx` gave it a canvas. A comment asserting
+   a feature does not exist, while the app ships a door to it, sends
+   the next reader looking for a bug that is not there.
 
    MOUNTING IT (the whole job):
 

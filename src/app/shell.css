@@ -818,6 +818,24 @@
   background: var(--paper);
 }
 
+/* The signpost to the OTHER rule surface — the mirror of
+   `.cn-lede--other` in constraints.css. Centred under the invitation,
+   quieter than it, and narrow enough to read as one thought. */
+.shell-flow-void-other {
+  max-width: 46ch;
+  margin: var(--sp-3) auto 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+  text-align: center;
+}
+.shell-flow-void-other b {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
 /* ============================================================
    THE INVITATION — org named, one action, one quiet second door
    ============================================================ */

@@ -61,6 +61,18 @@ export function RulesPane(): ReactElement {
             Every rule is one sentence. Change a word and the rule changes. Switch one off and
             everything it ruled out comes straight back.
           </p>
+          {/* NAME THE OTHER SURFACE. There are two places to write a rule
+              and they do different jobs — this one states a LIMIT, the
+              other DERIVES a list. A person who opens the wrong one does
+              not discover their mistake; they conclude the thing they
+              wanted cannot be done. So each pane says what it is not, and
+              points at the door that is. Both doors sit in the panel to
+              the left at the same time, so naming it is enough to find
+              it. */}
+          <p className="cn-lede cn-lede--other">
+            These are limits — things every row must keep. To work out what goes
+            <em> with</em> something, use <b>Work out what fits what</b> on the left.
+          </p>
           {constraints.length > 0 && (
             <p className="cn-count">
               {constraints.length} rule{constraints.length === 1 ? '' : 's'}
