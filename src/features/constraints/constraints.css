@@ -672,3 +672,137 @@
   line-height: 1.6;
   color: var(--ink-faint);
 }
+
+/* ============================================================
+   THE WORKBOOK'S OWN RULES
+
+   Drawn whether or not the engine can run them. The STATUS leads
+   each card, because "is this actually protecting me?" is the only
+   question a person has here, and a rule that looks identical
+   whether or not it is enforced is worse than no list at all.
+
+   Three states, three weights of ink. Checked is confident;
+   checked-elsewhere is confident and points; not-checked is
+   deliberately quiet and always carries its reason on the next
+   line — a status with no explanation reads as a bug.
+   ============================================================ */
+
+.cn-wb {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--hairline);
+}
+
+.cn-wb-eyebrow {
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+.cn-wb-title {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.cn-wb-lede {
+  margin: var(--sp-2) 0 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-wb-lede b {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.cn-wb-lede em {
+  font-style: italic;
+}
+
+.cn-wb-list {
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.cn-wb-item {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+}
+/* The left edge carries the state, so the list can be read down its
+   margin without reading a word of it. */
+.cn-wb-item.is-here {
+  border-left-color: var(--viridian, #2f6f5e);
+}
+.cn-wb-item.is-elsewhere {
+  border-left-color: var(--blue);
+}
+.cn-wb-item.is-pending {
+  border-left-color: var(--hairline);
+  background: var(--paper);
+}
+
+.cn-wb-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.cn-wb-item.is-here .cn-wb-status {
+  color: var(--viridian, #2f6f5e);
+}
+.cn-wb-item.is-elsewhere .cn-wb-status {
+  color: var(--blue);
+}
+.cn-wb-status-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.cn-wb-status b {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.cn-wb-says {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.cn-wb-why {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* The cell reference. Mono because it is a reference to look up, and
+   it WRAPS — a truncated cell address cannot be checked, which would
+   defeat the only reason it is printed. */
+.cn-wb-src {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}

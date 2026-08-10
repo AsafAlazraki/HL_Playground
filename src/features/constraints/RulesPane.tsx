@@ -19,6 +19,7 @@ import type { ConstraintDef } from '@/types/model'
 import { useConstraints } from './constraintDefs'
 import { NewRuleSentence } from './NewRuleSentence'
 import { RuleCard } from './RuleCard'
+import { WorkbookRuleList } from './WorkbookRuleList'
 import { evaluateConstraints, sortConstraints } from './state'
 import { useSentenceCtx } from './useCtx'
 import './constraints.css'
@@ -47,6 +48,12 @@ export function RulesPane(): ReactElement {
 
   const conflicts = Object.values(statuses).filter((s) => s.conflicts > 0).length
   const noColumns = ctx.concepts.length === 0
+
+  /* Which workbook seeds actually became rules. The seed's own
+     `blocked` is only a default: the moment the contract grows what a
+     rule needs, the id appears here and the list must say "checked"
+     rather than keep repeating a stale excuse. */
+  const liveIds = useMemo(() => new Set(constraints.map((c) => c.id)), [constraints])
 
   return (
     <section className="cn-root">
@@ -126,6 +133,17 @@ export function RulesPane(): ReactElement {
                 ))}
               </ul>
             )}
+
+            {/* THE WORKBOOK'S OWN RULES, ALWAYS DRAWN. They are listed
+                after the rules a person authored, because these are
+                found rather than written — but they are never hidden
+                behind an empty state. Six rules were mined out of the
+                price file with their cell references, none of them can
+                be stated as a sentence yet, and the pane answered "No
+                rules yet." That was false, and it is the reason this
+                block exists: what the system does NOT check is a fact
+                a person needs, because otherwise they assume it does. */}
+            <WorkbookRuleList liveIds={liveIds} />
           </>
         )}
       </div>

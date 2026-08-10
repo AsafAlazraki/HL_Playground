@@ -87,6 +87,20 @@ export interface WorkbookRuleSeed {
   /** why this admitted rule cannot be a ConstraintDef today, and what
    *  the contract would need. Absent means it seeds. */
   blocked?: string
+
+  /** THE SAME REASON, FOR A PERSON. `blocked` is written for whoever
+   *  will implement the missing piece — it names `state.tablesFor` and
+   *  `describe.literalOf`, which is right for that reader and useless
+   *  to a sales manager. This is one line they can act on. Required
+   *  wherever `blocked` is set: a rule that is read out of the
+   *  workbook, shown on screen, and then unexplained is worse than one
+   *  that was never shown. */
+  plainly?: string
+
+  /** Where this rule IS enforced, if not here. Two of the six are
+   *  already running as flow rules — leaving them looking unenforced
+   *  would be a second lie on top of the first. */
+  enforcedIn?: string
 }
 
 /** Stable clause ids, so a re-seed of the same rule is byte-identical
@@ -132,6 +146,9 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     kind: 'implies',
     priority: 100,
     needs: ['boat::max hp', 'motor::hp rating'],
+    plainly:
+      'It compares a column on the boat with a column on the motor. A sentence here can only talk about one kind of table at a time.',
+    enforcedIn: 'Work out what fits what · Motor fitment',
     blocked:
       'CROSS-KIND. Max HP is a boat column and HP Rating is a motor column, and the ' +
       'sentence surface is single-kind by construction: state.tablesFor keeps only tables ' +
@@ -169,6 +186,9 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     kind: 'implies',
     priority: 50,
     needs: ['boat::min hp', 'motor::hp rating'],
+    plainly:
+      'Same reason — boat against motor — and it must warn rather than block, which a sentence cannot yet do.',
+    enforcedIn: 'Work out what fits what · Motor fitment',
     blocked:
       'NO ADVISORY KIND, and cross-kind besides. The admission is conditional on this rule ' +
       'never filtering, and every ConstraintKind the contract has — implies, requires, ' +
@@ -198,6 +218,8 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     source: `${WORKBOOK} · Boat Module!LC (and the 12 sibling slots) · =VLOOKUP(KZ,'Motor Library'!C:ZZ,200,0) → Motor Library!GT 'Prop Option - Default'`,
     kind: 'implies',
     needs: ['custom::prop description'],
+    plainly:
+      "It reads a value off a third row — the motor's entry in the Motor Library. A sentence compares what is in front of it.",
     blocked:
       'A DERIVATION, NOT A COMPARISON. The obligation reads a column on a THIRD row — the ' +
       "Motor Library row for the motor on this pairing. ValueExpr has no lookup, and FieldPath's " +
@@ -226,6 +248,8 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     source: `${WORKBOOK} · Boat Module!LB · =IFERROR(VLOOKUP(LC,'Parts Maintenance'!C:ZZ,3,0),) → Parts Module (3).xlsx · Parts Maintenance!E 'Code'`,
     kind: 'table',
     needs: ['custom::prop part no.', 'custom::prop description'],
+    plainly:
+      'It looks a value up in another table. A sentence can compare two things; it cannot go and fetch one.',
     blocked:
       'A LOOKUP. A ClauseGroup compares one column to one value; it cannot look a value up. ' +
       "The one shape that could carry it is kind:'table' with `combinations`, and building " +
@@ -254,6 +278,8 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     source: `${WORKBOOK} · Boat Module!QD:QH · =100%-SUM(QD:QG) on 378 master cells`,
     kind: 'implies',
     needs: ['boat::on handover'],
+    plainly:
+      'It adds five columns together. A sentence compares one column to one value.',
     blocked:
       'ARITHMETIC ACROSS FIVE COLUMNS. A Clause compares ONE column to ONE value; there is no ' +
       'sum, and ValueExpr\'s { kind: "formula" } branch is explicitly not evaluated — ' +
@@ -284,6 +310,8 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     source: `${WORKBOOK} · Boat Module!A1005 'OBSOLETE' / C1005 'OBSOLETE MODELS (Models that ar No Longer Available)' · section divider`,
     kind: 'implies',
     needs: ['boat::source'],
+    plainly:
+      'It tests where a row sat in the spreadsheet, and no column carries that position.',
     blocked:
       'NO COLUMN TO TEST. The rule is a row-number threshold; the boat tables carry Source as ' +
       "TEXT ('Boat Module!R956') and CompareOp has no numeric extraction from text — " +
