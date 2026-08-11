@@ -56,7 +56,23 @@ const ENTRY = join(SRC, 'main.tsx')
    exemption is a guard that has quietly stopped guarding.
    ------------------------------------------------------------ */
 const DORMANT = [
-  // { dir: 'src/features/example', reason: 'why this is deliberately not wired up yet' },
+  {
+    dir: 'src/features/data',
+    reason:
+      'SUPERSEDED, not unfinished — and the first thing this guard ever caught. ' +
+      'It is the DATA tab of the inspector: a 1,377-line data-entry grid reached ' +
+      'only through src/app/Inspector.tsx <- src/app/Rails.tsx <- nothing. Rails ' +
+      'is the 340px right rail, retired on purpose (see the header of Rails.tsx: ' +
+      'a column of schema controls beside a table you can type straight into is ' +
+      'the clutter that removal existed to remove). Everything this grid does, ' +
+      'src/features/table now does better — 19 components with column sections, ' +
+      'hierarchy grouping, picture cells, level-of-detail rendering and column ' +
+      'windowing. Kept rather than deleted only because deleting 1,377 lines is ' +
+      "the repository owner's call, not a passing agent's; it is recorded here " +
+      'so the decision is visible rather than forgotten. If nobody wants the ' +
+      'inspector back, the honest follow-up is to delete this directory, ' +
+      'Inspector.tsx and Rails.tsx together, and remove this entry.',
+  },
 ]
 
 /* ---------------------------------------------------------- */

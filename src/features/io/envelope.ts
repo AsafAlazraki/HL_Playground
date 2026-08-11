@@ -46,6 +46,7 @@ import {
   type FieldPath,
   type FieldType,
   type GroupDef,
+  type ImageRef,
   type LoopSource,
   type ProjectExport,
   type RowData,
@@ -57,6 +58,7 @@ import {
   type ViewColumn,
   type XY,
 } from '@/types/model'
+import { isStorableSource } from '@/lib/imageSources'
 import { newId, nowIso } from '@/lib/id'
 
 export type Validated =
@@ -77,8 +79,58 @@ const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : und
 
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
 
+/* PICTURES SURVIVE A ROUND TRIP — they used to not.
+   `CellValue` has been `string | number | boolean | null | ImageRef[]`
+   since image columns existed, and this guard listed the first four.
+   Every picture in every cell was therefore dropped on import, in
+   silence, by the `isCellValue(v)` test on the row-values loop below:
+   export a project with photographs, import it, and the photographs
+   are gone with no error and no count. Found by the reachability and
+   test sweep, not by a user — which is the only reason it is not
+   already someone's lost afternoon.
+
+   AN IMPORTED FILE IS UNTRUSTED INPUT, and `ImageRef.src` goes
+   straight into an `<img src>`, so this is a security boundary as
+   well as a shape check. The scheme allow-list is the same one the
+   paste route enforces (`sourceKind` in `@/lib/imageSources`):
+   http, https, data:image/ and blob: only. A `javascript:` or
+   `data:text/html` source in a hand-edited project file is refused
+   here, at the door, rather than sanitised later by whoever renders
+   it. It asks `isStorableSource`, which is the SCHEME question alone
+   and works without a `window` — `sourceKind` answers "can this paint
+   on this origin?", which is a different question and returns
+   `refused` for a good https address in any non-browser context. Refusing the PICTURE rather than the whole cell keeps an
+   otherwise good import: one bad address costs one photograph. */
+const isImageRef = (v: unknown): v is ImageRef => {
+  if (!isRecord(v)) return false
+  if (typeof v.id !== 'string' || !isSafeId(v.id)) return false
+  if (typeof v.src !== 'string' || !isStorableSource(v.src)) return false
+  if (v.name !== undefined && typeof v.name !== 'string') return false
+  if (v.alt !== undefined && typeof v.alt !== 'string') return false
+  if (v.w !== undefined && !Number.isFinite(v.w)) return false
+  if (v.h !== undefined && !Number.isFinite(v.h)) return false
+  return true
+}
+
+/** The pictures in one cell, in their stored order — which IS the
+ *  primary: index 0 is the one that shows, so the order is data and
+ *  must not be re-sorted or de-duplicated on the way in. */
+const imageCell = (v: unknown[]): ImageRef[] =>
+  v.filter(isImageRef).map((img) => ({
+    id: img.id,
+    src: img.src,
+    ...(img.name !== undefined ? { name: img.name } : {}),
+    ...(img.alt !== undefined ? { alt: img.alt } : {}),
+    ...(img.w !== undefined ? { w: img.w } : {}),
+    ...(img.h !== undefined ? { h: img.h } : {}),
+  }))
+
 const isCellValue = (v: unknown): v is CellValue =>
-  v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+  v === null ||
+  typeof v === 'string' ||
+  typeof v === 'number' ||
+  typeof v === 'boolean' ||
+  Array.isArray(v)
 
 const clampAccent = (v: unknown, fallback: AccentKey): AccentKey =>
   typeof v === 'string' && (ACCENT_KEYS as string[]).includes(v) ? (v as AccentKey) : fallback
@@ -603,7 +655,15 @@ export function validateEnvelope(raw: unknown): Validated {
         const values: Record<string, CellValue> = {}
         if (isRecord(r.values)) {
           for (const [k, v] of Object.entries(r.values)) {
-            if (isSafeId(k) && isCellValue(v)) values[k] = v
+            /* An array cell is a picture cell, and every ImageRef in it
+               is validated and rebuilt rather than trusted whole — an
+               imported file may carry any shape and any scheme. A cell
+               whose pictures are ALL refused becomes an empty array,
+               not a dropped key: the column still holds a picture value,
+               it just holds none, which is the truthful outcome. */
+            if (!isSafeId(k)) continue
+            if (Array.isArray(v)) values[k] = imageCell(v)
+            else if (isCellValue(v)) values[k] = v
           }
         }
         clean.push({

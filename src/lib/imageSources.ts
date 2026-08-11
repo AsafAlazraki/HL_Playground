@@ -66,6 +66,31 @@ function parseSource(src: string): URL | null {
   }
 }
 
+/** MAY THIS ADDRESS BE STORED AT ALL — the scheme question, and only
+ *  the scheme question. `http:`, `https:`, `data:image/` and `blob:`;
+ *  everything else refused, including a bare path, because
+ *  `new URL('../x', base)` would silently resolve a typo into a
+ *  same-origin request.
+ *
+ *  SEPARATE FROM `sourceKind` ON PURPOSE, and the reason is not
+ *  tidiness. `sourceKind` answers "can this PAINT here?", which needs
+ *  `window.location.origin` to tell same-origin from remote — so it is
+ *  a browser question and returns `refused` for a perfectly good
+ *  `https://` address when there is no `window`. The import validator
+ *  in `features/io/envelope.ts` runs over an untrusted file and must
+ *  give the same answer in a test, a worker, or a Node process; it
+ *  cares whether an address is SAFE TO KEEP, never whether it will
+ *  paint on this origin. Wiring it to `sourceKind` silently discarded
+ *  every `https://` picture under vitest, which is how this was
+ *  found. */
+export function isStorableSource(src: string): boolean {
+  if (OWN_PIXELS.test(src)) return true
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(src)
+  if (scheme === null) return false
+  const p = scheme[1].toLowerCase()
+  return p === 'http' || p === 'https'
+}
+
 /** `own`         — our own bytes; nothing is fetched, nothing can fail.
  *  `same-origin` — cannot be refused cross-origin by construction.
  *  `remote`      — http/https elsewhere: gets a host verdict.
