@@ -17,6 +17,8 @@ import {
   Boat,
   CarProfile,
   Engine,
+  FolderOpen,
+  LinkSimple,
   MapPin,
   Motorcycle,
   Shapes,
@@ -50,6 +52,12 @@ export const INDUSTRY_ICON: Record<IndustryKey, Icon> = {
   motorcycle: Motorcycle,
   other: Shapes,
 }
+
+/** The two doors a picture comes in by: a file on this computer, or an
+ *  address on the web. Named for the door rather than the drawing, so
+ *  the mark can change without the caller changing. (IMAGE_SPEC §2) */
+export const FileDoorIcon = FolderOpen
+export const AddressDoorIcon = LinkSimple
 
 /** Structure / hierarchy — used by the "how is it structured?" step. */
 export const StructureIcon = TreeStructure

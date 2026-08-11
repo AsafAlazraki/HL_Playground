@@ -2,9 +2,16 @@
    Picture columns — a thumbnail strip inside an ordinary cell.
 
    ORDER IS THE PRIORITY. Index 0 is the primary: the one a catalogue
-   tile and a quote header show. There is no separate flag to fall out
-   of sync — dragging a picture to the front IS promoting it, and the
-   strip says so with a mark on the first slot only.
+   tile and the page that sells the boat show. There is no separate
+   flag to fall out of sync — dragging a picture to the front IS
+   promoting it. That rule used to be implied by a corner tick nobody
+   could interpret; it is now SAID, in three places (IMAGE_SPEC §3):
+   the first slot alone carries a solid ink frame, a drop marker
+   appears at the front of the strip the moment a picture is dragged
+   inside the cell, and the enlarged plate either stamps
+   "THE ONE THAT SHOWS" or offers the button that makes it so. All
+   three move the SAME array; there is no promote flag and no second
+   way to be wrong.
 
    Restraint is the requirement: a table full of pictures must still
    read as a TABLE. So the thumbs are small, square, on the row's own
@@ -17,33 +24,49 @@
    not a price list.
 
    ------------------------------------------------------------
+   TWO DOORS IN, NOT ONE (IMAGE_SPEC §2).
+
+   Every picture this business owns is ALREADY A URL — the catalogue
+   carries addresses, not photographs, which is why 305 pictures cost
+   37,857 bytes. Until now the only way in was dropping a file, so the
+   obvious route was the missing one. Now the `+` plate and a
+   double-click on the cell open one small sheet with both doors on
+   it: the file chooser, and a box to paste an address into. Ctrl+V on
+   a selected picture cell takes the short way and adds straight from
+   the clipboard.
+
+   THE SCHEME IS A SECURITY BOUNDARY, NOT A NICETY. `ImageRef.src`
+   goes straight into an `<img src>`, and that is the one place
+   untrusted text enters our DOM. Only `http:`, `https:`, `data:image/`
+   and `blob:` may be stored; `javascript:`, `file:`, `data:text/html`
+   and anything else are refused before the value exists, with a
+   sentence that says what IS allowed. A scheme-less line is refused
+   too, because resolving it against our own origin would silently
+   turn somebody's typo into a same-origin request.
+
+   AND WHAT HAPPENED IS SAID. An address on a host we already know
+   refuses us is still STORED — the data is right even when the
+   picture cannot be shown — so the sheet says so in words rather than
+   letting a correct save read as a failure.
+
+   ------------------------------------------------------------
    A PICTURE WE CANNOT PAINT IS STILL A RECORD OF A PICTURE.
 
-   The real catalogue does not carry photographs, it carries LINKS to
-   them — `https://www.northsidemarine.com.au/…/540-proline.jpg` — and
-   a link is only a picture where the browser is allowed to fetch it.
-   Here it is not: every one of those responses is refused
-   (`ERR_BLOCKED_BY_RESPONSE.NotSameOrigin`), and a refused subresource
-   is a console error the page cannot catch, cannot handle and cannot
-   apologise for. Seventy-odd of them per sheet.
+   Whether an address may be drawn is NOT decided here. It is decided
+   once per HOST in `@/lib/imageSources`, and the cell, the enlarged
+   plate and the page that sells the boat all read the same verdict —
+   so a picture that is a plate in the table is never a broken glyph
+   in front of a customer. A closed host is drawn as what it actually
+   is: a REFERENCE — hairline frame, the table kind's mark, the
+   filename — with no request made.
 
-   So the rule is: WE ONLY POINT AN <img> AT PIXELS WE ALREADY HOLD.
-   A `data:`/`blob:` picture (anything dropped, chosen or pasted in) is
-   painted exactly as before. A picture that lives at somebody else's
-   address is drawn as what it actually is — a REFERENCE: a hairline
-   frame, the table kind's mark, and the filename. No request is made,
-   so there is nothing to fail and nothing to log.
-
-   `onError` stays on the paths that do load, because a truncated data
-   URL is still possible; a picture that fails once is remembered for
-   the session so the same broken source is never asked for twice.
-
-   THE DATA IS UNTOUCHED. `ImageRef.src` keeps its URL, exports keep
-   it, and the day those pixels are reachable the same cell paints
-   them. Only the DISPLAY degrades — and it degrades into the drawing
-   office's own language rather than into a browser's broken glyph.
+   THE DATA IS UNTOUCHED. `ImageRef.src` keeps its address, exports
+   keep it, and the day those pixels are reachable the same cell
+   paints them. Only the DISPLAY degrades — and it degrades into the
+   drawing office's own language rather than into a browser's broken
+   glyph.
    ============================================================ */
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { DragEvent as ReactDragEvent, JSX } from 'react'
 import {
@@ -54,7 +77,23 @@ import {
   type TableKind,
 } from '@/types/model'
 import { newId } from '@/lib/id'
-import { ICON_SIZE, TABLE_KIND_ICON, weightFor } from '@/lib/icons'
+import {
+  AddressDoorIcon,
+  FileDoorIcon,
+  ICON_SIZE,
+  TABLE_KIND_ICON,
+  weightFor,
+} from '@/lib/icons'
+import {
+  hostIsClosed,
+  imageHostOf,
+  imageLabel,
+  nameFromUrl,
+  noteImageFailed,
+  noteImageLoaded,
+  useImageDisplay,
+} from '@/lib/imageSources'
+import { Popover } from './Popover'
 import { CrossGlyph, PlusGlyph } from './glyphs'
 
 /* ---------------------------------------------------------- */
@@ -73,7 +112,12 @@ function readDataUrl(file: File): Promise<string | null> {
 }
 
 /** Natural pixel size, so a grid can reserve space later. Never
- *  rejects: an unreadable picture simply carries no size. */
+ *  rejects: an unreadable picture simply carries no size.
+ *
+ *  Only ever asked of pixels we already hold. Measuring a REMOTE
+ *  address this way would be a second fetch of a full-size photograph
+ *  — and on a host that refuses us, one more uncatchable console line
+ *  for a number nobody reads. */
 function naturalSize(src: string): Promise<{ w: number; h: number } | null> {
   return new Promise((resolve) => {
     const img = new Image()
@@ -83,9 +127,10 @@ function naturalSize(src: string): Promise<{ w: number; h: number } | null> {
   })
 }
 
-/** Files (dropped or chosen) → ImageRefs, in the order they arrived.
- *  Anything that is not an image is ignored rather than reported —
- *  dragging a folder of mixed files onto a cell is not an error. */
+/** Files (dropped, chosen or pasted) → ImageRefs, in the order they
+ *  arrived. Anything that is not an image is ignored rather than
+ *  reported — dragging a folder of mixed files onto a cell is not an
+ *  error. */
 export async function readImageFiles(files: FileList | File[]): Promise<ImageRef[]> {
   const out: ImageRef[] = []
   for (const file of Array.from(files)) {
@@ -107,67 +152,245 @@ export const hasImageFiles = (dt: DataTransfer | null): boolean =>
   dt !== null && Array.from(dt.types).includes('Files')
 
 /* ---------------------------------------------------------- */
-/* pixels we hold vs. pictures we only reference              */
+/* reading addresses — the one untrusted door                 */
 /* ---------------------------------------------------------- */
 
-/** Pixels that travel with the project: nothing is fetched to draw
- *  them, so they can never fail on the network. */
-const OWN_PIXELS = /^(data:|blob:)/i
+/** The complete list of schemes that may reach an `<img src>`, and the
+ *  only place it is written down for the WRITE path. (`imageSources`
+ *  holds the same rule for the READ path; both must agree, and both
+ *  say `data:image/` rather than `data:`.) */
+const ALLOWED_SCHEME = /^(?:https?:|data:image\/|blob:)/i
 
-/** True when pointing an `<img>` at this source cannot produce a
- *  cross-origin fetch — our own bytes, or our own origin. Everything
- *  else is a REFERENCE and is drawn as one. */
-export function isPaintable(src: string): boolean {
-  if (src === '') return false
-  if (OWN_PIXELS.test(src)) return true
-  try {
-    return new URL(src, window.location.href).origin === window.location.origin
-  } catch {
-    return false
-  }
+/** Said to the reader, verbatim, whenever a line is refused. It names
+ *  what IS allowed, because "invalid" teaches nobody anything. */
+export const SCHEME_REFUSAL =
+  'A picture address must start with http://, https://, data:image/ or blob:.'
+
+export interface ReadAddresses {
+  /** the lines we will store, in the order they were pasted */
+  refs: ImageRef[]
+  /** lines refused on their scheme — kept, not merely counted, so the
+   *  box can hand back exactly what needs correcting */
+  refused: string[]
 }
 
-/** Sources that have already failed once. Module-level on purpose: the
- *  same photograph appears in a cell, in the strip and in the plate,
- *  and one failure is enough for all three, for the session. */
-const broken = new Set<string>()
+/** Anything with a scheme on every line and no tab in it. A block
+ *  paste out of a spreadsheet has tabs and prose; this is the test
+ *  that lets one go to the grid's block paste (which deliberately
+ *  skips picture columns) and the other be claimed here. */
+const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i
 
-/** `609%20Ocean%20Ranger.jpg` is an address, not a filename. Names
- *  lifted off a URL arrive escaped; a plate in the drawing office
- *  reads the words. Anything that will not decode is left exactly as
- *  it came, because a mangled name is worse than an ugly one. */
-function readable(text: string): string {
-  if (!text.includes('%')) return text
-  try {
-    return decodeURIComponent(text)
-  } catch {
-    return text
-  }
+export function looksLikeAddresses(text: string): boolean {
+  if (text.includes('\t')) return false
+  const lines = text.split(/\r?\n/).map((s) => s.trim()).filter((s) => s !== '')
+  return lines.length > 0 && lines.every((line) => HAS_SCHEME.test(line))
 }
 
-/** The words on the plate: the filename the business would recognise,
- *  falling back to the last segment of the address. */
-export function imageLabel(img: ImageRef): string {
-  const named = img.name?.trim()
-  if (named) return readable(named)
-  try {
-    const url = new URL(img.src, window.location.href)
-    const last = url.pathname.split('/').filter(Boolean).pop()
-    return last ? readable(last) : url.hostname
-  } catch {
-    return 'Picture'
+/** Text → pictures. One address per line, in the order pasted.
+ *
+ *  NO FETCH, NO HEAD CHECK, NO VALIDATION BEYOND THE SCHEME. Whether
+ *  an address paints is the host verdict's business, not this
+ *  function's: a picture on a host that refuses us is still a true
+ *  record of where that picture lives, and storing it is correct.
+ *
+ *  A line with no scheme at all is refused rather than resolved. */
+export function imageRefsFromText(text: string): ReadAddresses {
+  const refs: ImageRef[] = []
+  const refused: string[] = []
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim()
+    if (line === '') continue
+    if (!ALLOWED_SCHEME.test(line)) {
+      refused.push(line)
+      continue
+    }
+    /* http/https must also PARSE — `https://` on its own is a scheme,
+       not an address. `data:`/`blob:` are taken as they stand: they
+       are pixels we already hold, and `new URL` accepts both. */
+    let parsed: URL | null = null
+    try {
+      parsed = new URL(line)
+    } catch {
+      parsed = null
+    }
+    if (parsed === null || parsed.href === '') {
+      refused.push(line)
+      continue
+    }
+    const name = /^https?:/i.test(line) ? nameFromUrl(line) : ''
+    refs.push({ id: newId(), src: line, ...(name === '' ? {} : { name }) })
   }
+  return { refs, refused }
 }
 
-/** Where a referenced picture actually lives — the second line of the
- *  enlarged plate, so "why can't I see it" answers itself. */
-function imageHost(img: ImageRef): string {
-  try {
-    return new URL(img.src, window.location.href).hostname
-  } catch {
-    return ''
-  }
+/** What the sheet says after an attempt. Never silent, never a bare
+ *  "error" — a saved address on a blocked host is a SUCCESS that
+ *  happens not to be visible, and it has to read like one. */
+export interface AddOutcome {
+  text: string
+  tone: 'info' | 'warn'
 }
+
+const plural = (n: number): string => (n === 1 ? 'picture' : 'pictures')
+
+/** What an attempt did, and what the box should keep — the refused
+ *  lines, so they can be corrected rather than retyped. */
+export interface AddAttempt {
+  outcome: AddOutcome
+  keep: string
+}
+
+export function outcomeOf(refs: ImageRef[], refused: number): AddOutcome {
+  if (refs.length === 0) {
+    return {
+      text: refused === 0 ? 'Nothing to add.' : `Nothing was added. ${SCHEME_REFUSAL}`,
+      tone: 'warn',
+    }
+  }
+  /* a host already condemned this session: the address is saved, the
+     picture cannot be drawn, and those are two different facts */
+  const blocked = [
+    ...new Set(refs.filter((r) => hostIsClosed(r.src)).map((r) => imageHostOf(r.src))),
+  ].filter((h) => h !== '')
+  let text = `Added ${refs.length} ${plural(refs.length)} — saved.`
+  if (blocked.length > 0) {
+    text += ` ${blocked.join(', ')} refuses pictures here, so the cell shows the reference plate instead of the photograph.`
+  }
+  if (refused > 0) {
+    text += ` ${refused} ${refused === 1 ? 'line was' : 'lines were'} refused. ${SCHEME_REFUSAL}`
+  }
+  return { text, tone: refused > 0 ? 'warn' : 'info' }
+}
+
+/* ---------------------------------------------------------- */
+/* the sheet with both doors on it                            */
+/* ---------------------------------------------------------- */
+
+/** ADD PICTURES. Two doors and nothing else: the file chooser, which
+ *  is focused on open because it is the door that already existed,
+ *  and a box for an address, which is the door that was missing.
+ *
+ *  Nothing in here shows an example address. An example URL in a
+ *  catalogue tool is indistinguishable from a real one, so every
+ *  placeholder is an INSTRUCTION. (IMAGE_SPEC §2, §6.10) */
+function AddPictures({
+  anchor,
+  fieldName,
+  first,
+  onChooseFiles,
+  onSubmitText,
+  onClose,
+}: {
+  anchor: DOMRect
+  fieldName: string
+  /** what to say before the reader has done anything — the outcome of
+   *  the Ctrl+V that opened this sheet, when that is how it opened */
+  first: AddOutcome | null
+  onChooseFiles: () => void
+  onSubmitText: (text: string) => AddAttempt
+  onClose: () => void
+}): JSX.Element {
+  const [text, setText] = useState('')
+  const [said, setSaid] = useState<AddOutcome | null>(first)
+  const boxId = 'tb-imgurl'
+
+  const submit = (): void => {
+    const { outcome, keep } = onSubmitText(text)
+    setSaid(outcome)
+    /* what was stored leaves the box; what was refused stays in it, so
+       it can be corrected rather than retyped — and never added twice */
+    setText(keep)
+  }
+
+  return (
+    <Popover anchor={anchor} width={300} label={`Add pictures to ${fieldName}`} onClose={onClose}>
+      <header className="tb-menu-head">
+        <span className="tb-menu-title">Add pictures</span>
+      </header>
+
+      {/* THE FOOTER MUST SURVIVE THE SENTENCE. The sheet is capped at
+          380px and clips what will not fit; the outcome line makes the
+          sheet taller AFTER it opens, and a clipped footer means the
+          Add button disappears the moment there is something to say.
+          So the doors scroll and the footer does not. */}
+      <div className="tb-imgsheet">
+        <div className="tb-imgsheet-scroll">
+          <div className="tb-imgdoors">
+            <button
+              type="button"
+              className="tb-act tb-imgdoor"
+              autoFocus
+              onClick={onChooseFiles}
+            >
+              <span className="tb-imgdoor-mark" aria-hidden="true">
+                <FileDoorIcon size={ICON_SIZE.small} weight={weightFor(ICON_SIZE.small)} />
+              </span>
+              Choose files from this computer
+            </button>
+            <span className="mono-label tb-imgdoor-note">
+              Or drop them straight onto the cell
+            </span>
+          </div>
+
+          <div className="tb-menu-body tb-menu-more">
+            <label className="mono-label tb-menu-lab tb-imgdoor-lab" htmlFor={boxId}>
+              <span className="tb-imgdoor-mark" aria-hidden="true">
+                <AddressDoorIcon
+                  size={ICON_SIZE.small}
+                  weight={weightFor(ICON_SIZE.small)}
+                />
+              </span>
+              Paste a web address
+            </label>
+            <textarea
+              id={boxId}
+              className="field-input tb-area tb-mono-input"
+              rows={2}
+              value={text}
+              spellCheck={false}
+              placeholder="Paste the address here"
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                e.stopPropagation()
+                /* Enter adds; several addresses need newlines, so those
+                   are typed with Shift held, as in any message box */
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  submit()
+                }
+              }}
+            />
+            <p className="tb-menu-note">
+              Right-click a picture on a website, choose Copy image address, and paste
+              it here. Several, one per line, are added in the order you paste them.
+            </p>
+            {said && (
+              <p
+                className={'tb-imgsaid' + (said.tone === 'warn' ? ' tb-imgsaid-warn' : '')}
+                role="status"
+              >
+                {said.text}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <footer className="tb-menu-foot tb-imgsheet-foot">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Close
+          </button>
+          <button type="button" className="btn btn-primary" onClick={submit}>
+            Add
+          </button>
+        </footer>
+      </div>
+    </Popover>
+  )
+}
+
+/* ---------------------------------------------------------- */
+/* one thumbnail                                              */
+/* ---------------------------------------------------------- */
 
 /** The kind's mark, in the size the plate is drawn at. */
 function KindMark({ kind, size }: { kind?: TableKind; size: number }): JSX.Element {
@@ -175,29 +398,86 @@ function KindMark({ kind, size }: { kind?: TableKind; size: number }): JSX.Eleme
   return <Mark size={size} weight={weightFor(size)} />
 }
 
-/** One thumbnail: the picture when we hold its pixels, the reference
- *  frame when we only hold its address — and the reference frame the
- *  moment a picture we thought we held turns out not to load. */
-function Thumb({ img, kind }: { img: ImageRef; kind?: TableKind }): JSX.Element {
-  const [failed, setFailed] = useState(() => broken.has(img.src))
-  if (!isPaintable(img.src) || failed) {
-    return (
-      <span className="tb-imgmiss" aria-hidden="true">
-        <KindMark kind={kind} size={ICON_SIZE.tiny} />
-      </span>
-    )
-  }
+/** One thumbnail: the picture when the host verdict allows it, the
+ *  reference frame when it does not — and the reference frame the
+ *  moment a picture we thought would paint turns out not to.
+ *
+ *  Its own component because the verdict is a HOOK: forty rows means
+ *  forty subscriptions, one per source, and a hook cannot be called
+ *  inside the strip's map. */
+function ThumbButton({
+  img,
+  kind,
+  index,
+  count,
+  fieldName,
+  isActive,
+  onOpen,
+}: {
+  img: ImageRef
+  kind?: TableKind
+  index: number
+  count: number
+  fieldName: string
+  isActive: boolean
+  onOpen: (index: number) => void
+}): JSX.Element {
+  const { paint, probe } = useImageDisplay(img.src)
+  const first = index === 0
   return (
-    <img
-      className="tb-imgpic"
-      src={img.src}
-      alt={img.alt ?? ''}
-      draggable={false}
-      onError={() => {
-        broken.add(img.src)
-        setFailed(true)
+    <button
+      type="button"
+      tabIndex={-1}
+      className={'tb-imgthumb' + (paint ? '' : ' tb-imgthumb-ref')}
+      aria-label={
+        `${fieldName} — picture ${index + 1} of ${count}` +
+        (first ? ' (first, the one that shows)' : '') +
+        `: ${imageLabel(img)}` +
+        (paint ? '' : ' — held as a link, not shown here')
+      }
+      title={
+        imageLabel(img) +
+        (paint ? '' : ` — held as a link to ${imageHostOf(img.src)}, so it is not shown here`) +
+        (first
+          ? ' — first, so this is the one that shows. Drag another here to swap.'
+          : ' — drag it to the front to make it the one that shows.')
+      }
+      onClick={(e) => {
+        /* first click selects the cell, a second one opens the
+           picture — so sweeping a selection across a row of
+           photographs never throws a viewer up */
+        if (!isActive) return
+        e.stopPropagation()
+        onOpen(index)
       }}
-    />
+    >
+      {paint ? (
+        <img
+          className="tb-imgpic"
+          src={img.src}
+          alt={img.alt ?? ''}
+          draggable={false}
+          /* THE PROBE IS THE ONE PICTURE on an unknown host allowed to
+             make the request that settles it, so it must not be
+             deferred. Everything else waits until it is on screen: the
+             grid only virtualises above 150 rows, so a 40-row table
+             mounts all forty, and eager thumbs would fetch forty
+             full-size photographs to draw forty 24px squares. (§1.6) */
+          loading={probe ? 'eager' : 'lazy'}
+          decoding="async"
+          /* the verdict is the module's, not ours: what this cell
+             learns teaches every other cell and the page that sells
+             the boat */
+          onLoad={() => noteImageLoaded(img.src)}
+          onError={() => noteImageFailed(img.src)}
+        />
+      ) : (
+        <span className="tb-imgmiss" aria-hidden="true">
+          <KindMark kind={kind} size={ICON_SIZE.tiny} />
+        </span>
+      )}
+      {first && <span className="tb-imgmark" aria-hidden="true" />}
+    </button>
   )
 }
 
@@ -212,6 +492,10 @@ let dragFrom: { cell: string; index: number } | null = null
 
 const DND_TYPE = 'application/x-tb-image'
 
+/** The drop marker at the head of the strip — "the front" as a place
+ *  you can aim at, rather than as an abstraction. */
+const FRONT = -1
+
 export interface ImageStripProps {
   field: FieldDef
   /** what the table holds — the mark a referenced picture is drawn
@@ -224,7 +508,12 @@ export interface ImageStripProps {
   /** the cell is the one the reader is working in */
   isActive: boolean
   onOpen: (index: number) => void
+  /** open the operating system's file chooser — the door that already
+   *  existed, now reached from inside the ADD PICTURES sheet */
   onAdd: () => void
+  /** append pictures that already exist as values: addresses read off
+   *  the clipboard, or files read into `data:` URLs here */
+  onAddImages: (added: ImageRef[]) => void
   onRemove: (index: number) => void
   onReorder: (from: number, to: number) => void
   onDropFiles: (files: FileList) => void
@@ -238,16 +527,98 @@ export function ImageStrip({
   isActive,
   onOpen,
   onAdd,
+  onAddImages,
   onRemove,
   onReorder,
   onDropFiles,
 }: ImageStripProps): JSX.Element {
   const [over, setOver] = useState(false)
   const [dropAt, setDropAt] = useState<number | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const [add, setAdd] = useState<{ anchor: DOMRect; first: AddOutcome | null } | null>(
+    null,
+  )
+  const cellRef = useRef<HTMLDivElement | null>(null)
 
   const count = images.length
   const primary = primaryImage(images)
   const summary = count === 0 ? 'No pictures' : imageCellText(images)
+
+  const openAdd = useCallback((from: Element | null, first: AddOutcome | null): void => {
+    const box = (from ?? cellRef.current)?.getBoundingClientRect()
+    if (!box) return
+    setAdd({ anchor: box, first })
+  }, [])
+
+  const addText = useCallback(
+    (text: string): AddAttempt => {
+      const { refs, refused } = imageRefsFromText(text)
+      if (refs.length > 0) onAddImages(refs)
+      /* the outcome is read AFTER the refs exist, so a host already
+         known-closed is named in the sentence */
+      return { outcome: outcomeOf(refs, refused.length), keep: refused.join('\n') }
+    },
+    [onAddImages],
+  )
+
+  /* -- Ctrl+V straight onto the cell ----------------------------
+     The grid mounts ONE paste handler, and it treats text as a block
+     paste that deliberately skips picture columns — so a pasted
+     address used to be a silent no-op on the one column where it is
+     the obvious thing to do. This claims the event first, in the
+     capture phase, and only for the ONE cell that is both selected
+     and inside the table the reader is actually in: several sheets
+     are on the board at once, each with its own selection, and a
+     paste must never land in all of them. */
+  useEffect(() => {
+    if (!isActive) return
+    const mine = (): boolean => {
+      const cell = cellRef.current
+      if (cell === null) return false
+      const grid = cell.closest('.tb-grid')
+      return grid !== null && grid === document.activeElement
+    }
+    const onPaste = (e: ClipboardEvent): void => {
+      if (!mine()) return
+      const dt = e.clipboardData
+      if (dt === null) return
+      const files = Array.from(dt.files).filter((f) => IMAGE_MIME.test(f.type))
+      if (files.length > 0) {
+        /* pixels we hold — the same path as a drop */
+        e.preventDefault()
+        e.stopPropagation()
+        void readImageFiles(files).then((refs) => {
+          if (refs.length > 0) onAddImages(refs)
+          openAdd(null, outcomeOf(refs, 0))
+        })
+        return
+      }
+      const text = dt.getData('text/plain')
+      /* A BLOCK PASTE MUST STILL FLOW PAST A PICTURE COLUMN. Forty
+         columns of spreadsheet text landing on a selection whose
+         anchor happens to be a photograph must not scatter addresses
+         into it — so only text that is addresses all the way down is
+         claimed here; anything else is left to the grid's one paste
+         handler, which skips picture columns and says how many. */
+      if (!looksLikeAddresses(text)) return
+      e.preventDefault()
+      e.stopPropagation()
+      openAdd(null, addText(text).outcome)
+    }
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key !== 'Enter' || e.altKey || e.ctrlKey || e.metaKey) return
+      if (!mine()) return
+      e.preventDefault()
+      e.stopPropagation()
+      openAdd(null, null)
+    }
+    document.addEventListener('paste', onPaste, true)
+    document.addEventListener('keydown', onKey, true)
+    return () => {
+      document.removeEventListener('paste', onPaste, true)
+      document.removeEventListener('keydown', onKey, true)
+    }
+  }, [isActive, addText, onAddImages, openAdd])
 
   const onCellDragOver = (e: ReactDragEvent<HTMLDivElement>): void => {
     if (!hasImageFiles(e.dataTransfer)) return
@@ -265,8 +636,32 @@ export function ImageStrip({
     onDropFiles(e.dataTransfer.files)
   }
 
+  /* a drop target inside this cell's own strip, for the picture being
+     dragged inside it — `to` is where it lands */
+  const landAt = (to: number) => ({
+    onDragOver: (e: ReactDragEvent<HTMLElement>): void => {
+      if (dragFrom === null || dragFrom.cell !== cellKey) return
+      e.preventDefault()
+      e.stopPropagation()
+      e.dataTransfer.dropEffect = 'move'
+      if (dropAt !== to) setDropAt(to)
+    },
+    onDrop: (e: ReactDragEvent<HTMLElement>): void => {
+      const held = dragFrom
+      dragFrom = null
+      setDropAt(null)
+      setDragging(false)
+      if (held === null || held.cell !== cellKey) return
+      e.preventDefault()
+      e.stopPropagation()
+      const target = to === FRONT ? 0 : to
+      if (held.index !== target) onReorder(held.index, target)
+    },
+  })
+
   return (
     <div
+      ref={cellRef}
       className={
         'tb-imgcell' +
         (over ? ' tb-imgcell-over' : '') +
@@ -274,8 +669,8 @@ export function ImageStrip({
       }
       title={
         count === 0
-          ? `${field.name} — drop pictures here, or select the cell and press Enter`
-          : `${summary}${primary?.name ? ` · first: ${primary.name}` : ''}`
+          ? `${field.name} — drop pictures here, or press + to add one by address`
+          : `${summary}${primary?.name ? ` · first: ${primary.name}` : ''} — the first one is the one that shows`
       }
       onDragOver={onCellDragOver}
       onDragLeave={(e) => {
@@ -288,8 +683,30 @@ export function ImageStrip({
         setDropAt(null)
       }}
       onDrop={onCellDrop}
+      onDoubleClick={(e) => {
+        /* double-clicking a THUMBNAIL opens that picture; the grid's
+           own handler opens the file chooser for everything else in a
+           picture column, and this claims the empty space of the cell
+           before it gets there */
+        if ((e.target as HTMLElement).closest('.tb-imgslot, .tb-imgadd')) return
+        e.stopPropagation()
+        openAdd(e.currentTarget, null)
+      }}
     >
       <div className="tb-imgstrip">
+        {/* THE FRONT IS A PLACE. Drawn only while a picture is being
+            dragged inside this cell, so nothing is added to a resting
+            cell — and it says, at the moment it matters, that the
+            front of the strip is a target worth aiming at. */}
+        {dragging && count > 1 && (
+          <span
+            className={'tb-imgfront' + (dropAt === FRONT ? ' tb-imgfront-on' : '')}
+            aria-hidden="true"
+            title="Drop here to make it the one that shows"
+            {...landAt(FRONT)}
+          />
+        )}
+
         {images.map((img, i) => (
           <span
             key={img.id}
@@ -301,63 +718,26 @@ export function ImageStrip({
             draggable={count > 1}
             onDragStart={(e) => {
               dragFrom = { cell: cellKey, index: i }
+              setDragging(true)
               e.dataTransfer.effectAllowed = 'move'
               e.dataTransfer.setData(DND_TYPE, String(i))
             }}
             onDragEnd={() => {
               dragFrom = null
               setDropAt(null)
+              setDragging(false)
             }}
-            onDragOver={(e) => {
-              if (dragFrom === null || dragFrom.cell !== cellKey) return
-              e.preventDefault()
-              e.stopPropagation()
-              e.dataTransfer.dropEffect = 'move'
-              if (dropAt !== i) setDropAt(i)
-            }}
-            onDrop={(e) => {
-              const held = dragFrom
-              dragFrom = null
-              setDropAt(null)
-              if (held === null || held.cell !== cellKey) return
-              e.preventDefault()
-              e.stopPropagation()
-              if (held.index !== i) onReorder(held.index, i)
-            }}
+            {...landAt(i)}
           >
-            <button
-              type="button"
-              tabIndex={-1}
-              className={
-                'tb-imgthumb' + (isPaintable(img.src) ? '' : ' tb-imgthumb-ref')
-              }
-              aria-label={
-                `${field.name} — picture ${i + 1} of ${count}` +
-                (i === 0 ? ' (first, the one that shows)' : '') +
-                `: ${imageLabel(img)}` +
-                (isPaintable(img.src) ? '' : ' — held as a link, not shown here')
-              }
-              title={
-                imageLabel(img) +
-                (isPaintable(img.src)
-                  ? ''
-                  : ` — held as a link to ${imageHost(img)}, so it is not shown here`) +
-                (i === 0
-                  ? ' — first, so this is the one that shows. Drag another here to swap.'
-                  : ' — drag it to the front to make it the one that shows.')
-              }
-              onClick={(e) => {
-                /* first click selects the cell, a second one opens the
-                   picture — so sweeping a selection across a row of
-                   photographs never throws a viewer up */
-                if (!isActive) return
-                e.stopPropagation()
-                onOpen(i)
-              }}
-            >
-              <Thumb img={img} kind={kind} />
-              {i === 0 && <span className="tb-imgmark" aria-hidden="true" />}
-            </button>
+            <ThumbButton
+              img={img}
+              kind={kind}
+              index={i}
+              count={count}
+              fieldName={field.name}
+              isActive={isActive}
+              onOpen={onOpen}
+            />
             <button
               type="button"
               tabIndex={-1}
@@ -380,11 +760,11 @@ export function ImageStrip({
           tabIndex={-1}
           className="tb-imgadd"
           aria-label={`Add pictures to ${field.name}`}
-          title="Add pictures — or drop image files straight onto the cell"
+          title="Add pictures — choose files, or paste a web address"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation()
-            onAdd()
+            openAdd(e.currentTarget, null)
           }}
         >
           <PlusGlyph />
@@ -396,6 +776,20 @@ export function ImageStrip({
           </span>
         )}
       </div>
+
+      {add && (
+        <AddPictures
+          anchor={add.anchor}
+          fieldName={field.name}
+          first={add.first}
+          onChooseFiles={() => {
+            setAdd(null)
+            onAdd()
+          }}
+          onSubmitText={addText}
+          onClose={() => setAdd(null)}
+        />
+      )}
     </div>
   )
 }
@@ -411,6 +805,10 @@ export interface LightboxState {
   fieldName: string
   /** what the table holds — the mark a referenced picture is drawn with */
   kind?: TableKind
+  /** which cell these pictures belong to, so the plate can promote one
+   *  — the same move-to-index-0 the drag does, never a second flag */
+  rowId: string
+  fieldId: string
 }
 
 /** The enlarged form of a picture we only hold the address of: the
@@ -423,7 +821,7 @@ function ReferencePlate({
   image: ImageRef
   kind?: TableKind
 }): JSX.Element {
-  const host = imageHost(image)
+  const host = imageHostOf(image.src)
   return (
     <div className="tb-missplate" role="img" aria-label={`${imageLabel(image)} — held as a link`}>
       <span className="tb-missplate-mark" aria-hidden="true">
@@ -442,19 +840,17 @@ function ReferencePlate({
 /** The big picture, or its reference plate. Same decision as the
  *  thumbnail, taken once, in one place. */
 function Plate({ image, kind }: { image: ImageRef; kind?: TableKind }): JSX.Element {
-  const [failed, setFailed] = useState(() => broken.has(image.src))
-  if (!isPaintable(image.src) || failed) {
-    return <ReferencePlate image={image} kind={kind} />
-  }
+  const { paint, probe } = useImageDisplay(image.src)
+  if (!paint) return <ReferencePlate image={image} kind={kind} />
   return (
     <img
       className="tb-lightbox-pic"
       src={image.src}
       alt={image.alt ?? image.name ?? ''}
-      onError={() => {
-        broken.add(image.src)
-        setFailed(true)
-      }}
+      loading={probe ? 'eager' : 'lazy'}
+      decoding="async"
+      onLoad={() => noteImageLoaded(image.src)}
+      onError={() => noteImageFailed(image.src)}
     />
   )
 }
@@ -467,10 +863,13 @@ function Plate({ image, kind }: { image: ImageRef; kind?: TableKind }): JSX.Elem
 export function ImageLightbox({
   state,
   onIndex,
+  onPromote,
   onClose,
 }: {
   state: LightboxState
   onIndex: (next: number) => void
+  /** move this picture to index 0 — the whole of what "primary" means */
+  onPromote: (index: number) => void
   onClose: () => void
 }): JSX.Element | null {
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -531,8 +930,24 @@ export function ImageLightbox({
           <span className="tb-lightbox-name">{imageLabel(image) || fieldName}</span>
           <span className="tb-lightbox-of">
             {index + 1} / {images.length}
-            {index === 0 ? ' · first' : ''}
           </span>
+          {/* WHERE A MOUSE-ONLY READER LEARNS THE RULE. On the first
+              picture it is a statement; on any other it is the button
+              that makes the statement true — and that button is a
+              move-to-index-0 and nothing else, so order stays the only
+              thing that decides. (§3) */}
+          {index === 0 ? (
+            <span className="tb-lightbox-primary">The one that shows</span>
+          ) : (
+            <button
+              type="button"
+              className="tb-lightbox-promote"
+              title="Move this picture to the front of the strip — the first one is the one that shows"
+              onClick={() => onPromote(index)}
+            >
+              Make this the one that shows
+            </button>
+          )}
           <button
             type="button"
             className="tb-lightbox-x"
@@ -554,13 +969,18 @@ export function ImageLightbox({
               <button
                 key={img.id}
                 type="button"
-                className={'tb-lightbox-dot' + (i === index ? ' tb-lightbox-dot-on' : '')}
-                aria-label={`Picture ${i + 1}`}
+                className={
+                  'tb-lightbox-dot' +
+                  (i === index ? ' tb-lightbox-dot-on' : '') +
+                  (i === 0 ? ' tb-lightbox-dot-first' : '')
+                }
+                aria-label={`Picture ${i + 1}${i === 0 ? ' — the one that shows' : ''}`}
                 aria-current={i === index}
-                title={imageLabel(img)}
+                title={imageLabel(img) + (i === 0 ? ' — the one that shows' : '')}
                 onClick={() => onIndex(i)}
               >
-                <Thumb img={img} kind={kind} />
+                <ThumbDot img={img} kind={kind} />
+                {i === 0 && <span className="tb-imgmark" aria-hidden="true" />}
               </button>
             ))}
           </footer>
@@ -574,5 +994,29 @@ export function ImageLightbox({
       </div>
     </div>,
     document.body,
+  )
+}
+
+/** The 30px mark in the plate's footer. Same verdict, same module —
+ *  a picture that is a plate in the strip is a plate here too. */
+function ThumbDot({ img, kind }: { img: ImageRef; kind?: TableKind }): JSX.Element {
+  const { paint, probe } = useImageDisplay(img.src)
+  if (!paint) {
+    return (
+      <span className="tb-imgmiss" aria-hidden="true">
+        <KindMark kind={kind} size={ICON_SIZE.tiny} />
+      </span>
+    )
+  }
+  return (
+    <img
+      src={img.src}
+      alt=""
+      draggable={false}
+      loading={probe ? 'eager' : 'lazy'}
+      decoding="async"
+      onLoad={() => noteImageLoaded(img.src)}
+      onError={() => noteImageFailed(img.src)}
+    />
   )
 }

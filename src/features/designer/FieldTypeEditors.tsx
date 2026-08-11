@@ -7,12 +7,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   FIELD_TYPES,
   accentVar,
+  rowLabel,
   type EntityDef,
   type FieldDef,
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { FORMULA_FUNCTIONS, validateFormula } from '@/lib/formula'
 import { GuardNote } from './GuardNote'
+import { ConfirmFacts, ConfirmSamples, ConfirmSheet } from './ConfirmSheet'
 /* Phosphor only, through the house icon module — see the note in
    FieldRow.tsx: this folder used to draw its own SVGs at its own
    stroke weight, a few hundred pixels from the app's. */
@@ -156,6 +158,11 @@ export function ReferenceEditor({
   const updateCell = useProjectStore((s) => s.updateCell)
   const entities = useProjectStore((s) => s.entities)
   const rows = useProjectStore((s) => s.rowsByEntity[entityId])
+  /* rows of the table this link points at TODAY — the only place the
+     row ids in the cells mean anything readable */
+  const targetRows = useProjectStore((s) =>
+    field.refEntityId ? s.rowsByEntity[field.refEntityId] : undefined,
+  )
 
   /* Deterministic picker order: entities rehydrate from IndexedDB in
      arbitrary record order — sort by createdAt (drafting order), name as
@@ -173,27 +180,40 @@ export function ReferenceEditor({
 
   /* Re-pointing a link is as destructive as changing the type, so it is
      gated and cleared the same way — the lint engine's own retarget keeps
-     exactly this invariant (ids of the previous target cannot survive). */
-  const retarget = (target: EntityDef) => {
-    if (field.refEntityId === target.id) return
-    const from = field.refEntityId ? entities[field.refEntityId]?.name : undefined
-    if (filled.length > 0) {
-      const label = field.name.trim() || 'this untitled field'
-      const cells = filled.length === 1 ? '1 filled cell' : `${filled.length} filled cells`
-      if (
-        !window.confirm(
-          `Point "${label}" at ${target.name}${from ? ` instead of ${from}` : ''}?\n\n` +
-            `This clears ${cells} — a ${from ?? 'linked'} row id means nothing in ` +
-            `${target.name}, and it cannot be recovered.`,
-        )
-      ) {
-        return
-      }
-    }
+     exactly this invariant (ids of the previous target cannot survive).
+     The gate is the house sheet rather than `window.confirm`: the three
+     destructive acts on this surface now ask the same way, and this one
+     can finally show what is in the cells it is about to empty. */
+  const [pendingTarget, setPendingTarget] = useState<EntityDef | null>(null)
+
+  const commitRetarget = (target: EntityDef) => {
     /* the stored default is a row id of the old target too */
     updateField(entityId, field.id, { refEntityId: target.id, defaultValue: undefined })
     for (const r of filled) updateCell(entityId, r.id, field.id, null)
   }
+
+  const retarget = (target: EntityDef) => {
+    if (field.refEntityId === target.id) return
+    if (filled.length === 0) {
+      commitRetarget(target)
+      return
+    }
+    setPendingTarget(target)
+  }
+
+  const fromEntity = field.refEntityId ? entities[field.refEntityId] : undefined
+  /* what the cells SAY today, not their row ids — a row id on screen
+     is not evidence a person can weigh */
+  const filledLabels = useMemo(() => {
+    if (!fromEntity) return []
+    const seen: string[] = []
+    for (const r of filled) {
+      const target = (targetRows ?? []).find((t) => t.id === r.values[field.id])
+      const text = target ? rowLabel(fromEntity, target) : ''
+      if (text && !seen.includes(text) && seen.length < 4) seen.push(text)
+    }
+    return seen
+  }, [filled, fromEntity, targetRows, field.id])
 
   return (
     <div className="ds-sub">
@@ -241,6 +261,44 @@ export function ReferenceEditor({
       ) : null}
 
       <p className="ds-caption mono-label">a link draws a line on the sheet</p>
+
+      {pendingTarget ? (
+        <ConfirmSheet
+          eyebrow="Re-point link"
+          question={`Point “${field.name.trim() || 'this untitled column'}” at ${pendingTarget.name}${
+            fromEntity ? ` instead of ${fromEntity.name}` : ''
+          }?`}
+          onCancel={() => setPendingTarget(null)}
+          choices={[
+            {
+              label: `Point it at ${pendingTarget.name}`,
+              note: `The ${
+                filled.length === 1 ? '1 filled cell' : `${filled.length} filled cells`
+              } are emptied — a ${
+                fromEntity?.name ?? 'linked'
+              } row means nothing in ${pendingTarget.name}.`,
+              destructive: true,
+              onPick: () => {
+                const target = pendingTarget
+                setPendingTarget(null)
+                commitRetarget(target)
+              },
+            },
+          ]}
+        >
+          <ConfirmFacts
+            items={[
+              `${filled.length} of ${(rows ?? []).length} rows are linked`,
+              fromEntity ? `to ${fromEntity.name}` : 'to a table that is gone',
+            ]}
+          />
+          <ConfirmSamples label="Linked to" values={filledLabels} />
+          <p className="ds-cs-line">
+            This app has no undo. The links can only come back from a file you
+            exported earlier.
+          </p>
+        </ConfirmSheet>
+      ) : null}
     </div>
   )
 }
@@ -453,7 +511,7 @@ export function FormulaEditor({
           }}
         >
           An expression that does not parse can never compute a value, so the
-          field kept the last one that did.
+          column kept the last one that did.
         </GuardNote>
       ) : null}
 

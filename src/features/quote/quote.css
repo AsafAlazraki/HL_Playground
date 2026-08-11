@@ -1,0 +1,843 @@
+/* ============================================================
+   QUOTE (qt-) — the drawing office, at document scale.
+
+   On screen: the deep navy field, ONE white sheet centred at
+   880px, generous margins. A screen that feels slightly too empty
+   is correct — ART_DIRECTION: "near-monochrome with one accent is
+   what will make it feel expensive."
+
+   CARMINE APPEARS TWICE AND NOWHERE ELSE: an unpriced line, and a
+   credit. Every other mark is ink, hairline and paper.
+
+   On A4: the navy disappears and the sheet IS the page.
+
+   There is not a raw hex in this file and every measurement is on
+   the --sp scale.
+   ============================================================ */
+
+.qt-root {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  background: var(--canvas-bg);
+  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 3);
+}
+
+.qt-void {
+  padding: var(--sp-6) 0;
+  text-align: center;
+  color: var(--canvas-ink-faint);
+}
+
+/* the white sheet, on both screens that have one */
+.qt-sheet,
+.qt-doc {
+  position: relative;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: calc(var(--sp-6) + var(--sp-2)) var(--sp-6) var(--sp-6);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sheet-raised);
+  color: var(--ink);
+}
+
+/* -- corner registration ticks ------------------------------ */
+.qt-tick {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+}
+.qt-tick--tl {
+  top: -1px;
+  left: -1px;
+  border-top: 1.25px solid var(--hairline-strong);
+  border-left: 1.25px solid var(--hairline-strong);
+}
+.qt-tick--tr {
+  top: -1px;
+  right: -1px;
+  border-top: 1.25px solid var(--hairline-strong);
+  border-right: 1.25px solid var(--hairline-strong);
+}
+
+/* every number on a quote is mono and tabular, so columns of
+   figures line up on the decimal in every browser */
+.qt-num,
+.qt-total,
+.qt-foot-total {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the two carmine marks */
+.qt-nil,
+.is-credit {
+  color: var(--red);
+}
+.qt-nil {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.qt-was {
+  margin-right: var(--sp-2);
+  color: var(--ink-faint);
+  text-decoration: line-through;
+}
+
+.qt-star {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent-ochre);
+}
+
+.qt-linkbtn {
+  padding: 0 var(--sp-2);
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.qt-linkbtn:hover {
+  color: var(--blue);
+}
+
+.qt-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.qt-icon-btn:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+/* ============================================================
+   THE DRAFT
+   ============================================================ */
+
+.qt-edit {
+  padding-bottom: var(--sp-6);
+}
+
+.qt-warn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: var(--red-wash);
+  color: var(--red);
+  font-size: 12px;
+}
+
+.qt-edit-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+.qt-edit-for {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.qt-edit-subject {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  text-align: right;
+}
+.qt-edit-photo {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+.qt-edit-name {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.qt-field {
+  display: block;
+  margin-bottom: var(--sp-3);
+}
+.qt-field .mono-label {
+  display: block;
+  margin-bottom: 3px;
+}
+.qt-field--wide {
+  grid-column: 1 / -1;
+}
+.qt-input {
+  max-width: 420px;
+}
+.qt-input--name {
+  font-size: 16px;
+}
+.qt-input--qty {
+  width: 46px;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+.qt-input--amount {
+  width: 120px;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.qt-levels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.qt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-size: 12px;
+  cursor: pointer;
+}
+.qt-chip.is-on {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper-high);
+}
+.qt-chip-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.qt-disclose {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--sp-3) 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.qt-disclose:hover {
+  color: var(--blue);
+}
+
+.qt-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+}
+
+/* -- a section ---------------------------------------------- */
+
+.qt-section {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+.qt-section-head {
+  margin-bottom: var(--sp-2);
+}
+.qt-section-empty {
+  padding: var(--sp-2) 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.qt-line {
+  border-bottom: 1px solid var(--hairline);
+}
+.qt-line-main {
+  display: grid;
+  grid-template-columns: auto minmax(160px, 1.4fr) minmax(0, 1fr) 46px 130px 22px 22px;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+}
+.qt-line-name {
+  font-weight: 500;
+}
+.qt-line-detail,
+.qt-doc-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.qt-doc-fact-lab {
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 9px;
+}
+.qt-line-amount {
+  text-align: right;
+}
+.qt-line-open {
+  padding: var(--sp-3) 0 var(--sp-4);
+  border-top: 1px dashed var(--hairline);
+}
+.qt-line-where {
+  margin-bottom: var(--sp-2);
+  color: var(--ink-faint);
+  text-transform: none;
+  letter-spacing: 0.06em;
+}
+.qt-override {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
+}
+
+.qt-add,
+.qt-adj-door {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-2);
+  padding: 5px 10px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.qt-add:hover,
+.qt-adj-door:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.qt-picker {
+  margin-top: var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+}
+.qt-picker-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+.qt-picker-list {
+  max-height: 320px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+.qt-pick {
+  display: grid;
+  grid-template-columns: auto minmax(140px, 1fr) minmax(0, 1.2fr) 110px auto;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.qt-pick:hover:not(:disabled) {
+  background: var(--blue-wash);
+}
+.qt-pick:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.qt-pick-facts {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+.qt-pick .qt-num {
+  text-align: right;
+}
+
+/* -- adjustments -------------------------------------------- */
+
+.qt-adjustments {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+.qt-adj {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 110px 22px;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 0;
+}
+.qt-adj-sign {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.qt-adj-doors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* -- today's prices ----------------------------------------- */
+
+.qt-reread {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+.qt-reread-say {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.qt-reread-list {
+  margin: var(--sp-2) 0;
+  padding: 0;
+  list-style: none;
+}
+.qt-reread-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.qt-reread-acts {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* -- the foot bar: fixed to the stage, never to the sheet ---- */
+
+.qt-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  max-width: 880px;
+  margin: var(--sp-4) auto 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--canvas-hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-popover);
+}
+.qt-foot-sum {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+.qt-foot-total {
+  font-size: 22px;
+}
+.qt-foot-unpriced {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--red);
+}
+
+/* ============================================================
+   THE DOCUMENT
+   ============================================================ */
+
+.qt-issued-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 880px;
+  margin: 0 auto var(--sp-3);
+}
+.qt-issued-say {
+  flex: 1 1 auto;
+  color: var(--canvas-ink-soft);
+}
+
+.qt-doc-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+.qt-doc-org {
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-weight: 640;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.qt-plate {
+  display: grid;
+  gap: 2px;
+  min-width: 200px;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+.qt-plate-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.qt-plate-val {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.qt-doc-customer {
+  padding: var(--sp-4) 0;
+}
+.qt-doc-customer-name {
+  font-size: 16px;
+  font-weight: 500;
+}
+.qt-doc-customer-line {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.qt-doc-blank {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.qt-doc-subject {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  padding: var(--sp-4) 0;
+  border-top: 1px solid var(--hairline);
+}
+.qt-doc-photo {
+  width: 220px;
+  height: 165px;
+  object-fit: cover;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+.qt-doc-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.05;
+}
+.qt-doc-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin-top: var(--sp-3);
+}
+.qt-doc-spec-val {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.qt-doc-lines {
+  width: 100%;
+  margin-top: var(--sp-4);
+  border-collapse: collapse;
+}
+.qt-doc-lines th,
+.qt-doc-lines td {
+  padding: var(--sp-2) var(--sp-2);
+  text-align: left;
+  vertical-align: top;
+}
+.qt-doc-lines thead th {
+  border-bottom: 1px solid var(--hairline-strong);
+}
+.qt-doc-sec th {
+  padding-top: var(--sp-4);
+  color: var(--ink-soft);
+}
+.qt-doc-line td {
+  border-bottom: 1px solid var(--hairline);
+}
+.qt-col-qty,
+.qt-col-amt {
+  text-align: right;
+  white-space: nowrap;
+}
+.qt-doc-lines td.qt-col-qty,
+.qt-doc-lines td.qt-col-amt {
+  text-align: right;
+}
+.qt-doc-line-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qt-doc-tag {
+  color: var(--ink-faint);
+}
+.qt-each {
+  display: block;
+  color: var(--ink-faint);
+}
+
+.qt-money {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--sp-5);
+}
+.qt-money-rows {
+  min-width: 340px;
+  margin: 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline-strong);
+}
+.qt-money-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: 3px 0;
+}
+.qt-money-row dd {
+  margin: 0;
+}
+.qt-money-row--total {
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--hairline-strong);
+  border-bottom: 3px double var(--hairline-strong);
+}
+.qt-total {
+  font-size: 20px;
+}
+.qt-money-note {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+.qt-money-say {
+  margin-top: var(--sp-2);
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.qt-unpriced {
+  margin-top: var(--sp-4);
+  color: var(--red);
+  font-size: 12px;
+}
+.qt-doc-note {
+  margin-top: var(--sp-4);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.qt-doc-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+}
+
+/* ============================================================
+   THE LIST
+   ============================================================ */
+
+.qt-list {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+.qt-list-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--hairline);
+}
+.qt-list-row:last-child {
+  border-bottom: 0;
+}
+.qt-list-row.is-open {
+  background: var(--blue-wash);
+}
+.qt-list-open {
+  display: grid;
+  grid-template-columns: 90px minmax(120px, 1fr) minmax(120px, 1.4fr) 120px 120px;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: 1 1 auto;
+  padding: var(--sp-3) var(--sp-4);
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.qt-list-open:hover {
+  background: var(--blue-wash);
+}
+.qt-list-total {
+  text-align: right;
+}
+.qt-list-state {
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   A4 — the navy disappears and the sheet IS the page.
+
+   `visibility` rather than `display` so the document keeps its
+   layout while everything around it stops printing: the stage, the
+   left panel and the canvas are all ancestors of this element, and
+   none of them may put ink on the page.
+   ============================================================ */
+
+@page {
+  size: A4 portrait;
+  margin: 14mm;
+}
+
+@media print {
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+    /* an ancestor with overflow:hidden would clip the document at
+       the height of a screen it is no longer inside */
+    overflow: visible !important;
+  }
+
+  .qt-doc,
+  .qt-doc * {
+    visibility: visible !important;
+  }
+
+  .qt-doc {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 10pt;
+  }
+
+  /* hairlines survive a laser printer at half a point */
+  .qt-doc *,
+  .qt-doc {
+    border-color: rgba(18, 40, 63, 0.45) !important;
+  }
+  .qt-doc-head,
+  .qt-doc-subject,
+  .qt-doc-line td,
+  .qt-doc-lines thead th,
+  .qt-money-rows {
+    border-width: 0.5pt !important;
+  }
+
+  .qt-tick {
+    display: none;
+  }
+
+  .qt-doc-name {
+    /* the ≥22px floor holds, in points */
+    font-size: 22pt;
+  }
+  .qt-doc-specs,
+  .qt-plate-val,
+  .qt-doc-detail,
+  .qt-num {
+    font-size: 9pt;
+  }
+  .qt-doc .mono-label {
+    font-size: 7.5pt;
+  }
+  .qt-doc-photo {
+    /* capped so the whole rig reaches page 1 */
+    width: 55mm;
+    height: 41mm;
+  }
+
+  /* a total orphaned onto its own page is how a document stops
+     looking like a document */
+  .qt-doc-line,
+  .qt-money,
+  .qt-doc-head,
+  .qt-doc-subject,
+  .qt-unpriced {
+    break-inside: avoid;
+  }
+  .qt-doc-lines thead {
+    display: table-header-group;
+  }
+
+  /* the one accent that must survive a colour-managed printer */
+  .qt-nil,
+  .is-credit,
+  .qt-unpriced {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -1332,9 +1332,17 @@ export function Grid(props: GridProps): JSX.Element {
                                     index,
                                     fieldName: f.name,
                                     kind: entity.kind,
+                                    rowId: line.rowId,
+                                    fieldId: f.id,
                                   })
                                 }
                                 onAdd={() => chooseImages(line.rowId, f.id, imgs)}
+                                /* pictures that already exist as values —
+                                   addresses read off the clipboard, files the
+                                   cell has already read into `data:` URLs */
+                                onAddImages={(added) =>
+                                  onImages(line.rowId, f.id, [...imgs, ...added])
+                                }
                                 onRemove={(index) =>
                                   onImages(
                                     line.rowId,
@@ -1499,6 +1507,14 @@ export function Grid(props: GridProps): JSX.Element {
         <ImageLightbox
           state={lightbox}
           onIndex={(index) => setLightbox((s) => (s ? { ...s, index } : s))}
+          /* the plate's promote button is a move-to-index-0 and nothing
+             else — the same array move the drag performs, so order stays
+             the only thing that elects the primary */
+          onPromote={(index) => {
+            const next = moveImage(lightbox.images, index, 0)
+            onImages(lightbox.rowId, lightbox.fieldId, next)
+            setLightbox({ ...lightbox, images: next, index: 0 })
+          }}
           onClose={() => {
             setLightbox(null)
             gridRef.current?.focus()

@@ -277,6 +277,109 @@ window-level handler — which skips INPUT/TEXTAREA/SELECT but not buttons — w
 still live under them, aimed at the very table whose page was open. One line
 each, the same line the design and flow stages already carried.
 
+**F23 · The most destructive decision in the app was made without one value of
+the data in sight.** The column setup showed a name, a type tag and a band chip.
+Changing the type wipes every cell in the column, and there is no undo. On
+Highfield's "Max People" — typed TXT and looking for all the world like a column
+of numbers — nothing on that screen could tell you that one of its cells reads
+`3 + 1`, which is the entire reason it is text. Every open column now carries
+WHAT IT HOLDS NOW: how many rows hold a value, how many distinct, and the first
+few of them as written. Read from the rows on every render, so the counts are
+the counts at the moment of the decision. Verified on the real table: *33 of 40
+rows hold a value · 5 distinct values*, samples `8` `12` `3 + 1` `2` `+1 more`.
+Nothing here is an example; every string is a value out of the user's own rows.
+
+**F24 · `window.confirm` could only ever ask "destroy it or don't".** Three
+destructive acts were gated by the OS dialog — the one moment a sheet of white
+paper, hairlines and 10px mono stopped mid-sentence and Segoe UI finished it.
+Worse than the typeface: `confirm` has two answers, so it could not offer the
+third one that matters. `ConfirmSheet` is the same question with room in it, and
+`columnFacts.retypePlan` works out what a retype would do to every cell *before*
+anything is written, so the sentence a person agrees to is the sentence that
+comes true. TXT → NUM on Max People now offers **Keep the 29 that convert** (*the
+other 4 cannot be written as a number and are cleared*) beside **Clear the
+column** — and shows the 4 that cannot cross, `3 + 1` among them. Conversion is
+deliberately literal: `"12,500"` does not become 12500 and `"$400"` does not
+become 400, because guessing that a comma is a thousands separator is the app
+deciding what a business's data means. Cancel takes the focus, not the
+confirming button; Escape and the scrim both cancel; and the type select never
+commits — it snaps back to the type the column still has, so a sheet dismissed
+any way at all leaves the control agreeing with the column.
+
+**F25 · Rename was the one destructive act with no gate, and it silently broke
+every calculation.** Formula references resolve **by name**
+(`@/lib/formula/index.ts` keys its field map on the lower-cased name), so
+renaming "Base Cost" turned every expression reading it into `Error — Unknown
+field [Base Cost]`. No dialog, no mark on the calculated row, nothing anywhere
+in the stage; the break was visible only if you happened to open the one column
+that broke, and it survived a reload. It got the fix that removes the
+destruction rather than a fifth dialog: every expression on the table that names
+the column is rewritten in the same commit, and the row says which ones moved.
+`renameFieldRefs` walks the source the way the tokenizer lexes it — quoted text
+skipped whole, so the words inside `"[Base Cost]"` stay put; `]]` read as a
+literal `]`; case-blind and trimmed, matching exactly how the engine resolves —
+and a source that does not lex comes back untouched, because a formula that is
+already broken must not be made worse by a rename. Verified end to end on
+Highfield with a temporary calculated column: renaming Beam → Beam Width
+rewrote the stored expression to `[Beam Width] + 1`, it still validated *OK ·
+reads Beam Width*, and the row said so — *"A calculation names a column by its
+name, so the new name went into Column 32 as well."* Renamed back and the test
+column removed; 31 columns, 651 rows, unchanged.
+
+**F26 · Deleting a column named nothing that depended on it.** The old dialog
+said `Its column of data goes with it.` — no row count, no rule, not the word
+irreversible. The damage was surfaced one stage away, an hour later, as a red
+mark on a rule. The warning belongs before the act. The sheet now names the
+calculated columns that read it, the grouping drawer the table loses, and the
+rules that break — and it asks the rule engine rather than scanning the graph
+here, by validating each rule twice, once against the schema as it stands and
+once against a schema with the column already gone. A field id can be referenced
+from seven shapes in `RuleNodeConfigMap`; a hand-written scanner would have to
+track all seven forever. Only what the removal *adds* is reported, so a rule
+already broken for some other reason is never blamed on this column. Verified by
+opening and cancelling the audit's own case: deleting "Max Load kg" reports
+*Trailer fitment — Highfield breaks: Match "NSM Custom Trailers": reads a field
+that is no longer on "Highfield Inflatables". Output "Trailers that carry it": a
+column reads a field that no longer exists.*
+
+**F27 · Deleting a whole table never mentioned that it deletes rules.** The last
+`window.confirm` on the surface, behind the largest act the app has. It could
+name the rows and say "any link columns pointing at it are removed too" — it
+could not say *which* columns on *which* tables, and it never mentioned the
+third thing `deleteEntity` does: every rule **rooted** on the table is struck
+from the project. That is not a blocker to go and fix afterwards; the rule stops
+existing, and this was the only warning anyone would ever get. `entityDependents`
+builds the after-schema exactly the way the reducer does and reports the three
+losses separately. On the real project, deleting Highfield Inflatables now says:
+40 rows · 31 columns; *2 link columns point here and go too: Boat on Highfield ×
+Yamaha — Motor Fitment and Boat on Highfield × NSM Custom — Trailer Fitment*;
+and *These rules are written about this table and are deleted with it — Motor
+fitment — Highfield and Trailer fitment — Highfield. They do not become blockers
+you can fix; they stop existing.* Both rules the project has. Opened and
+cancelled; the table is untouched.
+
+**F28 · The door asked about columns and the answer started 290px down.** The
+sheet opened on the *table* — its description, its accent ink, and which column
+names a row — so someone who clicked "what is each column allowed to hold?" met
+eight of Highfield's 31 columns and the rest below the fold. The three controls
+are folded behind ABOUT THIS TABLE, shut on arrival, with the fold naming
+exactly what is behind it so nothing has to be hunted for. COLUMNS now sits at
+y=246 instead of y=412 and eleven rows are fully on screen at 1280×800. Also
+fixed in the same pass, all of them things a first-timer tripped on: the caret
+pointed **right** while the row opened **downward** (a right caret is this app's
+mark for a door that takes you elsewhere, which this is not); a brand-new empty
+calculated column was warned that changing its type would clear data it had
+never held — the warning belongs to the column, not the table; the GROUPS and
+band chips had no legend, only `title` attributes, and a tooltip is not an
+answer to someone who does not know there is a question; and the Add button
+handed back a column named **"Field 32"** on the one surface whose whole contract
+is *table and column, never entity, schema or field*. It says "Column 32" now —
+named here rather than in the store, because the store's fallback also names
+columns created by import, by a preset and by the join builder, and that is not
+this workflow's call. The Not-committed note now reads *"so the column kept the
+last one that did"*, and the link default hint says *"Choose the table this
+links to, below"* rather than "target entity".
+
 ### OPEN — to confirm once the app settles
 
 **O4 · Two rule surfaces.** Constraints are written as sentences in the rules
@@ -330,3 +433,33 @@ workflows are editing `src/features/views` or `src/features/table`, their saves
 hot-update the tree and reset the shell's `stage`, so an open stage closes by
 itself mid-test. Seen four times during this pass, with zero console errors each
 time. Re-open and carry on; do not go looking for the bug in the stage.
+
+**O11 · The column-setup door is still below the fold for 16 of the 17 tables
+that have one, and it has got worse.** Measured again at 1280×800 with the left
+panel at rest, after the fixes above: the door for **Highfield Inflatables** is
+now at y=**849** — *entirely* off screen, where the earlier pass measured y=791
+with a 9px sliver showing. The quote door added above the table list pushed
+every table down another 58px. Nothing in the panel says the word "column" until
+a table is selected, and selecting one does not scroll the newly-revealed doors
+into view; a person clicks the door they can see ("What goes with each one?"),
+lands on the view page, and never learns the second door exists. **A door only
+one table's worth of users can see is not open.** Everything behind it is now
+finished work, which makes this the single thing standing between a person and
+all of it.
+
+Cannot be fixed from `src/features/designer` — it is `src/app/LeftPanel.tsx` and
+`src/app/shell.css`, owned elsewhere. What it takes is one line, in the same
+place the designer's own field rows already do it: on selecting a table, call
+`scrollIntoView({ block: 'nearest' })` on the revealed door pair. Verify after:
+land cold at 1280×800, click HIGHFIELD INFLATABLES, and read the panel without
+scrolling — both doors should be fully on screen.
+
+**O12 · There is still no undo, and every sheet now says so out loud.** Four
+destructive acts (retype, delete column, re-point link, delete table) are gated
+and each closes with *"This app has no undo."* That sentence is honest and it is
+also an admission: the only recovery from any of them is a file the person
+exported earlier, and nothing prompts them to export. The retype sheet's
+KEEP WHAT CONVERTS narrows the hole rather than closing it. A real undo is a
+store-level change (`useProjectStore` would need a command log), not a designer
+one. Until then, consider whether the export control should be reachable from
+the moment before a destructive act rather than only from the top bar.

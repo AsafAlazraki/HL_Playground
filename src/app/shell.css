@@ -1038,6 +1038,155 @@
 }
 
 /* ============================================================
+   THE QUOTE STAGE — the box around `@/features/quote`.
+
+   Same box as the view, the rules and the flow stage: absolutely
+   positioned over `.shell-stage`, so the blueprint keeps its zoom
+   and node state underneath and closing is instant. It reuses
+   `.shell-viewstage` and `.shell-view-bar` outright rather than
+   forking them — five stages that look different from each other
+   is five stages a person has to learn.
+
+   THREE THINGS ARE NEW HERE, AND ONLY THREE. The document, the
+   editor, the list and the running total all belong to the
+   feature's own stylesheet, because the feature owns them; a shell
+   rule reaching into `.qt-*` would be a second opinion about a
+   document, and a second opinion is how two versions of one deal
+   start to exist.
+
+     1. the way in, on the view stage's bar;
+     2. the bar's right-hand group and the well the page sits in;
+     3. the print rules — which are only ever about the SHELL
+        getting out of the way.
+   ============================================================ */
+
+/* THE WAY IN, on the view stage's own bar. Pushed to the far right
+   so it is never mistaken for part of the crumb beside it, and given
+   the pen's ink because it is the one control on that bar that MAKES
+   something rather than moving you somewhere. */
+.btn.shell-view-quote {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}
+.btn.shell-view-quote:hover {
+  background: var(--blue-wash);
+}
+
+/* -- the bar's right-hand side ------------------------------- */
+.shell-quote-acts {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+.btn.shell-quote-act {
+  padding: 6px 11px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+/* -- the well the quote page sits in -------------------------
+   NO BACKGROUND DECLARED, deliberately. The document's field — the
+   deep navy the white sheet is pinned to — is the feature's own
+   decision and lives in its stylesheet; painting it here as well
+   would mean two files disagreeing about the colour behind a
+   customer's quote the first time either is edited.
+
+   `overflow-y: auto` rather than the view stage's `hidden`: a quote
+   is a document of unknown length, and a well that cannot scroll is
+   a well that silently cuts the last line off a long rig. If the
+   page scrolls itself this never activates. */
+.shell-quote-well {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ============================================================
+   PRINTING — the shell gets out of the way, and nothing else.
+
+   No PDF library anywhere in this feature. The browser's own
+   print-to-PDF produces a correct A4 file, and every byte of layout
+   duplicated in a second renderer is a byte that can disagree with
+   the screen — production has a genuinely good @react-pdf pipeline
+   AND a per-band re-summation inside it that disagrees with what
+   the salesperson was looking at.
+
+   EVERY RULE BELOW REMOVES CHROME. The page geometry, the point
+   sizes, the hairline weights, the repeating table head and the
+   `break-inside: avoid` on a money box belong to the feature's
+   stylesheet, because the feature owns the document. What the
+   feature CANNOT do from there is unpin an absolutely positioned
+   stage, un-scroll a 100dvh shell or hide a masthead — those are
+   shell classes, so those are the rules that live here.
+   ============================================================ */
+@media print {
+  /* the fixed, scrolling, full-height frame becomes ordinary flow —
+     without this the document prints as exactly one clipped page */
+  .shell-root,
+  .shell-body,
+  .shell-stage,
+  .shell-viewstage,
+  .shell-quote-well {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    background: #fff;
+    animation: none;
+  }
+  .shell-root {
+    display: block;
+  }
+  /* AND NOTHING BETWEEN THE DOCUMENT AND THE PAGE IS POSITIONED.
+     The feature's print rules pin the document with
+     `position: absolute; top: 0`, which resolves against the nearest
+     POSITIONED ancestor — and on screen that is this stage, sitting
+     inset:0 inside a relatively-positioned sheet inside a 100dvh
+     root. Left alone, a two-page quote is pinned to the top of a
+     box one screen tall and the second page is drawn from the wrong
+     origin. Standing all three down hands the document the page
+     itself as its origin, which is what it asked for. */
+  .shell-root,
+  .shell-stage,
+  .shell-viewstage {
+    position: static;
+    inset: auto;
+  }
+
+  /* the masthead, the panel, the way back and the blueprint
+     underneath are all chrome — none of them is part of what a
+     customer was handed */
+  .shell-masthead,
+  .shell-panel,
+  .shell-view-bar,
+  .react-flow {
+    display: none !important;
+  }
+
+  /* CARMINE MUST SURVIVE A LASER PRINTER. It appears in exactly two
+     places on the document — the mark on a line with no price, and
+     a negative adjustment — and a browser dropping inks to save
+     toner would silently remove the one warning the page carries.
+     Set on the well rather than on named classes, because the
+     document's class names belong to the feature and the shell must
+     not guess at them. */
+  .shell-quote-well,
+  .shell-quote-well * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* ============================================================
    OFF THE DEFAULT PATH
    ------------------------------------------------------------
    Nothing below here is mounted by the shell. The components it

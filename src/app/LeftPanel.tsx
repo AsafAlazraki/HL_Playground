@@ -101,6 +101,13 @@ export interface LeftPanelProps {
   onOpenFlow?: () => void
   /** whether that stage is open, so the door can say so */
   flowOpen?: boolean
+  /** open the list of quotes already made */
+  onOpenQuotes?: () => void
+  /** whether that stage is open, so the door can say so */
+  quotesOpen?: boolean
+  /** how many there are. The door is drawn only when this is above
+   *  zero — see the note on the door itself. */
+  quoteCount?: number
 }
 
 export function LeftPanel({
@@ -112,6 +119,9 @@ export function LeftPanel({
   rulesOpen = false,
   onOpenFlow,
   flowOpen = false,
+  onOpenQuotes,
+  quotesOpen = false,
+  quoteCount = 0,
 }: LeftPanelProps) {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -158,7 +168,51 @@ export function LeftPanel({
     <nav className="shell-panel" aria-label="Tables">
       <TableTypeRail />
 
-      {/* THE DOOR TO THE FLOW BUILDER, AND IT GOES FIRST.
+      {/* THE DOOR BACK TO A QUOTE, AND IT GOES ABOVE THE TWO RULE
+          DOORS — because it is the only one of the three that a
+          salesperson opens every morning, and because the thing
+          behind it is a document with a customer's name on it.
+
+          IT APPEARS ONLY ONCE THERE IS A QUOTE, and that is the same
+          lesson the two doors below it already learned the hard way:
+          an empty door on top ("Business rules / what has to be
+          true", opening a pane reading "No rules yet") taught people
+          the panel had nothing for them, and they never tried the
+          second sentence. A door onto an empty list is worse here,
+          not better, because a quote is not something you go and
+          make from this panel — it is made ON a view page, and the
+          view page's own control is the only honest way in. So until
+          one exists there is nothing to come back TO, and the panel
+          stays quiet.
+
+          The count is on the door for the same reason the table list
+          carries one: a person coming back wants to know whether
+          Tuesday's quote is still there before they click. */}
+      {onOpenQuotes && quoteCount > 0 ? (
+        <button
+          type="button"
+          className={`shell-panel-rules${quotesOpen ? ' is-open' : ''}`}
+          /* NAMED AND PRESSED EXPLICITLY, like the two below: the
+             label is built from two spans, one of them a 10px
+             uppercase aside, and a reader announcing them run
+             together is not a name. */
+          aria-label="Quotes we have made"
+          aria-pressed={quotesOpen}
+          onClick={onOpenQuotes}
+        >
+          <span className="shell-panel-rules-text">Quotes we have made</span>
+          {/* The count and nothing more. A sentence that has to read
+              correctly at one AND at forty ends up reading badly at
+              one — "1 document, each with its own date" — so it says
+              the number, which is the fact a person came back for. */}
+          <span className="shell-panel-rules-say mono-label">
+            {quoteCount} made so far
+          </span>
+        </button>
+      ) : null}
+
+      {/* THE DOOR TO THE FLOW BUILDER, AND IT GOES FIRST OF THE TWO
+          RULE DOORS.
           Two doors about rules sat here in the other order, and the
           empty one was on top: "Business rules / what has to be true"
           opens a pane reading "No rules yet", while this one opens two

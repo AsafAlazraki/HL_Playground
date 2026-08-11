@@ -8,7 +8,7 @@
    makes the reader wonder whether they are editing something else.
    ============================================================ */
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   FIELD_TYPES,
   UID_FIELD,
@@ -22,6 +22,9 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { FormulaEditor, ReferenceEditor, SelectOptionsEditor } from './FieldTypeEditors'
 import { GuardNote } from './GuardNote'
 import { useNameGuard } from './useNameGuard'
+import { ConfirmFacts, ConfirmSamples, ConfirmSheet } from './ConfirmSheet'
+import { columnFacts, factLines, retypePlan, type ColumnFacts, type RetypePlan } from './columnFacts'
+import { formulaReaders, nameList, renameFieldRefs, ruleBreakage } from './dependents'
 /* PHOSPHOR ONLY, THROUGH `@/lib/icons`. This folder used to hand-draw
    eight SVGs of its own, so the same caret appeared here at 1.4px and
    everywhere else in the app at Phosphor's 'light' weight — a hairline
@@ -42,6 +45,12 @@ interface FieldRowProps {
   onToggle: () => void
 }
 
+/** what the sheet is asking about, while it is up */
+type Pending =
+  | { act: 'retype'; to: FieldType; plan: RetypePlan }
+  | { act: 'delete' }
+  | null
+
 export function FieldRow({
   entity,
   field,
@@ -54,10 +63,24 @@ export function FieldRow({
   const updateField = useProjectStore((s) => s.updateField)
   const removeField = useProjectStore((s) => s.removeField)
   const moveField = useProjectStore((s) => s.moveField)
-  const rowCount = useProjectStore((s) => s.rowsByEntity[entity.id]?.length ?? 0)
-  const hasRows = rowCount > 0
+  const updateCell = useProjectStore((s) => s.updateCell)
+  const rows = useProjectStore((s) => s.rowsByEntity[entity.id])
 
   const meta = FIELD_TYPES[field.type]
+
+  /* WHAT IS IN THE COLUMN, ON THE SCREEN THAT TAKES IT AWAY. Read
+     from the rows every render — the counts have to be the counts at
+     the moment of the decision, not the ones from when the row was
+     opened, because the sheet underneath is live. */
+  const facts = useMemo(() => columnFacts(rows, field.id), [rows, field.id])
+  /* the type warning belongs to THIS column, not to the table: a
+     brand-new calculated column on a 40-row table used to be told
+     that changing its type would clear data it has never held */
+  const hasData = facts.filled > 0
+
+  const [pending, setPending] = useState<Pending>(null)
+  /** what a rename carried with it, said once, in the row that did it */
+  const [carried, setCarried] = useState<string | null>(null)
 
   const nameRef = useRef<HTMLInputElement | null>(null)
   useEffect(() => {
@@ -96,6 +119,35 @@ export function FieldRow({
     ],
     [entity.fields, field.id],
   )
+  /* A RENAME USED TO BE A LIVE GRENADE UNDER EVERY CALCULATION.
+     Formula references resolve BY NAME, case-insensitively
+     (`@/lib/formula/index.ts` keys its field map on the lower-cased
+     name), so renaming "Base Cost" turned every expression reading it
+     into `Error — Unknown field [Base Cost]`. The rename committed
+     instantly: no dialog, no mark on the calculated row, nothing
+     anywhere in the stage. The break was visible only if you happened
+     to open the one column that broke, and it survived a reload.
+
+     It is the only one of this surface's four destructive acts that
+     had no gate at all — so it is given the fix that removes the
+     destruction rather than a fifth dialog: every expression on this
+     table that names the column is rewritten in the same commit, and
+     the row says which ones moved. A rename now means what a person
+     thinks it means, and the note is there so the rewrite is not
+     itself a silent edit. */
+  const commitName = (name: string) => {
+    const readers = formulaReaders(entity, field)
+    updateField(entity.id, field.id, { name })
+    const moved: string[] = []
+    for (const r of readers) {
+      const next = renameFieldRefs(r.formula ?? '', field.name, name)
+      if (next.count === 0) continue
+      updateField(entity.id, r.id, { formula: next.src })
+      moved.push(r.name || 'an untitled column')
+    }
+    setCarried(moved.length > 0 ? nameList(moved) : null)
+  }
+
   const nameGuard = useNameGuard({
     current: field.name,
     taken: takenNames,
@@ -106,7 +158,7 @@ export function FieldRow({
     allowEmpty: false,
     message: (n) =>
       `A column named “${n}” already exists on this table — two columns with the same name make every formula and import ambiguous.`,
-    onCommit: (name) => updateField(entity.id, field.id, { name }),
+    onCommit: commitName,
   })
 
   /* -- guardrail 4: a list with nothing on it ----------------- */
@@ -122,20 +174,20 @@ export function FieldRow({
   const band = entity.sections?.find((s) => s.id === field.sectionId)
   const groupLevel = (entity.hierarchy ?? []).indexOf(field.id)
 
-  const handleRemove = () => {
-    const label = field.name.trim() || 'this untitled column'
-    const warning =
-      groupLevel >= 0
-        ? `\n\nIt is also a grouping level, so ${entity.name} loses that drawer on the sheet.`
-        : ''
-    if (
-      window.confirm(
-        `Remove the column "${label}" from ${entity.name}?\nIts column of data goes with it.${warning}`,
-      )
-    ) {
-      removeField(entity.id, field.id)
+  const label = field.name.trim() || 'this untitled column'
+
+  /* WHAT ELSE IS HOLDING ON — computed only while the sheet is up, so
+     the whole rules graph is not re-validated on every keystroke in
+     the name box. `ruleBreakage` asks the rule engine rather than
+     scanning the graph here; see the note on it. */
+  const holders = useMemo(() => {
+    if (pending?.act !== 'delete') return null
+    const { entities, rowsByEntity, rules } = useProjectStore.getState()
+    return {
+      readers: formulaReaders(entity, field),
+      rules: ruleBreakage({ entities, rowsByEntity }, rules, entity.id, field.id),
     }
-  }
+  }, [pending?.act, entity, field])
 
   return (
     <div className={expanded ? 'ds-frow ds-frow-open' : 'ds-frow'} ref={rowRef}>
@@ -196,6 +248,12 @@ export function FieldRow({
               {band.name}
             </span>
           ) : null}
+          {/* THE CARET POINTED RIGHT WHILE THE ROW OPENED DOWNWARD.
+              Two directions for one movement, and the one on screen
+              was the wrong one — a right caret is the app's own mark
+              for a door that takes you somewhere else, which this is
+              not. `.ds-frow-open` turns it in the stylesheet; the
+              glyph stays Phosphor's. */}
           <span className="ds-frow-caret" aria-hidden="true">
             <CaretRight size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
           </span>
@@ -204,7 +262,7 @@ export function FieldRow({
         <button
           type="button"
           className="ds-frow-del"
-          onClick={handleRemove}
+          onClick={() => setPending({ act: 'delete' })}
           aria-label={`Delete the column ${field.name || 'untitled'}`}
           title="Delete this column"
         >
@@ -280,6 +338,51 @@ export function FieldRow({
                 </GuardNote>
               </div>
             ) : null}
+            {carried ? (
+              <div className="ds-ctl-note">
+                <GuardNote tag="Carried over" live="status">
+                  A calculation names a column by its name, so the new name went
+                  into {carried} as well. Nothing else read this column.
+                </GuardNote>
+              </div>
+            ) : null}
+          </div>
+
+          {/* WHAT IS IN IT NOW — the block this surface had no answer
+              for. The type control below wipes every one of these
+              cells, and until this block existed the person deciding
+              could see the column's name, its type tag and its band,
+              and not one value of the data. Real values, read out of
+              the user's own rows; never an example. */}
+          <div className="ds-ctl-block ds-holds">
+            <span className="mono-label ds-lab">What it holds now</span>
+            {facts.rows === 0 ? (
+              <p className="ds-hint">This table has no rows yet.</p>
+            ) : facts.filled === 0 ? (
+              <p className="ds-hint">
+                Empty in all {facts.rows} rows — nothing to lose here.
+              </p>
+            ) : (
+              <>
+                <p className="ds-holds-count mono-label">
+                  {facts.filled} of {facts.rows} rows hold a value
+                  <span className="ds-holds-sep" aria-hidden="true"> · </span>
+                  {facts.distinct === 1 ? '1 distinct value' : `${facts.distinct} distinct values`}
+                </p>
+                <div className="ds-holds-samples">
+                  {facts.samples.map((v, i) => (
+                    <span className="ds-holds-sample" key={`${i}:${v}`}>
+                      {v}
+                    </span>
+                  ))}
+                  {facts.distinct > facts.samples.length ? (
+                    <span className="ds-holds-more mono-label">
+                      +{facts.distinct - facts.samples.length} more
+                    </span>
+                  ) : null}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="ds-ctl-block">
@@ -298,22 +401,22 @@ export function FieldRow({
                   const el = e.currentTarget
                   const next = el.value as FieldType
                   if (next === field.type) return
-                  /* type change wipes the column in the store — when data
-                     exists it must be confirm-gated like every other
-                     destructive action */
-                  if (hasRows) {
-                    const label = field.name.trim() || 'this untitled column'
-                    const rows = rowCount === 1 ? 'its 1 row' : `its ${rowCount} rows`
-                    if (
-                      !window.confirm(
-                        `Change "${label}" to ${FIELD_TYPES[next].label}?\n\nThis clears the column's data across ${rows} — it cannot be recovered.`,
-                      )
-                    ) {
-                      el.value = field.type
-                      return
-                    }
+                  /* THE SELECT NEVER COMMITS THE CHANGE. It puts the
+                     question up and snaps straight back to the type
+                     the column still has, so a sheet dismissed any way
+                     at all — Escape, the scrim, Cancel, a click
+                     somewhere else — leaves the control agreeing with
+                     the column. It used to be reverted only on the
+                     Cancel path, which is the one path a modal cannot
+                     assume it gets. */
+                  el.value = field.type
+                  if (facts.filled === 0) {
+                    /* nothing to lose: a column nobody has filled in
+                       does not need a sheet of paper to change */
+                    updateField(entity.id, field.id, { type: next })
+                    return
                   }
-                  updateField(entity.id, field.id, { type: next })
+                  setPending({ act: 'retype', to: next, plan: retypePlan(rows, field, next) })
                 }}
               >
                 {TYPE_ORDER.map((t) => (
@@ -323,7 +426,7 @@ export function FieldRow({
                 ))}
               </select>
             </div>
-            {hasRows ? (
+            {hasData ? (
               <p className="ds-warn">changing type clears this column’s data</p>
             ) : null}
           </div>
@@ -370,7 +473,205 @@ export function FieldRow({
           {field.type === 'formula' ? <FormulaEditor entity={entity} field={field} /> : null}
         </div>
       ) : null}
+
+      {pending?.act === 'retype' ? (
+        <RetypeSheet
+          columnName={label}
+          to={pending.to}
+          plan={pending.plan}
+          facts={facts}
+          onCancel={() => setPending(null)}
+          onChoose={(keep) => {
+            setPending(null)
+            /* ORDER MATTERS. `updateField` clears every cell of the
+               column as part of the type change, so the carried
+               values can only be written back after it — writing them
+               first would put them straight in front of the wipe.
+               These land in one React event, so the sheet underneath
+               re-renders once however many rows carried across. */
+            updateField(entity.id, field.id, { type: pending.to })
+            if (!keep) return
+            for (const c of pending.plan.carried) {
+              updateCell(entity.id, c.rowId, field.id, c.value)
+            }
+          }}
+        />
+      ) : null}
+
+      {pending?.act === 'delete' ? (
+        <DeleteSheet
+          columnName={label}
+          tableName={entity.name}
+          facts={facts}
+          groupLevel={groupLevel}
+          readers={holders?.readers ?? []}
+          rules={holders?.rules ?? []}
+          onCancel={() => setPending(null)}
+          onConfirm={() => {
+            setPending(null)
+            removeField(entity.id, field.id)
+          }}
+        />
+      ) : null}
     </div>
+  )
+}
+
+/* ------------------------------------------------------------ */
+/* the two sheets                                               */
+/* ------------------------------------------------------------ */
+
+function RetypeSheet({
+  columnName,
+  to,
+  plan,
+  facts,
+  onCancel,
+  onChoose,
+}: {
+  columnName: string
+  to: FieldType
+  plan: RetypePlan
+  facts: ColumnFacts
+  onCancel: () => void
+  onChoose: (keep: boolean) => void
+}) {
+  const kept = plan.carried.length
+  const target = FIELD_TYPES[to].label.toLowerCase()
+
+  return (
+    <ConfirmSheet
+      eyebrow="Change type"
+      question={`Make “${columnName}” a ${target} column?`}
+      onCancel={onCancel}
+      choices={
+        kept > 0
+          ? [
+              {
+                label: `Keep the ${kept} that convert`,
+                note:
+                  plan.lost === 0
+                    ? 'Every value survives, written as the new type.'
+                    : `The other ${plan.lost} cannot be written as a ${target} and are cleared.`,
+                destructive: plan.lost > 0,
+                onPick: () => onChoose(true),
+              },
+              {
+                label: 'Clear the column',
+                note: `All ${plan.filled} values go.`,
+                destructive: true,
+                onPick: () => onChoose(false),
+              },
+            ]
+          : [
+              {
+                label: 'Clear the column and change the type',
+                note: `All ${plan.filled} values go — none of them can be written as a ${target}.`,
+                destructive: true,
+                onPick: () => onChoose(false),
+              },
+            ]
+      }
+    >
+      <ConfirmFacts
+        items={[...factLines(facts), kept > 0 ? `${kept} convert` : 'none convert']}
+      />
+      <ConfirmSamples
+        label="In it now"
+        values={facts.samples}
+        more={facts.distinct - facts.samples.length}
+      />
+      {plan.lost > 0 ? (
+        <ConfirmSamples
+          label={
+            plan.lost === 1
+              ? 'The 1 that cannot cross'
+              : `${plan.lost} cannot cross, among them`
+          }
+          values={plan.lostSamples}
+        />
+      ) : null}
+      <p className="ds-cs-line">
+        This app has no undo. Whatever is cleared here can only come back from a
+        file you exported earlier.
+      </p>
+    </ConfirmSheet>
+  )
+}
+
+function DeleteSheet({
+  columnName,
+  tableName,
+  facts,
+  groupLevel,
+  readers,
+  rules,
+  onCancel,
+  onConfirm,
+}: {
+  columnName: string
+  tableName: string
+  facts: ColumnFacts
+  groupLevel: number
+  readers: FieldDef[]
+  rules: Array<{ ruleId: string; ruleName: string; messages: string[] }>
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <ConfirmSheet
+      eyebrow="Remove column"
+      question={`Remove “${columnName}” from ${tableName}?`}
+      onCancel={onCancel}
+      choices={[
+        {
+          label: 'Remove it',
+          note:
+            facts.filled === 0
+              ? 'The column is empty, so no values go with it.'
+              : `${facts.filled} values go with it, and cannot be recovered.`,
+          destructive: true,
+          onPick: onConfirm,
+        },
+      ]}
+    >
+      {/* one voice with the retype sheet: `factLines` is the only place
+          these counts are worded, so the two sheets can never describe
+          the same column two different ways */}
+      <ConfirmFacts items={factLines(facts)} />
+      <ConfirmSamples
+        label="In it now"
+        values={facts.samples}
+        more={facts.distinct - facts.samples.length}
+      />
+
+      {/* WHAT ELSE BREAKS. The rules stage already put a red mark on
+          the rule an hour after the column left — one stage away, if
+          you went looking. The warning belongs here, before it. */}
+      {groupLevel >= 0 ? (
+        <p className="ds-cs-line">
+          It is grouping level {groupLevel + 1}, so {tableName} loses that drawer
+          on the sheet.
+        </p>
+      ) : null}
+      {readers.length > 0 ? (
+        <p className="ds-cs-line ds-cs-line-warn">
+          {nameList(readers.map((r) => r.name || 'an untitled column'))}{' '}
+          {readers.length === 1 ? 'reads' : 'read'} this column, and will show
+          “Unknown field [{columnName}]” in every row instead of a value.
+        </p>
+      ) : null}
+      {rules.map((r) => (
+        <p className="ds-cs-line ds-cs-line-warn" key={r.ruleId}>
+          <span className="ds-cs-rule-name">{r.ruleName}</span> breaks:{' '}
+          {r.messages.join(' ')}
+        </p>
+      ))}
+      <p className="ds-cs-line">
+        This app has no undo. The column can only come back from a file you
+        exported earlier.
+      </p>
+    </ConfirmSheet>
   )
 }
 
@@ -472,7 +773,10 @@ function DefaultValueInput({ entityId, field }: { entityId: string; field: Field
     }
     case 'reference': {
       if (!field.refEntityId || !targetEntity) {
-        return <p className="ds-hint">Choose a target entity below first.</p>
+        /* SAID "TARGET ENTITY" on a surface whose whole contract is
+           table and column — and the control it points at is headed
+           "Links to". */
+        return <p className="ds-hint">Choose the table this links to, below.</p>
       }
       const rows = targetRows ?? []
       if (rows.length === 0) {

@@ -73,25 +73,66 @@ own hosts. The Highfield table has 40 rows; 37 carry a photo link; **33 of those
 37 are on `highfieldboats.com` and load.** Only 4 are on the blocked dealer
 host. Measured from `http://localhost:5090` with a real `<img>`:
 
-| host | in `northside.ts` (lines carrying it) | image cells | `<img>` from our origin |
-|---|---|---|---|
-| `www.highfieldboats.com` | 20 (with `media.`/`adventure.`: +3) | 30 | **paints** 2560×1440 |
-| `adventure.highfieldboats.com` | — | 3 | **paints** 2560×1440 |
-| `www.yamaha-motor.com.au` | — | 43 | **paints** 800×600 |
-| `mayfairmarine.com.au` | — | 33 | **paints** 1800×716 |
-| `www.stacer.com.au` | — | 20 | **paints** 3000×2000 |
-| `www.formosamarineboats.com.au` | — | 15 | **paints** 1920×1440 |
-| `app.jeanneau.com` | — | 4 | **paints** |
-| `dunbier.com` | — | 3 | **paints** 2560×1517 |
-| `www.gfabtrailers.com.au` | — | 3 | **paints** |
-| `www.surteesboats.com` | — | 1 | **paints** |
-| `www.northsidemarine.com.au` | 71 | 93 | **blocked** |
-| `northsidemarine1.sharepoint.com` | 4 | 57 | **blocked** |
+| host | image cells | distinct addresses | cells that paint | `<img>` from our origin |
+|---|---|---|---|---|
+| `www.highfieldboats.com` | 30 | 17 | 30 | **paints** 2560×1440 |
+| `adventure.highfieldboats.com` | 3 | 3 | 3 | **paints** 2560×1440 |
+| `www.yamaha-motor.com.au` | 43 | 26 | 43 | **paints** 800×600 |
+| `mayfairmarine.com.au` | 33 | 8 | 33 | **paints** 1800×716 |
+| `www.stacer.com.au` | 20 | 18 | **19** | **paints** 3000×2000 — one address 404s |
+| `www.formosamarineboats.com.au` | 15 | 14 | 15 | **paints** 1920×1440 |
+| `app.jeanneau.com` | 4 | 4 | 4 | **paints** 425×134 |
+| `dunbier.com` | 3 | 2 | 3 | **paints** 2560×1517 |
+| `www.gfabtrailers.com.au` | 3 | 3 | 3 | **paints** 600×400 |
+| `www.surteesboats.com` | 1 | 1 | 1 | **paints** 1080×588 |
+| `www.northsidemarine.com.au` | 93 | 71 | 0 | **blocked** |
+| `northsidemarine1.sharepoint.com` | 57 | 4 | 0 | **blocked** |
+| **total** | **305** | **171** | **154** | |
 
-Summing the per-host cell counts gives **155 of 305 cells paint today**. The
-study that produced the table states 150 in its summary line; the five-cell
-difference is unexplained and **not verified**. Either way it is roughly half
-the catalogue, and it is the *whole* of Highfield bar four rows.
+**154 of 305 image cells paint today.** That is the number; the 155 and the 150
+this table used to carry were both wrong, and §1.3.1 says how each went wrong.
+It is a little over half the catalogue, and it is the *whole* of Highfield bar
+four rows.
+
+#### 1.3.1 How this was counted, and what the old numbers were counting
+
+**An image cell is one row × one `image` column.** The count is 305 because the
+seed has 15 `image` columns across 15 tables and 305 rows carrying an address in
+one. A cell holds an *ordered* `ImageRef[]`, so a cell with three photographs
+would still be **one cell and three pictures** — but that case does not arise
+here: `imageCell()` (`src/demos/northside.ts:185-189`) wraps exactly one
+workbook URL, and measured over all 651 rows the largest cell in the seed holds
+**one** picture. So for this seed, and only for this seed, *cells = pictures =
+305*. The 37,857 bytes in §5.1 is the same 305 strings, which is the
+cross-check that both were taken over the same population.
+
+The count that is **not** 305 is **distinct addresses: 171**. 305 cells share
+171 addresses — SharePoint's 57 cells are 4 addresses, Mayfair's 33 are 8. That
+is the column the old table labelled "lines carrying it"; its three filled
+values (20 across the Highfield hosts, 71, 4) match the measured distinct counts
+exactly, so it was a distinct-address count wearing the wrong name.
+
+Neither retired number was a count of anything that paints:
+
+- **155** is the arithmetic sum of the ten reachable hosts' cells. The
+  arithmetic is right; the premise is not. It assumes host-open ⇒ every address
+  on it paints, and one does not: a single `www.stacer.com.au` file returns
+  **404** (`text/html`, 93,710 bytes) while a control on the same host returns
+  `200 image/jpeg`. A dead file on a healthy host — exactly the case §1.5's
+  two-claimant rule exists to keep from condemning the host. 155 − 1 = 154.
+- **150** is 93 + 57: the **blocked** total, which is the complement of 155, not
+  a paint count at all. The document uses 150 correctly for blocked cells twice
+  elsewhere (§1.5, §1.7), so a transposition of the two halves is the likely
+  explanation — likely, not established, because the study that wrote the
+  summary line is not here to ask. What is established is that 150 is not what
+  paints.
+
+Method, so this is repeatable: read the 21 entities and 651 rows out of the live
+app's IndexedDB at `http://localhost:5090`, take every value on an `image`-typed
+field, then point a real `<img>` from that same origin at each of the 171
+distinct addresses and record `naturalWidth > 0`. Verdicts were then folded back
+onto all 305 cells. The one non-blocked failure was re-probed cache-busted and
+confirmed server-side.
 
 Two corrections to the standing assumption in the codebase: the seed's links are
 **not** predominantly `northsidemarine.com.au` (that host is 93 of 305 cells),
@@ -155,12 +196,14 @@ four states: `unknown`, `probing`, `open`, `closed`.
 
 **The guarantee this buys: at most two uncatchable console lines per host per
 session, and none at all for a host that works.** On today's seed that predicts
-**four lines** for the whole 305-cell catalogue — two probes each for
-`northsidemarine.com.au` and `northsidemarine1.sharepoint.com` — against 150 if
-the gate were simply relaxed, and against the "seventy-odd per sheet" the
-current file header describes. That prediction follows from the measured
-per-host verdicts; **it is not verified in the running app** and is the first
-thing to check once the change is in.
+**five lines** for the whole 305-cell catalogue — two probes each for
+`northsidemarine.com.au` and `northsidemarine1.sharepoint.com`, plus one for the
+single dead file on `www.stacer.com.au`, which sits on an *open* host and so is
+drawn, fails, and degrades on its own (§1.3.1) — against **151** if the gate
+were simply relaxed, and against the "seventy-odd per sheet" the current file
+header describes. That prediction follows from the measured per-host verdicts;
+**it is not verified in the running app** and is the first thing to check once
+the change is in.
 
 ### 1.6 Lazy, always
 
@@ -182,8 +225,16 @@ carries three `media.`/`adventure.` links. We cannot downscale a remote picture
 ### 1.7 What we still cannot show, and what to do about it
 
 The 93 `northsidemarine.com.au` cells and the 57 SharePoint cells stay reference
-plates. That is correct behaviour, not a defect: a picture we cannot fetch is
-still a record of a picture, and the plate says whose address it is.
+plates — 150 of the 151 that do not paint. That is correct behaviour, not a
+defect: a picture we cannot fetch is still a record of a picture, and the plate
+says whose address it is.
+
+The 151st is different in kind and must not be folded in with them: one
+`www.stacer.com.au` cell whose file 404s on a host that otherwise serves 19 of
+20. No host rule can fix that one, because the host is not the problem — it
+degrades per-address through the `broken` Set, and the plate is the right answer
+for a reason that belongs to the file. The fix is a corrected address in the
+workbook, which is the business's, not ours.
 
 The fix for the 93 is not a client-side trick — it is the 164-entry mirror map
 described in §1.2, and adopting it is a decision for the user (§6.6). The 57

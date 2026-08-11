@@ -40,9 +40,10 @@
    and asking for one outright from the invitation (no kind yet,
    so the dialog opens on its first question).
 
-   DOORS OPEN STAGES, and there is exactly ONE STAGE. Four finished
-   features needed a table, or a rule, or nothing at all, and none of
-   them knew which one a person was pointing at — only the shell does.
+   DOORS OPEN STAGES, and there is exactly ONE STAGE. Five finished
+   features needed a table, a rule, a document, or nothing at all, and
+   none of them knew which one a person was pointing at — only the
+   shell does.
    So the panel draws a door, the door names a stage, and the stage is
    mounted OVER the sheet rather than instead of it: the canvas stays
    alive underneath, so closing is instant and the sheet has not moved.
@@ -79,16 +80,27 @@ import { ViewStage } from './ViewStage'
 import { RulesStage } from './RulesStage'
 import { DesignStage } from './DesignStage'
 import { FlowStage } from './FlowStage'
+import { QuoteStage } from './QuoteStage'
+import { useQuotes } from '@/features/quote'
 import { useViewPersistence } from './viewPersistence'
 import './shell.css'
 
-/** Everything that can cover the sheet. Two of them name a table; the
- *  other two are about the whole drawing. There is never more than one. */
+/** Everything that can cover the sheet. Two of them name a table, two
+ *  are about the whole drawing, and the fifth names a document. There
+ *  is never more than one.
+ *
+ *  The quote stage carries `quoteId: null` for the LIST rather than
+ *  being two stage kinds. A list and the thing it opens are one place
+ *  a person is, and splitting them would make "back to all quotes"
+ *  close a stage and open another — which unmounts the box, drops the
+ *  scroll, and re-runs the fade every time somebody compares two
+ *  documents. */
 type Stage =
   | { kind: 'view'; entityId: string }
   | { kind: 'design'; entityId: string }
   | { kind: 'rules' }
   | { kind: 'flow' }
+  | { kind: 'quote'; quoteId: string | null }
 
 export function Shell() {
   const org = useProjectStore((s) => s.meta.org)
@@ -98,6 +110,13 @@ export function Shell() {
 
   /* view pages survive a refresh — see viewPersistence.ts */
   useViewPersistence()
+
+  /* HOW MANY DOCUMENTS THERE ARE, for the door in the panel. Read
+     here rather than inside the panel so the door and the stage are
+     answering the same registry in the same frame — a count that
+     lagged the list by a render is how a door disappears while its
+     stage is still open. */
+  const quoteCount = useQuotes().length
 
   /* what is over the sheet right now, or null for the sheet itself */
   const [stage, setStage] = useState<Stage | null>(null)
@@ -166,10 +185,13 @@ export function Shell() {
           onOpenDesign={(id) => setStage({ kind: 'design', entityId: id })}
           onOpenRules={() => setStage({ kind: 'rules' })}
           onOpenFlow={() => setStage({ kind: 'flow' })}
+          onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
           openViewEntityId={open?.kind === 'view' ? open.entityId : null}
           openDesignEntityId={open?.kind === 'design' ? open.entityId : null}
           rulesOpen={open?.kind === 'rules'}
           flowOpen={open?.kind === 'flow'}
+          quotesOpen={open?.kind === 'quote'}
+          quoteCount={quoteCount}
         />
 
         <main className="shell-stage" aria-label="Sheet">
@@ -190,6 +212,13 @@ export function Shell() {
             <ViewStage
               key={open.entityId}
               entityId={open.entityId}
+              /* THE ONE WAY IN. A quote is minted on the view page,
+                 from the row that page is drawn for — nowhere else in
+                 the app knows both. The stage hands back the new
+                 document's id and we open it, so pressing "Quote this
+                 one" lands on the quote rather than on a list the
+                 person then has to search. */
+              onQuote={(quoteId) => setStage({ kind: 'quote', quoteId })}
               onClose={() => setStage(null)}
             />
           ) : open?.kind === 'design' ? (
@@ -202,6 +231,19 @@ export function Shell() {
             <RulesStage onClose={() => setStage(null)} />
           ) : open?.kind === 'flow' ? (
             <FlowStage onClose={() => setStage(null)} />
+          ) : open?.kind === 'quote' ? (
+            /* DELIBERATELY NOT KEYED ON THE QUOTE ID. The view and
+               design stages are keyed because a different table is a
+               different page; a different quote is the SAME place —
+               the list and the documents in it are one screen a person
+               moves around inside, and remounting it on every open
+               would drop the list's scroll position between two
+               documents being compared. */
+            <QuoteStage
+              quoteId={open.quoteId}
+              onOpen={(quoteId) => setStage({ kind: 'quote', quoteId })}
+              onClose={() => setStage(null)}
+            />
           ) : null}
         </main>
       </div>

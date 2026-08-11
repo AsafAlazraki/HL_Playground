@@ -36,11 +36,12 @@
 
 import { useMemo, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
-import { ArrowLeft, MagnifyingGlass } from '@phosphor-icons/react'
+import { ArrowLeft, MagnifyingGlass, Receipt } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar, readCell, rowLabel, type EntityDef, type RowData } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ViewPage, createViewFor } from '@/features/views'
+import { createQuoteFromView } from '@/features/quote'
 import { ICON_SIZE } from '@/lib/icons'
 
 /** How many rows the rail draws before it asks you to narrow. */
@@ -50,10 +51,13 @@ const NO_ROWS: RowData[] = []
 
 export interface ViewStageProps {
   entityId: string
+  /** Mint a quote from the row on screen and open it. Absent = the
+   *  control is not drawn, so this stage still works on its own. */
+  onQuote?: (quoteId: string) => void
   onClose: () => void
 }
 
-export function ViewStage({ entityId, onClose }: ViewStageProps): ReactElement {
+export function ViewStage({ entityId, onQuote, onClose }: ViewStageProps): ReactElement {
   const entity = useProjectStore((s) => s.entities[entityId])
   const rows = useProjectStore((s) => s.rowsByEntity[entityId]) ?? NO_ROWS
 
@@ -135,6 +139,38 @@ export function ViewStage({ entityId, onClose }: ViewStageProps): ReactElement {
           </span>
           <span className="shell-view-what-say">what goes with each one</span>
         </p>
+
+        {/* QUOTE THIS ONE — the one way a rig becomes a document.
+            The page in front of the salesperson IS the configured rig:
+            the star, the order, the rigging kit and prop sitting on the
+            join row. Carrying that straight onto a quote is what stops
+            them configuring the same boat twice, which is the cost the
+            spec exists to remove.
+
+            A SENTENCE, NOT A GLYPH, like every other door in this app —
+            nobody guesses an icon. It carries `aria-label` because the
+            words alone do not say WHICH one, and it carries NO
+            `aria-pressed`: this is not a toggle. It makes a new
+            document every time it is pressed, and telling a screen
+            reader it is "pressed" would promise a state it does not
+            have.
+
+            It is drawn only when there is a row on screen, because
+            "this one" has to mean something. */}
+        {onQuote && view && openRow ? (
+          <button
+            type="button"
+            className="btn shell-quote-act shell-view-quote"
+            aria-label={`Quote ${rowLabel(entity, openRow)}`}
+            onClick={() => {
+              const made = createQuoteFromView(view.id, openRow.id)
+              if (made) onQuote(made.id)
+            }}
+          >
+            <Receipt size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+            Quote this one
+          </button>
+        ) : null}
       </div>
 
       <div className="shell-view-split">

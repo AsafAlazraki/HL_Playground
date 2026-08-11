@@ -167,6 +167,54 @@
   outline: none;
 }
 
+/* -- the table's own three controls, folded ------------------
+   Shut on arrival: the door that opens this sheet asks what each
+   COLUMN may hold, and these three rows about the TABLE used to push
+   the column list past the bottom of a 1280x800 window. The closed
+   state names what is behind it rather than being a bare caret. */
+
+.ds-about-row {
+  padding: 0;
+}
+.ds-about-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.ds-about-toggle:hover {
+  background: var(--blue-wash);
+}
+.ds-about-caret {
+  display: inline-flex;
+  align-self: center;
+  flex: none;
+  color: var(--ink-faint);
+  transition: transform var(--t-fast) var(--ease-draft);
+}
+.ds-about-toggle[aria-expanded='true'] .ds-about-caret {
+  transform: rotate(90deg);
+}
+.ds-about-label {
+  flex: none;
+  color: var(--ink-soft);
+}
+.ds-about-what {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* -- description (quiet, auto-growing) ---------------------- */
 
 .ds-desc-row {
@@ -433,10 +481,16 @@
   border-color: var(--blue);
   color: var(--blue-deep);
 }
+/* POINTS THE WAY THE ROW ACTUALLY MOVES. At rest it aims DOWN,
+   because that is where the editor appears; open, it aims up,
+   because that is what pressing it again does. It used to sit at
+   0deg — a right caret, which everywhere else in this app means a
+   door onto another screen. The row is not a door. */
 .ds-frow-caret {
   display: inline-flex;
   flex: none;
   color: var(--ink-faint);
+  transform: rotate(90deg);
   transition:
     transform var(--t-med) var(--ease-draft),
     color var(--t-fast) var(--ease-draft);
@@ -445,7 +499,7 @@
   color: var(--blue);
 }
 .ds-frow-open .ds-frow-caret {
-  transform: rotate(90deg);
+  transform: rotate(-90deg);
   color: var(--blue);
 }
 
@@ -1238,4 +1292,238 @@
   align-self: flex-start;
   color: var(--red);
   border-color: color-mix(in srgb, var(--red) 40%, transparent);
+}
+
+/* ---------------------------------------------------------- */
+/* WHAT A COLUMN HOLDS — the block that was missing beside the */
+/* control that empties it                                     */
+/* ---------------------------------------------------------- */
+
+.ds-holds {
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--paper-sunken);
+  border-left: 2px solid var(--hairline-strong);
+}
+.ds-holds-count {
+  color: var(--ink-soft);
+}
+.ds-holds-sep {
+  color: var(--ink-faint);
+}
+.ds-holds-samples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  margin-top: var(--sp-1);
+}
+/* A REAL VALUE, DRESSED AS ONE. These are the user's own cells,
+   so they are set in the reading face and quoted by their frame —
+   never in the mono label face, which on this sheet is reserved
+   for words the app itself is saying. */
+.ds-holds-sample {
+  max-width: 100%;
+  padding: 1px 6px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+.ds-holds-more {
+  color: var(--ink-faint);
+}
+
+/* the legend under COLUMNS — the stamps a collapsed row carries */
+.ds-legend {
+  margin-top: calc(var(--sp-1) * -1);
+  font-size: 9px;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------- */
+/* THE CONFIRM SHEET — see ConfirmSheet.tsx for why this is    */
+/* not window.confirm                                          */
+/* ---------------------------------------------------------- */
+
+.ds-cs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+}
+.ds-cs-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--canvas-bg-deep);
+  /* the drawing stays visible underneath: this is a question about
+     the sheet, not a departure from it */
+  opacity: 0.44;
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+.ds-cs-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  max-height: calc(100vh - var(--sp-6) * 2);
+  overflow: hidden auto;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-popover);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+.ds-cs-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5) var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+.ds-cs-eyebrow {
+  color: var(--red);
+}
+/* Instrument Serif is only ever allowed at 22px and up */
+.ds-cs-question {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.ds-cs-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+}
+.ds-cs-facts {
+  color: var(--ink-soft);
+}
+.ds-cs-dot {
+  color: var(--ink-faint);
+}
+.ds-cs-line {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.ds-cs-line-warn {
+  padding-left: var(--sp-3);
+  color: var(--ink);
+  border-left: 2px solid var(--red);
+}
+.ds-cs-rule-name {
+  font-weight: 600;
+}
+
+.ds-cs-samples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.ds-cs-samples-lab {
+  color: var(--ink-faint);
+}
+.ds-cs-samples-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+}
+.ds-cs-sample {
+  max-width: 100%;
+  padding: 1px 6px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--paper-sunken);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+.ds-cs-sample-more {
+  color: var(--ink-faint);
+}
+
+.ds-cs-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-top: 1px solid var(--hairline);
+}
+/* Every choice states its own consequence, so they are full-width
+   blocks rather than a row of verbs — a person who reads only the
+   button still knows what it costs. */
+.ds-cs-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.ds-cs-choice:hover {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+}
+.ds-cs-choice-danger:hover {
+  background: var(--red-wash);
+  border-color: var(--red);
+}
+.ds-cs-choice-label {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.ds-cs-choice-danger .ds-cs-choice-label {
+  color: var(--red);
+}
+.ds-cs-choice-note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+.ds-cs-cancel {
+  align-self: center;
+  padding: var(--sp-1) var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.ds-cs-cancel:hover {
+  color: var(--ink);
+}
+/* the safe answer takes the focus, so it has to look like it has */
+.ds-cs-cancel:focus-visible {
+  outline: 1px solid var(--blue);
+  outline-offset: 2px;
 }

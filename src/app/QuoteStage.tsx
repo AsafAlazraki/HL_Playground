@@ -1,0 +1,132 @@
+/* ============================================================
+   THE QUOTE STAGE — the shell's box around `@/features/quote`.
+
+   Fourth time the same lesson: a finished feature reachable from
+   nothing. `@/features/quote` knows how to freeze a rig into a
+   document, how to sum it once, how to print it and how to list
+   what has been made. What it cannot know is which ROW a person is
+   pointing at, where the way back lives, and that only one thing
+   may cover the sheet at a time. Only the shell knows those. So
+   this file is a box and a way back, and it writes no quote logic
+   at all — no total, no price, no line. The moment a stage starts
+   adding numbers up "just for the bar" there are two answers for
+   one deal, which is precisely the fault this feature exists to
+   end (QUOTE_FINDINGS §3.4: production sums one quote in five
+   places and they already disagree).
+
+   WHAT THIS FILE IS, AND ALL IT IS:
+     1. a way back   — one control, top left, always there;
+     2. a crumb      — what is on screen, in the bar's own voice;
+     3. a box        — `<QuoteList>` or `<QuotePage>` fills it and
+                       scrolls itself;
+     4. one link     — "All quotes", from a document back to the
+                       diary, because the panel's door is behind the
+                       stage a person is standing on.
+
+   IT SITS OVER THE SHEET, like the view, rules and flow stages, so
+   the blueprint keeps its zoom and node state underneath and
+   closing is instant. A quote is something you write ABOUT the
+   sheet, not somewhere you go instead of it.
+
+   TWO PANELS STILL. Everything below is INSIDE the stage, the way
+   `ViewStage` puts its row rail inside its own box. Nothing here
+   re-opens the right rail the shell deleted.
+
+   THE LIST AND THE DOCUMENT ARE ONE STAGE, not two. A person moving
+   between quotes is in one place; splitting them into two stage
+   kinds would unmount the box on every hop and drop the scroll of
+   the list somebody is comparing two documents from.
+
+   A STAGE MUST NEVER OUTLIVE ITS SUBJECT. A draft can be thrown
+   away from inside this very stage, so a `quoteId` that no longer
+   resolves falls back to the LIST rather than to the sheet — the
+   person was in the middle of looking at their quotes, and the
+   feature's own page already says "That quote is no longer here."
+   ============================================================ */
+
+import type { ReactElement } from 'react'
+import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
+import { QuoteList, QuotePage, useQuote } from '@/features/quote'
+import { ICON_SIZE } from '@/lib/icons'
+
+export interface QuoteStageProps {
+  /** the quote being looked at, or null for the list of them */
+  quoteId: string | null
+  /** The shell holds which one is open, so the door in the panel and
+   *  the stage can never disagree about what is on screen. Passing
+   *  null goes back to the list without closing the stage. */
+  onOpen: (quoteId: string | null) => void
+  onClose: () => void
+}
+
+export function QuoteStage({ quoteId, onOpen, onClose }: QuoteStageProps): ReactElement {
+  const quote = useQuote(quoteId)
+  /* the id counts as open only when the document is really there */
+  const openId = quote ? quote.id : null
+
+  return (
+    <div
+      className="shell-viewstage"
+      role="region"
+      aria-label={quote ? `Quote ${quote.reference}` : 'Quotes we have made'}
+      /* KEYSTROKES STOP AT THIS ROOT, the same line every other stage
+         carries. The whiteboard is still mounted underneath and still
+         holds a window-level keydown handler: Delete or Backspace with
+         a table selected offers to delete that whole table, and it
+         only skips INPUT/TEXTAREA/SELECT. A quote is made almost
+         entirely of typing, and a Backspace in an empty customer field
+         must never offer to strike a price file off the sheet. */
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <div className="shell-view-bar">
+        <button type="button" className="btn shell-view-back" onClick={onClose}>
+          <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+          Back to the sheet
+        </button>
+
+        <p className="shell-view-what">
+          <span className="shell-view-what-name">
+            {quote ? quote.reference : 'Quotes we have made'}
+          </span>
+          <span className="shell-view-what-sep" aria-hidden="true">
+            ·
+          </span>
+          {/* The aside says what is IN FRONT OF YOU, and for the list
+              it says what a quote is — the two doors above it in the
+              panel are both about rules, and a third sentence has to
+              be told apart from them without looking. */}
+          <span className="shell-view-what-say">
+            {quote ? quote.subjectLabel : 'a rig, a customer and a moment'}
+          </span>
+        </p>
+
+        {/* THE WAY BACK TO THE DIARY. The panel's own door is behind
+            this stage, so without this the only route from a document
+            to the list is out to the sheet and in again. Drawn only
+            when a document is open, because on the list it would point
+            at itself. */}
+        {quote ? (
+          <div className="shell-quote-acts">
+            <button
+              type="button"
+              className="btn shell-quote-act"
+              aria-label="Back to the quotes we have made"
+              onClick={() => onOpen(null)}
+            >
+              <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+              All quotes
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="shell-quote-well">
+        {quote ? (
+          <QuotePage quoteId={quote.id} onOpenQuote={(id) => onOpen(id)} />
+        ) : (
+          <QuoteList onOpen={(id) => onOpen(id)} openId={openId} />
+        )}
+      </div>
+    </div>
+  )
+}

@@ -26,9 +26,12 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { FieldRow } from './FieldRow'
 import { GuardNote } from './GuardNote'
 import { useNameGuard } from './useNameGuard'
+import { ConfirmFacts, ConfirmSheet } from './ConfirmSheet'
+import { draftColumnName } from './columnFacts'
+import { entityDependents, nameList } from './dependents'
 /* Phosphor only, through the house icon module — this folder used to
    hand-draw its own SVGs and drifted off the app's hairline weight. */
-import { PencilSimple, Plus } from '@phosphor-icons/react'
+import { CaretRight, PencilSimple, Plus } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import './designer.css'
 
@@ -104,6 +107,10 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
   /* -- accent ink picker ------------------------------------- */
   const [hoverInk, setHoverInk] = useState<AccentKey | null>(null)
 
+  /* -- the table's own three controls, folded (see the note on the
+        toggle) — shut on arrival, because the door was about columns */
+  const [aboutOpen, setAboutOpen] = useState(false)
+
   /* -- fields accordion -------------------------------------- */
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null)
@@ -141,8 +148,19 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
     }
   }, [menuOpen])
 
+  /* THE FIRST THING THE ADD BUTTON HANDED BACK WAS A FIELD. The
+     store's `addField` falls back to `Field N` when no name is given,
+     so a surface whose whole contract is "table and column, never
+     entity, schema or field" opened its own new row saying the one
+     word it exists not to say. The name is supplied here rather than
+     changed in the store, because the store's fallback also names
+     columns created by import, by a preset and by the join builder,
+     and that is not this workflow's call to make. */
   const handleAdd = (type: FieldType) => {
-    const created = addField(entity.id, { name: '', type })
+    const created = addField(entity.id, {
+      name: draftColumnName(entity.fields.map((f) => f.name)),
+      type,
+    })
     setMenuOpen(false)
     if (created) {
       setExpandedId(created.id)
@@ -150,17 +168,35 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
     }
   }
 
-  /* -- danger ------------------------------------------------- */
-  const handleDeleteEntity = () => {
-    const rows = rowCount === 1 ? 'its 1 row' : `its ${rowCount} rows`
-    if (
-      window.confirm(
-        `Delete the table "${entity.name}"?\n\nThis strikes it from the sheet — ${rows} and any link columns pointing at it are removed too.`,
-      )
-    ) {
-      deleteEntity(entity.id)
+  /* -- danger -------------------------------------------------
+     THE LAST `window.confirm` ON THIS SURFACE, and the act behind it
+     is the largest one the app has. The OS dialog could name the rows
+     and say "any link columns pointing at it" — it could not name
+     WHICH columns, on which tables, and it never mentioned the third
+     thing `deleteEntity` does: every rule ROOTED on this table is
+     struck from the project. That is not a blocker to go and fix
+     afterwards; the rule is gone, and this was the only warning a
+     person would ever get about it. */
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  /* asked only while the sheet is up — `entityDependents` validates
+     every rule in the project twice */
+  const doomed = useMemo(() => {
+    if (!confirmingDelete) return null
+    const { entities: all, rowsByEntity, rules } = useProjectStore.getState()
+    return entityDependents({ entities: all, rowsByEntity }, rules, entity.id)
+  }, [confirmingDelete, entity.id])
+
+  /* the two stamps a collapsed column row can carry, explained once */
+  const chipLegend = useMemo(() => {
+    const out: string[] = []
+    if ((entity.hierarchy ?? []).some((id) => entity.fields.some((f) => f.id === id))) {
+      out.push('Groups — the sheet opens a drawer on this column')
     }
-  }
+    if (entity.fields.some((f) => entity.sections?.some((s) => s.id === f.sectionId))) {
+      out.push('The other stamp is the band the column sits in')
+    }
+    return out
+  }, [entity.fields, entity.hierarchy, entity.sections])
 
   const eligibleDisplay = entity.fields.filter((f) => f.type !== 'formula')
   const displayValue =
@@ -234,6 +270,34 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
           ) : null}
         </div>
 
+        {/* THE DOOR SAYS "WHAT IS EACH COLUMN ALLOWED TO HOLD?" AND
+            THE ANSWER STARTED 290px DOWN. Three controls about the
+            TABLE — its description, its accent ink, and which column
+            names a row — stood between the person and the word
+            COLUMNS, so a 31-column table showed eight of them below
+            the fold on arrival. They are not removed; they are folded,
+            with the fold naming exactly what is behind it so nothing
+            has to be guessed at or hunted for. Shut on arrival because
+            the arrival was about columns. */}
+        <div className="ds-titleblock-row ds-about-row">
+          <button
+            type="button"
+            className="ds-about-toggle"
+            aria-expanded={aboutOpen}
+            onClick={() => setAboutOpen((v) => !v)}
+          >
+            <span className="ds-about-caret" aria-hidden="true">
+              <CaretRight size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+            </span>
+            <span className="mono-label ds-about-label">About this table</span>
+            <span className="ds-about-what">
+              description · accent ink · which column names a row
+            </span>
+          </button>
+        </div>
+
+        {aboutOpen ? (
+        <>
         <div className="ds-titleblock-row ds-desc-row">
           <textarea
             ref={descRef}
@@ -295,6 +359,8 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
           </select>
           <p className="ds-caption mono-label">labels rows elsewhere</p>
         </div>
+        </>
+        ) : null}
       </header>
 
       {/* THE REVIEWER USED TO BE DRAWN HERE, and taking it out is a
@@ -316,6 +382,23 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             {String(entity.fields.length).padStart(2, '0')}
           </span>
         </div>
+
+        {/* THE CHIPS HAD NO LEGEND, only `title` attributes — a sales
+            manager reading GROUPS and IDENTITY on a row cannot guess
+            either, and a tooltip is not an answer to someone who does
+            not know there is a question. Drawn only when the table
+            actually carries the thing being explained, so it is never
+            a line about nothing. */}
+        {chipLegend.length > 0 ? (
+          <p className="ds-legend mono-label">
+            {chipLegend.map((l, i) => (
+              <span key={l}>
+                {i > 0 ? <span aria-hidden="true"> · </span> : null}
+                {l}
+              </span>
+            ))}
+          </p>
+        ) : null}
 
         {entity.fields.length === 0 ? (
           <div className="ds-empty-fields">
@@ -391,11 +474,74 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
         <button
           type="button"
           className="btn btn-danger ds-danger-btn"
-          onClick={handleDeleteEntity}
+          onClick={() => setConfirmingDelete(true)}
         >
           Delete this table
         </button>
       </footer>
+
+      {confirmingDelete && doomed ? (
+        <ConfirmSheet
+          eyebrow="Delete table"
+          question={`Delete “${entity.name}” from the sheet?`}
+          onCancel={() => setConfirmingDelete(false)}
+          choices={[
+            {
+              label: 'Delete the table',
+              note:
+                rowCount === 0
+                  ? 'It has no rows, so no data goes with it.'
+                  : `Its ${rowCount === 1 ? '1 row' : `${rowCount} rows`} go with it, and cannot be recovered.`,
+              destructive: true,
+              onPick: () => {
+                setConfirmingDelete(false)
+                deleteEntity(entity.id)
+              },
+            },
+          ]}
+        >
+          <ConfirmFacts
+            items={[
+              rowCount === 1 ? '1 row' : `${rowCount} rows`,
+              entity.fields.length === 1 ? '1 column' : `${entity.fields.length} columns`,
+            ]}
+          />
+
+          {/* WHICH link columns, on WHICH tables — the cascade in
+              `deleteEntity` drops these silently, and they are columns
+              on tables the person is not looking at. */}
+          {doomed.links.length > 0 ? (
+            <p className="ds-cs-line ds-cs-line-warn">
+              {doomed.links.length === 1
+                ? 'A link column points here and goes too: '
+                : `${doomed.links.length} link columns point here and go too: `}
+              {nameList(doomed.links.map((l) => `${l.columnName} on ${l.tableName}`))}.
+            </p>
+          ) : null}
+
+          {doomed.rootedRules.length > 0 ? (
+            <p className="ds-cs-line ds-cs-line-warn">
+              {doomed.rootedRules.length === 1 ? 'This rule is' : 'These rules are'} written
+              about this table and {doomed.rootedRules.length === 1 ? 'is' : 'are'} deleted
+              with it —{' '}
+              {nameList(doomed.rootedRules.map((r) => r.ruleName || 'an unnamed rule'))}. They
+              do not become blockers you can fix; they stop existing.
+            </p>
+          ) : null}
+
+          {doomed.brokenRules.map((r) => (
+            <p className="ds-cs-line ds-cs-line-warn" key={r.ruleId}>
+              <span className="ds-cs-rule-name">{r.ruleName}</span> breaks:{' '}
+              {r.messages.join(' ')}
+            </p>
+          ))}
+
+          <p className="ds-cs-line">
+            This app has no undo. The table can only come back from a file you exported
+            earlier.
+          </p>
+        </ConfirmSheet>
+      ) : null}
     </div>
   )
 }
