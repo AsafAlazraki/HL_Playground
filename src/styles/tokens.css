@@ -17,9 +17,33 @@
   --paper-overlay: rgba(255, 255, 255, 0.9);
 
   /* -- ink (marine navy) ------------------------------------ */
+  /* THREE TIERS, AND EVERY ONE OF THEM IS READABLE. The old faint
+     tier was #8598ad, which measures 2.96:1 on white, 2.73 on
+     --paper and 2.51 on --paper-sunken — under the 4.5:1 floor on
+     every ground it is used against, across 218 uses in 20 files.
+     It was never decoration: it carries every count, every
+     breadcrumb, every empty state, and the connective words of
+     every rule sentence. A tier that holds meaning has to be
+     legible, and this one was legible only to people with good
+     eyes on a good screen.
+
+     --ink-soft moved with it, and that is the part worth
+     explaining. Darkening faint alone to #5f6c7b left it 1.01
+     apart from soft on white — two tiers that measure differently
+     and LOOK the same, which is a ramp in the token file and not
+     on the screen. Pushing soft to #3d4e62 restores a real step
+     (6.5 then 3.2) while making the middle tier more readable too.
+     Same hue and saturation throughout; only value moved.
+
+     Measured, white / --paper / --paper-sunken:
+       --ink        14.99  13.81  12.73
+       --ink-soft    8.52   7.85   7.23
+       --ink-faint   5.36   4.94   4.55
+     The canvas has its own --canvas-ink-* set; the navy blueprint
+     is not governed by these and was not touched. */
   --ink: #12283f;            /* primary text / drawing ink */
-  --ink-soft: #4c617a;       /* secondary text */
-  --ink-faint: #8598ad;      /* tertiary, placeholders */
+  --ink-soft: #3d4e62;       /* secondary text */
+  --ink-faint: #5f6c7b;      /* tertiary, placeholders */
 
   /* -- nautical blue (the pen) ------------------------------ */
   --blue: #1d55c4;

@@ -195,8 +195,34 @@ export function Shell() {
         />
 
         <main className="shell-stage" aria-label="Sheet">
-          <Whiteboard />
-          {tableCount === 0 && <EmptyState onCreateTable={() => setPicking(true)} />}
+          {/* THE SHEET STOPS EXISTING WHILE A STAGE IS OVER IT.
+              A stage covers the canvas but never unmounted it, so the
+              blueprint kept every one of its 54 focusable things in
+              the tab order underneath — measured identical with the
+              view page, the flow rail and the flow stage open. Opening
+              a view page by keyboard and reaching its first control
+              cost 74 key presses, 53 of them inside a sheet nobody can
+              see, with a longest run of 9 presses showing no focus
+              ring at all. A screen reader had the same problem in a
+              worse form: it could read out a table the reader had no
+              way to know was there.
+
+              `inert` is the whole fix — it takes the subtree out of
+              the tab order, out of the accessibility tree and out of
+              hit-testing in one attribute, and reverses cleanly when
+              the stage closes. The canvas is NOT unmounted, which is
+              the point of the stage pattern: React Flow keeps its
+              zoom, its node positions and its selection, so closing is
+              instant and the sheet has not moved.
+
+              The wrapper exists only to carry the attribute. It takes
+              its size from `.shell-stage > *` and passes it down (see
+              `.shell-sheet-layer` in shell.css), so the canvas's own
+              box is unchanged. */}
+          <div className="shell-sheet-layer" inert={open !== null}>
+            <Whiteboard />
+            {tableCount === 0 && <EmptyState onCreateTable={() => setPicking(true)} />}
+          </div>
           {/* `key` on the table: a different subject is a different
               page, not the same page re-pointed. Without it the stage
               and the page under it kept their own state across the

@@ -105,16 +105,24 @@ export function ColumnMenu({
               Every value in this column leaves with it. There is no undo.
             </p>
           </div>
+          {/* FOCUS LANDS ON THE WAY OUT, NOT ON THE DELETE.
+              This dialog says "There is no undo" and then used to hand
+              the keyboard the Remove button, so the Enter that opened
+              it could destroy a column of the price file on the
+              follow-through. The app already disagreed with itself
+              here — the designer's own confirm sheet focuses cancel —
+              so this is bringing one surface into line with the other,
+              not inventing a policy. */}
           <footer className="tb-menu-foot">
-            <button type="button" className="btn btn-ghost" onClick={() => setConfirming(false)}>
-              Keep it
-            </button>
             <button
               type="button"
-              className="btn btn-danger tb-confirm-go"
+              className="btn btn-ghost"
               autoFocus
-              onClick={act(onRemove)}
+              onClick={() => setConfirming(false)}
             >
+              Keep it
+            </button>
+            <button type="button" className="btn btn-danger tb-confirm-go" onClick={act(onRemove)}>
               Remove
             </button>
           </footer>

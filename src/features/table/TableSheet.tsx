@@ -311,6 +311,10 @@ export function TableSheet({
               <button
                 type="button"
                 className="btn"
+                /* the keyboard lands on CANCEL, not on the delete —
+                   the Enter that opened this dialog must not carry
+                   through into striking the rows */
+                autoFocus
                 onClick={() => {
                   setConfirmRows(null)
                   gridRef.current?.focus()
@@ -318,7 +322,7 @@ export function TableSheet({
               >
                 Cancel
               </button>
-              <button type="button" className="btn btn-danger tb-confirm-go" autoFocus onClick={doDeleteRows}>
+              <button type="button" className="btn btn-danger tb-confirm-go" onClick={doDeleteRows}>
                 Delete {plural(confirmRows.length, 'row', 'rows')}
               </button>
             </div>

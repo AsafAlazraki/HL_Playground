@@ -56,6 +56,21 @@
   height: 100%;
 }
 
+/* THE SHEET LAYER — a wrapper that exists only to carry `inert`, so
+   the canvas leaves the tab order and the accessibility tree while a
+   stage is over it (see Shell.tsx). It takes 100%/100% from the rule
+   above and hands the same box to the canvas inside it, so nothing
+   about the blueprint's geometry changes; without this line the
+   canvas would size to its content instead of the stage and the
+   React Flow viewport would collapse. */
+.shell-sheet-layer {
+  position: relative;
+}
+.shell-sheet-layer > * {
+  width: 100%;
+  height: 100%;
+}
+
 /* registration cross ticks — the invitation card pins itself with
    these; the decorative full-window .shell-frame stays removed */
 .shell-tick {
@@ -323,6 +338,18 @@
   /* rows inset from the column edge: the accent bar of a selected row
      needs air around it or it reads as a border on the panel */
   padding: 0 var(--sp-2);
+}
+
+/* AIR UNDER A ROW THAT SCROLLS ITSELF INTO VIEW. Selecting a table
+   scrolls its <li> — doors included — into view (LeftPanel.tsx), and
+   `block: 'nearest'` moves the MINIMUM distance, which lands the last
+   door flush against the window edge: measured at 800.073px against
+   an 800px viewport, so it overshot by 0.073px and read as clipped.
+   `scroll-margin` is the mechanism built for exactly this — it pads
+   the box the scroller aims at without changing the box that is
+   drawn, so the row still sits on the panel's own rhythm. */
+.shell-tbl-list li {
+  scroll-margin-block: var(--sp-3);
 }
 
 .shell-tbl {

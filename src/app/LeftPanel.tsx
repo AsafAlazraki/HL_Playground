@@ -50,7 +50,7 @@
    place they are drawn now.
    ============================================================ */
 
-import { Fragment, useMemo } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { ArrowsLeftRight, CaretRight } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -129,6 +129,48 @@ export function LeftPanel({
   const select = useProjectStore((s) => s.select)
 
   const tables = useMemo(() => Object.values(entities), [entities])
+
+  /* ------------------------------------------------------------
+     BRING THE DOORS INTO VIEW.
+
+     Selecting a table reveals one or two sentences beneath its row —
+     they are the only way to the view page, the column setup and,
+     through the view page, the quote. At 1280x800 they were drawn
+     BELOW THE BOTTOM OF THE WINDOW for every one of the 21 seeded
+     tables, and nothing scrolled them up: measured with the panel at
+     rest, the list starts at y=704, a row is 35px and the door pair
+     is 82px, so a row must sit at y<=683 for both to land on an
+     800px screen. Clicking a table therefore looked like NOTHING
+     HAPPENED — the camera moved on the canvas and the panel did not
+     visibly change. Four of the five finished features sat behind
+     that miss.
+
+     `block: 'nearest'` is the whole trick: a row already fully on
+     screen is not moved at all, so this never yanks the list under
+     someone who can already see what they clicked. The doors render
+     INSIDE the row's <li>, so scrolling the <li> carries them with
+     it.
+
+     Keyed on the id alone, so it fires when the SELECTION changes and
+     not on every store write — a row that scrolled itself back under
+     the reader's thumb on every keystroke would be worse than the
+     bug. */
+  const selectedId = selection?.kind === 'entity' ? selection.id : null
+  const selectedRow = useRef<HTMLLIElement | null>(null)
+
+  useEffect(() => {
+    if (selectedId === null) return
+    const li = selectedRow.current
+    if (!li) return
+    /* after paint: the doors mount in the same commit as the
+       selection, and measuring before they exist scrolls to the row's
+       old, shorter box */
+    const id = requestAnimationFrame(() => {
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      li.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [selectedId])
 
   /* Grouped by kind, each group A→Z. Order inside a group is by NAME
      (not createdAt): once the list is cut into kinds, a person is
@@ -293,7 +335,7 @@ export function LeftPanel({
                   const rows = rowsByEntity[e.id]?.length ?? 0
                   const isOpen = openViewEntityId === e.id
                   return (
-                    <li key={e.id}>
+                    <li key={e.id} ref={isSel ? selectedRow : undefined}>
                       <button
                         type="button"
                         className={`shell-tbl${isSel ? ' is-selected' : ''}`}
