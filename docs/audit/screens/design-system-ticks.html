@@ -1,0 +1,165 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>design-system · the registration tick, eleven times</title>
+<!--
+  NOT A SCREENSHOT. This is a reproduction, built by transcribing each of the
+  eleven registration-tick implementations out of src/**/*.css verbatim, so the
+  drift in ART_DIRECTION's signature element can be seen side by side.
+  Each panel is the same 160x88 box; only the tick CSS changes.
+  Source of every value: docs/audit/design-system.md, finding D7(c).
+-->
+<style>
+  :root{
+    --paper:#f2f6fb; --paper-high:#fff; --ink:#12283f; --ink-soft:#4c617a;
+    --ink-faint:#8598ad; --blue:#1d55c4;
+    --hairline:rgba(18,40,63,.16); --hairline-strong:rgba(18,40,63,.36);
+    --canvas-bg:#123252; --canvas-ink-soft:rgba(217,230,247,.6);
+    --canvas-ink-faint:rgba(217,230,247,.34);
+  }
+  body{margin:0;padding:40px;background:var(--paper);color:var(--ink);
+       font:14px/1.45 'Archivo',system-ui,sans-serif}
+  h1{font-family:Georgia,serif;font-weight:400;font-size:30px;margin:0 0 6px}
+  p.lede{max-width:62ch;color:var(--ink-soft);margin:0 0 4px}
+  p.warn{max-width:62ch;color:var(--ink-faint);font-family:'IBM Plex Mono',ui-monospace,monospace;
+         font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 32px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:32px 28px}
+  figure{margin:0}
+  .stage{position:relative;height:104px;display:flex;align-items:center;justify-content:center;
+         background:var(--paper);padding:8px}
+  .stage.dark{background:var(--canvas-bg)}
+  .box{position:relative;width:160px;height:80px;background:var(--paper-high);
+       border:1px solid var(--hairline)}
+  .stage.dark .box{background:transparent;border-color:rgba(217,230,247,.22)}
+  figcaption{margin-top:10px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;
+             line-height:1.6;color:var(--ink-soft)}
+  figcaption b{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+  figcaption span{color:var(--ink-faint)}
+
+  /* ---- 1. app/shell.css:61 — 11px, FULL CROSS, 1px, offset -6 ---- */
+  .t1{position:absolute;width:11px;height:11px;pointer-events:none}
+  .t1::before,.t1::after{content:'';position:absolute;background:var(--hairline-strong)}
+  .t1::before{left:0;right:0;top:5px;height:1px}
+  .t1::after{top:0;bottom:0;left:5px;width:1px}
+  .t1.tl{top:-6px;left:-6px} .t1.tr{top:-6px;right:-6px}
+  .t1.bl{bottom:-6px;left:-6px} .t1.br{bottom:-6px;right:-6px}
+
+  /* ---- 2. constraints:37 / quote:47 / views:62 — 9px, 1.25px, offset -1, 2 corners ---- */
+  .t2{position:absolute;width:9px;height:9px;pointer-events:none}
+  .t2.tl{top:-1px;left:-1px;border-top:1.25px solid var(--hairline-strong);border-left:1.25px solid var(--hairline-strong)}
+  .t2.tr{top:-1px;right:-1px;border-top:1.25px solid var(--hairline-strong);border-right:1.25px solid var(--hairline-strong)}
+
+  /* ---- 3. review.css:17 — 9px, 1px, currentColor, offset -4, tl+br ---- */
+  .t3{position:absolute;width:9px;height:9px;pointer-events:none;color:var(--ink-soft)}
+  .t3.tl{top:-4px;left:-4px;border-top:1px solid currentColor;border-left:1px solid currentColor}
+  .t3.br{bottom:-4px;right:-4px;border-bottom:1px solid currentColor;border-right:1px solid currentColor}
+
+  /* ---- 4. datagrid:567 / table.css:2628 — 10px, 1.5px, offset -6, 4 corners ---- */
+  .t4{position:absolute;width:10px;height:10px;pointer-events:none}
+  .t4.tl{top:-6px;left:-6px;border-top:1.5px solid var(--hairline-strong);border-left:1.5px solid var(--hairline-strong)}
+  .t4.tr{top:-6px;right:-6px;border-top:1.5px solid var(--hairline-strong);border-right:1.5px solid var(--hairline-strong)}
+  .t4.bl{bottom:-6px;left:-6px;border-bottom:1.5px solid var(--hairline-strong);border-left:1.5px solid var(--hairline-strong)}
+  .t4.br{bottom:-6px;right:-6px;border-bottom:1.5px solid var(--hairline-strong);border-right:1.5px solid var(--hairline-strong)}
+
+  /* ---- 5. onboarding.css:56 — 8px, 1.5px, canvas-ink-faint, offset -5 ---- */
+  .t5{position:absolute;width:8px;height:8px;pointer-events:none}
+  .t5.tl{top:-5px;left:-5px;border-top:1.5px solid var(--canvas-ink-faint);border-left:1.5px solid var(--canvas-ink-faint)}
+  .t5.tr{top:-5px;right:-5px;border-top:1.5px solid var(--canvas-ink-faint);border-right:1.5px solid var(--canvas-ink-faint)}
+  .t5.bl{bottom:-5px;left:-5px;border-bottom:1.5px solid var(--canvas-ink-faint);border-left:1.5px solid var(--canvas-ink-faint)}
+  .t5.br{bottom:-5px;right:-5px;border-bottom:1.5px solid var(--canvas-ink-faint);border-right:1.5px solid var(--canvas-ink-faint)}
+
+  /* ---- 6. io.css:50 — 8px, 1px, --blue @ .5, offset +4 (INSIDE) ---- */
+  .t6{position:absolute;width:8px;height:8px;border:0 solid var(--blue);opacity:.5;pointer-events:none}
+  .t6.tl{top:4px;left:4px;border-top-width:1px;border-left-width:1px}
+  .t6.tr{top:4px;right:4px;border-top-width:1px;border-right-width:1px}
+  .t6.bl{bottom:4px;left:4px;border-bottom-width:1px;border-left-width:1px}
+  .t6.br{bottom:4px;right:4px;border-bottom-width:1px;border-right-width:1px}
+
+  /* ---- 7. whiteboard.css:93 — 7px, 1.5px, canvas-ink-soft, offset -4 ---- */
+  .t7{position:absolute;width:7px;height:7px;pointer-events:none}
+  .t7.tl{top:-4px;left:-4px;border-top:1.5px solid var(--canvas-ink-soft);border-left:1.5px solid var(--canvas-ink-soft)}
+  .t7.tr{top:-4px;right:-4px;border-top:1.5px solid var(--canvas-ink-soft);border-right:1.5px solid var(--canvas-ink-soft)}
+  .t7.bl{bottom:-4px;left:-4px;border-bottom:1.5px solid var(--canvas-ink-soft);border-left:1.5px solid var(--canvas-ink-soft)}
+  .t7.br{bottom:-4px;right:-4px;border-bottom:1.5px solid var(--canvas-ink-soft);border-right:1.5px solid var(--canvas-ink-soft)}
+
+  /* ---- 8. table-node.css:413 — 12px, 1.5px, offset +8 (INSIDE) ---- */
+  .t8{position:absolute;width:12px;height:12px;border:0 solid var(--hairline-strong);pointer-events:none}
+  .t8.tl{top:8px;left:8px;border-top-width:1.5px;border-left-width:1.5px}
+  .t8.tr{top:8px;right:8px;border-top-width:1.5px;border-right-width:1.5px}
+  .t8.bl{bottom:8px;left:8px;border-bottom-width:1.5px;border-left-width:1.5px}
+  .t8.br{bottom:8px;right:8px;border-bottom-width:1.5px;border-right-width:1.5px}
+</style>
+
+<h1>The registration tick, eleven times</h1>
+<p class="lede">ART_DIRECTION lists “registration ticks — corner crosses where a plate
+is pinned” as a load-bearing element of the language. It is implemented eleven times,
+in eleven files, at six sizes, three stroke weights, five offsets, three inks — and one
+of the eleven is a different shape from the other ten.</p>
+<p class="warn">Reproduction from source · not a screenshot · all boxes 160 × 80</p>
+
+<div class="grid">
+
+  <figure>
+    <div class="stage"><div class="box">
+      <i class="t1 tl"></i><i class="t1 tr"></i><i class="t1 bl"></i><i class="t1 br"></i>
+    </div></div>
+    <figcaption><b>.shell-tick</b>app/shell.css:61<br>
+      <span>11px · 1px · offset −6 · hairline-strong · <b style="display:inline">FULL CROSS</b></span></figcaption>
+  </figure>
+
+  <figure>
+    <div class="stage"><div class="box">
+      <i class="t2 tl"></i><i class="t2 tr"></i>
+    </div></div>
+    <figcaption><b>.cn-tick / .qt-tick / .vw-tick</b>constraints:37 · quote:47 · views:62<br>
+      <span>9px · 1.25px · offset −1 · 2 corners · ×3 files</span></figcaption>
+  </figure>
+
+  <figure>
+    <div class="stage"><div class="box">
+      <i class="t3 tl"></i><i class="t3 br"></i>
+    </div></div>
+    <figcaption><b>.rv-tick</b>review/review.css:17<br>
+      <span>9px · 1px · offset −4 · currentColor · tl+br only</span></figcaption>
+  </figure>
+
+  <figure>
+    <div class="stage"><div class="box">
+      <i class="t4 tl"></i><i class="t4 tr"></i><i class="t4 bl"></i><i class="t4 br"></i>
+    </div></div>
+    <figcaption><b>.dg-tick / .tb-tick</b>datagrid:567 · table.css:2628<br>
+      <span>10px · 1.5px · offset −6 · 4 corners · ×2 files, byte-identical</span></figcaption>
+  </figure>
+
+  <figure>
+    <div class="stage dark"><div class="box">
+      <i class="t5 tl"></i><i class="t5 tr"></i><i class="t5 bl"></i><i class="t5 br"></i>
+    </div></div>
+    <figcaption><b>.ob-tick</b>onboarding/onboarding.css:56<br>
+      <span>8px · 1.5px · offset −5 · canvas-ink-faint</span></figcaption>
+  </figure>
+
+  <figure>
+    <div class="stage"><div class="box">
+      <i class="t6 tl"></i><i class="t6 tr"></i><i class="t6 bl"></i><i class="t6 br"></i>
+    </div></div>
+    <figcaption><b>.io-tick</b>io/io.css:50<br>
+      <span>8px · 1px · offset <b style="display:inline">+4 INSIDE</b> · --blue @ 0.5</span></figcaption>
+  </figure>
+
+  <figure>
+    <div class="stage dark"><div class="box">
+      <i class="t7 tl"></i><i class="t7 tr"></i><i class="t7 bl"></i><i class="t7 br"></i>
+    </div></div>
+    <figcaption><b>.wb-tick</b>whiteboard/whiteboard.css:93<br>
+      <span>7px · 1.5px · offset −4 · canvas-ink-soft</span></figcaption>
+  </figure>
+
+  <figure>
+    <div class="stage"><div class="box">
+      <i class="t8 tl"></i><i class="t8 tr"></i><i class="t8 bl"></i><i class="t8 br"></i>
+    </div></div>
+    <figcaption><b>.tb-lod-ticks i</b>table/table-node.css:413<br>
+      <span>12px · 1.5px · offset <b style="display:inline">+8 INSIDE</b> · hairline-strong</span></figcaption>
+  </figure>
+
+</div>
