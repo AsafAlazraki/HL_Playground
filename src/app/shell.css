@@ -35,11 +35,20 @@
    pushing the sheet off the drawing.
    Invariant: .shell-root scrollWidth == clientWidth. */
 .shell-body {
+  position: relative;
   flex: 1 1 auto;
   display: flex;
   align-items: stretch;
   min-width: 0;
   min-height: 0;
+  /* ONE PLACE THAT KNOWS HOW WIDE THE PANEL IS. The panel floats over
+     the stage, so the stage's box no longer tells you what a person can
+     actually see — the leftmost 260px of the blueprint is behind glass.
+     Every consumer of that fact reads this token: the panel's own
+     width, the stage's left inset for FIT, and the camera's
+     is-it-on-screen test in Whiteboard.tsx. One number, so they cannot
+     disagree. */
+  --panel-w: 260px;
 }
 
 /* THE SHEET IS THE STAGE — everything under the masthead and right
@@ -294,9 +303,31 @@
    The material tokens are defined and measured in base.css and are
    waiting for those three. Do not add backdrop-filter to this rule
    on its own. */
+/* IT FLOATS NOW, and the three consequences above are handled — see
+   `--panel-w` in Whiteboard.tsx for the camera arithmetic and
+   `.shell-body.is-panning` below for the blur suspension.
+
+   It is absolutely positioned rather than a flex track, so the stage
+   spans the full width and the blueprint runs underneath it. That is
+   the whole point: white glass over --paper separates at 1.07:1 and
+   is not a material at all, while the same glass over the navy
+   measures 11.5:1 and reads as one instantly.
+
+   Ink on this surface, measured over --canvas-bg-deep at alpha 0.86:
+     --ink       11.38:1
+     --ink-soft   6.47:1
+     --ink-faint  4.07:1   <- BELOW 4.5, so it is overridden below
+   0.86 is the floor that keeps the middle tier clear while the
+   material still reads as glass; --ink-faint needs 0.909 over that
+   ground, which is paint, so faint ink on this panel is promoted to
+   --ink-soft rather than the material being thickened for it. */
 .shell-panel {
-  flex: 0 0 260px;
-  width: 260px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 20;
+  width: var(--panel-w, 260px);
   min-width: 0;
   min-height: 0;
   /* ONE region: the type rail and the list scroll together, so the
@@ -304,8 +335,55 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-bottom: var(--sp-6);
-  background: var(--paper-high);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: var(--mat-light-blur);
+  -webkit-backdrop-filter: var(--mat-light-blur);
+  /* a bright inner edge is light catching the material — apple-design
+     §12 — and the hairline stays as the drawing office's own line */
   border-right: 1px solid var(--hairline);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.5);
+}
+
+/* THE TIER THAT CANNOT RIDE ON GLASS. --ink-faint measures 4.07:1 on
+   this material over the deep navy and needs alpha 0.909 to clear the
+   floor — which is not glass. Promoting it here costs one step of
+   hierarchy on one surface; thickening the material to carry it would
+   cost the material everywhere. */
+.shell-panel .mono-label,
+.shell-panel .shell-tbl-rows,
+.shell-panel .shell-grp-count,
+.shell-panel .shell-panel-count {
+  color: var(--ink-soft);
+}
+
+/* BLUR SUSPENDS WHILE THE CAMERA MOVES. backdrop-filter re-samples
+   every frame, and the surface it samples is the one thing on screen
+   that is definitely moving. The canvas already drops to 12-24fps at
+   legible zoom; paying for a 260 x 844 blur on top of that is how a
+   material becomes a stutter. Same idiom tableLod.ts uses on the same
+   gesture: drop detail while moving, restore when it settles. */
+.shell-body.is-panning .shell-panel {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--paper-high);
+}
+
+/* Reduced transparency is not a preference to nod at — for some people
+   the blur is the reason they cannot read it. */
+@media (prefers-reduced-transparency: reduce) {
+  .shell-panel {
+    background: var(--paper-high);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .shell-panel {
+    background: var(--paper-high);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-right-color: var(--ink);
+  }
 }
 .shell-panel:focus-visible {
   outline: 2px solid var(--blue);

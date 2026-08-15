@@ -112,7 +112,17 @@ if (import.meta.env.DEV) {
 
 const GRID = 16
 const SNAP_GRID: [number, number] = [GRID, GRID]
-const FIT_VIEW_OPTIONS: FitViewOptions = { padding: 0.12, maxZoom: 1 }
+/* PER-SIDE PADDING, because the panel floats over the left edge. A
+   scalar padding is symmetric, so FIT would centre the sheet in the
+   CONTAINER and hand the leftmost 260px to a surface sitting on top of
+   it — the tables at the left of the drawing would be framed perfectly
+   and then covered up. The extra left padding is the panel's own width
+   expressed as a share of a 1280px window, plus the 0.12 everything
+   else gets. */
+const FIT_VIEW_OPTIONS: FitViewOptions = {
+  padding: { top: 0.12, right: 0.12, bottom: 0.12, left: 0.32 },
+  maxZoom: 1,
+}
 
 const snap = (n: number): number => Math.round(n / GRID) * GRID
 
@@ -324,14 +334,44 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   }, [select])
 
   /* -- the camera the reader parked ---------------------------- */
-  const onMoveStart = useCallback<OnMove>((event) => {
-    /* null = the app moved the camera; an event = the reader did */
-    if (event) interactedRef.current = true
+
+  /* DROP THE PANEL'S BLUR WHILE THE CAMERA MOVES. backdrop-filter
+     re-samples its backdrop every frame, and during a pan that backdrop
+     is the one thing on screen guaranteed to be changing — so the most
+     expensive surface in the app is repainted continuously at exactly
+     the moment the canvas can least afford it. The sheet already runs
+     at 12-24fps at legible zoom.
+
+     The class goes on .shell-body rather than in React state on
+     purpose: a state write here would re-render the whole shell on
+     every frame of a pan, which is the cost we are trying to avoid.
+     This toggles one class on one element and CSS does the rest. */
+  const bodyRef = useRef<HTMLElement | null>(null)
+  const panning = useCallback((on: boolean): void => {
+    bodyRef.current ??= document.querySelector('.shell-body')
+    bodyRef.current?.classList.toggle('is-panning', on)
   }, [])
 
-  const onMoveEnd = useCallback<OnMove>((_event, viewport) => {
-    setCanvasCamera(viewport)
-  }, [])
+  const onMoveStart = useCallback<OnMove>(
+    (event) => {
+      /* null = the app moved the camera; an event = the reader did */
+      if (event) interactedRef.current = true
+      panning(true)
+    },
+    [panning],
+  )
+
+  const onMoveEnd = useCallback<OnMove>(
+    (_event, viewport) => {
+      setCanvasCamera(viewport)
+      panning(false)
+    },
+    [panning],
+  )
+
+  /* a component that unmounts mid-pan must not leave the sheet
+     permanently un-blurred */
+  useEffect(() => () => panning(false), [panning])
 
   useEffect(
     () => () => {
@@ -509,7 +549,19 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
     if (!el) return
     const viewport = rf.getViewport()
     const rect = el.getBoundingClientRect()
-    const minX = -viewport.x / viewport.zoom
+    /* THE PANEL FLOATS OVER OUR LEFT EDGE, so the container's box is
+       wider than the region a person can actually see. Without this
+       inset a node sitting behind the panel satisfies `x >= minX` and
+       the camera decides it is already on screen — so clicking a table
+       in the list would aim at something the list itself is covering,
+       and the doors-into-view work would be quietly undone for every
+       table on the left of the sheet. The panel's width is declared
+       once, on .shell-body, and read here rather than repeated. */
+    const panelPx = Number.parseFloat(
+      getComputedStyle(el).getPropertyValue('--panel-w'),
+    )
+    const hidden = Number.isFinite(panelPx) ? panelPx : 0
+    const minX = (-viewport.x + hidden) / viewport.zoom
     const minY = -viewport.y / viewport.zoom
     const maxX = minX + rect.width / viewport.zoom
     const maxY = minY + rect.height / viewport.zoom
@@ -560,12 +612,41 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
          framed rather than shoved into the reader's face */
       const cx = (minX + maxX) / 2
       const cy = (minY + maxY) / 2
-      const width = Math.max(maxX - minX, MIN_FRAME_W)
+      let width = Math.max(maxX - minX, MIN_FRAME_W)
       const height = Math.max(maxY - minY, MIN_FRAME_H)
-      void rf.fitBounds(
-        { x: cx - width / 2, y: cy - height / 2, width, height },
-        { padding: 0.06, duration },
-      )
+      let x = cx - width / 2
+      const y = cy - height / 2
+
+      /* THE PANEL FLOATS OVER OUR LEFT EDGE, SO FIT MUST FRAME INTO
+         WHAT IS LEFT. `fitBounds` takes one scalar padding and has no
+         per-side option, so the correction is arithmetic — which is
+         what this whole function already is, and for the same reason:
+         we can vouch for it.
+
+         Framing content of width Wc into the FULL container gives
+         scale containerW/Wc, and the leftmost 260px of that lands
+         under glass. We want scale (containerW − panelW)/Wc instead,
+         so we hand fitBounds a box widened by containerW/(containerW −
+         panelW) and moved left by exactly the strip the panel covers,
+         measured in canvas units at that same scale. The empty strip
+         then sits under the panel and every table lands to the right
+         of it. Measured before this: FIT put 6 of 22 tables behind the
+         panel, the leftmost at x=233 under a 260px surface. */
+      const containerW = wrapRef.current?.getBoundingClientRect().width ?? 0
+      const panelPx = wrapRef.current
+        ? Number.parseFloat(getComputedStyle(wrapRef.current).getPropertyValue('--panel-w'))
+        : 0
+      const hidden = Number.isFinite(panelPx) ? panelPx : 0
+      /* guard the degenerate window — a container narrower than its own
+         panel would divide by zero or flip the sign */
+      if (containerW > hidden + 1) {
+        const visible = containerW - hidden
+        const scaled = width * (containerW / visible)
+        x -= (width * hidden) / visible
+        width = scaled
+      }
+
+      void rf.fitBounds({ x, y, width, height }, { padding: 0.06, duration })
     },
     [rf, tableNodes],
   )
