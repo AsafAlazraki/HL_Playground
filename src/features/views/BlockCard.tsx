@@ -59,7 +59,7 @@ import { AddPanel } from './AddPanel'
 import { RuleOffer } from './RuleOffer'
 import { KindMark } from './marks'
 import { RowPicture, pictureField } from './pictures'
-import { SPRING, SPRING_SOFT, transitionFor, useStillness } from './stillness'
+import { SPRING, SPRING_QUICK, SPRING_SLOW, transitionFor, useStillness } from './stillness'
 import { isRowDrag, isTableDrag, readRowDrag, readTableDrag, setRowDragData } from './dnd'
 
 /** A table dropped in and waiting for an answer. Nothing exists yet. */
@@ -351,7 +351,14 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       aria-label={`${target.name} for ${rowLabel(sourceEntity, sourceRow)}`}
       initial={still ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ ...transitionFor(still, SPRING), delay: still ? 0 : 0.05 * index }}
+      /* THE LARGEST THING THAT MOVES ON THIS PAGE, so it gets the
+         longest response. apple-design §4's move/reposition row is
+         damping 1.0 / response 0.4 and this is that row exactly: a
+         whole block card taking its place. At the 300ms default a
+         surface this size reads as a snap rather than as an arrival.
+         The stagger stays at 50ms, inside emil-design-eng's 30–80ms
+         band, and is dropped entirely when the page must not move. */
+      transition={{ ...transitionFor(still, SPRING_SLOW), delay: still ? 0 : 0.05 * index }}
       onDragOver={(e) => {
         if (!isTableDrag(e)) return
         e.preventDefault()
@@ -394,7 +401,12 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
             initial={still ? false : { opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={transitionFor(still, SPRING_SOFT)}
+            /* The third `height` animation that was on the 424ms
+               over-damped spring. A strip of three buttons growing out
+               of a header is a small surface answering a press, so it
+               takes the default response — and it is now 124ms less of
+               a wait before the handles are usable. */
+            transition={transitionFor(still, SPRING)}
           >
             <button
               type="button"
@@ -526,7 +538,16 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
               initial={still ? false : { opacity: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={transitionFor(still, SPRING)}
+              /* THE MOST-SEEN ANIMATION IN THE FEATURE. Every star,
+                 every remove, every filter keystroke moves these rows,
+                 dozens of times an hour — emil-design-eng's frequency
+                 table says drastically reduce at that rate, and the
+                 quick spring is that reduction. It stays a spring
+                 rather than becoming nothing because these rows carry
+                 `layout`: a row leaving mid-flight must be grabbable
+                 and re-targetable, which is exactly what a keyframe
+                 cannot do (apple-design §3). */
+              transition={transitionFor(still, SPRING_QUICK)}
             >
               {/* the native drag lives on a plain element: `motion` claims
                   onDragStart for its own gesture, and the two must not meet */}

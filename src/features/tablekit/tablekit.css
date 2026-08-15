@@ -34,13 +34,43 @@
   padding: var(--sp-5);
 }
 
+/* THE DIM MATERIAL. apple-design §12: "dim to focus, separate to
+   keep flow" — a modal task pairs the surface with a dimming scrim.
+   The blur is what turns a wash into a material: without it you are
+   looking at the drawing through a tinted window and every line of
+   it still competes for your eye; with it the blueprint is
+   unmistakably still there and unmistakably not the thing you are
+   reading. 44% over the blueprint composites to #102d4a, on which
+   the white dialog above it measures 14.03:1.
+
+   THE 0.44 MOVED OUT OF `opacity` AND INTO THE COLOUR, and that is
+   a BUG FIX, not a refactor. `animation: fade-in ... both` fills
+   forwards, and `fade-in` ends at `opacity: 1` — so the declared
+   0.44 governed this element for exactly 220ms and then the
+   animation's fill overrode it for the rest of its life. Measured
+   in Chromium on the running app: declared 0.44, computed 1 after
+   the animation finished. This scrim has been shipping FULLY
+   OPAQUE, and the comment that used to sit on that line — "little
+   enough that the blueprint is still visibly underneath" —
+   described something nobody has seen. The alpha is safe in the
+   colour, where no fill mode can reach it, and `fade-in` now fades
+   in a 44% scrim instead of overwriting it.
+
+   Its alpha is also why the blur had to come off `opacity`: group
+   opacity is applied to the filtered backdrop too, so a blur under
+   a 0.44 element composites 44% blurred over 56% sharp and reads as
+   a weaker blur bought at full price.
+
+   NO ANIMATED BLUR HERE, unlike .io-pop. This is a full-bleed
+   surface: 220ms of animated blur over 100% of a 1440×900 window is
+   thirteen frames of full-screen re-raster on the app's worst-
+   performing surface, and the existing opacity ramp modulates the
+   constant blur to read the same for the cost of one. */
 .tk-scrim {
   position: absolute;
   inset: 0;
-  background: var(--canvas-bg-deep);
-  /* enough to push the sheet forward, little enough that the blueprint
-     is still visibly underneath — the dialog sits ON the drawing */
-  opacity: 0.44;
+  background: var(--mat-dim-bg);
+  backdrop-filter: var(--mat-dim-blur);
   animation: fade-in var(--t-med) var(--ease-draft) both;
 }
 

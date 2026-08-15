@@ -117,14 +117,17 @@
   color: var(--hairline-strong);
 }
 
-/* the one display moment on the page */
+/* the one display moment on the page — the scale's top step.
+   The tracking is the change: +0.005em at 38px was +0.19px of air
+   per letter, added in the direction a 38px serif least needs it.
+   apple-design §15, "large display text wants negative tracking". */
 .vw-name {
   margin-top: var(--sp-2);
   font-family: var(--font-display);
-  font-size: 38px;
-  font-weight: 400;
-  line-height: 1.05;
-  letter-spacing: 0.005em;
+  font-size: var(--display-xl-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-xl-lead);
+  letter-spacing: var(--display-xl-track);
   color: var(--ink);
 }
 
@@ -1006,9 +1009,16 @@
   padding: calc(var(--sp-6) * 1.5) var(--sp-4);
   text-align: center;
 }
+/* a <p>, so it was inheriting body's 1.45 leading at 24px — the
+   display face set on running-copy leading, which is what makes a
+   two-line empty state read as a paragraph instead of a statement.
+   apple-design §15: leading tracks size inversely. */
 .vw-nothing-line {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: var(--display-m-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-m-lead);
+  letter-spacing: var(--display-m-track);
   color: var(--ink-soft);
 }
 .vw-nothing-sub {

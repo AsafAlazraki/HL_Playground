@@ -20,7 +20,31 @@
   display: block;
 }
 
-/* -- the popover sheet -------------------------------------- */
+/* -- the popover sheet --------------------------------------
+   THE LIGHT MATERIAL. apple-design §12: "lighter materials draw
+   attention to interactive elements." This one is summoned by a
+   press and dismissed by one, its backdrop is the blueprint, and
+   that backdrop is STATIC the whole time it is open — so the blur
+   is rasterised once and never invalidated.
+
+   IT IS LEGAL PRECISELY BECAUSE THE MASTHEAD IS NOT GLASS. Were
+   the masthead a material too, this popover would be glass-on-glass
+   along its top edge and glass-on-navy along the rest — one surface
+   wearing two materials, and the light-on-light half would separate
+   from its ground at 1.07:1. §12's "never stack a light translucent
+   surface on another" is not a style rule here, it is the reason
+   the roster is four surfaces and not six.
+
+   MEASURED on the material over --canvas-bg-deep (#d3d8dd, the
+   worst ground it can land on): --ink 10.45:1, --ink-soft 5.94:1,
+   --blue 4.65:1, --blue-deep darker still. --ink-faint would be
+   3.74:1 and --red 3.60:1, so both are remapped below and land at
+   5.94:1 and 4.65:1; those two carry 10 of this popover's 28
+   colour declarations.
+
+   --ec2, NOT --shadow-popover: this surface stands on the navy,
+   where every --shadow-* token built from --ink is shadow-coloured
+   light on shadow-coloured ground (1.046:1). See base.css. */
 .io-pop {
   position: absolute;
   top: calc(100% + var(--sp-3));
@@ -31,13 +55,52 @@
   /* the title block and CLEAR SHEET stay put on a short screen; only the
      sections between them scroll */
   max-height: calc(100vh - 96px);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline-strong);
+  /* see [data-material] in base.css */
+  --ink-faint: var(--ink-faint-material);
+  --red: var(--red-material);
+  background: var(--mat-light-bg);
+  backdrop-filter: var(--mat-light-blur);
+  border: 1px solid var(--mat-light-edge);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-popover);
+  box-shadow: var(--ec2);
   z-index: 60;
-  animation: sheet-in var(--t-med) var(--ease-draft);
+  /* MATERIALIZE, DON'T JUST FADE — §12's last bullet. The blur
+     radius animates alongside the existing scale-and-lift, so the
+     surface reads as a material ARRIVING rather than as pixels
+     appearing. Two animations rather than one because `sheet-in` is
+     shared by 25 surfaces in base.css and only one of them is
+     glass. backdrop-filter interpolates on the compositor and this
+     is a 348px-wide box, so it is thirteen frames of a 7.98%-of-
+     screen blur — which is why the three full-bleed scrims below
+     do NOT get the same treatment. */
+  animation:
+    sheet-in var(--t-med) var(--ease-draft),
+    material-in var(--t-med) var(--ease-draft);
   outline: none;
+}
+@keyframes material-in {
+  from {
+    backdrop-filter: blur(0px) saturate(100%);
+  }
+}
+
+/* GLASS IS PERMITTED ONLY OVER THE CANVAS. Every stage — view,
+   design, rules, flow, quote — covers the sheet with a --paper
+   surface, and this popover hangs off the masthead so it opens over
+   whichever of those is up. The same material over --paper
+   separates from its ground at 1.07:1: not a weaker surface, no
+   surface. So the material is spent when there is something to see
+   through and paint when there is not.
+   `.shell-sheet-layer[inert]` is the stage state that already
+   exists — Shell.tsx sets `inert` on the sheet the moment a stage
+   covers it — rather than a second flag that can disagree with it. */
+.shell-root:has(.shell-sheet-layer[inert]) .io-pop {
+  background: var(--paper-high);
+  backdrop-filter: none;
+  border-color: var(--hairline-strong);
+  box-shadow: var(--e3);
+  --ink-faint: var(--ink-faint-base);
+  --red: var(--red-base);
 }
 
 .io-body {

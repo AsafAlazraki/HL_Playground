@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { seedWorkbookConstraints } from '@/features/constraints'
+import { StillnessProvider } from '@/features/views/stillness'
 import { Shell } from '@/app/Shell'
 
 export default function App() {
@@ -31,5 +32,18 @@ export default function App() {
   }, [loaded, entities])
 
   if (!loaded) return null
-  return <Shell />
+  /* THE MOTION POLICY WRAPS THE WHOLE APP, not one feature.
+     `StillnessProvider` was mounted at exactly one site — inside
+     `ViewPage` — so "nothing moves while the user is working" was
+     true of one of the five stages and of nothing else: a camera
+     walk on the blueprint, a toast stack reflowing, and a rules list
+     re-sorting all moved happily under a caret. Hoisted here it is
+     one provider, one boolean, and the policy is true of every
+     surface that reads it. `beginTyping` / `endTyping` keep working
+     unchanged — the context is simply found further up. */
+  return (
+    <StillnessProvider>
+      <Shell />
+    </StillnessProvider>
+  )
 }

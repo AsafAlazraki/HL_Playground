@@ -3,6 +3,250 @@
    Every feature styles itself with these + tokens.css.
    ============================================================ */
 
+/* ============================================================
+   THE MATERIAL, ELEVATION AND PRESS SYSTEM
+   apple-design §12 (materials & depth), §14 (reduced motion,
+   reduced transparency, more contrast), §1 (response).
+
+   WHY THESE ARE IN base.css AND NOT tokens.css. They are tokens
+   and tokens.css is where they belong. tokens.css is held by the
+   type pass in this slot, and two agents writing :root in one file
+   is how a token file loses a value silently. base.css is loaded
+   immediately after tokens.css (main.tsx:10-11), so a :root block
+   here wins any tie with the same specificity — which is exactly
+   what the two prefers-* blocks at the foot of this file need.
+   Move them up when the slots merge; nothing consumes them by
+   file, only by name.
+   ============================================================ */
+
+:root {
+  /* ---------------------------------------------------------
+     MATERIALS — three, and only three.
+
+     Glass is permitted ONLY where the immediate backdrop resolves
+     to the navy canvas or a scrim over it. That one sentence
+     enforces apple-design §12's "never stack a light translucent
+     surface on another" without anyone reasoning about z-index:
+     white glass over --paper separates from its ground at 1.07:1
+     and stops being a surface at all, while the same material over
+     --canvas-bg-deep separates at 11.5:1.
+
+     THE ALPHAS ARE SET BY SWING, NOT BY THE CONTRAST FLOOR. Exact
+     alpha floors for 4.5:1 over #0d2740 are --ink 0.479,
+     --ink-soft 0.696, --ink-faint 0.909 — so accessibility alone
+     would have licensed 0.70. It is not the floor that decides.
+     A material over this app's canvas has a MOVING backdrop: a
+     white table card pans under it and the effective ground swings
+     from the navy composite to pure white. At 0.74 --ink-soft
+     swings 3.54 contrast points, which reads as text changing
+     WEIGHT as you pan — worse than being uniformly darker. 0.86
+     halves that swing to 2.05.
+
+     Composited grounds and measured contrast, sRGB src-over,
+     WCAG relative luminance, worst backdrop (#0d2740):
+       α 0.82 → #d3d8dd   ink 10.45   soft 5.94   faint 3.74
+       α 0.86 → #dde1e4   ink 11.39   soft 6.48   faint 4.07
+       α 1.00 → #ffffff   ink 14.99   soft 8.52   faint 5.36
+     The α 1.00 row is the ramp tokens.css was rebuilt around and
+     it reproduces exactly, so the ink ramp is intact and the two
+     rows above it are what the material costs.
+
+     WHITE, NOT TINTED. --paper (#f2f6fb) at the same alpha
+     measures 9.29 / 5.28 — very slightly WORSE than white — and
+     puts a fourth paper value into a palette that has three.
+
+     DARK GLASS IS NOT AVAILABLE IN THIS APP and the reason is
+     numeric, not taste: --ink #12283f and --canvas-bg #123252 are
+     nearly the same value. --ink at α 0.78 over the canvas
+     composites to #122a43, on which white text measures 14.57:1 —
+     perfectly legible — but the SURFACE separates from its ground
+     at 1.11:1. A dark translucent chip on the blueprint is
+     invisible as an object. .tb-toast stays solid.
+     --------------------------------------------------------- */
+
+  /* HEAVY — a surface that persists and holds a lot of text. */
+  --mat-heavy-bg: rgba(255, 255, 255, 0.86);
+  --mat-heavy-blur: blur(30px) saturate(140%);
+  --mat-heavy-edge: rgba(18, 40, 63, 0.14);
+
+  /* LIGHT — a surface summoned by a press and dismissed. */
+  --mat-light-bg: rgba(255, 255, 255, 0.82);
+  --mat-light-blur: blur(18px) saturate(130%);
+  --mat-light-edge: rgba(18, 40, 63, 0.16); /* == --hairline */
+
+  /* DIM — the only dark material, and it never carries text.
+     44% over the blueprint composites to #102d4a, on which the
+     white sheet above it measures 14.03:1. That value was already
+     in the app and already well judged; the blur is the addition,
+     and moving the alpha out of `opacity` is the bug fix — see
+     tablekit.css .tk-scrim. */
+  --mat-dim-alpha: 44%;
+  --mat-dim-bg: color-mix(in srgb, var(--canvas-bg-deep) var(--mat-dim-alpha), transparent);
+  --mat-dim-blur: blur(12px);
+
+  /* SATURATION IS 140% / 130%, NOT apple-design §12's 180%. That
+     figure is tuned for iOS wallpapers, which are polychrome. This
+     backdrop is ONE hue — Prussian navy #123252 — and 180% pushes
+     it far enough toward a visible blue cast in the white chrome
+     to fight the near-monochrome-plus-carmine direction
+     ART_DIRECTION.md is built on. 140% keeps the material alive
+     without tinting the paper.
+
+     BLUR IS 30px AND 18px. §12's example is 20px and the emil
+     skill caps blur at 20px ON CONTENT, which is a different thing
+     from a backdrop. Chromium's separable blur is effectively
+     O(area), not O(radius), so 30 costs no more than 18 and buys
+     the "bigger surfaces read as thicker" cue in the material
+     itself rather than only in the shadow. */
+
+  /* ---------------------------------------------------------
+     VIBRANCY — the ink a material is allowed to carry.
+     apple-design §12: "over blurred/translucent surfaces, don't
+     use flat gray text; use higher-contrast, slightly heavier
+     weight, and a small letter-spacing bump."
+
+     TWO INKS DO NOT SURVIVE A MATERIAL and both are remapped by
+     the [data-material] scope below, so no component has to know:
+
+     --ink-faint needs α ≥ 0.909 over #0d2740 to clear 4.5:1, and
+     0.909 is not glass, it is paint. tokens.css records that this
+     tier carries every count, every breadcrumb, every empty state
+     and the connective words of every rule sentence across 218
+     uses. Introduce glass without this rule and the contrast work
+     that file documents is silently undone on every surface it
+     touches.
+
+     --red is the tier the plan did not measure and it fails too.
+     Carmine #c2402f is text here, not decoration — the unpriced
+     line of a quote and four labels in the I/O popover — and it
+     measures 5.16:1 on the opaque paper it sits on today against
+     this, on the two materials' four composited grounds:
+
+                             LIGHT/#0d2740  LIGHT/canvas  HEAVY/#0d2740  HEAVY/canvas
+       --red as-is                3.60          3.66          3.92          3.97
+       deepened 85% to --ink      4.36          4.44          4.76          4.81
+       deepened 80% to --ink      4.65          4.74          5.07          5.13
+
+     85% clears on the heavy material and still fails on the light
+     one, which is why the number below is 80 and not the 85 the
+     first pass at this comment carried. At 80% the worst reading
+     is 4.65:1 — the same figure --blue measures on the same
+     ground, so the two accents land at identical legibility. This
+     is the operation the palette already performs between --blue
+     and --blue-deep; it adds no hue and it exists only inside a
+     material. */
+  --ink-faint-base: var(--ink-faint);
+  --red-base: var(--red);
+  --ink-faint-material: var(--ink-soft);
+  --red-material: color-mix(in srgb, var(--red-base) 80%, var(--ink));
+
+  /* ---------------------------------------------------------
+     ELEVATION — nine tiers, banded by AREA and by the ground the
+     surface stands on. apple-design §12: "bigger surfaces should
+     read as thicker."
+
+     THE FAILURE THIS PREVENTS. The five --shadow-* tokens in
+     tokens.css are all built from rgba(18,40,63,·), which is
+     --ink, which is the navy — so on the blueprint they are
+     shadow-coloured light on shadow-coloured ground. Contrast of
+     each token's darkest outer point against its actual ground
+     (1.000 = invisible; ~1.10 is the floor for a soft edge):
+
+                                on --paper  on --canvas-bg  on #0d2740
+       --shadow-sheet              1.482        1.029          1.003
+       --shadow-sheet-raised       1.847        1.043          1.004
+       --shadow-popover            1.935        1.046          1.004
+       --shadow-card-canvas        4.270        1.299          1.176
+       --shadow-card-canvas-raised 6.161        1.366          1.218
+
+     Five shipping surfaces float on the navy wearing one of the
+     top three: .wb-tools, .react-flow__controls, .qt-sheet/.qt-doc
+     (the customer's quote, pinned to the blueprint at 1.043:1),
+     .qt-foot and .rl-strip. The table cards on that same navy
+     correctly use the canvas pair at 1.299.
+
+     The second failure is that size does not read: --shadow-sheet
+     spans a 122× area range and --shadow-popover a 78× one.
+
+     THE --e* / --ec* SWEEP OVER ALL 45 --shadow-* SITES IS S2's,
+     NOT THIS PASS'S. Defined here because the materials consume
+     --ec2 and --ec3 and a material with no lift is a smudge. The
+     legacy five are left alone so the two diffs do not collide.
+     No box-shadow LITERAL may be added by this pass: of 99
+     box-shadow declarations in src/, 45 are token uses and the
+     rest are focus rings and inset selection bars. That
+     discipline is what makes a nine-tier ramp a rename.
+     --------------------------------------------------------- */
+
+  /* CHROME — surfaces standing on --paper / --paper-high.
+     Measured outer-layer visibility on --paper:
+     1.119 · 1.209 · 1.363 · 1.547 · 1.765 */
+  --e1: 0 1px 1px rgba(18, 40, 63, 0.04), 0 2px 6px -2px rgba(18, 40, 63, 0.06); /* ≤ 6k px² */
+  --e2: 0 1px 2px rgba(18, 40, 63, 0.05), 0 6px 14px -4px rgba(18, 40, 63, 0.1); /* ≤ 40k */
+  --e3: 0 1px 3px rgba(18, 40, 63, 0.06), 0 12px 26px -8px rgba(18, 40, 63, 0.16); /* ≤ 150k */
+  --e4: 0 2px 5px rgba(18, 40, 63, 0.07), 0 22px 46px -12px rgba(18, 40, 63, 0.22); /* ≤ 400k */
+  --e5: 0 2px 6px rgba(18, 40, 63, 0.08), 0 36px 72px -18px rgba(18, 40, 63, 0.28); /* > 400k */
+
+  /* CANVAS — surfaces on the navy, where there is almost no
+     headroom below. Measured on #123252: 1.192 · 1.299 · 1.366 ·
+     1.384; on #0d2740: 1.115 · 1.176 · 1.218 · 1.224. The ramp
+     compresses at the top because the navy has ~7% of white's
+     luminance beneath it, so the `0 Npx 0` contact line does the
+     near-field work. --ec2 and --ec3 are today's
+     --shadow-card-canvas pair to the digit: a rename, not a
+     recolour. */
+  --ec1: 0 1px 0 rgba(6, 16, 28, 0.3), 0 6px 14px -6px rgba(4, 12, 22, 0.35);
+  --ec2: 0 1px 0 rgba(6, 16, 28, 0.35), 0 10px 24px -8px rgba(4, 12, 22, 0.55);
+  --ec3: 0 2px 0 rgba(6, 16, 28, 0.4), 0 18px 40px -10px rgba(3, 10, 20, 0.65);
+  --ec4: 0 2px 0 rgba(6, 16, 28, 0.44), 0 30px 60px -14px rgba(3, 10, 20, 0.72);
+
+  /* ---------------------------------------------------------
+     THE PRESS. apple-design §1: "Respond on pointer-down, not on
+     release." emil: button press feedback 100-160ms, scale
+     0.95-0.98.
+
+     0.97 is the scale because scale() SCALES CHILDREN — the icon
+     and the label depress together and the control reads as
+     pressed rather than nudged, which is what the app's existing
+     translateY(1px) idiom cannot do.
+
+     --ease-press is --ease-draft on purpose. This app runs ONE
+     easing curve across 151 transition declarations, and not one
+     of them is the everything-shorthand. That restraint is an
+     asset and this pass does not spend it on a second curve.
+     --------------------------------------------------------- */
+  --press-scale: 0.97;
+  --press-wash: rgba(18, 40, 63, 0.07);
+  --press-wash-invert: rgba(255, 255, 255, 0.1);
+  --t-press: 110ms;
+  --ease-press: var(--ease-draft);
+  --press-fx: transform var(--t-press) var(--ease-press);
+}
+
+/* THE MATERIAL SCOPE — one rule, and it is the best idea in the
+   pass. Custom properties inherit, so every `color: var(--ink-faint)`
+   and every `color: var(--red)` INSIDE a material resolves to the
+   vibrancy value above without a single component knowing it is on
+   glass. The base values keep their own names, so the opaque chrome
+   is untouched and the two prefers-* blocks at the foot of this file
+   can hand them straight back.
+
+   Each of the roster surfaces repeats these two lines in its own
+   stylesheet. It should not have to: the attribute belongs in the
+   markup and this selector should be the only place the remap is
+   written. Adding `data-material` to .io-pop, .qt-foot and
+   .shell-panel is three .tsx edits in files this slot does not own,
+   so the selector is here and ready, and the surfaces opt in by
+   value until it lands. */
+[data-material] {
+  --ink-faint: var(--ink-faint-material);
+  --red: var(--red-material);
+}
+[data-material] .mono-label {
+  font-weight: 600;
+  letter-spacing: var(--micro-track-glass);
+}
+
 *,
 *::before,
 *::after {
@@ -15,11 +259,20 @@ body,
   height: 100%;
 }
 
+/* BODY IS A STEP OF THE SCALE, not a starting point that everything
+   else escapes from. 14px / 1.45 are the numbers that were already
+   here; the tracking is the addition, and it is deliberately tiny —
+   apple-design §15 says to "leave body near 0", and 0.003em at 14px
+   is 0.042px per letter. It exists so that the one place every
+   untracked string in the app inherits from is a stated value rather
+   than the browser's default, which is what let 26 tracking values
+   accumulate downstream with nothing to be measured against. */
 body {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: var(--ui-m-size);
+  line-height: var(--ui-m-lead);
+  letter-spacing: var(--ui-m-track);
   color: var(--ink);
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
@@ -70,22 +323,38 @@ textarea {
 
 /* -- shared primitives -------------------------------------- */
 
-/* Engineering micro-label: 10px mono, uppercase, letterspaced */
+/* Engineering micro-label: 10px mono, uppercase, letterspaced.
+   THIS IS THE ANCHOR OF THE MICRO BAND — --micro-* was cut around
+   the values that were already here, so all 144 uses render exactly
+   as before and the ~150 other mono-uppercase roles now have one
+   ramp to be measured against instead of 13 opinions at 9px.
+
+   The leading is the one real change: at 10px this was inheriting
+   body's 1.45, a value tuned for 14px running copy. apple-design
+   §15 — "leading tracks size inversely" — and a micro-label is the
+   smallest thing on screen, so it gets the tightest step (1.40,
+   a 0.5px shorter line box). A label that takes body's leading is
+   the same defect as a label that takes body's tracking. */
 .mono-label {
   font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
+  font-size: var(--micro-size);
+  font-weight: var(--micro-weight);
+  letter-spacing: var(--micro-track);
+  line-height: var(--micro-lead);
   text-transform: uppercase;
   color: var(--ink-soft);
 }
 
-/* Title-block heading: semi-expanded Archivo, uppercase */
+/* Title-block heading: semi-expanded Archivo, uppercase.
+   No font-size: this primitive takes the size of wherever it is
+   stamped, so only the two values that ARE its identity are set.
+   NOTE the 'wdth' axis is inert today — see --stamp-* in tokens.css
+   for why, and why --stamp-track must come down when it is fixed. */
 .block-heading {
   font-family: var(--font-ui);
   font-variation-settings: 'wdth' 118;
-  font-weight: 640;
-  letter-spacing: 0.06em;
+  font-weight: var(--stamp-weight);
+  letter-spacing: var(--stamp-track);
   text-transform: uppercase;
 }
 
@@ -94,6 +363,112 @@ textarea {
 }
 .hairline-r {
   border-right: 1px solid var(--hairline);
+}
+
+/* ============================================================
+   THE PRESS — one rule, every pressable thing in the app.
+
+   THE FAILURE THIS PREVENTS, counted over src/ before this rule:
+   234 <button> elements, 117 `cursor: pointer` rules, 215 :hover
+   rules, 108 :focus-visible rules — and SIX rules that draw
+   anything on pointer-down. Three more actively REMOVE feedback
+   (`transform: none` cancelling a hover lift) and one presses the
+   element UPWARD, above its own rest position. Pressing a physical
+   thing moves it IN. So the response problem in this app was never
+   that feedback is late — a full inventory of the input path found
+   no debounce, no artificial timer and no transition wait anywhere
+   between a pointer-down and a state change. It is that in ~99.5%
+   of cases there was nothing to be late. (apple-design §1.)
+
+   KEYED ON WHAT THE ELEMENT ALREADY IS, not on a utility class. A
+   utility class is twenty files of drift waiting to happen. More
+   usefully, `button:not(:disabled):not([aria-disabled='true']):active`
+   computes to (0,3,1), which beats every :hover transform rule in
+   the app at (0,2,0) AND every one of the four contradicting
+   :active rules — .tk-kind-card (0,2,0), .io-card (0,2,0),
+   .rl-chipbtn (0,2,0), .ob-kind (0,3,0). Specificity is the
+   enforcement mechanism, so the four dead rules cannot fight this
+   one while they wait for the S2 sweep to delete them.
+
+   TWO CHANNELS, because one does not survive the size range. A
+   scale of 0.97 on a 132px button moves its edge 2px and reads
+   clearly; on the 17px .tb-check — 288 of them, the densest
+   control on the sheet — it moves 0.25px and reads as nothing.
+   The wash covers the small end, the scale covers the large end,
+   and every target gets one of them unmistakably.
+
+   THE WASH IS A background-image AND NOT AN INSET box-shadow, and
+   that is a deliberate departure. An inset box-shadow is the whole
+   box-shadow property, and ~20 selectors in this app carry STATE
+   in box-shadow — .shell-tbl.is-selected, .cn-card.is-open,
+   .tk-opt.is-on, .shell-tab.is-active, .tb-lightbox-dot-on and
+   the rest are inset selection bars and on-indicators. A wash
+   built from box-shadow blanks every one of them for as long as
+   the pointer is down, which on the left panel's table rows means
+   the selection bar vanishes at the exact moment you select. Only
+   3 selectors in src/ use background-image, none of them
+   structural. Same two channels, one fifth of the collisions.
+
+   THE TRANSITION IS SPLIT ACROSS TWO SPECIFICITIES ON PURPOSE.
+   The base sits in :where() at specificity 0 so it can never
+   clobber a component's own transition list — 148 of the 151
+   transition declarations in src/ do not mention `transform`, and
+   a (0,2,1) shorthand here would silently delete their hover
+   colour transitions. The :active copy at (0,3,1) always wins, so
+   the press ALWAYS eases in at 110ms; the release eases only where
+   the component's own list already carries transform, and snaps
+   otherwise. The convention that fixes the rest is that every
+   component transition list leads with `var(--press-fx),` — .btn
+   below is the worked example; the other ~100 belong to S2.
+   ============================================================ */
+
+:where(button:not(:disabled), [role='button'], summary) {
+  transition:
+    var(--press-fx),
+    background-color var(--t-press) var(--ease-press);
+}
+
+button:not(:disabled):not([aria-disabled='true']):active,
+[role='button']:not([aria-disabled='true']):active,
+summary:active {
+  transition:
+    var(--press-fx),
+    background-color var(--t-press) var(--ease-press);
+  transform: scale(var(--press-scale));
+  background-image: linear-gradient(var(--press-wash), var(--press-wash));
+}
+
+/* a dark ground needs a light wash. (0,4,1) so it beats the rule
+   above outright rather than on source order. Only the primary
+   button is reachable from this file; the ~15 other dark-ground
+   buttons live in stylesheets this slot does not own and keep the
+   scale channel only — every one of them is 100px or wider, which
+   is the end of the range the scale was chosen for. */
+button.btn-primary:not(:disabled):not([aria-disabled='true']):active {
+  background-image: linear-gradient(var(--press-wash-invert), var(--press-wash-invert));
+}
+
+/* THE FIVE GRAB SURFACES. A scale fights a grab — the thing you
+   picked up should not shrink under your finger — so a drag source
+   gets the wash and the cursor and no movement. Keyed on the
+   `draggable` attribute the element already carries rather than on
+   a data-press hook, so no markup has to change: .rl-pcard and
+   .rl-chipbtn are `<button draggable>` and are covered. .tb-lod is
+   dragged by React Flow rather than by the attribute and is the one
+   grab surface this selector cannot see; it needs data-press="grab"
+   in the S2 sweep. (0,4,1) so it outranks the press. */
+button[draggable='true']:not(:disabled):not([aria-disabled='true']):active {
+  transform: none;
+  cursor: grabbing;
+}
+
+/* THE DELIBERATE OPT-OUT. It must be SPELLED, so that "nothing
+   happens when you press this" is a decision somebody made and not
+   a decision nobody made. (0,4,0), which beats the press at (0,3,1)
+   on the class-count column. */
+[data-press='none']:not(:disabled):not([aria-disabled='true']):active {
+  transform: none;
+  background-image: none;
 }
 
 /* -- buttons ------------------------------------------------ */
@@ -105,26 +480,42 @@ textarea {
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius);
   background: var(--paper-high);
+  /* 11px mono uppercase is the TOP of the micro band, not a size of
+     its own: 0.12em rather than the 0.1em it carried, which is
+     +0.22px per letter — about 1.3px on a six-letter label, absorbed
+     by an auto-width inline-flex control. The button is the most
+     repeated stamp in the app; if it is off the ramp, the ramp is
+     decorative. */
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  font-size: var(--micro-l-size);
+  font-weight: var(--micro-weight);
+  letter-spacing: var(--micro-l-track);
   text-transform: uppercase;
   color: var(--ink);
   cursor: pointer;
+  /* LEADS WITH var(--press-fx) — the convention every component
+     transition list in the app should follow. A `transition:`
+     shorthand replaces the whole list, so a component that
+     redeclares it silently drops the press's transform transition
+     and the button snaps back on release instead of easing. This
+     is the worked example; the other ~100 lists belong to S2. */
   transition:
+    var(--press-fx),
     background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    border-color var(--t-fast) var(--ease-draft);
   user-select: none;
 }
 .btn:hover {
   background: var(--blue-wash);
   border-color: var(--blue);
 }
-.btn:active {
-  transform: translateY(1px);
-}
+/* `.btn:active { transform: translateY(1px) }` was here and is gone.
+   It was the ONE press rule in the app that served the shared
+   foundation, and it is now superseded rather than deleted: the
+   rule above presses every button in the app, this one pressed one
+   class. A nudge down the y axis also leaves the label and the icon
+   at full size, which is the difference between a button that moved
+   and a button that was pressed. */
 .btn.btn-primary {
   background: var(--ink);
   border-color: var(--ink);
@@ -159,7 +550,13 @@ textarea {
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
   background: var(--paper-high);
-  font-size: 13px;
+  /* size and tracking from the scale; LEADING DELIBERATELY OMITTED.
+     On a single-line control `line-height` sets the control's height,
+     not the copy's readability — --ui-lead's 1.55 would add ~4.5px
+     to every input in the app for no legibility gain. Leading is a
+     running-copy decision and this is not running copy. */
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
   transition: border-color var(--t-fast) var(--ease-draft);
 }
 .field-input:hover {
@@ -174,7 +571,20 @@ textarea {
   color: var(--ink-faint);
 }
 
-/* -- field-type tag (TXT / NUM / REF / FX …) ---------------- */
+/* -- field-type tag (TXT / NUM / REF / FX …) ----------------
+   A DECLARED EXCEPTION TO THE MICRO BAND, kept rather than absorbed.
+   At 9px the band asks for 0.17em; this chip carries 0.08em and
+   stays there. The reason is that it is a BORDERED chip on a 30px
+   minimum measure, not a free-standing label: 0.17em at 9px adds
+   ~1.53px per letter, so a three-letter tag grows ~2.4px and breaks
+   out of the 20px content box the min-width was cut for — and there
+   are hundreds of these in a data grid, so the chip would set the
+   column width. Tracking that pushes its own container is not
+   legibility, it is a layout bug. The weight is 600 for the same
+   reason the tracking is tight: inside a box, a stamp gets its
+   separation from the border, not from air.
+   The 0.08em and the 600 are therefore literals ON PURPOSE, and
+   this comment is what makes them a decision rather than drift. */
 .type-tag {
   display: inline-flex;
   align-items: center;
@@ -216,5 +626,64 @@ textarea {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   THE TWO SETTINGS GLASS MAKES NON-OPTIONAL
+   apple-design §14: "prefers-reduced-transparency: reduce — make
+   translucent surfaces frostier/solid: raise background opacity,
+   drop the blur. prefers-contrast: more — near-solid backgrounds
+   with a defined, contrasting border."
+
+   BOTH ARE TOKEN-ONLY OVERRIDES. Not one per-component rule: every
+   material in the app obeys them because every material reads its
+   background, its blur and its edge from these names. They ship in
+   the same commit as the first backdrop-filter, not after it — a
+   translucency setting that lands a release later is a setting that
+   was never honoured.
+
+   The third signal, prefers-reduced-motion, already has seven
+   blocks in this codebase and is genuinely honoured app-wide. It is
+   extended by the motion pass, not touched here.
+   ============================================================ */
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    /* --paper-high, so the ink ramp goes back to the exact ground
+       tokens.css measured it against: 14.99 / 8.52 / 5.36. */
+    --mat-heavy-bg: var(--paper-high);
+    --mat-light-bg: var(--paper-high);
+    --mat-heavy-blur: none;
+    --mat-light-blur: none;
+    --mat-dim-blur: none;
+    /* the scrim stops being a window and becomes a wall */
+    --mat-dim-alpha: 82%;
+    /* THE SURFACES ARE OPAQUE AGAIN, SO THE INK COMES BACK. Without
+       these two lines the setting would leave the vibrancy remap in
+       force and the app would run its tertiary tier one step dark
+       for no reason at all — a translucency preference silently
+       editing the type colour of a solid panel. */
+    --ink-faint-material: var(--ink-faint-base);
+    --red-material: var(--red-base);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --mat-heavy-bg: var(--paper-high);
+    --mat-light-bg: var(--paper-high);
+    --mat-heavy-blur: none;
+    --mat-light-blur: none;
+    --mat-dim-blur: none;
+    /* §14's "defined, contrasting border": --ink measures 14.99:1
+       against the now-solid surface, where the material edge it
+       replaces measured 1.1. */
+    --mat-heavy-edge: var(--ink);
+    --mat-light-edge: var(--ink);
+    --hairline: rgba(18, 40, 63, 0.42);
+    --hairline-strong: rgba(18, 40, 63, 0.72);
+    --ink-faint-material: var(--ink-faint-base);
+    --red-material: var(--red-base);
   }
 }

@@ -40,7 +40,7 @@ import { BlockCard, type PendingDrop } from './BlockCard'
 import { RuleOffer } from './RuleOffer'
 import { KindMark } from './marks'
 import { SubjectPicture } from './pictures'
-import { SPRING, SPRING_SOFT, StillnessProvider, transitionFor, useStillness } from './stillness'
+import { SPRING, transitionFor, useStillness } from './stillness'
 import { isTableDrag, readTableDrag } from './dnd'
 import './views.css'
 
@@ -54,12 +54,11 @@ export interface ViewPageProps {
 const uncapitalise = (s: string): string =>
   s.length > 1 && s[1] === s[1].toLowerCase() ? s[0].toLowerCase() + s.slice(1) : s
 
+/* The stillness provider used to live here. It is now mounted once at
+   the app root (`src/App.tsx`) — the policy belongs to the person, not
+   to this page — so this component is the body and nothing else. */
 export function ViewPage(props: ViewPageProps): ReactElement {
-  return (
-    <StillnessProvider>
-      <ViewPageBody {...props} />
-    </StillnessProvider>
-  )
+  return <ViewPageBody {...props} />
 }
 
 /* ---------------------------------------------------------- */
@@ -275,7 +274,13 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
               initial={still ? false : { opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={transitionFor(still, SPRING_SOFT)}
+              /* A DRAWER OPENED BY A BUTTON, so ζ 1.0 and not
+                 apple-design §4's 0.8 drawer bounce — bounce is for a
+                 drag release, and SET UP is a press. It was on the
+                 424ms over-damped spring, which is the slowest thing
+                 in the file bolted to a `height` animation, the most
+                 expensive property it touches. */
+              transition={transitionFor(still, SPRING)}
             >
               <label className="vw-levels-lab">
                 <span className="mono-label">Changes apply to</span>
@@ -310,6 +315,9 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
               initial={still ? false : { opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
+              /* A notification with no momentum behind it — nothing
+                 threw this line onto the page, so it settles rather
+                 than overshoots (apple-design §4). Default response. */
               transition={transitionFor(still, SPRING)}
             >
               <Warning size={14} weight="light" aria-hidden="true" />
@@ -378,7 +386,11 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
               initial={still ? false : { opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={transitionFor(still, SPRING_SOFT)}
+              /* Same drawer, same press, same reason as the levels
+                 strip above — and this one hangs off the most-pressed
+                 control on the page, so 424ms was the wait between
+                 SET UP and anything appearing. */
+              transition={transitionFor(still, SPRING)}
             >
               {picking ? (
                 <section

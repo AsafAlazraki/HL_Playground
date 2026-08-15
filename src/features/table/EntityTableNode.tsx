@@ -110,6 +110,7 @@ import {
 import type { TableNodeSize } from './tableCanvasState'
 import { clearFitWidths, releaseFitColumn, useFitWidths } from './tableFitState'
 import { plural } from './helpers'
+import { CAM_MS, cameraMs, useStillness } from '@/features/views/stillness'
 import './table.css'
 import './table-node.css'
 
@@ -125,9 +126,12 @@ const EXPAND_INSET = 28
 
 /** Framing an expanded card: enough padding that the navy still shows
  *  on all four sides — an object ON a sheet, never a screen — and a
- *  short move. Spent exactly once, on the press itself. */
+ *  short move. Spent exactly once, on the press itself.
+ *
+ *  The duration is `CAM_MS`, shared with every other walk-to-an-object
+ *  in the app. It used to be a local 320 that happened to agree with
+ *  the other local 320 twelve lines down, and with nothing else. */
 const EXPAND_FRAME_PAD = 0.06
-const EXPAND_FRAME_MS = 320
 
 /* ---------------------------------------------------------- */
 /* opening a plate                                            */
@@ -138,9 +142,6 @@ const EXPAND_FRAME_MS = 320
  *  reads as leaving the blueprint rather than as walking up to one
  *  card on it. */
 const OPEN_PLATE_PAD = 56
-/** Long enough to be a move the eye can follow, short enough to be
- *  the answer to a press. Same beat as framing an expansion. */
-const OPEN_PLATE_MS = 320
 /** A press must never land back inside the plate band — a card that
  *  is still a plate afterwards has answered nothing. Clear of
  *  `PLATE_ZOOM_OUT`, never past the size the register is drawn at. */
@@ -331,6 +332,15 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
   const rf = useReactFlow()
   const flowStore = useStoreApi()
 
+  /* THE TWO CAMERA WALKS BELOW ASK BEFORE THEY MOVE. Both translated
+     the entire blueprint under the reader at full length no matter
+     what their operating system had been told — the full-viewport
+     vestibular case apple-design §14 names outright. At `duration: 0`
+     React Flow jumps straight to the framing, which is the static
+     transition §14 asks for: the reader still arrives, they are just
+     not carried there. */
+  const { still } = useStillness()
+
   const onExpand = useCallback(() => {
     const node = rf.getNode(entityId)
     const prev: TableNodeSize = {
@@ -353,9 +363,9 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
     const y = node?.position.y ?? 0
     void rf.fitBounds(
       { x, y, width: next.w, height: next.h },
-      { padding: EXPAND_FRAME_PAD, duration: EXPAND_FRAME_MS },
+      { padding: EXPAND_FRAME_PAD, duration: cameraMs(still, CAM_MS) },
     )
-  }, [entityId, rf, flowStore])
+  }, [entityId, rf, flowStore, still])
 
   /* ============================================================
      OPENING A PLATE — the press that gets a reader from a sheet of
@@ -390,9 +400,9 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
     void rf.setCenter(
       (node?.position.x ?? 0) + w / 2,
       (node?.position.y ?? 0) + h / 2,
-      { zoom, duration: OPEN_PLATE_MS },
+      { zoom, duration: cameraMs(still, CAM_MS) },
     )
-  }, [entityId, rf, flowStore])
+  }, [entityId, rf, flowStore, still])
 
   const onCollapse = useCallback(() => {
     /* a fit was worked out for the expanded window; at a fifth of the

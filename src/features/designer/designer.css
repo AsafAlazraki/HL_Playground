@@ -1361,13 +1361,21 @@
   place-items: center;
   padding: var(--sp-5);
 }
+/* THE DIM MATERIAL — the same surface as .tk-scrim, and the same
+   fix. See tablekit.css for the full reasoning: `animation: fade-in
+   ... both` fills forwards to `opacity: 1`, so this scrim's declared
+   0.44 was overridden for the whole of its life and the comment
+   promising that "the drawing stays visible underneath" described
+   something that has never been on screen. Measured on the running
+   app: declared 0.44, computed 1 once the animation finished.
+   The alpha now lives in the colour where a fill mode cannot reach
+   it, which is also what lets the backdrop blur run at full strength
+   instead of being halved by group opacity. (apple-design §12.) */
 .ds-cs-scrim {
   position: absolute;
   inset: 0;
-  background: var(--canvas-bg-deep);
-  /* the drawing stays visible underneath: this is a question about
-     the sheet, not a departure from it */
-  opacity: 0.44;
+  background: var(--mat-dim-bg);
+  backdrop-filter: var(--mat-dim-blur);
   animation: fade-in var(--t-med) var(--ease-draft) both;
 }
 .ds-cs-sheet {
@@ -1394,12 +1402,14 @@
 .ds-cs-eyebrow {
   color: var(--red);
 }
-/* Instrument Serif is only ever allowed at 22px and up */
+/* Instrument Serif is only ever allowed at 22px and up — the bottom
+   step of the display scale is that floor, stated once. */
 .ds-cs-question {
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 1.2;
+  font-size: var(--display-s-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-s-lead);
+  letter-spacing: var(--display-s-track);
   color: var(--ink);
 }
 

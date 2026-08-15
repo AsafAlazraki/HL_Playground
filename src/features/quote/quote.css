@@ -172,12 +172,18 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
 }
+/* the draft's subject name and the finished document's (`.qt-doc-name`
+   below) were 24px and 28px — the same line, in the same voice, four
+   pixels apart depending on whether you were editing it or reading
+   it. Both land on the 26px step, so the draft now shows the size
+   the customer will be handed. */
 .qt-edit-name {
   margin-top: 2px;
   font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 1.1;
+  font-size: var(--display-m-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-m-lead);
+  letter-spacing: var(--display-m-track);
 }
 
 .qt-field {
@@ -457,7 +463,38 @@
   margin-top: var(--sp-3);
 }
 
-/* -- the foot bar: fixed to the stage, never to the sheet ---- */
+/* -- the foot bar: fixed to the stage, never to the sheet ----
+   THE HEAVY MATERIAL, and the only surface in the app that needed
+   no change at all except its background. apple-design §12:
+   "build nav/toolbars/sheets as translucent layers with content
+   scrolling underneath — not opaque bars that consume a fixed
+   strip." This bar was already `position: sticky; bottom: 0` inside
+   a scrolling .qt-root, with the A4 sheet passing under it. It was
+   an opaque bar consuming a fixed strip of a document.
+
+   IT TAKES THE HEAVY WEIGHT FOR A CONTRAST REASON, NOT A SIZE ONE.
+   At 880 × 56 it is the smallest of the three glass surfaces, but
+   its backdrop ALTERNATES between the white document and the navy
+   field as you scroll, so it has the worst swing in the app: at
+   α 0.74 --ink-soft would measure 4.98:1 over the navy and 8.52:1
+   a scroll-frame later over the sheet, and text that changes
+   weight as you scroll is worse than text that is uniformly
+   darker. 0.86 cuts that swing from 3.54 contrast points to 2.05.
+
+   MEASURED ON ITS OWN WORST GROUND — the material over --canvas-bg,
+   composited rgb(222,226,231): --ink 11.52:1, --ink-soft 6.55:1;
+   --ink-faint would be 4.12:1 and --red 3.97:1, so both are
+   remapped below and land at 6.55:1 and 5.13:1. Nothing on this bar
+   is left under 4.5:1, and the ink ramp on opaque chrome is
+   untouched at 14.99 / 8.52 / 5.36.
+
+   --ec2 AND NOT --shadow-popover. This bar stands on the navy, and
+   --shadow-popover's darkest outer point measures 1.046:1 against
+   --canvas-bg — it is shadow-coloured light on shadow-coloured
+   ground, i.e. no shadow at all. --ec2 measures 1.299 on the same
+   field. At ~49k px² it takes the canvas ramp's second tier rather
+   than the material's default --ec3: bigger surfaces read as
+   thicker, and this one is not big. */
 
 .qt-foot {
   position: sticky;
@@ -470,10 +507,15 @@
   max-width: 880px;
   margin: var(--sp-4) auto 0;
   padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--canvas-hairline);
+  /* see [data-material] in base.css — the attribute belongs in the
+     markup and these two lines are the same remap by value */
+  --ink-faint: var(--ink-faint-material);
+  --red: var(--red-material);
+  border: 1px solid var(--mat-heavy-edge);
   border-radius: var(--radius);
-  background: var(--paper-high);
-  box-shadow: var(--shadow-popover);
+  background: var(--mat-heavy-bg);
+  backdrop-filter: var(--mat-heavy-blur);
+  box-shadow: var(--ec2);
 }
 .qt-foot-sum {
   display: flex;
@@ -571,11 +613,16 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
 }
+/* the <h1> of the document a customer is handed. 1.05 leading was
+   the 38px step's number used at 28px, which sets a wrapped name
+   almost solid; 1.12 is what 26px asks for (apple-design §15,
+   leading tracks size inversely). */
 .qt-doc-name {
   font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 400;
-  line-height: 1.05;
+  font-size: var(--display-m-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-m-lead);
+  letter-spacing: var(--display-m-track);
 }
 .qt-doc-specs {
   display: flex;

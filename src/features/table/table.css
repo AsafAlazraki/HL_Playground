@@ -1807,6 +1807,12 @@
 
 /* -- one picture, full size ---------------------------------- */
 
+/* THE DIM MATERIAL, fourth of four, and the deepest of them. 82%
+   rather than 44% because this one is not asking a question about
+   the sheet — it is showing one photograph, and everything else on
+   screen is competition. The blur is the addition; the alpha was
+   already in the colour and already well judged. (apple-design §12,
+   "dim to focus".) */
 .tb-lightbox {
   position: fixed;
   inset: 0;
@@ -1816,6 +1822,16 @@
   justify-content: center;
   padding: var(--sp-6);
   background: color-mix(in srgb, var(--canvas-bg-deep) 82%, transparent);
+  backdrop-filter: var(--mat-dim-blur);
+}
+/* §14: "make translucent surfaces frostier/solid." At 82% this one
+   is nearly there already; the setting takes it the rest of the way,
+   because the whole point of the surface is that one image is the
+   only thing you are looking at. */
+@media (prefers-reduced-transparency: reduce) {
+  .tb-lightbox {
+    background: var(--canvas-bg-deep);
+  }
 }
 
 .tb-lightbox-plate {
@@ -2660,6 +2676,20 @@ body.tb-resizing {
    CONFIRM + TOASTS
    ============================================================ */
 
+/* THE DIM MATERIAL, third of four. apple-design §12: "dim to focus."
+   ONLY THE BLUR IS ADDED — the 26% ink wash stays exactly as it is.
+   This scrim is the odd one out of the four: it dims a table stage
+   standing on --paper, not the blueprint, so it is built from --ink
+   rather than --canvas-bg-deep and it is correct at 26% where the
+   two canvas scrims want 44%. Its alpha is already in the colour,
+   so it never had the fill-mode defect the other two had.
+
+   NO prefers-reduced-transparency OVERRIDE, and that is a decision.
+   A 26% wash with no blur is a wash, not a material — which is
+   precisely what this rule renders once --mat-dim-blur resolves to
+   `none` under that setting, i.e. exactly what shipped before this
+   pass. The dialog it dims for is opaque and carries every word.
+   There is nothing here for the setting to make legible. */
 .tb-scrim {
   position: absolute;
   inset: 0;
@@ -2669,6 +2699,7 @@ body.tb-resizing {
   justify-content: center;
   padding: var(--sp-4);
   background: color-mix(in srgb, var(--ink) 26%, transparent);
+  backdrop-filter: var(--mat-dim-blur);
   animation: fade-in var(--t-fast) var(--ease-draft);
 }
 .tb-confirm {

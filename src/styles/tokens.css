@@ -124,6 +124,195 @@
   --font-ui: 'Archivo Variable', 'Archivo', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
+  /* ============================================================
+     THE TYPE SCALE — every step is a SET, never a size.
+
+     apple-design §15: "Tracking is size-specific — never one value
+     for all sizes... Build hierarchy from weight + size + leading as
+     a set, not size alone." Leading tracks size inversely: tight on
+     large headings, looser on body.
+
+     THE FAILURE THIS PREVENTS, measured over src/ before this file
+     changed:
+       letter-spacing   26 distinct values, 243 declarations,
+                        EVERY NON-ZERO ONE POSITIVE
+       at 9px alone     13 different tracking values across 67 rules,
+                        spanning 0.04em to 0.30em — a spread of
+                        0.26em WITHIN ONE SIZE, wider than the whole
+                        8px→11px band should ever be
+       at 13px alone    9 different line-heights
+       display face     8 sizes across 12 sites, and +0.005em of
+                        tracking at 38px — which is +0.19px per
+                        letter, i.e. not "tracked loose" but
+                        effectively untracked with a sub-pixel nudge
+                        in the WRONG direction
+
+     A ramp that is 26 values deep is not a hierarchy, it is 26
+     separate decisions nobody can reproduce. These tokens are the
+     hierarchy: pick a step, take all three numbers.
+
+     WHAT THIS BLOCK DOES NOT DO. It moves no UI or data font-size.
+     There are 169 fixed height/min-height/max-height px declarations
+     across the 17 stylesheets waiting to catch a size change, so the
+     31→21 screen-size collapse is its own pass with its own
+     acceptance test. Tracking and leading do not move box heights;
+     sizes do. Only the DISPLAY face's twelve sites move here, and
+     the display face is set in flowing lines, not in fixed boxes.
+     ============================================================ */
+
+  /* -- DISPLAY · Instrument Serif · 400 ONLY -----------------
+     THE 400 CUT IS THE ONLY ONE LOADED (`main.tsx:4-5`). Never set
+     a weight above 400 on this face: with no 700 file to reach for,
+     Chrome SYNTHESISES bold by smearing the 400 outline and the
+     serif brackets blob. `.cn-wb-title` is an <h3> that never reset
+     `font-weight`, so the UA's bold applied and that is exactly what
+     was shipping — one real defect, as opposed to a calibration.
+     `--display-weight` exists so a display rule can state 400 rather
+     than inherit whatever its element happens to be.
+
+     Four steps, ratio ~1.19, replacing eight sizes. Tracking goes
+     negative and tightens as the size grows — apple-design §15:
+     "Large display text wants negative tracking (letters read too
+     far apart as they grow)". At 38px, -0.020em is -0.76px per
+     letter against the +0.19px it had; at 22px, -0.006em is -0.13px,
+     because a serif at 22px is nearly at text size and barely wants
+     any. Leading tightens with size for the same reason: 1.04 at
+     38px, 1.18 at 22px. The 22px floor is ART_DIRECTION.md's and is
+     not moved. */
+  --display-xl-size: 38px;
+  --display-xl-track: -0.02em;
+  --display-xl-lead: 1.04;
+  --display-l-size: 32px;
+  --display-l-track: -0.016em;
+  --display-l-lead: 1.06;
+  --display-m-size: 26px;
+  --display-m-track: -0.011em;
+  --display-m-lead: 1.12;
+  --display-s-size: 22px;
+  --display-s-track: -0.006em;
+  --display-s-lead: 1.18;
+  --display-weight: 400;
+
+  /* -- UI · Archivo Variable · sentence case -----------------
+     Body sits near zero and the small end opens slightly, which is
+     the other half of apple-design §15: "small text wants slightly
+     positive tracking for legibility... leave body near 0". The
+     step ABOVE body tightens, because by 17px the face is starting
+     to read as a heading.
+
+     SIZES ARE LISTED FOR THE RECORD AND ARE NOT APPLIED HERE except
+     where a rule already states the same number. Applying TRACK and
+     LEAD is free; applying SIZE is the 169-fixed-height problem
+     above. */
+  --ui-xl-size: 17px;
+  --ui-xl-track: -0.002em;
+  --ui-xl-lead: 1.3;
+  --ui-l-size: 15px;
+  --ui-l-track: 0;
+  --ui-l-lead: 1.45;
+  --ui-m-size: 14px; /* body */
+  --ui-m-track: 0.003em;
+  --ui-m-lead: 1.45;
+  --ui-size: 13px;
+  --ui-track: 0.005em;
+  --ui-lead: 1.55;
+  --ui-s-size: 12px;
+  --ui-s-track: 0.008em;
+  --ui-s-lead: 1.5;
+  --ui-xs-size: 11px;
+  --ui-xs-track: 0.012em;
+  --ui-xs-lead: 1.45;
+
+  /* -- UI STAMP · Archivo · uppercase, semi-expanded ---------
+     The title-block caption. Uppercase always wants positive
+     tracking — there are no descenders or x-height cues to separate
+     the letters, so the space between them has to do that work —
+     and the smaller the stamp the more of it it wants.
+
+     ONE WEIGHT. Hierarchy here comes from size and tracking rather
+     than from three near-identical weights, which is the same
+     apple-design §15 "hierarchy is a set" rule read from the other
+     end: 640/620/600 on the same face at the same size are three
+     values that measure differently and LOOK identical.
+
+     CALIBRATED FOR THE WIDTH AXIS BEING OFF. `main.tsx:3` imports
+     `@fontsource-variable/archivo`, whose `index.css` ships only the
+     `wght` files and declares no `font-stretch`, so all 21
+     `font-variation-settings: 'wdth' 118` declarations in this
+     codebase are no-ops today. When that import is fixed the face
+     gets genuinely wider and these tracks must come DOWN — a
+     semi-expanded cut carries its own letter separation. Do not
+     turn the axis on without re-cutting these. */
+  --stamp-l-size: 15px;
+  --stamp-l-track: 0.05em;
+  --stamp-l-lead: 1.2;
+  --stamp-size: 13px;
+  --stamp-track: 0.06em;
+  --stamp-lead: 1.2;
+  --stamp-s-size: 11px;
+  --stamp-s-track: 0.08em;
+  --stamp-s-lead: 1.25;
+  --stamp-weight: 640;
+
+  /* -- MICRO-LABEL · IBM Plex Mono · uppercase ---------------
+     The engineering micro-label — 144 uses of `.mono-label` alone,
+     and ~150 more mono-uppercase roles beyond it. This band runs the
+     OPPOSITE way to the display face: monotone and uppercase, it
+     wants LOOSER tracking as it gets smaller, because at 8px the
+     counters close up and only the gap between letters still reads.
+
+     The ramp is monotone in absolute pixels too, which is the point:
+       11px × 0.12em = 1.32px between letters
+       10px × 0.14em = 1.40px
+        9px × 0.17em = 1.53px
+        8px × 0.20em = 1.60px
+     The letter shrinks and the gap GROWS. That is a decision; 13
+     different values at 9px was not.
+
+     --micro-* IS today's `.mono-label` (10px / 500 / 0.14em,
+     base.css) unchanged, so the anchor of the whole band does not
+     move and 144 sites render identically. */
+  --micro-l-size: 11px;
+  --micro-l-track: 0.12em;
+  --micro-size: 10px;
+  --micro-track: 0.14em;
+  --micro-s-size: 9px;
+  --micro-s-track: 0.17em;
+  --micro-xs-size: 8px;
+  --micro-xs-track: 0.2em;
+  --micro-lead: 1.4;
+  --micro-weight: 500;
+  /* the vibrancy bump, for micro-labels sitting on a translucent
+     surface — apple-design §12: "over blurred/translucent surfaces,
+     don't use flat gray text; use higher-contrast, slightly heavier
+     weight, and a small letter-spacing bump." +0.02em over the base
+     is +0.2px per letter at 10px. Defined here because tracking
+     lives in one place; nothing consumes it until the materials
+     pass lands `[data-material]`. */
+  --micro-track-glass: 0.16em;
+
+  /* -- DATA · IBM Plex Mono · not uppercase ------------------
+     Figures, SKUs, codes. Mono advance is fixed and letter-spacing
+     adds to EVERY advance equally, so any tracking here has to be
+     uniform per column or the columns stop aligning — consistency
+     is not a preference in this band, it is the requirement. Zero
+     at reading size; a hair open below it where the figures start
+     to crowd; negative only at 22px, where a run of digits is large
+     enough to read gappy (the plate's row/column figures). */
+  --data-xs-size: 10px;
+  --data-xs-track: 0.01em;
+  --data-s-size: 11px;
+  --data-s-track: 0.005em;
+  --data-size: 12px;
+  --data-track: 0;
+  --data-l-size: 14px;
+  --data-l-track: 0;
+  --data-xl-size: 22px;
+  --data-xl-track: -0.01em;
+  --data-lead: 1.45;
+  --data-l-lead: 1.4;
+  --data-xl-lead: 1;
+
   /* -- geometry --------------------------------------------- */
   --radius: 3px;
   --radius-sm: 2px;

@@ -12,9 +12,10 @@
 
 import { useMemo, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion } from 'motion/react'
 import { Article, Table } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
+import { SPRING_QUICK, transitionFor, useStillness } from '@/features/views/stillness'
 import type { ConstraintDef } from '@/types/model'
 import { useConstraints } from './constraintDefs'
 import { NewRuleSentence } from './NewRuleSentence'
@@ -27,7 +28,14 @@ import './constraints.css'
 export function RulesPane(): ReactElement {
   const constraints = useConstraints()
   const ctx = useSentenceCtx()
-  const reduced = useReducedMotion()
+  /* THE TYPING GATE, WHICH THIS PANE USED TO BE DEAF TO. It asked
+     `useReducedMotion()` directly, so it honoured the operating
+     system and nothing else — and this is a pane whose whole job is
+     editing sentences in place. The list re-sorts as a rule's status
+     changes, which is precisely the reflow-under-a-caret that
+     `stillness` exists to stop. One shared boolean now, so the pane
+     freezes for the same reasons every other surface does. */
+  const { still } = useStillness()
   const [openId, setOpenId] = useState<string | null>(null)
 
   const statuses = useMemo(
@@ -109,19 +117,23 @@ export function RulesPane(): ReactElement {
                   <motion.li
                     key={constraint.id}
                     className="cn-list-item"
-                    initial={reduced ? false : { opacity: 0, y: -6 }}
+                    initial={still ? false : { opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={
-                      reduced
-                        ? { duration: 0 }
-                        : {
-                            type: 'spring',
-                            stiffness: 340,
-                            damping: 34,
-                            mass: 0.9,
-                            delay: Math.min(i, 6) * 0.02,
-                          }
-                    }
+                    /* This was a hand-typed copy of the old default
+                       spring — drift, not a third opinion, and it went
+                       stale the moment the house set changed. A rule
+                       card arriving in a list is the same event as a
+                       row arriving in a block, so it takes the same
+                       config by import. The 20ms stagger, capped at
+                       seven cards, stays: it is inside
+                       emil-design-eng's 30–80ms guidance once the
+                       spring's own settle is counted, and capping it
+                       stops a twenty-rule list from taking half a
+                       second to finish arriving. */
+                    transition={{
+                      ...transitionFor(still, SPRING_QUICK),
+                      delay: still ? 0 : Math.min(i, 6) * 0.02,
+                    }}
                   >
                     <RuleCard
                       constraint={constraint}

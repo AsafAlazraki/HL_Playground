@@ -72,13 +72,18 @@
   color: var(--ink-faint);
 }
 
-/* the one display moment on the page */
+/* the one display moment on the page.
+   No `letter-spacing` at all was not neutral at 34px — it is the
+   face's own text-size fit applied to display type, which is exactly
+   the "one fixed value is wrong somewhere" case in apple-design §15.
+   34px was also a size used once; it lands on the 32px step. */
 .cn-title {
   margin: var(--sp-2) 0 0;
   font-family: var(--font-display);
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 1.08;
+  font-size: var(--display-l-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-l-lead);
+  letter-spacing: var(--display-l-track);
   color: var(--ink);
 }
 
@@ -658,11 +663,15 @@
   display: inline-flex;
   color: var(--ink-faint);
 }
+/* a <p> with no `line-height`, so at 24px it was taking body's 1.45
+   — display type on running-copy leading. 1.12 is the step's own. */
 .cn-void-title {
   margin: var(--sp-3) 0 0;
   font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 400;
+  font-size: var(--display-m-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-m-lead);
+  letter-spacing: var(--display-m-track);
   color: var(--ink);
 }
 .cn-void-note {
@@ -698,11 +707,22 @@
   color: var(--ink-faint);
 }
 
+/* THE ONE TYPE DEFECT IN THE APP, as opposed to a calibration.
+   This is an <h3> (`WorkbookRuleList.tsx:89`) that never reset
+   `font-weight`, so the UA's `bold` applied — and only the 400 cut
+   of Instrument Serif is loaded (`main.tsx:4`), so Chrome had
+   nothing to switch to and SYNTHESISED the bold by smearing the 400
+   outline. On a high-contrast serif that closes the thin strokes and
+   blobs the bracketed serifs: this heading was the only word in the
+   product not drawn by its typeface. `--display-weight` states 400
+   so no element's default can decide it again. */
 .cn-wb-title {
   margin: var(--sp-2) 0 0;
   font-family: var(--font-display);
-  font-size: 22px;
-  line-height: 1.2;
+  font-size: var(--display-s-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-s-lead);
+  letter-spacing: var(--display-s-track);
   color: var(--ink);
 }
 

@@ -105,6 +105,24 @@
 /* ============================================================
    MASTHEAD — mark · organisation · industry · I/O
    ============================================================ */
+/* THE MASTHEAD IS NOT GLASS, AND THAT IS A DECISION WITH A REASON.
+   It is the most tempting surface in the app and it fails on the
+   first test. apple-design §12 asks for translucent chrome "with
+   content scrolling underneath"; this bar is a flex SIBLING of the
+   stage (.shell-root is a column holding <TopBar /> then
+   .shell-body), so nothing scrolls under it and nothing ever will
+   without a layout change. Blur its backdrop and Chromium resolves
+   .shell-root's flat --paper at the full price of the blur: uniform
+   input, uniform output, no information, 1.07:1 of separation from
+   its own ground.
+
+   It is also the app's fixed datum — the title block of a drawing —
+   and a title block that floats is not a title block. It is the one
+   chrome present on all five --paper stages, where the material
+   would measure that same 1.07:1. One floating chrome layer and one
+   fixed frame is a hierarchy; two floating layers is a mood. Its
+   solidity is what makes .io-pop, which hangs off it, legal at all:
+   see io.css. */
 .shell-masthead {
   flex: 0 0 56px;
   height: 56px;
@@ -244,6 +262,38 @@
 /* ============================================================
    PANEL — the table types, then your tables. One scroll.
    ============================================================ */
+/* THE PANEL IS NOT GLASS YET, AND THE REASON IS THE SAME ARITHMETIC
+   AS THE MASTHEAD'S — but here the answer is a layout change rather
+   than a refusal. This is a flex TRACK, so the blueprint stops at
+   its left edge and there is nothing behind it to see: white glass
+   over --paper separates at 1.07:1, where the same material over
+   --canvas-bg-deep separates at 11.5:1. The material is not a
+   declaration this surface is missing, it is a layout it does not
+   have.
+
+   THE FIX IS TO FLOAT IT OVER THE STAGE, and it earns that three
+   ways: it is on screen whenever the sheet is, it is the largest
+   and most persistent chrome in the app at 260 × 844 ≈ 219k px²,
+   and a translucent sidebar over a document is the canonical
+   material moment apple-design §12 describes. It is NOT done here,
+   because floating it moves .shell-stage's box and three of the
+   consequences live in Whiteboard.tsx, which this slot does not
+   own:
+     · Whiteboard.tsx:505-517 decides whether a selected table is
+       already on screen from wrapRef.getBoundingClientRect(). Once
+       the container spans under the panel, rect.width grows by 260
+       and the visible region shrinks by 260 on the LEFT, so a node
+       hidden behind the panel reads as visible and the camera will
+       not fetch it. minX must gain the panel's width. Without that
+       line, floating the panel quietly undoes the doors-into-view
+       work (18 of 18) that landed today.
+     · FIT_VIEW_OPTIONS (Whiteboard.tsx:115) must carry per-side
+       padding so FIT stops framing nodes underneath the panel.
+     · The blur must suspend while the camera pans — §12 again, and
+       the same idiom tableLod.ts already uses on the same gesture.
+   The material tokens are defined and measured in base.css and are
+   waiting for those three. Do not add backdrop-filter to this rule
+   on its own. */
 .shell-panel {
   flex: 0 0 260px;
   width: 260px;
@@ -913,16 +963,28 @@
 
 /* THE DISPLAY FACE, second and last time it appears in the product:
    onboarding asks the question in Instrument Serif, this answers it in
-   the same voice. Never below 22px (ART_DIRECTION.md) — the floor of
-   the clamp is 28, and the short-window rule below keeps it at 26. Set
-   as drawn: no uppercase, no stamp tracking, just a hair to open it. */
+   the same voice. Never below 22px (ART_DIRECTION.md). Set as drawn:
+   no uppercase, no stamp tracking.
+
+   THE CLAMP GOES, and not because fluid type is wrong — because it
+   was keyed to the wrong measure. `.shell-invite-card` is
+   `max-width: 480px` and never narrows until the viewport is under
+   ~544px, but `3.4vw` shrank the title from 38px all the way to 28px
+   between 1118px and 823px of VIEWPORT — type getting smaller inside
+   a box that never got smaller. Above 1118px the clamp already
+   pinned at 38, so for every window this app is actually used in,
+   this is the same number it was rendering. The short-window rule
+   below still steps it down, and that one is keyed to the thing that
+   genuinely runs out: height.
+
+   Tracking goes -0.02em from +0.006em — apple-design §15. */
 .shell-invite-title {
   margin-top: var(--sp-3);
   font-family: var(--font-display);
-  font-size: clamp(28px, 3.4vw, 38px);
-  font-weight: 400;
-  line-height: 1.14;
-  letter-spacing: 0.006em;
+  font-size: var(--display-xl-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-xl-lead);
+  letter-spacing: var(--display-xl-track);
   color: var(--ink);
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -1059,8 +1121,13 @@
   .shell-invite-card {
     padding: 28px 40px 26px;
   }
+  /* one step down the scale, not a second clamp: the constraint here
+     is vertical room for the card, which is a step change, not a
+     continuum. Tracking and leading come with the step. */
   .shell-invite-title {
-    font-size: clamp(26px, 2.8vw, 32px);
+    font-size: var(--display-l-size);
+    line-height: var(--display-l-lead);
+    letter-spacing: var(--display-l-track);
   }
 }
 

@@ -101,7 +101,19 @@ export function FieldRow({
   useEffect(() => {
     if (!expanded) return
     const id = requestAnimationFrame(() => {
-      rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      /* A SMOOTH SCROLL IS MOTION AND HAS TO ASK. This one carries a
+         long, dense column list past the reader on the way to the
+         editor — apple-design §14's "avoid a large moving surface"
+         case, and the browser does not gate `behavior: 'smooth'` on
+         `prefers-reduced-motion` for you. `'auto'` still lands the
+         editor on screen, which is the whole point of the scroll; it
+         simply stops taking the reader along for the ride. The same
+         check, spelled the same way, as `LeftPanel.tsx`. */
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      rowRef.current?.scrollIntoView({
+        block: 'nearest',
+        behavior: reduced ? 'auto' : 'smooth',
+      })
     })
     return () => cancelAnimationFrame(id)
   }, [expanded])

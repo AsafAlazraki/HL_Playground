@@ -129,11 +129,17 @@
 .ob-ask {
   margin-top: calc(var(--sp-6) + var(--sp-1));
   font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.16;
-  /* Instrument Serif is drawn tight; a hair of tracking opens it up */
-  letter-spacing: 0.006em;
+  /* THE TRACKING WAS BACKWARDS. "Instrument Serif is drawn tight; a
+     hair of tracking opens it up" is true of the face at TEXT size —
+     at 32px the same face is display, and display type reads too far
+     apart, not too close: apple-design §15. +0.006em was +0.19px per
+     letter added to a line that already had too much; -0.016em takes
+     0.51px out. Leading comes down with it, 1.16 → 1.06, because a
+     two-line question set on body leading reads as two sentences. */
+  font-size: var(--display-l-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-l-lead);
+  letter-spacing: var(--display-l-track);
   color: var(--ink);
   text-wrap: balance;
 }
@@ -262,12 +268,16 @@
   text-align: center;
   animation: fade-in var(--t-med) var(--ease-draft) 60ms both;
 }
+/* 36px was a ninth display size for one heading. It lands on the
+   32px step — the same step as `.ob-ask` two screens earlier, which
+   is the point: the two questions onboarding asks are the same voice
+   at the same size, and they were 4px apart for no stated reason. */
 .ob-title {
   font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: 400;
-  line-height: 1.14;
-  letter-spacing: 0.006em;
+  font-size: var(--display-l-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-l-lead);
+  letter-spacing: var(--display-l-track);
   color: var(--canvas-ink);
   text-wrap: balance;
 }

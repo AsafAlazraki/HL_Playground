@@ -331,7 +331,7 @@
    the sheet is MORE readable with it than without.
 
    Every size here is chosen against the zoom it will be seen at. The
-   name is 30px drawn, so at 0.5 zoom it is 15px seen — where the card
+   name is 32px drawn, so at 0.5 zoom it is 16px seen — where the card
    header's 11.5px was 5.7px, i.e. nothing at all. The figures are
    22px drawn / 11px seen. The band names and the units are 11px: at
    this distance they are texture that says "eleven sections", and at
@@ -463,13 +463,34 @@
 }
 
 /* the one display line on the card — what makes the sheet readable at
-   a distance instead of a field of grey stripes */
+   a distance instead of a field of grey stripes.
+
+   THE ONE STEP ON THIS SCALE THAT GOES UP, and it is a measurement,
+   not a preference. Everything on this plate is drawn inside the
+   canvas transform, so what a reader gets is the authored size times
+   the camera's zoom. At the framing the app chooses when the data
+   lands (0.2786), 30px rendered at 8.36px — under the 8.4px floor
+   `tableLod.ts:18` writes as this app's own standard, on the first
+   screen anyone sees (UX_AUDIT §4). The 32px step renders at 8.91px
+   and clears it. Collapsing to 26px would have taken it to 7.24px
+   and made the finding worse.
+
+   This is a mitigation, not the fix: the figures below still land at
+   6.13px and the band chips at 3.06px, and only a second LOD tier
+   fixes those. The +2px is contained — the name clamps to two lines
+   with an ellipsis inside `.tb-lod-field`, which is `flex: 1 1 auto;
+   min-height: 0`, so it can never push the title block off the foot.
+
+   Weight stated because this is a <span> (`SheetPlate.tsx:118`)
+   inside a <button>: nothing here may inherit a bold that Instrument
+   Serif has no cut for. */
 .tb-lod-name {
   max-width: 18ch;
   font-family: var(--font-display);
-  font-size: 30px;
-  line-height: 1.06;
-  letter-spacing: 0.005em;
+  font-size: var(--display-l-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-l-lead);
+  letter-spacing: var(--display-l-track);
   color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;

@@ -24,7 +24,7 @@
    ============================================================ */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { JSX, ReactNode } from 'react'
+import type { CSSProperties, JSX, ReactNode } from 'react'
 
 export function Popover({
   anchor,
@@ -40,17 +40,36 @@ export function Popover({
   children: ReactNode
 }): JSX.Element {
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const [pos, setPos] = useState({ left: anchor.left, top: anchor.bottom + 4 })
+  /* `flipped` = the sheet had no room below and sits ABOVE its anchor.
+     `originX` = where the button is, in this sheet's own coordinates. */
+  const [pos, setPos] = useState({
+    left: anchor.left,
+    top: anchor.bottom + 4,
+    originX: Math.min(anchor.width / 2, width),
+    flipped: false,
+  })
 
   useLayoutEffect(() => {
     const h = rootRef.current?.offsetHeight ?? 240
     const left = Math.max(8, Math.min(anchor.left, window.innerWidth - width - 8))
     const below = anchor.bottom + 4
-    const top =
-      below + h > window.innerHeight - 8
-        ? Math.max(8, anchor.top - h - 4)
-        : below
-    setPos({ left, top })
+    const flipped = below + h > window.innerHeight - 8
+    const top = flipped ? Math.max(8, anchor.top - h - 4) : below
+    /* THE SHEET GREW FROM THE MIDDLE OF ITSELF, WHICH IS NOWHERE.
+       Every one of these sheets scaled from `50% 50%` — the browser
+       default — so a menu hanging off a column head at the far right
+       of a fifty-nine column register appeared to swell out of a point
+       in the middle of the grid rather than out of the button that was
+       pressed. apple-design §7: a popover must originate from the
+       element that triggered it, or the spatial relationship between
+       press and content is simply not stated.
+
+       Clamped into the sheet's own box, because the sheet is nudged
+       away from the window edge (the `Math.max(8, …)` above) and the
+       anchor can therefore end up outside it — an origin past the edge
+       would scale the sheet in from off-screen. */
+    const originX = Math.max(0, Math.min(width, anchor.left + anchor.width / 2 - left))
+    setPos({ left, top, originX, flipped })
   }, [anchor, width])
 
   useEffect(() => {
@@ -72,11 +91,29 @@ export function Popover({
     }
   }, [onClose])
 
+  /* The origin is handed down BOTH ways on purpose: `transformOrigin`
+     so the entry animation already in the stylesheet is anchored today
+     without a stylesheet change, and `--pop-origin` so any rule that
+     wants to key off it later reads one value rather than recomputing
+     it. `data-pop-flip` states which side the anchor is on, which is
+     the one thing the shared `sheet-in` keyframe cannot know: it lifts
+     the sheet 6px on the way in, and when flipped that 6px travels
+     AWAY from the button. Mirroring it needs a keyframe, which is a
+     stylesheet this step does not own — the attribute is the hook. */
+  const style = {
+    left: pos.left,
+    top: pos.top,
+    width,
+    transformOrigin: `${pos.originX}px ${pos.flipped ? 'bottom' : 'top'}`,
+    '--pop-origin': `${pos.originX}px ${pos.flipped ? 'bottom' : 'top'}`,
+  } as CSSProperties
+
   return createPortal(
     <div
       ref={rootRef}
       className="tb-menu tb-pop"
-      style={{ left: pos.left, top: pos.top, width }}
+      style={style}
+      data-pop-flip={pos.flipped ? 'above' : 'below'}
       role="dialog"
       aria-label={label}
       onKeyDown={(e) => e.stopPropagation()}
