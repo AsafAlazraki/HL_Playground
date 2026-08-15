@@ -1,0 +1,626 @@
+/* ============================================================
+   QUIET PRECISION — the design system
+   HelmLogic Dynamic Config, redesign branch.
+
+   Replaces "The Chart Room" (src/styles/tokens.css). The old
+   system was a costume: a navy blueprint field, a display serif
+   set at 9px, and 8-11px uppercase letterspaced mono carrying
+   labels that were never data. It measured 35 font sizes, 26
+   tracking values and 24 line-heights, which is not a hierarchy.
+
+   THE RULES THIS FILE ENFORCES
+   1. Six type steps. Each one is a SET — size, weight, leading
+      and tracking travel together. Never pick a size alone.
+   2. Two faces. Inter for everything a person reads, IBM Plex
+      Mono for every figure, code and SKU. No third face.
+   3. Uppercase appears exactly once (--label), on section
+      dividers. Nowhere else.
+   4. One accent. Kind colour is an eighth-note, not a theme.
+   5. Elevation on dark is LIGHTNESS FIRST, shadow second.
+   6. Every text token on its intended ground clears 4.5:1. The
+      measured figures are recorded beside each one.
+
+   Dark is the default. Light exists because a quote is printed.
+   ============================================================ */
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* -- ground ------------------------------------------------
+     Cool-neutral near-black. The steps are close on purpose: on
+     dark, a 6-8 point lift reads as "raised" without ever
+     looking like a different colour. */
+  --bg-sunken: #07080a;   /* behind the canvas, wells */
+  --bg: #0a0b0d;          /* app ground */
+  --bg-canvas: #0c0e11;   /* the sheet */
+  --surface-1: #131519;   /* cards, panels, the resting plane */
+  --surface-2: #1a1d22;   /* raised: popovers, menus, selected rows */
+  --surface-3: #22262c;   /* inputs, hover on surface-2 */
+  --surface-4: #2a2f36;   /* pressed, hover on surface-3 */
+
+  /* -- lines --------------------------------------------------
+     Alpha, not hex, so one border composes correctly over every
+     surface above. */
+  --line-subtle: rgba(255, 255, 255, 0.06);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.15);
+
+  /* -- text ---------------------------------------------------
+     Contrast measured against --surface-1 (#131519):
+       --fg            15.9 : 1
+       --fg-secondary   7.5 : 1
+       --fg-tertiary    4.8 : 1   <- the floor; nothing below it
+                                     is allowed to carry meaning
+       --fg-quaternary  3.0 : 1   <- decoration only (rules,
+                                     disabled marks, grid ticks) */
+  --fg: #edeef0;
+  --fg-secondary: #a0a6b0;
+  --fg-tertiary: #7b828d;
+  --fg-quaternary: #565d68;
+  --fg-on-accent: #ffffff;
+
+  /* -- accent -------------------------------------------------
+     One hue, roughly four appearances per screen. 5.1:1 on
+     --surface-1, so it is legal as text and not only as paint. */
+  --accent: #6e7bfa;
+  --accent-hover: #8189ff;
+  --accent-press: #5a66e0;
+  --accent-fg: #ffffff;
+  --accent-wash: rgba(110, 123, 250, 0.14);
+  --accent-wash-strong: rgba(110, 123, 250, 0.22);
+  --accent-line: rgba(110, 123, 250, 0.38);
+  --accent-glow: rgba(110, 123, 250, 0.28);
+
+  /* -- semantic ----------------------------------------------- */
+  --success: #56d364;
+  --success-wash: rgba(86, 211, 100, 0.13);
+  --warning: #e3b341;
+  --warning-wash: rgba(227, 179, 65, 0.13);
+  --danger: #ff7b72;
+  --danger-wash: rgba(255, 123, 114, 0.13);
+  --danger-solid: #d93a31;
+
+  /* -- the kind palette ---------------------------------------
+     Eight hues cut to roughly equal luminance so a sheet of
+     mixed tables reads as ONE drawing. Measured on --surface-1
+     they span 6.2:1 to 9.6:1 — the cool three sit low because
+     cool hues always do, not because they were picked loose.
+
+     This replaces 22 inks (7 accents + 7 "bright" variants + 8
+     field-type colours). Field types no longer carry hue at all;
+     see --chip-* below. */
+  --kind-indigo: #7c8cff;
+  --kind-cyan: #4fc3d9;
+  --kind-teal: #3fcba8;
+  --kind-green: #5fd07e;
+  --kind-amber: #e2a83e;
+  --kind-orange: #f08a4b;
+  --kind-rose: #f26d8b;
+  --kind-violet: #b182f5;
+  --kind-slate: #8a93a3;
+
+  /* what each table kind takes. One assignment, one place. */
+  --kind-boat: var(--kind-indigo);
+  --kind-motor: var(--kind-orange);
+  --kind-trailer: var(--kind-amber);
+  --kind-accessory: var(--kind-teal);
+  --kind-package: var(--kind-violet);
+  --kind-dealer: var(--kind-cyan);
+  --kind-custom: var(--kind-slate);
+  --kind-join: var(--kind-rose);
+
+  /* -- field-type chips ---------------------------------------
+     Eight coloured chips became three roles. A type chip is
+     metadata about a column, not a category of product, and it
+     has no business competing with the kind palette.
+       plain     TXT NUM DAT LST  — grey
+       computed  FX               — accent
+       linked    REF IMG          — a single cool hue */
+  --chip-fg: var(--fg-tertiary);
+  --chip-bg: rgba(255, 255, 255, 0.05);
+  --chip-computed-fg: var(--accent);
+  --chip-computed-bg: var(--accent-wash);
+  --chip-linked-fg: var(--kind-cyan);
+  --chip-linked-bg: rgba(79, 195, 217, 0.12);
+
+  /* -- elevation ----------------------------------------------
+     On dark the shadow alone does almost nothing; the lift comes
+     from the surface step. Shadow is the second half, and it is
+     tinted to the ground rather than pure black so it does not
+     punch a hole. */
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --e2:
+    0 2px 4px rgba(0, 0, 0, 0.32),
+    0 8px 20px -6px rgba(0, 0, 0, 0.5);
+  --e3:
+    0 4px 10px rgba(0, 0, 0, 0.35),
+    0 20px 48px -12px rgba(0, 0, 0, 0.62);
+  --e-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px -8px rgba(0, 0, 0, 0.5);
+  --e-card-hover:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 14px 32px -10px rgba(0, 0, 0, 0.6);
+
+  /* -- the canvas ---------------------------------------------
+     The blueprint grid is gone. What is left is a barely-there
+     dot field that tells you the plane is pannable and then
+     shuts up. */
+  --canvas-dot: rgba(255, 255, 255, 0.055);
+  --canvas-edge: rgba(255, 255, 255, 0.18);
+  --canvas-edge-active: var(--accent);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg-sunken: #f1f2f5;
+  --bg: #fbfbfc;
+  --bg-canvas: #f7f8fa;
+  --surface-1: #ffffff;
+  --surface-2: #ffffff;
+  --surface-3: #f2f4f7;
+  --surface-4: #e8ebf0;
+
+  --line-subtle: rgba(9, 12, 18, 0.06);
+  --line: rgba(9, 12, 18, 0.11);
+  --line-strong: rgba(9, 12, 18, 0.2);
+
+  /* measured on #ffffff: 17.4 / 8.0 / 4.9 / 3.0 */
+  --fg: #0e1116;
+  --fg-secondary: #4b5462;
+  --fg-tertiary: #6b7482;
+  --fg-quaternary: #949cab;
+  --fg-on-accent: #ffffff;
+
+  /* 5.6:1 on white */
+  --accent: #4a56d2;
+  --accent-hover: #3d48bd;
+  --accent-press: #333da3;
+  --accent-fg: #ffffff;
+  --accent-wash: rgba(74, 86, 210, 0.09);
+  --accent-wash-strong: rgba(74, 86, 210, 0.15);
+  --accent-line: rgba(74, 86, 210, 0.32);
+  --accent-glow: rgba(74, 86, 210, 0.2);
+
+  --success: #1a7f37;
+  --success-wash: rgba(26, 127, 55, 0.1);
+  --warning: #9a6700;
+  --warning-wash: rgba(154, 103, 0, 0.1);
+  --danger: #c9372c;
+  --danger-wash: rgba(201, 55, 44, 0.09);
+  --danger-solid: #c9372c;
+
+  /* the same eight hues, darkened to hold 4.5:1 on white */
+  --kind-indigo: #4552cc;
+  --kind-cyan: #0f7285;
+  --kind-teal: #0d7a5f;
+  --kind-green: #2f7d3f;
+  --kind-amber: #8a6208;
+  --kind-orange: #a8501a;
+  --kind-rose: #b8385a;
+  --kind-violet: #6e42b8;
+  --kind-slate: #5a6474;
+
+  --chip-fg: var(--fg-tertiary);
+  --chip-bg: rgba(9, 12, 18, 0.05);
+  --chip-computed-fg: var(--accent);
+  --chip-computed-bg: var(--accent-wash);
+  --chip-linked-fg: var(--kind-cyan);
+  --chip-linked-bg: rgba(15, 114, 133, 0.09);
+
+  --e1: 0 1px 2px rgba(9, 12, 18, 0.06);
+  --e2:
+    0 1px 2px rgba(9, 12, 18, 0.06),
+    0 6px 16px -6px rgba(9, 12, 18, 0.12);
+  --e3:
+    0 2px 6px rgba(9, 12, 18, 0.08),
+    0 20px 44px -12px rgba(9, 12, 18, 0.18);
+  --e-card: 0 1px 2px rgba(9, 12, 18, 0.05), 0 4px 12px -6px rgba(9, 12, 18, 0.1);
+  --e-card-hover:
+    0 2px 4px rgba(9, 12, 18, 0.07),
+    0 12px 28px -10px rgba(9, 12, 18, 0.16);
+
+  --canvas-dot: rgba(9, 12, 18, 0.07);
+  --canvas-edge: rgba(9, 12, 18, 0.22);
+  --canvas-edge-active: var(--accent);
+}
+
+/* ============================================================
+   TYPE — two faces, six steps, one uppercase style.
+
+   Every step below is a complete set. A rule that wants
+   "heading" takes size, weight, leading AND tracking from the
+   step; it never reaches in for one of them. That is the whole
+   discipline the old file was missing.
+
+   Tracking runs negative as size grows and returns to zero at
+   reading size — the standard optical correction, and the exact
+   opposite of the outgoing system, where all 24 non-zero
+   tracking values were positive.
+   ============================================================ */
+
+:root {
+  --font-sans:
+    'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* display · stage titles, the quote header, empty states */
+  --t-display-size: 28px;
+  --t-display-weight: 620;
+  --t-display-lead: 1.15;
+  --t-display-track: -0.021em;
+
+  /* title · panel headers, dialog titles, section leads */
+  --t-title-size: 20px;
+  --t-title-weight: 600;
+  --t-title-lead: 1.25;
+  --t-title-track: -0.014em;
+
+  /* heading · card names, row heads, the thing you scan for */
+  --t-heading-size: 15px;
+  --t-heading-weight: 570;
+  --t-heading-lead: 1.35;
+  --t-heading-track: -0.009em;
+
+  /* body · the default. Everything unmarked is this. */
+  --t-body-size: 14px;
+  --t-body-weight: 400;
+  --t-body-lead: 1.5;
+  --t-body-track: -0.002em;
+
+  /* small · secondary text, help, descriptions */
+  --t-small-size: 13px;
+  --t-small-weight: 400;
+  --t-small-lead: 1.45;
+  --t-small-track: 0;
+
+  /* caption · metadata beside a thing it describes */
+  --t-caption-size: 12px;
+  --t-caption-weight: 500;
+  --t-caption-lead: 1.35;
+  --t-caption-track: 0.002em;
+
+  /* THE ONE UPPERCASE STYLE. Section dividers. That is the list.
+     It replaces ~300 uppercase micro-label sites, none of which
+     were data and most of which were 8 or 9px. */
+  --t-label-size: 11px;
+  --t-label-weight: 600;
+  --t-label-lead: 1.3;
+  --t-label-track: 0.07em;
+
+  /* mono · every figure. Tabular by default so columns align. */
+  --t-mono-lg-size: 15px;
+  --t-mono-size: 13px;
+  --t-mono-sm-size: 11px;
+  --t-mono-weight: 450;
+  --t-mono-lead: 1.45;
+
+  /* -- geometry ----------------------------------------------- */
+  --r-chip: 4px;
+  --r-control: 6px;
+  --r-card: 10px;
+  --r-panel: 14px;
+  --r-full: 999px;
+
+  /* -- space · a 4px grid, named so nobody writes 13px --------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+
+  /* -- control heights ---------------------------------------- */
+  --h-sm: 28px;
+  --h-md: 32px;
+  --h-lg: 40px;
+  --h-row: 40px;      /* grid row */
+  --h-row-dense: 34px;
+
+  /* -- motion -------------------------------------------------
+     Two curves and three durations. Anything that needs a fourth
+     is a spring, and springs are for stage arrival only. */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --d-fast: 120ms;
+  --d-med: 180ms;
+  --d-slow: 260ms;
+
+  /* -- focus --------------------------------------------------
+     Two rings: a ground-coloured spacer, then the accent. Reads
+     on every surface without needing a per-surface variant. */
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  --focus-inset: inset 0 0 0 1px var(--accent), 0 0 0 3px var(--accent-glow);
+
+  /* -- layers -------------------------------------------------- */
+  --z-canvas: 0;
+  --z-panel: 10;
+  --z-stage: 20;
+  --z-popover: 40;
+  --z-dialog: 60;
+  --z-toast: 80;
+}
+
+/* ============================================================
+   TYPE UTILITIES — apply a whole step, never half of one.
+   ============================================================ */
+
+.ds-display {
+  font-family: var(--font-sans);
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  line-height: var(--t-display-lead);
+  letter-spacing: var(--t-display-track);
+  font-variation-settings: 'opsz' 28;
+}
+.ds-title {
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  font-variation-settings: 'opsz' 20;
+}
+.ds-heading {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
+}
+.ds-body {
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: var(--t-body-weight);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
+}
+.ds-small {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: var(--t-small-weight);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+}
+.ds-caption {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+}
+.ds-label {
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+.ds-mono,
+.ds-mono-lg,
+.ds-mono-sm {
+  font-family: var(--font-mono);
+  font-weight: var(--t-mono-weight);
+  line-height: var(--t-mono-lead);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+}
+.ds-mono-lg {
+  font-size: var(--t-mono-lg-size);
+}
+.ds-mono {
+  font-size: var(--t-mono-size);
+}
+.ds-mono-sm {
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   PRIMITIVES
+   ============================================================ */
+
+.ds-root {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: var(--t-body-weight);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+}
+
+.ds-root *,
+.ds-root *::before,
+.ds-root *::after {
+  box-sizing: border-box;
+}
+
+.ds-root :focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+  border-radius: var(--r-control);
+}
+
+/* -- buttons ------------------------------------------------- */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  letter-spacing: -0.003em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.ds-btn:active {
+  transform: translateY(0.5px);
+}
+
+.ds-btn--primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--e1);
+}
+.ds-btn--primary:hover {
+  background: var(--accent-hover);
+}
+.ds-btn--primary:active {
+  background: var(--accent-press);
+}
+
+.ds-btn--secondary {
+  background: var(--surface-3);
+  border-color: var(--line);
+  color: var(--fg);
+}
+.ds-btn--secondary:hover {
+  background: var(--surface-4);
+  border-color: var(--line-strong);
+}
+
+.ds-btn--ghost {
+  color: var(--fg-secondary);
+}
+.ds-btn--ghost:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.ds-btn--danger {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--danger);
+}
+.ds-btn--danger:hover {
+  background: var(--danger-wash);
+  border-color: var(--danger);
+}
+
+.ds-btn--sm {
+  height: var(--h-sm);
+  padding: 0 var(--s-2);
+  font-size: var(--t-caption-size);
+}
+.ds-btn--lg {
+  height: var(--h-lg);
+  padding: 0 var(--s-4);
+  font-size: var(--t-body-size);
+}
+
+/* -- input ---------------------------------------------------- */
+.ds-input {
+  height: var(--h-md);
+  width: 100%;
+  padding: 0 var(--s-3);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  letter-spacing: 0;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
+}
+.ds-input::placeholder {
+  color: var(--fg-tertiary);
+}
+.ds-input:hover {
+  border-color: var(--line-strong);
+}
+.ds-input:focus {
+  outline: none;
+  background: var(--surface-2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* -- chip ----------------------------------------------------- */
+.ds-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-chip);
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ds-chip--computed {
+  background: var(--chip-computed-bg);
+  color: var(--chip-computed-fg);
+}
+.ds-chip--linked {
+  background: var(--chip-linked-bg);
+  color: var(--chip-linked-fg);
+}
+
+/* -- card / panel --------------------------------------------- */
+.ds-card {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--e-card);
+}
+.ds-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e2);
+}
+
+/* -- divider -------------------------------------------------- */
+.ds-divider {
+  height: 1px;
+  background: var(--line-subtle);
+  border: 0;
+}
+
+/* ============================================================
+   MOTION POLICY — inherited from the old system, which had this
+   part right. Nothing moves while somebody is typing, and
+   reduced-motion cuts all of it.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .ds-root *,
+  .ds-root *::before,
+  .ds-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
