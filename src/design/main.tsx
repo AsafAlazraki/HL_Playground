@@ -12,6 +12,7 @@ import '@fontsource/ibm-plex-mono/500.css'
 import '@fontsource/ibm-plex-mono/600.css'
 import '../styles/ds.css'
 import './preview.css'
+import './modules.css'
 import { DesignPreview } from './DesignPreview'
 
 createRoot(document.getElementById('design-root')!).render(

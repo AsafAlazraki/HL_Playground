@@ -1,0 +1,818 @@
+/* ============================================================
+   MODULES (md-) — the dashboard, the create panel, the index.
+
+   THE CHART ROOM, chrome side: white sheets on the paper field,
+   marine-navy ink, hairlines, mono micro-labels, one accent per
+   surface. Industry-neutral — nothing in this file knows a boat
+   from a bandsaw.
+
+   Every measurement is on the --sp scale, every type step is a SET
+   from the --display / --micro / --data ramps in tokens.css, and
+   there is not a raw hex here.
+
+   ONE ACCENT VARIABLE, --md-accent, set inline by whichever
+   component owns the surface (the module's own accent, or the
+   picked table's). Everything tinted reads it, so a module never
+   half-changes colour.
+   ============================================================ */
+
+/* ============================================================
+   THE DASHBOARD
+   ============================================================ */
+
+.md-dash {
+  height: 100%;
+  overflow: auto;
+  background: var(--paper);
+  padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) * 2);
+}
+
+.md-dash-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  max-width: 1080px;
+  margin: 0 auto var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.md-dash-id {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.md-dash-eyebrow {
+  color: var(--ink-faint);
+}
+
+/* the one display moment on this screen — the top step of the ramp,
+   and the only thing here set in the serif */
+.md-dash-org {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--display-l-size);
+  letter-spacing: var(--display-l-track);
+  line-height: var(--display-l-lead);
+  color: var(--ink);
+}
+
+.md-new {
+  flex: 0 0 auto;
+}
+
+/* -- the empty state ---------------------------------------- */
+
+.md-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sp-6);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--e2);
+}
+
+.md-empty-eyebrow {
+  color: var(--ink-faint);
+}
+
+.md-empty-say {
+  margin: 0;
+  font-size: var(--ui-l-size);
+  line-height: var(--ui-l-lead);
+  letter-spacing: var(--ui-l-track);
+  color: var(--ink-soft);
+}
+
+.md-empty-count {
+  margin: 0;
+  font-size: var(--ui-m-size);
+  line-height: var(--ui-m-lead);
+  color: var(--ink);
+}
+.md-empty-count strong {
+  font-family: var(--font-mono);
+  font-size: var(--data-l-size);
+  font-weight: 500;
+  letter-spacing: var(--data-l-track);
+}
+
+/* -- the cards ---------------------------------------------- */
+
+.md-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-4);
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.md-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-2);
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-4);
+  text-align: left;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  /* the accent is a spine on the left edge, not a fill: a card is a
+     drawing, not a swatch */
+  border-left: 2px solid var(--md-accent, var(--ink));
+  border-radius: var(--radius);
+  box-shadow: var(--e1);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.md-card:hover {
+  border-color: var(--hairline-strong);
+  border-left-color: var(--md-accent, var(--ink));
+  box-shadow: var(--e2);
+}
+.md-card:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.md-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.md-card-mark {
+  display: inline-flex;
+  color: var(--md-accent, var(--ink));
+}
+
+.md-card-count {
+  color: var(--ink-faint);
+}
+
+.md-card-name {
+  font-size: var(--ui-xl-size);
+  letter-spacing: var(--ui-xl-track);
+  line-height: var(--ui-xl-lead);
+  color: var(--ink);
+}
+
+.md-card-desc {
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  line-height: var(--ui-lead);
+  color: var(--ink-soft);
+}
+
+.md-card-from {
+  color: var(--ink-faint);
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.md-card-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+}
+
+.md-verb {
+  padding: 2px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   A VISIBLE STUB — a control that is drawn, disabled, and says
+   what it will do. The alternative is a control that looks
+   finished and is not, which is a lie told to whoever is looking.
+   ============================================================ */
+
+.md-stub {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-sunken);
+}
+
+.md-dash-stub {
+  max-width: 1080px;
+  margin: var(--sp-5) auto 0;
+}
+
+.md-stub-say {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: var(--ui-s-lead);
+  color: var(--ink-soft);
+}
+
+.md-stubs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+/* ============================================================
+   THE CREATE PANEL
+   ============================================================ */
+
+.md-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+}
+
+/* the dim material — the blueprint stays unmistakably there and
+   unmistakably not the thing you are reading */
+.md-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--mat-dim-bg);
+  backdrop-filter: var(--mat-dim-blur);
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+
+.md-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 100%);
+  max-height: calc(100vh - var(--sp-6) * 2);
+  min-height: 0;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-popover);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+.md-dlg-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-6) var(--sp-4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.md-dlg-head-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 24px;
+}
+
+.md-dlg-eyebrow {
+  color: var(--ink-faint);
+}
+
+.md-dlg-q {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.md-dlg-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-dlg-close:hover {
+  color: var(--ink);
+  border-color: var(--hairline);
+}
+
+/* -- the two halves ----------------------------------------- */
+
+.md-dlg-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.md-pick {
+  overflow: auto;
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-right: 1px solid var(--hairline);
+  background: var(--paper);
+}
+
+.md-pick-grp + .md-pick-grp {
+  margin-top: var(--sp-4);
+}
+
+.md-pick-grp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-soft);
+}
+
+.md-pick-grp-count {
+  color: var(--ink-faint);
+}
+
+.md-pick-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-pick-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px var(--sp-2);
+  width: 100%;
+  padding: 6px var(--sp-2);
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-pick-row:hover {
+  background: var(--paper-high);
+  border-color: var(--hairline);
+}
+.md-pick-row.is-picked {
+  background: var(--paper-high);
+  border-color: var(--row-accent, var(--ink));
+  box-shadow: inset 2px 0 0 var(--row-accent, var(--ink));
+}
+
+.md-pick-glyph {
+  grid-row: span 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--row-accent, var(--ink-soft));
+}
+
+.md-pick-name {
+  font-size: var(--ui-m-size);
+  letter-spacing: var(--ui-m-track);
+  color: var(--ink);
+}
+
+.md-pick-facts {
+  color: var(--ink-faint);
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.md-pick-note {
+  margin: var(--sp-4) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: var(--ui-s-lead);
+  color: var(--ink-faint);
+}
+
+.md-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+}
+
+.md-form-void {
+  margin: 0;
+  font-size: var(--ui-m-size);
+  line-height: var(--ui-m-lead);
+  color: var(--ink-faint);
+}
+
+.md-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* -- the siblings ------------------------------------------- */
+
+.md-sibs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.md-sibs-say {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: var(--ui-s-lead);
+  color: var(--ink-soft);
+}
+
+.md-sib-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-sib {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 5px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.md-sib:hover {
+  background: var(--paper-high);
+}
+
+.md-sib-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  color: var(--ink);
+}
+
+.md-sib-rows {
+  color: var(--ink-faint);
+}
+
+.md-dlg-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-top: auto;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.md-dlg-foot-say {
+  margin: 0;
+  font-size: var(--ui-xs-size);
+  letter-spacing: var(--ui-xs-track);
+  line-height: var(--ui-xs-lead);
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   THE INDEX
+   ============================================================ */
+
+.md-index {
+  height: 100%;
+  overflow: auto;
+  background: var(--paper);
+  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 2);
+}
+
+.md-idx-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  max-width: 1180px;
+  margin: 0 auto var(--sp-5);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.md-idx-id {
+  min-width: 0;
+}
+
+.md-idx-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--display-m-size);
+  letter-spacing: var(--display-m-track);
+  line-height: var(--display-m-lead);
+  color: var(--ink);
+}
+
+.md-idx-desc {
+  margin: 4px 0 0;
+  font-size: var(--ui-m-size);
+  letter-spacing: var(--ui-m-track);
+  line-height: var(--ui-m-lead);
+  color: var(--ink-soft);
+}
+
+.md-idx-facts {
+  margin: 6px 0 0;
+  color: var(--ink-faint);
+}
+
+.md-idx-note {
+  max-width: 1180px;
+  margin: 0 auto var(--sp-4);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  color: var(--ink-faint);
+}
+
+.md-idx-find {
+  position: relative;
+  flex: 0 0 auto;
+  width: 240px;
+}
+
+.md-idx-find-mark {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.md-idx-find-input {
+  padding-left: 26px;
+}
+
+/* -- one table's run ---------------------------------------- */
+
+.md-sec {
+  max-width: 1180px;
+  margin: 0 auto var(--sp-5);
+}
+
+.md-sec-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: 6px;
+  margin-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--md-accent, var(--ink));
+}
+
+.md-sec-mark {
+  display: inline-flex;
+}
+
+.md-sec-name {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--stamp-size);
+  letter-spacing: var(--stamp-track);
+  line-height: var(--stamp-lead);
+  color: var(--ink);
+}
+
+.md-sec-count {
+  color: var(--ink-faint);
+}
+
+.md-grp + .md-grp {
+  margin-top: var(--sp-4);
+}
+
+.md-grp-trail {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-faint);
+}
+
+/* -- tiles --------------------------------------------------- */
+
+.md-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-2);
+  text-align: left;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+.md-tile:hover {
+  border-color: var(--md-accent, var(--hairline-strong));
+  box-shadow: var(--e1);
+}
+.md-tile:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* a module with `open` switched off lists but does not lead anywhere;
+   the face stops offering itself as a target */
+.md-tile.is-flat,
+.md-row.is-flat {
+  cursor: default;
+}
+
+/* THE PICTURE'S BOX IS RESERVED WHETHER OR NOT THERE IS A PICTURE.
+   A catalogue where some tiles are short and some are tall reads as
+   broken; a tile with no picture is simply a name on plain paper at
+   the same height as its neighbours. */
+.md-tile-pic {
+  display: block;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+}
+
+.md-tile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.md-tile-name {
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.md-tile-price {
+  font-family: var(--font-mono);
+  font-size: var(--data-s-size);
+  letter-spacing: var(--data-s-track);
+  color: var(--ink-soft);
+}
+
+/* -- rows ---------------------------------------------------- */
+
+.md-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hairline);
+}
+
+.md-row {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 5px var(--sp-2);
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft);
+}
+.md-row:hover {
+  background: var(--paper-high);
+}
+.md-row:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+/* a flat table has no trail, so the name takes the whole measure
+   rather than leaving a column of air where a trail would be */
+.md-row:not(:has(.md-row-trail)) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.md-row-trail {
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.md-row-name {
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  color: var(--ink);
+}
+
+.md-row-price {
+  font-family: var(--font-mono);
+  font-size: var(--data-s-size);
+  letter-spacing: var(--data-s-track);
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+/* -- what the page says when it is not drawing --------------- */
+
+.md-none {
+  max-width: 1180px;
+  margin: var(--sp-6) auto;
+  text-align: center;
+  font-size: var(--ui-m-size);
+  line-height: var(--ui-m-lead);
+  color: var(--ink-faint);
+}
+
+.md-more {
+  max-width: 1180px;
+  margin: var(--sp-4) auto 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   NARROW WINDOWS. The create panel's two halves stack rather
+   than shrink: a table list at 300px is a list of truncated
+   brand names, and the whole point of the left half is that you
+   can read what you are picking.
+   ============================================================ */
+
+@media (max-width: 760px) {
+  .md-dlg-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .md-pick {
+    border-right: none;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .md-idx-head,
+  .md-dash-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .md-idx-find {
+    width: 100%;
+  }
+}

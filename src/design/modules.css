@@ -1,0 +1,500 @@
+/* ============================================================
+   THE MODULE SYSTEM SURFACES
+
+   Aligned to docs/plan/MODULE_SYSTEM.md. The dashboard is the
+   front door (§3 Screen 1), a module is a place in the business
+   (§1), and the blueprint sheet is demoted to one built-in
+   module among the rest.
+
+   Two of these are the surfaces Phase 1 names as NEW work: the
+   dashboard, and the INDEX renderer — "the one genuinely new
+   renderer" (§4). The rest of Phase 1 mounts screens that
+   already exist.
+   ============================================================ */
+
+/* ---------- the shell, under modules ------------------------- */
+
+.shell {
+  display: flex;
+  height: 660px;
+  min-width: 880px;
+  background: var(--bg);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+}
+.shell-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-canvas);
+}
+.shell-top {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--s-3);
+  height: 52px;
+  padding: 0 var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--surface-1);
+  flex: none;
+}
+.shell-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-6);
+}
+.shell-spacer {
+  flex: 1;
+}
+
+.crumb {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-size: var(--t-small-size);
+  color: var(--fg-tertiary);
+  min-width: 0;
+}
+.crumb b {
+  color: var(--fg);
+  font-weight: 570;
+  font-size: var(--t-heading-size);
+  letter-spacing: var(--t-heading-track);
+}
+
+/* THE DESIGN GATE — one control, two modes, the same screen.
+   §4 rule 7, which ViewPage.tsx:252-266 already implements: the
+   gear grows handles on the drawing in front of you and never
+   navigates. Off, a salesperson never sees it at all. */
+.gear {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: var(--h-md);
+  padding: 0 10px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.gear:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.gear--on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* ---------- the dashboard ------------------------------------ */
+
+.dash-head {
+  margin-bottom: var(--s-6);
+}
+.dash-head h3 {
+  margin: 0 0 var(--s-1);
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  letter-spacing: var(--t-display-track);
+}
+.dash-head p {
+  margin: 0;
+  color: var(--fg-tertiary);
+  font-size: var(--t-small-size);
+}
+.dash-grid {
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(268px, 100%), 1fr));
+}
+
+.mcard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--e-card);
+  text-align: left;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease);
+}
+.mcard:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--e-card-hover);
+  transform: translateY(-1px);
+}
+.mcard-top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.mcard-mark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--mcard-wash, var(--accent-wash));
+  color: var(--mcard-ink, var(--accent));
+  flex: none;
+}
+.mcard-name {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+.mcard-desc {
+  color: var(--fg-secondary);
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  min-height: 40px;
+}
+.mcard-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+.mcard-meta b {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+/* CAPABILITIES AS WORDS — not icons, not a count. §3 Screen 5.
+   The verbs are about rows and never about boats (§5), so the
+   same strip reads correctly in a pharmacy or a plant hire yard.
+   Writing verbs are tinted because everything that writes is off
+   by default and turning one on is a deliberate act. */
+.mcard-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--s-1);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+}
+.verb {
+  height: 20px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  color: var(--fg-secondary);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.verb--write {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+/* the data model is a module too, but it is ours, not theirs */
+.mcard--builtin {
+  background: transparent;
+  box-shadow: none;
+  border-style: dashed;
+}
+.mcard--new {
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+  color: var(--fg-tertiary);
+  min-height: 186px;
+  font-size: var(--t-small-size);
+  font-weight: 520;
+}
+.mcard--new:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: none;
+}
+
+/* ---------- the INDEX surface — tiles ------------------------ */
+
+.idx-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+}
+.idx-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 360px;
+  flex: 1;
+}
+.idx-search svg {
+  position: absolute;
+  left: 12px;
+  color: var(--fg-tertiary);
+  pointer-events: none;
+}
+.idx-search input {
+  height: var(--h-lg);
+  padding-left: 36px;
+  font-size: var(--t-body-size);
+}
+.idx-group {
+  margin-bottom: var(--s-6);
+}
+.idx-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.idx-brand {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg);
+}
+.idx-path {
+  color: var(--fg-quaternary);
+  font-size: var(--t-caption-size);
+}
+.idx-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-tertiary);
+}
+.idx-tiles {
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(178px, 100%), 1fr));
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  box-shadow: var(--e-card);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  padding: 0;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease);
+}
+.tile:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--e-card-hover);
+  transform: translateY(-2px);
+}
+.tile-pic {
+  aspect-ratio: 16 / 10;
+  background: var(--surface-3);
+  display: grid;
+  place-items: center;
+  color: var(--fg-quaternary);
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+/* A TILE WITH NO PICTURE SAYS NOTHING ABOUT A PICTURE (§6.1).
+   It shows the row label and stops — no camera glyph, no "no
+   image" placeholder. A missing photo is the admin's job, not
+   the salesperson's problem, and a broken-image icon in front of
+   a customer is worse than a plain name. */
+.tile-pic--none {
+  background: var(--surface-2);
+  padding: var(--s-3);
+  font-size: var(--t-caption-size);
+  font-weight: 560;
+  color: var(--fg-tertiary);
+  text-align: center;
+  line-height: 1.4;
+}
+.tile-body {
+  padding: var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tile-name {
+  font-size: var(--t-small-size);
+  font-weight: 540;
+  color: var(--fg);
+  line-height: 1.35;
+}
+.tile-price {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.tile-rung {
+  font-size: 11px;
+  color: var(--fg-quaternary);
+}
+
+/* ---------- the capability strip ----------------------------- */
+
+.caps {
+  display: grid;
+  gap: 2px;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+}
+.cap {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border-radius: var(--r-control);
+  border: 1px solid transparent;
+  transition: background var(--d-fast) var(--ease);
+}
+.cap:hover {
+  background: var(--surface-2);
+}
+.cap-text {
+  min-width: 0;
+}
+.cap-verb {
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  color: var(--fg);
+}
+.cap-note {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  line-height: 1.45;
+}
+
+/* A CAPABILITY THAT CANNOT BE TURNED ON SAYS WHAT IS MISSING
+   (§5). This is ConstraintDef.because applied to a switch — the
+   reason written at the moment of the decision, in a sentence,
+   in the place where the switch is. It is the whole difference
+   between this and eleven checkboxes with no consumers. */
+.cap--refused {
+  background: var(--warning-wash);
+  border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+}
+.cap--refused .cap-verb {
+  color: var(--fg-secondary);
+}
+.cap--refused .cap-note {
+  color: var(--warning);
+}
+.sw--locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- bound / unmapped ---------------------------------
+   §4 rule 5, and the one genuinely good idea in HelmLogic's dead
+   designer: a bound block wears a badge, an unbound one says so
+   where it stands rather than failing silently. */
+
+.blk {
+  padding: var(--s-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+.blk--broken {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  background: var(--danger-wash);
+}
+.blk-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+}
+.blk-name {
+  font-size: var(--t-small-size);
+  font-weight: 570;
+}
+.blk-kind {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg-quaternary);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 19px;
+  padding: 0 7px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 550;
+  margin-left: auto;
+}
+.badge--bound {
+  background: var(--success-wash);
+  color: var(--success);
+}
+.badge--unmapped {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+.blk-unmapped {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  color: var(--danger);
+}
+.blk-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.blk-note {
+  margin-top: var(--s-2);
+  font-size: var(--t-caption-size);
+  color: var(--danger);
+}
+
+/* handles, grown by the gear */
+.blk-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+  color: var(--fg-tertiary);
+  cursor: grab;
+}

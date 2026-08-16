@@ -22,6 +22,9 @@ import {
   type RuleNodeConfigMap,
   type RuleNodeKind,
   type ViewDef,
+  type ModuleDef,
+  canBeModuleMaster,
+  DEFAULT_CAPABILITIES,
   type XY,
 } from '@/types/model'
 import { defaultMeta, repository, type ProjectSnapshot } from '@/db/repository'
@@ -144,6 +147,16 @@ interface ProjectStore {
   updateView: (id: string, patch: Partial<Omit<ViewDef, 'id' | 'createdAt'>>) => void
   deleteView: (id: string) => void
 
+  /* modules — the places in the business an admin makes for their org */
+  modules: Record<string, ModuleDef>
+  /** Three clicks: a table, a name, create. Everything else is derived
+   *  from the table and tuned later, so a module works before it is
+   *  configured. Also mints the detail view page, so opening an item
+   *  works on the first click rather than after a second setup step. */
+  createModule: (tableIds: string[], name?: string, description?: string) => ModuleDef | null
+  updateModule: (id: string, patch: Partial<Omit<ModuleDef, 'id' | 'createdAt'>>) => void
+  deleteModule: (id: string) => void
+
   /** which rule the canvas is currently drawing (UI state — not persisted) */
   activeRuleId: string | null
   setActiveRule: (id: string | null) => void
@@ -214,6 +227,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     rules: {},
     rowsByEntity: {},
     views: {},
+    modules: {},
     selection: null,
     inspectorTab: 'schema',
 
@@ -265,6 +279,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         rules: {},
         rowsByEntity: {},
         views: {},
+        modules: {},
         selection: null,
       })
     },
@@ -281,6 +296,17 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         groups: Object.fromEntries(data.groups.map((g) => [g.id, g])),
         rules: Object.fromEntries(data.rules.map((r) => [r.id, r])),
         rowsByEntity: data.rowsByEntity ?? {},
+        /* A SWAP REPLACES THE WHOLE PROJECT, so anything pointing INTO
+           the old one goes with it. Views and modules both hold table
+           ids; an import or a demo load used to leave the previous
+           project's pages behind, bound to tables that no longer exist,
+           and the persistence layer then wrote them back out as if they
+           belonged to the incoming set. A module surviving a swap is
+           worse than a view surviving one, because a module is the
+           thing a person navigates by — they would arrive somewhere
+           that cannot draw. */
+        views: {},
+        modules: {},
         selection: null,
       }))
     },
@@ -733,6 +759,60 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         const views = { ...s.views }
         delete views[id]
         return { views }
+      })
+    },
+
+    /* -- modules ------------------------------------------------ */
+
+
+    createModule: (tableIds, name, description) => {
+      const clean = tableIds.filter((id) => {
+        const e = get().entities[id]
+        return e !== undefined && canBeModuleMaster(e)
+      })
+      if (clean.length === 0) return null
+      const primary = get().entities[clean[0]]
+
+      /* THE DETAIL SURFACE IS MINTED WITH THE MODULE, not on first open.
+         A module whose items cannot be opened until somebody visits a
+         second screen is a module that looks broken for one click, and
+         createView is idempotent by contract — a table that already has
+         a view keeps it rather than gaining a second. */
+      const view = get().createView(clean[0])
+
+      const order = Object.values(get().modules).length
+      const mod: ModuleDef = {
+        id: newId(),
+        name: name?.trim() || primary.name,
+        description: description?.trim() || primary.description?.trim() || '',
+        tableIds: clean,
+        capabilities: [...DEFAULT_CAPABILITIES],
+        /* a table carrying pictures is a catalogue and wants tiles;
+           everything else is a list somebody scans */
+        index: primary.fields.some((f) => f.type === 'image') ? 'tiles' : 'rows',
+        viewId: view.id,
+        accent: primary.accent,
+        order,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      }
+      mutate((s) => ({ modules: { ...s.modules, [mod.id]: mod } }))
+      return mod
+    },
+
+    updateModule: (id, patch) => {
+      mutate((s) => {
+        const m = s.modules[id]
+        if (!m) return {}
+        return { modules: { ...s.modules, [id]: touch({ ...m, ...patch }) } }
+      })
+    },
+
+    deleteModule: (id) => {
+      mutate((s) => {
+        const modules = { ...s.modules }
+        delete modules[id]
+        return { modules }
       })
     },
 

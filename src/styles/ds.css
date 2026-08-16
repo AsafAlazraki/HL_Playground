@@ -20,136 +20,21 @@
    6. Every text token on its intended ground clears 4.5:1. The
       measured figures are recorded beside each one.
 
-   Dark is the default. Light exists because a quote is printed.
+   Light is the default. Dark is a first-class alternate, not an
+   afterthought: every token below has both values, measured.
    ============================================================ */
 
+/* ------------------------------------------------------------
+   LIGHT IS THE DEFAULT and lives on :root, so a page that never
+   sets the attribute is light -- and a quote, which is paper and
+   prints, inherits the right ground with no override at all.
+
+   Both selectors are specificity (0,1,0): `:root` is a
+   pseudo-class, `[data-theme]` an attribute. The DARK block
+   therefore wins only because it comes SECOND in source order.
+   Do not reorder these two blocks.
+   ------------------------------------------------------------ */
 :root,
-[data-theme='dark'] {
-  color-scheme: dark;
-
-  /* -- ground ------------------------------------------------
-     Cool-neutral near-black. The steps are close on purpose: on
-     dark, a 6-8 point lift reads as "raised" without ever
-     looking like a different colour. */
-  --bg-sunken: #07080a;   /* behind the canvas, wells */
-  --bg: #0a0b0d;          /* app ground */
-  --bg-canvas: #0c0e11;   /* the sheet */
-  --surface-1: #131519;   /* cards, panels, the resting plane */
-  --surface-2: #1a1d22;   /* raised: popovers, menus, selected rows */
-  --surface-3: #22262c;   /* inputs, hover on surface-2 */
-  --surface-4: #2a2f36;   /* pressed, hover on surface-3 */
-
-  /* -- lines --------------------------------------------------
-     Alpha, not hex, so one border composes correctly over every
-     surface above. */
-  --line-subtle: rgba(255, 255, 255, 0.06);
-  --line: rgba(255, 255, 255, 0.09);
-  --line-strong: rgba(255, 255, 255, 0.15);
-
-  /* -- text ---------------------------------------------------
-     Contrast measured against --surface-1 (#131519):
-       --fg            15.9 : 1
-       --fg-secondary   7.5 : 1
-       --fg-tertiary    4.8 : 1   <- the floor; nothing below it
-                                     is allowed to carry meaning
-       --fg-quaternary  3.0 : 1   <- decoration only (rules,
-                                     disabled marks, grid ticks) */
-  --fg: #edeef0;
-  --fg-secondary: #a0a6b0;
-  --fg-tertiary: #7b828d;
-  --fg-quaternary: #565d68;
-  --fg-on-accent: #ffffff;
-
-  /* -- accent -------------------------------------------------
-     One hue, roughly four appearances per screen. 5.1:1 on
-     --surface-1, so it is legal as text and not only as paint. */
-  --accent: #6e7bfa;
-  --accent-hover: #8189ff;
-  --accent-press: #5a66e0;
-  --accent-fg: #ffffff;
-  --accent-wash: rgba(110, 123, 250, 0.14);
-  --accent-wash-strong: rgba(110, 123, 250, 0.22);
-  --accent-line: rgba(110, 123, 250, 0.38);
-  --accent-glow: rgba(110, 123, 250, 0.28);
-
-  /* -- semantic ----------------------------------------------- */
-  --success: #56d364;
-  --success-wash: rgba(86, 211, 100, 0.13);
-  --warning: #e3b341;
-  --warning-wash: rgba(227, 179, 65, 0.13);
-  --danger: #ff7b72;
-  --danger-wash: rgba(255, 123, 114, 0.13);
-  --danger-solid: #d93a31;
-
-  /* -- the kind palette ---------------------------------------
-     Eight hues cut to roughly equal luminance so a sheet of
-     mixed tables reads as ONE drawing. Measured on --surface-1
-     they span 6.2:1 to 9.6:1 — the cool three sit low because
-     cool hues always do, not because they were picked loose.
-
-     This replaces 22 inks (7 accents + 7 "bright" variants + 8
-     field-type colours). Field types no longer carry hue at all;
-     see --chip-* below. */
-  --kind-indigo: #7c8cff;
-  --kind-cyan: #4fc3d9;
-  --kind-teal: #3fcba8;
-  --kind-green: #5fd07e;
-  --kind-amber: #e2a83e;
-  --kind-orange: #f08a4b;
-  --kind-rose: #f26d8b;
-  --kind-violet: #b182f5;
-  --kind-slate: #8a93a3;
-
-  /* what each table kind takes. One assignment, one place. */
-  --kind-boat: var(--kind-indigo);
-  --kind-motor: var(--kind-orange);
-  --kind-trailer: var(--kind-amber);
-  --kind-accessory: var(--kind-teal);
-  --kind-package: var(--kind-violet);
-  --kind-dealer: var(--kind-cyan);
-  --kind-custom: var(--kind-slate);
-  --kind-join: var(--kind-rose);
-
-  /* -- field-type chips ---------------------------------------
-     Eight coloured chips became three roles. A type chip is
-     metadata about a column, not a category of product, and it
-     has no business competing with the kind palette.
-       plain     TXT NUM DAT LST  — grey
-       computed  FX               — accent
-       linked    REF IMG          — a single cool hue */
-  --chip-fg: var(--fg-tertiary);
-  --chip-bg: rgba(255, 255, 255, 0.05);
-  --chip-computed-fg: var(--accent);
-  --chip-computed-bg: var(--accent-wash);
-  --chip-linked-fg: var(--kind-cyan);
-  --chip-linked-bg: rgba(79, 195, 217, 0.12);
-
-  /* -- elevation ----------------------------------------------
-     On dark the shadow alone does almost nothing; the lift comes
-     from the surface step. Shadow is the second half, and it is
-     tinted to the ground rather than pure black so it does not
-     punch a hole. */
-  --e1: 0 1px 2px rgba(0, 0, 0, 0.45);
-  --e2:
-    0 2px 4px rgba(0, 0, 0, 0.32),
-    0 8px 20px -6px rgba(0, 0, 0, 0.5);
-  --e3:
-    0 4px 10px rgba(0, 0, 0, 0.35),
-    0 20px 48px -12px rgba(0, 0, 0, 0.62);
-  --e-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px -8px rgba(0, 0, 0, 0.5);
-  --e-card-hover:
-    0 2px 4px rgba(0, 0, 0, 0.4),
-    0 14px 32px -10px rgba(0, 0, 0, 0.6);
-
-  /* -- the canvas ---------------------------------------------
-     The blueprint grid is gone. What is left is a barely-there
-     dot field that tells you the plane is pannable and then
-     shuts up. */
-  --canvas-dot: rgba(255, 255, 255, 0.055);
-  --canvas-edge: rgba(255, 255, 255, 0.18);
-  --canvas-edge-active: var(--accent);
-}
-
 [data-theme='light'] {
   color-scheme: light;
 
@@ -165,14 +50,17 @@
   --line: rgba(9, 12, 18, 0.11);
   --line-strong: rgba(9, 12, 18, 0.2);
 
-  /* measured on #ffffff: 17.4 / 8.0 / 4.9 / 3.0 */
+  /* Measured in-browser against --surface-1 (#ffffff), not
+     estimated:  18.9 / 7.7 / 4.7 / 2.8.
+     --fg-tertiary is the floor and clears 4.5. --fg-quaternary
+     does NOT, which is why it is barred from carrying meaning. */
   --fg: #0e1116;
   --fg-secondary: #4b5462;
   --fg-tertiary: #6b7482;
   --fg-quaternary: #949cab;
   --fg-on-accent: #ffffff;
 
-  /* 5.6:1 on white */
+  /* 5.9:1 on white, measured */
   --accent: #4a56d2;
   --accent-hover: #3d48bd;
   --accent-press: #333da3;
@@ -223,6 +111,146 @@
   --canvas-dot: rgba(9, 12, 18, 0.07);
   --canvas-edge: rgba(9, 12, 18, 0.22);
   --canvas-edge-active: var(--accent);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* -- ground ------------------------------------------------
+     Cool-neutral near-black. The steps are close on purpose: on
+     dark, a 6-8 point lift reads as "raised" without ever
+     looking like a different colour. */
+  --bg-sunken: #07080a;   /* behind the canvas, wells */
+  --bg: #0a0b0d;          /* app ground */
+  --bg-canvas: #0c0e11;   /* the sheet */
+  --surface-1: #131519;   /* cards, panels, the resting plane */
+  --surface-2: #1a1d22;   /* raised: popovers, menus, selected rows */
+  --surface-3: #22262c;   /* inputs, hover on surface-2 */
+  --surface-4: #2a2f36;   /* pressed, hover on surface-3 */
+
+  /* -- lines --------------------------------------------------
+     Alpha, not hex, so one border composes correctly over every
+     surface above. */
+  --line-subtle: rgba(255, 255, 255, 0.06);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.15);
+
+  /* -- text ---------------------------------------------------
+     Measured in-browser against --surface-1 (#131519):
+       --fg            15.7 : 1
+       --fg-secondary   7.5 : 1
+       --fg-tertiary    4.7 : 1   <- the floor. Clears 4.5.
+       --fg-quaternary  2.8 : 1   <- does NOT clear 4.5, and is
+                                     therefore decoration only:
+                                     rules, ticks, disabled marks.
+                                     Never a word that matters. */
+  --fg: #edeef0;
+  --fg-secondary: #a0a6b0;
+  --fg-tertiary: #7b828d;
+  --fg-quaternary: #565d68;
+  --fg-on-accent: #ffffff;
+
+  /* -- accent -------------------------------------------------
+     One hue, roughly four appearances per screen. 5.1:1 on
+     --surface-1 measured, so it is legal as text and not only as
+     paint. (Light's accent measures 5.9:1 on white.) */
+  --accent: #6e7bfa;
+  --accent-hover: #8189ff;
+  --accent-press: #5a66e0;
+  --accent-fg: #ffffff;
+  --accent-wash: rgba(110, 123, 250, 0.14);
+  --accent-wash-strong: rgba(110, 123, 250, 0.22);
+  --accent-line: rgba(110, 123, 250, 0.38);
+  --accent-glow: rgba(110, 123, 250, 0.28);
+
+  /* -- semantic ----------------------------------------------- */
+  --success: #56d364;
+  --success-wash: rgba(86, 211, 100, 0.13);
+  --warning: #e3b341;
+  --warning-wash: rgba(227, 179, 65, 0.13);
+  --danger: #ff7b72;
+  --danger-wash: rgba(255, 123, 114, 0.13);
+  --danger-solid: #d93a31;
+
+  /* -- the kind palette ---------------------------------------
+     Eight hues cut to roughly equal luminance so a sheet of
+     mixed tables reads as ONE drawing. Measured in-browser on
+     --surface-1 they span 5.9:1 to 9.0:1 on dark and 5.3:1 to
+     6.7:1 on light; every one of the sixteen clears 4.5.
+
+     This replaces 22 inks (7 accents + 7 "bright" variants + 8
+     field-type colours). Field types no longer carry hue at all;
+     see --chip-* below. */
+  --kind-indigo: #7c8cff;
+  --kind-cyan: #4fc3d9;
+  --kind-teal: #3fcba8;
+  --kind-green: #5fd07e;
+  --kind-amber: #e2a83e;
+  --kind-orange: #f08a4b;
+  --kind-rose: #f26d8b;
+  --kind-violet: #b182f5;
+  --kind-slate: #8a93a3;
+
+  /* -- field-type chips ---------------------------------------
+     Eight coloured chips became three roles. A type chip is
+     metadata about a column, not a category of product, and it
+     has no business competing with the kind palette.
+       plain     TXT NUM DAT LST  — grey
+       computed  FX               — accent
+       linked    REF IMG          — a single cool hue */
+  --chip-fg: var(--fg-tertiary);
+  --chip-bg: rgba(255, 255, 255, 0.05);
+  --chip-computed-fg: var(--accent);
+  --chip-computed-bg: var(--accent-wash);
+  --chip-linked-fg: var(--kind-cyan);
+  --chip-linked-bg: rgba(79, 195, 217, 0.12);
+
+  /* -- elevation ----------------------------------------------
+     On dark the shadow alone does almost nothing; the lift comes
+     from the surface step. Shadow is the second half, and it is
+     tinted to the ground rather than pure black so it does not
+     punch a hole. */
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --e2:
+    0 2px 4px rgba(0, 0, 0, 0.32),
+    0 8px 20px -6px rgba(0, 0, 0, 0.5);
+  --e3:
+    0 4px 10px rgba(0, 0, 0, 0.35),
+    0 20px 48px -12px rgba(0, 0, 0, 0.62);
+  --e-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px -8px rgba(0, 0, 0, 0.5);
+  --e-card-hover:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 14px 32px -10px rgba(0, 0, 0, 0.6);
+
+  /* -- the canvas ---------------------------------------------
+     The blueprint grid is gone. What is left is a barely-there
+     dot field that tells you the plane is pannable and then
+     shuts up. */
+  --canvas-dot: rgba(255, 255, 255, 0.055);
+  --canvas-edge: rgba(255, 255, 255, 0.18);
+  --canvas-edge-active: var(--accent);
+}
+
+/* ============================================================
+   WHAT EACH TABLE KIND TAKES — theme-independent, and therefore
+   NOT inside either theme block.
+
+   The mapping (a boat is indigo) is a product decision and never
+   changes; only the ink of "indigo" changes between light and
+   dark. Keeping the mapping here means a theme block that forgets
+   to restate it cannot silently resolve --kind-boat to nothing,
+   which is exactly what happened when light was promoted to the
+   default and every kind rail on the sheet fell back to grey.
+   ============================================================ */
+:root {
+  --kind-boat: var(--kind-indigo);
+  --kind-motor: var(--kind-orange);
+  --kind-trailer: var(--kind-amber);
+  --kind-accessory: var(--kind-teal);
+  --kind-package: var(--kind-violet);
+  --kind-dealer: var(--kind-cyan);
+  --kind-custom: var(--kind-slate);
+  --kind-join: var(--kind-rose);
 }
 
 /* ============================================================

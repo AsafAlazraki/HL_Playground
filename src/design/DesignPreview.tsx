@@ -3,10 +3,17 @@
 
    One route, no store, no persistence. It shows the new
    foundations and every component that carries the redesign,
-   with the outgoing version beside the three that change most.
+   with the outgoing version beside the ones where the redesign
+   is an argument rather than a repaint.
 
-   All content is real: the tables, counts, column names and
-   figures are Northside Marine's, taken from src/demos.
+   IT IS ALIGNED TO docs/plan/MODULE_SYSTEM.md. The dashboard is
+   the front door, a module is a place in the business, and the
+   blueprint sheet is one built-in module rather than the app.
+   The two surfaces that plan names as genuinely new work — the
+   dashboard and the INDEX renderer — are designed here.
+
+   All content is real: the tables, counts, column names, bands
+   and figures are Northside Marine's, from src/demos.
    ============================================================ */
 
 import { useState } from 'react'
@@ -16,8 +23,11 @@ import {
   Boat,
   CaretDown,
   Check,
+  DotsSixVertical,
   Engine,
   FileText,
+  Gear,
+  House,
   ListChecks,
   MagnifyingGlass,
   Moon,
@@ -29,6 +39,7 @@ import {
   Tag,
   TreeStructure,
   TruckTrailer,
+  Warning,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 
@@ -68,6 +79,18 @@ function Swatch({ name, value, ink }: { name: string; value: string; ink?: strin
   )
 }
 
+function Switch({ on, locked }: { on: boolean; locked?: boolean }) {
+  const [v, setV] = useState(on)
+  return (
+    <button
+      className={`sw${v ? ' sw--on' : ''}${locked ? ' sw--locked' : ''}`}
+      aria-label="toggle"
+      disabled={locked}
+      onClick={() => !locked && setV((x) => !x)}
+    />
+  )
+}
+
 /* ---------- the table card ---------------------------------- */
 
 type KindKey = 'boat' | 'motor' | 'trailer' | 'accessory' | 'package' | 'dealer' | 'custom'
@@ -93,13 +116,7 @@ interface CardData {
   rowNoun: string
 }
 
-function TableCard({
-  data,
-  state,
-}: {
-  data: CardData
-  state?: 'selected' | 'dim'
-}) {
+function TableCard({ data, state }: { data: CardData; state?: 'selected' | 'dim' }) {
   const Mark = KIND_MARK[data.kind]
   return (
     <div
@@ -162,9 +179,7 @@ function OldCard({ name }: { name: string }) {
         <Boat size={11} weight="light" />
       </div>
       <div className="oldcard-name">{name}</div>
-      <div className="oldcard-bands">
-        IDENTITY CAPACITY CONSTRUCTION COST BUILD +3
-      </div>
+      <div className="oldcard-bands">IDENTITY CAPACITY CONSTRUCTION COST BUILD +3</div>
       <div className="oldcard-stats">
         <span>
           40 <i>VARIANTS</i>
@@ -177,55 +192,37 @@ function OldCard({ name }: { name: string }) {
   )
 }
 
-/* ---------- the panel --------------------------------------- */
+/* ============================================================
+   THE SHELL UNDER MODULES
+   ============================================================ */
 
-const NAV_PRIMARY: { icon: Icon; label: string; count?: string; active?: boolean }[] = [
-  { icon: TreeStructure, label: 'Sheet', count: '22', active: true },
-  { icon: ListChecks, label: 'Rules', count: '6' },
-  { icon: ArrowsLeftRight, label: 'Fitment', count: '5' },
-  { icon: FileText, label: 'Quotes', count: '1' },
+interface ModuleRow {
+  name: string
+  count: string
+  hue: string
+  active?: boolean
+}
+
+const MODULES: ModuleRow[] = [
+  { name: 'Boats', count: '159', hue: 'boat', active: true },
+  { name: 'Trailers', count: '96', hue: 'trailer' },
+  { name: 'Parts & Accessories', count: '26', hue: 'accessory' },
+  { name: 'Quotes', count: '1', hue: 'package' },
 ]
 
-const NAV_TABLES: { group: string; count: string; kind: KindKey | 'join'; items: [string, number][] }[] = [
-  {
-    group: 'Boats',
-    count: '07',
-    kind: 'boat',
-    items: [
-      ['Formosa', 26],
-      ['Haines Signature', 9],
-      ['Highfield Inflatables', 40],
-      ['Jeanneau', 24],
-    ],
-  },
-  {
-    group: 'Motors',
-    count: '02',
-    kind: 'motor',
-    items: [
-      ['ePropulsion Outboards', 14],
-      ['Yamaha Outboards', 43],
-    ],
-  },
-  {
-    group: 'Trailers',
-    count: '07',
-    kind: 'trailer',
-    items: [
-      ['Dunbier Trailers', 16],
-      ['NSM Custom Trailers', 18],
-    ],
-  },
+const BUILTINS: { icon: Icon; name: string; count: string }[] = [
+  { icon: TreeStructure, name: 'Data model', count: '22' },
+  { icon: ListChecks, name: 'Business rules', count: '6' },
+  { icon: ArrowsLeftRight, name: 'Fitment flows', count: '5' },
 ]
 
-function NewPanel() {
-  const [q, setQ] = useState('')
+function ModuleNav({ active = 'Boats' }: { active?: string }) {
   return (
     <div className="nav">
       <div className="nav-head">
         <div className="nav-head-text">
           <div className="nav-org">Northside Marine</div>
-          <div className="nav-industry">Marine · 22 tables · 651 rows</div>
+          <div className="nav-industry">Marine · 4 modules</div>
         </div>
         <button className="ds-btn ds-btn--ghost ds-btn--sm" aria-label="Switch project">
           <CaretDown size={14} />
@@ -235,55 +232,61 @@ function NewPanel() {
       <div className="nav-search">
         <div className="nav-search-box">
           <MagnifyingGlass size={14} />
-          <input
-            className="ds-input"
-            placeholder="Search tables and columns"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
+          <input className="ds-input" placeholder="Search everything" readOnly />
         </div>
       </div>
 
       <div className="nav-group">
-        {NAV_PRIMARY.map(({ icon: I, label, count, active }) => (
-          <button className={`nav-item${active ? ' nav-item--active' : ''}`} key={label}>
-            <I size={16} />
-            <span className="nav-item-label">{label}</span>
-            <span className="nav-count">{count}</span>
-          </button>
-        ))}
+        <button className={`nav-item${active === 'Dashboard' ? ' nav-item--active' : ''}`}>
+          <House size={16} />
+          <span className="nav-item-label">Dashboard</span>
+        </button>
       </div>
 
       <div className="nav-scroll">
-        {NAV_TABLES.map((g) => (
-          <div className="nav-group" key={g.group}>
-            <div className="nav-group-label">
-              <span>{g.group}</span>
-              <span>{g.count}</span>
-            </div>
-            {g.items.map(([name, n]) => (
-              <button className="nav-item" key={name}>
-                <span
-                  className="nav-dot"
-                  style={{ ['--nav-dot' as string]: `var(--kind-${g.kind})` }}
-                />
-                <span className="nav-item-label">{name}</span>
-                <span className="nav-count">{n}</span>
-              </button>
-            ))}
+        <div className="nav-group">
+          <div className="nav-group-label">
+            <span>Modules</span>
+            <span>04</span>
           </div>
-        ))}
-      </div>
+          {MODULES.map((m) => (
+            <button
+              className={`nav-item${m.name === active ? ' nav-item--active' : ''}`}
+              key={m.name}
+            >
+              <span
+                className="nav-dot"
+                style={{ ['--nav-dot' as string]: `var(--kind-${m.hue})` }}
+              />
+              <span className="nav-item-label">{m.name}</span>
+              <span className="nav-count">{m.count}</span>
+            </button>
+          ))}
+          <button className="nav-item" style={{ color: 'var(--fg-tertiary)' }}>
+            <Plus size={16} />
+            <span className="nav-item-label">New module</span>
+          </button>
+        </div>
 
-      <div className="nav-foot">
-        <button className="ds-btn ds-btn--secondary">
-          <Plus size={14} /> New table
-        </button>
+        <div className="nav-group">
+          <div className="nav-group-label">
+            <span>Set up</span>
+            <span />
+          </div>
+          {BUILTINS.map(({ icon: I, name, count }) => (
+            <button className="nav-item" key={name}>
+              <I size={16} />
+              <span className="nav-item-label">{name}</span>
+              <span className="nav-count">{count}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
+/* the outgoing panel, rebuilt for the comparison */
 function OldPanel() {
   return (
     <div className="oldnav">
@@ -330,6 +333,251 @@ function OldPanel() {
     </div>
   )
 }
+
+/* ---------- the dashboard ------------------------------------ */
+
+interface ModCard {
+  icon: Icon
+  hue: string
+  name: string
+  desc: string
+  master: string
+  count: string
+  countNoun: string
+  read: string[]
+  write: string[]
+}
+
+const DASH: ModCard[] = [
+  {
+    icon: Boat,
+    hue: 'boat',
+    name: 'Boats',
+    desc: 'Every hull we sell, across seven brands, with what fits each one.',
+    master: 'Highfield Inflatables + 6',
+    count: '159',
+    countNoun: 'rows',
+    read: ['browse', 'search', 'open'],
+    write: ['relate', 'quote'],
+  },
+  {
+    icon: TruckTrailer,
+    hue: 'trailer',
+    name: 'Trailers',
+    desc: 'Seven trailer brands with their ATM, tare and rego costs.',
+    master: 'NSM Custom Trailers + 6',
+    count: '96',
+    countNoun: 'rows',
+    read: ['browse', 'search', 'open'],
+    write: [],
+  },
+  {
+    icon: Tag,
+    hue: 'accessory',
+    name: 'Parts & Accessories',
+    desc: 'The parts counter. Priced, categorised, editable in place.',
+    master: 'Parts & Accessories',
+    count: '26',
+    countNoun: 'rows',
+    read: ['browse', 'search', 'open'],
+    write: ['add', 'edit'],
+  },
+  {
+    icon: FileText,
+    hue: 'package',
+    name: 'Quotes',
+    desc: 'Every quote written, draft and issued, searchable by customer.',
+    master: 'Documents',
+    count: '1',
+    countNoun: 'document',
+    read: ['browse', 'search', 'open', 'export'],
+    write: ['edit', 'delete'],
+  },
+]
+
+function Dashboard() {
+  return (
+    <>
+      <div className="dash-head">
+        <h3>Northside Marine</h3>
+        <p>Four modules · 22 tables · 651 rows</p>
+      </div>
+      <div className="dash-grid">
+        {DASH.map((m) => (
+          <button
+            className="mcard"
+            key={m.name}
+            style={{
+              ['--mcard-ink' as string]: `var(--kind-${m.hue})`,
+              ['--mcard-wash' as string]: `color-mix(in srgb, var(--kind-${m.hue}) 13%, transparent)`,
+            }}
+          >
+            <div className="mcard-top">
+              <span className="mcard-mark">
+                <m.icon size={17} />
+              </span>
+              <span className="mcard-name">{m.name}</span>
+            </div>
+            <div className="mcard-desc">{m.desc}</div>
+            <div className="mcard-meta">
+              <b>{m.count}</b>
+              <span>
+                {m.countNoun} in {m.master}
+              </span>
+            </div>
+            <div className="mcard-verbs">
+              {m.read.map((v) => (
+                <span className="verb" key={v}>
+                  {v}
+                </span>
+              ))}
+              {m.write.map((v) => (
+                <span className="verb verb--write" key={v}>
+                  {v}
+                </span>
+              ))}
+            </div>
+          </button>
+        ))}
+
+        <button
+          className="mcard mcard--builtin"
+          style={{
+            ['--mcard-ink' as string]: 'var(--fg-tertiary)',
+            ['--mcard-wash' as string]: 'var(--chip-bg)',
+          }}
+        >
+          <div className="mcard-top">
+            <span className="mcard-mark">
+              <TreeStructure size={17} />
+            </span>
+            <span className="mcard-name">Data model</span>
+          </div>
+          <div className="mcard-desc">
+            The sheet the whole business is drawn on. Built in — you did not make it and cannot
+            delete it.
+          </div>
+          <div className="mcard-meta">
+            <b>22</b>
+            <span>tables · 651 rows</span>
+          </div>
+          <div className="mcard-verbs">
+            <span className="verb">built in</span>
+          </div>
+        </button>
+
+        <button className="mcard mcard--new">
+          <Plus size={20} />
+          New module
+        </button>
+      </div>
+    </>
+  )
+}
+
+/* ---------- the INDEX surface — the one new renderer --------- */
+
+interface TileData {
+  name: string
+  price?: string
+  pic: boolean
+}
+
+const HIGHFIELD_SPORT: TileData[] = [
+  { name: 'SP520 (PVC) W-W-WB', price: '41,340', pic: true },
+  { name: 'SP560 (PVC) LG-W-WB', price: '47,905', pic: true },
+  { name: 'SP560 (PVC) B-W-C', price: '47,905', pic: true },
+  { name: 'SP560 (HYP) W-W-WB', price: '51,190', pic: true },
+  { name: 'SP600 (PVC) B-B-DB', price: '58,420', pic: false },
+]
+
+const STACER_OPEN: TileData[] = [
+  { name: '429 Seaway', price: '18,990', pic: true },
+  { name: '449 Seaway', price: '21,450', pic: true },
+  { name: '481 Fishabout', price: '26,880', pic: true },
+]
+
+function Tile({ t }: { t: TileData }) {
+  return (
+    <button className="tile">
+      {t.pic ? (
+        <span className="tile-pic">
+          <Boat size={26} weight="thin" />
+        </span>
+      ) : (
+        <span className="tile-pic tile-pic--none">{t.name}</span>
+      )}
+      <span className="tile-body">
+        <span className="tile-name">{t.name}</span>
+        <span className="tile-price">${t.price}</span>
+        <span className="tile-rung">cash</span>
+      </span>
+    </button>
+  )
+}
+
+function IndexSurface() {
+  return (
+    <>
+      <div className="idx-bar">
+        <label className="idx-search">
+          <MagnifyingGlass size={16} />
+          <input className="ds-input" placeholder="Search 159 boats by name" readOnly />
+        </label>
+        <div className="pv-top-spacer" />
+        <button className="ds-btn ds-btn--ghost ds-btn--sm">Tiles</button>
+        <button className="ds-btn ds-btn--ghost ds-btn--sm">Rows</button>
+      </div>
+
+      <div className="idx-group">
+        <div className="idx-group-head">
+          <span className="idx-brand">Highfield Inflatables</span>
+          <span className="idx-path">▸ Sport</span>
+          <span className="idx-count">21 variants</span>
+        </div>
+        <div className="idx-tiles">
+          {HIGHFIELD_SPORT.map((t) => (
+            <Tile t={t} key={t.name} />
+          ))}
+        </div>
+      </div>
+
+      <div className="idx-group">
+        <div className="idx-group-head">
+          <span className="idx-brand">Stacer</span>
+          <span className="idx-path">▸ Open Boats</span>
+          <span className="idx-count">26 models</span>
+        </div>
+        <div className="idx-tiles">
+          {STACER_OPEN.map((t) => (
+            <Tile t={t} key={t.name} />
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+/* ---------- capabilities ------------------------------------- */
+
+const CAPS: { verb: string; note: string; on: boolean; refused?: string }[] = [
+  { verb: 'browse', note: 'The index surface exists at all.', on: true },
+  { verb: 'search', note: 'A field over the index. Every result opens.', on: true },
+  { verb: 'open', note: 'A row opens its detail surface.', on: true },
+  { verb: 'add', note: 'A NEW button on the index; a blank row.', on: false },
+  { verb: 'edit', note: 'Detail cells accept typing.', on: false },
+  { verb: 'delete', note: 'A row can be removed, with a confirm.', on: false },
+  { verb: 'relate', note: 'Pin and unpin rows inside related blocks.', on: true },
+  {
+    verb: 'quote',
+    note: 'Quote this one, on the detail surface.',
+    on: false,
+    refused:
+      'Nothing on this table is marked as a price. Set price columns on Stacer Trailers first.',
+  },
+  { verb: 'export', note: 'The index’s rows leave as a file.', on: false },
+  { verb: 'import', note: 'Rows arrive from a file into the master table.', on: false },
+]
 
 /* ---------- the grid ---------------------------------------- */
 
@@ -454,13 +702,7 @@ function NewGrid() {
 
 /* ---------- rule sentence ------------------------------------ */
 
-function RuleCard({
-  on,
-  incomplete,
-}: {
-  on: boolean
-  incomplete?: boolean
-}) {
+function RuleCard({ on, incomplete }: { on: boolean; incomplete?: boolean }) {
   const [enabled, setEnabled] = useState(on)
   return (
     <div className="rule">
@@ -515,24 +757,39 @@ const TYPE_STEPS: [string, string, string][] = [
   ['label', '11 / 600 / 1.30 / +0.07em', 'ds-label'],
 ]
 
+/* Contrast is a property of a PAIR, so it changes with the theme.
+   These are measured in-browser against --surface-1, not
+   estimated — an earlier pass asserted four figures by hand and
+   three of them were wrong. */
+const TEXT_RAMP: [string, string, string, string][] = [
+  ['Primary — names, values, anything read', '--fg', '18.9 : 1', '15.7 : 1'],
+  ['Secondary — descriptions, help, sentences', '--fg-secondary', '7.7 : 1', '7.5 : 1'],
+  ['Tertiary — metadata. The floor.', '--fg-tertiary', '4.7 : 1', '4.7 : 1'],
+  ['Quaternary — decoration only, never a word', '--fg-quaternary', '2.8 : 1', '2.8 : 1'],
+]
+
 const TOC = [
+  ['dashboard', 'Dashboard'],
+  ['index', 'Index'],
+  ['nav', 'Navigation'],
+  ['caps', 'Capabilities'],
+  ['card', 'Cards'],
+  ['grid', 'Grid'],
+  ['rules', 'Rules'],
+  ['quote', 'Quote'],
   ['color', 'Colour'],
   ['type', 'Type'],
-  ['depth', 'Depth'],
   ['controls', 'Controls'],
-  ['card', 'The card'],
-  ['panel', 'The panel'],
-  ['grid', 'The grid'],
-  ['rules', 'Rules'],
-  ['quote', 'The quote'],
-  ['empty', 'Empty'],
 ]
 
 export function DesignPreview() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  /* LIGHT IS THE DEFAULT. Dark is the alternate, and the toggle
+     writes the attribute the token file keys off. */
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [design, setDesign] = useState(false)
 
   const flip = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
+    const next = theme === 'light' ? 'dark' : 'light'
     setTheme(next)
     document.documentElement.setAttribute('data-theme', next)
   }
@@ -553,8 +810,8 @@ export function DesignPreview() {
           ))}
         </nav>
         <button className="ds-btn ds-btn--secondary ds-btn--sm" onClick={flip}>
-          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-          {theme === 'dark' ? 'Light' : 'Dark'}
+          {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+          {theme === 'light' ? 'Dark' : 'Light'}
         </button>
       </div>
 
@@ -570,7 +827,9 @@ export function DesignPreview() {
             display serif set at 9px, and 8–11px uppercase letterspaced mono carrying labels
             that were never data. It measured 35 font sizes, 26 tracking values and 24
             line-heights — 8 of them coexisting at 13px. This replaces it with a system small
-            enough to hold in your head and strict enough to stay consistent.
+            enough to hold in your head, and lays it over the module system in{' '}
+            <code className="ds-mono-sm">docs/plan/MODULE_SYSTEM.md</code> rather than over the
+            five hardcoded stages it retires.
           </p>
           <div className="pv-hero-meta">
             <div>
@@ -586,184 +845,191 @@ export function DesignPreview() {
               <dd>1 accent + 8 kinds, down from 22</dd>
             </div>
             <div>
-              <dt>Contrast floor</dt>
-              <dd>4.5 : 1, measured</dd>
+              <dt>Default</dt>
+              <dd>Light, with dark measured</dd>
             </div>
           </div>
         </div>
 
-        {/* ---------------- colour ---------------- */}
+        {/* ---------------- dashboard ---------------- */}
         <Section
-          id="color"
-          title="Colour"
-          blurb="A near-black cool-neutral ground in four steps, one accent, and eight kind hues cut to roughly equal luminance so a sheet of mixed tables reads as one drawing. Field-type colour is gone: eight coloured chips became grey, accent and one cool hue."
+          id="dashboard"
+          title="The dashboard"
+          blurb="The new front door. Not a stage over the canvas — the thing you see when nothing is open. Each card names a place in the business, what it is about, how much is in it, and what can be done there, as words. The blueprint sheet is one built-in card among the rest."
         >
-          <div className="pv-caption">Ground</div>
-          <div className="pv-swatches">
-            <Swatch name="bg" value="--bg" />
-            <Swatch name="bg-canvas" value="--bg-canvas" />
-            <Swatch name="surface-1" value="--surface-1" />
-            <Swatch name="surface-2" value="--surface-2" />
-            <Swatch name="surface-3" value="--surface-3" />
-            <Swatch name="surface-4" value="--surface-4" />
-          </div>
-
-          <div className="pv-caption" style={{ marginTop: 'var(--s-6)' }}>
-            Text, measured on surface-1
-          </div>
-          <div className="pv-textramp">
-            {[
-              ['Primary — names, values, anything read', '--fg', '15.9 : 1'],
-              ['Secondary — descriptions, help, sentences', '--fg-secondary', '7.5 : 1'],
-              ['Tertiary — metadata. The floor.', '--fg-tertiary', '4.8 : 1'],
-              ['Quaternary — rules and ticks. No meaning.', '--fg-quaternary', '3.0 : 1'],
-            ].map(([label, token, ratio]) => (
-              <div className="pv-textramp-row" key={token}>
-                <span style={{ color: `var(${token})` }}>{label}</span>
-                <span className="pv-textramp-token">{token}</span>
-                <span className="pv-textramp-ratio">{ratio}</span>
+          <div className="pv-stage pv-stage--flush">
+            <div className="shell">
+              <ModuleNav active="Dashboard" />
+              <div className="shell-main">
+                <div className="shell-top">
+                  <div className="crumb">
+                    <b>Dashboard</b>
+                  </div>
+                  <div className="shell-spacer" />
+                  <button className="ds-btn ds-btn--ghost ds-btn--sm">Import / export</button>
+                  <button
+                    className={`gear${design ? ' gear--on' : ''}`}
+                    onClick={() => setDesign((v) => !v)}
+                  >
+                    <Gear size={14} weight={design ? 'fill' : 'regular'} />
+                    {design ? 'Designing' : 'Design'}
+                  </button>
+                </div>
+                <div className="shell-body">
+                  <Dashboard />
+                </div>
               </div>
-            ))}
-          </div>
-
-          <div className="pv-caption" style={{ marginTop: 'var(--s-6)' }}>
-            Accent and semantic
-          </div>
-          <div className="pv-swatches">
-            <Swatch name="accent" value="--accent" />
-            <Swatch name="success" value="--success" />
-            <Swatch name="warning" value="--warning" />
-            <Swatch name="danger" value="--danger" />
-          </div>
-
-          <div className="pv-caption" style={{ marginTop: 'var(--s-6)' }}>
-            Kinds
-          </div>
-          <div className="pv-swatches">
-            {[
-              ['Boat', 'boat'],
-              ['Motor', 'motor'],
-              ['Trailer', 'trailer'],
-              ['Accessory', 'accessory'],
-              ['Package', 'package'],
-              ['Dealer', 'dealer'],
-              ['Custom', 'custom'],
-              ['Relationship', 'join'],
-            ].map(([name, k]) => (
-              <Swatch key={k} name={name} value={`--kind-${k}`} ink={`--kind-${k}`} />
-            ))}
-          </div>
-        </Section>
-
-        {/* ---------------- type ---------------- */}
-        <Section
-          id="type"
-          title="Type"
-          blurb="Inter for everything a person reads, IBM Plex Mono for every figure. Six steps plus one uppercase label style. Each step is a set — size, weight, leading and tracking travel together, and a rule never takes one without the others."
-        >
-          <div className="pv-stage">
-            {TYPE_STEPS.map(([name, spec, cls]) => (
-              <div className="pv-type-row" key={name}>
-                <span className="pv-type-name">{name}</span>
-                <span className={cls}>
-                  {name === 'label' ? 'Cost ladder' : 'Highfield SP560 (PVC) B-W-C'}
-                </span>
-                <span className="pv-type-spec">{spec}</span>
-              </div>
-            ))}
-            <div className="pv-type-row">
-              <span className="pv-type-name">mono</span>
-              <span className="ds-mono-lg">41,340.00 · HBS097 · 5.66 m</span>
-              <span className="pv-type-spec">15 / 450 / tabular</span>
             </div>
           </div>
           <div className="pv-note">
-            <strong>Uppercase appears once.</strong> The outgoing build used 8–11px letterspaced
-            uppercase mono for roughly 300 labels, none of which were data. Here it is a single
-            style used on section dividers, and figures get the mono face instead.
+            <strong>Writing verbs are tinted, reading verbs are not.</strong> Everything that
+            writes is off by default in the plan, so turning one on should be visible from the
+            dashboard without opening the module. The description comes from a field the admin
+            typed — never derived by substring-matching the name, which is how HelmLogic tells
+            every trailer and service user they are configuring boat packages.
           </div>
         </Section>
 
-        {/* ---------------- depth ---------------- */}
+        {/* ---------------- index ---------------- */}
         <Section
-          id="depth"
-          title="Depth and geometry"
-          blurb="On dark, elevation is lightness first and shadow second. Three levels, four radii, and a 4px space grid."
+          id="index"
+          title="The index surface"
+          blurb="The one genuinely new renderer in Phase 1. A catalogue is an index and the app has none — the closest thing today is a 120-row capped rail. Tiles group by source table, then by that table's own hierarchy, so seven brands read as one catalogue while each keeps its own columns."
         >
-          <div className="pv-elev">
-            {[
-              ['surface-1', '--surface-1', 'var(--e1)', 'e1 · resting'],
-              ['surface-2', '--surface-2', 'var(--e2)', 'e2 · popover'],
-              ['surface-3', '--surface-3', 'var(--e3)', 'e3 · dialog'],
-            ].map(([label, bg, shadow, note]) => (
-              <div
-                className="pv-elev-box"
-                key={label}
-                style={{ background: `var(${bg})`, boxShadow: shadow }}
-              >
-                <span>{label}</span>
-                <code>{note}</code>
+          <div className="pv-stage pv-stage--flush">
+            <div className="shell">
+              <ModuleNav active="Boats" />
+              <div className="shell-main">
+                <div className="shell-top">
+                  <div className="crumb">
+                    <b>Boats</b>
+                    <span>· 159 rows across 7 brands</span>
+                  </div>
+                  <div className="shell-spacer" />
+                  <button className="gear">
+                    <Gear size={14} /> Design
+                  </button>
+                </div>
+                <div className="shell-body">
+                  <IndexSurface />
+                </div>
               </div>
-            ))}
+            </div>
           </div>
-          <div className="pv-row" style={{ marginTop: 'var(--s-5)' }}>
-            {[
-              ['4px', 'chip'],
-              ['6px', 'control'],
-              ['10px', 'card'],
-              ['14px', 'panel'],
-            ].map(([r, use]) => (
-              <div
-                key={r}
-                style={{
-                  width: 108,
-                  height: 76,
-                  borderRadius: r,
-                  background: 'var(--surface-2)',
-                  border: '1px solid var(--line)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  gap: 2,
-                  fontSize: 12,
-                }}
-              >
-                <span className="ds-mono-sm" style={{ color: 'var(--fg-tertiary)' }}>
-                  {r}
-                </span>
-                <span style={{ color: 'var(--fg-secondary)', fontSize: 12 }}>{use}</span>
-              </div>
-            ))}
+          <div className="pv-note">
+            <strong>Search is the point.</strong> The UX audit's second-worst finding is that
+            with 21 tables and 651 rows loaded you cannot ask the app for a boat by name. The
+            field is the first control on the surface, at 40px, and it is not a filter icon in a
+            toolbar. <strong>A tile with no picture says nothing about a picture</strong> — it
+            shows the row label and stops. A broken-image glyph in front of a customer is worse
+            than a plain name.
           </div>
         </Section>
 
-        {/* ---------------- controls ---------------- */}
+        {/* ---------------- nav ---------------- */}
         <Section
-          id="controls"
-          title="Controls"
-          blurb="Four button roles, three sizes, one input. Every interactive surface has a hover, a press and a focus ring — the outgoing build had one press rule serving the whole design system."
+          id="nav"
+          title="Navigation"
+          blurb="The outgoing panel did four unrelated jobs in one 240px column on one scrollbar: a primary button, a drag-and-drop palette, three door-cards written as ad copy, and the table inventory. Under modules it does two — where you can stand, and how you set it up."
+        >
+          <div className="pv-ab">
+            <div className="pv-ab-cell">
+              <div className="pv-ab-head">
+                <span className="pv-tag pv-tag--old">Now</span>
+                <span className="pv-ab-note">4 jobs, 1 scrollbar, doors as ad copy</span>
+              </div>
+              <div className="pv-stage pv-stage--flush">
+                <OldPanel />
+              </div>
+            </div>
+            <div className="pv-ab-cell">
+              <div className="pv-ab-head">
+                <span className="pv-tag pv-tag--new">Redesign</span>
+                <span className="pv-ab-note">modules above, set-up below</span>
+              </div>
+              <div className="pv-stage pv-stage--flush">
+                <ModuleNav active="Boats" />
+              </div>
+            </div>
+          </div>
+          <div className="pv-note">
+            <strong>The table inventory is gone from the top level.</strong> Tables do not live
+            inside modules and are not owned by them, but they are also not where a salesperson
+            stands — they are what the data model is made of, so they live one click inside it.
+            The three door-cards become modules or set-up rows, and the kind palette moves into
+            the data model where it is used.
+          </div>
+        </Section>
+
+        {/* ---------------- capabilities ---------------- */}
+        <Section
+          id="caps"
+          title="Capabilities, and refusal"
+          blurb="Ten switches on a module, grown in place by the gear. They are verbs about rows, never nouns about boats, so the same strip reads correctly in a pharmacy. Everything that writes is off by default."
         >
           <div className="pv-stage">
-            <div className="pv-row" style={{ marginBottom: 'var(--s-5)' }}>
-              <button className="ds-btn ds-btn--primary">
-                <Plus size={14} /> New table
-              </button>
-              <button className="ds-btn ds-btn--secondary">Import</button>
-              <button className="ds-btn ds-btn--ghost">Cancel</button>
-              <button className="ds-btn ds-btn--danger">Delete table</button>
+            <div className="caps">
+              {CAPS.map((c) => (
+                <div className={`cap${c.refused ? ' cap--refused' : ''}`} key={c.verb}>
+                  <Switch on={c.on} locked={!!c.refused} />
+                  <div className="cap-text">
+                    <div className="cap-verb">{c.verb}</div>
+                    <div className="cap-note">
+                      {c.refused ? (
+                        <>
+                          <Warning size={12} weight="fill" style={{ verticalAlign: -1 }}/>{' '}
+                          {c.refused}
+                        </>
+                      ) : (
+                        c.note
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="pv-row" style={{ marginBottom: 'var(--s-5)' }}>
-              <button className="ds-btn ds-btn--primary ds-btn--sm">Small</button>
-              <button className="ds-btn ds-btn--primary">Medium</button>
-              <button className="ds-btn ds-btn--primary ds-btn--lg">Large</button>
+          </div>
+
+          <div className="pv-caption" style={{ marginTop: 'var(--s-8)' }}>
+            Bound and unmapped, on the page where the block stands
+          </div>
+          <div className="pv-stage" style={{ display: 'grid', gap: 'var(--s-3)' }}>
+            <div className="blk">
+              <div className="blk-head">
+                <span className="blk-handle">
+                  <DotsSixVertical size={13} />
+                </span>
+                <span className="blk-kind">Detail</span>
+                <span className="blk-name">Capacity</span>
+                <span className="badge badge--bound">
+                  <Check size={11} /> 5 columns bound
+                </span>
+              </div>
+              <div className="blk-cols">
+                {['Max HP', 'Min HP', 'Persons', 'Fuel (L)', 'Max load (kg)'].map((c) => (
+                  <span className="ds-chip" key={c}>
+                    {c}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="pv-row" style={{ alignItems: 'center' }}>
-              <input className="ds-input" style={{ width: 260 }} placeholder="Search rows" />
-              <span className="ds-chip">txt</span>
-              <span className="ds-chip">num</span>
-              <span className="ds-chip">lst</span>
-              <span className="ds-chip ds-chip--computed">fx</span>
-              <span className="ds-chip ds-chip--linked">ref</span>
-              <span className="ds-chip ds-chip--linked">img</span>
+
+            <div className="blk blk--broken">
+              <div className="blk-head">
+                <span className="blk-handle">
+                  <DotsSixVertical size={13} />
+                </span>
+                <span className="blk-kind">Price</span>
+                <span className="blk-name">Retail</span>
+                <span className="badge badge--unmapped">
+                  <Warning size={11} weight="fill" /> unmapped
+                </span>
+              </div>
+              <div className="blk-unmapped">{'{Cash Price}'}</div>
+              <div className="blk-note">
+                This block points at a column that is no longer on Highfield Inflatables. Pick
+                another, or remove the block.
+              </div>
             </div>
           </div>
         </Section>
@@ -771,8 +1037,8 @@ export function DesignPreview() {
         {/* ---------------- the card ---------------- */}
         <Section
           id="card"
-          title="The card on the sheet"
-          blurb="This is the biggest single change. The canvas is the app's primary navigation surface and it conveyed almost nothing: a 140×80 plate with its name in a display serif at 9px and its column bands rendered as an illegible grey smear."
+          title="Cards on the data-model sheet"
+          blurb="The sheet is now one module rather than the app, but it is still where the model is drawn — and its cards conveyed almost nothing: a 140×80 plate with its name in a display serif at 9px and its column bands rendered as an illegible grey smear."
         >
           <div className="pv-ab">
             <div className="pv-ab-cell">
@@ -857,11 +1123,7 @@ export function DesignPreview() {
                   rowNoun: 'trailers',
                 }}
               />
-              <JoinCard
-                name="Highfield × Yamaha"
-                pair="Boats ↔ Motors"
-                rows={134}
-              />
+              <JoinCard name="Highfield × Yamaha" pair="Boats ↔ Motors" rows={134} />
               <TableCard
                 data={{
                   kind: 'accessory',
@@ -878,43 +1140,9 @@ export function DesignPreview() {
           </div>
           <div className="pv-note">
             <strong>The kind rail is the only loud use of kind colour.</strong> Everything else
-            on the card is the neutral ramp, so 22 cards on a sheet read as one drawing rather
-            than a colour chart. Relationships are drawn as they behave — dashed, unfilled, and
-            named by the two things they join.
-          </div>
-        </Section>
-
-        {/* ---------------- the panel ---------------- */}
-        <Section
-          id="panel"
-          title="The panel"
-          blurb="The outgoing panel did four unrelated jobs in one 240px column on one scrollbar: a primary button, a drag-and-drop palette, three door-cards written as ad copy, and the real table inventory. This one does two — where you are, and what you have."
-        >
-          <div className="pv-ab">
-            <div className="pv-ab-cell">
-              <div className="pv-ab-head">
-                <span className="pv-tag pv-tag--old">Now</span>
-                <span className="pv-ab-note">4 jobs, 1 scrollbar, doors as ad copy</span>
-              </div>
-              <div className="pv-stage pv-stage--flush">
-                <OldPanel />
-              </div>
-            </div>
-            <div className="pv-ab-cell">
-              <div className="pv-ab-head">
-                <span className="pv-tag pv-tag--new">Redesign</span>
-                <span className="pv-ab-note">nav, then inventory, palette in a popover</span>
-              </div>
-              <div className="pv-stage pv-stage--flush">
-                <NewPanel />
-              </div>
-            </div>
-          </div>
-          <div className="pv-note">
-            <strong>The palette moves behind “New table”.</strong> A table-kind palette is used
-            on the day the model is set up and effectively never again; it does not deserve a
-            permanent third of the panel. The three door-cards become real nav rows with counts,
-            so their state is visible without reading a caption.
+            on the card is the neutral ramp, so 22 cards read as one drawing rather than a colour
+            chart. Relationships are drawn as they behave — dashed, unfilled, named by the two
+            things they join, and never offered as a module of their own.
           </div>
         </Section>
 
@@ -922,7 +1150,7 @@ export function DesignPreview() {
         <Section
           id="grid"
           title="The grid"
-          blurb="The strongest screen in the outgoing build, and mostly kept. What changes: section bands become pills that are never truncated, field-type chips lose their eight colours, computed columns are the one thing tinted with the accent, and the row height goes to 40px."
+          blurb="The strongest screen in the outgoing build, and mostly kept — it is where data changes, inside the data-model module. Section bands become pills that are never truncated, field-type chips lose their eight colours, and computed columns are the one thing tinted with the accent."
         >
           <div className="pv-stage pv-stage--flush">
             <NewGrid />
@@ -940,7 +1168,7 @@ export function DesignPreview() {
         <Section
           id="rules"
           title="Rules read as sentences"
-          blurb="The idea was already right — every underlined word is a dropdown built from the columns actually on the sheet. What it lacked was a state anyone could see. Tokens now look pressable, values are mono and accented, and a rule that cannot run says so in red rather than sitting blank."
+          blurb="Rules sit beside modules rather than inside them — they are about the whole organisation's data, not about one place a person stands. The idea was already right; what it lacked was a state anyone could see."
         >
           <div className="pv-stage" style={{ display: 'grid', gap: 'var(--s-4)' }}>
             <RuleCard on />
@@ -952,7 +1180,7 @@ export function DesignPreview() {
         <Section
           id="quote"
           title="The quote"
-          blurb="The only thing in this product a customer ever sees, and the least designed screen in the outgoing build. It is a document, and it prints — so it is rendered as paper in both themes, the way a PDF preview behaves."
+          blurb="The only thing in this product a customer ever sees, and the least designed screen in the outgoing build. It is a document and it prints, so it renders as paper in both themes — which is also why light is now the app's default."
         >
           <div className="pv-stage" style={{ display: 'grid', placeItems: 'center' }}>
             <div className="quote">
@@ -997,7 +1225,9 @@ export function DesignPreview() {
 
               <div className="quote-group">
                 <div className="quote-group-label">NSM Custom Trailers</div>
-                <div className="quote-empty">Nothing from NSM Custom Trailers on this quote yet.</div>
+                <div className="quote-empty">
+                  Nothing from NSM Custom Trailers on this quote yet.
+                </div>
               </div>
 
               <div className="quote-total">
@@ -1008,29 +1238,165 @@ export function DesignPreview() {
           </div>
         </Section>
 
+        {/* ---------------- colour ---------------- */}
+        <Section
+          id="color"
+          title="Colour"
+          blurb="Light leads. Four ground steps, one accent, and eight kind hues cut to roughly equal luminance so a sheet of mixed tables reads as one drawing. Field-type colour is gone: eight coloured chips became grey, accent and one cool hue."
+        >
+          <div className="pv-caption">Ground</div>
+          <div className="pv-swatches">
+            <Swatch name="bg" value="--bg" />
+            <Swatch name="bg-canvas" value="--bg-canvas" />
+            <Swatch name="surface-1" value="--surface-1" />
+            <Swatch name="surface-2" value="--surface-2" />
+            <Swatch name="surface-3" value="--surface-3" />
+            <Swatch name="surface-4" value="--surface-4" />
+          </div>
+
+          <div className="pv-caption" style={{ marginTop: 'var(--s-6)' }}>
+            Text, measured on surface-1 — {theme}
+          </div>
+          <div className="pv-textramp">
+            {TEXT_RAMP.map(([label, token, lightRatio, darkRatio]) => (
+              <div className="pv-textramp-row" key={token}>
+                <span style={{ color: `var(${token})` }}>{label}</span>
+                <span className="pv-textramp-token">{token}</span>
+                <span className="pv-textramp-ratio">
+                  {theme === 'light' ? lightRatio : darkRatio}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="pv-caption" style={{ marginTop: 'var(--s-6)' }}>
+            Accent and semantic
+          </div>
+          <div className="pv-swatches">
+            <Swatch name="accent" value="--accent" />
+            <Swatch name="success" value="--success" />
+            <Swatch name="warning" value="--warning" />
+            <Swatch name="danger" value="--danger" />
+          </div>
+
+          <div className="pv-caption" style={{ marginTop: 'var(--s-6)' }}>
+            Kinds
+          </div>
+          <div className="pv-swatches">
+            {[
+              ['Boat', 'boat'],
+              ['Motor', 'motor'],
+              ['Trailer', 'trailer'],
+              ['Accessory', 'accessory'],
+              ['Package', 'package'],
+              ['Dealer', 'dealer'],
+              ['Custom', 'custom'],
+              ['Relationship', 'join'],
+            ].map(([name, k]) => (
+              <Swatch key={k} name={name} value={`--kind-${k}`} ink={`--kind-${k}`} />
+            ))}
+          </div>
+        </Section>
+
+        {/* ---------------- type ---------------- */}
+        <Section
+          id="type"
+          title="Type"
+          blurb="Inter for everything a person reads, IBM Plex Mono for every figure. Six steps plus one uppercase label style. Each step is a set — size, weight, leading and tracking travel together, and a rule never takes one without the others."
+        >
+          <div className="pv-stage">
+            {TYPE_STEPS.map(([name, spec, cls]) => (
+              <div className="pv-type-row" key={name}>
+                <span className="pv-type-name">{name}</span>
+                <span className={cls}>
+                  {name === 'label' ? 'Cost ladder' : 'Highfield SP560 (PVC) B-W-C'}
+                </span>
+                <span className="pv-type-spec">{spec}</span>
+              </div>
+            ))}
+            <div className="pv-type-row">
+              <span className="pv-type-name">mono</span>
+              <span className="ds-mono-lg">41,340.00 · HBS097 · 5.66 m</span>
+              <span className="pv-type-spec">15 / 450 / tabular</span>
+            </div>
+          </div>
+          <div className="pv-note">
+            <strong>Uppercase appears once.</strong> The outgoing build used 8–11px letterspaced
+            uppercase mono for roughly 300 labels, none of which were data. Here it is a single
+            style used on section dividers, and figures get the mono face instead.
+          </div>
+        </Section>
+
+        {/* ---------------- controls ---------------- */}
+        <Section
+          id="controls"
+          title="Controls, depth and geometry"
+          blurb="Four button roles, three sizes, one input. On light, elevation is shadow first; on dark it is lightness first, then shadow. Three levels, four radii, a 4px space grid."
+        >
+          <div className="pv-stage">
+            <div className="pv-row" style={{ marginBottom: 'var(--s-5)' }}>
+              <button className="ds-btn ds-btn--primary">
+                <Plus size={14} /> New module
+              </button>
+              <button className="ds-btn ds-btn--secondary">Import</button>
+              <button className="ds-btn ds-btn--ghost">Cancel</button>
+              <button className="ds-btn ds-btn--danger">Delete module</button>
+            </div>
+            <div className="pv-row" style={{ marginBottom: 'var(--s-5)' }}>
+              <button className="ds-btn ds-btn--primary ds-btn--sm">Small</button>
+              <button className="ds-btn ds-btn--primary">Medium</button>
+              <button className="ds-btn ds-btn--primary ds-btn--lg">Large</button>
+            </div>
+            <div className="pv-row" style={{ alignItems: 'center' }}>
+              <input className="ds-input" style={{ width: 260 }} placeholder="Search rows" />
+              <span className="ds-chip">txt</span>
+              <span className="ds-chip">num</span>
+              <span className="ds-chip">lst</span>
+              <span className="ds-chip ds-chip--computed">fx</span>
+              <span className="ds-chip ds-chip--linked">ref</span>
+              <span className="ds-chip ds-chip--linked">img</span>
+            </div>
+          </div>
+
+          <div className="pv-elev" style={{ marginTop: 'var(--s-5)' }}>
+            {[
+              ['surface-1', '--surface-1', 'var(--e1)', 'e1 · resting'],
+              ['surface-2', '--surface-2', 'var(--e2)', 'e2 · popover'],
+              ['surface-3', '--surface-3', 'var(--e3)', 'e3 · dialog'],
+            ].map(([label, bg, shadow, note]) => (
+              <div
+                className="pv-elev-box"
+                key={label}
+                style={{ background: `var(${bg})`, boxShadow: shadow }}
+              >
+                <span>{label}</span>
+                <code>{note}</code>
+              </div>
+            ))}
+          </div>
+        </Section>
+
         {/* ---------------- empty ---------------- */}
         <Section
           id="empty"
-          title="Empty states"
-          blurb="A fresh clone opens on nothing, which is correct and needs to look deliberate."
+          title="The empty dashboard"
+          blurb="A fresh clone opens on nothing, which is correct and needs to look deliberate. The count is read from the store, and the second action is the way to the data model."
         >
-          <div className="pv-stage pv-stage--dots">
+          <div className="pv-stage">
             <div className="empty">
               <div className="empty-mark">
-                <TreeStructure size={26} />
+                <Stack size={26} />
               </div>
-              <h3>Nothing on the sheet yet</h3>
+              <h3>No modules yet</h3>
               <p>
-                Draw the tables behind your business — one per brand — or load a worked example
-                to see how a finished model is put together.
+                A module is a place in your business — Boats, Trailers, Quotes. You have{' '}
+                <strong style={{ color: 'var(--fg)' }}>21 tables</strong> and no modules.
               </p>
               <div className="empty-actions">
                 <button className="ds-btn ds-btn--primary ds-btn--lg">
-                  <Plus size={16} /> New table
+                  <Plus size={16} /> New module
                 </button>
-                <button className="ds-btn ds-btn--secondary ds-btn--lg">
-                  Load a worked example
-                </button>
+                <button className="ds-btn ds-btn--ghost ds-btn--lg">Open the data model</button>
               </div>
             </div>
           </div>
