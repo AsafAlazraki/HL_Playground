@@ -350,14 +350,51 @@
   --h-row: 40px;      /* grid row */
   --h-row-dense: 34px;
 
-  /* -- motion -------------------------------------------------
-     Two curves and three durations. Anything that needs a fourth
-     is a spring, and springs are for stage arrival only. */
+  /* -- motion --------------------------------------------------
+     TWO SYSTEMS, AND THE SPLIT IS NOT STYLISTIC.
+
+     CSS transitions handle STATE: hover, press, focus, open. They
+     are cheap, they never need to be interrupted mid-flight, and
+     the outgoing build's restraint here (one curve, two effective
+     durations, zero `transition: all`, zero transitions on layout
+     properties) was the one part of it that was already right.
+
+     SPRINGS handle anything a person can GRAB: dragging a table on
+     the sheet, reordering a block, throwing a sheet closed. A
+     fixed-duration animation cannot be redirected mid-flight —
+     grab a closing panel and it finishes closing first, then
+     reopens. A spring just re-targets. Consumed from JS by the
+     `motion` package the repo already depends on.
+
+     Apple's two designer parameters, not the physics triplet:
+       bounce 0    critically damped, no overshoot. THE DEFAULT.
+       bounce 0.2  only when the gesture itself carried momentum —
+                   a flick, a throw, a drag release. Overshoot on a
+                   menu that merely opened is wrong.
+
+     THE THREE RULES A SPRING CALL MUST KEEP:
+       1. Animate from the PRESENTATION value — read the live
+          on-screen transform on interrupt. Starting from the
+          logical target is what makes a grabbed element jump.
+       2. Never lock out input during a transition.
+       3. Hand the release velocity to the spring, so there is no
+          seam between the finger and the animation. */
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --d-press: 90ms;   /* down-state. Must feel instant. */
   --d-fast: 120ms;
   --d-med: 180ms;
   --d-slow: 260ms;
+
+  /* springs, read by JS */
+  --spring-ui-bounce: 0;
+  --spring-ui-duration: 0.35;
+  --spring-move-bounce: 0;
+  --spring-move-duration: 0.4;
+  --spring-momentum-bounce: 0.2;
+  --spring-momentum-duration: 0.4;
+  --spring-sheet-bounce: 0.2;
+  --spring-sheet-duration: 0.3;
 
   /* -- focus --------------------------------------------------
      Two rings: a ground-coloured spacer, then the accent. Reads
@@ -384,7 +421,6 @@
   font-weight: var(--t-display-weight);
   line-height: var(--t-display-lead);
   letter-spacing: var(--t-display-track);
-  font-variation-settings: 'opsz' 28;
 }
 .ds-title {
   font-family: var(--font-sans);
@@ -392,7 +428,6 @@
   font-weight: var(--t-title-weight);
   line-height: var(--t-title-lead);
   letter-spacing: var(--t-title-track);
-  font-variation-settings: 'opsz' 20;
 }
 .ds-heading {
   font-family: var(--font-sans);
@@ -465,8 +500,74 @@
   letter-spacing: var(--t-body-track);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* only the 100-900 wght cut is loaded, so a UA-synthesised bold
+     is a smeared outline and never a weight. Refuse it outright —
+     one <h3> in the outgoing build did exactly that. */
   font-synthesis-weight: none;
   text-rendering: optimizeLegibility;
+  /* real, because main.tsx imports the opsz cut. Inter redraws
+     itself for the size rather than being scaled to it. */
+  font-optical-sizing: auto;
+}
+
+/* ============================================================
+   PRESS — the response layer.
+
+   A survey of the outgoing build found 16 `:active` rules, of
+   which exactly ONE served the shared foundation; three of the
+   other fifteen CANCELLED feedback with `transform: none` and one
+   pressed upward. The honest reading is that 99.5% of pressable
+   surfaces were decided as "nothing", and this system was heading
+   the same way with a single 0.5px nudge on .ds-btn.
+
+   Feedback lands on POINTER-DOWN, not on release — `:active`
+   fires on mousedown, which is the behaviour we want. The moment
+   feedback waits for the click, directness falls off a cliff.
+
+   The scale is calibrated to the surface, not copied: a 32px
+   button can take 0.97, a 236px card cannot — at that width 0.97
+   is a 7px shrink and reads as a glitch. Big surfaces get a small
+   proportional press and lose their hover lift instead.
+   ============================================================ */
+
+/* small controls — the press is felt */
+.ds-root :is(.ds-btn, .gear, .grid-band, .rule-tok, .blk-handle):active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+
+/* large surfaces — the press is seen, not felt. The lift drops
+   away and the surface settles by a hair. */
+.ds-root :is(.tcard, .tile, .mcard):active {
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1);
+  transition-duration: var(--d-press);
+}
+
+/* rows press by darkening: a list row that scales makes its
+   neighbours look like they moved */
+.ds-root .nav-item:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+
+/* ============================================================
+   ORIGIN — a thing opens from where it was asked for.
+
+   A menu, popover or sheet scales from its trigger, never from
+   its own centre, so the spatial relationship between the button
+   and the content it produced is obvious. Callers set
+   --origin-x / --origin-y from the trigger's position.
+
+   Enter and exit take the SAME path. A panel that slides in from
+   the right dismisses to the right.
+   ============================================================ */
+.ds-popover {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--e3);
+  transform-origin: var(--origin-x, 50%) var(--origin-y, 0%);
 }
 
 .ds-root *,
@@ -505,9 +606,12 @@
     color var(--d-fast) var(--ease),
     box-shadow var(--d-fast) var(--ease);
 }
-.ds-btn:active {
-  transform: translateY(0.5px);
-}
+/* NO `.ds-btn:active { transform }` HERE. The press is owned by
+   the foundation rule in the PRESS section above; a leaf rule at
+   equal specificity but later in the file would silently beat it,
+   which is how the outgoing build ended up with three `:active`
+   rules that cancelled their own feedback. Colour-only presses
+   below are safe — they touch a different property. */
 
 .ds-btn--primary {
   background: var(--accent);
@@ -642,6 +746,10 @@
    part right. Nothing moves while somebody is typing, and
    reduced-motion cuts all of it.
    ============================================================ */
+/* REDUCED MOTION IS NOT NO FEEDBACK. Movement goes; colour and
+   opacity stay, because a press that stops confirming itself is a
+   worse interface, not a gentler one. Transforms are cut to zero
+   duration rather than removed, so :active still darkens. */
 @media (prefers-reduced-motion: reduce) {
   .ds-root *,
   .ds-root *::before,
@@ -650,5 +758,56 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .ds-root :is(.tcard, .tile, .mcard):hover,
+  .ds-root :is(.tcard, .tile, .mcard):active,
+  .ds-root :is(.ds-btn, .gear, .grid-band, .rule-tok, .blk-handle):active {
+    transform: none;
+  }
+}
+
+/* TRANSLUCENCY IS A PREFERENCE, NOT A GIVEN. The outgoing build
+   measured zero `prefers-reduced-transparency` rules and zero
+   `prefers-contrast` rules. Both are honoured here, and the
+   roster of translucent surfaces is short enough to list: the
+   floating page chrome, and nothing else. */
+@media (prefers-reduced-transparency: reduce) {
+  .ds-root .pv-top,
+  .ds-root .ds-popover {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .ds-root .pv-top::after {
+    display: none;
+  }
+}
+
+/* MORE CONTRAST: firm up every edge and lift the two text tiers
+   that sit closest to the floor. --fg-quaternary is raised to the
+   tertiary value because at higher contrast a 2.8:1 hairline of
+   text is the first thing that should stop being decorative. */
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme='light'] {
+    --line-subtle: rgba(9, 12, 18, 0.16);
+    --line: rgba(9, 12, 18, 0.3);
+    --line-strong: rgba(9, 12, 18, 0.5);
+    --fg-secondary: #333c49;
+    --fg-tertiary: #4b5462;
+    --fg-quaternary: #4b5462;
+  }
+  [data-theme='dark'] {
+    --line-subtle: rgba(255, 255, 255, 0.18);
+    --line: rgba(255, 255, 255, 0.3);
+    --line-strong: rgba(255, 255, 255, 0.48);
+    --fg-secondary: #c7ccd4;
+    --fg-tertiary: #a0a6b0;
+    --fg-quaternary: #a0a6b0;
+  }
+  .ds-root .ds-chip,
+  .ds-root .verb,
+  .ds-root .tcard-band {
+    border: 1px solid var(--line);
   }
 }

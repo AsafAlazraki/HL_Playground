@@ -723,7 +723,7 @@
 
 .md-row {
   display: grid;
-  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
   gap: var(--sp-3);
   width: 100%;
@@ -743,19 +743,6 @@
 .md-row:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: -2px;
-}
-
-/* a flat table has no trail, so the name takes the whole measure
-   rather than leaving a column of air where a trail would be */
-.md-row:not(:has(.md-row-trail)) {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.md-row-trail {
-  color: var(--ink-faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .md-row-name {

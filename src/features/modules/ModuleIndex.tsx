@@ -317,6 +317,10 @@ function Tile({ entry, canOpen, onOpen }: FaceProps): ReactElement {
         <button
           type="button"
           className="md-tile"
+          /* NAMED EXPLICITLY. The face is three spans, one of them a
+             picture and one a mono figure, and a reader announcing
+             them run together is not a name. */
+          aria-label={entry.price === '' ? entry.label : `${entry.label}, ${entry.price}`}
           onClick={() => onOpen(entry.tableId, entry.rowId)}
         >
           {body}
@@ -328,12 +332,14 @@ function Tile({ entry, canOpen, onOpen }: FaceProps): ReactElement {
   )
 }
 
+/** The dense line. IT DOES NOT REPEAT ITS OWN TRAIL: the group
+ *  heading above it already says "EPROPULSION - ELECTRIC OUTBOARDS",
+ *  and printing that again on all fourteen rows underneath is a
+ *  column of noise where the eye is trying to compare names and
+ *  numbers. Drawn and seen; the trail is on the heading, once. */
 function Row({ entry, canOpen, onOpen }: FaceProps): ReactElement {
   const body = (
     <>
-      {entry.trail === '' ? null : (
-        <span className="md-row-trail mono-label">{entry.trail}</span>
-      )}
       <span className="md-row-name">{entry.label}</span>
       {entry.price === '' ? null : <span className="md-row-price">{entry.price}</span>}
     </>
@@ -344,6 +350,7 @@ function Row({ entry, canOpen, onOpen }: FaceProps): ReactElement {
         <button
           type="button"
           className="md-row"
+          aria-label={entry.price === '' ? entry.label : `${entry.label}, ${entry.price}`}
           onClick={() => onOpen(entry.tableId, entry.rowId)}
         >
           {body}
