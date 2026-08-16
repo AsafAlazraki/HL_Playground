@@ -1,0 +1,517 @@
+/* ============================================================
+   THE UX PASS — surfaces for docs/plan/UX_PASS.md
+
+   These are processes, not decorations. Each one exists because
+   docs/audit/UX_AUDIT.md recorded a person failing at it:
+
+     .cmdk     finding 2  — you cannot ask the app for a boat by
+                            name. There is no search of any kind.
+     .toast    finding 7  — the everyday acts cannot be undone,
+                            and the app apologises for it in 19
+                            places across src/.
+     .blast    finding 7  — the fastest gestures carry the
+                            weakest warnings.
+     .propose  §8         — three clicks is good; for the first
+                            module it can be one.
+     .imap     finding 25 — paste-from-Excel is positional, so a
+                            pasted header row became a boat.
+   ============================================================ */
+
+/* ---------- ⌘K, over everything ------------------------------ */
+
+.cmdk-scrim {
+  position: relative;
+  display: grid;
+  place-items: start center;
+  padding: var(--s-10) var(--s-4);
+  background: color-mix(in srgb, var(--bg-sunken) 55%, transparent);
+  border-radius: var(--r-panel);
+  min-height: 460px;
+}
+.cmdk {
+  width: 100%;
+  max-width: 620px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e3);
+  overflow: hidden;
+}
+.cmdk-field {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  height: 54px;
+  padding: 0 var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+  color: var(--fg-tertiary);
+}
+.cmdk-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  letter-spacing: -0.011em;
+  outline: none;
+}
+.cmdk-field input::placeholder {
+  color: var(--fg-tertiary);
+}
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.cmdk-results {
+  max-height: 340px;
+  overflow-y: auto;
+  padding: var(--s-2);
+}
+.cmdk-group {
+  padding: var(--s-3) var(--s-2) var(--s-1);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+.cmdk-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  text-align: left;
+  cursor: pointer;
+}
+.cmdk-row:hover {
+  background: var(--surface-3);
+}
+.cmdk-row--on {
+  background: var(--accent-wash);
+}
+.cmdk-row--on::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+.cmdk-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 480;
+}
+/* EVERY RESULT SAYS WHERE IT LIVES. "Where am I / how did I get
+   here" is the wayfinding question this app fails worst, and a
+   search that answers it is worth more than one that is fast. */
+.cmdk-where {
+  flex: none;
+  max-width: 46%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+}
+.cmdk-amt {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+.cmdk-more {
+  padding: 4px var(--s-2) var(--s-2) 38px;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+}
+.cmdk-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-2) var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+  background: var(--surface-1);
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+}
+.cmdk-foot span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ---------- undo, and the dialogs it deletes ------------------ */
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  min-height: 46px;
+  padding: 0 var(--s-2) 0 var(--s-4);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--e3);
+  overflow: hidden;
+  position: relative;
+  max-width: 460px;
+}
+/* THE TOAST NAMES WHAT IT WILL UNDO. "Undone" tells a person
+   nothing; the count is the whole point. */
+.toast-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--t-small-size);
+  color: var(--fg);
+}
+.toast-text b {
+  font-weight: 560;
+}
+.toast::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 38%;
+  background: var(--accent);
+  opacity: 0.55;
+}
+.toast--warn {
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+}
+.toast--warn .toast-note {
+  color: var(--warning);
+  font-size: var(--t-caption-size);
+}
+
+/* the dialog that survives: irreversible, and it states the
+   blast radius rather than a fixed sentence */
+.blast {
+  max-width: 440px;
+  padding: var(--s-5);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e3);
+}
+.blast-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+.blast-mark {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+.blast-title {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+}
+.blast-sub {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+/* COMPUTED, NOT WRITTEN. dependents.ts and columnFacts.ts already
+   work this out; the designer surfaces it and the sheet does not. */
+.blast-list {
+  display: grid;
+  gap: 1px;
+  margin-bottom: var(--s-4);
+  border-radius: var(--r-control);
+  overflow: hidden;
+}
+.blast-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  background: var(--surface-3);
+  font-size: var(--t-small-size);
+}
+.blast-item b {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+  min-width: 28px;
+}
+.blast-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+.ds-btn--danger-solid {
+  background: var(--danger-solid);
+  border-color: var(--danger-solid);
+  color: #fff;
+}
+.ds-btn--danger-solid:hover {
+  filter: brightness(1.08);
+}
+
+/* ---------- propose the modules ------------------------------ */
+
+.propose-lead {
+  margin-bottom: var(--s-5);
+}
+.propose-lead h4 {
+  margin: 0 0 var(--s-1);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  letter-spacing: var(--t-title-track);
+}
+.propose-lead p {
+  margin: 0;
+  color: var(--fg-secondary);
+  font-size: var(--t-small-size);
+}
+.propose-grid {
+  display: grid;
+  gap: var(--s-3);
+  grid-template-columns: repeat(auto-fill, minmax(min(232px, 100%), 1fr));
+  margin-bottom: var(--s-5);
+}
+.pcard {
+  padding: var(--s-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--e-card);
+}
+.pcard-top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+  color: var(--pcard-ink, var(--accent));
+}
+.pcard-name {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+.pcard-meta {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  margin-bottom: var(--s-1);
+}
+/* WHAT WE FOUND, NOT WHAT WE ASSUMED. The proposal shows its
+   evidence — pictures, prices, a hierarchy — so accepting it is
+   an informed click and not a leap. */
+.pcard-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--s-3);
+}
+.pcard-actions {
+  display: flex;
+  gap: var(--s-2);
+}
+.pcard-actions .ds-btn {
+  flex: 1;
+}
+
+/* ---------- import: the header-mapping step ------------------ */
+
+.imap {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+}
+.imap-steps {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--surface-2);
+}
+.istep {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+.istep b {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-full);
+  background: var(--surface-4);
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+}
+.istep--done b {
+  background: var(--success-wash);
+  color: var(--success);
+}
+.istep--on {
+  color: var(--fg);
+  font-weight: 550;
+}
+.istep--on b {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.istep-sep {
+  color: var(--fg-quaternary);
+}
+
+.imap-rows {
+  padding: var(--s-2) 0;
+}
+.imap-row {
+  display: grid;
+  grid-template-columns: 1fr 20px 1fr auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+}
+.imap-row:hover {
+  background: var(--surface-2);
+}
+.imap-from {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.imap-arrow {
+  color: var(--fg-quaternary);
+  text-align: center;
+}
+.imap-to {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-sm);
+  padding: 0 var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  min-width: 0;
+}
+.imap-to span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.imap-to--new {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.imap-to--skip {
+  color: var(--fg-tertiary);
+  border-style: dashed;
+  background: transparent;
+}
+.imap-status {
+  font-size: var(--t-caption-size);
+  white-space: nowrap;
+}
+.imap-status--ok {
+  color: var(--success);
+}
+.imap-status--new {
+  color: var(--accent);
+}
+.imap-status--skip {
+  color: var(--fg-tertiary);
+}
+.imap-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+  background: var(--surface-2);
+}
+.imap-foot-note {
+  flex: 1;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+/* THE PREVIEW RESOLVES THE ROW LABEL, so "a boat named Variant"
+   is visible before it exists rather than after. */
+.imap-preview {
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+}
+.imap-preview-label {
+  margin-bottom: var(--s-2);
+}
+.imap-chip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 6px 0;
+  font-size: var(--t-small-size);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.imap-chip-row:last-child {
+  border-bottom: 0;
+}
+.imap-chip-row b {
+  font-weight: 550;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.imap-chip-row span {
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}

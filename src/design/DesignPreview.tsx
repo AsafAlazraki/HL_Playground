@@ -42,6 +42,14 @@ import {
   Warning,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
+import {
+  BlastConfirm,
+  CommandPalette,
+  ImportMapping,
+  NotUndoableToast,
+  ProposeModules,
+  UndoToast,
+} from './UxSurfaces'
 
 /* ---------- shared bits ------------------------------------- */
 
@@ -771,6 +779,10 @@ const TEXT_RAMP: [string, string, string, string][] = [
 const TOC = [
   ['dashboard', 'Dashboard'],
   ['index', 'Index'],
+  ['search', 'Search'],
+  ['undo', 'Undo'],
+  ['import', 'Import'],
+  ['propose', 'First run'],
   ['nav', 'Navigation'],
   ['caps', 'Capabilities'],
   ['card', 'Cards'],
@@ -923,6 +935,87 @@ export function DesignPreview() {
             toolbar. <strong>A tile with no picture says nothing about a picture</strong> — it
             shows the row label and stops. A broken-image glyph in front of a customer is worse
             than a plain name.
+          </div>
+        </Section>
+
+        {/* ---------------- search ---------------- */}
+        <Section
+          id="search"
+          title="One search over everything"
+          blurb="There is no search in this app of any kind — verified, against 21 tables and 651 rows. Per-module search is necessary and not sufficient, because the whole problem is that you do not know which module the thing is in."
+        >
+          <div className="pv-stage pv-stage--flush">
+            <CommandPalette />
+          </div>
+          <div className="pv-note">
+            <strong>Every result says where it lives.</strong> “Where am I, and how did I
+            get here” is the wayfinding question this app fails worst, so the path is part
+            of the result rather than something you find out after opening it. Row labels
+            only — never a UID, never a raw cell value; the audit's own note on this change
+            is that a search returning <code className="ds-mono-sm">kb2JYb4GLH</code> would
+            be worse than no search at all. Enter opens the thing, which also fixes the view
+            page always reopening on row 1 of 40.
+          </div>
+        </Section>
+
+        {/* ---------------- undo ---------------- */}
+        <Section
+          id="undo"
+          title="Undo, and the nine dialogs it deletes"
+          blurb="The app mentions undo nineteen times across src/ and implements it zero times — every mention is an apology. This stops being optional the moment a module hands a salesperson the edit and delete verbs over a dealership's real price file."
+        >
+          <div className="pv-stage" style={{ display: 'grid', gap: 'var(--s-5)', justifyItems: 'start' }}>
+            <UndoToast />
+            <NotUndoableToast />
+            <BlastConfirm />
+          </div>
+          <div className="pv-note">
+            <strong>If an act is undoable, it does not get a dialog — it gets a toast with
+            UNDO in it.</strong> The four confirm sheets exist <em>because</em> there is no
+            undo; <code className="ds-mono-sm">ConfirmSheet.tsx:5</code> says so itself. That
+            turns the common destructive acts from stop-read-decide-confirm into act-glance-
+            carry-on, which is quicker <em>and</em> less frightening. What survives is the
+            genuinely irreversible — and it states its blast radius, computed from
+            <code className="ds-mono-sm"> dependents.ts</code>, instead of a fixed sentence.
+            Anything not undoable says so at the moment it happens, never in a spec.
+          </div>
+        </Section>
+
+        {/* ---------------- import ---------------- */}
+        <Section
+          id="import"
+          title="Getting data in"
+          blurb="Every one of these dealers keeps their business in a spreadsheet, so import is not a feature of this product — it is the front door. Today the empty-table card advertises “paste a block straight from Excel”, mounts no grid, and on the path that does work is positional with no header row: a pasted header line became a boat named Variant."
+        >
+          <div className="pv-stage pv-stage--flush">
+            <ImportMapping />
+          </div>
+          <div className="pv-note">
+            <strong>Nothing is silently dropped and nothing is silently assumed.</strong>{' '}
+            Types are inferred and shown so they can be refused; “new column” is a
+            first-class outcome rather than a failure, because a dealer's spreadsheet has
+            columns we have never heard of and that is normal; skipping is explicit; and the
+            preview resolves the row label so “a boat named Variant” is visible before it
+            exists rather than after.
+          </div>
+        </Section>
+
+        {/* ---------------- propose ---------------- */}
+        <Section
+          id="propose"
+          title="The first run — propose, don't interrogate"
+          blurb="The module plan is proud of three clicks to a working module, and it should be. For the first one it can be one click, because the store already holds everything those three clicks ask: every table, its kind, its hierarchy, its row count, whether it has pictures and whether it has resolvable prices."
+        >
+          <div className="pv-stage">
+            <ProposeModules />
+          </div>
+          <div className="pv-note">
+            <strong>The proposal shows its evidence.</strong> Pictures, prices, a
+            three-level hierarchy — so accepting it is an informed click and not a leap, and
+            a wrong proposal is arguable rather than mysterious. The escape hatch stays one
+            click away, so nothing is taken from the person who wants to choose. This is the
+            difference between an empty app that asks you to understand a new concept and
+            one that shows you it already understands your business.
           </div>
         </Section>
 
