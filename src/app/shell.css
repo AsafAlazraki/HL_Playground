@@ -2210,3 +2210,243 @@
   padding-top: var(--sp-3);
   border-top: 1px solid var(--hairline);
 }
+
+
+/* ============================================================
+   THE MENU BAR, AND THE TABLE STAGE
+
+   The rail is gone; navigation lives on the bar. See MenuBar.tsx
+   for the argument. What follows is only its appearance.
+   ============================================================ */
+
+.shell-menubar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: var(--sp-4);
+  min-width: 0;
+}
+
+.mb {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.mb-menu {
+  position: relative;
+}
+
+.mb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.mb-btn:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+.mb-btn.is-open {
+  background: var(--blue-wash);
+  color: var(--ink);
+}
+.mb-btn svg {
+  color: var(--ink-faint);
+}
+.mb-btn-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* THE PANEL IS ANCHORED UNDER ITS OWN BUTTON, so what you pressed
+   and what appeared are obviously the same thing. It scales from
+   the top edge rather than its centre, for the same reason. */
+.mb-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  min-width: 260px;
+  max-width: 340px;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--sp-2);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--e3);
+  transform-origin: top left;
+  animation: mb-in 140ms var(--ease-draft);
+}
+@keyframes mb-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mb-panel {
+    animation: none;
+  }
+}
+
+.mb-group + .mb-group {
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+}
+.mb-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-2) 4px;
+}
+.mb-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.mb-group-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.mb-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 34px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 460;
+  letter-spacing: -0.002em;
+  text-align: left;
+  cursor: pointer;
+}
+.mb-item:hover,
+.mb-item:focus-visible {
+  background: var(--blue-wash);
+  outline: none;
+}
+.mb-item:active {
+  background: var(--paper-sunken);
+}
+.mb-item-mark {
+  flex: none;
+  display: flex;
+  color: var(--ink-faint);
+}
+.mb-item-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mb-item-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+.mb-none {
+  margin: 0;
+  padding: var(--sp-3);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+/* ---------- the table stage --------------------------------- */
+
+/* THE FULL WIDTH. The design stage next door is a form and wants a
+   column; this is a register and wants every pixel. */
+.shell-tablestage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.shell-tablestage .shell-view-bar {
+  flex: none;
+}
+.shell-table-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.shell-table-body > * {
+  flex: 1;
+  min-height: 0;
+}
+
+/* the doors travel with the table, beside its name */
+.shell-table-doors {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+.shell-table-door {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.shell-table-door:hover {
+  border-color: var(--blue);
+  color: var(--ink);
+}
+
+/* THE SHEET TAKES THE WHOLE WINDOW now that nothing sits beside it */
+.shell-body {
+  display: flex;
+  min-width: 0;
+}
+.shell-body > .shell-stage {
+  flex: 1;
+  min-width: 0;
+}

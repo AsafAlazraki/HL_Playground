@@ -74,7 +74,28 @@ interface StoredFrame {
   ph: number
 }
 
+/* EXPANSION IS RETIRED, AND SO IS ITS MEMORY.
+
+   "Show me the whole table" is answered by the table's own page now
+   (`app/TableStage.tsx`), not by growing a card until it claims the
+   pane. Nothing creates an expanded frame any more.
+
+   But this key is in localStorage on every machine that ran the old
+   build, and restoring it would put a viewport-sized node back on
+   the sheet with no way to collapse it — every control it had was
+   drawn on the card, and the card is off screen. So the key is read
+   once, discarded, and cleared. One line, and nobody inherits a
+   ghost. */
 function readStoredFrames(): Record<string, StoredFrame> {
+  try {
+    window.localStorage.removeItem(EXPAND_KEY)
+    return {}
+  } catch {
+    return {}
+  }
+}
+
+function readStoredFramesLegacy(): Record<string, StoredFrame> {
   try {
     const raw = window.localStorage.getItem(EXPAND_KEY)
     if (!raw) return {}

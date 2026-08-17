@@ -491,9 +491,6 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
             onOpen={onOpenPlate}
           />
         </div>
-        {focusedId === entityId ? (
-          <TableFocusOverlay entity={entity} rowCount={rows.length} />
-        ) : null}
       </div>
     )
   }
@@ -784,7 +781,7 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
             type="button"
             className="tb-node-act tb-node-act--expand"
             aria-pressed={expanded}
-            onClick={expanded ? onCollapse : onExpand}
+            onClick={() => setFocusedTableEntity(entityId)}
             aria-label={
               expanded
                 ? `Collapse ${entity.name} back to its previous size`
@@ -843,9 +840,6 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
         <Toasts items={toasts.items} onDismiss={toasts.dismiss} />
       </div>
 
-      {focusedId === entityId ? (
-        <TableFocusOverlay entity={entity} rowCount={rows.length} />
-      ) : null}
     </div>
   )
 }

@@ -72,9 +72,11 @@ import {
   useNewTableRequest,
 } from '@/features/whiteboard'
 import { NewTableDialog } from '@/features/tablekit'
+import { useFocusedTableEntity, setFocusedTableEntity } from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
 import { TopBar } from './TopBar'
-import { LeftPanel } from './LeftPanel'
+import { MenuBar } from './MenuBar'
+import { TableStage } from './TableStage'
 import { EmptyState } from './EmptyState'
 import { ViewStage } from './ViewStage'
 import { RulesStage } from './RulesStage'
@@ -116,6 +118,7 @@ type Stage =
   | { kind: 'flow' }
   | { kind: 'quote'; quoteId: string | null }
   | { kind: 'module'; moduleId: string | null }
+  | { kind: 'table'; entityId: string }
 
 export function Shell() {
   const org = useProjectStore((s) => s.meta.org)
@@ -136,18 +139,36 @@ export function Shell() {
   /* what is over the sheet right now, or null for the sheet itself */
   const [stage, setStage] = useState<Stage | null>(null)
 
+  /* OPENING A TABLE FROM THE SHEET.
+
+     A card on the canvas cannot reach the shell — it is inside React
+     Flow, several transforms down — so it publishes through the
+     module-level signal it already had for the FOCUS lens, and the
+     shell turns that into a stage. Both of the card's verbs, EXPAND
+     and FOCUS, now land here: they were two names for "show me the
+     whole table", and the answer to that is a page. */
+  const focusedTableId = useFocusedTableEntity()
+  useEffect(() => {
+    if (!focusedTableId) return
+    setStage({ kind: 'table', entityId: focusedTableId })
+    setFocusedTableEntity(null)
+  }, [focusedTableId])
+
   /* A STAGE ABOUT A TABLE THAT IS GONE IS NOT OPEN. Deleting a table
      from the sheet, an import or a demo swap all leave the id behind;
      resolving it here is what closes the stage and un-lights the door
      in the same frame, rather than leaving a page pointing at nothing. */
   const stagedEntityId =
-    (stage?.kind === 'view' || stage?.kind === 'design') && entities[stage.entityId]
+    (stage?.kind === 'view' ||
+      stage?.kind === 'design' ||
+      stage?.kind === 'table') &&
+    entities[stage.entityId]
       ? stage.entityId
       : null
   const open: Stage | null =
     stage === null
       ? null
-      : stage.kind === 'view' || stage.kind === 'design'
+      : stage.kind === 'view' || stage.kind === 'design' || stage.kind === 'table'
         ? stagedEntityId
           ? stage
           : null
@@ -186,31 +207,29 @@ export function Shell() {
 
   return (
     <div className="shell-root">
-      <TopBar />
+      <TopBar
+        onRevealTable={(id) => setStage({ kind: 'table', entityId: id })}
+        menu={
+          <MenuBar
+            onOpenTable={(id) => setStage({ kind: 'table', entityId: id })}
+            onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
+            onOpenRules={() => setStage({ kind: 'rules' })}
+            onOpenFlow={() => setStage({ kind: 'flow' })}
+            onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
+            onAddTable={() => setPicking(true)}
+            quoteCount={quoteCount}
+          />
+        }
+      />
 
       {/* THE FLEX CHAIN — .shell-root › .shell-body › panel | stage.
           Every box on it carries `min-width: 0` in shell.css; without
           it a panel that cannot fold below its min-content width pushes
           the row past the window and shoves the sheet off screen. */}
       <div className="shell-body">
-        {/* Every door hands the panel one value back. Nothing has to be
-            cleared on the way in, because there is only one slot. */}
-        <LeftPanel
-          onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
-          dashboardOpen={open?.kind === 'module'}
-          onOpenView={(id) => setStage({ kind: 'view', entityId: id })}
-          onOpenDesign={(id) => setStage({ kind: 'design', entityId: id })}
-          onOpenRules={() => setStage({ kind: 'rules' })}
-          onOpenFlow={() => setStage({ kind: 'flow' })}
-          onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
-          openViewEntityId={open?.kind === 'view' ? open.entityId : null}
-          openDesignEntityId={open?.kind === 'design' ? open.entityId : null}
-          rulesOpen={open?.kind === 'rules'}
-          flowOpen={open?.kind === 'flow'}
-          quotesOpen={open?.kind === 'quote'}
-          quoteCount={quoteCount}
-        />
-
+        {/* THE RAIL IS GONE. Navigation is on the bar now — see
+            MenuBar.tsx for why a 260px permanent column was the wrong
+            trade for an app whose main object is a wide register. */}
         <main className="shell-stage" aria-label="Sheet">
           {/* THE SHEET STOPS EXISTING WHILE A STAGE IS OVER IT.
               A stage covers the canvas but never unmounted it, so the
@@ -274,6 +293,14 @@ export function Shell() {
             <RulesStage onClose={() => setStage(null)} />
           ) : open?.kind === 'flow' ? (
             <FlowStage onClose={() => setStage(null)} />
+          ) : open?.kind === 'table' ? (
+            <TableStage
+              key={open.entityId}
+              entityId={open.entityId}
+              onOpenView={(id) => setStage({ kind: 'view', entityId: id })}
+              onOpenDesign={(id) => setStage({ kind: 'design', entityId: id })}
+              onClose={() => setStage(null)}
+            />
           ) : open?.kind === 'quote' ? (
             /* DELIBERATELY NOT KEYED ON THE QUOTE ID. The view and
                design stages are keyed because a different table is a

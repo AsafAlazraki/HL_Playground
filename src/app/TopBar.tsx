@@ -30,6 +30,7 @@
    ============================================================ */
 
 import { useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ImportExportMenu } from '@/features/io'
 import { SearchField } from '@/features/search'
@@ -48,9 +49,12 @@ export interface TopBarProps {
    *  asks through here. Unset, the selection still lands and is
    *  waiting the moment the stage is closed. */
   onRevealTable?: (entityId: string) => void
+  /** the menu bar, handed in by the shell — the bar owns the layout,
+   *  the shell owns what the menus do */
+  menu?: ReactNode
 }
 
-export function TopBar({ onRevealTable }: TopBarProps = {}) {
+export function TopBar({ onRevealTable, menu }: TopBarProps = {}) {
   const org = useProjectStore((s) => s.meta.org)
   const projectName = useProjectStore((s) => s.meta.name)
   const setOrganisation = useProjectStore((s) => s.setOrganisation)
@@ -87,6 +91,8 @@ export function TopBar({ onRevealTable }: TopBarProps = {}) {
         <span className="shell-mark-brand">Helmlogic</span>
         <span className="shell-mark-product block-heading">Dynamic Config</span>
       </div>
+
+      {menu ? <div className="shell-menubar">{menu}</div> : null}
 
       <div className="shell-org">
         {editing ? (
