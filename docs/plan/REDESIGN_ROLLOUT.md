@@ -268,7 +268,93 @@ step 1 and again after step 4. Every item is a thing the app can do today.
 
 ---
 
-## 7 · WHAT IS ALREADY DONE, SO IT IS NOT RE-DONE
+## 7 · WORKING IN PARALLEL WITH THE FEATURE BUILD
+
+**Yes, and most of it needs no coordination at all.** Three facts, measured
+this session rather than assumed.
+
+### 1 · Step 1 has zero file overlap. Provably.
+
+The other session is touching **56** `.ts/.tsx/.css` files across its working
+tree and recent commits. Switching the bridge on touches **two**:
+
+```
+src/styles/bridge.css     new file, nobody else has it
+src/main.tsx              not in their 56
+```
+
+The intersection is empty. Step 1 can be taken mid-flight, today, without a
+merge conflict being possible.
+
+### 2 · Everything they build from now on is redesigned for free.
+
+This is the real prize of the 97.6% tokenisation, and it is worth stating
+plainly to whoever is building:
+
+> They keep writing `var(--ink)`, `var(--paper-high)`, `var(--blue)`,
+> `var(--hairline)` exactly as they do now. Those names keep working. They
+> simply resolve to Quiet Precision instead of the Chart Room.
+
+No new conventions to learn, no rework, no rebasing onto a design system. A
+module screen written tomorrow against the old token names arrives already
+wearing the new one. **The longer the bridge is on, the less retrofitting there
+is at the end** — which inverts the usual "freeze the feature work while design
+lands" trade.
+
+The one thing to tell them: *if a screen suddenly looks different, that is the
+bridge and it is intended — do not fix it back.*
+
+### 3 · Ownership is by FILE, not by feature.
+
+| owner | files |
+|---|---|
+| Design | `src/styles/*`, `tools/check-styles.mjs`, this doc, `UX_PASS.md` |
+| Feature build | `src/features/*`, `src/app/*`, `src/db/*`, `src/store/*` |
+| **Contested — agree before editing** | `src/design/*` |
+
+That last row is live: the feature session has edited `DesignPreview.tsx`,
+`FlowSurfaces.tsx`, `flow.css` and `design/main.tsx`. The preview is only a
+proposal surface, so the simplest resolution is that whoever is holding it says
+so; it has no runtime consequence either way.
+
+### 4 · For steps 2–5, which DO touch their files: layer, do not edit.
+
+Steps 2–5 want to change `table.css`, `shell.css`, `quote.css` and the
+components beside them — which is exactly where the conflicts are. While the
+feature build is live, do not edit those files. Add instead:
+
+```ts
+// src/main.tsx — LAST import, after everything it overrides
+import './styles/late.css'
+```
+
+Later import order wins at equal specificity, so an override layer needs no
+`!important` and no specificity inflation. Their file is never opened, so a
+conflict is impossible.
+
+**With a hard rule attached:** `late.css` is a staging area, not a destination.
+Every rule in it is a debt with a home — the file it will be folded into — and
+it gets collapsed the moment the feature build pauses. A permanent override
+layer is two stylesheets fighting over one screen, which is worse than the
+problem it solved.
+
+### 5 · The guard makes the parallelism safe both ways
+
+`npm test` runs `check-styles` for both sessions. If either one writes a class
+with no rule — including a class whose rule the *other* session just moved —
+the run fails, names the class and names the file. Neither of us can silently
+unstyle the other's work.
+
+### What to do about the retention checklist
+
+§4 is written against what the app does **today**. The feature build is adding
+to that — `src/app/UndoKeys.tsx` and `src/store/undo.test.ts` exist, so UX_PASS
+§1 is being executed as we speak. Re-derive §4 from the tree at "go" rather
+than trusting it; it is a checklist, not a contract, and the app is moving.
+
+---
+
+## 8 · WHAT IS ALREADY DONE, SO IT IS NOT RE-DONE
 
 - `src/styles/ds.css` — the system, both themes, contrast measured in-browser
 - `src/styles/bridge.css` — the re-skin, written, not switched on
