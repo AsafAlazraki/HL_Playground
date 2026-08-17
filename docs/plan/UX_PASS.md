@@ -354,8 +354,9 @@ Ordered by ease gained per hour, which is not the order of difficulty.
 | 4 | Propose modules on the empty dashboard (§8) | ~1 day | the first-run moment |
 | 5 | `⌘K` over everything (§2) | ~1 day | the audit's #2 finding, and wayfinding |
 | 6 | Pinned display column (§7) | ~1 day | every price-reading task |
-| 7 | Paste with header mapping (§3) | ~2 days | the front door to the product |
-| 8 | **Undo + multi-tab lock (§1)** | **~3 days** | **everything above it gets safer, and nine dialogs get deleted** |
+| 7 | **The fit sentence (§11)** | ~2 days | retires the app's hardest screen |
+| 8 | Paste with header mapping (§3) | ~2 days | the front door to the product |
+| 9 | **Undo + multi-tab lock (§1)** | **~3 days** | **everything above it gets safer, and nine dialogs get deleted** |
 
 Undo is last by cost and first by value. If the module system ships `edit` or
 `delete` to an end user before §1 exists, that capability should stay off by
@@ -377,3 +378,88 @@ want a second person to exist.
 Nothing here needs roles to ship. But if the answer is "yes, a different
 person", then undo, provenance and the refusal sentences are not polish, they
 are the product's safety story, and they should be built at that weight.
+
+
+---
+
+## 11 · THE FLOW JOURNEY — a sentence, not a graph
+
+Added after the owner said the flow journey *"isn't as simple as it should be."*
+It is not, and the data says how much.
+
+### The measurement
+
+| | |
+|---|---|
+| Fitment flows in the real seed | **2** |
+| Shape of both | `start → match → output` — 3 nodes, 2 edges, linear |
+| Comparison clauses in each | **2** |
+| Node kinds the builder offers | **8** |
+| `condition` / `loop` / `filter` / `find` / `action` nodes in the real data | **0** |
+| The builder | **19 files, 5,236 lines** |
+
+Both flows come out of a single factory — `northside.ts:2349`, `mkRule` — which
+can only *emit* that one shape. There is no branch anywhere in the real data,
+because fitment does not branch: it is a filter with a name.
+
+Meanwhile audit finding 3 measured the canvas at 1280: **524px wide, opening
+scale 0.68, plate type 5.4–7.1px, the Output plate 123 of its 190px
+off-canvas.** A *two*-plate rule does not fit. You can never see the whole of
+even the simplest rule.
+
+**A graph is the right tool for a thing that branches. Nothing here branches.**
+
+### The design
+
+The default path becomes the sentence — which is what the rule already is when
+read aloud, and which is the surface the constraints module already uses:
+
+```
+For every  [Highfield Inflatables]  variant,
+find the   [Yamaha Outboards]  where
+      │  [HP Rating]  [is at least]  [Min HP]
+      │  [HP Rating]  [is at most ]  [Max HP]
+      │  + add a comparison
+Show  [Boat] [Min HP] [Max HP] [Motor] [HP Rating]  + column
+When nothing fits, [skip the boat]
+```
+
+Measured in the preview at 1280: sentence **610px**, live result **420px**,
+side by side, **zero clipped children**, smallest type **11.5px**.
+
+Four things it does that the canvas could not:
+
+1. **One door instead of two.** Constraints and fitment become one surface with
+   two verbs — *a limit* and *a fit* — each explained by a real sentence from
+   the dealer's own data. This closes finding 5: "motors must never exceed max
+   HP" reads as a limit, sends you to Business rules, and there is no refusal
+   sentence and no pointer to where it does live.
+2. **It runs while you build.** Finding 18's guided path produced 193 rows with
+   two columns both headed `Series`, and the person only found out after
+   pressing RUN. With the answer permanently on screen that is a mid-sentence
+   correction rather than a wasted journey.
+3. **It refuses to be confidently wrong.** Two fixes, not one: prefer
+   `displayFieldId` over "the first column", *and* notice a result that names
+   neither side and offer the repair.
+4. **Each side is tinted by its table**, so `HP Rating` vs `Min HP` cannot be
+   misread as two columns of one table.
+
+### Where it lives
+
+Not on a page you visit. Under modules a fitment flow **is** the Related block
+on a boat's detail surface, so the sentence opens from the one line that
+explains the list — *"Worked out by Motor fitment: HP between Min HP and Max
+HP"*. Design-time and run-time stay the same screen, which is the promise
+`ViewPage` already makes and keeps. Most people never open a rules list at all.
+
+### What happens to the 5,236 lines
+
+**Keep the engine, demote the canvas.** The execution engine is pure TS, is
+correct, and the sentence compiles straight into the same `RuleDef` — this is a
+new authoring surface over an unchanged model, not a new engine.
+
+The canvas stops being the default path and stops being advertised. It is not
+deleted yet, because deleting it is a one-way door and the argument for it is
+"nobody has branched *so far*". Revisit once real usage says whether anyone ever
+does. If in six months the `condition` node still has zero uses outside a
+demo, that is the answer.
