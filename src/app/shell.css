@@ -3318,3 +3318,68 @@
   align-items: center;
   gap: 4px;
 }
+
+
+/* ---------- the app switcher (Cmd/Ctrl + Tab) --------------- */
+
+.sw-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(9, 12, 18, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+.sw-row {
+  display: flex;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--paper-high) 82%, transparent);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border: 1px solid var(--hairline);
+  box-shadow: 0 32px 80px -16px rgba(9, 12, 18, 0.45);
+  max-width: calc(100vw - 64px);
+  overflow: hidden;
+}
+.sw-tile {
+  width: 108px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+}
+.sw-tile.is-on {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+}
+.sw-tile-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--paper-sunken);
+  border: 1px solid var(--hairline);
+}
+.sw-tile.is-on .sw-tile-mark {
+  background: var(--paper-high);
+}
+.sw-tile-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -77,6 +77,7 @@ import { Onboarding } from '@/features/onboarding'
 import { TopBar } from './TopBar'
 import { Dock } from './Dock'
 import { Win } from './Win'
+import { useWindowKeys } from './useWindowKeys'
 import {
   bestFrame,
   renderStage,
@@ -193,6 +194,20 @@ export function Shell() {
     setWins((prev) => prev.map((w) => (w.id === id ? { ...w, ...patch } : w)))
   }, [])
 
+  /* THE DESKTOP SHORTCUTS. Every one is modifier-gated, because
+     this app is made of editable grids and a bare key handler
+     would eat typing. See useWindowKeys.ts. */
+  const { switcher } = useWindowKeys({
+    ids: wins.map((w) => w.id),
+    raise: raiseWin,
+    close: closeWin,
+    minimise: (id) => patchWin(id, { mini: true }),
+    zoom: (id) =>
+      setWins((prev) =>
+        prev.map((w) => (w.id === id ? { ...w, zoomed: !w.zoomed } : w)),
+      ),
+  })
+
   /* the old single-slot setter, kept so every existing call site in
      this file keeps working — it just opens a window instead */
   const setStage = useCallback(
@@ -304,6 +319,28 @@ export function Shell() {
           )}
         </main>
       </div>
+
+      {switcher ? (
+        <div className="sw-scrim" role="dialog" aria-label="Switch window">
+          <div className="sw-row">
+            {switcher.order.map((id, i) => {
+              const w = wins.find((x) => x.id === id)
+              if (!w) return null
+              return (
+                <div
+                  key={id}
+                  className={`sw-tile${i === switcher.index ? ' is-on' : ''}`}
+                >
+                  <span className="sw-tile-mark" />
+                  <span className="sw-tile-name">
+                    {winTitle(w.stage, entities)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {/* THE DOCK — floating over the sheet, not attached to an
           edge and not a column beside it. */}
