@@ -152,7 +152,7 @@ export function ModuleStage({
     <div
       className="shell-viewstage"
       role="region"
-      aria-label={open ? open.name : 'Dashboard'}
+      aria-label={open ? open.name : 'Modules'}
       style={style}
       /* KEYSTROKES STOP AT THIS ROOT, the same line every other stage
          carries. The whiteboard is still mounted underneath and still
@@ -175,7 +175,7 @@ export function ModuleStage({
               <TableKindSymbol kind={kindOf(primary.kind)} size={ICON_SIZE.small} />
             </span>
           ) : null}
-          <span className="shell-view-what-name">{open ? open.name : 'Dashboard'}</span>
+          <span className="shell-view-what-name">{open ? open.name : 'Modules'}</span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>
