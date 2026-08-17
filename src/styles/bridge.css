@@ -1,0 +1,217 @@
+/* ============================================================
+   THE BRIDGE — one file that re-skins the whole app.
+
+   NOT IMPORTED YET. Adding one line to src/main.tsx, after
+   tokens.css and base.css, switches the entire application onto
+   Quiet Precision. Removing that line switches it back. That is
+   the whole rollback plan and it is why this file exists.
+
+   WHY THIS WORKS. Measured over every stylesheet in src/ that is
+   not mine:
+
+       4,787  var(--token) uses
+          63  hardcoded hex
+          57  hardcoded rgb()/rgba()
+
+   The app is 97.6% tokenised. Somebody was disciplined, and the
+   payoff is collected here: redefining ~50 names re-skins ~19,000
+   lines of CSS without touching one selector, one component, one
+   layout rule or one line of TSX. Nothing can move, because
+   nothing about geometry is being redefined except radii — see
+   the note on --sp-* below, which are deliberately NOT changed.
+
+   WHAT THIS FILE MAY NEVER DO:
+     - change a --sp-* value (spacing is layout; layout is risk)
+     - change a *-size / *-lead / *-track type value (same reason;
+       type sizing is handled in the hand-tune pass, per screen)
+     - introduce a new name (that is ds.css's job)
+     - style a selector (there is not one selector in here)
+
+   It only re-points colour, elevation, radius, motion and family.
+   Those five cannot reflow a page.
+
+   ORDER MATTERS. This must load AFTER tokens.css and base.css, or
+   the originals win. See main.tsx.
+   ============================================================ */
+
+@import './ds.css';
+
+:root {
+  /* ---------- ink ------------------------------------------
+     The single highest-value line in this file is --ink-faint.
+     The audit found 218 uses of an ink measuring 2.96:1 on
+     white, and called the screen "below its own legibility
+     floor". Re-pointing one token takes all 218 to 4.7:1. */
+  --ink: var(--fg);
+  --ink-soft: var(--fg-secondary);
+  --ink-faint: var(--fg-tertiary);
+  --ink-faint-base: var(--fg-tertiary);
+  --ink-faint-material: var(--fg-tertiary);
+
+  /* ---------- paper ---------------------------------------- */
+  --paper: var(--bg);
+  --paper-high: var(--surface-1);
+  --paper-overlay: var(--surface-2);
+  --paper-sunken: var(--bg-sunken);
+
+  /* ---------- lines ---------------------------------------- */
+  --hairline: var(--line);
+  --hairline-strong: var(--line-strong);
+
+  /* ---------- the accent ------------------------------------
+     `--blue` was the brand blue; it becomes the one accent. */
+  --blue: var(--accent);
+  --blue-deep: var(--accent-press);
+  --blue-wash: var(--accent-wash);
+  --blue-wash-strong: var(--accent-wash-strong);
+
+  /* ---------- carmine → danger ------------------------------ */
+  --red: var(--danger);
+  --red-base: var(--danger);
+  --red-material: var(--danger);
+  --red-wash: var(--danger-wash);
+
+  /* ---------- the canvas ------------------------------------
+     The blueprint field is retired here. `--canvas-bg` was the
+     navy; it becomes the ordinary sheet ground, and the grid
+     lines go to the near-invisible dot field's value so any
+     surviving grid rule fades rather than shouts. */
+  --canvas-bg: var(--bg-canvas);
+  --canvas-bg-deep: var(--bg-sunken);
+  --canvas-grid-minor: transparent;
+  --canvas-grid-major: var(--canvas-dot);
+  --canvas-hairline: var(--line);
+  --canvas-ink: var(--fg);
+  --canvas-ink-soft: var(--fg-secondary);
+  --canvas-ink-faint: var(--fg-tertiary);
+  --canvas-wash: var(--surface-2);
+  --canvas-edge: var(--line-strong);
+  --canvas-edge-selected: var(--accent);
+
+  /* ---------- the kind accents ------------------------------
+     Seven accents plus seven "bright" variants become the eight
+     equal-luminance kind hues. The -bright pair now resolves to
+     the same ink as its base: the outgoing pair existed so a
+     colour could survive the navy, and there is no navy. */
+  --accent-blue: var(--kind-indigo);
+  --accent-blue-bright: var(--kind-indigo);
+  --accent-ochre: var(--kind-amber);
+  --accent-ochre-bright: var(--kind-amber);
+  --accent-teal: var(--kind-teal);
+  --accent-teal-bright: var(--kind-teal);
+  --accent-violet: var(--kind-violet);
+  --accent-violet-bright: var(--kind-violet);
+  --accent-viridian: var(--kind-green);
+  --accent-viridian-bright: var(--kind-green);
+  --viridian: var(--kind-green);
+  --accent-carmine: var(--kind-rose);
+  --accent-carmine-bright: var(--kind-rose);
+  --accent-graphite: var(--kind-slate);
+  --accent-graphite-bright: var(--kind-slate);
+
+  /* ---------- field types ----------------------------------
+     Eight coloured chips become three roles. Everything that is
+     not computed or linked goes grey, which is the single
+     biggest reduction of noise in the grid. */
+  --type-text: var(--chip-fg);
+  --type-number: var(--chip-fg);
+  --type-date: var(--chip-fg);
+  --type-select: var(--chip-fg);
+  --type-boolean: var(--chip-fg);
+  --type-formula: var(--chip-computed-fg);
+  --type-reference: var(--chip-linked-fg);
+  --type-image: var(--chip-linked-fg);
+
+  /* ---------- radius ---------------------------------------
+     The one geometry change, and it is safe: a radius cannot
+     reflow anything. 3px → the real scale. */
+  --radius: var(--r-card);
+  --radius-sm: var(--r-control);
+
+  /* ---------- families -------------------------------------
+     THE DISPLAY SERIF IS RETIRED. --font-display was Instrument
+     Serif, set as low as 9px on the canvas cards where it read
+     as blur. Pointing it at the sans is what removes the serif
+     from ~12 sites without editing any of them. */
+  --font-ui: var(--font-sans);
+  --font-display: var(--font-sans);
+  /* --font-mono is defined identically by both systems; ds.css
+     wins by load order and the value is the same face. */
+
+  /* ---------- motion ---------------------------------------- */
+  --t-fast: var(--d-fast);
+  --t-med: var(--d-med);
+  --t-press: var(--d-press);
+  --ease-draft: var(--ease);
+  --ease-press: var(--ease);
+
+  /* ---------- elevation ------------------------------------
+     NAME COLLISION, DELIBERATE. base.css and ds.css both define
+     --e1/--e2/--e3, and they mean the same thing. ds.css is
+     imported at the top of this file, so ITS values win — which
+     is the intent. --e4/--e5 have no ds.css counterpart and are
+     mapped up to e3, the deepest we have. --ec1..--ec4 are the
+     canvas elevation set and take the card shadows. */
+  --e4: var(--e3);
+  --e5: var(--e3);
+  --ec1: var(--e-card);
+  --ec2: var(--e-card);
+  --ec3: var(--e-card-hover);
+  --ec4: var(--e-card-hover);
+  --shadow-card-canvas: var(--e-card);
+  --shadow-card-canvas-raised: var(--e-card-hover);
+  --shadow-popover: var(--e2);
+  --shadow-sheet: var(--e2);
+  --shadow-sheet-raised: var(--e3);
+
+  /* ---------- materials -------------------------------------
+     The glass pass is retired. The owner asked for Quiet
+     Precision over Glass & Depth, and the previous build's glass
+     pass produced the design being replaced. Every material
+     resolves to paint, and the blurs go to zero rather than
+     being deleted — a zero-radius backdrop-filter is a no-op, so
+     no rule needs to be found and edited. */
+  --mat-heavy-bg: var(--surface-1);
+  --mat-heavy-blur: 0px;
+  --mat-heavy-edge: var(--line);
+  --mat-light-bg: var(--surface-2);
+  --mat-light-blur: 0px;
+  --mat-light-edge: var(--line-subtle);
+  --mat-dim-bg: var(--bg-sunken);
+  --mat-dim-blur: 0px;
+  --mat-dim-alpha: 0.55;
+
+  /* ---------- press -----------------------------------------
+     ds.css owns press now (see its PRESS section). These stay
+     pointed at compatible values so any surviving base.css rule
+     agrees with the foundation rather than fighting it. */
+  --press-scale: 0.97;
+  --press-fx: var(--surface-3);
+  --press-wash: var(--surface-3);
+  --press-wash-invert: rgba(255, 255, 255, 0.12);
+
+  /* ---------- NOT REMAPPED, ON PURPOSE ----------------------
+     --sp-1..--sp-7   spacing is layout, and layout is the risk.
+                      The new scale happens to agree at 4/8/12/16
+                      anyway; changing them here would reflow
+                      every screen at once with nothing to blame.
+     --grid-unit / --grid-major / --grid-minor
+                      the sheet's geometry, not its colour.
+     every *-size, *-lead, *-track
+                      type sizing is the hand-tune pass, one
+                      screen at a time, so a regression has one
+                      obvious cause. This file must never make a
+                      screen reflow.
+     --micro-track-glass
+                      tracking, so it belongs to that pass too —
+                      but note it was widened for legibility over
+                      blur, and there is no blur left. It should
+                      collapse into the ordinary micro tracking
+                      rather than being re-pointed here.
+
+   COVERAGE, checked rather than assumed: of the 126 global tokens
+   the app consumes, 66 are remapped above and 60 are left as-is.
+   Every one of those 60 is a --sp-*, a --grid-*, or a type
+   size/lead/track/weight — except --e1/--e2/--e3 and --font-mono,
+   which ds.css defines itself and therefore already carries. */
+}

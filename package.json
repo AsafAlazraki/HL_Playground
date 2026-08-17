@@ -7,9 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run && npm run check:reachable",
+    "test": "vitest run && npm run check:reachable && npm run check:styles",
     "test:watch": "vitest",
-    "check:reachable": "node tools/check-reachability.mjs"
+    "check:reachable": "node tools/check-reachability.mjs",
+    "check:styles": "node tools/check-styles.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
