@@ -26,6 +26,7 @@
 
 import { useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
+import { desktopTop } from './winKit'
 
 export interface WinFrame {
   x: number
@@ -65,6 +66,9 @@ export function Win({
   children,
 }: WinProps) {
   const drag = useRef<{ dx: number; dy: number } | null>(null)
+  /* the same measured line the cascade uses, so a window can never
+     be dragged under the masthead either */
+  const topLimit = desktopTop()
 
   const onBarDown = useCallback(
     (e: React.PointerEvent) => {
@@ -86,7 +90,7 @@ export function Win({
         x: Math.max(-frame.w + 120, e.clientX - d.dx),
         /* never above the menu bar, and never dragged fully off the
            bottom — a window you cannot grab again is a window lost */
-        y: Math.min(Math.max(28, e.clientY - d.dy), window.innerHeight - 60),
+        y: Math.min(Math.max(topLimit, e.clientY - d.dy), window.innerHeight - 60),
       })
     },
     [frame.w, onMove],

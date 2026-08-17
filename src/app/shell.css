@@ -3513,3 +3513,287 @@
     transition: opacity 140ms linear;
   }
 }
+
+
+/* ============================================================
+   ONE TOOLBAR PER WINDOW.
+
+   A stage was written to be the whole screen, so it carries its
+   own bar with its own title and its own way back. Inside a
+   window that is a SECOND titlebar under the first: the window
+   said "Home", and the stage said "Northside Marine · 50 tables"
+   directly beneath it - and being squeezed between a back button
+   and a search field, the stage's title had 101px to say it in
+   and rendered as "NORT... · 21...".
+
+   A Mac window has one unified toolbar. The WINDOW owns identity
+   - title and traffic lights - and the stage's bar keeps only its
+   CONTROLS. So inside a window the stage's title is hidden and
+   its back button goes with it: the red light is the way out, it
+   is where a Mac user already looks for it, and two ways out of
+   one window is one too many.
+   ============================================================ */
+
+/* SPECIFICITY: the centring rule above is
+   `.shell-viewstage .shell-view-bar .shell-view-what` (0,3,0), so a
+   two-class hide loses to it and the duplicate title stayed on
+   screen. Matched depth for depth rather than reached for
+   !important, which would only move the argument. */
+/* the window chrome is gone, so nothing above the stage carries
+   its title or its way out any more — both come back */
+.win-body .shell-viewstage .shell-view-bar .shell-view-what,
+.win-body .shell-viewstage .shell-view-bar .shell-view-back {
+  display: flex;
+}
+
+/* with identity gone, the bar is controls only — so it stops
+   pretending to be a titlebar and becomes a toolbar */
+.win-body .shell-view-bar {
+  grid-template-columns: 1fr auto;
+  height: 46px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid var(--hairline);
+}
+.win-body .shell-view-bar > *:last-child {
+  grid-column: 2;
+  justify-self: end;
+}
+.win-body .hm-find,
+.win-body .shell-table-doors {
+  grid-column: 2;
+  justify-self: end;
+}
+.win-body .hm-bar-left {
+  grid-column: 1;
+}
+
+/* THE WINDOW TITLE CARRIES THE SUBJECT NOW, so it is allowed the
+   room to say it - it is the only place the name appears. */
+.win-title {
+  max-width: 60%;
+}
+
+/* a bar with nothing left in it should not leave a 46px band */
+.win-body .shell-view-bar:empty {
+  display: none;
+}
+
+
+/* ============================================================
+   ONE SYSTEM.
+
+   The floating-window desktop went too far. A dealer opening a
+   price file does not want to run a window manager, and traffic
+   lights on every table cost more than they gave.
+
+   So: ONE SURFACE, filling the window, and the dock is the only
+   chrome there is. The masthead is gone with it — it held a
+   wordmark, an org name and a search field, and every one of
+   those has a better home. That is 56px on a wide screen and
+   over 100px on a narrow one, given back to the thing people
+   came to read.
+
+   WHAT THE DOCK NOW IS: the whole navigation. Where you are
+   (a lit icon), where you can go (the rest), and how you get
+   there (one press). Section to section is a press; page to page
+   inside a section is the section's own business.
+   ============================================================ */
+
+.shell-root {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+.shell-body {
+  display: block;
+  height: 100vh;
+  min-width: 0;
+}
+.shell-stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* the surface takes everything, and stops 78px short of the
+   bottom so the dock always has air under it */
+.surface {
+  position: absolute;
+  /* OPAQUE, AND OVER EVERYTHING. This was transparent with the
+     whiteboard still mounted underneath at inset 0, so every page
+     had fifty table cards showing through it. A surface is a page,
+     not a pane of glass. */
+  background: var(--paper);
+  z-index: 10;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  /* ARRIVING IS A CROSS-FADE, not a slide. Sections are siblings,
+     not a stack — nothing is "further in" than anything else — so
+     there is no direction for a slide to honour. */
+  animation: surface-in 180ms var(--ease-settle);
+}
+@keyframes surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface {
+    animation: none;
+  }
+}
+
+/* a stage inside the surface is simply the surface */
+.surface > .shell-viewstage {
+  position: static;
+  inset: auto;
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--paper);
+}
+
+/* THE BAR FLOATS OVER THE PAGE, so the page must end above it —
+   otherwise the last rows of a register sit under the controls
+   and cannot be read or clicked. */
+.surface > .shell-viewstage {
+  padding-bottom: 76px;
+}
+
+/* THE STAGE'S OWN BAR IS THE ONLY HEADER NOW, so it gets its
+   title back — there is no window titlebar above it any more. */
+.surface .shell-view-what {
+  display: flex;
+}
+.surface .shell-view-bar {
+  height: 52px;
+  background: color-mix(in srgb, var(--paper-high) 80%, transparent);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* the sheet is a section like any other, so it fills the surface */
+.shell-sheet-layer {
+  position: absolute;
+  inset: 0;
+}
+
+
+/* ---------- the bar, when it is a page's toolbar ------------- */
+
+.dk-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 12px 0 8px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    transform var(--t-med) var(--ease-draft);
+}
+.dk-back:hover {
+  background: var(--paper-sunken);
+}
+.dk-back:active {
+  transform: scale(0.97);
+}
+
+/* the page's name, so the bar says WHERE these verbs apply — a
+   toolbar with no subject is a row of guesses */
+.dk-ctx-title {
+  max-width: 260px;
+  padding: 0 4px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- a table page fills the surface ------------------- */
+
+/* THE TABLE PAGE KEEPS ITS BAR, and this rule used to hide it.
+   Back, the table name and the two doors all live in that bar, so
+   hiding it left a full-screen register with NO WAY OUT - the one
+   defect that makes a page unusable rather than ugly. */
+.surface .shell-tablestage .shell-view-bar {
+  display: grid;
+}
+.surface .shell-tablestage {
+  padding: 0;
+}
+.surface .shell-table-body {
+  flex: 1;
+  min-height: 0;
+}
+
+
+/* ---------- the nested Tables menu -------------------------- */
+
+/* the two panels are ONE hover region, so travelling diagonally
+   from a parent row to its submenu cannot close the thing being
+   reached for */
+.dk-menus {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.dk-panel--l1 {
+  width: 232px;
+  columns: auto;
+}
+.dk-panel--l2 {
+  width: 300px;
+  max-height: min(58vh, 460px);
+  overflow-y: auto;
+  columns: auto;
+}
+.dk-row--branch {
+  gap: 8px;
+}
+.dk-row--branch svg {
+  color: var(--ink-faint);
+}
+.dk-row--branch.is-on {
+  background: var(--blue-wash);
+}
+.dk-row--branch.is-on svg {
+  color: var(--blue);
+}
+.dk-row--branch .dk-row-name {
+  font-weight: 550;
+}
+
+
+/* THE PAGE ENDS ABOVE THE BAR. The bar floats, so without this the
+   last rows of a register sit underneath it - readable only by
+   scrolling past the end, and un-clickable where they overlap. */
+.surface {
+  padding-bottom: 78px;
+}
+.surface > .shell-viewstage {
+  padding-bottom: 0;
+}

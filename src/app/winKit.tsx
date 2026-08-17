@@ -57,16 +57,34 @@ export const winKey = (s: Stage): string =>
         ? `module:${s.moduleId ?? 'dash'}`
         : s.kind
 
+/** THE TOP OF THE DESKTOP, measured rather than guessed.
+
+ *  This used to be the literal `56` - the masthead's height at the
+ *  one window size it was written against. The masthead wraps to two
+ *  lines on a narrower window and grows past 100px, and every window
+ *  then opened UNDERNEATH it: traffic lights sliced in half, the
+ *  titlebar unreachable, and no way to drag it back out because the
+ *  thing you drag was the part that was covered. */
+export function desktopTop(): number {
+  const mast = document.querySelector('.shell-masthead')
+  const h = mast ? Math.round(mast.getBoundingClientRect().height) : 56
+  return h + 10
+}
+
 /** CASCADE, like every OS. Each new window lands down and right of
  *  the last so the one underneath is still visibly there, and the
  *  run wraps before it walks off the screen. */
 export function bestFrame(n: number): WinFrame {
   const step = 28
   const i = n % 6
+  const top = desktopTop()
   const w = Math.min(1180, Math.max(760, Math.round(window.innerWidth * 0.72)))
-  const h = Math.min(760, Math.max(460, Math.round(window.innerHeight * 0.7)))
+  const h = Math.min(
+    760,
+    Math.max(420, Math.round((window.innerHeight - top - 96) * 0.94)),
+  )
   const x = Math.round((window.innerWidth - w) / 2) + i * step - 40
-  const y = 56 + i * step
+  const y = top + i * step
   return { x: Math.max(8, x), y, w, h }
 }
 

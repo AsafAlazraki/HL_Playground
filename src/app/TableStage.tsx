@@ -73,10 +73,10 @@ export function TableStage({
       type="button"
       className="shell-view-back"
       onClick={onClose}
-      aria-label="Back to the sheet"
+      aria-label="Back"
     >
       <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-      <span>Back to the sheet</span>
+      <span>Back</span>
     </button>
   )
 

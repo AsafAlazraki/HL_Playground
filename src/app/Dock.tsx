@@ -1,43 +1,45 @@
 /* ============================================================
-   THE DOCK — a floating bar over the sheet.
+   THE BAR — the only chrome, and the whole navigation.
 
-   Not attached to an edge and not a column: a rounded, translucent
-   bar that hovers above the drawing, the way the Dock does on a
-   Mac. The sheet keeps the entire window; the dock sits on top of
-   it and gets out of the way.
+   The masthead is gone, so this is where you are, where you can
+   go, and how you get there. It floats over the page, which is
+   why it costs the page nothing.
 
-   HOW IT BEHAVES, and every line of it is deliberate:
+   TABLES IS A NESTED MENU, NOT A WALL. Fifty tables in two
+   columns is a list you read rather than a menu you use. The
+   first level is the handful of things a dealer thinks in —
+   Boats, Motors, Trailers, Accessories, Relationships — and
+   hovering one opens its own tables beside it. One level of
+   thought at a time, which is what a menu is for.
 
-     - icons, with the name revealed on hover, so the resting bar
-       is small and the labels are there the moment you need them;
-     - a press opens its panel UPWARD, anchored over the icon that
-       opened it, because there is nothing below;
-     - one panel at a time, and moving along the dock while one is
-       open switches to it;
-     - Escape closes and returns focus to the icon;
-     - groups are separated by a hairline: where you go, then what
-       you make.
+   THE SUBMENU SURVIVES THE DIAGONAL. A parent row and its child
+   panel are one hover region, so travelling from "Boats" across
+   to "Highfield Inflatables" never closes the thing being
+   reached for. That diagonal is the single most common way a
+   nested menu is got wrong.
 
-   THIS IS THE ONE PLACE GLASS IS RIGHT. The design principles
-   retire translucency everywhere else, and the reason it earns its
-   place here is that this bar FLOATS OVER content that scrolls and
-   pans beneath it. A solid bar would punch a hole in the drawing;
-   a translucent one stays a layer above it. It is a single
-   surface, nothing translucent is stacked on it, and
-   prefers-reduced-transparency turns it solid.
+   SEARCH IS ALWAYS ON THE BAR. Wherever you are, whatever page
+   you are on, it is in the same place — the one control that
+   never moves, because the question it answers ("where is the
+   thing called X") is the one people arrive with most often.
+
+   THIS IS THE ONE GLASS SURFACE in the app: it floats over
+   content that scrolls beneath it, and a solid bar would punch a
+   hole in the page.
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   ArrowsLeftRight,
+  CaretRight,
   FileText,
   House,
-  SquaresFour,
-  TreeStructure,
   ListChecks,
+  MagnifyingGlass,
   Plus,
+  SquaresFour,
   Table as TableIcon,
+  TreeStructure,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -64,22 +66,20 @@ export interface DockProps {
   onOpenFlow?: () => void
   onOpenQuotes?: () => void
   onAddTable?: () => void
+  onSearch?: () => void
   onBackToSheet?: () => void
   onOpenHome?: () => void
   quoteCount?: number
-  /** which stage is up, so the dock can light the right icon */
   current?: string | null
 }
-
-/* ---------- one dock item ----------------------------------- */
 
 function DockItem({
   icon: I,
   label,
   count,
   active,
-  hasPanel,
   open,
+  hasPanel,
   onPress,
   onHover,
 }: {
@@ -87,35 +87,29 @@ function DockItem({
   label: string
   count?: number
   active?: boolean
-  hasPanel?: boolean
   open?: boolean
-  onPress: (e?: React.MouseEvent<HTMLButtonElement>) => void
+  hasPanel?: boolean
+  onPress: () => void
   onHover?: () => void
 }) {
   return (
     <button
       type="button"
       className={`dk-item${active ? ' is-active' : ''}${open ? ' is-open' : ''}`}
-      onClick={(e) => onPress(e)}
+      onClick={onPress}
       onPointerEnter={onHover}
       aria-label={label}
       aria-haspopup={hasPanel ? 'menu' : undefined}
       aria-expanded={hasPanel ? !!open : undefined}
     >
       <I size={22} aria-hidden="true" />
-      {count !== undefined && count > 0 ? (
-        <span className="dk-badge">{count}</span>
-      ) : null}
-      {/* the name, revealed above on hover — the resting bar stays
-          small and nothing is guessed at */}
+      {count !== undefined && count > 0 ? <span className="dk-badge">{count}</span> : null}
       <span className="dk-tip" aria-hidden="true">
         {label}
       </span>
     </button>
   )
 }
-
-/* ---------- the dock ---------------------------------------- */
 
 export function Dock({
   onOpenTable,
@@ -124,6 +118,7 @@ export function Dock({
   onOpenFlow,
   onOpenQuotes,
   onAddTable,
+  onSearch,
   onBackToSheet,
   onOpenHome,
   quoteCount = 0,
@@ -132,13 +127,14 @@ export function Dock({
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const [open, setOpen] = useState<string | null>(null)
-  /* WHERE THE PANEL GREW FROM (apple-design §7: anchor an
-     interaction to its source). Without this the panel scaled out
-     of its own centre and the relationship between the icon you
-     pressed and the thing that appeared was left to be guessed. */
-  const [originX, setOriginX] = useState<string>('50%')
-  const close = useCallback(() => setOpen(null), [])
+  /* the first-level row the pointer is on; its tables show beside it */
+  const [branch, setBranch] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
+
+  const close = useCallback(() => {
+    setOpen(null)
+    setBranch(null)
+  }, [])
 
   const tables = useMemo(() => Object.values(entities), [entities])
 
@@ -149,9 +145,7 @@ export function Dock({
       const items = live
         .filter((e) => e.role !== 'join' && kindOf(e.kind) === kind)
         .sort((a, b) => a.name.localeCompare(b.name))
-      if (items.length) {
-        out.push({ key: kind, label: TABLE_KINDS[kind]?.label ?? kind, items })
-      }
+      if (items.length) out.push({ key: kind, label: TABLE_KINDS[kind]?.label ?? kind, items })
     }
     const joins = live
       .filter((e) => e.role === 'join')
@@ -161,8 +155,8 @@ export function Dock({
   }, [tables])
 
   const tableCount = groups.reduce((n, g) => n + g.items.length, 0)
+  const branchGroup = groups.find((g) => g.key === branch) ?? null
 
-  /* click-outside and Escape, bound only while a panel is up */
   useEffect(() => {
     if (!open) return
     const onDown = (e: PointerEvent) => {
@@ -182,58 +176,64 @@ export function Dock({
     }
   }, [open, close])
 
-  const panel = (id: string, body: ReactNode) =>
-    open === id ? (
-      <div
-        className="dk-panel"
-        role="menu"
-        style={{ ['--dk-origin' as string]: originX }}
-      >
-        {body}
-      </div>
-    ) : null
-
   return (
     <div className="dk-wrap" ref={rootRef}>
-      {panel(
-        'tables',
-        groups.length === 0 ? (
-          <p className="dk-none">No tables yet.</p>
-        ) : (
-          <div className="dk-tables">
-            {groups.map((g) => (
-              <div className="dk-group" key={g.key}>
-                <div className="dk-group-head">
-                  <span className="dk-group-label">{g.label}</span>
-                  <span className="dk-group-count">{pad2(g.items.length)}</span>
-                </div>
-                {g.items.map((e) => (
-                  <button
-                    key={e.id}
-                    type="button"
-                    role="menuitem"
-                    className="dk-row"
-                    onClick={() => {
-                      close()
-                      onOpenTable(e.id)
-                    }}
-                  >
-                    <span className="dk-row-mark">
-                      <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.small} />
-                    </span>
-                    <span className="dk-row-name">{e.name}</span>
-                    <span className="dk-row-count">
-                      {rowsByEntity[e.id]?.length ?? 0}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ))}
+      {open === 'tables' ? (
+        <div className="dk-menus">
+          <div className="dk-panel dk-panel--l1" role="menu" aria-label="Tables">
+            {groups.length === 0 ? (
+              <p className="dk-none">No tables yet.</p>
+            ) : (
+              groups.map((g) => (
+                <button
+                  key={g.key}
+                  type="button"
+                  role="menuitem"
+                  aria-haspopup="menu"
+                  aria-expanded={branch === g.key}
+                  className={`dk-row dk-row--branch${branch === g.key ? ' is-on' : ''}`}
+                  onPointerEnter={() => setBranch(g.key)}
+                  onFocus={() => setBranch(g.key)}
+                  onClick={() => setBranch(g.key)}
+                >
+                  <span className="dk-row-name">{g.label}</span>
+                  <span className="dk-row-count">{pad2(g.items.length)}</span>
+                  <CaretRight size={13} weight="bold" aria-hidden="true" />
+                </button>
+              ))
+            )}
           </div>
-        ),
-      )}
 
-      <div className="dk" role="toolbar" aria-label="Dock">
+          {branchGroup ? (
+            <div
+              className="dk-panel dk-panel--l2"
+              role="menu"
+              aria-label={branchGroup.label}
+            >
+              {branchGroup.items.map((e) => (
+                <button
+                  key={e.id}
+                  type="button"
+                  role="menuitem"
+                  className="dk-row"
+                  onClick={() => {
+                    close()
+                    onOpenTable(e.id)
+                  }}
+                >
+                  <span className="dk-row-mark">
+                    <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.small} />
+                  </span>
+                  <span className="dk-row-name">{e.name}</span>
+                  <span className="dk-row-count">{rowsByEntity[e.id]?.length ?? 0}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="dk" role="toolbar" aria-label="Navigation">
         {onOpenHome ? (
           <DockItem
             icon={SquaresFour}
@@ -264,16 +264,7 @@ export function Dock({
           hasPanel
           open={open === 'tables'}
           active={current === 'table'}
-          onPress={(e) => {
-            const b = (e?.currentTarget as HTMLElement) ?? null
-            const wrap = rootRef.current
-            if (b && wrap) {
-              const br = b.getBoundingClientRect()
-              const wr = wrap.getBoundingClientRect()
-              setOriginX(`${Math.round(br.left + br.width / 2 - wr.left)}px`)
-            }
-            setOpen(open === 'tables' ? null : 'tables')
-          }}
+          onPress={() => (open === 'tables' ? close() : setOpen('tables'))}
           onHover={() => {
             if (open && open !== 'tables') setOpen('tables')
           }}
@@ -327,18 +318,28 @@ export function Dock({
           />
         ) : null}
 
+        <span className="dk-sep" aria-hidden="true" />
+
+        {/* SEARCH NEVER MOVES AND IS NEVER ABSENT — see the header. */}
+        {onSearch ? (
+          <DockItem
+            icon={MagnifyingGlass}
+            label="Find anything"
+            onPress={() => {
+              close()
+              onSearch()
+            }}
+          />
+        ) : null}
         {onAddTable ? (
-          <>
-            <span className="dk-sep" aria-hidden="true" />
-            <DockItem
-              icon={Plus}
-              label="New table"
-              onPress={() => {
-                close()
-                onAddTable()
-              }}
-            />
-          </>
+          <DockItem
+            icon={Plus}
+            label="New table"
+            onPress={() => {
+              close()
+              onAddTable()
+            }}
+          />
         ) : null}
       </div>
     </div>

@@ -74,7 +74,6 @@ import {
 import { NewTableDialog } from '@/features/tablekit'
 import { useFocusedTableEntity, setFocusedTableEntity } from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
-import { TopBar } from './TopBar'
 import { Dock } from './Dock'
 import { Win } from './Win'
 import { useWindowKeys } from './useWindowKeys'
@@ -157,6 +156,7 @@ export function Shell() {
   const seq = useRef(1)
 
   const focusedId = wins.length ? wins[wins.length - 1].id : null
+  const focused = wins.length ? wins[wins.length - 1] : null
 
   /* OPENING IS IDEMPOTENT PER SUBJECT. Pressing Boats twice does not
      make two Boats windows; the second press raises the one that is
@@ -275,6 +275,8 @@ export function Shell() {
   const dropped = useNewTableRequest()
   /* asked for from the invitation: nothing known yet */
   const [picking, setPicking] = useState(false)
+  /* the finder — ⌘K, and the search item on the dock */
+  const [finding, setFinding] = useState(false)
 
   /* a drop outranks a pick — and clears it, so dismissing the drop
      cannot leave a second dialog waiting underneath */
@@ -300,42 +302,39 @@ export function Shell() {
 
   return (
     <div className="shell-root">
-      <TopBar
-        onRevealTable={(id) => setStage({ kind: 'table', entityId: id })}
-      />
 
       {/* THE DESKTOP. The drawing stays live underneath and is the
           desktop picture; windows stand on it. */}
       <div className="shell-body">
         <main className="shell-stage" aria-label="Desktop">
-          <div className="shell-sheet-layer">
+          {/* THE SHEET IS A SECTION, NOT A BACKDROP. It used to be
+              mounted under every page so its camera survived; with an
+              opaque page over it that was invisible waste, and with a
+              transparent one it showed through. It is drawn when it
+              is the section you are in. */}
+          <div className="shell-sheet-layer" hidden={focused !== null}>
             <Whiteboard />
             {tableCount === 0 && <EmptyState onCreateTable={() => setPicking(true)} />}
           </div>
 
-          {wins.map((w, i) =>
-            w.mini ? null : (
-              <Win
-                key={w.id}
-                title={winTitle(w.stage, entities)}
-                frame={w.frame}
-                z={20 + i}
-                focused={w.id === focusedId}
-                zoomed={w.zoomed}
-                leaving={leaving[w.id]}
-                onFocus={() => raiseWin(w.id)}
-                onClose={() => closeWin(w.id)}
-                onMinimise={() => minimiseWin(w.id)}
-                onZoom={() => patchWin(w.id, { zoomed: !w.zoomed })}
-                onMove={(xy) => patchWin(w.id, { frame: { ...w.frame, ...xy } })}
-              >
-                {renderStage(w.stage, {
-                  openWin,
-                  close: () => closeWin(w.id),
-                })}
-              </Win>
-            ),
-          )}
+          {/* ONE SURFACE AT A TIME.
+
+              This was a stack of floating windows with traffic
+              lights, and it went too far: a dealer opening a price
+              file does not want to run a window manager, and the
+              chrome cost more than it gave. What is KEPT from it is
+              the stack itself — it is the history now, so the dock
+              can switch between recent places and Cmd-Tab still
+              walks them — but only the top one is drawn, and it
+              takes the whole surface. */}
+          {focused ? (
+            <div className="surface" key={focused.id}>
+              {renderStage(focused.stage, {
+                openWin,
+                close: () => closeWin(focused.id),
+              })}
+            </div>
+          ) : null}
         </main>
       </div>
 
@@ -374,6 +373,7 @@ export function Shell() {
         onOpenFlow={() => setStage({ kind: 'flow' })}
         onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
         onAddTable={() => setPicking(true)}
+        onSearch={() => setFinding(true)}
         quoteCount={quoteCount}
       />
 
