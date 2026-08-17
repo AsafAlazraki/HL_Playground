@@ -28,8 +28,8 @@ import { readCell } from '@/types/model'
 import { compareValues, isEmptyValue } from '@/lib/rules'
 import type { CellValue, Clause, ClauseGroup, ConstraintDef, EntityDef } from '@/types/model'
 import type { RowData } from '@/types/model'
-import { fieldOn } from './columns'
-import { literalOf, type SentenceCtx } from './describe'
+import { fieldOn, isUnsetField, isUnsetValue } from './columns'
+import { isUnary, literalOf, type SentenceCtx, type Side } from './describe'
 
 export interface ConstraintStatus {
   id: string
@@ -52,6 +52,62 @@ const EMPTY_STATUS = (id: string): ConstraintStatus => ({
   matched: 0,
   conflicts: 0,
 })
+
+/* ---------------------------------------------------------- */
+/* IS IT FINISHED, AND IF NOT, WHAT IS MISSING                 */
+/* ---------------------------------------------------------- */
+
+/* THE REFUSAL IS A SENTENCE WITH A REASON, IN THE PLACE WHERE THE THING
+   IS REFUSED (DESIGN_PRINCIPLES rule 10). The rules pane used to answer
+   this question with "NOTHING ELSE TO FILL IN" beside a live ADD RULE
+   button, over a sentence the app had composed out of the first column
+   of the first table. Both halves were wrong: nothing had been filled
+   in, and there was plenty left to fill.
+
+   One function, so the builder's footer, the card that is still short a
+   value and anything written later all say the same words. It names the
+   FIRST thing missing, in reading order, because a list of four things
+   to do reads as a form and the sentence is not a form. */
+
+const NEEDS_COLUMN: Record<Side, string> = {
+  if: 'Pick the column this rule looks at.',
+  then: 'Pick the column this rule sets.',
+}
+
+const COLUMN_GONE = 'One column this rule names has been deleted. Point it at a column that is still there.'
+
+function gapIn(
+  group: ClauseGroup | undefined,
+  side: Side,
+  ctx: SentenceCtx,
+): string | null {
+  if (!group || group.clauses.length === 0) return NEEDS_COLUMN[side]
+  for (const clause of group.clauses) {
+    const concept = ctx.index.get(clause.left.fieldId)
+    if (!concept) {
+      return isUnsetField(clause.left.fieldId) ? NEEDS_COLUMN[side] : COLUMN_GONE
+    }
+    if (isUnary(clause.op)) continue
+    if (isUnsetValue(literalOf(clause.right))) {
+      return `Choose a value for ${concept.name}.`
+    }
+  }
+  return null
+}
+
+/** What is still to be answered before this rule means anything — or
+ *  `null` when a person has made every choice it needs. */
+export function missingChoice(c: ConstraintDef, ctx: SentenceCtx): string | null {
+  /* a `table` constraint is an imported whitelist, not a sentence
+     somebody is part-way through writing */
+  if (c.kind === 'table') return null
+  const condition = gapIn(c.if, 'if', ctx)
+  if (condition) return condition
+  /* `excludes` reads "Never A together with B": its second group is
+     another condition, not an obligation, but either way it has to name
+     a column and a value before the rule rules anything out */
+  return gapIn(c.then, c.kind === 'excludes' ? 'if' : 'then', ctx)
+}
 
 /* ---------------------------------------------------------- */
 /* Evaluating one clause against one row of one table          */
@@ -109,8 +165,12 @@ function groupHolds(
 
 /** Tables that carry a column for every concept the sentence names.
  *  A rule spanning two kinds has none, and reports itself unscoped
- *  rather than silently claiming zero. */
-function tablesFor(c: ConstraintDef, ctx: SentenceCtx): EntityDef[] {
+ *  rather than silently claiming zero.
+ *
+ *  Exported because a rule about to be added should be able to say what
+ *  it will bite on, and this is the cheap half of `evaluateConstraint` —
+ *  a walk of the tables, with no row scan. */
+export function tablesFor(c: ConstraintDef, ctx: SentenceCtx): EntityDef[] {
   const clauses = [...c.if.clauses, ...(c.then?.clauses ?? [])]
   if (clauses.length === 0) return []
   const concepts = clauses.map((cl) => ctx.index.get(cl.left.fieldId))

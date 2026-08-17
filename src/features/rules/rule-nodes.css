@@ -111,17 +111,27 @@
   border-bottom: 1px solid color-mix(in srgb, var(--rl-ink) 45%, transparent);
 }
 
+/* THE PLATE HEADER, RE-INKED FOR PAPER.
+   This file was written for a navy blueprint, where --rl-ink was a
+   BRIGHT accent glowing off a dark ground. The redesign retired the navy
+   (bridge.css maps --canvas-bg to the ordinary sheet and every -bright
+   accent to its equal-luminance kind hue), so the same declarations now
+   put a mid-toned hue on a pale tint of itself. Measured on the seeded
+   Highfield rule: the tag read 2.65–3.02:1 and the kind line 3.62–3.86:1.
+
+   The fix keeps the kind hue where the contract allows it — as the
+   tag's RULE, a hairline box — and puts the words in real ink. */
 .rl-node-tag {
   flex: none;
   padding: 1px 4px;
-  border: 1px solid currentColor;
+  border: 1px solid color-mix(in srgb, var(--rl-ink) 60%, transparent);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   line-height: 1.5;
-  color: var(--rl-ink);
+  color: var(--canvas-ink);
 }
 
 .rl-node-kind {
@@ -135,7 +145,8 @@
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--canvas-ink-soft);
+  /* it names the step — full ink over the 26% head band, 9.1–9.6:1 */
+  color: var(--canvas-ink);
 }
 
 .rl-node-hits {
@@ -152,10 +163,13 @@
   animation: fade-in var(--t-med) var(--ease-draft) both;
 }
 
+/* THE RED PENCIL. Carried toward the ink for the same reason as the
+   stamps: as the bare hue this ring measured 2.67:1 on the head band,
+   under even the 3:1 a meaningful graphic needs. It stays red. */
 .rl-mark {
   flex: none;
   display: inline-flex;
-  color: var(--accent-carmine-bright);
+  color: color-mix(in srgb, var(--accent-carmine-bright) 82%, var(--canvas-ink));
 }
 
 /* the reviewer has marked this plate: the rule under the header goes
@@ -198,16 +212,20 @@
   gap: 2px 5px;
   min-width: 0;
 }
+/* A MUTED LINE IS STILL A LINE OF THE RULE. --canvas-ink-faint over the
+   plate tint lands under 4.5:1 wherever it is drawn — the same arithmetic
+   as the chip above — so "quieter" is carried by --canvas-ink-soft, which
+   is a real tier, rather than by the one that may never carry meaning. */
 .rl-line--muted {
-  color: var(--canvas-ink-faint);
+  color: var(--canvas-ink-soft);
 }
 .rl-line--muted .rl-ck {
-  color: var(--canvas-ink-faint);
+  color: var(--canvas-ink-soft);
 }
 
 /* red pencil: the row NAMES what the node is still missing */
 .rl-line--missing .rl-ck {
-  color: var(--accent-carmine-bright);
+  color: color-mix(in srgb, var(--accent-carmine-bright) 82%, var(--canvas-ink));
   font-style: italic;
 }
 
@@ -218,12 +236,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* WHOSE row this side reads — the entity's own bright accent */
+/* WHOSE row this side reads — the entity's own hue, carried far enough
+   toward the plate's ink to be read on the plate's own tint. The hue
+   arrives as `--rl-stamp-ink` from RuleNodes.tsx; measured 3.90:1 before,
+   6.42:1 after on the rose plate. */
 .rl-ck--stamp {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.11em;
   text-transform: uppercase;
+  color: color-mix(in srgb, var(--rl-stamp-ink, var(--canvas-ink)) 65%, var(--canvas-ink));
 }
 .rl-ck--field {
   color: var(--canvas-ink);
@@ -260,12 +282,15 @@
   font-size: 11px;
   line-height: 1.5;
 }
+/* same composite as .rl-ck--stamp, and for the same reason: measured
+   3.42–3.79:1 as the bare hue, 5.7:1 and better mixed */
 .rl-chip-stamp {
   flex: none;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: color-mix(in srgb, var(--rl-stamp-ink, var(--canvas-ink)) 65%, var(--canvas-ink));
 }
 .rl-chip-label {
   min-width: 0;
@@ -274,8 +299,11 @@
   white-space: nowrap;
   color: var(--canvas-ink);
 }
+/* "+3 more" is a count of columns a person cannot otherwise see, so it
+   is content: --canvas-ink-faint measured 3.57:1 on the chip's tint,
+   --canvas-ink-soft measures 5.78:1 */
 .rl-chip--more {
-  color: var(--canvas-ink-faint);
+  color: var(--canvas-ink-soft);
   border-style: dashed;
   background: none;
 }
@@ -335,13 +363,13 @@
   line-height: 1.4;
 }
 .rl-route--muted .rl-route-label {
-  color: var(--canvas-ink-faint);
+  color: var(--canvas-ink-soft);
 }
 .rl-route--muted .rl-route-test .rl-ck {
-  color: var(--canvas-ink-faint);
+  color: var(--canvas-ink-soft);
 }
 .rl-route--missing .rl-route-test .rl-ck {
-  color: var(--accent-carmine-bright);
+  color: color-mix(in srgb, var(--accent-carmine-bright) 82%, var(--canvas-ink));
   font-style: italic;
 }
 /* the route's diamond is the handle itself — see .rl-port--route below */
@@ -383,6 +411,27 @@
   background: var(--canvas-ink-faint);
 }
 
+/* -- the library's own credit -------------------------------- */
+/* IT STAYS — the licence asks for it, and hiding it is not ours to do.
+   But React Flow's own rule sets the anchor to 10px, under the 11px
+   floor, and its 2.70:1 grey was the worst pair on this surface.
+   Restyling the credit is not removing it.
+
+   TWO CANVASES, TWO CREDITS, ONE RULE EACH. The sheet's copy is styled
+   by whiteboard.css (`.wb-canvas …`, corrected in the same pass); this
+   stage mounts a SECOND React Flow, whose credit that selector never
+   reaches. It is scoped to `.shell-flow-canvas` deliberately: the
+   library's own `.react-flow__attribution a { color: #999 }` has the
+   same specificity as a bare selector here, and which of the two wins
+   would then depend on bundle order. */
+.react-flow__attribution a {
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+.shell-flow-canvas .react-flow__attribution a {
+  color: var(--ink-soft);
+}
+
 /* ============================================================
    Flow edges — DASHED, arrowed, tinted by the node they leave
    ============================================================ */
@@ -422,4 +471,37 @@
 }
 .rl-ghosts .wb-entity:hover {
   opacity: 0.6;
+}
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass, plate side.
+
+   `.rl-ck--stamp` and `.rl-chip-stamp` both carry the name of the
+   TABLE a side of a clause reads, straight off `entity.name`, and
+   both were uppercasing it: "Highfield Inflatables" drawn as
+   "HIGHFIELD INFLATABLES". DESIGN_PRINCIPLES rule 3 — uppercase is
+   a label style, never a name — and the note above `.rl-side >
+   .rl-stamp` in rules.css shows the second cost of it: capitals are
+   wider, so the stamp took 42% of a 304px column to say a name it
+   was not supposed to be shouting in the first place.
+
+   THE MEASURED COLOURS ARE UNTOUCHED. Both composites above were
+   arrived at against a plate tint (5.7:1 and 6.42:1), and lowercase
+   letters do not change a contrast ratio. Tracking comes back toward
+   0 because +0.10em is the uppercase caption's tracking, and these
+   are not captions.
+   ============================================================ */
+.rl-ck--stamp,
+.rl-chip-stamp {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+/* The plate's own heading is "<kind> · <table>" in ONE text node —
+   "Start · Highfield Inflatables" — so uppercasing the kind word
+   uppercased the dealer's table with it. Sentence case keeps the kind
+   capitalised, which was the only thing the transform was buying. */
+.rl-node-kind {
+  letter-spacing: 0.02em;
+  text-transform: none;
 }

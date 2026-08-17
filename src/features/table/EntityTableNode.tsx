@@ -790,7 +790,7 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
                     'row',
                     'rows',
                   )} and all ${plural(
-                    entity.fields.length + 1,
+                    whole.totalColumns,
                     'column',
                     'columns',
                   )}, without leaving the blueprint`
@@ -798,12 +798,15 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
             title={
               expanded
                 ? 'Collapse this sheet back to the size it was'
-                : `Grow this card to fill the blueprint — all ${plural(
+                : /* the same figure the readout and Home print — the
+                     `+ 1` here counted the locked UID column and made a
+                     third answer to "how many columns" */
+                  `Grow this card to fill the blueprint — all ${plural(
                     rows.length,
                     'row',
                     'rows',
                   )} and all ${plural(
-                    entity.fields.length + 1,
+                    whole.totalColumns,
                     'column',
                     'columns',
                   )} of ${entity.name}, with the sections strip and FIT COLUMNS. Stays on the sheet.`

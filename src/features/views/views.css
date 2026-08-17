@@ -167,6 +167,10 @@
 .vw-spec-val {
   margin: 0;
   font-family: var(--font-mono);
+  /* every figure is mono AND tabular — DESIGN_CONTRACT §3. Mono was
+     here and tabular was not, so `$8,227.50` and `$9,359.40` still
+     drifted against each other by the width of a `1`. */
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   color: var(--ink);
   white-space: nowrap;
@@ -570,6 +574,9 @@
 .vw-cell {
   overflow: hidden;
   font-family: var(--font-mono);
+  /* a column of prices only reads as a column when the digits are one
+     width — DESIGN_CONTRACT §3 */
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--ink-soft);
   text-align: right;
@@ -697,6 +704,20 @@
    with the rows it is explaining rather than with the card edge */
 .vw-block > .vw-held {
   margin: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+/* THE JOINS THE PAGE NEVER DREW. Same note, same voice, one step out:
+   these belong to no block, because the block was never seeded — see
+   ViewPage's `withheld`. Stacked at the tail of the blocks, on the
+   sheet's own gutters, so it reads as the last line of the answer and
+   not as a warning about the page. */
+.vw-withheld {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.vw-withheld > .vw-held + .vw-held {
+  margin-top: 0;
 }
 
 .vw-linkbtn {
@@ -1074,4 +1095,92 @@
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass, view side.
+
+   DESIGN_PRINCIPLES rule 3: uppercase is a LABEL style, never a name
+   and never a value. The view page is where a salesperson reads the
+   dealer's own catalogue back, and almost everything it was
+   uppercasing came off their sheet:
+
+     .vw-trail        the row's group path and the table's name —
+                      "OCEAN RANGER SDF (HARD TOPS)" for a row the
+                      dealer wrote as "Ocean Ranger SDF (Hard Tops)".
+     .vw-block-name   the joined table's name, via `.block-heading`.
+     .vw-col-name     THE COLUMN HEADINGS, via `.mono-label`. The
+     .vw-col          register already settled this one: `.tb-th-name`
+                      in table.css is `12px / 580 / letter-spacing 0 /
+                      text-transform: none` with the note "COLUMN
+                      HEADINGS read as words, not stamps". Two views of
+                      the same columns disagreed about it.
+     .vw-chip         "4 picked" — a count, which is a value.
+     .vw-tag          "no longer sold", "already here", "outside the
+                      rule" — SENTENCES, which rule 3 covers and
+                      DESIGN_CONTRACT §3 names outright.
+     .vw-gear         "Set up" / "Done", .vw-strip-btn "Rule" /
+     .vw-strip-btn    "Filter" / "Remove" — buttons.
+
+   `.mono-label` and `.block-heading` are NOT changed: they are the
+   shared primitives in src/styles/base.css, uppercase IS their
+   identity, and a caption is one of the three sanctioned uses. What
+   was wrong is stamping a caption primitive onto a name. Corrected
+   beside the class, in this feature's own stylesheet — the same move
+   modules.css:1518 made for `.md-sec-name`. Feature CSS loads after
+   base.css, so a single-class rule here wins the tie.
+
+   CONTRAST IS UNCHANGED: every colour above is untouched, and
+   lowercasing letters does not move a ratio.
+   ============================================================ */
+.vw-trail,
+.vw-trail-step {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.vw-block-name {
+  font-family: var(--font-ui);
+  font-weight: 570;
+  letter-spacing: -0.006em;
+  text-transform: none;
+}
+/* matched to `.tb-th-name`, so a column reads the same on both pages */
+.vw-col-name,
+.vw-col {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 580;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+.vw-chip {
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.vw-tag {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.vw-gear,
+.vw-strip-btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* THE SPEC STRIP IS COLUMN HEADINGS TOO. `.vw-spec`'s label is the
+   same string `.vw-col-name` above draws — "Hull Length (Mtr)",
+   "Beam (Mtr)" — read off the dealer's own column, and it was wearing
+   `.mono-label`, so the strip said "HULL LENGTH (MTR)" three
+   centimetres from a table saying "Hull Length (Mtr)". The whole
+   argument for the rule is that the two views of one column must not
+   disagree. The face and the size stay: what recedes here is the mono
+   and the tint, not the case. */
+.vw-spec .mono-label {
+  letter-spacing: 0.01em;
+  text-transform: none;
 }

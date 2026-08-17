@@ -4,6 +4,15 @@
    seconds end to end. Step 1 asks for a name. Step 2 asks what
    they sell. Nothing else is on screen at any point.
    CONFIGURATOR_SPEC.md §1a, §1b.
+
+   AND A THIRD SCREEN, WHICH IS OFF THE PATH UNTIL IT IS ASKED
+   FOR: open a saved copy. Naming the business is still the
+   default answer and still the only thing step 1 draws big.
+   But this screen is also where anybody who has just pressed
+   CLEAR SHEET arrives, and the only import door in the app was
+   on Home's toolbar — behind the gate they had just put
+   themselves in front of. A person who cleared the sheet to
+   restore a backup could not restore it. See OpenSavedCopy.tsx.
    ============================================================ */
 
 import { useState } from 'react'
@@ -11,6 +20,7 @@ import type { ReactElement } from 'react'
 import { INDUSTRIES } from '@/types/model'
 import type { IndustryKey } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
+import { OpenSavedCopy } from './OpenSavedCopy'
 import { HelmMark, INDUSTRY_ORDER, INDUSTRY_SYMBOLS } from './symbols'
 import './onboarding.css'
 
@@ -47,10 +57,12 @@ function NameStep({
   name,
   onName,
   onNext,
+  onOpenFile,
 }: {
   name: string
   onName: (v: string) => void
   onNext: () => void
+  onOpenFile: () => void
 }) {
   const ready = name.trim().length > 0
 
@@ -88,6 +100,15 @@ function NameStep({
 
         <button type="submit" className="ob-primary" disabled={!ready}>
           Continue
+        </button>
+
+        {/* THE OTHER HONEST ANSWER, kept quiet. Naming the business is
+            what almost everybody does here, so this is a text button
+            under the primary rather than a second card competing with
+            it — but it is on screen, because after CLEAR SHEET this is
+            the only import door there is. */}
+        <button type="button" className="ob-alt" onClick={onOpenFile}>
+          Open a saved copy instead
         </button>
       </form>
     </section>
@@ -173,7 +194,7 @@ function IndustryStep({
 
 export function Onboarding(): ReactElement {
   const setOrganisation = useProjectStore((s) => s.setOrganisation)
-  const [step, setStep] = useState<'name' | 'industry'>('name')
+  const [step, setStep] = useState<'name' | 'industry' | 'file'>('name')
   const [name, setName] = useState('')
 
   return (
@@ -184,7 +205,13 @@ export function Onboarding(): ReactElement {
           name={name}
           onName={setName}
           onNext={() => setStep('industry')}
+          onOpenFile={() => setStep('file')}
         />
+      ) : step === 'file' ? (
+        /* loading a file leaves onboarding by itself: the shell's gate
+           is `!org && tableCount === 0`, and a file that validated has
+           tables in it */
+        <OpenSavedCopy key="file" onBack={() => setStep('name')} />
       ) : (
         <IndustryStep
           key="industry"

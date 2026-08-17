@@ -9,7 +9,7 @@
    ============================================================ */
 
 import { isImageValue, type CellValue, type ColumnFilter, type EntityDef } from '@/types/model'
-import { formatCell } from './columns'
+import { bandOf, formatCell } from './columns'
 import type { RelatedRow } from './pairs'
 
 const text = (v: CellValue): string => {
@@ -72,7 +72,14 @@ export function applyFilters({
     }
     if (needle === '') return true
     for (const fieldId of searchFieldIds) {
-      const shown = formatCell(byId.get(fieldId), read(r, fieldId)).toLowerCase()
+      /* the same text the block DREW, band and all, so typing `$8,2`
+         finds the row a reader can see it on */
+      const shown = formatCell(
+        byId.get(fieldId),
+        read(r, fieldId),
+        undefined,
+        bandOf(entity, byId.get(fieldId)),
+      ).toLowerCase()
       if (shown.includes(needle)) return true
       if (text(read(r, fieldId)).toLowerCase().includes(needle)) return true
     }

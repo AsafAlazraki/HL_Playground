@@ -243,12 +243,30 @@ export function useRuleGraph(ruleId: string | null): {
         labelShowBg: !!label,
         labelBgPadding: [5, 2] as [number, number],
         labelBgBorderRadius: 2,
+        /* THE TWO SVG TEXT NODES FITMENT WAS DRAWING UNDER THE FLOOR.
+           This was `fontSize: 9`, uppercase, +0.1em — 9px is under the
+           11px floor DESIGN_PRINCIPLES calls absolute, and it is the
+           only place in the app that broke it with an inline style
+           rather than a stylesheet, which is why no CSS sweep found
+           it. React Flow puts these in a real <text>, so the browser
+           was setting a rule's row counts at nine pixels.
+           Uppercase is gone with it, and this label is BOTH things the
+           rule forbids: `label` is the route's own NAME off the node
+           ("else", "body", a branch the admin typed) and the half
+           after the middot is a VALUE, the number of rows that took
+           that route. Neither is a caption.
+           The tracking goes to 0: +0.1em is the uppercase label's
+           tracking, and this is not one. Mono and tabular stay,
+           because a figure is mono everywhere in this app.
+           The canvas may be zoomed out under this — that is what
+           MIN_READABLE in FlowStage exists to bound, and at 11px the
+           0.68 floor draws 7.5px rather than 6.1px. */
         labelStyle: {
           fill: 'var(--canvas-ink)',
           fontFamily: 'var(--font-mono)',
-          fontSize: 9,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase' as const,
+          fontSize: 11,
+          fontVariantNumeric: 'tabular-nums',
+          letterSpacing: '0',
         },
         labelBgStyle: { fill: 'var(--canvas-bg-deep)', fillOpacity: 0.92 },
       }

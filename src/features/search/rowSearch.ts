@@ -26,13 +26,59 @@
    default when it does not — so the label a search matches is the
    same label the reference pickers, the node badges and the quote
    lines use. Nothing here invents a name.
+
+   A PAIR IS NOT A PLACE, SO A PAIR IS NEVER A DESTINATION.
+
+   This file used to make all 27 joins doors, and it was ruled
+   against: "all tables should be a module, and than their join and
+   view ones should lie within them". The measurement is what the
+   ruling was about — typing `crossfire` answered with the two real
+   Stacer boats and then STACER × P/D PARTS (8), STACER × YAMAHA —
+   MOTOR FITMENT (8) and STACER × STACER TRAILERS (4), so the answer
+   was 2 things and 20 rows of internal plumbing, and pressing one
+   landed the reader on a raw pair-record sheet.
+
+   A pair row's name is not a name. It is TWO names with a separator
+   between them, composed by the seed from the links that define the
+   pair (`northside.ts`: `resolved.label = names.join(' · ')`). So a
+   match inside one is always a match on one of the two things it
+   pairs — and those things are already in this index, under their
+   own tables, spelled the same way. Measured over the real file:
+   2,260 of 2,260 pair rows are named entirely by the rows they point
+   at, zero counter-examples. A pair row therefore adds no reachable
+   thing, and is searched THROUGH rather than INTO.
+
+   Two consequences, both deliberate:
+     · a pair row that says something its two sides do not — a
+       hand-typed pair name, which this file does not have but
+       another org's data can — is not dropped. It is answered with
+       the row the pair is ABOUT (the first link column), carrying
+       the name of the list it was found in, so nothing becomes
+       unfindable and no press lands on a pair sheet.
+     · a `role: 'join'` table with no link column at all is not a
+       pair list in any usable sense — there is nothing to resolve
+       to — so it is indexed exactly like a base table. No data can
+       fall out of reach through this rule.
+
+   HISTORY IS OFFERED, AND SAID. A retired table is what an old quote
+   was written against; `model.ts` keeps it and `sellable.ts` states
+   the rule — the data stays, no customer-facing surface offers it,
+   and the sheet does not filter, "because hiding rows from the
+   person whose job is fixing them is how data rots unseen". This
+   field lands a person on the SHEET, which is that person's surface,
+   so withholding the retired table would make it unmaintainable and
+   silently unfindable. It is answered LAST, after everything live,
+   and every line that carries it says it is history rather than
+   stock. Nothing retired is ever ranked as though it were stock.
    ============================================================ */
 
 import {
   displayFieldOf,
   isImageValue,
+  isRetired,
   type AccentKey,
   type EntityDef,
+  type FieldDef,
   type RowData,
   type TableKind,
   type TableRole,
@@ -42,7 +88,11 @@ import {
 /* The index                                                     */
 /* ------------------------------------------------------------ */
 
-/** One searchable row: what it is called, and where it lives. */
+/** One searchable row: what it is called, and where it lives.
+ *
+ *  `entityId` and `rowId` are WHERE THE PRESS LANDS, which is not
+ *  always where the text was found — see `via`. They are never a
+ *  join. */
 export interface RowEntry {
   entityId: string
   rowId: string
@@ -51,13 +101,22 @@ export interface RowEntry {
   /** the lower-cased form actually scanned — folded once, at build
    *  time, so a keystroke never pays for 651 `toLowerCase()` calls */
   hay: string
+  /** set when the text scanned belongs to a PAIR LIST rather than to
+   *  the row this entry lands on: the pair list's own name, so the
+   *  answer can say where it was read. */
+  via?: string
 }
 
 /** One searchable table. A table name is a legitimate answer to
  *  "where does this live?", which is the question the audit found
- *  unanswered. */
+ *  unanswered.
+ *
+ *  `destId` is the table a press OPENS. For a pair list it is the
+ *  table the pairs are about, because a pair list lies within the
+ *  thing it pairs and is not somewhere to stand. */
 export interface TableEntry {
   entityId: string
+  destId: string
   name: string
   hay: string
 }
@@ -70,6 +129,8 @@ export interface TableFacts {
   kind?: TableKind
   role?: TableRole
   accent: AccentKey
+  /** history rather than stock — every line drawing this says so */
+  retired: boolean
   /** how many rows of this table are searchable at all */
   rowCount: number
 }
@@ -78,9 +139,21 @@ export interface SearchIndex {
   rows: RowEntry[]
   tables: TableEntry[]
   facts: Record<string, TableFacts>
-  /** rows carrying a usable name — the number the empty state quotes */
+  /** rows a search can land on, each carrying a usable name — the
+   *  number the empty state quotes. Pair rows are not among them:
+   *  they are searched through to the things they pair. */
   rowTotal: number
+  /** LIVE tables — the same 50 Home's header and the dock badge
+   *  print. A retired table is still answerable and is still marked
+   *  as history; it is simply not counted as part of the business. */
   tableTotal: number
+  /** rows that live in a pair list, searched through to their sides */
+  pairRows: number
+  /** entries reading a pair list's own extra wording. Zero on the
+   *  real file, which is why the dedupe pass is gated on it. */
+  viaRows: number
+  /** tables held out of `tableTotal` because they are history */
+  retiredTables: number
 }
 
 export const EMPTY_INDEX: SearchIndex = {
@@ -89,6 +162,9 @@ export const EMPTY_INDEX: SearchIndex = {
   facts: {},
   rowTotal: 0,
   tableTotal: 0,
+  pairRows: 0,
+  viaRows: 0,
+  retiredTables: 0,
 }
 
 /** A cell only counts as a NAME if it is text or a figure. An image
@@ -103,6 +179,42 @@ const labelOf = (v: unknown): string => {
   return ''
 }
 
+/** A pair list, and nothing about boats in it: the link columns that
+ *  define the pair, in the order the table declares them. */
+const linkFieldsOf = (
+  entity: EntityDef,
+  entities: Record<string, EntityDef>,
+): FieldDef[] =>
+  entity.fields.filter(
+    (f) => f.type === 'reference' && f.refEntityId !== undefined && Boolean(entities[f.refEntityId]),
+  )
+
+/** Is this table a list of pairs rather than a list of things? Keyed
+ *  on the declared role and on there being something to resolve to —
+ *  a `role: 'join'` table with no link column has no pair to be about
+ *  and is treated as an ordinary table, so nothing in it can fall out
+ *  of reach. */
+const isPairList = (entity: EntityDef, links: FieldDef[]): boolean =>
+  entity.role === 'join' && links.length > 0
+
+/** What a pair row's name says that the two things it pairs do not.
+ *
+ *  A composed pair name — "Stacer - Crossfire 449 · Yamaha - F90XB" —
+ *  leaves nothing once both sides are struck out, which is the whole
+ *  file's case (2,260 of 2,260). Anything left over is wording
+ *  somebody typed onto the pair itself, and it is kept. */
+function residueOf(hay: string, sides: string[]): string {
+  let rest = hay
+  for (const side of sides) {
+    if (!side) continue
+    const at = rest.indexOf(side)
+    if (at < 0) continue
+    rest = `${rest.slice(0, at)} ${rest.slice(at + side.length)}`
+  }
+  if (!/[a-z0-9]/.test(rest)) return ''
+  return rest.trim().replace(/\s+/g, ' ')
+}
+
 /** Fold the whole project into one flat scannable list.
  *
  *  Cost is linear in rows and is paid ONCE per opening of the field,
@@ -115,38 +227,120 @@ export function buildSearchIndex(
   const rows: RowEntry[] = []
   const tables: TableEntry[] = []
   const facts: Record<string, TableFacts> = {}
+  const all = Object.values(entities)
 
-  for (const entity of Object.values(entities)) {
+  /* every row's label, by row id, so a pair row can ask what the rows
+     it links are called without a second walk of the project */
+  const labelByRow = new Map<string, { entityId: string; label: string }>()
+  const pairs: { entity: EntityDef; links: FieldDef[] }[] = []
+  let pairRows = 0
+  let viaRows = 0
+  let retiredTables = 0
+
+  for (const entity of all) {
     const field = displayFieldOf(entity)
     const list = rowsByEntity[entity.id] ?? []
+    const links = linkFieldsOf(entity, entities)
+    const pairList = isPairList(entity, links)
     let counted = 0
 
     if (field) {
       for (const row of list) {
         const label = labelOf(row.values[field.id])
         if (!label) continue
+        labelByRow.set(row.id, { entityId: entity.id, label })
+        counted += 1
+        /* A PAIR ROW IS NOT A THING. It is answered through the things
+           it pairs — which are already in this list, under their own
+           tables — so it is never its own entry. */
+        if (pairList) continue
         rows.push({
           entityId: entity.id,
           rowId: row.id,
           label,
           hay: label.toLowerCase(),
         })
-        counted += 1
       }
     }
 
-    tables.push({
-      entityId: entity.id,
-      name: entity.name,
-      hay: entity.name.toLowerCase(),
-    })
+    if (pairList) {
+      pairRows += counted
+      pairs.push({ entity, links })
+    }
+
+    const retired = isRetired(entity)
+    if (retired) retiredTables += 1
     facts[entity.id] = {
       id: entity.id,
       name: entity.name,
       kind: entity.kind,
       role: entity.role,
       accent: entity.accent,
+      retired,
       rowCount: counted,
+    }
+  }
+
+  /* every table that is a list of pairs, so nothing below can resolve
+     one pair list to another and put a pair sheet back on the far end
+     of a press */
+  const pairIds = new Set(pairs.map((p) => p.entity.id))
+
+  /* -- the tables, and where each one opens ------------------- */
+  for (const entity of all) {
+    const links = linkFieldsOf(entity, entities)
+    /* A PAIR LIST OPENS THE THING IT IS ABOUT — its first link column
+       that names a real table, which is the side the pair is a fact
+       about (a fitment list's first column is the boat, and its name
+       reads "Highfield × Yamaha" in the same order). A RETIRED pair
+       list is the one exception and stands as itself: its pairs are
+       history, and sending a person who typed OBSOLETE to a live
+       table would hide the very thing they asked for. */
+    const subject =
+      isPairList(entity, links) && !isRetired(entity)
+        ? links.find((f) => f.refEntityId !== undefined && !pairIds.has(f.refEntityId))
+            ?.refEntityId
+        : undefined
+    tables.push({
+      entityId: entity.id,
+      destId: subject && facts[subject] ? subject : entity.id,
+      name: entity.name,
+      hay: entity.name.toLowerCase(),
+    })
+  }
+
+  /* -- pair wording nobody could otherwise reach -------------- */
+  for (const { entity, links } of pairs) {
+    const field = displayFieldOf(entity)
+    if (!field) continue
+    for (const row of rowsByEntity[entity.id] ?? []) {
+      const label = labelOf(row.values[field.id])
+      if (!label) continue
+      const sides: string[] = []
+      let subject: { entityId: string; rowId: string; label: string } | undefined
+      for (const link of links) {
+        const cell = row.values[link.id]
+        if (typeof cell !== 'string') continue
+        const target = labelByRow.get(cell)
+        if (!target) continue
+        sides.push(target.label.toLowerCase())
+        /* the row this pair is about, and never a row of another pair
+           list — the answer has to be a thing, not another pair */
+        if (!subject && !pairIds.has(target.entityId)) {
+          subject = { entityId: target.entityId, rowId: cell, label: target.label }
+        }
+      }
+      if (!subject) continue
+      const residue = residueOf(label.toLowerCase(), sides)
+      if (!residue) continue
+      rows.push({
+        entityId: subject.entityId,
+        rowId: subject.rowId,
+        label: subject.label,
+        hay: residue,
+        via: entity.name,
+      })
+      viaRows += 1
     }
   }
 
@@ -155,7 +349,10 @@ export function buildSearchIndex(
     tables,
     facts,
     rowTotal: rows.length,
-    tableTotal: tables.length,
+    tableTotal: all.length - retiredTables,
+    pairRows,
+    viaRows,
+    retiredTables,
   }
 }
 
@@ -187,25 +384,26 @@ const isWordEdge = (ch: string): boolean => !/[a-z0-9]/.test(ch)
 /** WHAT A TABLE IS OUTRANKS HOW WELL IT MATCHED, and this is the
  *  single most important line in the file.
  *
- *  Measured on the real sheet as it stands (48 tables, 2,862 rows):
+ *  Measured on the real sheet as it stands (52 tables, 3,566 rows):
  *  searching the Highfield Sport 560 by name returns 211 matches, and
- *  151 of them are JOIN rows — "Highfield - SP560 (HYP) B-B-B ·
- *  Yamaha - F90XB" and the like — because a join row's label is the
+ *  151 of them were PAIR rows — "Highfield - SP560 (HYP) B-B-B ·
+ *  Yamaha - F90XB" and the like — because a pair row's label is the
  *  two sides of the pair written out, so every product name appears
  *  in it as many times as it has partners. Ranked on match quality
- *  alone the three biggest joins take the top three groups and
- *  HIGHFIELD INFLATABLES, the table the person is actually looking
- *  for, lands fourth, below the fold, having eaten 24 of the 40
+ *  alone the three biggest pair lists took the top three groups and
+ *  Highfield Inflatables, the table the person is actually looking
+ *  for, landed fourth, below the fold, having eaten 24 of the 40
  *  result slots on the way down.
  *
- *  The model already settled this: a join "records pairs and has no
- *  independent existence" (`canBeModuleMaster`) — it is a
- *  relationship, not a place to stand. So base tables answer first,
- *  the assembled combinations after them, and the relationships
- *  last. They are all still listed, because hiding real rows would
- *  be a different lie. */
-const roleOrder = (role: TableRole | undefined): number =>
-  role === 'join' ? 2 : role === 'view' ? 1 : 0
+ *  Pair rows no longer answer at all — see the header — so the tier
+ *  a pair list can still appear in is the one where its own NAME
+ *  matched, and there it stands for the table it is about. What is
+ *  left to order is: things you sell, then the assembled
+ *  combinations, then a pair list answering for its subject, and
+ *  HISTORY LAST. A retired table is answerable and marked; it is
+ *  never ranked as though it were stock. */
+const standing = (t: TableFacts): number =>
+  t.retired ? 3 : t.role === 'join' ? 2 : t.role === 'view' ? 1 : 0
 
 function rankOf(hay: string, at: number): Rank {
   if (at === 0) return RANK.prefix
@@ -216,16 +414,25 @@ export interface RowHit {
   rowId: string
   label: string
   rank: Rank
-  /** where the match starts in `label`, for the highlight */
+  /** where the match starts in `label`, for the highlight. -1 when
+   *  the text matched was not this label — a pair list's own wording */
   at: number
   length: number
+  /** the pair list the match was read in, when it was not this row */
+  via?: string
 }
 
 export interface TableHit {
+  /** the table a press OPENS — never a live pair list */
   table: TableFacts
   rank: Rank
   at: number
   length: number
+  /** set when what matched was a PAIR LIST that lies within `table`:
+   *  the list's own name, and how many of this table's lists matched.
+   *  `at` is -1 whenever this is set, because the run that matched is
+   *  not in the label being drawn. */
+  via?: { name: string; count: number }
 }
 
 /** All hits from one table, in rank order, with the count that did
@@ -287,6 +494,19 @@ export const MIN_QUERY = 2
 export const normalizeQuery = (raw: string): string =>
   raw.trim().replace(/\s+/g, ' ').toLowerCase()
 
+/** Keep the first reading of each row and drop the rest. The list is
+ *  already sorted best-first, so "first" is "best". */
+function dedupeByRow(hits: RowHit[]): RowHit[] {
+  const seen = new Set<string>()
+  const out: RowHit[] = []
+  for (const h of hits) {
+    if (seen.has(h.rowId)) continue
+    seen.add(h.rowId)
+    out.push(h)
+  }
+  return out
+}
+
 /**
  * Match `query` against every row label and table name in `index`.
  *
@@ -301,29 +521,60 @@ export function search(
   const q = normalizeQuery(rawQuery)
   if (q.length < MIN_QUERY) return NO_RESULT
 
-  /* -- tables whose own name matched ------------------------- */
-  const tableHits: TableHit[] = []
+  /* -- tables whose own name matched -------------------------
+     ONE LINE PER PLACE, NEVER ONE PER PAIR LIST. Three of Stacer's
+     pair lists carry the word "Stacer", so before this was keyed on
+     the DESTINATION the query `stacer` drew four lines that opened
+     the same table. The direct hit wins outright; among pair lists
+     the best-ranked one is named and the rest are counted. */
+  const byDest = new Map<string, TableHit>()
   for (const t of index.tables) {
     const at = t.hay.indexOf(q)
     if (at < 0) continue
-    const facts = index.facts[t.entityId]
+    const facts = index.facts[t.destId]
     if (!facts) continue
-    tableHits.push({ table: facts, rank: rankOf(t.hay, at), at, length: q.length })
+    const via = t.destId === t.entityId ? undefined : t.name
+    const rank = rankOf(t.hay, at)
+    const held = byDest.get(t.destId)
+    if (!held) {
+      byDest.set(t.destId, {
+        table: facts,
+        rank,
+        at: via ? -1 : at,
+        length: q.length,
+        ...(via ? { via: { name: via, count: 1 } } : {}),
+      })
+      continue
+    }
+    if (!via) {
+      /* the table's own name beats any list inside it */
+      if (held.via) byDest.set(t.destId, { table: facts, rank, at, length: q.length })
+      continue
+    }
+    if (!held.via) continue
+    const count = held.via.count + 1
+    const better = rank < held.rank || (rank === held.rank && t.name.length < held.via.name.length)
+    byDest.set(t.destId, {
+      table: facts,
+      rank: better ? rank : held.rank,
+      at: -1,
+      length: q.length,
+      via: { name: better ? via : held.via.name, count },
+    })
   }
-  tableHits.sort(
+  const tableHits = [...byDest.values()].sort(
     (a, b) =>
-      roleOrder(a.table.role) - roleOrder(b.table.role) ||
+      standing(a.table) - standing(b.table) ||
+      (a.via ? 1 : 0) - (b.via ? 1 : 0) ||
       a.rank - b.rank ||
       a.table.name.length - b.table.name.length,
   )
 
-  /* -- rows, bucketed by the table they live in --------------- */
+  /* -- rows, bucketed by the table they OPEN ------------------ */
   const buckets = new Map<string, RowHit[]>()
-  let rowTotal = 0
   for (const r of index.rows) {
     const at = r.hay.indexOf(q)
     if (at < 0) continue
-    rowTotal += 1
     let bucket = buckets.get(r.entityId)
     if (!bucket) {
       bucket = []
@@ -332,32 +583,47 @@ export function search(
     bucket.push({
       rowId: r.rowId,
       label: r.label,
-      rank: rankOf(r.hay, at),
-      at,
+      /* a match read in a pair list's own wording is not a match on
+         the name being drawn, so it carries no highlight and never
+         outranks one */
+      rank: r.via ? RANK.inside : rankOf(r.hay, at),
+      at: r.via ? -1 : at,
       length: q.length,
+      ...(r.via ? { via: r.via } : {}),
     })
   }
 
   const groups: RowGroup[] = []
+  let rowTotal = 0
   for (const [entityId, hits] of buckets) {
     const table = index.facts[entityId]
     if (!table) continue
-    /* strongest match first, then the shortest name — "Sport 560"
-       outranks "Sport 560 Deluxe Package" for the query "sport 560" */
+    /* the row's own name first, then the strongest match, then the
+       shortest name — "Sport 560" outranks "Sport 560 Deluxe Package"
+       for the query "sport 560" */
     hits.sort(
       (a, b) =>
-        a.rank - b.rank || a.label.length - b.label.length || (a.label < b.label ? -1 : 1),
+        (a.via ? 1 : 0) - (b.via ? 1 : 0) ||
+        a.rank - b.rank ||
+        a.label.length - b.label.length ||
+        (a.label < b.label ? -1 : 1),
     )
-    groups.push({ table, hits, more: 0, total: hits.length })
+    /* ONE LINE PER ROW. A row reached both by its own name and through
+       a pair list's wording is one answer, and the sorted order above
+       has already put the better reading first. Gated on there being
+       any pair wording at all, which on the real file there is not. */
+    const listed = index.viaRows > 0 ? dedupeByRow(hits) : hits
+    rowTotal += listed.length
+    groups.push({ table, hits: listed, more: 0, total: listed.length })
   }
 
-  /* things you sell first, relationships last (see `roleOrder`);
-     within a tier, the table holding the best answer, then the one
-     with more to show, then its name — so the order is stable from
-     one keystroke to the next and nothing jumps under the cursor */
+  /* things you sell first, history last (see `standing`); within a
+     tier, the table holding the best answer, then the one with more to
+     show, then its name — so the order is stable from one keystroke to
+     the next and nothing jumps under the cursor */
   groups.sort(
     (a, b) =>
-      roleOrder(a.table.role) - roleOrder(b.table.role) ||
+      standing(a.table) - standing(b.table) ||
       a.hits[0].rank - b.hits[0].rank ||
       b.hits.length - a.hits.length ||
       (a.table.name < b.table.name ? -1 : 1),

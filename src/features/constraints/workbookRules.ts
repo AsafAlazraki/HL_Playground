@@ -305,7 +305,7 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     needs: ['boat::max hp', 'motor::hp rating'],
     plainly:
       'It compares a column on the boat with a column on the motor. A sentence here can only talk about one kind of table at a time.',
-    enforcedIn: 'Work out what fits what · Motor fitment',
+    enforcedIn: 'Fitment · Motor fitment',
     blocked:
       'CROSS-KIND. Max HP is a boat column and HP Rating is a motor column, and the ' +
       'sentence surface is single-kind by construction: state.tablesFor keeps only tables ' +
@@ -355,6 +355,19 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
      open (PVC) LG-W-DG', KV 115 HP, KW 115 HP, slots 1–2 both F90XB
      at 90 HP. So the breach is a price decision, and a rule that
      removed it would be removing the dealer's entry offer.
+
+     AND IT WAS PROMOTED ANYWAY, WHICH IS WHY THE WARNING ABOVE IS
+     WRITTEN TWICE. src/demos/northside.ts seeded 'Motor fitment —
+     Highfield' as HP >= Min HP **AND** HP <= Max HP, so the floor was
+     a filter on the one surface that RUNS. Measured on the seed's own
+     Highfield × Yamaha join — the workbook's thirteen motor slots,
+     resolved at 100 % on the display name — 134 pairings, of which
+     16 (11.9 %) sit below their hull's Min HP and 0 above Max HP.
+     Every one of those 16 was deleted from the screen. The clause is
+     gone; Min HP is a COLUMN on the result instead, so a person sees
+     which offer is under the plate. src/demos/seededRules.test.ts
+     asserts the rule offers all 134 and that no gating clause reads
+     Min HP — the ceiling is A1's to enforce and this one is not.
      ---------------------------------------------------------- */
   {
     id: 'wb:boat-min-hp-floor',
@@ -369,7 +382,7 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     needs: ['boat::min hp', 'motor::hp rating'],
     plainly:
       'Same reason — boat against motor — and it must warn rather than block, which a sentence cannot yet do. Nearly one standard-fit motor in ten is below the plate on purpose, because it is the cheapest way onto the water.',
-    enforcedIn: 'Work out what fits what · Motor fitment',
+    enforcedIn: 'Fitment · Motor fitment',
     blocked:
       'NO ADVISORY KIND, and cross-kind besides. The admission is conditional on this rule ' +
       'never filtering, and every ConstraintKind the contract has — implies, requires, ' +
@@ -880,7 +893,13 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
       'because even with both columns it is still boat-against-trailer. THE LINE THIS NOTE USED ' +
       'TO END ON — "until then the app checks nothing that actually picks a trailer" — is no ' +
       'longer true, and the selector above is why. It is still true that the SENTENCE surface ' +
-      'checks nothing that picks a trailer.',
+      'checks nothing that picks a trailer. AND IT IS NOW ALSO THE SEEDED FLOW RULE: ' +
+      "src/demos/northside.ts's 'Trailer fitment — Highfield' matches on the banner instead of " +
+      'the ATM floor it used to compare, which had it returning 1,758 cross-brand pairs on the ' +
+      'running app. That rule is a `contains` clause against one word, because a rule rooted on ' +
+      'one brand\'s table can only name that brand as a literal; it is NOT a second ' +
+      'implementation of the marque derivation, and src/demos/seededRules.test.ts asserts it ' +
+      'returns exactly what `selectPartners` returns for every one of the 40 Highfield hulls.',
   },
 
   /* ----------------------------------------------------------
@@ -913,14 +932,29 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
        Jeanneau · Merry Fisher · Cap Camarat · Haines — no weight-
        headed column in the band AT ALL.
 
-     AND THE LIVE RULE THIS OVERTURNS. src/demos/northside.ts seeds
-     'Trailer fitment — Highfield' as Trailer!K ATM >= Highfield!P
-     Max Load. Re-measured: 190/190 = 100 % on the real pairings, and
-     it leaves 94.31 % of the NSM Custom table standing (median
-     97.26 %). It is never violated and it selects almost nothing —
-     and Max Load is an AFLOAT PAYLOAD, not towed mass. Its own
-     description already admits the test is wrong. Keep it as a floor
-     if you like; it is not the trailer rule. F8 is.
+     AND THE LIVE RULE THIS OVERTURNED — NOW CORRECTED. src/demos/
+     northside.ts used to seed 'Trailer fitment — Highfield' as
+     Trailer!K ATM >= Highfield!P Max Load. Re-measured: 190/190 =
+     100 % on the real pairings, and it leaves 94.31 % of the NSM
+     Custom table standing (median 97.26 %). It is never violated and
+     it selects almost nothing — and Max Load is an AFLOAT PAYLOAD,
+     not towed mass. Its own description already admitted the test was
+     wrong.
+
+     WHAT THAT COST ON SCREEN, recorded because it is the reason this
+     rule is worded the way it is. RUN on the real seed, that rule
+     reported 1,758 rows and paired 'Highfield - UL240 (PVC) W-W' with
+     'REDCO 575 Surtees Alum', 'REDCO Stabicraft Alloy' and a Formosa
+     cradle — 53 distinct trailers, the whole target table, for every
+     one of the 40 hulls. A demo surface was teaching a stakeholder the
+     OPPOSITE of the finding: that Highfield hulls take any brand's
+     cradle. The rule now matches on the series banner and returns 80
+     (2 per hull, 1.38 % of the seed's 145 live trailers), which is
+     F8's discrimination reproduced, and src/demos/seededRules.test.ts
+     asserts it equals `selectPartners` hull by hull and that NO
+     seeded rule gates on ATM, Max Load or any length column again.
+     The floor is on that rule as a COLUMN and not as a clause. Keep
+     it as a floor; it is not the trailer rule. F8 is.
      ---------------------------------------------------------- */
   {
     id: 'wb:pairing-trailer-atm-carries-boat',

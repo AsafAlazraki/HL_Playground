@@ -15,7 +15,7 @@
    touched: fold a drawer, sort a column, rename a group — the rows
    underneath are exactly the rows the store holds.
    ============================================================ */
-import type { EntityDef, FieldDef } from '@/types/model'
+import { displayFieldOf, type EntityDef, type FieldDef } from '@/types/model'
 import type { ViewRow } from '@/features/table/core'
 import { ADD_H, GROUP_H, ROW_H } from './helpers'
 
@@ -278,11 +278,45 @@ export interface LeafNoun {
   many: string
 }
 
-export function leafNoun(entity: EntityDef | undefined): LeafNoun {
-  const h = entity?.hierarchy
+/**
+ * A column name that says what the column's JOB is rather than what the
+ * row IS. "12 names" and "27 labels" are no better than "12 records", so
+ * a table whose naming column is called one of these keeps the neutral
+ * word — including every table a person has just made, whose first
+ * column this app calls `Name`.
+ */
+const NOT_A_KIND = new Set(['name', 'label', 'title', 'id', 'code', 'description', 'value'])
+
+/**
+ * WHICH COLUMN NAMES THE ROWS. The deepest grouping level, because that
+ * is the level a drawer opens onto — and where a table has no grouping
+ * at all, the DISPLAY column, which is the column that names a row by
+ * definition.
+ *
+ * Formosa is why the second half exists. It is the one boat table the
+ * workbook files under no series banner, so its `hierarchy` is empty and
+ * the front door read "26 rows" beside six sibling brands reading
+ * "models" and "variants" — the jargon noun, on the one card that fell
+ * through. Its display column is `Model`, the same column the others
+ * group by, so the fall-through was the bug and not the data. `Labour
+ * Rates` and `Oils & Consumables` were in the same state and now read
+ * "6 rates" and "10 consumables".
+ *
+ * A JOIN IS EXEMPT whatever its columns are called: its rows are the
+ * pairings between two things rather than things a dealer has one of,
+ * and the front door already calls one of them a Relationship.
+ */
+function leafColumnName(entity: EntityDef | undefined): string {
+  if (!entity || entity.role === 'join') return ''
+  const h = entity.hierarchy
   const id = h && h.length > 0 ? h[h.length - 1] : undefined
-  const field = id ? entity?.fields.find((f) => f.id === id) : undefined
-  const one = (field?.name ?? '').trim().toLowerCase() || 'row'
+  const field = id ? entity.fields.find((f) => f.id === id) : displayFieldOf(entity)
+  const name = (field?.name ?? '').trim().toLowerCase()
+  return NOT_A_KIND.has(name) ? '' : name
+}
+
+export function leafNoun(entity: EntityDef | undefined): LeafNoun {
+  const one = leafColumnName(entity) || 'row'
   if (/[^aeiou]y$/.test(one)) return { one, many: `${one.slice(0, -1)}ies` }
   if (/(s|x|z|ch|sh)$/.test(one)) return { one, many: `${one}es` }
   return { one, many: `${one}s` }

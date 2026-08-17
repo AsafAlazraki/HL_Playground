@@ -72,7 +72,11 @@ import {
   useNewTableRequest,
 } from '@/features/whiteboard'
 import { NewTableDialog } from '@/features/tablekit'
-import { useFocusedTableEntity, setFocusedTableEntity } from '@/features/table'
+import {
+  requestRowReveal,
+  setFocusedTableEntity,
+  useFocusedTableEntity,
+} from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
 import { Dock } from './Dock'
 import { Win } from './Win'
@@ -96,8 +100,13 @@ import { ModuleStage } from './ModuleStage'
 import { useQuotes } from '@/features/quote'
 import { Finder } from '@/features/search'
 import { Freshness } from '@/features/io'
-import { isStaleNorthside, northsideDrift } from '@/demos'
-import { loadDemoSet, realDemoSet } from './demoLoad'
+import {
+  isStaleNorthside,
+  keepSeedVersion,
+  northsideDrift,
+  northsideSeedFingerprint,
+} from '@/demos'
+import { applyDemoSet, realDemoSet } from './demoLoad'
 import { useViewPersistence } from './viewPersistence'
 import './shell.css'
 
@@ -244,6 +253,15 @@ export function Shell() {
       ),
   })
 
+  /* ESCAPE IS NOT BOUND HERE, DELIBERATELY. Every stage draws its own
+     way back and now has the keystroke to match, but it is bound inside
+     the stage, to that stage's own `onClose` — see stageKeys.ts. A
+     keystroke bound HERE could only mean "drop the focused window",
+     which is the wrong answer for a module's item page: its back goes
+     to the module's list, and the window is the module. The shell keeps
+     its one rule about the keyboard — nothing unmodified is bound at
+     this level, because the sheet under it is made of editable grids. */
+
   /* the old single-slot setter, kept so every existing call site in
      this file keeps working — it just opens a window instead.
 
@@ -360,15 +378,40 @@ export function Shell() {
           desktop picture; windows stand on it. */}
       <div className="shell-body">
         <main className="shell-stage" aria-label="Desktop">
-          {/* THE SHEET IS A SECTION, NOT A BACKDROP. It used to be
-              mounted under every page so its camera survived; with an
-              opaque page over it that was invisible waste, and with a
-              transparent one it showed through. It is drawn when it
-              is the section you are in. */}
-          <div className="shell-sheet-layer" hidden={focused !== null}>
-            <Whiteboard />
-            {tableCount === 0 && <EmptyState onCreateTable={() => setPicking(true)} />}
-          </div>
+          {/* THE SHEET IS A SECTION, NOT A BACKDROP — and it is MOUNTED
+              only while it is the section you are in.
+
+              This carried `hidden` instead, which is `display: none`:
+              the canvas stayed alive behind an opaque page, doing
+              invisible work in a container with NO BOX. React Flow
+              cannot survive that. `getViewportForBounds` divides the
+              pane by the drawing, so a 0 x 0 pane with nothing measured
+              in it is 0/0 — and a NaN viewport reaches the DOM as
+              `<pattern x="NaN">`, which is the wall of red a
+              stakeholder sees the moment they open dev tools. The one
+              guard already in place (`paneMeasured`, 7d7a607) stops the
+              camera being SPENT on a hidden pane; it cannot stop a
+              canvas from being mounted in one.
+
+              Unmounting is not a compromise, it is what the
+              architecture already assumes: `canvasState.ts` keeps the
+              camera, the framing licence and the arranged-rules set at
+              module level with the reason written on them — "because
+              the canvas unmounts every time TABLE view is opened, none
+              of this can live in component state". The camera is parked
+              on the way out and restored on the way in, so the sheet
+              comes back on the same square inch, and the one framing
+              licence per session is not spent twice.
+
+              It also means the sheet's window-level Delete/Backspace
+              handler is not registered while a page is in front, which
+              is the thing every stage root was defending against. */}
+          {focused === null ? (
+            <div className="shell-sheet-layer">
+              <Whiteboard />
+              {tableCount === 0 && <EmptyState onCreateTable={() => setPicking(true)} />}
+            </div>
+          ) : null}
 
           {/* ONE SURFACE AT A TIME.
 
@@ -437,8 +480,14 @@ export function Shell() {
           was on their way to. */}
       {finding ? (
         <Finder
-          onReveal={(entityId) => {
+          /* AND IT LANDS ON THE ROW, not merely in the register the row
+             is in. The row id is published as a request before the
+             stage opens — the sheet reads it on mount, goes to that
+             row and marks it. See `rowRevealState`: it is a one-shot
+             act, not something the stage remembers. */
+          onReveal={(entityId, rowId) => {
             setFinding(false)
+            if (rowId) requestRowReveal(entityId, rowId)
             setStage({ kind: 'table', entityId })
           }}
           onClose={() => setFinding(false)}
@@ -446,8 +495,16 @@ export function Shell() {
       ) : null}
 
       {/* AN OLDER COPY OF THE EXAMPLE SAYS SO. Drawn only over the
-          prepared set it is about, only while it really differs, and
-          only until the person answers it either way. */}
+          prepared set it is about, only when this browser was really
+          SEEDED FROM AN OLDER BUILD of it — never because somebody has
+          since edited the sheet, which is what it used to do and which
+          made it offer to destroy the edit — and only until the person
+          answers it either way.
+
+          "Keep this one" is recorded against the version it was an
+          answer about, so it is not asked again on every reload; a
+          later change to the set may ask once more. See
+          @/demos/seedStamp. */}
       {drift && !keeping && isStaleNorthside(drift) ? (
         <Freshness
           setName={drift.setName}
@@ -455,13 +512,19 @@ export function Shell() {
           resized={drift.resized}
           noModules={drift.noModules}
           moduleCount={drift.moduleCount}
-          onDismiss={() => setKeeping(true)}
-          onRefresh={() => {
+          onDismiss={() => {
+            keepSeedVersion(northsideSeedFingerprint())
+            setKeeping(true)
+          }}
+          onLoadCurrent={() => {
             const set = realDemoSet()
-            /* the guard names what is on the sheet now and asks first;
-               backing out leaves the notice up, because nothing has
-               been decided */
-            if (set && loadDemoSet(set)) setKeeping(true)
+            /* every question — including the offer to save a copy of
+               this sheet first — has already been asked by the notice,
+               in the app's own voice. `applyDemoSet` only loads. */
+            if (set) {
+              applyDemoSet(set)
+              setKeeping(true)
+            }
           }}
         />
       ) : null}

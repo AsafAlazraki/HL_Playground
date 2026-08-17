@@ -211,28 +211,59 @@
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3) 4px;
   font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-size: var(--stamp-s-size);
-  font-weight: var(--stamp-weight);
-  letter-spacing: var(--stamp-s-track);
   line-height: var(--stamp-lead);
-  text-transform: uppercase;
   color: var(--hs-ink, var(--ink-soft));
 }
 .hs-head--plain {
-  /* the TABLES group names no single table, so it takes no accent */
+  /* the TABLES group names no single table, so it takes no accent —
+     and it names no table at all, so it IS a group caption and takes
+     the one uppercase style the contract allows for one */
+  font-size: var(--stamp-s-size);
+  font-weight: var(--stamp-weight);
+  letter-spacing: var(--stamp-s-track);
+  text-transform: uppercase;
   color: var(--ink-soft);
 }
 .hs-head-mark {
   flex: none;
   display: inline-flex;
+  /* the kind hue lands on the GLYPH, which is what a kind hue is for */
   color: var(--hs-ink, var(--ink-soft));
 }
+/* A NAME IS DRAWN AS A NAME. This heading was 11px uppercase in the
+   table's own accent, which broke two settled rules at once:
+   uppercase is lossy on content ("OBSOLETE Trailers — No Longer
+   Available" is a name with its own emphasis in it), and six
+   accent-inked headings in one popover spend an accent budget of
+   about four a screen. The accent stays on the mark; the name takes
+   --ink, where it reads at 18.9:1 instead of leaning on a hue that
+   was drawn to be a rail. */
 .hs-head-name {
   min-width: 0;
+  font-size: 12px;
+  font-weight: 560;
+  letter-spacing: -0.002em;
+  color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* HISTORY, STAMPED ON THE HEADING THAT IS ALWAYS ON SCREEN. A label
+   and not a name, so uppercase is the right style for it; 11px is the
+   floor and this sits on it rather than under it. */
+.hs-head-was {
+  flex: none;
+  margin-left: -2px;
+  padding: 1px 5px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--micro-l-size);
+  font-weight: var(--micro-weight);
+  letter-spacing: var(--micro-l-track);
+  line-height: var(--micro-lead);
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 .hs-head-count {
   flex: none;
@@ -292,6 +323,26 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* WHERE THE WORDS WERE READ, when they were not read in the name on
+   the line. A pair list answers for the table it lies within, so the
+   line draws the place it opens and this says what matched — normal
+   case, because a pair list's name is a name and uppercasing it would
+   lose the × and the case the dealer typed. --ink-soft rather than
+   --ink-faint: this sits on the lit row as often as not, and
+   --ink-faint measures 4.16:1 once --blue-wash is under it. */
+.hs-opt-note {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 52%;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: var(--ui-m-lead);
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* A TINT COUNTS. --ink-faint is the 4.7:1 floor on white and 4.16:1
    measured on this row once --blue-wash is under it, so the lit row
    — which is also every hovered row, because hover moves the cursor

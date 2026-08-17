@@ -464,7 +464,19 @@ export function findFieldIn(
   return undefined
 }
 
-/** Header for a combined-view column: `MOTOR · HP`. */
+/** Header for a combined-view column: `Yamaha Outboards · HP`.
+ *
+ *  NOT `.toUpperCase()`, WHICH IS WHERE THIS ONE WAS HIDING. The stamp
+ *  is the TABLE'S NAME, and this line uppercased it in TypeScript
+ *  rather than in CSS — so a sweep of the stylesheets could not find
+ *  it, the capitals were in the DOM itself, and the `title` tooltip
+ *  built from it ("HIGHFIELD INFLATABLES · Boat Weight kg") shouted
+ *  too. DESIGN_PRINCIPLES rule 3: uppercase is a label style, never a
+ *  name — and doing it in the data rather than the presentation is the
+ *  lossy version, because nothing downstream can get the dealer's own
+ *  capitalisation back. The stamp is drawn by `.rl-stamp`, which is
+ *  where its type belongs.
+ */
 export function columnHeader(
   col: ViewColumn,
   rule: RuleDef | undefined,
@@ -473,7 +485,7 @@ export function columnHeader(
   const entity = scopeEntity(col.scope, rule, entities)
   const field = entity?.fields.find((f) => f.id === col.fieldId)
   return {
-    stamp: (entity?.name ?? col.scope).toUpperCase(),
+    stamp: entity?.name ?? col.scope,
     label: col.label ?? field?.name ?? '(field removed)',
   }
 }

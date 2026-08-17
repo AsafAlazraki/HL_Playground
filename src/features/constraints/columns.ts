@@ -132,6 +132,16 @@ export function conceptByKey(
 /** The field id a new clause should store for this concept. */
 export const representativeFieldId = (c: ColumnConcept): string => c.fieldIds[0]
 
+/** THE COLUMN NOBODY HAS PICKED YET. A clause has to name a field id,
+ *  so an unanswered "which column?" is stored as the empty one — never
+ *  as the first column of the first table, which is what made the new
+ *  rule read like a rule somebody had written. It is deliberately NOT a
+ *  missing column: `a column that is gone` is a different sentence, and
+ *  a person who has chosen nothing has lost nothing. */
+export const UNSET_FIELD = ''
+
+export const isUnsetField = (fieldId: string): boolean => fieldId === UNSET_FIELD
+
 /** The field on THIS table that is this concept, if it has one. */
 export function fieldOn(
   concept: ColumnConcept,
@@ -209,16 +219,22 @@ export function domainFor(
   }
 }
 
-/** The value a freshly retargeted clause should hold. */
-export function defaultValueFor(domain: ValueDomain): CellValue {
-  switch (domain.control) {
-    case 'boolean':
-      return true
-    case 'choice':
-      return domain.options[0] ?? ''
-    case 'number':
-      return 0
-    default:
-      return ''
-  }
-}
+/** The value a freshly retargeted clause holds: NOTHING.
+ *
+ *  THIS USED TO RETURN THE FIRST VALUE TO HAND — `true` for a boolean,
+ *  `options[0]` for a list, `0` for a number — and that is how the rules
+ *  pane came to greet a person with "When Discontinued is yes, Wheel
+ *  Size in must be 0" and an ADD RULE button already live. Nobody wrote
+ *  that rule; the app composed it out of whichever column happened to
+ *  sort first and invited a press. A business fact this dealership never
+ *  stated is the one thing the owner is angriest about, and a default
+ *  that reads like an answer is how it gets stated.
+ *
+ *  So an unchosen value is `null`, `valueWords` draws it as `…`, and
+ *  every gate that asks whether a rule is finished can see that it is
+ *  not. Anything that needs a real value must get it from a person. */
+export const UNSET_VALUE: CellValue = null
+
+/** True when a clause's right-hand side has never been filled in. */
+export const isUnsetValue = (v: CellValue): boolean =>
+  v === null || v === undefined || v === ''

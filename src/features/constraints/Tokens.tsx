@@ -57,6 +57,8 @@ export interface SelectTokenProps {
   onChange: (value: string) => void
   label: string
   title?: string
+  /** nothing has been chosen here yet: the face is a slot, not a name */
+  unchosen?: boolean
 }
 
 export function SelectToken({
@@ -68,6 +70,7 @@ export function SelectToken({
   onChange,
   label,
   title,
+  unchosen = false,
 }: SelectTokenProps): ReactElement {
   /* a value that is no longer in the list would silently select the
      first option; keep it visible instead so the user sees the truth */
@@ -75,14 +78,26 @@ export function SelectToken({
   const known = flat.some((o) => o.value === value)
 
   return (
-    <span className={cls(role, true, 'cn-tok--sel')} title={title}>
+    <span
+      className={cls(role, true, unchosen ? 'cn-tok--sel is-unset' : 'cn-tok--sel')}
+      title={title}
+    >
       <select
         className="cn-tok-input"
         value={value}
         aria-label={label}
         onChange={(e: ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
       >
-        {!known && <option value={value}>{face}</option>}
+        {/* An unanswered slot keeps its own face at the top of the list
+            and CANNOT BE CHOSEN: "a column" is the absence of a choice,
+            not one of the choices. A value that has gone missing stays
+            selectable so the truth is visible rather than silently
+            replaced by whatever sorts first. */}
+        {!known && (
+          <option value={value} disabled={value === ''}>
+            {face}
+          </option>
+        )}
         {groups
           ? groups.map((g) => (
               <optgroup key={g.label} label={g.label}>

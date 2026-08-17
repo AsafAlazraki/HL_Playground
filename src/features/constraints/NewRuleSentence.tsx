@@ -14,17 +14,17 @@ import { Plus } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { newId, nowIso } from '@/lib/id'
 import type { ConstraintDef } from '@/types/model'
-import type { ColumnConcept } from './columns'
+import { isUnsetField } from './columns'
 import {
   INDICATIVE,
-  domainOf,
   isUnary,
   literalOf,
   valueWords,
   type SentenceCtx,
 } from './describe'
-import { inferKind, makeClause, singleGroup } from './edit'
+import { emptyClause, inferKind, singleGroup } from './edit'
 import { createConstraint } from './constraintDefs'
+import { missingChoice, tablesFor } from './state'
 import { RuleSentence } from './RuleSentence'
 import { BECAUSE_PLACEHOLDER } from './RuleCard'
 import { useSentenceCtx } from './useCtx'
@@ -37,49 +37,31 @@ export const NEW_RULE_CAPTION =
 /* The draft                                                  */
 /* ---------------------------------------------------------- */
 
-/** What the first sentence should open on. Two things decide it: the
- *  subject (a rule about the boats you sell beats a rule about a
- *  pairing table nobody opened), and whether every word of it can be a
- *  dropdown (a short list of values beats free text). */
-const KIND_RANK: Record<string, number> = {
-  boat: 0,
-  motor: 1,
-  trailer: 2,
-  accessory: 3,
-  package: 4,
-  dealer: 5,
-  custom: 6,
-}
-
-function scoreConcept(concept: ColumnConcept, ctx: SentenceCtx): number {
-  const domain = domainOf(ctx, concept)
-  const values =
-    domain.control === 'choice' && domain.options.length > 0
-      ? 0
-      : domain.control === 'boolean'
-        ? 1
-        : domain.control === 'number'
-          ? 2
-          : 3
-  /* a sentence whose every word is a dropdown teaches the idea in one
-     look, so a listed column outranks the subject it belongs to */
-  return values * 10 + (KIND_RANK[concept.kind] ?? 9)
-}
-
+/* AN EMPTY SENTENCE, AND IT MUST STAY EMPTY.
+ *
+ * This used to open on a rule the app had composed for itself: the two
+ * best-ranked columns it could find, each with a value picked off the
+ * front of its own list. On the seeded sheet that read "When
+ * Discontinued is yes, Wheel Size in must be 0" — a plausible, precise,
+ * entirely invented claim about this dealership — with ADD RULE already
+ * live beside the words "nothing else to fill in". One press and a rule
+ * nobody wrote was in the register, wearing "You, just now" as its
+ * source.
+ *
+ * The ranking was well meant: a sentence whose every word is a dropdown
+ * teaches the idea in one look. But a teaching example and a live draft
+ * cannot be the same object, because the button under it commits it. So
+ * the draft opens with nothing answered, the words say which choices are
+ * being asked for, and the button says why it is not available yet.
+ */
 function makeDraft(ctx: SentenceCtx): ConstraintDef | null {
   if (ctx.concepts.length === 0) return null
-  const ranked = [...ctx.concepts].sort((a, b) => scoreConcept(a, ctx) - scoreConcept(b, ctx))
-  const left = ranked[0]
-  const right =
-    ranked.find((c) => c.kind === left.kind && c.key !== left.key) ??
-    ranked.find((c) => c.key !== left.key) ??
-    left
   const now = nowIso()
   return {
     id: newId(),
     kind: 'implies',
-    if: singleGroup(makeClause(left, ctx)),
-    then: singleGroup(makeClause(right, ctx)),
+    if: singleGroup(emptyClause()),
+    then: singleGroup(emptyClause()),
     because: '',
     enabled: true,
     createdAt: now,
@@ -87,20 +69,13 @@ function makeDraft(ctx: SentenceCtx): ConstraintDef | null {
   }
 }
 
+/** A draft survives a change to the sheet as long as every column it
+ *  has been pointed at is still there. An unanswered slot is always
+ *  still valid — there is nothing in it to go stale. */
 const draftStillValid = (draft: ConstraintDef, ctx: SentenceCtx): boolean =>
-  [...draft.if.clauses, ...(draft.then?.clauses ?? [])].every((c) =>
-    ctx.index.has(c.left.fieldId),
+  [...draft.if.clauses, ...(draft.then?.clauses ?? [])].every(
+    (c) => isUnsetField(c.left.fieldId) || ctx.index.has(c.left.fieldId),
   )
-
-function complete(draft: ConstraintDef): boolean {
-  const clauses = [...draft.if.clauses, ...(draft.then?.clauses ?? [])]
-  if (clauses.length < 2) return false
-  return clauses.every((c) => {
-    if (isUnary(c.op)) return true
-    const v = literalOf(c.right)
-    return v !== null && v !== undefined && v !== ''
-  })
-}
 
 /** When nobody writes a reason, write one that is at least true: the
  *  condition itself, phrased to read after "because". */
@@ -136,7 +111,9 @@ export function NewRuleSentence({ onAdded }: NewRuleSentenceProps): ReactElement
 
   if (!draft) return null
 
-  const ready = complete(draft)
+  const missing = missingChoice(draft, ctx)
+  const ready = missing === null
+  const reach = ready ? tablesFor(draft, ctx).length : 0
 
   const add = (): void => {
     if (!ready) return
@@ -183,14 +160,33 @@ export function NewRuleSentence({ onAdded }: NewRuleSentenceProps): ReactElement
       </p>
 
       <div className="cn-new-foot">
-        <button type="button" className="cn-add" onClick={add} disabled={!ready}>
+        <button
+          type="button"
+          className="cn-add"
+          onClick={add}
+          disabled={!ready}
+          /* the reason is beside the button and readable — never a
+             tooltip, and never a disabled control with no explanation */
+          aria-describedby={ready ? undefined : 'cn-new-why'}
+        >
           Add rule
         </button>
-        <span className="cn-meta cn-meta--dim">
-          {ready
-            ? 'Nothing else to fill in.'
-            : 'Choose a value on both sides and the button wakes up.'}
-        </span>
+        {ready ? (
+          /* WHAT IT WILL BITE ON, COUNTED FROM THE SHEET. One table per
+             brand means a rule about boats is a rule about seven
+             tables, and a rule naming two kinds is a rule about none —
+             which is worth knowing BEFORE it is added rather than from
+             an empty status line afterwards. */
+          <span className="cn-new-why">
+            {reach === 0
+              ? 'No table carries both of these columns, so this rule would never apply.'
+              : `It applies to ${reach} table${reach === 1 ? '' : 's'}.`}
+          </span>
+        ) : (
+          <span className="cn-new-why" id="cn-new-why">
+            {missing}
+          </span>
+        )}
       </div>
     </section>
   )

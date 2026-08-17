@@ -404,6 +404,37 @@ export function buildNorthsideProject(): NorthsideProject {
   /* Two fitment rules, rooted on Highfield. They are written    */
   /* against columns the workbook already has and NOTHING in it  */
   /* enforces — fitment there is a hand-typed 13-slot menu.      */
+  /*                                                            */
+  /* EACH RULE GATES ON THE ONE COLUMN THE ADJUDICATION FOUND    */
+  /* SELECTS, AND SHOWS THE FLOOR BESIDE IT WITHOUT TESTING IT.  */
+  /* That distinction is the whole of docs/specs/FITMENT_RULES   */
+  /* .md §1.2 and it was got wrong here in both rules at once:   */
+  /*                                                            */
+  /*   · the trailer rule matched on Trailer Module!K ATM >=     */
+  /*     Boat Module!P Max Load and returned 1,758 pairs — every */
+  /*     row of NSM Custom Trailers against every Highfield      */
+  /*     hull, so a Highfield UL240 was offered "REDCO 575       */
+  /*     Surtees Alum", "REDCO Stabicraft Alloy" and a Formosa   */
+  /*     cradle. F9 settles ATM as a FLOOR: it is violated by    */
+  /*     nothing and passed by a mean 97.70 % of the catalogue,  */
+  /*     so it selects nothing. F8 — the series banner naming    */
+  /*     the boat's brand — is the selector, at 581/581 with     */
+  /*     zero counter-examples. It now matches on the banner.    */
+  /*   · the motor rule ANDed HP >= Min HP with HP <= Max HP.    */
+  /*     A2/F2 admits Min HP only as a warning "so nobody later  */
+  /*     'fixes' it by promoting it", and the promotion deleted  */
+  /*     16 of the 134 Highfield × Yamaha pairings the workbook  */
+  /*     itself writes (11.9 %). Max HP breaches 0 of those 134, */
+  /*     which is A1/F1 reproduced, so the ceiling is the gate   */
+  /*     and the floor is a column.                              */
+  /*                                                            */
+  /* THE TRAILER SELECTOR IS NOT REIMPLEMENTED HERE. The engine  */
+  /* that reads a banner and answers with a marque is            */
+  /* src/features/constraints/trailerFitment.ts, and             */
+  /* seededRules.test.ts asserts this rule returns EXACTLY the   */
+  /* list its `selectPartners` returns for every Highfield hull. */
+  /* A `contains` clause is all a match node can say; the test   */
+  /* is what keeps the two from drifting apart.                  */
   /* ---------------------------------------------------------- */
 
   const clauseVsSource = (candidate: string, op: Clause['op'], source: string): Clause => ({
@@ -411,6 +442,18 @@ export function buildNorthsideProject(): NorthsideProject {
     left: { fieldId: candidate },
     op,
     right: { kind: 'field', path: { fieldId: source } },
+  })
+
+  /** A candidate column against a fixed word. The banner selector needs
+   *  one: the boat's brand is the NAME OF ITS TABLE rather than a column
+   *  on it, so a rule rooted on one brand's table can only name that
+   *  brand as a literal. That is the interim FITMENT_RULES.md §6.4 asks
+   *  to replace with a real `Brand` / `Series Brand` pair at import. */
+  const clauseVsWord = (candidate: string, op: Clause['op'], word: string): Clause => ({
+    id: newId(),
+    left: { fieldId: candidate },
+    op,
+    right: { kind: 'literal', value: word },
   })
 
   const mkRule = (
@@ -456,13 +499,10 @@ export function buildNorthsideProject(): NorthsideProject {
   const rules: RuleDef[] = [
     mkRule(
       'Motor fitment — Highfield',
-      'Every Yamaha whose HP lands inside the hull’s Min HP / Max HP envelope (Boat Module!KV, KW). Those two columns exist in the Master Price File and NOTHING enforces them. Shaft and control are deliberately not compared: the Boat Module writes XL / L / UL while the Motor Module writes 25" / 20" / 30" — the same axis in two vocabularies. Written against `boat` and `motor`, so it reads the same on any of the nine boat tables.',
+      'Every Yamaha at or below the hull’s Max HP (Boat Module!KW) — the ceiling the spec plate states, and the only half of the envelope that may gate. FITMENT_RULES.md F1 measures 0 of 1,424 live slot-1/slot-2 motors above it, and 0 of the 134 Highfield × Yamaha pairings this seed carries. MIN HP IS SHOWN AND NEVER TESTED: F2 admits it as a warning only, because the dealer breaks it on purpose — 72 of 757 live standard-fit motors (9.51%) sit below the plate, since slot 1 is the row’s lowest-HP motor on 99.9% of rows and is the cheapest way onto the water. ANDing it in deleted 16 of those 134 pairings (11.9%), which is the failure A2 is on record refusing to make twice. Shaft and control are deliberately not compared: the Boat Module writes XL / L / UL while the Motor Module writes 25" / 20" / 30" — the same axis in two vocabularies. KNOWN LIMIT: Motor Library!E is text, so a twin-rig row like “2 x 225” cannot be ordered against a number and is reported as not matching rather than silently passed; F1 asks for Max HP to be decomposed into total, rig count and per-engine at import before that can be fixed.',
       'boat_highfield',
       'mot_yamaha',
-      [
-        clauseVsSource(fid('mot_yamaha', 'e'), 'gte', fid('boat_highfield', 'kv')),
-        clauseVsSource(fid('mot_yamaha', 'e'), 'lte', fid('boat_highfield', 'kw')),
-      ],
+      [clauseVsSource(fid('mot_yamaha', 'e'), 'lte', fid('boat_highfield', 'kw'))],
       [
         { scope: 'source', fieldId: fid('boat_highfield', 'c'), label: 'Boat' },
         { scope: 'source', fieldId: fid('boat_highfield', 'kv'), label: 'Min HP' },
@@ -477,18 +517,19 @@ export function buildNorthsideProject(): NorthsideProject {
     ),
     mkRule(
       'Trailer fitment — Highfield',
-      'NSM Custom trailers whose ATM clears the hull’s Max Load (Boat Module!P). Max Load is the hull’s PAYLOAD rating, so this clears the load only — the legal test would add hull weight and trailer tare on top, and no column in the workbook does. The Trailer Module runs a custom cradle series per boat model beside a length-band fallback, with nothing joining them but a model name typed into text.',
+      'Trailers whose series banner names Highfield — Trailer Module!A’s own heading, read here off the Series column that carries it verbatim. This is FITMENT_RULES.md F8, the one candidate in either workbook that holds at 100% AND rejects something: 581 of 581 testable live pairings with zero counter-examples, leaving 0.92–7.83% of the 434 live trailers standing (Highfield 12 of 434 = 2.76%). On this seed’s 145 live trailers it leaves 2. ATM IS SHOWN AND NEVER TESTED: F9 settles ATM ≥ the hull’s weight as a FLOOR rather than a selector — 530 of 530 live pairings hold it, but so does a mean 97.70% of the catalogue, so gating on it chooses no trailer. The weight column beside it is Boat Module!S “Boat Weight”, which is what the hull tows; Boat Module!P “Max Load” is an afloat PAYLOAD and the rule built on it is refuted at 52.5% (F10). THIS RULE USED TO MATCH ON ATM ≥ Max Load and returned 1,758 pairs — the whole NSM Custom table against every Highfield hull, offering a Highfield UL240 the “REDCO 575 Surtees Alum”, “REDCO Stabicraft Alloy” and Formosa cradles. It is the same selector src/features/constraints/trailerFitment.ts runs; the sentence surface still cannot say it, because the boat’s brand is the name of its table (§6.4).',
       'boat_highfield',
       'trl_nsmcustom',
-      [clauseVsSource(fid('trl_nsmcustom', 'k'), 'gte', fid('boat_highfield', 'p'))],
+      [clauseVsWord(fid('trl_nsmcustom', 'series'), 'contains', 'Highfield')],
       [
         { scope: 'source', fieldId: fid('boat_highfield', 'c'), label: 'Boat' },
-        { scope: 'source', fieldId: fid('boat_highfield', 'p'), label: 'Max Load kg' },
+        { scope: 'source', fieldId: fid('boat_highfield', 's'), label: 'Boat Weight kg' },
+        { scope: 'match', fieldId: fid('trl_nsmcustom', 'series'), label: 'Series' },
         { scope: 'match', fieldId: fid('trl_nsmcustom', 'c'), label: 'Trailer' },
         { scope: 'match', fieldId: fid('trl_nsmcustom', 'k'), label: 'ATM kg' },
         { scope: 'match', fieldId: fid('trl_nsmcustom', 'ca'), label: 'Sell inc Rego' },
       ],
-      'Trailers that carry it',
+      'Trailers built for Highfield',
       -900,
     ),
   ]

@@ -29,7 +29,7 @@ export function QuoteList({ onOpen, openId }: QuoteListProps): ReactElement {
 
   if (quotes.length === 0) {
     return (
-      <div className="qt-root">
+      <div className="qt-root qt-root--doc">
         <p className="qt-void">
           No quotes yet. Open a table, press <em>What goes with each one?</em>, pick one and press{' '}
           <em>Quote this one</em>.
@@ -39,7 +39,9 @@ export function QuoteList({ onOpen, openId }: QuoteListProps): ReactElement {
   }
 
   return (
-    <div className="qt-root">
+    /* nothing in a list of quotes is sticky, so it keeps the trailing
+       air on the scrollport — see `.qt-root--doc` in quote.css */
+    <div className="qt-root qt-root--doc">
       <ul className="qt-list">
         {quotes.map((q) => {
           const totals = quoteTotals(q)

@@ -66,3 +66,8 @@ export type { TableNodeSize } from './tableCanvasState'
 export { forgetGroupState } from './tableGroupState'
 export { forgetSectionState } from './tableSectionState'
 export { forgetFitState } from './tableFitState'
+
+/* WHERE A SEARCH SENT US. "Find anything" knows the row; only the
+   sheet can go to it. One pending request per table, consumed once —
+   see `rowRevealState` for why this is not a prop and not a stage. */
+export { forgetRowReveal, requestRowReveal } from './rowRevealState'

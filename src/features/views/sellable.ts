@@ -33,6 +33,7 @@
 
 import { isDiscontinued, isRetired, type EntityDef, type RowData } from '@/types/model'
 import { plural, singular } from './describe'
+import { withheldRelations } from './relations'
 
 /* ---------------------------------------------------------- */
 /* Filtering                                                   */
@@ -117,6 +118,46 @@ export function retiredPairsSentence(tableName: string, joinName: string): strin
   return `${joinName} — the list that recorded which ${plural(
     tableName,
   )} go with this one — is history rather than stock, so none of it is offered here. Nothing is deleted, and ${STILL_OPENS}.`
+}
+
+/** WHAT A PAGE SAYS ABOUT THE JOINS IT NEVER DREW.
+ *
+ *  Point 2 of this file's own header — "what the surface says when it
+ *  held something back" — with the one case that had no voice. Every
+ *  other held-back thing is held back by a block, and the block says
+ *  so; a RETIRED TABLE and a RETIRED JOIN are refused by
+ *  `existingRelations` before a block exists, so on the Surtees page
+ *  five joins in the store became four blocks on screen and the fifth
+ *  was never mentioned. A silent withholding is a salesperson quietly
+ *  not trusting the page.
+ *
+ *  It is one sentence PER WITHHELD JOIN and not a tally, because
+ *  "1 was held back" sends a person looking and "OBSOLETE Trailers —
+ *  No Longer Available is history rather than stock" ends the search.
+ *  The count is the number of sentences.
+ *
+ *  `drawn` is the tables the page has already put on itself. A block
+ *  somebody added by hand before the table was retired says it in its
+ *  own header, and twice is worse than once. */
+export function withheldNotes(
+  entities: Record<string, EntityDef>,
+  tableId: string,
+  drawn: ReadonlySet<string>,
+): { id: string; sentence: string }[] {
+  const out: { id: string; sentence: string }[] = []
+  for (const w of withheldRelations(entities, tableId)) {
+    if (drawn.has(w.otherId)) continue
+    const other = entities[w.otherId]
+    if (!other) continue
+    out.push({
+      id: w.otherId,
+      sentence:
+        w.reason === 'table'
+          ? retiredTableSentence(other.name)
+          : retiredPairsSentence(other.name, entities[w.joinId]?.name ?? 'That list'),
+    })
+  }
+  return out
 }
 
 /** What a picker says about the tables it did not offer. */

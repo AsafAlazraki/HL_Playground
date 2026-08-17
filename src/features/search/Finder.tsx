@@ -46,8 +46,11 @@ import { SearchField } from './SearchField'
 import './search.css'
 
 export interface FinderProps {
-  /** a result was chosen — the shell opens that table and closes this */
-  onReveal: (entityId: string) => void
+  /** a result was chosen — the shell opens that table and closes this.
+   *  `rowId` is the row that was picked, absent when what was picked
+   *  was a table; the shell hands it to the sheet so the register
+   *  opens ON the row rather than at the top of it. */
+  onReveal: (entityId: string, rowId?: string) => void
   onClose: () => void
 }
 

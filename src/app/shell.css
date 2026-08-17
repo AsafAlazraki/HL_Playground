@@ -915,14 +915,40 @@
   outline: 2px solid var(--blue);
   outline-offset: -2px;
 }
+/* THE TRAIL IS THE DEALER'S OWN WORDS, NOT A CAPTION. It is the
+   group path a row sits under — "Ocean Ranger SDF (Hard Tops)" — read
+   straight off their sheet, so it was wearing `.mono-label` and
+   coming out "OCEAN RANGER SDF (HARD TOPS)". That is a value in a
+   label's clothes: the same flattening that makes their `PVC`
+   indistinguishable from their `Pvc`. `.mono-label` is gone from the
+   markup (it is the primitive for a CAPTION and it is right to stay
+   uppercase); the trail carries its own type here, Inter at the floor
+   with tracking back at 0. */
 .shell-view-row-trail {
   display: block;
+  font-family: var(--font-ui);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink-faint);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* MEASURED WHILE THIS RULE WAS OPEN, AND IT WAS FAILING. --ink-faint
+   is 4.72:1 on white — the floor, exactly — and the OPEN row is lit
+   with --blue-wash, which composites to #eff0fb and takes the same
+   ink to 4.16:1. That is the trap DESIGN_CONTRACT §1 names in so many
+   words: "--ink-faint is 4.72:1 on white but 4.26:1 over a 3.5% tint,
+   which fails ... step up to --ink-soft". Measured by parsing
+   `color(srgb …)`, compositing the full ancestor chain to an opaque
+   base and compositing the text over that: 4.16:1 before, and
+   --ink-soft on the same lit row measures 6.74:1 after. It was wrong
+   before this pass too; it is fixed here because this is the rule
+   that was open. */
+.shell-view-row.is-open .shell-view-row-trail {
+  color: var(--ink-soft);
 }
 .shell-view-row-name {
   display: block;
@@ -1366,12 +1392,23 @@
    so it is never mistaken for part of the crumb beside it, and given
    the pen's ink because it is the one control on that bar that MAKES
    something rather than moving you somewhere. */
+/* SENTENCE CASE. "QUOTE THIS ONE" was `.btn`'s 11px uppercase mono
+   stamp, which the contract lists among the things uppercase may
+   never be: a button. It is the toolbar control step instead —
+   12.5px Inter at 500, the same step `.shell-view-back` two tracks
+   away already takes, so the two controls on this bar finally read
+   as belonging to the same bar. Narrower too: 14 characters go from
+   ~111px of mono at +0.12em to ~89px of Inter, so nothing on the bar
+   got tighter for it. */
 .btn.shell-view-quote {
   flex: 0 0 auto;
   margin-left: auto;
   padding: 6px 12px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   border-color: var(--blue);
   color: var(--blue-deep);
 }
@@ -1387,10 +1424,15 @@
   gap: var(--sp-2);
   margin-left: auto;
 }
+/* "All quotes" — a button, so sentence case, on the same control
+   step as every other control on a page toolbar. */
 .btn.shell-quote-act {
   padding: 6px 11px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* -- the well the quote page sits in -------------------------
@@ -2544,6 +2586,22 @@
   background: var(--blue);
 }
 
+/* THE COUNT SITS ON THE FLOOR, AND IT FITS — MEASURED, NOT GUESSED.
+   This was 10px, which is under the 11px floor DESIGN_PRINCIPLES
+   calls absolute, on the redesign's own dock. Before shrinking the
+   badge's job to fit the type, the type was measured against the
+   badge: IBM Plex Mono tabular advances 5.98px per digit at 10px and
+   6.58px at 11px, so "50" goes 11.95px -> 13.15px. With `padding:
+   0 4px` the pill goes 20px -> 21.2px wide inside a 44px item, and
+   the 16px height already had 3px of air above an 11px line box.
+   1.2px. The badge did not have to say anything less to clear the
+   floor, so it still says the number — a count relocated into a
+   tooltip is a count the resting bar no longer has.
+   The `#fff` beside it was a literal colour, which is rule 1. It is
+   `--paper-high` now, the same inversion `.dk-tip` below uses:
+   #ffffff on --blue #4a56d2 measures 5.87:1, and in dark #131519 on
+   #6e7bfa measures 5.16:1. Both clear 4.5:1.
+   GEOMETRY UNTOUCHED: 44x44 item, 13px radius, 4px gap. */
 .dk-badge {
   position: absolute;
   top: 4px;
@@ -2555,9 +2613,9 @@
   place-items: center;
   border-radius: 999px;
   background: var(--blue);
-  color: #fff;
+  color: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -2805,6 +2863,24 @@
    "NORTHSIDE MARINE · 50 TABLES" as "NORT… · 21…" on a 1900px screen.
    The cap belongs on the TRACK, where it resolves against a real
    length; see `minmax(0, auto)` on the centre column. */
+/* A NAME IS A NAME. The rule the redesign wrote for itself is that
+   uppercase is a LABEL style — never a name, never a value, never a
+   sentence — and this bar was breaking it on every stage in the app.
+   `.shell-view-what` above (shell.css:811) is the outgoing crumb: an
+   11px mono stamp at +0.14em, uppercase. The redesign re-typed the
+   NAME on top of it and left the parent's transform, family and
+   tracking to inherit, so the org came out "NORTHSIDE MARINE", a
+   table came out "STACER" and "YAMAHA OUTBOARDS", and the aside —
+   which is a sentence, "what goes with each one" — came out shouting
+   in mono at +1.54px per letter.
+   Uppercasing content is lossy in this app specifically: a dealer's
+   `PVC` and a dealer's `Pvc` are different facts about their data,
+   and a crumb that flattens them teaches nobody anything. The three
+   sanctioned uppercase uses — group caption, mono stamp, card kind
+   eyebrow — are all still uppercase; a page title is none of them.
+   Reset here rather than at :811 because :811 also dresses the
+   pre-redesign window-titlebar crumb, and the three-track grid rule
+   is the redesign's own block for this bar. */
 .shell-viewstage .shell-view-bar .shell-view-what {
   grid-column: 2;
   justify-self: center;
@@ -2816,6 +2892,9 @@
   min-width: 0;
   max-width: 100%;
   pointer-events: none;
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
 }
 .shell-view-what-name {
   font-family: var(--font-ui);
@@ -2827,8 +2906,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* the aside is half sentence ("what goes with each one") and half
+   count ("26 models"), so it reads as Inter and takes tabular figures
+   rather than the mono face — the digits still line up between one
+   table and the next without a sentence being set in a typewriter. */
 .shell-view-what-say {
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
   white-space: nowrap;
 }

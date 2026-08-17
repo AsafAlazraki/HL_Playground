@@ -17,9 +17,10 @@
    already maintains by hand, and where there is no rung it says so.
 
    WHY NOT A REGEX. The nearest thing to a price-column detector in
-   this codebase is `MONEY = /price|cost|cash|rrp|sell|trade|…/i` in
-   views/columns.ts, and it matches `Dealer List Price` and
-   `Base Cost` as readily as `Sell Price`. Ranked by
+   this codebase is `isMoney(name, band)` in views/columns.ts, and it
+   is deliberately a different question: it decides how to SET a
+   figure, and so it matches `Dealer List Price` and `Base Cost` as
+   readily as `Sell Price`. Ranked by
    `defaultColumns()`, the first money column on a seeded boat is
    `Base Cost` and on a seeded motor is `Dealer List Price` — the
    dealer's BUY price. A quote that guesses prints that to a
@@ -52,6 +53,7 @@ import type {
   FieldDef,
   TableKind,
 } from '@/types/model'
+import { money } from '@/lib/money'
 import {
   LEVEL_TITLE,
   QUOTE_LEVEL_ORDER,
@@ -380,26 +382,17 @@ export function defaultLevelKey(root: EntityDef | undefined): string {
 /* Setting a number                                           */
 /* ---------------------------------------------------------- */
 
-const grouped = new Intl.NumberFormat(undefined, {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
-const groupedCents = new Intl.NumberFormat(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
 /** Money as the drawing office sets it. Cents appear only when the
  *  figure HAS cents — every seeded price is whole, and printing
  *  `$14,190.00` where the business writes `$14,190` makes a document
  *  look like a program wrote it. NOTHING IS EVER ROUNDED HERE: a
  *  rounded display over an unrounded total is how two summations of
- *  one deal start to disagree. */
-export function money(n: number): string {
-  const sign = n < 0 ? '−' : ''
-  const abs = Math.abs(n)
-  return `${sign}$${Number.isInteger(abs) ? grouped.format(abs) : groupedCents.format(abs)}`
-}
+ *  one deal start to disagree.
+ *
+ *  It lives in `@/lib/money` now, because a spec block on an item page
+ *  prints the same figures and was printing them three other ways. This
+ *  re-export is the quote's own door onto it. */
+export { money } from '@/lib/money'
 
 /** A signed adjustment always shows its sign, because a discount
  *  that reads like a charge is the one mistake nobody catches. */

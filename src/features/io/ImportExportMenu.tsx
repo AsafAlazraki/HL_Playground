@@ -10,60 +10,48 @@
 
    Everything the user reads here is configurator vocabulary —
    TABLES, COLUMNS, ROWS. Never entity, schema, field or zone.
+
+   THE TWO IRREVERSIBLE ACTS ARE ASKED IN THE APP'S OWN VOICE.
+   Both used to be `window.confirm`, and both were wrong in the
+   same three ways. The OS drew them, so the one moment a
+   stakeholder is watching something irreversible was the one
+   moment the drawing office handed off to Segoe UI. `confirm`
+   has exactly two answers, so neither could offer the third
+   one that actually matters — SAVE A COPY FIRST. And REPLACE's
+   sentence was written unconditional: "Every table and row on
+   the sheet now will be overwritten", printed at people whose
+   sheet was empty. `ConfirmSheet` is the house question, its
+   facts are counted from the store (`sheetNow`), and an empty
+   sheet is not asked at all because it has nothing to lose.
+
+   CLEAR SHEET IS THE DOOR THAT USED TO STRAND PEOPLE. It calls
+   `resetProject`, which wipes meta including the organisation,
+   so the shell lands on onboarding — and this menu, the only
+   import door in the app, went with it. Somebody who cleared
+   the sheet in order to restore a backup could not restore it.
+   Two things answer that: the confirm offers to save a copy
+   before it clears, and onboarding now carries an import of its
+   own (`features/onboarding`).
    ============================================================ */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import type { ProjectExport } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
-import { buildExportPayload } from './exportPayload'
-import { validateEnvelope } from './envelope'
+import { forgetSeedStamp } from '@/demos/seedStamp'
+import { ConfirmFacts, ConfirmSheet } from '@/features/designer/ConfirmSheet'
 import { applyMerge, applyReplace } from './apply'
+import { readEnvelopeFile, summariseEnvelope } from './readEnvelope'
+import { nextCopyName, pad2, saveCopyOfSheet } from './saveCopy'
+import { sheetFacts, sheetNow } from './sheetNow'
 import './io.css'
 
 /* ------------------------------------------------------------ */
-/* helpers — export                                              */
+/* helpers                                                       */
 /* ------------------------------------------------------------ */
-
-const pad2 = (n: number): string => String(n).padStart(2, '0')
-
-const kebab = (s: string): string =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'project'
 
 const plural = (n: number, one: string, many: string): string =>
   `${n} ${n === 1 ? one : many}`
-
-function downloadJson(json: string, fileName: string): void {
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 4000)
-}
-
-/** Builds the export envelope, bumps REV, triggers the download.
- *  Returns the issued rev number.
- *
- *  The envelope itself is `buildExportPayload`, which lives in its own
- *  module so the round trip can be walked without a DOM — see the
- *  header there for the two importer-refuses-its-own-export bugs that
- *  went unseen while it was private to this file. */
-function issueExport(includeData: boolean): number {
-  const rev = useProjectStore.getState().bumpExportCount()
-  const s = useProjectStore.getState()
-  downloadJson(
-    JSON.stringify(buildExportPayload(rev, includeData), null, 2),
-    `${kebab(s.meta.name)}-rev${pad2(rev)}.json`,
-  )
-  return rev
-}
 
 /* ------------------------------------------------------------ */
 /* small glyphs                                                  */
@@ -116,6 +104,9 @@ interface Pending {
   fileName: string
 }
 
+/** which irreversible act is being asked about, or null */
+type Asking = 'replace' | 'clear' | null
+
 export interface ImportExportMenuProps {
   /** Which edge the popover hangs from. It has always hung from the
    *  RIGHT, because it lived at the right end of a title block; on a
@@ -130,6 +121,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
   const [pending, setPending] = useState<Pending | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [stamp, setStamp] = useState<string | null>(null)
+  const [asking, setAsking] = useState<Asking>(null)
 
   const rootRef = useRef<HTMLDivElement>(null)
   const popRef = useRef<HTMLDivElement>(null)
@@ -152,11 +144,18 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
     setError(null)
     setPending(null)
     setDragOver(false)
+    setAsking(null)
   }, [])
 
-  /* escape + outside click */
+  /* escape + outside click.
+     THE CONFIRM OWNS BOTH WHILE IT IS UP. It is portalled to
+     document.body, so every pointerdown inside it is "outside" this
+     root — pressing a choice would close the menu out from under the
+     question. And `ConfirmSheet` takes Escape in the capture phase to
+     cancel itself; this listener must not also fire and take the menu
+     with it. */
   useEffect(() => {
-    if (!open) return
+    if (!open || asking !== null) return
     const onPointer = (e: PointerEvent) => {
       if (rootRef.current && e.target instanceof Node && !rootRef.current.contains(e.target)) {
         closeMenu()
@@ -174,7 +173,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
       document.removeEventListener('pointerdown', onPointer)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open, closeMenu])
+  }, [open, asking, closeMenu])
 
   /* focus the sheet when it opens */
   useEffect(() => {
@@ -199,7 +198,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
 
   /* -- export ------------------------------------------------ */
   const onExport = (includeData: boolean) => {
-    const issued = issueExport(includeData)
+    const issued = saveCopyOfSheet(includeData)
     closeMenu()
     showStamp(`REV ${pad2(issued)} ISSUED`)
   }
@@ -208,30 +207,12 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
   const handleFile = useCallback(async (file: File) => {
     setError(null)
     setPending(null)
-    if (!/\.json$/i.test(file.name)) {
-      setError('EXPECTED A .JSON FILE')
-      return
-    }
-    let text: string
-    try {
-      text = await file.text()
-    } catch {
-      setError('FILE COULD NOT BE READ')
-      return
-    }
-    let raw: unknown
-    try {
-      raw = JSON.parse(text)
-    } catch {
-      setError('FILE IS NOT VALID JSON')
-      return
-    }
-    const res = validateEnvelope(raw)
+    const res = await readEnvelopeFile(file)
     if (!res.ok) {
       setError(res.error)
       return
     }
-    setPending({ data: res.data, fileName: file.name })
+    setPending({ data: res.data, fileName: res.fileName })
   }, [])
 
   const onDrop = (e: DragEvent) => {
@@ -241,15 +222,25 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
     if (file) void handleFile(file)
   }
 
-  const doReplace = () => {
-    if (!pending) return
-    const ok = window.confirm(
-      `Replace this sheet with "${pending.data.project.name}"?\n\nEvery table and row on the sheet now will be overwritten.`,
-    )
-    if (!ok) return
-    applyReplace(pending.data)
+  /* -- replace ----------------------------------------------- */
+
+  const doReplace = (data: ProjectExport) => {
+    applyReplace(data)
     closeMenu()
     showStamp('SHEET REPLACED')
+  }
+
+  /** An empty sheet has nothing to overwrite, so it is not asked.
+   *  That is also the case the old unconditional sentence was false
+   *  about — it promised to overwrite "every table and row" of a sheet
+   *  that held none. */
+  const askReplace = () => {
+    if (!pending) return
+    if (sheetNow().blank) {
+      doReplace(pending.data)
+      return
+    }
+    setAsking('replace')
   }
 
   /* additive — nothing on the sheet is touched, so no confirm */
@@ -261,45 +252,28 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
   }
 
   /* -- clear sheet ------------------------------------------- */
+
   const doClear = () => {
-    if (
-      !window.confirm(
-        'Clear the sheet? Every table, column and row will be wiped, and you will start again from naming your business.',
-      )
-    )
-      return
-    if (!window.confirm('Confirm again — this cannot be undone.')) return
     void useProjectStore.getState().resetProject()
+    /* the sheet this browser was seeded with is gone, so the record of
+       which build seeded it goes too — see @/demos/seedStamp */
+    forgetSeedStamp()
     closeMenu()
     showStamp('SHEET CLEARED')
   }
 
   /* -- derived preview stats --------------------------------- */
-  const preview = pending
-    ? {
-        name: pending.data.project.name,
-        rev: pending.data.project.rev,
-        tables: pending.data.entities.length,
-        columns: pending.data.entities.reduce((n, e) => n + e.fields.length, 0),
-        rows: pending.data.rows
-          ? Object.values(pending.data.rows).reduce((n, l) => n + l.length, 0)
-          : 0,
-        /* the design layer, named rather than counted into the grid:
-           REPLACE overwrites the dashboard too, and a person deserves
-           to see that before they press it */
-        also: [
-          pending.data.modules?.length
-            ? plural(pending.data.modules.length, 'MODULE', 'MODULES')
-            : '',
-          pending.data.views?.length
-            ? plural(pending.data.views.length, 'PAGE', 'PAGES')
-            : '',
-          pending.data.constraints?.length
-            ? plural(pending.data.constraints.length, 'RULE', 'RULES')
-            : '',
-        ].filter(Boolean),
-      }
-    : null
+  const preview = pending ? summariseEnvelope(pending.data) : null
+  /* the design layer, named rather than counted into the grid:
+     REPLACE overwrites the dashboard too, and a person deserves to see
+     that before they press it */
+  const previewAlso = preview
+    ? [
+        preview.modules > 0 ? plural(preview.modules, 'MODULE', 'MODULES') : '',
+        preview.pages > 0 ? plural(preview.pages, 'PAGE', 'PAGES') : '',
+        preview.rules > 0 ? plural(preview.rules, 'RULE', 'RULES') : '',
+      ].filter(Boolean)
+    : []
 
   const blank = tableCount === 0
 
@@ -364,8 +338,8 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                       <span className="io-stat-lbl">Rows</span>
                     </div>
                   </div>
-                  {preview.also.length > 0 && (
-                    <div className="io-plate-also">ALSO — {preview.also.join(' · ')}</div>
+                  {previewAlso.length > 0 && (
+                    <div className="io-plate-also">ALSO — {previewAlso.join(' · ')}</div>
                   )}
                   <div className="io-plate-src">
                     SOURCE — {pending.fileName}
@@ -383,7 +357,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                     Discard
                   </button>
                   <span className="io-grow" />
-                  <button type="button" className="btn io-replace" onClick={doReplace}>
+                  <button type="button" className="btn io-replace" onClick={askReplace}>
                     Replace
                   </button>
                   <button type="button" className="btn btn-primary" onClick={doMerge}>
@@ -486,13 +460,86 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
           </div>
 
           <footer className="io-foot">
-            <button type="button" className="io-clear" onClick={doClear}>
+            {/* THE REFUSAL SITS WHERE THE ACT IS REFUSED. An enabled
+                CLEAR SHEET on an empty sheet is a control that does
+                nothing, and the reason is one line away in the same
+                footer rather than in a tooltip. */}
+            <button
+              type="button"
+              className="io-clear"
+              disabled={blank}
+              onClick={() => setAsking('clear')}
+            >
               Clear Sheet
             </button>
-            <span className="io-foot-sig">HELMLOGIC · DOC CTRL</span>
+            {blank ? (
+              <span className="io-foot-sig io-foot-why">SHEET IS ALREADY EMPTY</span>
+            ) : (
+              <span className="io-foot-sig">HELMLOGIC · DOC CTRL</span>
+            )}
           </footer>
         </div>
       )}
+
+      {/* ============================================================
+          THE TWO QUESTIONS, IN THE HOUSE VOICE.
+
+          Each offers the answer `window.confirm` could not: save a
+          copy first. The safe choice is listed first and the
+          destructive one is drawn in the red pencil; Cancel takes the
+          focus, so Enter out of habit costs nothing.
+          ============================================================ */}
+      {asking === 'replace' && pending ? (
+        <ConfirmSheet
+          eyebrow="Replace the sheet"
+          question={`Put “${pending.data.project.name}” on the sheet instead of what is there now?`}
+          choices={[
+            {
+              label: 'Save a copy, then replace',
+              note: `Writes ${nextCopyName()} to your downloads first.`,
+              onPick: () => {
+                saveCopyOfSheet(true)
+                doReplace(pending.data)
+              },
+            },
+            {
+              label: 'Replace without saving',
+              note: 'The sheet below is gone for good.',
+              destructive: true,
+              onPick: () => doReplace(pending.data),
+            },
+          ]}
+          onCancel={() => setAsking(null)}
+        >
+          <ConfirmFacts items={sheetFacts(sheetNow())} />
+        </ConfirmSheet>
+      ) : null}
+
+      {asking === 'clear' ? (
+        <ConfirmSheet
+          eyebrow="Clear the sheet"
+          question="Take everything off the sheet and start again from naming your business?"
+          choices={[
+            {
+              label: 'Save a copy, then clear',
+              note: `Writes ${nextCopyName()} to your downloads first.`,
+              onPick: () => {
+                saveCopyOfSheet(true)
+                doClear()
+              },
+            },
+            {
+              label: 'Clear without saving',
+              note: 'Nothing here can be got back.',
+              destructive: true,
+              onPick: doClear,
+            },
+          ]}
+          onCancel={() => setAsking(null)}
+        >
+          <ConfirmFacts items={sheetFacts(sheetNow())} />
+        </ConfirmSheet>
+      ) : null}
 
       {stamp && (
         <div className="io-stamp" role="status" aria-live="polite">

@@ -26,12 +26,17 @@
       bands twice over. This screen is the one a customer reads
       over a shoulder.
 
-   3. NO PICTURE IS FAKED. A row with no picture, or a picture on a
-      host the browser cannot fetch, draws the row's name on plain
-      paper — never a hatched rectangle, never a filename. The
-      verdict is `@/lib/imageSources`', shared with the table cell
-      and the view page, so a picture that is a plate in the grid
-      is never a broken glyph here.
+   3. NO PICTURE IS FAKED, AND NO ABSENCE IS LEFT UNEXPLAINED. A row
+      with no picture draws plain paper. A row whose picture is an
+      ADDRESS the browser is not allowed to fetch says so, in the
+      well the photograph would have filled: "Held as a link", with
+      the host on the title. Those are two different facts about a
+      dealer's data and drawing them the same way — 111 blank wells
+      out of 174 — read as a broken screen. Never a hatched
+      rectangle, never a filename, and never another boat's
+      photograph standing in. The verdict is `@/lib/imageSources`',
+      shared with the table cell and the view page, so a picture
+      that is a plate in the grid is never a broken glyph here.
 
    IT MUST STAY SMOOTH AT 651 ROWS. The entry list is built once
    per data change, the price and picture columns are resolved once
@@ -97,7 +102,15 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
-import { ArrowDown, ArrowUp, Check, Gear, MagnifyingGlass, X } from '@phosphor-icons/react'
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Gear,
+  LinkSimple,
+  MagnifyingGlass,
+  X,
+} from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   accentVar,
@@ -108,7 +121,13 @@ import {
 } from '@/types/model'
 import { TableKindSymbol } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
-import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
+import {
+  imageHostOf,
+  imageLabel,
+  noteImageFailed,
+  noteImageLoaded,
+  useImageDisplay,
+} from '@/lib/imageSources'
 import { heldBackRowCount } from '@/features/views/sellable'
 import { useQuotes } from '@/features/quote'
 import {
@@ -815,11 +834,37 @@ function Row({ entry, canOpen, onOpen }: FaceProps): ReactElement {
 /* The picture, or nothing at all                             */
 /* ---------------------------------------------------------- */
 
-/** One tile's picture. There is no third outcome: a picture, or the
- *  name on plain paper. The verdict is taken per HOST in
- *  `@/lib/imageSources` and shared with the grid and the view page,
- *  so a catalogue of 240 tiles costs at most two failed requests per
- *  host rather than one per tile.
+/** One tile's picture — and THREE OUTCOMES, not two, because "there is
+ *  no picture" and "the picture is somewhere we are not allowed to
+ *  fetch it from" are different facts about a dealer's data and a
+ *  catalogue that draws them the same way is lying about one of them.
+ *
+ *    a picture            → the photograph
+ *    an address we cannot → the plate below: a link mark and the words
+ *      paint                "Held as a link", with the host in the
+ *                           title and the accessible name
+ *    no picture at all    → plain paper. The row has nothing to show
+ *                           and nothing is claimed.
+ *
+ *  WHY THIS IS NOT A MISSING FEATURE. 111 of the 174 tiles in Boats
+ *  were blank wells, and nearly all of them hold a real address on
+ *  `www.northsidemarine.com.au`, which serves
+ *  `Cross-Origin-Resource-Policy: same-origin` behind Cloudflare. That
+ *  cannot be fetched by a browser on any other origin — and a plain
+ *  server-side request from the seed generator is answered 403 as well,
+ *  measured on four of the addresses, so storing the pixels locally at
+ *  seed time is not an option either. Both roads are closed by the
+ *  origin, so the only honest move left is to SAY SO where the picture
+ *  would be. No photograph is invented and no other boat's picture is
+ *  ever substituted.
+ *
+ *  The verdict is taken per HOST in `@/lib/imageSources` and shared
+ *  with the table cell and the view page — so a catalogue of 174 tiles
+ *  costs at most two failed requests per host rather than one per tile
+ *  (measured: two console lines for the whole Boats module), and a
+ *  picture that is a plate in the grid is never a broken glyph here.
+ *  The wording is the table cell's own, so a person who has seen one
+ *  recognises the other.
  *
  *  Split in two so the hook is never asked about a row that has no
  *  picture at all — a conditional hook is not an option, and an
@@ -836,9 +881,31 @@ function TilePicture({
   return <Painted img={img} alt={alt} />
 }
 
+/** THE PICTURE IS HELD AS A LINK, AND THAT IS WHAT IT SAYS. Two words
+ *  and a mark, quietly, in the well the photograph would have filled:
+ *  repeated down a grid it reads as a convention somebody chose, which
+ *  is the whole difference between this and a broken page. The sentence
+ *  with the host in it — the same sentence `ImageCell`'s enlarged plate
+ *  prints — is on the title and in the accessible name, because the
+ *  host is what a person FIXING the data needs and they do that work in
+ *  the table, not here. */
+function HeldAsLink({ img }: { img: ImageRef }): ReactElement {
+  const host = imageHostOf(img.src)
+  const why =
+    host === ''
+      ? 'Held as a link — the picture itself is not here.'
+      : `Held as a link — the picture itself lives at ${host}.`
+  return (
+    <span className="md-tile-held" role="img" aria-label={`${imageLabel(img)} — ${why}`} title={why}>
+      <LinkSimple size={ICON_SIZE.small} aria-hidden="true" />
+      <span className="md-tile-held-say">Held as a link</span>
+    </span>
+  )
+}
+
 function Painted({ img, alt }: { img: ImageRef; alt: string }): ReactElement | null {
   const { paint, probe } = useImageDisplay(img.src)
-  if (!paint) return null
+  if (!paint) return <HeldAsLink img={img} />
   return (
     <img
       className="md-tile-img"

@@ -346,11 +346,17 @@ describe('the Northside demo seeds its own modules', () => {
     expect(isStaleNorthside(northsideDrift(entities, rows, s.modules))).toBe(false)
   })
 
-  it('calls an older copy of the example stale, and says what differs', () => {
+  it('counts what differs from the set, without that being the verdict', () => {
+    /* THIS TEST USED TO ASSERT THE BUG. It made one table absent and
+       one table smaller and expected `isStaleNorthside` to say yes —
+       which is precisely why adding a row raised the notice at a
+       person who had lost nothing, over an offer to replace their
+       sheet. The evidence below is still gathered and still printed;
+       the verdict now comes from the fingerprint this browser was
+       seeded with, and lives in seedStamp.ts. See freshness.test.ts
+       for both halves of that. */
     loadNorthsideProject()
     const s = useProjectStore.getState()
-    /* the shape the owner actually met: fewer tables than the set
-       carries now, and a Yamaha file half the size */
     const yamaha = Object.values(s.entities).find((e) => e.name === 'Yamaha Outboards')!
     const parts = Object.values(s.entities).find((e) => e.name === 'Parts & Accessories')!
     const entities = { ...s.entities }
@@ -358,10 +364,13 @@ describe('the Northside demo seeds its own modules', () => {
     const rows = { ...s.rowsByEntity, [yamaha.id]: s.rowsByEntity[yamaha.id].slice(0, 43) }
 
     const drift = northsideDrift(entities, rows, {})
-    expect(isStaleNorthside(drift)).toBe(true)
     expect(drift?.missing).toContain('Parts & Accessories')
     expect(drift?.resized).toContainEqual({ name: 'Yamaha Outboards', has: 43, wants: 83 })
     expect(drift?.noModules).toBe(true)
     expect(drift?.moduleCount).toBe(5)
+    /* seeded from THIS build, so none of the above makes it an older
+       copy — one deleted table and one shortened table is a person
+       working, not a stale seed */
+    expect(isStaleNorthside(drift)).toBe(false)
   })
 })

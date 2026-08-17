@@ -11,6 +11,15 @@
    the owner of this repository once, and a stakeholder would have
    less reason to doubt it.
 
+   AND THE FAILURE IT CAUSED, WHICH WAS WORSE THAN THE ONE IT
+   ANSWERS. Staleness was decided by comparing row counts, so
+   ADDING ONE ROW raised this panel — which then printed "Nothing
+   has been lost" over an offer to load the current example, and
+   loading it would have destroyed the row that had just been
+   typed. The verdict now comes from the fingerprint the browser
+   was SEEDED with (`@/demos/seedStamp`) and an edit cannot reach
+   it. Whoever changes the detection reads that file first.
+
    FOUR PARTS, IN THE ORDER EVERY EMPTY STATE IN THIS APP USES:
    what sort of thing this is, what it IS in the dealer's words,
    what you already have counted from the store, and one action.
@@ -18,21 +27,28 @@
    of 83" is the sentence that turns "my data reverted" into "this
    is an older copy", and it is read, never written.
 
-   THE OFFER IS NON-DESTRUCTIVE AND SAYS SO. Pressing it goes
-   through the same guard every prepared set goes through, which
-   names what is on the sheet now and asks before replacing it.
-   Keeping the old copy is a real answer and is drawn as one — an
+   THE OFFER CANNOT COST ANYBODY THEIR WORK. It used to hand off
+   to `window.confirm`; it now asks the house question, states the
+   blast radius counted from the store, and leads with the answer
+   a native dialog had no room for — SAVE A COPY FIRST, which
+   writes the sheet to a file before the replace happens. Keeping
+   the old copy is still a real answer and is drawn as one; an
    older example is a perfectly good thing to be looking at, and
-   a person who chose it should not be asked twice.
+   a person who chose it is not asked again (the choice is
+   recorded against the version it was about).
 
    IT KNOWS NOTHING ABOUT ANY PARTICULAR EXAMPLE. Every string it
-   prints is handed to it: the set's name, the tables that differ
-   and their two figures. Marine content lives in src/demos and
-   this file is free of it, so a pharmacy's own starting set gets
-   the same sentence with its own nouns in it.
+   prints about the set is handed to it: the set's name, the tables
+   that differ and their two figures. Marine content lives in
+   src/demos and this file is free of it, so a pharmacy's own
+   starting set gets the same sentence with its own nouns in it.
    ============================================================ */
 
+import { useState } from 'react'
 import type { JSX } from 'react'
+import { ConfirmFacts, ConfirmSheet } from '@/features/designer/ConfirmSheet'
+import { nextCopyName, saveCopyOfSheet } from './saveCopy'
+import { sheetFacts, sheetNow } from './sheetNow'
 import './io.css'
 
 export interface FreshnessProps {
@@ -46,8 +62,10 @@ export interface FreshnessProps {
   noModules: boolean
   /** how many places the current set would put on the dashboard */
   moduleCount: number
-  /** load the current copy — asks before it replaces anything */
-  onRefresh: () => void
+  /** put the current copy of the set on the sheet. The caller does the
+   *  load and nothing else — every question in front of it, including
+   *  saving a copy of what is about to be replaced, is asked here. */
+  onLoadCurrent: () => void
   onDismiss: () => void
 }
 
@@ -60,9 +78,11 @@ export function Freshness({
   resized,
   noModules,
   moduleCount,
-  onRefresh,
+  onLoadCurrent,
   onDismiss,
 }: FreshnessProps): JSX.Element {
+  const [asking, setAsking] = useState(false)
+
   /* WHAT DIFFERS, COUNTED, AT MOST THREE THINGS. A list of every
      table that moved would be the diff and not the answer; the
      question a person is asking is "is this the same file", and two
@@ -92,34 +112,67 @@ export function Freshness({
   }
 
   return (
-    <div className="io-fresh" role="status" aria-live="polite">
-      <span className="mono-label io-fresh-eyebrow">An older copy</span>
-      <p className="io-fresh-say">
-        This browser is showing a copy of “{setName}” that was loaded before the
-        current one. Nothing has been lost — the example itself has moved on
-        since, and your machine kept what it was given.
-      </p>
-      {facts.length > 0 ? (
-        <p className="io-fresh-facts">
-          {/* each fact is its own line and therefore its own sentence */}
-          {facts.map((f) => (
-            <span className="io-fresh-fact" key={f}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}.
-            </span>
-          ))}
+    <>
+      <div className="io-fresh" role="status" aria-live="polite">
+        <span className="mono-label io-fresh-eyebrow">An older copy</span>
+        <p className="io-fresh-say">
+          This browser is showing a copy of “{setName}” that was loaded before the
+          current one. Nothing has been lost — the example itself has moved on
+          since, and your machine kept what it was given.
         </p>
-      ) : null}
-      <div className="io-fresh-acts">
-        <button type="button" className="io-fresh-go" onClick={onRefresh}>
-          Load the current example
-        </button>
-        <button type="button" className="io-fresh-keep" onClick={onDismiss}>
-          Keep this one
-        </button>
+        {facts.length > 0 ? (
+          <p className="io-fresh-facts">
+            {/* each fact is its own line and therefore its own sentence */}
+            {facts.map((f) => (
+              <span className="io-fresh-fact" key={f}>
+                {f.charAt(0).toUpperCase() + f.slice(1)}.
+              </span>
+            ))}
+          </p>
+        ) : null}
+        <div className="io-fresh-acts">
+          <button type="button" className="io-fresh-go" onClick={() => setAsking(true)}>
+            Load the current example
+          </button>
+          <button type="button" className="io-fresh-keep" onClick={onDismiss}>
+            Keep this one
+          </button>
+        </div>
+        <p className="io-fresh-foot">
+          Loading it replaces this sheet, and can save a copy of it to a file
+          first. Keeping this one is not asked again.
+        </p>
       </div>
-      <p className="io-fresh-foot">
-        Loading it replaces what is on the sheet now, and asks first.
-      </p>
-    </div>
+
+      {asking ? (
+        <ConfirmSheet
+          eyebrow="Load the current example"
+          question={`Put the current “${setName}” on the sheet instead of this copy?`}
+          choices={[
+            {
+              label: 'Save a copy, then load',
+              note: `Writes ${nextCopyName()} to your downloads first.`,
+              onPick: () => {
+                saveCopyOfSheet(true)
+                setAsking(false)
+                onLoadCurrent()
+              },
+            },
+            {
+              label: 'Load without saving',
+              note: 'Anything typed into this copy is gone for good.',
+              destructive: true,
+              onPick: () => {
+                setAsking(false)
+                onLoadCurrent()
+              },
+            },
+          ]}
+          onCancel={() => setAsking(false)}
+        >
+          <ConfirmFacts items={sheetFacts(sheetNow())} />
+        </ConfirmSheet>
+      ) : null}
+    </>
   )
 }

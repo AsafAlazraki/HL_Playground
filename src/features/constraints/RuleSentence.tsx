@@ -32,6 +32,7 @@ import {
   setClauseConcept,
   setClauseOp,
   setClauseValue,
+  unsetSide,
 } from './edit'
 import { putConstraint } from './constraintDefs'
 import { useSentenceCtx } from './useCtx'
@@ -135,8 +136,15 @@ export function RuleSentence({
   }
 
   /** The obligation lives on the same kind as the condition, or the
-   *  rule could never be true of any row. Retargeting the condition
-   *  therefore carries the obligation with it. */
+   *  rule could never be true of any row. So retargeting the condition
+   *  across kinds STRANDS the obligation — and when it does, the
+   *  obligation goes back to being an open question.
+   *
+   *  It used to reach into the column list and pick some other column of
+   *  the new kind instead, which wrote half a rule on the reader's
+   *  behalf: change "Discontinued" to "Hull Length" and the far side
+   *  silently became a claim about a column nobody had looked at. An
+   *  unanswered slot says what happened; a substituted column hides it. */
   const changeConcept = (control: TokenControl & { k: 'field' }, key: string): void => {
     const concept = conceptOf(ctx, key)
     if (!concept) return
@@ -144,12 +152,7 @@ export function RuleSentence({
     if (control.side === 'if') {
       const head = next.then?.clauses[0]
       const current = head ? ctx.index.get(head.left.fieldId) : undefined
-      if (head && current && current.kind !== concept.kind) {
-        const replacement =
-          ctx.concepts.find((c) => c.kind === concept.kind && c.key !== concept.key) ??
-          ctx.concepts.find((c) => c.kind === concept.kind)
-        if (replacement) next = setClauseConcept(next, 'then', head.id, replacement, ctx)
-      }
+      if (head && current && current.kind !== concept.kind) next = unsetSide(next, 'then')
     }
     apply(next)
   }
@@ -181,6 +184,7 @@ export function RuleSentence({
             groups={conceptGroups(sideConcepts(control.side))}
             label={control.side === 'if' ? 'The column the rule looks at' : 'The column the rule sets'}
             title={token.concept ? conceptOptionLabel(token.concept) : undefined}
+            unchosen={token.unchosen}
             onChange={(key) => changeConcept(control, key)}
           />
         )
@@ -257,7 +261,13 @@ export function RuleSentence({
             key={token.id}
             text={token.text}
             label={`Remove ${token.text}`}
-            onRemove={() => apply(removeOneOfValue(constraint, control.side, control.value, ctx))}
+            /* the last member of a set has nothing to be removed to:
+               drawing a cross that cannot act is a control that lies */
+            onRemove={
+              control.removable
+                ? () => apply(removeOneOfValue(constraint, control.side, control.value, ctx))
+                : undefined
+            }
           />
         )
 

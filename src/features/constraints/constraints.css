@@ -174,6 +174,15 @@
 .cn-tok--op {
   color: var(--ink-soft);
 }
+/* A SLOT, NOT A NAME. An unanswered column keeps the underline that says
+   it can be changed, but drops the weight and the full ink that make a
+   real column name look like a decision already taken. It stays at
+   --ink-soft (7.7:1 on the card) because "what do I do here" is the most
+   load-bearing text on the panel, not decoration. */
+.cn-tok--field.is-unset {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
 .cn-tok--value {
   color: var(--blue-deep);
   font-weight: 500;
@@ -351,35 +360,59 @@
   border-top: 1px solid var(--hairline);
 }
 
+/* THE PRIMARY ACTION, IN SENTENCE CASE. It read "ADD RULE" in 11px mono
+   with 0.14em tracking, which is the group-label style: uppercase is a
+   caption style and never a button (DESIGN_CONTRACT §3). The geometry is
+   unchanged; only the lettering is now the chrome step every other
+   control on the surface uses. */
 .cn-add {
   padding: 8px 16px;
   border: 1px solid var(--ink);
   border-radius: var(--radius);
   background: var(--ink);
   color: var(--paper-high);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
   font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   cursor: pointer;
   transition:
     background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
 }
 .cn-add:hover:not(:disabled) {
   background: var(--blue-deep);
   border-color: var(--blue-deep);
 }
+.cn-add:active:not(:disabled) {
+  transform: scale(0.97);
+}
 .cn-add:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
+/* THE RESTING STATE OF THIS BUTTON IS DISABLED — an unwritten rule
+   cannot be added — so its label has to be READ, not merely seen.
+   --ink-faint is 4.72:1 on white but only 4.22:1 over --paper-sunken;
+   --ink-soft measures 6.84:1 on the same tint. */
 .cn-add:disabled {
   border-color: var(--hairline-strong);
   background: var(--paper-sunken);
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   cursor: not-allowed;
+}
+
+/* WHY THE BUTTON IS NOT AVAILABLE, IN THE PLACE IT IS NOT AVAILABLE.
+   A sentence, so it is set as one: this used to be `.cn-meta`, whose
+   uppercase mono stamp turned "nothing else to fill in" into a caption
+   shouting a falsehood. */
+.cn-new-why {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }
 
 /* ============================================================
@@ -1380,4 +1413,27 @@
 .cn-tf-aside-what b {
   font-weight: 500;
   color: var(--ink);
+}
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass, business-rules side.
+
+   `.cn-wb-status` is a mono STATUS STAMP and stays uppercase: it is
+   the app's own word for a state ("checked in", "not here"), which is
+   one of the three uses DESIGN_CONTRACT §3 sanctions. But when the
+   state is `elsewhere` the stamp appends WHERE, in a <b>, and that is
+   the rule's own name off the project — "Fitment · Motor fitment" was
+   coming out "FITMENT · MOTOR FITMENT". A stamp may shout its own
+   word; it may not shout the dealer's.
+
+   Everything else uppercase on this surface was checked and left
+   alone, deliberately: `.cn-eyebrow`, `.cn-wb-eyebrow`,
+   `.cn-band-eyebrow` are captions; `.cn-count` and `.cn-meta` are
+   mono stamps; `.cn-lo-verdict` is a card caption in the app's words
+   and `.cn-lo-size` beside it already carried
+   `text-transform: none`, which is the same distinction drawn here.
+   ============================================================ */
+.cn-wb-status b {
+  letter-spacing: 0.01em;
+  text-transform: none;
 }

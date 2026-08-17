@@ -36,6 +36,21 @@ export function realDemoSet(): DemoSet | undefined {
 const plural = (n: number, one: string, many: string): string =>
   `${n} ${n === 1 ? one : many}`
 
+/** Put the set on the sheet, having already asked. Nothing here is a
+ *  question: the two doors that offer a prepared set from an EMPTY
+ *  sheet have nothing to ask about, and the one door that offers it
+ *  over a full sheet — the freshness notice — asks in the app's own
+ *  voice and offers to save a copy first, which `window.confirm` had
+ *  no room to do. See features/io/Freshness.tsx. */
+export function applyDemoSet(demo: DemoSet): void {
+  const store = useProjectStore.getState()
+  /* the old rule id would survive the swap and leave the canvas drawing
+     a flow that no longer exists — drop it before the sheet changes */
+  store.setActiveRule(null)
+  store.select(null)
+  demo.load()
+}
+
 /** @returns true if the demo was loaded, false if the user backed out. */
 export function loadDemoSet(demo: DemoSet): boolean {
   const store = useProjectStore.getState()
@@ -63,10 +78,6 @@ export function loadDemoSet(demo: DemoSet): boolean {
     if (!confirmed) return false
   }
 
-  /* the old rule id would survive the swap and leave the canvas drawing
-     a flow that no longer exists — drop it before the sheet changes */
-  store.setActiveRule(null)
-  store.select(null)
-  demo.load()
+  applyDemoSet(demo)
   return true
 }

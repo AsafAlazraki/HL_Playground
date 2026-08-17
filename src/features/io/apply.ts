@@ -53,6 +53,7 @@ import type {
 import { useProjectStore } from '@/store/useProjectStore'
 import { registerViewDef } from '@/features/views'
 import { registerConstraints } from '@/features/constraints'
+import { forgetSeedStamp } from '@/demos/seedStamp'
 import { newId, nowIso } from '@/lib/id'
 import { branchKey, isWellKnownFieldId } from './envelope'
 
@@ -89,6 +90,13 @@ export function keepingOrganisation(swap: () => void, incoming?: OrgProfile): vo
 /* ------------------------------------------------------------ */
 
 export function applyReplace(data: ProjectExport): void {
+  /* THE SHEET NOW CAME FROM A FILE, NOT FROM THE SEED. The stamp
+     records which build of the prepared set THIS BROWSER was seeded
+     with; a replace throws that sheet away, so the record goes with
+     it, or the freshness notice would be answering a question about a
+     project that is no longer open. See @/demos/seedStamp. */
+  forgetSeedStamp()
+
   keepingOrganisation(() => {
     useProjectStore.getState().replaceProject({
       name: data.project.name,

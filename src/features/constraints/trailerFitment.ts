@@ -331,9 +331,19 @@ export interface FloorSpec {
  * is deliberately absent: it is an AFLOAT PAYLOAD, not towed mass, and
  * the rule built on it — `ATM ≥ boat weight + Max Load` — rejects the
  * dealer's own standard cradle for the PA660EW across 51 rows
- * (73/139 = 52.5 %, WORKBOOK_RULES_REFUTED F10). The live seed's
- * `Trailer fitment — Highfield` flow rule still compares against it;
- * this list is the correction.
+ * (73/139 = 52.5 %, WORKBOOK_RULES_REFUTED F10).
+ *
+ * THE LIVE SEED USED TO COMPARE AGAINST MAX LOAD AND NO LONGER DOES. Until
+ * this note was rewritten, `Trailer fitment — Highfield` in
+ * src/demos/northside.ts matched on `Trailer Module!K ATM ≥ Boat Module!P
+ * Max Load`, and on the running app it reported 1,758 rows: all 53 rows of
+ * NSM Custom Trailers against all 40 Highfield hulls, so a Highfield UL240
+ * was offered 'REDCO 575 Surtees Alum', 'REDCO Stabicraft Alloy' and a
+ * Formosa cradle. It now matches on the series banner and returns 80 — the
+ * same 2 trailers per hull `selectPartners` returns, asserted hull by hull
+ * in src/demos/seededRules.test.ts so that flow rule can never grow a
+ * second implementation of F8. This list is what the floor compares when it
+ * WARNS, and warning is still all it does.
  */
 export const TRAILER_ATM_FLOOR: FloorSpec = {
   capacity: 'ATM (KG)',

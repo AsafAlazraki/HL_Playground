@@ -48,6 +48,7 @@ import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { TableWorkspace } from '@/features/table'
 import { countLabel, leafNoun } from '@/features/table/grouping'
 import { ICON_SIZE } from '@/lib/icons'
+import { stageKeys, useStageEscape } from './stageKeys'
 
 export interface TableStageProps {
   entityId: string
@@ -67,6 +68,11 @@ export function TableStage({
   const entity = useProjectStore((s) => s.entities[entityId])
   const rows = useProjectStore((s) => s.rowsByEntity[entityId])
   const rowCount = rows ? rows.length : 0
+
+  /* Escape is this same control on the keyboard. Bound before the
+     subject check, so the page that says the table is gone can be shut
+     the same way as the page that shows it. */
+  useStageEscape(onClose)
 
   const back = (
     <button
@@ -101,9 +107,10 @@ export function TableStage({
       role="region"
       aria-label={entity.name}
       style={{ '--view-accent': accentVar(entity.accent) } as CSSProperties}
-      /* the sheet's own Delete/Escape handlers are still live under
-         this stage and are aimed at this very table */
-      onKeyDown={(e) => e.stopPropagation()}
+      /* Delete and Backspace stop here — the sheet's own handler aims
+         them at this very table. Escape travels, so the shell can close
+         this page with it; see stageKeys.ts for the whole order. */
+      onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
         {back}

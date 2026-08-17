@@ -488,15 +488,19 @@ export function ClauseEditor({
   const options = useMemo(() => fieldOptionsIn(left, entities), [left, entities])
   const canAdd = options.length > 0
 
+  /* A NEW CONDITION NAMES NO FIELD. It used to open on `options[0]` —
+     whichever field happened to sort first on the table being tested —
+     so pressing "Add condition" wrote a test the person had not chosen,
+     already reading as though it meant something. The same fault put an
+     invented sentence in front of the ADD RULE button on the business
+     rules pane; it is the same fix here. `FieldSelect` already draws an
+     unchosen field as its disabled "Pick a field" prompt, and the
+     validator already reports a clause with no field as a blocker, so
+     the empty state is both visible and named. */
   const addClause = () => {
-    const first = options[0]
-    if (!first) return
-    const path = first.via
-      ? { viaFieldId: first.via.id, fieldId: first.field.id }
-      : { fieldId: first.field.id }
-    const op = opsForType(first.field.type)[0] ?? 'eq'
-    const clause: Clause = { id: newId(), left: path, op }
-    if (!isUnaryOp(op)) clause.right = { kind: 'literal', value: null }
+    if (!canAdd) return
+    const clause: Clause = { id: newId(), left: { fieldId: '' }, op: 'eq' }
+    clause.right = { kind: 'literal', value: null }
     onChange({ ...group, clauses: [...group.clauses, clause] })
   }
 

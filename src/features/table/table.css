@@ -2957,12 +2957,21 @@ body.tb-resizing {
 
 /* THE TYPE CHIP lost its eight colours in the bridge; here it
    loses its weight too. It is metadata about a column and has no
-   business competing with the column's name. */
+   business competing with the column's name.
+   NOT 10.5px. That was the third thing in the app drawn under the
+   11px floor DESIGN_PRINCIPLES calls absolute, and it is the sort of
+   place it happens: the chip is metadata, so it was made quiet by
+   being made small. The floor does not have an exemption for
+   unimportant text — quiet comes from the mono face and --ink-soft,
+   which is what the note under `.tb-cell-sys` below already worked
+   out for the UID column. `.tb-chip-key` is a caption ("SORT",
+   "FILTER") and keeps its capitals; `.tb-chip-val` beside it is the
+   dealer's column name and already had its own 11.5px. */
 .tb-chip,
 .tb-chip-key {
   border-radius: 4px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.04em;
 }
@@ -3100,4 +3109,104 @@ body.tb-resizing {
   line-height: 1.25;
   max-height: 2.5em;
   overflow: hidden;
+}
+
+
+/* ============================================================
+   THE ROW A SEARCH SENT US TO.
+
+   "Find anything" used to open the table and stop there: on an
+   83-row register a person landed at the top with nothing saying
+   which of the 83 they had picked, and the row id had been in hand
+   at the moment of the press.
+
+   The going-there is the SELECTION moving — `TableSheet` sets it to
+   the row's name cell and the grid's own "keep the active cell in
+   view" rule does the scrolling, so there is no second scrolling
+   mechanism and no new camera. What is left for paint is the one
+   thing a cell selection cannot say: which row was ASKED for, as
+   opposed to which cell the cursor happens to be in.
+
+   IT IS A WASH AND A RAIL, AND IT GOES. The mark lives for as long
+   as an arrival needs marking (2.6s, held in React state) and then
+   leaves the selection behind as the durable answer. No animation:
+   nothing here moves, and nothing fades — which is also why there
+   is no reduced-motion escape to write. The rail rides in the
+   gutter, which is the one part of a row that is always on screen
+   however far sideways the register has been scrolled.
+   ============================================================ */
+.tb-row-found {
+  background: var(--blue-wash);
+}
+/* the pin is opaque and paints itself, exactly as the stripe and the
+   hover band above have to handle it */
+.tb-row-found .tb-cell-pin {
+  background: color-mix(in srgb, var(--blue-wash) 88%, var(--paper-high));
+}
+.tb-row-found .tb-gut {
+  background: color-mix(in srgb, var(--blue) 12%, var(--paper-sunken));
+  color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass, register side.
+
+   `.tb-th-name` above already settled this for the column headings
+   ("COLUMN HEADINGS read as words, not stamps"), and then stopped
+   there. Three more things on the same page were still stamping the
+   dealer's own words in capitals they never typed:
+
+     .tb-band-name   the SECTION's name — the admin types "Identity",
+                     "Hull & Rig"; the sheet drew "IDENTITY".
+     .tb-grp-lab     the grouped COLUMN's name — "SERIES" for a column
+                     called Series. Its own note above says the word is
+                     "the level's own word — BRAND, RANGE", and that is
+                     the tell: the comment had to write the capitals
+                     out because the capitals were not in the data.
+     .tb-grp-count   "7 MODELS" — a figure and the dealer's own noun,
+                     which is a value twice over.
+
+   Buttons too, which DESIGN_CONTRACT §3 names outright: "COLLAPSE
+   ALL", "FIT COLUMNS", "DELETE ROWS", "+ ROW". They come from `.btn`
+   in src/styles/base.css — the shared foundation, not ours to re-cut
+   for ~200 controls the redesign has not reached — so they are
+   corrected here, beside the classes, exactly as modules.css:1518 did
+   for `.md-sec-name`. `.tb-actions .btn` catches the primary "+ Row",
+   which carries no class of its own.
+
+   KEPT UPPERCASE, because all three are captions and captions are one
+   of the sanctioned uses: `.tb-count-label` ("ROWS"), `.tb-th-sys-tag`
+   ("SYSTEM"), `.tb-strip-label` ("SECTIONS"), `.tb-chip-key`.
+
+   TRACKING: +0.18em and +0.12em are the uppercase caption's tracking.
+   DESIGN_CONTRACT §3 — tracking runs negative as size grows and
+   returns to ~0 at reading size, and only the 11px uppercase label
+   takes it positive. These are no longer that.
+
+   COLOURS UNTOUCHED. Every one of these was measured against its
+   ground during the redesign (see the notes above each) and case does
+   not move a contrast ratio.
+   ============================================================ */
+.tb-band-name {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.tb-grp-lab {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.tb-grp-count {
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.tb-whole-btn,
+.tb-del-btn,
+.tb-actions .btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }

@@ -36,6 +36,7 @@ import {
   conceptByKey,
   conceptIndex,
   domainFor,
+  isUnsetField,
   type ColumnConcept,
   type ValueDomain,
 } from './columns'
@@ -160,8 +161,10 @@ export type TokenControl =
   | { k: 'field'; side: Side; clauseId: string; conceptKey: string }
   | { k: 'op'; side: Side; clauseId: string; op: SentenceOp; conceptKey: string }
   | { k: 'value'; side: Side; clauseId: string; conceptKey: string; value: CellValue }
-  /** one chosen value of an `is one of` set; clicking removes it */
-  | { k: 'chip'; side: Side; conceptKey: string; value: CellValue }
+  /** one chosen value of an `is one of` set; clicking removes it —
+   *  unless it is the only one left, because a set of nothing is not a
+   *  set, and a cross that cannot remove anything is a lie */
+  | { k: 'chip'; side: Side; conceptKey: string; value: CellValue; removable: boolean }
   /** the empty slot at the end of an `is one of` set */
   | { k: 'chipAdd'; side: Side; conceptKey: string; taken: CellValue[] }
 
@@ -171,6 +174,8 @@ export interface SentenceToken {
   text: string
   /** punctuation: sits against the word before it */
   tight?: boolean
+  /** a slot nobody has answered yet — drawn as empty, never as a name */
+  unchosen?: boolean
   /** present only when this word is a control */
   control?: TokenControl
   /** what the control needs to offer */
@@ -212,6 +217,11 @@ export function domainOf(ctx: SentenceCtx, concept: ColumnConcept): ValueDomain 
 }
 
 const MISSING_NAME = 'a column that is gone'
+
+/** The face of a column nobody has chosen yet. It is a slot, and it
+ *  reads as one: no name, no value, nothing that could be mistaken for
+ *  a decision this business has made. */
+export const UNCHOSEN_NAME = 'a column'
 
 /* -- the `is one of` collapse -------------------------------- */
 
@@ -255,18 +265,35 @@ function clauseTokens(
 ): void {
   const concept = ctx.index.get(clause.left.fieldId)
   const domain = concept ? domainOf(ctx, concept) : undefined
+  /* NOT CHOSEN IS NOT THE SAME AS GONE. An unchosen column keeps its
+     dropdown — it is the one thing on the sentence still to answer —
+     whereas a column that has been deleted has no list to offer. */
+  const unchosen = !concept && isUnsetField(clause.left.fieldId)
 
   out.push({
     id: `${side}:${clause.id}:field`,
     role: 'field',
-    text: concept ? concept.name : MISSING_NAME,
+    text: concept ? concept.name : unchosen ? UNCHOSEN_NAME : MISSING_NAME,
     concept,
     domain,
-    ...(concept
-      ? { control: { k: 'field', side, clauseId: clause.id, conceptKey: concept.key } as TokenControl }
+    ...(unchosen ? { unchosen: true } : {}),
+    ...(concept || unchosen
+      ? {
+          control: {
+            k: 'field',
+            side,
+            clauseId: clause.id,
+            conceptKey: concept?.key ?? '',
+          } as TokenControl,
+        }
       : {}),
   })
 
+  /* THE VERB AND THE VALUE WAIT FOR THE COLUMN. Which comparisons are
+     honest, and which values exist, are both facts about a column: with
+     no column picked there is nothing true to offer, so the rest of the
+     clause is drawn as words rather than as controls that would have to
+     guess. One live choice at a time, in reading order. */
   out.push({
     id: `${side}:${clause.id}:op`,
     role: 'op',
@@ -378,7 +405,13 @@ function groupTokens(
         text: valueWords(v, domain.control),
         concept: oneOf.concept,
         domain,
-        control: { k: 'chip', side, conceptKey: oneOf.concept.key, value: v },
+        control: {
+          k: 'chip',
+          side,
+          conceptKey: oneOf.concept.key,
+          value: v,
+          removable: oneOf.values.length > 1,
+        },
       })
     })
     out.push({

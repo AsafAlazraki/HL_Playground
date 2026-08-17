@@ -9,7 +9,7 @@
    full-window lens: the search/narrow chrome, the strike-rows
    confirmation, and the designed empty plates.
    ============================================================ */
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { displayFieldOf } from '@/types/model'
@@ -32,7 +32,8 @@ import { useGroupCommands } from './useGroupCommands'
 import { useColumnCommands } from './useColumnCommands'
 import type { NewColumn } from './useColumnCommands'
 import type { ToastTone } from './Toasts'
-import { plural } from './helpers'
+import { plural, singleSel } from './helpers'
+import { clearRowReveal, useRowReveal } from './rowRevealState'
 
 export function TableSheet({
   entityId,
@@ -124,6 +125,73 @@ export function TableSheet({
     noun,
     pushToast,
   )
+
+  /* -- the row a search sent us to -------------------------------
+     GOING TO A ROW IS THE SELECTION MOVING, not a second scrolling
+     mechanism. The grid already keeps its active cell in view and
+     already lights the row's gutter, so a reveal sets the selection
+     to that row's NAME cell — which is also the frozen column, so the
+     grid's own rule ("scrolling to reveal the pin would only throw
+     the sheet back to its left edge") means the sheet moves
+     vertically and not sideways. `found` adds the one thing selection
+     alone cannot say: that THIS is the row you asked for. */
+  const reveal = useRowReveal(entityId)
+  const [found, setFound] = useState<string | null>(null)
+  const nameFieldId = entity ? displayFieldOf(entity)?.id : undefined
+  /* THE TIMER IS A REF, NOT A CLEANUP, and that is the whole bug this
+     shape avoids: consuming the request re-runs the effect with
+     nothing pending, so a timer cancelled by the effect's own cleanup
+     was cancelled one tick after it was set — measured, the mark
+     never went away. */
+  const markTimer = useRef<number | null>(null)
+  useEffect(
+    () => () => {
+      if (markTimer.current !== null) window.clearTimeout(markTimer.current)
+    },
+    [],
+  )
+
+  useEffect(() => {
+    if (!reveal) return
+    clearRowReveal(entityId)
+    const r = view.viewRows.findIndex((vr) => vr.rowId === reveal.rowId)
+    if (r < 0) {
+      /* IT SAYS WHY, WHERE IT IS. The row is in the table and not in
+         the addressable set, which can only be a live narrowing or a
+         folded drawer — both of them things the person did, and
+         neither of them ours to undo behind their back. */
+      pushToast('That row is out of view — a filter or a folded drawer is hiding it', 'warn')
+      return
+    }
+    const col = nameFieldId ? view.fields.findIndex((f) => f.id === nameFieldId) : -1
+    cmd.setSel(singleSel({ row: r, col: col < 0 ? 0 : col }))
+    setFound(reveal.rowId)
+    /* the mark is an ARRIVAL, not a state: it leaves once it has been
+       seen, and the selection it put on the row is what stays */
+    if (markTimer.current !== null) window.clearTimeout(markTimer.current)
+    markTimer.current = window.setTimeout(() => setFound(null), 2600)
+    /* AND IT LANDS IN THE PAGE, NOT ON ITS EDGE. The grid's own rule
+       scrolls the active cell to the nearest edge, which is right when
+       the arrows walk one row past the fold and wrong on arrival:
+       measured, row 54 of the 83-row register arrived with 6px of it
+       under the bottom rail. So once the grid has done its work — one
+       frame later, on the scroller the toolbar already holds a ref to
+       — the row is nudged into the upper third, where a person reads
+       it as the answer rather than as the last line on screen. */
+    requestAnimationFrame(() => {
+      const port = viewportRef.current
+      const line = port?.querySelector('.tb-row-found')
+      if (!port || !(line instanceof HTMLElement)) return
+      const box = line.getBoundingClientRect()
+      const frame = port.getBoundingClientRect()
+      const want = frame.top + Math.max(0, (frame.height - box.height) / 3)
+      port.scrollTop += box.top - want
+    })
+    /* ON A REQUEST ONLY. `view` changes identity on every keystroke in
+       the sheet's own find box; re-running then would drag the cursor
+       back to a row the person had moved on from. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reveal])
 
   /* -- ordering / narrowing ------------------------------------- */
 
@@ -254,6 +322,7 @@ export function TableSheet({
           sort={sort}
           filters={filters}
           marks={cmd.marks}
+          found={found}
           sel={cmd.sel}
           editing={cmd.editing}
           colWidths={widths}

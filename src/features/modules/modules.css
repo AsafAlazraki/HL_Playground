@@ -1886,3 +1886,86 @@
     flex: 1 0 100%;
   }
 }
+
+/* ============================================================
+   BUTTONS ARE NOT LABELS — the uppercase pass, module side.
+
+   DESIGN_PRINCIPLES rule 3 and DESIGN_CONTRACT §3: uppercase is a
+   label style, and the contract names a button among the things it
+   may never be. Two controls on this surface were wearing one:
+
+     .md-new    "New module" — the ONE primary action of the module
+                dashboard, and the last line of the empty state the
+                contract quotes in full (§6). `.btn` stamped it
+                "NEW MODULE".
+     .md-gear   "Set up" / "Done" — the one control on a module's
+                index, in `--micro-*`, which is the caption ramp.
+
+   `.md-sec-name` at :1518 already did this for a NAME, and it is the
+   precedent: the fix is a rule beside the class in the feature's own
+   stylesheet, not a re-cut of `.btn` in src/styles — that file is the
+   shared foundation and `.btn`'s stamp is used by ~200 controls the
+   redesign has not reached yet.
+
+   NARROWER, NOT WIDER: "NEW MODULE" is 10 characters of 11px mono at
+   +0.12em ≈ 79px; "New module" is 12.5px Inter ≈ 68px. Nothing in
+   either bar had to move.
+   ============================================================ */
+.md-new,
+.md-gear {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ============================================================
+   A PICTURE HELD AS A LINK SAYS SO — the third outcome in a tile's
+   picture well.
+
+   THE MEASUREMENT. 111 of the 174 tiles in Boats drew an empty
+   `--paper-sunken` well. Most of them are not rows without a
+   photograph: they hold a real address on
+   `www.northsidemarine.com.au`, which serves
+   `Cross-Origin-Resource-Policy: same-origin` behind Cloudflare and
+   therefore can never be painted by a browser on another origin.
+   Offline it would be all 174. A grid two-thirds full of blank grey
+   rectangles reads as a screen that failed to load, which is the one
+   thing this surface must not do in front of a stakeholder.
+
+   THE ONE-LINE PLATE, NOT A PARAGRAPH. `ImageCell`'s enlarged plate
+   prints the whole sentence with the host in it, and that is right at
+   plate size for the person whose job is fixing the data. Repeated
+   down 111 tiles at 11px it would be three wrapped lines each, and a
+   page of apologies is not quieter than a page of grey. So the tile
+   carries the mark and the two words, and the sentence — the same
+   sentence, verbatim — is on the `title` and in the accessible name.
+
+   CONTRAST. `--ink-soft` (#4b5462) on `--paper-sunken` (#f1f2f5) is
+   6.8:1 measured, both opaque, no tint in between. `--ink-faint`
+   would have been 4.26:1 over this well and fails — the trap
+   DESIGN_CONTRACT §1 names by hand.
+   ============================================================ */
+.md-tile-held {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-2);
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* 11px is the floor and this sits on it: sentence case, no tracking,
+   because it is a phrase a person reads and not a group caption. */
+.md-tile-held-say {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+}

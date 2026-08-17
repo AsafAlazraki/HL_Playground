@@ -16,27 +16,36 @@ import type { ReactElement } from 'react'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { RulesPane } from '@/features/constraints'
 import { ICON_SIZE } from '@/lib/icons'
+import { stageKeys, useStageEscape } from './stageKeys'
 
 export interface RulesStageProps {
   onClose: () => void
 }
 
 export function RulesStage({ onClose }: RulesStageProps): ReactElement {
+  /* Escape is the control in track 1 of the bar, on the keyboard */
+  useStageEscape(onClose)
+
   return (
     <div
       className="shell-viewstage"
       role="region"
       aria-label="Business rules"
-      /* KEYSTROKES STOP AT THIS ROOT, the same line the design and flow
-         stages carry: the whiteboard underneath still deletes the
-         SELECTED TABLE on Delete or Backspace, and it only skips
-         INPUT/TEXTAREA/SELECT. */
-      onKeyDown={(e) => e.stopPropagation()}
+      /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line the design
+         and flow stages carry: the whiteboard underneath still deletes
+         the SELECTED TABLE on either one, and it only skips
+         INPUT/TEXTAREA/SELECT. Escape travels, so the shell can close
+         this page with it; see stageKeys.ts for the whole order. */
+      onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
-        <button type="button" className="btn shell-view-back" onClick={onClose}>
-          <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          Back to the sheet
+        {/* `shell-view-back`, no `btn`, labelled "Back" — TableStage is
+            the calibration. `.btn` stamped this "BACK TO THE SHEET" in
+            11px uppercase mono; uppercase is a label style and this is
+            a button. */}
+        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
+          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+          <span>Back</span>
         </button>
         <p className="shell-view-what">
           <span className="shell-view-what-name">Business rules</span>

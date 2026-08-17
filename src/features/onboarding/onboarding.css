@@ -219,6 +219,247 @@
 }
 
 /* ============================================================
+   THE QUIET SECOND ANSWER — "open a saved copy".
+
+   A text button under the primary, not a second primary: naming the
+   business is what nearly everybody does on this screen, and two
+   filled buttons would make the first run a choice instead of a
+   sentence. It is still a real control and takes all three states.
+
+   It carries `--ink-soft` (7.7:1 on the card's white) rather than
+   `--ink-faint`, which is 4.72:1 on white and would be the second
+   quietest thing on a screen holding only four.
+   ============================================================ */
+
+.ob-alt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  align-self: center;
+  margin-top: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.ob-alt:hover {
+  color: var(--blue-deep);
+  background: var(--blue-wash);
+}
+.ob-alt:active {
+  transform: scale(0.97);
+}
+.ob-alt:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+/* Back sits below the two answers and reads as the way out, so it
+   gets the smaller step and none of the accent on hover. */
+.ob-alt--back {
+  margin-top: var(--sp-2);
+  font-size: 12.5px;
+}
+.ob-alt--back:hover {
+  color: var(--ink);
+  background: var(--paper-sunken);
+}
+
+/* ============================================================
+   OPEN A SAVED COPY — the third screen, off the default path.
+   Same white card as step 1; everything below the rule is the
+   file, and nothing else is on screen.
+   ============================================================ */
+
+.ob-note {
+  margin-top: var(--sp-3);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.ob-drop {
+  margin-top: var(--sp-5);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-sunken);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.ob-drop:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.ob-drop:active {
+  transform: scale(0.994);
+}
+.ob-drop:focus-visible {
+  outline: none;
+  border-style: solid;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.ob-drop.is-over {
+  border-style: solid;
+  border-color: var(--blue);
+  background: var(--blue-wash-strong);
+  color: var(--blue-deep);
+}
+.ob-drop-glyph {
+  display: block;
+  margin-bottom: var(--sp-2);
+}
+.ob-drop-main {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--ink);
+}
+.ob-drop:hover .ob-drop-main,
+.ob-drop.is-over .ob-drop-main {
+  color: var(--blue-deep);
+}
+.ob-drop-sub {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: currentColor;
+}
+
+.ob-file {
+  display: none;
+}
+
+/* the red pencil, in the place the file was refused */
+.ob-refuse {
+  margin-top: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: var(--red-wash);
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+}
+.ob-refuse strong {
+  font-weight: 700;
+}
+
+/* -- what the file holds ------------------------------------ */
+.ob-plate {
+  margin-top: var(--sp-5);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  overflow: hidden;
+  animation: sheet-in var(--t-med) var(--ease-draft);
+}
+.ob-plate-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
+}
+/* THE FILE'S OWN NAME IS A NAME, so it is sentence case and it is
+   never a stamp — the design rule that uppercase is a label style and
+   never a name. It is also the one string on this screen that came
+   from outside, so it truncates rather than pushing REV off the edge. */
+.ob-plate-name {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 570;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ob-plate-rev {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  /* --ink-faint is 4.26:1 over --paper-sunken and fails; --ink-soft is
+     6.9:1 measured on the same ground */
+  color: var(--ink-soft);
+}
+.ob-plate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.ob-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px; /* number to its label — optical, below the scale */
+  padding: var(--sp-3) var(--sp-2);
+  border-right: 1px solid var(--hairline);
+}
+.ob-stat:last-child {
+  border-right: none;
+}
+.ob-stat-num {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.ob-stat-lbl {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  /* on the plate's white, where --ink-faint measures 4.72:1 */
+  color: var(--ink-faint);
+}
+.ob-plate-also {
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
    STEP 2 — pick an industry.
    ============================================================ */
 

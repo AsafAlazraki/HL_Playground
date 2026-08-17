@@ -174,49 +174,262 @@ describe('search — the answer is grouped by the table it lives in', () => {
   })
 })
 
-describe('search — a relationship never outranks a thing you sell', () => {
-  /* THE CASE THIS EXISTS FOR, measured on the real sheet: a join
+describe('search — a pair is never a place', () => {
+  /* THE CASE THIS EXISTS FOR, measured on the real sheet: a pair
      row's label spells out both sides of the pair, so a product name
-     appears in it once per partner. Ranked on match quality alone
-     the joins bury the product table they are joining — the exact
-     "we never tell you which table it is in" failure, restaged
-     inside the fix for it. */
+     appears in it once per partner. Listed as rows of their own the
+     pair lists buried the two real answers under twenty rows of
+     plumbing, and pressing one landed the reader on a pair-record
+     sheet — which the owner ruled against: "all tables should be a
+     module, and than their join and view ones should lie within
+     them".
+     A pair row's name is not a name. It is the two names it links,
+     and both of those rows are in this index already — measured over
+     the whole file at 2,260 of 2,260 pair rows, zero
+     counter-examples. So a pair row answers THROUGH its sides. */
   const base = table('tp', 'Products', { kind: 'boat' })
-  const join = table('tj', 'Products × Partners', { kind: 'custom', role: 'join' })
+  const partners = table('tw', 'Partners', { kind: 'motor' })
+  const join: EntityDef = {
+    ...table('tj', 'Products × Partners', { kind: 'custom', role: 'join' }),
+    fields: [
+      { id: 'tj.name', name: 'Label', type: 'text' },
+      { id: 'tj.p', name: 'Product', type: 'reference', refEntityId: 'tp' },
+      { id: 'tj.w', name: 'Partner', type: 'reference', refEntityId: 'tw' },
+    ],
+  }
 
-  const index = buildSearchIndex(
-    { tp: base, tj: join },
-    {
-      tp: [row('tp', 'p1', { 'tp.name': 'Alpha One' })],
-      /* three pair rows, each carrying the product's name */
+  const entities = { tp: base, tw: partners, tj: join }
+  const rowsByEntity = {
+    tp: [row('tp', 'p1', { 'tp.name': 'Alpha One' })],
+    tw: [
+      row('tw', 'w1', { 'tw.name': 'Partner A' }),
+      row('tw', 'w2', { 'tw.name': 'Partner B' }),
+      row('tw', 'w3', { 'tw.name': 'Partner C' }),
+    ],
+    /* three pair rows, each named by the two rows it links */
+    tj: [
+      row('tj', 'j1', { 'tj.name': 'Alpha One · Partner A', 'tj.p': 'p1', 'tj.w': 'w1' }),
+      row('tj', 'j2', { 'tj.name': 'Alpha One · Partner B', 'tj.p': 'p1', 'tj.w': 'w2' }),
+      row('tj', 'j3', { 'tj.name': 'Alpha One · Partner C', 'tj.p': 'p1', 'tj.w': 'w3' }),
+    ],
+  }
+  const index = buildSearchIndex(entities, rowsByEntity)
+
+  it('answers with the one product and no pair rows at all', () => {
+    const result = search(index, 'alpha one')
+    expect(result.groups.map((g) => g.table.name)).toEqual(['Products'])
+    expect(result.rowTotal).toBe(1)
+  })
+
+  it('answers the other side with the other side, not with the pair', () => {
+    const result = search(index, 'partner b')
+    expect(result.groups.map((g) => g.table.name)).toEqual(['Partners'])
+    expect(result.groups[0].hits.map((h) => h.label)).toEqual(['Partner B'])
+  })
+
+  it('counts the pair rows as searched through rather than indexed', () => {
+    expect(index.pairRows).toBe(3)
+    expect(index.rowTotal).toBe(4)
+    expect(index.rows.some((r) => r.entityId === 'tj')).toBe(false)
+  })
+
+  it('lets a pair list’s own NAME answer for the table it lies within', () => {
+    const result = search(index, 'partners')
+    /* Partners matched its own name; the pair list matched too and
+       opens Products, because that is what its pairs are about */
+    const byDest = result.tables.map((t) => [t.table.name, t.via?.name ?? null])
+    expect(byDest).toEqual([
+      ['Partners', null],
+      ['Products', 'Products × Partners'],
+    ])
+    expect(result.tables[1].at).toBe(-1)
+  })
+
+  it('never draws two lines that open the same table', () => {
+    const twoLists: Record<string, EntityDef> = {
+      ...entities,
+      tj2: {
+        ...table('tj2', 'Products × Extras', { role: 'join' }),
+        fields: [
+          { id: 'tj2.name', name: 'Label', type: 'text' },
+          { id: 'tj2.p', name: 'Product', type: 'reference', refEntityId: 'tp' },
+        ],
+      },
+    }
+    const result = search(
+      buildSearchIndex(twoLists, { ...rowsByEntity, tj2: [] }),
+      'products',
+    )
+    const opened = result.tables.map((t) => t.table.name)
+    expect(opened).toEqual([...new Set(opened)])
+    /* Products matched its own name, so the two lists inside it add
+       nothing and are not drawn a second time */
+    expect(result.tables.map((t) => [t.table.name, t.via?.count ?? 0])).toEqual([
+      ['Products', 0],
+    ])
+  })
+
+  it('counts the lists when several of them are what matched', () => {
+    const result = search(
+      buildSearchIndex(
+        {
+          ...entities,
+          tj2: {
+            ...table('tj2', 'Products × Extras', { role: 'join' }),
+            fields: [
+              { id: 'tj2.name', name: 'Label', type: 'text' },
+              { id: 'tj2.p', name: 'Product', type: 'reference', refEntityId: 'tp' },
+            ],
+          },
+        },
+        { ...rowsByEntity, tj2: [] },
+      ),
+      /* a run only the two lists carry, so the table's own name does
+         not match and the lists are what answers */
+      'products ×',
+    )
+    expect(result.tables).toHaveLength(1)
+    expect(result.tables[0].table.name).toBe('Products')
+    expect(result.tables[0].via?.count).toBe(2)
+  })
+
+  it('keeps wording that belongs to the pair itself, and says where it read it', () => {
+    /* the case this file does not have and another org's data can: a
+       pair row carrying a note of its own. Dropping it would make a
+       real string unfindable; answering it with the pair would send
+       somebody to a pair sheet. So it answers with the row the pair
+       is ABOUT, carrying the list it was read in. */
+    const withNote = {
+      ...rowsByEntity,
       tj: [
-        row('tj', 'j1', { 'tj.name': 'Alpha One · Partner A' }),
-        row('tj', 'j2', { 'tj.name': 'Alpha One · Partner B' }),
-        row('tj', 'j3', { 'tj.name': 'Alpha One · Partner C' }),
+        row('tj', 'j1', {
+          'tj.name': 'Alpha One · Partner A · Winter Kit',
+          'tj.p': 'p1',
+          'tj.w': 'w1',
+        }),
       ],
+    }
+    const idx = buildSearchIndex(entities, withNote)
+    expect(idx.viaRows).toBe(1)
+    const result = search(idx, 'winter kit')
+    expect(result.groups.map((g) => g.table.name)).toEqual(['Products'])
+    const [hit] = result.groups[0].hits
+    expect(hit.rowId).toBe('p1')
+    expect(hit.label).toBe('Alpha One')
+    expect(hit.via).toBe('Products × Partners')
+    expect(hit.at).toBe(-1)
+  })
+
+  it('reads a row reached twice as one answer', () => {
+    const withNote = {
+      ...rowsByEntity,
+      tj: [
+        row('tj', 'j1', {
+          'tj.name': 'Alpha One · Partner A · Alpha One spare',
+          'tj.p': 'p1',
+          'tj.w': 'w1',
+        }),
+      ],
+    }
+    const result = search(buildSearchIndex(entities, withNote), 'alpha one')
+    expect(result.groups[0].hits).toHaveLength(1)
+    expect(result.groups[0].hits[0].via).toBeUndefined()
+    expect(result.rowTotal).toBe(1)
+  })
+
+  it('never resolves one pair list to another pair list', () => {
+    /* the far end of a press has to be a thing. A list whose first
+       link names another list skips it and takes the next side. */
+    const nested: EntityDef = {
+      ...table('tk', 'Deep × Pairs', { role: 'join' }),
+      fields: [
+        { id: 'tk.name', name: 'Label', type: 'text' },
+        { id: 'tk.j', name: 'Pair', type: 'reference', refEntityId: 'tj' },
+        { id: 'tk.p', name: 'Product', type: 'reference', refEntityId: 'tp' },
+      ],
+    }
+    const result = search(
+      buildSearchIndex({ ...entities, tk: nested }, { ...rowsByEntity, tk: [] }),
+      'deep ×',
+    )
+    expect(result.tables.map((t) => t.table.name)).toEqual(['Products'])
+    expect(result.tables[0].via?.name).toBe('Deep × Pairs')
+  })
+
+  it('treats a join with no link column as an ordinary table', () => {
+    /* `role: 'join'` with nothing to resolve to is not a pair list in
+       any usable sense — there is no pair for its rows to be about —
+       so its rows stay findable where they are. Nothing may fall out
+       of reach through the pair rule. */
+    const fees = table('tf', 'Fee Bands', { role: 'join' })
+    const idx = buildSearchIndex(
+      { tf: fees },
+      { tf: [row('tf', 'f1', { 'tf.name': 'Band Four' })] },
+    )
+    expect(idx.pairRows).toBe(0)
+    const result = search(idx, 'band four')
+    expect(result.groups.map((g) => g.table.name)).toEqual(['Fee Bands'])
+    expect(result.groups[0].hits[0].rowId).toBe('f1')
+  })
+})
+
+describe('search — history is answered, said, and never ranked as stock', () => {
+  /* The discontinued contract, both halves of it: the data stays and
+     the sheet does not filter, because "hiding rows from the person
+     whose job is fixing them is how data rots unseen" — and no
+     customer-facing surface offers it. This field lands a person on
+     the sheet, so it answers, LAST, and every line says it is
+     history. */
+  const live = table('ta', 'Table A', { kind: 'trailer' })
+  const gone = table('tz', 'Table Z Withdrawn', { kind: 'trailer', retired: true })
+  const index = buildSearchIndex(
+    { ta: live, tz: gone },
+    {
+      ta: [row('ta', 'r1', { 'ta.name': 'Alpha One' })],
+      tz: [row('tz', 'r9', { 'tz.name': 'Alpha Nine' })],
     },
   )
 
-  it('answers with the base table first even though the join matched more', () => {
-    const result = search(index, 'alpha one')
+  it('answers a retired table after every live one', () => {
+    const result = search(index, 'alpha')
     expect(result.groups.map((g) => g.table.name)).toEqual([
-      'Products',
-      'Products × Partners',
+      'Table A',
+      'Table Z Withdrawn',
     ])
-    expect(result.groups[1].total).toBeGreaterThan(result.groups[0].total)
+    expect(result.groups[1].table.retired).toBe(true)
   })
 
-  it('still lists the join — hiding real rows would be its own lie', () => {
-    const result = search(index, 'partner b')
-    expect(result.groups.map((g) => g.table.name)).toEqual(['Products × Partners'])
+  it('still finds a row on it, so the person maintaining it can reach it', () => {
+    const result = search(index, 'alpha nine')
+    expect(result.groups.map((g) => g.table.name)).toEqual(['Table Z Withdrawn'])
+    expect(result.groups[0].hits[0].rowId).toBe('r9')
   })
 
-  it('orders a matching table name the same way', () => {
-    const result = search(index, 'products')
-    expect(result.tables.map((t) => t.table.name)).toEqual([
-      'Products',
-      'Products × Partners',
+  it('counts only the live tables — the number Home and the dock print', () => {
+    expect(index.tableTotal).toBe(1)
+    expect(index.retiredTables).toBe(1)
+    expect(index.tables).toHaveLength(2)
+  })
+
+  it('leaves a retired pair list standing as itself', () => {
+    /* its pairs are history: sending somebody who typed the retired
+       list's name to a live table would hide what they asked for */
+    const goneJoin: EntityDef = {
+      ...table('tj', 'Table A × Table Z Withdrawn', { role: 'join', retired: true }),
+      fields: [
+        { id: 'tj.name', name: 'Label', type: 'text' },
+        { id: 'tj.a', name: 'A', type: 'reference', refEntityId: 'ta' },
+      ],
+    }
+    const idx = buildSearchIndex(
+      { ta: live, tj: goneJoin },
+      { ta: [row('ta', 'r1', { 'ta.name': 'Alpha One' })], tj: [] },
+    )
+    const result = search(idx, 'withdrawn')
+    expect(result.tables.map((t) => [t.table.name, t.via?.name ?? null])).toEqual([
+      ['Table A × Table Z Withdrawn', null],
     ])
+    expect(result.tables[0].table.retired).toBe(true)
   })
 })
 

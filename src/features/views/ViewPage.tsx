@@ -34,10 +34,10 @@ import {
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
-import { defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from './columns'
+import { bandOf, defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from './columns'
 import { levelCaption, levelOptions, levelValues, oneOf, rowsInScope, singular } from './describe'
 import { findJoinTable, makeEngine, type Ctx } from './pairs'
-import { retiredTablesSentence } from './sellable'
+import { retiredTablesSentence, withheldNotes } from './sellable'
 import { addBlock, setBlockRule, useViewDef, walkBlocks } from './viewDefs'
 import { BlockCard, type PendingDrop } from './BlockCard'
 import { RuleOffer } from './RuleOffer'
@@ -132,6 +132,37 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
     return Object.values(entities).filter(
       (e) => e.role !== 'join' && e.id !== root.id && !taken.has(e.id) && isRetired(e),
     ).length
+  }, [entities, view, root])
+
+  /* WHAT THIS PAGE HELD BACK BEFORE IT DREW ANYTHING, in words.
+
+     A block holds its own retired rows back and says so in its own
+     header. But `existingRelations` refuses a retired table, and a
+     retired join, BEFORE a block is ever seeded. Measured on Surtees -
+     620 Game Fisher: six relations in the store, five blocks on the
+     screen, and not one word about the sixth — "Surtees × OBSOLETE
+     Trailers", whose table is retired too. `BlockCard`'s heldNote
+     could not fire: it only runs for a block, and there was none.
+
+     SO THE SENTENCE COMES FROM THE PAGE. It belongs to whatever
+     answers "what else goes with this one", and with no block to
+     carry it that is the page itself — the same place the picker
+     already owns `retiredTablesSentence` for the tables it did not
+     offer. It sits at the end of the blocks because it is the tail of
+     that same answer, and it uses `sellable.ts`'s sentences verbatim
+     so the page and its blocks say it in one voice.
+
+     A relation somebody has ALREADY put on this page is skipped: the
+     block draws it and BlockCard says it, and twice is worse than
+     once. Nothing here filters, deletes or re-decides — `isRetired`
+     is still the only judge, upstream, in `relations.ts`. */
+  const withheld = useMemo(() => {
+    if (!view || !root) return []
+    return withheldNotes(
+      entities,
+      root.id,
+      new Set(walkBlocks(view).map((b) => b.block.tableId)),
+    )
   }, [entities, view, root])
 
   /* the safe answer is the narrow one, so the default is always
@@ -395,6 +426,19 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
           ))}
         </div>
 
+        {/* THE JOINS THIS PAGE NEVER DREW, NAMED. See `withheld` above:
+            the guard is upstream of the block, so the sentence has to
+            come from here or from nowhere. */}
+        {withheld.length > 0 ? (
+          <div className="vw-withheld">
+            {withheld.map((w) => (
+              <p key={w.id} className="vw-held" role="note">
+                {w.sentence}
+              </p>
+            ))}
+          </div>
+        ) : null}
+
         {pendingHere && pendingTable ? (
           <RuleOffer
             key={pendingHere.seq}
@@ -407,7 +451,15 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
 
         {view.blocks.length === 0 && !pendingHere ? (
           <section className="vw-nothing">
-            <p className="vw-nothing-line">Nothing goes with this yet.</p>
+            {/* "Nothing goes with this yet" is FALSE when something
+                does and it is history — the sentence above has just
+                named it. Saying both would send a person off to
+                configure a relationship that already exists. */}
+            <p className="vw-nothing-line">
+              {withheld.length > 0
+                ? 'Nothing that goes with this is still stock.'
+                : 'Nothing goes with this yet.'}
+            </p>
             <p className="vw-nothing-sub">
               {configuring
                 ? `Add a table below — or drag one in from the left — and we will work out how it relates to this ${singular(root.name)}.`
@@ -546,7 +598,12 @@ function SpecStrip({
     for (const pair of rangePairs(entity)) {
       used.add(pair.min.id)
       used.add(pair.max.id)
-      const text = formatRange(read(pair.min.id), read(pair.max.id), pair.min.name)
+      const text = formatRange(
+        read(pair.min.id),
+        read(pair.max.id),
+        pair.min.name,
+        bandOf(entity, pair.min),
+      )
       if (text === '') continue
       out.push(withUnit(pair.label, text, splitUnit(pair.min.name).unit))
     }
@@ -556,7 +613,7 @@ function SpecStrip({
       if (used.has(fieldId)) continue
       const field = entity.fields.find((f) => f.id === fieldId)
       if (!field) continue
-      const text = formatCell(field, read(fieldId))
+      const text = formatCell(field, read(fieldId), undefined, bandOf(entity, field))
       if (text === '') continue
       const { base, unit } = splitUnit(field.name)
       out.push(withUnit(base, text, unit))

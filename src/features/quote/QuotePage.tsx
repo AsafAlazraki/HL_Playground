@@ -34,9 +34,16 @@ export interface QuotePageProps {
 export function QuotePage({ quoteId, onOpenQuote }: QuotePageProps): ReactElement {
   const quote = useQuote(quoteId)
 
+  /* `qt-root--doc` IS "NOTHING IN HERE IS STICKY", and it is on the two
+     branches that end on ordinary content rather than on the draft's
+     total bar. Only those may take trailing padding on the scrollport:
+     a `position: sticky` footer is floored by its scroll container's
+     content box, so 96px of padding once lifted the total 96px off the
+     bottom edge and let the quote go on painting underneath it. See
+     `.qt-root` in quote.css. */
   if (!quote) {
     return (
-      <div className="qt-root">
+      <div className="qt-root qt-root--doc">
         <p className="qt-void">That quote is no longer here.</p>
       </div>
     )
@@ -51,7 +58,7 @@ export function QuotePage({ quoteId, onOpenQuote }: QuotePageProps): ReactElemen
   }
 
   return (
-    <div className="qt-root">
+    <div className="qt-root qt-root--doc">
       {/* the controls are OUTSIDE the document, and print hides
           everything that is not the document itself */}
       <div className="qt-issued-bar">

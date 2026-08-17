@@ -457,15 +457,30 @@
     color var(--t-fast) var(--ease-draft),
     background var(--t-fast) var(--ease-draft);
 }
-.io-clear:hover {
+.io-clear:hover:not(:disabled) {
   color: var(--red);
   background: var(--red-wash);
+}
+/* AN EMPTY SHEET CANNOT BE CLEARED, and an enabled control that does
+   nothing is a lie told to whoever is looking. The reason is printed
+   one line away, in the footer's own signature slot, rather than in a
+   tooltip. */
+.io-clear:disabled {
+  color: var(--ink-faint);
+  cursor: default;
 }
 .io-foot-sig {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.14em;
   color: var(--ink-faint);
+}
+/* The signature slot is decoration and takes the quietest ink there
+   is. When it carries the REASON the button beside it is refused it is
+   not decoration any more, and it steps up: --ink-faint measures
+   4.26:1 on this footer's --paper-sunken and fails, --ink-soft 6.9:1. */
+.io-foot-why {
+  color: var(--ink-soft);
 }
 
 /* -- stamp toast -------------------------------------------- */

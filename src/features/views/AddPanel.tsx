@@ -21,7 +21,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 import { MagnifyingGlass, Plus, X } from '@phosphor-icons/react'
 import { isDiscontinued, rowLabel, type CellValue, type EntityDef, type RowData } from '@/types/model'
-import { formatCell } from './columns'
+import { bandOf, formatCell } from './columns'
 import { oneOf, singular } from './describe'
 import { useStillness } from './stillness'
 
@@ -64,7 +64,12 @@ export function AddPanel({
     for (const row of rows) {
       if (out.length >= LIMIT) break
       if (needle !== '') {
-        const hay = [rowLabel(entity, row), ...columns.map((c) => formatCell(byId.get(c), read(row, c)))]
+        const hay = [
+          rowLabel(entity, row),
+          ...columns.map((c) =>
+            formatCell(byId.get(c), read(row, c), undefined, bandOf(entity, byId.get(c))),
+          ),
+        ]
           .join(' ')
           .toLowerCase()
         if (!hay.includes(needle)) continue
@@ -140,7 +145,7 @@ export function AddPanel({
                   <span className="vw-add-cells">
                     {columns.map((c) => (
                       <span key={c} className="vw-add-cell">
-                        {formatCell(byId.get(c), read(row, c))}
+                        {formatCell(byId.get(c), read(row, c), undefined, bandOf(entity, byId.get(c)))}
                       </span>
                     ))}
                   </span>

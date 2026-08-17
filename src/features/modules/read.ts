@@ -37,7 +37,7 @@ import {
   type RowData,
   type TableKind,
 } from '@/types/model'
-import { formatCell, normColumn } from '@/features/views/columns'
+import { bandOf, formatCell, normColumn } from '@/features/views/columns'
 /* the direct path, as `columns` already is: nothing here needs the
    feature's React surface and a module must not pull ViewPage in to
    count its rows */
@@ -450,7 +450,7 @@ export function buildEntries(
         rowId: row.id,
         label,
         trail: trailOf(entity, row),
-        price: price ? formatCell(price.field, raw) : '',
+        price: price ? formatCell(price.field, raw, undefined, bandOf(entity, price.field)) : '',
         img: imgField ? primaryImage(row.values[imgField.id] ?? null) : undefined,
         hay: label.toLowerCase(),
       })

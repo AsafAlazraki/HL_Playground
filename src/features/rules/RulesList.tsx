@@ -50,8 +50,14 @@ export function RulesList() {
     select({ kind: 'rule', id })
   }
 
+  /* NO TABLE IS PRE-PICKED. It used to open on `entityList[0]` — the
+     oldest table on the sheet — with "Draft rule" already live, so one
+     press made a rule about a table nobody had named. The table a rule
+     walks is the one irreversible choice in this panel (`createRule`
+     seeds the Start plate from it), and it is exactly the kind of
+     structure that must never be a side effect of opening a form. */
   const startDraft = () => {
-    setDraftRoot(entityList[0]?.id ?? '')
+    setDraftRoot('')
     setDrafting(true)
   }
 
@@ -219,12 +225,23 @@ export function RulesList() {
                 autoFocus
                 onChange={(e) => setDraftRoot(e.currentTarget.value)}
               >
+                <option value="" disabled>
+                  Pick a table
+                </option>
                 {entityList.map((e) => (
                   <option key={e.id} value={e.id}>
                     {e.name}
                   </option>
                 ))}
               </select>
+              {/* THE REFUSAL SAYS WHY, WHERE IT IS REFUSED. A disabled
+                  button with no sentence beside it reads as a broken
+                  button. */}
+              {!draftRoot && (
+                <p className="rl-draft-why" id="rl-draft-why">
+                  Pick the table this rule walks and it can be drafted.
+                </p>
+              )}
               <div className="rl-draft-acts">
                 <button type="button" className="btn" onClick={() => setDrafting(false)}>
                   Cancel
@@ -234,6 +251,7 @@ export function RulesList() {
                   className="btn btn-primary"
                   onClick={commitDraft}
                   disabled={!draftRoot}
+                  aria-describedby={draftRoot ? undefined : 'rl-draft-why'}
                 >
                   Draft rule
                 </button>

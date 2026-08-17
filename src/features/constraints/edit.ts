@@ -17,7 +17,9 @@ import type {
   ConstraintKind,
 } from '@/types/model'
 import {
-  defaultValueFor,
+  UNSET_FIELD,
+  UNSET_VALUE,
+  isUnsetValue,
   representativeFieldId,
   type ColumnConcept,
 } from './columns'
@@ -60,12 +62,33 @@ export function makeClause(concept: ColumnConcept, ctx: SentenceCtx, op?: Senten
   if (isUnary(real)) {
     return { id: newId(), left: { fieldId: representativeFieldId(concept) }, op: real }
   }
+  /* the column is chosen, the VALUE is not — see UNSET_VALUE */
   return {
     id: newId(),
     left: { fieldId: representativeFieldId(concept) },
     op: real,
-    right: { kind: 'literal', value: defaultValueFor(domain) },
+    right: { kind: 'literal', value: UNSET_VALUE },
   }
+}
+
+/** A clause with nothing answered: no column, no value. This is what a
+ *  brand-new sentence is made of, so the words on screen are the ones a
+ *  person is being asked for rather than a rule they never wrote. */
+export function emptyClause(): Clause {
+  return {
+    id: newId(),
+    left: { fieldId: UNSET_FIELD },
+    op: 'eq',
+    right: { kind: 'literal', value: UNSET_VALUE },
+  }
+}
+
+/** Put a side back to "no column chosen". Used when retargeting the
+ *  condition strands the obligation on a different kind of table: the
+ *  old alternative was to silently point it at some other column of the
+ *  new kind, which invents half a rule on the reader's behalf. */
+export function unsetSide(c: ConstraintDef, side: Side): ConstraintDef {
+  return stamp(withSide(c, side, singleGroup(emptyClause())))
 }
 
 export function singleGroup(clause: Clause): ClauseGroup {
@@ -122,14 +145,13 @@ export function setClauseOp(
     const clause = group.clauses.find((cl) => cl.id === clauseId)
     if (!clause) return c
     const held =
-      clause.right && clause.right.kind === 'literal' ? clause.right.value : ''
-    /* a set that opens with an empty member reads "is one of …" and
-       teaches nothing; open it on a real value from the column */
-    const concept = ctx.index.get(clause.left.fieldId)
-    const first = concept
-      ? domainOf(ctx, concept).options[0]
-      : undefined
-    const value: CellValue = held === '' || held === null ? (first ?? '') : held
+      clause.right && clause.right.kind === 'literal' ? clause.right.value : UNSET_VALUE
+    /* THE SET OPENS ON WHATEVER WAS ALREADY CHOSEN, AND ON NOTHING IF
+       NOTHING WAS. It used to reach for `options[0]` so the sentence
+       would not read "is one of …" — but a value the app picked reads
+       exactly like a value the dealer picked, and this is a live rule.
+       An empty member is the truth, and the `+` beside it is the ask. */
+    const value: CellValue = isUnsetValue(held) ? UNSET_VALUE : held
     return stamp(
       withSide(c, side, {
         combinator: 'OR',

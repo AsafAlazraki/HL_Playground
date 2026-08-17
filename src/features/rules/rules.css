@@ -249,7 +249,12 @@
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1;
-  color: var(--ink-faint);
+  /* MEASURED: these two only ever appear over a lit rule row, and
+     --ink-faint on --blue-wash-strong is 3.14:1. --ink-soft on the same
+     wash is 5.10:1. A glyph IS the whole control here — there is no
+     label beside it — so it cannot be the tier that "may never carry
+     meaning". */
+  color: var(--ink-soft);
   cursor: pointer;
   transition:
     background var(--t-fast) var(--ease-draft),
@@ -278,9 +283,19 @@
   pointer-events: none;
 }
 
+/* "+ New rule" — a button, so sentence case. It was inheriting
+   `.btn`'s 11px uppercase mono stamp and reading "+ NEW RULE" on the
+   one control that starts work on this stage. `.btn` is the shared
+   foundation in src/styles and is not ours to re-cut; the fix belongs
+   here, beside the class, which is the same move modules.css:1518
+   already made for `.md-sec-name`. */
 .rl-add {
   align-self: flex-start;
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 .rl-addrow {
   display: flex;
@@ -322,8 +337,11 @@
   line-height: 1.5;
   color: var(--ink-soft);
 }
+/* MEASURED: --ink-faint is 4.72:1 on white but 4.22:1 on --paper-sunken,
+   which is the ground every `.rl-empty` block sits on — the documented
+   trap, and this line names the open rule, so it is content. 6.84:1. */
 .rl-empty-meta {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 /* ------------------------------------------------------------ */
@@ -1073,14 +1091,21 @@
   border-radius: 999px;
   line-height: 1.5;
 }
+/* THE KIND HUES ARE EQUAL-LUMINANCE MARKS, NOT INKS. Drawn as a bare
+   glyph on the lit row of the open rule they measured 4.11:1 (green) and
+   worse for amber, which is exactly the trap the contract records: a hue
+   that is fine as a 3px rail is not fine as text. Each is carried toward
+   --ink until it clears 4.5:1 on --blue-wash-strong, which keeps green
+   green and amber amber while making the character readable. Each mix is
+   the LEAST ink that clears the bar, measured in the browser. */
 .rl-dotstamp.is-ok {
-  color: var(--accent-viridian);
+  color: color-mix(in srgb, var(--accent-viridian) 85%, var(--ink));
 }
 .rl-dotstamp.is-blocked {
-  color: var(--red);
+  color: color-mix(in srgb, var(--red) 88%, var(--ink));
 }
 .rl-dotstamp.is-adrift {
-  color: var(--accent-ochre);
+  color: color-mix(in srgb, var(--accent-ochre) 75%, var(--ink));
 }
 /* THEY HOVER OVER THE ROW, THEY DO NOT SIT IN IT. Laid out in the row
    these two 20px buttons held 47px of a 192px rail permanently, even at
@@ -1120,6 +1145,14 @@
   border-radius: var(--radius);
   background: var(--paper-high);
   box-shadow: var(--shadow-sheet);
+}
+/* why "Draft rule" is not available yet — a sentence, in the panel where
+   the button is, at the reading step rather than the caption step */
+.rl-draft-why {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }
 .rl-draft-acts {
   display: flex;
@@ -1262,8 +1295,12 @@
   font-weight: 600;
   color: var(--ink);
 }
+/* A LINE TOKEN WAS BEING USED AS AN INK. --hairline-strong is a border
+   colour; as the dot between two figures in the run readout it measured
+   1.57:1. The bar's own separator uses --ink-faint (4.72:1) and this is
+   the same mark doing the same job. */
 .rl-readout-sep {
-  color: var(--hairline-strong);
+  color: var(--ink-faint);
 }
 .rl-readout-warn {
   color: var(--red);
@@ -1520,4 +1557,79 @@
   height: 1.5px;
   background: var(--red);
   transform: rotate(-18deg);
+}
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass.
+
+   DESIGN_PRINCIPLES rule 3: uppercase is a LABEL style, never a
+   name and never a value. Three things on this surface were
+   breaking it, and all three were showing the dealer their OWN
+   words in capitals they did not type:
+
+     .rl-toolbar-name   the rule's name, off `rule.name`, wearing
+                        `.block-heading` — "TRAILER FITMENT —
+                        HIGHFIELD" for a rule an admin typed as
+                        "Trailer fitment — Highfield".
+     .rl-stamp          the table a rule reads, off `entity.name` —
+                        "HIGHFIELD INFLATABLES".
+     .rl-results-rule   the same rule name again, over the answer.
+
+   The eyebrows on this stage (`.mono-label`, `.rl-strip-title`,
+   `.rl-panel-head`) are captions and stay uppercase: they are one
+   of the three sanctioned uses, and they are the app's own words
+   rather than the dealer's.
+
+   Fixed HERE and not in `src/styles/base.css`, because
+   `.block-heading` and `.mono-label` are the shared foundation and
+   are right to be uppercase — what was wrong was stamping a title
+   primitive onto a name. Same move modules.css:1518 already made
+   for `.md-sec-name`. Feature CSS loads after base.css, so a
+   single-class rule here wins the tie.
+   ============================================================ */
+.rl-toolbar-name,
+.rl-results-rule {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  text-transform: none;
+}
+.rl-stamp {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+/* "Run" is a button. So is the check beside it a stamp — the stamp
+   keeps its capitals, the button does not. */
+.rl-run {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The toolbar's read-out is "80 rows · 1 view" — figures and the
+   dealer's own nouns, which is a value, and `.rl-readout-n` beside it
+   is the figure itself. "Clear" is a button (`.btn btn-ghost`, no
+   class of its own — reached through `.rl-toolbar`, which is
+   declared). `.rl-strip-hint` is the sentence "drag or click".
+   `.rl-strip-title` ("NODES"), `.rl-toolbar-lab` ("RULE") and
+   `.rl-check` ("CHECKS ✓") are captions and stamps and stay. */
+.rl-readout,
+.rl-readout-n,
+.rl-readout-sep {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.rl-toolbar > .btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.rl-strip-hint {
+  letter-spacing: 0;
+  text-transform: none;
 }

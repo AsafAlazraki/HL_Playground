@@ -48,6 +48,7 @@ import type { ReactElement } from 'react'
 import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
 import { QuoteList, QuotePage, useQuote } from '@/features/quote'
 import { ICON_SIZE } from '@/lib/icons'
+import { stageKeys, useStageEscape } from './stageKeys'
 
 export interface QuoteStageProps {
   /** the quote being looked at, or null for the list of them */
@@ -64,24 +65,38 @@ export function QuoteStage({ quoteId, onOpen, onClose }: QuoteStageProps): React
   /* the id counts as open only when the document is really there */
   const openId = quote ? quote.id : null
 
+  /* Escape is the control in track 1 of the bar, on the keyboard. Not
+     "back to all quotes", which is a lateral move inside this window
+     and sits in track 3 — Escape is the way OUT, everywhere. */
+  useStageEscape(onClose)
+
   return (
     <div
       className="shell-viewstage"
       role="region"
       aria-label={quote ? `Quote ${quote.reference}` : 'Quotes we have made'}
-      /* KEYSTROKES STOP AT THIS ROOT, the same line every other stage
-         carries. The whiteboard is still mounted underneath and still
-         holds a window-level keydown handler: Delete or Backspace with
-         a table selected offers to delete that whole table, and it
-         only skips INPUT/TEXTAREA/SELECT. A quote is made almost
-         entirely of typing, and a Backspace in an empty customer field
-         must never offer to strike a price file off the sheet. */
-      onKeyDown={(e) => e.stopPropagation()}
+      /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line every
+         other stage carries: the sheet's window-level handler offers to
+         delete the whole SELECTED TABLE on either one, and it only skips
+         INPUT/TEXTAREA/SELECT. A quote is made almost entirely of
+         typing, and a Backspace in an empty customer field must never
+         offer to strike a price file off the sheet.
+
+         Escape travels, so the shell can close this page with it. That
+         it only closes the page when the focus is NOT in a field matters
+         more here than anywhere: this surface is fields, and a document
+         a salesperson is halfway through writing must not vanish because
+         they reached for Escape to undo a word. See stageKeys.ts. */
+      onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
-        <button type="button" className="btn shell-view-back" onClick={onClose}>
-          <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          Back to the sheet
+        {/* `shell-view-back`, no `btn`, labelled "Back" — TableStage is
+            the calibration. `.btn` stamped this "BACK TO THE SHEET" in
+            11px uppercase mono; uppercase is a label style and this is
+            a button. */}
+        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
+          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+          <span>Back</span>
         </button>
 
         <p className="shell-view-what">

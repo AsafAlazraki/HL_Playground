@@ -976,3 +976,67 @@
 .tb-node--plate .tb-lod-ticks {
   display: none;
 }
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass, blueprint side.
+
+   The Data model is where every table in the business is drawn at
+   once, so it is the surface that repeats this fault the most times
+   per screen. DESIGN_PRINCIPLES rule 3: uppercase is a LABEL style,
+   never a name and never a value.
+
+     .tb-node-name   THE TABLE'S NAME, via `.block-heading` — the
+                     dealer's "Stacer" and "Yamaha Outboards" drawn as
+                     "STACER" and "YAMAHA OUTBOARDS", fifty times over.
+                     This is the headline case, and the dock's own row
+                     for the same table (`.dk-row-name`) has always
+                     drawn it in sentence case: the app was
+                     contradicting itself about one string.
+     .tb-node-rows   "30 MODELS" — a figure and the dealer's own noun.
+     .tb-focus-name  the same table name again, in the focus overlay.
+     .tb-focus-tally its count.
+     .tb-node-act    "EXPAND", "FOCUS", "+ MODEL" — buttons, which
+                     DESIGN_CONTRACT §3 names outright. "+ MODEL" is
+                     the worse one: the noun comes from the dealer's
+                     data through `leafNoun`, so a motorcycle shop's
+                     "+ bike" was being shouted at them too.
+
+   `.block-heading` and `.mono-label` are NOT changed — they live in
+   src/styles/base.css, they are the shared foundation, and uppercase
+   is the identity of a title-block stamp. What was wrong is stamping
+   one onto a name. Corrected beside the class in this feature's own
+   stylesheet, the same move modules.css:1518 made for `.md-sec-name`;
+   feature CSS loads after base.css, so a single-class rule wins the
+   tie.
+
+   `--stamp-weight`/`--stamp-track` came with `.block-heading`, so the
+   name restates weight and tracking rather than losing them. The name
+   is a button (rename in place), so it keeps every state it had.
+   COLOURS AND GEOMETRY UNTOUCHED — case does not move a ratio, and
+   lowercase is narrower, so nothing on a 24px strip grew.
+   ============================================================ */
+.tb-node-name {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  text-transform: none;
+}
+.tb-node-rows,
+.tb-focus-tally {
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.tb-focus-name {
+  font-family: var(--font-ui);
+  font-weight: 570;
+  letter-spacing: -0.006em;
+  text-transform: none;
+}
+.tb-node-act {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}

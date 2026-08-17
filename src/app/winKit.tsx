@@ -88,13 +88,21 @@ export function bestFrame(n: number): WinFrame {
   return { x: Math.max(8, x), y, w, h }
 }
 
-/** What the titlebar says. A window is named for its subject. */
+/** What the titlebar says. A window is named for its subject.
+ *
+ *  ONE NOUN PER PLACE, and these are the dock's nouns. Two of them were
+ *  the last holdouts of names the app had already stopped using: the
+ *  switcher called the fitment stage "What fits what" — a QUESTION,
+ *  which commit 4c4a3e2 ruled out as a name — and called the module
+ *  dashboard "Dashboard", which is the screen's shape rather than what
+ *  is on it. Both now say what the dock says, so ⌘-Tab and the bar
+ *  cannot disagree about where a person is. */
 export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNode {
   if (s.kind === 'home') return 'Home'
   if (s.kind === 'rules') return 'Business rules'
-  if (s.kind === 'flow') return 'What fits what'
+  if (s.kind === 'flow') return 'Fitment'
   if (s.kind === 'quote') return s.quoteId ? 'Quote' : 'Quotes'
-  if (s.kind === 'module') return s.moduleId ? 'Module' : 'Dashboard'
+  if (s.kind === 'module') return s.moduleId ? 'Module' : 'Modules'
   const e = entities[s.entityId]
   if (!e) return 'Table'
   const mark = <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.tiny} />

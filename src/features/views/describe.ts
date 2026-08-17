@@ -23,7 +23,33 @@ import {
 /* ---------------------------------------------------------- */
 
 /**
- * "Yamaha Outboards" -> "Yamaha Outboard", "Accessories" -> "Accessory".
+ * A NAME THAT IS NOT A PLURAL HAS NO SINGULAR, and is handed straight
+ * back. `-ees` is the shape that says so: an English plural in `-es` is
+ * a word that already ended in `e` taking an `s`, and the letter under
+ * that `e` is a CONSONANT — "Module" ▸ "Modul|es", "Inflatable" ▸
+ * "Inflatabl|es". A vowel there means the `es` is part of the word, not
+ * an ending put on it, so "Surtees" stays "Surtees".
+ *
+ * It was "a Surtee", on the add-a-table panel of all nineteen Surtees
+ * item pages. A brand is not a countable noun and no morphology will
+ * ever tell you its singular, so the only correct move is to leave it
+ * alone — the same reason the casing is left alone below. The cost of
+ * being wrong the other way is a mangled brand on a page a dealer shows
+ * a customer; the cost of being wrong this way is "a Fees", on a table
+ * a person named and can rename.
+ */
+export const isPluralName = (name: string): boolean => {
+  const n = name.trim()
+  if (/[^aeiou]ies$/i.test(n)) return true
+  if (/(ches|shes|sses|xes|zes)$/i.test(n)) return true
+  /* `Surtees`, `Fees`, `Toes` — a vowel under the `es` */
+  if (/[aeiou]es$/i.test(n)) return false
+  return /[^s]s$/i.test(n)
+}
+
+/**
+ * "Yamaha Outboards" -> "Yamaha Outboard", "Accessories" -> "Accessory",
+ * "Surtees" -> "Surtees".
  *
  * THE AUTHOR'S OWN CASING, NEVER OURS. One table is one brand, so the
  * name on a table is a proper noun — and a page that offers a customer
@@ -33,15 +59,20 @@ import {
 export function singular(name: string): string {
   const n = name.trim()
   if (n === '') return 'row'
+  if (!isPluralName(n)) return n
   if (/[^aeiou]ies$/i.test(n)) return `${n.slice(0, -3)}y`
   if (/(ches|shes|sses|xes|zes)$/i.test(n)) return n.slice(0, -2)
-  if (/[^s]s$/i.test(n)) return n.slice(0, -1)
-  return n
+  return n.slice(0, -1)
 }
 
-/** "Boats" -> "Boats", "Boat" -> "Boats". Casing preserved, as above. */
+/** "Boats" -> "Boats", "Boat" -> "Boats", "Surtees" -> "Surtees".
+ *  Casing preserved, as above — and a name with no singular has no
+ *  plural either, so "No Surtees fit this boat yet", never "Surteeses". */
 export function plural(name: string): string {
-  const one = singular(name)
+  const n = name.trim()
+  if (isPluralName(n)) return n
+  if (/[aeiou]es$/i.test(n)) return n
+  const one = singular(n)
   if (/[^aeiou]y$/i.test(one)) return `${one.slice(0, -1)}ies`
   if (/(ch|sh|ss|x|z|s)$/i.test(one)) return `${one}es`
   return `${one}s`

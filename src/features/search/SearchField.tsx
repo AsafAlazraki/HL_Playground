@@ -43,6 +43,22 @@
    which kills a bubble-phase window listener while a cell is being
    edited — so the one shortcut that has to work from anywhere is
    taken on the way down rather than on the way up.
+
+   THREE THINGS THIS FIELD DRAWS THAT ARE RULINGS, NOT DECORATION.
+   `rowSearch.ts` argues all three; what is here is how they read.
+
+     1. A PAIR LIST IS NEVER A DESTINATION. A line whose words were
+        found in a pair list draws the PLACE IT OPENS and says, in
+        normal case beside it, which list they were read in — so
+        nothing lands on a pair-record sheet and nothing pretends the
+        pair was the answer.
+     2. HISTORY IS ANSWERED AND SAID. A retired table's caption reads
+        "History, not stock" where a live one reads its row count,
+        and the sticky heading over its rows carries a HISTORY stamp,
+        which is on screen for every one of its rows that is.
+     3. THE ROW TRAVELS. Choosing a row hands its id to the shell,
+        which hands it to the sheet — the register opens ON the row,
+        marked, instead of at the top of eighty-three of them.
    ============================================================ */
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -90,14 +106,24 @@ function marked(label: string, at: number, length: number): JSX.Element {
   )
 }
 
-/** What a table IS, in a couple of words, for the tables group. A
- *  join is called out because a pair row is not a product, and
- *  finding one should not read like finding one. */
+/** What a table IS, in a couple of words, for the tables group.
+ *
+ *  HISTORY SAYS SO INSTEAD OF SAYING "10 ROWS". A retired table is
+ *  what an old quote was written against and is not stock; reading
+ *  its row count beside every live table's row count is exactly how
+ *  somebody quotes a trailer that cannot be bought. `sellable.ts`
+ *  owns the sentence this shortens. */
 function tableCaption(t: TableFacts): string {
+  if (t.retired) return 'History, not stock'
   if (t.role === 'join') return 'Relationship'
   if (t.role === 'view') return 'Combination'
   return `${t.rowCount} row${t.rowCount === 1 ? '' : 's'}`
 }
+
+/** Where the query was actually read, when it was not read in the
+ *  name being drawn: one pair list by name, or a count of them. */
+const viaSays = (name: string, count: number): string =>
+  count === 1 ? `in ${name}` : `in ${count} relationships`
 
 const inkStyle = (accent: TableFacts['accent']): CSSProperties =>
   ({ '--hs-ink': accentVar(accent) }) as CSSProperties
@@ -116,8 +142,15 @@ export interface SearchFieldProps {
    *  the sheet, that pan happens underneath something opaque. Only
    *  the shell knows a stage is open and only the shell can close
    *  it, so this asks. Left unset, the selection still lands and is
-   *  waiting the moment the stage is closed. */
-  onReveal?: (entityId: string) => void
+   *  waiting the moment the stage is closed.
+   *
+   *  THE ROW ID TRAVELS WITH IT, and it has to. This carried only the
+   *  table, so picking one boat out of an 83-row register opened the
+   *  register at the top with nothing saying which of the 83 had been
+   *  picked — the search found the row and then threw it away, having
+   *  had it in hand. `rowId` is absent only when what was chosen was
+   *  a TABLE and there is no row to land on. */
+  onReveal?: (entityId: string, rowId?: string) => void
 }
 
 export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX.Element {
@@ -227,13 +260,13 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
 
   /* -- choosing ---------------------------------------------- */
   const choose = useCallback(
-    (entityId: string) => {
+    (entityId: string, rowId?: string) => {
       /* the store already knows how to be aimed at a table, and the
          sheet already walks its camera when a selection arrives from
          outside the canvas (Whiteboard.tsx's auto-pan). Nothing new
          is invented here — this is the door the panel's list uses. */
       select({ kind: 'entity', id: entityId })
-      onReveal?.(entityId)
+      onReveal?.(entityId, rowId)
       close(false)
     },
     [select, onReveal, close],
@@ -275,7 +308,7 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
         const picked = options[cursor]
         if (!picked) return
         e.preventDefault()
-        choose(picked.entityId)
+        choose(picked.entityId, picked.kind === 'row' ? picked.rowId : undefined)
         return
       }
       default:
@@ -376,6 +409,15 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                   {result.tables.map((t) => {
                     painted += 1
                     const i = painted
+                    /* A PAIR LIST ANSWERS FOR THE TABLE IT LIES WITHIN.
+                       What matched was "Stacer × Yamaha — Motor
+                       Fitment"; what opens is Stacer, because the
+                       pairs are a fact about those boats and a pair
+                       sheet is not somewhere to be sent. So the line
+                       draws the place it opens and says where the
+                       words were read, and the two are never confused
+                       with one another. */
+                    const via = t.via
                     return (
                       <li
                         key={t.table.id}
@@ -384,6 +426,11 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                         aria-selected={i === cursor}
                         className={`hs-opt${i === cursor ? ' is-active' : ''}`}
                         style={inkStyle(t.table.accent)}
+                        aria-label={
+                          via
+                            ? `${t.table.name} — matched ${viaSays(via.name, via.count)}`
+                            : `${t.table.name} — ${tableCaption(t.table)}`
+                        }
                         onPointerDown={(e) => e.preventDefault()}
                         onClick={() => choose(t.table.id)}
                         onPointerEnter={() => setActive(i)}
@@ -397,9 +444,15 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                         <span className="hs-opt-label">
                           {marked(t.table.name, t.at, t.length)}
                         </span>
-                        <span className="hs-opt-where mono-label">
-                          {tableCaption(t.table)}
-                        </span>
+                        {via ? (
+                          <span className="hs-opt-note">
+                            {viaSays(via.name, via.count)}
+                          </span>
+                        ) : (
+                          <span className="hs-opt-where mono-label">
+                            {tableCaption(t.table)}
+                          </span>
+                        )}
                       </li>
                     )
                   })}
@@ -422,7 +475,19 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                         size={ICON_SIZE.tiny}
                       />
                     </span>
+                    {/* THE TABLE'S NAME IS A NAME, so it is drawn as
+                        one. This heading uppercased it, and uppercase
+                        is lossy on content — "OBSOLETE Trailers — No
+                        Longer Available" is a name whose own emphasis
+                        disappears when the whole line shouts. */}
                     <span className="hs-head-name">{g.table.name}</span>
+                    {/* AND IF IT IS HISTORY, THE HEADING SAYS SO. It is
+                        sticky, so this stamp is on screen for every one
+                        of its rows that is — which is the point: no row
+                        of a retired table can be read as stock. */}
+                    {g.table.retired ? (
+                      <span className="hs-head-was">History</span>
+                    ) : null}
                     <span className="hs-head-count mono-label">
                       {g.total} match{g.total === 1 ? '' : 'es'}
                     </span>
@@ -452,9 +517,13 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                              which reads an option's accessible name
                              and not the heading it happens to sit
                              under. */
-                          aria-label={`${h.label} — in ${g.table.name}`}
+                          aria-label={
+                            `${h.label} — in ${g.table.name}` +
+                            (g.table.retired ? ', history rather than stock' : '') +
+                            (h.via ? `, matched in ${h.via}` : '')
+                          }
                           onPointerDown={(e) => e.preventDefault()}
-                          onClick={() => choose(g.table.id)}
+                          onClick={() => choose(g.table.id, h.rowId)}
                           onPointerEnter={() => setActive(i)}
                         >
                           <span className="hs-opt-mark" aria-hidden="true">
@@ -466,6 +535,12 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                           <span className="hs-opt-label">
                             {marked(h.label, h.at, h.length)}
                           </span>
+                          {/* the words were read on a pair, and the
+                              answer is the thing the pair is about —
+                              so the line says where they were read */}
+                          {h.via ? (
+                            <span className="hs-opt-note">{viaSays(h.via, 1)}</span>
+                          ) : null}
                         </li>
                       )
                     })}
@@ -490,8 +565,19 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                 </>
               ) : (
                 <>
-                  Type any part of a name. Every row in every table is searched, and the
-                  answer is grouped by the table it lives in.
+                  Type any part of a name. Every table is searched and the answer is
+                  grouped by the table it lives in
+                  {index.pairRows > 0
+                    ? ' — a relationship’s pairs lead to the things they pair, never to the pair'
+                    : ''}
+                  .
+                  {/* THE SAME COUNT THE REST OF THE APP PRINTS. This
+                      said 52 while Home's header and the dock badge
+                      both said 50: it was counting the retired table
+                      and the retired relationship that those two
+                      deliberately withhold. One number, everywhere —
+                      `index.tableTotal` is now the live count, and
+                      history is still answerable and still marked. */}
                   <span className="hs-say-count mono-label">
                     {index.rowTotal} named rows · {index.tableTotal} tables
                   </span>

@@ -155,6 +155,11 @@ export interface GridProps {
   sort: SortState | null
   filters: ColumnFilter[]
   marks: Set<string>
+  /** the row a search sent us to, marked for as long as an arrival
+   *  needs marking. Selection says where the cursor is; this says
+   *  which row was ASKED for, which on an 83-row register is not the
+   *  same question. */
+  found?: string | null
   sel: GridSel
   editing: EditState | null
   colWidths: Record<string, number>
@@ -233,6 +238,7 @@ export function Grid(props: GridProps): JSX.Element {
     sort,
     filters,
     marks,
+    found,
     sel,
     editing,
     colWidths,
@@ -1269,7 +1275,11 @@ export function Grid(props: GridProps): JSX.Element {
               return (
                 <div
                   key={line.rowId}
-                  className={'tb-row' + (r % 2 === 1 ? ' tb-row-alt' : '')}
+                  className={
+                    'tb-row' +
+                    (r % 2 === 1 ? ' tb-row-alt' : '') +
+                    (found === line.rowId ? ' tb-row-found' : '')
+                  }
                   role="row"
                   /* the band row takes index 1 when it is drawn, so the
                      headings take 2 and the data starts at 3 */

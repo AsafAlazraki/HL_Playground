@@ -40,6 +40,7 @@ import { accentVar } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { EntityDesigner } from '@/features/designer/EntityDesigner'
 import { ICON_SIZE } from '@/lib/icons'
+import { stageKeys, useStageEscape } from './stageKeys'
 
 export interface DesignStageProps {
   entityId: string
@@ -49,10 +50,22 @@ export interface DesignStageProps {
 export function DesignStage({ entityId, onClose }: DesignStageProps): ReactElement {
   const entity = useProjectStore((s) => s.entities[entityId])
 
+  /* Escape is this same control on the keyboard. Bound before the
+     subject check, so the page that says the table is gone can be shut
+     the same way as the page that shows it. */
+  useStageEscape(onClose)
+
+  /* `shell-view-back`, NO `btn`, LABELLED "Back" — TableStage is the
+     calibration and DESIGN_CONTRACT §4 names this file as one of the
+     five that had not been brought to it. `.btn` stamps its label in
+     11px uppercase mono, so this control read "BACK TO THE SHEET" —
+     a button, which is one of the things uppercase may never be —
+     while the same control one stage away read "Back" in the 12.5px
+     Inter the rest of the toolbar uses. */
   const back = (
-    <button type="button" className="btn shell-view-back" onClick={onClose}>
-      <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-      Back to the sheet
+    <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
+      <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+      <span>Back</span>
     </button>
   )
 
@@ -71,9 +84,10 @@ export function DesignStage({ entityId, onClose }: DesignStageProps): ReactEleme
       role="region"
       aria-label={`Columns of ${entity.name}`}
       style={{ '--view-accent': accentVar(entity.accent) } as CSSProperties}
-      /* see the header note — the sheet's Delete handler is still live
-         under this stage and is aimed at this very table */
-      onKeyDown={(e) => e.stopPropagation()}
+      /* Delete and Backspace stop here — the sheet's own handler aims
+         them at this very table. Escape travels, so the shell can close
+         this page with it; see stageKeys.ts for the whole order. */
+      onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
         {back}

@@ -80,6 +80,56 @@ export interface Relation {
   joinId: string
 }
 
+/** A relation this table really has, that a customer-facing surface
+ *  refuses to draw — and WHICH of the two things is history, because
+ *  the two are different sentences.
+ *
+ *    'table'  the related table itself is retired. "OBSOLETE Trailers
+ *             — No Longer Available" is a shelf, not stock.
+ *    'pairs'  the related table is live, but the join recording which
+ *             of its rows go with this one is retired. "Surtees ×
+ *             OBSOLETE Trailers" is a whole list of nothing but
+ *             retired stock. */
+export interface WithheldRelation extends Relation {
+  reason: 'table' | 'pairs'
+}
+
+/** ONE WALK, TWO ANSWERS — what a page draws, and what it refused.
+ *
+ *  These have to come from the same loop. The refusal used to be three
+ *  `continue`s and nothing else, so the page could not name what it
+ *  had held back and said nothing at all; a second function that
+ *  re-derived the refusals would be a second opinion, and the whole
+ *  reason this file exists is that two derivations of "what goes with
+ *  this table" disagreed once already (see the header). */
+function splitRelations(
+  entities: Record<string, EntityDef>,
+  tableId: string,
+): { kept: Relation[]; withheld: WithheldRelation[] } {
+  const kept: Relation[] = []
+  const withheld: WithheldRelation[] = []
+  const seen = new Set<string>()
+  for (const other of Object.values(entities)) {
+    if (other.id === tableId) continue
+    if (other.role === 'join') continue
+    const join = findJoinTable(entities, tableId, other.id)
+    if (!join || seen.has(other.id)) continue
+    seen.add(other.id)
+    const relation: Relation = { otherId: other.id, joinId: join.entityId }
+    if (isRetired(other)) {
+      withheld.push({ ...relation, reason: 'table' })
+      continue
+    }
+    const joinEntity = entities[join.entityId]
+    if (joinEntity && isRetired(joinEntity)) {
+      withheld.push({ ...relation, reason: 'pairs' })
+      continue
+    }
+    kept.push(relation)
+  }
+  return { kept, withheld }
+}
+
 /** Join tables already touching this table, and what they join it to.
  *
  *  A RETIRED TABLE NEVER BECOMES A BLOCK, and neither does a retired
@@ -89,25 +139,31 @@ export interface Relation {
  *  be able to seed itself onto the Surtees page and then rely on the
  *  renderer to hold its rows back. Nothing is deleted: the join and
  *  the table stay on the sheet, and an old quote written against
- *  either still opens. */
+ *  either still opens.
+ *
+ *  What it refuses is not silent — `withheldRelations` is the other
+ *  half of the same walk, and the page says it in words. */
 export function existingRelations(
   entities: Record<string, EntityDef>,
   tableId: string,
 ): Relation[] {
-  const out: Relation[] = []
-  const seen = new Set<string>()
-  for (const other of Object.values(entities)) {
-    if (other.id === tableId) continue
-    if (other.role === 'join') continue
-    if (isRetired(other)) continue
-    const join = findJoinTable(entities, tableId, other.id)
-    if (!join || seen.has(other.id)) continue
-    const joinEntity = entities[join.entityId]
-    if (joinEntity && isRetired(joinEntity)) continue
-    seen.add(other.id)
-    out.push({ otherId: other.id, joinId: join.entityId })
-  }
-  return out
+  return splitRelations(entities, tableId).kept
+}
+
+/** THE RELATIONS `existingRelations` REFUSED, so a page can say so.
+ *
+ *  This exists because the guard is upstream of the explanation. A
+ *  block holds its own held-back rows back and says so in its own
+ *  header (`BlockCard`'s heldNote) — but a block that was never seeded
+ *  has no header to say it in, and the page drew four of five joins
+ *  and stopped. A count nobody is told is the defect the discontinued
+ *  contract was written to prevent: the data stays, no customer-facing
+ *  surface offers it, and THE PERSON IS TOLD. */
+export function withheldRelations(
+  entities: Record<string, EntityDef>,
+  tableId: string,
+): WithheldRelation[] {
+  return splitRelations(entities, tableId).withheld
 }
 
 /**

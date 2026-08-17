@@ -73,15 +73,19 @@
   cursor: grabbing;
 }
 
+/* THE LIBRARY'S CREDIT, WHICH STAYS. --canvas-ink-faint measured 4.33:1
+   on the sheet — the documented --ink-faint trap, and this rule reaches
+   the Fitment canvas too, where the credit was the worst pair on the
+   surface. --canvas-ink-soft measures 7.5:1 and is still quiet. */
 .wb-canvas .react-flow__attribution {
   background: transparent;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.06em;
-  color: var(--canvas-ink-faint);
+  color: var(--canvas-ink-soft);
 }
 .wb-canvas .react-flow__attribution a {
-  color: var(--canvas-ink-faint);
+  color: var(--canvas-ink-soft);
 }
 
 /* ============================================================
@@ -700,11 +704,15 @@
 }
 /* label: a small white chip pinned to the sheet, naming the column
    that draws the line */
+/* Tracking back to ~0 with the capitals: +0.1em is the uppercase
+   caption's tracking, and this chip carries a column's NAME —
+   `useDerivedGraph` was uppercasing it in TypeScript and no longer
+   does. */
 .wb-canvas .react-flow__edge-text {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.01em;
   fill: var(--ink-soft);
 }
 .wb-canvas .react-flow__edge-textbg {

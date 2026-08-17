@@ -41,7 +41,7 @@
    ============================================================ */
 import { useCallback, useMemo } from 'react'
 import type { RefObject } from 'react'
-import { accentVar, type ColumnSection, type FieldDef } from '@/types/model'
+import { accentVar, isSystemFieldId, type ColumnSection, type FieldDef } from '@/types/model'
 import {
   buildSections,
   fitColumnWidths,
@@ -71,9 +71,21 @@ export interface WholeTable {
   bands: BandChip[]
   /** every band folded shut — the toggle now reads EXPAND ALL */
   allFolded: boolean
-  /** columns the table has, folded ones included */
+  /**
+   * The columns a PERSON has, folded ones included — which is
+   * `entity.fields.length`, and NOT the locked UID column the grid draws
+   * in front of them.
+   *
+   * ONE NUMBER, TWO SCREENS. Home's card reads `e.fields.length` and this
+   * readout read `visibleFields(entity).length`, so Yamaha Outboards was
+   * "27 columns" on the front door and "COLUMNS 28" over its own
+   * register. The band chips are the tie-breaker: they already summed to
+   * 27, because UID carries no `sectionId` and is in no band. A column
+   * nobody can rename, retype, reorder or delete (model.ts UID_FIELD) is
+   * not a column a person counts.
+   */
   totalColumns: number
-  /** columns the grid is drawing right now */
+  /** columns the grid is drawing right now, on the same footing */
   shownColumns: number
   /** the window is currently shared out between the drawn columns */
   fitted: boolean
@@ -160,8 +172,19 @@ export function useWholeTable({
 
   const allFolded = bands.length > 0 && bands.every((b) => b.folded)
 
+  /* the system column is exempt from both figures, so `total - shown`
+     stays the number of columns a fold actually took away */
+  const totalColumns = useMemo(
+    () => allFields.reduce((n, f) => (isSystemFieldId(f.id) ? n : n + 1), 0),
+    [allFields],
+  )
+
   const shownColumns = useMemo(
-    () => slots.reduce((n, s) => (s.kind === 'field' ? n + 1 : n), 0),
+    () =>
+      slots.reduce(
+        (n, s) => (s.kind === 'field' && !isSystemFieldId(s.field.id) ? n + 1 : n),
+        0,
+      ),
     [slots],
   )
 
@@ -260,7 +283,7 @@ export function useWholeTable({
   return {
     bands,
     allFolded,
-    totalColumns: allFields.length,
+    totalColumns,
     shownColumns,
     fitted,
     toggleAllBands,

@@ -19,6 +19,7 @@
 
 import { useProjectStore } from '@/store/useProjectStore'
 import { loadNorthsideProject } from './northside'
+import { forgetSeedStamp } from './seedStamp'
 
 export interface DemoSet {
   id: string
@@ -37,6 +38,9 @@ export function loadBlankProject(): void {
     rules: [],
     rowsByEntity: {},
   })
+  /* the stamp says where the sheet came from, so it must not outlive
+     the sheet — see seedStamp.ts */
+  forgetSeedStamp()
 }
 
 export const DEMOS: DemoSet[] = [
@@ -60,6 +64,19 @@ export {
   isStaleNorthside,
   loadNorthsideProject,
   northsideDrift,
+  northsideSeedFingerprint,
   seedNorthsideModules,
 } from './northside'
 export type { NorthsideProject, SeedDrift } from './northside'
+
+/* WHICH BUILD OF THE SET THIS BROWSER WAS SEEDED FROM — the record
+   that lets the freshness notice tell an older seed from an edit.
+   See seedStamp.ts for why that distinction is the whole mechanism. */
+export {
+  forgetSeedStamp,
+  isStaleSeedCopy,
+  keepSeedVersion,
+  readSeedStamp,
+  writeSeedStamp,
+} from './seedStamp'
+export type { SeedStamp } from './seedStamp'

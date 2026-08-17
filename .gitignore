@@ -19,3 +19,6 @@ Thumbs.db
 # Python bytecode from the seed generator — machine and version specific
 __pycache__/
 *.pyc
+
+# agent screenshots — never committed; they belong in the scratchpad
+*.png

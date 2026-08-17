@@ -242,9 +242,17 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
               <span className={`qt-adj-sign${a.amount < 0 ? ' is-credit' : ''}`}>
                 {money(a.amount)}
               </span>
+              {/* AN × IS NOT A NAME. Every one of these buttons drew an
+                  icon and a `title` and nothing else, so a screen
+                  reader announced five unnamed buttons on a document
+                  about to be handed to a customer. The label names the
+                  ROW it acts on, not the shape it is drawn as, because
+                  five identical "Remove"s in a list is the same defect
+                  one step further on. */}
               <button
                 type="button"
                 className="qt-icon-btn"
+                aria-label={`Take ${a.label.trim() === '' ? 'this adjustment' : a.label} off the quote`}
                 title="Take this off the quote"
                 onClick={() => removeAdjustment(quote.id, a.id)}
               >
@@ -486,6 +494,7 @@ function SectionCard({
             <button
               type="button"
               className="qt-icon-btn"
+              aria-label={`Close the ${section.title} picker`}
               title="Close"
               onClick={() => setPicking(false)}
             >
@@ -623,6 +632,7 @@ function LineRow({
           type="button"
           className="qt-icon-btn"
           aria-expanded={open}
+          aria-label={`Where ${line.label}'s price came from, and how to change it`}
           title="Change the price on this line"
           onClick={() => setOpen((v) => !v)}
         >
@@ -632,6 +642,7 @@ function LineRow({
           <button
             type="button"
             className="qt-icon-btn"
+            aria-label={`Take ${line.label} off the quote`}
             title={`Take ${line.label} off the quote`}
             onClick={() => removeLine(quote.id, line.id)}
           >

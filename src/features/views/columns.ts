@@ -18,6 +18,7 @@ import {
   type EntityDef,
   type FieldDef,
 } from '@/types/model'
+import { money } from '@/lib/money'
 
 /* ---------------------------------------------------------- */
 /* Names                                                      */
@@ -141,22 +142,108 @@ export function defaultColumns(entity: EntityDef, max = 3): string[] {
 /* Formatting                                                 */
 /* ---------------------------------------------------------- */
 
-const MONEY = /price|cost|cash|rrp|sell|trade|freight|deposit|fee|charge/i
+/* ============================================================
+   WHICH COLUMNS ARE MONEY — and which only look it.
 
-const numberFmt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 })
-const moneyFmt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 })
+   Every one of these traces to a workbook column and an adjudicated
+   reading of it; none of it is guessed from the shape of a number.
 
-/** A number as the drawing office sets it: grouped, no stray decimals. */
-export function formatNumber(n: number, name = ''): string {
-  if (!Number.isFinite(n)) return ''
-  return MONEY.test(name) ? `$${moneyFmt.format(n)}` : numberFmt.format(n)
+   THE COLUMN'S OWN NAME, where the business's word for the figure
+   settles it. `CTD` is Cost To Dealer (HELMLOGIC_GROUND_TRUTH.md:91),
+   so `Landed CTD`, `Nett CTD`, `Total Nett CTD`, `Act CTD`, `Kit CTD`
+   and `Parts & Accessories 1 CTD` are all costs. `GP` is Gross Profit
+   in DOLLARS (MPF_GROUND_TRUTH.md:92, `GP = sell/1.1 - AX`). A `$` in
+   the name says it outright — `Rego ($)`, `NSM Lab ($)`, `Labour ($)`.
+
+   THE BAND IT SITS IN, where the name alone cannot possibly say. The
+   boat brands each spend their freight and compliance money under a
+   column of their own — `ABP Compl.`, `Aus Spec`, `Dazmac`,
+   `IYT Logistics`, `Handling`, `Stamp Duty` (the seed's own header
+   note at northside.ts, cols IQ and IX). No regex over those words
+   will ever find a price; the workbook filed every one of them under
+   `Cost Build`, and that is the fact to read. Same for `Base List`
+   and `P&A` under `Supply Pricing` (`G` is "P&A cost (ex GST)",
+   MPF_GROUND_TRUTH.md §6.7) and `Dealer` / `Factory` / `Settlement`
+   / `Discount` under `Kit Pricing` and `Pricing`.
+
+   AND A RATIO IS NEVER MONEY, whatever band it sits in. `MU` is
+   Markup — `MU = GP / CTD`, a bare ratio, which is why the trailer
+   sheet's own label for the identical figure is `MU %`
+   (MPF_GROUND_TRUTH.md §6.6, §6.7). `$0.28` would be a lie about the
+   business's arithmetic. Hours are not money either: `TTF (Hours)`,
+   `NSM Lab (Hrs)`, `Lab Hrs` are the input a labour rate is charged
+   against, not the charge.
+   ============================================================ */
+
+const MONEY_NAME =
+  /\$|\b(price|cost|cash|rrp|sell|trade|freight|deposit|fee|charge|ctd|nett|landed|gp|rego|warranty|allowance|rebate)\b/i
+
+const MONEY_BAND =
+  /\b(cost|costs|price|prices|pricing|margin|retail|trade|wholesale|fee|fees|rate|rates|charge|charges|install|supply|sundries|total|totals|ladder)\b/i
+
+/** A MARKUP OR A PERCENTAGE. `MU = GP / CTD`, so the figure is a
+ *  proportion of something else and not an amount of anything. */
+const RATIO_NAME = /\bmu\b|\bmark ?up\b|%/i
+
+/** A count of hours: the input a labour rate is charged against. */
+const HOURS_NAME = /\bhrs?\b|\bhours?\b/i
+
+/** The band a column was filed under, as its author named it. */
+export function bandOf(
+  entity: EntityDef | undefined,
+  field: FieldDef | undefined,
+): string {
+  if (!entity || !field?.sectionId) return ''
+  return entity.sections?.find((s) => s.id === field.sectionId)?.name ?? ''
 }
 
-/** One cell, ready to print. `resolveRef` turns a link into its label. */
+/** Is this column a currency amount? See the block above for every
+ *  clause's source. `band` is the section's NAME, never its id — an id
+ *  is minted for a table a person made and says nothing. */
+export function isMoney(name: string, band = ''): boolean {
+  const n = name.trim()
+  if (n === '') return false
+  if (RATIO_NAME.test(n) || HOURS_NAME.test(n)) return false
+  /* a column carrying its own unit is a measurement: "Boat Weight kg",
+     "OA Length m", "MU %" */
+  if (splitUnit(n).unit !== undefined) return false
+  return MONEY_NAME.test(n) || MONEY_BAND.test(band)
+}
+
+/** Is this column a proportion rather than an amount? */
+export const isRatio = (name: string): boolean => RATIO_NAME.test(name.trim())
+
+const numberFmt = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})
+
+/** A ratio takes the SAME two decimals every time, for the same reason
+ *  money does: `MU 0.27 · 0.7 · 0.47` down one column is the reported
+ *  raggedness again, one column over. The maximum was already two, so
+ *  this adds a minimum and rounds nothing that was not rounded before. */
+const ratioFmt = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
+/** A number as the drawing office sets it: grouped, and money set as
+ *  money — one format, `@/lib/money`, the same one the quote prints. */
+export function formatNumber(n: number, name = '', band = ''): string {
+  if (!Number.isFinite(n)) return ''
+  if (isMoney(name, band)) return money(n)
+  return isRatio(name) ? ratioFmt.format(n) : numberFmt.format(n)
+}
+
+/** One cell, ready to print. `resolveRef` turns a link into its label;
+ *  `band` is the section NAME the column was filed under, which is half
+ *  of the money question — pass it wherever the entity is in hand
+ *  (`bandOf(entity, field)`). */
 export function formatCell(
   field: FieldDef | undefined,
   value: CellValue,
   resolveRef?: (refEntityId: string | undefined, rowId: string) => string,
+  band = '',
 ): string {
   if (value === null || value === undefined) return ''
   /* A PICTURE IS NEVER A NUMBER. This used to return the count, so a
@@ -167,21 +254,26 @@ export function formatCell(
      pictures.tsx, in the two places §4 puts them. */
   if (isImageValue(value)) return ''
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
-  if (typeof value === 'number') return formatNumber(value, field?.name ?? '')
+  if (typeof value === 'number') return formatNumber(value, field?.name ?? '', band)
   const text = String(value).trim()
   if (text === '') return ''
   if (field?.type === 'reference' && resolveRef) return resolveRef(field.refEntityId, text)
   const asNum = Number(text)
   if (field?.type === 'number' && text !== '' && Number.isFinite(asNum)) {
-    return formatNumber(asNum, field.name)
+    return formatNumber(asNum, field.name, band)
   }
   return text
 }
 
 /** `90–115` for an envelope, or a single bound when only one is filled. */
-export function formatRange(min: CellValue, max: CellValue, name = ''): string {
-  const a = typeof min === 'number' ? formatNumber(min, name) : ''
-  const b = typeof max === 'number' ? formatNumber(max, name) : ''
+export function formatRange(
+  min: CellValue,
+  max: CellValue,
+  name = '',
+  band = '',
+): string {
+  const a = typeof min === 'number' ? formatNumber(min, name, band) : ''
+  const b = typeof max === 'number' ? formatNumber(max, name, band) : ''
   if (a !== '' && b !== '') return a === b ? a : `${a}–${b}`
   return a !== '' ? a : b
 }

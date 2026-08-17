@@ -4,9 +4,11 @@
    ONE OF TWO RULE SURFACES, AND THEY DO DIFFERENT JOBS. This one
    states LIMITS: things that must be true of every row, whatever else
    happens — "a boat's motor may not exceed its rated Max HP". The
-   other, `src/features/rules/` behind "Work out what fits what",
-   DERIVES: it walks the rows and hands back a list — "for this hull,
-   these are the Yamahas that fit".
+   other, `src/features/rules/` behind Fitment, DERIVES: it walks the
+   rows and hands back a list — "for this hull, these are the Yamahas
+   that fit". (That place was once called "Work out what fits what".
+   A place is a NOUN naming what is on the screen, never a question,
+   so it is Fitment on the dock, on the stage and here.)
 
    The distinction is not decorative. A limit has no output; you can
    only ever break it. A derivation has no truth value; it just

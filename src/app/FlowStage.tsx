@@ -79,6 +79,7 @@ import {
   useRuleRun,
 } from '@/features/rules'
 import { ICON_SIZE } from '@/lib/icons'
+import { stageKeys, useStageEscape } from './stageKeys'
 
 /* The sheet's grid, so plates and tables sit on the same paper. */
 const GRID = 16
@@ -109,6 +110,12 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
      it, so an import through `features/io` would hand this stage an id
      with no rule behind it and every child would draw an empty box. */
   const ruleId = activeRuleId && rules[activeRuleId] ? activeRuleId : null
+
+  /* Escape is the control in track 1 of the bar, on the keyboard. The
+     rule canvas underneath keeps its own Delete/Backspace — that belongs
+     to the plate a person has selected, and this stage root lets nothing
+     of the sort travel. */
+  useStageEscape(onClose)
 
   /* the plate the inspector is open on — canvas-local, because a
      selection is a thing you are doing here, not a thing the project
@@ -144,14 +151,18 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
       className="shell-viewstage shell-flowstage"
       role="region"
       aria-label="Fitment"
-      /* see the header note — the sheet's Delete handler is still live
-         under this stage and would take a whole table with it */
-      onKeyDown={(e) => e.stopPropagation()}
+      /* see the header note — the sheet's Delete handler would take a
+         whole table with it. Escape travels, so the shell can close this
+         page with it; see stageKeys.ts for the whole order. */
+      onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
-        <button type="button" className="btn shell-view-back" onClick={onClose}>
-          <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          Back to the sheet
+        {/* `shell-view-back`, no `btn`, labelled "Back" — TableStage is
+            the calibration and `.btn` would stamp this in 11px uppercase
+            mono instead of the 12.5px control label the bar uses. */}
+        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
+          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+          <span>Back</span>
         </button>
         <p className="shell-view-what">
           {/* Fitment, not "What fits what" — commit 4c4a3e2's rule: a
@@ -162,7 +173,15 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>
-          <span className="shell-view-what-say">walk the rows, collect the matches</span>
+          {/* NOT AD COPY. This read "walk the rows, collect the matches",
+              which DESIGN_PRINCIPLES §6 names as the outgoing build's
+              failure by that exact phrasing: a door caption written as a
+              brochure line. The aside says what SORT of place this is —
+              and it borrows the words the rules pane already uses to
+              point here ("to work out what goes with something, use
+              Fitment"), so the two doors describe each other the same
+              way round. */}
+          <span className="shell-view-what-say">the rules that work out what fits</span>
         </p>
       </div>
 

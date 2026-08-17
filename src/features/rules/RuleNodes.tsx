@@ -51,11 +51,15 @@ function RedMark({ title }: { title: string }) {
 
 function Chunk({ chunk }: { chunk: PlateChunk }) {
   if (chunk.t === 'stamp') {
-    /* entity stamps are inked BRIGHT — the plate sits on the navy sheet */
+    /* THE HUE ARRIVES AS A VARIABLE, NOT AS A COLOUR. It used to be set
+       straight onto `color`, which no stylesheet could then correct — and
+       on paper an equal-luminance kind hue over a tint of itself measured
+       3.4–3.9:1. rule-nodes.css now composites it toward the plate's ink,
+       which it can only do if the hue is a custom property. */
     return (
       <span
         className="rl-ck rl-ck--stamp"
-        style={{ color: accentInkBright(chunk.accent) }}
+        style={{ '--rl-stamp-ink': accentInkBright(chunk.accent) } as CSSProperties}
         title={chunk.title ?? chunk.text}
       >
         {chunk.text}
@@ -207,7 +211,10 @@ function Plate({ data, selected, isConnectable }: NodeProps) {
           <div className="rl-chips">
             {spec.chips.map((c) => (
               <span className="rl-chip" key={c.id} title={`${c.stamp} · ${c.label}`}>
-                <span className="rl-chip-stamp" style={{ color: accentInkBright(c.accent) }}>
+                <span
+                  className="rl-chip-stamp"
+                  style={{ '--rl-stamp-ink': accentInkBright(c.accent) } as CSSProperties}
+                >
                   {c.stamp}
                 </span>
                 <span className="rl-chip-label">{c.label}</span>

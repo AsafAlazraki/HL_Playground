@@ -20,10 +20,18 @@
    THREE LEVELS, AND YOU CAN ALWAYS GET OUT OF ALL THREE.
      item  → the module   (the view stage's own back, relabelled)
      index → the dashboard ("All modules", top right)
-     dash  → the sheet     ("Back to the sheet", top left)
-   Nobody is ever trapped: every level draws its own way back before
-   it draws anything else, and the sheet is at most three presses
-   away from the deepest screen in the system.
+     dash  → whatever was under it ("Back", top left, and Escape)
+   Nobody is ever trapped: every level draws its own way back before it
+   draws anything else, and it is at most three presses to the surface
+   behind the deepest screen in the system.
+
+   THE TOP-LEFT CONTROL SAYS "Back", NOT "Back to the sheet". Two
+   reasons, and the second is the load-bearing one. The dock calls the
+   drawing "Data model", so a second name for the same place was one
+   name too many. And this control closes the window it is in: what you
+   land on is whatever was underneath, which is another page as often as
+   it is the drawing. A caption naming a destination it cannot promise
+   is worse than one that names none.
 
    THE DETAIL SURFACE IS `ViewStage`, NOT A SECOND PAGE. The plan is
    explicit (§4, the Detail and Related rows of the block table):
@@ -73,6 +81,7 @@ import { accentVar } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { Dashboard, ModuleIndex, NewModuleDialog } from '@/features/modules'
 import { ICON_SIZE } from '@/lib/icons'
+import { stageKeys, useStageEscape } from './stageKeys'
 import { ViewStage } from './ViewStage'
 
 /** Which item is open, and which module it was opened from. */
@@ -116,6 +125,13 @@ export function ModuleStage({
   const item =
     detail && open && detail.moduleId === open.id && entities[detail.tableId] ? detail : null
 
+  /* ESCAPE IS OURS ONLY WHILE THE BOX IS OURS. When an item is open this
+     stage hands its whole box to a `ViewStage`, whose own back goes to
+     the module's list — so that stage owns the keystroke, and ours must
+     stand down or one press would close the module as well as the item.
+     `null` is how that is said; see stageKeys.ts. */
+  useStageEscape(item ? null : onClose)
+
   /* THE DETAIL, AND NOTHING OF OURS AROUND IT. Keyed on the row so a
      different item is a different page rather than the same page
      re-pointed: the rail's find box and the row it is showing both
@@ -154,19 +170,26 @@ export function ModuleStage({
       role="region"
       aria-label={open ? open.name : 'Modules'}
       style={style}
-      /* KEYSTROKES STOP AT THIS ROOT, the same line every other stage
-         carries. The whiteboard is still mounted underneath and still
-         holds a window-level keydown handler: Delete or Backspace with
-         a table selected offers to delete that whole table, and it
-         only skips INPUT/TEXTAREA/SELECT. The index is a search box
-         over 651 rows, and a Backspace clearing the last letter of a
-         search must never offer to strike a price file off the sheet. */
-      onKeyDown={(e) => e.stopPropagation()}
+      /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line every
+         other stage carries: the sheet's window-level handler offers to
+         delete the whole SELECTED TABLE on either one, and it only skips
+         INPUT/TEXTAREA/SELECT. The index is a search box over 651 rows,
+         and a Backspace clearing the last letter of a search must never
+         offer to strike a price file off the sheet.
+
+         Escape travels, so the shell can close this page with it — and
+         because Escape typed into that same search box belongs to the
+         box, not to us. See stageKeys.ts for the whole order. */
+      onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
-        <button type="button" className="btn shell-view-back" onClick={onClose}>
-          <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          Back to the sheet
+        {/* `shell-view-back`, no `btn`, labelled "Back" — TableStage is
+            the calibration. `.btn` stamped this "BACK TO THE SHEET" in
+            11px uppercase mono; uppercase is a label style and this is
+            a button. */}
+        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
+          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+          <span>Back</span>
         </button>
 
         <p className="shell-view-what">

@@ -43,6 +43,7 @@ import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ViewPage, createViewFor } from '@/features/views'
 import { createQuoteFromView } from '@/features/quote'
 import { ICON_SIZE } from '@/lib/icons'
+import { stageKeys, useStageEscape } from './stageKeys'
 
 /** How many rows the rail draws before it asks you to narrow. */
 const RAIL_CAP = 120
@@ -74,7 +75,12 @@ export interface ViewStageProps {
 export function ViewStage({
   entityId,
   initialRowId,
-  backLabel = 'Back to the sheet',
+  /* "Back", one word, is the calibration — commit 10fd799 chose it
+     deliberately because this control returns to wherever you came
+     from. The PROP stays, because a host that opens this stage from a
+     module needs to be able to say so ("Back to Boats"); only the
+     default came into line. */
+  backLabel = 'Back',
   onQuote,
   onClose,
 }: ViewStageProps): ReactElement {
@@ -117,10 +123,24 @@ export function ViewStage({
   const shown = matches.slice(0, RAIL_CAP)
   const hidden = matches.length - shown.length
 
+  /* Escape is this same control on the keyboard, whatever it is called
+     here: opened from Tables it leaves the page, opened from a module it
+     goes back to that module's list, because both are `onClose`. */
+  useStageEscape(onClose)
+
+  /* NO `btn` — see DesignStage. `.btn`'s 11px uppercase mono stamp
+     turned this into "BACK TO BOATS" when a module passed the name of
+     the place it came from, which is uppercase on a NAME as well as on
+     a button. `.shell-view-back` carries the whole control. */
   const back = (
-    <button type="button" className="btn shell-view-back" onClick={onClose}>
-      <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-      {backLabel}
+    <button
+      type="button"
+      className="shell-view-back"
+      onClick={onClose}
+      aria-label={backLabel}
+    >
+      <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+      <span>{backLabel}</span>
     </button>
   )
 
@@ -137,15 +157,17 @@ export function ViewStage({
     <div
       className="shell-viewstage"
       style={{ '--view-accent': accentVar(entity.accent) } as CSSProperties}
-      /* KEYSTROKES STOP AT THIS ROOT, the same line the design and flow
-         stages carry. The whiteboard is still mounted underneath and
-         still holds a window-level keydown handler: Delete or Backspace
-         with a table selected offers to delete that whole table, and it
-         only skips INPUT/TEXTAREA/SELECT — a stage made of buttons is
-         not exempt. The door that opens this stage sits under the
-         selected table, so without this a Backspace aimed at a row
-         offers to delete the table being looked at. */
-      onKeyDown={(e) => e.stopPropagation()}
+      /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line the design
+         and flow stages carry. The sheet's window-level handler offers to
+         delete the whole SELECTED TABLE on either one, and it only skips
+         INPUT/TEXTAREA/SELECT — a stage made of buttons is not exempt.
+         The door that opens this stage sits under the selected table, so
+         without this a Backspace aimed at a row offers to delete the
+         table being looked at.
+
+         Escape travels, so the shell can close this page with it; see
+         stageKeys.ts for the whole order. */
+      onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
         {back}
@@ -231,8 +253,12 @@ export function ViewStage({
                       aria-current={isOpen || undefined}
                       onClick={() => setWanted(e.id)}
                     >
+                      {/* NOT `mono-label` on the trail. It is the dealer's
+                          own group path, read off their sheet — a value —
+                          and `.mono-label` uppercases what it is stamped
+                          on. Its type lives on the class itself now. */}
                       {e.trail === '' ? null : (
-                        <span className="shell-view-row-trail mono-label">{e.trail}</span>
+                        <span className="shell-view-row-trail">{e.trail}</span>
                       )}
                       <span className="shell-view-row-name">{e.name}</span>
                     </button>

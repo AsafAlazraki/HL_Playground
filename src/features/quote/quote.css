@@ -15,12 +15,54 @@
    the --sp scale.
    ============================================================ */
 
+/* THE SCROLLPORT HAS NO BOTTOM PADDING, AND THAT IS THE WHOLE FIX.
+
+   This carried `padding-bottom: calc(var(--sp-6) * 3)` — 96px, left
+   over from the days when every surface padded itself to clear the
+   dock. DESIGN_CONTRACT §8.7 already rules that out, and this is the
+   defect it was written from: a `position: sticky; bottom: 0` box is
+   floored by its scroll container's CONTENT box, so 96px of padding
+   lifted the total bar 96px off the bottom edge — while the document
+   behind it went on painting through that padding. Measured at
+   1280×860 and 1920×860, scrollTop 0 and 481: `.qt-foot` bottom 686,
+   scrollport bottom 782, and `elementFromPoint` in the middle of the
+   gap returned `.qt-line-main` "Yamaha - F150XC". Content, then a
+   total, then more content. At the very end of the scroll the gap was
+   empty, which is why it survived being looked at.
+
+   So the DRAFT's scrollport has no bottom padding and the draft ends
+   on its total: the bar IS the last box in the flow, so where it
+   rests and where the document ends are one line, and it does not
+   lift off the bottom edge as you reach the end. The 78px the dock
+   needs is reserved once, on `.shell-stage`, and stays reserved.
+
+   THE PADDING IS SAFE EXACTLY WHERE NOTHING IS STICKY, which is why
+   the modifier below exists rather than a blanket rule. Measured
+   after: gap under the bar 0px at 1280×860 and 1920×860, at scrollTop
+   0, 417 and 833 — `elementFromPoint` has nowhere left to look.
+
+   AND NO TEST GUARDS THIS, so do not assume one does. A tripwire that
+   read this stylesheet was written and thrown away: vitest stubs a
+   `?raw` and a `?inline` stylesheet import to the empty string here
+   (measured, both), and the app project has no `@types/node` to read
+   the file with. The guard is this note, DESIGN_CONTRACT §8.7, and a
+   person measuring the gap in a browser. */
 .qt-root {
   position: relative;
   height: 100%;
   overflow: auto;
   background: var(--canvas-bg);
-  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 3);
+  padding: var(--sp-5) var(--sp-5) 0;
+}
+
+/* AN ISSUED DOCUMENT HAS NO BAR TO END ON. Nothing in a finished
+   quote is sticky, so the scrollport may hand out its trailing air
+   again — and it has to be padding here, not a margin on `.qt-doc`:
+   a last child's bottom margin does not enter the scrollable overflow
+   region, so the sheet ended flush on the stage's edge (measured: 0px
+   after the document) with its rounded corner reading as a clip. */
+.qt-root--doc {
+  padding-bottom: calc(var(--sp-6) * 3);
 }
 
 .qt-void {
@@ -130,8 +172,13 @@
    THE DRAFT
    ============================================================ */
 
+/* THE DRAFT ENDS ON ITS TOTAL. No padding after the foot bar: the bar
+   is the last box in this flow, so its resting place and the end of
+   the document are the same line — it does not lift off the bottom
+   edge as you reach the end, and there is no strip beneath it for a
+   line of the quote to show through. See `.qt-root`. */
 .qt-edit {
-  padding-bottom: var(--sp-6);
+  padding-bottom: 0;
 }
 
 .qt-warn {
@@ -494,7 +541,13 @@
    ground, i.e. no shadow at all. --ec2 measures 1.299 on the same
    field. At ~49k px² it takes the canvas ramp's second tier rather
    than the material's default --ec3: bigger surfaces read as
-   thicker, and this one is not big. */
+   thicker, and this one is not big.
+
+   `bottom: 0` MEANS THE SCROLLPORT'S BOTTOM AND NOTHING ELSE. It only
+   lands there because neither `.qt-root` nor `.qt-edit` has bottom
+   padding any more — read the note on `.qt-root` before adding either
+   back. Any strip left under this bar is a strip the document paints
+   through, and a total with quote lines below it is not a total. */
 
 .qt-foot {
   position: sticky;
@@ -953,4 +1006,84 @@
 /* THE TOTAL is the one moment on the page that raises its voice */
 .qt-doc-foot {
   border-top: 2px solid var(--ink);
+}
+
+/* ============================================================
+   A NAME IS A NAME, AND A BUTTON IS NOT A LABEL — the uppercase
+   pass, quote side.
+
+   A quote is the one thing in this app that leaves the building with
+   the dealer's name on it, so it is the worst place to be flattening
+   their own words.
+
+     .qt-doc-org    THE ORGANISATION'S NAME on the document's title
+                    block. It was `text-transform: uppercase` at
+                    +0.06em, so a dealer who typed "Northside Marine"
+                    got "NORTHSIDE MARINE" on a customer's quotation.
+                    DESIGN_PRINCIPLES rule 3: uppercase is a label
+                    style, NEVER a name. The eyebrow above it —
+                    `.mono-label` reading "Quotation" — is a caption
+                    and stays uppercase; that is the sanctioned use,
+                    and the pair now reads as caption-then-name rather
+                    than as two stamps.
+     .qt-linkbtn    "Clear" / "Open"  — buttons.
+     .qt-disclose   "Show the working" — a button.
+     .qt-add        "Add a line"       — a button.
+     .qt-adj-door   an adjustment door — a button.
+
+   `.qt-doc-fact-lab` and `.qt-plate`'s labels are KEPT uppercase:
+   "DATE", "REFERENCE", "OVERRIDE" are captions naming the field
+   beside them, not the value in it.
+
+   Weight and 'wdth' stay on the org name — it is still the largest
+   thing in the title block. Only the transform and the caption
+   tracking go, because +0.06em is the uppercase label's tracking and
+   DESIGN_CONTRACT §3 gives display text negative tracking, never
+   positive.
+   ============================================================ */
+.qt-doc-org {
+  letter-spacing: -0.006em;
+  text-transform: none;
+}
+.qt-linkbtn,
+.qt-disclose,
+.qt-add,
+.qt-adj-door {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ============================================================
+   THE OVERRIDE FIELD WAS SIZED BY AN <input>'s DEFAULT, WHICH IS NOT A
+   DECISION ANYBODY MADE.
+
+   THE SYMPTOM: the placeholder "leave blank to use the price file" was
+   cut off by its own field's right edge, at every window width.
+
+   THE CONSTRAINT, WHICH IS NOT THE PLACEHOLDER'S LENGTH. `.qt-override`
+   is a flex row and `.qt-field` is `display: block`, so as a flex item
+   its base size is its content's INTRINSIC width — and an `<input>`'s
+   intrinsic width is its `size` attribute, twenty characters, about
+   180px. `.field-input` is `width: 100%`, and a percentage resolves to
+   auto for intrinsic sizing, so it never widens the field it is in.
+   `.qt-input`'s `max-width: 420px` could therefore never engage: there
+   was nothing over 180px for it to cap. Raising the max-width — the
+   obvious fix — changes nothing at all, which is how the real
+   constraint was found.
+
+   THE FIX: give the fields a flex basis wide enough for the longer of
+   the two placeholders (about 215px of 12.5px Inter plus 18px of
+   padding) and let them grow into the row, capped at the 420px the
+   stylesheet already chose. `flex-wrap` was already there and puts the
+   second field on its own line when the row cannot hold two, so the
+   basis is honoured rather than shrunk away; `min-width: 0` keeps a
+   squeezed line inside the card instead of overflowing it.
+   ============================================================ */
+.qt-override .qt-field {
+  flex: 1 1 260px;
+  min-width: 0;
+  max-width: 420px;
 }

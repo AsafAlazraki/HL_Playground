@@ -48,7 +48,7 @@ import {
   type JoinRef,
   type RelatedRow,
 } from '@/features/views'
-import { defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from '@/features/views/columns'
+import { bandOf, defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from '@/features/views/columns'
 import { freezeLevels, isCostColumn, looksMonetary, normName, priceAtLevel, defaultLevelKey } from './pricing'
 import type { FrozenLevel, QuoteDef, QuoteLine, QuoteSection } from './types'
 
@@ -182,7 +182,7 @@ function pairFactsOf(
       if (value) facts.push({ label: field.name, value: 'Yes' })
       continue
     }
-    const text = formatCell(field, value, resolveRef)
+    const text = formatCell(field, value, resolveRef, bandOf(joinEntity, field))
     if (text === '') continue
     facts.push({ label: field.name, value: text })
   }

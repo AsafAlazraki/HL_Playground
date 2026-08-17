@@ -41,7 +41,7 @@ import {
   type ViewBlock,
 } from '@/types/model'
 import type { RuleEngine } from '@/lib/rules/evaluate'
-import { defaultColumns, formatCell } from './columns'
+import { bandOf, defaultColumns, formatCell } from './columns'
 import { countChip, isCuratedOnly, oneOf, plural, singular, summariseRule } from './describe'
 import { applyFilters, filterableColumns, valuesInUse } from './filter'
 import {
@@ -630,7 +630,15 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
 
                 {columns.map((c) => (
                   <span key={c} className="vw-cell">
-                    {formatCell(byId.get(c), readRelated(r, c), resolveRef)}
+                    {/* the band goes with the column: a figure filed
+                        under Supply Pricing is money even where its
+                        name is `P&A`, and `MU` is a ratio even there */}
+                    {formatCell(
+                      byId.get(c),
+                      readRelated(r, c),
+                      resolveRef,
+                      bandOf(target, byId.get(c)),
+                    )}
                   </span>
                 ))}
 

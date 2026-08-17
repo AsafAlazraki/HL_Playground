@@ -36,6 +36,7 @@ import { quoteTotals } from '@/features/quote/totals'
 import type { QuoteDef, QuoteLine } from '@/features/quote/types'
 import { curatedOnly } from './describe'
 import { makeEngine, relatedRows, type Ctx, type JoinRef } from './pairs'
+import { defaultBlocksFor, existingRelations, withheldRelations } from './relations'
 import {
   countDiscontinued,
   heldBackRowCount,
@@ -44,6 +45,7 @@ import {
   sellableRowCount,
   sellableRows,
   sellableTables,
+  withheldNotes,
 } from './sellable'
 
 /* ---------------------------------------------------------- */
@@ -314,5 +316,103 @@ describe('the sentences — a count is never left on its own', () => {
 
   it('says nothing at all when nothing was held', () => {
     expect(heldBackSentence(0, 'NSM Custom Trailers')).toBe('')
+  })
+})
+
+/* ---------------------------------------------------------- */
+/* 4. AND A WITHHOLDING NOBODY WAS TOLD ABOUT.                 */
+/*                                                             */
+/* The three above all prove a BLOCK holding rows back. This   */
+/* one is the case the block cannot cover: `existingRelations` */
+/* refuses a retired table, and a retired join, BEFORE a block */
+/* is seeded — so `BlockCard`'s heldNote had nothing to run in */
+/* and the page drew four of five joins in silence. Measured   */
+/* on the seed: the Surtees page has a "Surtees × OBSOLETE     */
+/* Trailers" join in the store, drew five blocks, and never    */
+/* said a sixth relationship existed.                          */
+/* ---------------------------------------------------------- */
+
+describe('the joins a page never drew', () => {
+  const drewNothing = new Set<string>()
+
+  it('draws the relation, and withholds nothing, while both are live', () => {
+    const { entities } = sheet()
+    expect(existingRelations(entities, 'boats')).toEqual([
+      { otherId: 'trailers', joinId: 'join' },
+    ])
+    expect(withheldRelations(entities, 'boats')).toEqual([])
+    expect(withheldNotes(entities, 'boats', drewNothing)).toEqual([])
+  })
+
+  it('still refuses a retired TABLE — and now names it', () => {
+    const { entities } = sheet({ trailers: { retired: true } })
+
+    /* the guard is untouched: no relation, and so no seeded block */
+    expect(existingRelations(entities, 'boats')).toEqual([])
+    expect(defaultBlocksFor(entities, 'boats')).toEqual([])
+
+    /* and the refusal is no longer silent */
+    expect(withheldRelations(entities, 'boats')).toEqual([
+      { otherId: 'trailers', joinId: 'join', reason: 'table' },
+    ])
+    const notes = withheldNotes(entities, 'boats', drewNothing)
+    expect(notes).toHaveLength(1)
+    expect(notes[0].sentence).toBe(retiredTableSentence('NSM Custom Trailers'))
+    expect(notes[0].sentence).toContain('history rather than stock')
+    expect(notes[0].sentence).toContain('still opens, still totals and still prints')
+  })
+
+  it('still refuses a retired JOIN — and names the join, not the table', () => {
+    const { entities } = sheet({ join: { retired: true } })
+
+    expect(existingRelations(entities, 'boats')).toEqual([])
+    expect(defaultBlocksFor(entities, 'boats')).toEqual([])
+    expect(withheldRelations(entities, 'boats')).toEqual([
+      { otherId: 'trailers', joinId: 'join', reason: 'pairs' },
+    ])
+
+    /* the sentence has to name the LIST, because the table itself is
+       still stock and telling somebody NSM Custom Trailers is history
+       would be false */
+    const [note] = withheldNotes(entities, 'boats', drewNothing)
+    expect(note.sentence).toContain('Highfield x NSM Custom Trailers')
+    expect(note.sentence).toContain('the list that recorded which')
+    expect(note.sentence).not.toContain('NSM Custom Trailers is history')
+  })
+
+  it('reads the same from the other end of a retired join', () => {
+    /* the OBSOLETE trailer's own page: the table it is joined to is
+       live, the list is not */
+    const { entities } = sheet({ join: { retired: true } })
+    expect(withheldRelations(entities, 'trailers')).toEqual([
+      { otherId: 'boats', joinId: 'join', reason: 'pairs' },
+    ])
+  })
+
+  it('says the TABLE is history when both it and its join are', () => {
+    /* Northside's real case — trl_obsolete and join_surtees_obs are
+       both retired. One sentence, and it is the one that explains the
+       most: the shelf is gone, not just the list pointing at it. */
+    const { entities } = sheet({ trailers: { retired: true }, join: { retired: true } })
+    expect(withheldRelations(entities, 'boats')).toEqual([
+      { otherId: 'trailers', joinId: 'join', reason: 'table' },
+    ])
+    expect(withheldNotes(entities, 'boats', drewNothing)).toHaveLength(1)
+  })
+
+  it('does not say it twice when a block is already drawing that table', () => {
+    /* somebody added the block by hand before the table was retired.
+       The block holds its rows back and says so in its own header. */
+    const { entities } = sheet({ trailers: { retired: true } })
+    expect(withheldNotes(entities, 'boats', new Set(['trailers']))).toEqual([])
+  })
+
+  it('never mistakes "no relationship" for "a relationship held back"', () => {
+    /* a table joined to nothing must still say "nothing goes with
+       this yet" — the sentence is for a join that EXISTS */
+    const { entities } = sheet()
+    const alone = { ...entities, loose: table('loose', 'Rates & Charges', []) }
+    expect(withheldRelations(alone, 'loose')).toEqual([])
+    expect(withheldNotes(alone, 'loose', drewNothing)).toEqual([])
   })
 })
