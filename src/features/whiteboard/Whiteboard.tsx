@@ -79,6 +79,7 @@ import {
   DEFAULT_TABLE_NODE_SIZE,
   tableNodeTypes,
   useEntityTableNodes,
+  useExpandedTableNodes,
 } from '@/features/table'
 import type { TableKind, XY } from '@/types/model'
 import {
@@ -187,6 +188,9 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
      back to this component must land on the same square inch of sheet
      the reader left it on. */
   const [initialCamera] = useState(getCanvasCamera)
+  /* which tables are expanded — read so the opening frame can land on
+     one rather than on the whole drawing (see the framing effect) */
+  const expandedTables = useExpandedTableNodes()
 
   /* a table type is being dragged over the sheet right now */
   const [dropping, setDropping] = useState(false)
@@ -691,8 +695,49 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
     firstFrameRef.current = false
     /* the reader got to the sheet before we ever framed it — leave it */
     if (first && interactedRef.current) return
+
+    /* AN EXPANDED CARD IS FRAMED, NOT LEFT WHERE IT FELL.
+
+       The expanded-frames key is in localStorage and survives a
+       reload; the camera is module state and does not. So the app
+       used to come back with a card sized to the WHOLE PANE sitting
+       at whatever canvas coordinate it happened to occupy, with the
+       viewport at its default — which put half of it behind the
+       panel, the rest off the right edge, and its own COLLAPSE
+       button somewhere off screen. There was no other way out,
+       because every control for an expanded card is drawn ON the
+       card.
+
+       If a table is expanded, it IS what the reader left the sheet
+       looking at, so it is what the camera opens on. */
+    const expandedIds = Object.keys(expandedTables)
+    const target = expandedIds.find((id) =>
+      tableNodes.some((n) => n.id === id),
+    )
+    if (target) {
+      const node = rf.getNode(target)
+      if (node) {
+        void rf.fitBounds(
+          {
+            x: node.position.x,
+            y: node.position.y,
+            width: node.width ?? DEFAULT_TABLE_NODE_SIZE.w,
+            height: node.height ?? DEFAULT_TABLE_NODE_SIZE.h,
+          },
+          { padding: 0.06, duration: 0 },
+        )
+        return
+      }
+    }
     frameTables(420)
-  }, [frameTables, nodesInitialized, tableNodes.length, drawingRev])
+  }, [
+    frameTables,
+    nodesInitialized,
+    tableNodes,
+    drawingRev,
+    expandedTables,
+    rf,
+  ])
 
   const onFit = useCallback(() => {
     interactedRef.current = true

@@ -51,6 +51,7 @@ export {
   setFocusedTableEntity,
   useFocusedTableEntity,
   useTableNodeExpanded,
+  useExpandedTableNodes,
 } from './tableCanvasState'
 export type { TableNodeSize } from './tableCanvasState'
 

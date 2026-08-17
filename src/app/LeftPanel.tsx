@@ -357,9 +357,6 @@ export function LeftPanel({
           onClick={onOpenDashboard}
         >
           <span className="shell-panel-rules-text">Dashboard</span>
-          <span className="shell-panel-rules-say mono-label">
-            the places in your business
-          </span>
         </button>
       ) : null}
 
@@ -386,23 +383,10 @@ export function LeftPanel({
           stands open as it always did. A control that cannot change
           what you are looking at is worse than no control, and with
           no tables there is nothing under this fold to protect. */}
-      {tables.length > 0 ? (
-        <button
-          type="button"
-          className={`shell-fold shell-fold--action${typesOpen ? ' is-open' : ''}`}
-          aria-expanded={typesOpen}
-          onClick={() => setTypesPref(!typesOpen)}
-        >
-          <CaretRight
-            className="shell-fold-mark"
-            size={ICON_SIZE.tiny}
-            weight="bold"
-            aria-hidden="true"
-          />
-          <span className="shell-fold-say">Add a table</span>
-        </button>
-      ) : null}
-      {typesOpen ? <TableTypeRail /> : null}
+      {/* THE TYPE TRAY MOVED TO THE FOOT OF THE COLUMN — see the end
+          of this file. It is how you make your SECOND table, which is
+          a setup act, and it was standing between the reader and the
+          seventeen tables they use all day. */}
 
       {/* THE DOOR BACK TO A QUOTE, AND IT GOES ABOVE THE TWO RULE
           DOORS — because it is the only one of the three that a
@@ -424,26 +408,36 @@ export function LeftPanel({
           The count is on the door for the same reason the table list
           carries one: a person coming back wants to know whether
           Tuesday's quote is still there before they click. */}
+      {/* THE THREE DOORS ARE ONE GROUP, UNDER ONE HEADING.
+
+          They used to be three bordered cards stacked loose between
+          a button and the table list, each with a second line of
+          prose underneath it — "walk every row, collect the
+          matches", "limits every row must keep", "1 made so far".
+          Read together they are a brochure, and a person looking for
+          their boats had to get past all of it.
+
+          Grouped and unadorned they are what they always were: three
+          places to go. The prose is gone; the count stays on Quotes,
+          because "is Tuesday's quote still there" is the actual
+          question somebody comes back with. */}
+      {(onOpenQuotes && quoteCount > 0) ||
+      (tables.length > 0 && (onOpenFlow || onOpenRules)) ? (
+        <div className="shell-panel-head">
+          <span className="mono-label">Work</span>
+        </div>
+      ) : null}
+
       {onOpenQuotes && quoteCount > 0 ? (
         <button
           type="button"
           className={`shell-panel-rules${quotesOpen ? ' is-open' : ''}`}
-          /* NAMED AND PRESSED EXPLICITLY, like the two below: the
-             label is built from two spans, one of them a 10px
-             uppercase aside, and a reader announcing them run
-             together is not a name. */
-          aria-label="Quotes we have made"
+          aria-label="Quotes"
           aria-pressed={quotesOpen}
           onClick={onOpenQuotes}
         >
-          <span className="shell-panel-rules-text">Quotes we have made</span>
-          {/* The count and nothing more. A sentence that has to read
-              correctly at one AND at forty ends up reading badly at
-              one — "1 document, each with its own date" — so it says
-              the number, which is the fact a person came back for. */}
-          <span className="shell-panel-rules-say mono-label">
-            {quoteCount} made so far
-          </span>
+          <span className="shell-panel-rules-text">Quotes</span>
+          <span className="shell-panel-rules-count">{quoteCount}</span>
         </button>
       ) : null}
 
@@ -472,14 +466,11 @@ export function LeftPanel({
              announcing them run together is not a name — so it is
              stated once, plainly. `aria-pressed` is the honest
              semantic: this is a toggle, not a link. */
-          aria-label="Work out what fits what"
+          aria-label="What fits what"
           aria-pressed={flowOpen}
           onClick={onOpenFlow}
         >
-          <span className="shell-panel-rules-text">Work out what fits what</span>
-          <span className="shell-panel-rules-say mono-label">
-            walk every row, collect the matches
-          </span>
+          <span className="shell-panel-rules-text">What fits what</span>
         </button>
       ) : null}
 
@@ -498,9 +489,6 @@ export function LeftPanel({
           onClick={onOpenRules}
         >
           <span className="shell-panel-rules-text">Business rules</span>
-          <span className="shell-panel-rules-say mono-label">
-            limits every row must keep
-          </span>
         </button>
       ) : null}
 
@@ -669,6 +657,46 @@ export function LeftPanel({
             )
           })}
         </>
+      )}
+
+      {/* THE TYPE TRAY, AT THE FOOT.
+
+          It used to be the second thing in the column, above every
+          table. Measured at 1280x800 with the real file loaded it was
+          370px of a 744px panel — half the column spent on seven
+          chips, standing between the reader and the seventeen tables
+          they use all day.
+
+          Folding it was the previous answer and it was not enough,
+          because the fold still sat in the reading path. Making a
+          table is a SETUP act — you do it on the day you build the
+          model and rarely again — so it belongs where setup belongs,
+          at the bottom, still one press away.
+
+          A DISCLOSURE, so `aria-expanded` and not `aria-pressed`: it
+          reveals the thing underneath it rather than toggling a
+          stage. And on an empty sheet it stands open, because the
+          invitation card on the sheet points straight at it. */}
+      {tables.length > 0 ? (
+        <div className="shell-panel-foot">
+          <button
+            type="button"
+            className={`shell-fold shell-fold--action${typesOpen ? ' is-open' : ''}`}
+            aria-expanded={typesOpen}
+            onClick={() => setTypesPref(!typesOpen)}
+          >
+            <CaretRight
+              className="shell-fold-mark"
+              size={ICON_SIZE.tiny}
+              weight="bold"
+              aria-hidden="true"
+            />
+            <span className="shell-fold-say">Add a table</span>
+          </button>
+          {typesOpen ? <TableTypeRail /> : null}
+        </div>
+      ) : (
+        <TableTypeRail />
       )}
     </nav>
   )
