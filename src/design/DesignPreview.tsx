@@ -56,6 +56,7 @@ import {
   OldFlowCanvas,
   OneDoor,
 } from './FlowSurfaces'
+import { BusyTable, JobsPanel } from './SheetSurfaces'
 
 /* ---------- shared bits ------------------------------------- */
 
@@ -790,6 +791,7 @@ const TOC = [
   ['import', 'Import'],
   ['propose', 'First run'],
   ['flow', 'What fits what'],
+  ['jobs', 'Opening a table'],
   ['nav', 'Navigation'],
   ['caps', 'Capabilities'],
   ['card', 'Cards'],
@@ -1329,6 +1331,53 @@ export function DesignPreview() {
             on the card is the neutral ramp, so 22 cards read as one drawing rather than a colour
             chart. Relationships are drawn as they behave — dashed, unfilled, named by the two
             things they join, and never offered as a module of their own.
+          </div>
+        </Section>
+
+        {/* ---------------- jobs, not tools ---------------- */}
+        <Section
+          id="jobs"
+          title="Opening a table — jobs, not tools"
+          blurb="Counted off one screen with no interaction: 56 columns, 11 section bands with every label truncated, 3 nested grouping levels, and 8 chrome verbs — four of which mean “let me see more of this”. The first data column is UID SYSTEM, reading kb2JYb4GLH. A dealer's first column should not be a machine key."
+        >
+          <div className="pv-ab">
+            <div className="pv-ab-cell">
+              <div className="pv-ab-head">
+                <span className="pv-tag pv-tag--old">Now</span>
+                <span className="pv-ab-note">every band label cut mid-word</span>
+              </div>
+              <BusyTable />
+            </div>
+            <div className="pv-ab-cell">
+              <div className="pv-ab-head">
+                <span className="pv-tag pv-tag--new">Redesign</span>
+                <span className="pv-ab-note">what you can do, in outcomes</span>
+              </div>
+              <JobsPanel />
+            </div>
+          </div>
+
+          <div className="pv-note">
+            <strong>The move is not “fewer features”.</strong> Nothing is taken away — the
+            spreadsheet is the last item on the panel, plainly labelled, and it says so:
+            “every column at once, nothing is hidden from you.” What changes is that a table
+            opens on <em>what you can do with it</em> rather than on every tool it has. Tools
+            are what an app has; jobs are what a person came for.
+          </div>
+          <div className="pv-note">
+            <strong>Every job is derived, never hardcoded.</strong> “Change prices” exists
+            because <code className="ds-mono-sm">priceLevels</code> resolve on this table;
+            “Set what goes with these” because joins reference it; “Fix what's missing”
+            because required cells are empty — and that one is the most useful sentence the
+            panel can say, so it wears the warning rather than hiding. A job that{' '}
+            <em>cannot</em> run is not hidden either: “Add pictures” states that no column is
+            set as the photo column yet, which is the same refusal pattern the capability
+            strip uses.
+          </div>
+          <div className="pv-note">
+            <strong>And the nouns are the dealer's.</strong> “40 boats in 3 series” rather
+            than “29 VARIANTS · 56 COLUMNS · 11 SECTIONS”. The row noun already comes from the
+            table, so a motorcycle shop reads “40 bikes” with no extra work.
           </div>
         </Section>
 

@@ -22,6 +22,7 @@ import './preview.css'
 import './modules.css'
 import './ux.css'
 import './flow.css'
+import './sheet.css'
 import { DesignPreview } from './DesignPreview'
 
 createRoot(document.getElementById('design-root')!).render(

@@ -1,0 +1,357 @@
+/* ============================================================
+   THE TABLE, FOR SOMEBODY WHO DOES NOT THINK IN TABLES
+
+   Counted off docs/screens/x09-final-expanded.png, one screen,
+   no interaction:
+
+     56 columns
+     11 section bands, EVERY ONE truncated — IDEN… 8, DIMENS… 6,
+        CAPA… 5, COST B… 6, MAR… 1, HULL ONLY P… 7, PRE-DEL… 8,
+        REGISTRATION &… 6, MOTOR FI… 4, DEPOSIT SC… 3,
+        FACTORY LEA… 1
+      3 nested grouping levels (BRAND ▸ SERIES ▸ MODEL)
+      8 chrome verbs (COLLAPSE ALL · FIT COLUMNS · + ADD VARIANT
+        · + VARIANT · COLLAPSE · FOCUS · zoom · fit)
+        — four of which mean "let me see more of this"
+      and the FIRST data column is `UID SYSTEM`, reading
+      kb2JYb4GLH
+
+   A dealer's first column should not be a machine key.
+
+   THE MOVE IS NOT "FEWER FEATURES". It is that a table opens on
+   WHAT YOU CAN DO WITH IT, in outcomes, and the spreadsheet is
+   one of those outcomes rather than the front page. Tools are
+   what an app has; jobs are what a person came for.
+
+   Every job below is DERIVED, never hardcoded: "Change prices"
+   exists because priceLevels resolve on this table, "Set what
+   goes with these" because joins reference it, "Fix what's
+   missing" because required cells are empty. A job that cannot
+   run is not hidden — it is shown with the reason, which is the
+   same refusal pattern the capability strip uses.
+   ============================================================ */
+
+/* ---------- the jobs panel ---------------------------------- */
+
+.jobs {
+  max-width: 560px;
+  padding: var(--s-5);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e2);
+}
+
+.jobs-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.jobs-mark {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--jobs-wash, var(--accent-wash));
+  color: var(--jobs-ink, var(--accent));
+}
+.jobs-name {
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  letter-spacing: var(--t-title-track);
+}
+/* THE SUMMARY IS A SENTENCE IN THE DEALER'S NOUNS. Not
+   "29 VARIANTS · 56 COLUMNS · 11 SECTIONS" — the row noun comes
+   from the table, so a bike shop reads "40 bikes". */
+.jobs-sum {
+  margin-top: 2px;
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+  line-height: 1.5;
+}
+.jobs-sum b {
+  color: var(--fg);
+  font-weight: 550;
+}
+
+.jobs-label {
+  margin: var(--s-4) 0 var(--s-2);
+}
+
+.jobs-list {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.job {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-card);
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+.job:hover {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+.job-mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--chip-bg);
+  color: var(--fg-secondary);
+}
+.job:hover .job-mark {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.job-text {
+  flex: 1;
+  min-width: 0;
+}
+.job-title {
+  font-size: var(--t-body-size);
+  font-weight: 540;
+  color: var(--fg);
+  letter-spacing: -0.005em;
+}
+.job-sub {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  line-height: 1.4;
+}
+.job-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+.job-go {
+  flex: none;
+  color: var(--fg-quaternary);
+}
+.job:hover .job-go {
+  color: var(--accent);
+}
+
+/* a job with something wrong behind it wears the warning rather
+   than hiding — "2 boats have no price" is the most useful thing
+   this panel can say */
+.job--attention .job-mark {
+  background: var(--warning-wash);
+  color: var(--warning);
+}
+.job--attention .job-count {
+  color: var(--warning);
+}
+
+/* a job that cannot run says why, in the sentence, where it is */
+.job--refused {
+  cursor: not-allowed;
+}
+.job--refused .job-title,
+.job--refused .job-mark {
+  opacity: 0.55;
+}
+.job--refused .job-sub {
+  color: var(--warning);
+}
+
+/* THE SPREADSHEET IS AN OUTCOME, NOT THE FRONT PAGE — last,
+   plainly labelled, and never removed. Anyone who wants the grid
+   is one click away and nobody is forced through it. */
+.jobs-sheet {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  margin-top: var(--s-4);
+  padding: var(--s-3);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.jobs-sheet:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+.jobs-sheet-text {
+  flex: 1;
+  min-width: 0;
+}
+.jobs-sheet-text b {
+  display: block;
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  color: var(--fg);
+}
+.jobs-sheet-text span {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* ---------- the outgoing toolbar, at true density ------------ */
+
+.busy {
+  background: #fff;
+  border: 1px solid rgba(18, 40, 63, 0.16);
+  border-radius: 3px;
+  /* the mock is genuinely wider than its column — it scrolls inside
+     itself rather than pushing the page, which is the same rule the
+     shell mocks follow. `.busy-bands` keeps its own `overflow:
+     hidden` on purpose: the bands being cut off IS the finding. */
+  overflow-x: auto;
+  color: #12283f;
+  font-family: 'Archivo Variable', sans-serif;
+}
+.busy-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(18, 40, 63, 0.16);
+  background: #eef2f7;
+}
+.busy-btn {
+  height: 24px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(18, 40, 63, 0.22);
+  border-radius: 2px;
+  background: #fff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #12283f;
+}
+.busy-stat {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #5f6c7b;
+}
+.busy-stat b {
+  color: #12283f;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+/* eleven bands, every label cut mid-word — this is what shipped */
+.busy-bands {
+  display: flex;
+  gap: 3px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(18, 40, 63, 0.16);
+  overflow: hidden;
+}
+.busy-band {
+  flex: none;
+  padding: 3px 5px;
+  border: 1px solid rgba(18, 40, 63, 0.16);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: #12283f;
+  white-space: nowrap;
+}
+.busy-cols {
+  display: flex;
+  border-bottom: 1px solid rgba(18, 40, 63, 0.16);
+  background: #f7f9fb;
+}
+.busy-col {
+  padding: 8px 10px;
+  border-right: 1px solid rgba(18, 40, 63, 0.12);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: #12283f;
+  white-space: nowrap;
+}
+.busy-col--uid {
+  background: #eef2f7;
+  color: #5f6c7b;
+}
+.busy-rows {
+  font-size: 10px;
+}
+.busy-row {
+  display: flex;
+  border-bottom: 1px solid rgba(18, 40, 63, 0.1);
+}
+.busy-cell {
+  padding: 7px 10px;
+  border-right: 1px solid rgba(18, 40, 63, 0.1);
+  white-space: nowrap;
+}
+.busy-cell--uid {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: #1d55c4;
+  background: #fbfcfd;
+}
+.busy-group {
+  padding: 5px 10px;
+  background: #f2f6fa;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: #5f6c7b;
+  border-bottom: 1px solid rgba(18, 40, 63, 0.1);
+}
+
+/* ---------- the quieted grid header -------------------------- */
+
+/* the display column leads and is PINNED, always. Audit finding
+   6: scroll right to a price and the product's name leaves the
+   screen, so the number on screen belongs to nothing. */
+.grid-th-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--fg-quaternary);
+}
+.grid-band-rest {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--r-full);
+  border: 1px dashed var(--line-strong);
+  background: transparent;
+  color: var(--fg-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.grid-band-rest:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

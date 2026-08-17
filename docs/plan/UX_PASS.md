@@ -463,3 +463,81 @@ deleted yet, because deleting it is a one-way door and the argument for it is
 "nobody has branched *so far*". Revisit once real usage says whether anyone ever
 does. If in six months the `condition` node still has zero uses outside a
 demo, that is the answer.
+
+
+---
+
+## 12 · OPENING A TABLE — jobs, not tools
+
+Added after the owner said there is *"a lot going on when looking at a table"*
+and worried it is too hard for non-technical users. It is, and the count is
+takeable off a single screenshot with no interaction
+(`docs/screens/x09-final-expanded.png`):
+
+| on one screen | |
+|---|---|
+| columns | **56** |
+| section bands | **11**, every label truncated |
+| nested grouping levels | **3** (BRAND ▸ SERIES ▸ MODEL) |
+| chrome verbs | **8**, four meaning "let me see more of this" |
+| first data column | `UID SYSTEM`, reading `kb2JYb4GLH` |
+
+The eleven band labels as shipped: `IDEN… 8` · `DIMENS… 6` · `CAPA… 5` ·
+`COST B… 6` · `MAR… 1` · `HULL ONLY P… 7` · `PRE-DEL… 8` ·
+`REGISTRATION &… 6` · `MOTOR FI… 4` · `DEPOSIT SC… 3` · `FACTORY LEA… 1`.
+
+**A dealer's first column should not be a machine key.**
+
+### The move is not "fewer features"
+
+Nothing is removed. A table opens on **what you can do with it**, in outcomes,
+and the spreadsheet is the last item on that panel — plainly labelled, and
+saying so: *"every column at once, nothing is hidden from you."*
+
+> Tools are what an app has. Jobs are what a person came for.
+
+```
+  ⛵  Highfield Inflatables
+      40 boats in 3 series. Pictures on 38 of them, and prices are set.
+
+  WHAT DO YOU WANT TO DO?
+      $   Change prices              Cash, trade and hull-only        14
+      +   Add a boat                 One row, filled in as a form
+      🔗  Set what goes with these   Motors, trailers and parts        3
+      ⚠   Fix what's missing         2 have no price, 2 no picture     4
+      ▣   Add pictures               No column is set as the photo    ✗
+
+  ▤  Open the sheet
+     Every column at once, spreadsheet style. Nothing is hidden from you.
+```
+
+### Three properties that keep it honest
+
+1. **Every job is derived, never hardcoded.** *Change prices* exists because
+   `priceLevels` resolve on this table; *Set what goes with these* because joins
+   reference it; *Fix what's missing* because required cells are empty. A table
+   with no prices does not show a price job.
+2. **A job that cannot run says why, where it is.** *Add pictures* states that
+   no column is set as the photo column yet — the same refusal pattern as the
+   capability strip (§5 of the module plan) and the fit sentence (§11).
+3. **The nouns are the dealer's.** "40 boats in 3 series", not "29 VARIANTS ·
+   56 COLUMNS · 11 SECTIONS". The row noun already comes from the table, so a
+   motorcycle shop reads "40 bikes" with no extra work.
+
+### Measured against the outgoing screen
+
+| | now | redesign |
+|---|---|---|
+| things to read before acting | **42** | **18** |
+| truncated labels | **19** | **0** |
+| smallest type | 8px | 11px |
+
+### The grid still gets two fixes
+
+Because *Open the sheet* is a real destination, not a punishment:
+
+- **The display column leads and is pinned** (audit finding 6 — scroll right to
+  a price and the product's name leaves the screen, so the number on screen
+  belongs to nothing).
+- **One band at a time**, with the rest behind a plain "+7 more" — the band
+  strip already exists, it just shows all eleven at once and truncates them all.
