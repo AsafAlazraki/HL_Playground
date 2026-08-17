@@ -867,3 +867,112 @@
     display: none;
   }
 }
+
+/* ============================================================
+   THE PLATE, REDESIGNED — Quiet Precision.
+
+   The rules above are kept and overridden here rather than
+   rewritten, so the plate's behaviour — it is the drag surface,
+   it is the press that walks the camera in, the name clamps
+   inside a flex field that can never push the title block off
+   the foot — is untouched. Only what it looks like changes.
+
+   THE FINDING THIS ANSWERS is written a few rules above in this
+   same file, by the person who built it: at the framing the app
+   chooses when data lands (0.2786), the band chips render at
+   3.06px and the figures at 6.13px. Three pixels is not small
+   text, it is a grey smear, and a sheet of 22 of them is why the
+   canvas conveyed almost nothing.
+
+   The fix is not more type — you cannot win a fight with a 0.28
+   transform by setting 40px. It is FEWER, LARGER THINGS:
+
+     - the bands go. Eleven chips at 3.06px were the smear. They
+       are still on the expanded card and in the register, which
+       is where a person reads them.
+     - the name gets the room they were using, and goes left.
+     - the kind gets a rail and a word, so a table is recognised
+       before its name is read — which is what the centred glyph
+       was for, at a size where a glyph cannot be told apart.
+     - the two figures stay: at this distance "how much is in it"
+       is the one fact worth carrying.
+   ============================================================ */
+
+/* the kind rail — the one place kind colour is allowed to be loud */
+.tb-node--plate::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--tbn-accent);
+  z-index: 1;
+  pointer-events: none;
+}
+/* the accent already reads as the rail, so the top bar is noise */
+.tb-node--plate {
+  border-top-width: 1px;
+  border-top-color: var(--hairline-strong);
+}
+
+.tb-node--plate .tb-lod {
+  align-items: stretch;
+  text-align: left;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3) calc(var(--sp-4) + 3px);
+  background: var(--paper-high);
+}
+.tb-node--plate .tb-lod:hover,
+.tb-node--plate .tb-lod:focus-visible {
+  background: color-mix(in srgb, var(--tbn-accent) 6%, var(--paper-high));
+}
+
+.tb-node--plate .tb-lod-field {
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+  gap: var(--sp-2);
+}
+
+/* the kind mark sits on the name's line, not above it in the middle */
+.tb-node--plate .tb-lod-mark {
+  align-self: flex-start;
+}
+
+.tb-node--plate .tb-lod-name {
+  max-width: none;
+  font-family: var(--font-sans);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: -0.022em;
+  text-align: left;
+}
+
+/* THE SMEAR, REMOVED. 3.06px rendered. Still on the expanded card
+   and in the register — this is a level-of-detail decision, not a
+   deletion. */
+.tb-node--plate .tb-lod-bands {
+  display: none;
+}
+
+.tb-node--plate .tb-lod-block {
+  justify-content: flex-start;
+  gap: var(--sp-5);
+  border-top-color: var(--hairline);
+}
+.tb-node--plate .tb-lod-num {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+.tb-node--plate .tb-lod-unit {
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+/* registration ticks were the drawing-office costume; the rail and
+   the card's own edge say "pinned" without four corner crosses */
+.tb-node--plate .tb-lod-ticks {
+  display: none;
+}
