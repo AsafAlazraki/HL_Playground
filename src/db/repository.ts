@@ -6,6 +6,7 @@ import type {
   RowData,
   RuleDef,
   ViewDef,
+  ModuleDef,
 } from '@/types/model'
 
 /** Everything the UI layer needs from persistence. A future backend
@@ -17,6 +18,7 @@ export interface ProjectSnapshot {
   rules: RuleDef[]
   rows: RowData[]
   views: ViewDef[]
+  modules: ModuleDef[]
 }
 
 export interface ProjectRepository {
@@ -36,20 +38,21 @@ class DexieProjectRepository implements ProjectRepository {
   async load(): Promise<ProjectSnapshot | null> {
     const meta = await db.meta.get('default')
     if (!meta) return null
-    const [entities, groups, rules, rows, views] = await Promise.all([
+    const [entities, groups, rules, rows, views, modules] = await Promise.all([
       db.entities.toArray(),
       db.groups.toArray(),
       db.rules.toArray(),
       db.rows.toArray(),
       db.views.toArray(),
+      db.modules.toArray(),
     ])
-    return { meta, entities, groups, rules, rows, views }
+    return { meta, entities, groups, rules, rows, views, modules }
   }
 
   async saveAll(s: ProjectSnapshot): Promise<void> {
     await db.transaction(
       'rw',
-      [db.meta, db.entities, db.groups, db.rules, db.rows, db.views],
+      [db.meta, db.entities, db.groups, db.rules, db.rows, db.views, db.modules],
       async () => {
         await Promise.all([
           db.meta.clear(),
@@ -58,6 +61,7 @@ class DexieProjectRepository implements ProjectRepository {
           db.rules.clear(),
           db.rows.clear(),
           db.views.clear(),
+          db.modules.clear(),
         ])
         await Promise.all([
           db.meta.put(s.meta),
@@ -66,6 +70,7 @@ class DexieProjectRepository implements ProjectRepository {
           s.rules.length ? db.rules.bulkPut(s.rules) : Promise.resolve(),
           s.rows.length ? db.rows.bulkPut(s.rows) : Promise.resolve(),
           s.views.length ? db.views.bulkPut(s.views) : Promise.resolve(),
+          s.modules.length ? db.modules.bulkPut(s.modules) : Promise.resolve(),
         ])
       },
     )
@@ -74,7 +79,7 @@ class DexieProjectRepository implements ProjectRepository {
   async wipe(): Promise<void> {
     await db.transaction(
       'rw',
-      [db.meta, db.entities, db.groups, db.rules, db.rows, db.views],
+      [db.meta, db.entities, db.groups, db.rules, db.rows, db.views, db.modules],
       async () => {
         await Promise.all([
           db.meta.clear(),
@@ -83,6 +88,7 @@ class DexieProjectRepository implements ProjectRepository {
           db.rules.clear(),
           db.rows.clear(),
           db.views.clear(),
+          db.modules.clear(),
         ])
       },
     )

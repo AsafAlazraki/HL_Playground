@@ -252,6 +252,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
           /* `views` is a v2 store — a project saved before it existed
              loads with none, which is the correct empty state */
           views: Object.fromEntries((snap.views ?? []).map((v) => [v.id, v])),
+          modules: Object.fromEntries((snap.modules ?? []).map((m) => [m.id, m])),
         })
       } else {
         set({ loaded: true, meta: defaultMeta() })
@@ -320,6 +321,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         rules: Object.values(s.rules),
         rows: Object.values(s.rowsByEntity).flat(),
         views: Object.values(s.views),
+        modules: Object.values(s.modules),
       }
     },
 

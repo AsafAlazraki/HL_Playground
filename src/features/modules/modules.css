@@ -173,7 +173,17 @@
   color: var(--ink);
 }
 
+/* CLAMPED AT THREE LINES so a grid of cards stays a grid. The
+   descriptions in the real data are the workbook's own provenance
+   notes and run to forty words; the full sentence is the first
+   thing on the module's own page, so nothing is lost by cutting it
+   here — only the card's height is. */
 .md-card-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
   font-size: var(--ui-size);
   letter-spacing: var(--ui-track);
   line-height: var(--ui-lead);

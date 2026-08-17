@@ -51,17 +51,37 @@ const NO_ROWS: RowData[] = []
 
 export interface ViewStageProps {
   entityId: string
+  /** Which row to open on. Absent = the first one, which is what the
+   *  panel's own door wants: it names a TABLE and nothing more.
+   *  A caller that already knows the row — the module index, where a
+   *  person clicked a specific boat — passes it here rather than
+   *  landing them on someone else's boat. Read once, as the initial
+   *  value: after that the rail owns which row is open, so `key` the
+   *  stage on the row if a new one must replace the old page. */
+  initialRowId?: string
+  /** What the one way back says. It defaults to the sheet because for
+   *  four years that is the only place this stage was opened from; a
+   *  host that opens it from somewhere ELSE — the module stage, where
+   *  the sheet is two more presses out — must not have its back
+   *  button lie about where it goes. */
+  backLabel?: string
   /** Mint a quote from the row on screen and open it. Absent = the
    *  control is not drawn, so this stage still works on its own. */
   onQuote?: (quoteId: string) => void
   onClose: () => void
 }
 
-export function ViewStage({ entityId, onQuote, onClose }: ViewStageProps): ReactElement {
+export function ViewStage({
+  entityId,
+  initialRowId,
+  backLabel = 'Back to the sheet',
+  onQuote,
+  onClose,
+}: ViewStageProps): ReactElement {
   const entity = useProjectStore((s) => s.entities[entityId])
   const rows = useProjectStore((s) => s.rowsByEntity[entityId]) ?? NO_ROWS
 
-  const [wanted, setWanted] = useState<string | null>(null)
+  const [wanted, setWanted] = useState<string | null>(initialRowId ?? null)
   const [query, setQuery] = useState('')
 
   /* The page for this table. Idempotent by contract, so this is safe
@@ -100,7 +120,7 @@ export function ViewStage({ entityId, onQuote, onClose }: ViewStageProps): React
   const back = (
     <button type="button" className="btn shell-view-back" onClick={onClose}>
       <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-      Back to the sheet
+      {backLabel}
     </button>
   )
 

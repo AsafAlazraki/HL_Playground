@@ -73,20 +73,14 @@ const DORMANT = [
       'inspector back, the honest follow-up is to delete this directory, ' +
       'Inspector.tsx and Rails.tsx together, and remove this entry.',
   },
-  {
-    dir: 'src/features/modules',
-    reason:
-      'BUILT AND NOT YET MOUNTED, deliberately and for one build only. The ' +
-      'module dashboard, create panel and index renderer were built to be ' +
-      'mounted by src/app — which a different agent owns in the same slot, so ' +
-      'the two diffs do not collide over Shell.tsx. The feature is finished and ' +
-      'self-contained: `import { Dashboard, NewModuleDialog, ModuleIndex } from ' +
-      '"@/features/modules"` is the whole job, and the header of its index.ts ' +
-      'carries the three lines that mount it. THIS ENTRY MUST BE DELETED THE ' +
-      'MOMENT src/app IMPORTS IT — it is the one kind of exemption this list ' +
-      'was written to distrust, and it is only honest while the wiring is a ' +
-      'known, imminent, separately owned change.',
-  },
+  /* `src/features/modules` was here, exempt for exactly one build
+     while the feature waited on a separately owned diff to Shell.tsx.
+     Its own entry said it must be deleted the moment src/app imported
+     it. src/app/ModuleStage.tsx now does, so it is deleted and the
+     directory is checked like every other one — which is the point:
+     an exemption kept past its cause is a guard that has quietly
+     stopped guarding, and this is the kind of entry the list was
+     written to distrust. */
 ]
 
 /* ---------------------------------------------------------- */

@@ -156,6 +156,10 @@ function Card({
         type="button"
         className="md-card"
         style={style}
+        /* NAMED EXPLICITLY. The card is six spans — a mark, a count, a
+           name, a sentence, a provenance line and a row of verbs — and
+           a reader announcing them run together is not a name. */
+        aria-label={`Open ${module.name}`}
         onClick={() => onOpen(module.id)}
       >
         <span className="md-card-top">
@@ -175,13 +179,21 @@ function Card({
           <span className="md-card-desc">{module.description}</span>
         )}
 
-        <span className="md-card-from mono-label">
-          {master
-            ? tableCount > 1
-              ? `${master.name} + ${tableCount - 1} more`
-              : master.name
-            : 'its table is no longer on the sheet'}
-        </span>
+        {/* WHERE IT COMES FROM, but only when that says something the
+            name does not. A module made from one table and left with
+            the table's own name would otherwise print that name twice,
+            a line apart, which reads as a rendering fault. */}
+        {!master ? (
+          <span className="md-card-from mono-label">
+            its table is no longer on the sheet
+          </span>
+        ) : tableCount > 1 ? (
+          <span className="md-card-from mono-label">
+            {master.name} + {tableCount - 1} more
+          </span>
+        ) : master.name === module.name ? null : (
+          <span className="md-card-from mono-label">{master.name}</span>
+        )}
 
         {/* THE VERBS, AS WORDS. Read from the model's own labels, so a
             capability added there appears here without this file

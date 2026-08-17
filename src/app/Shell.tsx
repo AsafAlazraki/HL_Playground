@@ -81,26 +81,41 @@ import { RulesStage } from './RulesStage'
 import { DesignStage } from './DesignStage'
 import { FlowStage } from './FlowStage'
 import { QuoteStage } from './QuoteStage'
+import { ModuleStage } from './ModuleStage'
 import { useQuotes } from '@/features/quote'
 import { useViewPersistence } from './viewPersistence'
 import './shell.css'
 
 /** Everything that can cover the sheet. Two of them name a table, two
- *  are about the whole drawing, and the fifth names a document. There
- *  is never more than one.
+ *  are about the whole drawing, the fifth names a document and the
+ *  sixth names a place in the business. There is never more than one.
  *
  *  The quote stage carries `quoteId: null` for the LIST rather than
  *  being two stage kinds. A list and the thing it opens are one place
  *  a person is, and splitting them would make "back to all quotes"
  *  close a stage and open another — which unmounts the box, drops the
  *  scroll, and re-runs the fade every time somebody compares two
- *  documents. */
+ *  documents.
+ *
+ *  The module stage carries `moduleId: null` for the DASHBOARD of
+ *  them, for exactly that reason and no other. It carries no ROW: the
+ *  item a person is reading inside a module is a position inside that
+ *  module, the way the open row is a position inside the view stage,
+ *  and it lives there. One fact per stage is what keeps this a union
+ *  rather than a truth table.
+ *
+ *  THE DASHBOARD IS A STAGE, NOT THE HOME. The plan asks whether it
+ *  should replace the blueprint as the front door (§11, open question
+ *  1) and nobody has answered; until somebody does, it opens the way
+ *  the other five open — over the sheet, which keeps its zoom and its
+ *  nodes underneath and is one press away. */
 type Stage =
   | { kind: 'view'; entityId: string }
   | { kind: 'design'; entityId: string }
   | { kind: 'rules' }
   | { kind: 'flow' }
   | { kind: 'quote'; quoteId: string | null }
+  | { kind: 'module'; moduleId: string | null }
 
 export function Shell() {
   const org = useProjectStore((s) => s.meta.org)
@@ -181,6 +196,8 @@ export function Shell() {
         {/* Every door hands the panel one value back. Nothing has to be
             cleared on the way in, because there is only one slot. */}
         <LeftPanel
+          onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
+          dashboardOpen={open?.kind === 'module'}
           onOpenView={(id) => setStage({ kind: 'view', entityId: id })}
           onOpenDesign={(id) => setStage({ kind: 'design', entityId: id })}
           onOpenRules={() => setStage({ kind: 'rules' })}
@@ -268,6 +285,33 @@ export function Shell() {
             <QuoteStage
               quoteId={open.quoteId}
               onOpen={(quoteId) => setStage({ kind: 'quote', quoteId })}
+              onClose={() => setStage(null)}
+            />
+          ) : open?.kind === 'module' ? (
+            /* NOT KEYED ON THE MODULE ID, for the quote stage's reason:
+               the dashboard and the modules on it are one place a
+               person moves around inside, and remounting the box on
+               every hop would drop the dashboard's scroll between two
+               modules being compared — and re-run the fade each time.
+               The stage clears its own open item when the module under
+               it changes, which is the only state a hop must not carry.
+
+               A DELETED MODULE IS NOT RESOLVED HERE, unlike the two
+               stages that name a table. Those close outright, because
+               a view of a struck-off table is a white rectangle with a
+               back button in it. A module stage always has somewhere
+               to stand — the dashboard — so it falls back to that
+               itself, and the door in the panel stays lit because the
+               person is still, truthfully, in the module system. */
+            <ModuleStage
+              moduleId={open.moduleId}
+              onOpen={(moduleId) => setStage({ kind: 'module', moduleId })}
+              /* THE ONE WAY IN IS UNCHANGED. Quoting from a module's
+                 item page is the view page's own control, so it hands
+                 back the same new document id and lands on the same
+                 stage as quoting from the panel's door does. Two ways
+                 to reach a boat must not become two kinds of quote. */
+              onQuote={(quoteId) => setStage({ kind: 'quote', quoteId })}
               onClose={() => setStage(null)}
             />
           ) : null}

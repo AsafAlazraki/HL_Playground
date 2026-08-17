@@ -85,6 +85,12 @@ interface PanelGroup {
 }
 
 export interface LeftPanelProps {
+  /** open the dashboard — the places in the business, and the way to
+   *  make one. Absent = the door is not drawn, so this panel still
+   *  works for a host that has no module system. */
+  onOpenDashboard?: () => void
+  /** whether that stage is open, so the door can say so */
+  dashboardOpen?: boolean
   /** open the "what goes with this?" page for a table */
   onOpenView: (entityId: string) => void
   /** open the column setup for a table */
@@ -111,6 +117,8 @@ export interface LeftPanelProps {
 }
 
 export function LeftPanel({
+  onOpenDashboard,
+  dashboardOpen = false,
   onOpenView,
   onOpenDesign,
   openViewEntityId = null,
@@ -208,6 +216,45 @@ export function LeftPanel({
 
   return (
     <nav className="shell-panel" aria-label="Tables">
+      {/* THE FRONT DOOR, AND IT IS THE FIRST THING IN THE COLUMN.
+
+          Every other door here is about the sheet — a rule written
+          about it, a walk over it, a document made from a row of it.
+          This one is about the BUSINESS: the places in it, and what
+          people are allowed to do when they are standing in one. It
+          is what a stakeholder is shown first, so it is what the
+          panel offers first, above the type rail and above both rule
+          doors.
+
+          IT IS ALWAYS DRAWN, unlike the quote door beside it. That
+          one waits for a quote to exist because a quote is made
+          somewhere else and a door onto an empty list teaches people
+          the panel has nothing for them. This door is the only way to
+          make the thing behind it, so hiding it until one exists
+          would hide it forever.
+
+          IT DOES NOT REPLACE THE SHEET. Whether the dashboard becomes
+          the app's home is open question 1 in the plan and nobody has
+          answered it; a door is the honest shape until somebody does.
+
+          NAMED AND PRESSED EXPLICITLY, like every door below it: the
+          label is two spans, one of them a 10px uppercase aside, and
+          a reader announcing them run together is not a name. */}
+      {onOpenDashboard ? (
+        <button
+          type="button"
+          className={`shell-panel-rules is-front${dashboardOpen ? ' is-open' : ''}`}
+          aria-label="Dashboard"
+          aria-pressed={dashboardOpen}
+          onClick={onOpenDashboard}
+        >
+          <span className="shell-panel-rules-text">Dashboard</span>
+          <span className="shell-panel-rules-say mono-label">
+            the places in your business
+          </span>
+        </button>
+      ) : null}
+
       <TableTypeRail />
 
       {/* THE DOOR BACK TO A QUOTE, AND IT GOES ABOVE THE TWO RULE

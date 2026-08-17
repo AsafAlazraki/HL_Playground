@@ -314,6 +314,12 @@ export function NewModuleDialog({
                             }
                             className={`md-pick-row${isPicked ? ' is-picked' : ''}`}
                             style={{ '--row-accent': accentVar(e.accent) } as CSSProperties}
+                            /* NAMED AND PRESSED EXPLICITLY, the same
+                               line the left panel's rows carry: the
+                               label is two spans, one of them a 10px
+                               aside, and a reader announcing them run
+                               together is not a name. */
+                            aria-label={`Make a module about ${e.name}`}
                             aria-pressed={isPicked}
                             onClick={() => pick(e)}
                           >
@@ -398,6 +404,11 @@ export function NewModuleDialog({
                             <label className="md-sib">
                               <input
                                 type="checkbox"
+                                /* the row count beside the name is a
+                                   mono aside, so the box states which
+                                   table it is rather than reading
+                                   "ePropulsion Outboards 14" */
+                                aria-label={`Include ${s.name}`}
                                 checked={alsoIds.includes(s.id)}
                                 onChange={() => toggleSibling(s.id)}
                               />

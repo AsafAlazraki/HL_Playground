@@ -431,6 +431,32 @@
   color: var(--ink-soft);
 }
 
+/* THE FRONT DOOR — the same door, standing first.
+
+   It is the panel's first child, so it has nothing above it to take
+   its top margin from: without the line below it sits hard against
+   the masthead's hairline and reads as part of the chrome rather
+   than as something to press. The bottom margin and the rule under
+   it are the seam between what this app IS ABOUT (the places in the
+   business) and what it is MADE OF (the sheet, and the doors onto
+   it) — one hairline, because that is what this house uses to say
+   "different subject" and nothing louder is needed. */
+.shell-panel-rules.is-front {
+  /* the seam below is drawn as this door's own ::after, so the box it
+     hangs off has to be the positioned one */
+  position: relative;
+  margin-top: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.shell-panel-rules.is-front::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--sp-4) / -2);
+  border-bottom: 1px solid var(--hairline);
+}
+
 .shell-panel-head {
   display: flex;
   align-items: baseline;
@@ -1283,6 +1309,32 @@
 }
 
 /* ============================================================
+   THE MODULE STAGE — the box around `@/features/modules`.
+
+   The sixth stage, and it declares exactly ONE rule, because it
+   reuses `.shell-viewstage`, `.shell-view-bar`, `.shell-view-what`
+   and `.shell-quote-acts` outright. Six stages that look different
+   from each other is six stages a person has to learn.
+
+   `overflow: hidden` AND NOT `auto`, which is the one place this
+   parts company with the quote well above. The dashboard and the
+   index are both `height: 100%; overflow: auto` in the feature's own
+   stylesheet, so they scroll themselves; a second scroller here
+   would nest a scrollbar inside a scrollbar and strand the sticky
+   brand heads of a seven-table index halfway down an outer scroll
+   nobody meant to move. The two `min-*: 0` lines are the same flex
+   fix the rest of this file carries: without them a 174-tile index
+   sets the flex item's floor to its own content height and pushes
+   the bar off the top of the stage.
+   ============================================================ */
+.shell-module-well {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ============================================================
    PRINTING — the shell gets out of the way, and nothing else.
 
    No PDF library anywhere in this feature. The browser's own
@@ -1307,7 +1359,11 @@
   .shell-body,
   .shell-stage,
   .shell-viewstage,
-  .shell-quote-well {
+  .shell-quote-well,
+  /* an index is a catalogue and somebody will print one; without
+     this line it prints as exactly one clipped page, the same way
+     the quote did before its line was added */
+  .shell-module-well {
     height: auto;
     min-height: 0;
     max-height: none;
