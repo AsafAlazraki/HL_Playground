@@ -890,3 +890,67 @@
     -webkit-print-color-adjust: exact;
   }
 }
+
+/* ============================================================
+   QUIET PRECISION - the quote document
+
+   Appended, not rewritten. Every rule above still applies; these
+   override APPEARANCE only. Nothing here changes a selector's
+   meaning, a layout mode, or a behaviour - which is why it could
+   be done without reading the interaction code.
+   ============================================================ */
+
+/* A QUOTE IS PAPER. It is the only thing in this product that a
+   customer ever sees, and it prints - so it gets document
+   proportions, not form proportions. */
+.qt-doc {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--e3);
+}
+.qt-doc-org {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.qt-doc-name {
+  font-family: var(--font-ui);
+  font-size: 30px;
+  font-weight: 620;
+  line-height: 1.12;
+  letter-spacing: -0.024em;
+  color: var(--ink);
+}
+.qt-doc-head {
+  border-bottom: 1px solid var(--hairline-strong);
+}
+.qt-doc-sec {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.qt-doc-line-name {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* every figure is mono and tabular, so a column of money lines up
+   on the decimal - which is the entire reason a quote is legible */
+.qt-col-amt,
+.qt-col-qty,
+.qt-doc-spec-val {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.qt-col-amt {
+  font-size: 15px;
+  text-align: right;
+  color: var(--ink);
+}
+
+/* THE TOTAL is the one moment on the page that raises its voice */
+.qt-doc-foot {
+  border-top: 2px solid var(--ink);
+}

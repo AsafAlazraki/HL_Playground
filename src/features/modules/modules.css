@@ -1401,3 +1401,156 @@
     width: 100%;
   }
 }
+
+/* ============================================================
+   QUIET PRECISION - the dashboard and the index
+
+   Appended, not rewritten. Every rule above still applies; these
+   override APPEARANCE only. Nothing here changes a selector's
+   meaning, a layout mode, or a behaviour - which is why it could
+   be done without reading the interaction code.
+   ============================================================ */
+
+/* MODULE CARDS. Name, description, what it is about, and the
+   capability verbs AS WORDS - a card should say what can be done
+   in there without being opened. */
+.md-card {
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--ec1);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft),
+    transform var(--t-med) var(--ease-draft);
+}
+.md-card:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--ec3);
+  transform: translateY(-1px);
+}
+.md-card:active {
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1);
+}
+.md-card-name {
+  font-size: 15px;
+  font-weight: 570;
+  letter-spacing: -0.009em;
+  text-transform: none;
+  color: var(--ink);
+}
+.md-card-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+.md-card-count {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.md-card-from {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+/* Writing verbs are tinted by the component; everything a verb
+   chip needs from here is to stop being a stamp. */
+.md-verb {
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* THE INDEX TILE. A catalogue without pictures is a spreadsheet -
+   and a tile with NO picture says nothing about a picture. It
+   shows the row label and stops, because a broken-image glyph in
+   front of a customer is worse than a plain name. */
+.md-tile {
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--ec1);
+  overflow: hidden;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft),
+    transform var(--t-med) var(--ease-draft);
+}
+.md-tile:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--ec3);
+  transform: translateY(-2px);
+}
+.md-tile:active {
+  transform: translateY(0) scale(0.994);
+}
+.md-tile-name {
+  font-size: 13px;
+  font-weight: 540;
+  line-height: 1.35;
+  letter-spacing: -0.003em;
+  text-transform: none;
+  color: var(--ink);
+}
+.md-tile-price {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.md-tile-pic {
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.md-sec-name {
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -0.003em;
+  text-transform: none;
+  color: var(--ink);
+}
+.md-sec-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* A CAPABILITY THAT CANNOT BE TURNED ON SAYS WHAT IS MISSING -
+   ConstraintDef.because, applied to a switch. The reason belongs
+   where the switch is, in a sentence. */
+.md-cap-label {
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: -0.003em;
+  text-transform: none;
+  color: var(--ink);
+}
+.md-cap-note,
+.md-cap-says,
+.md-cap-why {
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+/* bound / unmapped, said where the block stands */
+.md-bind-unmapped,
+.md-bound-word {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

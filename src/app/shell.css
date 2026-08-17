@@ -2072,3 +2072,119 @@
   color: var(--red);
   border-color: var(--red);
 }
+
+/* ============================================================
+   QUIET PRECISION - the panel and masthead
+
+   Appended, not rewritten. Every rule above still applies; these
+   override APPEARANCE only. Nothing here changes a selector's
+   meaning, a layout mode, or a behaviour - which is why it could
+   be done without reading the interaction code.
+   ============================================================ */
+
+/* THE MASTHEAD stops being a title block. One line, one weight. */
+.shell-masthead {
+  background: var(--paper-high);
+  border-bottom: 1px solid var(--hairline);
+}
+.shell-mark-brand {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.shell-mark-product {
+  font-size: 15px;
+  font-weight: 570;
+  letter-spacing: -0.009em;
+  text-transform: none;
+  color: var(--ink);
+}
+.shell-org-name {
+  font-size: 15px;
+  font-weight: 560;
+  letter-spacing: -0.009em;
+  text-transform: none;
+}
+.shell-org-industry {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+/* THE GROUP HEADING is the one uppercase style in the system. */
+.shell-grp-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.shell-grp-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+}
+
+/* A TABLE ROW IS A NAV ROW, NOT A STAMP. It was uppercase at 640
+   weight with letterspacing - a shout repeated 24 times down one
+   column. Sentence case, one weight, and the name is allowed to
+   be the loudest thing on its own row. */
+.shell-tbl {
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 460;
+  letter-spacing: -0.002em;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+.shell-tbl:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+.shell-tbl.is-front {
+  background: var(--blue-wash);
+  color: var(--ink);
+  font-weight: 540;
+}
+
+/* THE DOORS were ad copy in a bordered card - a headline over a
+   shouted mono subtitle, three of them stacked. They become nav
+   rows: one line, one weight, state visible without reading a
+   caption. */
+.shell-panel-rules {
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.shell-panel-rules:hover {
+  background: var(--paper-sunken);
+  border-color: var(--hairline);
+}
+.shell-panel-rules.is-front {
+  background: var(--blue-wash);
+  border-color: transparent;
+}
+.shell-panel-rules-text {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  color: var(--ink);
+}
+.shell-panel-rules-say {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+/* names get their case back - see the note in table.css */
+.shell-tbl-name {
+  text-transform: none;
+  font-size: 13px;
+  font-weight: 460;
+  letter-spacing: -0.003em;
+}

@@ -2891,3 +2891,131 @@ body.tb-resizing {
   outline-offset: 1px;
   opacity: 1;
 }
+
+/* ============================================================
+   QUIET PRECISION - the grid
+
+   Appended, not rewritten. Every rule above still applies; these
+   override APPEARANCE only. Nothing here changes a selector's
+   meaning, a layout mode, or a behaviour - which is why it could
+   be done without reading the interaction code.
+   ============================================================ */
+
+/* BANDS ARE PILLS AND ARE NEVER TRUNCATED. The outgoing build
+   shipped IDEN... 8, DIMENS... 6 and CAPA... 5 as final. A label
+   cut mid-word is a bug, not a density strategy - so the strip
+   scrolls and every name stays whole. */
+.tb-bands,
+.tb-bands-pick {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.tb-band-name,
+.tb-bandpick {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+.tb-bandpick {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+.tb-bandpick:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+.tb-bandpick-on {
+  background: var(--blue-wash);
+  border-color: var(--blue-wash-strong);
+  color: var(--ink);
+}
+
+/* COLUMN HEADINGS read as words, not stamps. */
+.tb-th-name {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 580;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* THE TYPE CHIP lost its eight colours in the bridge; here it
+   loses its weight too. It is metadata about a column and has no
+   business competing with the column's name. */
+.tb-chip,
+.tb-chip-key {
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* ROWS GET AIR. The grid was tighter than a spreadsheet while
+   claiming to be easier than one. */
+.tb-row {
+  min-height: 40px;
+}
+.tb-cell {
+  font-size: 13px;
+}
+
+/* THE SYSTEM COLUMN stops leading, but NOT by going quieter than
+   the floor. --ink-faint measures 4.72:1 on white and 4.26:1 over
+   this cell alpha-tint, which fails - and a UID is data, however
+   unimportant. It keeps --ink-soft (7.5:1); what makes it recede
+   is the mono face and the tint behind it, not a fainter ink. */
+.tb-cell-sys,
+.tb-sys {
+  color: var(--ink-soft);
+}
+
+
+/* ============================================================
+   UPPERCASE IS A LABEL STYLE, NEVER A NAME STYLE.
+
+   The outgoing build uppercased the things a person reads FOR
+   THEIR CONTENT: the table name on every card (52 of them), the
+   group value on every band (128), and the table name in the
+   panel (24). That is lossy, not loud - a proper noun uppercased
+   loses its word-shape, and a VALUE uppercased cannot be told
+   from a value that was typed that way. "PVC" and "Pvc" are
+   different facts about a dealer's data.
+
+   Uppercase survives on LABELS - the band caption, the group
+   caption, the mono stamp - which is the one style the system
+   allows. Names and values get their own case back.
+   ============================================================ */
+.tb-node-name,
+.tb-grp-name,
+.shell-tbl-name,
+.tb-addbtn-text {
+  text-transform: none;
+  letter-spacing: -0.003em;
+}
+.tb-node-name {
+  font-size: 13px;
+  font-weight: 560;
+}
+.tb-grp-name {
+  font-weight: 560;
+}
+.shell-tbl-name {
+  font-size: 13px;
+  font-weight: 460;
+}
+.tb-addbtn-text {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+}
