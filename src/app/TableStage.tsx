@@ -130,7 +130,15 @@ export function TableStage({
               className="shell-table-door"
               onClick={() => onOpenView(entityId)}
             >
-              What goes with each one
+              {/* NOT "What goes with each one". A place is named with a
+                  noun that says what is on the screen — never a question
+                  — which is the rule commit 4c4a3e2 set when it renamed
+                  "What fits what" to Fitment on the bar. This button
+                  opens that same thing and was left behind, so the bar
+                  and the button disagreed. The owner's report was the
+                  plainest possible evidence: "I don't get the what goes
+                  with each one that is just confusing". */}
+              Fitment
             </button>
           ) : null}
           {onOpenDesign ? (

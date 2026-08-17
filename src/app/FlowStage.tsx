@@ -143,7 +143,7 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
     <div
       className="shell-viewstage shell-flowstage"
       role="region"
-      aria-label="What fits what"
+      aria-label="Fitment"
       /* see the header note — the sheet's Delete handler is still live
          under this stage and would take a whole table with it */
       onKeyDown={(e) => e.stopPropagation()}
@@ -154,7 +154,11 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
           Back to the sheet
         </button>
         <p className="shell-view-what">
-          <span className="shell-view-what-name">What fits what</span>
+          {/* Fitment, not "What fits what" — commit 4c4a3e2's rule: a
+              place is a noun naming what is on the screen, never a
+              question. The bar was renamed and the stages it opens
+              were not, so the two disagreed. */}
+          <span className="shell-view-what-name">Fitment</span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>
