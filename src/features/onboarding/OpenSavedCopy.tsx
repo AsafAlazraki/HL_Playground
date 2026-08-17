@@ -152,8 +152,18 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
                   <span className="ob-stat-lbl">Rows</span>
                 </div>
               </div>
-              {also.length > 0 && <div className="ob-plate-also">ALSO — {also.join(' · ')}</div>}
-              <div className="ob-plate-also">SOURCE — {pending.fileName}</div>
+              {/* SENTENCE CASE, IN THE MARKUP. These two read "ALSO —"
+                  and "SOURCE —" as literal capitals, which no
+                  `text-transform` pass could have caught — and the
+                  second one names the FILE the person just chose, so
+                  their `Boats-Feb.json` came back as `BOATS-FEB.JSON`.
+                  A file name is a value. The io panel's own copy of
+                  this plate (`.io-plate-also`, `.io-plate-src`) was
+                  corrected to "Also —" / "Source —" by the pass at
+                  io.css:770 and this one was missed, so the same plate
+                  was drawn two ways one screen apart. */}
+              {also.length > 0 && <div className="ob-plate-also">Also — {also.join(' · ')}</div>}
+              <div className="ob-plate-also">Source — {pending.fileName}</div>
             </div>
 
             <button

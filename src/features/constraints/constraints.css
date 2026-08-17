@@ -1437,3 +1437,35 @@
   letter-spacing: 0.01em;
   text-transform: none;
 }
+
+/* ============================================================
+   AND `.cn-done`, WHICH THE PASS ABOVE DID NOT LIST.
+
+   The note above walked the uppercase on this surface and ruled on
+   every caption and stamp it found. It did not name `.cn-done`, and
+   `.cn-done` is not a caption or a stamp — it is a BUTTON with a word
+   on it, which DESIGN_CONTRACT §3 names as one of the four things
+   uppercase may never touch, and the §11 checklist repeats. The
+   markup says `Done` (RuleCard.tsx:97); the stylesheet was shouting
+   it as `DONE` at 11px mono with +0.14em.
+
+   It reads wrong as well as breaking the rule. It is the quietest
+   act on the card — fold this rule's editor shut again — sitting in
+   a footer beside 11px metadata, and it was the loudest thing in the
+   card. The word goes back to the app's chrome voice, the same one
+   `Add rule` and `Keep it` use.
+
+   Everything the pass above deliberately kept is untouched. The one
+   call worth a second look is `.cn-meta`: "15 rows break this · 7
+   tables" is a clause with a verb in it rather than a stamp, and
+   uppercase on a sentence is forbidden by the same paragraph — but
+   it was ruled on explicitly and reversing that is a design decision
+   with an owner, not a fix, so it is left as it is and written down
+   here instead.
+   ============================================================ */
+.cn-done {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  letter-spacing: 0;
+  text-transform: none;
+}

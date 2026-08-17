@@ -13,6 +13,17 @@
    The grid resolves a keydown to a GridCommand via core's pure
    `resolveKey`; this hook performs it. Nothing here re-implements
    selection geometry, key bindings, TSV or coercion.
+
+   AND FOUR OF ITS NOTES NOW OFFER THE WAY BACK. Rule 9 says an
+   undoable act gets a toast with UNDO; the Fitment stage's toasts
+   have offered it since the last four `window.confirm` calls came
+   out, and the register's did not — measured, `Ctrl+D` said "2 cells
+   filled" with a dismiss cross and nothing else. Every act that
+   OVERWRITES OR REMOVES a value goes through `offerUndo` now (clear,
+   paste, fill-right, fill-down); copy, cut's clipboard half and every
+   refusal do not, because there is nothing there to take back. The
+   pin lives in `@/store/notes` and is shared with the bus, so the
+   button cannot revert the wrong act — see the note on it.
    ============================================================ */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, RefObject } from 'react'
@@ -31,7 +42,8 @@ import {
   type NormalRange,
 } from '@/features/table/core'
 import type { TableData } from './useTableData'
-import type { ToastTone } from './Toasts'
+import type { PushToast } from './Toasts'
+import { offerUndo } from '@/store/notes'
 import {
   ORIGIN,
   cellText,
@@ -122,7 +134,7 @@ export interface SheetCommands {
 export function useSheetCommands(
   entityId: string,
   data: TableData,
-  pushToast: (text: string, tone?: ToastTone) => void,
+  pushToast: PushToast,
   /** the columns this table is FILED under, outermost first. A row a
    *  paste creates past the last one inherits them from the row it
    *  follows, so a block pasted at the foot of a drawer stays in that
@@ -440,7 +452,7 @@ export function useSheetCommands(
         cleared += 1
       }
     }
-    if (cleared > 0) pushToast(`${plural(cleared, 'cell', 'cells')} cleared`)
+    if (cleared > 0) offerUndo(pushToast, `${plural(cleared, 'cell', 'cells')} cleared`)
   }, [sel, fields, rowIdAt, rowById, entityId, updateCell, clearMark, pushToast])
 
   const blockText = useCallback(
@@ -588,7 +600,7 @@ export function useSheetCommands(
       if (readOnly > 0) parts.push(`${readOnly} calculated`)
       if (locked > 0) parts.push(`${locked} system`)
       if (pictures > 0) parts.push(`${pictures} pictures`)
-      pushToast(parts.join(' · '), skipped > 0 ? 'warn' : 'info')
+      offerUndo(pushToast, parts.join(' · '), skipped > 0 ? 'warn' : 'info')
     },
     [
       colCount,
@@ -676,7 +688,7 @@ export function useSheetCommands(
           },
         ],
       }))
-      pushToast(`${plural(written, 'cell', 'cells')} filled`)
+      offerUndo(pushToast, `${plural(written, 'cell', 'cells')} filled`)
     },
     [
       sel,
@@ -749,7 +761,7 @@ export function useSheetCommands(
           e.preventDefault()
           const n = normalizeRange(cmd.range)
           const written = fillDownFrom(n, n.r0 + 1, n.r1)
-          if (written > 0) pushToast(`${plural(written, 'cell', 'cells')} filled`)
+          if (written > 0) offerUndo(pushToast, `${plural(written, 'cell', 'cells')} filled`)
           return
         }
         case 'select-all':

@@ -106,6 +106,16 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
   const rules = useProjectStore((s) => s.rules)
   const activeRuleId = useProjectStore((s) => s.activeRuleId)
 
+  /* WHAT THE MIDDLE OF THIS PAGE IS ALLOWED TO ASK FOR.
+     The void said "Pick a rule on the left … or draft a new one" in
+     every state, and on a cleared install neither is possible: with no
+     tables `RulesList` draws no rule list and no + NEW RULE at all,
+     because a rule always walks the rows of one table. An instruction
+     naming two controls that are not on the screen leaves a person
+     concluding the feature is broken rather than empty. */
+  const entityCount = useProjectStore((s) => Object.keys(s.entities).length)
+  const ruleCount = Object.keys(rules).length
+
   /* NEVER TRUST THE REMEMBERED ID. `deleteRule` and `replaceProject`
      leave `activeRuleId` set; only the list and the demo loader clear
      it, so an import through `features/io` would hand this stage an id
@@ -202,8 +212,26 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
         ) : (
           <div className="shell-flow-void">
             <p className="shell-view-void">
-              Pick a rule on the left to see how it works out its answer, or draft
-              a new one.
+              {entityCount === 0 ? (
+                /* the step that has to happen first, named where it can
+                   be pressed — the rail beside this is empty for the
+                   same reason and says so in its own words */
+                <>
+                  A rule walks every row of one table, and there are no tables yet.
+                  Start one from <b>New table</b> on the bar, or load your price file
+                  from <b>Home</b>.
+                </>
+              ) : ruleCount === 0 ? (
+                <>
+                  No rules yet. Press <b>+ New rule</b> on the left and pick the table
+                  it walks — the drawing of how it reaches its answer appears here.
+                </>
+              ) : (
+                <>
+                  Pick a rule on the left to see how it works out its answer, or draft
+                  a new one.
+                </>
+              )}
             </p>
             {/* NAME THE OTHER SURFACE — the mirror of the line in
                 RulesPane. A rule here DERIVES a list; a rule there states

@@ -18,7 +18,7 @@
    ============================================================ */
 
 import { useProjectStore } from '@/store/useProjectStore'
-import { loadNorthsideProject } from './northside'
+import { buildNorthsideProject, loadNorthsideProject } from './northside'
 import { forgetSeedStamp } from './seedStamp'
 
 export interface DemoSet {
@@ -45,6 +45,23 @@ export interface DemoSet {
    *  no document behind the set. */
   file?: string
   load(): void
+  /**
+   * HOW MUCH LANDS, COUNTED FROM THE SET RATHER THAN WRITTEN BY HAND.
+   *
+   * A door that says "load the price file" and nothing else asks a
+   * person to press a button that replaces their whole sheet without
+   * telling them what arrives. The number matters most on the first
+   * screen anybody sees, which is exactly where a hand-typed "52
+   * tables, 3,566 rows" would go stale the first time the seed changed
+   * and nobody remembered — the same trap `northsideSeedFingerprint`
+   * exists to avoid, and it is solved the same way: derive it.
+   *
+   * It BUILDS the set to count it, so it is not free — roughly one
+   * `buildNorthsideProject()`. Call it once, behind a `useMemo`, on a
+   * surface that is actually drawing the offer. Undefined on a set with
+   * nothing in it: the blank sheet's own name says how much it holds.
+   */
+  holds?: () => { tables: number; rows: number }
 }
 
 /** A clean sheet — nothing on the canvas, nothing in the data. */
@@ -69,6 +86,12 @@ export const DEMOS: DemoSet[] = [
     business: 'Northside Marine',
     file: 'Master Price File',
     load: loadNorthsideProject,
+    holds: () => {
+      const p = buildNorthsideProject()
+      let rows = 0
+      for (const list of Object.values(p.rowsByEntity)) rows += list.length
+      return { tables: p.entities.length, rows }
+    },
   },
   {
     id: 'blank',

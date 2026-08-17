@@ -20,6 +20,7 @@
 import type { ReactElement } from 'react'
 import { ArrowUUpLeft, Printer } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
+import { localDay } from './day'
 import { QuoteDocument } from './QuoteDocument'
 import { QuoteEditor } from './QuoteEditor'
 import { makeNewVersion, useQuote } from './quotes'
@@ -30,6 +31,13 @@ export interface QuotePageProps {
   /** the stage's navigation — used when a new version is made */
   onOpenQuote?: (quoteId: string) => void
 }
+
+/* THE DAY IS READ IN THE DEALER'S OWN CALENDAR, not UTC. This banner
+   used to take `.slice(0, 10)` off `issuedAt` and so disagreed with
+   the document's own DATE plate and with the reference by a day, every
+   morning, in any zone ahead of UTC. `localDay` carries the whole
+   measurement — and the quotes list had the same fault, which is why
+   it is one shared function and not two. */
 
 export function QuotePage({ quoteId, onOpenQuote }: QuotePageProps): ReactElement {
   const quote = useQuote(quoteId)
@@ -70,7 +78,7 @@ export function QuotePage({ quoteId, onOpenQuote }: QuotePageProps): ReactElemen
       <div className="qt-issued-head">
         <div className="qt-issued-bar">
           <p className="qt-issued-say mono-label">
-            Given to the customer{quote.issuedAt ? ` · ${quote.issuedAt.slice(0, 10)}` : ''}
+            Given to the customer{quote.issuedAt ? ` · ${localDay(quote.issuedAt)}` : ''}
           </p>
           <button type="button" className="btn" onClick={() => window.print()}>
             <Printer size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />

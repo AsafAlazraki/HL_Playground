@@ -131,6 +131,14 @@ export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNo
 export interface StageHandlers {
   openWin: (s: Stage) => void
   close: () => void
+  /** Put the new-table dialog up.
+   *
+   *  THE SHELL OWNS THAT DIALOG for both ways in — the dock's NEW TABLE
+   *  and a type dropped on the sheet — and Home's first screen is the
+   *  third. It is a call upward rather than a dialog of Home's own,
+   *  because two NewTableDialogs is two answers to "what structure?"
+   *  (`EmptyState` records the same reasoning for the invitation). */
+  newTable: () => void
 }
 
 /** What a window draws. Every stage is mounted exactly as it was —
@@ -138,7 +146,12 @@ export interface StageHandlers {
 export function renderStage(s: Stage, h: StageHandlers): ReactNode {
   switch (s.kind) {
     case 'home':
-      return <HomeStage onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })} />
+      return (
+        <HomeStage
+          onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
+          onNewTable={h.newTable}
+        />
+      )
     case 'table':
       return (
         <TableStage

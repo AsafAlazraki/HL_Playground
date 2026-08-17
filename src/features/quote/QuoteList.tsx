@@ -13,6 +13,7 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
+import { localDay } from './day'
 import { money } from './pricing'
 import { quoteTotals } from './totals'
 import { discardDraft, useQuotes } from './quotes'
@@ -22,9 +23,23 @@ export interface QuoteListProps {
   onOpen: (quoteId: string) => void
   /** highlighted row, when the stage already has one open */
   openId?: string | null
+  /**
+   * How many tables are on the sheet — the ONE fact the empty state
+   * needs and this feature is not allowed to look up.
+   *
+   * `useProjectStore` appears in exactly one file of this feature
+   * (freeze.ts) so that no drawn quote can touch live data, and that
+   * invariant is worth more than a count. So the stage reads it and
+   * hands it down: `QuoteStage` is in `src/app`, it already knows the
+   * sheet, and it is the only caller that has to change.
+   *
+   * Left undefined, the empty state falls back to the route sentence
+   * without claiming a count it does not have.
+   */
+  tableCount?: number
 }
 
-export function QuoteList({ onOpen, openId }: QuoteListProps): ReactElement {
+export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): ReactElement {
   const quotes = useQuotes()
 
   /* ============================================================
@@ -41,22 +56,68 @@ export function QuoteList({ onOpen, openId }: QuoteListProps): ReactElement {
      not on the screen is worse than no instruction, because the
      person concludes they are in the wrong app.
 
-     THE TERSE FORM ON PURPOSE, not the module dashboard's four-part
-     card. The load-bearing third line of that card is a count read
-     from the store, and this feature's one invariant is that
-     `useProjectStore` appears in exactly ONE of its files
-     (freeze.ts) so that no drawn quote can touch live data. A count
-     is not worth spending that on: the honest thing this screen
-     knows is the route, and the route is what a person on their
-     first Monday is missing.
+     AND IT ASKED FOR A TABLE THAT MIGHT NOT EXIST. That four-step
+     sentence was the WHOLE page on a cleared install: an otherwise
+     blank screen telling somebody to open a table from a bar whose
+     Tables panel reads "No tables yet." Step one was impossible, so
+     none of the four could be followed, and the page's own honest
+     answer — that a quote is written FROM a row and a row has to
+     exist first — was the one thing it did not say.
+
+     So there are two states, and which one is drawn depends on a fact
+     this feature is not allowed to look up (see `tableCount`). Both
+     take the module dashboard's four-part shape, which is the house
+     empty state: eyebrow, what the thing IS, what you already have,
+     one step that works from here.
      ============================================================ */
   if (quotes.length === 0) {
+    /* nothing on the sheet to quote FROM — the route has to start
+       one surface earlier, and it says so rather than sending a person
+       to press a control that is not there yet */
+    const nowhereToStart = tableCount === 0
+
     return (
-      <div className="qt-root qt-root--doc">
-        <p className="qt-void">
-          No quotes yet. Open a table from <em>Tables</em> on the bar, press <em>Fitment</em>, pick
-          the row you are selling and press <em>Quote this one</em>.
-        </p>
+      <div className="qt-root qt-root--doc qt-root--none">
+        <div className="qt-none">
+          <span className="mono-label qt-none-eyebrow">
+            {nowhereToStart ? 'Nothing to quote from yet' : 'No quotes yet'}
+          </span>
+
+          <p className="qt-none-say">
+            A quote is one rig, one customer and one moment — the row you are
+            selling, frozen with its prices on the day you hand it over.
+          </p>
+
+          {/* WHAT YOU ALREADY HAVE, counted, and only when the stage
+              handed the count down. A blank screen reading "nothing
+              here" at somebody who has just loaded fifty-two tables
+              reads as though the app had lost them — the argument is
+              `md-empty`'s and it holds here. */}
+          {tableCount === undefined ? null : (
+            <p className="qt-none-count">
+              You have{' '}
+              <strong>
+                {tableCount} {tableCount === 1 ? 'table' : 'tables'}
+              </strong>{' '}
+              and no quotes.
+            </p>
+          )}
+
+          <p className="qt-none-do">
+            {nowhereToStart ? (
+              <>
+                A quote is written from a row, so a table comes first. Start one from{' '}
+                <em>New table</em> on the bar, or load your price file from{' '}
+                <em>Home</em> — then the row you pick becomes the quote.
+              </>
+            ) : (
+              <>
+                Open a table from <em>Tables</em> on the bar, press <em>Fitment</em>,
+                pick the row you are selling and press <em>Quote this one</em>.
+              </>
+            )}
+          </p>
+        </div>
       </div>
     )
   }
@@ -71,7 +132,12 @@ export function QuoteList({ onOpen, openId }: QuoteListProps): ReactElement {
           return (
             <li key={q.id} className={`qt-list-row${openId === q.id ? ' is-open' : ''}`}>
               <button type="button" className="qt-list-open" onClick={() => onOpen(q.id)}>
-                <span className="mono-label qt-list-when">{q.createdAt.slice(0, 10)}</span>
+                {/* THE DEALER'S OWN CALENDAR DAY, not UTC's. `.slice(0, 10)` on
+                    the stored instant named the UTC day, so in any zone ahead of
+                    UTC this column disagreed with the reference on the document
+                    it opens — measured at UTC+10, a quote raised at 02:28 on the
+                    18th listed as the 17th. See `localDay`. */}
+                <span className="mono-label qt-list-when">{localDay(q.createdAt)}</span>
                 <span className="qt-list-who">
                   {q.customer.name.trim() === '' ? (
                     <span className="qt-doc-blank">no customer yet</span>

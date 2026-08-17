@@ -199,7 +199,12 @@ describe('the real seed survives a round trip through its own file', () => {
     )
   })
 
-  it('“Structure only” drops the rows and keeps everything else', () => {
+  /* "everything else" was the old name of this test, and it stopped
+     being true when the quotes came out of a structure-only copy — the
+     privacy fix in exportPayload.ts, pinned in quotes.envelope.test.ts.
+     What this one is about is the STRUCTURE surviving: every table, and
+     none of the rows. */
+  it('“Structure only” drops the rows and keeps every table', () => {
     const before = seeded()
     const file = buildExportPayload(1, false)
     const result = validateEnvelope(file)
@@ -207,5 +212,8 @@ describe('the real seed survives a round trip through its own file', () => {
     if (!result.ok) return
     expect(rowsIn(result.data.rows)).toBe(0)
     expect(result.data.entities).toHaveLength(before.tables)
+    /* and no customer documents: structure is tables, columns, pages
+       and rules — a quote names a person */
+    expect(result.data.quotes).toBeUndefined()
   })
 })

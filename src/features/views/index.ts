@@ -53,6 +53,11 @@
 export { ViewPage } from './ViewPage'
 export type { ViewPageProps } from './ViewPage'
 
+/* WHICH ROW A PAGE OPENS ON when the door named a table and nothing
+   more. See landing.ts for the measurement and the rule. */
+export { firstAnsweredRow } from './landing'
+export type { FirstAnsweredArgs } from './landing'
+
 export {
   createViewFor,
   useViewDefs,

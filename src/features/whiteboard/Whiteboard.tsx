@@ -139,6 +139,90 @@ const DROP_HEADER_H = 24
 const MIN_FRAME_W = 1120
 const MIN_FRAME_H = 720
 
+/* ============================================================
+   THE OPENING FRAME HAS A FLOOR, AND IT IS A MEASUREMENT.
+
+   A drawing nobody can read is not a drawing. Measured at 1440x900 on
+   the seeded sheet — 52 tables spanning 2,920 x 5,600 drawing units,
+   the height binding — the one framing licence landed the camera at
+   zoom 0.138571. `.tb-lod-name` is authored at 34px inside the canvas
+   transform, so it drew at 4.7px: under the 8.4px floor `tableLod.ts`
+   measures as the size below which neither face resolves at all. Every
+   figure and band on the plate was finer than that again. The sheet was
+   a field of grey rectangles and the screen said nothing about itself.
+
+   WHERE 0.4 COMES FROM. The plate has two tiers of type that carry
+   meaning: the name at `--display-l-size` 34px, and the two figures at
+   22px mono. Against tableLod's 8.4px floor:
+
+       zoom   name (34px)   figures (22px)
+       0.14        4.7 px        3.1 px     <- what it opened at
+       0.25        8.5 px        5.5 px     name only
+       0.38       12.9 px        8.4 px     <- both clear the floor
+       0.40       13.6 px        8.8 px     the floor, rounded up
+       0.60       20.4 px       13.2 px     the plate gives way to a grid
+
+   So 0.4 is the lowest zoom at which everything on a plate that carries
+   meaning is legible, with the 11px band chips left as texture — which
+   `table-node.css` already records as a known limit only a second LOD
+   tier would fix. It is the same argument `FlowStage.MIN_READABLE = 0.68`
+   makes about its own 10px micro-labels; the number differs because the
+   type does.
+
+   WHAT IT COSTS, STATED. At 0.4 on a 1440x900 window the frame holds
+   the full width of the drawing and about the top 37% of its height —
+   roughly half the tables. That is the trade the brief asked for: a
+   legible opening frame beats all 52 cards at once. FIT is untouched
+   and still frames every table, because a recovery control that
+   refuses to recover is worse than a first frame that shows less (the
+   note on `minZoom` below is the same lesson), and the legend names it.
+   ============================================================ */
+const MIN_READABLE = 0.4
+
+/** Air between the drawing and the edge of the pane, in screen pixels,
+ *  when the opening frame is anchored rather than fitted. */
+const OPEN_FRAME_PAD = 24
+
+/* ============================================================
+   THE RESERVE MAY NOT DEPEND ON WHAT THE FRAME DECIDES.
+
+   The legend gains one sentence — "Opened close enough to read. Fit …
+   frames all 52" — exactly when the readable floor binds, and that
+   sentence is inside the block whose height the framing arithmetic
+   reserves. So a reserve measured from the block as drawn chases its own
+   tail: it measures three lines, the frame lands, the block grows to
+   four, and the top row of cards is left sitting under it. Measured at
+   1440x900: the first row's headers were clipped by 48px.
+
+   So when that line is NOT on the block, the reserve adds room for it —
+   two lines of 12px at 1.5, rounded up. Generous by a few pixels in the
+   case where it never appears, which costs a little air above the top
+   row and can never hide a card.
+   ============================================================ */
+const LEGEND_MORE_H = 40
+
+/**
+ * How much of our left edge a floating panel is covering right now.
+ *
+ * `--panel-w` is the one place that knows the panel's width and every
+ * consumer reads it (shell.css:51) — but the panel itself has not been
+ * mounted since the masthead went, `LeftPanel` being imported by
+ * nothing. So the token kept reserving 260px of a 1440px window for a
+ * surface that is not there: measured, FIT put the drawing between x=562
+ * and x=967 with 473px of empty pane to its right, off centre by exactly
+ * the strip it was avoiding.
+ *
+ * The honest test is whether the panel is ON SCREEN, not whether its
+ * width is declared. Nothing is removed and nothing is hard-coded: the
+ * day `LeftPanel` is mounted again this reads its width off the same
+ * token and the arithmetic below is right without being touched.
+ */
+function panelCover(el: HTMLElement): number {
+  if (!el.ownerDocument.querySelector('.shell-panel')) return 0
+  const px = Number.parseFloat(getComputedStyle(el).getPropertyValue('--panel-w'))
+  return Number.isFinite(px) ? px : 0
+}
+
 /** Anything the sheet can draw — one type today, and the mirror below
  *  is written so a second one costs nothing. */
 type CanvasNode = Node
@@ -180,6 +264,9 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   const rf = useReactFlow<CanvasNode, Edge>()
   const nodesInitialized = useNodesInitialized()
   const wrapRef = useRef<HTMLDivElement | null>(null)
+  /** the legend, so the framing arithmetic can reserve its exact height
+   *  rather than a constant that drifts from the sentence it draws */
+  const legendRef = useRef<HTMLElement | null>(null)
   /** set right before any select() triggered from inside the canvas */
   const selectFromCanvasRef = useRef(false)
   /** the reader has taken the pen — the sheet is theirs from here */
@@ -195,6 +282,19 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
 
   /* a table type is being dragged over the sheet right now */
   const [dropping, setDropping] = useState(false)
+
+  /* WHAT THE LEGEND COUNTS: the cards that are DRAWN, not the rows in
+     the store. Two of the seeded 52 are retired, which Home holds back
+     and the sheet still draws — a title block reading 50 over 52 visible
+     cards is the disagreement every count in this app is written to
+     avoid. So the total is the node list's own length, and the joins are
+     counted among exactly those nodes. */
+  const entities = useProjectStore((s) => s.entities)
+  const shape = useMemo(() => {
+    let joins = 0
+    for (const n of tableNodes) if (entities[n.id]?.role === 'join') joins += 1
+    return { tables: tableNodes.length, joins }
+  }, [tableNodes, entities])
 
   /* -- store -> local mirror ----------------------------------
      Identity is the whole point: a node whose data, position and
@@ -605,10 +705,20 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
      ============================================================ */
 
   const frameTables = useCallback(
-    (duration: number) => {
+    /**
+     * @param readable When true the camera refuses to go below
+     * `MIN_READABLE` and anchors the drawing's top-left corner instead
+     * of fitting all of it. That is the OPENING frame only. FIT passes
+     * false, because FIT must always be able to fit — see the note on
+     * `minZoom` below, and `MIN_READABLE` above for the measurement.
+     * @returns true when the readable floor bound, i.e. the frame does
+     * NOT hold every table. The legend says so where the reader can see
+     * it, rather than leaving them to wonder what happened to the rest.
+     */
+    (duration: number, readable = false): boolean => {
       if (tableNodes.length === 0) {
         void rf.fitView({ ...FIT_VIEW_OPTIONS, duration })
-        return
+        return false
       }
       let minX = Number.POSITIVE_INFINITY
       let minY = Number.POSITIVE_INFINITY
@@ -622,47 +732,115 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
       }
       /* a camera is never moved on arithmetic we cannot vouch for */
       if (!Number.isFinite(minX) || !Number.isFinite(minY) || maxX <= minX) {
-        return
+        return false
       }
       /* pad a thin drawing out to a minimum window, so one table is
          framed rather than shoved into the reader's face */
       const cx = (minX + maxX) / 2
       const cy = (minY + maxY) / 2
       let width = Math.max(maxX - minX, MIN_FRAME_W)
-      const height = Math.max(maxY - minY, MIN_FRAME_H)
+      let height = Math.max(maxY - minY, MIN_FRAME_H)
       let x = cx - width / 2
-      const y = cy - height / 2
+      let y = cy - height / 2
 
-      /* THE PANEL FLOATS OVER OUR LEFT EDGE, SO FIT MUST FRAME INTO
-         WHAT IS LEFT. `fitBounds` takes one scalar padding and has no
-         per-side option, so the correction is arithmetic — which is
-         what this whole function already is, and for the same reason:
-         we can vouch for it.
+      /* WHAT IS FLOATING OVER OUR EDGES, SO FRAMING CAN AVOID IT.
+         `fitBounds` takes one scalar padding and has no per-side
+         option, so the correction is arithmetic — which is what this
+         whole function already is, and for the same reason: we can
+         vouch for it.
 
-         Framing content of width Wc into the FULL container gives
-         scale containerW/Wc, and the leftmost 260px of that lands
-         under glass. We want scale (containerW − panelW)/Wc instead,
-         so we hand fitBounds a box widened by containerW/(containerW −
-         panelW) and moved left by exactly the strip the panel covers,
-         measured in canvas units at that same scale. The empty strip
-         then sits under the panel and every table lands to the right
-         of it. Measured before this: FIT put 6 of 22 tables behind the
-         panel, the leftmost at x=233 under a 260px surface. */
-      const containerW = wrapRef.current?.getBoundingClientRect().width ?? 0
-      const panelPx = wrapRef.current
-        ? Number.parseFloat(getComputedStyle(wrapRef.current).getPropertyValue('--panel-w'))
+         TWO INSETS NOW, not one. The left is the floating panel, when
+         one is mounted (`panelCover` — the token used to reserve 260px
+         for a surface that has not existed since the masthead went, and
+         the drawing sat 473px off centre because of it). The top is the
+         legend, which says what this screen IS and must never be the
+         thing hiding a card: it is measured rather than assumed, so the
+         reserve cannot drift from the sentence.
+
+         Framing content of width Wc into the FULL container gives scale
+         containerW/Wc, and the leftmost inset of that lands under
+         glass. We want scale (containerW − inset)/Wc instead, so we hand
+         fitBounds a box widened by containerW/(containerW − inset) and
+         moved left by exactly the strip that is covered, measured in
+         canvas units at that same scale. The empty strip then sits under
+         the panel and every table lands clear of it. Measured before the
+         left half of this: FIT put 6 of 22 tables behind the panel, the
+         leftmost at x=233 under a 260px surface. The vertical axis is
+         the same transform with height for width. */
+      const el = wrapRef.current
+      const rect = el?.getBoundingClientRect()
+      const containerW = rect?.width ?? 0
+      const containerH = rect?.height ?? 0
+      const insetL = el ? panelCover(el) : 0
+      /* THE LEGEND BAND IS RESERVED ON THE OPENING FRAME AND NOT ON FIT,
+         and that is a measurement rather than an oversight. Reserving it
+         for FIT costs 240px of an 822px pane — measured, it took FIT from
+         zoom 0.155 to 0.102 on the seeded sheet, i.e. it made the one
+         control whose whole job is "show me the shape of all of it" show
+         a third less of it. At FIT zoom nothing on a card is legible
+         anyway (see MIN_READABLE), the block takes no pointer events, and
+         the zoom cluster already floats over the opposite corner. On the
+         OPENING frame it is the other way round: that frame is the one a
+         person reads, so no card may open underneath the sentence
+         explaining the screen. */
+      const legendEl = readable ? legendRef.current : null
+      const insetT = legendEl
+        ? legendEl.getBoundingClientRect().height +
+          /* see LEGEND_MORE_H — the line the block is about to gain */
+          (legendEl.querySelector('.wb-legend-more') ? 0 : LEGEND_MORE_H) +
+          OPEN_FRAME_PAD
         : 0
-      const hidden = Number.isFinite(panelPx) ? panelPx : 0
+
       /* guard the degenerate window — a container narrower than its own
          panel would divide by zero or flip the sign */
-      if (containerW > hidden + 1) {
-        const visible = containerW - hidden
-        const scaled = width * (containerW / visible)
-        x -= (width * hidden) / visible
+      const visibleW = containerW - insetL
+      const visibleH = containerH - insetT
+      if (containerW > insetL + 1) {
+        const scaled = width * (containerW / visibleW)
+        x -= (width * insetL) / visibleW
         width = scaled
+      }
+      if (containerH > insetT + 1) {
+        const scaled = height * (containerH / visibleH)
+        y -= (height * insetT) / visibleH
+        height = scaled
+      }
+
+      /* ============================================================
+         THE FLOOR, on the opening frame only.
+
+         `fitBounds` would land on min(vw/Wc, vh/Hc) once its own 6%
+         padding is taken out; the same arithmetic here answers "would
+         that be legible?" BEFORE the camera moves, so the drawing never
+         flashes through an illegible frame on its way to a readable one.
+
+         Below the floor the camera stops fitting and ANCHORS instead:
+         the drawing's top-left corner is placed at the top-left of what
+         a reader can actually see, at exactly MIN_READABLE. Top-left and
+         not centre, because that is where the eye starts and where the
+         first cards on this sheet are; a centred readable frame on a
+         5,600-unit-tall drawing opens on its middle, which is nobody's
+         idea of the beginning.
+         ============================================================ */
+      if (readable && visibleW > 1 && visibleH > 1) {
+        const pad = 1.12
+        const wouldBe = Math.min(visibleW / (width * pad), visibleH / (height * pad))
+        if (wouldBe < MIN_READABLE) {
+          const z = MIN_READABLE
+          void rf.setViewport(
+            {
+              zoom: z,
+              x: insetL + OPEN_FRAME_PAD - minX * z,
+              y: insetT + OPEN_FRAME_PAD - minY * z,
+            },
+            { duration },
+          )
+          return true
+        }
       }
 
       void rf.fitBounds({ x, y, width, height }, { padding: 0.06, duration })
+      return false
     },
     [rf, tableNodes],
   )
@@ -696,6 +874,24 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   }, [entityKey])
 
   const firstFrameRef = useRef(true)
+  /**
+   * The opening frame hit the readable floor, so it does NOT hold every
+   * table — the legend says which control frames the rest.
+   *
+   * IT HAS TO SURVIVE THE COMPONENT, because the camera does.
+   * `.shell-sheet-layer` unmounts whole every time a page opens over the
+   * sheet, so this state is thrown away on every visit while
+   * `getCanvasCamera` — module state — is restored. Measured: come back
+   * to the drawing a second time and the frame was still the readable
+   * one while the sentence explaining it had gone.
+   *
+   * A camera still sitting exactly on the readable floor is still that
+   * frame, so the line is still true. Zoom at all and it is not, and the
+   * line goes — which is the same thing FIT does to it explicitly.
+   */
+  const [framedPart, setFramedPart] = useState(
+    () => Math.abs((initialCamera?.zoom ?? 0) - MIN_READABLE) < 1e-6,
+  )
 
   /* ============================================================
      THE ONE FRAME IS NEVER SPENT ON A PANE WITH NO SIZE.
@@ -784,7 +980,11 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
         return
       }
     }
-    frameTables(420)
+    /* THE OPENING FRAME TAKES THE READABLE FLOOR. See `MIN_READABLE`:
+       the seeded sheet fitted at 0.1386, where the plate's own name
+       drew at 4.7px. What the frame did NOT hold is not left to be
+       guessed at — it is handed to the legend, which says it. */
+    setFramedPart(frameTables(420, true))
   }, [
     frameTables,
     nodesInitialized,
@@ -797,7 +997,13 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
 
   const onFit = useCallback(() => {
     interactedRef.current = true
+    /* FIT MUST ALWAYS BE ABLE TO FIT — no floor here, deliberately.
+       The one recovery control on this sheet may not refuse to recover;
+       the note on `minZoom` below is the same lesson, learned the hard
+       way. Once it has run, every table IS in the frame, so the legend's
+       line about the rest of them stops being true and goes. */
     frameTables(420)
+    setFramedPart(false)
   }, [frameTables])
 
   /* THE EMPTY SHEET is not answered here. The shell pins ONE
@@ -813,6 +1019,54 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
       className={`wb-root${dropping ? ' wb-root--drop' : ''}`}
       ref={wrapRef}
     >
+      {/* ============================================================
+          THE TITLE BLOCK — what this drawing is, on the drawing.
+
+          This screen is the second item on the dock and it said nothing
+          about itself: 52 cards on an infinite plane, no bar, no name,
+          no sentence. Every other place in this app has a 52px toolbar
+          that names it; the sheet is the one surface underneath all of
+          them and adding a toolbar to it would be a second bar on the
+          screen the moment a window opens over it.
+
+          So it takes the form a drawing office would use instead — a
+          title block, pinned to the paper, in the same card the rest of
+          the app is made of. It counts what is drawn rather than what is
+          stored, so it can never disagree with the cards beside it, and
+          `pointer-events: none` keeps every pan, drag and drop on the
+          sheet exactly as it was. Its height is measured by the framing
+          arithmetic above, so no card ever opens underneath it.
+          ============================================================ */}
+      {tableNodes.length > 0 ? (
+        <aside className="wb-legend" ref={legendRef} aria-label="What this drawing shows">
+          <span className="mono-label wb-legend-eyebrow">Data model</span>
+          <p className="wb-legend-say">
+            Every table you have, drawn where you put it, with a line wherever one
+            table points at another. Press a card to open its register.
+          </p>
+          <p className="wb-legend-count">
+            <b>{shape.tables}</b> tables
+            {shape.joins > 0 ? (
+              <>
+                <i aria-hidden="true" />
+                <b>{shape.joins}</b> of them relationships
+              </>
+            ) : null}
+          </p>
+          {/* WHAT THE FRAME LEFT OUT, SAID OUT LOUD. A first frame that
+              holds half the drawing is only honest if it admits it and
+              names the control that shows the rest — which is the FIT
+              bracket bottom left, and it is still the one thing on this
+              sheet that always frames every table. */}
+          {framedPart ? (
+            <p className="wb-legend-more">
+              Opened close enough to read. <b>Fit</b>, bottom left, frames all{' '}
+              {shape.tables} at once.
+            </p>
+          ) : null}
+        </aside>
+      ) : null}
+
       <ReactFlow<CanvasNode, Edge>
         className="wb-canvas"
         nodes={nodes}

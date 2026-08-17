@@ -178,7 +178,20 @@ export function Dock({
   }, [open, close])
 
   return (
-    <div className="dk-wrap" ref={rootRef}>
+    <div
+      className="dk-wrap"
+      ref={rootRef}
+      /* THE APP'S NOTES GET OUT OF THE WAY OF THIS. The toast strip
+         used to paint "Undone — …" across the middle of the navigation
+         and win the hit test doing it; that was answered with a
+         constant, 84px, hard-coded into the note layer. The constant is
+         gone: the dock declares itself and is measured like any other
+         floating instrument, so an open Tables menu — which is taller
+         than the bar — is cleared too, and a change to the dock's
+         geometry can never leave the note behind. See
+         `src/app/UndoKeys.tsx`. */
+      data-note-clear=""
+    >
       {open === 'tables' ? (
         <div className="dk-menus">
           <div className="dk-panel dk-panel--l1" role="menu" aria-label="Tables">
@@ -218,6 +231,14 @@ export function Dock({
                   type="button"
                   role="menuitem"
                   className="dk-row"
+                  /* A NAME THAT WRAPS TO TWO LINES CAN STILL RUN OUT.
+                     Seventeen of the twenty-six relationship tables
+                     were cut by the old 300px panel with nothing to
+                     read the rest from, and two of them read as the
+                     same row. The panel is wider and wraps now; the
+                     whole name is here as well, so however narrow the
+                     window gets the row still says which table it is. */
+                  title={e.name}
                   onClick={() => {
                     close()
                     onOpenTable(e.id)

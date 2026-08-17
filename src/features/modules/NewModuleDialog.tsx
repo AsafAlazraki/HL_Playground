@@ -295,10 +295,17 @@ export function NewModuleDialog({
 
         <form className="md-dlg-body" onSubmit={create}>
           <div className="md-pick" role="group" aria-label="Your tables">
+            {/* THE REFUSAL NAMES A CONTROL THAT EXISTS. "Draw one on the
+                sheet first" meant dragging a type out of the left panel's
+                palette, and that panel has been imported by nothing since
+                the masthead went. New table on the dock is the route now.
+                The dashboard behind this panel also refuses to open it
+                with no tables (Dashboard.tsx), so this is the second line
+                of defence rather than the first. */}
             {groups.length === 0 ? (
               <p className="md-none">
-                There are no tables to make a module from yet. Draw one on the sheet
-                first.
+                There are no tables to make a module from yet. Start one from{' '}
+                <em>New table</em> on the bar first.
               </p>
             ) : (
               groups.map((group) => (

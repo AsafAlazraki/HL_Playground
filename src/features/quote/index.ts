@@ -211,6 +211,12 @@ export {
 } from './totals'
 export type { QuoteTotals, LineAmount } from './totals'
 
+/* -- WHICH DAY A STORED INSTANT FALLS ON ---------------------
+   Exported because the modules dashboard prints a quote's day too,
+   and three surfaces reading one timestamp three ways is how the
+   fault this fixes got in. See day.ts for the measurement. */
+export { localDay } from './day'
+
 /* -- the shapes (move these to model.ts) --------------------- */
 export { QUOTE_LEVEL_ORDER, LEVEL_TITLE } from './types'
 export type {

@@ -41,6 +41,7 @@ import { countLabel, leafNoun } from '@/features/table/grouping'
 import { ImportExportMenu } from '@/features/io'
 import { ICON_SIZE } from '@/lib/icons'
 import { loadDemoSet, realDemoSet, startingPointWords } from './demoLoad'
+import { useClipTitles } from './useClipTitles'
 
 const KIND_ORDER: TableKind[] = [
   'boat',
@@ -54,9 +55,13 @@ const KIND_ORDER: TableKind[] = [
 
 export interface HomeStageProps {
   onOpenTable: (entityId: string) => void
+  /** Put the new-table dialog up. The shell hosts it for all three ways
+   *  in — the dock's NEW TABLE, a type dropped on the sheet, and this
+   *  screen — so there is one place the structure question is asked. */
+  onNewTable?: () => void
 }
 
-export function HomeStage({ onOpenTable }: HomeStageProps) {
+export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const org = useProjectStore((s) => s.meta.org)
@@ -108,6 +113,38 @@ export function HomeStage({ onOpenTable }: HomeStageProps) {
 
   const total = groups.reduce((n, g) => n + g.items.length, 0)
 
+  /* A CARD NAME THAT WAS CUT SAYS SO, AND SAYS ALL OF ITSELF.
+     `.hm-card-name` clamps to two lines, which is right for a 230px
+     card and leaves one of the fifty — "Haines Signature ×
+     Dunbier/Haines BMT — Trailer Fitment", which wants 2.2 lines at
+     1280 — reading "…BMT —" with nowhere to find the rest. The
+     `aria-label` on the card already carried the whole name for a
+     screen reader; this is the same promise kept for the eye, and it is
+     measured, so the forty-nine cards that fit stay silent. */
+  const cardNames = useClipTitles<HTMLDivElement>(
+    '.hm-card-name',
+    useMemo(() => groups.flatMap((g) => g.items.map((e) => e.name)).join('|'), [groups]),
+  )
+
+  /* HOW MUCH THE PREPARED SET PUTS ON THE SHEET, COUNTED FROM THE SET.
+     A door that replaces somebody's whole sheet has to say what arrives,
+     and a hand-typed "52 tables, 3,566 rows" goes stale the first time
+     the seed changes and nobody remembers — so `DemoSet.holds` builds
+     the set and counts it. It is not free (one `buildNorthsideProject`),
+     which is why it is behind a `useMemo` and only reached on the one
+     screen that draws the offer. */
+  const holds = useMemo(
+    () => (groups.length === 0 ? real?.holds?.() : undefined),
+    [groups.length, real],
+  )
+
+  /* THE PRESETS ARE COUNTED AND NAMED FROM THE MODEL, never listed by
+     hand: the day a kind is added or renamed this sentence follows it. */
+  const presets = useMemo(
+    () => KIND_ORDER.map((k) => TABLE_KINDS[k]?.label ?? k),
+    [],
+  )
+
   return (
     <div className="shell-viewstage hm" role="region" aria-label="Home">
       <div className="shell-view-bar">
@@ -138,42 +175,148 @@ export function HomeStage({ onOpenTable }: HomeStageProps) {
             auto-places into the gap this leaves. */}
       </div>
 
-      <div className="hm-scroll">
+      {/* THE SCROLLPORT CENTRES ITS ONE CHILD WHEN THAT CHILD IS THE
+          FIRST SCREEN, and goes back to being a top-anchored gallery the
+          moment there are cards. `safe center` rather than `center`: at
+          1280x800 the first screen is close to filling the column, and
+          plain `center` would push its top edge above the scrollport's
+          own origin, where it cannot be scrolled back to. */}
+      <div
+        className={`hm-scroll${groups.length === 0 ? ' hm-scroll--first' : ''}`}
+        ref={cardNames}
+      >
         {groups.length === 0 ? (
-          /* THE FRONT DOOR HAS TO CARRY THE EXAMPLE, because it is the
-             screen a new user actually lands on.
+          /* ============================================================
+             THE FIRST SCREEN, AND IT IS THE WEAKEST ONE A STAKEHOLDER
+             SEES FIRST.
 
-             The invitation with this door on it lives in `EmptyState`,
-             which the shell draws inside `.shell-sheet-layer` — and
-             that layer is `hidden` whenever a window is focused. The
-             shell opens a `home` window on first render, so a person
-             who has just finished onboarding met a Home page reading
-             "No tables yet." with the one door to the prepared set
-             mounted-but-invisible behind it, reachable only by
-             guessing at the second icon on the bar. Measured: the
-             `.shell-invite` node was in the DOM with zero client
-             rects.
+             WHAT WAS HERE. `.hm-none` — the terse in-list form, one
+             sentence and a 240px stack of link text — pinned to the top
+             left of a 1440px window. Measured at 1440x900: everything on
+             the page fitted in a 240 x 130 box in the corner, and the
+             other 1.2 million pixels were empty. That form is right for
+             a list that has been filtered to nothing; it is wrong for
+             the second screen anybody ever sees, which has to say where
+             they are and what the app is before it offers anything.
 
-             So Home offers it too, in the same words and off the same
-             register (`realDemoSet`), and stays silent when no set
-             ships — the screen never draws a button that loads
-             nothing. Every class here is already declared for the
-             invitation; nothing new is introduced. */
-          <div className="hm-none">
-            <p>Nothing on the sheet yet.</p>
-            {real && words && (
-              <span style={{ display: 'block', maxWidth: '46ch', marginTop: 'var(--sp-2)' }}>
+             AND WHY HOME CARRIES IT AT ALL. The invitation with this
+             door on it lives in `EmptyState`, drawn inside
+             `.shell-sheet-layer` — and that layer is `hidden` whenever a
+             window is focused. The shell opens a `home` window on first
+             render, so a person leaving onboarding met the terse form
+             with the prepared set mounted-but-invisible behind it,
+             reachable only by guessing at the second icon on the bar.
+             Measured: the `.shell-invite` node was in the DOM with zero
+             client rects. The invitation is still the right screen for
+             the SHEET (press Data model on an empty sheet and there it
+             is); this is the same offer where a person actually lands.
+
+             STRUCTURE — DESIGN_CONTRACT §6's four parts, and then the
+             doors: eyebrow, what this place IS, what you have, and the
+             one or two things worth doing. Two doors and not three,
+             because there are exactly two honest starting points
+             (`@/demos`: the real file, or nothing) and the third route —
+             opening a saved copy — is already in track 1 of this bar.
+
+             HONESTY ABOUT WHOSE DATA IT IS is `startingPointWords`'s
+             job and not restated here: it compares the sheet's own
+             organisation with the business whose file the set is, so
+             the door says "your Master Price File" to Northside Marine
+             and "Northside Marine's Master Price File — a worked
+             example" to everybody else. Both readings are true and
+             neither is written twice.
+             ============================================================ */
+          <div className="hm-first">
+            <div className="hm-first-say">
+              <span className="mono-label hm-first-eyebrow">Nothing on the sheet yet</span>
+
+              <h2 className="hm-first-title">
+                Home is every table you have, on one page.
+              </h2>
+
+              {/* THE EXAMPLES ARE THE PRESET NAMES, not a second
+                  vocabulary. This read "a brand of boats, the outboards,
+                  the trailers" while the line beneath it lists Boats,
+                  Motors, Trailers, Accessories out of TABLE_KINDS — two
+                  namings of one set of things, one of which the app does
+                  not use anywhere else. Same words as the presets, so a
+                  reader meets each noun once. */}
+              <p className="hm-first-prose">
+                A table holds one kind of thing you sell — one brand&rsquo;s models, the
+                motors, the trailers, the accessories that go with them. Its columns are
+                what you record about them; its rows are the stock itself. Everything
+                else in {org?.name ?? 'this app'} is built on those tables: what fits
+                what, the rules that price a rig, the quotes you hand a customer. So a
+                table is the first thing to put here, and it stays on this computer.
+              </p>
+
+              {/* WHAT YOU ALREADY HAVE, COUNTED. Zero is the honest
+                  figure for the tables, so the line goes on to the thing
+                  that is not zero — the presets a table can be drawn
+                  from, counted and named out of TABLE_KINDS. A screen
+                  that says only "you have nothing" has told a person
+                  nothing they could not see. */}
+              {/* mono is for FIGURES, so only the count takes it — "no
+                  tables" is words and is set as words, in full ink */}
+              <p className="hm-first-count">
+                You have <b>no tables</b> yet. <strong>{presets.length}</strong> presets
+                are ready to draw one from — {presets.slice(0, -1).join(', ')} and{' '}
+                {presets[presets.length - 1]}.
+              </p>
+            </div>
+
+            <div className="hm-first-doors">
+              {/* THE PREPARED SET. Drawn only when one ships — the
+                  register answers that (`realDemoSet`), so the screen
+                  can never offer a button that loads nothing. */}
+              {real && words ? (
                 <button
                   type="button"
-                  className="shell-invite-alt"
+                  className="hm-first-door hm-first-door--data"
                   onClick={() => loadDemoSet(real)}
                 >
-                  <span className="shell-invite-alt-tag mono-label">{words.tag}</span>
-                  <span className="shell-invite-alt-label">{words.label}</span>
-                  <span className="shell-invite-alt-note">{words.note}</span>
+                  <span className="mono-label hm-first-door-tag">{words.tag}</span>
+                  <span className="hm-first-door-name">{words.label}</span>
+                  {/* where the numbers came from — the demos module's own
+                      sentence, because the demos module is what knows */}
+                  <span className="hm-first-door-note">{words.note}</span>
+                  {holds ? (
+                    <span className="hm-first-door-foot">
+                      <b>{holds.tables}</b>
+                      <span>tables</span>
+                      <i aria-hidden="true" />
+                      <b>{holds.rows.toLocaleString()}</b>
+                      <span>rows</span>
+                    </span>
+                  ) : null}
                 </button>
-              </span>
-            )}
+              ) : null}
+
+              {/* AND THE OTHER HONEST STARTING POINT. Drawn only when the
+                  shell handed down the way to open the dialog, so this
+                  never becomes an enabled control that does nothing. */}
+              {onNewTable ? (
+                <button
+                  type="button"
+                  className="hm-first-door hm-first-door--blank"
+                  onClick={onNewTable}
+                >
+                  <span className="mono-label hm-first-door-tag">Blank sheet</span>
+                  <span className="hm-first-door-name">Start a table</span>
+                  <span className="hm-first-door-note">
+                    Pick what it holds and give it a name. Its columns arrive already
+                    drawn for that kind, and you can change any of them afterwards.
+                  </span>
+                  <span className="hm-first-door-foot">
+                    <b>{presets.length}</b>
+                    <span>presets</span>
+                    <i aria-hidden="true" />
+                    <b>0</b>
+                    <span>rows loaded</span>
+                  </span>
+                </button>
+              ) : null}
+            </div>
           </div>
         ) : (
           groups.map((g) => (

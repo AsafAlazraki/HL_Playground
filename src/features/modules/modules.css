@@ -106,6 +106,22 @@
   letter-spacing: var(--data-l-track);
 }
 
+/* WHY THE ONE ACTION IS OFF, under the control it refuses. Only drawn
+   when there are no tables — see the note in Dashboard.tsx. The
+   controls it names are set the way `.qt-none-do em` sets them: a
+   button's name is a name, so weight and full ink, never italic. */
+.md-empty-why {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.md-empty-why em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--ink);
+}
+
 /* -- the cards ---------------------------------------------- */
 
 .md-cards {
@@ -793,6 +809,14 @@
   font-size: var(--ui-m-size);
   line-height: var(--ui-m-lead);
   color: var(--ink-faint);
+}
+/* a control's name is its name — italic reads as emphasis on a word,
+   not as the word written on a button. Same treatment as
+   `.md-empty-why em` and `.qt-none-do em`. */
+.md-none em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--ink);
 }
 
 .md-more {

@@ -51,6 +51,102 @@
   animation: fade-in var(--t-fast) var(--ease-draft) both;
 }
 
+/* ============================================================
+   THE TITLE BLOCK — what this drawing is, pinned to the paper.
+
+   The Data model is the one surface in this app with no 52px toolbar
+   over it, because it is the layer every page opens ON TOP of and a
+   second bar would appear the moment one did. A drawing office solves
+   exactly this with a title block, so that is the form: the same white
+   card, hairline and 10px radius as everything else, in the corner the
+   eye starts at.
+
+   IT IS NEVER IN THE WAY. `pointer-events: none` so every pan, drag and
+   drop on the sheet behaves as though it were not there, and the
+   framing arithmetic in Whiteboard.tsx MEASURES its height and reserves
+   it, so no card is ever opened underneath it. Nothing in it is
+   pressable; the control it names (FIT) is a real control ten pixels
+   from the other corner.
+   ============================================================ */
+.wb-legend {
+  position: absolute;
+  top: var(--sp-5);
+  left: var(--sp-5);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  width: max-content;
+  max-width: min(46ch, calc(100% - var(--sp-6) * 2));
+  padding: var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--ec1);
+  pointer-events: none;
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* movement goes, the surface still arrives — see DESIGN_CONTRACT §1 */
+  .wb-legend {
+    animation-duration: 1ms;
+  }
+}
+
+.wb-legend-eyebrow {
+  color: var(--ink-faint);
+}
+
+.wb-legend-say {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* the two figures, on the block's own ruled foot — mono and tabular,
+   because every figure in this app is */
+.wb-legend-count {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  width: 100%;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.wb-legend-count b {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.wb-legend-count i {
+  width: 1px;
+  height: 10px;
+  margin: 0 4px;
+  background: var(--hairline-strong);
+}
+
+/* WHAT THE OPENING FRAME LEFT OUT. Drawn only while it is true — FIT
+   clears it, because after FIT every table is in the frame. */
+.wb-legend-more {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.wb-legend-more b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
 /* -- pane ---------------------------------------------------- */
 /* the React Flow surface must stay transparent so the sheet
    gradient above shows through */

@@ -681,7 +681,11 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
               />
             </div>
             {/* the map of the sheet, drawn only when the sheet is */}
-            <BandStrip bands={whole.bands} onReveal={whole.revealBand} />
+            <BandStrip
+          bands={whole.bands}
+          atBandName={whole.atBandName}
+          onReveal={whole.revealBand}
+        />
           </>
         ) : null}
 

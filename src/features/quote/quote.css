@@ -123,6 +123,89 @@
   color: var(--canvas-ink);
 }
 
+/* ============================================================
+   THE DIARY WITH NOTHING IN IT — the house empty state, not a
+   sentence floating on a blank page.
+
+   `.qt-void` above is the terse form and stays where it belongs: one
+   line, for a document that is no longer here. This is the four-part
+   card DESIGN_CONTRACT §6 sets as the model — eyebrow, what the thing
+   IS, what you already have, one step — drawn in the same box as
+   `.md-empty` (560px, centred, hairline, --e2) so the two empty
+   screens in this app are recognisably one screen.
+
+   The measurements are `.md-empty`'s, deliberately copied rather than
+   invented: two empty states an eighth of an inch apart in padding is
+   two empty states.
+   ============================================================ */
+/* THE CARD IS NOT STRANDED AT THE TOP OF A BLANK PAGE. The diary's
+   empty state is the whole page, and left at the scrollport's top edge
+   it read as a notice somebody forgot to finish — the fault this pass
+   exists to answer. `safe center` and not `center`: the card is short
+   here, but at 800px of window with a wrapped route sentence it is not,
+   and plain `center` would push its top out of scroll reach. */
+.qt-root--none {
+  display: grid;
+  align-content: center;
+  align-content: safe center;
+}
+
+.qt-none {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sp-6);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--e2);
+  text-align: left;
+}
+
+.qt-none-eyebrow {
+  color: var(--ink-faint);
+}
+
+.qt-none-say {
+  margin: 0;
+  font-size: var(--ui-l-size);
+  line-height: var(--ui-l-lead);
+  letter-spacing: var(--ui-l-track);
+  color: var(--ink-soft);
+}
+
+.qt-none-count {
+  margin: 0;
+  font-size: var(--ui-m-size);
+  line-height: var(--ui-m-lead);
+  color: var(--ink);
+}
+.qt-none-count strong {
+  font-family: var(--font-mono);
+  font-size: var(--data-l-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--data-l-track);
+}
+
+/* the one step, and the controls it names. Same treatment as
+   `.qt-void em`: a control's name is its name, so weight and full ink
+   rather than italic, which reads as emphasis on a word instead. */
+.qt-none-do {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+.qt-none-do em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--ink);
+}
+
 /* the white sheet, on both screens that have one */
 .qt-sheet,
 .qt-doc {
@@ -677,6 +760,18 @@
   line-height: 1.5;
   color: var(--ink-soft);
 }
+/* MORE THAN ONE THING CAN BE WRONG AT ONCE — a quote with no customer
+   on it and no price on any line is refused twice, and both sentences
+   are printed rather than the first one only. Stacked at --sp-1 so the
+   pair reads as one answer to one question and not as two alerts. */
+.qt-foot-whys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.qt-foot-whys .qt-foot-why {
+  margin: 0;
+}
 
 /* ============================================================
    THE DOCUMENT
@@ -1117,9 +1212,26 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+/* THE MONEY STEP BELONGS TO THE CELLS, NOT TO THE COLUMN HEAD.
+   Measured on the issued document: the head row read DESCRIPTION and
+   QTY at the sanctioned 11px/0.06em label step and AMOUNT at 15px in
+   the full-strength ink tier — two uppercase sizes in a row of three
+   words, and 15px uppercase is not a step DESIGN_CONTRACT §3 has. All
+   three `<th>`s wear `.mono-label`; `.qt-col-amt` is on the head and
+   the cells alike, and at equal specificity the later rule won.
+
+   Scoped to `td` the whole head row goes back to one label step, and
+   the fix stays out of the print block's way: an override on
+   `.qt-doc-lines thead th` (0,2,1) would have beaten
+   `.qt-doc .mono-label` (0,2,0) and set the head at 11px on paper,
+   where 7.5pt is the measured value. `text-align: right` stays on the
+   shared selector, because the head is right-aligned over its column
+   too. */
 .qt-col-amt {
-  font-size: 15px;
   text-align: right;
+}
+.qt-doc-lines td.qt-col-amt {
+  font-size: 15px;
   color: var(--ink);
 }
 

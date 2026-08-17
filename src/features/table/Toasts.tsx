@@ -31,9 +31,17 @@ export interface ToastItem {
   act?: ToastAct
 }
 
+/** WHAT A SURFACE IS HANDED. Every register in the app takes a
+ *  `pushToast` prop, and until now that prop's type stopped at
+ *  `(text, tone)` while `push` itself already took a third argument —
+ *  so the strip could carry UNDO and nothing downstream could ask it
+ *  to. `offerUndo` in `@/store/notes` is what builds the act; this is
+ *  the type that lets it reach the strip. */
+export type PushToast = (text: string, tone?: ToastTone, act?: ToastAct) => void
+
 export interface ToastApi {
   items: ToastItem[]
-  push: (text: string, tone?: ToastTone, act?: ToastAct) => void
+  push: PushToast
   dismiss: (id: number) => void
 }
 

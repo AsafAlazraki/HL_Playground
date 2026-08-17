@@ -131,6 +131,122 @@ describe('undo — a row delete', () => {
   })
 })
 
+/* ============================================================
+   WHAT THE CONFIRM SHEETS NOW PROMISE, IN WRITING.
+
+   Two destructive confirms in the register said "There is no undo."
+   Both were false, so the row strike became a toast with UNDO and the
+   column sheet's sentence became "Ctrl+Z brings the column back, with
+   every value in it." A sentence in front of somebody deciding whether
+   to risk their price file has to be exactly true, and "it comes back"
+   is not the same claim as "it comes back WHERE IT WAS" — a row that
+   returned to the foot of a 3,566-row table, or a column that returned
+   to the far right of a banded sheet, would make both sentences lies of
+   a quieter kind. The tests above prove the values survive; these prove
+   the POSITION does, which is the half the wording now rests on.
+   ============================================================ */
+describe('undo — and the place the thing comes back to', () => {
+  it('puts a struck row back at its own index, not at the end', async () => {
+    store().replaceProject({
+      name: 'Test Sheet',
+      entities: [boats()],
+      groups: [],
+      rules: [],
+      rowsByEntity: {
+        'e-boats': [
+          row('r1', 'Surtees 540', 52000),
+          row('r2', 'Highfield 460', 31000),
+          row('r3', 'Stacer 429', 18000),
+        ],
+      },
+    })
+
+    store().deleteRow('e-boats', 'r2')
+    await turn()
+    expect(rows().map((r) => r.id)).toEqual(['r1', 'r3'])
+
+    expect(store().undo()).toBe('Row deleted · Boats')
+    expect(rows().map((r) => r.id)).toEqual(['r1', 'r2', 'r3'])
+    expect(cell('r2', 'f-model')).toBe('Highfield 460')
+    expect(cell('r2', 'f-price')).toBe(31000)
+  })
+
+  it('takes a whole strike of three rows back in one press, in order', async () => {
+    store().replaceProject({
+      name: 'Test Sheet',
+      entities: [boats()],
+      groups: [],
+      rules: [],
+      rowsByEntity: {
+        'e-boats': [
+          row('r1', 'Surtees 540', 52000),
+          row('r2', 'Highfield 460', 31000),
+          row('r3', 'Stacer 429', 18000),
+          row('r4', 'Formosa 480', 27000),
+        ],
+      },
+    })
+
+    /* what the toolbar's Delete button does: one synchronous loop */
+    for (const id of ['r1', 'r2', 'r4']) store().deleteRow('e-boats', id)
+    await turn()
+    expect(rows().map((r) => r.id)).toEqual(['r3'])
+    expect(store().past).toHaveLength(1)
+
+    expect(store().undo()).toBe('3 rows deleted · Boats')
+    expect(rows().map((r) => r.id)).toEqual(['r1', 'r2', 'r3', 'r4'])
+  })
+
+  it('puts a removed column back at its own index, in its own band', () => {
+    const banded: EntityDef = {
+      ...boats(),
+      sections: [{ id: 's-id', name: 'Identity' }],
+      fields: [
+        { id: 'f-model', name: 'Model', type: 'text', sectionId: 's-id' },
+        { id: 'f-matrix', name: 'Matrix', type: 'text', sectionId: 's-id' },
+        { id: 'f-price', name: 'Price', type: 'number' },
+      ],
+    }
+    store().replaceProject({
+      name: 'Test Sheet',
+      entities: [banded],
+      groups: [],
+      rules: [],
+      rowsByEntity: {
+        'e-boats': [
+          { ...row('r1', 'Surtees 540', 52000), values: { 'f-model': 'Surtees 540', 'f-matrix': 'Surtees', 'f-price': 52000 } },
+          { ...row('r2', 'Highfield 460', 31000), values: { 'f-model': 'Highfield 460', 'f-matrix': 'Highfield', 'f-price': 31000 } },
+        ],
+      },
+    })
+
+    store().removeField('e-boats', 'f-matrix')
+    expect(store().entities['e-boats'].fields.map((f) => f.id)).toEqual([
+      'f-model',
+      'f-price',
+    ])
+    expect(cell('r1', 'f-matrix')).toBeUndefined()
+
+    expect(store().undo()).toBe('Column deleted · Boats')
+    /* the middle column, in the middle again — a column that came back
+       at the far right would be inside no band, and the sheet would draw
+       "Identity" twice with Price between the two halves */
+    const back = store().entities['e-boats'].fields
+    expect(back.map((f) => f.id)).toEqual(['f-model', 'f-matrix', 'f-price'])
+    expect(back[1].sectionId).toBe('s-id')
+    expect(cell('r1', 'f-matrix')).toBe('Surtees')
+    expect(cell('r2', 'f-matrix')).toBe('Highfield')
+  })
+
+  it('gives back the name column the table was displaying by', () => {
+    store().removeField('e-boats', 'f-model')
+    expect(store().entities['e-boats'].displayFieldId).toBeUndefined()
+
+    store().undo()
+    expect(store().entities['e-boats'].displayFieldId).toBe('f-model')
+  })
+})
+
 describe('undo — a paste', () => {
   it('is one step however many cells it wrote', async () => {
     /* what `useSheetCommands.doPaste` does: create the rows it needs,

@@ -60,8 +60,34 @@ export function Dashboard({ onOpen, onNew }: DashboardProps): ReactElement {
     [modules],
   )
 
+  /* ============================================================
+     THE ONE ACTION HAD TO BE POSSIBLE BEFORE IT WAS OFFERED.
+
+     On a cleared install this page read "You have 0 tables and no
+     modules" and then offered NEW MODULE — and the panel behind that
+     button answers "There are no tables to make a module from yet"
+     (NewModuleDialog.tsx). So the empty state's single action opened a
+     second empty state, which is the fault an empty state exists to
+     prevent: a next step that cannot be taken from where the person is
+     standing.
+
+     A module is ABOUT a table; with no tables there is nothing for it
+     to be about. So the control is disabled and says why, in the place
+     where it is refused — DESIGN_CONTRACT §6 rule 5 and §5's stub
+     pattern, rather than a tooltip or a dialog that says no.
+     ============================================================ */
+  const canMakeModule = tableCount > 0
+
   const newButton = (
-    <button type="button" className="btn btn-primary md-new" onClick={onNew}>
+    <button
+      type="button"
+      className="btn btn-primary md-new"
+      onClick={onNew}
+      disabled={!canMakeModule}
+      /* the sentence beneath carries the reason for everyone; this
+         carries it for a reader who lands on the control itself */
+      aria-describedby={canMakeModule ? undefined : 'md-empty-why'}
+    >
       <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
       New module
     </button>
@@ -94,6 +120,15 @@ export function Dashboard({ onOpen, onNew }: DashboardProps): ReactElement {
             and no modules.
           </p>
           {newButton}
+          {/* THE REFUSAL, WHERE THE THING IS REFUSED, and it names the
+              step that does work from here. Zero tables is the only
+              state in which this page cannot be got out of on its own. */}
+          {canMakeModule ? null : (
+            <p className="md-empty-why" id="md-empty-why">
+              A module is about a table, and there are none yet. Start one from{' '}
+              <em>New table</em> on the bar, or load your price file from <em>Home</em>.
+            </p>
+          )}
         </div>
       ) : (
         <>

@@ -84,16 +84,41 @@ const byCreatedAt = <T extends { createdAt: string; name: string }>(a: T, b: T):
    raised, in silence, under a button labelled Everything.
    ============================================================ */
 
+/* ============================================================
+   WHAT "STRUCTURE ONLY" MEANS — decided, and made true.
+
+   It used to carry the quotes. The panel said "Structure only /
+   Tables and pages, no rows" and the file held two documents, each
+   naming a customer, their phone number and suburb, the prices they
+   were offered and the discount they were given. The note that put
+   them there argued that a quote is neither structure nor a row and
+   that leaving it out would make this card the silent-loss card
+   again — and the first half is right while the second is answered
+   by the other card. Everything is the backup. This is not.
+
+   THIS IS A PRIVACY DECISION, NOT A COPY ONE. Structure only is the
+   option a person picks precisely because it sounds safe to hand to
+   somebody else: a supplier, a consultant, another dealer. What they
+   are handing over is a description of how their business is
+   arranged, and a customer's name is not part of that description.
+   Rewording the card so it admitted to carrying two customers'
+   quotes would have made the sentence true and the file still wrong.
+
+   SO STRUCTURE IS: tables, columns, zones, pages, modules, business
+   rules, and the dealer's own organisation name — which is theirs and
+   is the thing that makes an imported set knowably somebody's. NOT
+   rows, and NOT documents naming customers.
+
+   And the card says so out loud, both ways: Everything names the
+   quotes AND says they carry customer names, Structure only says it
+   leaves them out and counts what it left. See ImportExportMenu.
+   ============================================================ */
+
 /** The envelope for the sheet as it stands, at the given revision.
- *  `includeData` false is "Structure only" — it drops rows and
- *  nothing else, because modules and pages say how the business is
- *  arranged and only the rows are its contents.
- *
- *  QUOTES TRAVEL IN BOTH. They are neither structure nor rows: a quote
- *  is a document that was given to a customer, and "the shape of my
- *  business without its stock" is not a thing anyone means to send
- *  without the deals they have raised. Leaving them out of Structure
- *  only would also make that card the one silent loss again. */
+ *  `includeData` false is "Structure only": it drops the rows and the
+ *  quotes, and keeps everything that describes how the business is
+ *  arranged. Modules and pages ARE structure — they say how the
+ *  business is laid out, not what stock is in it. */
 export function buildExportPayload(rev: number, includeData: boolean): ProjectFile {
   const s = useProjectStore.getState()
   const views = Object.values(s.views).sort(byCreatedAt)
@@ -106,7 +131,15 @@ export function buildExportPayload(rev: number, includeData: boolean): ProjectFi
   /* oldest first in the file, newest first on screen: the list is a
      diary and reads best newest-first, while a file reads best in the
      order things happened and diffs between two revisions stay short */
-  const quotes = [...allQuotes()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  /* ONLY IN THE FULL COPY. A quote holds a customer's name, their
+     contact lines, the prices they were offered and any discount
+     given, so it travels with the data and never in a structure-only
+     copy — see the block above. Read at all only when it will be
+     written, so nothing about a structure-only save touches the quote
+     registry. */
+  const quotes = includeData
+    ? [...allQuotes()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    : []
   return {
     kind: EXPORT_KIND,
     version: EXPORT_VERSION,

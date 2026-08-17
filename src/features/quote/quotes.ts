@@ -31,7 +31,7 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { newId, nowIso } from '@/lib/id'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
 import { priceAtLevel } from './pricing'
-import { unexplainedOverrides } from './totals'
+import { issueBlockers } from './totals'
 import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from './types'
 
 /* ---------------------------------------------------------- */
@@ -503,24 +503,24 @@ export const applyPriceChanges = (id: string, changes: PriceChange[]): void =>
  * on the sheet, and production's complete, correct expiry module
  * never fires because nothing writes the date it reads.
  *
- * IT REFUSES ONE THING, and it is the one that cannot be repaired
- * afterwards: a line carrying a price somebody typed with no reason
- * beside it. The override is deliberately written BESIDE the frozen
- * figure so an auditor can compute the delta later — and a delta
- * with no sentence attached is exactly the question nobody can
- * answer six weeks on. Because this document becomes read-only in
- * the same act, the reason is written now or never.
+ * IT REFUSES EVERYTHING THAT CANNOT BE REPAIRED AFTERWARDS, and the
+ * list of those is `issueBlockers` in totals.ts — no customer name,
+ * nothing on the document, a total of nought that nobody decided on,
+ * and a line carrying a price somebody typed with no reason beside it.
+ * Each is argued where it is written. The list is shared with the screen so
+ * the button, the sentence under it and this function cannot disagree
+ * about whether a given quote may go out.
  *
  * Returns whether the quote was issued, so the screen can say why
  * not rather than appearing to do nothing. The screen ALSO disables
- * the button and prints the sentence beside it — this is the line
+ * the button and prints the sentences beside it — this is the line
  * that makes the refusal true, the way `mutate` is the line that
  * makes an issued quote's read-only controls true.
  */
 export function issueQuote(id: string): boolean {
   const q = registry.get(id)
   if (!q || q.state !== 'draft') return false
-  if (unexplainedOverrides(q).length > 0) return false
+  if (issueBlockers(q).length > 0) return false
   mutate(id, (x) => ({ ...x, state: 'issued', issuedAt: nowIso() }))
   return true
 }

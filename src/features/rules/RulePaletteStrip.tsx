@@ -127,6 +127,15 @@ export function RulePaletteStrip({
       className={`rl-strip nodrag nopan nowheel${className ? ` ${className}` : ''}`}
       role="toolbar"
       aria-label="Rule node palette"
+      /* THE APP'S NOTES GET OUT OF THE WAY OF THIS. Eight chips
+         floating bottom-centre of the canvas are the exact band the
+         toast strip parks in — measured at 1440 x 900, deleting a step
+         put a note at y 755–792 over a palette at 754–806 and six of
+         the eight chips were unusable for nine seconds. One attribute
+         says "a note must clear me"; `src/app/UndoKeys.tsx` measures
+         it and floors itself above, at any width and however many rows
+         this strip has wrapped to. Nothing about the palette moves. */
+      data-note-clear=""
     >
       <span className="rl-strip-title" aria-hidden="true">
         Nodes

@@ -584,6 +584,108 @@
 }
 
 /* ============================================================
+   YOU ARE HERE — and which chips are not doors.
+
+   A map with no "you are here" is a legend. The strip had eleven
+   identical chips over a 58-column register and answered "what sections
+   exist" without ever answering "which one am I looking at", so a
+   reader had to read a column heading to find out where a chip had put
+   them. Two marks fix it, and both come off the one measurement in
+   `useWholeTable` — the same geometry `revealBand` scrolls with.
+
+   LIT is the band the window's left edge is in. It is the band's own
+   ink at full strength on a wash of it, which is the notation the sheet
+   already uses for a folded band's chip — the difference being the
+   bracket, which stays a bracket because the band is still open.
+
+   INERT is a chip whose scroll target is where the sheet already is.
+   Measured on Highfield Inflatables: its last three bands all clamp to
+   the same maximum scroll, so at the right-hand end of that register
+   three of eight chips were presses that could not move anything. They
+   lose the pointer, the hover wash and the bracket's lift — the three
+   things that said "door" — and keep their name, their count and their
+   place, because the map is still a map. `.tb-strip-at` beside them
+   carries the reason in words.
+
+   COLOUR: the name goes to `--ink` on a lit chip rather than staying in
+   the band ink, because band hues are equal-luminance and several of
+   them (amber, cyan) do not clear 4.5:1 on their own 12% wash. The hue
+   stays as the wash and the bracket, which is where §1 says a kind hue
+   belongs — a rail, a dot or a glyph, never the thing you read.
+   ============================================================ */
+.tb-strip-chip-here {
+  background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 12%, var(--paper-high));
+}
+.tb-strip-chip-here .tb-strip-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+.tb-strip-chip-here .tb-strip-count {
+  color: var(--ink-soft);
+}
+.tb-strip-chip-here .tb-strip-rule {
+  opacity: 1;
+  border-top-width: 2px;
+}
+
+/* a chip that cannot move the view stops looking like one that can */
+.tb-strip-chip-stuck {
+  cursor: default;
+}
+.tb-strip-chip-stuck:hover {
+  background: none;
+}
+.tb-strip-chip-stuck.tb-strip-chip-here:hover {
+  background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 12%, var(--paper-high));
+}
+.tb-strip-chip-stuck:hover .tb-strip-rule {
+  opacity: 0.55;
+}
+.tb-strip-chip-stuck.tb-strip-chip-here:hover .tb-strip-rule {
+  opacity: 1;
+}
+/* THE BRACKET CARRIES IT, AND THE NAME IS LEFT ALONE — measured, not
+   preferred. The first version greyed a stuck chip's name to
+   `--ink-faint`, which is 4.72:1 on white and measured **4.22:1** here:
+   this strip is not sitting on bare white, and DESIGN_CONTRACT §1 names
+   that exact trap ("4.26:1 over a 3.5% tint, which fails"). Stepping the
+   other way to `--ink-soft` would make an inert chip DARKER than a live
+   one, which is the wrong sentence in the right contrast.
+
+   So the mark is the bracket, which is the part that means "door" —
+   it is the thing that lifts under the pointer — and the name keeps the
+   band ink it has everywhere else. Nothing on this strip is ever
+   distinguished by colour alone: the cursor, the dead hover, the
+   `aria-disabled`, the title and `.tb-strip-at` all say the same thing.
+
+   Focus stays findable and the chip stays in the tab order on purpose:
+   its accessible name is the explanation (see BandStrip.tsx). */
+.tb-strip-chip-stuck:not(.tb-strip-chip-here) .tb-strip-rule {
+  opacity: 0.3;
+}
+
+/* WHICH BAND, IN WORDS. The lit chip says "here"; this says which, and
+   it is what turns an inert chip from "broken" into "already on
+   screen". 12.5px is the toolbar control label step — this sits in the
+   same 28px strip and must not read louder than the chips it explains. */
+.tb-strip-at {
+  flex: none;
+  align-self: center;
+  max-width: 22ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+.tb-strip-at b {
+  font-weight: 560;
+  color: var(--ink);
+}
+
+/* ============================================================
    GRID
    ============================================================ */
 
@@ -598,6 +700,22 @@
 .tb-grid:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: -2px;
+}
+/* THE RING IS FOR A KEYBOARD ARRIVAL, NOT FOR A CLICK. Measured on a
+   1440 x 694 register: clicking any cell painted this 2px accent
+   rectangle around the WHOLE grid and held it there for as long as the
+   person typed. `.tb-grid` is a `tabindex` div, and `onBodyMouseDown`
+   has to call `preventDefault()` (so a drag-select is not a text
+   selection) and then `focus()` itself — a scripted focus Chrome
+   cannot tell from a Tab, so it matches `:focus-visible`.
+   Grid.tsx marks the grid on pointer-down and clears the mark when
+   focus leaves the register, so this rule takes the ring off exactly
+   the presses that never asked for it. Nothing else moves: the grid is
+   still focusable, a Tab still draws the ring, and the CELL keeps the
+   2px ring it always had (`.tb-cell-on`) — which is the indicator a
+   person typing in a cell actually needs. */
+.tb-grid[data-pointer-focus]:focus-visible {
+  outline: none;
 }
 
 .tb-scroll {
@@ -2834,6 +2952,13 @@ body.tb-resizing {
   backdrop-filter: var(--mat-dim-blur);
   animation: fade-in var(--t-fast) var(--ease-draft);
 }
+/* NOTHING IN THE REGISTER MOUNTS `.tb-scrim` / `.tb-confirm` ANY MORE.
+   The row strike was the last modal on this surface and it is now a
+   toast with UNDO (see the argument at the top of `TableSheet.tsx`).
+   The shell is left standing rather than deleted: it is the shape a
+   genuinely irreversible act would take on this surface, and three of
+   the four classes below (`-title`, `-sub`, `-go`) are still live in the
+   column menu's in-place confirm. */
 .tb-confirm {
   width: 100%;
   max-width: 340px;
@@ -2847,13 +2972,32 @@ body.tb-resizing {
   box-shadow: var(--shadow-popover);
   animation: sheet-in var(--t-med) var(--ease-draft);
 }
+/* THE TITLE OF A DESTRUCTIVE SHEET IS A SENTENCE, SO IT IS SET LIKE
+   ONE. This rule was `--font-mono 11px/600, +0.14em, uppercase, --red`,
+   which took "Remove “Matrix”?" and drew REMOVE “MATRIX”? — three
+   faults in one declaration, all measured in the browser:
+
+     1. UPPERCASE ON A SENTENCE, which rule 3 forbids outright. It also
+        uppercased the dealer's own column NAME, and that is lossy:
+        `PVC` shouted cannot be told from a column somebody typed as
+        `Pvc`, and those are different facts about their data.
+     2. 11px TITLING 12.5px BODY. The heading was the smallest text in
+        its own sheet — the one line a person reads first, set below
+        the line it introduces.
+     3. IT SPENT --red ON THE HEADING, so the sheet had two red things
+        and no hierarchy between them. The danger belongs on the button
+        that does the thing (`.tb-confirm-go`, below) and nowhere else;
+        nothing in this app shouts.
+
+   What replaces it is the contract's page-title step — 13px / 600 /
+   -0.006em Inter, `--ink` — one step above the 12.5px body it heads.
+   `--ink` on `--paper-overlay` measures 17.8:1. */
 .tb-confirm-title {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--red);
+  letter-spacing: -0.006em;
+  color: var(--ink);
 }
 .tb-confirm-sub {
   font-size: 12.5px;
@@ -2892,7 +3036,17 @@ body.tb-resizing {
   background: var(--ink);
   color: var(--paper-high);
   box-shadow: var(--shadow-popover);
-  pointer-events: auto;
+  /* A NOTE NEVER TAKES A PRESS IT WAS NOT AIMED AT. This was
+     `pointer-events: auto` on the whole plate, so for as long as a note
+     stood, everything under it was unreachable — measured on the
+     Fitment stage as six of the node palette's eight buttons, dead for
+     nine seconds. The two things ON the note claim their own presses
+     below; the plate and the sentence let a press through to whatever
+     the note happens to be sitting over. This is the half of the fix
+     that holds on every surface, including ones not yet written: a
+     surface that never declares itself (see `data-note-clear`) can be
+     covered, but it can no longer be disabled. */
+  pointer-events: none;
   animation: sheet-in var(--t-med) var(--ease-draft);
 }
 .tb-toast-warn {
@@ -2916,6 +3070,8 @@ body.tb-resizing {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* the plate is click-through; the two controls are not */
+  pointer-events: auto;
   width: 16px;
   height: 16px;
   padding: 0;
@@ -2970,6 +3126,8 @@ body.tb-resizing {
   display: inline-flex;
   flex: none;
   align-items: center;
+  /* the plate is click-through; the decision is not */
+  pointer-events: auto;
   height: 28px;
   padding: 0 10px;
   border: none;
@@ -3323,9 +3481,31 @@ body.tb-resizing {
   text-transform: none;
   font-variant-numeric: tabular-nums;
 }
+/* AND THE COLUMN MENU'S FOOTER, WHICH THIS LIST MISSED.
+
+   The three selectors above were written by naming the buttons that
+   were on screen at the time, and `.tb-menu-foot` was not one of them
+   — so the four buttons inside the column menu kept `.btn`'s old mono
+   stamp: 11px IBM Plex Mono, weight 600, +0.06em, UPPERCASE. Measured
+   on Yamaha Outboards: the remove-column confirm read "KEEP IT" and
+   "REMOVE", and the options panel beneath it reads "BACK" and "SAVE
+   CHOICES".
+
+   DESIGN_CONTRACT §3 names a button as one of the four things
+   uppercase may never touch, and the checklist repeats it. It matters
+   most here of all the places it could have survived: this is the
+   sheet that asks whether to destroy a column of the price file, and
+   a shouted REMOVE beside a shouted KEEP IT reads as a system alert
+   rather than as the app's own quiet question. The sentence above it
+   is 13px Inter and says "Ctrl+Z brings the column back" — the two
+   buttons should sound like the same voice that just said that.
+
+   Same declaration as the block below, not a new one, because these
+   are the same kind of thing: a button with a word on it. */
 .tb-whole-btn,
 .tb-del-btn,
-.tb-actions .btn {
+.tb-actions .btn,
+.tb-menu-foot .btn {
   font-family: var(--font-ui);
   font-size: 12.5px;
   font-weight: 500;
@@ -3369,4 +3549,121 @@ body.tb-resizing {
   text-transform: none;
   white-space: normal;
   max-width: 44ch;
+}
+/* AND THE BUTTON BESIDE IT, which the same pass walked straight past.
+   The block above corrected the SENTENCE and left the one word that
+   answers it stamped "UNDO" in 11px mono with +0.12em — a button, which
+   DESIGN_CONTRACT §3 names outright in its list of things uppercase may
+   never be. It is also the most consequential word in the app, and it
+   was the only one on the note not set like language.
+   The sentence's own step, one weight up because this is the note's
+   primary: the contract's toolbar-control label is 12.5px/500, and a
+   decision standing beside a report takes 560. GEOMETRY UNTOUCHED —
+   still the contract's 28px control at 7px radius; lowercase is
+   narrower, so nothing grew. COLOUR UNTOUCHED: the wash and the label
+   were measured at 11.07:1 light and 10.96:1 dark (see the note above)
+   and case does not move a ratio. */
+.tb-toast-act {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 560;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+
+/* ============================================================
+   A HEADING SHOWS ALL OF ITS TEXT, OR SHOWS THAT THERE IS MORE.
+
+   The block at :3203 above stopped the heading being cut on ONE
+   line by letting it wrap to two. Measured at 1280 across all
+   fifty of Northside's registers, 18 of 782 headings needed a
+   THIRD and lost it to `max-height: 2.5em` over `overflow:
+   hidden` - silently, with no ellipsis and no mark of any kind:
+
+     Surtees        App. Dry Hull Weight kg  -> "App. Dry Hull"
+                    Top & Cabin Thickness mm, Hull Thickness mm,
+                    Sides Thickness mm
+     Rigging Kits   Parts & Accessories 1-4 CTD -> "Parts & Accessories"
+     Yamaha         RRP + Freight Inc GST    -> "RRP + Freight"
+     three trailers Between Guards (mm)
+     and four more
+
+   Every one of them at the 116px column floor, which is where a
+   thirty-column register puts most of its columns.
+
+   TWO THINGS CHANGE HERE.
+
+   1 · A THIRD LINE, THEN AN ELLIPSIS. `-webkit-line-clamp` where
+       `max-height` was, because a clamp ends in an ellipsis and a
+       max-height ends in nothing. Three lines clears every one of
+       the 18; a name past three says so with the one mark that
+       means "there is more of this".
+
+   2 · THE FRAME STOPS EATING THE TEXT'S ROOM. `.tb-th` was 7px
+       top and bottom and `.tb-th-main` another 8px, so 30px of
+       insets sat around a 30px name inside a 46px box - which is
+       exactly how a two-line name came to overflow its own cell
+       and paint over the first row of data. 4px and 4px: a
+       one-line name is still centred (`justify-content: center`
+       does not care how much room is spare), a two-line name is
+       now centred instead of hanging out of the bottom, and three
+       lines fit in 61px instead of 75.
+
+   THE HEIGHT IS MEASURED, NOT ASSUMED. `.tb-head` carries it
+   inline from `useHeaderRowHeight` (headerHeight.ts), read off
+   `.tb-headprobe` - a hidden copy of this markup, at the real
+   column widths, for EVERY column and not just the windowed ones.
+   `HEAD_H` is its floor, so 38 of the 50 registers are untouched
+   and 12 grow by 15px, once, at the top of a surface that already
+   scrolls both ways.
+   ============================================================ */
+
+.tb-th {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.tb-th-main {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.tb-th-tight .tb-th-main {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.tb-th-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  max-height: none;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------
+   THE PROBE. Zero-sized and clipped, so it cannot add a pixel to
+   the sheet's scroll width the way an absolutely positioned box
+   this wide would; `visibility: hidden` so it is never painted
+   and never read out. It is the same classes as the real heading
+   - that is the whole point, because a probe with its own styling
+   measures its own styling - with only the sticky/translucent
+   chrome of the live one turned off, none of which affects height.
+   ------------------------------------------------------------ */
+.tb-headprobe {
+  flex: none;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+.tb-headprobe-row {
+  display: flex;
+  align-items: flex-start;
+  width: max-content;
+}
+.tb-headprobe .tb-th {
+  position: static;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }

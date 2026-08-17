@@ -6,8 +6,34 @@
    performed by `useSheetCommands`; the nesting, the in-group + ROW
    and the column commands come from the same hooks the on-canvas
    register uses. This file owns only what is specific to the
-   full-window lens: the search/narrow chrome, the strike-rows
-   confirmation, and the designed empty plates.
+   full-window lens: the search/narrow chrome, the row commands the
+   toolbar issues, and the designed empty plates.
+
+   THE ROW CONFIRM IS GONE, AND THIS IS THE ARGUMENT FOR IT. It was a
+   scrim, a dialog and two buttons that said "This entry leaves the
+   table for good. There is no undo." Both sentences were false.
+   Measured in the running app on Surtees: delete row 03, press
+   Ctrl+Z, and the row comes back AT INDEX 03, inside its own Series
+   drawer, with every one of its thirty values — the register's text
+   byte-identical to what it was before. `deleteRow` records one step
+   per act, so a strike of eight rows is one step too.
+
+   Rule 9 is not a preference here, it is the whole reason the dialog
+   existed: "if an act is undoable it gets a toast with UNDO, not a
+   dialog." A confirm sheet is a full stop in the middle of somebody's
+   work, and this one was charging a person that full stop to protect
+   them from something a keystroke already fixes — while telling them
+   the opposite, which is the part that does real damage. A person who
+   reads "there is no undo" and believes it stops doing things they
+   could safely do.
+
+   What replaces it is not nothing. The toolbar's own button already
+   names the act and counts it — "Delete 3 rows" — so the deliberate
+   press is where it always was; the note that follows says what
+   happened and carries UNDO for nine seconds, and Ctrl+Z stands fifty
+   steps deep behind that. The COLUMN menu keeps its confirm, because
+   removing a column is not the same act: see the note in
+   `ColumnMenu.tsx`.
    ============================================================ */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { JSX } from 'react'
@@ -33,7 +59,8 @@ import { useBoxWidth, useNameColumnWidth } from './nameColumnWidth'
 import { useGroupCommands } from './useGroupCommands'
 import { useColumnCommands } from './useColumnCommands'
 import type { NewColumn } from './useColumnCommands'
-import type { ToastTone } from './Toasts'
+import type { PushToast } from './Toasts'
+import { offerUndo } from '@/store/notes'
 import { plural, singleSel } from './helpers'
 import { clearRowReveal, useRowReveal } from './rowRevealState'
 
@@ -47,7 +74,7 @@ export function TableSheet({
   colWidths: Record<string, number>
   /** width <= 0 resets the column to its type default */
   onResizeColumn: (fieldId: string, w: number) => void
-  pushToast: (text: string, tone?: ToastTone) => void
+  pushToast: PushToast
 }): JSX.Element {
   const deleteRow = useProjectStore((s) => s.deleteRow)
   const addField = useProjectStore((s) => s.addField)
@@ -55,7 +82,6 @@ export function TableSheet({
   const [sort, setSort] = useState<SortState | null>(null)
   const [filters, setFilters] = useState<ColumnFilter[]>([])
   const [search, setSearch] = useState('')
-  const [confirmRows, setConfirmRows] = useState<string[] | null>(null)
 
   const data = useTableData(entityId, { sort, filters, search })
   const { entity, rows, hasFormula, viewActive, buildViewRows } = data
@@ -251,15 +277,20 @@ export function TableSheet({
 
   /* -- rows ------------------------------------------------------ */
 
+  /* ONE ACT, ONE STEP, ONE NOTE. The loop is synchronous inside one
+     handler, which is exactly what the store's history collapses into
+     a single entry — so eight rows come back together on one press,
+     not eight. "struck" is gone with the dialog: the toolbar's button
+     says Delete, the store's own label says "8 rows deleted", and the
+     audit had this app using four different verbs for one act. */
   const doDeleteRows = useCallback(() => {
-    const ids = confirmRows ?? []
-    setConfirmRows(null)
+    const ids = cmd.selectedRowIds
     if (ids.length === 0) return
     for (const id of ids) deleteRow(entityId, id)
     cmd.resetSelection()
-    pushToast(`${plural(ids.length, 'row', 'rows')} struck`, 'warn')
+    offerUndo(pushToast, `${plural(ids.length, 'row', 'rows')} deleted`, 'warn')
     gridRef.current?.focus()
-  }, [confirmRows, deleteRow, entityId, pushToast, cmd, gridRef])
+  }, [cmd, deleteRow, entityId, pushToast, gridRef])
 
   /* -- render ---------------------------------------------------- */
 
@@ -307,12 +338,16 @@ export function TableSheet({
         onToggleFit={whole.toggleFit}
         selectedRows={cmd.selectedRowIds.length}
         onAddRow={groups.addRow}
-        onDeleteRows={() => setConfirmRows(cmd.selectedRowIds)}
+        onDeleteRows={doDeleteRows}
         canEdit={!noFields}
       />
 
       {/* the map of the sheet, drawn only when the sheet is */}
-      {onSheet && <BandStrip bands={whole.bands} onReveal={whole.revealBand} />}
+      {onSheet && <BandStrip
+          bands={whole.bands}
+          atBandName={whole.atBandName}
+          onReveal={whole.revealBand}
+        />}
 
       {noFields ? (
         <NoFieldsPlate
@@ -382,53 +417,6 @@ export function TableSheet({
         />
       )}
 
-      {confirmRows !== null && (
-        <div className="tb-scrim" role="presentation" onMouseDown={() => setConfirmRows(null)}>
-          <div
-            className="tb-confirm"
-            role="alertdialog"
-            aria-modal="true"
-            aria-label="Confirm row deletion"
-            onMouseDown={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              e.stopPropagation()
-              if (e.key === 'Escape') {
-                setConfirmRows(null)
-                gridRef.current?.focus()
-              }
-            }}
-          >
-            <p className="tb-confirm-title">
-              Strike {plural(confirmRows.length, 'row', 'rows')}?
-            </p>
-            <p className="tb-confirm-sub">
-              {confirmRows.length === 1
-                ? 'This entry leaves the table for good.'
-                : `These ${confirmRows.length} entries leave the table for good.`}{' '}
-              There is no undo.
-            </p>
-            <div className="tb-confirm-actions">
-              <button
-                type="button"
-                className="btn"
-                /* the keyboard lands on CANCEL, not on the delete —
-                   the Enter that opened this dialog must not carry
-                   through into striking the rows */
-                autoFocus
-                onClick={() => {
-                  setConfirmRows(null)
-                  gridRef.current?.focus()
-                }}
-              >
-                Cancel
-              </button>
-              <button type="button" className="btn btn-danger tb-confirm-go" onClick={doDeleteRows}>
-                Delete {plural(confirmRows.length, 'row', 'rows')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   )
 }

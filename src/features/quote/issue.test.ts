@@ -35,8 +35,10 @@
    ============================================================ */
 import { beforeEach, describe, expect, it } from 'vitest'
 
-const { registerQuote, getQuote, issueQuote, setOverride, discardDraft } = await import('./quotes')
-const { quoteTotals, unexplainedOverrides, needsOverrideReason } = await import('./totals')
+const { registerQuote, getQuote, issueQuote, setOverride, discardDraft, patchQuote } =
+  await import('./quotes')
+const { quoteTotals, unexplainedOverrides, needsOverrideReason, issueBlockers } =
+  await import('./totals')
 
 import type { QuoteDef, QuoteLine } from './types'
 
@@ -68,7 +70,7 @@ function line(id: string, label: string, unitPrice: number): QuoteLine {
 }
 
 let n = 0
-function draft(): QuoteDef {
+function draft(over: Partial<QuoteDef> = {}): QuoteDef {
   n += 1
   const hull = line(`l${n}a`, 'Highfield SP 560', 62000)
   const motor = line(`l${n}b`, 'Yamaha F150XC', 29000)
@@ -91,6 +93,7 @@ function draft(): QuoteDef {
     customer: { name: 'A customer' },
     createdAt: new Date(2026, 0, 1 + n).toISOString(),
     updatedAt: new Date(2026, 0, 1 + n).toISOString(),
+    ...over,
   }
   registerQuote(quote)
   return quote
@@ -181,5 +184,162 @@ describe('a quote with an unexplained override may not be given out', () => {
     const other = draft()
     discardDraft(other.id)
     expect(issueQuote(other.id)).toBe(false)
+  })
+})
+
+/* ============================================================
+   THE SAME CLASS OF HOLE, THE OTHER THREE CASES.
+
+   The override gate above was the only one closed. Measured on the live
+   app: opening Stabicraft - 1450 Explorer, pressing "Quote this one"
+   and pressing "Give it to the customer" without touching the customer
+   field ISSUED the quote, and the frozen document printed the
+   placeholder sentence where a name belongs. Issuing is the one
+   irreversible act in this app — `mutate` refuses every edit afterwards
+   and the only remaining action is "Make a new version" — so a document
+   addressed to nobody was now permanent.
+
+   Each ruling is argued in `issueBlockers` (totals.ts). These pin the
+   registry, which is the line that makes the refusal true: a test that
+   only read the screen would not notice `issueQuote` letting it
+   through, which is exactly how this shipped.
+   ============================================================ */
+
+describe('a quote with no customer on it may not be given to a customer', () => {
+  it('REFUSES the issue, and stays a draft so the name can still be typed', () => {
+    const q = draft({ customer: { name: '' } })
+    expect(issueQuote(q.id)).toBe(false)
+    expect(getQuote(q.id)?.state).toBe('draft')
+    expect(getQuote(q.id)?.issuedAt).toBeUndefined()
+  })
+
+  it('does not accept whitespace as a name — it prints as a blank', () => {
+    const q = draft({ customer: { name: '   ' } })
+    expect(issueQuote(q.id)).toBe(false)
+  })
+
+  it('lets it out the moment a name is typed, and the name travels with it', () => {
+    const q = draft({ customer: { name: '' } })
+    expect(issueQuote(q.id)).toBe(false)
+    patchQuote(q.id, { customer: { name: 'R. Kelleher' } })
+    expect(issueBlockers(getQuote(q.id) as QuoteDef)).toEqual([])
+    expect(issueQuote(q.id)).toBe(true)
+    expect(getQuote(q.id)?.customer.name).toBe('R. Kelleher')
+  })
+
+  it('says why, and says it where the name is typed', () => {
+    const q = draft({ customer: { name: '' } })
+    const why = issueBlockers(getQuote(q.id) as QuoteDef)
+    expect(why).toHaveLength(1)
+    /* the sentence names the field, and says why it cannot wait */
+    expect(why[0]).toContain('customer name at the top')
+    expect(why[0]).toContain('freezes the document')
+  })
+})
+
+describe('a quote with nothing on it may not be given to a customer', () => {
+  /* NOT REACHABLE FROM THE APP'S OWN PATH — the subject is minted as a
+     line and the subject's line has no remove control. It is reachable
+     from a FILE: `normQuote` reads a quotes block whose lines all fail
+     narrowing and hands back an editable draft with none. */
+  it('REFUSES an empty document, however it got here', () => {
+    const q = draft({ lines: [], adjustments: [], sections: [] })
+    expect(issueQuote(q.id)).toBe(false)
+    expect(issueBlockers(getQuote(q.id) as QuoteDef)[0]).toContain('nothing on this quote to offer')
+  })
+})
+
+/** A line on a table with no price column: `unitPrice: null`, which is
+ *  "not priced here" and never a nought. */
+const unpriced = (id: string, label: string): QuoteLine => ({
+  ...line(id, label, 0),
+  unitPrice: null,
+  priceFieldId: null,
+  priceColumnName: null,
+  levels: [],
+})
+
+const oneLine = (l: QuoteLine): Partial<QuoteDef> => ({
+  lines: [l],
+  sections: [{ blockId: '__subject', tableId: 'tbl_boats', title: 'Boats', lineIds: [l.id] }],
+})
+
+describe('a quote that comes to nothing may not be given to a customer', () => {
+  it('REFUSES a document whose every line is "not priced here"', () => {
+    const q = draft(oneLine(unpriced('lz', 'Stabicraft 1450 Explorer')))
+    expect(quoteTotals(getQuote(q.id) as QuoteDef).total).toBe(0)
+    expect(issueQuote(q.id)).toBe(false)
+    expect(issueBlockers(getQuote(q.id) as QuoteDef)[0]).toContain('comes to $0')
+  })
+
+  it('REFUSES a boat the price file holds at a literal nought', () => {
+    /* The seed's own Haines Signature boats: "Signature Fisher - 525F,
+       $0" on the Boats module today. `unitPrice: 0` is a real number and
+       not a null, so the null check alone would have let this out at
+       Total $0 — which is why the gate is on the TOTAL. */
+    const q = draft(oneLine(line('lq', 'Signature Fisher - 525F', 0)))
+    expect(quoteTotals(getQuote(q.id) as QuoteDef).unpricedCount).toBe(0)
+    expect(quoteTotals(getQuote(q.id) as QuoteDef).total).toBe(0)
+    expect(issueQuote(q.id)).toBe(false)
+  })
+
+  it('ALLOWS an even swap, because a person stated it', () => {
+    /* 62,000 against a 62,000 trade-in. Two visible rows, the dealer's
+       own words in the trade-in's label, and a document that says so.
+       Refusing every nought would invent a pricing policy the dealer's
+       data does not contain. */
+    const hull = line('lp', 'Highfield SP 560', 62000)
+    const q = draft({
+      ...oneLine(hull),
+      adjustments: [
+        { id: 'adj_swap', kind: 'tradeIn', label: 'Stacer 429 Outlaw', amount: -62000 },
+      ],
+    })
+    expect(quoteTotals(getQuote(q.id) as QuoteDef).total).toBe(0)
+    expect(issueBlockers(getQuote(q.id) as QuoteDef)).toEqual([])
+    expect(issueQuote(q.id)).toBe(true)
+  })
+
+  it('does not treat a fresh adjustment row, still at nought, as a decision', () => {
+    /* `addAdjustment` starts a row at 0 with an empty label. A quote
+       that comes to nothing does not become issuable because somebody
+       pressed "Add a discount" and typed nothing into it. */
+    const q = draft({
+      ...oneLine(unpriced('lr', 'Stabicraft 1450 Explorer')),
+      adjustments: [{ id: 'adj_blank', kind: 'discount', label: '', amount: 0 }],
+    })
+    expect(issueQuote(q.id)).toBe(false)
+  })
+
+  it('allows one unpriced line among priced ones — the document says so itself', () => {
+    /* Pinned so the new gate cannot creep into the existing behaviour:
+       `.qt-unpriced` prints "1 line ... is not in the total", which is
+       the honest answer when the rest of the quote carries figures. */
+    const hull = line('lm', 'Highfield SP 560', 62000)
+    const nil = unpriced('ln', 'Bow rail')
+    const q = draft({
+      lines: [hull, nil],
+      sections: [
+        { blockId: '__subject', tableId: 'tbl_boats', title: 'Boats', lineIds: [hull.id, nil.id] },
+      ],
+    })
+    const now = getQuote(q.id) as QuoteDef
+    expect(quoteTotals(now).unpricedCount).toBe(1)
+    expect(quoteTotals(now).total).toBe(62000)
+    expect(issueBlockers(now)).toEqual([])
+    expect(issueQuote(q.id)).toBe(true)
+  })
+})
+
+describe('every reason is reported, not just the first one', () => {
+  it('names both the missing customer and the nought total', () => {
+    const q = draft({
+      customer: { name: '' },
+      ...oneLine(unpriced('lb', 'Stabicraft 1450 Explorer')),
+    })
+    /* A person who fixes one refusal and is then refused for a second
+       nobody mentioned has been told half the truth. */
+    expect(issueBlockers(getQuote(q.id) as QuoteDef)).toHaveLength(2)
+    expect(issueQuote(q.id)).toBe(false)
   })
 })

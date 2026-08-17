@@ -51,11 +51,69 @@
    than inside a table, so it needs one. No colour, no type, no
    token — geometry only. The look of a toast is not this file's.
    ============================================================ */
-import { useEffect } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import type { JSX } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { onSaid } from '@/store/notes'
 import { Toasts, useToasts } from '@/features/table/Toasts'
+
+/* ============================================================
+   WHERE A NOTE IS ALLOWED TO SIT — solved once, for every surface.
+
+   THE FAULT, TWICE. A previous round found that every Ctrl+Z painted
+   its note across the middle of the DOCK, and answered it by lifting
+   this layer's floor by the dock's own height — a constant, 84px. The
+   same fault then turned up against a different surface: on the
+   Fitment stage, deleting a step put a note at y 755–792 straight over
+   the node palette, which sits at y 754–806, and six of its eight
+   buttons were unusable for nine seconds. Measured at 1440 x 900.
+   Raising the constant again would fix Fitment and wait for the next
+   surface. There is no rectangle that is empty on every stage: the
+   bottom centre holds the dock and the palette, the bottom left holds
+   React Flow's zoom controls, the bottom right holds the freshness
+   notice, and the top centre holds the Fitment stage's own tool strip
+   (measured y 64–113). Choosing a corner is choosing which surface
+   breaks next.
+
+   SO THE FLOOR IS MEASURED, NOT CHOSEN. Anything that floats over a
+   page and must never be covered marks itself `data-note-clear`, and
+   this layer floors itself above the highest such thing on screen. Two
+   elements carry it today — the dock (`.dk-wrap`) and the Fitment
+   palette (`.rl-strip`) — and the dock's 84px constant is gone with
+   them, because the dock is now measured like everything else. A new
+   surface that parks an instrument over its page adds one attribute
+   and needs no arithmetic; the note gets out of its way at every
+   window width, including the width where the palette wraps to two
+   rows (measured at 1152: floor 194 instead of 146).
+
+   IT COSTS NOTHING WHEN NOTHING IS BEING SAID. The measurement runs on
+   the layout pass in which a note appears — which is the only moment
+   the number matters — and again on a resize while one is standing. No
+   observers, no polling, nothing subscribed for the session.
+
+   AND THE MEASUREMENT IS THE SECOND LINE OF DEFENCE, NOT THE FIRST.
+   `.tb-toast` is now `pointer-events: none` with its two controls
+   claiming their own presses (see table.css), so a surface that never
+   declares itself can be covered but can no longer be disabled. The
+   guarantee this file adds is visual; the guarantee that a press
+   always reaches its target holds whether or not anyone remembers the
+   attribute.
+   ============================================================ */
+const FURNITURE = '[data-note-clear]'
+
+/** How far up from the bottom of the window a note must start, to
+ *  clear everything that has declared itself. `--sp-5` inside
+ *  `.tb-toasts` is the air above it. */
+function floorAbove(): number {
+  let floor = 0
+  for (const el of document.querySelectorAll<HTMLElement>(FURNITURE)) {
+    const box = el.getBoundingClientRect()
+    /* something folded away, or not laid out yet, reserves nothing */
+    if (box.width < 1 || box.height < 1) continue
+    floor = Math.max(floor, window.innerHeight - box.top)
+  }
+  return Math.round(floor)
+}
 
 /** a keystroke that belongs to a text field belongs to the browser */
 function isTextEntry(target: EventTarget | null): boolean {
@@ -94,21 +152,44 @@ export function UndoKeys(): JSX.Element {
      once for the session and never re-registers mid-note. */
   useEffect(() => onSaid((note) => push(note.text, note.tone, note.act)), [push])
 
-  /* THE NOTE CLEARS THE BAR IT WAS LANDING ON. `inset: 0` put this
-     layer over the whole viewport, and `.tb-toasts` parks its strip at
-     the bottom of whatever contains it — which is the exact band the
-     floating dock occupies. Measured at 1280 × 860: the toast came up
-     at 810–842 inside a dock sitting 777–838, so every Ctrl+Z painted
-     "Undone — …" across the middle of the navigation, and won the hit
-     test doing it (z-index 200 against the bar).
-     Lifting the floor by the dock's own height puts the note directly
-     above the bar instead of on it. Still geometry only — no colour,
-     no type, no token; the look of a toast is not this file's. */
+  /* THE FLOOR, MEASURED. See the note above `FURNITURE`. */
+  const standing = items.length > 0
+  const [floor, setFloor] = useState(0)
+  const remeasure = useCallback(() => setFloor(floorAbove()), [])
+
+  /* `useLayoutEffect`, so the number is right in the frame the note
+     first paints in — an effect would land it one frame late and the
+     note would visibly jump up off the palette. */
+  useLayoutEffect(() => {
+    if (!standing) return
+    remeasure()
+  }, [standing, items.length, remeasure])
+
+  /* and only while one is standing: a resize with nothing to say needs
+     no arithmetic, and the next note measures for itself anyway */
+  useEffect(() => {
+    if (!standing) return
+    window.addEventListener('resize', remeasure)
+    return () => window.removeEventListener('resize', remeasure)
+  }, [standing, remeasure])
+
+  /* THE NOTE CLEARS EVERY FLOATING THING THAT HAS SAID SO. `inset: 0`
+     put this layer over the whole viewport, and `.tb-toasts` parks its
+     strip at the bottom of whatever contains it — which was the exact
+     band the floating dock occupies (measured at 1280 × 860: the note
+     came up at 810–842 inside a dock sitting 777–838), and then the
+     exact band the Fitment palette occupies (1440 × 900: note 755–792,
+     palette 754–806).
+     The floor was a constant for the first of those and is measured for
+     both, from `[data-note-clear]`. `floor` is 0 before the first
+     measurement, so the fallback is the dock's old clearance and a note
+     is never worse off than it was. Still geometry only — no colour, no
+     type, no token; the look of a toast is not this file's. */
   return (
     <div
       style={{
         position: 'fixed',
-        inset: '0 0 var(--dock-clear, 84px) 0',
+        inset: `0 0 ${floor > 0 ? floor : 84}px 0`,
         zIndex: 200,
         pointerEvents: 'none',
       }}

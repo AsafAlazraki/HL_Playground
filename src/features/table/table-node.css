@@ -1046,3 +1046,89 @@
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* ============================================================
+   A NAME IS A NAME — the five sites the blueprint pass missed.
+
+   The block at :986 above corrected `.tb-node-name`, `.tb-node-rows`,
+   `.tb-focus-name`, `.tb-focus-tally` and `.tb-node-act`, and stopped
+   at the card's header and footer. Five more things on the same two
+   surfaces were still stamping words nobody typed in capitals.
+   Enumerated live at 1440 on the Data model with Northside's 50 tables,
+   with the verdict for each:
+
+     .tb-node-nameedit  FIX — the RENAME BOX. The name button beside it
+                        was corrected to sentence case by the pass
+                        above and the input you type into was not, so
+                        clicking "Stacer" to rename it made the word
+                        jump to STACER under the caret and every letter
+                        typed after it was a capital the dealer could
+                        not see the shape of. An editor that does not
+                        show what is being edited is the worst instance
+                        of this fault in the app.
+     .tb-lod-band       FIX — the SECTION names on the folded plate,
+                        read straight off the admin's own sheet:
+                        "Identity", "Identity & Spec", "Hull & Rig"
+                        drawn as IDENTITY, IDENTITY & SPEC. Exactly the
+                        fault table.css:3191 records for
+                        `.tb-band-name`, on the other drawing of the
+                        same table.
+     .tb-lod-unit       FIX — the dealer's own noun under each figure.
+                        `leafNoun` reads it from their data, so this is
+                        "26 MODELS / 25 COLUMNS" for a boat shop and
+                        "40 BIKES" for a motorcycle shop. A value.
+     .tb-node-filtered  FIX — "Narrowed", a button, and the one control
+                        that undoes a filter.
+     .tb-node-tally     FIX — "12 of 40 showing", a sentence carrying
+                        two figures.
+
+   KEPT UPPERCASE: `.tb-lod-more` ("+3") has no letters in it, so the
+   transform has no visible effect and the mono stamp is a sanctioned
+   use; it is split off the `.tb-lod-band` rule here rather than
+   changed. `.block-heading` and `.mono-label` are NOT touched — they
+   live in src/styles/base.css, they are the shared foundation, and
+   uppercase is the identity of a title-block stamp.
+
+   TRACKING COMES DOWN WITH THE CASE, §3: +0.06em to +0.14em is the
+   11px uppercase label's tracking, and none of these is a label. The
+   band stamp keeps +0.01em because it is still a boxed stamp, just no
+   longer a shouted one — the same hair table.css gave `.tb-band-name`.
+
+   COLOURS AND GEOMETRY UNTOUCHED. Case does not move a contrast ratio,
+   and lowercase is narrower, so nothing on a 24px strip grew.
+   ============================================================ */
+/* the input is the same word in the same place as the button it
+   replaces, so it takes the button's exact step — 11.5px / 600 /
+   -0.004em, matching `.tb-node-name` at :1024. A rename that changes
+   the size of the word is a second thing moving for no reason. */
+.tb-node-nameedit {
+  font-family: var(--font-ui);
+  font-variation-settings: normal;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  text-transform: none;
+}
+.tb-lod-band {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.tb-lod-unit {
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.tb-node-filtered {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.tb-node-tally {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}

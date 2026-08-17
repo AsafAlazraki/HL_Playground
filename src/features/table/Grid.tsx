@@ -92,12 +92,12 @@ import {
   BAND_H,
   COL_OVERSCAN,
   GUTTER_W,
-  HEAD_H,
   INDENT_W,
   OVERSCAN,
   ROW_H,
   TIGHT_COL_W,
   VIRTUALIZE_ABOVE,
+  cellInsetW,
   cellPrintText,
   cellText,
   clampWidth,
@@ -112,6 +112,7 @@ import {
   primaryRange,
   selContains,
   singleSel,
+  valueFaceOf,
   valueForField,
   widthOf,
   type CellRange,
@@ -119,6 +120,8 @@ import {
   type GridSel,
   type MoveDir,
 } from './helpers'
+import { useHeaderRowHeight } from './headerHeight'
+import { usePaintedWidth } from './nameColumnWidth'
 
 const NO_IMAGES: ImageRef[] = []
 
@@ -358,7 +361,42 @@ export function Grid(props: GridProps): JSX.Element {
      has always been */
   const banded = useMemo(() => bands.some((b) => b.section !== undefined), [bands])
   const bandH = banded ? BAND_H : 0
-  const headH = HEAD_H + bandH
+
+  /* -- the heading row's own height -----------------------------
+     A HEADING SHOWS ALL OF ITS TEXT OR SHOWS THAT THERE IS MORE, and
+     18 of Northside's 782 headings used to show neither — see the
+     note at the bottom of table.css. The height cannot be left to
+     CSS because it is a number here: `.tb-head` carries it inline and
+     `headH` below is what the row virtualiser subtracts from
+     `scrollTop`. So the real heading markup is laid out once, hidden,
+     at the real column widths, and its height is read off the
+     browser (`headerHeight.ts`).
+
+     `headFields` is EVERY column, not the windowed ones: a heading
+     row that grew as you scrolled sideways would move the sheet
+     under the pointer. */
+  const headProbeRef = useRef<HTMLDivElement | null>(null)
+  const headFields = useMemo(
+    () =>
+      colLayout.placed.flatMap((p) =>
+        p.slot.kind === 'field' ? [{ field: p.slot.field, w: p.w }] : [],
+      ),
+    [colLayout],
+  )
+  /* what a re-measure has to wait for: a name, a width or a type
+     changing. Anything else the probe would answer identically. */
+  const headKey = useMemo(
+    () => headFields.map((h) => `${h.field.name} ${h.w} ${h.field.type}`).join(''),
+    [headFields],
+  )
+  const headRowH = useHeaderRowHeight(headProbeRef, headKey)
+  const headH = headRowH + bandH
+
+  /* THE PAINTED WIDTH OF A VALUE, so a cut one can be told from one
+     that fits. Cached per string — see `usePaintedWidth`. `undefined`
+     on the first frame, before a cell exists to read the face off,
+     which is what `mayBeClipped`'s character estimate is still for. */
+  const paintedWidth = usePaintedWidth()
 
   const refLabels = useMemo(
     () => fields.map((f) => refLabelOf(f)),
@@ -811,6 +849,42 @@ export function Grid(props: GridProps): JSX.Element {
       aria-rowcount={rows + 1 + (banded ? 1 : 0)}
       aria-colcount={cols + 1}
       aria-label={`${entity.name} table`}
+      /* A FOCUS RING BELONGS ON THE THING THAT HAS FOCUS.
+         `.tb-grid` is the keyboard stop for the whole register, so it
+         carries `tabIndex={0}` and a `:focus-visible` ring — and that
+         ring was being painted around the ENTIRE 1440x694 register
+         every time somebody clicked a cell, and held there for as long
+         as they typed. The cause is two lines working together, both of
+         them correct on their own: `onBodyMouseDown` calls
+         `preventDefault()` so a drag-select does not start a text
+         selection, and then calls `focus()` itself because the
+         prevented default no longer moves focus. Chrome cannot tell a
+         scripted `focus()` on a `tabindex` div from a keyboard arrival,
+         so it matches `:focus-visible` and draws the ring.
+         The fix is to say which it was. A pointer press marks the grid,
+         the ring stands down for that press, and the CELL's own 2px
+         ring (`.tb-cell-on`) is the indicator — which is what a person
+         typing in a cell needs to see. Nothing about keyboard focus
+         changes: Tab still lands here, there is no mousedown on a Tab,
+         so the mark is absent and the whole-grid ring still draws. The
+         mark is cleared on blur, so tabbing back in after clicking
+         shows the ring again. */
+      onMouseDownCapture={() => {
+        gridRef.current?.setAttribute('data-pointer-focus', '')
+      }}
+      onBlur={(e) => {
+        /* ONLY WHEN FOCUS REALLY LEAVES. React's `onBlur` is
+           `focusout`, which bubbles, so an unguarded handler cleared
+           the mark every time the cell editor opened — and the editor
+           hands focus straight back to the grid on commit, from a
+           keystroke, which is the exact arrival Chrome reads as
+           keyboard. That is the "ring stays up the whole time anyone
+           types" half of the fault. The mark therefore survives every
+           move INSIDE the register and only goes when the next thing
+           to hold focus is outside it. */
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+        gridRef.current?.removeAttribute('data-pointer-focus')
+      }}
       onKeyDown={onGridKey}
       onPaste={(e) => {
         /* a paste INTO a live input that happens to sit inside the grid —
@@ -829,6 +903,40 @@ export function Grid(props: GridProps): JSX.Element {
         onPasteText(text)
       }}
     >
+      {/* -- how tall the heading row has to be ------------------
+          A hidden copy of one heading cell per column, at that
+          column's real width, carrying the same classes the live
+          heading does — so what it measures is what the live row
+          will do, with no font metrics and no wrap simulation. It is
+          0x0 and clipped, so it costs the sheet no scroll width, and
+          `visibility: hidden` keeps it out of the paint and out of
+          the accessibility tree. See headerHeight.ts. */}
+      <div className="tb-headprobe" aria-hidden="true">
+        <div className="tb-headprobe-row" ref={headProbeRef}>
+          {headFields.map(({ field, w }) => (
+            <div
+              key={field.id}
+              className={'tb-th' + (w < TIGHT_COL_W ? ' tb-th-tight' : '')}
+              style={{ width: w }}
+            >
+              <span className="tb-th-main">
+                <span className="tb-th-top">
+                  <span className="tb-th-name">
+                    {field.name}
+                    {field.required === true && <span className="tb-th-req">*</span>}
+                  </span>
+                </span>
+                {field.type === 'formula' && (
+                  <span className="tb-th-meta">
+                    <span className="tb-th-ro">calculated</span>
+                  </span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div
         className="tb-scroll"
         ref={(el) => {
@@ -939,7 +1047,7 @@ export function Grid(props: GridProps): JSX.Element {
               className="tb-head"
               role="row"
               aria-rowindex={banded ? 2 : 1}
-              style={{ height: HEAD_H }}
+              style={{ height: headRowH }}
             >
               <button
                 type="button"
@@ -1398,8 +1506,34 @@ export function Grid(props: GridProps): JSX.Element {
                                      `mayBeClipped` so a value that fits
                                      carries no tooltip: a register that
                                      spoke on every hover would be worse
-                                     than one that clipped. */
-                                  mayBeClipped(text, w)
+                                     than one that clipped.
+
+                                     AND THE GATE IS MEASURED NOW. It
+                                     estimated 5.4px a character, which
+                                     is a lower bound for lower case and
+                                     far under the truth for the upper
+                                     case a price file is full of: 216
+                                     of Rigging Kits' 468 cut values
+                                     were scored as fitting and carried
+                                     no title at all. It also charged
+                                     every column the same 25px of
+                                     inset, when the first column of a
+                                     GROUPED register is stepped in by
+                                     another 18. Both are read off the
+                                     real geometry here. */
+                                  mayBeClipped(
+                                      text,
+                                      w,
+                                      cellInsetW({
+                                        w,
+                                        groupedLead: c === 0 && layout.grouped,
+                                        pick: f.type === 'select' || f.type === 'reference',
+                                        image: f.type === 'image',
+                                      }),
+                                      paintedWidth === undefined
+                                        ? undefined
+                                        : (s) => paintedWidth(s, valueFaceOf(f)),
+                                    )
                                   ? text
                                   : undefined
                         }
@@ -1530,6 +1664,7 @@ export function Grid(props: GridProps): JSX.Element {
       {menu && menuField && (
         <ColumnMenu
           field={menuField}
+          entityId={entity.id}
           anchor={menu.rect}
           sortDir={sort?.fieldId === menuField.id ? sort.dir : null}
           filtered={filterByField.has(menuField.id)}

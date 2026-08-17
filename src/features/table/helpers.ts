@@ -363,18 +363,96 @@ const NARROWEST_CHAR = 5.4
  *  shape here, so a cut value carries the whole of itself as its
  *  cell's title.
  *
- *  Estimated rather than measured because this is decided per CELL, on
- *  every painted cell of every windowed row — a canvas measurement
- *  there would be thousands per scroll. The measured path is the one
- *  that decides the name column's WIDTH (`nameColumnWidth`), which
- *  happens once per table. */
-export function mayBeClipped(text: string, columnWidth: number): boolean {
+ *  `measure` is the painted width of the string, injected — pure, so
+ *  this is testable without a canvas, and so the estimate below is only
+ *  ever the fallback. THE ESTIMATE WAS NOT GOOD ENOUGH ON ITS OWN:
+ *  measured on Rigging Kits at 1280, 216 of 468 cut values were passed
+ *  as fitting, because `NARROWEST_CHAR` is calibrated on lower case and
+ *  the register is full of upper case — "TILLER CONVERSION KITS" wants
+ *  158px of its 141px box and the estimate scored it 119. Where the
+ *  painted face is known it is measured instead; the character count
+ *  survives only for the first frame, before a cell has been painted
+ *  to read the face off.
+ *
+ *  `inset` is what the cell's own padding and rule cost — see
+ *  `cellInsetW`, because it is not one number for every column. */
+export function mayBeClipped(
+  text: string,
+  columnWidth: number,
+  inset: number = CELL_INSET_W,
+  measure?: (s: string) => number,
+): boolean {
   if (text === '') return false
-  return text.length * NARROWEST_CHAR > columnWidth - CELL_INSET_W
+  const available = columnWidth - inset
+  if (measure) return measure(text) > available - CLIP_SLACK
+  return text.length * NARROWEST_CHAR > available
 }
+
+/** The last pixels the measurement cannot account for, spent on the side
+ *  that offers a title rather than the side that withholds one.
+ *
+ *  Small, because the two real causes are named and charged where they
+ *  belong instead: a picker's extra padding is in `cellInsetW`, and a
+ *  figure's mono face is in `usePaintedWidth`. What is left is canvas
+ *  metrics running about half a percent off the layout engine's, since
+ *  `font-optical-sizing: auto` does not reach a canvas — 1.4px on a
+ *  264px string, measured. Two of those, rounded up. */
+const CLIP_SLACK = 3
 
 /** What a cell's two `--sp-3` insets and its right-hand rule cost. */
 export const CELL_INSET_W = 25
+
+/** …and at `TIGHT_COL_W` the insets drop to `--sp-1` either side
+ *  (`.tb-cell-tight`), which is 16px less. */
+export const TIGHT_CELL_INSET_W = 9
+
+/** …and a GROUPED register steps its first column in by 18px so the
+ *  run of leaves reads as belonging to its drawer
+ *  (`.tb-grid-grouped .tb-cell-lead`). Missing this is half of why
+ *  `mayBeClipped` under-fired: the lead column of a grouped table has
+ *  43px of inset, not 25, so a value with 18px to spare was scored as
+ *  fitting when it was already cut. */
+export const GROUP_LEAD_INSET_W = 18
+
+/** …and a select or reference value keeps `--sp-2` clear on its right
+ *  (`.tb-pick`), inside the inset every other cell has. This is where
+ *  the other half of the misses were: the join tables are almost all
+ *  reference columns, so "Yamaha - F115XB2 (White)" had 151px and its
+ *  column said 159. */
+export const PICK_INSET_W = 8
+
+/** What one cell's own box costs the value inside it. Pure, and keyed
+ *  on exactly the four things `table.css` keys its padding on. */
+export function cellInsetW(opts: {
+  /** the column's drawn width */
+  w: number
+  /** is this the register's first column, in a grouped register */
+  groupedLead: boolean
+  /** a select or a reference — `.tb-pick` */
+  pick: boolean
+  /** a picture strip sets its own padding and takes the full width */
+  image: boolean
+}): number {
+  if (opts.image) return 0
+  const base = opts.w < TIGHT_COL_W ? TIGHT_CELL_INSET_W : CELL_INSET_W
+  return (
+    base +
+    (opts.groupedLead ? GROUP_LEAD_INSET_W : 0) +
+    (opts.pick ? PICK_INSET_W : 0)
+  )
+}
+
+/** Which of the three painted faces a column's values are drawn in —
+ *  `GridCell`'s own `.tb-num` / `.tb-date` test, in one place so the
+ *  measurement and the paint cannot disagree. */
+export function valueFaceOf(field: FieldDef): 'text' | 'num' | 'date' {
+  if (field.type === 'date') return 'date'
+  if (field.type === 'number') return 'num'
+  /* a worked-out value is `.tb-fx`, which is the same mono at the same
+     12px as `.tb-num` whatever it worked out to */
+  if (field.type === 'formula') return 'num'
+  return 'text'
+}
 
 /** Marks (red-pencil corner ticks) are keyed per cell, not per index. */
 export const markKey = (rowId: string, fieldId: string): string =>

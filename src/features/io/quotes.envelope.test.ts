@@ -170,10 +170,52 @@ describe('the envelope carries the quotes', () => {
     expect(file.quotes?.map((q) => q.id).sort()).toEqual(['qt_draft', 'qt_issued'])
   })
 
-  it('carries them in Structure only too, because a document is neither structure nor a row', () => {
+  /* ============================================================
+     AND "STRUCTURE ONLY" CARRIES NONE OF THEM.
+
+     It used to carry both, under a panel reading "Structure only /
+     Tables and pages, no rows" and a fact line reading "52 tables · 25
+     pages · 2 quotes · no rows". A quote holds a customer's NAME, their
+     contact lines, the prices they were offered and any discount given
+     — and this is the card a person picks precisely because it sounds
+     safe to hand to a supplier, a consultant or another dealer.
+
+     A privacy problem, not a copy problem: rewording the card to admit
+     it carried two customers' quotes would have made the sentence true
+     and the file still wrong. Structure is tables, columns, pages,
+     modules and rules. Not documents naming customers.
+
+     The assertion below is on the SERIALISED file rather than on the
+     `quotes` key, because the key is not the only way a name could
+     reach the envelope and a test that only checked the key would not
+     notice the next one.
+     ============================================================ */
+  it('CARRIES NO CUSTOMER NAME IN A STRUCTURE-ONLY COPY — the privacy hole', () => {
     const file = buildExportPayload(1, false)
     expect(file.rows).toBeUndefined()
+    expect(file.quotes).toBeUndefined()
+
+    /* the whole envelope as it would be written to disk. R. Kelleher is
+       on both fixtures, with a phone number and a suburb. */
+    const onDisk = JSON.stringify(file)
+    expect(onDisk).not.toContain('R. Kelleher')
+    expect(onDisk).not.toContain('0400 000 000')
+    expect(onDisk).not.toContain('Sandgate')
+    /* and nothing else the documents alone hold: the discount given, the
+       consultant who raised it, the reference printed on the paper */
+    expect(onDisk).not.toContain('Boat show')
+    expect(onDisk).not.toContain('A. Salesperson')
+    expect(onDisk).not.toContain('Q-qt_draft')
+
+    /* the two documents are still on the sheet — this card leaves them
+       out of the FILE, it does not delete them */
+    expect(allQuotes()).toHaveLength(2)
+  })
+
+  it('still carries them in the full copy, which is the backup', () => {
+    const file = buildExportPayload(1, true)
     expect(file.quotes).toHaveLength(2)
+    expect(JSON.stringify(file)).toContain('R. Kelleher')
   })
 
   it('accepts its own file and brings both documents back', () => {

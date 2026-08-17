@@ -44,6 +44,20 @@
    microtask later the burst is closed and the top of the stack is
    ours. This is why `sayUndoable` takes no entry from its caller: the
    timing is a property of the history machinery, not of the surface.
+
+   AND WHY THE PIN IS LENT OUT. A register does NOT speak through this
+   bus: `TableSheet` and `EntityTableNode` each own a `useToasts()`
+   strip, positioned inside the sheet they belong to, and that is
+   right — a note about two cells belongs beside the two cells. But
+   until now only the bus could build the pinned UNDO act, so rule 9
+   was obeyed on the flow stage and disobeyed in the register: Ctrl+D
+   said "2 cells filled" and offered nothing, while a deleted rule
+   offered UNDO. `offerUndo` is the pin with the destination taken
+   out — hand it any push and it builds the same act against the same
+   step, and every word it goes on to say (the refusal, the
+   confirmation) comes back through THAT push, so one strip carries
+   the whole exchange. `sayUndoable` is now that function aimed at
+   the bus, which is all it ever was.
    ============================================================ */
 import type { ToastAct, ToastTone } from '@/features/table/Toasts'
 import { useProjectStore, type HistoryEntry } from './useProjectStore'
@@ -78,8 +92,13 @@ export function say(note: Note): void {
   for (const listen of listeners) listen(note)
 }
 
+/** How a surface says things. `useToasts().push` has exactly this
+ *  shape, and so does the bus wrapper below. */
+export type PushNote = (text: string, tone?: ToastTone, act?: ToastAct) => void
+
 /**
- * Say what was just done, with UNDO on it — the shape rule 9 asks for.
+ * Report what was just done through `push`, with UNDO on it — the
+ * shape rule 9 asks for, for a surface that owns its own toast strip.
  *
  * MUST be called immediately after the mutation, in the same turn of
  * the event loop, so the step it pins is the one the sentence is
@@ -87,33 +106,39 @@ export function say(note: Note): void {
  * offering to undo something the store cannot put back is a lie, and
  * a silent no-op here is the loud kind of bug, so it reports the act
  * without the button rather than with a dead one.
+ *
+ * The refusal and the confirmation go back through the same `push`,
+ * because a note that answers itself somewhere else reads as two
+ * unrelated events.
  */
-export function sayUndoable(text: string): void {
+export function offerUndo(push: PushNote, text: string, tone?: ToastTone): void {
   queueMicrotask(() => {
     const past = useProjectStore.getState().past
     const step: HistoryEntry | undefined = past[past.length - 1]
     if (step === undefined) {
-      say({ text })
+      push(text, tone)
       return
     }
-    say({
-      text,
-      act: {
-        label: 'Undo',
-        onPick: () => {
-          const store = useProjectStore.getState()
-          const top = store.past[store.past.length - 1]
-          if (top !== step) {
-            say({
-              text: 'Something else has happened since — Ctrl+Z steps back one at a time',
-              tone: 'warn',
-            })
-            return
-          }
-          const label = store.undo()
-          if (label) say({ text: `Undone — ${label}` })
-        },
+    push(text, tone, {
+      label: 'Undo',
+      onPick: () => {
+        const store = useProjectStore.getState()
+        const top = store.past[store.past.length - 1]
+        if (top !== step) {
+          push(
+            'Something else has happened since — Ctrl+Z steps back one at a time',
+            'warn',
+          )
+          return
+        }
+        const label = store.undo()
+        if (label) push(`Undone — ${label}`)
       },
     })
   })
+}
+
+/** `offerUndo` aimed at the bus — for a surface with no strip of its own. */
+export function sayUndoable(text: string, tone?: ToastTone): void {
+  offerUndo((text2, tone2, act) => say({ text: text2, tone: tone2, act }), text, tone)
 }

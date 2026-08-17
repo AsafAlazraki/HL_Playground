@@ -117,6 +117,38 @@ function NameStep({
 
 /* -- step 2 ------------------------------------------------ */
 
+/* ============================================================
+   WHAT "COMING SOON" IS ALLOWED TO MEAN — AND WHY `other` IS NOT IT.
+
+   `INDUSTRIES[k].available` records one thing: whether HelmLogic ships
+   PREPARED DOMAIN KNOWLEDGE for that industry. `TABLE_KINDS` is drawn
+   for marine — boat, motor, trailer, accessory, package, dealer — and
+   there is no equivalent set for cars or for bikes yet. Stamping those
+   two COMING SOON is honest.
+
+   `other` is a different KIND of answer and one boolean cannot tell the
+   two apart. Its own blurb reads "Start from a blank sheet and build
+   your own tables", and that is not a capability being promised — it is
+   the app as it ships today: New table is the ninth item on the dock,
+   `createTable` mints a table from any kind, and the custom preset
+   exists precisely for "anything the presets do not cover"
+   (model.ts, `--kind-custom`). So the stamp was telling anybody reading
+   this screen that a shipped path was unbuilt, which is the one thing
+   an unavailable mark must never do.
+
+   The reading lives HERE because onboarding is the only surface that
+   consumes `available`, and because `src/types/model.ts` is not this
+   feature's file to write.
+   ============================================================ */
+
+/** Answers that start from a blank sheet rather than from prepared
+ *  domain knowledge. The app has always been able to do this. */
+const STARTS_BLANK: ReadonlySet<IndustryKey> = new Set<IndustryKey>(['other'])
+
+/** Can this answer be picked today? */
+const isReady = (k: IndustryKey): boolean =>
+  INDUSTRIES[k].available || STARTS_BLANK.has(k)
+
 function IndustryCard({
   industry,
   delay,
@@ -128,7 +160,7 @@ function IndustryCard({
 }) {
   const meta = INDUSTRIES[industry]
   const Symbol = INDUSTRY_SYMBOLS[industry]
-  const soon = !meta.available
+  const soon = !isReady(industry)
 
   return (
     <button
@@ -170,8 +202,17 @@ function IndustryStep({
 
         <header className="ob-head">
           <h1 className="ob-title">What does {org} sell?</h1>
+          {/* THE SUB-LINE HAS TO MATCH WHAT THE CARDS NOW OFFER. It read
+              "Marine is ready to use today. The rest are still on the
+              drawing board" over four cards of which one was pickable;
+              two of the four are pickable now and the sentence has to say
+              which is which, or it re-tells the fault the stamp did. It
+              also stops claiming Marine "arrives ready" — picking either
+              answer lands on the same sheet; what Marine gets you is
+              table presets already drawn for boats, motors and trailers. */}
           <p className="ob-sub">
-            Marine is ready to use today. The rest are still on the drawing board.
+            Marine is the one the table presets are drawn for. Other starts you on a
+            blank sheet. The rest are still on the drawing board.
           </p>
         </header>
 

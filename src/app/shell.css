@@ -1014,6 +1014,14 @@
   line-height: 1.7;
   color: var(--ink-soft);
 }
+/* A CONTROL'S NAME IS ITS NAME. When a void names the button somebody
+   has to press, the name is set in full ink at 600 rather than left to
+   the browser's bold on soft ink — the same treatment
+   `.shell-flow-void-other b` and `.qt-none-do em` already give it. */
+.shell-view-void b {
+  font-weight: 600;
+  color: var(--ink);
+}
 
 /* ============================================================
    THE DESIGN STAGE — the box around `@/features/designer`.
@@ -3127,6 +3135,51 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
+/* ============================================================
+   EXCEPT THE FROZEN ONE, WHICH HAS TO BE OPAQUE.
+
+   The rule above is right about the header ROW: it is translucent
+   so the rows sliding up underneath it read as depth rather than
+   as a hard edge, and DESIGN_CONTRACT §8.10 lists the table's
+   sticky header row in the sanctioned translucent roster for
+   exactly that reason. But it selects `.tb-th`, which is every
+   header CELL — including `.tb-th-pin`, the heading of the frozen
+   column. A frozen column does not have rows passing under it. It
+   has COLUMNS passing under it, sideways, and at 86% with a 12px
+   blur their names come through it as grey smudges.
+
+   MEASURED, on Yamaha Outboards (27 columns) at 1280 scrolled
+   768px right: "Shaft Length in" and "Cylinders / Displacement"
+   both rendered as blurred grey blobs inside the "Motor" heading,
+   one either side of the word. It reads as a rendering fault, and
+   it is on every register in the app wide enough to scroll — which
+   is all fifty of them.
+
+   `table.css:948` already knew this and said so — "THE HEADING
+   FREEZES WITH ITS COLUMN … or the frozen column would sit under
+   the name of whatever band happened to scroll under it" — and set
+   `background: var(--paper-sunken)`. That rule is one class; this
+   skin's is two, so the skin quietly took the opacity back off it.
+   Restored here rather than there, because this is the file that
+   removed it.
+
+   The sorted and selected tints are re-stated composited onto that
+   opaque base: `--blue-wash` and `--blue-wash-strong` are 9% and
+   15% alpha, so as backgrounds on the pin they would let the same
+   ghosts through. Same colour, same weight, no transparency.
+   ============================================================ */
+.shell-tablestage .tb-th-pin {
+  background: var(--paper-sunken);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.shell-tablestage .tb-th-pin.tb-th-sorted {
+  background: color-mix(in srgb, var(--blue) 9%, var(--paper-sunken));
+}
+.shell-tablestage .tb-th-pin.tb-th-selected {
+  background: color-mix(in srgb, var(--blue) 15%, var(--paper-sunken));
+}
+
 /* ---------- the sheet keeps the window ---------------------- */
 
 .shell-stage {
@@ -3306,11 +3359,229 @@
   margin: 0 4px;
   background: var(--hairline-strong);
 }
-.hm-none {
-  margin: 0;
-  padding: var(--sp-6);
+/* ============================================================
+   THE FIRST SCREEN — Home with nothing on the sheet.
+
+   `.hm-none` STOOD HERE AND IS GONE. It was the terse in-list form
+   (13px, --ink-faint, one sentence) and it was the WHOLE page at
+   1440x900: measured, everything on screen fitted a 240 x 130 box in
+   the top-left corner. That form is right for a list filtered to
+   nothing and wrong for the second screen anybody sees, so the rule
+   goes with the markup rather than staying behind as a dead selector —
+   the same tidying `.hm-find` got when the second search went.
+
+   THE MEASURE. 1080px, which is the contract's dashboard width, and
+   the prose inside it holds 62ch — wide enough to look like a page
+   rather than a column, short enough to still be a line of text. The
+   doors then take the width in two equal tracks at 1280 and up, and
+   stack under 720px of column.
+   ============================================================ */
+.hm-scroll--first {
+  display: grid;
+  /* centred while there is room. `safe` first in the cascade order that
+     matters: a browser that does not know it keeps the plain value, and
+     one that does refuses to push the top edge out of reach. */
+  align-content: center;
+  align-content: safe center;
+}
+
+.hm-first {
+  display: grid;
+  gap: var(--sp-6);
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.hm-first-say {
+  display: grid;
+  gap: var(--sp-3);
+  max-width: 62ch;
+}
+
+.hm-first-eyebrow {
   color: var(--ink-faint);
+}
+
+/* the page's own line, set at the dashboard's headline step — the same
+   one `.md-dash-org` takes, so the two front doors of this app open at
+   the same volume. Not the display serif: that face appears exactly
+   twice in the product (onboarding's question and the invitation's
+   answer) and a third would stop it meaning anything. */
+.hm-first-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 580;
+  line-height: 1.25;
+  letter-spacing: -0.014em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.hm-first-prose {
+  margin: 0;
+  font-size: var(--ui-l-size);
+  line-height: 1.6;
+  letter-spacing: var(--ui-l-track);
+  color: var(--ink-soft);
+}
+
+.hm-first-count {
+  margin: 0;
   font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+/* the figure, and only the figure — mono is for numbers */
+.hm-first-count strong {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+/* "no tables" is words, so it is set as words */
+.hm-first-count b {
+  font-weight: 560;
+  color: var(--ink);
+}
+
+/* -- the two doors ------------------------------------------- */
+
+.hm-first-doors {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  align-items: stretch;
+}
+
+/* THE SAME CARD THE GALLERY DRAWS, at the size a decision deserves:
+   `--ec1` at rest, `--ec3` and a 1px lift on hover, a 0.994 press. The
+   3px rail is on the left edge exactly as `.hm-card` puts it. */
+.hm-first-door {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: var(--sp-5) var(--sp-5) var(--sp-4) calc(var(--sp-5) + 5px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--ec1);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft),
+    transform var(--t-med) var(--ease-draft);
+}
+.hm-first-door::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 13px;
+  bottom: 13px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--hairline-strong);
+}
+/* ONE ACCENT, ON THE ONE PRIMARY THING. The prepared file is what a
+   person on this screen almost always wants, so it takes the accent
+   rail and the accent name; the blank-sheet door is the same card in
+   ink. That is one of the four appearances the accent gets on a
+   screen — the others here are the dock's lit Home item and whichever
+   control has focus. */
+.hm-first-door--data::before {
+  background: var(--blue);
+}
+.hm-first-door--data .hm-first-door-name {
+  color: var(--blue-deep);
+}
+/* and the other door is the same card in ink. Stated rather than left
+   to the base rule: the two readings sit next to each other in the
+   stylesheet the way they sit next to each other on the screen, and
+   which one is primary is a decision somebody can find. */
+.hm-first-door--blank::before {
+  background: var(--hairline-strong);
+}
+
+.hm-first-door:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--ec3);
+  transform: translateY(-1px);
+}
+.hm-first-door:active {
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1);
+}
+.hm-first-door:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-color: var(--blue);
+}
+
+/* read BEFORE the name, which is the whole point on the data door: a
+   person who has just typed their own business name must not be able
+   to mistake a bundled workbook for their own file. Boxed, so it reads
+   as a stamp and not as a heading. */
+.hm-first-door-tag {
+  display: inline-block;
+  padding: 2px 6px 1px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  color: var(--ink-faint);
+}
+.hm-first-door:hover .hm-first-door-tag,
+.hm-first-door:focus-visible .hm-first-door-tag {
+  border-color: var(--hairline-strong);
+  color: var(--ink-soft);
+}
+
+.hm-first-door-name {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 570;
+  line-height: 1.3;
+  letter-spacing: -0.009em;
+  color: var(--ink);
+}
+
+.hm-first-door-note {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* the figures, on the door's own ruled foot — the same shape
+   `.hm-card-stats` gives a table card, so a door and a card read as
+   members of one system */
+.hm-first-door-foot {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 9px;
+  border-top: 1px solid var(--hairline);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.hm-first-door-foot b {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.hm-first-door-foot i {
+  width: 1px;
+  height: 10px;
+  margin: 0 4px;
+  background: var(--hairline-strong);
 }
 
 
@@ -3972,4 +4243,121 @@
   left: calc(100% + 8px);
   top: 0;
   margin: 0;
+}
+
+
+/* ============================================================
+   THE SUBMENU IS ALWAYS ON THE SCREEN, AND ALWAYS READABLE.
+
+   MEASURED, 1280 x 860, Relationships open: the panel's box ran
+   from y 517 to y 977 - 117px BELOW the bottom of the window and
+   201px below the top of the dock bar. It had `overflow-y: auto`
+   and it did scroll, but scrolling only moves content INSIDE the
+   box, and the bottom of the box was off the screen: the last four
+   of twenty-six tables could not be reached by any means.
+
+   THE CAUSE WAS `top: 0`, not the height. The second panel is
+   absolute inside `.dk-menus`, whose height is the FIRST panel's -
+   seven rows, about 250px. Anchored to that top and allowed 460px,
+   it had to end 210px lower than its own container. Anchored to
+   the BOTTOM instead, it ends where the first panel ends, which is
+   10px above the dock, which is on the screen by construction at
+   every window height. The two panels now share a baseline, and
+   switching branches never moves either of them - which is the
+   same promise the note above makes about the first panel.
+
+   AND SEVENTEEN OF TWENTY-SIX NAMES WERE CUT with no title, so
+   "Stabicraft x NSM Custom - Trailer Fitment" and "Stabicraft x
+   GFAB - Trailer Fitment" were the same row twice. A menu whose
+   entries cannot be told apart is not a menu. The panel is wider
+   now - as wide as the room to the right of it allows, so it can
+   never be the thing that goes off the edge - and a name that
+   still does not fit wraps to a second line and then ellipsises,
+   with the whole of it on the row as a title. Nothing truncates
+   mid-word (DESIGN_CONTRACT 3).
+
+   THE WIDTH IS THE ROOM THERE IS. The panel's left edge sits at
+   the window's centre + 124px (half of the 232px first panel, plus
+   the 8px gap). `50vw - 140px` is that gap less a 16px margin, so
+   at 1280 it asks for 500 and takes its 420px ceiling, at 1024 it
+   takes 372, and at 800 it stops at the 260px floor rather than
+   crossing the right-hand edge.
+   ============================================================ */
+
+.dk-panel--l2 {
+  top: auto;
+  bottom: 0;
+  width: clamp(260px, calc(50vw - 140px), 420px);
+}
+
+/* a row that has grown to two lines needs air above and below it;
+   a one-line row still measures 32px and is untouched */
+.dk-panel--l2 .dk-row {
+  padding: 5px var(--sp-2);
+}
+.dk-panel--l2 .dk-row-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.35;
+}
+
+/* ============================================================
+   A NAME IS A NAME — the first screen, which no pass reached.
+
+   `EmptyState.tsx` is what a dealer sees the moment onboarding ends
+   and before anything is on the sheet. Swept live with Northside's
+   name in the store; two of its four strings were shouting, and they
+   are the two that carry meaning:
+
+     .btn.shell-invite-go   FIX — "Create your first table" drawn as
+                            CREATE YOUR FIRST TABLE. A button, and the
+                            single primary action on the screen. From
+                            `.btn` in src/styles/base.css — the shared
+                            foundation, not ours to re-cut — so it is
+                            corrected here beside the class, the same
+                            move table.css:3354 and designer.css:1596
+                            made. Its own rule already overrode the
+                            size and tracking, which is the tell: the
+                            +0.18em was there to make 11px capitals
+                            legible at button size, and none of that is
+                            needed once the label is language.
+     .shell-invite-alt-note FIX — "Real data extracted from Northside
+                            Marine's Master Price File." A SENTENCE,
+                            with a full stop, and it uppercases the
+                            dealer's own business name inside it. Rule
+                            3 forbids both. It is also provenance — the
+                            line that says the figures are theirs and
+                            not invented — so it is the one line on the
+                            screen that most needs to be read rather
+                            than scanned.
+
+   KEPT UPPERCASE: `.shell-invite-alt-tag` ("YOUR DATA") is a caption
+   and carries `.mono-label`, one of the three sanctioned uses;
+   `.shell-invite-kicker` ("Nothing on the sheet yet") was already
+   sentence case.
+
+   TRACKING COMES DOWN WITH THE CASE (§3) and the note goes to the UI
+   face at reading size — 12.5px is the contract's chrome step and 11px
+   mono was carrying a two-line sentence. COLOURS UNTOUCHED: the note
+   stays `--ink-faint`, which measures 4.72:1 on the card's
+   `--paper-high`, and the button keeps `.btn-primary`. Case does not
+   move a ratio.
+   ============================================================ */
+.btn.shell-invite-go {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -0.004em;
+  text-transform: none;
+}
+.shell-invite-alt-note {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.55;
+  text-transform: none;
 }

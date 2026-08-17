@@ -40,7 +40,7 @@ import { ArrowLeft, MagnifyingGlass, Receipt } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar, readCell, rowLabel, type EntityDef, type RowData } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
-import { ViewPage, createViewFor } from '@/features/views'
+import { ViewPage, createViewFor, firstAnsweredRow } from '@/features/views'
 import { createQuoteFromView } from '@/features/quote'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
@@ -94,11 +94,48 @@ export function ViewStage({
      to ask for on every render and needs no effect. */
   const view = useMemo(() => (entity ? createViewFor(entityId) : undefined), [entity, entityId])
 
+  /* WHAT THIS OPENS ON WHEN THE DOOR NAMED ONLY A TABLE.
+     `rows[0]` is the sheet's own first row, and on the real Northside
+     sheet that is the worst page in the catalogue: walked all 40 rows of
+     Highfield Inflatables and the eight with three of five blocks empty
+     are rows 1–8, while 18 of the 40 have every block full. So a demo
+     opening the first brand of the first module landed on the emptiest
+     boat, eight times running.
+     The first row with an answer in every block is offered instead —
+     the dealer's own order, first match, no ranking and no favourite.
+     `firstAnsweredRow` carries the whole rule and the measurement; it
+     answers `undefined` when no row qualifies, and then `rows[0]` is
+     still what happens.
+
+     DECIDED ONCE PER TABLE, AND READ IMPERATIVELY ON PURPOSE. The scan
+     needs the whole sheet — the blocks read other tables and the joins
+     between them — but this stage must not SUBSCRIBE to the whole
+     sheet: `rowsByEntity` is a new object after every cell edit
+     anywhere in the app, so a subscription would re-render the page on
+     every keystroke somebody types in an unrelated register AND would
+     re-run the landing rule, which could move the open page out from
+     under whoever is reading it. `getState()` inside the memo keeps the
+     deps honest and the answer stable: it is settled when the table
+     opens and never again. */
+  const landing = useMemo(() => {
+    if (!entity || !view) return undefined
+    const { entities, rowsByEntity } = useProjectStore.getState()
+    return firstAnsweredRow({
+      entities,
+      rowsByEntity,
+      entity,
+      rows: rowsByEntity[entity.id] ?? NO_ROWS,
+      viewId: view.id,
+      limit: RAIL_CAP,
+    })
+  }, [entity, view])
+
   /* Never trust the remembered row: a swap, an import or a deleted
      row would leave the page pointing at nothing. Fall back to the
-     first row so the stage always opens on something real. */
+     landing row, then to the first row, so the stage always opens on
+     something real. */
   const openRow: RowData | undefined =
-    (wanted ? rows.find((r) => r.id === wanted) : undefined) ?? rows[0]
+    (wanted ? rows.find((r) => r.id === wanted) : undefined) ?? landing ?? rows[0]
 
   const entries = useMemo<RailEntry[]>(() => {
     if (!entity) return []

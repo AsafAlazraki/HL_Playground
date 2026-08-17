@@ -46,7 +46,7 @@ import {
   sellableRowCount,
   sellableTables,
 } from '@/features/views/sellable'
-import { isCostColumn, priceLevelsFor, type QuoteDef } from '@/features/quote'
+import { isCostColumn, localDay, priceLevelsFor, type QuoteDef } from '@/features/quote'
 /* the store-free derivation both a view page and `createModule` read,
    by direct path for the same reason `columns` is above: nothing here
    needs the views feature's React surface */
@@ -278,7 +278,11 @@ export function moduleActivity(
       /* THE QUOTES LIST'S OWN TWO WORDS, so a document called Given
          there is never called Issued here. */
       state: q.state === 'issued' ? 'Given' : 'Draft',
-      day: q.createdAt.slice(0, 10),
+      /* THE DEALER'S CALENDAR DAY, NOT UTC'S — and this strip is the
+         one that showed the disagreement most plainly, because it
+         prints the day right beside the reference the day was minted
+         into: "GIVEN 20260818-01 2026-08-17", measured at UTC+10. */
+      day: localDay(q.createdAt),
     })),
     quoteCount: raised.length,
     edited,

@@ -36,7 +36,7 @@ vi.mock('@/db/repository', () => ({
 }))
 
 const { useProjectStore } = await import('./useProjectStore')
-const { say, sayUndoable, onSaid } = await import('./notes')
+const { say, sayUndoable, offerUndo, onSaid } = await import('./notes')
 
 /** the history burst closes on one microtask and `sayUndoable` reads it
  *  on the next, so two turns is what it takes for a note to arrive */
@@ -172,5 +172,85 @@ describe('sayUndoable', () => {
 
     expect(heard.notes).toHaveLength(1)
     expect(heard.notes[0].act).toBeUndefined()
+  })
+})
+
+/* ============================================================
+   THE SAME PIN, LENT TO A SURFACE THAT OWNS ITS OWN STRIP.
+
+   A register does not speak through the bus: `TableSheet` and
+   `EntityTableNode` each hold a `useToasts()` list positioned inside
+   the sheet the note is about. That is why `Ctrl+D` said "2 cells
+   filled" and offered nothing while a deleted rule offered UNDO —
+   only the bus could build the pinned act. `offerUndo` takes the push
+   as an argument so the register can obey rule 9 too, and everything
+   the act goes on to say must come back through THAT push: a note
+   answered in a strip on the other side of the window reads as two
+   unrelated events.
+   ============================================================ */
+describe('offerUndo — a strip that is not the bus', () => {
+  /** a stand-in for `useToasts().push` */
+  const strip = (): { seen: Array<{ text: string; tone?: string; act?: { label: string; onPick: () => void } }>; push: Parameters<typeof offerUndo>[0] } => {
+    const seen: Array<{ text: string; tone?: string; act?: { label: string; onPick: () => void } }> = []
+    return { seen, push: (text, tone, act) => seen.push({ text, tone, act }) }
+  }
+
+  it('pushes the note through the strip it was handed, with UNDO on it', async () => {
+    const s = strip()
+    const bus = listen()
+    store().deleteRow('e-boats', 'r1')
+    offerUndo(s.push, '1 row deleted', 'warn')
+    await settle()
+    bus.stop()
+
+    expect(s.seen).toHaveLength(1)
+    expect(s.seen[0].text).toBe('1 row deleted')
+    expect(s.seen[0].tone).toBe('warn')
+    expect(s.seen[0].act?.label).toBe('Undo')
+    /* and NOT through the bus — one note, in one place */
+    expect(bus.notes).toHaveLength(0)
+  })
+
+  it('takes the act back and reports it in the same strip', async () => {
+    const s = strip()
+    store().deleteRow('e-boats', 'r1')
+    offerUndo(s.push, '1 row deleted', 'warn')
+    await settle()
+    expect(store().rowsByEntity['e-boats']).toHaveLength(0)
+
+    s.seen[0].act?.onPick()
+
+    expect(store().rowsByEntity['e-boats']).toHaveLength(1)
+    expect(s.seen.map((n) => n.text)).toEqual(['1 row deleted', 'Undone — Row deleted · Boats'])
+  })
+
+  it('REFUSES in the same strip when something else has happened since', async () => {
+    const s = strip()
+    store().deleteRow('e-boats', 'r1')
+    offerUndo(s.push, '1 row deleted', 'warn')
+    await settle()
+
+    store().addRow('e-boats', { 'f-model': 'Stacer 429' })
+    await settle()
+
+    s.seen[0].act?.onPick()
+
+    /* the add is still there and the delete is still done: a refusal
+       changes nothing at all, and it says so where it was refused */
+    expect(store().rowsByEntity['e-boats']).toHaveLength(1)
+    expect(store().rowsByEntity['e-boats'][0].id).not.toBe('r1')
+    const last = s.seen[s.seen.length - 1]
+    expect(last.tone).toBe('warn')
+    expect(last.text).toContain('Ctrl+Z steps back one at a time')
+  })
+
+  it('offers no button for an act that recorded no step', async () => {
+    const s = strip()
+    store().moveEntity('e-boats', { x: 900, y: 400 })
+    offerUndo(s.push, 'Moved a table')
+    await settle()
+
+    expect(s.seen).toHaveLength(1)
+    expect(s.seen[0].act).toBeUndefined()
   })
 })

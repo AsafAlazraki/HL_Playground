@@ -49,7 +49,7 @@
    (`tableSectionState`, `tableFitState`), keyed by entityId, because
    both survive the unmount of the canvas AND of the FOCUS lens.
    ============================================================ */
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { RefObject } from 'react'
 import { accentVar, isSystemFieldId, type ColumnSection, type FieldDef } from '@/types/model'
 import {
@@ -75,11 +75,40 @@ export interface BandChip {
    *  the chip never changes its mind about how big the band is */
   count: number
   folded: boolean
+  /**
+   * The window's left edge is inside this band — i.e. this is the band
+   * the reader is ON. Exactly one chip carries it.
+   *
+   * THE STRIP USED TO SAY NOTHING ABOUT WHERE YOU WERE. Eight chips,
+   * all identical, over a register 58 columns wide: the one fact a map
+   * has to carry — you are here — was the fact it did not have.
+   */
+  here: boolean
+  /**
+   * Pressing this chip cannot move the view: the scroll position it
+   * asks for is the one the sheet is already at.
+   *
+   * WHY THREE CHIPS APPEARED TO DO NOTHING. `revealBand` parks a band's
+   * left edge beside the frozen name column, and the browser clamps any
+   * scrollLeft past the end of the content. On Highfield Inflatables the
+   * last three bands all sit inside the final window, so all three
+   * clamp to the same maximum — press any one and the other two become
+   * presses that change nothing at all, with no way to tell from
+   * looking. They are not broken; those columns are already on screen.
+   * So the chip says that instead of pretending to be a door.
+   *
+   * A FOLDED band is never `stuck`, whatever the scroll: pressing it
+   * opens it, which is a real change.
+   */
+  stuck: boolean
 }
 
 export interface WholeTable {
   /** the bands that actually hold columns, in column order */
   bands: BandChip[]
+  /** the band the window's left edge is in, by name — the strip prints
+   *  it, because a lit chip says "here" and a sentence says which */
+  atBandName: string | undefined
   /** every band folded shut — the toggle now reads EXPAND ALL */
   allFolded: boolean
   /**
@@ -158,7 +187,7 @@ export function useWholeTable({
   /* One chip per band that HOLDS something. A declared section with no
      columns left in it is not a band — a chip reading `PRICING · 0`
      would be a control that does nothing. */
-  const bands = useMemo<BandChip[]>(() => {
+  const bands = useMemo<Omit<BandChip, 'here' | 'stuck'>[]>(() => {
     if (!sections || sections.length === 0) return []
     const counts = new Map<string, number>()
     /* column order, not declaration order: the strip is a map of the
@@ -171,7 +200,7 @@ export function useWholeTable({
       counts.set(f.sectionId, (seen ?? 0) + 1)
     }
     const byId = new Map(sections.map((s) => [s.id, s]))
-    const out: BandChip[] = []
+    const out: Omit<BandChip, 'here' | 'stuck'>[] = []
     for (const id of order) {
       const section = byId.get(id)
       if (!section) continue
@@ -226,6 +255,130 @@ export function useWholeTable({
     (nextCollapsed: ReadonlySet<string>) =>
       buildSections(allFields, sections, nextCollapsed),
     [allFields, sections],
+  )
+
+  /* ============================================================
+     WHERE THE WINDOW IS, AND WHICH CHIPS ARE DOORS.
+
+     Both answers come off ONE piece of geometry — the same layout
+     `revealBand` scrolls with, so what a chip says and what it would do
+     can never disagree. The layout is derived from the columns and the
+     widths in force, which is exactly when it can change.
+
+     THE SUBSCRIPTION IS BANDED, not continuous. A scroll handler that
+     wrote `scrollLeft` into state would re-render the whole register on
+     every frame of a sideways drag — the fault `tableLod.ts` is written
+     around. This one computes the ANSWER (which band, which chips are
+     inert) and hands back the previous object unless it actually
+     changed, so dragging across the middle of one band costs one read
+     per event and no render at all.
+     ============================================================ */
+  const layout = useMemo(() => {
+    const model = modelFor(collapsed)
+    const el = viewportRef.current
+    const foldW = foldWidthFor(model.slots, widths, el?.clientWidth ?? 0)
+    return layoutColumns(model.slots, widths, foldW)
+  }, [modelFor, collapsed, widths, viewportRef])
+
+  const [reach, setReach] = useState<{ hereId: string | null; stuck: string[] }>({
+    hereId: null,
+    stuck: [],
+  })
+
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el || bands.length === 0) return
+    const pin = pinWidthOf(layout, pinFieldId)
+
+    const read = (): void => {
+      /* the browser will not scroll past the end of the content, so the
+         target every chip really lands on is its own clamped to that */
+      const max = Math.max(0, el.scrollWidth - el.clientWidth)
+      const at = el.scrollLeft
+
+      const stuck: string[] = []
+      for (const b of bands) {
+        const x = bandLeftOf(layout, b.id)
+        if (x === undefined) continue
+        const target = Math.min(Math.max(0, x - pin), max)
+        /* a folded band always has something to do: open itself */
+        if (!b.folded && Math.abs(target - at) < 1) stuck.push(b.id)
+      }
+
+      /* ============================================================
+         WHICH BAND THE VIEW IS IN — the one taking up the most of it.
+
+         The first version of this named the band CONTAINING the left
+         edge, which is the literal answer and the wrong one. Measured on
+         Highfield Inflatables scrolled to the end: the left edge sits in
+         the last two cut-off columns of Motor Envelope while Registration,
+         Hull Only Pricing and Source fill the rest of the window with
+         their headers legible — so the strip said "Motor Envelope" about
+         a screen that plainly showed three other bands. Whichever band
+         has the most of the window is the one a person would name, and it
+         is measured in the same pixels the reader is looking at.
+         ============================================================ */
+      const from = at + pin
+      const to = at + el.clientWidth
+      const seen = new Map<string, number>()
+      for (const p of layout.placed) {
+        const id = p.slot.kind === 'fold' ? p.slot.section.id : p.slot.section?.id
+        if (id === undefined) continue
+        const w = Math.min(p.x + p.w, to) - Math.max(p.x, from)
+        if (w <= 0) continue
+        seen.set(id, (seen.get(id) ?? 0) + w)
+      }
+      let hereId: string | null = null
+      let hereW = 0
+      /* `bands` order, so a tie between two equal slivers resolves to
+         the leftmost rather than to whatever the map iterated first */
+      for (const b of bands) {
+        const w = seen.get(b.id) ?? 0
+        if (w > hereW) {
+          hereW = w
+          hereId = b.id
+        }
+      }
+      /* nothing of any band in the window — only the pin is showing */
+      if (hereId === null) hereId = bands[0]?.id ?? null
+
+      setReach((prev) => {
+        if (
+          prev.hereId === hereId &&
+          prev.stuck.length === stuck.length &&
+          prev.stuck.every((id, i) => id === stuck[i])
+        ) {
+          return prev
+        }
+        return { hereId, stuck }
+      })
+    }
+
+    read()
+    el.addEventListener('scroll', read, { passive: true })
+    /* the window changing width moves every band's target, and a fold
+       changes the content width without a scroll event of its own */
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', read)
+      ro.disconnect()
+    }
+  }, [bands, layout, pinFieldId, viewportRef])
+
+  const chips = useMemo<BandChip[]>(
+    () =>
+      bands.map((b) => ({
+        ...b,
+        here: b.id === reach.hereId,
+        stuck: reach.stuck.includes(b.id),
+      })),
+    [bands, reach],
+  )
+
+  const atBandName = useMemo(
+    () => chips.find((b) => b.here)?.name,
+    [chips],
   )
 
   const toggleAllBands = useCallback(() => {
@@ -303,7 +456,8 @@ export function useWholeTable({
   }, [fitted, entityId, slots, widths, viewportRef, pinFieldId, onFit])
 
   return {
-    bands,
+    bands: chips,
+    atBandName,
     allFolded,
     totalColumns,
     shownColumns,

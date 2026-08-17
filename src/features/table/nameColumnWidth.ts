@@ -111,12 +111,126 @@ function paintedFont(): string | null {
 
 let canvas: HTMLCanvasElement | null = null
 
+/** THE FONT IS SET INSIDE THE CLOSURE, NOT OUTSIDE IT. One canvas is
+ *  shared, so a second measurer built while the first is still in use
+ *  would silently re-point the first at its own face — and the register
+ *  now measures three faces (the sans a name is drawn in, the mono a
+ *  figure is, the mono a date is). Every call states its own font. */
 function measurerFor(font: string): (s: string) => number {
   canvas ??= document.createElement('canvas')
   const ctx = canvas.getContext('2d')
   if (!ctx) return (s) => s.length * 7
-  ctx.font = font
-  return (s) => ctx.measureText(s).width
+  return (s) => {
+    ctx.font = font
+    return ctx.measureText(s).width
+  }
+}
+
+/* ---------------------------------------------------------- */
+/* the same measurement, per painted cell                     */
+/* ---------------------------------------------------------- */
+
+/** Above this many distinct strings the cache is dropped whole. A
+ *  register's painted vocabulary is small and hugely repetitive —
+ *  Rigging Kits draws "TILLER CONVERSION KITS" on twenty-six rows — so
+ *  this is a ceiling against a session that walks fifty registers, not
+ *  a working size. */
+const CLIP_CACHE_MAX = 20000
+
+/** The three faces a value cell is drawn in, keyed by the class that
+ *  selects them. A NAME is Inter at 12.5px; a FIGURE is IBM Plex Mono
+ *  at 12px, which is nearly a fifth wider per digit, and a money value
+ *  measured against the sans reads as fitting when it is cut — the one
+ *  value on the sheet where that matters most. A DATE is the mono again
+ *  at 11.5px. Read off live cells so none of it can drift from
+ *  `table.css`. */
+const VALUE_FACES = { text: '.tb-val', num: '.tb-num', date: '.tb-date' } as const
+export type ValueFace = keyof typeof VALUE_FACES
+
+function faceFonts(): Record<ValueFace, string> | null {
+  const base = paintedFont()
+  if (base === null) return null
+  const out = { text: base, num: base, date: base }
+  for (const face of ['num', 'date'] as const) {
+    const el = document.querySelector(VALUE_FACES[face])
+    if (!el) continue
+    const cs = getComputedStyle(el)
+    if (cs.fontSize === '') continue
+    out[face] = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
+  }
+  return out
+}
+
+/** Painted width of a string in the face its cell draws it in, cached
+ *  across cells and re-taken when the faces change.
+ *
+ *  WHY THIS EXISTS AS WELL AS `widestOf`. `mayBeClipped` decides, per
+ *  painted cell, whether the value carries itself as a title. Its own
+ *  note said a canvas measurement there would be "thousands per
+ *  scroll" — and thousands of `measureText` calls WOULD be felt. What
+ *  is not felt is a Map lookup, because a register's painted vocabulary
+ *  is far smaller than its cell count and hugely repetitive. Measured
+ *  on Rigging Kits, the largest register there is: its 640 rows x 44
+ *  columns are 28,160 cells and 4,430 distinct strings, each measured
+ *  once. Instrumented live, `measureText` is called 345 times across a
+ *  sweep of all 44 columns and ZERO times across forty vertical scroll
+ *  steps after that — every cell on the way down is a cache hit.
+ *
+ *  `undefined` until a cell has been painted to read the faces off —
+ *  the first frame falls back to `mayBeClipped`'s character estimate,
+ *  and the state set here re-renders with the measured answer. */
+export function usePaintedWidth():
+  | ((s: string, face: ValueFace) => number)
+  | undefined {
+  const [fonts, setFonts] = useState<Record<ValueFace, string> | null>(null)
+  const cache = useRef<Map<string, number>>(new Map())
+
+  useLayoutEffect(() => {
+    const next = faceFonts()
+    if (next === null) return
+    if (
+      fonts === null ||
+      next.text !== fonts.text ||
+      next.num !== fonts.num ||
+      next.date !== fonts.date
+    ) {
+      setFonts(next)
+    }
+  })
+
+  /* A webfont arriving after the first measurement invalidates every
+     entry: Inter is wider than the fallback they were taken in. */
+  const [facesIn, setFacesIn] = useState(false)
+  useEffect(() => {
+    if (facesIn) return
+    let live = true
+    void document.fonts?.ready.then(() => {
+      if (live) setFacesIn(true)
+    })
+    return () => {
+      live = false
+    }
+  }, [facesIn])
+
+  return useMemo(() => {
+    if (fonts === null) return undefined
+    cache.current = new Map()
+    const of: Record<ValueFace, (s: string) => number> = {
+      text: measurerFor(fonts.text),
+      num: measurerFor(fonts.num),
+      date: measurerFor(fonts.date),
+    }
+    return (s: string, face: ValueFace): number => {
+      const key = `${face} ${s}`
+      const hit = cache.current.get(key)
+      if (hit !== undefined) return hit
+      if (cache.current.size >= CLIP_CACHE_MAX) cache.current = new Map()
+      const w = of[face](s)
+      cache.current.set(key, w)
+      return w
+    }
+    /* `facesIn` is a re-measure trigger and is read for no other reason */
+  }, [fonts, facesIn])
 }
 
 /* ---------------------------------------------------------- */

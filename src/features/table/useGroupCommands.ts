@@ -24,7 +24,7 @@ import {
 import { coerceCellText } from '@/features/table/core'
 import type { TableData } from './useTableData'
 import type { SheetCommands } from './useSheetCommands'
-import type { ToastTone } from './Toasts'
+import type { PushToast } from './Toasts'
 import { cellText, singleSel, valueForField } from './helpers'
 import {
   collectLeaves,
@@ -67,7 +67,7 @@ export function useGroupCommands(
   levelIds: string[],
   /** what the rows are called, so the sheet speaks the domain */
   noun: LeafNoun,
-  pushToast: (text: string, tone?: ToastTone) => void,
+  pushToast: PushToast,
 ): GroupCommands {
   const addRowToStore = useProjectStore((s) => s.addRow)
   const updateCell = useProjectStore((s) => s.updateCell)

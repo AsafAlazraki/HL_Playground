@@ -1606,3 +1606,38 @@
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* ============================================================
+   AND CANCEL IS A BUTTON — the one the pass above got wrong.
+
+   The block at :1539 enumerated every uppercase site on this page and
+   listed `.ds-cs-cancel` under KEPT, as a caption. It is not a caption.
+   It is the button on the destructive confirm sheet that costs nothing
+   to press, it is the button that TAKES THE FOCUS (ConfirmSheet.tsx:79
+   focuses it on mount precisely so a habitual Enter is safe), and
+   DESIGN_CONTRACT §3 names a button in its list of things uppercase may
+   never be. Every path through that sheet ends in something
+   unrecoverable, so the safe answer is the most important word on it —
+   and it was the only word on it still set as a stamp:
+
+     Save a copy, then replace     ← 14px Inter, sentence case
+     Replace without saving        ← 14px Inter, sentence case
+     CANCEL                        ← 11px mono, +0.1em, uppercase
+
+   Three answers to one question, two of them written like language and
+   the third like a rubber stamp. The safe one now reads as the peer of
+   the two it is offered against.
+
+   THE STEP: the contract's toolbar-control label, --font-ui 12.5px /
+   500, tracking 0. It keeps the quiet ink (`--ink-soft`, 7.7:1),
+   the centred alignment and the accent focus ring it already had —
+   the focus ring is the thing that says it holds the keyboard, and
+   that is untouched. Colours untouched; case does not move a ratio.
+   ============================================================ */
+.ds-cs-cancel {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}

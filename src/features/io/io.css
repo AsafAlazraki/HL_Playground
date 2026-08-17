@@ -857,3 +857,51 @@
 .io-card:disabled .io-card-meta {
   color: var(--ink-soft);
 }
+
+/* ============================================================
+   THE THREE BUTTONS ON THE IMPORT PREVIEW — the last uppercase
+   labels in the app, and the worst three to have left.
+
+   The pass at :770 above enumerated this panel class by class and
+   corrected eleven of them. It missed these three because they carry
+   no appearance of their own: they are `.btn` from src/styles/base.css,
+   the shared foundation, whose identity IS an 11px uppercase mono
+   stamp. So the panel that decides what happens to a dealer's whole
+   sheet still read
+
+     DISCARD                        REPLACE   ADD TO SHEET
+
+   which is uppercase on three buttons — the one thing
+   DESIGN_CONTRACT §3 names outright and forbids twice ("never a
+   table name, a row label, a column value, a BUTTON, or a
+   sentence"). It is also the only surface in the app where the
+   irreversible answer was shouting; nothing in this design shouts,
+   and a control that shouts on the one screen that can lose a
+   dealer's work reads as a warning label rather than a choice.
+
+   Corrected here, beside the classes, exactly as table.css:3354 did
+   for `.tb-actions .btn` and designer.css:1596 for `.ds-add-btn` —
+   `.btn` itself is not re-cut for the ~200 controls the redesign has
+   not reached. `.io-plate-actions .btn` catches "Add to sheet", which
+   carries `.btn-primary` and no class of its own.
+
+   THE STEP IS THE CONTRACT'S TOOLBAR CONTROL: --font-ui 12.5px / 500,
+   tracking 0. `.io-replace` keeps the extra weight it needs to read as
+   the destructive one of the three; the red pencil it is drawn in
+   (:454) is untouched, and so is every colour here — case does not
+   move a contrast ratio.
+   ============================================================ */
+.io-discard,
+.io-replace,
+.io-plate-actions .btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* of the three, one destroys and one adds; the destructive answer is
+   allowed a step of weight so the pair are never read as equals */
+.io-replace {
+  font-weight: 560;
+}

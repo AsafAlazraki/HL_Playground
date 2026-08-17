@@ -47,6 +47,7 @@
 import type { ReactElement } from 'react'
 import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
 import { QuoteList, QuotePage, useQuote } from '@/features/quote'
+import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
 
@@ -64,6 +65,17 @@ export function QuoteStage({ quoteId, onOpen, onClose }: QuoteStageProps): React
   const quote = useQuote(quoteId)
   /* the id counts as open only when the document is really there */
   const openId = quote ? quote.id : null
+
+  /* ONE FACT THE FEATURE MAY NOT LOOK UP ITSELF, read here instead.
+     `@/features/quote` keeps `useProjectStore` to a single file
+     (freeze.ts) so a drawn document can never touch live data, and the
+     invariant is worth more than a count. But the diary's empty state
+     cannot be honest without it: with nothing on the sheet, "open a
+     table and press Fitment" is a four-step instruction whose first
+     step is impossible, which is what that page used to be on a cleared
+     install. So the stage reads the sheet — it is in `src/app`, it
+     already knows — and hands the number down. */
+  const tableCount = useProjectStore((s) => Object.keys(s.entities).length)
 
   /* Escape is the control in track 1 of the bar, on the keyboard. Not
      "back to all quotes", which is a lateral move inside this window
@@ -139,7 +151,7 @@ export function QuoteStage({ quoteId, onOpen, onClose }: QuoteStageProps): React
         {quote ? (
           <QuotePage quoteId={quote.id} onOpenQuote={(id) => onOpen(id)} />
         ) : (
-          <QuoteList onOpen={(id) => onOpen(id)} openId={openId} />
+          <QuoteList onOpen={(id) => onOpen(id)} openId={openId} tableCount={tableCount} />
         )}
       </div>
     </div>

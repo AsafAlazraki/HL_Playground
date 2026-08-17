@@ -103,8 +103,14 @@ export function RulesList() {
       {entityList.length === 0 ? (
         <div className="rl-empty">
           <span className="rl-empty-title">Nothing to reason about yet</span>
+          {/* "ON THE SHEET" POINTED AT NOTHING. Dropping a table type onto
+              the blueprint needed the type palette in the left panel, and
+              that panel has been imported by nothing since the masthead
+              went. The control that really does this is New table, ninth
+              on the dock, and it never moves. */}
           <span className="rl-empty-hint">
-            Draft a table on the sheet first — a rule always walks the rows of one.
+            Start a table from New table on the bar first — a rule always walks the
+            rows of one.
           </span>
         </div>
       ) : (

@@ -16,7 +16,8 @@ import {
   type FieldDef,
   type FieldType,
 } from '@/types/model'
-import type { ToastTone } from './Toasts'
+import type { PushToast } from './Toasts'
+import { offerUndo } from '@/store/notes'
 import { byCreatedAt } from './helpers'
 import { untitledColumnName } from './columnKinds'
 
@@ -109,7 +110,7 @@ function moveIntoSection(
 
 export function useColumnCommands(
   entityId: string,
-  pushToast: (text: string, tone?: ToastTone) => void,
+  pushToast: PushToast,
 ): ColumnCommands {
   const entities = useProjectStore((s) => s.entities)
   const addField = useProjectStore((s) => s.addField)
@@ -186,12 +187,17 @@ export function useColumnCommands(
     [entity, entityId, updateField, pushToast],
   )
 
+  /* THE NOTE CARRIES THE WAY BACK. `removeField` is one recorded step
+     and Ctrl+Z restores the column at its own index, in its own band,
+     with every cell in every row — measured on Surtees, 19 rows, the
+     register byte-identical afterwards. So the note that says it left
+     is the right place to offer that, and it used to offer nothing. */
   const removeColumn = useCallback(
     (fieldId: string) => {
       const gone = entity?.fields.find((f) => f.id === fieldId)
       if (!gone) return
       removeField(entityId, fieldId)
-      pushToast(`“${gone.name}” removed`, 'warn')
+      offerUndo(pushToast, `“${gone.name}” removed`, 'warn')
     },
     [entity, entityId, removeField, pushToast],
   )

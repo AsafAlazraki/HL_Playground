@@ -44,13 +44,7 @@ import {
   type PriceChange,
 } from './freeze'
 import { money, parseAmount, quoteLevelChoices } from './pricing'
-import {
-  lineAmount,
-  linesOf,
-  needsOverrideReason,
-  quoteTotals,
-  unexplainedOverrides,
-} from './totals'
+import { issueBlockers, lineAmount, linesOf, needsOverrideReason, quoteTotals } from './totals'
 import {
   addAdjustment,
   addLine,
@@ -80,31 +74,16 @@ const ADJUSTMENT_DOORS: Array<{ kind: AdjustmentKind; door: string }> = [
   { kind: 'line', door: 'Add a line' },
 ]
 
-/** The dealer's own line names, read out as a person would say them.
- *  Never truncated to a count: "2 lines" tells somebody there is a
- *  problem and not where it is, and the whole point of the sentence
- *  is that they can go and fix it. */
-function nameList(labels: string[]): string {
-  if (labels.length <= 1) return labels[0] ?? ''
-  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`
-}
-
-/**
- * WHY THIS QUOTE MAY NOT GO OUT YET, or '' when it may.
+/** THE SENTENCE UNDER THE EMPTY CUSTOMER FIELD.
  *
- * DESIGN_PRINCIPLES rule 10: a refusal is a sentence with a reason,
- * in the place where the thing is refused — and it says what the
- * person CAN do. So it names the lines, says what is missing, and
- * says why it cannot wait: issuing makes the document read-only, so
- * a reason not written now can never be written.
- */
-function issueRefusal(blocked: QuoteLine[]): string {
-  if (blocked.length === 0) return ''
-  const names = nameList(blocked.map((l) => l.label))
-  return blocked.length === 1
-    ? `${names} has a price you typed and no reason beside it. Open the line and write why it is different — once this goes to the customer nothing on it can be changed.`
-    : `${blocked.length} lines have a price you typed and no reason beside them — ${names}. Open each and write why it is different; once this goes to the customer nothing on it can be changed.`
-}
+ *  DESIGN_PRINCIPLES rule 10: the refusal goes where the thing is
+ *  refused. The foot bar says the quote cannot go out; this says which
+ *  keystroke fixes it, at the field it is about — the same arrangement
+ *  the override's reason field already has. Drawn only while it is
+ *  true, so it is a refusal in place and not a permanent instruction
+ *  nobody reads. */
+const NO_CUSTOMER_WHY =
+  'A quote is addressed to somebody. Until this is written it cannot be given to the customer — giving it to them freezes the document, so the name cannot be added later.'
 
 export interface QuoteEditorProps {
   quote: QuoteDef
@@ -138,11 +117,15 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
      it: an issued quote is a record of what was offered. */
   const subjectNote = quote.state === 'draft' ? unsellableSubject(quote.rootTableId, quote.rootRowId) : ''
 
-  /* THE ONE THING THAT STOPS THIS GOING OUT — computed from the
-     quote's own lines, so the button, the sentence beside it and
-     `issueQuote` itself cannot disagree about whether it may. */
-  const blocked = unexplainedOverrides(quote)
-  const refusal = issueRefusal(blocked)
+  /* EVERYTHING THAT STOPS THIS GOING OUT — computed from the quote
+     itself by `issueBlockers`, which `issueQuote` also calls, so the
+     button, the sentences beside it, the note under the customer field
+     and the registry cannot disagree about whether it may. Every
+     reason that applies is printed: a person who fixes one and is then
+     refused for a second reason nobody mentioned has been told half
+     the truth. */
+  const refusals = issueBlockers(quote)
+  const noCustomer = quote.customer.name.trim() === ''
 
   return (
     /* THE DOCUMENT SCROLLS AND THE TOTAL DOES NOT — and they are
@@ -199,10 +182,16 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
                   value={quote.customer.name}
                   placeholder="the customer's name"
                   spellCheck={false}
+                  aria-describedby={noCustomer ? `${quote.id}-who` : undefined}
                   onChange={(e) =>
                     patchQuote(quote.id, { customer: { ...quote.customer, name: e.target.value } })
                   }
                 />
+                {noCustomer ? (
+                  <span className="qt-field-why" id={`${quote.id}-who`}>
+                    {NO_CUSTOMER_WHY}
+                  </span>
+                ) : null}
               </label>
 
               {levels.length > 1 ? (
@@ -465,15 +454,15 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
               </span>
             ) : null}
           </div>
-          {/* DISABLED, WITH THE REASON ONE LINE AWAY — never a disabled
-              control on its own. `issueQuote` refuses the same case, so
+          {/* DISABLED, WITH THE REASONS ONE LINE AWAY — never a disabled
+              control on its own. `issueQuote` refuses the same cases, so
               the button and the registry cannot disagree; if it ever
               returns false the document stays a draft and the stage is
               not told anything happened. */}
           <button
             type="button"
             className="btn btn-primary"
-            disabled={refusal !== ''}
+            disabled={refusals.length > 0}
             onClick={() => {
               if (issueQuote(quote.id)) onIssued?.(quote)
             }}
@@ -481,10 +470,14 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
             Give it to the customer
           </button>
         </div>
-        {refusal !== '' ? (
-          <p className="qt-foot-why" role="status">
-            {refusal}
-          </p>
+        {refusals.length > 0 ? (
+          <div className="qt-foot-whys" role="status">
+            {refusals.map((why) => (
+              <p key={why} className="qt-foot-why">
+                {why}
+              </p>
+            ))}
+          </div>
         ) : null}
       </div>
     </>

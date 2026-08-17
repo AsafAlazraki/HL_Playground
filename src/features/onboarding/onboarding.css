@@ -729,3 +729,39 @@
   font-size: 13px;
   font-weight: 560;
 }
+
+/* ============================================================
+   THE FILE PLATE — the third screen, which the pass above stopped
+   short of.
+
+   The block at :707 corrected the first two onboarding screens and
+   listed the file screen's captions under KEPT. Two of them are not
+   captions:
+
+     .ob-plate-also  FIX — it draws BOTH bottom lines of the plate:
+                     "Also — 5 modules · 3 pages" and "Source —
+                     <the file the person just chose>". The second is a
+                     file name, which is a value, and the first is a
+                     count and the app's own nouns. `.io-plate-also`
+                     and `.io-plate-src` — the same plate, drawn by the
+                     import panel one screen away — were corrected at
+                     io.css:800 and this was not, so one plate had two
+                     cases. The literal capitals in the markup went
+                     with it; see OpenSavedCopy.tsx.
+
+   KEPT UPPERCASE, all captions or mono stamps: `.ob-stat-lbl`
+   ("TABLES", "COLUMNS", "ROWS" — the captions under the plate's three
+   figures), `.ob-plate-rev` ("REV 00", a stamp), `.ob-kind-stamp`
+   ("COMING SOON"), `.ob-note-label`.
+
+   TRACKING COMES DOWN WITH THE CASE (§3): +0.06em is the 11px
+   uppercase label's tracking and this line is a sentence. It keeps the
+   mono face, because what it is mostly made of is figures and a file
+   name, and it keeps `--ink-soft` — measured 7.7:1 on the plate's
+   white. Case does not move a ratio.
+   ============================================================ */
+.ob-plate-also {
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}

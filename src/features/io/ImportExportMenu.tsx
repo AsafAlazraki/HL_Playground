@@ -320,8 +320,17 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
         /* the documents in the file. A replace does NOT overwrite the
            quotes already here — a file only ever adds documents, see
            `restoreQuotes` — and naming them is how a person knows the
-           count on the dock is about to go up. */
-        preview.quotes > 0 ? plural(preview.quotes, 'quote', 'quotes') : '',
+           count on the dock is about to go up.
+
+           NAMED AS CUSTOMER QUOTES, in the same words the export card
+           uses, because that is what makes them different from the
+           other three things in this list: a file arriving with them in
+           it is a file carrying somebody else's customers. A
+           structure-only copy has none, and this line then says
+           nothing — which is the file telling the truth for free. */
+        preview.quotes > 0
+          ? plural(preview.quotes, 'customer quote', 'customer quotes')
+          : '',
       ].filter(Boolean)
     : []
 
@@ -438,9 +447,18 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                           travel now (exportPayload.ts), so the sentence
                           can say so — and the meta counts them beside
                           the tables and rows, because a promise on a
-                          card is worth what the figure under it says. */}
+                          card is worth what the figure under it says.
+
+                          AND IT NAMES WHAT A QUOTE HOLDS. This is the
+                          card that carries customer names, contact
+                          lines, offered prices and discounts out of the
+                          browser in a file a person may send on. Naming
+                          them is what makes the OTHER card's promise
+                          mean something: one of the two is safe to hand
+                          over and a person has to be able to tell
+                          which. */}
                       <span className="io-card-sub">
-                        Tables, rows, modules, pages and quotes
+                        Tables, rows, modules, pages, rules and quotes — with customer names
                       </span>
                       <span className="io-card-meta">
                         {plural(tableCount, 'table', 'tables')} ·{' '}
@@ -459,21 +477,31 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                     >
                       <GlyphStructureOnly />
                       <span className="io-card-title">Structure only</span>
-                      {/* modules and pages are STRUCTURE, not data: they say
+                      {/* MODULES AND PAGES ARE STRUCTURE, not data: they say
                           how the business is arranged, and only the rows are
-                          the contents. So this leaves out rows and nothing
-                          else. */}
-                      <span className="io-card-sub">Tables and pages, no rows</span>
+                          the contents.
+
+                          QUOTES ARE NOT STRUCTURE, and this card used to
+                          carry them while reading "Tables and pages, no
+                          rows". A quote holds a customer's name, their
+                          contact details, the prices they were offered and
+                          any discount given — and this is the card a person
+                          picks because it sounds safe to hand to a supplier
+                          or another dealer. They are out of the file now
+                          (exportPayload.ts) and the sentence says so. */}
+                      <span className="io-card-sub">
+                        Tables, pages and rules. No rows, and no customer quotes.
+                      </span>
                       <span className="io-card-meta">
                         {plural(tableCount, 'table', 'tables')}
-                        {pageCount > 0 ? ` · ${plural(pageCount, 'page', 'pages')}` : ''}
-                        {/* quotes are neither structure nor rows — they
-                            are documents, and they travel in both
-                            copies. Counted here for the same reason: the
-                            meta line is the only place either card says
-                            what is really in the file. */}
-                        {quoteCount > 0 ? ` · ${plural(quoteCount, 'quote', 'quotes')}` : ''} · no
-                        rows
+                        {pageCount > 0 ? ` · ${plural(pageCount, 'page', 'pages')}` : ''} · no rows
+                        {/* A COUNT MUST SAY WHAT IT LEFT OUT. Silence about
+                            two documents that are on the sheet and not in
+                            the file is how the meta line stops being the
+                            one place either card tells the truth. */}
+                        {quoteCount > 0
+                          ? ` · ${plural(quoteCount, 'quote', 'quotes')} left out`
+                          : ''}
                       </span>
                     </button>
                   </div>

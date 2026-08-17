@@ -428,6 +428,10 @@ export function Shell() {
               {renderStage(focused.stage, {
                 openWin,
                 close: () => closeWin(focused.id),
+                /* the same dialog the dock's NEW TABLE and a type
+                   dropped on the sheet both open — one host, one
+                   structure question */
+                newTable: () => setPicking(true),
               })}
             </div>
           ) : null}
