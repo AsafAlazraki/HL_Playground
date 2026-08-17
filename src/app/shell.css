@@ -2415,10 +2415,11 @@
 
 /* the doors travel with the table, beside its name */
 .shell-table-doors {
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  margin-left: auto;
 }
 .shell-table-door {
   height: 28px;
@@ -2449,4 +2450,871 @@
 .shell-body > .shell-stage {
   flex: 1;
   min-width: 0;
+}
+
+
+/* ============================================================
+   THE DOCK — floating, over the sheet.
+   ============================================================ */
+
+.dk-wrap {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.dk-wrap > * {
+  pointer-events: auto;
+}
+
+.dk {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 20px;
+  /* THE ONE GLASS SURFACE IN THE APP. It floats over a drawing that
+     pans and scrolls beneath it; a solid bar would punch a hole in
+     the sheet. Nothing translucent is stacked on it. */
+  background: color-mix(in srgb, var(--paper-high) 78%, transparent);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid var(--hairline);
+  box-shadow:
+    0 1px 2px rgba(9, 12, 18, 0.06),
+    0 12px 32px -8px rgba(9, 12, 18, 0.22);
+}
+
+.dk-sep {
+  width: 1px;
+  height: 26px;
+  margin: 0 4px;
+  background: var(--hairline-strong);
+}
+
+.dk-item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-med) var(--ease-draft);
+}
+.dk-item:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+  /* the Dock's own gesture: the icon grows toward the pointer */
+  transform: translateY(-3px) scale(1.06);
+}
+.dk-item:active {
+  transform: translateY(0) scale(0.97);
+}
+.dk-item.is-open,
+.dk-item.is-active {
+  background: var(--blue-wash);
+  color: var(--blue);
+}
+.dk-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--paper-high), 0 0 0 4px var(--blue);
+}
+
+/* a running dot under an active place, like the Dock's own */
+.dk-item.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--blue);
+}
+
+.dk-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--blue);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* THE NAME, ABOVE, ON HOVER. The resting bar is icons; nothing has
+   to be guessed at, because the label is one hover away and it is
+   never covering the thing it names. */
+.dk-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.dk-item:hover .dk-tip,
+.dk-item:focus-visible .dk-tip {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- the panel, opening UPWARD ----------------------- */
+
+.dk-panel {
+  width: min(520px, calc(100vw - 48px));
+  max-height: min(58vh, 460px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--sp-3);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--paper-high) 92%, transparent);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid var(--hairline);
+  box-shadow:
+    0 2px 6px rgba(9, 12, 18, 0.08),
+    0 24px 56px -12px rgba(9, 12, 18, 0.28);
+  transform-origin: bottom center;
+  animation: dk-in 160ms var(--ease-draft);
+}
+@keyframes dk-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* the table list runs in columns, so fifty tables are one glance
+   rather than one long scroll */
+.dk-tables {
+  columns: 2;
+  column-gap: var(--sp-4);
+}
+.dk-group {
+  break-inside: avoid;
+  margin-bottom: var(--sp-3);
+}
+.dk-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 var(--sp-2) 4px;
+}
+.dk-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.dk-group-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.dk-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 32px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 460;
+  text-align: left;
+  cursor: pointer;
+}
+.dk-row:hover,
+.dk-row:focus-visible {
+  background: var(--blue-wash);
+  outline: none;
+}
+.dk-row-mark {
+  flex: none;
+  display: flex;
+  color: var(--ink-faint);
+}
+.dk-row-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-row-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+.dk-none {
+  margin: 0;
+  padding: var(--sp-3);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+/* the sheet's own zoom controls sit bottom-left; the dock is
+   centred, so they never meet — but on a narrow window, give way */
+@media (max-width: 720px) {
+  .dk-tables {
+    columns: 1;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dk,
+  .dk-panel {
+    background: var(--paper-high);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-panel {
+    animation: none;
+  }
+  .dk-item:hover {
+    transform: none;
+  }
+}
+
+
+/* ============================================================
+   THE MAC WINDOW.
+
+   A stage is not a web page that fills the tab — it is an
+   APPLICATION WINDOW sitting on a desktop. That means, precisely:
+
+     - it is INSET from the edges, so the sheet shows around it and
+       you can see it is a thing ON something;
+     - its corners are rounded and its shadow is real and soft and
+       large, because that is what says "floating" rather than
+       "painted on";
+     - its toolbar is UNIFIED with the window - one continuous
+       translucent surface, no rule under it - and the title sits
+       in the middle of it, not on the left;
+     - content scrolls UNDER the toolbar, which is why the toolbar
+       is translucent in the first place.
+
+   Everything below serves those four sentences.
+   ============================================================ */
+
+.shell-viewstage {
+  position: absolute;
+  inset: 10px 10px 84px;      /* clear of the dock at the bottom */
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  /* the Mac window shadow: tight contact edge, then a wide soft
+     ambient. One shadow cannot do both. */
+  box-shadow:
+    0 0 0 0.5px rgba(9, 12, 18, 0.08),
+    0 2px 6px rgba(9, 12, 18, 0.09),
+    0 24px 64px -12px rgba(9, 12, 18, 0.28);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ---------- the unified toolbar ----------------------------- */
+
+.shell-view-bar {
+  position: relative;
+  flex: none;
+  /* THREE COLUMNS, NOT FLEX-WITH-AN-ABSOLUTE-TITLE. A real toolbar
+     keeps its title in the middle of the WINDOW however wide the
+     controls on either side grow, and the honest way to say that is
+     a grid whose outer tracks are equal. Absolute centring inside a
+     flex row resolves against a static-position box and drifts. */
+  display: grid;
+  /* minmax(0,...) so the outer tracks stay EQUAL when the controls
+     on one side are wider than the other - with a bare 1fr the wider
+     side grows its track and drags the centre with it. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-3);
+  height: 52px;
+  padding: 0 var(--sp-4);
+  /* VIBRANCY. Content scrolls under it, so it is a material and
+     not a bar. This and the dock are the only two. */
+  background: color-mix(in srgb, var(--paper-high) 72%, transparent);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  /* NO RULE UNDERNEATH. A unified toolbar is continuous with its
+     window; a 1px line under it is the thing that makes a web page
+     look like a web page. The separation comes from the material. */
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 60%, transparent);
+  z-index: 5;
+}
+
+/* THE TITLE IS CENTRED, absolutely, so it stays centred in the
+   WINDOW no matter how wide the controls on either side grow —
+   which is exactly how a Mac titlebar behaves. */
+.shell-viewstage .shell-view-bar .shell-view-what {
+  grid-column: 2;
+  justify-self: center;
+  position: static;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 46%;
+  pointer-events: none;
+}
+.shell-view-what-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-view-what-say {
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.shell-view-what-sep {
+  color: var(--ink-faint);
+}
+.shell-view-what-mark {
+  display: flex;
+  color: var(--ink-faint);
+}
+
+/* ---------- Mac controls ------------------------------------ */
+
+/* the back control is a plain chevron affordance, left, like a
+   Mac toolbar's navigation segment */
+.shell-view-back {
+  grid-column: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.shell-view-back:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+.shell-view-back:active {
+  background: var(--paper-sunken);
+  transform: scale(0.98);
+}
+
+/* toolbar buttons on the right, same bezel */
+.shell-table-door {
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
+}
+.shell-table-door:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+}
+.shell-table-door:active {
+  transform: scale(0.98);
+}
+
+/* ---------- the band strip as a segmented control ----------- */
+
+/* A MAC SEGMENTED CONTROL: one recessed track, the selected
+   segment lifted out of it on a pill with a real shadow.
+
+   TARGETED AT `.tb-strip-*`, WHICH IS THE PICKER. An earlier
+   version of this aimed at `.tb-bands`, which is not the picker at
+   all - it is the band HEADER ROW inside the grid, spanning the
+   columns of a section. Styling that as a segmented control put a
+   recessed track and a fitted width around a table header. The two
+   are named a syllable apart and do completely different jobs. */
+.tb-strip-rail {
+  gap: 2px;
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--paper-sunken);
+  border: 1px solid color-mix(in srgb, var(--hairline) 70%, transparent);
+  width: fit-content;
+  max-width: 100%;
+}
+.tb-strip-chip {
+  height: 24px;
+  padding: 0 11px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: none;
+}
+.tb-strip-chip:hover {
+  background: color-mix(in srgb, var(--paper-high) 70%, transparent);
+  color: var(--ink);
+}
+.tb-strip-chip[aria-pressed='true'],
+.tb-strip-chip.is-on {
+  background: var(--paper-high);
+  border-color: color-mix(in srgb, var(--hairline) 80%, transparent);
+  color: var(--ink);
+  box-shadow:
+    0 0.5px 1px rgba(9, 12, 18, 0.06),
+    0 1px 3px rgba(9, 12, 18, 0.08);
+}
+.tb-strip-name {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.tb-strip-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* ---------- the register, in a Mac window ------------------- */
+
+.shell-table-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper-high);
+}
+
+/* Mac list striping: alternating rows, not a grid of boxes. The
+   hairlines between columns stay, because this is a spreadsheet
+   and a spreadsheet needs them — but the ROW is the unit. */
+.shell-tablestage .tb-row:nth-child(even) {
+  background: color-mix(in srgb, var(--ink) 2.5%, transparent);
+}
+.shell-tablestage .tb-row:hover {
+  background: color-mix(in srgb, var(--blue) 7%, transparent);
+}
+
+/* the header row is a Mac list header: quiet, sticky, and it
+   scrolls its content underneath */
+.shell-tablestage .tb-head,
+.shell-tablestage .tb-th {
+  background: color-mix(in srgb, var(--paper-high) 86%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ---------- the sheet keeps the window ---------------------- */
+
+.shell-stage {
+  position: relative;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .shell-view-bar,
+  .shell-tablestage .tb-head,
+  .shell-tablestage .tb-th {
+    background: var(--paper-high);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+
+/* ============================================================
+   HOME — the Finder window in gallery view.
+   ============================================================ */
+
+.hm-bar-left {
+  grid-column: 1;
+}
+.hm-find {
+  grid-column: 3;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  width: 200px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  color: var(--ink-faint);
+  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
+}
+.hm-find:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.hm-find input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+}
+
+.hm-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+}
+
+.hm-sec + .hm-sec {
+  margin-top: var(--sp-6);
+}
+.hm-sec-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.hm-sec-name {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+}
+.hm-sec-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.hm-grid {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
+}
+
+/* THE SAME CARD THE SHEET DRAWS - kind rail, kind name, table
+   name, what is in it - so moving between the two never feels
+   like moving between two apps. */
+.hm-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-height: 104px;
+  padding: 13px 14px 12px 17px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--paper-high);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.04), 0 2px 6px -2px rgba(9, 12, 18, 0.07);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft),
+    transform var(--t-med) var(--ease-draft);
+}
+.hm-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tbn-accent, var(--ink-faint));
+}
+.hm-card:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: 0 1px 2px rgba(9, 12, 18, 0.06), 0 10px 24px -8px rgba(9, 12, 18, 0.16);
+  transform: translateY(-2px);
+}
+.hm-card:active {
+  transform: translateY(0) scale(0.995);
+  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
+}
+.hm-card:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+.hm-card-kind {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--tbn-accent, var(--ink-faint));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.hm-card-name {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 570;
+  line-height: 1.25;
+  letter-spacing: -0.009em;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hm-card-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 9px;
+  border-top: 1px solid var(--hairline);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.hm-card-stats b {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.hm-card-stats i {
+  width: 1px;
+  height: 10px;
+  margin: 0 4px;
+  background: var(--hairline-strong);
+}
+.hm-none {
+  margin: 0;
+  padding: var(--sp-6);
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+
+/* ============================================================
+   THE DESKTOP, AND THE WINDOWS ON IT
+   ============================================================ */
+
+.win {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  /* an UNFOCUSED window sits back: shallower shadow, no ring. The
+     focused one is unmistakably the one you are working in. */
+  box-shadow:
+    0 0 0 0.5px rgba(9, 12, 18, 0.06),
+    0 4px 12px -4px rgba(9, 12, 18, 0.14);
+  transition: box-shadow var(--t-med) var(--ease-draft);
+}
+.win.is-focused {
+  box-shadow:
+    0 0 0 0.5px rgba(9, 12, 18, 0.1),
+    0 8px 20px -6px rgba(9, 12, 18, 0.18),
+    0 32px 72px -16px rgba(9, 12, 18, 0.34);
+}
+.win.is-zoomed {
+  border-radius: 11px;
+}
+
+/* ---------- the titlebar ------------------------------------ */
+
+.win-bar {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  height: 38px;
+  padding: 0 12px;
+  cursor: default;
+  user-select: none;
+  background: color-mix(in srgb, var(--paper-sunken) 76%, transparent);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 70%, transparent);
+}
+.win-lights {
+  grid-column: 1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.win-light {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  /* GREY UNTIL THE POINTER IS OVER THE WINDOW, like a Mac. An
+     unfocused window should not be shouting three colours. */
+  background: #d3d5da;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.win:hover .win-light--close,
+.win.is-focused .win-light--close {
+  background: #ff5f57;
+}
+.win:hover .win-light--min,
+.win.is-focused .win-light--min {
+  background: #febc2e;
+}
+.win:hover .win-light--zoom,
+.win.is-focused .win-light--zoom {
+  background: #28c840;
+}
+.win-light:active {
+  filter: brightness(0.86);
+}
+
+.win-title {
+  grid-column: 2;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.win.is-focused .win-title {
+  color: var(--ink);
+}
+.win-bar-end {
+  grid-column: 3;
+}
+
+/* ---------- the body ----------------------------------------
+   A stage was written to be the only thing on screen — absolutely
+   inset, with its own frame and shadow. Inside a window it is
+   simply the content, so its frame is handed back to the window
+   that now owns it. */
+.win-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper-high);
+}
+.win-body > .shell-viewstage {
+  position: static;
+  inset: auto;
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+/* the window owns the titlebar now, so the stage's own bar is a
+   toolbar under it rather than a second title */
+.win-body .shell-view-bar {
+  height: 44px;
+}
+
+/* ---------- the desktop ------------------------------------- */
+
+/* the drawing is the desktop picture: it stays live underneath,
+   and windows sit on it */
+.shell-desktop {
+  position: absolute;
+  inset: 0;
+}
+
+/* minimised windows live on the dock */
+.dk-mini {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }

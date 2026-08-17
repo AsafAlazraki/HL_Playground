@@ -63,7 +63,7 @@
    door in the panel and the stage agree about what is open.
    ============================================================ */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { OrgProfile } from '@/types/model'
 import {
@@ -75,7 +75,16 @@ import { NewTableDialog } from '@/features/tablekit'
 import { useFocusedTableEntity, setFocusedTableEntity } from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
 import { TopBar } from './TopBar'
-import { MenuBar } from './MenuBar'
+import { Dock } from './Dock'
+import { Win } from './Win'
+import {
+  bestFrame,
+  renderStage,
+  winKey,
+  winTitle,
+  type Stage,
+  type Win as WinState,
+} from './winKit'
 import { TableStage } from './TableStage'
 import { EmptyState } from './EmptyState'
 import { ViewStage } from './ViewStage'
@@ -111,14 +120,6 @@ import './shell.css'
  *  1) and nobody has answered; until somebody does, it opens the way
  *  the other five open — over the sheet, which keeps its zoom and its
  *  nodes underneath and is one press away. */
-type Stage =
-  | { kind: 'view'; entityId: string }
-  | { kind: 'design'; entityId: string }
-  | { kind: 'rules' }
-  | { kind: 'flow' }
-  | { kind: 'quote'; quoteId: string | null }
-  | { kind: 'module'; moduleId: string | null }
-  | { kind: 'table'; entityId: string }
 
 export function Shell() {
   const org = useProjectStore((s) => s.meta.org)
@@ -137,7 +138,73 @@ export function Shell() {
   const quoteCount = useQuotes().length
 
   /* what is over the sheet right now, or null for the sheet itself */
-  const [stage, setStage] = useState<Stage | null>(null)
+  /* ============================================================
+     THE DESKTOP.
+
+     There is no single "stage" any more. Each thing you open is a
+     WINDOW, and windows stand beside each other — because a person
+     configuring a boat wants the boat, the motors that fit it and
+     the quote open at once, and one slot made that impossible.
+
+     `wins` is the stack, bottom to top. The last entry is the
+     focused one; raising a window moves it to the end. `zoomed`
+     and `mini` are per-window and live on the entry.
+     ========================================================== */
+  const [wins, setWins] = useState<WinState[]>([
+    { id: 'home', stage: { kind: 'home' }, frame: bestFrame(0), zoomed: false, mini: false },
+  ])
+  const seq = useRef(1)
+
+  const focusedId = wins.length ? wins[wins.length - 1].id : null
+
+  /* OPENING IS IDEMPOTENT PER SUBJECT. Pressing Boats twice does not
+     make two Boats windows; the second press raises the one that is
+     already open, which is what every OS does and what anybody
+     expects. */
+  const openWin = useCallback((stage: Stage) => {
+    setWins((prev) => {
+      const key = winKey(stage)
+      const found = prev.find((w) => winKey(w.stage) === key)
+      if (found) {
+        return [...prev.filter((w) => w.id !== found.id), { ...found, mini: false }]
+      }
+      const id = `w${seq.current++}`
+      return [
+        ...prev,
+        { id, stage, frame: bestFrame(prev.length), zoomed: false, mini: false },
+      ]
+    })
+  }, [])
+
+  const closeWin = useCallback((id: string) => {
+    setWins((prev) => prev.filter((w) => w.id !== id))
+  }, [])
+
+  const raiseWin = useCallback((id: string) => {
+    setWins((prev) => {
+      if (prev.length && prev[prev.length - 1].id === id) return prev
+      const w = prev.find((x) => x.id === id)
+      if (!w) return prev
+      return [...prev.filter((x) => x.id !== id), { ...w, mini: false }]
+    })
+  }, [])
+
+  const patchWin = useCallback((id: string, patch: Partial<WinState>) => {
+    setWins((prev) => prev.map((w) => (w.id === id ? { ...w, ...patch } : w)))
+  }, [])
+
+  /* the old single-slot setter, kept so every existing call site in
+     this file keeps working — it just opens a window instead */
+  const setStage = useCallback(
+    (next: Stage | null) => {
+      if (next === null) {
+        setWins((prev) => prev.filter((w) => w.stage.kind !== 'home'))
+        return
+      }
+      openWin(next)
+    },
+    [openWin],
+  )
 
   /* OPENING A TABLE FROM THE SHEET.
 
@@ -154,25 +221,18 @@ export function Shell() {
     setFocusedTableEntity(null)
   }, [focusedTableId])
 
-  /* A STAGE ABOUT A TABLE THAT IS GONE IS NOT OPEN. Deleting a table
-     from the sheet, an import or a demo swap all leave the id behind;
-     resolving it here is what closes the stage and un-lights the door
-     in the same frame, rather than leaving a page pointing at nothing. */
-  const stagedEntityId =
-    (stage?.kind === 'view' ||
-      stage?.kind === 'design' ||
-      stage?.kind === 'table') &&
-    entities[stage.entityId]
-      ? stage.entityId
-      : null
-  const open: Stage | null =
-    stage === null
-      ? null
-      : stage.kind === 'view' || stage.kind === 'design' || stage.kind === 'table'
-        ? stagedEntityId
-          ? stage
-          : null
-        : stage
+  /* A WINDOW WHOSE SUBJECT IS GONE CLOSES ITSELF. A table struck
+     from the sheet, an import or a demo swap all leave an id behind,
+     and a window pointing at nothing is a white rectangle with a
+     back button in it. Each stage already checks its own subject;
+     this drops the window so the dock and the desktop agree. */
+  useEffect(() => {
+    setWins((prev) =>
+      prev.filter((w) =>
+        'entityId' in w.stage ? Boolean(entities[w.stage.entityId]) : true,
+      ),
+    )
+  }, [entities])
 
   /* the last organisation we saw, kept across a swap that drops it */
   const knownOrg = useRef<OrgProfile | null>(null)
@@ -209,141 +269,57 @@ export function Shell() {
     <div className="shell-root">
       <TopBar
         onRevealTable={(id) => setStage({ kind: 'table', entityId: id })}
-        menu={
-          <MenuBar
-            onOpenTable={(id) => setStage({ kind: 'table', entityId: id })}
-            onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
-            onOpenRules={() => setStage({ kind: 'rules' })}
-            onOpenFlow={() => setStage({ kind: 'flow' })}
-            onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
-            onAddTable={() => setPicking(true)}
-            quoteCount={quoteCount}
-          />
-        }
       />
 
-      {/* THE FLEX CHAIN — .shell-root › .shell-body › panel | stage.
-          Every box on it carries `min-width: 0` in shell.css; without
-          it a panel that cannot fold below its min-content width pushes
-          the row past the window and shoves the sheet off screen. */}
+      {/* THE DESKTOP. The drawing stays live underneath and is the
+          desktop picture; windows stand on it. */}
       <div className="shell-body">
-        {/* THE RAIL IS GONE. Navigation is on the bar now — see
-            MenuBar.tsx for why a 260px permanent column was the wrong
-            trade for an app whose main object is a wide register. */}
-        <main className="shell-stage" aria-label="Sheet">
-          {/* THE SHEET STOPS EXISTING WHILE A STAGE IS OVER IT.
-              A stage covers the canvas but never unmounted it, so the
-              blueprint kept every one of its 54 focusable things in
-              the tab order underneath — measured identical with the
-              view page, the flow rail and the flow stage open. Opening
-              a view page by keyboard and reaching its first control
-              cost 74 key presses, 53 of them inside a sheet nobody can
-              see, with a longest run of 9 presses showing no focus
-              ring at all. A screen reader had the same problem in a
-              worse form: it could read out a table the reader had no
-              way to know was there.
-
-              `inert` is the whole fix — it takes the subtree out of
-              the tab order, out of the accessibility tree and out of
-              hit-testing in one attribute, and reverses cleanly when
-              the stage closes. The canvas is NOT unmounted, which is
-              the point of the stage pattern: React Flow keeps its
-              zoom, its node positions and its selection, so closing is
-              instant and the sheet has not moved.
-
-              The wrapper exists only to carry the attribute. It takes
-              its size from `.shell-stage > *` and passes it down (see
-              `.shell-sheet-layer` in shell.css), so the canvas's own
-              box is unchanged. */}
-          <div className="shell-sheet-layer" inert={open !== null}>
+        <main className="shell-stage" aria-label="Desktop">
+          <div className="shell-sheet-layer">
             <Whiteboard />
             {tableCount === 0 && <EmptyState onCreateTable={() => setPicking(true)} />}
           </div>
-          {/* `key` on the table: a different subject is a different
-              page, not the same page re-pointed. Without it the stage
-              and the page under it kept their own state across the
-              switch — the rail's find box still held the last table's
-              word, so a 43-row table opened saying "nothing here
-              matches", and SET UP mode carried over, handing the next
-              table's page to a customer covered in handles. The design
-              stage is keyed for the same reason: `DesignerSheet` resets
-              itself on a new entity, but the stage's own chrome does
-              not, so the open accordion row would follow the reader
-              from one table to a completely different one. */}
-          {open?.kind === 'view' ? (
-            <ViewStage
-              key={open.entityId}
-              entityId={open.entityId}
-              /* THE ONE WAY IN. A quote is minted on the view page,
-                 from the row that page is drawn for — nowhere else in
-                 the app knows both. The stage hands back the new
-                 document's id and we open it, so pressing "Quote this
-                 one" lands on the quote rather than on a list the
-                 person then has to search. */
-              onQuote={(quoteId) => setStage({ kind: 'quote', quoteId })}
-              onClose={() => setStage(null)}
-            />
-          ) : open?.kind === 'design' ? (
-            <DesignStage
-              key={open.entityId}
-              entityId={open.entityId}
-              onClose={() => setStage(null)}
-            />
-          ) : open?.kind === 'rules' ? (
-            <RulesStage onClose={() => setStage(null)} />
-          ) : open?.kind === 'flow' ? (
-            <FlowStage onClose={() => setStage(null)} />
-          ) : open?.kind === 'table' ? (
-            <TableStage
-              key={open.entityId}
-              entityId={open.entityId}
-              onOpenView={(id) => setStage({ kind: 'view', entityId: id })}
-              onOpenDesign={(id) => setStage({ kind: 'design', entityId: id })}
-              onClose={() => setStage(null)}
-            />
-          ) : open?.kind === 'quote' ? (
-            /* DELIBERATELY NOT KEYED ON THE QUOTE ID. The view and
-               design stages are keyed because a different table is a
-               different page; a different quote is the SAME place —
-               the list and the documents in it are one screen a person
-               moves around inside, and remounting it on every open
-               would drop the list's scroll position between two
-               documents being compared. */
-            <QuoteStage
-              quoteId={open.quoteId}
-              onOpen={(quoteId) => setStage({ kind: 'quote', quoteId })}
-              onClose={() => setStage(null)}
-            />
-          ) : open?.kind === 'module' ? (
-            /* NOT KEYED ON THE MODULE ID, for the quote stage's reason:
-               the dashboard and the modules on it are one place a
-               person moves around inside, and remounting the box on
-               every hop would drop the dashboard's scroll between two
-               modules being compared — and re-run the fade each time.
-               The stage clears its own open item when the module under
-               it changes, which is the only state a hop must not carry.
 
-               A DELETED MODULE IS NOT RESOLVED HERE, unlike the two
-               stages that name a table. Those close outright, because
-               a view of a struck-off table is a white rectangle with a
-               back button in it. A module stage always has somewhere
-               to stand — the dashboard — so it falls back to that
-               itself, and the door in the panel stays lit because the
-               person is still, truthfully, in the module system. */
-            <ModuleStage
-              moduleId={open.moduleId}
-              onOpen={(moduleId) => setStage({ kind: 'module', moduleId })}
-              /* THE ONE WAY IN IS UNCHANGED. Quoting from a module's
-                 item page is the view page's own control, so it hands
-                 back the same new document id and lands on the same
-                 stage as quoting from the panel's door does. Two ways
-                 to reach a boat must not become two kinds of quote. */
-              onQuote={(quoteId) => setStage({ kind: 'quote', quoteId })}
-              onClose={() => setStage(null)}
-            />
-          ) : null}
+          {wins.map((w, i) =>
+            w.mini ? null : (
+              <Win
+                key={w.id}
+                title={winTitle(w.stage, entities)}
+                frame={w.frame}
+                z={20 + i}
+                focused={w.id === focusedId}
+                zoomed={w.zoomed}
+                onFocus={() => raiseWin(w.id)}
+                onClose={() => closeWin(w.id)}
+                onMinimise={() => patchWin(w.id, { mini: true })}
+                onZoom={() => patchWin(w.id, { zoomed: !w.zoomed })}
+                onMove={(xy) => patchWin(w.id, { frame: { ...w.frame, ...xy } })}
+              >
+                {renderStage(w.stage, {
+                  openWin,
+                  close: () => closeWin(w.id),
+                })}
+              </Win>
+            ),
+          )}
         </main>
       </div>
+
+      {/* THE DOCK — floating over the sheet, not attached to an
+          edge and not a column beside it. */}
+      <Dock
+        /* the dock lights whichever window is focused */
+        current={wins.length ? wins[wins.length - 1].stage.kind : null}
+        onBackToSheet={() => setStage(null)}
+        onOpenHome={() => setStage({ kind: 'home' })}
+        onOpenTable={(id) => setStage({ kind: 'table', entityId: id })}
+        onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
+        onOpenRules={() => setStage({ kind: 'rules' })}
+        onOpenFlow={() => setStage({ kind: 'flow' })}
+        onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
+        onAddTable={() => setPicking(true)}
+        quoteCount={quoteCount}
+      />
 
       {/* `key` on the sequence: dropping the same kind on the same spot
          twice is two separate questions, not one stale dialog. */}

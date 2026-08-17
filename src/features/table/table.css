@@ -2905,13 +2905,19 @@ body.tb-resizing {
    shipped IDEN... 8, DIMENS... 6 and CAPA... 5 as final. A label
    cut mid-word is a bug, not a density strategy - so the strip
    scrolls and every name stays whole. */
-.tb-bands,
-.tb-bands-pick {
+/* THE PICKER SCROLLS; THE GRID'S BAND HEADER DOES NOT.
+
+   `.tb-bands` is the band header row INSIDE the grid - it spans the
+   columns of a section and must track their widths exactly. Giving
+   it `overflow-x: auto` nests a scrollbar inside the grid's own
+   scroller and desynchronises the header from the columns beneath
+   it. The thing that needed to stop truncating is the PICKER, one
+   syllable away. */
+.tb-strip-rail {
   overflow-x: auto;
   scrollbar-width: thin;
 }
-.tb-band-name,
-.tb-bandpick {
+.tb-strip-name {
   max-width: none;
   overflow: visible;
   text-overflow: clip;
