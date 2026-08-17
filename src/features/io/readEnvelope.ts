@@ -14,11 +14,10 @@
    Nothing throws, nothing is logged and dropped.
    ============================================================ */
 
-import type { ProjectExport } from '@/types/model'
-import { validateEnvelope } from './envelope'
+import { validateEnvelope, type ProjectFile } from './envelope'
 
 export type EnvelopeRead =
-  | { ok: true; data: ProjectExport; fileName: string }
+  | { ok: true; data: ProjectFile; fileName: string }
   | { ok: false; error: string }
 
 export async function readEnvelopeFile(file: File): Promise<EnvelopeRead> {
@@ -54,9 +53,13 @@ export interface EnvelopeSummary {
   modules: number
   pages: number
   rules: number
+  /** the documents in the file. A person about to press Replace is
+   *  entitled to know the file is carrying quotes, because they are the
+   *  one thing in it that was handed to a customer. */
+  quotes: number
 }
 
-export function summariseEnvelope(data: ProjectExport): EnvelopeSummary {
+export function summariseEnvelope(data: ProjectFile): EnvelopeSummary {
   return {
     name: data.project.name,
     rev: data.project.rev,
@@ -66,5 +69,6 @@ export function summariseEnvelope(data: ProjectExport): EnvelopeSummary {
     modules: data.modules?.length ?? 0,
     pages: data.views?.length ?? 0,
     rules: data.constraints?.length ?? 0,
+    quotes: data.quotes?.length ?? 0,
   }
 }

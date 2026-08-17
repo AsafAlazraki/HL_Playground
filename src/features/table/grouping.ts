@@ -15,7 +15,13 @@
    touched: fold a drawer, sort a column, rename a group — the rows
    underneath are exactly the rows the store holds.
    ============================================================ */
-import { displayFieldOf, type EntityDef, type FieldDef } from '@/types/model'
+import {
+  TABLE_KINDS,
+  displayFieldOf,
+  type EntityDef,
+  type FieldDef,
+  type TableKind,
+} from '@/types/model'
 import type { ViewRow } from '@/features/table/core'
 import { ADD_H, GROUP_H, ROW_H } from './helpers'
 
@@ -288,6 +294,51 @@ export interface LeafNoun {
 const NOT_A_KIND = new Set(['name', 'label', 'title', 'id', 'code', 'description', 'value'])
 
 /**
+ * WHAT ONE ROW OF A TABLE OF THIS KIND IS — the word the table's own
+ * `kind` already asserts, and the last word standing when the naming
+ * column cannot be trusted. `TABLE_KINDS[k].label` is the plural of
+ * exactly this word on every entry, which is what stops the two
+ * disagreeing.
+ *
+ * `custom` is deliberately blank. A custom table's kind says nothing
+ * about its rows — that is what makes it custom — so it never overrules
+ * the column and never supplies a word of its own.
+ */
+const KIND_NOUN: Record<TableKind, string> = {
+  boat: 'boat',
+  motor: 'motor',
+  trailer: 'trailer',
+  accessory: 'accessory',
+  package: 'package',
+  dealer: 'dealer',
+  custom: '',
+}
+
+/** Which kind a word names, for the words that name one. */
+const KIND_BY_NOUN: Map<string, TableKind> = new Map(
+  (Object.keys(KIND_NOUN) as TableKind[])
+    .filter((k) => KIND_NOUN[k] !== '')
+    .map((k) => [KIND_NOUN[k], k]),
+)
+
+/**
+ * A RELATIONSHIP'S ROWS ARE PAIRINGS, and that is the dealer's own word
+ * for them — it is the name of the band every join table in the prepared
+ * set files its two ends under (`{ id: "pairing", name: "Pairing" }`).
+ *
+ * Twenty-six of the fifty cards on the front door are Relationships, and
+ * every one of them read "· 71 rows" — the jargon noun, on more than half
+ * the screen, under a heading that had already said what they are. A
+ * pairing is not a thing the dealer has one of; it is the fact that two
+ * things go together, which is precisely what the card is for.
+ */
+const PAIRING: LeafNoun = Object.freeze({ one: 'pairing', many: 'pairings' })
+
+/** The table's kind, defaulted the way every other surface defaults it. */
+const kindOfEntity = (entity: EntityDef): TableKind =>
+  entity.kind !== undefined && entity.kind in TABLE_KINDS ? entity.kind : 'custom'
+
+/**
  * WHICH COLUMN NAMES THE ROWS. The deepest grouping level, because that
  * is the level a drawer opens onto — and where a table has no grouping
  * at all, the DISPLAY column, which is the column that names a row by
@@ -300,23 +351,43 @@ const NOT_A_KIND = new Set(['name', 'label', 'title', 'id', 'code', 'description
  * through. Its display column is `Model`, the same column the others
  * group by, so the fall-through was the bug and not the data. `Labour
  * Rates` and `Oils & Consumables` were in the same state and now read
- * "6 rates" and "10 consumables".
+ * "18 rates" and "27 consumables".
  *
- * A JOIN IS EXEMPT whatever its columns are called: its rows are the
- * pairings between two things rather than things a dealer has one of,
- * and the front door already calls one of them a Relationship.
+ * A COLUMN NAME IS NOT ALLOWED TO OVERRULE THE TABLE'S KIND, and the two
+ * Factory Packages files are why. Haines Signature Factory Packages and
+ * Jeanneau Factory Packages are `kind: 'package'`, and their naming
+ * column is headed `Motor` — because the Master Price File types a
+ * boat-plus-engine bundle into the boat row's motor slot, so the bundles
+ * live in the Motor Library. The seed's own note on those tables says it
+ * in capitals: "These are NOT motors." FITMENT_RULES.md §1.3 and §1.5
+ * are why they are separate tables at all, and why neither Haines nor
+ * Jeanneau carries a Yamaha motor-fitment join. The front door read
+ * "39 motors" on both, contradicting the research the same seed cites
+ * two lines above the count.
+ *
+ * So: when the naming column's word names a DIFFERENT one of the app's
+ * kinds than the table declares, the column is naming a RELATION rather
+ * than the row, and the table's own kind wins. A `custom` table declares
+ * nothing, so nothing of its is overruled.
  */
-function leafColumnName(entity: EntityDef | undefined): string {
-  if (!entity || entity.role === 'join') return ''
+function leafColumnName(entity: EntityDef): string {
   const h = entity.hierarchy
   const id = h && h.length > 0 ? h[h.length - 1] : undefined
   const field = id ? entity.fields.find((f) => f.id === id) : displayFieldOf(entity)
   const name = (field?.name ?? '').trim().toLowerCase()
-  return NOT_A_KIND.has(name) ? '' : name
+  if (NOT_A_KIND.has(name)) return ''
+  const own = kindOfEntity(entity)
+  if (own !== 'custom') {
+    const named = KIND_BY_NOUN.get(name)
+    if (named !== undefined && named !== own) return ''
+  }
+  return name
 }
 
 export function leafNoun(entity: EntityDef | undefined): LeafNoun {
-  const one = leafColumnName(entity) || 'row'
+  if (!entity) return { one: 'row', many: 'rows' }
+  if (entity.role === 'join') return { ...PAIRING }
+  const one = leafColumnName(entity) || KIND_NOUN[kindOfEntity(entity)] || 'row'
   if (/[^aeiou]y$/.test(one)) return { one, many: `${one.slice(0, -1)}ies` }
   if (/(s|x|z|ch|sh)$/.test(one)) return { one, many: `${one}es` }
   return { one, many: `${one}s` }

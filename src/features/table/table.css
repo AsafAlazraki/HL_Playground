@@ -405,8 +405,47 @@
   /* keeps the actions in the same right-hand corner once they wrap */
   margin-left: auto;
 }
+/* A DISABLED CONTROL STILL HAS TO BE READ, and this was the worst one
+   in the app: `opacity: 0.4` over `.btn:disabled`'s own 0.45 put
+   "Delete rows" at **2.62:1** on the live register at 1280 and 1920.
+   `--fg-quaternary` sits at 2.8:1 and DESIGN_CONTRACT says even that
+   may never carry meaning — so the label naming the one destructive act
+   on the page was below the line the contract draws for a TICK MARK.
+   How a person knows what is unavailable is by reading it.
+
+   Opacity is the wrong instrument for "not now": it fades the words,
+   which are the part that has to survive, and by an amount that depends
+   on whatever is behind the button. The state is said structurally
+   instead — a flat plate instead of a raised bezel, the ink one tier
+   down at `--ink-soft` (7.65:1 on `--paper-high`), no hover, no press —
+   and the REASON is printed beside it in `.tb-why`. Same treatment for
+   the primary "+ Row", which had the same 3.0:1 fault whenever a table
+   has no column to put a row in.
+   See modules.css for the identical call on `.md-stub .btn`. */
+.tb-actions .btn:disabled,
 .tb-del-btn:disabled {
-  opacity: 0.4;
+  opacity: 1;
+  color: var(--ink-soft);
+  background: var(--paper-high);
+  border-color: var(--hairline);
+}
+
+/* THE REFUSAL ITSELF — a sentence, in the place where the thing is
+   refused, which is DESIGN_CONTRACT §6.5 and rule 10. It sits in the
+   toolbar's own flow immediately before the actions it explains and is
+   absorbed by `.tb-chips`'s empty spacer, so it costs no width; it is
+   gone the moment the refusal is. Sentence case, a full stop, and the
+   dealer's noun — the voice the empty states use. */
+.tb-why {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  text-wrap: balance;
 }
 
 /* ============================================================
@@ -1497,9 +1536,17 @@
   background: color-mix(in srgb, var(--blue) 5%, var(--paper-high));
 }
 /* consequence 2: the selection wash and the active ring, drawn on the
-   cell itself in the same ink the overlays use */
+   cell itself in the same ink the overlays use.
+   MIXED FROM `--blue`, NOT FROM `--blue-wash`, and consequence 1 above
+   is why: `--blue-wash` carries its own alpha, so mixing 88% of it with
+   12% of an opaque ground still leaves the result translucent — this
+   cell computed to alpha 0.20 and forty columns of figures were passing
+   through the frozen name column every time it was selected. The wash
+   is the same colour a reader sees; it is simply stated as the opaque
+   equivalent (9% of the accent over the resting plane) so the pin can
+   keep the one promise it exists to keep. */
 .tb-cell-pin[aria-selected='true'] {
-  background: color-mix(in srgb, var(--blue-wash) 88%, var(--paper-high));
+  background: color-mix(in srgb, var(--blue) 9%, var(--paper-high));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blue) 45%, transparent);
 }
 /* the doubled class is deliberate: the active ring has to beat the
@@ -2892,6 +2939,65 @@ body.tb-resizing {
   opacity: 1;
 }
 
+/* ------------------------------------------------------------
+   UNDO, ON THE NOTE ITSELF — the button rule 9 needs somewhere
+   to put.
+
+   THE GEOMETRY IS THE CONTRACT'S CONTROL, unchanged: 28px high,
+   7px radius, 0 10px of padding. Nothing new is invented, and
+   the note that carries a decision therefore stands ~6px taller
+   than a note that only reports something — which is the right
+   signal rather than a cost. The 16px dismiss cross beside it
+   keeps its own size: one of these is a decision and the other
+   is a tidy-up, and they must never look interchangeable.
+
+   THE INK IS FULL STRENGTH, not the cross's 0.6. The chip is a
+   translucent wash, so the ratio was taken by compositing it
+   onto the note's own opaque ground and then reading the label
+   over the result — never against the token:
+
+     light  `--paper-high` 18% over `--ink` #0e1116 → rgb(57,60,64)
+            label #ffffff on that .................... 11.07:1
+     dark   the note inverts: `--ink` is `--fg` #edeef0 and
+            `--paper-high` is `--surface-1` #131519, so the wash
+            over it → rgb(198,199,201), label #131519 .. 10.96:1
+
+   The sentence beside it is 18.98:1 light and 15.97:1 dark. A
+   translucent label on a translucent chip would have made the
+   most consequential word in the app the faintest one.
+   ------------------------------------------------------------ */
+.tb-toast-act {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--paper-high) 18%, transparent);
+  color: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.tb-toast-act:hover {
+  background: color-mix(in srgb, var(--paper-high) 30%, transparent);
+}
+/* PRESS ON POINTER-DOWN (rule 8) — the press is the feedback the
+   hand is waiting for, and it must not wait for the mouse-up. */
+.tb-toast-act:active {
+  background: color-mix(in srgb, var(--paper-high) 42%, transparent);
+}
+.tb-toast-act:focus-visible {
+  outline: 2px solid var(--paper-high);
+  outline-offset: 1px;
+}
+
 /* ============================================================
    QUIET PRECISION - the grid
 
@@ -3135,13 +3241,29 @@ body.tb-resizing {
    gutter, which is the one part of a row that is always on screen
    however far sideways the register has been scrolled.
    ============================================================ */
+/* THE MARK USED TO PAINT ON HALF THE ROWS IT WAS ASKED TO.
+   Measured live: the found row's computed background was the ZEBRA
+   tint, not `--blue-wash`. `.tb-row-found` is one class;
+   `.shell-tablestage .tb-row:nth-child(even)` — a SECOND zebra the
+   page skin had added in shell.css — is two classes and a pseudo-class,
+   which weighs the same as three. So the reveal painted its gutter rail
+   and its pinned cell (two classes each, both winning) and left the row
+   body striped, on whichever rows happened to be even.
+   The duplicate stripe is gone from shell.css rather than out-weighed
+   here — see the note there — so this rule needs no extra weight and
+   `.tb-row-alt` is the register's one zebra again. HOVER deliberately
+   still beats it (`.shell-tablestage .tb-row:hover`, two classes and a
+   pseudo): the mark lives 2.6s and must not cost the sheet its pointer
+   feedback while it does. */
 .tb-row-found {
   background: var(--blue-wash);
 }
 /* the pin is opaque and paints itself, exactly as the stripe and the
-   hover band above have to handle it */
+   hover band above have to handle it — and OPAQUE means mixed from
+   `--blue`, not from the already-translucent `--blue-wash`. See the note
+   on `.tb-cell-pin[aria-selected]`. */
 .tb-row-found .tb-cell-pin {
-  background: color-mix(in srgb, var(--blue-wash) 88%, var(--paper-high));
+  background: color-mix(in srgb, var(--blue) 9%, var(--paper-high));
 }
 .tb-row-found .tb-gut {
   background: color-mix(in srgb, var(--blue) 12%, var(--paper-sunken));
@@ -3209,4 +3331,42 @@ body.tb-resizing {
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+}
+
+/* ------------------------------------------------------------
+   THE NOTE THE APP SPEAKS THROUGH WAS THE ONE STRIP THIS PASS
+   MISSED, and it is the worst place to have missed.
+
+   DESIGN_CONTRACT §3 forbids uppercase on "a table name, a row
+   label, a column value, a button, or a sentence". A toast is
+   ALL of those at once: it is a sentence, and the sentence is
+   usually about a name — the undo note prints the very label the
+   store recorded, so `Undone — 40 cell edits · Boats` came out
+   as `UNDONE — 40 CELL EDITS · BOATS`, uppercasing a table the
+   dealer named. `PVC` and `Pvc` are different facts about their
+   data and this strip could not tell them apart.
+
+   It was survivable while the strip only ever said `SAVED` or
+   `12 ROWS PASTED`. It stopped being survivable when the four
+   remaining `window.confirm` calls became notes: a confirm's job
+   was to carry a whole sentence naming what it was about, and a
+   note cannot take that job on in 11px uppercase mono with
+   +0.12em of tracking.
+
+   So the same correction as the eleven strips above, in the same
+   words: the UI face at reading size, tracking 0, case as
+   written. NOWRAP GOES WITH IT — a sentence that does not fit
+   must wrap, never be cut (§3, "nothing truncates mid-word"),
+   and 44ch is the contract's own prose measure. Nothing about
+   colour, ground or elevation moves; the note is still the same
+   dark plate with the same shadow.
+   ------------------------------------------------------------ */
+.tb-toast-text {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+  max-width: 44ch;
 }

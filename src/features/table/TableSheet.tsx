@@ -27,7 +27,9 @@ import { useSheetCommands } from './useSheetCommands'
 import { useGroupedView } from './useGroupedView'
 import { useSectionedView } from './useSectionedView'
 import { useWholeTable } from './useWholeTable'
+import type { FitReport } from './sections'
 import { releaseFitColumn, useFitWidths } from './tableFitState'
+import { useBoxWidth, useNameColumnWidth } from './nameColumnWidth'
 import { useGroupCommands } from './useGroupCommands'
 import { useColumnCommands } from './useColumnCommands'
 import type { NewColumn } from './useColumnCommands'
@@ -77,14 +79,20 @@ export function TableSheet({
   const cmd = useSheetCommands(entityId, view, pushToast, levelIds)
   const { rowCount, gridRef } = cmd
 
-  /* -- seeing the whole table ------------------------------------
-     A fit is an OVERLAY over the reader's own widths, never a
-     replacement: one press back is a delete, so "restores the previous
-     widths" is true by construction. */
+  /* -- the widths in force, in three layers ----------------------
+     THE NAME COLUMN'S MEASURED WIDTH IS THE BOTTOM ONE, so it is a
+     DEFAULT and nothing more: a drag still wins over it, and resetting
+     a column returns to it rather than to the 184px type default that
+     clipped 26 of Stacer's 26 names at every window width.
+     A fit is the TOP one — an overlay, never a replacement, so one
+     press back is a `delete` and "restores the previous widths" is true
+     by construction. */
+  const [sheetBox, sheetW] = useBoxWidth()
+  const nameW = useNameColumnWidth(entity, rows, sheetW)
   const fit = useFitWidths(entityId)
   const widths = useMemo(
-    () => (fit ? { ...colWidths, ...fit } : colWidths),
-    [fit, colWidths],
+    () => ({ ...nameW, ...colWidths, ...(fit ?? {}) }),
+    [nameW, fit, colWidths],
   )
 
   /* dragging a grip while fitted takes THAT column out of the fit, so
@@ -95,6 +103,20 @@ export function TableSheet({
       onResizeColumn(fieldId, w)
     },
     [entityId, onResizeColumn],
+  )
+
+  /* THE NOTE FIT RAISES, hoisted so its identity is stable across
+     renders — an inline arrow would make `toggleFit` a new function on
+     every keystroke in a cell. `where` is the only word that differs
+     between this lens and the card's. */
+  const sayWhatFitDid = useCallback(
+    (report: FitReport) => {
+      pushToast(
+        'Columns are as narrow as they can be and still be read. ' +
+          `${report.onScreen} of ${report.shared} fit the window — the rest scroll sideways.`,
+      )
+    },
+    [pushToast],
   )
 
   /* the grid's own scroller: the window to measure a fit against, and
@@ -113,6 +135,10 @@ export function TableSheet({
     viewportRef,
     /* the same column the grid freezes — see the pin note in `Grid` */
     pinFieldId: entity ? displayFieldOf(entity)?.id : undefined,
+    /* WHAT THE PRESS ACTUALLY DID, when it is not what the word "fit"
+       promises. Only ever raised when the 116px floor bound, and every
+       figure in it is counted, not written. */
+    onFit: sayWhatFitDid,
   })
 
   const columns = useColumnCommands(entityId, pushToast)
@@ -254,6 +280,8 @@ export function TableSheet({
   return (
     <section
       className="tb-sheet-wrap"
+      /* the box the name column's ceiling is a share of */
+      ref={sheetBox}
       id={`tb-sheet-${entityId}`}
       role="tabpanel"
       aria-labelledby={`tb-tab-${entityId}`}

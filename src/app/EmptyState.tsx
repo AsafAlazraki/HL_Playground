@@ -7,21 +7,26 @@
         moment on this screen that is allowed to be big;
      2. ONE primary action, CREATE YOUR FIRST TABLE, which opens
         the new-table dialog;
-     3. a quiet second door: the bundled Master Price File, tagged
-        EXAMPLE DATA and named as somebody else's business, so
-        nobody has to guess whether it is a toy — or worse, whose
-        it is;
+     3. a quiet second door: the bundled Master Price File, named
+        for the business whose file it is, so nobody has to guess
+        whether it is a toy — or worse, whose it is;
      4. one hint that the types on the left can be dragged.
 
-   WHY THE SECOND DOOR IS WORDED LIKE THAT. It used to read "Start
-   from Northside Marine" on a screen whose headline is the name
-   the user just typed in. A dealer who had called their business
-   Northside Marine read it as "start from MY data" and expected
-   their own price list back. The button now says EXAMPLE DATA
-   before any name is reached and calls the file ANOTHER DEALER'S,
-   and only then does the provenance line name the business and
-   the workbook. Nothing on it can be read as the user's own, and
-   it is still three short lines.
+   WHY THE SECOND DOOR IS WORDED THE WAY IT IS. It used to read
+   "Start from Northside Marine" on a screen whose headline is the
+   name the user just typed in. A dealer who had called their
+   business Northside Marine read it as "start from MY data" and
+   expected their own price list back. So the file was anonymised
+   to "another dealer's price file" — which fixed that reader and
+   lied to the one who matters most, because Northside Marine are
+   now this app's FIRST REAL CUSTOMER and the door was describing
+   their own catalogue as a stranger's while the provenance line
+   underneath named them.
+
+   Both readers are served by naming the business and comparing it
+   to the organisation on the sheet, which `startingPointWords`
+   does — and which is the one place that reasoning is written
+   down. This file just draws whichever three lines come back.
 
    What is NOT here, and is not coming back: the three prepared-set
    cards, the DRAFT FIRST ENTITY / IMPORT pair, the BLANK SHEET /
@@ -35,7 +40,7 @@
    ============================================================ */
 
 import { useProjectStore } from '@/store/useProjectStore'
-import { loadDemoSet, realDemoSet } from './demoLoad'
+import { loadDemoSet, realDemoSet, startingPointWords } from './demoLoad'
 
 export interface EmptyStateProps {
   onCreateTable: () => void
@@ -51,6 +56,9 @@ export function EmptyState({ onCreateTable }: EmptyStateProps) {
      blank sheet ships this is undefined and the second door simply is
      not drawn — the screen never offers a button that loads nothing. */
   const real = realDemoSet()
+  /* the same name the headline above prints, so what the door says and
+     who the screen is addressed to can never disagree */
+  const words = real ? startingPointWords(real, name) : undefined
 
   return (
     <div className="shell-invite">
@@ -79,19 +87,17 @@ export function EmptyState({ onCreateTable }: EmptyStateProps) {
           Create your first table
         </button>
 
-        {real && (
+        {real && words && (
           <button
             type="button"
             className="shell-invite-alt"
             onClick={() => loadDemoSet(real)}
           >
-            <span className="shell-invite-alt-tag mono-label">Example data</span>
-            <span className="shell-invite-alt-label">
-              Load a worked example — another dealer’s price file
-            </span>
+            <span className="shell-invite-alt-tag mono-label">{words.tag}</span>
+            <span className="shell-invite-alt-label">{words.label}</span>
             {/* the provenance line — the demos module writes it, because
                 the demos module is what knows where the numbers came from */}
-            <span className="shell-invite-alt-note">{real.blurb}</span>
+            <span className="shell-invite-alt-note">{words.note}</span>
           </button>
         )}
 

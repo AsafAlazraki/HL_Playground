@@ -68,10 +68,30 @@ export type InspectorTab = 'schema' | 'data'
    scroll positions, with the cell edit you actually wanted back
    pushed off the bottom. "Undo" has never meant "un-scroll".
 
-   Views, modules and rules are also out for this pass. They are
-   configuration surfaces with their own confirm gates, and they are
-   the obvious next ring — the machinery below takes them with one
-   `record()` call each when somebody decides they belong.
+   THE NEXT RING IS IN, AND IT IS EXACTLY THE DESTRUCTIVE HALF OF IT.
+   The paragraph that stood here said rules and zones were "the
+   obvious next ring — the machinery below takes them with one
+   `record()` call each when somebody decides they belong", and what
+   decided it was the last four `window.confirm` calls in the app.
+   Every one of them guarded a delete, and a native modal in front of
+   an act the store can already put back is the wrong instrument
+   twice: it breaks the drawing office's visual language, and it asks
+   a question whose answer is a keystroke away. So four acts joined
+   the stack — delete a rule, delete a step, delete a wire, delete a
+   zone — and the confirms became notes with UNDO on them (rule 9).
+
+   The line held is the same line: only DESTRUCTION is recorded.
+   Renaming a rule, switching one off, retyping a step's config, and
+   dragging a plate or a zone around are all still out — nothing
+   about them is invisible a second later, and a fifty-deep stack
+   full of them is how undo stops being worth pressing. `rules`,
+   `groups` and `entities` were already in the slice below, so each
+   of the four is genuinely one `record()` call: nothing about the
+   time-travel machinery had to change to admit them.
+
+   Views and modules stay out. They are configuration surfaces whose
+   own doors ask in the app's voice, and no `window.confirm` was
+   hiding in either.
 
    ONE ACT IS ONE STEP. A paste is forty `updateCell` calls and a
    dozen `addRow`s; deleting eight selected rows is eight
@@ -935,6 +955,12 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     deleteGroup: (id) => {
+      /* THE FRAME GOES AND THE TABLES STAY, but each of them loses its
+         `groupId` — which is a change to `entities`, invisible on the
+         sheet the moment the frame is gone. Both maps are in the slice,
+         so undo puts the zone back with its members still in it. Moving
+         or resizing a zone is still not a step; deleting one is. */
+      if (get().groups[id]) record({ one: 'Zone deleted', where: get().groups[id].name })
       mutate((s) => {
         const groups = { ...s.groups }
         delete groups[id]
@@ -1228,6 +1254,18 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     deleteRuleNode: (ruleId, nodeId) => {
+      /* A STEP TAKES ITS WIRES WITH IT — which is why this was the one
+         rule act that had a confirm on it saying "everything set up on
+         it goes too, and there is no undo". There is now. React Flow
+         deletes a node and its edges in one handler, so the edge ops
+         that follow fold into this step by the burst rule above. */
+      if (get().rules[ruleId]?.nodes.some((n) => n.id === nodeId)) {
+        record({
+          one: 'Step deleted',
+          many: (n) => `${n} steps deleted`,
+          where: get().rules[ruleId]?.name,
+        })
+      }
       mutate((s) => {
         const r = s.rules[ruleId]
         if (!r) return {}
@@ -1281,6 +1319,20 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     deleteRuleEdge: (ruleId, edgeId) => {
+      /* A WIRE IS CHEAP TO REDRAW and this is still worth a step: the
+         line from one plate to the next IS the rule, and a wire cut by
+         a stray Backspace is off the screen with nothing to show where
+         it went. Cheap to record, too — the entry retains one edge
+         array. Deleting a step deletes its wires in the same turn of
+         the event loop, so those collapse into the step's own entry
+         rather than piling up beside it. */
+      if (get().rules[ruleId]?.edges.some((e) => e.id === edgeId)) {
+        record({
+          one: 'Line deleted',
+          many: (n) => `${n} lines deleted`,
+          where: get().rules[ruleId]?.name,
+        })
+      }
       mutate((s) => {
         const r = s.rules[ruleId]
         if (!r) return {}
@@ -1333,6 +1385,11 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     deleteRule: (id) => {
+      /* THE WHOLE RULE IS ONE OBJECT IN `rules`, so the slice already
+         holds every step, every wire and every clause on it — this is
+         one `record()` and undo gives the drawing back entire. Read
+         the name BEFORE the mutation, like every other site here. */
+      if (get().rules[id]) record({ one: 'Rule deleted', where: get().rules[id].name })
       mutate((s) => {
         const rules = { ...s.rules }
         delete rules[id]

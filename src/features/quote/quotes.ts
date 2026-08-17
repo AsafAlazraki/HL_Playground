@@ -31,6 +31,7 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { newId, nowIso } from '@/lib/id'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
 import { priceAtLevel } from './pricing'
+import { unexplainedOverrides } from './totals'
 import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from './types'
 
 /* ---------------------------------------------------------- */
@@ -157,6 +158,31 @@ export function useQuote(id: string | null | undefined): QuoteDef | undefined {
 }
 
 export const getQuote = (id: string): QuoteDef | undefined => registry.get(id)
+
+/**
+ * Every quote there is, newest first, without a hook.
+ *
+ * IT EXISTS SO A QUOTE CAN LEAVE THE BROWSER. "Save a copy →
+ * Everything" carried tables, rows, modules, pages and rules and no
+ * quotes, under a title that says Everything: a dealer who exported,
+ * cleared and re-imported lost every quote they had raised, in
+ * silence. `exportPayload.ts` said so out loud and named the two
+ * things missing — a `quotes` key on the envelope, and a list reader
+ * that is not a hook. This is the second one, and it is a reader:
+ * nothing here mutates, and the array is a copy of the published
+ * snapshot rather than the registry's own.
+ *
+ * A QUOTE TRAVELS SAFELY BECAUSE IT IS ALREADY A PHOTOGRAPH. Every
+ * field on a line is a value, so writing one out and reading it back
+ * cannot change a number — which is the whole reason a quote may
+ * cross a file boundary at all. A quote that travelled as IDS and
+ * landed in a project with different price data would silently
+ * re-price a signed deal.
+ */
+export function allQuotes(): QuoteDef[] {
+  loadQuotes()
+  return [...list]
+}
 
 /* ---------------------------------------------------------- */
 /* Writing                                                    */
@@ -385,7 +411,14 @@ export const setOverride = (
  *  remember a minus sign is asking to be silently wrong on the day
  *  they forget, and the workbook's own `Dealer Discount Given`
  *  (AB169) carries its instruction in the cell beside it for exactly
- *  that reason. */
+ *  that reason.
+ *
+ *  IT SIGNS WHAT A PERSON TYPES, and nothing else. An adjustment
+ *  arriving from a FILE keeps the signed amount the file carries and
+ *  is never re-signed here: re-deriving it would change a total on
+ *  import, and a quote whose total moves because it crossed a file
+ *  boundary is the one failure this whole feature exists to prevent.
+ *  See `normAdjustments` in features/io/envelope.ts. */
 const SIGN: Record<AdjustmentKind, -1 | 1> = {
   discount: -1,
   rebate: -1,
@@ -463,13 +496,34 @@ export const applyPriceChanges = (id: string, changes: PriceChange[]): void =>
 
 /* -- issuing --------------------------------------------------- */
 
-/** The moment it is given to a customer. Everything that makes a
- *  number becomes read-only, and "re-read today's prices" is gone.
- *  Nothing expires: the workbook's own validity is a typed sentence
- *  on the sheet, and production's complete, correct expiry module
- *  never fires because nothing writes the date it reads. */
-export const issueQuote = (id: string): void =>
-  mutate(id, (q) => ({ ...q, state: 'issued', issuedAt: nowIso() }))
+/**
+ * The moment it is given to a customer. Everything that makes a
+ * number becomes read-only, and "re-read today's prices" is gone.
+ * Nothing expires: the workbook's own validity is a typed sentence
+ * on the sheet, and production's complete, correct expiry module
+ * never fires because nothing writes the date it reads.
+ *
+ * IT REFUSES ONE THING, and it is the one that cannot be repaired
+ * afterwards: a line carrying a price somebody typed with no reason
+ * beside it. The override is deliberately written BESIDE the frozen
+ * figure so an auditor can compute the delta later — and a delta
+ * with no sentence attached is exactly the question nobody can
+ * answer six weeks on. Because this document becomes read-only in
+ * the same act, the reason is written now or never.
+ *
+ * Returns whether the quote was issued, so the screen can say why
+ * not rather than appearing to do nothing. The screen ALSO disables
+ * the button and prints the sentence beside it — this is the line
+ * that makes the refusal true, the way `mutate` is the line that
+ * makes an issued quote's read-only controls true.
+ */
+export function issueQuote(id: string): boolean {
+  const q = registry.get(id)
+  if (!q || q.state !== 'draft') return false
+  if (unexplainedOverrides(q).length > 0) return false
+  mutate(id, (x) => ({ ...x, state: 'issued', issuedAt: nowIso() }))
+  return true
+}
 
 /**
  * "Make a new version" — the only action left on an issued quote.

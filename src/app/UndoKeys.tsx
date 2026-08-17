@@ -35,6 +35,16 @@
    this app says. Pressing Ctrl+Z with an empty stack says so too,
    rather than answering with nothing.
 
+   AND IT IS NOW THE APP'S ONE MOUTH, not only the undo chord's.
+   `src/store/notes.ts` explains why that bus exists; the short of it
+   is that the toast strip was a local hook, so rule 9 — "if an act is
+   undoable it gets a toast with UNDO, not a dialog" — was impossible
+   to obey anywhere except inside a table, and four surfaces reached
+   for `window.confirm` instead. This component already had the only
+   host mounted above the dock for the whole session, so it draws what
+   comes through the bus too. It stays the undo keys' file: the chord
+   is still bound here, and the note is still the table's own strip.
+
    The wrapper is a fixed, click-through layer with no paint of its
    own: `.tb-toasts` positions itself absolutely inside whatever
    contains it, and this component is mounted at the app root rather
@@ -44,6 +54,7 @@
 import { useEffect } from 'react'
 import type { JSX } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { onSaid } from '@/store/notes'
 import { Toasts, useToasts } from '@/features/table/Toasts'
 
 /** a keystroke that belongs to a text field belongs to the browser */
@@ -77,6 +88,11 @@ export function UndoKeys(): JSX.Element {
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
   }, [undo, redo, push])
+
+  /* Anything else in the app that has something to report lands here.
+     `push` is stable (a `useCallback` with no deps), so this subscribes
+     once for the session and never re-registers mid-note. */
+  useEffect(() => onSaid((note) => push(note.text, note.tone, note.act)), [push])
 
   /* THE NOTE CLEARS THE BAR IT WAS LANDING ON. `inset: 0` put this
      layer over the whole viewport, and `.tb-toasts` parks its strip at

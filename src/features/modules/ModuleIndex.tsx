@@ -122,8 +122,10 @@ import {
 import { TableKindSymbol } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import {
-  imageHostOf,
+  HELD_AS_LINK,
+  heldAsLinkNote,
   imageLabel,
+  measuredClosedHost,
   noteImageFailed,
   noteImageLoaded,
   useImageDisplay,
@@ -204,6 +206,37 @@ export function ModuleIndex({
      leaving a person to work out why 651 became 645. */
   const held = useMemo(() => heldBackRowCount(tables, rowsByEntity), [tables, rowsByEntity])
   const retiredTables = useMemo(() => tables.filter(isRetired), [tables])
+
+  /* THE PICTURES THIS CATALOGUE CANNOT PAINT, COUNTED AND EXPLAINED
+     ONCE — the same instinct as `held` above, aimed at the other thing
+     a person notices before they have read a word.
+
+     93 of the 174 tiles in Boats are reference plates. Each one already
+     says "Held as a link" and carries the reason on its title, and a
+     reader who never hovers still counts ninety-three empty wells and
+     concludes the software is broken. A grid cannot answer that; a
+     sentence can. So the reason is stated once, at the foot of the
+     index, in the voice `.md-held` established — reason and
+     reassurance in the same breath, because the question underneath
+     "where are the photographs" is "have we lost them".
+
+     COUNTED FROM THE RECORDED MEASUREMENT, never from the live probe
+     verdict — see `measuredClosedHost` for why a page-level total has
+     to be a number that cannot move while somebody is reading it. It
+     names the hosts it counted and claims nothing about any other. */
+  const linkedPictures = useMemo(() => {
+    const byHost = new Map<string, { host: string; why: string; count: number }>()
+    for (const e of entries) {
+      if (!e.img) continue
+      const closed = measuredClosedHost(e.img.src)
+      if (closed === null) continue
+      const found = byHost.get(closed.host)
+      if (found) found.count += 1
+      else byHost.set(closed.host, { ...closed, count: 1 })
+    }
+    const hosts = [...byHost.values()].sort((a, b) => b.count - a.count)
+    return { hosts, total: hosts.reduce((n, h) => n + h.count, 0) }
+  }, [entries])
 
   const canSearch = module.capabilities.includes('search')
   const canOpen = module.capabilities.includes('open')
@@ -575,6 +608,29 @@ export function ModuleIndex({
         </p>
       ) : null}
 
+      {/* AND THE OTHER THING A PERSON NOTICES FIRST. See
+          `linkedPictures` above for what is counted and why the count
+          is taken from the recorded measurement rather than the live
+          verdict. Same class, same voice, same role as the note above
+          it: the reason, then the reassurance that nothing was lost. */}
+      {linkedPictures.total > 0 ? (
+        <p className="md-held" role="note">
+          {linkedPictures.total} {linkedPictures.total === 1 ? 'item' : 'items'} here{' '}
+          {linkedPictures.total === 1 ? 'holds its photograph' : 'hold their photographs'} as
+          a link rather than a picture, because{' '}
+          {linkedPictures.hosts.map((h, i) => (
+            <span key={h.host}>
+              {i > 0 ? (i === linkedPictures.hosts.length - 1 ? ' and ' : ', ') : ''}
+              {h.why}
+            </span>
+          ))}
+          . The addresses are kept exactly as{' '}
+          {linkedPictures.total === 1 ? 'it was' : 'they were'} imported and travel with every
+          export, so nothing has been lost and nothing has been substituted — the day those
+          pictures can be fetched, the same tiles paint them.
+        </p>
+      ) : null}
+
       {/* A module without `browse` has no index at all — that is what
           the switch means, and saying so is better than drawing an
           empty page. The header and the gear stay drawn above it, or
@@ -884,21 +940,27 @@ function TilePicture({
 /** THE PICTURE IS HELD AS A LINK, AND THAT IS WHAT IT SAYS. Two words
  *  and a mark, quietly, in the well the photograph would have filled:
  *  repeated down a grid it reads as a convention somebody chose, which
- *  is the whole difference between this and a broken page. The sentence
- *  with the host in it — the same sentence `ImageCell`'s enlarged plate
- *  prints — is on the title and in the accessible name, because the
- *  host is what a person FIXING the data needs and they do that work in
- *  the table, not here. */
+ *  is the whole difference between this and a broken page.
+ *
+ *  BOTH STRINGS COME FROM `@/lib/imageSources` NOW. The label was
+ *  written out here as a literal and the sentence was assembled here
+ *  too, so this tile and the table cell could drift apart — and had:
+ *  the cell's thumbnail said "held as a link, not shown here" while
+ *  this said "Held as a link". One export each (`HELD_AS_LINK`,
+ *  `heldAsLinkNote`) and they cannot.
+ *
+ *  The sentence is on the title and in the accessible name rather than
+ *  on the tile, because it is what a person FIXING the record needs and
+ *  they do that work in the table — but it is a REASON now, not just an
+ *  address: for the two hosts we have measured it says what the host
+ *  does, so a stakeholder reads a permission somebody else set rather
+ *  than a fault in the dealership's own catalogue. */
 function HeldAsLink({ img }: { img: ImageRef }): ReactElement {
-  const host = imageHostOf(img.src)
-  const why =
-    host === ''
-      ? 'Held as a link — the picture itself is not here.'
-      : `Held as a link — the picture itself lives at ${host}.`
+  const why = heldAsLinkNote(img.src)
   return (
     <span className="md-tile-held" role="img" aria-label={`${imageLabel(img)} — ${why}`} title={why}>
       <LinkSimple size={ICON_SIZE.small} aria-hidden="true" />
-      <span className="md-tile-held-say">Held as a link</span>
+      <span className="md-tile-held-say">{HELD_AS_LINK}</span>
     </span>
   )
 }

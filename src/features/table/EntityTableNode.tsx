@@ -88,6 +88,7 @@ import { useSheetCommands } from './useSheetCommands'
 import { useGroupedView } from './useGroupedView'
 import { useSectionedView } from './useSectionedView'
 import { useWholeTable } from './useWholeTable'
+import type { FitReport } from './sections'
 import { useGroupCommands } from './useGroupCommands'
 import { useColumnCommands } from './useColumnCommands'
 import type { NewColumn } from './useColumnCommands'
@@ -109,6 +110,7 @@ import {
 } from './tableCanvasState'
 import type { TableNodeSize } from './tableCanvasState'
 import { clearFitWidths, releaseFitColumn, useFitWidths } from './tableFitState'
+import { useBoxWidth, useNameColumnWidth } from './nameColumnWidth'
 import { plural } from './helpers'
 import { CAM_MS, cameraMs, useStillness } from '@/features/views/stillness'
 import './table.css'
@@ -226,14 +228,16 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
   const toasts = useToasts()
   const pushToast = toasts.push
 
-  /* A fit is an OVERLAY over the reader's own widths, never a
-     replacement — one press back is a delete, which is what makes
-     "restores the previous widths" true by construction. Same module
-     the full-window sheet uses, so a table looks the same in both. */
-  const fit = useFitWidths(entityId)
-  const colWidths = useMemo(
-    () => (fit ? { ...ownWidths, ...fit } : ownWidths),
-    [fit, ownWidths],
+  /* THE NOTE FIT RAISES — hoisted for a stable identity, as in
+     `TableSheet`. On a card the window it reports against is the card. */
+  const sayWhatFitDid = useCallback(
+    (report: FitReport) => {
+      pushToast(
+        'Columns are as narrow as they can be and still be read. ' +
+          `${report.onScreen} of ${report.shared} fit the card — the rest scroll sideways.`,
+      )
+    },
+    [pushToast],
   )
 
   /* the grid's own scroller: the window a fit is measured against,
@@ -242,6 +246,23 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
 
   const data = useTableData(entityId, { sort, filters, search: '' })
   const { entity, rows, hasFormula, buildViewRows } = data
+
+  /* THE WIDTHS IN FORCE, IN THREE LAYERS — the same three the
+     full-window sheet uses, so a table is the same table in both
+     lenses. The name column's MEASURED width is the bottom one and is
+     only a default, so a drag still wins; a fit is the top one and is
+     an overlay, so one press back is a delete and "restores the
+     previous widths" is true by construction.
+     On a card the ceiling is a share of THE CARD, which is why a 520px
+     register on the blueprint does not hand two thirds of itself to one
+     column — see `NAME_MAX_SHARE`. */
+  const [cardBox, cardW] = useBoxWidth()
+  const nameW = useNameColumnWidth(entity, rows, cardW)
+  const fit = useFitWidths(entityId)
+  const colWidths = useMemo(
+    () => ({ ...nameW, ...ownWidths, ...(fit ?? {}) }),
+    [nameW, fit, ownWidths],
+  )
 
   const { data: groupedView, layout, levelIds, levelNames, grouped, noun } =
     useGroupedView(entityId, data, entity)
@@ -272,6 +293,9 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
     viewportRef,
     /* the same column the grid freezes — see the pin note in `Grid` */
     pinFieldId: entity ? displayFieldOf(entity)?.id : undefined,
+    /* WHAT THE PRESS ACTUALLY DID, when the 116px floor bound and the
+       register is still wider than the card. Every figure counted. */
+    onFit: sayWhatFitDid,
   })
 
   const columns = useColumnCommands(entityId, pushToast)
@@ -666,6 +690,8 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
             itself arrives on screen), so the fade runs exactly once
             per transition and never mid-edit */}
         <div
+          /* the box the name column's ceiling is a share of */
+          ref={cardBox}
           className={
             'tb-node-body nodrag nowheel' +
             (cmd.editing === null ? ' tb-node-body--in' : '')

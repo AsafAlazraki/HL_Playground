@@ -44,7 +44,13 @@ import {
   type PriceChange,
 } from './freeze'
 import { money, parseAmount, quoteLevelChoices } from './pricing'
-import { lineAmount, linesOf, quoteTotals } from './totals'
+import {
+  lineAmount,
+  linesOf,
+  needsOverrideReason,
+  quoteTotals,
+  unexplainedOverrides,
+} from './totals'
 import {
   addAdjustment,
   addLine,
@@ -73,6 +79,32 @@ const ADJUSTMENT_DOORS: Array<{ kind: AdjustmentKind; door: string }> = [
   { kind: 'tradeIn', door: 'Add a trade-in' },
   { kind: 'line', door: 'Add a line' },
 ]
+
+/** The dealer's own line names, read out as a person would say them.
+ *  Never truncated to a count: "2 lines" tells somebody there is a
+ *  problem and not where it is, and the whole point of the sentence
+ *  is that they can go and fix it. */
+function nameList(labels: string[]): string {
+  if (labels.length <= 1) return labels[0] ?? ''
+  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`
+}
+
+/**
+ * WHY THIS QUOTE MAY NOT GO OUT YET, or '' when it may.
+ *
+ * DESIGN_PRINCIPLES rule 10: a refusal is a sentence with a reason,
+ * in the place where the thing is refused — and it says what the
+ * person CAN do. So it names the lines, says what is missing, and
+ * says why it cannot wait: issuing makes the document read-only, so
+ * a reason not written now can never be written.
+ */
+function issueRefusal(blocked: QuoteLine[]): string {
+  if (blocked.length === 0) return ''
+  const names = nameList(blocked.map((l) => l.label))
+  return blocked.length === 1
+    ? `${names} has a price you typed and no reason beside it. Open the line and write why it is different — once this goes to the customer nothing on it can be changed.`
+    : `${blocked.length} lines have a price you typed and no reason beside them — ${names}. Open each and write why it is different; once this goes to the customer nothing on it can be changed.`
+}
 
 export interface QuoteEditorProps {
   quote: QuoteDef
@@ -106,313 +138,356 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
      it: an issued quote is a record of what was offered. */
   const subjectNote = quote.state === 'draft' ? unsellableSubject(quote.rootTableId, quote.rootRowId) : ''
 
+  /* THE ONE THING THAT STOPS THIS GOING OUT — computed from the
+     quote's own lines, so the button, the sentence beside it and
+     `issueQuote` itself cannot disagree about whether it may. */
+  const blocked = unexplainedOverrides(quote)
+  const refusal = issueRefusal(blocked)
+
   return (
-    <div className="qt-edit">
-      <div className="qt-sheet">
-        <span className="qt-tick qt-tick--tl" aria-hidden="true" />
-        <span className="qt-tick qt-tick--tr" aria-hidden="true" />
+    /* THE DOCUMENT SCROLLS AND THE TOTAL DOES NOT — and they are
+       SIBLINGS, which is the whole of the fix.
 
-        {subjectNote !== '' ? (
-          <p className="qt-warn" role="status">
-            <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-            {subjectNote}
-          </p>
-        ) : null}
+       The total used to be `position: sticky; bottom: 0` as the last
+       child of `.qt-edit`, inside the page's own scrollport, so at the
+       top and the middle of the scroll it floated over the middle of the
+       quote with lines passing behind it. It is opaque, so nothing was
+       hidden; it was still a total painted across its own document, and
+       a total is the END of a document.
 
-        {saveNote ? (
-          <p className="qt-warn" role="status">
-            <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-            {saveNote}
-          </p>
-        ) : null}
+       Of the two answers — give the scroller room, or stop it being
+       sticky — the first is the trap DESIGN_CONTRACT §8.7 was written
+       from: a sticky box is floored by its scroll container's CONTENT
+       box, so padding the scrollport lifts the bar off the bottom edge
+       and lets the document go on painting through the strip beneath it.
+       That was measured once already (the note on `.qt-root`).
 
-        {/* -- who it is for, and at which rung ---------------- */}
-        <header className="qt-edit-head">
-          <div className="qt-edit-for">
-            <label className="qt-field">
-              <span className="mono-label">Customer</span>
-              <input
-                ref={nameRef}
-                className="field-input qt-input qt-input--name"
-                value={quote.customer.name}
-                placeholder="the customer's name"
-                spellCheck={false}
-                onChange={(e) =>
-                  patchQuote(quote.id, { customer: { ...quote.customer, name: e.target.value } })
-                }
-              />
-            </label>
+       So the bar leaves the scroll entirely. `.qt-root--edit` is the
+       column, `.qt-edit` is the scrollport inside it, and the total is a
+       sibling BELOW that scrollport where no line can reach it. Nothing
+       is sticky, nothing is padded to clear anything, the 78px the dock
+       needs is still reserved once on `.shell-stage`, and the running
+       total stays visible while a person works. */
+    <>
+      <div className="qt-edit">
+        <div className="qt-sheet">
+          <span className="qt-tick qt-tick--tl" aria-hidden="true" />
+          <span className="qt-tick qt-tick--tr" aria-hidden="true" />
 
-            {levels.length > 1 ? (
-              <div className="qt-levels" role="group" aria-label="Price level">
-                <span className="mono-label">Priced at</span>
-                {levels.map((l) => (
-                  <button
-                    key={l.key}
-                    type="button"
-                    className={`qt-chip${quote.levelKey === l.key ? ' is-on' : ''}`}
-                    aria-pressed={quote.levelKey === l.key}
-                    onClick={() => setLevel(quote.id, l.key)}
-                  >
-                    {l.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="qt-edit-subject">
-            <FrozenPhoto
-              img={quote.subjectImage}
-              fallbackAlt={quote.subjectLabel}
-              className="qt-edit-photo"
-              w={120}
-              h={90}
-            />
-            <div>
-              <p className="mono-label">{quote.reference}</p>
-              <h1 className="qt-edit-name">{quote.subjectLabel}</h1>
-            </div>
-          </div>
-        </header>
-
-        <button
-          type="button"
-          className="qt-disclose"
-          aria-expanded={contact}
-          onClick={() => setContact((v) => !v)}
-        >
-          {contact ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}
-          Add contact details
-        </button>
-        {contact ? (
-          <label className="qt-field qt-field--wide">
-            <span className="mono-label">Contact</span>
-            <textarea
-              className="field-input qt-input"
-              rows={3}
-              value={(quote.customer.contact ?? []).join('\n')}
-              placeholder={'one line each — as it should print on the quote'}
-              onChange={(e) =>
-                patchQuote(quote.id, {
-                  customer: {
-                    ...quote.customer,
-                    contact: e.target.value.split('\n').filter((l) => l.trim() !== ''),
-                  },
-                })
-              }
-            />
-          </label>
-        ) : null}
-
-        {/* -- the rig ----------------------------------------- */}
-        {quote.sections.map((section) => (
-          <SectionCard key={section.blockId} quote={quote} section={section} />
-        ))}
-
-        {/* -- adjustments ------------------------------------- */}
-        <section className="qt-adjustments">
-          <p className="mono-label">Adjustments</p>
-          {quote.adjustments.map((a) => (
-            <div key={a.id} className="qt-adj">
-              <input
-                className="field-input qt-input"
-                value={a.label}
-                placeholder={
-                  a.kind === 'tradeIn'
-                    ? 'what is being traded in'
-                    : a.kind === 'rebate'
-                      ? 'the rebate, as it should print'
-                      : a.kind === 'discount'
-                        ? 'why the discount is given'
-                        : 'what this line is for'
-                }
-                onChange={(e) => updateAdjustment(quote.id, a.id, { label: e.target.value })}
-              />
-              <input
-                className="field-input qt-input qt-input--amount"
-                inputMode="decimal"
-                value={a.amount === 0 ? '' : String(Math.abs(a.amount))}
-                placeholder="amount"
-                aria-label="Amount"
-                onChange={(e) =>
-                  setAdjustmentMagnitude(quote.id, a.id, parseAmount(e.target.value) ?? 0)
-                }
-              />
-              <span className={`qt-adj-sign${a.amount < 0 ? ' is-credit' : ''}`}>
-                {money(a.amount)}
-              </span>
-              {/* AN × IS NOT A NAME. Every one of these buttons drew an
-                  icon and a `title` and nothing else, so a screen
-                  reader announced five unnamed buttons on a document
-                  about to be handed to a customer. The label names the
-                  ROW it acts on, not the shape it is drawn as, because
-                  five identical "Remove"s in a list is the same defect
-                  one step further on. */}
-              <button
-                type="button"
-                className="qt-icon-btn"
-                aria-label={`Take ${a.label.trim() === '' ? 'this adjustment' : a.label} off the quote`}
-                title="Take this off the quote"
-                onClick={() => removeAdjustment(quote.id, a.id)}
-              >
-                <X size={12} weight="bold" />
-              </button>
-            </div>
-          ))}
-          <div className="qt-adj-doors">
-            {ADJUSTMENT_DOORS.map((d) => (
-              <button
-                key={d.kind}
-                type="button"
-                className="qt-adj-door"
-                onClick={() => addAdjustment(quote.id, d.kind)}
-              >
-                <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                {d.door}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* -- the details nobody needs on the way in ---------- */}
-        <button
-          type="button"
-          className="qt-disclose"
-          aria-expanded={details}
-          onClick={() => setDetails((v) => !v)}
-        >
-          {details ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}
-          Reference, tax and notes
-        </button>
-        {details ? (
-          <div className="qt-details">
-            <label className="qt-field">
-              <span className="mono-label">Prepared by</span>
-              <input
-                className="field-input qt-input"
-                value={quote.preparedBy ?? ''}
-                placeholder="your name"
-                onChange={(e) => patchQuote(quote.id, { preparedBy: e.target.value })}
-              />
-            </label>
-            <label className="qt-field">
-              <span className="mono-label">Reference</span>
-              <input
-                className="field-input qt-input"
-                value={quote.reference}
-                onChange={(e) => patchQuote(quote.id, { reference: e.target.value })}
-              />
-            </label>
-            <label className="qt-field">
-              <span className="mono-label">Tax rate %</span>
-              <input
-                className="field-input qt-input"
-                inputMode="decimal"
-                value={quote.taxRate === undefined ? '' : String(quote.taxRate)}
-                /* BLANK IS NOT ZERO and blank is the default: there is
-                   no tax-rate column anywhere in the data, so the
-                   document prints the inclusive sentence until a
-                   person states a rate */
-                placeholder="leave blank if the total is tax-inclusive"
-                onChange={(e) => {
-                  const n = parseAmount(e.target.value)
-                  patchQuote(quote.id, { taxRate: n === null ? undefined : n })
-                }}
-              />
-            </label>
-            <label className="qt-field qt-field--wide">
-              <span className="mono-label">Note on the quote</span>
-              <input
-                className="field-input qt-input"
-                value={quote.note ?? ''}
-                placeholder="validity, conditions — printed as typed"
-                onChange={(e) => patchQuote(quote.id, { note: e.target.value })}
-              />
-            </label>
-          </div>
-        ) : null}
-
-        {/* -- today's prices, as a diff and never silently ---- */}
-        <section className="qt-reread">
-          {changes === null ? (
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => setChanges(priceChanges(quote))}
-            >
-              Re-read today's prices
-            </button>
-          ) : changes.length === 0 ? (
-            <p className="qt-reread-say">
-              Nothing has moved — every line still matches today's price file.
-              <button type="button" className="qt-linkbtn" onClick={() => setChanges(null)}>
-                Close
-              </button>
+          {subjectNote !== '' ? (
+            <p className="qt-warn" role="status">
+              <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+              {subjectNote}
             </p>
-          ) : (
-            <div className="qt-reread-diff">
-              <p className="mono-label">What would change</p>
-              <ul className="qt-reread-list">
-                {changes.map((c) => (
-                  <li key={c.lineId} className="qt-reread-row">
-                    <span className="qt-reread-name">{c.label}</span>
-                    {c.gone ? (
-                      <span className="qt-nil">that row is no longer on the sheet</span>
-                    ) : (
-                      <span className="qt-num">
-                        <span className="qt-was">
-                          {c.from === null ? 'not priced' : money(c.from)}
-                        </span>
-                        {c.to === null ? 'not priced' : money(c.to)}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <div className="qt-reread-acts">
+          ) : null}
+
+          {saveNote ? (
+            <p className="qt-warn" role="status">
+              <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+              {saveNote}
+            </p>
+          ) : null}
+
+          {/* -- who it is for, and at which rung ---------------- */}
+          <header className="qt-edit-head">
+            <div className="qt-edit-for">
+              <label className="qt-field">
+                <span className="mono-label">Customer</span>
+                <input
+                  ref={nameRef}
+                  className="field-input qt-input qt-input--name"
+                  value={quote.customer.name}
+                  placeholder="the customer's name"
+                  spellCheck={false}
+                  onChange={(e) =>
+                    patchQuote(quote.id, { customer: { ...quote.customer, name: e.target.value } })
+                  }
+                />
+              </label>
+
+              {levels.length > 1 ? (
+                <div className="qt-levels" role="group" aria-label="Price level">
+                  <span className="mono-label">Priced at</span>
+                  {levels.map((l) => (
+                    <button
+                      key={l.key}
+                      type="button"
+                      className={`qt-chip${quote.levelKey === l.key ? ' is-on' : ''}`}
+                      aria-pressed={quote.levelKey === l.key}
+                      onClick={() => setLevel(quote.id, l.key)}
+                    >
+                      {l.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="qt-edit-subject">
+              <FrozenPhoto
+                img={quote.subjectImage}
+                fallbackAlt={quote.subjectLabel}
+                className="qt-edit-photo"
+                w={120}
+                h={90}
+              />
+              <div>
+                <p className="mono-label">{quote.reference}</p>
+                <h1 className="qt-edit-name">{quote.subjectLabel}</h1>
+              </div>
+            </div>
+          </header>
+
+          <button
+            type="button"
+            className="qt-disclose"
+            aria-expanded={contact}
+            onClick={() => setContact((v) => !v)}
+          >
+            {contact ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}
+            Add contact details
+          </button>
+          {contact ? (
+            <label className="qt-field qt-field--wide">
+              <span className="mono-label">Contact</span>
+              <textarea
+                className="field-input qt-input"
+                rows={3}
+                value={(quote.customer.contact ?? []).join('\n')}
+                placeholder={'one line each — as it should print on the quote'}
+                onChange={(e) =>
+                  patchQuote(quote.id, {
+                    customer: {
+                      ...quote.customer,
+                      contact: e.target.value.split('\n').filter((l) => l.trim() !== ''),
+                    },
+                  })
+                }
+              />
+            </label>
+          ) : null}
+
+          {/* -- the rig ----------------------------------------- */}
+          {quote.sections.map((section) => (
+            <SectionCard key={section.blockId} quote={quote} section={section} />
+          ))}
+
+          {/* -- adjustments ------------------------------------- */}
+          <section className="qt-adjustments">
+            <p className="mono-label">Adjustments</p>
+            {quote.adjustments.map((a) => (
+              <div key={a.id} className="qt-adj">
+                <input
+                  className="field-input qt-input"
+                  value={a.label}
+                  placeholder={
+                    a.kind === 'tradeIn'
+                      ? 'what is being traded in'
+                      : a.kind === 'rebate'
+                        ? 'the rebate, as it should print'
+                        : a.kind === 'discount'
+                          ? 'why the discount is given'
+                          : 'what this line is for'
+                  }
+                  onChange={(e) => updateAdjustment(quote.id, a.id, { label: e.target.value })}
+                />
+                <input
+                  className="field-input qt-input qt-input--amount"
+                  inputMode="decimal"
+                  value={a.amount === 0 ? '' : String(Math.abs(a.amount))}
+                  placeholder="amount"
+                  aria-label="Amount"
+                  onChange={(e) =>
+                    setAdjustmentMagnitude(quote.id, a.id, parseAmount(e.target.value) ?? 0)
+                  }
+                />
+                <span className={`qt-adj-sign${a.amount < 0 ? ' is-credit' : ''}`}>
+                  {money(a.amount)}
+                </span>
+                {/* AN × IS NOT A NAME. Every one of these buttons drew an
+                    icon and a `title` and nothing else, so a screen
+                    reader announced five unnamed buttons on a document
+                    about to be handed to a customer. The label names the
+                    ROW it acts on, not the shape it is drawn as, because
+                    five identical "Remove"s in a list is the same defect
+                    one step further on. */}
                 <button
                   type="button"
-                  className="btn btn-primary"
-                  onClick={() => {
-                    applyPriceChanges(quote.id, changes)
-                    setChanges(null)
-                  }}
+                  className="qt-icon-btn"
+                  aria-label={`Take ${a.label.trim() === '' ? 'this adjustment' : a.label} off the quote`}
+                  title="Take this off the quote"
+                  onClick={() => removeAdjustment(quote.id, a.id)}
                 >
-                  Use today's prices
-                </button>
-                <button type="button" className="btn btn-ghost" onClick={() => setChanges(null)}>
-                  Leave them as they are
+                  <X size={12} weight="bold" />
                 </button>
               </div>
+            ))}
+            <div className="qt-adj-doors">
+              {ADJUSTMENT_DOORS.map((d) => (
+                <button
+                  key={d.kind}
+                  type="button"
+                  className="qt-adj-door"
+                  onClick={() => addAdjustment(quote.id, d.kind)}
+                >
+                  <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                  {d.door}
+                </button>
+              ))}
             </div>
-          )}
-        </section>
+          </section>
+
+          {/* -- the details nobody needs on the way in ---------- */}
+          <button
+            type="button"
+            className="qt-disclose"
+            aria-expanded={details}
+            onClick={() => setDetails((v) => !v)}
+          >
+            {details ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}
+            Reference, tax and notes
+          </button>
+          {details ? (
+            <div className="qt-details">
+              <label className="qt-field">
+                <span className="mono-label">Prepared by</span>
+                <input
+                  className="field-input qt-input"
+                  value={quote.preparedBy ?? ''}
+                  placeholder="your name"
+                  onChange={(e) => patchQuote(quote.id, { preparedBy: e.target.value })}
+                />
+              </label>
+              <label className="qt-field">
+                <span className="mono-label">Reference</span>
+                <input
+                  className="field-input qt-input"
+                  value={quote.reference}
+                  onChange={(e) => patchQuote(quote.id, { reference: e.target.value })}
+                />
+              </label>
+              <label className="qt-field">
+                <span className="mono-label">Tax rate %</span>
+                <input
+                  className="field-input qt-input"
+                  inputMode="decimal"
+                  value={quote.taxRate === undefined ? '' : String(quote.taxRate)}
+                  /* BLANK IS NOT ZERO and blank is the default: there is
+                     no tax-rate column anywhere in the data, so the
+                     document prints the inclusive sentence until a
+                     person states a rate */
+                  placeholder="leave blank if the total is tax-inclusive"
+                  onChange={(e) => {
+                    const n = parseAmount(e.target.value)
+                    patchQuote(quote.id, { taxRate: n === null ? undefined : n })
+                  }}
+                />
+              </label>
+              <label className="qt-field qt-field--wide">
+                <span className="mono-label">Note on the quote</span>
+                <input
+                  className="field-input qt-input"
+                  value={quote.note ?? ''}
+                  placeholder="validity, conditions — printed as typed"
+                  onChange={(e) => patchQuote(quote.id, { note: e.target.value })}
+                />
+              </label>
+            </div>
+          ) : null}
+
+          {/* -- today's prices, as a diff and never silently ---- */}
+          <section className="qt-reread">
+            {changes === null ? (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setChanges(priceChanges(quote))}
+              >
+                Re-read today's prices
+              </button>
+            ) : changes.length === 0 ? (
+              <p className="qt-reread-say">
+                Nothing has moved — every line still matches today's price file.
+                <button type="button" className="qt-linkbtn" onClick={() => setChanges(null)}>
+                  Close
+                </button>
+              </p>
+            ) : (
+              <div className="qt-reread-diff">
+                <p className="mono-label">What would change</p>
+                <ul className="qt-reread-list">
+                  {changes.map((c) => (
+                    <li key={c.lineId} className="qt-reread-row">
+                      <span className="qt-reread-name">{c.label}</span>
+                      {c.gone ? (
+                        <span className="qt-nil">that row is no longer on the sheet</span>
+                      ) : (
+                        <span className="qt-num">
+                          <span className="qt-was">
+                            {c.from === null ? 'not priced' : money(c.from)}
+                          </span>
+                          {c.to === null ? 'not priced' : money(c.to)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <div className="qt-reread-acts">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      applyPriceChanges(quote.id, changes)
+                      setChanges(null)
+                    }}
+                  >
+                    Use today's prices
+                  </button>
+                  <button type="button" className="btn btn-ghost" onClick={() => setChanges(null)}>
+                    Leave them as they are
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
       </div>
 
-      {/* -- the foot bar: always visible, never scrolled away - */}
+      {/* -- the foot bar: under the document, never over it ---- */}
       <div className="qt-foot">
-        <div className="qt-foot-sum">
-          <span className="mono-label">Total</span>
-          <span className="qt-foot-total">{money(totals.total)}</span>
-          {totals.unpricedCount > 0 ? (
-            <span className="qt-foot-unpriced">
-              {totals.unpricedCount} not priced
-            </span>
-          ) : null}
+        <div className="qt-foot-line">
+          <div className="qt-foot-sum">
+            <span className="mono-label">Total</span>
+            <span className="qt-foot-total">{money(totals.total)}</span>
+            {totals.unpricedCount > 0 ? (
+              <span className="qt-foot-unpriced">
+                {totals.unpricedCount} not priced
+              </span>
+            ) : null}
+          </div>
+          {/* DISABLED, WITH THE REASON ONE LINE AWAY — never a disabled
+              control on its own. `issueQuote` refuses the same case, so
+              the button and the registry cannot disagree; if it ever
+              returns false the document stays a draft and the stage is
+              not told anything happened. */}
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={refusal !== ''}
+            onClick={() => {
+              if (issueQuote(quote.id)) onIssued?.(quote)
+            }}
+          >
+            Give it to the customer
+          </button>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => {
-            issueQuote(quote.id)
-            onIssued?.(quote)
-          }}
-        >
-          Give it to the customer
-        </button>
+        {refusal !== '' ? (
+          <p className="qt-foot-why" role="status">
+            {refusal}
+          </p>
+        ) : null}
       </div>
-    </div>
+    </>
   )
 }
 
@@ -705,10 +780,22 @@ function LineRow({
                   className="field-input qt-input"
                   value={line.overrideReason ?? ''}
                   placeholder="the reason this price is different"
+                  aria-describedby={needsOverrideReason(line) ? `${line.id}-why` : undefined}
                   onChange={(e) =>
                     setOverride(quote.id, line.id, line.overridePrice, e.target.value)
                   }
                 />
+                {/* THE SAME REFUSAL, AT THE FIELD IT IS ABOUT. The foot
+                    bar says the quote cannot go out; this says which
+                    keystroke fixes it. Both come from
+                    `needsOverrideReason`, so neither can be true while
+                    the other is false. */}
+                {needsOverrideReason(line) ? (
+                  <span className="qt-field-why" id={`${line.id}-why`}>
+                    Until this is written the quote cannot be given to the customer — an issued
+                    quote is read-only, so the reason cannot be added later.
+                  </span>
+                ) : null}
               </label>
             ) : null}
           </div>

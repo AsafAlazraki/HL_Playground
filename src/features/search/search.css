@@ -379,9 +379,20 @@
   letter-spacing: var(--ui-track);
   color: var(--ink-soft);
 }
+/* A COUNT IS A VALUE, NOT A CAPTION. It wears `.mono-label` for the
+   mono face and tabular figures and inherited the capitals with them,
+   so "1,303 named rows · 50 tables" — the line DESIGN_CONTRACT §6 calls
+   the load-bearing one, the one that tells an arriving person the app
+   has not lost their data — came out shouting. The mono face is what
+   makes it a figure; the capitals were only making it a label it is
+   not. Same conclusion `.md-idx-facts` and `.md-card-count` reach in
+   modules.css. */
 .hs-say-count {
   display: block;
   margin-top: var(--sp-2);
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
 }
 

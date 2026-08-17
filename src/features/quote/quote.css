@@ -65,10 +65,62 @@
   padding-bottom: calc(var(--sp-6) * 3);
 }
 
+/* ============================================================
+   THE DRAFT IS A COLUMN, AND THE TOTAL IS NOT IN THE SCROLL.
+
+   The note above solved half of a problem and left the other half
+   standing. The bar stopped floating 96px off the bottom edge, and it
+   went on being `position: sticky; bottom: 0` INSIDE the scrollport —
+   so at the top and the middle of the scroll it sat across the middle
+   of the quote with lines passing behind it. Measured again at
+   1280×860 and 1920×860, scrollTop 0 and mid-scroll: content above the
+   bar, content below it, and `elementFromPoint` under the bar
+   returning a `.qt-line-main`. Opaque, so nothing was hidden — and
+   still a total painted over its own document.
+
+   Padding the scrollport cannot fix that, and this is the file that
+   proves it: a sticky box is floored by its scroll container's CONTENT
+   box, so every pixel of bottom padding lifts the bar and hands the
+   document a strip to paint through. DESIGN_CONTRACT §8.7.
+
+   So the bar comes out of the scroll. This element is the COLUMN and
+   does not scroll; `.qt-edit` is the scrollport inside it; `.qt-foot`
+   is a sibling below the scrollport, where no line of the quote can
+   reach it. Nothing is sticky, nothing is padded to clear the dock —
+   the 78px is still reserved once, on `.shell-stage` — and the total
+   is where a total belongs: at the end, under the document.
+   ============================================================ */
+.qt-root--edit {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+/* A SENTENCE TAKES THE SOFT INK, NOT THE FAINT ONE — and here that is
+   a contrast fix as well as a semantic one. This was
+   --canvas-ink-faint, which resolves to --fg-tertiary #6b7482: on the
+   canvas ground #f7f8fa that measures 4.36:1 and FAILS the 4.5 floor.
+   (It is the trap DESIGN_CONTRACT §1 names — the faint tier is 4.72:1
+   on pure white and less on anything at all darker.) --fg-secondary
+   #4b5462 on the same ground measures 6.80:1, and the contract already
+   reserves the faint tier for metadata and counts rather than for
+   prose. It matters more than it did: this is the screen a salesperson
+   now lands on before they have made anything. */
 .qt-void {
   padding: var(--sp-6) 0;
   text-align: center;
-  color: var(--canvas-ink-faint);
+  color: var(--canvas-ink-soft);
+}
+/* A CONTROL'S NAME IS ITS NAME. `<em>` here marks the three buttons a
+   person is being sent to press, and italic is the wrong mark for
+   that — it reads as emphasis on a word rather than as the word
+   written on the button. Weight and the full ink instead, matching
+   `.qt-issued-why em`. */
+.qt-void em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--canvas-ink);
 }
 
 /* the white sheet, on both screens that have one */
@@ -172,13 +224,25 @@
    THE DRAFT
    ============================================================ */
 
-/* THE DRAFT ENDS ON ITS TOTAL. No padding after the foot bar: the bar
-   is the last box in this flow, so its resting place and the end of
-   the document are the same line — it does not lift off the bottom
-   edge as you reach the end, and there is no strip beneath it for a
-   line of the quote to show through. See `.qt-root`. */
+/* THE DRAFT'S SCROLLPORT. It holds the sheet and nothing else, which
+   is what makes the total unreachable by the document rather than
+   merely painted over it. The horizontal air the page used to get from
+   `.qt-root`'s padding is charged here instead, because this is the box
+   that scrolls now. See `.qt-root--edit`. */
 .qt-edit {
-  padding-bottom: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  /* BOTH EDGES, so the sheet and the total bar share a centre line.
+     The bar is outside this scrollport now, so a scrollbar on one side
+     of the sheet shifts the sheet's centre and not the bar's: measured
+     880px at left 515 against 880px at left 520, five pixels of
+     misalignment between a document and its own total. Reserving the
+     gutter on both edges puts the two centres back on one line. Where
+     the property is unsupported the five pixels come back and nothing
+     else changes. */
+  scrollbar-gutter: stable both-edges;
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
 }
 
 .qt-warn {
@@ -240,6 +304,17 @@
 .qt-field .mono-label {
   display: block;
   margin-bottom: 3px;
+}
+/* WHY A FIELD IS BEING ASKED FOR, under the field. Only ever drawn
+   when it is true (see `needsOverrideReason`), so it is a refusal in
+   place and not a permanent instruction nobody reads. --ink-soft on
+   the white sheet: 7.7:1. */
+.qt-field-why {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
 }
 .qt-field--wide {
   grid-column: 1 / -1;
@@ -510,30 +585,30 @@
   margin-top: var(--sp-3);
 }
 
-/* -- the foot bar: fixed to the stage, never to the sheet ----
-   THE HEAVY MATERIAL, and the only surface in the app that needed
-   no change at all except its background. apple-design §12:
-   "build nav/toolbars/sheets as translucent layers with content
-   scrolling underneath — not opaque bars that consume a fixed
-   strip." This bar was already `position: sticky; bottom: 0` inside
-   a scrolling .qt-root, with the A4 sheet passing under it. It was
-   an opaque bar consuming a fixed strip of a document.
+/* -- the foot bar: BELOW the document, not over it ------------
+   IT IS NOT STICKY AND IT IS NOT IN THE SCROLL. It was
+   `position: sticky; bottom: 0` inside the page's scrollport, which
+   put a total across the middle of its own document at every scroll
+   position but the last one. `.qt-root--edit` is the column now and
+   this is the row under the scrollport — read that note before
+   putting `position` back on this rule.
 
-   IT TAKES THE HEAVY WEIGHT FOR A CONTRAST REASON, NOT A SIZE ONE.
-   At 880 × 56 it is the smallest of the three glass surfaces, but
-   its backdrop ALTERNATES between the white document and the navy
-   field as you scroll, so it has the worst swing in the app: at
-   α 0.74 --ink-soft would measure 4.98:1 over the navy and 8.52:1
-   a scroll-frame later over the sheet, and text that changes
-   weight as you scroll is worse than text that is uniformly
-   darker. 0.86 cuts that swing from 3.54 contrast points to 2.05.
+   NO BACKDROP-FILTER ANY MORE, and nothing was lost with it: the
+   bridge already resolves --mat-heavy-blur to 0px (DESIGN_CONTRACT
+   §8.10 — glass as a look is retired) and --mat-heavy-bg to the
+   opaque paper, and nothing scrolls behind this bar to be seen
+   through. A translucent surface over a surface that never moves is
+   a look, not a function. The two ink remaps stay: they resolve to
+   the same values on the flat bridge, and they are what keeps this
+   bar honest if the material ever comes back.
 
-   MEASURED ON ITS OWN WORST GROUND — the material over --canvas-bg,
-   composited rgb(222,226,231): --ink 11.52:1, --ink-soft 6.55:1;
-   --ink-faint would be 4.12:1 and --red 3.97:1, so both are
-   remapped below and land at 6.55:1 and 5.13:1. Nothing on this bar
-   is left under 4.5:1, and the ink ramp on opaque chrome is
-   untouched at 14.99 / 8.52 / 5.36.
+   MEASURED ON ITS GROUND — the opaque bar on --canvas-bg: --ink
+   11.52:1, --ink-soft 6.55:1. --ink-faint would be 4.12:1 and --red
+   3.97:1, which is why both are remapped and land at 6.55:1 and
+   5.13:1. Nothing on this bar is under 4.5:1. What has gone is the
+   SWING the old note was written about: its backdrop no longer
+   alternates between the white sheet and the navy field, because it
+   no longer has a backdrop.
 
    --ec2 AND NOT --shadow-popover. This bar stands on the navy, and
    --shadow-popover's darkest outer point measures 1.046:1 against
@@ -543,22 +618,22 @@
    than the material's default --ec3: bigger surfaces read as
    thicker, and this one is not big.
 
-   `bottom: 0` MEANS THE SCROLLPORT'S BOTTOM AND NOTHING ELSE. It only
-   lands there because neither `.qt-root` nor `.qt-edit` has bottom
-   padding any more — read the note on `.qt-root` before adding either
-   back. Any strip left under this bar is a strip the document paints
-   through, and a total with quote lines below it is not a total. */
+   THE WIDTH IS THE SHEET'S, and it is `width` rather than `max-width`
+   for a reason that was measured: this is now a flex ITEM in the
+   column, and an auto margin on the cross axis switches off
+   `align-items: stretch`, so a max-width alone left the bar at its own
+   content width — 570px under an 880px document at 1920, which reads
+   as two objects rather than a document and its total. With an
+   explicit width the auto margins only centre it. The second half of
+   the min() is the side air the scrollport above gets from its own
+   padding, so the two edges line up at every window width. */
 
 .qt-foot {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  max-width: 880px;
-  margin: var(--sp-4) auto 0;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: min(880px, calc(100% - var(--sp-5) * 2));
+  margin: 0 auto var(--sp-5);
   padding: var(--sp-3) var(--sp-4);
   /* see [data-material] in base.css — the attribute belongs in the
      markup and these two lines are the same remap by value */
@@ -567,8 +642,16 @@
   border: 1px solid var(--mat-heavy-edge);
   border-radius: var(--radius);
   background: var(--mat-heavy-bg);
-  backdrop-filter: var(--mat-heavy-blur);
   box-shadow: var(--ec2);
+}
+/* the total and the one action, on one line. A second row appears
+   under them only when the quote is refused (`.qt-foot-why`), so the
+   bar is 56px tall exactly as long as there is nothing to say. */
+.qt-foot-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
 }
 .qt-foot-sum {
   display: flex;
@@ -582,6 +665,17 @@
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--red);
+}
+/* WHY THE PRIMARY ACTION IS DISABLED, next to the disabled control.
+   --ink-soft and not --red: this is a sentence about work still to do,
+   not an error, and carmine on a quote means an unpriced line or a
+   credit and nothing else (see the head of this file). 6.55:1 on the
+   bar's own ground. */
+.qt-foot-why {
+  max-width: 68ch;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
 }
 
 /* ============================================================
@@ -598,6 +692,32 @@
 .qt-issued-say {
   flex: 1 1 auto;
   color: var(--canvas-ink-soft);
+}
+
+/* the controls and the sentence about them are one block, aligned
+   with the sheet below — so the note starts where the document starts
+   instead of being centred over it as a narrow column */
+.qt-issued-head {
+  max-width: 880px;
+  margin: 0 auto var(--sp-4);
+}
+
+/* WHY THIS PAGE HAS NOTHING TO TYPE ON — the sentence the read-only
+   document never had. It sits on the canvas above the sheet, in the
+   canvas ink ramp (--canvas-ink-soft is --fg-secondary over
+   --bg-canvas, 7.4:1), at a reading measure rather than the sheet's
+   full 880px. `<em>` names the control directly above it rather than
+   italicising for emphasis. */
+.qt-issued-why {
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--canvas-ink-soft);
+}
+.qt-issued-why em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--canvas-ink);
 }
 
 .qt-doc-head {
@@ -1086,4 +1206,107 @@
   flex: 1 1 260px;
   min-width: 0;
   max-width: 420px;
+}
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass, quote editor.
+
+   This page had more of the fault left in it than any other, and it is
+   the one a salesperson has open in front of a customer. Enumerated
+   live, with the verdict for each:
+
+     .qt-section-head h2   FIX — the TABLE NAME, once per section, five
+                           to six a quote: "HIGHFIELD INFLATABLES",
+                           "NSM CUSTOM TRAILERS", "YAMAHA OUTBOARDS",
+                           "PARTS & ACCESSORIES", "DEALER FIT PACKAGES".
+                           These are the dealer's own file names and
+                           `.mono-label` was stamping them. table.css
+                           settled the identical case for
+                           `.shell-tbl-name` and `.tb-node-name`.
+     .qt-doc-fact-lab      FIX — ×11 on one quote. The dealer's COLUMN
+                           names used as captions: "Rigging Kit Option",
+                           "Prop Part No.", "Engine Hole". table.css's
+                           own note is the calibration — "COLUMN
+                           HEADINGS read as words, not stamps" — and a
+                           part number's label is exactly that.
+     .qt-reread .btn       FIX — "RE-READ TODAY'S PRICES", a button.
+     .qt-foot-line .btn    FIX — "GIVE IT TO THE CUSTOMER", a button,
+                           and the single most important press on the
+                           page.
+
+   KEPT UPPERCASE, every one a caption or a mono stamp: the `.mono-label`
+   eyebrows "CUSTOMER", "PRICED AT", "ADJUSTMENTS", "TOTAL", and the
+   quote number "20260817-01", which is a stamp and is already mono.
+
+   The section heading keeps the mono face — a quote is a document and
+   its section rules are typeset, not chrome — and gives up only the
+   capitals and the label's tracking.
+   ============================================================ */
+.qt-section-head h2 {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.qt-doc-fact-lab {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.qt-reread .btn,
+.qt-foot-line .btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* AND THE REFUSED PRIMARY HAS TO BE READ. `.btn:disabled` is
+   `opacity: 0.45` in the shared foundation, and 45% of white-on-`--ink`
+   over this foot bar is not a tier — the reason is already printed one
+   line down in `.qt-foot-why`, exactly as §6.5 asks, so the button
+   itself only has to stay legible while it waits. Flat plate, ink one
+   tier down, no press: the same treatment table.css gives the
+   register's actions and modules.css gives its stub. */
+.qt-foot-line .btn:disabled {
+  opacity: 1;
+  color: var(--ink-soft);
+  background: var(--paper-high);
+  border-color: var(--hairline);
+}
+
+/* ============================================================
+   AND THE ISSUED DOCUMENT, which is the page a customer sees.
+
+   Found by looking at the live issued quote rather than the draft: the
+   document is typeset in the quotation idiom, where uppercase captions
+   are correct and are kept — but three of its stamps are not captions.
+
+     .qt-doc-sec th        FIX — the TABLE NAME heading each block of the
+                           rig: "STACER", "YAMAHA OUTBOARDS". The same
+                           string, and the same fault, as
+                           `.qt-section-head h2` in the draft above.
+     .qt-doc-spec dt       FIX — the dealer's COLUMN names under the
+                           subject: "HP", "HULL LENGTH (MTR)", "BEAM
+                           (MTR)", "BOTTOMSIDES". Column headings read as
+                           words, not stamps.
+     .qt-issued-bar .btn   FIX — "PRINT" and "MAKE A NEW VERSION", the
+                           only two controls left on an issued quote.
+
+   KEPT UPPERCASE, and deliberately, because a quotation's field captions
+   ARE labels and this is the one surface in the app that is a printed
+   form: "QUOTATION", "DATE", "REFERENCE", "PREPARED FOR", the line
+   table's "DESCRIPTION / QTY / AMOUNT", the money rows' captions,
+   `.qt-doc-tag` ("RECOMMENDED", a stamp) and `.qt-issued-say` ("GIVEN TO
+   THE CUSTOMER · 2026-08-17", a status stamp with its date).
+   ============================================================ */
+.qt-doc-sec th,
+.qt-doc-spec dt {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.qt-issued-bar .btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }

@@ -105,6 +105,7 @@ import {
   fullySelectedCols,
   isEmptyCell,
   markKey,
+  mayBeClipped,
   moveImage,
   pad2,
   plural,
@@ -1286,6 +1287,16 @@ export function Grid(props: GridProps): JSX.Element {
                   aria-rowindex={r + 2 + (banded ? 1 : 0)}
                   style={{ top: line.top, height: line.h, width: sheetW }}
                 >
+                  {/* THE ROW NUMBER IS WHAT IDENTIFIES A ROW, and this
+                      gutter has always drawn it — `helpers.ts` calls
+                      GUTTER_W the "frozen row-number gutter". What used
+                      to sit immediately to its right was a UID SYSTEM
+                      column printing a ten-character machine key, on
+                      every register in the app. That column is gone
+                      (see the note on `fields` in useTableData.ts), and
+                      the id it printed lands here instead: named in the
+                      tooltip, beside the number, available to anyone
+                      who needs it and shouted at nobody who does not. */}
                   <div
                     className={'tb-gut' + (sel.active.row === r ? ' tb-gut-on' : '')}
                     data-r={r}
@@ -1293,7 +1304,7 @@ export function Grid(props: GridProps): JSX.Element {
                     role="rowheader"
                     aria-colindex={1}
                     style={{ width: GUTTER_W }}
-                    title="Click to select the row · Ctrl+click to add it"
+                    title={`Row ${r + 1} · click to select it, Ctrl+click to add it\nIdentifier ${line.rowId}`}
                   >
                     {pad2(r + 1)}
                   </div>
@@ -1374,7 +1385,23 @@ export function Grid(props: GridProps): JSX.Element {
                               ? `${f.name} is required`
                               : system
                                 ? 'Row identifier — read-only. Ctrl+C copies it.'
-                                : undefined
+                                : /* A CUT VALUE STILL SAYS ALL OF ITSELF.
+                                     The name column is measured to its
+                                     content now, but a ceiling is a ceiling
+                                     and a 66-character trailer name on a
+                                     1280px window is legitimately clamped —
+                                     as is any long value in a column at the
+                                     116px floor. Where the ellipsis is the
+                                     honest answer, the whole string is the
+                                     cell's title, so nothing on this sheet
+                                     is unreachable. Gated by
+                                     `mayBeClipped` so a value that fits
+                                     carries no tooltip: a register that
+                                     spoke on every hover would be worse
+                                     than one that clipped. */
+                                  mayBeClipped(text, w)
+                                  ? text
+                                  : undefined
                         }
                       >
                         {f.type === 'image' ? (

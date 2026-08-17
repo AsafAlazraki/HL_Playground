@@ -94,6 +94,19 @@ describe('the Northside demo seeds its own modules', () => {
     }
   })
 
+  it('never prints a count in its prose — the badge counts, live', () => {
+    loadNorthsideProject()
+    /* Rates & Charges read "64 charges" while its own badge said 65 the
+       moment a row was added, and Parts & Accessories read "719 lines"
+       against 738 seeded. The card counts its rows from the store one
+       line above the sentence (`md-card-count`), so a figure typed into
+       the sentence can only ever drift out of true. No digit belongs in
+       any of these. */
+    for (const m of ordered()) {
+      expect(m.description, m.name).not.toMatch(/\d/)
+    }
+  })
+
   /* -- ruling 2: the brand is the section -------------------- */
 
   it('opens Boats onto the seven brands, not onto a flat list of hulls', () => {

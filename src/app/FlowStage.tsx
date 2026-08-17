@@ -65,6 +65,7 @@ import type {
 } from '@xyflow/react'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { sayUndoable } from '@/store/notes'
 import type { RuleNode } from '@/types/model'
 import {
   RuleInspector,
@@ -359,33 +360,71 @@ function FlowCanvas({ ruleId, nodeId, onPickNode }: FlowCanvasProps): ReactEleme
     [connectRuleNodes, ruleId],
   )
 
-  /* A LINE IS CHEAP, A STEP IS NOT. Deleting an edge loses a drag;
-     deleting a plate loses everything configured on it, and this app
-     has no undo — so a plate is always asked about first. */
-  const onBeforeDelete = useCallback<OnBeforeDelete<Node, Edge>>(async ({ nodes: going }) => {
-    if (going.length === 0) return true
-    const what =
-      going.length === 1
-        ? 'this step'
-        : `these ${going.length} steps`
-    return window.confirm(
-      `Delete ${what} from the rule?\n\nEverything set up on it goes too, and there is no undo.`,
-    )
+  /* A LINE IS CHEAP, A STEP IS NOT — AND BOTH ARE NOW UNDOABLE, which
+     is what took the question away.
+
+     This held `window.confirm("Delete this step from the rule? …
+     Everything set up on it goes too, AND THERE IS NO UNDO.")`. The
+     last clause was true when it was written and is not any more:
+     `deleteRuleNode` and `deleteRuleEdge` each record a step, `rules`
+     is in the undo slice, and a plate comes back with every clause
+     still on it. Rule 9 — an undoable act gets a note with UNDO, not a
+     dialog — so `onBeforeDelete` now consents and `onNodesDelete` says
+     what happened afterwards.
+
+     ONE NOTE FOR THE WHOLE GESTURE, not one per plate and not one per
+     handler. React Flow's `deleteElements` calls `onNodesDelete` and
+     `onEdgesDelete` for the SAME gesture, in the same turn of the
+     event loop — deleting a plate always delivers its wires to the
+     second one — and the store folds every op in that turn into ONE
+     history entry. Two notes each offering to undo "their" step would
+     be describing a stack that holds one, so the count is gathered in
+     a ref and spoken once, on the microtask after the burst closes.
+     The plate outranks the wire in the sentence: a person who deleted
+     a step knows its lines went, and a person who cut only a line
+     never hears about plates. */
+  const onBeforeDelete = useCallback<OnBeforeDelete<Node, Edge>>(async () => true, [])
+
+  const goneRef = useRef({ nodes: 0, edges: 0, queued: false })
+
+  const noteDeleted = useCallback(() => {
+    const gone = goneRef.current
+    if (gone.queued) return
+    gone.queued = true
+    queueMicrotask(() => {
+      const { nodes, edges } = gone
+      gone.nodes = 0
+      gone.edges = 0
+      gone.queued = false
+      if (nodes > 0) {
+        sayUndoable(
+          nodes === 1
+            ? 'Deleted one step and the lines joined to it'
+            : `Deleted ${nodes} steps and the lines joined to them`,
+        )
+      } else if (edges > 0) {
+        sayUndoable(edges === 1 ? 'Deleted one line' : `Deleted ${edges} lines`)
+      }
+    })
   }, [])
 
   const onNodesDelete = useCallback(
     (going: Node[]) => {
       for (const n of going) deleteRuleNode(ruleId, n.id)
       if (going.some((n) => n.id === nodeId)) onPickNode(null)
+      goneRef.current.nodes += going.length
+      noteDeleted()
     },
-    [deleteRuleNode, nodeId, onPickNode, ruleId],
+    [deleteRuleNode, nodeId, noteDeleted, onPickNode, ruleId],
   )
 
   const onEdgesDelete = useCallback(
     (going: Edge[]) => {
       for (const e of going) deleteRuleEdge(ruleId, e.id)
+      goneRef.current.edges += going.length
+      noteDeleted()
     },
-    [deleteRuleEdge, ruleId],
+    [deleteRuleEdge, noteDeleted, ruleId],
   )
 
   /* -- the palette's two ways in ------------------------------ */

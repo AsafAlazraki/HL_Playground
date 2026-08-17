@@ -50,7 +50,15 @@ screenshots show:
 
 1. type a business name → **Continue**
 2. pick **Marine**
-3. **Load a worked example — another dealer's price file**
+3. the second door — **Load Northside Marine's Master Price File — a worked
+   example**, tagged EXAMPLE DATA
+
+   That door names the business whose file it is, because the file is
+   Northside Marine's and they are the first real customer rather than a
+   fixture. If you typed *Northside Marine* at step 1 it reads **Load your
+   Master Price File** instead and is tagged YOUR DATA — same set, the reading
+   that is true for whoever is looking at it. See `startingPointWords` in
+   `src/app/demoLoad.ts`.
 
 Two consequences worth knowing. Each *origin* has its own database, so running
 the same code on a different port gives you a fresh empty one — useful for

@@ -307,7 +307,20 @@ export function Dock({
             }}
           />
         ) : null}
-        {onOpenQuotes && quoteCount > 0 ? (
+        {/* QUOTES IS ALWAYS HERE, and the count is what changes.
+
+            It used to be drawn only when `quoteCount > 0`, so on a
+            cleared install — a salesperson's first Monday — the one
+            thing they were hired to do had no door in the app at all.
+            A place that appears only once you have used it cannot be
+            discovered: you cannot raise your first quote from a button
+            that your first quote would have drawn.
+
+            The badge still needs a number to appear (`DockItem` draws
+            it only above zero), so nothing on the bar shouts about an
+            empty diary — and the list behind it says, in the dealer's
+            own counts, how to make the first one. */}
+        {onOpenQuotes ? (
           <DockItem
             icon={FileText}
             label="Quotes"

@@ -33,6 +33,9 @@ const {
   imageLabel,
   imageHostOf,
   nameFromUrl,
+  heldAsLinkNote,
+  measuredClosedHost,
+  HELD_AS_LINK,
 } = await import('./imageSources')
 
 describe('sourceKind — the scheme allow-list', () => {
@@ -110,6 +113,84 @@ describe('the host verdict', () => {
     noteImageFailed(own)
     expect(hostIsClosed(own)).toBe(true)
     expect(hostIsClosed('data:image/png;base64,AAAAAAAA')).toBe(false)
+  })
+})
+
+/* ============================================================
+   THE TWO HOSTS WE DO NOT SPEND A REQUEST ON.
+
+   These are the only assertions in this file that name a REAL host,
+   and they name them on purpose: the list in `imageSources.ts` is a
+   measurement, and a measurement nobody can see go red is a comment.
+   If somebody deletes an entry — or adds one without measuring — the
+   walk goes back to printing `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin`
+   at a stakeholder, and this is where that is caught.
+
+   Measured 2026-08-17 (see the block above `MEASURED_CLOSED`):
+   northsidemarine.com.au answers 403 behind Cloudflare with
+   `Cross-Origin-Resource-Policy: same-origin`; the SharePoint host
+   302s to a Microsoft sign-in. The ten hosts that DO serve are
+   represented here by highfieldboats.com, which must stay unknown
+   until the probe answers for it — the table is not allowed to grow
+   into a blanket refusal of cross-origin pictures, which is the rule
+   this whole module exists to have replaced.
+   ============================================================ */
+describe('the hosts a request is never spent on', () => {
+  it('refuses the two measured hosts without any address having failed', () => {
+    expect(hostIsClosed('https://www.northsidemarine.com.au/x/y.jpg')).toBe(true)
+    expect(
+      hostIsClosed('https://northsidemarine1.sharepoint.com/sites/x/Shared%20Documents/y.jpg'),
+    ).toBe(true)
+  })
+
+  it('leaves every host that serves to the probe', () => {
+    expect(hostIsClosed('https://www.highfieldboats.com/x/y.jpg')).toBe(false)
+    expect(hostIsClosed('https://www.stacer.com.au/x/y.jpg')).toBe(false)
+    expect(hostIsClosed('https://www.yamaha-motor.com.au/x/y.ashx')).toBe(false)
+    /* a sibling subdomain is a different host and gets its own answer */
+    expect(hostIsClosed('https://northsidemarine.com.au/x/y.jpg')).toBe(false)
+  })
+
+  it('hands a page the host and the reason, and nothing for anywhere else', () => {
+    expect(measuredClosedHost('https://www.northsidemarine.com.au/x/y.jpg')).toEqual({
+      host: 'www.northsidemarine.com.au',
+      why: 'northsidemarine.com.au serves its pictures to its own site only',
+    })
+    expect(measuredClosedHost('https://www.highfieldboats.com/x/y.jpg')).toBeNull()
+    /* a host condemned by the PROBE is deliberately not in this count —
+       see the note on the function: a page-level total must not move
+       while somebody is reading it */
+    noteImageFailed('https://dies-live.invalid/1.jpg')
+    noteImageFailed('https://dies-live.invalid/2.jpg')
+    expect(hostIsClosed('https://dies-live.invalid/3.jpg')).toBe(true)
+    expect(measuredClosedHost('https://dies-live.invalid/3.jpg')).toBeNull()
+  })
+
+  it('reads as a clause as well as a sentence, so a list of them holds together', () => {
+    /* the module index joins these with commas and "and" — an entry
+       starting "this" or "it" would break the sentence it lands in */
+    for (const src of [
+      'https://www.northsidemarine.com.au/x/y.jpg',
+      'https://northsidemarine1.sharepoint.com/x/y.jpg',
+    ]) {
+      const why = measuredClosedHost(src)?.why ?? ''
+      expect(why).not.toBe('')
+      expect(why).not.toMatch(/^(this|it|the picture)\b/i)
+      expect(why).not.toMatch(/[.!?]$/)
+    }
+  })
+
+  it('says WHY for a measured host, and WHERE for any other', () => {
+    expect(heldAsLinkNote('https://www.northsidemarine.com.au/x/y.jpg')).toBe(
+      `${HELD_AS_LINK} — northsidemarine.com.au serves its pictures to its own site only.`,
+    )
+    expect(heldAsLinkNote('https://northsidemarine1.sharepoint.com/x/y.jpg')).toBe(
+      `${HELD_AS_LINK} — northsidemarine1.sharepoint.com needs a sign-in to read.`,
+    )
+    expect(heldAsLinkNote('https://plates.invalid/x.jpg')).toBe(
+      `${HELD_AS_LINK} — the picture itself lives at plates.invalid.`,
+    )
+    expect(heldAsLinkNote('')).toBe(`${HELD_AS_LINK} — the picture itself is not here.`)
   })
 })
 

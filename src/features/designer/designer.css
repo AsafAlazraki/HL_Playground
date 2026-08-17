@@ -1537,3 +1537,72 @@
   outline: 1px solid var(--blue);
   outline-offset: 2px;
 }
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass, Columns page.
+
+   table.css settled this for the register in two blocks
+   ("COLUMN HEADINGS read as words, not stamps", then
+   `.tb-band-name` / `.tb-grp-lab` / `.tb-grp-count` and the four
+   buttons). The Columns page is the OTHER door on the same table and
+   it had not been reached, so the app contradicted itself one press
+   apart: the sheet drew the section as "Identity" and this page drew
+   the same word as "IDENTITY", thirty-three times.
+
+   Enumerated live at 1280 and 1920, with the verdict for each:
+
+     .ds-name-text   FIX — the table's NAME at 17px, inherited from
+                     `.block-heading`. "HIGHFIELD INFLATABLES" is the
+                     dealer's own proper noun and the largest thing on
+                     the page; capitals cost it its word-shape.
+     .ds-frow-band   FIX — the SECTION's name, ×33. The admin types
+                     "Identity", "Hull & Rig". Exactly the fault
+                     table.css:3191 records for `.tb-band-name`.
+     .ds-add-btn     FIX — "ADD COLUMN", a button. From `.btn` in
+                     src/styles/base.css, the shared foundation, so it
+                     is corrected here beside the class.
+     .ds-danger-btn  FIX — "DELETE THIS TABLE", a button.
+     .ds-danger-note FIX — "DELETING REMOVES ITS ROWS AND ANY LINK
+                     COLUMNS AIMED AT IT." A sentence, with a full
+                     stop, shouted.
+     .ds-legend      FIX — "GROUPS — THE SHEET OPENS A DRAWER ON THIS
+                     COLUMN". A sentence.
+
+   KEPT UPPERCASE, all captions or mono stamps, which are the three
+   sanctioned uses: `.ds-sheet-tag` ("TABLE · COLUMN SETUP"),
+   `.ds-saved` ("SAVED"), `.ds-about-label` ("ABOUT THIS TABLE"),
+   `.ds-sect-label` ("COLUMNS", "DANGER"), `.ds-sect-meta` (a figure),
+   `.ds-frow-level` ("GROUPS" — the level marker, a caption, not the
+   dealer's word), `.ds-note-action`, `.ds-mark-fix`, `.ds-cs-cancel`.
+
+   TRACKING COMES DOWN WITH THE CASE, §3: +0.08em and +0.1em on a
+   sentence are the 11px label's tracking worn by running copy, which
+   is what made these read as stamps in the first place. The band stamp
+   keeps a hair of tracking because it is still a boxed stamp, just no
+   longer a shouted one — the same +0.01em table.css gave
+   `.tb-band-name`.
+
+   COLOURS UNTOUCHED. Case does not move a contrast ratio, and every
+   one of these was measured against its ground during the redesign.
+   ============================================================ */
+.ds-name-text {
+  text-transform: none;
+  letter-spacing: -0.009em;
+}
+.ds-frow-band {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+.ds-legend,
+.ds-danger-note {
+  text-transform: none;
+  letter-spacing: 0;
+}
+.ds-add-btn,
+.ds-danger-btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}

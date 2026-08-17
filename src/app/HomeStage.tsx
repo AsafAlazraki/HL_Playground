@@ -40,7 +40,7 @@ import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { countLabel, leafNoun } from '@/features/table/grouping'
 import { ImportExportMenu } from '@/features/io'
 import { ICON_SIZE } from '@/lib/icons'
-import { loadDemoSet, realDemoSet } from './demoLoad'
+import { loadDemoSet, realDemoSet, startingPointWords } from './demoLoad'
 
 const KIND_ORDER: TableKind[] = [
   'boat',
@@ -67,6 +67,14 @@ export function HomeStage({ onOpenTable }: HomeStageProps) {
      demos register rather than named here, so the offer disappears
      with the set instead of dangling. */
   const real = realDemoSet()
+  /* AND IT CALLS THE SET WHAT IT IS. This door read "Load a worked
+     example — another dealer's price file" directly above a provenance
+     line naming Northside Marine's own Master Price File — the app's
+     first screen, telling its first real customer that their catalogue
+     belongs to a stranger. `startingPointWords` holds the whole
+     argument; both doors read the same three lines off it, so they
+     cannot drift apart again. */
+  const words = real ? startingPointWords(real, org?.name) : undefined
 
   /* NO FIND BOX HERE ANY MORE, and that is a ruling rather than a
      tidy-up: "i don't want search in top bar I want it in the bottom
@@ -153,18 +161,16 @@ export function HomeStage({ onOpenTable }: HomeStageProps) {
              invitation; nothing new is introduced. */
           <div className="hm-none">
             <p>Nothing on the sheet yet.</p>
-            {real && (
+            {real && words && (
               <span style={{ display: 'block', maxWidth: '46ch', marginTop: 'var(--sp-2)' }}>
                 <button
                   type="button"
                   className="shell-invite-alt"
                   onClick={() => loadDemoSet(real)}
                 >
-                  <span className="shell-invite-alt-tag mono-label">Example data</span>
-                  <span className="shell-invite-alt-label">
-                    Load a worked example — another dealer’s price file
-                  </span>
-                  <span className="shell-invite-alt-note">{real.blurb}</span>
+                  <span className="shell-invite-alt-tag mono-label">{words.tag}</span>
+                  <span className="shell-invite-alt-label">{words.label}</span>
+                  <span className="shell-invite-alt-note">{words.note}</span>
                 </button>
               </span>
             )}
@@ -187,6 +193,18 @@ export function HomeStage({ onOpenTable }: HomeStageProps) {
                       key={e.id}
                       className="hm-card"
                       style={{ ['--tbn-accent' as string]: accentVar(e.accent) }}
+                      /* NAMED EXPLICITLY, exactly as the module card next
+                         door is and for the same two reasons. One:
+                         DESIGN_CONTRACT §5 — the card is four spans and a
+                         reader announcing "Relationship Haines Signature ×
+                         Dunbier/Haines BMT — Trailer Fitment 16 trailers 4
+                         columns" run together has not read a name. Two:
+                         `.hm-card-name` clamps to two lines, which is the
+                         right answer for a 54-character join name in a
+                         230px card and the wrong answer for the reader who
+                         then cannot find out what the third line said.
+                         Every figure here is counted, not written. */
+                      aria-label={`Open ${e.name} — ${countLabel(rows, noun)}, ${e.fields.length === 1 ? '1 column' : `${e.fields.length} columns`}`}
                       onClick={() => onOpenTable(e.id)}
                     >
                       {/* A JOIN SAYS WHAT IT IS, WHICH IS WHAT ITS OWN

@@ -1969,3 +1969,92 @@
   line-height: 1.3;
   letter-spacing: 0;
 }
+
+/* ============================================================
+   A DISABLED CONTROL STILL HAS TO BE READ.
+
+   `.btn:disabled` in src/styles/base.css is `opacity: 0.45`, and 45%
+   of `--ink` over this stub's `--paper-sunken` composites to
+   **3.14:1** — measured on the live dashboard at 1280 and 1920. That
+   is under `--fg-quaternary`'s 2.8:1 line by a hair and nowhere near
+   the 4.5:1 floor, and the words are the whole point of the control:
+   a person learns what is unavailable by READING it. "Reorder cards"
+   greyed to illegibility teaches nobody that reordering exists.
+
+   Opacity is the wrong instrument. It dims the LABEL, which is the one
+   part that has to survive, and it dims it by an amount that depends on
+   whatever happens to be behind the control. So the disabled state
+   drops the alpha and says its unavailability structurally instead:
+
+     the label stays legible   `--ink-soft`, 7.65:1 on the plate
+     the plate goes flat       `--paper-high` and a plain `--hairline`
+                               instead of the raised `--hairline-strong`
+                               bezel, so it reads as a slot rather than
+                               a thing to press
+     nothing answers the       `pointer-events: none` is already on
+     pointer                   `.btn:disabled`; no hover, no press
+
+   AND IT SAYS WHY, one gap away, which is rule 10 and which
+   `.md-stub-say` was already built to do: "Cards sit in the order they
+   were made. Dragging them into your own order arrives with the module
+   designer." The reason is a sentence in the place the thing is
+   refused — not a tooltip, and not a spec.
+
+   Scoped to `.md-stub` because that is where this feature draws a
+   disabled control. The foundation is not re-cut for ~200 buttons the
+   redesign has not reached; each feature answers for its own, which is
+   the same call table.css:3204 made for the register's four.
+   ============================================================ */
+.md-stub .btn:disabled {
+  opacity: 1;
+  color: var(--ink-soft);
+  background: var(--paper-high);
+  border-color: var(--hairline);
+}
+
+/* ============================================================
+   A VALUE IS A VALUE — the uppercase pass, modules.
+
+   The block at :1396 re-typed the names and the descriptions on these
+   cards and stopped at the FIGURES, which are read for their content
+   exactly as a name is. Enumerated live, with the verdict for each:
+
+     .md-card-count  FIX — "174 ITEMS · 19 NOT SOLD" at 13px on the
+                     dashboard card. A count and the dealer's own noun:
+                     a value twice over, which is the same reading
+                     table.css:3199 wrote for `.tb-grp-count`.
+     .md-idx-facts   FIX — "174 ITEMS · 7 TABLES" under a module's name.
+     .md-grp-trail   FIX — ×43 on one module page. This is the worst of
+                     them: it is the dealer's OWN grouping values,
+                     "Sport ▸ SP560", "Roll-Up ▸ RU230KAM", flattened
+                     into "SPORT ▸ SP560". shell.css:918 already fixed
+                     precisely this for `.shell-view-row-trail` and
+                     wrote the reason down: "THE TRAIL IS THE DEALER'S
+                     OWN WORDS, NOT A CAPTION." Their `PVC` and their
+                     `Pvc` are different facts about their data.
+     .md-dash-stub
+       .btn          FIX — "REORDER CARDS", a button.
+
+   KEPT UPPERCASE: `.md-dash-eyebrow` ("ORGANISATION") and
+   `.md-over-cap` ("INSIDE", "WHAT GOES WITH THESE") are section
+   captions; `.md-sec-count` and `.md-chip-n` are bare figures, where
+   the transform has no visible effect and the mono stamp is the
+   sanctioned use.
+   ============================================================ */
+.md-card-count,
+.md-idx-facts,
+.md-grp-trail {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.md-card-count,
+.md-idx-facts {
+  font-variant-numeric: tabular-nums;
+}
+.md-stub .btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}

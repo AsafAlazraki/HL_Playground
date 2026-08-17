@@ -9,6 +9,7 @@
 import { useMemo } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { sayUndoable } from '@/store/notes'
 import { RULE_NODE_KINDS } from '@/types/model'
 import type {
   ActionOp,
@@ -1165,11 +1166,19 @@ export function RuleInspector({
         <button
           type="button"
           className="btn btn-ghost btn-danger rl-insp-del"
-          title="Delete this node and its connections"
+          title="Delete this step and the lines into and out of it"
+          /* NO CONFIRM. `deleteRuleNode` records a step, and the step
+             it records covers the node AND the wires that go with it —
+             they are removed inside the same mutation, so one Ctrl+Z or
+             one press of UNDO puts the whole thing back configured
+             exactly as it was. Rule 9: an undoable act is a note, not a
+             question. The note names the KIND, because the plate the
+             reader was looking at has just left the screen. */
           onClick={() => {
-            if (window.confirm(`Delete this ${meta.label.toLowerCase()} node?`)) {
-              deleteRuleNode(ruleId, node.id)
-            }
+            deleteRuleNode(ruleId, node.id)
+            sayUndoable(
+              `Deleted the ${meta.label.toLowerCase()} step and the lines joined to it`,
+            )
           }}
         >
           Delete

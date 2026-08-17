@@ -81,6 +81,15 @@ export function TableToolbar({
 }): JSX.Element {
   const sortField = sort ? fields.find((f) => f.id === sort.fieldId) : undefined
 
+  /* Which refusal, if either, is standing. A table with no columns has
+     nowhere to put a row, so that reason comes first — "pick rows in the
+     gutter" is nonsense on a sheet that has no rows to pick. */
+  const refusal: string | null = !canEdit
+    ? 'Draft a column before adding rows.'
+    : selectedRows === 0
+      ? 'Pick rows in the number gutter to delete them.'
+      : null
+
   return (
     <div className="tb-toolbar">
       <label className="tb-search" title="Search every column, including calculated ones">
@@ -168,6 +177,22 @@ export function TableToolbar({
         onClearView={onClearView}
       />
 
+      {/* A CONTROL THAT CANNOT ACT SAYS WHY, WHERE IT IS — rule 10, and
+          the reason was living in a `title`, which DESIGN_CONTRACT §6
+          rules out by name ("never a tooltip"). Both refusals on this
+          toolbar have a reason and now print it beside the button they
+          refuse: no rows picked, or no columns to put a row in.
+          It costs the toolbar no width. `.tb-chips` is `flex: 1 1 0`
+          and empty until a sort or a filter exists — 534px of slack at
+          1440 and 374px at 1280, measured — so the note is absorbed by
+          the spacer rather than pushing the actions onto a second row,
+          and it leaves of its own accord the moment a row is picked. */}
+      {refusal !== null && (
+        <p className="tb-why" aria-live="polite">
+          {refusal}
+        </p>
+      )}
+
       <div className="tb-actions">
         <button
           type="button"
@@ -175,7 +200,7 @@ export function TableToolbar({
           disabled={selectedRows === 0}
           title={
             selectedRows === 0
-              ? 'Select whole rows from the number gutter to delete them'
+              ? undefined
               : `Delete the ${selectedRows} selected ${selectedRows === 1 ? 'row' : 'rows'}`
           }
           onClick={onDeleteRows}
@@ -188,7 +213,7 @@ export function TableToolbar({
           type="button"
           className="btn btn-primary"
           disabled={!canEdit}
-          title={canEdit ? 'Append a row' : 'Draft a column first'}
+          title={canEdit ? 'Append a row' : undefined}
           onClick={onAddRow}
         >
           <span aria-hidden="true">+</span> Row

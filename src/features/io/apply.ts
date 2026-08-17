@@ -31,6 +31,7 @@
    ============================================================ */
 
 import { OUT_HANDLE } from '@/types/model'
+import type { QuoteDef } from '@/features/quote'
 import type {
   ActionOp,
   CellValue,
@@ -53,9 +54,10 @@ import type {
 import { useProjectStore } from '@/store/useProjectStore'
 import { registerViewDef } from '@/features/views'
 import { registerConstraints } from '@/features/constraints'
+import { getQuote, registerQuote } from '@/features/quote'
 import { forgetSeedStamp } from '@/demos/seedStamp'
 import { newId, nowIso } from '@/lib/id'
-import { branchKey, isWellKnownFieldId } from './envelope'
+import { branchKey, isWellKnownFieldId, type ProjectFile } from './envelope'
 
 /* ------------------------------------------------------------ */
 /* organisation guard                                            */
@@ -89,7 +91,46 @@ export function keepingOrganisation(swap: () => void, incoming?: OrgProfile): vo
 /* replace                                                       */
 /* ------------------------------------------------------------ */
 
-export function applyReplace(data: ProjectExport): void {
+/* ============================================================
+   THE QUOTES A FILE CARRIES — put back BY ID, on both paths.
+
+   BY ID, and never reissued, which is what makes the trip a person
+   actually takes work: export → clear the sheet → import returns
+   exactly the documents that left, and doing it twice returns the same
+   ones rather than two copies of each. Everything else in a merge is
+   reissued because two tables with one id would fight over a store
+   record; two quotes with one id are the SAME DOCUMENT, and a diary
+   that doubles every time somebody re-imports their own backup is a
+   diary nobody can count.
+
+   A QUOTE ALREADY HERE IS LEFT ALONE. `registerQuote` would overwrite
+   it, and the copy in this browser may be the newer one — a draft
+   somebody has since typed a customer into, or an issued quote whose
+   file predates the issue. Nothing in the envelope can tell which of
+   two versions of one id is the later one (`updatedAt` is written by
+   whichever machine touched it last, and clocks differ), so the rule
+   is the same one `keepingOrganisation` keeps: what is on this machine
+   wins, and a file only ever ADDS.
+
+   NOTHING IS CLEARED FIRST, on a replace or a merge. A quote does not
+   depend on the sheet — every figure on it is a value — so it survives
+   both, and both confirm sheets say so in a sentence
+   (`quotesSurviveSentence`).
+   ============================================================ */
+
+/** Register the file's quotes that are not already here. Returns how
+ *  many arrived, which is what a toast could count. */
+function restoreQuotes(quotes: QuoteDef[] | undefined): number {
+  let added = 0
+  for (const q of quotes ?? []) {
+    if (getQuote(q.id)) continue
+    registerQuote(q)
+    added += 1
+  }
+  return added
+}
+
+export function applyReplace(data: ProjectFile): void {
   /* THE SHEET NOW CAME FROM A FILE, NOT FROM THE SEED. The stamp
      records which build of the prepared set THIS BROWSER was seeded
      with; a replace throws that sheet away, so the record goes with
@@ -120,6 +161,7 @@ export function applyReplace(data: ProjectExport): void {
     entity: (old) => (old && tables.has(old) ? old : undefined),
     field: (old) => (old && fields.has(old) ? old : undefined),
   })
+  restoreQuotes(data.quotes)
 }
 
 /* ------------------------------------------------------------ */
@@ -580,7 +622,7 @@ function mergeOffsetX(
  *  of the sheet's right-hand edge. References that point outside the
  *  imported set survive only if the target exists in the current
  *  project; otherwise they are nulled. */
-export function applyMerge(data: ProjectExport): void {
+export function applyMerge(data: ProjectFile): void {
   const store = useProjectStore.getState()
   const cur = {
     meta: store.meta,
@@ -759,4 +801,15 @@ export function applyMerge(data: ProjectExport): void {
   restoreDesign({ views: keptViews, modules: keptModules }, keepAsIs)
   /* then the imported design, on the reissued ids */
   restoreDesign(data, m, true)
+
+  /* THE QUOTES KEEP THEIR OWN IDS THROUGH A MERGE, unlike everything
+     above. Their row and view pointers therefore point at the ids the
+     file used, which after a merge belong to nothing — and that is the
+     honest outcome: a quote is a photograph, so it still prints every
+     figure, and the two acts that need the pointers ("open this row",
+     "make another quote like this one") already answer with a sentence
+     rather than a wrong row when the id resolves to nothing. Reissuing
+     them instead would mean a second import of the same backup filed a
+     second copy of every document. */
+  restoreQuotes(data.quotes)
 }

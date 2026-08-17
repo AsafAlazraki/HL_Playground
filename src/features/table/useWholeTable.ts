@@ -19,9 +19,9 @@
                         sheet scrolls to it, opening it if it was
                         folded. No traversal.
      FIT EVERY COLUMN   share the window out between the columns that
-                        are drawn, so all of them are on screen at
-                        once. Dense on purpose — for seeing the table,
-                        not for reading it.
+                        are drawn — down to the 116px floor and no
+                        further. As many columns as can be READ, not as
+                        many as will physically go.
 
    Two invariants are worth stating because they are what make the
    three feel like one idea:
@@ -30,10 +30,20 @@
       is `useSectionedView`'s doing, upstream) — never hidden-but-
       focusable. So folding is also how you stop Tab, paste and fill
       from walking through forty money columns.
-   2. While a fit is on, the sheet ALWAYS fits: fold or reveal a band
-      and the remaining columns take the freed room back immediately.
-      A control that says "fit" and then leaves you scrolling is worse
-      than no control.
+   2. While a fit is on, the sheet is re-shared the moment the drawn
+      columns change: fold or reveal a band and the rest take the freed
+      room back immediately.
+
+   AND THE ONE THAT USED TO BE HERE AND WAS WRONG. It read "while a fit
+   is on, the sheet ALWAYS fits", and FIT delivered that by working to a
+   private 28px floor — under the contract's 116px, and under
+   `.tb-cell`'s own CSS floor, so the maths said 39px while the paint
+   said 116 and the band header drew 39px bands over 116px columns.
+   Measured at 1280: one press took Stacer from 26 clipped values to
+   119 and cut the band strip to "Id…", "Registr…". Fitting all of them
+   at a width where none of them can be read is not fitting. The floor
+   wins now, the register scrolls sideways when it must — DESIGN_CONTRACT
+   §2 allows exactly that — and `onFit` says so out loud when it does.
 
    State lives in the two session-lived modules next door
    (`tableSectionState`, `tableFitState`), keyed by entityId, because
@@ -44,12 +54,13 @@ import type { RefObject } from 'react'
 import { accentVar, isSystemFieldId, type ColumnSection, type FieldDef } from '@/types/model'
 import {
   buildSections,
-  fitColumnWidths,
+  fitColumns,
   foldWidthFor,
   layoutColumns,
   pinWidthOf,
   type ColumnLayout,
   type ColumnSlot,
+  type FitReport,
 } from './sections'
 import { setSectionsFolded, useCollapsedSections } from './tableSectionState'
 import { clearFitWidths, setFitWidths, useFitWidths } from './tableFitState'
@@ -117,6 +128,7 @@ export function useWholeTable({
   widths,
   viewportRef,
   pinFieldId,
+  onFit,
 }: {
   entityId: string
   sections: readonly ColumnSection[] | undefined
@@ -134,6 +146,10 @@ export function useWholeTable({
    *  control that exists to bring a band into view parks it under the
    *  pin instead. */
   pinFieldId?: string
+  /** Told when a fit landed at the 116px floor rather than inside the
+   *  window, so the host can say so where the press happened. Not
+   *  called when the whole sheet fits: the screen says that itself. */
+  onFit?: (report: FitReport) => void
 }): WholeTable {
   const collapsed = useCollapsedSections(entityId)
   const fit = useFitWidths(entityId)
@@ -195,11 +211,11 @@ export function useWholeTable({
     (nextSlots: ColumnSlot[]): Record<string, number> => {
       const el = viewportRef.current
       if (!fitted || !el) return widths
-      const next = fitColumnWidths(nextSlots, widths, el.clientWidth)
+      const next = fitColumns(nextSlots, widths, el.clientWidth, pinFieldId).widths
       setFitWidths(entityId, next)
       return { ...widths, ...next }
     },
-    [entityId, fitted, widths, viewportRef],
+    [entityId, fitted, widths, viewportRef, pinFieldId],
   )
 
   /* What the sheet WILL be once a fold changes — worked out from the
@@ -273,12 +289,18 @@ export function useWholeTable({
     }
     const el = viewportRef.current
     if (!el) return
-    const next = fitColumnWidths(slots, widths, el.clientWidth)
+    const report = fitColumns(slots, widths, el.clientWidth, pinFieldId)
     /* nothing flexible on the sheet — every band folded, say. Latching
        the control on would leave a pressed button that changed nothing */
-    if (Object.keys(next).length === 0) return
-    setFitWidths(entityId, next)
-  }, [fitted, entityId, slots, widths, viewportRef])
+    if (Object.keys(report.widths).length === 0) return
+    setFitWidths(entityId, report.widths)
+    /* AND SAY WHAT IT DID, when what it did is not what "fit" sounds
+       like. The 116px floor is the contract's, and when it binds the
+       register stays wider than the window — which is allowed, and is
+       the reader's to know at the moment of the press rather than
+       something to work out from a scrollbar. */
+    if (!report.fitsWindow) onFit?.(report)
+  }, [fitted, entityId, slots, widths, viewportRef, pinFieldId, onFit])
 
   return {
     bands,

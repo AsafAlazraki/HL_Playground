@@ -854,9 +854,22 @@
 }
 
 /* -- the rail of rows --------------------------------------- */
+/* THE RAIL GROWS WITH THE WINDOW, because what it holds is the one
+   thing on this page a person is choosing BETWEEN.
+   MEASURED: at 232px fixed, 28 of the 28 drawn rows were clipped, and
+   the list at 1920 was byte-identical to the list at 1280 — a wider
+   window bought nothing. Worst case "Highfield - Coaster 540 open (PVC)
+   LG-W-DG" wanted 278px of 12px Inter and had 195. Two variants of one
+   hull differ only in the trim code at the END of the name, which is
+   exactly the part an ellipsis eats: the rail was showing a
+   salesperson two rows they could not tell apart.
+   `clamp` rather than a bigger fixed number, so 1280 keeps its page
+   width and 1920 spends what it has. The name also wraps now (see
+   `.shell-view-row-name`), so the two answers compound instead of
+   competing. */
 .shell-view-rail {
-  flex: 0 0 232px;
-  width: 232px;
+  flex: 0 0 clamp(232px, 19vw, 344px);
+  width: clamp(232px, 19vw, 344px);
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
@@ -950,14 +963,24 @@
 .shell-view-row.is-open .shell-view-row-trail {
   color: var(--ink-soft);
 }
+/* A NAME WRAPS. DESIGN_CONTRACT §3: "if a name does not fit it wraps or
+   clamps to two lines with the full text still in the DOM" — and this
+   was the one place in the app still cutting a name on one line, in the
+   list whose whole job is telling two boats apart. Two lines, clamped,
+   never mid-word (`overflow-wrap` is left alone deliberately: a break
+   inside "Coaster" would be worse than a second line), and the button
+   carries the whole string as its `title` for the rare row that is
+   still longer than two lines of a narrow rail. */
 .shell-view-row-name {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   font-size: 12px;
   font-weight: 560;
+  line-height: 1.35;
   letter-spacing: 0.03em;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 .shell-view-row-trail + .shell-view-row-name {
   margin-top: 1px;
@@ -3034,10 +3057,22 @@
   letter-spacing: 0;
   text-transform: none;
 }
+/* THE TINT COUNTS, AND THIS RULE IS THE ONE THAT FORGOT IT. Nine lines
+   up, `.tb-strip-rail` became a recessed segmented track on
+   `var(--paper-sunken)`. `--ink-faint` measures 4.72:1 on white and
+   **4.22:1 on --paper-sunken** — measured on the live strip, eight
+   chips, every one of them — so the count that says how many columns a
+   section holds was the one number on the register a person could not
+   read. `--ink-soft` is 6.9:1 on the same track.
+   The count is still the quiet half of the chip: what makes it recede
+   is the mono face and the 11px step beside a 12.5px name, not an ink
+   under the floor. Same conclusion as `.tb-cell-sys` in table.css and
+   `.rl-empty-meta` in rules.css, which recorded 4.22:1 for this exact
+   ground before this rule was written. */
 .tb-strip-count {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 /* ---------- the register, in a Mac window ------------------- */
@@ -3054,10 +3089,31 @@
 
 /* Mac list striping: alternating rows, not a grid of boxes. The
    hairlines between columns stay, because this is a spreadsheet
-   and a spreadsheet needs them — but the ROW is the unit. */
-.shell-tablestage .tb-row:nth-child(even) {
-  background: color-mix(in srgb, var(--ink) 2.5%, transparent);
-}
+   and a spreadsheet needs them — but the ROW is the unit.
+
+   THE STRIPE ITSELF IS GONE FROM HERE, and taking it out fixed two
+   things at once.
+
+   IT WAS THE SECOND ZEBRA. `table.css` already stripes the register
+   with `.tb-row-alt`, from the row's DATA index — the number the
+   gutter prints. This one counted DOM CHILDREN, and in a grouped
+   register the drawer lines are siblings of the rows, so the two
+   disagreed: measured live on Stacer, row 1 took THIS 2.5% tint while
+   carrying no `.tb-row-alt`, and row 2 took `.tb-row-alt`'s 1.6% —
+   every row striped, in two different tints, with none left plain.
+   A stripe whose job is "which line am I on" cannot be two stripes.
+
+   AND IT BEAT THE SEARCH REVEAL. `.tb-row-found` is one class;
+   `.shell-tablestage .tb-row:nth-child(even)` is two classes and a
+   pseudo-class, which counts the same as three classes. So the mark
+   that says "THIS is the row you asked for" painted its gutter rail
+   and its pinned cell (both two classes, both winning) and left the
+   row body striped — the reveal half-painted, on whichever rows
+   happened to be even. Raising the reveal to beat it would have left
+   the double zebra in place; removing the duplicate answers both.
+
+   The HOVER band stays: it is the one this skin adds that table.css
+   does not, and it is what actually tells you which line you are on. */
 .shell-tablestage .tb-row:hover {
   background: color-mix(in srgb, var(--blue) 7%, transparent);
 }
@@ -3185,8 +3241,21 @@
   transform: translateY(0) scale(0.995);
   box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
 }
+/* FOCUS HAS TO BE FINDABLE, and this was the one card in the app you
+   could not find. The ring was a 1px border colour change plus a 3px
+   halo in `--blue-wash`, which is blue at 9% alpha: measured 1.09:1
+   against the card's own white, so on a grid of fifty cards a keyboard
+   user tabbing through had no idea which one was theirs.
+   `.md-card:focus-visible` — deliberately THE SAME CARD, in
+   modules.css:148 — already draws `2px solid var(--blue)` at 2px
+   offset, and so does `.md-tile`, `.rl-chipbtn`, `.ob-primary` and
+   every row in the shell. That is the house ring; Home now takes it.
+   The wash stays as the third layer so the ring reads as belonging to
+   the card rather than sitting on top of it, and the blue border keeps
+   the card's own edge lit. */
 .hm-card:focus-visible {
-  outline: none;
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-wash);
 }

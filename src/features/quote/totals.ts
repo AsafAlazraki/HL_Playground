@@ -127,6 +127,40 @@ export function looseLines(quote: QuoteDef): QuoteLine[] {
   return quote.lines.filter((l) => !claimed.has(l.id))
 }
 
+/* ============================================================
+   THE OVERRIDE WITH NOTHING WRITTEN BESIDE IT.
+
+   `setOverride` puts a typed price BESIDE the frozen one and takes a
+   reason with it, which is the right shape. What was missing is the
+   only half that matters six weeks later: nothing asked for the
+   reason before the document went out, so a quote could be given to
+   a customer carrying a number a person typed and no record of why.
+
+   That is production's §3.5 exactly — the margin-override reason is
+   written to `window.__marginOverrideAudit` and read by nothing —
+   one step worse, because here it was never written at all. And it
+   is unrecoverable by construction: after issue the document is
+   read-only, so the reason cannot be added afterwards. It is written
+   at the moment of the decision or it does not exist.
+
+   PURE, and here rather than in `quotes.ts`, because three surfaces
+   ask the same question — the foot bar (may this go out?), the line
+   (why is my Why field being asked for?) and `issueQuote` itself
+   (the line that makes the refusal true).
+   ============================================================ */
+
+/** Lines carrying a price somebody typed with no reason beside it.
+ *  Empty when the quote may be given out. */
+export function unexplainedOverrides(quote: QuoteDef): QuoteLine[] {
+  return quote.lines.filter((l) => needsOverrideReason(l))
+}
+
+/** True of one line: a typed price, and nothing written about it.
+ *  Whitespace is not a reason — `' '` prints as a blank on the
+ *  document and reads as a reason that was given. */
+export const needsOverrideReason = (line: QuoteLine): boolean =>
+  line.overridePrice !== undefined && (line.overrideReason ?? '').trim() === ''
+
 /** A one-line answer to "is this quote worth showing to anyone yet?"
  *  — used by the foot bar, never as a gate. Nothing here blocks a
  *  sale: production's margin gate runs on a guessed cost and blocks

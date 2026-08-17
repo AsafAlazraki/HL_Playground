@@ -9,7 +9,16 @@
    summed to 27, because the locked UID column carries no `sectionId`
    and is in no band. A column nobody can rename, retype, reorder or
    delete (model.ts UID_FIELD) is not a column a person counts, so
-   both figures now leave it out.
+   both figures leave it out.
+
+   AND THE REGISTER NO LONGER DRAWS IT EITHER, which is what settled
+   the disagreement rather than papering over it: the machine key was
+   the first thing on screen in every register in the app, under a
+   heading reading UID SYSTEM, and a row is identified to a dealer by
+   the NUMBER the gutter has always printed. The model still declares
+   the column (`visibleFields`), the register declines to take it, and
+   the last test in the first block pins that gap so it stays a
+   decision rather than a drift.
 
    WHAT THE ROWS ARE CALLED. `leafNoun` names rows from the column
    that names them, so a boat table counts "26 models" and never "26
@@ -18,9 +27,24 @@
    `hierarchy`, and nothing after it. Its display column is `Model`,
    the same column its six siblings group by.
 
-   Both are checked through the seed and the same functions the
-   screens call, because both failures are invisible: nothing throws,
-   the numbers just disagree with each other.
+   TWO WAYS THAT DERIVATION WAS STILL WRONG ON THE FRONT DOOR, both
+   fixed here and both pinned below.
+
+   A COLUMN NAME FOOLED IT. The two Factory Packages tables are
+   `kind: 'package'` with a naming column headed `Motor`, because the
+   workbook types a boat-plus-engine bundle into the boat row's motor
+   slot. Both cards read "39 motors" — directly contradicting
+   FITMENT_RULES.md §1.3/§1.5 and the seed's own desc, which says
+   "These are NOT motors" and is the reason neither brand carries a
+   Yamaha motor-fitment join.
+
+   A JOIN WAS EXEMPT. All 27 of them fell to "rows", which is 26 of the
+   50 cards the front door draws. A relationship's rows are PAIRINGS —
+   the name of the band each join files its two ends under.
+
+   All of it is checked through the seed and the same functions the
+   screens call, because these failures are invisible: nothing throws,
+   the numbers just disagree with the research.
    ============================================================ */
 import { describe, expect, it } from 'vitest'
 import { isSystemFieldId, visibleFields, type EntityDef } from '@/types/model'
@@ -36,10 +60,15 @@ const byName = (name: string): EntityDef => {
 }
 
 /* The two counting expressions the two screens use, spelled out here
-   so a change to either one has to come past this file. */
+   so a change to either one has to come past this file.
+
+   The register's input is `entity.fields` because that is what
+   `useTableData` now hands the grid. The system filter stays anyway:
+   it is what keeps this honest if a system column is ever put back in
+   front of a person's own. */
 const asHomeCounts = (e: EntityDef): number => e.fields.length
 const asTheReadoutCounts = (e: EntityDef): number =>
-  buildSections(visibleFields(e), e.sections, new Set<string>()).slots.reduce(
+  buildSections(e.fields, e.sections, new Set<string>()).slots.reduce(
     (n, s) => (s.kind === 'field' && !isSystemFieldId(s.field.id) ? n + 1 : n),
     0,
   )
@@ -63,7 +92,22 @@ describe('how many columns', () => {
     const banded = yamaha.fields.filter((f) => f.sectionId !== undefined).length
     /* every column on this table is in a band, and UID is in none */
     expect(banded).toBe(asHomeCounts(yamaha))
+  })
+
+  it('is one fewer than the model still declares, on purpose', () => {
+    /* `visibleFields` is the model's own contract and it puts the UID
+       column in front of a person's columns; the register declines to
+       take it, and 27 rather than 28 is that decision, not a slip. The
+       gap is pinned so removing the column from the model (or putting it
+       back on screen) has to come past this file — and so nobody
+       "fixes" the register by drawing a machine key again. */
+    const yamaha = byName('Yamaha Outboards')
     expect(visibleFields(yamaha).length).toBe(asHomeCounts(yamaha) + 1)
+    expect(visibleFields(yamaha)[0].name).toBe('UID')
+    expect(isSystemFieldId(visibleFields(yamaha)[0].id)).toBe(true)
+    /* and it is not one of the table's own columns, so nothing that
+       reads `entity.fields` can draw it by accident */
+    expect(yamaha.fields.some((f) => isSystemFieldId(f.id))).toBe(false)
   })
 })
 
@@ -80,9 +124,10 @@ describe('what the rows are called', () => {
     expect(leafNoun(byName('Highfield Inflatables')).many).toBe('variants')
   })
 
-  it('never falls back to the jargon noun on a table a dealer maintains', () => {
+  it('never falls back to the jargon noun on ANY of the 52 tables', () => {
+    /* joins used to be exempt from this and were the reason 26 of the 50
+       cards still counted in "rows" */
     for (const e of project.entities) {
-      if (e.role === 'join') continue
       expect(leafNoun(e).one, e.name).not.toBe('row')
     }
   })
@@ -97,13 +142,45 @@ describe('what the rows are called', () => {
     expect(leafNoun(byName('Dealer Fit Packages')).many).toBe('packages')
   })
 
-  it('leaves a join the neutral word — its rows are pairings, not things', () => {
-    /* its display column is a computed `Label` no row fills in, and
-       the front door already calls one of these a Relationship */
-    const join = project.entities.find((e) => e.role === 'join')
-    expect(join).toBeDefined()
-    if (!join) return
-    expect(leafNoun(join)).toEqual({ one: 'row', many: 'rows' })
+  it('calls a factory package a package, not a motor', () => {
+    /* kind: 'package', naming column headed `Motor`, because the Master
+       Price File types a boat-plus-engine bundle into the boat row's
+       motor slot. The seed's own desc on both tables says "These are NOT
+       motors" (FITMENT_RULES.md §1.3, §1.5) — and it is why neither
+       brand has a Yamaha motor-fitment join. */
+    expect(leafNoun(byName('Haines Signature Factory Packages')).many).toBe('packages')
+    expect(leafNoun(byName('Jeanneau Factory Packages')).many).toBe('packages')
+    expect(countLabel(39, leafNoun(byName('Jeanneau Factory Packages')))).toBe('39 packages')
+    /* and the real motor tables are untouched by the guard */
+    expect(leafNoun(byName('Yamaha Outboards')).many).toBe('motors')
+    expect(leafNoun(byName('ePropulsion Outboards')).many).toBe('motors')
+  })
+
+  it('never lets a column name overrule a declared kind', () => {
+    /* the general form of the Factory Packages failure: a naming column
+       that names one of the app's OWN kinds, on a table declared to hold
+       a different one, is naming a relation rather than the row */
+    for (const e of project.entities) {
+      if (e.role === 'join' || e.kind === undefined || e.kind === 'custom') continue
+      const noun = leafNoun(e).one
+      const KINDS = ['boat', 'motor', 'trailer', 'accessory', 'package', 'dealer']
+      if (KINDS.includes(noun)) expect(noun, e.name).toBe(e.kind)
+    }
+  })
+
+  it('gives a relationship the dealer’s word — its rows are pairings', () => {
+    /* 26 of the 50 cards on the front door are Relationships, and every
+       one read "· 71 rows". `Pairing` is the name of the band each join
+       files its two ends under, so the word is the seed's own. */
+    const joins = project.entities.filter((e) => e.role === 'join')
+    expect(joins.length).toBe(27)
+    for (const j of joins) {
+      expect(leafNoun(j), j.name).toEqual({ one: 'pairing', many: 'pairings' })
+    }
+    expect(countLabel(71, leafNoun(byName('Formosa × NSM Custom — Trailer Fitment')))).toBe(
+      '71 pairings',
+    )
+    expect(countLabel(1, leafNoun(joins[0]))).toBe('1 pairing')
   })
 
   it('keeps the neutral word for a table a person has only just made', () => {

@@ -1,13 +1,29 @@
 /* ============================================================
    RULES — the index of rules, beside the index of entities.
 
-   Create (choosing a root entity), select, rename in place,
-   delete with a confirm, and a validity stamp per rule.
+   Create (choosing a root entity), select, rename in place, delete,
+   and a validity stamp per rule.
+
+   DELETING IS A NOTE WITH UNDO ON IT, NOT A QUESTION. This panel held
+   the last raw `window.confirm` on a surface the demo visits:
+
+     Delete rule "Trailer fitment — Highfield"? The flow you drew is
+     removed with it.
+
+   Two things were wrong with it. The browser finished the drawing
+   office's sentence in Segoe UI, on a white OS plate, at the one
+   moment the app most needed to look like itself. And the question
+   was unnecessary: a rule is a single object in `rules`, `rules` is
+   in the undo slice, so `deleteRule` now records a step and the whole
+   flow comes back exactly as it was drawn. Rule 9 — an undoable act
+   gets a note with UNDO, not a dialog. The sentence the confirm used
+   to ask is now the sentence the note states, in the past tense.
    ============================================================ */
 
 import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { sayUndoable } from '@/store/notes'
 import { accentVar } from '@/types/model'
 import { ruleReach, useAllRuleIssues } from './useRuleIssues'
 import './rules.css'
@@ -69,11 +85,12 @@ export function RulesList() {
   }
 
   const remove = (id: string, name: string) => {
-    if (!window.confirm(`Delete rule "${name}"? The flow you drew is removed with it.`)) {
-      return
-    }
     if (activeRuleId === id) setActiveRule(null)
     deleteRule(id)
+    /* THE NAME IS IN THE NOTE. Two rules in this rail can be named
+       after the same brand and told apart by their last few words, so
+       "Rule deleted" alone would leave a reader unsure which one went. */
+    sayUndoable(`Deleted “${name}” — the flow drawn on it went with it`)
   }
 
   return (

@@ -14,7 +14,6 @@ import { useCallback, useMemo, useRef } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   rowLabel,
-  visibleFields,
   type CellValue,
   type EntityDef,
   type FieldDef,
@@ -41,10 +40,10 @@ export interface ViewOpts {
 
 export interface TableData {
   entity: EntityDef | undefined
-  /** the columns as a user sees them: the row's permanent identifier
-   *  FIRST, locked, then the table's own columns. The identifier lives
-   *  outside `EntityDef.fields`, so it is resolved through the model's
-   *  `readCell` rather than out of `row.values`. */
+  /** the columns as a user sees them — the table's own, and only its
+   *  own. The row's identity is the NUMBER in the gutter; see the note
+   *  on `fields` in the body of the hook for why the machine key is no
+   *  longer one of these. */
   fields: FieldDef[]
   /** every stored row, in store order */
   rows: RowData[]
@@ -85,19 +84,46 @@ export function useTableData(entityId: string, opts: ViewOpts): TableData {
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
 
   const entity = entities[entityId] as EntityDef | undefined
-  /* THE LOCKED IDENTIFIER FIRST, then the table's own columns.
-     Every table carries a permanent row identifier, and the register is
-     the surface it has to be visible on — the same first column the
-     entity card already shows in DATA mode. It is read-only everywhere
-     (no editor, no paste target, no fill, never cleared) and orderable,
-     narrowable and copyable like any other.
+  /* THE TABLE'S OWN COLUMNS, AND NOTHING IN FRONT OF THEM.
+     ------------------------------------------------------------------
+     This was `visibleFields(entity)`, which is the model's UID column
+     followed by the table's own — so the first thing in every register
+     in this app was a heading reading UID SYSTEM over a ten-character
+     machine key (`-KS7x1XXCj`). Two separate rulings say it cannot
+     stay. DESIGN_PRINCIPLES §6 names "UID" among the system jargon this
+     app refuses in chrome; and the redesign's own audit of this screen
+     concluded, in one sentence, "A dealer's first column should not be a
+     machine key" (design/SheetSurfaces.tsx, design/sheet.css).
+
+     WHAT A PERSON SHOULD SEE INSTEAD WAS ALREADY ON SCREEN, one column
+     to the left. `Grid` freezes a 48px gutter down the left edge whose
+     entire job is the row NUMBER — `helpers.ts` calls it "Frozen
+     row-number gutter width", it is the only way to select whole rows,
+     and it is drawn on every register and every sheet card because both
+     use the same `Grid`. So the answer to "what identifies this row to a
+     dealer" needed no new column; it needed the redundant one removed.
+
+     THE ID IS NOT GONE, IT IS NO LONGER SHOUTED. It is still the row's
+     identity everywhere it was: the value every reference column holds
+     and every join pairs on, what `readCell` resolves for the system
+     field id, and what every export writes and every import reads back
+     (`envelope.ts` refuses a row without one — a copy that dropped it
+     could not be merged back). In the register it moves to the gutter it
+     belongs to, printed in the gutter's own tooltip beside the row
+     number, so a person who needs it can read it off the row and
+     nobody else has to look at it.
+
+     WHAT DOES NARROW, said plainly rather than glossed: in the register
+     the id can no longer be sorted on, filtered on, or lifted with
+     Ctrl+C, because those were affordances OF the column. Sorting a
+     register by a random ten-character key is not a thing a dealer
+     does; being handed one as the first fact about a boat is not
+     either, and only one of the two was worth keeping.
+
      Memoized on the entity, so the array identity stays exactly as
-     stable as `entity.fields` was and every downstream memo
-     (hasFormula, buildViewRows, viewRows) keeps biting. */
-  const fields = useMemo(
-    () => (entity ? visibleFields(entity) : NO_FIELDS),
-    [entity],
-  )
+     stable as it was and every downstream memo (hasFormula,
+     buildViewRows, viewRows) keeps biting. */
+  const fields = useMemo(() => (entity ? entity.fields : NO_FIELDS), [entity])
   const rows = rowsByEntity[entityId] ?? NO_ROWS
 
   const hasFormula = useMemo(

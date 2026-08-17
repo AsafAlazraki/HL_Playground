@@ -7278,7 +7278,23 @@ export function buildNorthsideProject(): NorthsideProject {
 
 interface SeedModule {
   name: string
-  /** one line under the name — counts and table names, nothing else */
+  /**
+   * One line under the name — what is in here and why, and NEVER a
+   * count.
+   *
+   * A COUNT IN PROSE IS A LIE WAITING TO HAPPEN, and two of these five
+   * had already told it. Rates & Charges read "64 charges" beside a live
+   * badge saying 65 the moment a row was added, and Parts & Accessories
+   * read "719 lines" against 738 actually seeded — nobody wrote a wrong
+   * number, the rows moved and the sentence could not. The card already
+   * counts its own rows from the store, live, one line above this one
+   * (`md-card-count` in features/modules/Dashboard.tsx), so a figure
+   * typed here is duplication that can only ever drift out of true.
+   *
+   * Every fact these sentences do carry is a fact that does not move:
+   * which workbook sheet the tables came from, and what kind of thing
+   * is in them.
+   */
   desc: string
   /** seed keys, primary first. A key that does not resolve is skipped. */
   tables: string[]
@@ -7312,7 +7328,7 @@ interface SeedModule {
 const MODULES: SeedModule[] = [
   {
     name: "Boats",
-    desc: "Seven brand price files off the Boat Module sheet — 174 hulls, each brand keeping its own columns.",
+    desc: "Seven brand price files off the Boat Module sheet, each brand keeping its own columns.",
     tables: [
       "boat_highfield",
       "boat_stabicraft",
@@ -7326,13 +7342,13 @@ const MODULES: SeedModule[] = [
   },
   {
     name: "Motors",
-    desc: "Yamaha and ePropulsion outboards, and the two factory package files that power Haines Signature and Jeanneau — 175 ways to drive a hull.",
+    desc: "Yamaha and ePropulsion outboards, plus the two factory package files the workbook keeps in the Motor Library — boat-plus-engine bundles, held apart because they are not motors.",
     tables: ["mot_yamaha", "mot_pkg_haines", "mot_pkg_jeanneau", "mot_epropulsion"],
     can: ["browse", "search", "open", "relate", "quote"],
   },
   {
     name: "Trailers",
-    desc: "Seven trailer brands off the Trailer Module sheet — 145 trailers, plus the obsolete band kept so an old quote still opens and never offered here.",
+    desc: "Seven trailer brands off the Trailer Module sheet, plus the obsolete band kept so an old quote still opens and never offered here.",
     tables: [
       "trl_nsmcustom",
       "trl_dunbier",
@@ -7347,12 +7363,12 @@ const MODULES: SeedModule[] = [
   },
   {
     name: "Parts & Accessories",
-    desc: "Parts & Accessories, Rigging Kits and Dealer Fit Packages — 719 lines that go ONTO a boat rather than being one.",
+    desc: "Parts & Accessories, Rigging Kits and Dealer Fit Packages — the lines that go ONTO a boat rather than being one.",
     tables: ["parts", "rig_kits", "dealer_fit"],
   },
   {
     name: "Rates & Charges",
-    desc: "Labour Rates, Oils & Consumables and Registration Costs — 64 charges the other places read. A register rather than a catalogue.",
+    desc: "Labour Rates, Oils & Consumables and Registration Costs — the charges the other places read. A register rather than a catalogue.",
     tables: ["labour_rates", "oils_lubes", "registration"],
     can: ["browse", "search"],
   },

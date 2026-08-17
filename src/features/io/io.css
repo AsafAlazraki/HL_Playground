@@ -242,6 +242,25 @@
   color: var(--ink-faint);
 }
 
+/* WHY THIS PANEL COUNTS MORE TABLES THAN THE FRONT DOOR DOES. The same
+   recipe as `.io-blank-note` directly above — same face, same 11px,
+   same tracking, same token — because it stands in the same place under
+   the same two cards and a second look for one more sentence is a
+   second thing to learn. `--ink-faint` is remapped to
+   `--ink-faint-material` by `.io-pop` over the canvas and back to
+   `--ink-faint-base` over a stage, so this pair is the one the panel's
+   own measurement already covers; nothing new is introduced. Leading is
+   the only addition, because this sentence wraps and the blank note
+   never does. */
+.io-kept-note {
+  margin-top: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  line-height: 1.65;
+  color: var(--ink-faint);
+}
+
 /* -- import dropzone ---------------------------------------- */
 .io-drop {
   margin-top: var(--sp-3);
@@ -286,12 +305,21 @@
 .io-drop:hover .io-drop-main {
   color: var(--blue-deep);
 }
+/* AN ALPHA IS NOT A TIER. `opacity: 0.75` on `--ink-soft` over the
+   drop-zone's `--paper-sunken` composites to a 75% ink and measured
+   **3.79:1** on the live panel — below `--ink-faint`'s floor and below
+   `--fg-quaternary`'s 2.8:1 line, which the contract says may never
+   carry meaning. This line is the second half of the instruction: it is
+   the only thing on the plate that says a click will also do.
+   It keeps `currentColor` so it still turns `--blue-deep` with its
+   parent on hover and drag-over; the second-line reading comes from
+   400 weight against the main line's 600, which is where a hierarchy
+   inside one 11px mono block belongs. 6.9:1 at rest. */
 .io-drop-sub {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.14em;
   color: currentColor;
-  opacity: 0.75;
 }
 
 .io-file {
@@ -465,15 +493,28 @@
    nothing is a lie told to whoever is looking. The reason is printed
    one line away, in the footer's own signature slot, rather than in a
    tooltip. */
+/* and the refusal has to be READ. `--ink-faint` is 4.22:1 on this
+   footer's `--paper-sunken` — the same arithmetic as `.io-foot-sig`
+   above — so the label naming what is unavailable was the least legible
+   thing in the panel. It steps to `--ink-soft` (6.9:1). What says the
+   button is refused is the printed reason in `.io-foot-why` beside it
+   and the loss of the red hover, not an ink under the floor. */
 .io-clear:disabled {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   cursor: default;
 }
+/* THE NOTE BELOW WAS RIGHT AND THIS RULE DID NOT LISTEN. `.io-foot-why`
+   steps up because it carries a reason; `.io-foot-sig` was left at
+   `--ink-faint` on the same `--paper-sunken` footer and measured
+   **4.22:1** on the live panel. The floor is 4.5:1 for anything a
+   person reads, and a signature slot that reads "HELMLOGIC · DOC CTRL"
+   is words, not a rule. Both halves of the slot now clear the floor;
+   the slot stays quiet by being 11px mono at the end of a footer. */
 .io-foot-sig {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.14em;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 /* The signature slot is decoration and takes the quietest ink there
    is. When it carries the REASON the button beside it is refused it is
@@ -718,4 +759,101 @@
 .io-root--left .io-pop {
   right: auto;
   left: 0;
+}
+
+/* ============================================================
+   A NAME IS A NAME — the uppercase pass, Import / export.
+
+   This panel predates the redesign and had more of the fault in it than
+   any other surface: it was set almost entirely in capitals, the
+   drafting-office "document control" idiom taken past the one thing
+   DESIGN_PRINCIPLES §2 allows it on. Enumerated live at 1280 and 1920,
+   with the verdict for each:
+
+     .io-card-title    FIX — "EVERYTHING", "STRUCTURE ONLY". The NAME of
+                       the copy you are about to take, on the button you
+                       press to take it. A button label, twice over.
+     .io-card-sub      FIX — "TABLES, ROWS, MODULES, PAGES AND QUOTES".
+                       A sentence listing what travels.
+     .io-card-meta     FIX — "52 TABLES · 3,566 ROWS · 5 MODULES".
+                       Values, and the figures the card's promise is
+                       worth. The nouns were capitals in the markup too
+                       and are now the dealer's own words in their own
+                       case (`plural(n, 'table', 'tables')`).
+     .io-plate-name    FIX — the imported FILE's name, read off the file
+                       a person picked. The one string on the plate that
+                       is not ours at all.
+     .io-plate-also    FIX — "ALSO — 5 MODULES · 25 PAGES": values.
+     .io-plate-src     FIX — "SOURCE — <filename>": a value.
+     .io-clear         FIX — "CLEAR SHEET", a button, and the most
+                       destructive one in the app.
+     .io-blank-note    FIX — a sentence.
+     .io-kept-note     FIX — a sentence explaining the count.
+     .io-drop-main
+     .io-drop-sub      FIX — "DROP .JSON HERE" / "OR CLICK TO BROWSE"
+                       were literal capitals in the markup rather than a
+                       transform; they are two halves of one instruction
+                       and are now sentence case in the TSX.
+
+   KEPT UPPERCASE, all of them captions or mono stamps, which are the
+   three sanctioned uses: `.io-head-title` ("DOCUMENT CONTROL"),
+   `.io-rev` and `.io-plate-rev` ("REV 00"), the section `.mono-label`s
+   ("SAVE A COPY", "OPEN A SAVED COPY"), `.io-stat-lbl` ("TABLES",
+   "ROWS" — the captions under the plate's three figures),
+   `.io-stamp` ("SAVED", the rubber stamp), `.io-foot-sig`.
+
+   TRACKING COMES DOWN WITH THE CASE, §3 — +0.12em to +0.14em is the
+   11px label's tracking, and none of these is a label any more. The
+   plate's stamps keep a hair of it because they are still stamps.
+   ============================================================ */
+.io-card-title {
+  font-size: 13px;
+  letter-spacing: -0.004em;
+  text-transform: none;
+}
+.io-card-sub,
+.io-blank-note,
+.io-kept-note {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.io-card-meta,
+.io-plate-also,
+.io-plate-src {
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.io-plate-name {
+  letter-spacing: -0.004em;
+  text-transform: none;
+}
+.io-clear {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* AND THE TWO EXPORT CARDS, when there is nothing to export. Same
+   fault, same instrument: `opacity: 0.45` on a card whose whole content
+   is words puts "Everything · Tables, rows, modules, pages and quotes ·
+   no tables" at about 3.0:1, and a person reading a blank sheet's panel
+   is exactly the person who needs to know what the two copies WOULD
+   carry. The card sinks to a flat well and steps its ink down a tier;
+   `.io-blank-note` directly beneath already says why there is nothing
+   to take a copy of. */
+.io-card:disabled {
+  opacity: 1;
+  background: var(--paper-sunken);
+  border-color: var(--hairline);
+  color: var(--ink-soft);
+}
+.io-card:disabled .io-glyph {
+  color: var(--ink-soft);
+}
+.io-card:disabled .io-card-sub,
+.io-card:disabled .io-card-meta {
+  color: var(--ink-soft);
 }

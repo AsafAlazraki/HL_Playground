@@ -56,18 +56,37 @@ export const GUTTER_W = 48
 export const ADD_COL_W = 40
 export const MIN_COL_W = 76
 export const MAX_COL_W = 560
-/** The floor FIT COLUMNS works to.
+/** THE COLUMN FLOOR, AND THERE IS ONLY ONE.
  *
- *  `MIN_COL_W` is the floor for a column you are READING, and it is
- *  the only floor a drag ever obeys. It cannot also be the floor for
- *  FIT: fifty-eight columns at 76px is 4,408px of sheet, which fits no
- *  window ever made, so "fit every column on screen" and "never go
- *  below 76px" are not both satisfiable. FIT therefore works to its
- *  own dense floor — narrow enough to get the whole register on one
- *  screen, wide enough that a figure still shows its first characters
- *  and a heading still shows its first letters. Seeing the table's
- *  shape is the job; reading it is what one press back is for. */
-export const FIT_MIN_COL_W = 28
+ *  DESIGN_CONTRACT §2 records it as **116px**, with the row-number
+ *  gutter and a system column exempt, and `table.css` enforces it in
+ *  paint: `.tb-cell, .tb-th { min-width: 116px }`.
+ *
+ *  FIT used to work to a private floor of 28px, on the argument that
+ *  "fit every column on screen" and "never go below the reading floor"
+ *  are not both satisfiable. They are not — but the answer to that is
+ *  not to break the floor, because the floor was measured and the
+ *  promise was not. Two things were wrong with the private floor:
+ *
+ *  1. IT MADE THE CONTROL UNREADABLE. Measured on the live register at
+ *     1280, one press of FIT drove every column to 39px and took the
+ *     count of clipped values on Stacer from 26 to 119, clipping the
+ *     band strip to "Id…", "Registr…", "Hull Only Pri…". A control
+ *     called FIT that makes things unreadable is misnamed.
+ *  2. IT MADE THE SHEET LIE ABOUT ITSELF. Only the layout MATHS went
+ *     to 39px; `.tb-cell`'s CSS floor held the paint at 116px, so the
+ *     spanning band header — which takes its widths from the maths and
+ *     carries no min-width — drew 39px bands over 116px columns. The
+ *     header row and the data rows were out of alignment for as long as
+ *     a fit was on.
+ *
+ *  So FIT shares the window out and STOPS at the floor. When the floor
+ *  binds, the sheet stays wider than the window and scrolls sideways —
+ *  which the contract explicitly allows, and `TableSheet` says out loud
+ *  in a note at the moment of the press rather than leaving the reader
+ *  to discover it. Fitting as many columns as can be READ beats fitting
+ *  all of them at a width where none of them can. */
+export const FIT_MIN_COL_W = 116
 /** Below this a column has no room for the heading's stamps or for the
  *  cell's --sp-3 inset — both drop to a hairline inset instead. A
  *  property of a NARROW COLUMN, not of fit mode, so a column dragged
@@ -324,6 +343,38 @@ export function valueForField(
   if (isSystemFieldId(field.id)) return readCell(row, field.id)
   return values[field.id] ?? null
 }
+
+/** Widest a character of a painted value can be assumed NOT to be.
+ *
+ *  A lower bound, deliberately: 12.5px Inter averages about 6.2px per
+ *  character and the narrowest realistic average — an all-lowercase
+ *  string of `i`, `l`, `t` — still clears 5. Used only as a GATE, so
+ *  erring low means a title is offered on a cell that turned out to
+ *  fit, never withheld from one that is cut. */
+const NARROWEST_CHAR = 5.4
+
+/** Is this value likely to be cut by a column this wide?
+ *
+ *  DESIGN_CONTRACT §3 allows an ellipsis where a value genuinely cannot
+ *  fit — a register scrolls sideways and a column has a floor, so a
+ *  44-character value in a 116px column is the honest outcome, not a
+ *  defect. What is NOT allowed is the value being GONE: rule 10's
+ *  "anything that cannot be done says why, where it is" has the same
+ *  shape here, so a cut value carries the whole of itself as its
+ *  cell's title.
+ *
+ *  Estimated rather than measured because this is decided per CELL, on
+ *  every painted cell of every windowed row — a canvas measurement
+ *  there would be thousands per scroll. The measured path is the one
+ *  that decides the name column's WIDTH (`nameColumnWidth`), which
+ *  happens once per table. */
+export function mayBeClipped(text: string, columnWidth: number): boolean {
+  if (text === '') return false
+  return text.length * NARROWEST_CHAR > columnWidth - CELL_INSET_W
+}
+
+/** What a cell's two `--sp-3` insets and its right-hand rule cost. */
+export const CELL_INSET_W = 25
 
 /** Marks (red-pencil corner ticks) are keyed per cell, not per index. */
 export const markKey = (rowId: string, fieldId: string): string =>

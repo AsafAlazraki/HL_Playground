@@ -251,6 +251,13 @@ export function ViewStage({
                       type="button"
                       className={`shell-view-row${isOpen ? ' is-open' : ''}`}
                       aria-current={isOpen || undefined}
+                      /* THE WHOLE OF IT, WHEREVER IT IS CUT. The name
+                         wraps to two lines and the trail keeps one, so
+                         a long enough row is still clamped — and this
+                         list exists to tell two variants apart, which
+                         is a promise that cannot rest on the visible
+                         part alone. */
+                      title={e.trail === '' ? e.name : `${e.trail} ▸ ${e.name}`}
                       onClick={() => setWanted(e.id)}
                     >
                       {/* NOT `mono-label` on the trail. It is the dealer's

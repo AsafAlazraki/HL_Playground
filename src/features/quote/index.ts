@@ -52,23 +52,34 @@
       changes: `priceLevelsFor` already reads the field when it is
       present.
 
-   3. A `quotes` slice on the store + Dexie v3 + `ProjectExport`.
-      `quotes.ts` persists to localStorage today, which is enough to
-      survive a refresh and not enough to survive a machine. Wanted:
+   3. A `quotes` slice on the store + Dexie v3. `quotes.ts` persists
+      to localStorage today, which is enough to survive a refresh and
+      not enough to survive a machine. Wanted:
          quotes: Record<string, QuoteDef>
          createQuote / updateQuote / deleteQuote
-      plus QuoteDef[] in ProjectSnapshot, a `db.version(3)` table,
-      the three Promise.all lists in DexieProjectRepository, and
-      `quotes?: QuoteDef[]` in ProjectExport at EXPORT_VERSION 2
-      (with version 1 read as "valid, no quotes" rather than
-      rejected). Because every field on a line is a VALUE, this
-      costs the envelope validator a shape check and nothing else —
-      and it is the reason a quote can travel at all: a quote that
-      travelled as IDS and landed in a project with different price
-      data would silently re-price a signed deal.
-      NOTE: `replaceProject` must CLEAR quotes. It does not clear
-      `views` today, so a demo swap leaves stale ViewDefs that are
-      written straight back to Dexie. A quote must not copy that.
+      plus QuoteDef[] in ProjectSnapshot, a `db.version(3)` table and
+      the three Promise.all lists in DexieProjectRepository.
+
+      A QUOTE NOW TRAVELS IN A SAVED COPY, and that half is done —
+      not the way this note asked for, because `ProjectExport` is
+      orchestrator-owned. `src/features/io/envelope.ts` declares
+      `ProjectFile extends ProjectExport` with `quotes?: QuoteDef[]`,
+      normalises every field of every quote at the door and hands
+      them to `registerQuote`; `allQuotes()` here is the reader it
+      exports from. If `quotes?: QuoteDef[]` is ever added to
+      `ProjectExport` itself, `ProjectFile` becomes an alias and
+      nothing else moves. It is an OPTIONAL key inside version 2
+      rather than a version 3, because EXPORT_VERSION is in the same
+      owned file — and an absent key already means "a file with no
+      quotes", which is the tolerance v1 was given for the same
+      reason.
+      NOTE: a REPLACE deliberately does NOT clear quotes, and a CLEAR
+      SHEET does not either. A quote is a photograph of what was
+      offered on a day and does not depend on the sheet, so it
+      outlives one; both confirm sheets say so in a sentence. What a
+      replace does do is put the file's own quotes in BY ID, so
+      export → clear → import returns exactly the documents that
+      left and cannot double them.
 
    4. TWO READ-THROUGHS ON THE BOAT × MOTOR JOIN — what fitting
       the rigging kit costs. FIXED SINCE THIS WAS WRITTEN, and
@@ -126,6 +137,9 @@ export {
   useQuote,
   useQuotes,
   getQuote,
+  /* the non-hook list reader — what lets a quote leave the browser
+     inside a saved copy of the sheet. See §3 above. */
+  allQuotes,
   loadQuotes,
   persistNote,
   patchQuote,
@@ -185,7 +199,16 @@ export {
 export type { PricedAt, QuoteLevelChoice } from './pricing'
 
 /* -- THE ONE SUMMATION --------------------------------------- */
-export { quoteTotals, lineAmount, linesOf, looseLines, isEmptyQuote } from './totals'
+export {
+  quoteTotals,
+  lineAmount,
+  linesOf,
+  looseLines,
+  isEmptyQuote,
+  /* the gate on issuing: a typed price with no reason beside it */
+  unexplainedOverrides,
+  needsOverrideReason,
+} from './totals'
 export type { QuoteTotals, LineAmount } from './totals'
 
 /* -- the shapes (move these to model.ts) --------------------- */

@@ -745,9 +745,15 @@
 .tb-node .tb-toast {
   padding: 4px 4px 4px var(--sp-2);
 }
+/* 11px to match the node's density — but the CASE and the TRACKING
+   are the page's, not this node's. +0.1em is the uppercase caption's
+   tracking and `.tb-toast-text` is no longer uppercase anywhere (see
+   the note at the foot of table.css): a sentence in the UI face at
+   +0.1em reads as a ransom note. This selector out-specifies the base
+   rule, so it has to say so itself rather than inherit the fix. */
 .tb-node .tb-toast-text {
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
 }
 
 /* ============================================================

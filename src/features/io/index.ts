@@ -14,7 +14,7 @@ export type { EnvelopeRead, EnvelopeSummary } from './readEnvelope'
 /* the one write path out of the app, so anything that is about to
    replace the sheet can save a copy of it first */
 export { saveCopyOfSheet, nextCopyName, pad2 } from './saveCopy'
-export { sheetNow, sheetFacts } from './sheetNow'
+export { sheetNow, sheetFacts, quotesSurviveSentence } from './sheetNow'
 export type { SheetNow } from './sheetNow'
 export { applyReplace, applyMerge } from './apply'
 /* any loader that calls replaceProject must wrap itself in this, or the

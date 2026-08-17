@@ -5,6 +5,7 @@
 import { useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { sayUndoable } from '@/store/notes'
 import { ACCENT_KEYS, accentVar } from '@/types/model'
 import type { GroupDef } from '@/types/model'
 import { EntityDesigner } from '@/features/designer/EntityDesigner'
@@ -28,14 +29,17 @@ function ZoneCard({ group }: { group: GroupDef }) {
   const deleteGroup = useProjectStore((s) => s.deleteGroup)
   const cancelled = useRef(false)
 
+  /* NO CONFIRM, AND NOT ONLY BECAUSE THIS FILE IS OFF THE PATH.
+     `deleteGroup` records a step now — the frame goes and every table
+     it held loses its `groupId`, both of which are in the undo slice —
+     so this is rule 9's case exactly: a note with UNDO, not a dialog.
+     It is corrected here rather than left for the deliberate return,
+     because a `window.confirm` waiting in an unmounted file is the
+     kind of thing that ships the day somebody remounts it. */
   const onDelete = () => {
-    if (
-      window.confirm(
-        `Delete zone "${group.name}"?\n\nEntities inside stay on the sheet — only the frame is removed.`,
-      )
-    ) {
-      deleteGroup(group.id)
-    }
+    const name = group.name
+    deleteGroup(group.id)
+    sayUndoable(`Deleted the zone “${name}” — the tables inside it stayed on the sheet`)
   }
 
   return (

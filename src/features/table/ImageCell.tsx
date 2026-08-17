@@ -85,6 +85,7 @@ import {
   weightFor,
 } from '@/lib/icons'
 import {
+  heldAsLinkNote,
   hostIsClosed,
   imageHostOf,
   imageLabel,
@@ -429,18 +430,27 @@ function ThumbButton({
       type="button"
       tabIndex={-1}
       className={'tb-imgthumb' + (paint ? '' : ' tb-imgthumb-ref')}
+      /* ONE WORDING FOR THIS IDEA, EVERYWHERE. These two strings used
+         to invent their own — "held as a link, not shown here" for the
+         reader, "held as a link to <host>, so it is not shown here"
+         for the pointer — while the enlarged plate said a third thing
+         and the module tile a fourth. They all say `heldAsLinkNote`'s
+         sentence now, which also means the eye and the screen reader
+         are finally told the same thing here. */
       aria-label={
         `${fieldName} — picture ${index + 1} of ${count}` +
         (first ? ' (first, the one that shows)' : '') +
         `: ${imageLabel(img)}` +
-        (paint ? '' : ' — held as a link, not shown here')
+        (paint ? '' : `. ${heldAsLinkNote(img.src)}`)
       }
+      /* the note goes LAST and stands as its own sentence — spliced
+         into the middle it collided with the drag hint's full stop */
       title={
         imageLabel(img) +
-        (paint ? '' : ` — held as a link to ${imageHostOf(img.src)}, so it is not shown here`) +
         (first
           ? ' — first, so this is the one that shows. Drag another here to swap.'
-          : ' — drag it to the front to make it the one that shows.')
+          : ' — drag it to the front to make it the one that shows.') +
+        (paint ? '' : ` ${heldAsLinkNote(img.src)}`)
       }
       onClick={(e) => {
         /* first click selects the cell, a second one opens the
@@ -813,7 +823,13 @@ export interface LightboxState {
 
 /** The enlarged form of a picture we only hold the address of: the
  *  same hairline frame the thumbnail draws, at plate size, saying what
- *  it is and where it lives. Never a broken-image glyph. */
+ *  it is and why it is not shown. Never a broken-image glyph.
+ *
+ *  THE SENTENCE IS `heldAsLinkNote`'s, not this file's — the same words
+ *  the thumbnail's title and the module tile use, so a reader who has
+ *  met one recognises the others instead of counting three faults. And
+ *  the screen reader is told what the eye is told: the aria-label used
+ *  to stop at "held as a link" and drop the reason on the floor. */
 function ReferencePlate({
   image,
   kind,
@@ -821,18 +837,14 @@ function ReferencePlate({
   image: ImageRef
   kind?: TableKind
 }): JSX.Element {
-  const host = imageHostOf(image.src)
+  const note = heldAsLinkNote(image.src)
   return (
-    <div className="tb-missplate" role="img" aria-label={`${imageLabel(image)} — held as a link`}>
+    <div className="tb-missplate" role="img" aria-label={`${imageLabel(image)} — ${note}`}>
       <span className="tb-missplate-mark" aria-hidden="true">
         <KindMark kind={kind} size={ICON_SIZE.large} />
       </span>
       <span className="tb-missplate-name">{imageLabel(image)}</span>
-      <span className="tb-missplate-note">
-        {host === ''
-          ? 'Held as a link — the picture itself is not here.'
-          : `Held as a link — the picture itself lives at ${host}.`}
-      </span>
+      <span className="tb-missplate-note">{note}</span>
     </div>
   )
 }

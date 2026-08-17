@@ -36,14 +36,18 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
-import type { ProjectExport } from '@/types/model'
+import { isRetired } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { forgetSeedStamp } from '@/demos/seedStamp'
 import { ConfirmFacts, ConfirmSheet } from '@/features/designer/ConfirmSheet'
+import { useQuotes } from '@/features/quote'
 import { applyMerge, applyReplace } from './apply'
+/* the envelope this build reads and writes: ProjectExport plus the
+   quotes, declared beside the validator that narrows them */
+import type { ProjectFile } from './envelope'
 import { readEnvelopeFile, summariseEnvelope } from './readEnvelope'
 import { nextCopyName, pad2, saveCopyOfSheet } from './saveCopy'
-import { sheetFacts, sheetNow } from './sheetNow'
+import { quotesSurviveSentence, sheetFacts, sheetNow } from './sheetNow'
 import './io.css'
 
 /* ------------------------------------------------------------ */
@@ -96,11 +100,32 @@ function GlyphDrop() {
 }
 
 /* ------------------------------------------------------------ */
+/* the sentence about the documents that outlive the sheet        */
+/* ------------------------------------------------------------ */
+
+/** WHAT HAPPENS TO THE QUOTES, inside both destructive confirms.
+ *
+ *  The clear sheet's blast radius read "52 TABLES · 3,567 ROWS · 5
+ *  MODULES · 25 PAGES · 2 RULES" and never mentioned quotes — while not
+ *  clearing them, so afterwards the dock showed a quote count against
+ *  an empty sheet and nothing had ever said why. Erring safe was right;
+ *  saying nothing about it was not. The wording and the decision behind
+ *  it live in `sheetNow.ts`, so the two confirms cannot drift apart.
+ *
+ *  `ds-cs-line` is ConfirmSheet's own sentence class (designer.css) —
+ *  the same one EntityDesigner and FieldRow put inside this sheet. */
+function QuotesSurvive() {
+  const say = quotesSurviveSentence(sheetNow())
+  if (say === '') return null
+  return <p className="ds-cs-line">{say}</p>
+}
+
+/* ------------------------------------------------------------ */
 /* component                                                     */
 /* ------------------------------------------------------------ */
 
 interface Pending {
-  data: ProjectExport
+  data: ProjectFile
   fileName: string
 }
 
@@ -134,10 +159,30 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
   const rowCount = useProjectStore((s) =>
     Object.values(s.rowsByEntity).reduce((n, l) => n + l.length, 0),
   )
+  /* TWO SURFACES, TWO DEFENSIBLE FIGURES, AND NOW A SENTENCE BETWEEN
+     THEM. This card said "52 TABLES · 3,566 ROWS" while Home, the
+     surface whose toolbar opens this very panel, said 50 — with nothing
+     anywhere to reconcile them. Neither number was wrong. A copy really
+     does carry 52, and it MUST: `retired` was once dropped on the way
+     through the envelope, and exporting the seed and importing it back
+     resurrected "OBSOLETE Trailers — No Longer Available" as live
+     stock, which is the app offering a discontinued trailer to a
+     customer because a file went out and came back (envelope.ts). And
+     Home is right to withhold them, because a retired table is history
+     rather than stock and no surface a customer sees may offer it.
+     So the difference is named where the bigger number is printed. */
+  const retiredCount = useProjectStore(
+    (s) => Object.values(s.entities).filter((e) => isRetired(e)).length,
+  )
   /* the card must not promise more than the file holds, nor less: it
      said "Everything" for a long time while carrying none of this */
   const moduleCount = useProjectStore((s) => Object.keys(s.modules).length)
   const pageCount = useProjectStore((s) => Object.keys(s.views).length)
+  /* the quotes are not in the store — they are their own registry, and
+     `useQuotes` is its hook. Read the same way as everything else on
+     this panel, so the figure on the card is the figure the export
+     writes rather than a count taken at a different moment. */
+  const quoteCount = useQuotes().length
 
   const closeMenu = useCallback(() => {
     setOpen(false)
@@ -224,7 +269,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
 
   /* -- replace ----------------------------------------------- */
 
-  const doReplace = (data: ProjectExport) => {
+  const doReplace = (data: ProjectFile) => {
     applyReplace(data)
     closeMenu()
     showStamp('SHEET REPLACED')
@@ -269,9 +314,14 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
      that before they press it */
   const previewAlso = preview
     ? [
-        preview.modules > 0 ? plural(preview.modules, 'MODULE', 'MODULES') : '',
-        preview.pages > 0 ? plural(preview.pages, 'PAGE', 'PAGES') : '',
-        preview.rules > 0 ? plural(preview.rules, 'RULE', 'RULES') : '',
+        preview.modules > 0 ? plural(preview.modules, 'module', 'modules') : '',
+        preview.pages > 0 ? plural(preview.pages, 'page', 'pages') : '',
+        preview.rules > 0 ? plural(preview.rules, 'rule', 'rules') : '',
+        /* the documents in the file. A replace does NOT overwrite the
+           quotes already here — a file only ever adds documents, see
+           `restoreQuotes` — and naming them is how a person knows the
+           count on the dock is about to go up. */
+        preview.quotes > 0 ? plural(preview.quotes, 'quote', 'quotes') : '',
       ].filter(Boolean)
     : []
 
@@ -339,11 +389,9 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                     </div>
                   </div>
                   {previewAlso.length > 0 && (
-                    <div className="io-plate-also">ALSO — {previewAlso.join(' · ')}</div>
+                    <div className="io-plate-also">Also — {previewAlso.join(' · ')}</div>
                   )}
-                  <div className="io-plate-src">
-                    SOURCE — {pending.fileName}
-                  </div>
+                  <div className="io-plate-src">Source — {pending.fileName}</div>
                 </div>
                 <div className="io-plate-actions">
                   <button
@@ -381,13 +429,26 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                     >
                       <GlyphFullSet />
                       <span className="io-card-title">Everything</span>
-                      <span className="io-card-sub">Tables, rows, modules and pages</span>
+                      {/* THE TITLE SAYS EVERYTHING, SO THE FILE HAS TO
+                          HOLD EVERYTHING. This subtitle listed four
+                          things and the envelope carried those four: a
+                          dealer who pressed it, cleared the sheet and
+                          re-imported lost every quote they had raised,
+                          silently, under the word Everything. Quotes
+                          travel now (exportPayload.ts), so the sentence
+                          can say so — and the meta counts them beside
+                          the tables and rows, because a promise on a
+                          card is worth what the figure under it says. */}
+                      <span className="io-card-sub">
+                        Tables, rows, modules, pages and quotes
+                      </span>
                       <span className="io-card-meta">
-                        {plural(tableCount, 'TABLE', 'TABLES')} ·{' '}
-                        {plural(rowCount, 'ROW', 'ROWS')}
+                        {plural(tableCount, 'table', 'tables')} ·{' '}
+                        {plural(rowCount, 'row', 'rows')}
                         {moduleCount > 0
-                          ? ` · ${plural(moduleCount, 'MODULE', 'MODULES')}`
+                          ? ` · ${plural(moduleCount, 'module', 'modules')}`
                           : ''}
+                        {quoteCount > 0 ? ` · ${plural(quoteCount, 'quote', 'quotes')}` : ''}
                       </span>
                     </button>
                     <button
@@ -404,14 +465,33 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                           else. */}
                       <span className="io-card-sub">Tables and pages, no rows</span>
                       <span className="io-card-meta">
-                        {plural(tableCount, 'TABLE', 'TABLES')}
-                        {pageCount > 0 ? ` · ${plural(pageCount, 'PAGE', 'PAGES')}` : ''} · NO
-                        ROWS
+                        {plural(tableCount, 'table', 'tables')}
+                        {pageCount > 0 ? ` · ${plural(pageCount, 'page', 'pages')}` : ''}
+                        {/* quotes are neither structure nor rows — they
+                            are documents, and they travel in both
+                            copies. Counted here for the same reason: the
+                            meta line is the only place either card says
+                            what is really in the file. */}
+                        {quoteCount > 0 ? ` · ${plural(quoteCount, 'quote', 'quotes')}` : ''} · no
+                        rows
                       </span>
                     </button>
                   </div>
                   {blank && (
                     <p className="io-blank-note">NOTHING ON THE SHEET TO SAVE YET</p>
+                  )}
+                  {/* the one sentence that makes 52 and 50 the same
+                      answer. Derived from the store, so it disappears on
+                      a sheet with no history on it and can never quote a
+                      figure the cards above it do not. */}
+                  {!blank && retiredCount > 0 && (
+                    <p
+                      className="io-kept-note"
+                      title="A retired table is history rather than stock: it is kept so an old quote still opens, and no surface a customer sees offers it. A copy has to carry it — leaving it out would restore it as live stock."
+                    >
+                      {plural(retiredCount, 'retired table', 'retired tables')} included — Home
+                      counts the other {tableCount - retiredCount}
+                    </p>
                   )}
                 </section>
 
@@ -435,8 +515,8 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                     onDrop={onDrop}
                   >
                     <GlyphDrop />
-                    <span className="io-drop-main">DROP .JSON HERE</span>
-                    <span className="io-drop-sub">OR CLICK TO BROWSE</span>
+                    <span className="io-drop-main">Drop a .json copy here</span>
+                    <span className="io-drop-sub">or click to browse</span>
                   </button>
                   <input
                     ref={fileRef}
@@ -512,6 +592,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
           onCancel={() => setAsking(null)}
         >
           <ConfirmFacts items={sheetFacts(sheetNow())} />
+          <QuotesSurvive />
         </ConfirmSheet>
       ) : null}
 
@@ -538,6 +619,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
           onCancel={() => setAsking(null)}
         >
           <ConfirmFacts items={sheetFacts(sheetNow())} />
+          <QuotesSurvive />
         </ConfirmSheet>
       ) : null}
 

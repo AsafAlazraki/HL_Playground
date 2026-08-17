@@ -210,11 +210,20 @@
   outline-offset: 2px;
 }
 /* waiting, not broken — a sunken well until a name is typed, so it
-   still reads as the button rather than a second empty field */
+   still reads as the button rather than a second empty field.
+
+   THE WELL IS THE TRAP. `--paper-sunken` is the tint DESIGN_PRINCIPLES
+   names by name: `--ink-faint` is 4.72:1 on white and **4.22:1 here**,
+   measured on the live first screen. This is the first word anybody
+   ever reads in the product and it was under the floor. `--ink-soft` is
+   6.9:1 on the same well. The waiting is said by the well and by the
+   button having no fill of its own, not by an ink that cannot be read:
+   the same reasoning `.ob-alt` records fifteen lines down for choosing
+   `--ink-soft` over `--ink-faint`. */
 .ob-primary:disabled {
   background: var(--paper-sunken);
   border-color: var(--hairline);
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   cursor: default;
 }
 
@@ -663,4 +672,60 @@
   .ob-head {
     animation-delay: 0ms !important;
   }
+}
+
+/* ============================================================
+   UPPERCASE IS A LABEL STYLE — the first two screens.
+
+   DESIGN_PRINCIPLES §2 lists what uppercase may go on: a section
+   caption, a group caption, a mono stamp. It lists what it may never
+   go on: a table name, a row label, a column value, a BUTTON, a
+   SENTENCE. Onboarding was breaking two of the four, and it is the
+   first thing anybody sees.
+
+     .ob-mark-word   the product's own NAME, stamped "HELMLOGIC" at
+                     15px with +3px of tracking. A wordmark is a name;
+                     capitals cost it its word-shape and gain nothing
+                     a 600 weight was not already saying.
+     .ob-kind-label  "MARINE", "MOTORCYCLES & ATVS" — the NAME of the
+                     industry on the card a person is about to press.
+     .ob-primary     "CONTINUE" — a button.
+     .ob-back        "BACK" — a button, and the same word TableStage,
+                     DesignStage and every other stage now draw as
+                     "Back" in 12.5px Inter (DESIGN_CONTRACT §4).
+
+   KEPT UPPERCASE: `.ob-kind-stamp` ("COMING SOON") is a mono stamp,
+   which is one of the three sanctioned uses, and `.ob-note-label`
+   and the file-screen captions are captions.
+
+   TRACKING COMES DOWN WITH THE CASE. §3 — tracking runs negative as
+   size grows and returns to ~0 at reading size, and only the 11px
+   uppercase label takes it positive. +0.2em on a 15px wordmark and
+   +0.16em on a button label were both the label's tracking worn by
+   something that is not a label.
+   ============================================================ */
+.ob-mark-word {
+  text-transform: none;
+  letter-spacing: -0.004em;
+}
+.ob-kind-label {
+  text-transform: none;
+  letter-spacing: -0.006em;
+}
+/* the two buttons keep the mono face — they are the product's own
+   chrome, not the dealer's words — and give up only the capitals and
+   the label tracking */
+.ob-primary,
+.ob-back {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ob-primary {
+  /* it is the one primary on the screen, so it keeps a step of weight
+     over the quiet second answer beneath it */
+  font-size: 13px;
+  font-weight: 560;
 }

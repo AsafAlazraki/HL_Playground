@@ -61,8 +61,11 @@
   font-size: 11px;
   color: var(--ink-faint);
 }
+/* the same fault as `.vw-trail-sep` in views.css, and the same fix:
+   `--hairline-strong` is a 20%-alpha BORDER colour and measures 1.57:1
+   as text. A separator that cannot be seen is not a separator. */
 .rl-legend-sep {
-  color: var(--hairline-strong);
+  color: var(--ink-faint);
 }
 
 /* -- the entity stamp: WHOSE row a side reads ---------------- */
@@ -342,6 +345,16 @@
    trap, and this line names the open rule, so it is content. 6.84:1. */
 .rl-empty-meta {
   color: var(--ink-soft);
+}
+/* "so it is content" — the note above says it, and then left the line
+   uppercased. It reads "MOTOR FITMENT — HIGHFIELD · 3 NODES": the rule's
+   own NAME, which the dealer typed, and a count. Uppercase is a label
+   style. `.rl-empty-title` above it stays capitals because it IS the
+   label — the 11px empty-state eyebrow DESIGN_CONTRACT §6 draws. */
+.rl-empty-meta {
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ------------------------------------------------------------ */
@@ -903,15 +916,35 @@
   cursor: grabbing;
   transform: none;
 }
-/* a closed chip stays focusable (aria-disabled) so the tooltip can say why */
+/* a closed chip stays focusable (aria-disabled) so the tooltip can say why
+
+   AND ITS WORDS HAVE TO BE READ. `opacity: 0.42` on the whole chip put
+   its tag at **1.87:1** and its label at **2.78:1** — measured on the
+   live Fitment canvas — which is below `--fg-quaternary`'s 2.8:1 line
+   that may never carry meaning. A palette of eight node kinds where the
+   closed ones cannot be read is a palette that does not tell you what
+   this rule is missing.
+   So the alpha goes and the closed state is said structurally: the
+   plate sinks to `--paper-sunken`, it gives up the 2px kind-coloured
+   underline that marks a chip you can drag, and both lines step to
+   `--ink-soft` (6.9:1 on the sunken plate) from `--rl-ink-chrome` and
+   `--ink`. Legible, and unmistakably not draggable. */
 .rl-chipbtn[aria-disabled='true'],
 .rl-chipbtn:disabled {
-  opacity: 0.42;
+  opacity: 1;
   cursor: not-allowed;
+  background: var(--paper-sunken);
+  border-bottom-color: var(--hairline);
+}
+.rl-chipbtn[aria-disabled='true'] .rl-chipbtn-tag,
+.rl-chipbtn[aria-disabled='true'] .rl-chipbtn-label,
+.rl-chipbtn:disabled .rl-chipbtn-tag,
+.rl-chipbtn:disabled .rl-chipbtn-label {
+  color: var(--ink-soft);
 }
 .rl-chipbtn[aria-disabled='true']:hover,
 .rl-chipbtn:disabled:hover {
-  background: var(--paper-high);
+  background: var(--paper-sunken);
   transform: none;
 }
 

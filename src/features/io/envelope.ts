@@ -113,9 +113,20 @@ import {
 } from '@/types/model'
 import { isStorableSource } from '@/lib/imageSources'
 import { newId, nowIso } from '@/lib/id'
+/* TYPE-ONLY, so the validator still depends on the model and nothing
+   else at runtime. The quote shapes live in the quote feature because
+   `@/types/model` is orchestrator-owned — see `ProjectFile` below. */
+import type {
+  AdjustmentKind,
+  FrozenLevel,
+  QuoteAdjustment,
+  QuoteDef,
+  QuoteLine,
+  QuoteSection,
+} from '@/features/quote'
 
 export type Validated =
-  | { ok: true; data: ProjectExport }
+  | { ok: true; data: ProjectFile }
   | { ok: false; error: string }
 
 /* ------------------------------------------------------------ */
@@ -915,6 +926,305 @@ function normConstraint(raw: unknown, stamp: string): ConstraintDef | undefined 
   }
 }
 
+/* ============================================================
+   THE QUOTES — the documents that were given to customers.
+
+   WHY THEY ARE IN THE FILE AT ALL. "Save a copy → Everything" carried
+   tables, rows, modules, pages and rules and no quotes, under a title
+   that says Everything, with a subtitle that listed four things and
+   named the absence nowhere. A dealer who exported, cleared the sheet
+   and re-imported lost every quote they had raised, silently — and
+   Clear Sheet is the documented way to restore a backup, so that is
+   not a hypothetical path, it is the recommended one.
+
+   WHY A QUOTE MAY CROSS A FILE BOUNDARY AT ALL, when a module points
+   at a table and a page points at a row: because a quote points at
+   NOTHING. Every field on every line is a value — the number, the
+   column it was read from, the level, the join's own facts, the
+   photograph — so writing one out and reading it back cannot change a
+   figure on it. That is not a happy accident, it is the property the
+   whole feature is built on ("a quote given on Monday says the same
+   number on Friday"). A quote that travelled as ids and landed in a
+   project with different price data would silently re-price a signed
+   deal, which is exactly why this validator resolves nothing.
+
+   AND SO NOTHING HERE IS RESOLVED AGAINST THE TABLES IN THE FILE.
+   `viewId`, `rootTableId`, `rootRowId`, a line's `entityId` / `rowId`
+   are kept as they are, checked only for id SAFETY, because they are
+   used for exactly two acts — "open this row on the sheet" and "make
+   another quote like this one" — and both already answer with a
+   sentence when the row has gone (`mintQuoteFromView` returns null).
+   Dropping a quote because the boat it quoted is no longer sold would
+   destroy the record of what was quoted, which is the one question a
+   quote exists to answer.
+
+   THE ONE RULE ABOUT MONEY: NOTHING DROPS A NUMBER. A line or an
+   adjustment that is unreadable in some detail arrives with that
+   detail blank; it is never omitted, because `quoteTotals` sums the
+   lines and the adjustments, so omitting one silently changes the
+   total on a document a customer is holding. An unknown adjustment
+   KIND becomes 'line' — the neutral kind, which prints no qualifier —
+   and its signed amount is carried exactly as the file holds it. It
+   is deliberately NOT re-signed from the kind: re-deriving the sign
+   would move a total on import.
+
+   VERSION. This is an OPTIONAL key inside version 2, not a version 3.
+   `EXPORT_VERSION` lives in `@/types/model`, which this workflow may
+   not edit — and the tolerance is the right one anyway and already
+   precedented twice in this file: a v2 file written before quotes
+   travelled simply has no `quotes` key and reads as a project with no
+   quotes, exactly as a v1 file reads as one with no modules or pages.
+   A file from a genuinely FUTURE version is still refused by the
+   version check above.
+   ============================================================ */
+
+/** The envelope as this build writes and reads it.
+ *
+ *  `ProjectExport` is orchestrator-owned and has no `quotes` key, so
+ *  the key is declared here, where the validator that has to narrow it
+ *  lives. It EXTENDS rather than replaces: every existing function
+ *  that takes a `ProjectExport` keeps working unchanged, and if
+ *  `quotes?: QuoteDef[]` is ever added to the model this becomes an
+ *  alias and nothing else in the app moves. */
+export interface ProjectFile extends ProjectExport {
+  quotes?: QuoteDef[]
+}
+
+/** A money figure, or the REAL state "not priced here". Never 0 by
+ *  accident: `showZeros` on the workbook's own quote sheet renders an
+ *  unmatched lookup as blank, and blank read as free is the class of
+ *  fault this feature was written against. */
+const moneyOrNull = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isFinite(v) ? v : null
+
+/** `{label, value}` pairs — a subject's specs, a line's pair facts. A
+ *  pair with an empty half is dropped rather than kept: it draws as a
+ *  gap under the line name, which reads as a missing rigging kit. */
+function normFacts(raw: unknown): Array<{ label: string; value: string }> {
+  const out: Array<{ label: string; value: string }> = []
+  for (const f of arr(raw)) {
+    if (!isRecord(f)) continue
+    const label = str(f.label)?.trim()
+    const value = str(f.value)?.trim()
+    if (!label || !value) continue
+    out.push({ label, value })
+  }
+  return out
+}
+
+/** Every rung this line carries, which is what makes a level change
+ *  arithmetic on frozen data. A rung with no key cannot be chosen and
+ *  a repeated key would shadow itself in `priceAtLevel`, so both go;
+ *  the LABEL falls back to the key because an unlabelled chip draws as
+ *  an empty box, and echoing the file's own key invents nothing. */
+function normFrozenLevels(raw: unknown): FrozenLevel[] {
+  const out: FrozenLevel[] = []
+  const seen = new Set<string>()
+  for (const l of arr(raw)) {
+    if (!isRecord(l)) continue
+    const key = str(l.key)?.trim()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push({
+      key,
+      label: str(l.label)?.trim() || key,
+      fieldId: safeIdOr(l.fieldId, ''),
+      value: moneyOrNull(l.value),
+      scope: l.scope === 'line' ? 'line' : 'quote',
+    })
+  }
+  return out
+}
+
+/** One frozen line. Kept even when parts of it are unreadable — see
+ *  the rule about money above. Only a line with no usable ID is
+ *  dropped, and then because `sections` address lines by id and two
+ *  lines sharing one would shadow each other in every lookup. */
+function normQuoteLine(raw: unknown, seen: Set<string>): QuoteLine | undefined {
+  if (!isRecord(raw) || !isSafeId(raw.id) || seen.has(raw.id)) return undefined
+  seen.add(raw.id)
+
+  const qtyRaw = raw.qty
+  /* the same floor `setQty` keeps: a line on a quote is at least one
+     of something, and 0 would silently zero its amount */
+  const qty =
+    typeof qtyRaw === 'number' && Number.isFinite(qtyRaw) && qtyRaw > 0 ? Math.floor(qtyRaw) : 1
+
+  const levelKey = str(raw.levelKey)?.trim() ?? ''
+  const pairFacts = normFacts(raw.pairFacts)
+  const sourceNote = str(raw.sourceNote)?.trim()
+  const overridePrice =
+    typeof raw.overridePrice === 'number' && Number.isFinite(raw.overridePrice)
+      ? raw.overridePrice
+      : undefined
+  /* a reason without a price is not a reason for anything, and the
+     document reads `overridePrice` to decide whether to print it */
+  const overrideReason = overridePrice === undefined ? undefined : str(raw.overrideReason)
+
+  return {
+    id: raw.id,
+    entityId: safeIdOr(raw.entityId, ''),
+    rowId: safeIdOr(raw.rowId, ''),
+    ...(isSafeId(raw.pairRowId) ? { pairRowId: raw.pairRowId } : {}),
+    label: str(raw.label) ?? '',
+    qty,
+    unitPrice: moneyOrNull(raw.unitPrice),
+    priceFieldId: isSafeId(raw.priceFieldId) ? raw.priceFieldId : null,
+    priceColumnName: str(raw.priceColumnName) ?? null,
+    levelKey,
+    levelResolved: str(raw.levelResolved)?.trim() || levelKey,
+    levels: normFrozenLevels(raw.levels),
+    ...(raw.pinnedLevel === true ? { pinnedLevel: true } : {}),
+    ...(sourceNote ? { sourceNote } : {}),
+    ...(pairFacts.length ? { pairFacts } : {}),
+    ...(raw.recommended === true ? { recommended: true } : {}),
+    /* THE SAME SECURITY BOUNDARY AS A ROW'S PICTURE CELL: a line's
+       photograph goes straight into an `<img src>` on a document, so
+       the scheme allow-list decides, not the file. One bad address
+       costs one photograph and nothing else. */
+    ...(isImageRef(raw.image) ? { image: raw.image } : {}),
+    ...(overridePrice !== undefined ? { overridePrice } : {}),
+    ...(overrideReason !== undefined ? { overrideReason } : {}),
+  }
+}
+
+/** The groups the document prints under, in the file's own order. A
+ *  section addresses lines by id, so ids that did not arrive are
+ *  dropped from it — the line is gone either way, and a heading over
+ *  nothing is better than a lookup that returns undefined. */
+function normQuoteSections(raw: unknown, lineIds: ReadonlySet<string>): QuoteSection[] {
+  const out: QuoteSection[] = []
+  const seen = new Set<string>()
+  for (const s of arr(raw)) {
+    if (!isRecord(s)) continue
+    const blockId = safeIdOr(s.blockId, '')
+    /* the block id is a React key and `SUBJECT_BLOCK` is looked up by
+       its literal value, so a blank or repeated one is not usable */
+    if (blockId === '' || seen.has(blockId)) continue
+    seen.add(blockId)
+    const picked = num(s.pickedCount, -1)
+    const held = num(s.heldCount, -1)
+    out.push({
+      blockId,
+      tableId: safeIdOr(s.tableId, ''),
+      title: str(s.title) ?? '',
+      lineIds: arr(s.lineIds).filter((id): id is string => typeof id === 'string' && lineIds.has(id)),
+      ...(picked >= 0 ? { pickedCount: Math.floor(picked) } : {}),
+      ...(held >= 0 ? { heldCount: Math.floor(held) } : {}),
+    })
+  }
+  return out
+}
+
+/** The discounts, rebates, trade-ins and typed lines, with their signs
+ *  exactly as the file carries them — see the rule about money above.
+ *  An unknown kind becomes 'line', which is the kind that prints no
+ *  qualifier of its own. */
+function normAdjustments(raw: unknown): QuoteAdjustment[] {
+  const out: QuoteAdjustment[] = []
+  const seen = new Set<string>()
+  for (const a of arr(raw)) {
+    if (!isRecord(a) || !isSafeId(a.id) || seen.has(a.id)) continue
+    seen.add(a.id)
+    const kind: AdjustmentKind =
+      a.kind === 'discount' || a.kind === 'rebate' || a.kind === 'tradeIn' ? a.kind : 'line'
+    const note = str(a.note)?.trim()
+    out.push({
+      id: a.id,
+      kind,
+      label: str(a.label) ?? '',
+      amount: typeof a.amount === 'number' && Number.isFinite(a.amount) ? a.amount : 0,
+      ...(note ? { note } : {}),
+    })
+  }
+  return out
+}
+
+/** One document.
+ *
+ *  `state` IS READ THE SAFE WAY ROUND: only an explicit 'draft' is a
+ *  draft, and anything else is treated as GIVEN TO THE CUSTOMER. A
+ *  damaged state read as a draft would reopen a document somebody has
+ *  already handed over for editing behind their back; read as issued
+ *  it costs one press of "Make a new version", which is a repair a
+ *  person can make and the page explains. Same discipline as
+ *  `normConstraint` refusing to guess between `implies` and
+ *  `excludes`. */
+function normQuote(raw: unknown, stamp: string): QuoteDef | undefined {
+  if (!isRecord(raw) || !isSafeId(raw.id)) return undefined
+
+  const lines: QuoteLine[] = []
+  const seenLines = new Set<string>()
+  for (const l of arr(raw.lines)) {
+    const line = normQuoteLine(l, seenLines)
+    if (line) lines.push(line)
+  }
+
+  const customer = isRecord(raw.customer) ? raw.customer : {}
+  const contact = arr(customer.contact)
+    .filter((c): c is string => typeof c === 'string')
+    .map((c) => c.trim())
+    .filter((c) => c !== '')
+
+  const taxRate =
+    typeof raw.taxRate === 'number' && Number.isFinite(raw.taxRate) ? raw.taxRate : undefined
+  const preparedBy = str(raw.preparedBy)?.trim()
+  const organisation = str(raw.organisation)?.trim()
+  const note = str(raw.note)?.trim()
+  const issuedAt = str(raw.issuedAt)?.trim()
+  const levelKey = str(raw.levelKey)?.trim() ?? ''
+
+  return {
+    id: raw.id,
+    /* the document's own number, printed on the plate and in the
+       footer. Whatever the file says, never generated here: a
+       reference this app minted for a document it did not mint is a
+       fabricated document number. */
+    reference: str(raw.reference)?.trim() ?? '',
+    state: raw.state === 'draft' ? 'draft' : 'issued',
+    viewId: safeIdOr(raw.viewId, ''),
+    rootTableId: safeIdOr(raw.rootTableId, ''),
+    rootRowId: safeIdOr(raw.rootRowId, ''),
+    subjectLabel: str(raw.subjectLabel) ?? '',
+    subjectSpecs: normFacts(raw.subjectSpecs),
+    ...(isImageRef(raw.subjectImage) ? { subjectImage: raw.subjectImage } : {}),
+    sections: normQuoteSections(raw.sections, new Set(lines.map((l) => l.id))),
+    lines,
+    adjustments: normAdjustments(raw.adjustments),
+    levelKey,
+    ...(taxRate !== undefined ? { taxRate } : {}),
+    customer: {
+      name: str(customer.name) ?? '',
+      ...(contact.length ? { contact } : {}),
+    },
+    ...(preparedBy ? { preparedBy } : {}),
+    ...(organisation ? { organisation } : {}),
+    ...(note ? { note } : {}),
+    /* ONE LINK, not a chain — and it is not resolved against the
+       quotes in the file, because a superseded document may honestly
+       have stayed behind in the browser it was written in */
+    ...(isSafeId(raw.supersedesId) ? { supersedesId: raw.supersedesId } : {}),
+    ...(issuedAt ? { issuedAt } : {}),
+    createdAt: str(raw.createdAt) ?? stamp,
+    updatedAt: str(raw.updatedAt) ?? stamp,
+  }
+}
+
+/** Every quote in the file, in its own order. A repeated id is
+ *  dropped: quote ids key the registry, so the second would replace
+ *  the first and one of the two documents would vanish on import. */
+export function normQuotes(raw: unknown, stamp: string): QuoteDef[] {
+  const out: QuoteDef[] = []
+  const seen = new Set<string>()
+  for (const q of arr(raw)) {
+    const quote = normQuote(q, stamp)
+    if (!quote || seen.has(quote.id)) continue
+    seen.add(quote.id)
+    out.push(quote)
+  }
+  return out
+}
+
 /* ------------------------------------------------------------ */
 /* validateEnvelope                                              */
 /* ------------------------------------------------------------ */
@@ -953,6 +1263,8 @@ export function validateEnvelope(raw: unknown): Validated {
     return { ok: false, error: 'FILE IS DAMAGED — BAD MODULES BLOCK' }
   if (raw.constraints !== undefined && !Array.isArray(raw.constraints))
     return { ok: false, error: 'FILE IS DAMAGED — BAD RULES BLOCK' }
+  if (raw.quotes !== undefined && !Array.isArray(raw.quotes))
+    return { ok: false, error: 'FILE IS DAMAGED — BAD QUOTES BLOCK' }
 
   const stamp = nowIso()
 
@@ -1187,8 +1499,16 @@ export function validateEnvelope(raw: unknown): Validated {
     constraints.push(constraint)
   }
 
+  /* THE DOCUMENTS, and they are in NO id namespace but their own. A
+     quote id keys the quote registry, never a store record, a Dexie
+     row or a run's hit counter — so it cannot collide with a table or a
+     row, and `seenIds` is deliberately not consulted. Repeats WITHIN
+     the quotes are dropped by `normQuotes`, which is the collision that
+     could really cost somebody a document. */
+  const quotes = normQuotes(raw.quotes, stamp)
+
   const projectRaw = isRecord(raw.project) ? raw.project : {}
-  const data: ProjectExport = {
+  const data: ProjectFile = {
     kind: EXPORT_KIND,
     version: EXPORT_VERSION,
     exportedAt: str(raw.exportedAt) ?? '',
@@ -1210,6 +1530,7 @@ export function validateEnvelope(raw: unknown): Validated {
     ...(views.length ? { views } : {}),
     ...(modules.length ? { modules } : {}),
     ...(constraints.length ? { constraints } : {}),
+    ...(quotes.length ? { quotes } : {}),
   }
   return { ok: true, data }
 }

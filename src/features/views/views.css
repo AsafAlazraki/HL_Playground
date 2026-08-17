@@ -113,8 +113,20 @@
   align-items: center;
   gap: 6px;
 }
+/* A HAIRLINE TOKEN IS NOT AN INK. `--hairline-strong` is
+   rgba(9,12,18,.20) and it is drawn as a BORDER everywhere else in the
+   app, where 20% of the ink over white is exactly the weight a 1px
+   rule wants. Set on TEXT it measured **1.57:1** at 11px/600 on the
+   live joins page — invisible, so the trail read "Sport SP560" with a
+   gap where the step should be, and the reader has to guess whether
+   "Sport" and "SP560" are one value or two.
+   The separator carries structure, so it takes the ink ramp's own
+   metadata tier rather than a border colour: `--ink-faint` is 4.57:1 on
+   this page's `--paper` ground and it is the floor for anything a
+   person must read. It still sits a tier under the values it divides,
+   which are `--ink`. */
 .vw-trail-sep {
-  color: var(--hairline-strong);
+  color: var(--ink-faint);
 }
 
 /* the one display moment on the page — the scale's top step.
@@ -563,12 +575,22 @@
   background: var(--paper-sunken);
 }
 
+/* A NAME WRAPS RATHER THAN BEING CUT — DESIGN_CONTRACT §3, and this row
+   is where the rule pays. Measured at 1280: "Mech Rigging Kit - 6X3
+   Concealed Mount w CL5 Gauge Kit, 5m Harness" wants 579px and had 444,
+   so two kits differing only in their gauge kit read as one row twice.
+   The line's `min-height: 34px` grows for the second line, the value
+   tracks beside it are unaffected, and the `title` on the span keeps the
+   whole string reachable for the third line nobody gets. */
 .vw-row-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
   font-size: 13.5px;
+  line-height: 1.3;
   color: var(--ink);
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .vw-cell {

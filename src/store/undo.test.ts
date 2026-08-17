@@ -190,7 +190,146 @@ describe('undo — columns and tables', () => {
   })
 })
 
+/* ============================================================
+   THE RING THE CONFIRMS BROUGHT IN.
+
+   Four `window.confirm` calls were replaced by notes with UNDO on
+   them, and each of those notes is a promise this file has to keep:
+   delete a rule, delete a step, delete a wire, delete a zone. If any
+   one of them stops recording, the app goes on offering UNDO for an
+   act it can no longer take back — which is worse than the native
+   dialog it replaced, because the dialog at least did not lie.
+
+   The line is still DESTRUCTION ONLY, so the tests below the next
+   heading pin the other half: naming a rule, switching one off,
+   configuring a step and dragging a plate are all still not steps.
+   ============================================================ */
+describe('undo — the destructive acts on rules and zones', () => {
+  it('brings a deleted rule back whole, with every step and line on it', async () => {
+    const rule = store().createRule('e-boats', 'Trailer fitment — Highfield')
+    const start = rule.nodes[0]
+    const match = store().addRuleNode(rule.id, 'match', { x: 300, y: 60 })
+    expect(match).not.toBeNull()
+    store().connectRuleNodes(rule.id, { source: start.id, target: match!.id })
+    await turn()
+
+    const before = store().rules[rule.id]
+    expect(before.nodes).toHaveLength(2)
+    expect(before.edges).toHaveLength(1)
+
+    store().deleteRule(rule.id)
+    await turn()
+    expect(store().rules[rule.id]).toBeUndefined()
+
+    expect(store().undo()).toBe('Rule deleted · Trailer fitment — Highfield')
+    const after = store().rules[rule.id]
+    expect(after.nodes).toHaveLength(2)
+    expect(after.edges).toHaveLength(1)
+  })
+
+  it('brings a deleted step back, and the lines that went with it', async () => {
+    const rule = store().createRule('e-boats')
+    const start = rule.nodes[0]
+    const match = store().addRuleNode(rule.id, 'match', { x: 300, y: 60 })
+    store().connectRuleNodes(rule.id, { source: start.id, target: match!.id })
+    await turn()
+
+    store().deleteRuleNode(rule.id, match!.id)
+    await turn()
+    expect(store().rules[rule.id].nodes).toHaveLength(1)
+    expect(store().rules[rule.id].edges).toHaveLength(0)
+
+    expect(store().undo()).toBe(`Step deleted · ${rule.name}`)
+    expect(store().rules[rule.id].nodes).toHaveLength(2)
+    expect(store().rules[rule.id].edges).toHaveLength(1)
+  })
+
+  it('folds a step and its wires into ONE entry, not one per removal', async () => {
+    const rule = store().createRule('e-boats')
+    const start = rule.nodes[0]
+    const match = store().addRuleNode(rule.id, 'match', { x: 300, y: 60 })
+    store().connectRuleNodes(rule.id, { source: start.id, target: match!.id })
+    await turn()
+    const depth = store().past.length
+
+    /* what React Flow does in one gesture: the node, then its edges */
+    const edgeId = store().rules[rule.id].edges[0].id
+    store().deleteRuleNode(rule.id, match!.id)
+    store().deleteRuleEdge(rule.id, edgeId)
+    await turn()
+
+    expect(store().past).toHaveLength(depth + 1)
+    /* and the plate outranks the wire in the words, so a person who
+       deleted a step is not told about lines they never aimed at */
+    expect(store().past[store().past.length - 1].label).toBe(`Step deleted · ${rule.name}`)
+  })
+
+  it('brings a cut line back on its own', async () => {
+    const rule = store().createRule('e-boats')
+    const start = rule.nodes[0]
+    const match = store().addRuleNode(rule.id, 'match', { x: 300, y: 60 })
+    store().connectRuleNodes(rule.id, { source: start.id, target: match!.id })
+    await turn()
+
+    const edgeId = store().rules[rule.id].edges[0].id
+    store().deleteRuleEdge(rule.id, edgeId)
+    await turn()
+    expect(store().rules[rule.id].edges).toHaveLength(0)
+
+    expect(store().undo()).toBe(`Line deleted · ${rule.name}`)
+    expect(store().rules[rule.id].edges).toHaveLength(1)
+  })
+
+  it('brings a deleted zone back with its tables still in it', async () => {
+    const zone = store().createGroup({ name: 'Trailers' })
+    store().assignEntityToGroup('e-boats', zone.id)
+    await turn()
+    expect(store().entities['e-boats'].groupId).toBe(zone.id)
+
+    store().deleteGroup(zone.id)
+    await turn()
+    expect(store().groups[zone.id]).toBeUndefined()
+    /* the frame going is visible; the table losing its groupId is not */
+    expect(store().entities['e-boats'].groupId).toBeUndefined()
+
+    expect(store().undo()).toBe('Zone deleted · Trailers')
+    expect(store().groups[zone.id]).toBeDefined()
+    expect(store().entities['e-boats'].groupId).toBe(zone.id)
+  })
+
+  it('records nothing when the subject was already gone', async () => {
+    const depth = store().past.length
+    store().deleteRule('no-such-rule')
+    store().deleteRuleNode('no-such-rule', 'no-such-node')
+    store().deleteRuleEdge('no-such-rule', 'no-such-edge')
+    store().deleteGroup('no-such-zone')
+    await turn()
+    expect(store().past).toHaveLength(depth)
+  })
+})
+
 describe('what history deliberately ignores', () => {
+  it('does not record a rule being renamed or switched off', async () => {
+    const rule = store().createRule('e-boats')
+    await turn()
+    const depth = store().past.length
+    store().updateRule(rule.id, { name: 'Renamed' })
+    store().updateRule(rule.id, { enabled: false })
+    await turn()
+    expect(store().past).toHaveLength(depth)
+  })
+
+  it('does not record where a step or a zone sits', async () => {
+    const rule = store().createRule('e-boats')
+    const zone = store().createGroup()
+    await turn()
+    const depth = store().past.length
+    store().moveRuleNode(rule.id, rule.nodes[0].id, { x: 500, y: 500 })
+    store().updateGroup(zone.id, { position: { x: 700, y: 700 } })
+    await turn()
+    expect(store().past).toHaveLength(depth)
+  })
+
   it('does not record where a table sits on the drawing', async () => {
     store().moveEntity('e-boats', { x: 900, y: 400 })
     await turn()

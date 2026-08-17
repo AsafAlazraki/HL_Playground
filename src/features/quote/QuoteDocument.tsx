@@ -251,10 +251,21 @@ function DocLine({ line }: { line: QuoteLine }): ReactElement {
             ))}
           </span>
         ) : null}
-        {overridden && line.overrideReason ? (
+        {/* AN OVERRIDE ALWAYS SAYS SOMETHING, EVEN WHEN NOBODY WROTE A
+            REASON. A draft can no longer be issued with an unexplained
+            override — `issueQuote` refuses it and the foot bar says why
+            — but two documents can still reach this line: one issued
+            before that gate existed, and one that arrived inside an
+            imported file. For those, printing nothing would present a
+            price somebody typed as though it came from the price file.
+            So the absence is printed as an absence. */}
+        {overridden ? (
           <span className="qt-doc-detail">
             <span className="qt-doc-fact">
-              <span className="qt-doc-fact-lab">override</span> {line.overrideReason}
+              <span className="qt-doc-fact-lab">override</span>{' '}
+              {(line.overrideReason ?? '').trim() === ''
+                ? 'no reason given'
+                : line.overrideReason}
             </span>
           </span>
         ) : null}

@@ -200,8 +200,11 @@ export function pinWidthOf(
    ============================================================ */
 
 /** Narrowest a folded band's chip is ever drawn. Eleven of these plus
- *  the gutter and the locked identifier is what a 1280px screen has
- *  room for, which is the smallest window this is promised on. */
+ *  the row-number gutter is what a 1280px screen has room for, which is
+ *  the smallest window this is promised on. (It used to have to make
+ *  room for a locked UID column in front of the reader's own as well;
+ *  the register stopped drawing that — see useTableData.ts — so the
+ *  floor now has more slack than it was set with, not less.) */
 export const FOLD_MIN_W = 64
 
 /** The width every folded chip is drawn at, given the window. Pure —
@@ -393,21 +396,54 @@ export function windowColumns(
  *  chip — those keep the width `foldWidthFor` gave them, because
  *  folding a band is a decision the reader already made and fitting
  *  must not undo it.
- *  The locked identifier keeps its width too: FIT must never squeeze
- *  the one column that says WHICH row you are looking at.
+ *  A system column, if one is ever drawn again, keeps its width too.
+ *  The register draws none today: the column that says WHICH row you
+ *  are looking at is the gutter, and the gutter is already fixed. The
+ *  branch stays because `visibleFields` still declares one and this
+ *  must not start squeezing it if anything takes the model up on it.
+ *
+ *  AND THE FROZEN NAME COLUMN, which is the fourth and was the one
+ *  this function had already promised in words and never delivered. The
+ *  note above used to say "FIT must never squeeze the one column that
+ *  says WHICH row you are looking at" while the code exempted only a
+ *  system column — and the register draws none. So the display column
+ *  went into the share with the rest, and one press of FIT turned every
+ *  boat on Stacer into "Stacer - 4…". A row without a readable name is
+ *  not a row you can price. It is exempt now, by id, from the caller
+ *  that already knows which column the grid freezes.
  *
  *  What is left is shared out equally, and the remainder is spent one
  *  pixel at a time from the left so the sheet's right edge lands
  *  exactly on the window's rather than a few pixels inside it.
  *
- *  Returns widths for the flexible columns only — merge it OVER the
- *  reader's own widths, never in place of them, so one press back
- *  restores what they had rather than recomputing defaults. */
-export function fitColumnWidths(
+ *  `FIT_MIN_COL_W` is the contract's 116px floor and the share stops
+ *  there: when the columns cannot all fit above it, the sheet stays
+ *  wider than the window and scrolls. `fitsWindow` reports which of the
+ *  two happened, so the caller can say so.
+ *
+ *  `widths` is for the flexible columns only — merge it OVER the
+ *  reader's own, never in place of them, so one press back is a delete
+ *  and restores what they had rather than recomputing defaults. */
+export interface FitReport {
+  /** widths for the flexible columns only, to be merged OVER the
+   *  reader's own */
+  widths: Record<string, number>
+  /** the whole sheet now lies inside the window. False = the 116px
+   *  floor bound and the register still scrolls sideways. */
+  fitsWindow: boolean
+  /** how many of the drawn columns are on screen after the fit —
+   *  every one of them when `fitsWindow` */
+  onScreen: number
+  /** how many columns took part in the share */
+  shared: number
+}
+
+export function fitColumns(
   slots: readonly ColumnSlot[],
   widths: Record<string, number>,
   available: number,
-): Record<string, number> {
+  pinFieldId?: string,
+): FitReport {
   const foldW = foldWidthFor(slots, widths, available)
   let fixed = GUTTER_W + ADD_COL_W
   const flex: FieldDef[] = []
@@ -416,13 +452,15 @@ export function fitColumnWidths(
       fixed += foldW
       continue
     }
-    if (isSystemFieldId(slot.field.id)) {
+    if (isSystemFieldId(slot.field.id) || slot.field.id === pinFieldId) {
       fixed += widthOf(slot.field, widths)
       continue
     }
     flex.push(slot.field)
   }
-  if (flex.length === 0) return {}
+  if (flex.length === 0) {
+    return { widths: {}, fitsWindow: fixed <= available, onScreen: 0, shared: 0 }
+  }
 
   const room = available - fixed
   const per = Math.floor(room / flex.length)
@@ -437,7 +475,13 @@ export function fitColumnWidths(
     spare -= extra
     out[f.id] = each + extra
   }
-  return out
+  /* how much of the sheet the window holds, counting only the columns
+     that were shared out — the fixed part is on screen by definition */
+  const fitsWindow = each * flex.length <= room
+  const onScreen = fitsWindow
+    ? flex.length
+    : Math.max(0, Math.floor(Math.max(0, room) / each))
+  return { widths: out, fitsWindow, onScreen, shared: flex.length }
 }
 
 /* ---------------------------------------------------------- */

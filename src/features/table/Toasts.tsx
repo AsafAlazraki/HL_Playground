@@ -11,19 +11,39 @@ import { CrossGlyph } from './glyphs'
 
 export type ToastTone = 'info' | 'warn'
 
+/** THE OTHER HALF OF RULE 9. "If an act is undoable it gets a toast
+ *  with UNDO, not a dialog" needs somewhere on a toast to put UNDO, and
+ *  until now there was nowhere: the strip could say what happened and
+ *  offer only a dismiss cross, so every destructive act that wanted a
+ *  way back had to reach for `window.confirm` instead and ask BEFORE
+ *  doing it. One named act per note — never two, because a note is
+ *  read at a glance and a glance holds one decision. */
+export interface ToastAct {
+  /** a verb, in the words of the thing being taken back: "Undo" */
+  label: string
+  onPick: () => void
+}
+
 export interface ToastItem {
   id: number
   text: string
   tone: ToastTone
+  act?: ToastAct
 }
 
 export interface ToastApi {
   items: ToastItem[]
-  push: (text: string, tone?: ToastTone) => void
+  push: (text: string, tone?: ToastTone, act?: ToastAct) => void
   dismiss: (id: number) => void
 }
 
 const DWELL = 4600
+/** A NOTE YOU MUST AIM AT GETS LONGER. 4.6s is a reading time; a note
+ *  carrying UNDO has to be read, decided about, and then physically
+ *  hit — which is a pointer trip across the window, or a Tab. Nothing
+ *  is lost when it goes: the step is still on the stack fifty deep and
+ *  Ctrl+Z still takes it back. This is how long the OFFER stands. */
+const DWELL_ACT = 9000
 /** At most three stacked notes — older ones roll off. */
 const MAX_ITEMS = 3
 
@@ -43,16 +63,16 @@ export function useToasts(): ToastApi {
   }, [])
 
   const push = useCallback(
-    (text: string, tone: ToastTone = 'info') => {
+    (text: string, tone: ToastTone = 'info', act?: ToastAct) => {
       seq += 1
       const id = seq
-      setItems((list) => [...list, { id, text, tone }].slice(-MAX_ITEMS))
+      setItems((list) => [...list, { id, text, tone, act }].slice(-MAX_ITEMS))
       timers.current.set(
         id,
         setTimeout(() => {
           timers.current.delete(id)
           setItems((list) => list.filter((x) => x.id !== id))
-        }, DWELL),
+        }, act ? DWELL_ACT : DWELL),
       )
     },
     [],
@@ -131,6 +151,24 @@ export function Toasts({
           >
             <span className="tb-toast-rule" aria-hidden="true" />
             <span className="tb-toast-text">{t.text}</span>
+            {/* THE ACT IS A REAL BUTTON WITH A WORD ON IT, sitting
+                between the sentence and the dismiss cross, so the two
+                are never mistaken for each other: one takes the change
+                back, the other takes the note away. It closes the note
+                itself — a note offering to undo something that has
+                already been undone is a lie sitting on the screen. */}
+            {t.act ? (
+              <button
+                type="button"
+                className="tb-toast-act"
+                onClick={() => {
+                  onDismiss(t.id)
+                  t.act?.onPick()
+                }}
+              >
+                {t.act.label}
+              </button>
+            ) : null}
             <button
               type="button"
               className="tb-toast-x"

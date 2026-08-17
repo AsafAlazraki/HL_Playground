@@ -753,7 +753,12 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
             <ul className="vw-removed-list">
               {result.removed.map(({ row }) => (
                 <li key={row.id} className="vw-removed-row">
-                  <span className="vw-row-name">{rowLabel(target, row)}</span>
+                  {/* the same `title` its sibling above carries: the name
+                      clamps to two lines and a long enough one is still
+                      cut, so the whole of it stays reachable */}
+                  <span className="vw-row-name" title={rowLabel(target, row)}>
+                    {rowLabel(target, row)}
+                  </span>
                   <button type="button" className="btn btn-ghost" onClick={() => restoreRow(row)}>
                     <ArrowUUpLeft size={13} weight="light" />
                     Put it back

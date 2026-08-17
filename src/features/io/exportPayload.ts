@@ -28,9 +28,11 @@
    file, poking the anchor — because that is chrome, not content.
    ============================================================ */
 
-import { EXPORT_KIND, EXPORT_VERSION, type ProjectExport } from '@/types/model'
+import { EXPORT_KIND, EXPORT_VERSION } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { getConstraints } from '@/features/constraints'
+import { allQuotes } from '@/features/quote'
+import type { ProjectFile } from './envelope'
 
 /* Deterministic serialisation order: store records are keyed objects whose
    Object.values order depends on how IndexedDB rehydrated them — sort by
@@ -60,20 +62,39 @@ const byCreatedAt = <T extends { createdAt: string; name: string }>(a: T, b: T):
      constraints  `getConstraints()` — the constraint registry's own
                   non-hook reader, scoped to the current organisation
 
-   STILL NOT CARRIED, and deliberately not smuggled: QUOTES. There is
-   no `quotes` key on `ProjectExport` and no non-hook list reader on
-   the quote registry (`useQuotes` is a hook; `getQuote` needs an id
-   you would have to already have). Both are named in
-   `features/quote/index.ts` §3 as store work. Reaching into that
-   module's private `list` to make an export look complete is exactly
-   how a frozen document gets re-priced by an import, so it waits.
+   AND THE FIFTH, WHICH THIS NOTE USED TO SAY WAS WAITING: QUOTES.
+
+     quotes       `allQuotes()` — the quote registry's own non-hook
+                  reader, newest first
+
+   What it said was that there was no `quotes` key on `ProjectExport`
+   and no list reader that is not a hook, and that reaching into the
+   registry's private `list` to make an export look complete was how a
+   frozen document gets re-priced by an import. The first half is still
+   true — `ProjectExport` is orchestrator-owned — so the key is
+   declared beside the validator as `ProjectFile`, and the reader is a
+   real exported reader rather than a reach-in. The second half was
+   never a reason to leave them out, only a reason to do it properly:
+   every field on a quote line is a VALUE, so a quote is the one thing
+   in this file that a round trip cannot change.
+
+   What it cost to leave them out, meanwhile, was the whole point: a
+   dealer who pressed Everything, cleared the sheet and re-imported —
+   the documented way to restore a backup — lost every quote they had
+   raised, in silence, under a button labelled Everything.
    ============================================================ */
 
 /** The envelope for the sheet as it stands, at the given revision.
  *  `includeData` false is "Structure only" — it drops rows and
  *  nothing else, because modules and pages say how the business is
- *  arranged and only the rows are its contents. */
-export function buildExportPayload(rev: number, includeData: boolean): ProjectExport {
+ *  arranged and only the rows are its contents.
+ *
+ *  QUOTES TRAVEL IN BOTH. They are neither structure nor rows: a quote
+ *  is a document that was given to a customer, and "the shape of my
+ *  business without its stock" is not a thing anyone means to send
+ *  without the deals they have raised. Leaving them out of Structure
+ *  only would also make that card the one silent loss again. */
+export function buildExportPayload(rev: number, includeData: boolean): ProjectFile {
   const s = useProjectStore.getState()
   const views = Object.values(s.views).sort(byCreatedAt)
   /* dashboard order, then name — the same comparison the Dashboard
@@ -82,6 +103,10 @@ export function buildExportPayload(rev: number, includeData: boolean): ProjectEx
     (a, b) => a.order - b.order || a.name.localeCompare(b.name),
   )
   const constraints = [...getConstraints()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  /* oldest first in the file, newest first on screen: the list is a
+     diary and reads best newest-first, while a file reads best in the
+     order things happened and diffs between two revisions stay short */
+  const quotes = [...allQuotes()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   return {
     kind: EXPORT_KIND,
     version: EXPORT_VERSION,
@@ -97,5 +122,6 @@ export function buildExportPayload(rev: number, includeData: boolean): ProjectEx
     ...(views.length ? { views } : {}),
     ...(modules.length ? { modules } : {}),
     ...(constraints.length ? { constraints } : {}),
+    ...(quotes.length ? { quotes } : {}),
   }
 }

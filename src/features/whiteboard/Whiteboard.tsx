@@ -75,6 +75,7 @@ import type {
   OnNodeDrag,
 } from '@xyflow/react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { sayUndoable } from '@/store/notes'
 import {
   DEFAULT_TABLE_NODE_SIZE,
   tableNodeTypes,
@@ -479,9 +480,21 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
 
   /* -- Delete / Escape ------------------------------------------
      Table nodes stop keyboard events at their own root, so a cell
-     edit never reaches this handler — but a table holds real data,
-     so deleting one is always confirmed and always says how much
-     goes with it. */
+     edit never reaches this handler.
+
+     A TABLE HOLDS REAL DATA, AND THAT IS AN ARGUMENT FOR A WAY BACK
+     RATHER THAN FOR A QUESTION. This raised `window.confirm("Delete
+     the table “Highfield Inflatables” and its 63 rows?")`, which
+     was right when `deleteEntity` was permanent. It is not:
+     `deleteEntity` records a step, `entities` and `rowsByEntity` are
+     both in the undo slice, and the table comes back with all 63 rows
+     in their order. Rule 9 — an undoable act gets a note with UNDO,
+     not a dialog.
+
+     THE COUNT STAYS IN THE SENTENCE. It was the best thing about the
+     confirm and it costs nothing to keep: a stray Backspace that took
+     63 rows off the sheet must say 63, or the note reads as though a
+     frame was tidied away. */
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return
@@ -511,13 +524,12 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
       if (!entity) return
       event.preventDefault()
       const rows = store.rowsByEntity[sel.id]?.length ?? 0
-      const message =
+      store.deleteEntity(sel.id)
+      sayUndoable(
         rows > 0
-          ? `Delete the table “${entity.name}” and its ${rows} row${
-              rows === 1 ? '' : 's'
-            }?`
-          : `Delete the table “${entity.name}”?`
-      if (window.confirm(message)) store.deleteEntity(sel.id)
+          ? `Deleted “${entity.name}” and its ${rows} row${rows === 1 ? '' : 's'}`
+          : `Deleted “${entity.name}”`,
+      )
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)

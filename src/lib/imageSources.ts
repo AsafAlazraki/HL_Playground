@@ -37,6 +37,19 @@
    works — four for the entire 305-cell catalogue, against the
    seventy-odd per sheet the old rule was written to stop.
 
+   AND FOUR IS STILL FOUR. A fresh walk of the app produced three
+   failed requests and two red console lines, all of them
+   `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin`, and a stakeholder who opens
+   dev tools reads red as broken software. There is no way to catch
+   them: a subresource the browser refuses is logged by the browser, so
+   `onerror` fires *after* the line is already printed, and no `fetch`
+   mode, `try` or handler can take it back. The only way not to have
+   the line is NOT TO MAKE THE REQUEST — which is honest exactly when
+   the request is one we have measured cannot succeed. See
+   `MEASURED_CLOSED` below: two hosts named, with what was measured and
+   how to measure it again. The probe machinery above is untouched and
+   still decides every other host at runtime.
+
    NOTHING IS PERSISTED. A host that is down for ten minutes must not
    be dead forever inside somebody's IndexedDB; a reload re-probes.
 
@@ -144,6 +157,71 @@ export function nameFromUrl(src: string): string {
   return last ? readable(last) : ''
 }
 
+/* ---------------------------------------------------------- */
+/* the words in the place the picture would have been         */
+/* ---------------------------------------------------------- */
+
+/** THE LABEL, WRITTEN ONCE. Four surfaces drew this idea and three of
+ *  them used different words for it — the cell's thumbnail said
+ *  "held as a link, not shown here", its enlarged plate said "Held as
+ *  a link — the picture itself lives at …", and the module tile said
+ *  "Held as a link to …, so it is not shown here". Repeated down a
+ *  grid, one wording reads as a convention somebody chose; three
+ *  wordings read as three different faults. */
+export const HELD_AS_LINK = 'Held as a link'
+
+/**
+ * WHY THIS WELL IS EMPTY, in one sentence, for every surface that
+ * draws one. Counted in the DOM on the Boats module: 174 tiles, 64
+ * photographs painted, 93 of these plates, 17 rows carrying no picture
+ * at all. So this sentence is the catalogue's answer to "where are the
+ * photographs" and it has to be a decision rather than an apology.
+ *
+ * It says the most specific true thing available. When the host is one
+ * we have MEASURED and recorded (see `MEASURED_CLOSED`), it says what
+ * the host does — a reader learns the picture is fine and the
+ * permission is not, which is the difference between "your data is
+ * broken" and "this photograph is somebody else's to serve". Otherwise
+ * it names where the picture lives, which is what a person fixing the
+ * record needs.
+ *
+ * NOTHING HERE IS EVER A GUESS AT THE PICTURE. No filename is dressed
+ * up as a caption, no other boat's photograph is substituted, and the
+ * address is never quietly rewritten.
+ */
+export function heldAsLinkNote(src: string): string {
+  const host = imageHostOf(src)
+  if (host === '') return `${HELD_AS_LINK} — the picture itself is not here.`
+  const measured = MEASURED_CLOSED.get(parseSource(src)?.host ?? '')
+  if (measured !== undefined) return `${HELD_AS_LINK} — ${measured}.`
+  return `${HELD_AS_LINK} — the picture itself lives at ${host}.`
+}
+
+/**
+ * The host behind a picture we know in advance we cannot paint, and why
+ * — or `null` for every other address.
+ *
+ * FOR A PAGE THAT WANTS TO SAY THIS ONCE INSTEAD OF NINETY-THREE TIMES.
+ * A catalogue where most tiles are plates needs a sentence at the top,
+ * and a sentence at the top needs a COUNT THAT DOES NOT MOVE. The live
+ * verdict cannot supply one: `hostIsClosed` answers out of a session's
+ * probe results, so a page-level total taken from it would tick upward
+ * as answers landed and read as a page discovering faults while
+ * somebody watched. This answers only from the recorded measurement, so
+ * it is the same number on the first frame and the hundredth, offline
+ * and on.
+ *
+ * The trade is stated rather than hidden: a host that dies TODAY is a
+ * plate on the tile and is not in this count. The sentence therefore
+ * names the hosts it counted, and claims nothing about any other.
+ */
+export function measuredClosedHost(src: string): { host: string; why: string } | null {
+  const host = parseSource(src)?.host
+  if (host === undefined) return null
+  const why = MEASURED_CLOSED.get(host)
+  return why === undefined ? null : { host: imageHostOf(src), why }
+}
+
 /** The words on the plate: the filename the business would recognise,
  *  falling back to the last segment of the address, then the host. */
 export function imageLabel(img: ImageRef): string {
@@ -164,6 +242,63 @@ export type HostVerdict = 'unknown' | 'probing' | 'open' | 'closed'
  *  two is also the ceiling on console lines we are willing to spend
  *  finding out. */
 const MAX_PROBES = 2
+
+/* ============================================================
+   THE TWO HOSTS WE DO NOT SPEND A REQUEST ON, AND THE MEASUREMENT.
+
+   This is a RECORDED MEASUREMENT, not an assumption and not a
+   convenience. Each address below was requested from this machine on
+   2026-08-17 with a current Chrome user-agent, and the answer is the
+   sentence beside it. Re-measure with:
+
+     curl -sD - -o /dev/null -A "Mozilla/5.0 … Chrome/128 …" <address>
+
+   `www.northsidemarine.com.au`  71 addresses in the seed, the largest
+     block on any one host.
+     HTTP/1.1 403, `Cf-Mitigated: challenge`, `Content-Type: text/html`,
+     5,758 bytes of Cloudflare interstitial — and on that response,
+     `Cross-Origin-Resource-Policy: same-origin`. A browser on any
+     other origin is refused by CORP before the bytes matter, which is
+     precisely `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin`.
+
+   `northsidemarine1.sharepoint.com`  4 addresses in the seed.
+     HTTP/1.1 302 to a Microsoft 365 sign-in. There is no
+     unauthenticated read of a SharePoint document library and there is
+     no browser fix for one.
+
+   The other ten hosts in the seed — highfieldboats.com,
+   adventure.highfieldboats.com, yamaha-motor.com.au, stacer.com.au,
+   formosamarineboats.com.au, mayfairmarine.com.au, app.jeanneau.com,
+   gfabtrailers.com.au, dunbier.com, surteesboats.com — all answered
+   200 with an image content type and NO `Cross-Origin-Resource-Policy`
+   header at all. They serve, they are not listed here, and they are
+   still settled by the probe rather than by this table.
+
+   WHY THIS IS NOT SILENCING A WARNING. The warning was the browser
+   truthfully reporting a request that could not succeed. Removing the
+   request removes the cause. The DATA is not touched — `ImageRef.src`
+   keeps its address, the export keeps it, and a reader is told in
+   words where the picture lives (`heldAsLinkNote`).
+
+   WHY IT IS HONEST TO SAY THIS IS A LATCH. `serves` is consulted
+   FIRST, so a host that ever does paint outranks this table — but with
+   no probe spent, nothing on a listed host will paint, so in practice a
+   listed host stays closed for the session. That is the trade: two red
+   lines every session, for every user, forever, against a
+   re-measurement when somebody changes this list. The addresses are
+   third-party marketing sites the dealership does not control; the
+   dealership's own host is the one behind Cloudflare.
+   ============================================================ */
+const MEASURED_CLOSED = new Map<string, string>([
+  [
+    'www.northsidemarine.com.au',
+    'northsidemarine.com.au serves its pictures to its own site only',
+  ],
+  /* Each of these reads as a clause as well as a sentence: the plate
+     prints `Held as a link — <reason>.` and the module index joins
+     them into a list, so no entry may begin with "this" or "it". */
+  ['northsidemarine1.sharepoint.com', 'northsidemarine1.sharepoint.com needs a sign-in to read'],
+])
 
 interface HostRecord {
   /** every distinct address ever seen on this host */
@@ -207,11 +342,17 @@ function recordFor(host: string): HostRecord {
 }
 
 /** Derived, never latched — so a host condemned on its only address
- *  gets one more chance the moment a second address turns up. */
+ *  gets one more chance the moment a second address turns up.
+ *
+ *  PIXELS OUTRANK THE TABLE. `serves` is read before `MEASURED_CLOSED`
+ *  so a picture that actually painted is always believed over anything
+ *  written down here — which is the only ordering that cannot make this
+ *  file lie about what the browser just did. */
 function verdictFor(host: string): HostVerdict {
   const rec = hosts.get(host)
+  if (rec?.serves) return 'open'
+  if (MEASURED_CLOSED.has(host)) return 'closed'
   if (rec === undefined) return 'unknown'
-  if (rec.serves) return 'open'
   if (rec.failures.size >= MAX_PROBES) return 'closed'
   if (rec.failures.size > 0 && rec.addresses.size <= rec.failures.size) return 'closed'
   return rec.claim === null ? 'unknown' : 'probing'

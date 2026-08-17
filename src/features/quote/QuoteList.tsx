@@ -27,12 +27,35 @@ export interface QuoteListProps {
 export function QuoteList({ onOpen, openId }: QuoteListProps): ReactElement {
   const quotes = useQuotes()
 
+  /* ============================================================
+     THE FIRST MONDAY SCREEN, and it has to be right, because the
+     dock now draws Quotes whether or not any exist. It used to
+     appear only when `quoteCount > 0`, which meant nobody could
+     find quoting until they had already done it — so this page was
+     unreachable exactly when it was the only page that mattered.
+
+     IT NAMES THE THREE REAL CONTROLS, in the order they are pressed.
+     The sentence used to say "press What goes with each one?", and
+     that button has been called **Fitment** since commit 4c4a3e2
+     renamed the place — a route instruction naming a control that is
+     not on the screen is worse than no instruction, because the
+     person concludes they are in the wrong app.
+
+     THE TERSE FORM ON PURPOSE, not the module dashboard's four-part
+     card. The load-bearing third line of that card is a count read
+     from the store, and this feature's one invariant is that
+     `useProjectStore` appears in exactly ONE of its files
+     (freeze.ts) so that no drawn quote can touch live data. A count
+     is not worth spending that on: the honest thing this screen
+     knows is the route, and the route is what a person on their
+     first Monday is missing.
+     ============================================================ */
   if (quotes.length === 0) {
     return (
       <div className="qt-root qt-root--doc">
         <p className="qt-void">
-          No quotes yet. Open a table, press <em>What goes with each one?</em>, pick one and press{' '}
-          <em>Quote this one</em>.
+          No quotes yet. Open a table from <em>Tables</em> on the bar, press <em>Fitment</em>, pick
+          the row you are selling and press <em>Quote this one</em>.
         </p>
       </div>
     )

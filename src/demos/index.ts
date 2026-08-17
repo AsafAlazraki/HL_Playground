@@ -26,6 +26,24 @@ export interface DemoSet {
   name: string
   /** one plain sentence describing what lands on the sheet */
   blurb: string
+  /**
+   * WHOSE BUSINESS THE DATA IS, when it is anybody's — and this is not
+   * decoration either.
+   *
+   * The doors that offer this set called it "another dealer's price
+   * file". That was written when Northside Marine was a sample, and it
+   * became false the day they became the first real customer: the first
+   * sentence they read on the app described their own catalogue as a
+   * stranger's. Naming the business here is what lets each door work
+   * out which of its two true readings applies — see
+   * `startingPointWords` in app/demoLoad.ts.
+   *
+   * Blank on a set that is nobody's data.
+   */
+  business?: string
+  /** What the business calls the document itself. Blank when there is
+   *  no document behind the set. */
+  file?: string
   load(): void
 }
 
@@ -48,6 +66,8 @@ export const DEMOS: DemoSet[] = [
     id: 'northside',
     name: 'Northside Marine',
     blurb: 'Real data extracted from Northside Marine’s Master Price File.',
+    business: 'Northside Marine',
+    file: 'Master Price File',
     load: loadNorthsideProject,
   },
   {
