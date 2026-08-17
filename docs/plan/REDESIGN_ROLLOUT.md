@@ -1,8 +1,31 @@
 # THE REDESIGN ROLLOUT — the execution kit
 
-**Status.** Ready. Nothing is switched on. This document plus
-`src/styles/bridge.css` plus `tools/check-styles.mjs` are the whole kit; on
-"go", step 1 takes minutes and the app is already wearing the new system.
+**Status.** **DONE — steps 1 to 5a are shipped.** The app wears Quiet
+Precision. Rollback is still one line (`import './styles/bridge.css'` in
+`src/main.tsx`).
+
+Verified on the running app, not asserted:
+
+| | |
+|---|---|
+| Contrast failures | **0** across 16,618 text nodes, alpha composited |
+| Smallest rendered type | **11px** (was 8px, with 1,405 elements below 11) |
+| Instrument Serif elements | **0** |
+| `--ink-faint` | 2.96:1 → **4.72:1**, across 218 sites |
+| Tests | **251 passing**, reachability clean, no new style orphans |
+| Page horizontal scroll | none, stages open and closed |
+
+**Still open:** step 5b (the remaining new surfaces — jobs panel, fit sentence,
+nav, index tiles, quote document) and step 6 (the UX_PASS process work, of which
+undo is already being built by the feature session).
+
+**A note on measuring.** Three separate contrast sweeps in this session
+reported false regressions before one was right — the first could not parse
+`color(srgb …)`, the second read its 0–1 channels as 0–255, the third ignored
+alpha and composited nothing. Each looked like a real bug in the app and was a
+bug in the ruler. Anything re-running this check should composite the full
+ancestor chain and handle `color()` syntax, or it will report a catastrophe that
+is not there.
 
 **Read with.** `docs/plan/UX_PASS.md` (§1–§12, the process work),
 `docs/plan/MODULE_SYSTEM.md` (what the app now is), `docs/audit/UX_AUDIT.md`
