@@ -292,6 +292,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* A TINT COUNTS. --ink-faint is the 4.7:1 floor on white and 4.16:1
+   measured on this row once --blue-wash is under it, so the lit row
+   — which is also every hovered row, because hover moves the cursor
+   — was failing while the same words one line below passed. Stepped
+   to --ink-soft only where the ground moves: 6.8:1 measured, and the
+   resting rows keep the lighter metadata they were drawn with. */
+.hs-opt.is-active .hs-opt-where {
+  color: var(--ink-soft);
+}
 
 /* THE MATCHED RUN. <mark>'s user-agent style is a yellow highlight
    from a different century; this ink is the app's own pen, and the
@@ -335,5 +344,85 @@
 @media (prefers-reduced-motion: reduce) {
   .hs-pop {
     animation: none;
+  }
+}
+
+/* ============================================================
+   THE FINDER — the panel this field stands in now the masthead
+   is gone. `Finder.tsx` explains what it is and why it closes
+   three ways; everything below is geometry and ground.
+
+   Nothing above changes. Every override is scoped under `.fx-panel`
+   and does one thing: give the field the whole width of the panel it
+   was handed, and let the answer hang the same width underneath
+   instead of 420px right-aligned to a masthead compartment that no
+   longer exists.
+   ============================================================ */
+
+.fx-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 14vh var(--sp-4) var(--sp-4);
+  /* A WASH, NOT A BLUR. The dock and the page toolbar are the two
+     translucent surfaces in this app; a third was not argued for.
+     Built from --ink at a fraction, which is exactly how table.css
+     builds `.tb-scrim` — the one other scrim in the app that dims a
+     --paper page rather than the blueprint. */
+  background: color-mix(in srgb, var(--ink) 38%, transparent);
+  /* the same arrival as every other summoned surface here:
+     `.md-scrim`, `.tk-scrim` and `.ds-cs-scrim` all fade their
+     ground and settle their box, on the app's own out-curve */
+  animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+
+/* A TIGHT COLLAR ROUND THE FIELD, and nothing under it. The answer
+   list is positioned against the field and hangs directly beneath,
+   so this box holds one control and stops — anything else in it is
+   behind the popover the moment somebody types. */
+.fx-panel {
+  width: min(520px, 100%);
+  padding: 5px;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  /* CONCENTRIC, NOT ARBITRARY. The field inside is --radius (10px)
+     and the collar is 5px, so 15px is the only outer radius whose
+     curve stays parallel to the one it wraps. */
+  border-radius: 15px;
+  box-shadow: var(--e3);
+  animation: sheet-in var(--t-med) var(--ease-draft) both;
+}
+
+.fx-panel .hs-root {
+  display: flex;
+  width: 100%;
+}
+.fx-panel .hs-input {
+  width: 100%;
+  height: 36px;
+}
+.fx-panel .hs-pop {
+  left: 0;
+  right: 0;
+  width: auto;
+  /* MEASURED FROM THE PANEL, NOT FROM THE FIELD. `.hs-pop` hangs
+     --sp-2 below `.hs-root`, which in the masthead WAS the outer
+     edge; here the collar adds 5px underneath it, so the same rule
+     left a 2.33px sliver between two bordered white boxes — near
+     enough to touch that it read as a rendering fault rather than
+     as two surfaces. 5px of collar plus the --sp-2 the popover has
+     always used puts the gap back where the eye expects it. */
+  top: calc(100% + var(--sp-2) + 5px);
+}
+
+/* MOVEMENT GOES, OPACITY STAYS. `sheet-in` lifts and scales; under
+   the setting the panel still arrives, it just no longer travels to
+   get here. The scrim's fade is opacity only and is left alone. */
+@media (prefers-reduced-motion: reduce) {
+  .fx-panel {
+    animation-name: fade-in;
   }
 }

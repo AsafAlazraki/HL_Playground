@@ -185,6 +185,124 @@ export type {
   WorkbookRuleSeed,
 } from './workbookRules'
 
+/* -- the trailer selector — F8, the rule that actually picks -------
+   FOR THE MODULE AND QUOTE WAVES. This is the one rule in either
+   workbook that both holds at 100% and rejects something, and it is
+   the only thing in this project that narrows a trailer list from a
+   catalogue to a shortlist (docs/specs/FITMENT_RULES.md §1.2, F8).
+
+   `TrailerFitmentPanel` takes no props, reads the store itself and
+   brings its own stylesheet, exactly like `RegistrationTheme` — so
+   drawing it on a module page is one line. It already draws inside
+   the rules pane, so it is not waiting on anybody to be reachable.
+
+   THE MODEL UNDER IT is what a picker needs, and it is generic: point
+   `selectPartners` at any two kinds and it returns three buckets —
+   `selected` (the partner's series names this subject's marque),
+   `rejected` (it names another) and `unnamed` (it names none, which is
+   NOT a rejection: the price file itself offers ten such trailers).
+
+   TWO THINGS ABOUT IT THAT MUST SURVIVE ANY REUSE, both recorded on
+   F8 and F9 in workbookRules.ts and both under test:
+
+     · `TRAILER_ATM_FLOOR` is a WARNING. It annotates a candidate and
+       never removes one. Promoting it to a filter is the A2 failure
+       the adjudication records once and refuses to repeat, and it
+       would reject nothing useful anyway — it leaves a mean 97.70% of
+       the catalogue standing.
+     · THERE IS NO TRAILER LENGTH RULE. `Boat Size`, `Trailer Length`
+       and `Between Guards` are refuted at 9.4%, 50.0% and 0.0%
+       (F10, F11) and nothing here reads any of them. */
+
+export { TrailerFitmentPanel } from './TrailerFitmentPanel'
+
+export {
+  TRAILER_ATM_FLOOR,
+  TRAILER_FITMENT,
+  bannerField,
+  bannerOf,
+  loadFieldFor,
+  marqueOfBanner,
+  marqueOfSubject,
+  marqueVocabulary,
+  readCatalogue,
+  readMarques,
+  selectPartners,
+} from './trailerFitment'
+export type {
+  CatalogueReading,
+  FitmentProject,
+  FitmentResult,
+  FitmentScope,
+  FloorSpec,
+  FloorVerdict,
+  HeldBack,
+  Marque,
+  MarqueReading,
+  PartnerVerdict,
+  RegimeReading,
+  SelectOptions,
+  SeriesVerdict,
+} from './trailerFitment'
+
+/* -- the common themes, and the decisions behind the import -------
+   FOR THE MODULE WAVE. Both components take no props, read the
+   store themselves and bring their own stylesheet, exactly like
+   `RulesPane` — so mounting one on a module page is one line:
+
+       import { RegistrationTheme } from '@/features/constraints'
+       <RegistrationTheme />
+
+   `RegistrationTheme` belongs beside the Rates & Charges tables,
+   and `LeftOutList` belongs wherever a person asks what the import
+   covers. Both already draw inside the rules pane, so neither is
+   waiting on anybody to be reachable — this export is so they can
+   be drawn TWICE without the words being written twice.
+
+   THE MODEL UNDER IT is exported too, and it is what a quote needs:
+   `findFeeRegister` locates the fee table, `feeForBand` returns a
+   fee AT A NAMED RUNG with the cell it came from, and
+   REGISTRATION_POLICY carries the four things that may not be done,
+   each with the reason to print at the point of refusal. */
+
+export { RegistrationTheme } from './RegistrationTheme'
+export { LeftOutList } from './LeftOutList'
+
+export {
+  BOAT_KEY_COLUMN,
+  REGISTRATION_AS_AT,
+  REGISTRATION_POLICY,
+  REGISTRATION_SECTION_ID,
+  REGISTRATION_TABLE_NAME,
+  THIRD_PARTY_RECOVERY,
+  TRAILER_KEY_COLUMN,
+  TRAILER_MASS_BANDS,
+  atmBandDisagreements,
+  feeForBand,
+  findFeeRegister,
+  massBandFor,
+  registrationKeys,
+} from './registration'
+export type {
+  BandCheck,
+  BandDisagreement,
+  FeeRegister,
+  FeeRung,
+  MassBand,
+  RegistrationFee,
+  RegistrationKey,
+  RegistrationRequirement,
+} from './registration'
+
+export {
+  CAME_IN,
+  LEFT_OUT,
+  RATE_COMMITMENT,
+  leftOutArtefacts,
+  leftOutSubstantive,
+} from './leftOut'
+export type { CameInRecord, LeftOutRecord, LeftOutVerdict } from './leftOut'
+
 export {
   addOneOfValue,
   inferKind,

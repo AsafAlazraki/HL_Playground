@@ -70,21 +70,28 @@
       `views` today, so a demo swap leaves stale ViewDefs that are
       written straight back to Dexie. A quote must not copy that.
 
-   4. THE SEEDED JOINS DO NOT USE THE WELL-KNOWN PAIR IDS.
-      `join_hf_yam` and its siblings declare their own `Recommended`
-      (boolean) and `Slot` (number) columns with freshly minted ids
-      rather than `__recommended` / `__order`, so `readPairs`
-      returns `recommended: false` for every row of the real seed.
-      CONSEQUENCE HERE, EXACTLY: the workbook's own recommended
-      motor never pre-ticks, so a quote made from the Northside data
-      opens with its motor and trailer sections EMPTY and costs one
-      extra pick per section. The quote does not paper over it — a
-      name-matched star would be a guess about which motor a
-      business recommends — but the picker does print the join's own
-      facts, so `Slot 1` and `Recommended Yes` are visible on the
-      candidate a person is choosing between. Emitting
-      `__recommended` / `__order` from the seed is the cheaper fix
-      and needs no contract change.
+   4. TWO READ-THROUGHS ON THE BOAT × MOTOR JOIN — what fitting
+      the rigging kit costs. FIXED SINCE THIS WAS WRITTEN, and
+      recorded because the fix is the interesting half: the seeded
+      joins used to declare their own `Recommended` and `Slot`
+      columns with minted ids, so `readPairs` returned
+      `recommended: false` for every row and a quote opened with its
+      motor and trailer sections EMPTY. `tools/seed/gen_all.py` now
+      emits `__origin` / `__recommended` / `__order` literally, the
+      standard-fit motor pre-ticks, and the five-way association —
+      rigging kit, prop part no., prop description, engine hole,
+      slot — arrives on the line by value (freeze.ts `pairFactsOf`).
+      WHAT IS STILL MISSING is money, not identity:
+      FOUR_MODULES.md §3.7 asks for `Rigging Kit Labour (Hrs)` ←
+      `rig_kits.O` and `Rigging Sell` ← `rig_kits.AC` on each of the
+      eight joins, and neither is seeded. So a quote names the kit
+      and cannot price fitting it — median $3,370, maximum $44,310.
+      The labour is arithmetic rather than a guess: `Boat Module!UH`
+      computes it and is overridden on 0 of 2,436 cells
+      (FITMENT_RULES.md R9, seeded as a blocked rule in
+      `features/constraints/workbookRules.ts`). Two columns × eight
+      joins, in a section that already exists, and no contract
+      change.
 
    ---------------------------------------------------------------
    WHAT IS DELIBERATELY NOT BUILT (QUOTE_SPEC §7), so nobody reads

@@ -685,8 +685,51 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
 
   const firstFrameRef = useRef(true)
 
+  /* ============================================================
+     THE ONE FRAME IS NEVER SPENT ON A PANE WITH NO SIZE.
+
+     The sheet is a SECTION now, not a backdrop: `Shell` draws it
+     inside `.shell-sheet-layer`, which carries `hidden` — i.e.
+     `display: none` — the whole time any window is in front. That is
+     their decision and it is the right one; the cost is that this
+     canvas can mount, initialise its nodes and spend its single
+     framing licence while its container measures 0 × 0.
+
+     What that produced, measured at 1280 × 782 after pressing Data
+     model with a table window open: `matrix(0.04, …)` — React Flow's
+     minZoom floor — with all fifty-two cards packed into a 93 × 118
+     speck in the top-left corner, 1.1 % of the pane. The drawing was
+     perfect and the camera was nonsense, and because the licence is
+     one-shot, revealing the sheet could never put it right. Pressing
+     FIT recovered it (0.13, 28 %), which is how we know it was only
+     ever the camera.
+
+     So the licence waits for a pane that can be measured, and a
+     ResizeObserver re-runs this effect at the moment the sheet is
+     revealed and gains one. Nothing else about the camera changes —
+     it is still framed exactly twice, on the first real draw of a
+     session and on FIT.
+     ============================================================ */
+  const [paneMeasured, setPaneMeasured] = useState(false)
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const read = (): void => {
+      const { width, height } = el.getBoundingClientRect()
+      setPaneMeasured(width > 1 && height > 1)
+    }
+    read()
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   useEffect(() => {
     if (!nodesInitialized || tableNodes.length === 0) return
+    /* a hidden sheet has no box to frame into, and framing into one
+       would burn the session's only frame on a degenerate transform */
+    if (!paneMeasured) return
     /* the licence is claimed only once there is something to frame —
        an empty sheet must not spend it and leave the first table the
        reader creates off camera */
@@ -733,6 +776,7 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   }, [
     frameTables,
     nodesInitialized,
+    paneMeasured,
     tableNodes,
     drawingRev,
     expandedTables,

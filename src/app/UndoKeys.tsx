@@ -78,8 +78,25 @@ export function UndoKeys(): JSX.Element {
     return () => window.removeEventListener('keydown', onKeyDown, true)
   }, [undo, redo, push])
 
+  /* THE NOTE CLEARS THE BAR IT WAS LANDING ON. `inset: 0` put this
+     layer over the whole viewport, and `.tb-toasts` parks its strip at
+     the bottom of whatever contains it — which is the exact band the
+     floating dock occupies. Measured at 1280 × 860: the toast came up
+     at 810–842 inside a dock sitting 777–838, so every Ctrl+Z painted
+     "Undone — …" across the middle of the navigation, and won the hit
+     test doing it (z-index 200 against the bar).
+     Lifting the floor by the dock's own height puts the note directly
+     above the bar instead of on it. Still geometry only — no colour,
+     no type, no token; the look of a toast is not this file's. */
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, pointerEvents: 'none' }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: '0 0 var(--dock-clear, 84px) 0',
+        zIndex: 200,
+        pointerEvents: 'none',
+      }}
+    >
       <Toasts items={items} onDismiss={dismiss} />
     </div>
   )

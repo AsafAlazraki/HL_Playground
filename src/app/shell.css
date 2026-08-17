@@ -3010,36 +3010,18 @@
 
 .hm-bar-left {
   grid-column: 1;
-}
-.hm-find {
-  grid-column: 3;
-  justify-self: end;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  width: 200px;
-  padding: 0 10px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
-  color: var(--ink-faint);
-  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
-}
-.hm-find:focus-within {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-.hm-find input {
-  flex: 1;
+  /* a grid child defaults to min-width: auto and will not shrink
+     below its content, which is how a wide control on one side
+     squeezes the centre track and truncates the title */
   min-width: 0;
-  border: 0;
-  background: transparent;
-  outline: none;
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
 }
+
+/* `.hm-find` STOOD IN TRACK 3 AND IS GONE. It was a second search a
+   metre above the first: "i don't want search in top bar I want it
+   in the bottom floating one". The dock's "Find anything" is the one
+   search now — see features/search/Finder.tsx — so the rules for the
+   box that is no longer written go with the markup rather than
+   staying behind as a dead selector. */
 
 .hm-scroll {
   flex: 1;
@@ -3572,7 +3554,6 @@
   grid-column: 2;
   justify-self: end;
 }
-.win-body .hm-find,
 .win-body .shell-table-doors {
   grid-column: 2;
   justify-self: end;

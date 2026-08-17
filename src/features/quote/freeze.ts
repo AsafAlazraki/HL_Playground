@@ -29,7 +29,9 @@ import {
   isRetired,
   primaryImage,
   rowLabel,
-  isPairFieldId,
+  PAIR_ORDER_FIELD,
+  PAIR_ORIGIN_FIELD,
+  PAIR_RECOMMENDED_FIELD,
   type CellValue,
   type EntityDef,
   type ImageRef,
@@ -104,12 +106,40 @@ function sourceNoteOf(entity: EntityDef | undefined, row: RowData | undefined): 
  *  columns are copied onto the line by value at pick time, and the
  *  document prints them under the line in mono.
  *
- *  The two link columns, the join's label column and the three pair
- *  system columns are excluded: they say which two rows this is
- *  about, which the line already says. The `Source` column is
- *  excluded from the FACTS and folded into the line's source note
- *  instead — a customer document should not carry a spreadsheet
- *  address, and the business should not lose it. */
+ *  The two link columns and the join's label column are excluded:
+ *  they say which two rows this is about, which the line already
+ *  says. The `Source` column is excluded from the FACTS and folded
+ *  into the line's source note instead — a customer document should
+ *  not carry a spreadsheet address, and the business should not lose
+ *  it.
+ *
+ *  THE THREE PAIR SYSTEM COLUMNS ARE NOT ONE DECISION, and treating
+ *  them as one is how the fifth fact went missing. When the seed
+ *  declared its own `Slot` column this printed `Slot 1`; the seed was
+ *  then corrected to emit the model's own `__order` (so `readPairs`
+ *  could see the star at all), and a blanket `isPairFieldId` skip
+ *  silently dropped the slot with it. So, each on its own terms:
+ *
+ *    __order        KEPT, as `Slot`. It is the fifth member of the
+ *                   association and it is the PAIR'S IDENTITY —
+ *                   (boat, motor) is not unique and neither is
+ *                   (boat, motor, rigging kit); a UNIQUE constraint
+ *                   on the first deletes 641 of 4,018 live offerings
+ *                   and on the second 392 (FITMENT_RULES.md §1.4).
+ *                   Two lines for the same motor differ by this and
+ *                   by the kit, and nothing else. It is labelled
+ *                   `Slot` rather than by the column's generic name
+ *                   because `Order 3` on a customer's page reads as
+ *                   an order number, and `slot` is the word the
+ *                   workbook itself uses for the thirteen of them.
+ *    __recommended  skipped — it is on the line as `recommended` and
+ *                   drawn as a star, and "Recommended No" under a
+ *                   line nobody recommended is noise.
+ *    __origin       skipped — 'rule' where the sheet POINTED at the
+ *                   row and 'added' where a person typed it is
+ *                   provenance about the CATALOGUE, not a fact about
+ *                   the goods. It stays on the join row, which is
+ *                   where the view page reads and draws it. */
 function pairFactsOf(
   ctx: Ctx,
   join: JoinRef | null | undefined,
@@ -131,7 +161,14 @@ function pairFactsOf(
   for (const field of joinEntity.fields) {
     if (field.id === join.sourceFieldId || field.id === join.targetFieldId) continue
     if (field.id === join.labelFieldId) continue
-    if (isPairFieldId(field.id)) continue
+    if (field.id === PAIR_ORIGIN_FIELD || field.id === PAIR_RECOMMENDED_FIELD) continue
+    if (field.id === PAIR_ORDER_FIELD) {
+      const slot = joinRow.values[field.id]
+      if (typeof slot === 'number' && Number.isFinite(slot)) {
+        facts.push({ label: 'Slot', value: String(slot) })
+      }
+      continue
+    }
     if (field.type === 'image') continue
     const value = joinRow.values[field.id] ?? null
     if (normName(field.name) === 'source') {
@@ -507,9 +544,22 @@ export function candidateOffer(quote: QuoteDef, section: QuoteSection): Offer {
     join,
   })
 
-  const onQuote = new Map(
-    quote.lines.filter((l) => l.entityId === target.id).map((l) => [l.rowId, l.id]),
-  )
+  /* A CANDIDATE IS A PAIRING, NOT A ROW.
+     The same motor is offered against one hull more than once often
+     enough that (boat, motor) is not a key: a UNIQUE constraint on it
+     deletes 641 of 4,018 live offerings, and adding the rigging kit
+     still deletes 392 (FITMENT_RULES.md §1.4). `Highfield ADV7` slots
+     4–9 are all F250XSB2, told apart by six Helm Master rigging
+     packages. So "already on the quote" is keyed on the JOIN ROW —
+     the pairing — and falls back to the row id for a block that has
+     no join at all, and for lines minted before `pairRowId` existed.
+     Keyed on the row id alone, picking one of those six would grey
+     out the other five. */
+  const onQuote = new Map<string, string>()
+  for (const line of quote.lines) {
+    if (line.entityId !== target.id) continue
+    onQuote.set(line.pairRowId ?? line.rowId, line.id)
+  }
 
   /* A curated block is a handful of rows; a block showing a whole
      table can be four hundred, and a quote is not a catalogue. The
@@ -519,7 +569,7 @@ export function candidateOffer(quote: QuoteDef, section: QuoteSection): Offer {
      sold, so nothing discontinued can be minted from here — and it
      hands back how many, which the editor states in words. */
   const candidates = result.rows.slice(0, OFFER_CAP).map((r) => {
-    const already = onQuote.get(r.row.id)
+    const already = onQuote.get(r.pair?.rowId ?? r.row.id)
     return {
       line: mintLine({
         ctx,

@@ -459,11 +459,27 @@
   border-bottom: 1px solid var(--hairline);
   color: var(--ink-faint);
 }
+/* A HEADER SAYS ITS WHOLE NAME — the same ruling the register took in
+   b4ed961, applied to the block tables it was never applied to.
+
+   These headers were `nowrap` + ellipsis inside a minmax(44px, 104px)
+   track, so "Dealer List Price" read as "Dealer List P…" and "Shaft
+   Length in" as "Shaft Length …" on every module page, at 1280 AND at
+   1920 — extra width goes to the name track, never to these. That is
+   the one place in a table where truncation costs the most: the header
+   is the only thing telling you what the values underneath it MEAN.
+
+   So the label wraps instead of being cut. The header row gets taller
+   once, at the top of each block, and every value below it is
+   untouched — `.vw-row-line` keeps its own nowrap, so rows do not
+   grow. `align-items: end` keeps a one-line header sitting on the same
+   baseline as a two-line one beside it. */
 .vw-col,
 .vw-col-name {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+}
+.vw-cols {
+  align-items: end;
 }
 .vw-col {
   text-align: right;

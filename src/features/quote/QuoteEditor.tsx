@@ -500,8 +500,11 @@ function SectionCard({
             </p>
           ) : (
             <ul className="qt-picker-list">
+              {/* keyed on the minted line, never on the row: one hull
+                  offers the same motor in several slots, so a row id is
+                  not unique among candidates (FITMENT_RULES.md §1.4) */}
               {candidates.map((c) => (
-                <li key={c.line.rowId}>
+                <li key={c.line.id}>
                   <button
                     type="button"
                     className="qt-pick"

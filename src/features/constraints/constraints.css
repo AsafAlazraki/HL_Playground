@@ -826,3 +826,558 @@
   color: var(--ink-faint);
   overflow-wrap: anywhere;
 }
+
+/* ============================================================
+   THE TWO THEME BANDS — registration, and what is not in here.
+
+   THE SHARED SHELL (`cn-band`). Both sit below the workbook rules
+   and both are "the honest state of this system" content, so they
+   take the same top rule and the same three-part head that `.cn-wb`
+   has. The head is factored here rather than copied: three surfaces
+   on one pane disagreeing about the size of an eyebrow is the kind
+   of drift that makes a page look assembled rather than drawn.
+
+   `.cn-wb-src` above is SHARED by all three, deliberately. A
+   provenance line is one thing — mono, 11px, wrapping so a cell
+   address can actually be looked up — and having three of them
+   would guarantee two eventually differ.
+
+   COLOUR BUDGET. One eighth-note in the whole of this: the ochre
+   left edge on a trailer whose band disagrees with its own weight.
+   It is a border and never text, so it carries no contrast
+   obligation, and the sentence beside it says the same thing in
+   words for anyone who cannot see it.
+   ============================================================ */
+
+.cn-band {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--hairline);
+}
+
+.cn-band-eyebrow {
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+/* Same step as `.cn-wb-title`, and for the same reason: the weight
+   is stated so no element default can decide it. */
+.cn-band-title {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--display-s-size);
+  font-weight: var(--display-weight);
+  line-height: var(--display-s-lead);
+  letter-spacing: var(--display-s-track);
+  color: var(--ink);
+}
+
+.cn-band-lede {
+  margin: var(--sp-2) 0 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* -- registration: where the concept lives ------------------ */
+
+.cn-rg-where {
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.cn-rg-where-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+/* The count. Mono and tabular so three of them stack on the digit,
+   which is the only reason a figure is mono at all. */
+.cn-rg-where-n {
+  flex: 0 0 3.5ch;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cn-rg-where-what {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-rg-where-what b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* -- registration: the four requirements -------------------- */
+
+.cn-rg-policy {
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.cn-rg-rule {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+/* The requirement itself. It is a sentence a person reads, so it
+   keeps its own case — uppercase here would turn "Never mark it up"
+   into chrome. */
+.cn-rg-rule-says {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.cn-rg-rule-why {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* -- registration: the check -------------------------------- */
+
+.cn-rg-check {
+  margin-top: var(--sp-5);
+}
+
+.cn-rg-check-head {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.cn-rg-list {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.cn-rg-row {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--accent-ochre);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+}
+
+/* The trailer, by name, with its table beside it. The name keeps its
+   own case: it is the string the dealer typed, and uppercasing it
+   would lose the difference between what they wrote and what we did. */
+.cn-rg-row-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.cn-rg-row-table {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.cn-rg-row-fact {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.cn-rg-row-fact b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cn-rg-note {
+  margin: var(--sp-3) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-rg-note b {
+  font-weight: 500;
+  color: var(--ink);
+}
+/* The half that is NOT checked. Quieter, because it is a caveat
+   rather than a finding — but still on the readable ramp and never
+   below it: a caveat nobody can read is a caveat nobody was given. */
+.cn-rg-note--quiet {
+  color: var(--ink-faint);
+}
+
+/* -- what is not in here ------------------------------------ */
+
+.cn-lo-came {
+  margin: var(--sp-4) 0 0;
+  padding: 0 0 0 var(--sp-3);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 2px solid var(--hairline);
+}
+
+.cn-lo-came-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.cn-lo-came-what {
+  color: var(--ink);
+}
+.cn-lo-came-what b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* The commitment that made all three of those tables rather than
+   three numbers in our source. Sits with the three it explains, not
+   in a spec. */
+.cn-lo-commit {
+  margin: var(--sp-3) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-lo-commit b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cn-lo-came-size {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.cn-lo-list {
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.cn-lo-item {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--hairline);
+  border-radius: var(--radius);
+}
+/* A decision to WAIT reads differently from a decision to say no,
+   and the difference is worth one step of surface rather than a
+   second hue. */
+.cn-lo-item.is-later {
+  background: var(--paper-high);
+}
+.cn-lo-item.is-out {
+  background: var(--paper);
+}
+
+/* The verdict leads the card, the way the status leads a workbook
+   rule — "is this coming back?" is the only question here. */
+.cn-lo-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* The size. NOT uppercased: it carries units and counts, and
+   "157 models x 11 intervals" in caps says nothing extra while
+   losing the shape of the words in it. */
+.cn-lo-size {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+.cn-lo-what {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.cn-lo-why {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* The measurement. Mono because it is evidence to be checked, and it
+   wraps for the same reason `.cn-wb-src` does. */
+.cn-lo-measured {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.cn-lo-reopen {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.cn-lo-foot {
+  margin: var(--sp-3) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   THE TRAILER SELECTOR — F8, drawn.
+
+   Same band chrome as the registration theme (`.cn-band*`), because
+   both are the same kind of thing on the same page: the app being
+   honest about a rule. What differs carries its own `cn-tf-` name.
+
+   THE SHAPE IS A LEDGER, not a card grid. Eight brands, each with one
+   figure that matters — how much of the catalogue its series heading
+   leaves standing — and the figure is the thing to be able to read
+   down the page without reading a word. So the count is mono and
+   tabular and sits first, exactly as `.cn-rg-where-n` does, and every
+   other line on the row is quieter than it.
+   ============================================================ */
+
+.cn-tf-list {
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.cn-tf-item {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  /* The left edge says "this one is being checked", the same signal
+     `.cn-wb-item.is-here` carries three sections up. A reader should
+     not have to learn a second vocabulary halfway down one page.
+     No literal fallback: `--viridian` is defined in styles/bridge.css,
+     so the fallback in the older rule is dead code and DESIGN_PRINCIPLES
+     rule 1 is "never write a colour". */
+  border-left: 2px solid var(--viridian);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+}
+
+/* The brand keeps its own case — DESIGN_PRINCIPLES rule 3: uppercase
+   is a label style, never a name style. */
+.cn-tf-brand {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.cn-tf-brand-table {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+}
+
+.cn-tf-count {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 0;
+}
+
+/* Tabular so eight of them stack on the digit, which is the only
+   reason a figure is mono at all. */
+.cn-tf-count-n {
+  flex: 0 0 3.5ch;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cn-tf-count-of {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* The banners, verbatim off Trailer Module!A. Mono because they are a
+   reference to be checked against the sheet, and they WRAP — a
+   truncated heading cannot be looked up. */
+.cn-tf-series {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.cn-tf-how {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.cn-tf-how b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cn-tf-floor-line {
+  margin: var(--sp-2) 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+.cn-tf-floor-line b {
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+/* -- the floor, said to be a floor -------------------------- */
+
+.cn-tf-floor {
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.cn-tf-floor-head {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.cn-tf-floor-note {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-tf-floor-note b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cn-tf-floor-note--quiet {
+  color: var(--ink-faint);
+}
+.cn-tf-floor-note--quiet b {
+  color: var(--ink-soft);
+}
+
+/* -- set aside, and never rejected -------------------------- */
+
+.cn-tf-aside {
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.cn-tf-aside-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.cn-tf-aside-n {
+  flex: 0 0 3.5ch;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cn-tf-aside-what {
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-tf-aside-what b {
+  font-weight: 500;
+  color: var(--ink);
+}

@@ -89,11 +89,18 @@ export function WorkbookRuleList({ liveIds }: WorkbookRuleListProps): ReactEleme
         <h3 className="cn-wb-title">
           {WORKBOOK_RULES.length} rules your workbook already states
         </h3>
+        {/* NAMED THE ONE WORKBOOK, AND THERE ARE NOW FIVE. This read
+            "Read out of Boat Module (5).xlsx" from the day six rules
+            were mined out of that one file. Ten more have landed since,
+            off the Trailer, Registration, Rigging and Motor modules,
+            and each seed already prints its own workbook on its
+            provenance line — so a single file named up here was
+            telling a person to go and check the wrong spreadsheet. */}
         <p className="cn-wb-lede">
-          Read out of <b>Boat Module (5).xlsx</b> — each one traced to the cell that says
-          it. {running} of {WORKBOOK_RULES.length} are being checked. The rest are listed
-          so you know what is <em>not</em> being checked, which is the part you would
-          otherwise have to guess.
+          Read out of your price file — each one traced to the cell that says it, on the
+          line under the rule. {running} of {WORKBOOK_RULES.length} are being checked. The
+          rest are listed so you know what is <em>not</em> being checked, which is the part
+          you would otherwise have to guess.
         </p>
       </header>
 

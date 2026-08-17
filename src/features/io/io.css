@@ -505,3 +505,202 @@
     transform: rotate(-2deg) scale(1);
   }
 }
+
+/* ============================================================
+   THE FRESHNESS NOTICE — see Freshness.tsx for what it is for.
+
+   Drawn in the redesign's own vocabulary rather than this file's
+   drafting-table one, because it appears OVER a page and has to
+   belong to that page: --paper-high on a hairline, 10px radius,
+   --ec3 at rest so it reads as lifted off the surface underneath.
+   Nothing above changes.
+
+   IT DOES NOT STAND IN FRONT OF THE PAGE. Drawn top-centre it
+   covered the very screen a person had just opened — including the
+   module dashboard's own empty state, which is the screen most
+   likely to have sent them looking. So it sits in the bottom right,
+   clear of the dock's reserved 78px strip and clear of the toast
+   stack, which is bottom-centre. It is a notification, not a gate.
+   ============================================================ */
+
+.io-fresh {
+  position: fixed;
+  bottom: 96px;
+  right: var(--sp-5);
+  z-index: 150;
+  width: min(430px, calc(100vw - var(--sp-6)));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--ec3);
+}
+
+.io-fresh-eyebrow {
+  color: var(--ink-faint);
+}
+
+.io-fresh-say {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+/* THE COUNTED DIFFERENCE — the line that turns "my data reverted"
+   into "this is an older copy". Ink, not a tint: it is the fact the
+   reader came for. */
+.io-fresh-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.io-fresh-fact {
+  font-variant-numeric: tabular-nums;
+}
+
+.io-fresh-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.io-fresh-go {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--blue);
+  color: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition:
+    filter var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.io-fresh-go:hover {
+  filter: brightness(1.08);
+}
+.io-fresh-go:active {
+  transform: scale(0.97);
+}
+.io-fresh-go:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+.io-fresh-keep {
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.io-fresh-keep:hover {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+.io-fresh-keep:active {
+  transform: scale(0.97);
+}
+.io-fresh-keep:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+.io-fresh-foot {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   THE I/O TRIGGER, on a redesigned toolbar.
+
+   It is the one part of this feature that now stands on a page the
+   redesign drew, so it takes that page's control step — 28px tall,
+   7px radius, 12.5px Inter, sentence case — rather than `.btn`'s
+   uppercase mono stamp. The popover it opens is unchanged.
+   ============================================================ */
+
+.io-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.io-trigger:hover {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+.io-trigger:active {
+  transform: scale(0.97);
+}
+.io-trigger:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* The popover hangs from the LEFT when the trigger stands in a
+   toolbar's left-hand track — a 348px sheet right-aligned to a
+   control at the window's left edge lands off the side of it. */
+.io-root--left .io-pop {
+  right: auto;
+  left: 0;
+}

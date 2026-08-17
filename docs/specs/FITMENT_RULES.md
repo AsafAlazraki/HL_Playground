@@ -1193,11 +1193,26 @@ Highfield, `K` for Surtees — and seed `Max Load` **only** for Highfield, where
 **And a sixth workbook is not attached.** ASSERTED:
 `xl/externalLinks/_rels/externalLink5.xml.rels` targets
 `…/Master Price File/Rigging Module.xlsx`. **Every rigging kit and every rigging
-labour hour comes from it.** A 5.77 MB cache of its `Rigging Kits` sheet is
+labour hour comes from it.** ~~A 5.77 MB cache of its `Rigging Kits` sheet is
 embedded in `Boat Module (5).xlsx` and the rule was read from that cache — but a
 cache cannot prove absence, and here is the demonstration: column `O`, the
 lookup target of `UH Rigging Kit Labour`, has **zero cached values** yet `UH829`
-returns `5.8`. **Ask the owner for `Rigging Module.xlsx`.**
+returns `5.8`.~~ **Ask the owner for `Rigging Module.xlsx`.**
+
+> **STRUCK, and the demonstration was the wrong way round.**
+> `FOUR_MODULES.md` §3.1 obtained the file and compared it to the cache cell for
+> cell: **42,372 cells present in both, 0 differing, 0 that the cache does not
+> carry, 0 that the real sheet does not** — and column `O` has **1,448 cached
+> cells, 1,247 of them non-blank.** `Boat Module!LA829` names a kit,
+> `Rigging Kits!C382` is that same string, and `Rigging Kits!O382 = 5.8` is the
+> value `UH829` returns. **The cache is a byte-exact mirror and the hours were
+> cached all along.** The file was still worth asking for, for the DERIVATION
+> rather than the data: the price ladder, the two external labour rates, the
+> `OBSOLETE RIGGING KITS` divider at `C829`, the six preamble sentinels, and one
+> sheet the cache genuinely does not carry (`Rigging Spec Enquiry`). The
+> `Rigging Kits` table in the seed is built from the real file
+> (`src/demos/northside.ts`, `rig_kits` — 640 rows), so this clause is now
+> history rather than a request.
 
 #### 6.6 · One file cannot be opened at all
 
@@ -1364,10 +1379,23 @@ scratchpad/adj/b2_hfrule.py  §5.8 the seeded Highfield trailer rule, re-tested
    cells) and the one brand where the series rule breaks. Those are the same
    fact.
 
-2. **`Rigging Module.xlsx` is not among the five workbooks.** Every rigging kit
+2. ~~**`Rigging Module.xlsx` is not among the five workbooks.** Every rigging kit
    and every rigging labour hour on every boat row comes from it. We read the
    rule from a cache embedded in the Boat Module and the cache is demonstrably
-   incomplete.
+   incomplete.~~
+   **STRUCK — the cache was a byte-exact mirror** (42,372 cells, 0 differing, 0
+   missing either way), so nothing was read from an incomplete source. The file
+   arrived and is now the source of the seed's `rig_kits` table; what it added
+   was the derivation, not the data. See §6.5 above and `FOUR_MODULES.md` §3.1.
+   **A correction stated clearly is worth more than the original finding**, and
+   this one costs nothing except the admission.
+
+   What replaces it as the thing to put in front of the owner:
+   **153 live rigging triples on 31 live boat rows name a kit from below the
+   `OBSOLETE RIGGING KITS` divider — 24 distinct kits, and NINE are in slot 1,
+   the boat's standard fit** (all Stabicraft rows 178–194). That is item 1 above
+   repeating in a second library, which makes it one report and not two fixes
+   (`FOUR_MODULES.md` §3.9).
 
 3. **The one live quote form in the Master Price File has a cell labelled
    `Boat:` that nothing reads.** ASSERTED: zero references to `[1]Boat Module`

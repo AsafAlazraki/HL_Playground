@@ -190,9 +190,11 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
                 a LIMIT. Someone who opens the wrong one does not realise
                 they opened the wrong one, they conclude the thing they
                 wanted is impossible. */}
+            {/* the door is on the bar, not to the left — there is no
+                left panel in this shell any more */}
             <p className="shell-flow-void-other">
               These rules produce answers. For a limit every row must keep — a
-              maximum, a required value — use <b>Business rules</b> on the left.
+              maximum, a required value — use <b>Business rules</b> on the bar.
             </p>
           </div>
         )}

@@ -18,8 +18,11 @@ import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { SPRING_QUICK, transitionFor, useStillness } from '@/features/views/stillness'
 import type { ConstraintDef } from '@/types/model'
 import { useConstraints } from './constraintDefs'
+import { LeftOutList } from './LeftOutList'
 import { NewRuleSentence } from './NewRuleSentence'
+import { RegistrationTheme } from './RegistrationTheme'
 import { RuleCard } from './RuleCard'
+import { TrailerFitmentPanel } from './TrailerFitmentPanel'
 import { WorkbookRuleList } from './WorkbookRuleList'
 import { evaluateConstraints, sortConstraints } from './state'
 import { useSentenceCtx } from './useCtx'
@@ -84,9 +87,17 @@ export function RulesPane(): ReactElement {
               points at the door that is. Both doors sit in the panel to
               the left at the same time, so naming it is enough to find
               it. */}
+          {/* THE DOOR IT POINTS AT IS ON THE BAR, AND IT IS CALLED
+              FITMENT. Two things had gone stale in one sentence: there
+              is no panel to the left any more (`LeftPanel` is imported
+              by nothing since the masthead went), and 4c4a3e2 renamed
+              this door — b5ac6de's "Fitment is called Fitment
+              everywhere" missed this copy. Sending somebody left to
+              look for a name that no longer exists is worse than not
+              pointing at all. */}
           <p className="cn-lede cn-lede--other">
             These are limits — things every row must keep. To work out what goes
-            <em> with</em> something, use <b>Work out what fits what</b> on the left.
+            <em> with</em> something, use <b>Fitment</b> on the bar.
           </p>
           {constraints.length > 0 && (
             <p className="cn-count">
@@ -156,6 +167,44 @@ export function RulesPane(): ReactElement {
                 block exists: what the system does NOT check is a fact
                 a person needs, because otherwise they assume it does. */}
             <WorkbookRuleList liveIds={liveIds} />
+
+            {/* THE ONE RULE IN THE PRICE FILE THAT ACTUALLY PICKS
+                SOMETHING, and it goes directly under the list that
+                names it. F8 — a trailer's series heading says which
+                boat brand it is built for — is the only candidate in
+                either workbook that both holds at 100% and rejects
+                something, and its card in the list above said "Not
+                checked yet" for as long as the app had no surface for
+                it. This is that surface, and it draws the measurement
+                rather than a claim: how much of the trailer catalogue
+                each brand's heading leaves standing, computed from the
+                loaded sheet on every render. The weight floor is on it
+                too, labelled a floor, because a check that never
+                narrows anything looks like the selector until somebody
+                says otherwise. */}
+            <TrailerFitmentPanel />
+
+            {/* THE THEMES, AND THE DECISIONS. Both sit here for the
+                same reason the workbook rules do: this pane is where
+                the app is honest about what it does and does not do.
+
+                REGISTRATION is the owner's own example of a common
+                theme — one concept the boat and the trailer share —
+                and it is drawn once, with the four things it may not
+                do and the rows that disagree with it today.
+
+                WHAT IS NOT IN HERE answers the other half. A person
+                who knows the price file will look for the service
+                schedule; without this they cannot tell a decision
+                from a gap, and both guesses cost us.
+
+                NEITHER ADDS A DOOR. Joins and views are never doors
+                on the navigation bar, and a fee register is not a
+                place in the business — these are blocks on a surface
+                that already exists. Both are exported from this
+                feature's index so a module page can draw them too. */}
+            <RegistrationTheme />
+            <LeftOutList />
           </>
         )}
       </div>

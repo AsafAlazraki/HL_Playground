@@ -63,7 +63,7 @@
    door in the panel and the stage agree about what is open.
    ============================================================ */
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { OrgProfile } from '@/types/model'
 import {
@@ -94,6 +94,10 @@ import { FlowStage } from './FlowStage'
 import { QuoteStage } from './QuoteStage'
 import { ModuleStage } from './ModuleStage'
 import { useQuotes } from '@/features/quote'
+import { Finder } from '@/features/search'
+import { Freshness } from '@/features/io'
+import { isStaleNorthside, northsideDrift } from '@/demos'
+import { loadDemoSet, realDemoSet } from './demoLoad'
 import { useViewPersistence } from './viewPersistence'
 import './shell.css'
 
@@ -126,6 +130,20 @@ export function Shell() {
   const entities = useProjectStore((s) => s.entities)
   const tableCount = Object.keys(entities).length
   const setOrganisation = useProjectStore((s) => s.setOrganisation)
+
+  /* IS THIS COPY OF THE PREPARED SET THE CURRENT ONE? The sheet is
+     hydrated out of this browser's own storage, so a person who
+     loaded the example months ago meets THAT one — and it reads like
+     data reverting rather than like an old file. The comparison is
+     the set's own (`@/demos`), the notice is `features/io`'s, and
+     the shell only decides whether to draw it. */
+  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const modules = useProjectStore((s) => s.modules)
+  const [keeping, setKeeping] = useState(false)
+  const drift = useMemo(
+    () => northsideDrift(entities, rowsByEntity, modules),
+    [entities, rowsByEntity, modules],
+  )
 
   /* view pages survive a refresh — see viewPersistence.ts */
   useViewPersistence()
@@ -227,11 +245,26 @@ export function Shell() {
   })
 
   /* the old single-slot setter, kept so every existing call site in
-     this file keeps working — it just opens a window instead */
+     this file keeps working — it just opens a window instead.
+
+     NULL MEANS THE SHEET, AND THE SHEET IS WHAT IS UNDER EVERY
+     WINDOW. This used to drop only the HOME window, which made the
+     bar's "Data model" a dead press for most of a session: `focused`
+     is the top of the stack, so a single table, module or quote left
+     standing kept the sheet hidden and the button did visibly
+     nothing. Measured before the change: open Stacer, press Data
+     model, and the table stage was still the surface with the sheet
+     layer still `hidden`.
+
+     Emptying the stack is the honest reading of "show me the
+     drawing" — there is no fourth state where a window is open and
+     the sheet is in front. It costs the Cmd-Tab history, which is
+     the right trade for a deliberate press of the one item on the
+     bar that means "nothing in front". */
   const setStage = useCallback(
     (next: Stage | null) => {
       if (next === null) {
-        setWins((prev) => prev.filter((w) => w.stage.kind !== 'home'))
+        setWins([])
         return
       }
       openWin(next)
@@ -277,6 +310,26 @@ export function Shell() {
   const [picking, setPicking] = useState(false)
   /* the finder — ⌘K, and the search item on the dock */
   const [finding, setFinding] = useState(false)
+
+  /* THE ONE KEY THE SHELL BINDS, AND IT IS MODIFIED. The header above
+     says this shell binds nothing globally, and the reason it gives
+     is unmodified keys: a bare "n" eats the n of every word typed
+     into a cell. ⌘K cannot — no cell wants it, and the field has been
+     drawing that stamp on itself since it was written, which was a
+     promise nothing kept once the masthead that held it was removed.
+     CAPTURE PHASE, for the same reason SearchField takes it there: a
+     table node stops keydown at its own root while a cell is being
+     edited, so a bubble-phase listener here would never fire. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key !== 'k' && e.key !== 'K') return
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+      e.preventDefault()
+      setFinding(true)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [])
 
   /* a drop outranks a pick — and clears it, so dismissing the drop
      cannot leave a second dialog waiting underneath */
@@ -376,6 +429,42 @@ export function Shell() {
         onSearch={() => setFinding(true)}
         quoteCount={quoteCount}
       />
+
+      {/* FIND ANYTHING. The state was declared and the dock button was
+          wired to it; nothing rendered it, so the one control on the
+          bar that never moves did nothing. Choosing a result opens
+          that table, which is what a person who searched for a row
+          was on their way to. */}
+      {finding ? (
+        <Finder
+          onReveal={(entityId) => {
+            setFinding(false)
+            setStage({ kind: 'table', entityId })
+          }}
+          onClose={() => setFinding(false)}
+        />
+      ) : null}
+
+      {/* AN OLDER COPY OF THE EXAMPLE SAYS SO. Drawn only over the
+          prepared set it is about, only while it really differs, and
+          only until the person answers it either way. */}
+      {drift && !keeping && isStaleNorthside(drift) ? (
+        <Freshness
+          setName={drift.setName}
+          missing={drift.missing}
+          resized={drift.resized}
+          noModules={drift.noModules}
+          moduleCount={drift.moduleCount}
+          onDismiss={() => setKeeping(true)}
+          onRefresh={() => {
+            const set = realDemoSet()
+            /* the guard names what is on the sheet now and asks first;
+               backing out leaves the notice up, because nothing has
+               been decided */
+            if (set && loadDemoSet(set)) setKeeping(true)
+          }}
+        />
+      ) : null}
 
       {/* `key` on the sequence: dropping the same kind on the same spot
          twice is two separate questions, not one stale dialog. */}

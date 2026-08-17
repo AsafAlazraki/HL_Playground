@@ -1554,3 +1554,335 @@
   font-family: var(--font-mono);
   font-size: 12px;
 }
+
+/* ============================================================
+   THE OVERVIEW BAND — what this place IS, above what is in it.
+
+   Appended in the same spirit as the block above it: nothing here
+   changes an existing selector. It draws one card between the
+   header and the catalogue, in the same geometry every other run
+   on this page uses (1180px, centred, --sp scale, 10px radius,
+   --ec1 at rest), so a module reads as one page rather than as a
+   header with a widget under it.
+
+   THE ACCENT APPEARS ONCE, on the card's left edge, and once more
+   on the member marks. Everything else is ink on paper: the strips
+   are facts, and a screen where every fact is coloured has no
+   primary.
+
+   A NAME IS NEVER UPPERCASED. `mono-label` stamps the three
+   captions and the member counts, and nothing else — a brand name
+   and the sentence "on 6 of 7" are content, and uppercasing content
+   loses information the dealer typed.
+   ============================================================ */
+
+.md-over {
+  max-width: 1180px;
+  margin: 0 auto var(--sp-5);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--md-accent, var(--hairline-strong));
+  border-radius: var(--radius);
+  box-shadow: var(--ec1);
+}
+
+.md-over-strip {
+  min-width: 0;
+}
+
+.md-over-strip + .md-over-strip {
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.md-over-cap {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-faint);
+}
+
+/* -- INSIDE: the member tables, each a way into its own run ---- */
+
+.md-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.md-chip:hover:not(:disabled) {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+/* the press lands on pointer-down, and at control scale */
+.md-chip:active:not(:disabled) {
+  background: var(--paper-sunken);
+  transform: scale(0.97);
+}
+.md-chip:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+/* a table whose every row is held back is still NAMED — it is in
+   this module — but there is no run to scroll to */
+.md-chip:disabled {
+  cursor: default;
+  color: var(--ink-faint);
+  background: var(--paper-sunken);
+}
+
+.md-chip-mark {
+  display: inline-flex;
+  color: var(--md-accent, var(--ink-faint));
+}
+
+.md-chip-name {
+  white-space: nowrap;
+}
+
+.md-chip-n {
+  color: var(--ink-faint);
+}
+
+/* -- WHAT GOES WITH THESE: reachable through a declared join --- */
+
+.md-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.md-link-mark {
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+
+.md-link-name {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* MONO BECAUSE IT IS A FIGURE, and not uppercased because it is a
+   sentence about one. `mono-label` would have printed "ON 6 OF 7". */
+.md-link-share {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* -- WHAT YOU CAN DO HERE: the verbs, and where each happens ---- */
+
+.md-acts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: var(--sp-2) var(--sp-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-act {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* THE DASHED EDGE IS THE STUB PATTERN, kept. A verb this screen
+   does not perform is drawn as a disabled control that says where
+   the act happens — the same promise `.md-stub` made, beside the
+   verbs that do work rather than in a strip of its own. */
+.md-act-verb {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: default;
+}
+.md-act-verb.is-live {
+  border: 1px solid var(--hairline-strong);
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.md-act-say {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* -- WHAT HAS HAPPENED LATELY: quotes raised, rows worked on ---
+
+   THE ONE STRIP IN THIS BAND THAT IS SOMETIMES ABSENT. It is drawn
+   only when something really has happened, so these rules govern a
+   surface a freshly loaded sheet never reaches.
+
+   A quote row is a LIST ROW, not a card, so it takes the list row's
+   feedback from the rest of this page: it DARKENS on press rather
+   than scaling, because a line in a stack of lines that shrinks
+   makes its neighbours look as though they moved. Same decision
+   `.md-row` already made, and the same reason.
+   ------------------------------------------------------------- */
+
+.md-lately {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-late {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  width: 100%;
+  min-width: 0;
+  padding: 6px var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-late:hover {
+  background: var(--paper-sunken);
+}
+/* the press lands on pointer-down, and a row darkens rather than
+   scaling — see the note above */
+.md-late:active {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+}
+
+/* THE HOVER GROUND COSTS THE METADATA ITS CONTRAST, so the metadata
+   steps up with it. `--ink-faint` is 4.72:1 on `--paper-high` and
+   only 4.22:1 on `--paper-sunken` — measured, not assumed — which is
+   under the 4.5:1 floor every text/background pair has to clear, and
+   a tint counts. `--ink-soft` restores it to 6.84:1 on the same
+   ground. This is the mistake DESIGN_PRINCIPLES records being made
+   and caught once already; it is not made again here. */
+.md-late:hover .md-late-state,
+.md-late:hover .md-late-ref,
+.md-late:hover .md-late-when,
+.md-late:active .md-late-state,
+.md-late:active .md-late-ref,
+.md-late:active .md-late-when {
+  color: var(--ink-soft);
+}
+.md-late:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+/* no route to the document: the facts are still drawn, and nothing
+   pretends to be pressable */
+.md-late.is-flat {
+  cursor: default;
+}
+
+/* THE SUBJECT IS THE NAME, so it takes the ink a name takes and it
+   is the thing that gives way when the row is narrow. */
+.md-late-what {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* GIVEN or DRAFT — a state, which is the one thing on this row that
+   is a label rather than a value, so it is the one thing uppercased.
+   `mono-label` carries the 11px / 0.06em stamp. */
+.md-late-state {
+  flex: 0 0 auto;
+  color: var(--ink-faint);
+}
+
+/* A REFERENCE AND A DAY ARE FIGURES A PERSON READS ALOUD. Mono and
+   tabular so a column of them lines up, never `mono-label`, because
+   uppercasing a value loses what the business typed. */
+.md-late-ref,
+.md-late-when {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.md-late-say {
+  margin: var(--sp-2) 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* NARROW: the four facts stop being one line and become two, rather
+   than the name being squeezed to nothing between three figures. */
+@media (max-width: 620px) {
+  .md-late {
+    flex-wrap: wrap;
+    gap: 2px var(--sp-2);
+  }
+  .md-late-what {
+    flex: 1 0 100%;
+  }
+}

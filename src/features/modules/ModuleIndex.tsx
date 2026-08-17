@@ -39,6 +39,49 @@
    remainder stated in words — the same discipline, and the same
    sentence shape, as the view stage's rail.
 
+   WHAT A MODULE IS THAT A TABLE IS NOT — the overview band, drawn
+   above the catalogue and derived from nothing but the data.
+
+   A module opening onto rows alone is the table again, one screen
+   further in, and that is exactly what it looked like. A place in
+   the business has to say, in the first two seconds, WHAT YOU CAN
+   DO HERE — not only what is in it. Four strips do that, and
+   every figure in them is read, never written:
+
+     INSIDE          the member tables as chips, each with its own
+                     count, each scrolling to that run. This is the
+                     brand level made navigable: seven price files,
+                     not one flat list of 174 hulls.
+     WHAT GOES WITH  the tables reachable through a declared join,
+                     and on how many of these tables each one is —
+                     "Yamaha Outboards, on 6 of 7". The asymmetry
+                     is real (Haines Signature and Jeanneau take
+                     factory packages instead) and saying it is the
+                     alternative to shipping headings that are
+                     empty for four brands out of seven.
+     WHAT YOU CAN DO the verbs that are switched on. One that this
+                     renderer performs is stated with the contract's
+                     own sentence; one it does not is a DISABLED
+                     control saying where the act happens instead.
+                     That second case used to be a separate strip
+                     below the header; it belongs here, beside the
+                     verbs that do work, because a person reading a
+                     row of capabilities wants the whole row.
+     WHAT HAS        the quotes raised against these tables, and the
+     HAPPENED        rows changed since they were added. THE ONLY
+     LATELY          STRIP THAT CAN BE ABSENT, and it is absent on a
+                     freshly loaded sheet, because nothing has
+                     happened yet and saying so in a heading would be
+                     four words where the truth is none. `read.ts`
+                     explains why both signals are exactly zero there
+                     and why neither can be faked into life.
+
+   THE FIRST THREE ANSWER WHAT A CATALOGUE ANSWERS. The fourth is
+   what makes this an application: a place that remembers what was
+   done in it. It arrives during a demonstration rather than before
+   one — press "Quote this one" on any boat and it is drawn on the
+   way back.
+
    ONE CONTROL: THE GEAR, top right. It does not navigate and it
    does not open a form that represents this module. It grows
    handles on the drawing already in front of you — the name and
@@ -52,31 +95,34 @@
    reinvented.
    ============================================================ */
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import { ArrowDown, ArrowUp, Check, Gear, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   accentVar,
   isRetired,
-  MODULE_CAPABILITIES,
+  TABLE_KINDS,
   type ImageRef,
-  type ModuleCapability,
   type ModuleDef,
 } from '@/types/model'
 import { TableKindSymbol } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
 import { heldBackRowCount } from '@/features/views/sellable'
+import { useQuotes } from '@/features/quote'
 import {
   buildEntries,
+  capEntries,
   groupEntries,
   listedTables,
+  moduleActivity,
   moduleTables,
+  relatedTables,
   type IndexEntry,
   type IndexSection,
 } from './read'
-import { moveId, NOT_YET_SAYS } from './designer'
+import { capabilityStates, moveId, NOT_YET_SAYS } from './designer'
 import { ModuleDesigner } from './ModuleDesigner'
 import './modules.css'
 
@@ -86,25 +132,28 @@ import './modules.css'
  *  enough that seven brands at once stay instant. */
 const INDEX_CAP = 240
 
-/** The verbs this renderer does not yet perform. A module with one
- *  of these switched on gets a DISABLED control saying what it will
- *  do, rather than a control that looks finished and does nothing —
- *  which is a lie told to whoever is looking at the screen. The
- *  sentences live in `designer.ts` beside the switch that turns each
- *  verb on, so the promise made in DESIGN mode and the promise made
- *  in USE mode are one string and can never drift apart. */
-const NOT_YET: ModuleCapability[] = ['add', 'edit', 'delete', 'relate', 'quote', 'export']
-
 export interface ModuleIndexProps {
   module: ModuleDef
   /** clicking an item — the table it belongs to and the row itself */
   onOpen: (tableId: string, rowId: string) => void
+  /** Opening one of the quotes raised here. Absent = the quotes are
+   *  still NAMED, as a fact about this place, but they are not doors —
+   *  the same shape `canOpen` gives an item, and the reason this
+   *  feature still imports nothing from the app. */
+  onOpenQuote?: (quoteId: string) => void
 }
 
-export function ModuleIndex({ module, onOpen }: ModuleIndexProps): ReactElement {
+export function ModuleIndex({
+  module,
+  onOpen,
+  onOpenQuote,
+}: ModuleIndexProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const updateModule = useProjectStore((s) => s.updateModule)
+  /* Quotes live in their own registry rather than the project store —
+     a document is frozen and must not move when the sheet does. */
+  const quotes = useQuotes()
   const [query, setQuery] = useState('')
   const [designing, setDesigning] = useState(false)
 
@@ -153,13 +202,66 @@ export function ModuleIndex({ module, onOpen }: ModuleIndexProps): ReactElement 
     return entries.filter((e) => needles.every((n) => e.hay.includes(n)))
   }, [entries, canSearch, query])
 
-  const shown = matches.length > INDEX_CAP ? matches.slice(0, INDEX_CAP) : matches
+  /* THE CAP IS SHARED OUT, NOT SPENT IN ORDER. A flat slice gave the
+     whole budget to the first tables and left the last one undrawn —
+     and an undrawn table has no section head, so the member chip that
+     promises to go to it pressed to no effect. See `capEntries`. */
+  const shown = useMemo(() => capEntries(matches, INDEX_CAP), [matches])
   const hidden = matches.length - shown.length
   const sections = useMemo(() => groupEntries(shown, listed), [shown, listed])
 
   const multiTable = tables.length > 1
-  const stubs = NOT_YET.filter((c) => module.capabilities.includes(c))
   const browsing = module.capabilities.includes('browse')
+
+  /* -- the overview band ------------------------------------- */
+
+  /* How many items each member table brings, counted off the WHOLE
+     list and not off what the search left — a chip whose number
+     changed as you typed would be a second, quieter search result. */
+  const memberCounts = useMemo(() => {
+    const out = new Map<string, number>()
+    for (const e of entries) out.set(e.tableId, (out.get(e.tableId) ?? 0) + 1)
+    return out
+  }, [entries])
+
+  /* What is reachable from here through a join somebody declared. */
+  const related = useMemo(() => relatedTables(module, entities), [module, entities])
+
+  /* The verbs that are ON, in the contract's own order, each with
+     either the sentence for what it does or the sentence for where
+     it is done instead. `capabilityStates` is the same reader the
+     designer strip uses, so the two can never disagree. */
+  const acts = useMemo(
+    () => capabilityStates(module, tables).filter((s) => s.on),
+    [module, tables],
+  )
+
+  /* WHAT HAS HAPPENED HERE — quotes raised against these tables, and
+     rows changed since they were loaded. Both are exactly zero on a
+     freshly loaded sheet, so the strip below draws nothing at all
+     until something really has happened. */
+  const lately = useMemo(
+    () => moduleActivity(module, entities, rowsByEntity, quotes),
+    [module, entities, rowsByEntity, quotes],
+  )
+  const anythingLately = lately.quoteCount > 0 || lately.edited > 0
+
+  /* A CHIP SCROLLS TO ITS RUN, and clears the find box on the way:
+     "show me Stacer" while three letters are typed into search would
+     otherwise scroll to a heading that is not drawn. Done through
+     state rather than in the handler because the run only exists
+     after the render that cleared the query. */
+  const [goingTo, setGoingTo] = useState<string | null>(null)
+  useEffect(() => {
+    if (goingTo === null) return
+    setGoingTo(null)
+    const el = document.getElementById(`md-sec-${module.id}-${goingTo}`)
+    if (!el) return
+    const still =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+  }, [goingTo, module.id])
 
   const style = { '--md-accent': accentVar(module.accent) } as CSSProperties
 
@@ -266,21 +368,163 @@ export function ModuleIndex({ module, onOpen }: ModuleIndexProps): ReactElement 
 
       {designing ? <ModuleDesigner module={module} /> : null}
 
-      {/* WHAT IS SWITCHED ON BUT NOT YET BUILT. Drawn disabled, with
-          the sentence saying what it will do — never as a live-looking
-          control. Nothing is drawn at all for a module that has none
-          of these on, which is every module a person makes today. */}
-      {stubs.length > 0 ? (
-        <div className="md-stubs">
-          {stubs.map((c) => (
-            <div className="md-stub" key={c}>
-              <button type="button" className="btn" disabled>
-                {MODULE_CAPABILITIES[c].label}
-              </button>
-              <p className="md-stub-say">{NOT_YET_SAYS[c]}</p>
+      {/* THE OVERVIEW BAND — see the header. Three strips, all
+          derived, drawn above the catalogue rather than instead of
+          it. A module with no tables left draws none of them: there
+          is nothing true to say, and the sentence below says so. */}
+      {tables.length > 0 ? (
+        <section className="md-over" aria-label={`About ${module.name}`}>
+          {multiTable ? (
+            <div className="md-over-strip">
+              <p className="md-over-cap mono-label">Inside</p>
+              <ul className="md-chips">
+                {listed.map((t) => {
+                  const n = memberCounts.get(t.id) ?? 0
+                  return (
+                    <li key={t.id}>
+                      <button
+                        type="button"
+                        className="md-chip"
+                        disabled={n === 0}
+                        aria-label={`Go to ${t.name}, ${n} ${n === 1 ? 'item' : 'items'}`}
+                        onClick={() => setGoingTo(t.id)}
+                      >
+                        <span className="md-chip-mark">
+                          <TableKindSymbol
+                            kind={t.kind && t.kind in TABLE_KINDS ? t.kind : 'custom'}
+                            size={ICON_SIZE.tiny}
+                          />
+                        </span>
+                        <span className="md-chip-name">{t.name}</span>
+                        <span className="md-chip-n mono-label">{n}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
-          ))}
-        </div>
+          ) : null}
+
+          {related.length > 0 ? (
+            <div className="md-over-strip">
+              <p className="md-over-cap mono-label">What goes with these</p>
+              <ul className="md-links">
+                {related.map((r) => (
+                  <li className="md-link" key={r.tableId}>
+                    <span className="md-link-mark">
+                      <TableKindSymbol kind={r.kind} size={ICON_SIZE.tiny} />
+                    </span>
+                    <span className="md-link-name">{r.name}</span>
+                    {/* THE SHARE, NOT A TICK. "on 3 of 7" is the fact
+                        a person can act on; a tick would say only
+                        that the relationship exists somewhere. */}
+                    <span className="md-link-share">
+                      on {r.on} of {r.of}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {acts.length > 0 ? (
+            <div className="md-over-strip">
+              <p className="md-over-cap mono-label">What you can do here</p>
+              <ul className="md-acts">
+                {acts.map((a) => {
+                  /* NOT PERFORMED ON THIS SCREEN = A DISABLED CONTROL
+                     THAT SAYS WHERE IT IS. An enabled control that
+                     does nothing is a lie told to whoever is looking;
+                     a verb quietly missing from the row is worse,
+                     because the dashboard card already promised it. */
+                  const elsewhere = a.refused ?? NOT_YET_SAYS[a.key]
+                  return (
+                    <li className="md-act" key={a.key}>
+                      {elsewhere ? (
+                        <button type="button" className="md-act-verb" disabled>
+                          {a.label}
+                        </button>
+                      ) : (
+                        <span className="md-act-verb is-live">{a.label}</span>
+                      )}
+                      <span className="md-act-say">{elsewhere ?? a.says}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ) : null}
+
+          {/* WHAT HAS HAPPENED LATELY — the fourth question, and the
+              one that makes this an application rather than a
+              catalogue. DRAWN ONLY WHEN SOMETHING HAS: a freshly
+              loaded sheet has raised no quotes and changed no rows, so
+              this strip is absent, and the absence is the true answer.
+              It arrives the moment somebody quotes a boat. */}
+          {anythingLately ? (
+            <div className="md-over-strip">
+              <p className="md-over-cap mono-label">What has happened lately</p>
+              {lately.quotes.length > 0 ? (
+                <ul className="md-lately">
+                  {lately.quotes.map((q) => {
+                    /* The subject as the QUOTE froze it, its reference,
+                       the word the quotes list prints for its state,
+                       and the day. Four facts, one line, no summary. */
+                    const body = (
+                      <>
+                        <span className="md-late-what">{q.subject}</span>
+                        <span className="md-late-state mono-label">{q.state}</span>
+                        {/* MONO BECAUSE THEY ARE FIGURES, and not
+                            `mono-label`, because a reference and a date
+                            are values a person reads back to somebody
+                            on the phone. */}
+                        <span className="md-late-ref">{q.reference}</span>
+                        <span className="md-late-when">{q.day}</span>
+                      </>
+                    )
+                    return (
+                      <li key={q.id}>
+                        {onOpenQuote ? (
+                          <button
+                            type="button"
+                            className="md-late"
+                            aria-label={`Open the quote for ${q.subject}, ${q.reference}`}
+                            onClick={() => onOpenQuote(q.id)}
+                          >
+                            {body}
+                          </button>
+                        ) : (
+                          <div className="md-late is-flat">{body}</div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : null}
+
+              {lately.quoteCount > lately.quotes.length ? (
+                <p className="md-late-say">
+                  {lately.quoteCount - lately.quotes.length} more raised here — all of
+                  them are in Quotes.
+                </p>
+              ) : null}
+
+              {/* THE ROWS SOMEBODY HAS WORKED ON. Not a door: there is
+                  no one honest destination for a count spread across
+                  two tables, and inventing one would be worse than
+                  stating the fact. `updatedAt !== createdAt` is exact,
+                  so this sentence can never appear for data nobody has
+                  touched. */}
+              {lately.edited > 0 ? (
+                <p className="md-late-say">
+                  {lately.edited} {lately.edited === 1 ? 'item' : 'items'} on{' '}
+                  {lately.editedOn.join(', ')} {lately.edited === 1 ? 'has' : 'have'} been
+                  edited since {lately.edited === 1 ? 'it was' : 'they were'} added.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </section>
       ) : null}
 
       {!canOpen ? (
@@ -338,6 +582,10 @@ export function ModuleIndex({ module, onOpen }: ModuleIndexProps): ReactElement 
         sections.map((section) => (
           <Section
             key={section.tableId}
+            /* the anchor a member chip scrolls to. Keyed on the MODULE
+               too: two modules sharing a table would otherwise write
+               the same id, and only one of them could be reached. */
+            domId={`md-sec-${module.id}-${section.tableId}`}
             section={section}
             showHead={multiTable}
             mode={module.index}
@@ -376,6 +624,8 @@ export function ModuleIndex({ module, onOpen }: ModuleIndexProps): ReactElement 
 /* ---------------------------------------------------------- */
 
 interface SectionProps {
+  /** the id a member chip in the overview band scrolls to */
+  domId: string
   section: IndexSection
   /** the brand head, drawn only when the module spans more than one
    *  table — a one-table module already has its name in the header.
@@ -399,6 +649,7 @@ interface SectionProps {
 }
 
 function Section({
+  domId,
   section,
   showHead,
   mode,
@@ -413,7 +664,7 @@ function Section({
   onDrop,
 }: SectionProps): ReactElement {
   return (
-    <section className="md-sec" aria-label={section.name}>
+    <section className="md-sec" id={domId} aria-label={section.name}>
       {showHead ? (
         <div className="md-sec-head">
           <span className="md-sec-mark">

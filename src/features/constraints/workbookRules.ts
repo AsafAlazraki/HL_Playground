@@ -6,12 +6,18 @@
 
    PROVENANCE, NOT INVENTION
    ─────────────────────────────────────────────────────────────
-   Every entry below survived adjudication against the five
-   workbooks in `C:/Users/AsafA/Downloads` (opened read-only) and
-   is written up in `docs/specs/FITMENT_RULES.md`. Each carries
-   the cell, header, formula, banner or divider label it came
-   from, quoted in the comment above it, and the `because` clause
-   the adjudicator wrote.
+   Every entry below survived adjudication against the workbooks
+   in `C:/Users/AsafA/Downloads` (opened read-only) and is written
+   up in `docs/specs/FITMENT_RULES.md` or, for the rigging kit,
+   `docs/specs/FOUR_MODULES.md` §3 — the section written once the
+   eighth workbook, `Rigging Module.xlsx`, was in hand. Each entry
+   carries the cell, header, formula, banner or divider label it
+   came from, quoted in the comment above it, and the `because`
+   clause the adjudicator wrote.
+
+   NOTHING HERE IS TYPED TO FILL A SCREEN. If a rule cannot be
+   sourced it is not written; if it was measured and failed it goes
+   to WORKBOOK_RULES_REFUTED with the number that killed it.
 
    EVERY SEED SAYS WHICH KIND OF EVIDENCE IT RESTS ON, because the
    two are not interchangeable:
@@ -25,12 +31,28 @@
                seed is admitted as a WARNING and may never filter.
 
    The first six seeds (A1–A6) were adjudicated first and are all
-   ASSERTED. The five added since (F6–F12) come from the fitment
+   ASSERTED. The five added next (F6–F12) come from the fitment
    adjudication; two of them — F7 and F12 — are OBSERVED, and say
-   so on their card, in their `source`, and in their blocker.
+   so on their card, in their `source`, and in their blocker. The
+   three added last are the MOTOR AND RIGGING pass: R9 (the engine
+   labour, ASSERTED by formula and overridden on 0 of 2,436 cells),
+   F15 (the rigging section names the boat's brand) and F16 (a
+   mechanical motor never takes a Helm Master kit, OBSERVED at
+   0 of 1,576).
 
-   THE HONEST STATE OF THIS FILE: eleven admitted rules, and ALL
-   ELEVEN are `blocked` — not one can be stated as a
+   The last two, S1 and S2, come from a third adjudication —
+   docs/specs/SERVICE_AND_THEMES.md §5.4 — and both are `blocked` ON
+   PURPOSE rather than for want of a contract. S1 (a trailer's
+   registration band against its own ATM) is blocked because nine live
+   rows violate it and correcting one changes a price the business is
+   charging today; S2 (one registration fee, read at one column) is
+   blocked because it is a divergence between two SHEETS and no clause
+   tests a sheet. Both are enforced as a REPORT instead — see
+   `registration.ts` and the panel it draws — which is §3.1's own
+   instruction: show the nine and change none.
+
+   THE HONEST STATE OF THIS FILE: sixteen admitted rules, and ALL
+   SIXTEEN are `blocked` — not one can be stated as a
    `ConstraintDef` the app can both SHOW and RUN today. Each
    blocker is named on its seed, and the shape the contract would
    need is named with it. The seeder below is real and idempotent;
@@ -54,19 +76,30 @@
    side. So an expressible rule is: one kind, columns compared to
    literals.
 
-   Six of the eleven are cross-kind (A1, A2, F6, F7, F8, F9), four
-   want a warning that does not prune (A2, F7, F9, F12), two are
-   lookups (A3, A4), one is arithmetic (A5), and three need a
-   column no table has (A6, F8, F12). The four contract changes
-   that clear them are listed under CONTRACT, at the foot of the
-   rule array.
+   Eight of the sixteen are cross-kind (A1, A2, F6, F7, F8, F9,
+   F15, F16), six want a warning that does not prune (A2, F7, F9,
+   F12, F15, F16), three are lookups or derivations (A3, A4, R9),
+   two are arithmetic (A5, R9), and six need a column no table has
+   (A6, F8, F12, F15, F16, R9). The contract changes that clear
+   them are listed under CONTRACT, at the foot of the rule array —
+   S1 and S2 are not among them, being held back on purpose.
 
-   AND WHAT IS *NOT* HERE, DELIBERATELY: six candidate rules that
-   the same adjudication REFUTED with a measurement. They are
+   AND ONE SHAPE THE CONTRACT LIST DID NOT HAVE UNTIL THE RIGGING
+   PASS: F16 compares two PARTNERS OF ONE PAIRING — the motor and
+   the kit chosen beside it — which are two `reference` columns on
+   the same join row. That is not A1's boat-against-motor; it is
+   the join row read as a row. It is written up under CONTRACT 1b.
+
+   AND WHAT IS *NOT* HERE, DELIBERATELY: eleven candidate rules
+   that the same adjudications REFUTED with a measurement. They are
    recorded in WORKBOOK_RULES_REFUTED below rather than dropped,
    because a refutation with a number on it is a finding and the
    absence of one is an invitation to guess again. They are not
-   seeds and must never become seeds.
+   seeds and must never become seeds. Five of the eleven are about
+   the motor and the rigging kit, and two of those five are the
+   ones most likely to be re-derived by a reader who has not read
+   the arithmetic: that the motor names the kit (53.3 %), and that
+   the join may be deduped on (boat, motor) (deletes 15.95 %).
    ============================================================ */
 
 import { nowIso } from '@/lib/id'
@@ -93,7 +126,19 @@ export type ResolvedColumns = Record<string, ColumnConcept>
  *  first pass over the Boat Module; `F*` continue the numbering used by
  *  docs/specs/FITMENT_RULES.md §4, where F1–F5 ARE A1–A6 amended and
  *  F6–F12 are the rules it added. F10 and F11 are refutations, not
- *  rules, and are recorded in WORKBOOK_RULES_REFUTED instead. */
+ *  rules, and are recorded in WORKBOOK_RULES_REFUTED instead.
+ *
+ *  `R9` is a RELATIONSHIP reference — FITMENT_RULES.md §3 numbers its
+ *  relationships R1–R12, and R9 is the only one of them that states an
+ *  obligation rather than a shape, so it is carried here under its own
+ *  number rather than given a new one.
+ *
+ *  `F15` and `F16` are the two rigging rules from FOUR_MODULES.md §3.3,
+ *  which numbered nothing. They take the next free numbers in §4's
+ *  sequence (F14 is that document's table of observations-that-are-not-
+ *  rules) so that every rule in this app has ONE reference. Each says in
+ *  its own `source` which document and which section it came from — the
+ *  number is bookkeeping, the citation is the evidence. */
 export type WorkbookRuleRef =
   | 'A1'
   | 'A2'
@@ -101,11 +146,22 @@ export type WorkbookRuleRef =
   | 'A4'
   | 'A5'
   | 'A6'
+  | 'R9'
   | 'F6'
   | 'F7'
   | 'F8'
   | 'F9'
   | 'F12'
+  | 'F15'
+  | 'F16'
+  /* S1 and S2 come from a different adjudication —
+     docs/specs/SERVICE_AND_THEMES.md §5.4, which specifies both and
+     names widening this union as "the one contract change the rules
+     side needs". They are lettered S rather than F because a
+     reference that does not say which document to open is a
+     reference nobody checks. */
+  | 'S1'
+  | 'S2'
 
 /**
  * WHAT THIS RULE RESTS ON — and it changes what may be done with it.
@@ -177,12 +233,24 @@ export const clauseId = (seedId: string, side: 'if' | 'then', i: number): string
 export const WORKBOOK = 'Boat Module (5).xlsx'
 
 /* ============================================================
-   THE ELEVEN ADMITTED RULES
+   THE FOURTEEN ADMITTED RULES
 
    Ordered as a person reads them, not as they were adjudicated:
    the motor envelope (A1, A2, F6, F7), then the propeller chain
-   it drags behind it (A3, A4), then the trailer (F8, F9), then
+   it drags behind it (A3, A4), then the RIGGING KIT the motor
+   drags behind it (F15, F16) and the labour those two settle
+   between them (R9), then the trailer (F8, F9), then
    pre-delivery (F12), then the housekeeping (A5, A6).
+
+   WHERE THE RIGGING KIT SITS, stated once because every rule
+   below depends on it: THE KIT BELONGS TO THE (BOAT, MOTOR)
+   PAIRING AND TO NEITHER SIDE ALONE (FITMENT_RULES.md R5,
+   FOUR_MODULES.md §3.3). It is a column on the boat × motor
+   join, never a join of its own and never a domain hanging off
+   the motor — the motor predicts it on 53.3 % of real pairs, and
+   the 79.4 % that once made it look like a domain was one
+   sentinel matching another. That measurement is kept in
+   WORKBOOK_RULES_REFUTED so it is not made again.
    ============================================================ */
 
 export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
@@ -531,6 +599,204 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
   },
 
   /* ----------------------------------------------------------
+     F15 · A RIGGING KIT COMES FROM A SECTION BUILT FOR THE
+           BOAT'S BRAND — the trailer rule (F8) again, on the
+           other partner, and it reaches one pairing in seven.
+
+     THE ONE RIGGING RULE THAT SURVIVED. FOUR_MODULES.md §3.3
+     measured every candidate selector by majority vote over the
+     3,945 live (boat, motor, kit) triples. The four the brief
+     named came last: hull material 15.76 %, motor brand 18.77 %,
+     HP band 26.03 %, motor Control 26.10 %. All four are refuted
+     below. This one is asserted by the sheet's own banner rows.
+
+     EVIDENCE (asserted): `Rigging Kits!C` carries band headers over
+     each run, and EIGHT of them name a boat brand — rows 546, 616,
+     659, 670, 695, 715, 733, 766. Measured: 555 of 571 testable
+     live triples = 97.20 %.
+
+     THE 16 COUNTER-EXAMPLES ARE ONE CLASS, AND THE KITS ARE RIGHT.
+     Cap Camarat hulls (Boat Module rows 249, 250, 251, 255, 256,
+     257) take Cap Camarat kits while `Boat Module!E Matrix` labels
+     those rows `Merry Fisher`. The brand COLUMN is wrong, not the
+     pairing. Fold Jeanneau's three marques — Jeanneau, Merry
+     Fisher, Cap Camarat — into one brand group and it is 571 of
+     571 = 100.00 %, discriminating to between 0.96 % and 9.32 % of
+     the 622 live kits.
+
+     AND THE SCOPE IS SMALL, WHICH IS THE HONEST HALF. It reaches
+     571 of 3,945 live triples — 14.5 % — because the big brand has
+     no bespoke catalogue: Highfield carries 588 live boats and
+     2,519 live triples against a HIGHFIELD RIGGING KITS section of
+     EXACTLY TWO KITS, and draws everything else from the generic
+     Yamaha sections. Haines Signature takes the sentinel
+     `HAINES - Factory Fit Rigging Kit` on 117 of 117. Same shape as
+     the trailers, same correction: bespoke is the norm for the
+     small brands and generic for the big one.
+     ---------------------------------------------------------- */
+  {
+    id: 'wb:pairing-rigging-section-matches-boat-brand',
+    ref: 'F15',
+    evidence: 'asserted',
+    statement:
+      "A boat may only be paired with a rigging kit from a factory-fit section named for that boat's brand.",
+    because: 'that section is the factory-fit range built for this boat brand',
+    source: `Rigging Module.xlsx · Rigging Kits!C band header rows 546, 616, 659, 670, 695, 715, 733, 766 — eight sections naming a boat brand · ASSERTED by the banner labels · 555 of 571 testable live triples (97.20 %); the 16 counter-examples are one class — Cap Camarat hulls at Boat Module rows 249, 250, 251, 255, 256, 257 taking Cap Camarat kits while Boat Module!E 'Matrix' labels them Merry Fisher — so folding Jeanneau's three marques into one group gives 571 of 571 (100.00 %), leaving between 0.96 % and 9.32 % of the 622 live kits. It is evaluable on only 571 of 3,945 live triples (14.5 %): Highfield's own section holds exactly two kits and its 2,519 triples come from the generic Yamaha sections instead · FOUR_MODULES.md §3.3`,
+    kind: 'implies',
+    priority: 60,
+    needs: ['boat::brand', 'accessory::section'],
+    plainly:
+      'The rigging sections are named after boat brands, so this is the trailer rule again on a different part — but it can only answer for one pairing in seven, because the biggest brand has two kits of its own and takes everything else from the general Yamaha ranges. And the boat\'s brand is still the name of its table rather than a column on it.',
+    blocked:
+      "LEFT SIDE HAS NO COLUMN — F8's blocker exactly, because it is F8's rule on another " +
+      'partner. The boat brand is the table IDENTITY (one table per brand), so buildConcepts ' +
+      'never produces boat::brand and no clause can name it. RIGHT SIDE IS SEEDED AND HALF ' +
+      "USABLE: rig_kits carries `Section` — the band header row, VERBATIM — so the brand is a " +
+      'substring sharing the cell with the range name and the vintage the business writes into ' +
+      'the same banner ("As at 01.07.2024", "Season 2024 as at 28.05.2024"). Testing it means ' +
+      'parsing a heading rather than comparing a value, which is the same shape F8 is blocked ' +
+      "on and needs the same fix: a derived `Section Brand` column written at import. THIRD: " +
+      'IT MUST WARN, not filter, and the surface must be able to say NOT EVALUABLE HERE — it ' +
+      'reaches 571 of 3,945 live triples, and a gate that silently passes the other 85.5 % has ' +
+      'not checked them. That is F9\'s requirement, met for a different reason. FOURTH, AND DO ' +
+      'NOT "FIX" IT BY WIDENING THE MATCH: the 16 counter-examples are a defect in Boat ' +
+      'Module!E Matrix and not in the kits, so the correct handling is to fold Jeanneau, Merry ' +
+      'Fisher and Cap Camarat into ONE brand group (571/571) — relabelling the kits to match ' +
+      'the boat column would encode the defect as a rule. NEEDS: everything F8 needs, plus ' +
+      "A2's non-blocking severity.",
+  },
+
+  /* ----------------------------------------------------------
+     F16 · A MECHANICAL-CONTROL MOTOR NEVER TAKES A HELM MASTER
+           RIGGING KIT
+
+     OBSERVED, and it is the ONLY ZERO in the whole rigging
+     cross-tab — which is exactly why it is worth writing and
+     exactly why it may not filter.
+
+     EVIDENCE: Motor Module (1).xlsx · `Motor Library!J 'Control'`
+     (asserted header) cross-tabbed against the kit named beside
+     that motor on the pairing:
+
+       mechanical-control motor × Helm Master kit    0 of 1,576
+       digital-control (DEC) motor × mechanical kit  137 cells
+
+     THE ASYMMETRY IS THE FINDING, as it was for F7. A digital
+     motor can be rigged mechanically and 137 pairings are. A
+     mechanical motor is never given the digital package. Writing
+     this as an equality between the motor's control generation and
+     the kit's would reject those 137 pairings the workbook itself
+     lists.
+
+     AND IT IS THE SAME FACT F13 FOUND FROM THE OTHER END: of the
+     203 places where horsepower DESCENDS between adjacent motor
+     slots, 166 (81.8 %) coincide with a change of Rigging Kit
+     Option and 129 (63.5 %) with a change of the motor's Control
+     value. The slot ladder restarts at each control generation
+     because the rigging changes with it. Row 154, Stabicraft 2050
+     Frontier FT, runs thirteen slots in three blocks: 1–4 Mech +
+     Hydraulic, 5–9 DEC + Hydraulic, 10–12 DEC + Digital Electric
+     Steering.
+     ---------------------------------------------------------- */
+  {
+    id: 'wb:pairing-mechanical-motor-excludes-helm-master-kit',
+    ref: 'F16',
+    evidence: 'observed',
+    statement:
+      'A motor with mechanical controls must not be paired with a Helm Master rigging kit.',
+    because: 'a Helm Master kit belongs with a digitally controlled motor, and this one is mechanical',
+    source: `Motor Module (1).xlsx · Motor Library!J 'Control' (asserted header) × Rigging Module.xlsx · Rigging Kits!C, the Helm Master kits · OBSERVED, not asserted: 0 of 1,576 mechanical-control pairings name a Helm Master kit — the only zero in the whole rigging cross-tab. It does NOT run the other way: a digital-control (DEC) motor takes a mechanical kit on 137 cells · FOUR_MODULES.md §3.3`,
+    kind: 'excludes',
+    priority: 25,
+    needs: ['motor::control', 'accessory::rigging kit'],
+    plainly:
+      "It compares the motor's control type with the rigging kit chosen beside it, and those are two different tables joined through one pairing. It runs one way only — a digital motor CAN be rigged mechanically, and 137 pairings are — and it is a pattern rather than a rule the business wrote, so it should warn rather than block.",
+    blocked:
+      'TWO PARTNERS OF ONE PAIRING, WHICH IS A SHAPE THE CONTRACT HAS NOT GOT. This is not ' +
+      "A1's boat-against-motor: the motor and the kit are two `reference` columns on the SAME " +
+      'boat × motor join row, so a rule that could say it would have to be scoped to the JOIN ' +
+      'ROW and read two of its links. columns.ts RULEABLE excludes `reference` and ' +
+      'buildConcepts skips PAIR fields, so neither side is a concept a sentence can name. ' +
+      'SECOND: "Helm Master" IS NOT A COLUMN. It is a token inside Rigging Kits!C, the same ' +
+      "shape as F8's series banner — the kit's control generation would have to be derived at " +
+      'import before any clause could test it. THIRD: OBSERVED. The business never wrote this ' +
+      'down; it may warn and may never prune, and every ConstraintKind prunes ' +
+      "(lib/configure/solve.prune). FOURTH, AND DO NOT \"FIX\" IT BY MAKING IT SYMMETRICAL: an " +
+      "equality between the motor's control generation and the kit's would reject the 137 live " +
+      "pairings where a DEC motor takes a mechanical kit. NEEDS: A2's non-blocking severity, a " +
+      'rule scoped to a join row that can read two partners of one pairing (CONTRACT 1b), and ' +
+      "the kit's control generation as a real column.",
+  },
+
+  /* ----------------------------------------------------------
+     R9 · THE ENGINE LABOUR IS THE STANDARD-FIT MOTOR PLUS ITS
+          RIGGING KIT, AND NOTHING ELSE
+
+     THE ONE FIGURE IN THE WHOLE FAN-OUT THE BUSINESS NEVER
+     ARGUES WITH. Hand-override rate 0 of 2,436 cells — 0.0 %,
+     not once, anywhere in the sheet. Compare the rigging kit
+     itself at 94.0 % overtyped, the motor slot at 96.8 %, prop
+     description 8.3 %, prop part no. 6.8 %. THE OVERRIDE RATE IS
+     THE INSTRUCTION (FITMENT_RULES.md §5.7): 0 % means carry it
+     as a computed column, and this is the only 0 % in the file.
+
+     EVIDENCE (asserted, by formula, on all 812 live rows) — and
+     every lookup is $-ANCHORED to slot 1, so it can never walk to
+     slot 2:
+
+       UF Motor PD Labour      = VLOOKUP($KZ,'[4]Motor Library'!$C:$ZZ,28,0)
+                                 → Motor Library!AD 'Labour (Hrs)'
+       UG Motor Install Labour = VLOOKUP($KZ,'[4]Motor Library'!$C:$ZZ,87,0)
+                                 → Motor Library!CK 'TTF'
+       UH Rigging Kit Labour   = VLOOKUP($LA,'[5]Rigging Kits'!$C:$ZZ,13,0)
+                                 → Rigging Kits!O 'NSM Lab (Hrs)'
+       UJ Total Engine Labour  = ROUNDUP(SUM(UF:UI),)
+       SX Est Hrs              = $JN + $UJ
+
+     AND IT IS A SECOND, INDEPENDENT ASSERTION THAT SLOT 1 IS THE
+     RECOMMENDATION: the boat is priced against slot 1's motor and
+     slot 1's kit alone, which is the same thing the header
+     'Recommended Motor Option' says in words.
+
+     THE RIGGING HALF IS ALREADY HERE AND THE MOTOR HALF IS NOT.
+     rig_kits carries O as `NSM Lab (Hrs)` — hand-typed on 1,244
+     rows, zero formulas, 51 distinct values, median 5.65
+     (FOUR_MODULES.md §3.4) — so the number UH returns is seeded.
+     Motor Library!AD and CK are not on any motor table.
+     ---------------------------------------------------------- */
+  {
+    id: 'wb:boat-engine-labour-from-standard-fit',
+    ref: 'R9',
+    evidence: 'asserted',
+    statement:
+      "A boat's engine labour must be the standard-fit motor's own pre-delivery and installation hours plus its rigging kit's fitting hours, and nothing else.",
+    because:
+      'the hours on the job are the hours that motor takes to prepare and install plus the hours its rigging kit takes to fit',
+    source: `${WORKBOOK} · Boat Module!UF/UG/UH/UJ · UF = VLOOKUP($KZ,'Motor Library'!C:ZZ,28,0) → Motor Library!AD 'Labour (Hrs)'; UG = VLOOKUP($KZ,…,87,0) → Motor Library!CK 'TTF'; UH = VLOOKUP($LA,'Rigging Kits'!C:ZZ,13,0) → Rigging Kits!O 'NSM Lab (Hrs)'; UJ = ROUNDUP(SUM(UF:UI),) · ASSERTED by formula on all 812 live rows, every lookup $-anchored to slot 1 so it never walks to slot 2 · hand-override rate 0 of 2,436 cells (0.0 %) — the only 0 % in the workbook, against 94.0 % on the rigging kit itself · FITMENT_RULES.md R9`,
+    kind: 'implies',
+    priority: 80,
+    needs: ['motor::labour (hrs)', 'motor::ttf', 'accessory::nsm lab (hrs)'],
+    plainly:
+      'It adds up three numbers from three different tables — the motor\'s preparation hours, its installation hours and its rigging kit\'s fitting hours. Two of those columns are not on the sheet yet. The business has never once overridden this figure in 2,436 rows, so it is arithmetic rather than a judgement, and it is real money a quote currently cannot show.',
+    blocked:
+      'A DERIVATION ACROSS THREE TABLES, AND THEN ARITHMETIC. Two of the three obligations read ' +
+      'a column on a THIRD row (the Motor Library row for the motor on this pairing, and the ' +
+      "Rigging Kits row for its kit), which is A3's and A4's blocker: ValueExpr has no lookup, " +
+      "and FieldPath's one viaFieldId hop is dropped by both evaluators. Then they are SUMMED, " +
+      "which is A5's blocker: a Clause compares one column to one value and ValueExpr's " +
+      "{ kind: 'formula' } branch is not evaluated. SECOND: TWO OF THE THREE COLUMNS ARE NOT " +
+      'SEEDED. Motor Library!AD `Labour (Hrs)` and CK `TTF` are absent from every motor table ' +
+      'in src/demos/northside.ts. The rigging side IS seeded — rig_kits carries O as `NSM Lab ' +
+      '(Hrs)` — so this rule is two columns away from being computable, not a research ' +
+      'project. THIRD, AND IT IS AN IMPORT GAP RATHER THAN A CONTRACT ONE: the answer belongs ' +
+      'on the PAIR. FOUR_MODULES.md §3.7 asks for two read-through columns on each boat × motor ' +
+      'join — Rigging Kit Labour (Hrs) ← rig_kits.O and Rigging Sell ← rig_kits.AC — and ' +
+      'neither is on any of the eight joins today, so a quote line carries the kit but not what ' +
+      'fitting it costs. NEEDS: an evaluated relationship hop (A3/A4), a formula right-hand ' +
+      'side the solver evaluates (A5), and Motor Library!AD and CK seeded on the motor tables.',
+  },
+
+  /* ----------------------------------------------------------
      F8 · A TRAILER SERIES IS BUILT FOR ONE BOAT BRAND
 
      THIS IS THE RULE THE OWNER ASKED FOR — "highfield have special
@@ -586,8 +852,19 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     priority: 100,
     needs: ['boat::brand', 'trailer::series brand'],
     plainly:
-      'This is the rule that actually picks a trailer, and we cannot write it. The boat brand is the NAME OF ITS TABLE rather than a column on it, and the trailer brand is buried inside a series heading. Two columns have to be created before this can be said at all.',
+      'This is the rule that picks a trailer, and it now runs — a Highfield hull is offered 2 of the 145 trailers on the sheet instead of all of them. It still cannot be written as a SENTENCE here, because the boat brand is the NAME OF ITS TABLE rather than a column on it and the trailer brand is buried inside a series heading, so the selector reads the heading instead. Two columns written at import would let it be said in words as well as run.',
+    enforcedIn: 'Business rules · The trailer selector',
     blocked:
+      'RUNS, BUT NOT AS A SENTENCE. src/features/constraints/trailerFitment.ts evaluates this ' +
+      'rule against the loaded tables and the Business rules pane draws the result: it derives ' +
+      "the boat's marque from its table name (or, where a table holds several, from its " +
+      "outermost level — the seed's Jeanneau table holds Merry Fisher and Cap Camarat as " +
+      "ranges) and the trailer's series brand from the banner in the table's outermost level. " +
+      'Measured on src/demos/northside.ts: 308 of 308 testable live pairings, 0 counter-' +
+      'examples, and it leaves 1.38–13.10 % of the 145 live trailers standing — Highfield 2. ' +
+      'THAT PARSING IS AN INTERIM AND IS MARKED AS ONE: FITMENT_RULES.md §6.4 asks for a real ' +
+      "`Brand` column on every boat table and a `Series Brand` column on every trailer table, " +
+      'and until those exist the rule cannot be a ConstraintDef. What follows is why. ' +
       'NEITHER SIDE HAS A COLUMN — a harder blocker than A1, which at least has both. LEFT ' +
       'SIDE: the boat brand is the table IDENTITY. ONE TABLE PER BRAND is the substrate ' +
       'decision, and src/demos/northside.ts states it in its own header ("Brand is therefore ' +
@@ -600,9 +877,10 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
       'NEEDS, in this order: (1) a Brand column written on every boat table and a Series Brand ' +
       'column derived from the banner on every trailer table at import (FITMENT_RULES.md ' +
       '§6.4) — 135 of 476 trailer rows name a brand in their banner; (2) everything A1 needs, ' +
-      'because even with both columns it is still boat-against-trailer. UNTIL THEN THE APP ' +
-      'CHECKS NOTHING THAT ACTUALLY PICKS A TRAILER: the ATM floor (F9) passes 97.7 % of the ' +
-      'catalogue, and this is the 3 % gate.',
+      'because even with both columns it is still boat-against-trailer. THE LINE THIS NOTE USED ' +
+      'TO END ON — "until then the app checks nothing that actually picks a trailer" — is no ' +
+      'longer true, and the selector above is why. It is still true that the SENTENCE surface ' +
+      'checks nothing that picks a trailer.',
   },
 
   /* ----------------------------------------------------------
@@ -656,8 +934,18 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
     priority: 30,
     needs: ['trailer::atm (kg)', 'boat::boat weight'],
     plainly:
-      'Every brand writes the boat\'s weight under a different heading — "BMT Weight", "Tow Weight", "App. Tow Weight", "Boat Weight", "Hull Weight" — so this is five rules rather than one, and two of our seven boat tables have no weight column at all and can never be checked.',
+      'Every brand writes the boat\'s weight under a different heading — "BMT Weight", "Tow Weight", "App. Tow Weight", "Boat Weight", "Hull Weight" — so this is five rules rather than one, and two of our seven boat tables have no weight column at all. It now runs beside the trailer selector as a WARNING: it says which trailers are under-rated for the hull and it never takes one off the list, and where a brand has no weight column it says so instead of quietly passing.',
+    enforcedIn: 'Business rules · The trailer selector',
     blocked:
+      'RUNS AS A WARNING, AND MAY NEVER BE MORE. src/features/constraints/trailerFitment.ts ' +
+      "reads it per boat table off that band's own weight column — TRAILER_ATM_FLOOR quotes the " +
+      'five headers from this rule verbatim — and annotates a candidate without ever removing ' +
+      'one. Its test proves that by running the whole selection twice, with the floor and ' +
+      'without, over all 174 seeded hulls and requiring the same list both times. Measured on ' +
+      'the seed: 115 of 115 evaluable live pairings clear it, it leaves a mean 87.42 % of the ' +
+      'catalogue standing against the series banner\'s 13.10 % ceiling, and it reports "not ' +
+      'evaluable" on Jeanneau and Haines Signature rather than passing them. IT IS STILL NOT A ' +
+      'SENTENCE, for the reasons that follow, and it must never become a filter. ' +
       'FIVE COLUMNS WHERE A SENTENCE NEEDS ONE — and cross-kind besides. columns.ts keys a ' +
       'concept as kind + normalised NAME, so the boat-side weight is FIVE separate concepts in ' +
       "this project: Stacer 'BMT Weight (Dry) kg' (Q), Stabicraft 'Tow Weight @ (Dry) kg' (Q), " +
@@ -812,6 +1100,131 @@ export const WORKBOOK_RULES: WorkbookRuleSeed[] = [
       'discontinued trailer as its standard is a thing the owner should be shown, which means ' +
       'those pairs must be imported and marked, not dropped.',
   },
+
+  /* ----------------------------------------------------------
+     S1 · A TRAILER'S REGISTRATION BAND MUST MATCH ITS ATM
+          — and it is BLOCKED ON PURPOSE, which is the whole point.
+
+     SERVICE_AND_THEMES.md §5.4 specifies this seed and specifies that
+     it must not run: "Nine live rows violate it, seven undercharging
+     by $117. The app must SHOW the nine long before it may RESOLVE
+     them — resolving changes a price the business is charging today."
+
+     EVIDENCE (asserted): a band table and a mass column, which is as
+     stated as evidence gets. `Registration Module.xlsx` ·
+     `Registration Costs!C15:C19` bands trailer registration on ATM
+     MASS and says so in the labels themselves — 'Small Trailers - Up
+     to 1.02t', 'Large Trailers - Over 1.021t', 'Heavy Trailers - Over
+     4.55t', plus the catalogued decline 'Registration - NOT REQUIRED'.
+     `Trailer Module!BY 'Rego Type'` names one of those bands on the
+     trailer row; `Trailer Module!K 'ATM (KG)'` states that trailer's
+     rated mass, numeric on 459 of 463 cells.
+
+     THE NINE, from MPF_GROUND_TRUTH §14 and not re-derived here:
+     Trailer Module rows 60, 61, 224–227, 398, 401 and 403. Seven of
+     the nine undercharge by $117 each — the gap between the small
+     band's 166 and the large band's 283.
+
+     AND IT IS RUNNING, as a report, in this feature. §3.1's own
+     sentence for it is "Offer it as a check that shows the nine and
+     changes none — which is exactly the shape workbookRules.ts exists
+     for", and `registration.ts` is that check: it tests ONLY the bound
+     each band label states, names the words it read the bound out of,
+     and writes nothing. Three of the nine are in the seeded subset and
+     the surface draws all three. So `enforcedIn` points there rather
+     than leaving this card reading as unprotected.
+     ---------------------------------------------------------- */
+  {
+    id: 'wb:trailer-rego-band-matches-atm',
+    ref: 'S1',
+    evidence: 'asserted',
+    statement: "A trailer's registration band must match its ATM.",
+    because: 'the mass band a trailer is registered in is the band its own rated weight falls in',
+    source: `Registration Module.xlsx · Registration Costs!C15:C19 — trailer registration banded on ATM mass, each band stating its own bound in its label ('Up to 1.02t', 'Over 1.021t', 'Over 4.55t') × Trailer Module.xlsx · Trailer Module!BY 'Rego Type' against !K 'ATM (KG)' (numeric on 459 of 463 rows) · ASSERTED by a band table and a mass column · NINE live rows contradict their own ATM — rows 60, 61, 224–227, 398, 401, 403 — seven of them undercharging by $117 each, the gap between the 166 small band and the 283 large one (MPF_GROUND_TRUTH §14, not re-derived)`,
+    kind: 'implies',
+    priority: 25,
+    needs: ['trailer::rego type', 'trailer::atm (kg)'],
+    enforcedIn: 'Business rules · Registration is one fee table',
+    plainly:
+      'Nine trailers are registered in a weight band their own rated weight contradicts, and seven of them are being undercharged. This is deliberately shown rather than enforced: correcting one changes a price the business is charging today, so the app points at them and touches nothing.',
+    blocked:
+      'BLOCKED ON PURPOSE, and the purpose is the finding. FIRST: it must WARN and never ' +
+      'prune. Every ConstraintKind the contract has — implies, requires, excludes, table — ' +
+      'removes values in solve.prune, and pruning here would delete nine trailers the dealer ' +
+      'is actively selling. This is CONTRACT 2, the same non-blocking severity A2, F7, F9 and ' +
+      'F12 are waiting on, and it is the A2 failure exactly: a rule that rejects the ' +
+      "business's own recommendation does not get made twice. SECOND: the bound lives inside " +
+      "the band LABEL and in a different unit — 'Up to 1.02t' against a column headed " +
+      "'ATM (KG)' — so a clause comparing a column to a literal has to restate a threshold " +
+      'the fee table already holds, three times over, in kilograms the label never wrote. ' +
+      'That is CONTRACT 3, an evaluated relationship hop into Registration Costs, which is ' +
+      "the honest shape: the rule should READ the band's bound, not carry a copy of it. " +
+      'UNTIL BOTH LAND the check runs as a report — src/features/constraints/registration.ts, ' +
+      'drawn on the rules pane — which shows the rows and changes none of them.',
+  },
+
+  /* ----------------------------------------------------------
+     S2 · ONE REGISTRATION FEE, READ AT ONE COLUMN
+
+     SERVICE_AND_THEMES.md §5.4 specifies this seed and its blocker in
+     one line: "It is a cross-file divergence, not a row-level rule;
+     there is no clause shape for it yet. Record it, show it, change
+     nothing."
+
+     EVIDENCE (asserted): two formulas, pointing at two different
+     columns of the SAME external table, by hard-coded ordinal.
+
+       Trailer Module!BZ = VLOOKUP(BY,'[3]Registration Costs'!$C:$ZZ,9,0)
+                           ordinal 9 → column K SELL → 283.00
+       Managers View!G23 = VLOOKUP($DB$75,'[10]…',8,0)*$M$54
+                           ordinal 8 → column J CTD  → 282.19
+
+     Eighty-one cents on every trailer, forever, because two
+     hard-coded ordinals count into one external table. A
+     boat-and-trailer package therefore carries one fee at retail and
+     one at cost on the same document — and the boat's own line
+     (Managers View!K34/D23/A23) reads ordinal 8, agreeing with the
+     quote sheet and disagreeing with the trailer sheet.
+
+     WHY IT IS A SEED AND NOT A NOTE. §3.1 calls this "the exact class
+     of fault the app exists to end", and the app ends it by holding
+     ONE fee table with BOTH columns named — which the seed already
+     does. What is still missing is a rule that can SAY so, because the
+     divergence is between two files rather than between two rows.
+
+     AND THE MODEL REFUSES TO PICK A SIDE, deliberately.
+     `registration.ts` exposes a `FeeRung` of 'ctd' | 'sell' with no
+     default, because §6.2 Q1 is a question only the owner can answer:
+     "If the answer is 'cost — we pass it through at what it costs
+     us', say so, and 3rd Party Recovery becomes the app's word too."
+     Defaulting here would be answering the owner's question for him.
+     ---------------------------------------------------------- */
+  {
+    id: 'wb:registration-fee-read-at-one-column',
+    ref: 'S2',
+    evidence: 'asserted',
+    statement: 'One registration fee must be read at one column.',
+    because:
+      'the same fee is read at cost in one place and at retail in another, so one document can carry both',
+    source: `Registration Module.xlsx · Registration Costs!J 'CTD' and !K 'SELL' · ASSERTED by two formulas counting into the same external table by hard-coded ordinal: Trailer Module!BZ = VLOOKUP(BY,'[3]Registration Costs'!$C:$ZZ,9,0) reads ordinal 9 = K SELL = 283.00, while Managers View!G23 reads ordinal 8 = J CTD = 282.19 for the same trailer on the same deal, and the boat's own line (Managers View!K34) also reads ordinal 8 · 81 cents on every trailer, and a boat-and-trailer package carries one fee at retail and one at cost on one document`,
+    kind: 'implies',
+    priority: 25,
+    needs: ['trailer::rego ($)'],
+    enforcedIn: 'Business rules · Registration is one fee table',
+    plainly:
+      'The same registration fee is read from two different columns by two different sheets, so a package quote can charge 81 cents more for the trailer than the boat. One table now holds both columns and neither is a default — which of them is the policy is a question for the owner, not for this app.',
+    blocked:
+      'NOT A ROW-LEVEL RULE. Every ConstraintDef this app has tests a ROW against a value; ' +
+      'this tests one SHEET against another sheet, and there is no clause shape for it — ' +
+      'neither side of the divergence is a column on a row that could fail. It is recorded ' +
+      'here because a fault the app exists to end must be findable, and shown on the ' +
+      'registration panel because the fix is structural rather than conditional: one table, ' +
+      'both columns named, and a caller that has to state which rung it wants. WHAT WOULD ' +
+      'CLOSE IT is not a contract change at all — it is an answer. SERVICE_AND_THEMES §6.2 Q1: ' +
+      'one of those two ordinals is the policy and the other is a counting error, and only ' +
+      'the owner can say which. Until then feeForBand() offers both rungs and defaults to ' +
+      'neither, which is the one behaviour that cannot be wrong.',
+  },
 ]
 
 /** The admitted rules that cannot be stated yet, with the reason. Read
@@ -825,7 +1238,7 @@ export const WORKBOOK_RULES_BLOCKED: Array<{ id: string; ref: string; blocked: s
   }))
 
 /* ============================================================
-   CONTRACT — the four changes that clear all eleven
+   CONTRACT — the five changes that clear all fourteen
 
    Ordered by how many admitted rules each one unblocks, so the
    list doubles as a work order. Nothing here is a guess: each is
@@ -836,16 +1249,25 @@ export const WORKBOOK_RULES_BLOCKED: Array<{ id: string; ref: string; blocked: s
        already carries) so a rule can name the boat AND the motor
        — or the boat and the trailer — of ONE pairing, plus a
        sentence token that renders a COLUMN on the right-hand
-       side.                        unblocks A1 A2 F6 F7 F8 F9 (6)
+       side.                    unblocks A1 A2 F6 F7 F8 F9 F15 (7)
        The stored shape is already there: ValueExpr has
        { kind: 'field' } and solve.enforceClause narrows both
        columns from it. The gap is describe.literalOf, which
        returns null for a field right-hand side and would print an
        unfinished sentence on the card.
 
+   1b· THE SAME THING POINTED AT ONE JOIN ROW, so a rule can read
+       TWO PARTNERS OF ONE PAIRING — the motor and the rigging kit
+       chosen beside it — rather than the source and one partner.
+                                            unblocks F16 F12 (2)
+       This is not a second mechanism, it is the same RowScope
+       resolving to the join row instead of the source row. It is
+       written separately because 1 as stated does not cover it,
+       and F16 is the first rule to need it.
+
    2 · A NON-BLOCKING SEVERITY on ConstraintDef (or a fifth
        ConstraintKind) that records a warning without pruning a
-       domain.                          unblocks A2 F7 F9 F12 (4)
+       domain.                  unblocks A2 F7 F9 F12 F15 F16 (6)
        Every kind the contract has — implies, requires, excludes,
        table — removes values in solve.prune. Four of the eleven
        rules are admitted ON CONDITION they never filter, and two
@@ -855,45 +1277,74 @@ export const WORKBOOK_RULES_BLOCKED: Array<{ id: string; ref: string; blocked: s
    3 · AN EVALUATED RELATIONSHIP HOP. FieldPath.viaFieldId exists
        and is DROPPED by both evaluators today — evaluate.
        clauseFieldId returns undefined for a hop, state.clauseHolds
-       ignores it outright.                     unblocks A3 A4 (2)
+       ignores it outright.                  unblocks A3 A4 R9 (3)
 
    4 · A FORMULA RIGHT-HAND SIDE THE SOLVER EVALUATES.
-       { kind: 'formula' } returns 'M' today.      unblocks A5 (1)
+       { kind: 'formula' } returns 'M' today.   unblocks A5 R9 (2)
 
-   AND FIVE IMPORT-SIDE COLUMNS, which are not contract changes at
+   AND EIGHT IMPORT-SIDE COLUMNS, which are not contract changes at
    all — they are seeds, and they belong to tools/seed:
      · a boolean `Obsolete` on boats and on trailers        (A6)
      · `Brand` on every boat table and `Series Brand` on
        every trailer table                                  (F8)
+     · `Section Brand` on the rigging kits, derived from the
+       band header the same way `Series Brand` is           (F15)
+     · the kit's control generation, derived from its name  (F16)
      · `Shaft Lgth` folded to inches on the boat tables     (F6)
      · Motor Library!GT:KO as the motor's prop options      (A3)
+     · Motor Library!AD 'Labour (Hrs)' and CK 'TTF' on the
+       motor tables                                         (R9)
      · Boat Module!QD..QH, the five deposit stages          (A5)
+
+   AND TWO READ-THROUGHS ON THE BOAT × MOTOR JOIN, which are not a
+   rule at all but are what turns R9 into a number on a quote:
+   Rigging Kit Labour (Hrs) ← rig_kits.O and Rigging Sell ←
+   rig_kits.AC, on all eight joins (FOUR_MODULES.md §3.7). The kit
+   already travels onto a quote line; what fitting it costs does
+   not, and the median is $3,370.
    ============================================================ */
 
 /* ============================================================
    REFUTED — candidate rules that a measurement KILLED
 
    These are NOT seeds and must never become seeds. They are here
-   because the same adjudication that admitted the eleven above
+   because the same adjudications that admitted the fourteen above
    tested these and found them false, and a refutation with a
    number on it is a finding, while the absence of one is an
    invitation to guess again. Every one of them is a rule somebody
    would plausibly write on a wet Tuesday by looking at the column
    headings — which is exactly why the numbers are recorded.
 
-   The headline, because it is the one most likely to be
-   re-derived: THERE IS NO TRAILER LENGTH RULE. Trailer Module!H
+   TWO HEADLINES, because these are the two most likely to be
+   re-derived.
+
+   THERE IS NO TRAILER LENGTH RULE. Trailer Module!H
    'Boat Size (Mtr)' is not a length. Across its 456 populated
    cells there are 277 point sizes, 142 MODEL DESIGNATORS
    ('Highfield 660', 'SP600', 'Formosa 525', '2050', 'Jet Ski'),
    36 ranges and 1 pair — and 499 of the 674 live pairings (74.0 %)
    land on a trailer whose H is a model designator. The size
    reading is the minority case.
+
+   THE MOTOR DOES NOT DETERMINE THE RIGGING KIT. It looked as
+   though it did at 79.4 %, and that figure was one sentinel
+   matching another: NR - ENGINE NOT REQUIRED is a real Motor
+   Library row whose Rigging Option - 01 is NR - RIGGING KIT NOT
+   REQUIRED, so 16,267 of the 20,640 "matches" were those two
+   strings meeting. On real pairs it is 53.3 %. The kit belongs to
+   the PAIRING, which is why it is a column on the boat × motor
+   join and why (boat, motor) must never be made unique — a UNIQUE
+   constraint there deletes 641 live offerings.
    ============================================================ */
 
 export interface RefutedRuleRecord {
-  /** FITMENT_RULES.md's reference for the refutation */
-  ref: 'F10' | 'F11'
+  /** Where the refutation is written up. `F10`/`F11` are
+   *  FITMENT_RULES.md §4's own refutation numbers; `R8`, `R10` and
+   *  `F13` are its rules and relationships whose REJECTED half is
+   *  recorded here; the two `§` refs are sections that carry a
+   *  refutation without numbering it. Every record also cites its
+   *  document in `verdict` or `source`. */
+  ref: 'F10' | 'F11' | 'R8' | 'R10' | 'F13' | 'FITMENT §1.4' | 'FOUR_MODULES §3.3'
   /** the rule as somebody would write it */
   candidate: string
   /** the number that kills it — numerator, denominator, rate */
@@ -905,6 +1356,113 @@ export interface RefutedRuleRecord {
 }
 
 export const WORKBOOK_RULES_REFUTED: RefutedRuleRecord[] = [
+  /* ----------------------------------------------------------
+     THE MOTOR AND THE RIGGING KIT — five refutations, and the
+     first two are the ones that would do real damage.
+     ---------------------------------------------------------- */
+  {
+    ref: 'R8',
+    candidate:
+      "The rigging kit is nominated by the motor, exactly as the propeller is — take it from the motor's own Rigging Option list.",
+    measured:
+      '2,098 of 3,933 live real pairs are members of the list = 53.34 %; 1,066 of 3,933 equal Rigging Option - 01 = 27.10 %; and the formula that would assert it fires on 507 of 26,018 cells = 1.9 %, the other 97.1 % being hand-typed literals',
+    verdict:
+      'REFUTED AT ANY SEVERITY — and the 79.4 % that made it look true is a DENOMINATOR ' +
+      'ARTEFACT. `NR - ENGINE NOT REQUIRED` is a real Motor Library row (C502) whose ' +
+      '`Rigging Option - 01` is `NR - RIGGING KIT NOT REQUIRED`, so 16,267 of the 20,640 ' +
+      '"matches" are one sentinel matching another. Strip them and membership falls to 53.3 %, ' +
+      'which is not a domain — it is barely better than a coin flip — and the misses are not ' +
+      'near-matches to be tuned: they are brand-specific pre-rig SKUs (`Yamaha/Stacer ' +
+      '|703-6Y52L-11-05 |Side Mount Rigging Kit`) that the generic Yamaha list does not carry. ' +
+      "Seeding Motor Library!DA:EX as a domain would block half the dealer's own listings. AND " +
+      "THE MECHANISM IS NOW KNOWN, which is why no amount of tuning saves it: a kit's identity " +
+      'is mount × gauge × harness × CABLE LENGTH, and cable length is a property of the HULL, ' +
+      "not the motor — monotone in Boat Module!G Hull Length across 1,146 live cells (10' → " +
+      "3.36 m median, 13' → 4.59, 15' → 6.16, 17' → 7.39, no inversion). A lookup keyed on the " +
+      'motor asks a one-sided question of a two-sided fact and can only ever return one ' +
+      'arbitrary length. KEEP THE FACT AS PROVENANCE, NEVER AS A FILTER: the Motor Library ' +
+      'does publish a permitted set per motor, the boat module fetches item 1 of it on 507 ' +
+      'cells, and the business overrides that answer on 94.0 % of cells. Show it in the ' +
+      "join's rigging column description; do not gate anything with it. " +
+      'FITMENT_RULES.md §1.1 / R8, FOUR_MODULES.md §3.2.',
+    source: `${WORKBOOK} · Boat Module!LA and its twelve sibling Rigging Kit Option columns · =VLOOKUP(<motor slot>,'[4]Motor Library'!$C:$ZZ,103,0) on 507 cells (the 39 Formosa rows × 13 slots) → Motor Library!DA 'Rigging Option - 01', DB..EX 'Rigging Option - 02..50'`,
+  },
+  {
+    ref: 'FITMENT §1.4',
+    candidate:
+      'A boat and a motor name one pairing, so the join can be deduped on (boat, motor) — or, failing that, on (boat, motor, rigging kit).',
+    measured:
+      'a UNIQUE constraint on (boat, motor) deletes 641 of 4,018 live motor edges = 15.95 %; adding the rigging kit still deletes 392 = 9.76 %; adding the prop description as well still deletes 264 = 6.57 %',
+    verdict:
+      'REFUTED. THERE IS NO NATURAL KEY, and every candidate for one destroys real offerings. ' +
+      'Adding the rigging kit recovers only 249 of the 641, and 264 live edges are ' +
+      'byte-identical across two slots of the same row. THE PAIR\'S IDENTITY IS ITS SLOT ' +
+      'INDEX — which is why `__order` is not decoration but the primary key of a join row, and ' +
+      'why the importer must never dedupe. Worked, because the shape is easy to miss: ' +
+      'Highfield ADV7 slots 4–9 are all `F250XSB2`, distinguished only by six Helm Master ' +
+      'rigging packages. Six real things the dealer sells, which any dedupe turns into one. ' +
+      'DUPLICATES HERE ARE OFFERINGS, NOT NOISE. FITMENT_RULES.md §1.4, §5.6.',
+    source: `${WORKBOOK} · Boat Module!KZ..NX, the thirteen five-column motor slots, over the 812 live rows`,
+  },
+  {
+    ref: 'FOUR_MODULES §3.3',
+    candidate:
+      "The rigging kit can be selected from the motor's brand, or its HP band, or its control type, or the hull's material.",
+    measured:
+      'majority vote over the 3,945 live (boat, motor, kit) triples: hull material 15.76 %, motor brand 18.77 %, HP band 26.03 %, motor Control 26.10 % — against motor + hull length at 80.66 % and the pair itself at 93.79 %',
+    verdict:
+      'REFUTED, ALL FOUR — they are the four WORST predictors in the table that measured them, ' +
+      'and they were the four the brief proposed. Nothing here overturns the relationship; it ' +
+      'EXPLAINS it. The kit belongs to the (boat, motor) pairing and to neither side alone, ' +
+      'and even the pair reaches only 93.79 % because the same pair is legitimately offered ' +
+      'more than one kit. A selector right one time in four would put the wrong kit on three ' +
+      'quotes in four, and a kit with its fitting is a median $3,370 and a maximum $44,310. ' +
+      'THE BOAT BRAND IS THE ONE THING IN THIS FAMILY THAT DOES HOLD, and it is admitted ' +
+      'above as F15 at 571/571 — but on 14.5 % of triples, which is why it warns and does not ' +
+      'select. FOUR_MODULES.md §3.3.',
+    source: `Rigging Module.xlsx · Rigging Kits!C × ${WORKBOOK} · Boat Module!LA and its twelve siblings, cross-tabbed against Motor Library!Q 'Supplier', E 'HP Rating', J 'Control' and the (HYP)/(PVC) token in the boat's own name`,
+  },
+  {
+    ref: 'F13',
+    candidate:
+      'The motor slots are a ladder of increasing horsepower, so the display order can be recomputed by sorting on HP.',
+    measured:
+      'HP is non-decreasing end to end on 527 of 719 live rows = 73.3 %; of the 203 adjacent descents, 166 (81.8 %) coincide with a change of Rigging Kit Option and 129 (63.5 %) with a change of the motor’s Control value',
+    verdict:
+      'REFUTED — and the 27 % that fails is the information, not the noise. THE LADDER ' +
+      'RESTARTS at each change of control generation, and the rigging kit changes with it: ' +
+      'Boat Module!R154, Stabicraft 2050 Frontier FT, runs its thirteen slots in three blocks ' +
+      '— slots 1–4 Mech + Hydraulic (150→175), 5–9 DEC + Hydraulic (150→200), 10–12 DEC + ' +
+      'Digital Electric Steering (150→200). Each block ascends and each restarts. A sort by HP ' +
+      'destroys the boundaries a salesperson reads the menu by. Carry the raw slot index; ' +
+      'never derive it. Occupancy, by contrast, IS monotone — only 9 of 813 live rows have a ' +
+      'hole — so the ladder is a list of blocks and not a rank. FITMENT_RULES.md F13.',
+    source: `${WORKBOOK} · Boat Module!KZ..NX × Motor Module (1).xlsx · Motor Library!E 'HP Rating', J 'Control'`,
+  },
+  {
+    ref: 'R10',
+    candidate:
+      'Slot 1 is not really the recommendation, so `recommended` should become a multi-value flag or a soft rank.',
+    measured:
+      'on real deals the quoted motor sits in slot 1 on 17 of 77 (22.1 %) and the modal choice is slot 3 (24.7 %); for trailers slot 1 wins 30 of 66 (45.5 %) — but the quoted motor is SOMEWHERE in the thirteen slots on 71 of 77 (92.2 %)',
+    verdict:
+      'REFUTED AS A CHANGE TO THE CATALOGUE. One slot is headed `Recommended Motor Option` and ' +
+      'the other twelve are headed `Motor Option 2..13`, identically in all nine band header ' +
+      'rows, and the labour allowance is priced from slot 1 alone ($KZ/$LA-anchored — R9 ' +
+      'above). A second recommended row is not in the data, and inventing one is precisely the ' +
+      'failure this file exists to prevent. THE STATISTIC IS REAL AND IT IS A USAGE FACT, NOT ' +
+      'A CATALOGUE FACT: it says carry all thirteen slots, which we do, and it belongs on a ' +
+      'screen as usage. AND THE FLAG MUST BE ALLOWED TO BE ABSENT FOR A WHOLE ROW: `Std ' +
+      'Trailer` is populated on only 350 of 812 live boats (43.1 %), so defaulting the star to ' +
+      '"the first row we found" would assert a standard trailer for 462 boats that have none. ' +
+      'FITMENT_RULES.md R10, §5.6.',
+    source: `${WORKBOOK} · Boat Module!KZ 'Recommended Motor Option' and LF..NT 'Motor Option 2..13' in all nine band header rows; NZ 'Std Trailer'`,
+  },
+
+  /* ----------------------------------------------------------
+     THE TRAILER, THE DIMENSIONS AND THE MOTOR WEIGHT — the six
+     from the fitment pass, unchanged.
+     ---------------------------------------------------------- */
   {
     ref: 'F10',
     candidate: "A trailer's ATM must cover the boat's weight PLUS its Max Load.",

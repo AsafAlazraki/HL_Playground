@@ -60,6 +60,7 @@
 import {
   ACCENT_KEYS,
   DEFAULT_CAPABILITIES,
+  DISCONTINUED_FIELD_ID,
   ELSE_HANDLE,
   EXPORT_KIND,
   EXPORT_VERSION,
@@ -226,10 +227,10 @@ export const isSafeId = (v: unknown): v is string =>
 /* ============================================================
    THE COLUMN IDS THAT ARE MEANT TO REPEAT.
 
-   `__origin`, `__recommended`, `__order` and `__uid` are CONSTANTS,
-   not minted ids: every curated join carries the same three so a pair
-   row can be read without a name lookup (`PAIR_FIELDS` in the model),
-   and the model says so out loud.
+   `__origin`, `__recommended`, `__order`, `__uid` and
+   `__discontinued` are CONSTANTS, not minted ids: every curated join
+   carries the same three so a pair row can be read without a name
+   lookup (`PAIR_FIELDS` in the model), and the model says so out loud.
 
    The file-wide uniqueness rule below did not know that, so it read
    the second join's `__origin` as a collision and REFUSED THE WHOLE
@@ -238,10 +239,26 @@ export const isSafeId = (v: unknown): v is string =>
    seed has several. Found by exporting the seed and importing it
    back, which is the one test nobody had run end to end.
 
+   RUNNING THAT TEST AGAIN THROUGH THE RE-HUNG DOOR FOUND THE NEXT
+   ONE. `__discontinued` is the same kind of constant and was missed:
+   `isDiscontinued(row)` reads `row.values['__discontinued']` by that
+   literal string on ANY table, so every table carrying the flag
+   carries the same id BY CONTRACT — the seed has it on three
+   (OBSOLETE Trailers, Parts & Accessories, Rigging Kits). Exporting
+   the real seed and importing it back was rejected outright with
+   "DUPLICATE ID __discontinued", which meant the demo project could
+   be saved to a file and never opened again. Measured, not guessed:
+   of 738 distinct column ids across the 52 seeded tables, exactly
+   four repeat, and these are all four.
+
+   The rule for ORDINARY column ids is unchanged and still enforced —
+   a minted id on two tables is a damaged file, and the test named
+   "still refuses an ordinary column id used on two tables" pins it.
+
    They still may not repeat WITHIN one table: two columns sharing an
    id in one table would shadow each other in every cell lookup. */
 export const isWellKnownFieldId = (id: string): boolean =>
-  isSystemFieldId(id) || isPairFieldId(id)
+  isSystemFieldId(id) || isPairFieldId(id) || id === DISCONTINUED_FIELD_ID
 
 /** An id we can keep, or the model's "not configured yet" sentinel. */
 const safeIdOr = (v: unknown, fallback: string): string => (isSafeId(v) ? v : fallback)
@@ -1020,6 +1037,15 @@ export function validateEnvelope(raw: unknown): Validated {
       accent: clampAccent(e.accent, ACCENT_KEYS[i % ACCENT_KEYS.length]),
       ...(isTableKind(e.kind) ? { kind: e.kind } : {}),
       ...(isTableRole(e.role) ? { role: e.role } : {}),
+      /* A TABLE THAT IS HISTORY MUST STAY HISTORY. `retired` was the
+         fifth key going quiet: dropped here, so exporting the seed and
+         importing it back resurrected "OBSOLETE Trailers — No Longer
+         Available" as live stock. Home counts 50 of the 52 tables for
+         exactly this reason, and after a round trip it counted 52 —
+         which is the app offering discontinued trailers to a customer
+         because a file went out and came back. Only `true` is carried;
+         anything else is a table that was never retired. */
+      ...(e.retired === true ? { retired: true } : {}),
       ...(hierarchy.length ? { hierarchy } : {}),
       ...(sections.length ? { sections } : {}),
       fields,

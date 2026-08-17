@@ -236,6 +236,15 @@ export function ModuleStage({
             key={open.id}
             module={open}
             onOpen={(tableId, rowId) => setDetail({ moduleId: open.id, tableId, rowId })}
+            /* THE QUOTES RAISED HERE ARE DOORS, not a readout. The
+               index names them as a fact about this place; only the
+               shell knows that a quote opens in a window of its own,
+               so it hands over the same route the item page's "Quote
+               this one" already returns through. Absent when the shell
+               did not give this stage one, and the strip then still
+               NAMES them — a fact that cannot be opened is better than
+               a control that does nothing. */
+            onOpenQuote={onQuote}
           />
         ) : (
           <Dashboard onOpen={(id) => onOpen(id)} onNew={() => setCreating(true)} />

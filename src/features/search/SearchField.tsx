@@ -105,6 +105,11 @@ const inkStyle = (accent: TableFacts['accent']): CSSProperties =>
 /* ------------------------------------------------------------ */
 
 export interface SearchFieldProps {
+  /** Take the keyboard on mount. Set by a surface that exists ONLY to
+   *  hold this field — `Finder` — where landing anywhere else would
+   *  mean a person pressing "Find anything" and then having to click
+   *  the box. Never set where the field is one control among many. */
+  autoFocus?: boolean
   /** THE DOOR THIS FEATURE DOES NOT OWN. Choosing a result selects
    *  the table and the sheet walks its camera to it — but while a
    *  stage (view page, quotes, modules, rules, flow, design) covers
@@ -115,7 +120,7 @@ export interface SearchFieldProps {
   onReveal?: (entityId: string) => void
 }
 
-export function SearchField({ onReveal }: SearchFieldProps = {}): JSX.Element {
+export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX.Element {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const select = useProjectStore((s) => s.select)
@@ -181,6 +186,15 @@ export function SearchField({ onReveal }: SearchFieldProps = {}): JSX.Element {
     el?.focus()
     el?.select()
   }, [rememberOrigin])
+
+  /* -- asked for by a surface that is only this field --------- */
+  useEffect(() => {
+    if (autoFocus) openFromShortcut()
+    /* ON MOUNT ONLY. Re-running this would drag the caret back into
+       the box every time the prop's identity changed underneath a
+       person mid-word. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /* -- Ctrl+K / Cmd+K, from anywhere ------------------------- */
   useEffect(() => {

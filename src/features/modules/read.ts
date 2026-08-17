@@ -46,7 +46,11 @@ import {
   sellableRowCount,
   sellableTables,
 } from '@/features/views/sellable'
-import { isCostColumn, priceLevelsFor } from '@/features/quote'
+import { isCostColumn, priceLevelsFor, type QuoteDef } from '@/features/quote'
+/* the store-free derivation both a view page and `createModule` read,
+   by direct path for the same reason `columns` is above: nothing here
+   needs the views feature's React surface */
+import { existingRelations } from '@/features/views/relations'
 
 /* ---------------------------------------------------------- */
 /* The module's tables and its size                           */
@@ -102,6 +106,184 @@ export function moduleHeldCount(
   rowsByEntity: Record<string, RowData[]>,
 ): number {
   return heldBackRowCount(moduleTables(module, entities), rowsByEntity)
+}
+
+/* ---------------------------------------------------------- */
+/* What goes with the things in this module                    */
+/* ---------------------------------------------------------- */
+
+export interface RelatedTable {
+  tableId: string
+  name: string
+  kind: TableKind
+  /** how many of the module's own tables declare a join to it */
+  on: number
+  /** how many tables the module lists, so `on` reads as a share */
+  of: number
+}
+
+/** The tables reachable FROM this module through a declared join, and
+ *  how much of the module each one touches.
+ *
+ *  THIS IS THE FACT THAT MAKES A MODULE MORE THAN A LIST OF ROWS. An
+ *  index answers "what is in here"; this answers "what goes with the
+ *  things in here" — Yamaha Outboards on six brands of seven, Dealer
+ *  Fit Packages on three. The asymmetry is real and measured (six
+ *  brands take Yamaha; Haines Signature and Jeanneau take factory
+ *  packages instead), and stating it is the alternative to a page of
+ *  headings that resolve for one brand and are empty for the rest.
+ *
+ *  PURELY STRUCTURAL, and it has to be: `existingRelations` asks only
+ *  "which table carries a reference column to this one", with no brand
+ *  list, no kind test and no name matching. A pharmacy with one
+ *  supplier join gets one line here, and an eighth brand added
+ *  tomorrow changes the counts with no code change.
+ *
+ *  A table the module already HOLDS is never listed — Motors would
+ *  otherwise report its own factory package files as something that
+ *  goes with it. Retired tables and retired joins are refused upstream. */
+export function relatedTables(
+  module: ModuleDef,
+  entities: Record<string, EntityDef>,
+): RelatedTable[] {
+  const mine = listedTables(module, entities)
+  const own = new Set(module.tableIds)
+  const tally = new Map<string, number>()
+  for (const table of mine) {
+    for (const rel of existingRelations(entities, table.id)) {
+      if (own.has(rel.otherId)) continue
+      tally.set(rel.otherId, (tally.get(rel.otherId) ?? 0) + 1)
+    }
+  }
+
+  const out: RelatedTable[] = []
+  for (const [tableId, on] of tally) {
+    const e = entities[tableId]
+    if (!e) continue
+    out.push({
+      tableId,
+      name: e.name,
+      kind: e.kind && e.kind in TABLE_KINDS ? e.kind : 'custom',
+      on,
+      of: mine.length,
+    })
+  }
+  return out.sort((a, b) => b.on - a.on || a.name.localeCompare(b.name))
+}
+
+/* ---------------------------------------------------------- */
+/* What has actually happened in this module                   */
+/* ---------------------------------------------------------- */
+
+/** One quote raised against a row in this module, read the way the
+ *  quotes list already reads one so the two surfaces can never print
+ *  the same document differently. */
+export interface ModuleQuote {
+  id: string
+  /** the subject's name as the quote FROZE it. Never re-read from the
+   *  sheet: a quote prints what it froze, and a boat renamed since is
+   *  still the boat this document was written for. */
+  subject: string
+  reference: string
+  /** the word `QuoteList` prints for this state — 'Given' or 'Draft' */
+  state: string
+  /** the ISO day, the same slice the quotes list prints */
+  day: string
+}
+
+export interface ModuleActivity {
+  /** the most recent few, newest first */
+  quotes: ModuleQuote[]
+  /** how many there are altogether, so a capped list can say so */
+  quoteCount: number
+  /** rows changed since the day they were loaded */
+  edited: number
+  /** the tables those changes are on, in the module's own order */
+  editedOn: string[]
+}
+
+/** How many of a module's quotes are named before the strip says
+ *  "and N more". Four is one line at any sensible width and is the
+ *  same discipline as `INDEX_CAP`: name a few, count the rest. */
+const ACTIVITY_CAP = 4
+
+/** WHAT HAS HAPPENED HERE LATELY — and nothing at all when nothing
+ *  has.
+ *
+ *  THIS IS THE FOURTH QUESTION A PLACE IN THE BUSINESS ANSWERS. The
+ *  other three — what is in it, what it is made of, what you can do
+ *  with it — are true of a catalogue. This one is what makes a module
+ *  an application: quotes are raised here, rows are worked on here,
+ *  and the place remembers.
+ *
+ *  BOTH SIGNALS ARE EXACT, AND BOTH ARE ZERO ON A FRESH SHEET, which
+ *  is the whole reason they may be trusted:
+ *
+ *    · a quote's `rootTableId` is the table its subject came from, so
+ *      "raised here" is a set membership and never a guess;
+ *    · `updatedAt !== createdAt` is precisely "this row has been
+ *      changed since it was made". `buildNorthsideProject` stamps
+ *      every one of its 3,566 rows with ONE `nowIso()` for both
+ *      fields, and the store's `touch()` moves `updatedAt` alone —
+ *      measured on the live seed: 3,566 rows, 0 edited, 1 distinct
+ *      stamp.
+ *
+ *  So a freshly loaded example reports nothing and the strip is not
+ *  drawn, which is the honest answer: nothing HAS happened. The
+ *  moment somebody quotes a boat or corrects a price, it appears. A
+ *  recency list on a fresh seed would have printed 3,566 identical
+ *  timestamps, and that is exactly the fabrication this avoids.
+ *
+ *  EVERY member table counts, including a retired one. Its rows are
+ *  withheld from the catalogue because they are history rather than
+ *  stock — but a quote raised against one still happened, and still
+ *  opens. */
+export function moduleActivity(
+  module: ModuleDef,
+  entities: Record<string, EntityDef>,
+  rowsByEntity: Record<string, RowData[]>,
+  quotes: readonly QuoteDef[],
+): ModuleActivity {
+  const tables = moduleTables(module, entities)
+  const mine = new Set(tables.map((t) => t.id))
+
+  /* NEWEST FIRST, BY WHEN IT WAS RAISED. `createdAt` and not
+     `updatedAt`, because raising is the event this strip reports and
+     it is the column the quotes list already prints — sorting by one
+     date and printing another puts an old day at the top of a list
+     that claims to be recent. */
+  const raised = quotes
+    .filter((q) => mine.has(q.rootTableId))
+    .slice()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+
+  let edited = 0
+  const editedOn: string[] = []
+  for (const table of tables) {
+    let here = 0
+    for (const row of rowsByEntity[table.id] ?? []) {
+      if (row.updatedAt !== row.createdAt) here++
+    }
+    if (here > 0) {
+      edited += here
+      editedOn.push(table.name)
+    }
+  }
+
+  return {
+    quotes: raised.slice(0, ACTIVITY_CAP).map((q) => ({
+      id: q.id,
+      subject: q.subjectLabel,
+      reference: q.reference,
+      /* THE QUOTES LIST'S OWN TWO WORDS, so a document called Given
+         there is never called Issued here. */
+      state: q.state === 'issued' ? 'Given' : 'Draft',
+      day: q.createdAt.slice(0, 10),
+    })),
+    quoteCount: raised.length,
+    edited,
+    editedOn,
+  }
 }
 
 /** The kind's own plural, as its author wrote it in TABLE_KINDS.
@@ -272,6 +454,75 @@ export function buildEntries(
         img: imgField ? primaryImage(row.values[imgField.id] ?? null) : undefined,
         hay: label.toLowerCase(),
       })
+    }
+  }
+  return out
+}
+
+/** The first `cap` entries, EXCEPT that every table keeps a place.
+ *
+ *  THE BUG THIS FIXES, measured on the real seed. Parts & Accessories
+ *  lists 719 items across three tables — 67 parts, 622 rigging kits,
+ *  30 dealer fit packages. A flat `slice(0, 240)` spends the whole
+ *  budget on the first two and Dealer Fit is never drawn, so its
+ *  section head does not exist, so the member chip that promises to
+ *  "Go to Dealer Fit Packages, 30 items" scrolls to nothing and the
+ *  press does nothing at all. An enabled control that does nothing is
+ *  a lie told to whoever is looking, and this one sat on the strip
+ *  whose whole purpose was to reach that table without scrolling past
+ *  622 rigging kits.
+ *
+ *  So the cap is shared out instead of spent in order: every table
+ *  takes a fair slice, whatever is left over goes round again to the
+ *  tables that still have rows, and the ORIGINAL order is rebuilt at
+ *  the end so a brand's own row order survives. The total drawn is
+ *  still exactly `cap`, so the "N more" sentence is unchanged and the
+ *  page stays as fast as it was.
+ *
+ *  A module under the cap is returned untouched — Boats, Motors,
+ *  Trailers and Rates all draw exactly what they drew before. */
+export function capEntries(entries: IndexEntry[], cap: number): IndexEntry[] {
+  if (cap <= 0 || entries.length <= cap) return entries
+
+  const byTable = new Map<string, number>()
+  for (const e of entries) byTable.set(e.tableId, (byTable.get(e.tableId) ?? 0) + 1)
+  const tables = [...byTable.keys()]
+
+  /* A fair slice each, never less than one, never more than the table
+     holds, and never more than the budget still allows — a module with
+     more tables than the cap has rows still stops at the cap. */
+  const share = Math.max(1, Math.floor(cap / tables.length))
+  const take = new Map<string, number>()
+  let budget = cap
+  for (const t of tables) {
+    const n = Math.min(share, byTable.get(t) ?? 0, budget)
+    take.set(t, n)
+    budget -= n
+  }
+
+  /* What the short tables did not use goes to the long ones, one row
+     at a time so no single table swallows the remainder. */
+  let moved = true
+  while (budget > 0 && moved) {
+    moved = false
+    for (const t of tables) {
+      if (budget === 0) break
+      const got = take.get(t) ?? 0
+      if (got < (byTable.get(t) ?? 0)) {
+        take.set(t, got + 1)
+        budget--
+        moved = true
+      }
+    }
+  }
+
+  const left = new Map(take)
+  const out: IndexEntry[] = []
+  for (const e of entries) {
+    const n = left.get(e.tableId) ?? 0
+    if (n > 0) {
+      out.push(e)
+      left.set(e.tableId, n - 1)
     }
   }
   return out

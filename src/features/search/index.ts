@@ -10,6 +10,11 @@
 export { SearchField } from './SearchField'
 export type { SearchFieldProps } from './SearchField'
 
+/* the surface the field stands on now the masthead is gone — see
+   Finder.tsx. The dock's "Find anything" opens this. */
+export { Finder } from './Finder'
+export type { FinderProps } from './Finder'
+
 export {
   DEFAULT_LIMITS,
   EMPTY_INDEX,

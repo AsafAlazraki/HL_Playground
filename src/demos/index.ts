@@ -54,5 +54,12 @@ export const DEMOS: DemoSet[] = [
   },
 ]
 
-export { buildNorthsideProject, loadNorthsideProject } from './northside'
-export type { NorthsideProject } from './northside'
+export {
+  NORTHSIDE_NAME,
+  buildNorthsideProject,
+  isStaleNorthside,
+  loadNorthsideProject,
+  northsideDrift,
+  seedNorthsideModules,
+} from './northside'
+export type { NorthsideProject, SeedDrift } from './northside'

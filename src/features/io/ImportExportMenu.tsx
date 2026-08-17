@@ -14,9 +14,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
-import { EXPORT_KIND, EXPORT_VERSION, type ProjectExport } from '@/types/model'
+import type { ProjectExport } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
-import { getConstraints } from '@/features/constraints'
+import { buildExportPayload } from './exportPayload'
 import { validateEnvelope } from './envelope'
 import { applyMerge, applyReplace } from './apply'
 import './io.css'
@@ -48,76 +48,18 @@ function downloadJson(json: string, fileName: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 4000)
 }
 
-/* Deterministic serialisation order: store records are keyed objects whose
-   Object.values order depends on how IndexedDB rehydrated them — sort by
-   createdAt (name as tiebreak) so the same project always exports the same
-   file, and revision diffs stay readable. Groups have no createdAt. */
-const byCreatedAt = <T extends { createdAt: string; name: string }>(a: T, b: T): number =>
-  a.createdAt.localeCompare(b.createdAt) || a.name.localeCompare(b.name)
-
-/* ============================================================
-   WHAT "EVERYTHING" MEANS.
-
-   Until version 2 it meant the SEED: tables, zones, flow rules and
-   rows — every one of which a demo loader can produce — and none of
-   the work a person actually did. The modules they built, the pages
-   they curated, the business rules they wrote and the name of their
-   own business all stayed in the browser they were made in, silently,
-   under a button labelled Everything.
-
-   The four that travel now, and where each is read from:
-
-     org          `meta.org`, so an imported set knows whose it is
-     views        the store's `views` slice — the shell mirrors the
-                  view feature's registry into it on every change
-                  (`app/viewPersistence.ts`), so this is the current
-                  page layout and not a stale copy
-     modules      the store's `modules` slice, in dashboard order
-     constraints  `getConstraints()` — the constraint registry's own
-                  non-hook reader, scoped to the current organisation
-
-   STILL NOT CARRIED, and deliberately not smuggled: QUOTES. There is
-   no `quotes` key on `ProjectExport` and no non-hook list reader on
-   the quote registry (`useQuotes` is a hook; `getQuote` needs an id
-   you would have to already have). Both are named in
-   `features/quote/index.ts` §3 as store work. Reaching into that
-   module's private `list` to make an export look complete is exactly
-   how a frozen document gets re-priced by an import, so it waits.
-   ============================================================ */
-
 /** Builds the export envelope, bumps REV, triggers the download.
- *  Returns the issued rev number. */
+ *  Returns the issued rev number.
+ *
+ *  The envelope itself is `buildExportPayload`, which lives in its own
+ *  module so the round trip can be walked without a DOM — see the
+ *  header there for the two importer-refuses-its-own-export bugs that
+ *  went unseen while it was private to this file. */
 function issueExport(includeData: boolean): number {
-  const store = useProjectStore.getState()
-  const rev = store.bumpExportCount()
+  const rev = useProjectStore.getState().bumpExportCount()
   const s = useProjectStore.getState()
-  const views = Object.values(s.views).sort(byCreatedAt)
-  /* dashboard order, then name — the same comparison the Dashboard
-     itself sorts by, so the file lists them as the person sees them */
-  const modules = Object.values(s.modules).sort(
-    (a, b) => a.order - b.order || a.name.localeCompare(b.name),
-  )
-  const constraints = [...getConstraints()].sort((a, b) =>
-    a.createdAt.localeCompare(b.createdAt),
-  )
-  const payload: ProjectExport = {
-    kind: EXPORT_KIND,
-    version: EXPORT_VERSION,
-    exportedAt: new Date().toISOString(),
-    project: { name: s.meta.name, rev },
-    entities: Object.values(s.entities).sort(byCreatedAt),
-    groups: Object.values(s.groups).sort((a, b) => a.name.localeCompare(b.name)),
-    /* rules carry their whole graph — nodes, edges and every typed
-       config — so a full set re-imports and runs identically */
-    rules: Object.values(s.rules).sort(byCreatedAt),
-    ...(includeData ? { rows: { ...s.rowsByEntity } } : {}),
-    ...(s.meta.org ? { org: s.meta.org } : {}),
-    ...(views.length ? { views } : {}),
-    ...(modules.length ? { modules } : {}),
-    ...(constraints.length ? { constraints } : {}),
-  }
   downloadJson(
-    JSON.stringify(payload, null, 2),
+    JSON.stringify(buildExportPayload(rev, includeData), null, 2),
     `${kebab(s.meta.name)}-rev${pad2(rev)}.json`,
   )
   return rev
@@ -174,7 +116,15 @@ interface Pending {
   fileName: string
 }
 
-export function ImportExportMenu() {
+export interface ImportExportMenuProps {
+  /** Which edge the popover hangs from. It has always hung from the
+   *  RIGHT, because it lived at the right end of a title block; on a
+   *  toolbar's left-hand track that puts a 348px sheet off the side
+   *  of the window. The trigger's own look is unchanged either way. */
+  align?: 'left' | 'right'
+}
+
+export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
@@ -354,17 +304,20 @@ export function ImportExportMenu() {
   const blank = tableCount === 0
 
   return (
-    <div className="io-root" ref={rootRef}>
+    <div className={`io-root${align === 'left' ? ' io-root--left' : ''}`} ref={rootRef}>
       <button
         type="button"
         ref={triggerRef}
-        className="btn io-trigger"
+        /* NOT `.btn`. This control now stands on a toolbar the
+           redesign drew, and `.btn` carries the outgoing build's
+           uppercase mono stamp — see io.css. */
+        className="io-trigger"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => (open ? closeMenu() : setOpen(true))}
       >
         <GlyphArrows />
-        I/O
+        Import / export
       </button>
 
       {open && (

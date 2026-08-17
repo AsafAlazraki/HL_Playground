@@ -172,6 +172,8 @@ import type {
   FieldType,
   GroupDef,
   ImageRef,
+  ModuleCapability,
+  ModuleDef,
   RowData,
   RuleDef,
   RuleEdge,
@@ -182,12 +184,20 @@ import type {
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 
+/** What this project is called on the sheet, and the one string that
+ *  says a project on somebody's machine came from this set. */
+export const NORTHSIDE_NAME = 'Northside Marine — Master Price File'
+
 export interface NorthsideProject {
   name: string
   entities: EntityDef[]
   groups: GroupDef[]
   rules: RuleDef[]
   rowsByEntity: Record<string, RowData[]>
+  /** seed key → the id that table was minted with, so the module seed
+   *  below can name its tables by the key it already reads them by
+   *  rather than by matching on a display name. */
+  idByKey: Record<string, string>
 }
 
 /* ---------------------------------------------------------- */
@@ -7179,16 +7189,166 @@ export function buildNorthsideProject(): NorthsideProject {
   ]
 
   return {
-    name: 'Northside Marine — Master Price File',
+    name: NORTHSIDE_NAME,
     entities,
     groups: [],
     rules,
     rowsByEntity,
+    idByKey: Object.fromEntries(entityId),
+  }
+}
+
+/* ============================================================
+   THE FIVE MODULES — the places in this business.
+
+   WHY THE LIST LIVES HERE AND NOWHERE ELSE. A module name is a
+   BUSINESS string: "Boats", "Rates & Charges". Marine content lives
+   only in src/demos, so src/app and src/store stay generic and a
+   pharmacy loading its own set gets its own places with no code
+   change. Nothing below is invented — every name is a seeded table's
+   own name or a heading from docs/specs, and every figure is the sum
+   of row counts already in this file.
+
+   THE BRAND IS THE SECTION, which is the owner's ruling taken
+   literally: Boats holds all seven brand price files rather than one
+   flattened list of hulls, because the workbook reads each brand's
+   columns from THAT brand's banner row — "Max People" on Highfield is
+   a different column on Stacer. `ModuleIndex` cuts its index by table
+   and then by that table's own hierarchy, so seven tables draw seven
+   brand heads with the levels each brand declares underneath.
+
+   JOINS AND VIEWS ARE NEVER DOORS. Only `role: "base"` tables are
+   named here; the 27 join tables appear INSIDE a module as related
+   blocks on an item's page, seeded per table by `createModule`.
+
+   EVERY BASE TABLE BELONGS TO SOME MODULE. That includes the retired
+   OBSOLETE Trailers table, which is why it is in the Trailers list:
+   `sellableTables` then drops it from the catalogue and the index
+   says so in words. A table nobody filed would be a table nobody
+   could reach except through the sheet.
+
+   THE DESCRIPTION IS PASSED EXPLICITLY, and that is not decoration.
+   `createModule` falls back to the primary table's own description
+   when none is given, and Highfield's is a 202-character note about
+   which spreadsheet row its columns came from — the exact string
+   ModuleStage.tsx's header records as the failure that taught this.
+   ============================================================ */
+
+interface SeedModule {
+  name: string
+  /** one line under the name — counts and table names, nothing else */
+  desc: string
+  /** seed keys, primary first. A key that does not resolve is skipped. */
+  tables: string[]
+  /** what may be DONE here. Omitted = DEFAULT_CAPABILITIES. */
+  can?: ModuleCapability[]
+}
+
+/* The verbs, and why each module has the ones it has. `browse`,
+   `search` and `open` are DEFAULT_CAPABILITIES — look, do not touch —
+   and nothing that writes is switched on anywhere, deliberately.
+
+   `relate` is on where this side of the relationship OWNS the
+   decision: a boat is the source of every fitment join, and a motor's
+   page turns those round. It is OFF on trailers and parts because
+   FITMENT_RULES.md puts the selector on the boat's series banner —
+   the pair is written on the boat's join, so a relate verb here would
+   promise a decision this side does not make.
+
+   `quote` is on where the table declares a selling price. It is off
+   on Parts & Accessories because a part is quoted as a LINE on a
+   boat's quote, and off on Rates & Charges because registration is a
+   third-party recovery that SERVICE_AND_THEMES.md §3.1 forbids
+   marking up — a quote verb over a fee register invites the double
+   charge that document rules out.
+
+   `open` is off on Rates & Charges, and that is measured rather than
+   preferred: no join names Labour Rates, Oils & Consumables or
+   Registration Costs, so an item page for a labour rate would carry
+   zero blocks and be a row shown twice. SERVICE_AND_THEMES.md §1.4
+   calls these "a register that other places read". */
+const MODULES: SeedModule[] = [
+  {
+    name: "Boats",
+    desc: "Seven brand price files off the Boat Module sheet — 174 hulls, each brand keeping its own columns.",
+    tables: [
+      "boat_highfield",
+      "boat_stabicraft",
+      "boat_stacer",
+      "boat_formosa",
+      "boat_jeanneau",
+      "boat_surtees",
+      "boat_haines",
+    ],
+    can: ["browse", "search", "open", "relate", "quote"],
+  },
+  {
+    name: "Motors",
+    desc: "Yamaha and ePropulsion outboards, and the two factory package files that power Haines Signature and Jeanneau — 175 ways to drive a hull.",
+    tables: ["mot_yamaha", "mot_pkg_haines", "mot_pkg_jeanneau", "mot_epropulsion"],
+    can: ["browse", "search", "open", "relate", "quote"],
+  },
+  {
+    name: "Trailers",
+    desc: "Seven trailer brands off the Trailer Module sheet — 145 trailers, plus the obsolete band kept so an old quote still opens and never offered here.",
+    tables: [
+      "trl_nsmcustom",
+      "trl_dunbier",
+      "trl_bmt",
+      "trl_mackay",
+      "trl_redco",
+      "trl_gfab",
+      "trl_stacertrailers",
+      "trl_obsolete",
+    ],
+    can: ["browse", "search", "open", "quote"],
+  },
+  {
+    name: "Parts & Accessories",
+    desc: "Parts & Accessories, Rigging Kits and Dealer Fit Packages — 719 lines that go ONTO a boat rather than being one.",
+    tables: ["parts", "rig_kits", "dealer_fit"],
+  },
+  {
+    name: "Rates & Charges",
+    desc: "Labour Rates, Oils & Consumables and Registration Costs — 64 charges the other places read. A register rather than a catalogue.",
+    tables: ["labour_rates", "oils_lubes", "registration"],
+    can: ["browse", "search"],
+  },
+]
+
+/** Mints the five modules through the store's own `createModule`, on a
+ *  project that has just been replaced.
+ *
+ *  THROUGH THE REAL ACTION, NEVER AROUND IT. `createModule` mints each
+ *  member table's detail page and seeds it from that table's own joins;
+ *  a module written straight into the `modules` map would have none of
+ *  that, and would then be indistinguishable from a user's own module
+ *  until somebody clicked into it. It also means these persist exactly
+ *  as a hand-made module does — the store writes to Dexie, and a
+ *  reload finds them there.
+ *
+ *  Exported for the test that walks the real seed through the real
+ *  store; nothing in the app calls it but `loadNorthsideProject`. */
+export function seedNorthsideModules(idByKey: Record<string, string>): void {
+  const store = useProjectStore.getState()
+  for (const m of MODULES) {
+    const ids = m.tables
+      .map((k) => idByKey[k])
+      .filter((id): id is string => {
+        const e = id ? store.entities[id] : undefined
+        /* A JOIN OR A VIEW IS NEVER A DOOR. `canBeModuleMaster` admits
+           role 'view', which the ruling forbids, so the filter is
+           written here rather than borrowed. */
+        return e !== undefined && (e.role === undefined || e.role === "base")
+      })
+    if (ids.length === 0) continue
+    const mod = store.createModule(ids, m.name, m.desc)
+    if (mod && m.can) store.updateModule(mod.id, { capabilities: m.can })
   }
 }
 
 /** Builds the Northside set and applies it wholesale (replaces the
- *  current project). */
+ *  current project), then mints the five modules on top of it. */
 export function loadNorthsideProject(): void {
   const p = buildNorthsideProject()
   useProjectStore.getState().replaceProject({
@@ -7198,4 +7358,132 @@ export function loadNorthsideProject(): void {
     rules: p.rules,
     rowsByEntity: p.rowsByEntity,
   })
+  /* AFTER the swap, never before: `replaceProject` clears `modules`
+     and `views` wholesale, because a module surviving a swap points at
+     tables that are gone. */
+  seedNorthsideModules(p.idByKey)
 }
+
+/* ============================================================
+   IS THIS COPY OF THE EXAMPLE THE CURRENT ONE?
+
+   THE FAILURE THIS ANSWERS, and it is a demo-day failure rather
+   than a bug. This app is local-first: the sheet lives in the
+   browser's own IndexedDB and is hydrated on load. So a person who
+   loaded the example weeks ago opens the app and gets THAT copy —
+   21 tables, 43 Yamahas — while a browser seeded today holds 25 base
+   tables and 83. Nothing is broken and nothing was lost, but it
+   reads exactly like data reverting, and the owner has already been
+   caught by it once.
+
+   THE TEST IS THE DATA, NOT A VERSION NUMBER. A stamp written beside
+   the project would have to be bumped by hand, and the first time
+   somebody forgot, this would go quiet at the moment it mattered.
+   Instead the seed compares itself: every table this file declares,
+   by name and by how many rows it carries, against what is on the
+   sheet. A stale copy differs in one of them by construction, and a
+   copy that matches is genuinely current — including for someone who
+   has never heard of IndexedDB.
+
+   AND THE IDENTITY TEST IS THE DATA TOO, WHICH WAS LEARNED THE HARD
+   WAY. This first asked "is `meta.name` the name this file gives the
+   project?", and it never once answered yes: `setOrganisation`
+   overwrites `meta.name` with the BUSINESS name, and `Shell.tsx`
+   deliberately re-applies the organisation after every project swap
+   so a demo load cannot un-name the dealer. So a project loaded from
+   this file is called "Northside Marine" a frame later and the
+   comparison was dead on arrival. The honest question is not what the
+   project is CALLED but what is IN it: this set is recognised when
+   most of the tables on the sheet are tables this file declares, by
+   name. That also survives the case the whole mechanism exists for —
+   an OLDER copy, which has fewer tables than the set does now and
+   would fail any test written the other way round.
+
+   IT SAYS NOTHING ABOUT ANYBODY ELSE'S SHEET. A real dealer's own
+   tables, an import, a blank sheet: none of them share thirty table
+   names with this file, so all of them return null and are never
+   nagged.
+
+   AND IT IS NOT A JUDGEMENT ABOUT EDITS. Row counts are compared,
+   not row contents: a person who has been typing in cells still
+   matches, and so does one who has added tables of their own. What
+   differs is a table that has since been added TO THE SET, removed
+   from it, or seeded to a different depth.
+   ============================================================ */
+
+export interface SeedDrift {
+  /** what this example calls itself, so a notice about it can name it
+   *  without reading `meta.name` — which is the BUSINESS name by the
+   *  time anybody asks (see the header above) */
+  setName: string
+  /** tables this set carries that the sheet does not have, by name */
+  missing: string[]
+  /** tables the sheet has at a different size */
+  resized: { name: string; has: number; wants: number }[]
+  /** the set now brings modules and this sheet carries none */
+  noModules: boolean
+  /** how many places the current set would put on the dashboard */
+  moduleCount: number
+}
+
+/** Below this many of the set's own tables, a sheet is somebody's own
+ *  work that happens to share a name or two — never this example. */
+const RECOGNISE_FLOOR = 8
+/** And this share of what is ON the sheet has to come from the set,
+ *  so a dealer who loaded the example and then built their own thirty
+ *  tables beside it is not told their project is an old copy.
+ *
+ *  HALF, NOT MORE. The copy this exists to catch is an OLD one, and
+ *  an old one is allowed to disagree about names as well as counts —
+ *  a table renamed since it was taken would count against it twice.
+ *  Half of a sheet being tables this file declares by name is still
+ *  nothing a dealer's own workbook would ever do by accident. */
+const RECOGNISE_SHARE = 0.5
+
+/** What the current set holds, compared with what is on the sheet, or
+ *  null when the sheet did not come from this set. */
+export function northsideDrift(
+  entities: Record<string, EntityDef>,
+  rowsByEntity: Record<string, RowData[]>,
+  modules: Record<string, ModuleDef>,
+): SeedDrift | null {
+  const onSheet = new Map<string, number>()
+  for (const e of Object.values(entities)) {
+    onSheet.set(e.name, rowsByEntity[e.id]?.length ?? 0)
+  }
+  if (onSheet.size === 0) return null
+
+  const missing: string[] = []
+  const resized: { name: string; has: number; wants: number }[] = []
+  let recognised = 0
+  for (const t of TABLES) {
+    /* JOIN TABLES ARE NOT COMPARED BY SIZE. A pairing whose either
+       side does not resolve is dropped at build time (pass 2 above),
+       so a join's row count is a function of the base tables and not
+       a fact this list can state. Their presence still counts. */
+    const has = onSheet.get(t.n)
+    if (has === undefined) {
+      missing.push(t.n)
+      continue
+    }
+    recognised += 1
+    if (t.role !== "join" && has !== t.rows.length) {
+      resized.push({ name: t.n, has, wants: t.rows.length })
+    }
+  }
+
+  if (recognised < RECOGNISE_FLOOR) return null
+  if (recognised < onSheet.size * RECOGNISE_SHARE) return null
+
+  return {
+    setName: NORTHSIDE_NAME,
+    missing,
+    resized,
+    noModules: Object.keys(modules).length === 0,
+    moduleCount: MODULES.length,
+  }
+}
+
+/** True when the sheet came from this set and no longer matches it. */
+export const isStaleNorthside = (drift: SeedDrift | null): boolean =>
+  drift !== null && (drift.missing.length > 0 || drift.resized.length > 0 || drift.noModules)

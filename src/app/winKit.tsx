@@ -167,6 +167,13 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
         <ModuleStage
           moduleId={s.moduleId}
           onOpen={(moduleId) => h.openWin({ kind: 'module', moduleId })}
+          /* THE QUOTE ROUTE WAS DANGLING. ModuleStage takes `onQuote`
+             and hands it to the ViewStage it opens an item on, and
+             the view stage draws "Quote this one" only when it has
+             one — so a boat opened from a module could not be quoted
+             while the same boat opened from Tables could. Wired to
+             the same place the view case wires it. */
+          onQuote={(quoteId) => h.openWin({ kind: 'quote', quoteId })}
           onClose={h.close}
         />
       )

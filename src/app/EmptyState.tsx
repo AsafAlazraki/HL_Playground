@@ -95,8 +95,15 @@ export function EmptyState({ onCreateTable }: EmptyStateProps) {
           </button>
         )}
 
+        {/* THE HINT NAMED A PALETTE THAT IS NOT THERE. It read "drag a
+            table type from the left onto the sheet", and there is no
+            panel to the left of this card — `LeftPanel` has been
+            imported by nothing since the masthead was removed. The
+            first screen a new user meets cannot point at empty space,
+            so it names the control that really does this, which is on
+            the bar and never moves. */}
         <p className="shell-invite-hint">
-          Or drag a table type from the left onto the sheet.
+          Or press New table on the bar.
         </p>
       </section>
     </div>
