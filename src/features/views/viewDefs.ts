@@ -12,12 +12,10 @@
    ============================================================ */
 
 import { useCallback, useSyncExternalStore } from 'react'
-import { isRetired } from '@/types/model'
-import type { ClauseGroup, ColumnFilter, EntityDef, ViewBlock, ViewDef } from '@/types/model'
+import type { ClauseGroup, ColumnFilter, ViewBlock, ViewDef } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { newId, nowIso } from '@/lib/id'
-import { curatedOnly } from './describe'
-import { findJoinTable } from './pairs'
+import { defaultBlocksFor } from './relations'
 
 /** Root, related, related-to-the-related. Three, and no deeper. */
 export const MAX_DEPTH = 3
@@ -78,33 +76,6 @@ function patch(id: string, fn: (v: ViewDef) => ViewDef): void {
 /* Making one                                                 */
 /* ---------------------------------------------------------- */
 
-/** Join tables already touching this table, and what they join it to.
- *
- *  A RETIRED TABLE NEVER BECOMES A BLOCK, and neither does a retired
- *  join. A view page is a page you would put in front of a customer,
- *  and this is the function that decides what is on it before anybody
- *  has configured anything — so "Surtees x OBSOLETE Trailers" must not
- *  be able to seed itself onto the Surtees page and then rely on the
- *  renderer to hold its rows back. Nothing is deleted: the join and
- *  the table stay on the sheet, and an old quote written against
- *  either still opens. */
-function existingRelations(entities: Record<string, EntityDef>, tableId: string) {
-  const out: Array<{ otherId: string; joinId: string }> = []
-  const seen = new Set<string>()
-  for (const other of Object.values(entities)) {
-    if (other.id === tableId) continue
-    if (other.role === 'join') continue
-    if (isRetired(other)) continue
-    const join = findJoinTable(entities, tableId, other.id)
-    if (!join || seen.has(other.id)) continue
-    const joinEntity = entities[join.entityId]
-    if (joinEntity && isRetired(joinEntity)) continue
-    seen.add(other.id)
-    out.push({ otherId: other.id, joinId: join.entityId })
-  }
-  return out
-}
-
 /**
  * A sensible default view for a table.
  *
@@ -116,6 +87,10 @@ function existingRelations(entities: Record<string, EntityDef>, tableId: string)
  * block (only what someone put in it). No rule is invented and no join
  * is created; a table with nothing declared yet opens empty and invites
  * the first drag.
+ *
+ * The blocks come from `relations.ts`, which is also what the store's
+ * `createModule` seeds a module's tables with — one derivation, so the
+ * two surfaces cannot drift apart again.
  */
 export function createViewFor(tableId: string): ViewDef {
   const already = list.find((v) => v.rootTableId === tableId)
@@ -123,12 +98,7 @@ export function createViewFor(tableId: string): ViewDef {
 
   const { entities } = useProjectStore.getState()
   const root = entities[tableId]
-  const blocks: ViewBlock[] = existingRelations(entities, tableId).map(({ otherId, joinId }) => ({
-    id: newId(),
-    tableId: otherId,
-    joinTableId: joinId,
-    rule: curatedOnly(),
-  }))
+  const blocks: ViewBlock[] = defaultBlocksFor(entities, tableId)
 
   const view: ViewDef = {
     id: newId(),

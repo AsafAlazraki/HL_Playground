@@ -29,6 +29,11 @@ import {
   type XY,
 } from '@/types/model'
 import { defaultMeta, repository, type ProjectSnapshot } from '@/db/repository'
+/* DIRECT PATH, DELIBERATELY. `@/features/views` is the feature's barrel and
+   pulls React surfaces and this very store back in; `relations.ts` imports
+   neither, which is what makes it safe here. Same precedent and same reason
+   as src/features/modules/read.ts. */
+import { defaultBlocksFor } from '@/features/views/relations'
 import { newId, nowIso } from '@/lib/id'
 
 export interface Selection {
@@ -1094,55 +1099,56 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
       if (clean.length === 0) return null
       const primary = get().entities[clean[0]]
 
-      /* THE DETAIL SURFACE IS MINTED WITH THE MODULE, not on first open.
-         A module whose items cannot be opened until somebody visits a
-         second screen is a module that looks broken for one click, and
-         createView is idempotent by contract — a table that already has
-         a view keeps it rather than gaining a second. */
-      const view = get().createView(clean[0])
-
-      /* AND IT ARRIVES KNOWING WHAT GOES WITH THE THING. A module made
-         over a boat used to open onto the boat alone — no motors, no
-         trailer — because a fresh view has no blocks and somebody has
-         to drag tables onto it first. That is the whole point of the
-         product missing from its own front page.
+      /* EVERY TABLE IN THE MODULE GETS ITS OWN PAGE, SEEDED FROM ITS
+         OWN JOINS. A module made over a boat used to open onto the boat
+         alone — no motors, no trailer — because a fresh view has no
+         blocks and somebody has to drag tables onto it first. That is
+         the whole point of the product missing from its own front page.
 
          The blocks are NOT guessed. A JOIN TABLE is explicit data: it
          exists because someone said these two tables relate, and it
-         carries the curated pairs. So every table joined to the master
-         by an existing join becomes a block, and a table with no join
-         to it becomes nothing. `suggest.ts` deliberately only OFFERS a
-         rule and never applies one, which is right for a guess from
-         column shapes — this is not a guess, it is a relationship
+         carries the curated pairs. `suggest.ts` deliberately only
+         OFFERS a rule and never applies one, which is right for a guess
+         from column shapes — this is not a guess, it is a relationship
          already written down.
 
-         Only when the view is empty: a view somebody has already
-         curated is theirs, and a module opening over it must not
-         rearrange their page. */
-      if (view.blocks.length === 0) {
-        const master = new Set(clean)
-        const joins = Object.values(get().entities).filter((e) => e.role === 'join')
-        const blocks: ViewBlock[] = []
-        const seen = new Set<string>()
+         THE BLOCKS ARE PER TABLE AND NOT PER MODULE, and that is the
+         fix docs/audit/MODULE_BLOCK_TRACE.md was written to force. The
+         old seed asked "does ANY join name ANY of my tables?" and wrote
+         every answer onto the FIRST table's page. A module over seven
+         brand tables therefore seeded eleven blocks onto one brand,
+         each bound to a different brand's join — measured per brand:
+         5, 2, 1, 1, 1, 1 and, for Formosa, 0 of 11. Asking the question
+         per table instead is the same structural test — "which join
+         carries a reference column to THIS table" — and every block it
+         produces belongs to the table whose page it is on.
 
-        for (const join of joins) {
-          /* which two tables does this join point at? a reference column
-             names its target, so the join's own columns are the answer */
-          const targets = join.fields
-            .filter((f) => f.type === 'reference' && f.refEntityId)
-            .map((f) => f.refEntityId as string)
-          if (!targets.some((t) => master.has(t))) continue
-          for (const other of targets) {
-            if (master.has(other) || seen.has(other)) continue
-            if (!get().entities[other]) continue
-            seen.add(other)
-            blocks.push({ id: newId(), tableId: other, joinTableId: join.id })
-          }
-        }
-        if (blocks.length > 0) {
-          get().updateView(view.id, { blocks })
-        }
+         `defaultBlocksFor` is `createViewFor`'s own derivation, moved
+         to a store-free file so both callers read one answer. Imported
+         by direct path rather than through `@/features/views`, which
+         would drag the React surfaces and the store back in a circle;
+         the same precedent, with the same reason, is in
+         src/features/modules/read.ts.
+
+         Only when a view is empty: a view somebody has already curated
+         is theirs, and a module opening over it must not rearrange
+         their page. */
+      for (const tableId of clean) {
+        const v = get().createView(tableId)
+        if (v.blocks.length > 0) continue
+        const blocks = defaultBlocksFor(get().entities, tableId)
+        if (blocks.length > 0) get().updateView(v.id, { blocks })
       }
+
+      /* THE DETAIL SURFACE IS MINTED WITH THE MODULE, not on first open.
+         A module whose items cannot be opened until somebody visits a
+         second screen is a module that looks broken for one click, and
+         createView is idempotent by contract — so this is the same
+         record the loop above already made for the primary table, not
+         a second one. `viewId` names the PRIMARY table's page; a module
+         spanning seven tables has seven, and a row is opened on its own
+         table's view rather than through this id (see ModuleStage). */
+      const view = get().createView(clean[0])
 
       const order = Object.values(get().modules).length
       const mod: ModuleDef = {

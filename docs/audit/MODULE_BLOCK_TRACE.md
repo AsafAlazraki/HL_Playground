@@ -1,5 +1,40 @@
 # A MULTI-TABLE MODULE AUTO-SEEDS BLOCKS THAT DO NOT RESOLVE
 
+> ## FIXED — 2026-08-17, by option 1. READ THIS BEFORE THE REST OF THE PAGE.
+>
+> The auto-seed is row-aware now. `createModule` no longer scans every join in the project
+> against the module as a set; it walks its own tables and seeds **each table's page from that
+> table's own joins**, through `defaultBlocksFor` in `src/features/views/relations.ts` — the same
+> derivation a table's page has always used, moved to a store-free file so the two callers cannot
+> drift apart again.
+>
+> **The numbers below are what the OLD seed produced.** After the fix, on the same seed:
+> Stacer **4** · Stabicraft **6** · Surtees **5** · Jeanneau **6** · Haines Signature **3** ·
+> Highfield **5** · Formosa **4** — every one of them resolving, none of them borrowed from
+> another brand. Formosa goes 0 → 4. Surtees never meets the OBSOLETE join at all: the join and
+> the table are both retired, so `existingRelations` refuses it twice before `sellable.ts` is
+> ever asked. A brand's block count exceeds its join count wherever one join carries three
+> reference columns — a Motor Fitment join names the boat, the outboard **and** the rigging kit.
+>
+> Two corrections to what is written below, both worth knowing:
+>
+> 1. **The render-time symptom was narrower than §"WHAT THIS MEANS" implies.** `ModuleStage`
+>    renders `<ViewStage entityId={item.tableId}>`, which resolves the row's OWN table's view —
+>    so a Formosa row never actually drew eleven empty blocks on screen. What it drew was
+>    Formosa's page. The damage was to the PRIMARY brand's page, which really did hold eleven
+>    blocks, was mirrored to IndexedDB by `viewPersistence.ts`, and came back on reload.
+> 2. **The seeded blocks carried no `rule`**, and `relatedRows` with no rule matches every
+>    candidate — so each block would have drawn its whole target table (640 rigging kits under
+>    one hull). `defaultBlocksFor` seeds `curatedOnly()`, as `createViewFor` always did.
+>
+> **A stored project keeps its old view.** `viewPersistence.ts` HYDRATE registers saved ViewDefs
+> by their stored id, so an IndexedDB holding an eleven-block page keeps it. The fix governs
+> modules seeded after it; a browser carrying an older project needs the seed-version refresh.
+>
+> The guard is `src/features/modules/moduleBlocks.test.ts`, which asserts the per-brand counts
+> against the real seed through the real store action, and — structurally, with no brand list —
+> that no block is ever bound to a join that does not name its own table.
+
 **Status:** measured, not argued. Traced against the real Northside seed through the real
 `createModule`, on 2026-08-17. Recorded here because the module work is paused mid-flight and
 this is the finding that decides how it resumes.
@@ -66,6 +101,8 @@ Note also `root=Stacer` — the minted ViewDef is rooted on a single table, so a
 seven of them is describing itself by one.
 
 ## WHAT THIS MEANS FOR THE BUILD
+
+*(Historic — option 1 was taken. See the note at the top of this file.)*
 
 Seeding a multi-table module and shipping it is not viable as the code stands. Whoever resumes
 this picks one of:

@@ -56,6 +56,7 @@ import { createEngine } from '@/lib/rules/evaluate'
 import type { NodeSite, RowRef, RuleEngine } from '@/lib/rules/evaluate'
 import { useProjectStore } from '@/store/useProjectStore'
 import { isCuratedOnly } from './describe'
+import { findJoinTable, type JoinRef } from './relations'
 
 /** Where a pair sits in the salesperson's order.
  *  NOT in model.ts yet — see the note in index.ts. */
@@ -72,49 +73,12 @@ export type Ctx = {
 /* Finding and making the join table                          */
 /* ---------------------------------------------------------- */
 
-export interface JoinRef {
-  entityId: string
-  /** link column pointing at the row the view is drawn for */
-  sourceFieldId: string
-  /** link column pointing at the related row */
-  targetFieldId: string
-  /** the join's own plain text column, so a join row reads as something */
-  labelFieldId?: string
-}
-
-/** A table is a join when it links both sides and is nobody's subject —
- *  a Packages table (kind 'package', role 'base') links three tables and
- *  is emphatically not one. */
-function looksLikeJoin(e: EntityDef): boolean {
-  if (e.role === 'join') return true
-  return e.role === undefined && e.kind === undefined
-}
-
-export function findJoinTable(
-  entities: Record<string, EntityDef>,
-  sourceEntityId: string,
-  targetEntityId: string,
-): JoinRef | null {
-  if (sourceEntityId === targetEntityId) return null
-  for (const e of Object.values(entities)) {
-    if (e.id === sourceEntityId || e.id === targetEntityId) continue
-    if (!looksLikeJoin(e)) continue
-    const source = e.fields.find(
-      (f) => f.type === 'reference' && f.refEntityId === sourceEntityId,
-    )
-    const target = e.fields.find(
-      (f) => f.type === 'reference' && f.refEntityId === targetEntityId,
-    )
-    if (!source || !target || source.id === target.id) continue
-    return {
-      entityId: e.id,
-      sourceFieldId: source.id,
-      targetFieldId: target.id,
-      labelFieldId: e.fields.find((f) => f.type === 'text')?.id,
-    }
-  }
-  return null
-}
+/* WHAT A JOIN IS, and how one is found, now live in `relations.ts` —
+   a file that imports neither this store nor React, so the STORE can
+   read the same derivation this feature does. They are re-exported
+   here unchanged: every existing caller keeps its import. */
+export type { JoinRef } from './relations'
+export { findJoinTable, looksLikeJoin } from './relations'
 
 /** The join a block already names, read back into its two link columns.
  *  Falls back to looking one up, so a block whose join was renamed or
