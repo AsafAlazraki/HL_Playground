@@ -21,18 +21,18 @@
 .ds-lab {
   display: block;
   margin-bottom: var(--sp-1);
-  font-size: 9.5px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 
 .ds-lab-inline {
-  font-size: 9.5px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 
 .ds-caption {
   margin-top: var(--sp-1);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-faint);
 }
@@ -93,7 +93,7 @@
 }
 .ds-sheet-tag {
   color: var(--ink-faint);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.2em;
 }
 
@@ -103,7 +103,7 @@
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   padding: 1px 6px;
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   transform: rotate(-2deg);
   opacity: 0;
@@ -277,7 +277,7 @@
 }
 .ds-ink-name {
   padding-bottom: 2px;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   color: var(--ink-soft);
 }
@@ -474,7 +474,7 @@
   padding: 1px 5px;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
-  font-size: 8.5px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 .ds-frow-level {
@@ -552,13 +552,13 @@
 .ds-warn {
   margin-top: var(--sp-1);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.05em;
   color: var(--red);
 }
 .ds-warn::before {
   content: '▲ ';
-  font-size: 7px;
+  font-size: 11px;
   vertical-align: 1px;
 }
 
@@ -709,7 +709,7 @@
 }
 .ds-opt-idx {
   flex: none;
-  font-size: 9px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 .ds-opt-name {
@@ -842,7 +842,7 @@
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   color: var(--accent-viridian);
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   transform: rotate(-1.5deg);
   animation: fade-in var(--t-med) var(--ease-draft) both;
@@ -854,7 +854,7 @@
   gap: var(--sp-1);
 }
 .ds-fx-dep-label {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 .ds-fx-chip {
@@ -863,7 +863,7 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--type-formula) 7%, transparent);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--type-formula);
 }
 
@@ -879,7 +879,7 @@
   animation: fade-in var(--t-fast) var(--ease-draft) both;
 }
 .ds-fx-err-label {
-  font-size: 8.5px;
+  font-size: 11px;
   color: var(--red);
 }
 .ds-fx-err-msg {
@@ -900,7 +900,7 @@
   border-radius: var(--radius-sm);
   background: none;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   cursor: pointer;
   transition:
     background var(--t-fast) var(--ease-draft),
@@ -955,7 +955,7 @@
 }
 .ds-fx-hint {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.7;
   color: var(--ink-soft);
 }
@@ -981,12 +981,12 @@
 }
 .ds-fx-fn-name {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--type-formula);
 }
 .ds-fx-fn-desc {
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -1051,7 +1051,7 @@
   color: var(--ink);
 }
 .ds-add-item-desc {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 
@@ -1073,7 +1073,7 @@
 }
 .ds-note-tag {
   flex: none;
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   color: var(--red);
 }
@@ -1087,7 +1087,7 @@
 .ds-note-detail {
   flex: 1 1 100%;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.5;
   color: var(--red);
   overflow-wrap: anywhere;
@@ -1100,7 +1100,7 @@
   border-radius: var(--radius-sm);
   background: none;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--red);
@@ -1209,7 +1209,7 @@
   min-width: 0;
 }
 .ds-mark-title {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   color: var(--red);
 }
@@ -1233,7 +1233,7 @@
   border-radius: var(--radius-sm);
   background: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1254,7 +1254,7 @@
 }
 .ds-mark-fixlabel {
   min-width: 0;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.4;
   color: var(--ink-faint);
 }
@@ -1283,7 +1283,7 @@
   margin-top: var(--sp-2);
 }
 .ds-danger-note {
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.7;
   letter-spacing: 0.1em;
   color: var(--ink-faint);
@@ -1342,7 +1342,7 @@
 /* the legend under COLUMNS — the stamps a collapsed row carries */
 .ds-legend {
   margin-top: calc(var(--sp-1) * -1);
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.7;
   letter-spacing: 0.08em;
   color: var(--ink-faint);
@@ -1512,7 +1512,7 @@
 }
 .ds-cs-choice-note {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
   letter-spacing: 0.04em;
   color: var(--ink-soft);
@@ -1521,7 +1521,7 @@
   align-self: center;
   padding: var(--sp-1) var(--sp-3);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);

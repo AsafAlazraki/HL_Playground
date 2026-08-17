@@ -157,7 +157,7 @@
 }
 .shell-mark-brand {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -236,7 +236,7 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -335,13 +335,15 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-bottom: var(--sp-6);
-  background: rgba(255, 255, 255, 0.86);
+  /* PAINT, NOT GLASS. This was a translucent material with a bright
+     inner edge catching the light. Quiet Precision was chosen over
+     Glass & Depth, so the surface is opaque and the only edge is the
+     hairline. The blur token still resolves (to 0px) so nothing here
+     needs the declaration removed. */
+  background: var(--paper-high);
   backdrop-filter: var(--mat-light-blur);
   -webkit-backdrop-filter: var(--mat-light-blur);
-  /* a bright inner edge is light catching the material — apple-design
-     §12 — and the hairline stays as the drawing office's own line */
   border-right: 1px solid var(--hairline);
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.5);
 }
 
 /* THE TIER THAT CANNOT RIDE ON GLASS. --ink-faint measures 4.07:1 on
@@ -519,7 +521,7 @@
 .shell-fold-count {
   flex: 0 0 auto;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   color: var(--ink-faint);
@@ -569,7 +571,7 @@
 .shell-panel-count {
   flex: 0 0 auto;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   color: var(--ink-faint);
@@ -580,7 +582,7 @@
 .shell-panel-none {
   margin: var(--sp-5) var(--sp-4) 0;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -661,7 +663,7 @@
 .shell-tbl-rows {
   flex: 0 0 auto;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--ink-faint);
 }
@@ -692,7 +694,7 @@
 .shell-grp-count {
   flex: 0 0 auto;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   color: var(--ink-faint);
@@ -700,7 +702,7 @@
 /* said once, under the relationships head: a join is not stock */
 .shell-grp-note {
   margin: 6px var(--sp-4) 0;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.5;
   color: var(--ink-faint);
 }
@@ -803,7 +805,7 @@
 .btn.shell-view-back {
   flex: 0 0 auto;
   padding: 6px 11px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
 }
 .shell-view-what {
@@ -812,7 +814,7 @@
   gap: 7px;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -915,7 +917,7 @@
 }
 .shell-view-row-trail {
   display: block;
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-faint);
   white-space: nowrap;
@@ -943,7 +945,7 @@
 }
 .shell-view-rail-more {
   margin: var(--sp-3) var(--sp-4) 0;
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.6;
   color: var(--ink-faint);
 }
@@ -1160,7 +1162,7 @@
 
 .shell-invite-kicker {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.26em;
   text-transform: uppercase;
@@ -1263,7 +1265,7 @@
   padding: 2px 6px 1px;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   color: var(--ink-faint);
 }
@@ -1301,7 +1303,7 @@
   max-width: 40ch;
   margin: 5px auto 0;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1312,7 +1314,7 @@
 .shell-invite-hint {
   margin-top: var(--sp-4);
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1368,7 +1370,7 @@
   flex: 0 0 auto;
   margin-left: auto;
   padding: 6px 12px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   border-color: var(--blue);
   color: var(--blue-deep);
@@ -1387,7 +1389,7 @@
 }
 .btn.shell-quote-act {
   padding: 6px 11px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
 }
 
@@ -1541,7 +1543,7 @@
   min-width: 0;
 }
 .shell-cell-caption {
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.22em;
   color: var(--ink-faint);
   white-space: nowrap;
@@ -1574,7 +1576,7 @@
   margin: 0;
   padding: 3px var(--sp-2);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   line-height: 1.4;
@@ -1672,7 +1674,7 @@
   color: var(--red);
 }
 .shell-check-unit {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1688,7 +1690,7 @@
   border-radius: var(--radius-sm);
   background: var(--red);
   color: var(--paper-high);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
@@ -1741,7 +1743,7 @@
 }
 .shell-yield-kicker {
   flex: 0 0 auto;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   color: var(--ink-faint);
 }
@@ -1772,7 +1774,7 @@
   margin: 0;
   padding: 2px 7px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1810,7 +1812,7 @@
 }
 .shell-run-kicker {
   flex: 0 0 auto;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   color: var(--ink-faint);
 }
@@ -1829,7 +1831,7 @@
 .shell-run-go {
   flex: 0 0 auto;
   padding: 4px 13px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
 }
 .shell-run-meta {
@@ -1846,7 +1848,7 @@
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1865,7 +1867,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--ink-soft);
 }
@@ -1882,7 +1884,7 @@
 .shell-run-clear {
   flex: 0 0 auto;
   padding: 2px 8px;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.16em;
 }
 
@@ -1919,7 +1921,7 @@
 }
 .shell-inspector-kind {
   flex: 0 0 auto;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.22em;
   color: var(--ink-faint);
   border: 1px solid var(--hairline);
@@ -1966,7 +1968,7 @@
   margin: 0;
   padding: var(--sp-3) 0;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -2026,7 +2028,7 @@
   gap: var(--sp-1);
 }
 .shell-zone-caption {
-  font-size: 9px;
+  font-size: 11px;
 }
 .shell-zone-swatches {
   display: flex;
@@ -2056,7 +2058,7 @@
 }
 .shell-zone-meta {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-faint);

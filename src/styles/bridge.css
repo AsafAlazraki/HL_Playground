@@ -22,16 +22,20 @@
 
    WHAT THIS FILE MAY NEVER DO:
      - change a --sp-* value (spacing is layout; layout is risk)
-     - change a *-size / *-lead / *-track type value (same reason;
-       type sizing is handled in the hand-tune pass, per screen)
      - introduce a new name (that is ds.css's job)
      - style a selector (there is not one selector in here)
 
-   It only re-points colour, elevation, radius, motion and family.
-   Those five cannot reflow a page.
+   IT IS IN TWO HALVES, and the order they were taken matters. The
+   first re-points colour, elevation, radius, motion and family —
+   none of which can reflow a page — and that half was switched on
+   and verified first. The second, at the bottom, maps the type
+   scale. Type sizing CAN reflow, which is why it went second and
+   on proven ground rather than at the same time; if a screen has
+   re-wrapped, it is the bottom half and nothing else.
 
    ORDER MATTERS. This must load AFTER tokens.css and base.css, or
    the originals win. See main.tsx.
+
    ============================================================ */
 
 @import './ds.css';
@@ -214,4 +218,118 @@
    Every one of those 60 is a --sp-*, a --grid-*, or a type
    size/lead/track/weight — except --e1/--e2/--e3 and --font-mono,
    which ds.css defines itself and therefore already carries. */
+}
+
+/* ============================================================
+   TYPE — the second half of the bridge.
+
+   The first half deliberately left this alone, on the grounds
+   that type sizing is layout and layout is reflow. That caution
+   was right for the first switch-on and is now spent: the ground
+   is proven, so this maps the outgoing scale onto the six steps
+   in one place rather than across nineteen stylesheets.
+
+   WHAT IS BEING FIXED, not just renamed:
+
+   TRACKING RAN THE WRONG WAY. Every one of the outgoing scale's
+   non-zero tracking values was POSITIVE, including at 38px.
+   Large text needs NEGATIVE tracking — letters read too far
+   apart as they grow — and body sits near zero. The display
+   steps below go negative and the UI steps come back to ~0.
+
+   THE MICRO FLOOR WAS 8px AT 0.2em. That is the "below its own
+   legibility floor" finding, and it is the single worst thing in
+   the outgoing type. The floor moves to 10-11px and the tracking
+   collapses from 0.12-0.2em to the one label value, 0.06em.
+   Sizes move by 1-3px only, so chrome does not re-wrap.
+
+   THE DISPLAY WEIGHT WAS 400 because the face was a serif.
+   Inter at 400 has no presence at display size; 620 is the
+   equivalent voice.
+
+   SIZES ARE HELD WITHIN ±1px of the originals wherever they were
+   already sane (14 body, 13, 12), because the goal here is the
+   system, not a re-layout. The exceptions are the micro tier,
+   which is the point, and display weight, which cannot reflow.
+   ============================================================ */
+
+:root {
+  /* -- display: the big moments. Negative tracking, real weight. */
+  --display-weight: 620;
+  --display-xl-size: 38px;
+  --display-xl-track: -0.028em;
+  --display-xl-lead: 1.06;
+  --display-l-size: 32px;
+  --display-l-track: -0.024em;
+  --display-l-lead: 1.1;
+  --display-m-size: 26px;
+  --display-m-track: -0.02em;
+  --display-m-lead: 1.16;
+  --display-s-size: 22px;
+  --display-s-track: -0.016em;
+  --display-s-lead: 1.22;
+
+  /* -- UI: tracking returns to zero, leading unchanged so nothing
+        re-wraps. Sizes are the originals. */
+  --ui-xl-size: 17px;
+  --ui-xl-track: -0.011em;
+  --ui-xl-lead: 1.32;
+  --ui-l-size: 15px;
+  --ui-l-track: -0.009em;
+  --ui-l-lead: 1.45;
+  --ui-m-size: 14px;
+  --ui-m-track: -0.002em;
+  --ui-m-lead: 1.45;
+  --ui-size: 13px;
+  --ui-track: 0;
+  --ui-lead: 1.55;
+  --ui-s-size: 12px;
+  --ui-s-track: 0.002em;
+  --ui-s-lead: 1.5;
+  --ui-xs-size: 11px;
+  --ui-xs-track: 0.004em;
+  --ui-xs-lead: 1.45;
+
+  /* -- stamps: the uppercase chrome label. One tracking value now,
+        and the weight comes down from 640 — Inter at 640 uppercase
+        with letterspacing reads as shouting. */
+  --stamp-weight: 600;
+  --stamp-l-size: 13px;
+  --stamp-l-track: 0.05em;
+  --stamp-l-lead: 1.25;
+  --stamp-size: 12px;
+  --stamp-track: 0.06em;
+  --stamp-lead: 1.3;
+  --stamp-s-size: 11px;
+  --stamp-s-track: 0.06em;
+  --stamp-s-lead: 1.3;
+
+  /* -- micro: THE FLOOR. Was 8-11px at 0.12-0.2em tracking across
+        roughly 300 sites, none of which were data. */
+  --micro-weight: 600;
+  --micro-lead: 1.35;
+  --micro-l-size: 11px;
+  --micro-l-track: 0.06em;
+  --micro-size: 11px;
+  --micro-track: 0.06em;
+  --micro-s-size: 10px;
+  --micro-s-track: 0.06em;
+  --micro-xs-size: 10px;
+  --micro-xs-track: 0.06em;
+  /* the glass variant widened tracking to survive blur. There is no
+     blur. It collapses into the ordinary micro track. */
+  --micro-track-glass: 0.06em;
+
+  /* -- data: mono figures. Sizes held; tracking to zero, because
+        tabular numerals do not want letterspacing. */
+  --data-xs-size: 10px;
+  --data-xs-track: 0;
+  --data-s-size: 11px;
+  --data-s-track: 0;
+  --data-size: 12px;
+  --data-track: 0;
+  --data-l-size: 14px;
+  --data-l-track: 0;
+  --data-xl-size: 22px;
+  --data-xl-track: -0.01em;
 }

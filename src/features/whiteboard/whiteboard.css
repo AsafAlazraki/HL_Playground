@@ -76,7 +76,7 @@
 .wb-canvas .react-flow__attribution {
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--canvas-ink-faint);
 }
@@ -238,7 +238,7 @@
   border-radius: var(--radius-sm);
   background: var(--paper-sunken);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--ink-soft);
@@ -307,7 +307,7 @@
   border: none;
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1;
   color: var(--ink-faint);
@@ -356,7 +356,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--ink);
 }
 .wb-field-req {
@@ -412,7 +412,7 @@
   padding: 6px 10px 4px;
   border-top: 1px solid var(--hairline);
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -434,7 +434,7 @@
   border-radius: var(--radius-sm);
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -477,7 +477,7 @@
   white-space: nowrap;
   padding: 4px 6px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   line-height: 1.45;
   color: var(--ink);
 }
@@ -485,7 +485,7 @@
   border-left: 1px solid color-mix(in srgb, var(--hairline) 45%, transparent);
 }
 .wb-data-row--head .wb-data-cell {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -534,7 +534,7 @@
   gap: 8px;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -592,7 +592,7 @@
 .wb-dim-label {
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -648,7 +648,7 @@
   background: var(--canvas-bg);
   border: 1px solid var(--wb-accent);
   border-radius: var(--radius-sm);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -658,7 +658,7 @@
   position: absolute;
   right: 10px;
   bottom: 8px;
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: color-mix(in srgb, var(--wb-accent) 72%, var(--canvas-ink-soft));
 }
@@ -702,7 +702,7 @@
    that draws the line */
 .wb-canvas .react-flow__edge-text {
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   fill: var(--ink-soft);
@@ -776,7 +776,7 @@
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--wb-accent) 8%, transparent);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -790,7 +790,7 @@
 .wb-readout-check {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -821,7 +821,7 @@
   border-radius: var(--radius-sm);
   background: var(--ink);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -856,7 +856,7 @@
   gap: 4px;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -882,7 +882,7 @@
   border-radius: var(--radius-sm);
   background: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -904,7 +904,7 @@
 }
 
 .wb-tools-label {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 /* compartment divider between the two instrument groups */
@@ -927,7 +927,7 @@
   padding: 4px 10px;
   background: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -967,7 +967,7 @@
   border-radius: var(--radius-sm);
   background: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1001,7 +1001,7 @@
   border-radius: var(--radius-sm);
   background: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1239,7 +1239,7 @@
   animation: sheet-in var(--t-med) var(--ease-draft) both;
 }
 .wb-noflow-stamp {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--canvas-ink-faint);
 }
 .wb-noflow-title {

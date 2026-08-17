@@ -110,7 +110,7 @@
 }
 .tb-node-band .tb-whole-btn {
   padding: 4px 9px;
-  font-size: 9.5px;
+  font-size: 11px;
 }
 
 /* the read-out sits at the far end, where a reader's eye lands after
@@ -123,7 +123,7 @@
   border-left: none;
 }
 .tb-node-band .tb-count-label {
-  font-size: 9px;
+  font-size: 11px;
 }
 .tb-node-band .tb-count-num {
   font-size: 12px;
@@ -242,7 +242,7 @@
   border-radius: var(--radius-sm);
   background: var(--blue-wash);
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -272,7 +272,7 @@
   border-radius: var(--radius-sm);
   background: var(--paper-sunken);
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -620,7 +620,7 @@
 .tb-node-plate-btn {
   margin-top: var(--sp-2);
   padding: 5px 10px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 /* ============================================================
@@ -653,7 +653,7 @@
   border-radius: var(--radius-sm);
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -728,7 +728,7 @@
   min-width: 0;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -746,7 +746,7 @@
   padding: 4px 4px 4px var(--sp-2);
 }
 .tb-node .tb-toast-text {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.1em;
 }
 
@@ -824,7 +824,7 @@
 .tb-focus-tally {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);

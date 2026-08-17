@@ -137,7 +137,7 @@
 }
 .io-head-rev {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   color: var(--ink-faint);
@@ -215,7 +215,7 @@
 }
 .io-card-sub {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -229,7 +229,7 @@
   align-self: stretch;
   border-top: 1px dashed var(--hairline);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-faint);
 }
@@ -237,7 +237,7 @@
 .io-blank-note {
   margin-top: var(--sp-2);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-faint);
 }
@@ -277,7 +277,7 @@
 }
 .io-drop-main {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   color: var(--ink);
@@ -288,7 +288,7 @@
 }
 .io-drop-sub {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   color: currentColor;
   opacity: 0.75;
@@ -307,7 +307,7 @@
   background: var(--red-wash);
   color: var(--red);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   line-height: 1.6;
@@ -349,7 +349,7 @@
 .io-plate-rev {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--blue-deep);
@@ -378,7 +378,7 @@
 }
 .io-stat-lbl {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -395,7 +395,7 @@
   padding: var(--sp-2) var(--sp-3);
   border-top: 1px solid var(--hairline);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -405,7 +405,7 @@
   padding: var(--sp-2) var(--sp-3);
   border-top: 1px solid var(--hairline);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -447,7 +447,7 @@
   border-radius: var(--radius-sm);
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -463,7 +463,7 @@
 }
 .io-foot-sig {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   color: var(--ink-faint);
 }
@@ -480,7 +480,7 @@
   background: var(--paper-overlay);
   box-shadow: inset 0 0 0 2px var(--paper-high), inset 0 0 0 3px var(--blue);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;

@@ -21,7 +21,7 @@
 }
 .rl-panel-count {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--ink-faint);
 }
@@ -74,7 +74,7 @@
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -87,7 +87,7 @@
   border-style: dashed;
 }
 .rl-stamp--sm {
-  font-size: 8px;
+  font-size: 11px;
   padding: 0 4px;
 }
 
@@ -204,7 +204,7 @@
   border: 0;
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -280,7 +280,7 @@
 
 .rl-add {
   align-self: flex-start;
-  font-size: 10px;
+  font-size: 11px;
 }
 .rl-addrow {
   display: flex;
@@ -369,7 +369,7 @@
 }
 .rl-clause-n {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--ink-faint);
 }
@@ -397,7 +397,7 @@
   border-radius: 999px;
   background: var(--paper);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.16em;
   color: var(--ink-soft);
@@ -449,7 +449,7 @@
   border: 0;
   background: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--ink-faint);
@@ -499,7 +499,7 @@
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   color: var(--rl-ink-chrome, var(--ink));
@@ -511,7 +511,7 @@
 }
 .rl-insp-del {
   flex: none;
-  font-size: 9.5px;
+  font-size: 11px;
   padding: 4px 8px;
 }
 .rl-insp-blurb {
@@ -584,7 +584,7 @@
 .rl-branch-n {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--ink-faint);
 }
@@ -616,7 +616,7 @@
 }
 .rl-valuerow-name {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--ink);
 }
@@ -725,7 +725,7 @@
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-align: center;
@@ -742,7 +742,7 @@
 }
 .rl-pcard-grip {
   flex: none;
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1;
   color: var(--ink-faint);
   opacity: 0;
@@ -808,7 +808,7 @@
   align-items: center;
   flex: none;
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -899,7 +899,7 @@
 
 .rl-chipbtn-tag {
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   line-height: 1.3;
@@ -913,7 +913,7 @@
   font-family: var(--font-ui);
   font-variation-settings: 'wdth' 112;
   font-weight: 620;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.25;
   letter-spacing: 0.02em;
   color: var(--ink);
@@ -1067,7 +1067,7 @@
   min-width: 16px;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   border: 0;
   border-radius: 999px;
@@ -1216,7 +1216,7 @@
 .rl-noteitem-tag {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1232,7 +1232,7 @@
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1253,7 +1253,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -1340,7 +1340,7 @@
   border-radius: var(--radius) var(--radius) 0 0;
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -1361,7 +1361,7 @@
   color: var(--ink);
 }
 .rl-tab-n {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 
@@ -1423,7 +1423,7 @@
 .rl-td--gutter {
   width: 28px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   color: var(--ink-faint);
   text-align: right;
 }
@@ -1468,7 +1468,7 @@
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -1479,7 +1479,7 @@
 .rl-effect-why {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--red);
@@ -1497,7 +1497,7 @@
 .rl-applied {
   padding: 0 var(--sp-3) var(--sp-3);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent-viridian);

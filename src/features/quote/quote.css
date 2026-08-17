@@ -99,7 +99,7 @@
   border: 0;
   background: none;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -252,7 +252,7 @@
   border: 0;
   background: none;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -314,7 +314,7 @@
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 9px;
+  font-size: 11px;
 }
 .qt-line-amount {
   text-align: right;
@@ -347,7 +347,7 @@
   border-radius: var(--radius-sm);
   background: none;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -401,7 +401,7 @@
 }
 .qt-pick-facts {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 .qt-pick .qt-num {
@@ -834,7 +834,9 @@
   /* hairlines survive a laser printer at half a point */
   .qt-doc *,
   .qt-doc {
-    border-color: rgba(18, 40, 63, 0.45) !important;
+    /* neutral ink, not the outgoing navy. Print has no theme, so
+       this stays a literal — it is the one place that is correct. */
+    border-color: rgba(14, 17, 22, 0.45) !important;
   }
   .qt-doc-head,
   .qt-doc-subject,
