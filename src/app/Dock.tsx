@@ -38,6 +38,7 @@ import {
   MagnifyingGlass,
   Plus,
   SquaresFour,
+  Stack,
   Table as TableIcon,
   TreeStructure,
 } from '@phosphor-icons/react'
@@ -249,7 +250,7 @@ export function Dock({
         {onBackToSheet ? (
           <DockItem
             icon={TreeStructure}
-            label="How it all connects"
+            label="Data model"
             active={current === null}
             onPress={() => {
               close()
@@ -275,8 +276,8 @@ export function Dock({
 
         {onOpenDashboard ? (
           <DockItem
-            icon={House}
-            label="Dashboard"
+            icon={Stack}
+            label="Modules"
             active={current === 'module'}
             onPress={() => {
               close()
@@ -287,7 +288,7 @@ export function Dock({
         {onOpenFlow ? (
           <DockItem
             icon={ArrowsLeftRight}
-            label="What fits what"
+            label="Fitment"
             active={current === 'flow'}
             onPress={() => {
               close()
