@@ -3611,9 +3611,22 @@
   height: 100vh;
   min-width: 0;
 }
+/* THE BAR OWNS THE BOTTOM STRIP, GLOBALLY.
+
+   Padding each surface could not fix this: several stages carry
+   their own sticky footers - the quote total, the flow rail - and
+   a sticky element resolves against its SCROLL CONTAINER, not
+   against a padded ancestor. So they kept landing under the bar,
+   and the quote total ended up floating across the middle of its
+   own page.
+
+   Reserving the strip here, once, is the only place that fixes
+   every stage at the same time: nothing inside the app can reach
+   into the bottom 78px, so a sticky footer sticks to the bottom
+   of the PAGE and the page stops above the bar. */
 .shell-stage {
   position: absolute;
-  inset: 0;
+  inset: 0 0 78px 0;
 }
 
 /* the surface takes everything, and stops 78px short of the
@@ -3667,9 +3680,7 @@
 /* THE BAR FLOATS OVER THE PAGE, so the page must end above it —
    otherwise the last rows of a register sit under the controls
    and cannot be read or clicked. */
-.surface > .shell-viewstage {
-  padding-bottom: 76px;
-}
+
 
 /* THE STAGE'S OWN BAR IS THE ONLY HEADER NOW, so it gets its
    title back — there is no window titlebar above it any more. */
@@ -3788,12 +3799,28 @@
 }
 
 
-/* THE PAGE ENDS ABOVE THE BAR. The bar floats, so without this the
-   last rows of a register sit underneath it - readable only by
-   scrolling past the end, and un-clickable where they overlap. */
+/* the strip is reserved on .shell-stage above, so a surface simply
+   fills what is left */
 .surface {
-  padding-bottom: 78px;
-}
-.surface > .shell-viewstage {
   padding-bottom: 0;
+}
+
+
+/* ---------- the submenu does not move its parent ------------- */
+
+/* THE FIRST PANEL MUST NOT MOVE.  was a flex row inside
+   a centred wrapper, so the moment the second panel appeared the
+   pair re-centred and the list you were pointing at slid left out
+   from under the pointer. The first panel is the only thing in
+   flow now; the second is positioned beside it and takes no part
+   in the centring. */
+.dk-menus {
+  position: relative;
+  display: block;
+}
+.dk-panel--l2 {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 0;
+  margin: 0;
 }

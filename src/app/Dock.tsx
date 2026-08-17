@@ -192,9 +192,10 @@ export function Dock({
                   aria-haspopup="menu"
                   aria-expanded={branch === g.key}
                   className={`dk-row dk-row--branch${branch === g.key ? ' is-on' : ''}`}
-                  onPointerEnter={() => setBranch(g.key)}
-                  onFocus={() => setBranch(g.key)}
-                  onClick={() => setBranch(g.key)}
+                  /* CLICK, NOT HOVER. A menu that opens by being
+                     passed over opens on the way to somewhere else,
+                     and on a 7-row list that is most of the time. */
+                  onClick={() => setBranch(branch === g.key ? null : g.key)}
                 >
                   <span className="dk-row-name">{g.label}</span>
                   <span className="dk-row-count">{pad2(g.items.length)}</span>

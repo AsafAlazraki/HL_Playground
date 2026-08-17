@@ -3025,3 +3025,79 @@ body.tb-resizing {
   font-size: 12px;
   font-weight: 500;
 }
+
+
+/* ============================================================
+   A COLUMN HAS A FLOOR.
+
+   Twenty-four columns crushed into one screen gives about 50px
+   each, and at 50px every value in this app renders as "F...",
+   "S...", "2...". The audit already recorded this once - thirty
+   columns into 1,016px, a 3px value box, every header cut to one
+   letter - and called it unreadable, which it is.
+
+   A register is allowed to be wider than the window. That is what
+   horizontal scrolling is for, and a spreadsheet user has scrolled
+   one sideways every day of their working life. What they have
+   never done is read a column 50px wide.
+   ============================================================ */
+
+.tb-cell,
+.tb-th {
+  min-width: 116px;
+}
+/* the row-number gutter and the system column are the exceptions:
+   they hold short, fixed-shape values and stealing 116px for them
+   costs a real column its room */
+.tb-cell.tb-cell-lead,
+.tb-th.tb-th-lead,
+.tb-gutter,
+.tb-cell-sys,
+.tb-th-sys {
+  min-width: 0;
+}
+
+/* THE TITLE GETS ITS ROOM BACK. It was capped at 46% of a
+   three-track toolbar and rendered as "F.. - 2..." - a name
+   truncated to one letter tells you nothing at all. */
+.shell-view-what {
+  max-width: none;
+  min-width: 0;
+}
+.shell-view-what-name {
+  max-width: 42vw;
+}
+
+
+/* ============================================================
+   A HEADER SAYS ITS WHOLE NAME.
+
+   Every header was overflowing its cell and being clipped, so a
+   column called "Hull Only Pricing" read as "Hull..." - and a
+   column you cannot name is a column you cannot use. The header
+   row is the one place in a register where truncation costs the
+   most, because it is the only thing telling you what the
+   thousand values underneath it MEAN.
+
+   So the label wraps to two lines instead of being cut. The row
+   gets taller once, at the top, and every value below it stays
+   readable - which is the right trade in a table that already
+   scrolls sideways.
+   ============================================================ */
+
+.tb-th {
+  height: auto;
+  min-height: 46px;
+  align-items: flex-start;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  white-space: normal;
+}
+.tb-th-name {
+  display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+  max-height: 2.5em;
+  overflow: hidden;
+}
