@@ -22,6 +22,7 @@ import {
   type RuleNodeConfigMap,
   type RuleNodeKind,
   type ViewDef,
+  type ViewBlock,
   type ModuleDef,
   canBeModuleMaster,
   DEFAULT_CAPABILITIES,
@@ -781,6 +782,49 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
          createView is idempotent by contract — a table that already has
          a view keeps it rather than gaining a second. */
       const view = get().createView(clean[0])
+
+      /* AND IT ARRIVES KNOWING WHAT GOES WITH THE THING. A module made
+         over a boat used to open onto the boat alone — no motors, no
+         trailer — because a fresh view has no blocks and somebody has
+         to drag tables onto it first. That is the whole point of the
+         product missing from its own front page.
+
+         The blocks are NOT guessed. A JOIN TABLE is explicit data: it
+         exists because someone said these two tables relate, and it
+         carries the curated pairs. So every table joined to the master
+         by an existing join becomes a block, and a table with no join
+         to it becomes nothing. `suggest.ts` deliberately only OFFERS a
+         rule and never applies one, which is right for a guess from
+         column shapes — this is not a guess, it is a relationship
+         already written down.
+
+         Only when the view is empty: a view somebody has already
+         curated is theirs, and a module opening over it must not
+         rearrange their page. */
+      if (view.blocks.length === 0) {
+        const master = new Set(clean)
+        const joins = Object.values(get().entities).filter((e) => e.role === 'join')
+        const blocks: ViewBlock[] = []
+        const seen = new Set<string>()
+
+        for (const join of joins) {
+          /* which two tables does this join point at? a reference column
+             names its target, so the join's own columns are the answer */
+          const targets = join.fields
+            .filter((f) => f.type === 'reference' && f.refEntityId)
+            .map((f) => f.refEntityId as string)
+          if (!targets.some((t) => master.has(t))) continue
+          for (const other of targets) {
+            if (master.has(other) || seen.has(other)) continue
+            if (!get().entities[other]) continue
+            seen.add(other)
+            blocks.push({ id: newId(), tableId: other, joinTableId: join.id })
+          }
+        }
+        if (blocks.length > 0) {
+          get().updateView(view.id, { blocks })
+        }
+      }
 
       const order = Object.values(get().modules).length
       const mod: ModuleDef = {

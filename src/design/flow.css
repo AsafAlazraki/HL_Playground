@@ -1,0 +1,531 @@
+/* ============================================================
+   THE FLOW JOURNEY — "what fits what", said as a sentence.
+
+   WHY THIS EXISTS. The seeded data has two fitment flows. Both
+   come out of one factory (northside.ts:2349 `mkRule`) and both
+   are the same shape: start → match → output. Three nodes, two
+   edges, no branch, two comparison clauses each. Across the
+   whole real dataset there are ZERO condition, loop, filter,
+   find and action nodes.
+
+   The builder that authors them is 19 files and 5,236 lines of
+   node-graph canvas offering eight node kinds — and the audit
+   measured that at 1280 a TWO-plate rule does not fit on it
+   (canvas 524px, opening scale 0.68, plate type 5.4-7.1px, the
+   Output plate 123 of its 190px off-canvas).
+
+   A graph is the right tool for a thing that branches. Nothing
+   here branches. So the default path becomes the sentence, which
+   is what the rule already is when you read it aloud, and which
+   is also the surface the constraints module already uses — so
+   the two rule doors a centimetre apart collapse into one.
+   ============================================================ */
+
+/* ---------- one door, two things you can say ----------------- */
+
+.door {
+  display: grid;
+  gap: var(--s-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+}
+.dcard {
+  display: block;
+  padding: var(--s-4);
+  text-align: left;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
+}
+.dcard:hover {
+  border-color: var(--accent-line);
+}
+.dcard--on {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+.dcard-verb {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+}
+.dcard-verb svg {
+  color: var(--accent);
+}
+/* THE EXAMPLE IS THE EXPLANATION. The audit found people could
+   predict the right door only half the time, because both
+   subtitles were abstract. A real sentence from their own data
+   settles it without a paragraph. */
+.dcard-eg {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+  line-height: 1.55;
+}
+.dcard-eg b {
+  color: var(--fg);
+  font-weight: 550;
+}
+.dcard-makes {
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* ---------- the sentence ------------------------------------- */
+
+.flow {
+  display: grid;
+  gap: var(--s-5);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  .flow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.fsent {
+  padding: var(--s-5);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+}
+.fline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 2.1;
+  color: var(--fg-secondary);
+  letter-spacing: -0.004em;
+}
+.fline + .fline {
+  margin-top: 2px;
+}
+
+/* clause rows are indented and aligned as a COLUMN, because two
+   comparisons that do not line up read as two unrelated
+   sentences rather than a pair of limits on one thing */
+.fclauses {
+  margin: var(--s-3) 0 var(--s-3) var(--s-4);
+  padding-left: var(--s-4);
+  border-left: 2px solid var(--line);
+  display: grid;
+  gap: var(--s-2);
+}
+.fclause {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+.fclause-x {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--fg-quaternary);
+  cursor: pointer;
+}
+.fclause-x:hover {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+
+/* a token is a dropdown built from the admin's own columns —
+   never a hand-written list. That is the mistake that killed
+   HelmLogic's designer and the one we are best placed not to
+   repeat. */
+.ftok {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--d-fast) var(--ease), background var(--d-fast) var(--ease);
+}
+.ftok:hover {
+  border-color: var(--accent-line);
+  background: var(--surface-4);
+}
+.ftok span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ftok svg {
+  flex: none;
+  color: var(--fg-tertiary);
+}
+/* the two sides of a comparison are tinted by WHICH TABLE they
+   come from, so "HP Rating vs Min HP" cannot be misread as two
+   columns of the same table */
+.ftok--source {
+  border-color: color-mix(in srgb, var(--kind-boat) 40%, transparent);
+  background: color-mix(in srgb, var(--kind-boat) 10%, transparent);
+}
+.ftok--match {
+  border-color: color-mix(in srgb, var(--kind-motor) 40%, transparent);
+  background: color-mix(in srgb, var(--kind-motor) 10%, transparent);
+}
+.ftok--op {
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+}
+.fadd {
+  justify-self: start;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  cursor: pointer;
+}
+.fadd:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.fcols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: var(--s-2) 0 0 var(--s-4);
+}
+.fcol {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+}
+.fcol i {
+  font-style: normal;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--fcol-ink, var(--kind-slate));
+}
+.fsent-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* ---------- the live result ---------------------------------- */
+
+/* IT RUNS WHILE YOU BUILD. The audit's guided path produced 193
+   rows headed `Series` / `Series` — naming neither the boat nor
+   the motor — and the person only discovered it after pressing
+   RUN. A result that is already on screen turns that from a
+   wasted journey into a thing you fix mid-sentence. */
+.fres {
+  position: sticky;
+  top: 72px;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+}
+.fres-top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--surface-2);
+}
+.fres-count {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-lg-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.fres-of {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+.fres-live {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--t-caption-size);
+  color: var(--success);
+}
+.fres-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--success);
+  font-style: normal;
+}
+.fres-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--t-caption-size);
+}
+.fres-table th {
+  text-align: left;
+  padding: 8px var(--s-3);
+  background: var(--surface-2);
+  color: var(--fg-secondary);
+  font-weight: 560;
+  border-bottom: 1px solid var(--line-subtle);
+  white-space: nowrap;
+}
+.fres-table td {
+  padding: 7px var(--s-3);
+  border-bottom: 1px solid var(--line-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+.fres-table td.num {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+.fres-foot {
+  padding: var(--s-2) var(--s-3);
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+}
+
+/* THE APP NOTICES A USELESS ANSWER AND SAYS SO. A suggestion that
+   is confidently wrong is worse than no suggestion; a result that
+   names neither side is the same thing one step later. */
+.fwarn {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--warning-wash);
+  border-bottom: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+}
+.fwarn svg {
+  flex: none;
+  color: var(--warning);
+  margin-top: 2px;
+}
+.fwarn-text {
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+.fwarn-text b {
+  color: var(--fg);
+  font-weight: 560;
+}
+.fwarn-fix {
+  margin-top: 6px;
+}
+
+/* ---------- edited where its answer is shown ----------------- */
+
+.inctx {
+  max-width: 620px;
+  padding: var(--s-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+.inctx-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+}
+.inctx-title {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+}
+.inctx-n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-tertiary);
+}
+/* the rule in one line, where its result is — press it and the
+   sentence above opens on this rule. Design-time and run-time
+   are the same screen, which is the promise ViewPage already
+   makes and keeps. */
+.inctx-why {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  margin-bottom: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  text-align: left;
+  cursor: pointer;
+}
+.inctx-why:hover {
+  border-color: var(--accent-line);
+  color: var(--fg);
+}
+.inctx-why b {
+  color: var(--fg);
+  font-weight: 550;
+}
+.inctx-why svg {
+  flex: none;
+  margin-left: auto;
+  color: var(--fg-tertiary);
+}
+.inctx-rows {
+  display: grid;
+  gap: 1px;
+}
+.inctx-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 7px var(--s-2);
+  border-radius: var(--r-control);
+  font-size: var(--t-small-size);
+}
+.inctx-row:hover {
+  background: var(--surface-2);
+}
+.inctx-row .num {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+.star {
+  border: 0;
+  background: transparent;
+  color: var(--fg-quaternary);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--r-chip);
+}
+.star--on {
+  color: var(--warning);
+}
+.star:hover {
+  background: var(--surface-3);
+}
+
+/* ---------- the outgoing canvas, at true measured scale ------
+   Rebuilt from docs/audit/view-and-rules.md §3: canvas 524px,
+   opening scale 0.68, plate type 5.4-7.1px, the Output plate
+   123 of its 190px past the right edge. Not a caricature —
+   these are the numbers that were measured. */
+
+.oldflow {
+  padding: var(--s-4);
+  background: #123252;
+  border-radius: var(--r-card);
+}
+.oldflow-canvas {
+  position: relative;
+  width: 524px;
+  max-width: 100%;
+  height: 190px;
+  overflow: hidden;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 16px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+.oldplate {
+  position: absolute;
+  top: 46px;
+  width: 129px;
+  padding: 5px 6px;
+  background: #fff;
+  border: 1px solid rgba(18, 40, 63, 0.2);
+  border-radius: 2px;
+  color: #12283f;
+}
+.oldplate-tag {
+  font-family: var(--font-mono);
+  font-size: 5.8px;
+  letter-spacing: 0.18em;
+  color: #1d55c4;
+  margin-bottom: 2px;
+}
+.oldplate-body {
+  font-size: 7.1px;
+  line-height: 1.4;
+}
+.oldplate-clause {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid rgba(18, 40, 63, 0.16);
+  font-family: var(--font-mono);
+  font-size: 5.4px;
+  line-height: 1.5;
+  color: #5f6c7b;
+}
+.oldflow-clip {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  text-align: center;
+  background: linear-gradient(90deg, transparent, rgba(220, 60, 50, 0.35));
+  border-left: 1px dashed rgba(255, 120, 110, 0.8);
+  color: #ffd9d6;
+  font-family: var(--font-mono);
+  font-size: 6px;
+  line-height: 1.4;
+}

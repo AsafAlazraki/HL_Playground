@@ -50,6 +50,12 @@ import {
   ProposeModules,
   UndoToast,
 } from './UxSurfaces'
+import {
+  FlowSentence,
+  InContextFit,
+  OldFlowCanvas,
+  OneDoor,
+} from './FlowSurfaces'
 
 /* ---------- shared bits ------------------------------------- */
 
@@ -783,6 +789,7 @@ const TOC = [
   ['undo', 'Undo'],
   ['import', 'Import'],
   ['propose', 'First run'],
+  ['flow', 'What fits what'],
   ['nav', 'Navigation'],
   ['caps', 'Capabilities'],
   ['card', 'Cards'],
@@ -1016,6 +1023,92 @@ export function DesignPreview() {
             click away, so nothing is taken from the person who wants to choose. This is the
             difference between an empty app that asks you to understand a new concept and
             one that shows you it already understands your business.
+          </div>
+        </Section>
+
+        {/* ---------------- the flow journey ---------------- */}
+        <Section
+          id="flow"
+          title="“What fits what” — a sentence, not a graph"
+          blurb="The most complex journey in the app, and the numbers say it does not need to be. The seeded data has two fitment flows; both come out of one factory and both are the same shape — start → match → output, three nodes, two edges, two comparisons, no branch. Across the whole real dataset there are zero condition, loop, filter, find and action nodes. The builder that authors them is 19 files and 5,236 lines offering eight node kinds."
+        >
+          <div className="pv-ab">
+            <div className="pv-ab-cell">
+              <div className="pv-ab-head">
+                <span className="pv-tag pv-tag--old">Now, at 1280</span>
+                <span className="pv-ab-note">measured, not caricatured</span>
+              </div>
+              <OldFlowCanvas />
+              <div className="pv-note" style={{ marginTop: 'var(--s-3)' }}>
+                Canvas <strong>524px</strong>, opening scale <strong>0.68</strong>, plate type{' '}
+                <strong>5.4–7.1px</strong>, the Output plate <strong>123 of its 190px</strong>{' '}
+                off-canvas. A <em>two</em>-plate rule does not fit. Fine at 1920 — this is a
+                1280 problem, on the machine the brief names.
+              </div>
+            </div>
+            <div className="pv-ab-cell">
+              <div className="pv-ab-head">
+                <span className="pv-tag pv-tag--new">Redesign</span>
+                <span className="pv-ab-note">the same rule, read aloud</span>
+              </div>
+              <div className="pv-stage" style={{ marginTop: 0 }}>
+                <OneDoor />
+              </div>
+              <div className="pv-note" style={{ marginTop: 'var(--s-3)' }}>
+                <strong>Two rule doors a centimetre apart become one.</strong> The audit found
+                people could predict the right door only half the time — “motors must never
+                exceed max HP” reads as a <em>limit</em>, so it sends you to Business rules,
+                where it cannot be written and nothing says why. Here the verb is the choice,
+                and each verb is explained by a real sentence from their own data.
+              </div>
+            </div>
+          </div>
+
+          <div className="pv-caption" style={{ marginTop: 'var(--s-8)' }}>
+            The rule itself — Motor fitment, Highfield
+          </div>
+          <div className="pv-stage">
+            <FlowSentence />
+          </div>
+          <div className="pv-note">
+            <strong>It runs while you build.</strong> Every token is a dropdown built from the
+            admin's own columns, and the two sides of a comparison are tinted by which table
+            they came from, so “HP Rating vs Min HP” cannot be misread as two columns of one
+            table. The answer is on screen the whole time rather than behind a RUN button.
+          </div>
+
+          <div className="pv-caption" style={{ marginTop: 'var(--s-8)' }}>
+            And when the answer is useless, the app says so
+          </div>
+          <div className="pv-stage">
+            <FlowSentence broken />
+          </div>
+          <div className="pv-note">
+            <strong>This is the audit's finding 18, caught at the moment it happens.</strong>{' '}
+            Building the rule the way a first-timer would — using only the app's own
+            suggestions — produced <strong>193 rows with two columns both headed{' '}
+            <code className="ds-mono-sm">Series</code></strong>, naming neither the boat nor
+            the motor. Every click was a control the app put in front of them. A suggestion
+            that is confidently wrong is worse than no suggestion, so the fix is two-part:
+            prefer the display column instead of the first column, and notice the useless
+            result and offer the repair.
+          </div>
+
+          <div className="pv-caption" style={{ marginTop: 'var(--s-8)' }}>
+            Where it is actually edited
+          </div>
+          <div className="pv-stage" style={{ display: 'grid', placeItems: 'start' }}>
+            <InContextFit />
+          </div>
+          <div className="pv-note">
+            <strong>The rule is edited where its answer is shown.</strong> Under modules a
+            fitment flow is not a place you visit — it is the Related block on a boat's detail
+            surface. So the sentence opens from the one line that explains the list, and
+            design-time and run-time stay the same screen, which is the promise{' '}
+            <code className="ds-mono-sm">ViewPage</code> already makes and keeps. Most people
+            never open the rules list at all. The star is also given a tooltip, because the
+            audit found PICKED and STARRED are never stated and the star silently decides what
+            goes on the quote.
           </div>
         </Section>
 
