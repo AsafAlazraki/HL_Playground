@@ -788,6 +788,36 @@
   background: var(--blue-wash-strong);
 }
 
+/* THE HEADING FREEZES WITH ITS COLUMN. Same sticky offset, same
+   scroller — so a name and the column it names cannot drift apart.
+   z 5 puts it over the other headings and under the corner (7), which
+   is the one thing that must always win on the left edge.
+   Declared last of the `.tb-th` backgrounds so the opaque paint holds
+   whatever else the column is: an opaque pin is the whole point. */
+.tb-th-pin {
+  position: sticky;
+  /* `left` is set inline, from the same GUTTER_W the corner is drawn
+     with */
+  z-index: 5;
+  background: var(--paper-sunken);
+  border-right: 1px solid var(--hairline-strong);
+}
+.tb-th-pin.tb-th-sorted {
+  background: var(--blue-wash);
+}
+.tb-th-pin.tb-th-selected {
+  background: var(--blue-wash-strong);
+}
+
+/* and so does the section band above it, or the frozen column would
+   sit under the name of whatever band happened to scroll under it */
+.tb-band-pin {
+  position: sticky;
+  z-index: 5;
+  background: var(--paper-sunken);
+  border-right: 1px solid var(--hairline-strong);
+}
+
 /* the heading above a folded band: no name (the chip above it has the
    name), just the drafting mark for "columns live here, folded" */
 .tb-th-fold {
@@ -1422,6 +1452,61 @@
    a strip can run edge to edge without the text inset */
 .tb-cell-img {
   padding: 0;
+}
+
+/* ============================================================
+   THE FROZEN NAME COLUMN
+
+   A price register is 4,248px of sheet in a 508px card. Scrolled to
+   the price band, fifteen variants of one model read as six identical
+   rows of numbers and NOTHING on screen said which boat was being
+   priced — the row ordinal was the only frozen thing on the sheet.
+
+   The display column now freezes beside it. Not a copy of the cell:
+   the SAME cell, offset in place, so it is still selected, edited,
+   filled and copied exactly as it was. Three consequences follow, and
+   all three are why these rules exist.
+
+   1. IT MUST BE OPAQUE. Forty columns of figures pass underneath it.
+      A transparent pin is a smear.
+   2. IT PAINTS ITS OWN SELECTION. The range boxes and the active ring
+      are drawn at the column's SCROLLED position, which slides out
+      from under the pin the moment it freezes.
+   3. THE CHROME STILL WINS. z 4 in the body and z 5 in the header
+      puts it over the data, the range boxes AND the active ring —
+      which, being drawn at the scrolled position, would otherwise
+      leave a stray rule across the frozen cell — while the row-number
+      gutter, the heading corner and the + COLUMN plate stay above it.
+   ============================================================ */
+
+.tb-cell-pin {
+  position: sticky;
+  /* `left` is set inline, from the same GUTTER_W the gutter is drawn
+     with — one number, so the pin can never sit a pixel off it */
+  z-index: 4;
+  background: var(--paper-high);
+  border-right: 1px solid var(--hairline-strong);
+}
+/* the row's own paint, carried onto the pin: an opaque column that
+   ignored the stripe and the hover band would read as a different row
+   from the one it belongs to */
+.tb-row-alt .tb-cell-pin {
+  background: color-mix(in srgb, var(--ink) 1.6%, var(--paper-high));
+}
+.tb-row:hover .tb-cell-pin {
+  background: color-mix(in srgb, var(--blue) 5%, var(--paper-high));
+}
+/* consequence 2: the selection wash and the active ring, drawn on the
+   cell itself in the same ink the overlays use */
+.tb-cell-pin[aria-selected='true'] {
+  background: color-mix(in srgb, var(--blue-wash) 88%, var(--paper-high));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blue) 45%, transparent);
+}
+/* the doubled class is deliberate: the active ring has to beat the
+   `[aria-selected]` wash above it, and the active cell is always
+   inside the selection */
+.tb-cell-pin.tb-cell-pin-on {
+  box-shadow: inset 0 0 0 2px var(--blue);
 }
 
 /* required + empty: a red-pencil tick against the left rule */

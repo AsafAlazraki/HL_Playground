@@ -473,6 +473,10 @@ export interface EntityDef {
   /** base (default) | join | view — see TableRole. A base table stays pure:
    *  it never grows a column belonging to another subject. */
   role?: TableRole
+  /** history rather than stock. The table and its rows survive so an
+   *  old quote still resolves; nothing customer-facing offers it.
+   *  See DISCONTINUED_FIELD above for the row-level equivalent. */
+  retired?: boolean
   /** ordered field ids forming the grouping levels; empty/absent = flat.
    *  Rows stay flat; this is a view transform only.
    *  Level COUNT and level NAME are per-table — there is no universal
@@ -1016,7 +1020,22 @@ export interface ProjectMeta {
 }
 
 export const EXPORT_KIND = 'helmlogic-dynamic-config' as const
-export const EXPORT_VERSION = 1 as const
+/* VERSION 2 CARRIES THE DESIGN WORK, and that is the whole reason it
+   moved. Version 1 held tables, zones, rules and rows — everything the
+   SEED produces and nothing a PERSON makes. So the file the export card
+   calls "Everything" carried none of the modules an admin built, none of
+   the view pages they curated, none of their quotes and none of their
+   business rules, and a round trip silently dropped all four.
+
+   Nothing anybody designs could leave the browser it was made in. That
+   is a strange thing to be true of a configurator whose entire purpose
+   is letting a dealer design their own system.
+
+   A v1 file still imports: every added key is optional and an older
+   file simply arrives with none of them. A v2 file opened by an older
+   build is refused by the version check rather than silently losing
+   half of itself, which is the correct failure. */
+export const EXPORT_VERSION = 2 as const
 
 export interface ProjectExport {
   kind: typeof EXPORT_KIND
@@ -1028,6 +1047,19 @@ export interface ProjectExport {
   rules: RuleDef[]
   /** present when "include data" was chosen; keyed by entityId */
   rows?: Record<string, RowData[]>
+
+  /* -- v2: the things a person makes, rather than the seed ---- */
+
+  /** the organisation, so an imported set knows whose it is rather than
+   *  arriving unnamed and sending the shell back to onboarding */
+  org?: OrgProfile
+  /** the pages that say what goes with what */
+  views?: ViewDef[]
+  /** the places in the business, in dashboard order */
+  modules?: ModuleDef[]
+  /** limits every row must keep, including the workbook-derived ones a
+   *  person has since edited or switched off */
+  constraints?: ConstraintDef[]
 }
 
 /* ---------------------------------------------------------- */
@@ -1053,6 +1085,54 @@ export const UID_FIELD: Readonly<FieldDef> = Object.freeze({
   required: true,
   description: 'System identifier — unique per row, assigned when the row is created.',
 })
+
+/* ============================================================
+   DISCONTINUED NEVER REACHES A SALESPERSON.
+
+   The workbook records what a dealer USED to sell as well as what
+   they sell now — the Boat Module keeps everything below its own
+   `OBSOLETE MODELS` divider at row 1005, and the Trailer Module
+   still carries stock that is no longer available. That history is
+   worth keeping: it is what an old quote was written against, and
+   deleting it would make yesterday's documents unreadable.
+
+   But 30 live pairings offer a discontinued trailer and EIGHT of
+   them offer it as the boat's STANDARD fit. Somebody would have
+   quoted it.
+
+   So the rule is: the data stays, and no surface a customer can see
+   ever offers it. One boolean, on the row, because a product is
+   discontinued individually — and one on the table, because
+   sometimes an entire relationship is (Surtees x OBSOLETE
+   Trailers is a whole join of nothing but retired stock).
+
+   It is a NORMAL BOOLEAN COLUMN, not a hidden flag: a person can
+   see it in the grid, sort by it, and change it. A dealer who
+   brings a model back does so by typing in a cell, not by asking
+   for a developer.
+   ============================================================ */
+export const DISCONTINUED_FIELD_ID = '__discontinued'
+
+export const DISCONTINUED_FIELD: Readonly<FieldDef> = Object.freeze({
+  id: DISCONTINUED_FIELD_ID,
+  name: 'Discontinued',
+  type: 'boolean' as FieldType,
+  description:
+    'No longer sold. The row is kept — old quotes were written against it — but it is never offered on a page a customer sees.',
+})
+
+/** Is this row still sellable? Everything customer-facing asks this:
+ *  the module index, a view page's blocks, the pickers a quote adds
+ *  from. The sheet itself does NOT ask — the sheet is where a person
+ *  maintains their data, and hiding rows from the person who has to
+ *  fix them is how data rots unseen. */
+export const isDiscontinued = (row: RowData): boolean =>
+  row.values[DISCONTINUED_FIELD_ID] === true
+
+/** A whole table that is history rather than stock. Same reasoning as
+ *  the row flag, one level up: the join survives so an old document
+ *  still resolves, and nothing offers it. */
+export const isRetired = (entity: EntityDef): boolean => entity.retired === true
 
 export const isSystemFieldId = (fieldId: string): boolean => fieldId === UID_FIELD_ID
 

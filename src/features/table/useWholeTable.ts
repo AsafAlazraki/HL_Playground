@@ -47,6 +47,7 @@ import {
   fitColumnWidths,
   foldWidthFor,
   layoutColumns,
+  pinWidthOf,
   type ColumnLayout,
   type ColumnSlot,
 } from './sections'
@@ -103,6 +104,7 @@ export function useWholeTable({
   slots,
   widths,
   viewportRef,
+  pinFieldId,
 }: {
   entityId: string
   sections: readonly ColumnSection[] | undefined
@@ -115,6 +117,11 @@ export function useWholeTable({
   /** the grid's own scroller, so the window can be measured and a band
    *  can be scrolled to */
   viewportRef: RefObject<HTMLDivElement | null>
+  /** the display column the grid freezes at the left edge, when there
+   *  is one. REACH ONE BAND has to scroll a band clear of it, or the
+   *  control that exists to bring a band into view parks it under the
+   *  pin instead. */
+  pinFieldId?: string
 }): WholeTable {
   const collapsed = useCollapsedSections(entityId)
   const fit = useFitWidths(entityId)
@@ -217,20 +224,23 @@ export function useWholeTable({
       /* the same fold width the grid will draw with, or the scroll
          target lands on a column that is not where we think it is */
       const foldW = foldWidthFor(model.slots, inForce, el.clientWidth)
-      const x = bandLeftOf(layoutColumns(model.slots, inForce, foldW), sectionId)
+      const layout = layoutColumns(model.slots, inForce, foldW)
+      const x = bandLeftOf(layout, sectionId)
       if (x === undefined) return
+      /* land the band BESIDE the frozen name column, never under it */
+      const target = Math.max(0, x - pinWidthOf(layout, pinFieldId))
       /* Now, and again once the fold has been committed. Both are
          needed: while the band is still folded the sheet is narrower
          than it is about to be, and the browser clamps a scrollLeft
          past the current content — so the first set lands short and
          the second one lands. A timeout rather than an animation frame
          deliberately: it runs whether or not the window is painting. */
-      el.scrollLeft = x
+      el.scrollLeft = target
       window.setTimeout(() => {
-        el.scrollLeft = x
+        el.scrollLeft = target
       }, 0)
     },
-    [collapsed, entityId, modelFor, refit, widths, viewportRef],
+    [collapsed, entityId, modelFor, refit, widths, viewportRef, pinFieldId],
   )
 
   const toggleFit = useCallback(() => {

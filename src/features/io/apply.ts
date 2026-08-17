@@ -17,6 +17,17 @@
    sentinel ('' for an id, `{fieldId:''}` for a path) so `validateRule`
    reports a designed blocker. Nothing is ever left dangling, and no
    rule is silently loosened into matching more rows than it did.
+
+   THE DESIGN LAYER LANDS THROUGH THE STORE'S OWN DOORS. `replaceProject`
+   takes tables, zones, rules and rows and deliberately CLEARS views and
+   modules — "a module surviving a swap is worse than a view surviving
+   one, because a module is the thing a person navigates by". So the
+   pages and the modules a file carries are put back AFTERWARDS, through
+   `createView` / `updateView` / `createModule` / `updateModule`, which
+   is also what keeps every derived thing (a module's detail surface, a
+   view's idempotency by root table) consistent instead of hand-built.
+   Constraints go home through `registerConstraints`, the seam their own
+   registry exports for exactly this.
    ============================================================ */
 
 import { OUT_HANDLE } from '@/types/model'
@@ -25,19 +36,25 @@ import type {
   CellValue,
   Clause,
   ClauseGroup,
+  ConstraintDef,
   EntityDef,
   FieldPath,
   GroupDef,
+  OrgProfile,
   ProjectExport,
   RowData,
   RuleDef,
   RuleEdge,
   RuleNode,
   ValueExpr,
+  ViewBlock,
+  ViewDef,
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
+import { registerViewDef } from '@/features/views'
+import { registerConstraints } from '@/features/constraints'
 import { newId, nowIso } from '@/lib/id'
-import { branchKey } from './envelope'
+import { branchKey, isWellKnownFieldId } from './envelope'
 
 /* ------------------------------------------------------------ */
 /* organisation guard                                            */
@@ -50,12 +67,21 @@ import { branchKey } from './envelope'
  *  organisation first, put it straight back after, and the swap is
  *  invisible: same business, same industry, new contents.
  *
+ *  `incoming` is the organisation the FILE carries, and it is only ever
+ *  a fallback: the business already on this machine wins, because a set
+ *  sent over by a colleague must not rename the person opening it.
+ *  It matters when there is none — an import into a shell that has not
+ *  been through onboarding would otherwise land and immediately bounce
+ *  the user back to "what's the name of your business?" while holding a
+ *  file that already answers it.
+ *
  *  Exported so any other loader that calls `replaceProject` can wrap
  *  itself the same way. */
-export function keepingOrganisation(swap: () => void): void {
+export function keepingOrganisation(swap: () => void, incoming?: OrgProfile): void {
   const org = useProjectStore.getState().meta.org
   swap()
-  if (org) useProjectStore.getState().setOrganisation(org.name, org.industry)
+  const keep = org ?? incoming
+  if (keep) useProjectStore.getState().setOrganisation(keep.name, keep.industry)
 }
 
 /* ------------------------------------------------------------ */
@@ -72,6 +98,19 @@ export function applyReplace(data: ProjectExport): void {
       rules: data.rules,
       rowsByEntity: data.rows ?? {},
     })
+  }, data.org)
+
+  /* ids arrive unchanged on a replace, so a pointer is kept exactly
+     when the thing it names actually came in the file. The envelope
+     has already resolved these once; doing it again here costs
+     nothing and means `applyReplace` cannot be broken by a caller
+     handing it something the validator never saw. */
+  const tables = new Set(data.entities.map((e) => e.id))
+  const fields = new Set<string>()
+  for (const e of data.entities) for (const f of e.fields) fields.add(f.id)
+  restoreDesign(data, {
+    entity: (old) => (old && tables.has(old) ? old : undefined),
+    field: (old) => (old && fields.has(old) ? old : undefined),
   })
 }
 
@@ -79,18 +118,25 @@ export function applyReplace(data: ProjectExport): void {
 /* merge — reference resolution                                  */
 /* ------------------------------------------------------------ */
 
-/** Every way an imported id can be looked up. Each returns `undefined`
- *  when the id belongs to nothing that exists after the merge. */
-interface RefMaps {
+/** The two lookups everything that names a table or a column needs.
+ *  On a REPLACE they are identity-on-presence; on a MERGE they follow
+ *  the reissued ids. Either way `undefined` means "this points at
+ *  nothing that exists after the apply". */
+interface DesignRefs {
   entity: (old: string | undefined) => string | undefined
   field: (old: string | undefined) => string | undefined
+}
+
+/** Every way an imported id can be looked up. Each returns `undefined`
+ *  when the id belongs to nothing that exists after the merge. */
+interface RefMaps extends DesignRefs {
   group: (old: string | undefined) => string | undefined
   row: (old: CellValue) => CellValue
 }
 
 const BLANK_PATH: FieldPath = { fieldId: '' }
 
-function remapPath(path: FieldPath | undefined, m: RefMaps): FieldPath {
+function remapPath(path: FieldPath | undefined, m: DesignRefs): FieldPath {
   const fieldId = m.field(path?.fieldId)
   if (!fieldId) return { ...BLANK_PATH }
   if (path?.viaFieldId === undefined) return { fieldId }
@@ -103,13 +149,13 @@ function remapPath(path: FieldPath | undefined, m: RefMaps): FieldPath {
 
 /** literal + formula carry no ids: a literal is a plain cell value, and
  *  formula source names fields by NAME, which the merge does not change. */
-function remapValue(expr: ValueExpr | undefined, m: RefMaps): ValueExpr | undefined {
+function remapValue(expr: ValueExpr | undefined, m: DesignRefs): ValueExpr | undefined {
   if (!expr) return undefined
   if (expr.kind === 'field') return { kind: 'field', path: remapPath(expr.path, m) }
   return expr
 }
 
-function remapGroup(group: ClauseGroup | undefined, m: RefMaps): ClauseGroup {
+function remapGroup(group: ClauseGroup | undefined, m: DesignRefs): ClauseGroup {
   const clauses: Clause[] = (group?.clauses ?? []).map((c) => {
     const right = remapValue(c?.right, m)
     return {
@@ -127,7 +173,7 @@ function remapGroup(group: ClauseGroup | undefined, m: RefMaps): ClauseGroup {
  *  nulling them would silently collapse two columns into one. */
 function remapValuesMap(
   values: Record<string, ValueExpr> | undefined,
-  m: RefMaps,
+  m: DesignRefs,
 ): Record<string, ValueExpr> {
   const out: Record<string, ValueExpr> = {}
   for (const [fieldId, expr] of Object.entries(values ?? {})) {
@@ -306,14 +352,226 @@ function remapRule(rule: RuleDef, m: RefMaps, stamp: string): RuleDef {
 }
 
 /* ------------------------------------------------------------ */
+/* the design layer — pages, modules, constraints                */
+/* ------------------------------------------------------------ */
+
+/** One related table on a page. A block whose table is gone is dropped
+ *  — the block IS the table, and a heading over nothing reads as a bug
+ *  rather than as an absence. A block whose JOIN is gone keeps the
+ *  block and loses the curation: it then shows everything in that
+ *  table, which is visibly wider rather than silently empty. */
+function remapBlocks(blocks: ViewBlock[] | undefined, m: DesignRefs, fresh: boolean): ViewBlock[] {
+  const out: ViewBlock[] = []
+  for (const b of blocks ?? []) {
+    const tableId = m.entity(b.tableId)
+    if (!tableId) continue
+    const joinTableId = b.joinTableId ? m.entity(b.joinTableId) : undefined
+    const filters = b.filters
+      ?.map((f) => {
+        const fieldId = m.field(f.fieldId)
+        return fieldId ? { ...f, fieldId } : undefined
+      })
+      .filter((f): f is NonNullable<typeof f> => f !== undefined)
+    const columns = b.columns
+      ?.map((c) => m.field(c))
+      .filter((c): c is string => c !== undefined)
+    const children = remapBlocks(b.children, m, fresh)
+    out.push({
+      id: fresh ? newId() : b.id,
+      tableId,
+      ...(joinTableId ? { joinTableId } : {}),
+      ...(b.rule ? { rule: remapGroup(b.rule, m) } : {}),
+      ...(filters ? { filters } : {}),
+      ...(columns ? { columns } : {}),
+      ...(children.length ? { children } : {}),
+    })
+  }
+  return out
+}
+
+/** A constraint's clauses name columns, so a merge has to move them
+ *  with everything else. A path that resolves nowhere is BLANKED, not
+ *  guessed — `evaluateConstraint` then reports the rule as unscoped,
+ *  which is the visible outcome, instead of a rule quietly asserting
+ *  something about a different column. */
+function remapConstraint(c: ConstraintDef, m: DesignRefs, stamp: string): ConstraintDef {
+  const combinations = c.combinations?.map((combo) => {
+    const out: Record<string, CellValue> = {}
+    for (const [fieldId, v] of Object.entries(combo)) {
+      const mapped = m.field(fieldId)
+      if (mapped) out[mapped] = v
+    }
+    return out
+  })
+  return {
+    ...c,
+    id: newId(),
+    if: remapGroup(c.if, m),
+    ...(c.then ? { then: remapGroup(c.then, m) } : {}),
+    ...(combinations ? { combinations } : {}),
+    updatedAt: stamp,
+  }
+}
+
+/**
+ * Put the pages, the modules and the business rules a file carries
+ * back into the app, after the tables they point at are in place.
+ *
+ * ORDER IS LOAD-BEARING, three times over.
+ *
+ *   PAGES FIRST, because `createModule` mints a detail surface for its
+ *   primary table and `createView` is idempotent by root table — so a
+ *   module made after its page finds that page instead of a second one.
+ *
+ *   MODULES SECOND, and then the pages are re-asserted, because
+ *   `createModule` also fills an EMPTY page with one block per join.
+ *   That is right for a module somebody is making now (the joins are
+ *   written-down relationships, not a guess) and wrong for one arriving
+ *   from a file: a page a person deliberately emptied has to come back
+ *   empty.
+ *
+ *   CONSTRAINTS LAST, because the registry keys them by the CURRENT
+ *   organisation and `keepingOrganisation` has only just decided what
+ *   that is.
+ *
+ * Existing constraints are NOT cleared. They are scoped to the
+ * organisation rather than to the sheet, the organisation survives a
+ * replace by design, and a rule whose columns are not on the new sheet
+ * reports itself unscoped rather than firing — so keeping them costs a
+ * grey card, while clearing them would silently destroy authored rules
+ * every time somebody opened an older file that carries none.
+ */
+function restoreDesign(
+  design: Pick<ProjectExport, 'views' | 'modules' | 'constraints'>,
+  m: DesignRefs,
+  fresh = false,
+): void {
+  const store = () => useProjectStore.getState()
+  const stamp = nowIso()
+
+  /* -- pages ------------------------------------------------- */
+  /** imported view id → the id the store actually gave it */
+  const viewIdMap = new Map<string, string>()
+  const restored: Array<{ id: string; name: string; blocks: ViewBlock[]; from: ViewDef }> = []
+
+  for (const v of design.views ?? []) {
+    const rootTableId = m.entity(v.rootTableId)
+    /* a page is "for" one table's rows; with that table gone there is
+       no row to open it on and nothing for its blocks to hang off */
+    if (!rootTableId) continue
+    const blocks = remapBlocks(v.blocks, m, fresh)
+    const record = store().createView(rootTableId, v.name)
+    store().updateView(record.id, { name: v.name, blocks })
+    viewIdMap.set(v.id, record.id)
+    restored.push({ id: record.id, name: v.name, blocks, from: v })
+  }
+
+  /* -- modules ----------------------------------------------- */
+  for (const mod of design.modules ?? []) {
+    const tableIds = mod.tableIds
+      .map((id) => m.entity(id))
+      .filter((id): id is string => id !== undefined)
+    /* every pointer dead means there is no list to draw, no primary to
+       take a name from and nowhere for the card to lead — the module
+       is not imported at all rather than imported broken */
+    if (tableIds.length === 0) continue
+    const made = store().createModule(tableIds, mod.name, mod.description)
+    /* the store refuses a master that cannot be one (a join records
+       pairs and is not a place to stand) — its rule, kept, not copied */
+    if (!made) continue
+    /* the page it named, on whatever id the store gave that page. With
+       no page of its own it keeps the one `createModule` just minted —
+       the store's own contract that a module can be opened, not a
+       pointer invented here */
+    const viewId = mod.viewId ? viewIdMap.get(mod.viewId) : undefined
+    store().updateModule(made.id, {
+      description: mod.description,
+      capabilities: mod.capabilities,
+      index: mod.index,
+      accent: mod.accent,
+      order: mod.order,
+      ...(viewId ? { viewId } : {}),
+    })
+  }
+
+  /* -- pages, re-asserted, and told to the page feature ------- */
+  for (const r of restored) {
+    store().updateView(r.id, { name: r.name, blocks: r.blocks })
+    /* THE PAGE FEATURE KEEPS ITS OWN REGISTRY and the shell mirrors it
+       into the store (`app/viewPersistence.ts`), hydrating ONCE at
+       mount. A page that arrives long after that has to be handed to
+       both, or the store holds a layout the stage never draws. It is
+       registered under the STORE's id so the two agree on one. */
+    registerViewDef({
+      ...r.from,
+      id: r.id,
+      name: r.name,
+      rootTableId: store().views[r.id]?.rootTableId ?? r.from.rootTableId,
+      blocks: r.blocks,
+      updatedAt: stamp,
+    })
+  }
+
+  /* -- business rules ---------------------------------------- */
+  const constraints = design.constraints ?? []
+  if (constraints.length > 0) {
+    registerConstraints(fresh ? constraints.map((c) => remapConstraint(c, m, stamp)) : constraints)
+  }
+}
+
+/* ------------------------------------------------------------ */
 /* merge                                                         */
 /* ------------------------------------------------------------ */
 
+/* ============================================================
+   WHERE A MERGED SET LANDS.
+
+   It used to land at +80/+80. That is smaller than a table node, so
+   every imported table came down ON TOP of one already on the sheet,
+   overlapping it by all but a corner — and because a merge is the one
+   operation where the same set is routinely added to itself, the two
+   copies sharing a name were also the two copies stacked on each
+   other. The result reads as corruption rather than as an addition.
+
+   So the imported block is placed CLEAR of everything already there,
+   keeping its own internal layout intact: one rectangle of new work
+   beside the old, which is what "add to sheet" means.
+   ============================================================ */
+
+/** Roughly what a table node occupies. It is the store's own spacing
+ *  for a new table (`createTable` steps 560 across), not a measured
+ *  box: the point is a gap that is obviously a gap. */
+const TABLE_FOOTPRINT_W = 560
+const MERGE_GUTTER = 160
+
+function mergeOffsetX(
+  current: { entities: Record<string, EntityDef>; groups: Record<string, GroupDef> },
+  data: ProjectExport,
+): number {
+  let right = Number.NEGATIVE_INFINITY
+  for (const e of Object.values(current.entities)) {
+    right = Math.max(right, (e.position?.x ?? 0) + TABLE_FOOTPRINT_W)
+  }
+  for (const g of Object.values(current.groups)) {
+    right = Math.max(right, (g.position?.x ?? 0) + (g.size?.w ?? 0))
+  }
+  /* an empty sheet is not a collision — the file keeps its own layout */
+  if (right === Number.NEGATIVE_INFINITY) return 0
+
+  let left = Number.POSITIVE_INFINITY
+  for (const e of data.entities) left = Math.min(left, e.position?.x ?? 0)
+  for (const g of data.groups) left = Math.min(left, g.position?.x ?? 0)
+  if (left === Number.POSITIVE_INFINITY) return 0
+
+  return Math.max(0, Math.round(right + MERGE_GUTTER - left))
+}
+
 /** Merge: fresh ids for every imported entity / field / group / rule /
- *  rule node / condition branch / edge / row, remapped in one pass;
- *  entity and zone positions offset +80/+80. References that point
- *  outside the imported set survive only if the target exists in the
- *  current project; otherwise they are nulled. */
+ *  rule node / condition branch / edge / row / page / module /
+ *  constraint, remapped in one pass; the imported block is placed clear
+ *  of the sheet's right-hand edge. References that point outside the
+ *  imported set survive only if the target exists in the current
+ *  project; otherwise they are nulled. */
 export function applyMerge(data: ProjectExport): void {
   const store = useProjectStore.getState()
   const cur = {
@@ -341,6 +599,13 @@ export function applyMerge(data: ProjectExport): void {
     idMap.set(e.id, newId())
     importedEntityIds.add(e.id)
     for (const f of e.fields) {
+      /* `__origin` / `__recommended` / `__order` are CONSTANTS, and
+         `readPairs` finds them by their literal id. Reissuing one
+         turns a curated join's pair columns into three anonymous
+         columns — the pairing still shows in the grid and stops
+         being readable by anything that asks for it. They keep their
+         ids; nothing else in the merge does. */
+      if (isWellKnownFieldId(f.id)) continue
       idMap.set(f.id, newId())
       importedFieldIds.add(f.id)
     }
@@ -364,6 +629,8 @@ export function applyMerge(data: ProjectExport): void {
     },
     field: (old) => {
       if (!old) return undefined
+      /* a constant id resolves to itself on both sides of the merge */
+      if (isWellKnownFieldId(old)) return old
       if (importedFieldIds.has(old)) return idMap.get(old)
       return currentFieldIds.has(old) ? old : undefined
     },
@@ -381,19 +648,33 @@ export function applyMerge(data: ProjectExport): void {
   }
 
   const stamp = nowIso()
+  const dx = mergeOffsetX(cur, data)
 
   /* pass 1 — remap entities + fields */
   const mergedEntities: EntityDef[] = data.entities.map((e) => ({
     ...e,
     id: idMap.get(e.id) as string,
-    position: { x: (e.position?.x ?? 120) + 80, y: (e.position?.y ?? 120) + 80 },
+    position: { x: (e.position?.x ?? 120) + dx, y: e.position?.y ?? 120 },
     groupId: m.group(e.groupId),
     displayFieldId: m.field(e.displayFieldId),
+    /* THE GROUPING LEVELS ARE FIELD IDS. `...e` carried `hierarchy`
+       through unchanged, so after a merge every level named a column
+       that no longer existed and the grouped view collapsed to flat —
+       the same loss the envelope used to cause on the way in, arriving
+       by a different door. A level that cannot be followed is dropped
+       rather than left dangling. */
+    ...(e.hierarchy
+      ? {
+          hierarchy: e.hierarchy
+            .map((fid) => m.field(fid))
+            .filter((fid): fid is string => fid !== undefined),
+        }
+      : {}),
     createdAt: e.createdAt ?? stamp,
     updatedAt: stamp,
     fields: e.fields.map((f) => ({
       ...f,
-      id: idMap.get(f.id) as string,
+      id: isWellKnownFieldId(f.id) ? f.id : (idMap.get(f.id) as string),
       ...(f.refEntityId !== undefined ? { refEntityId: m.entity(f.refEntityId) } : {}),
       ...(f.type === 'reference' && f.defaultValue !== undefined
         ? { defaultValue: m.row(f.defaultValue) }
@@ -405,7 +686,7 @@ export function applyMerge(data: ProjectExport): void {
   const mergedGroups: GroupDef[] = data.groups.map((g) => ({
     ...g,
     id: idMap.get(g.id) as string,
-    position: { x: (g.position?.x ?? 80) + 80, y: (g.position?.y ?? 80) + 80 },
+    position: { x: (g.position?.x ?? 80) + dx, y: g.position?.y ?? 80 },
     size: g.size ?? { w: 520, h: 380 },
   }))
 
@@ -422,8 +703,14 @@ export function applyMerge(data: ProjectExport): void {
     mergedRowsByEntity[newEntityId] = list.map((r) => {
       const values: Record<string, CellValue> = {}
       for (const [oldFieldId, v] of Object.entries(r.values)) {
-        const nf = idMap.get(oldFieldId)
-        if (!nf || !importedFieldIds.has(oldFieldId)) continue // cell for a field not in the imported schema
+        /* the same rule as the schema pass, or a curated pair row
+           would arrive with its origin and order in dead columns */
+        const nf = isWellKnownFieldId(oldFieldId)
+          ? oldFieldId
+          : importedFieldIds.has(oldFieldId)
+            ? idMap.get(oldFieldId)
+            : undefined
+        if (!nf) continue // cell for a field not in the imported schema
         values[nf] = refFieldIds.has(nf) ? m.row(v) : v
       }
       return {
@@ -439,6 +726,12 @@ export function applyMerge(data: ProjectExport): void {
   /* pass 4 — remap rules, all the way down into every node config */
   const mergedRules: RuleDef[] = data.rules.map((r) => remapRule(r, m, stamp))
 
+  /* the sheet's own pages and modules, which `replaceProject` is about
+     to clear — a merge adds, so they have to be put back beside the
+     imported ones rather than swept up with the swap */
+  const keptViews = Object.values(store.views)
+  const keptModules = Object.values(store.modules)
+
   /* union with current work */
   const rowsUnion: Record<string, RowData[]> = { ...cur.rowsByEntity, ...mergedRowsByEntity }
   keepingOrganisation(() => {
@@ -451,4 +744,11 @@ export function applyMerge(data: ProjectExport): void {
       rowsByEntity: rowsUnion,
     })
   })
+
+  /* the sheet's own design first, unchanged — its ids still resolve,
+     because a merge keeps every table that was already here */
+  const keepAsIs: DesignRefs = { entity: (id) => id, field: (id) => id }
+  restoreDesign({ views: keptViews, modules: keptModules }, keepAsIs)
+  /* then the imported design, on the reissued ids */
+  restoreDesign(data, m, true)
 }

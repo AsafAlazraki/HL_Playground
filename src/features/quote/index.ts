@@ -146,14 +146,21 @@ export {
   mintLine,
   mintFreeLine,
   candidatesFor,
+  candidateOffer,
   priceChanges,
   referenceFor,
   subjectStillOnSheet,
+  /* WHY A NEW QUOTE FOR THIS ROW WOULD BE WRONG, in one sentence, or
+     '' when it would not. Any surface offering "Quote this one" — the
+     view stage's button is the one that exists today — should draw
+     this instead of the button, or beside it. It NEVER touches a
+     quote that already exists. */
+  unsellableSubject,
   freezeSpecs,
   OFFER_CAP,
   SUBJECT_BLOCK,
 } from './freeze'
-export type { Candidate, MintLineArgs, MintQuoteArgs, PriceChange } from './freeze'
+export type { Candidate, Offer, MintLineArgs, MintQuoteArgs, PriceChange } from './freeze'
 
 /* -- the price ladder ---------------------------------------- */
 export {

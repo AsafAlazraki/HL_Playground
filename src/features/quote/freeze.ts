@@ -25,6 +25,8 @@
    ============================================================ */
 
 import {
+  isDiscontinued,
+  isRetired,
   primaryImage,
   rowLabel,
   isPairFieldId,
@@ -397,6 +399,12 @@ export function mintQuoteFromView(args: MintQuoteArgs): QuoteDef | null {
       /* how many the view had picked, so an empty section can explain
          itself instead of looking like nothing was ever configured */
       pickedCount: result.rows.length,
+      /* and how many it declined to offer because they are no longer
+         sold. `relatedRows` has already held those back — the star on
+         a discontinued row is cleared there, so this loop can never
+         mint a line for one — and this records the number so the
+         section can SAY it rather than be shorter without a word. */
+      ...(result.heldCount > 0 ? { heldCount: result.heldCount } : {}),
     })
   }
 
@@ -440,6 +448,24 @@ export interface Candidate {
   alreadyLineId?: string
 }
 
+/** What a section may still take, and what it refused to offer.
+ *
+ *  The refusal is returned rather than swallowed. A picker that
+ *  silently drops three of eight is the failure this whole change
+ *  exists to prevent: the salesperson looks at five and believes
+ *  that is the menu, and nobody can answer "where did the trailer
+ *  go?". The sentence the editor prints comes from `@/features/views`
+ *  so the page and the quote say the same words. */
+export interface Offer {
+  candidates: Candidate[]
+  /** rows held back because they are no longer sold */
+  heldCount: number
+  /** 'table' — the related table is history rather than stock;
+   *  'pairs' — the list recording which of its rows go with this one
+   *  is. Absent when the reason is individual rows. */
+  historic?: 'table' | 'pairs'
+}
+
 /** How many candidates a section offers before it asks you to narrow
  *  it on the sheet. */
 export const OFFER_CAP = 40
@@ -458,15 +484,16 @@ export const OFFER_CAP = 40
  * so the workbook's recommended slot is visible even where the star
  * was never written (see index.ts, "what this feature wants").
  */
-export function candidatesFor(quote: QuoteDef, section: QuoteSection): Candidate[] {
+export function candidateOffer(quote: QuoteDef, section: QuoteSection): Offer {
+  const none: Offer = { candidates: [], heldCount: 0 }
   /* there is exactly one boat on a quote for one boat */
-  if (section.blockId === SUBJECT_BLOCK) return []
+  if (section.blockId === SUBJECT_BLOCK) return none
   const { ctx, engine } = live()
   const view = getViewDef(quote.viewId)
   const root = ctx.entities[quote.rootTableId]
   const row = root ? rowOf(ctx, root.id, quote.rootRowId) : undefined
   const target = ctx.entities[section.tableId]
-  if (!view || !root || !row || !target) return []
+  if (!view || !root || !row || !target) return none
 
   const block = view.blocks.find((b) => b.id === section.blockId)
   const join = joinRefFor(ctx.entities, block?.joinTableId, root.id, target.id)
@@ -486,8 +513,12 @@ export function candidatesFor(quote: QuoteDef, section: QuoteSection): Candidate
 
   /* A curated block is a handful of rows; a block showing a whole
      table can be four hundred, and a quote is not a catalogue. The
-     cap is on the OFFER, never on the quote. */
-  return result.rows.slice(0, OFFER_CAP).map((r) => {
+     cap is on the OFFER, never on the quote.
+
+     `relatedRows` has already held back everything that is no longer
+     sold, so nothing discontinued can be minted from here — and it
+     hands back how many, which the editor states in words. */
+  const candidates = result.rows.slice(0, OFFER_CAP).map((r) => {
     const already = onQuote.get(r.row.id)
     return {
       line: mintLine({
@@ -503,6 +534,52 @@ export function candidatesFor(quote: QuoteDef, section: QuoteSection): Candidate
       ...(already ? { alreadyLineId: already } : {}),
     }
   })
+
+  return {
+    candidates,
+    heldCount: result.heldCount,
+    ...(result.historic ? { historic: result.historic } : {}),
+  }
+}
+
+/** The candidates alone, for callers that do not draw the refusal.
+ *  `candidateOffer` is the one to reach for on a screen: a picker
+ *  that shows five of eight without saying so is the defect. */
+export function candidatesFor(quote: QuoteDef, section: QuoteSection): Candidate[] {
+  return candidateOffer(quote, section).candidates
+}
+
+/**
+ * Why raising a NEW quote for this row would be wrong, in one
+ * sentence — or '' when there is no reason.
+ *
+ * A LIVE READ, and deliberately not a refusal. Two things must both
+ * be true and only one of them is a filter:
+ *
+ *   · a salesperson must not be handed a discontinued hull as though
+ *     it were stock, so any surface offering "quote this one" says
+ *     this sentence instead of quietly doing nothing — a dead button
+ *     is the failure, not the fix
+ *   · an existing quote naming that hull must still open, still
+ *     total, still print and still be superseded, so nothing here
+ *     is consulted by `makeNewVersion`, by the document, or by any
+ *     line already minted
+ *
+ * The one legitimate re-quote of retired stock — a customer buying
+ * the last one on the floor — goes through "Make a new version" of
+ * the quote that already names it, which copies frozen lines and
+ * never comes near this function.
+ */
+export function unsellableSubject(rootTableId: string, rootRowId: string): string {
+  const { entities, rowsByEntity } = useProjectStore.getState()
+  const entity = entities[rootTableId]
+  if (!entity) return ''
+  if (isRetired(entity)) {
+    return `${entity.name} is history rather than stock. Nothing in it should be offered to a customer — its rows stay on the sheet so the quotes already written against them still open.`
+  }
+  const row = (rowsByEntity[rootTableId] ?? []).find((r) => r.id === rootRowId)
+  if (!row || !isDiscontinued(row)) return ''
+  return `${rowLabel(entity, row)} is no longer sold. It stays on the sheet and every quote already written against it still opens — but it should not be put in front of a customer as something they can buy. Clear its Discontinued box on the sheet if the business has brought it back.`
 }
 
 /** True when the table a section was drawn for is still on the sheet.

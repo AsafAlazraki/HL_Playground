@@ -12,6 +12,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { displayFieldOf } from '@/types/model'
 import {
   distinctValues,
   type ColumnFilter,
@@ -109,6 +110,8 @@ export function TableSheet({
     slots: sectioned.slots,
     widths,
     viewportRef,
+    /* the same column the grid freezes — see the pin note in `Grid` */
+    pinFieldId: entity ? displayFieldOf(entity)?.id : undefined,
   })
 
   const columns = useColumnCommands(entityId, pushToast)

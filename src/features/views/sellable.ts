@@ -1,0 +1,128 @@
+/* ============================================================
+   DISCONTINUED NEVER REACHES A SALESPERSON — and never vanishes
+   silently either.
+
+   `@/types/model` gives this feature two questions and both are
+   already answered there: `isDiscontinued(row)` for a product that
+   is no longer sold, `isRetired(entity)` for a whole table that is
+   history rather than stock. Nothing here re-decides either. What
+   lives in this file is the OTHER half of the rule, the half a
+   predicate cannot carry:
+
+     1. WHICH SURFACES ASK. A module index, a view page's blocks and
+        the pickers a quote adds from are read by, or over the
+        shoulder of, a customer — they ask. The SHEET does not, and
+        neither does the grid: that is where a person maintains
+        their data, and hiding rows from the person who has to fix
+        them is how data rots unseen.
+
+     2. WHAT THE SURFACE SAYS WHEN IT HELD SOMETHING BACK. A block
+        that would have drawn eight and draws six must not simply
+        read six. The count alone is the defect; the sentence is the
+        fix — the same discipline the quote's own sections already
+        keep ("4 Yamaha Outboards were picked for this one…").
+
+   AND THE THING THAT MUST NOT HAPPEN: none of this touches a quote
+   that already exists. A quote line is a FROZEN COPY — its label,
+   its price, the column that price came from and the join's own
+   rigging kit were written onto it at pick time — so a document
+   naming a trailer discontinued since still opens, still totals and
+   still prints. Filtering the PICKER is not filtering the DOCUMENT,
+   and nothing in this file is ever called while a quote is drawn.
+   ============================================================ */
+
+import { isDiscontinued, isRetired, type EntityDef, type RowData } from '@/types/model'
+import { plural, singular } from './describe'
+
+/* ---------------------------------------------------------- */
+/* Filtering                                                   */
+/* ---------------------------------------------------------- */
+
+/** The rows a customer-facing surface may offer. */
+export const sellableRows = (rows: RowData[]): RowData[] =>
+  rows.filter((r) => !isDiscontinued(r))
+
+/** How many of these are no longer sold — the number every surface
+ *  that drops them has to be able to say. */
+export const countDiscontinued = (rows: RowData[]): number => {
+  let n = 0
+  for (const r of rows) if (isDiscontinued(r)) n += 1
+  return n
+}
+
+/** The tables a customer-facing surface may draw at all. A retired
+ *  table keeps its rows so an old quote still resolves; it is simply
+ *  never a place anybody is sent. */
+export const sellableTables = (tables: EntityDef[]): EntityDef[] =>
+  tables.filter((e) => !isRetired(e))
+
+/** Rows still sellable across a set of tables, counted — the figure
+ *  a dashboard card and an index header both print, resolved once so
+ *  a card can never say 40 and the page it opens draw 39. */
+export function sellableRowCount(
+  tables: EntityDef[],
+  rowsByEntity: Record<string, RowData[]>,
+): number {
+  let n = 0
+  for (const e of tables) {
+    if (isRetired(e)) continue
+    n += sellableRows(rowsByEntity[e.id] ?? []).length
+  }
+  return n
+}
+
+/** Rows held back across a set of tables — discontinued rows on live
+ *  tables, plus every row of a retired one. */
+export function heldBackRowCount(
+  tables: EntityDef[],
+  rowsByEntity: Record<string, RowData[]>,
+): number {
+  let n = 0
+  for (const e of tables) {
+    const rows = rowsByEntity[e.id] ?? []
+    n += isRetired(e) ? rows.length : countDiscontinued(rows)
+  }
+  return n
+}
+
+/* ---------------------------------------------------------- */
+/* The sentences                                               */
+/* ---------------------------------------------------------- */
+
+/** The reassurance every one of these sentences ends on. It is the
+ *  whole reason the data stays: an old quote was written against it
+ *  and deleting it would make yesterday's documents unreadable. */
+const STILL_OPENS = 'a quote that already names one still opens, still totals and still prints'
+
+/** "2 NSM Custom Trailers are no longer sold…" — said in words,
+ *  never left as the difference between two numbers. */
+export function heldBackSentence(count: number, tableName: string): string {
+  if (count <= 0) return ''
+  const one = count === 1
+  const noun = one ? singular(tableName) : plural(tableName)
+  return `${count} ${noun} ${one ? 'is' : 'are'} no longer sold, so ${
+    one ? 'it is' : 'they are'
+  } not offered here. ${one ? 'It stays' : 'They stay'} on the sheet, and ${STILL_OPENS}.`
+}
+
+/** The whole table is history rather than stock. */
+export function retiredTableSentence(tableName: string): string {
+  return `${tableName} is history rather than stock, so nothing from it is offered here. The table and its rows stay on the sheet, and ${STILL_OPENS}.`
+}
+
+/** The table is live, but the list recording which of its rows go
+ *  with this one is history — "Surtees x OBSOLETE Trailers" is a
+ *  whole join of nothing but retired stock. */
+export function retiredPairsSentence(tableName: string, joinName: string): string {
+  return `${joinName} — the list that recorded which ${plural(
+    tableName,
+  )} go with this one — is history rather than stock, so none of it is offered here. Nothing is deleted, and ${STILL_OPENS}.`
+}
+
+/** What a picker says about the tables it did not offer. */
+export function retiredTablesSentence(count: number): string {
+  if (count <= 0) return ''
+  return count === 1
+    ? 'One table is history rather than stock and is not offered here. It stays on the sheet, so an old quote written against it still opens.'
+    : `${count} tables are history rather than stock and are not offered here. They stay on the sheet, so an old quote written against them still opens.`
+}

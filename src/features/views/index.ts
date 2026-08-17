@@ -85,6 +85,22 @@ export { suggestRule } from './suggest'
 export type { RuleSuggestion, SuggestionKind } from './suggest'
 export { describeRule, summariseRule, countChip, curatedOnly, isCuratedOnly } from './describe'
 
+/* WHICH SURFACES HOLD DISCONTINUED STOCK BACK, and what they say when
+   they do. Exported because the module index and the quote picker are
+   the other two customer-facing surfaces and must say the same
+   sentences this page says — one wording, one policy. */
+export {
+  sellableRows,
+  sellableTables,
+  sellableRowCount,
+  countDiscontinued,
+  heldBackRowCount,
+  heldBackSentence,
+  retiredTableSentence,
+  retiredPairsSentence,
+  retiredTablesSentence,
+} from './sellable'
+
 /* Reading and writing pairs, for anything else that needs the
    curated menu (a quote, an export, a rule run). */
 export {

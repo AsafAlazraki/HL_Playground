@@ -12,6 +12,7 @@
    ============================================================ */
 
 import { useCallback, useSyncExternalStore } from 'react'
+import { isRetired } from '@/types/model'
 import type { ClauseGroup, ColumnFilter, EntityDef, ViewBlock, ViewDef } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { newId, nowIso } from '@/lib/id'
@@ -77,15 +78,27 @@ function patch(id: string, fn: (v: ViewDef) => ViewDef): void {
 /* Making one                                                 */
 /* ---------------------------------------------------------- */
 
-/** Join tables already touching this table, and what they join it to. */
+/** Join tables already touching this table, and what they join it to.
+ *
+ *  A RETIRED TABLE NEVER BECOMES A BLOCK, and neither does a retired
+ *  join. A view page is a page you would put in front of a customer,
+ *  and this is the function that decides what is on it before anybody
+ *  has configured anything — so "Surtees x OBSOLETE Trailers" must not
+ *  be able to seed itself onto the Surtees page and then rely on the
+ *  renderer to hold its rows back. Nothing is deleted: the join and
+ *  the table stay on the sheet, and an old quote written against
+ *  either still opens. */
 function existingRelations(entities: Record<string, EntityDef>, tableId: string) {
   const out: Array<{ otherId: string; joinId: string }> = []
   const seen = new Set<string>()
   for (const other of Object.values(entities)) {
     if (other.id === tableId) continue
     if (other.role === 'join') continue
+    if (isRetired(other)) continue
     const join = findJoinTable(entities, tableId, other.id)
     if (!join || seen.has(other.id)) continue
+    const joinEntity = entities[join.entityId]
+    if (joinEntity && isRetired(joinEntity)) continue
     seen.add(other.id)
     out.push({ otherId: other.id, joinId: join.entityId })
   }

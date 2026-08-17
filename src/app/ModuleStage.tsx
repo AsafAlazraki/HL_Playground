@@ -226,7 +226,14 @@ export function ModuleStage({
           section heads of a seven-brand index. */}
       <div className="shell-module-well">
         {open ? (
+          /* KEYED ON THE MODULE, because everything the index holds is
+             a position INSIDE one: what has been typed in the find box,
+             and whether the gear is on. Switching modules through the
+             panel's door without this arrives at a different place
+             already filtered by the last module's search, or already in
+             design mode over somebody else's page. */
           <ModuleIndex
+            key={open.id}
             module={open}
             onOpen={(tableId, rowId) => setDetail({ moduleId: open.id, tableId, rowId })}
           />

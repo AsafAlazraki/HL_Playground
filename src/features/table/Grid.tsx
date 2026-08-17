@@ -20,14 +20,27 @@
    exactly as folding a drawer takes rows out of it, so nothing in
    here has to know sections exist beyond drawing them.
 
-   Stacking, deliberately: cells 0 · overlays 2 · frozen gutter 4 ·
-   frozen header 6 · corner 7. The active-cell ring can never draw
-   over the frozen chrome.
+   To the left of all of it, frozen: the row ordinal, and THE DISPLAY
+   COLUMN. A price register is 4,248px of sheet in a 508px card — 12%
+   of it on screen — so scrolling to the price band used to leave
+   fifteen variants of one model reading as six identical rows of
+   numbers with nothing on screen saying which boat was which. The
+   column `displayFieldOf` names is drawn `position: sticky` in every
+   row, in the heading row and in the section band above it, so the
+   name is still there at the far right of the sheet. Only that one
+   column, and only ever in place — it is the SAME cell, so it is
+   still selected, edited, filled and copied exactly as before.
+
+   Stacking, deliberately: cells 0 · overlays 2 · the active ring 3 ·
+   pinned column and the frozen gutter 4 · pinned header 5 · frozen
+   header 6 · corner 7. The active-cell ring can never draw over the
+   frozen chrome, and the frozen chrome always wins over the pin.
    ============================================================ */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { JSX, MouseEvent as ReactMouseEvent, RefObject } from 'react'
 import {
   accentVar,
+  displayFieldOf,
   isImageValue,
   isSystemFieldId,
   type CellValue,
@@ -67,9 +80,10 @@ import {
   foldChipText,
   foldWidthFor,
   layoutColumns,
+  pinWidthOf,
   windowColumns,
   type ColumnSlot,
-  type PlacedSlot,
+  type DrawItem,
 } from './sections'
 import type { LinkTarget, NewColumn } from './useColumnCommands'
 import { columnKindOf } from './columnKinds'
@@ -84,6 +98,7 @@ import {
   ROW_H,
   TIGHT_COL_W,
   VIRTUALIZE_ABOVE,
+  cellPrintText,
   cellText,
   clampWidth,
   fillTarget,
@@ -188,13 +203,6 @@ type Drag =
   | { kind: 'row'; anchor: number }
   | { kind: 'fill' }
   | null
-
-/** One thing a row lays out: a drawn column, or the dead width of the
- *  columns the window skipped. A spacer carries no `data-r`/`data-c`,
- *  so it is not a cell, cannot be selected and cannot be typed into. */
-type DrawItem = { placed: PlacedSlot } | { gap: number; key: string }
-
-const isGap = (d: DrawItem): d is { gap: number; key: string } => 'gap' in d
 
 function ColumnGap({ w }: { w: number }): JSX.Element {
   return <span className="tb-colgap" style={{ width: w }} aria-hidden="true" />
@@ -301,13 +309,30 @@ export function Grid(props: GridProps): JSX.Element {
   const { left: colX, right: colRight, total: bodyW } = colLayout
   const sheetW = GUTTER_W + bodyW + ADD_COL_W
 
+  /* -- the frozen name column -----------------------------------
+     ONE column is pinned and it is the one `displayFieldOf` names:
+     the thing a reader would say out loud to identify the row. It is
+     resolved from the ENTITY, so the card, the FOCUS lens and every
+     other place a grid is drawn freeze the same column.
+     `undefined` when the table has no display column at all, or when
+     its band is folded away — a chip cannot be pinned open. */
+  const pinFieldId = useMemo(() => {
+    const display = displayFieldOf(entity)
+    if (!display) return undefined
+    return fields.some((f) => f.id === display.id) ? display.id : undefined
+  }, [entity, fields])
+
+  /* what the pin costs the reader on the left edge. Everything that
+     scrolls a column to the left edge has to clear this. */
+  const pinW = useMemo(() => pinWidthOf(colLayout, pinFieldId), [colLayout, pinFieldId])
+
   /* -- the column window ---------------------------------------
      The mirror of the row windowing below: only the slots the
-     scroller actually crosses are drawn, and the width skipped either
-     side is drawn as one spacer each. The locked identifier and the
-     column holding the live editor are never dropped — see
-     `windowColumns`. */
-  const colWindow = useMemo(
+     scroller actually crosses are drawn, and every skipped run is
+     drawn as one spacer. The locked identifier, the pinned display
+     column and the column holding the live editor are never dropped —
+     see `windowColumns`. */
+  const drawList = useMemo<DrawItem[]>(
     () =>
       windowColumns(
         colLayout,
@@ -315,24 +340,12 @@ export function Grid(props: GridProps): JSX.Element {
         viewport.w,
         COL_OVERSCAN,
         editing !== null ? editing.col : undefined,
+        pinFieldId,
       ),
-    [colLayout, scrollLeft, viewport.w, editing],
+    [colLayout, scrollLeft, viewport.w, editing, pinFieldId],
   )
 
-  /* what a row actually lays out: the drawn slots, with the skipped
-     width either side as one spacer each. One list, walked by the
-     heading row and by every data row, so the two can never disagree
-     about where a column starts. */
-  const drawList = useMemo<DrawItem[]>(() => {
-    const out: DrawItem[] = []
-    if (colWindow.lead) out.push({ placed: colWindow.lead })
-    if (colWindow.padLeft > 0) out.push({ gap: colWindow.padLeft, key: 'gap:l' })
-    for (const p of colWindow.drawn) out.push({ placed: p })
-    if (colWindow.padRight > 0) out.push({ gap: colWindow.padRight, key: 'gap:r' })
-    return out
-  }, [colWindow])
-
-  const bands = useMemo(() => bandsOf(colLayout), [colLayout])
+  const bands = useMemo(() => bandsOf(colLayout, pinFieldId), [colLayout, pinFieldId])
   /* a run in no band draws nothing, so a table whose columns are all
      unbanded gets no band row at all — and is exactly as tall as it
      has always been */
@@ -403,16 +416,21 @@ export function Grid(props: GridProps): JSX.Element {
     else if (rowTop + ROW_H > el.scrollTop + el.clientHeight - headH) {
       el.scrollTop = rowTop + ROW_H - el.clientHeight + headH
     }
+    /* the pinned column is frozen on screen — scrolling to reveal it
+       would only throw the sheet back to its left edge */
+    if (fields[col]?.id === pinFieldId) return
     const left = colX[col] ?? 0
     const right = colRight[col] ?? left
-    if (left < el.scrollLeft) el.scrollLeft = left
+    /* a column revealed at the left edge has to clear the pin as well
+       as the gutter, or the pin covers the cell we just went to */
+    if (left < el.scrollLeft + pinW) el.scrollLeft = Math.max(0, left - pinW)
     else if (right > el.scrollLeft + el.clientWidth - GUTTER_W) {
       el.scrollLeft = right - el.clientWidth + GUTTER_W
     }
     /* colX/fields are stable within a render; the active cell is the
        only trigger we want here */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey, rows, cols])
+  }, [activeKey, rows, cols, pinW, pinFieldId])
 
   /* the window-level release handler must read the CURRENT selection,
      never the one captured when the listener was installed */
@@ -840,24 +858,36 @@ export function Grid(props: GridProps): JSX.Element {
                     return (
                       <span
                         key={b.key}
-                        className="tb-band tb-band-plain"
-                        style={{ width: b.w }}
+                        className={
+                          'tb-band tb-band-plain' + (b.pinned ? ' tb-band-pin' : '')
+                        }
+                        style={{ width: b.w, ...(b.pinned ? { left: GUTTER_W } : {}) }}
                         aria-hidden="true"
                       />
                     )
                   }
                   const section = b.section
                   const ink = accentVar(section.accent ?? 'graphite')
-                  const cols = plural(b.count, 'column', 'columns')
+                  /* what the PRESS does, which is fold the whole run —
+                     never the width of the piece it landed on */
+                  const cols = plural(b.runCount ?? b.count, 'column', 'columns')
                   return (
                     <div
                       key={b.key}
-                      className={'tb-band' + (b.collapsed ? ' tb-band-shut' : '')}
+                      className={
+                        'tb-band' +
+                        (b.collapsed ? ' tb-band-shut' : '') +
+                        (b.pinned ? ' tb-band-pin' : '')
+                      }
                       role="columnheader"
                       {...(b.collapsed
                         ? {}
                         : { 'aria-colindex': b.from + 2, 'aria-colspan': b.count })}
-                      style={{ width: b.w, ['--tb-band-ink' as string]: ink }}
+                      style={{
+                        width: b.w,
+                        ['--tb-band-ink' as string]: ink,
+                        ...(b.pinned ? { left: GUTTER_W } : {}),
+                      }}
                     >
                       <button
                         type="button"
@@ -875,9 +905,14 @@ export function Grid(props: GridProps): JSX.Element {
                         }
                         onClick={() => onToggleSection(section.id)}
                       >
-                        <span className="tb-band-name">
-                          {b.collapsed ? foldChipText(section, b.count) : section.name}
-                        </span>
+                        {/* the other half of a run the pin cut: the ink
+                            and the fold control stay, the name does not
+                            repeat — see `muted` in `bandsOf` */}
+                        {!b.muted && (
+                          <span className="tb-band-name">
+                            {b.collapsed ? foldChipText(section, b.count) : section.name}
+                          </span>
+                        )}
                       </button>
                       {!b.collapsed && (
                         <span className="tb-band-rule" aria-hidden="true" />
@@ -910,7 +945,7 @@ export function Grid(props: GridProps): JSX.Element {
                 <span className="tb-corner-mark" aria-hidden="true" />
               </button>
               {drawList.map((item) => {
-                if (isGap(item)) return <ColumnGap key={item.key} w={item.gap} />
+                if (item.kind === 'gap') return <ColumnGap key={item.key} w={item.w} />
                 const { slot, x, w } = item.placed
                 if (slot.kind === 'fold') {
                   return (
@@ -929,6 +964,10 @@ export function Grid(props: GridProps): JSX.Element {
                 const dir = sort?.fieldId === f.id ? sort.dir : null
                 const filtered = filterByField.has(f.id)
                 const system = isSystemFieldId(f.id)
+                /* the heading freezes WITH its column — same sticky
+                   offset in the same scroller, so the two cannot drift
+                   apart by so much as a pixel */
+                const pinned = f.id === pinFieldId
                 return (
                   <div
                     key={f.id}
@@ -942,6 +981,7 @@ export function Grid(props: GridProps): JSX.Element {
                       (f.type === 'formula' ? ' tb-th-fx' : '') +
                       (system ? ' tb-th-sys' : '') +
                       (slot.section ? ' tb-th-banded' : '') +
+                      (pinned ? ' tb-th-pin' : '') +
                       /* fitted down to a stripe (or dragged there): the
                          heading gives up its inset and its stamps, and
                          the band above it carries the naming */
@@ -949,6 +989,7 @@ export function Grid(props: GridProps): JSX.Element {
                     }
                     style={{
                       width: w,
+                      ...(pinned ? { left: GUTTER_W } : {}),
                       ...(slot.section
                         ? {
                             ['--tb-band-ink' as string]: accentVar(
@@ -1247,7 +1288,7 @@ export function Grid(props: GridProps): JSX.Element {
                     {pad2(r + 1)}
                   </div>
                   {drawList.map((item) => {
-                    if (isGap(item)) return <ColumnGap key={item.key} w={item.gap} />
+                    if (item.kind === 'gap') return <ColumnGap key={item.key} w={item.w} />
                     const { slot, x, w } = item.placed
                     /* a folded band leaves a quiet stripe the width of
                        its chip — no data-r/data-c, so it is not a cell,
@@ -1282,9 +1323,17 @@ export function Grid(props: GridProps): JSX.Element {
                       !system &&
                       isEmptyCell(row.values[f.id])
                     const marked = marks.has(markKey(line.rowId, f.id))
-                    const text = viewRows[r]?.text[f.id] ?? cellText(stored, f, refLabels[c])
+                    const copyText = viewRows[r]?.text[f.id] ?? cellText(stored, f, refLabels[c])
+                    /* what the cell PAINTS — the app's one money format.
+                       `copyText` is still what it copies and what the
+                       editor seeds with, so typing 41340 stores 41340. */
+                    const text = cellPrintText(f, stored, copyText)
                     const brokenRef =
                       f.type === 'reference' && targetEntityOf(f) === undefined
+                    /* the pinned column paints its own selection: the
+                       overlay rectangles are drawn at the column's
+                       SCROLLED position and slide out from under it */
+                    const pinned = f.id === pinFieldId
                     return (
                       <div
                         key={f.id}
@@ -1303,9 +1352,11 @@ export function Grid(props: GridProps): JSX.Element {
                           (marked ? ' tb-cell-mark' : '') +
                           (f.type === 'image' ? ' tb-cell-img' : '') +
                           (isEditing ? ' tb-cell-editing' : '') +
+                          (pinned ? ' tb-cell-pin' : '') +
+                          (pinned && isActive ? ' tb-cell-pin-on' : '') +
                           (w < TIGHT_COL_W ? ' tb-cell-tight' : '')
                         }
-                        style={{ width: w }}
+                        style={{ width: w, ...(pinned ? { left: GUTTER_W } : {}) }}
                         title={
                           marked
                             ? 'Pasted value could not be read as this column’s type — the cell was left unset'

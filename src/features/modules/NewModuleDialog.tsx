@@ -36,6 +36,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import {
   accentVar,
   canBeModuleMaster,
+  isRetired,
   TABLE_KINDS,
   type EntityDef,
   type TableKind,
@@ -170,9 +171,18 @@ export function NewModuleDialog({
   const tables = useMemo(() => Object.values(entities), [entities])
 
   /* WHAT MAY BE A MASTER, and nothing else. One predicate, owned by
-     the model — this panel does not get its own opinion about joins. */
-  const offered = useMemo(() => tables.filter(canBeModuleMaster), [tables])
-  const joinCount = tables.length - offered.length
+     the model — this panel does not get its own opinion about joins.
+
+     A RETIRED TABLE IS NEVER A MASTER EITHER. A module is a place a
+     person is sent to browse, and history is not a place: the table
+     and its rows stay on the sheet so an old quote still resolves,
+     and the absence is explained below rather than merely arranged. */
+  const offered = useMemo(
+    () => tables.filter((e) => canBeModuleMaster(e) && !isRetired(e)),
+    [tables],
+  )
+  const joinCount = tables.filter((e) => !canBeModuleMaster(e)).length
+  const retiredCount = tables.filter((e) => canBeModuleMaster(e) && isRetired(e)).length
 
   const groups = useMemo<PickGroup[]>(() => {
     const byKind = new Map<TableKind, EntityDef[]>()
@@ -355,6 +365,20 @@ export function NewModuleDialog({
                 not offered here. A link table records which rows go with which, so it
                 belongs inside a module as a related list rather than being a place of
                 its own.
+              </p>
+            ) : null}
+
+            {/* THE OTHER ABSENCE, EXPLAINED THE SAME WAY. A person who
+                can see the table on the sheet must not be left
+                wondering whether the app lost it. */}
+            {retiredCount > 0 ? (
+              <p className="md-pick-note">
+                {retiredCount === 1 ? 'One table is' : `${retiredCount} tables are`} history
+                rather than stock and {retiredCount === 1 ? 'is' : 'are'} not offered here.
+                A module is a place people are sent to browse, and nothing that is no longer
+                sold belongs in one. The {retiredCount === 1 ? 'table stays' : 'tables stay'}{' '}
+                on the sheet, and a quote already written against{' '}
+                {retiredCount === 1 ? 'it' : 'one'} still opens.
               </p>
             ) : null}
           </div>

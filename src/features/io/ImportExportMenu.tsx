@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import { EXPORT_KIND, EXPORT_VERSION, type ProjectExport } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
+import { getConstraints } from '@/features/constraints'
 import { validateEnvelope } from './envelope'
 import { applyMerge, applyReplace } from './apply'
 import './io.css'
@@ -54,12 +55,51 @@ function downloadJson(json: string, fileName: string): void {
 const byCreatedAt = <T extends { createdAt: string; name: string }>(a: T, b: T): number =>
   a.createdAt.localeCompare(b.createdAt) || a.name.localeCompare(b.name)
 
+/* ============================================================
+   WHAT "EVERYTHING" MEANS.
+
+   Until version 2 it meant the SEED: tables, zones, flow rules and
+   rows — every one of which a demo loader can produce — and none of
+   the work a person actually did. The modules they built, the pages
+   they curated, the business rules they wrote and the name of their
+   own business all stayed in the browser they were made in, silently,
+   under a button labelled Everything.
+
+   The four that travel now, and where each is read from:
+
+     org          `meta.org`, so an imported set knows whose it is
+     views        the store's `views` slice — the shell mirrors the
+                  view feature's registry into it on every change
+                  (`app/viewPersistence.ts`), so this is the current
+                  page layout and not a stale copy
+     modules      the store's `modules` slice, in dashboard order
+     constraints  `getConstraints()` — the constraint registry's own
+                  non-hook reader, scoped to the current organisation
+
+   STILL NOT CARRIED, and deliberately not smuggled: QUOTES. There is
+   no `quotes` key on `ProjectExport` and no non-hook list reader on
+   the quote registry (`useQuotes` is a hook; `getQuote` needs an id
+   you would have to already have). Both are named in
+   `features/quote/index.ts` §3 as store work. Reaching into that
+   module's private `list` to make an export look complete is exactly
+   how a frozen document gets re-priced by an import, so it waits.
+   ============================================================ */
+
 /** Builds the export envelope, bumps REV, triggers the download.
  *  Returns the issued rev number. */
 function issueExport(includeData: boolean): number {
   const store = useProjectStore.getState()
   const rev = store.bumpExportCount()
   const s = useProjectStore.getState()
+  const views = Object.values(s.views).sort(byCreatedAt)
+  /* dashboard order, then name — the same comparison the Dashboard
+     itself sorts by, so the file lists them as the person sees them */
+  const modules = Object.values(s.modules).sort(
+    (a, b) => a.order - b.order || a.name.localeCompare(b.name),
+  )
+  const constraints = [...getConstraints()].sort((a, b) =>
+    a.createdAt.localeCompare(b.createdAt),
+  )
   const payload: ProjectExport = {
     kind: EXPORT_KIND,
     version: EXPORT_VERSION,
@@ -71,6 +111,10 @@ function issueExport(includeData: boolean): number {
        config — so a full set re-imports and runs identically */
     rules: Object.values(s.rules).sort(byCreatedAt),
     ...(includeData ? { rows: { ...s.rowsByEntity } } : {}),
+    ...(s.meta.org ? { org: s.meta.org } : {}),
+    ...(views.length ? { views } : {}),
+    ...(modules.length ? { modules } : {}),
+    ...(constraints.length ? { constraints } : {}),
   }
   downloadJson(
     JSON.stringify(payload, null, 2),
@@ -148,6 +192,10 @@ export function ImportExportMenu() {
   const rowCount = useProjectStore((s) =>
     Object.values(s.rowsByEntity).reduce((n, l) => n + l.length, 0),
   )
+  /* the card must not promise more than the file holds, nor less: it
+     said "Everything" for a long time while carrying none of this */
+  const moduleCount = useProjectStore((s) => Object.keys(s.modules).length)
+  const pageCount = useProjectStore((s) => Object.keys(s.views).length)
 
   const closeMenu = useCallback(() => {
     setOpen(false)
@@ -286,6 +334,20 @@ export function ImportExportMenu() {
         rows: pending.data.rows
           ? Object.values(pending.data.rows).reduce((n, l) => n + l.length, 0)
           : 0,
+        /* the design layer, named rather than counted into the grid:
+           REPLACE overwrites the dashboard too, and a person deserves
+           to see that before they press it */
+        also: [
+          pending.data.modules?.length
+            ? plural(pending.data.modules.length, 'MODULE', 'MODULES')
+            : '',
+          pending.data.views?.length
+            ? plural(pending.data.views.length, 'PAGE', 'PAGES')
+            : '',
+          pending.data.constraints?.length
+            ? plural(pending.data.constraints.length, 'RULE', 'RULES')
+            : '',
+        ].filter(Boolean),
       }
     : null
 
@@ -349,6 +411,9 @@ export function ImportExportMenu() {
                       <span className="io-stat-lbl">Rows</span>
                     </div>
                   </div>
+                  {preview.also.length > 0 && (
+                    <div className="io-plate-also">ALSO — {preview.also.join(' · ')}</div>
+                  )}
                   <div className="io-plate-src">
                     SOURCE — {pending.fileName}
                   </div>
@@ -389,10 +454,13 @@ export function ImportExportMenu() {
                     >
                       <GlyphFullSet />
                       <span className="io-card-title">Everything</span>
-                      <span className="io-card-sub">Tables and rows</span>
+                      <span className="io-card-sub">Tables, rows, modules and pages</span>
                       <span className="io-card-meta">
                         {plural(tableCount, 'TABLE', 'TABLES')} ·{' '}
                         {plural(rowCount, 'ROW', 'ROWS')}
+                        {moduleCount > 0
+                          ? ` · ${plural(moduleCount, 'MODULE', 'MODULES')}`
+                          : ''}
                       </span>
                     </button>
                     <button
@@ -403,9 +471,15 @@ export function ImportExportMenu() {
                     >
                       <GlyphStructureOnly />
                       <span className="io-card-title">Structure only</span>
-                      <span className="io-card-sub">Tables, no rows</span>
+                      {/* modules and pages are STRUCTURE, not data: they say
+                          how the business is arranged, and only the rows are
+                          the contents. So this leaves out rows and nothing
+                          else. */}
+                      <span className="io-card-sub">Tables and pages, no rows</span>
                       <span className="io-card-meta">
-                        {plural(tableCount, 'TABLE', 'TABLES')} · NO ROWS
+                        {plural(tableCount, 'TABLE', 'TABLES')}
+                        {pageCount > 0 ? ` · ${plural(pageCount, 'PAGE', 'PAGES')}` : ''} · NO
+                        ROWS
                       </span>
                     </button>
                   </div>

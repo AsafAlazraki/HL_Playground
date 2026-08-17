@@ -457,6 +457,108 @@
   border-bottom: 1px solid var(--hairline);
 }
 
+/* -- the two folds -------------------------------------------
+   ONE IDIOM, TWO JOBS, AND THE SAME CARET EITHER WAY.
+
+   `.shell-fold` on its own is a SUBHEAD YOU CAN OPEN: it stands
+   where a `.shell-grp` head stands, carries the same mono label,
+   count and hairline, and adds the caret that says there is
+   something under it. That is Relationships and Retired — the
+   two groups that are not stock.
+
+   `.shell-fold--action` is the same control drawn as a door,
+   because it is one: it opens the type tray, and a tray is a
+   thing you go and get rather than a section of the list. One
+   line, 34px, against the 63px of the two-line doors around it —
+   it is the quietest thing in the column on purpose.
+
+   Both are buttons carrying `aria-expanded`, so the caret is
+   decoration and never the only statement of state. */
+.shell-fold {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: calc(100% - var(--sp-4) * 2);
+  margin: var(--sp-4) var(--sp-4) 0;
+  padding: 0 0 5px;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink-soft);
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.shell-fold:hover {
+  color: var(--ink);
+}
+.shell-fold:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* the caret turns rather than swapping for a second glyph — the
+   same mark pointing at where the list will be */
+.shell-fold-mark {
+  flex: 0 0 auto;
+  color: var(--ink-faint);
+  transition: transform var(--t-fast) var(--ease-draft);
+}
+.shell-fold.is-open .shell-fold-mark {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-fold-mark {
+    transition: none;
+  }
+}
+.shell-fold-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.shell-fold-count {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* the tray door: a one-line member of the `.shell-panel-rules`
+   family, sitting where the 370px rail used to start */
+.shell-fold--action {
+  margin: var(--sp-2) var(--sp-4) 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  color: var(--ink);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.shell-fold--action:hover,
+.shell-fold--action.is-open {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+}
+.shell-fold--action:focus-visible {
+  outline-offset: -2px;
+}
+.shell-fold-say {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+/* a shut fold's list is display:none, so the group under it must
+   not inherit the open list's spacing */
+.shell-fold + .shell-tbl-list {
+  padding-top: 5px;
+}
+
 .shell-panel-head {
   display: flex;
   align-items: baseline;

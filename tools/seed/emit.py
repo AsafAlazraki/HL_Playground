@@ -1,11 +1,20 @@
-"""Emit src/demos/northside.ts from the assembled table specs."""
-import sys, io, os
-SC = r"C:/Users/AsafA/AppData/Local/Temp/claude/C--Users-AsafA--claude-projects-HelmLogic-Dynamic-Config/1bf40b7d-3f26-4235-aa97-875a41f0e4fc/scratchpad/"
-sys.path.insert(0, SC)
+"""Emit src/demos/northside.ts from the assembled table specs.
+
+RUN IT FROM ANYWHERE:  python tools/seed/emit.py
+
+This is the command that WRITES the seed; gen_all.py only assembles and prints
+a summary. Paths are derived from this file's own location, for the reason
+recorded at the top of gen_all.py.
+"""
+import sys, io
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 import gen_all
 from gen_lib import ts_val, ts_str
 
-OUT = r"C:/Users/AsafA/.claude/projects/HelmLogic Dynamic Config/src/demos/northside.ts"
+OUT = str(HERE.parent.parent / "src" / "demos" / "northside.ts")
 
 HEADER = '''/* ============================================================
    demos/northside — REAL Northside Marine data.
@@ -54,29 +63,65 @@ HEADER = '''/* ============================================================
 
    WORKBOOK → TABLE map
    ─────────────────────────────────────────────────────────────
-   Boats (9 tables)   Boat Module (5).xlsx · sheet "Boat Module"
-                      Stacer R3/4-142 · Stabicraft R143/144-199 ·
+   Boats (7 tables,   Boat Module (5).xlsx · sheet "Boat Module"
+    9 header bands)   Stacer R3/4-142 · Stabicraft R143/144-199 ·
                       Surtees R200/201-225 · Jeanneau R226/227-232 ·
                       Merry Fisher R233/234-247 ·
                       Cap Camarat R248/249-261 ·
                       Haines Signature R262/263-277 ·
                       Highfield R278/281-948 · Formosa R955/956-1004
-   Trailers (7)       Trailer Module.xlsx · sheet "Trailer Module"
+                      (Merry Fisher and Cap Camarat are Jeanneau
+                      RANGES, so they are series inside one table.)
+   Trailers (8)       Trailer Module.xlsx · sheet "Trailer Module"
                       REDCO/Tinka 4-85 · NSM Custom 87-184 ·
                       GFAB 186-231 · Stacer 232-280 ·
                       Dunbier 281-454 · Mackay 455-625 ·
-                      Dunbier/Haines BMT 626-655.
-                      Brand membership comes from the HIDDEN
-                      Dropdowns sheet; the hierarchy level is
-                      encoded in the FONT SIZE of column C.
-   Motors (2)         Motor Module · sheet "Motor Library"
+                      Dunbier/Haines BMT 626-655 ·
+                      OBSOLETE 656-700.
+                      Membership of a block is the ROW BAND; the
+                      hierarchy level inside it is encoded in the
+                      FONT SIZE of column C and nowhere else.
+   Motors (4)         Motor Module · sheet "Motor Library"
                       (header row 4). Yamaha 5-293 ·
-                      ePropulsion 294-341.
+                      ePropulsion 294-341 · and two FACTORY PACKAGE
+                      tables selected by Motor Library!Q Supplier,
+                      because a boat sold with its engines lives in
+                      the Motor Library and is not a motor.
    Parts (1)          Parts Module (3).xlsx · sheet
                       "Parts Maintenance". Category is a banner ROW.
-   Joins (4)          Boat Module (5).xlsx — the thirteen motor
-                      slots (KZ..LD, LF..LJ … NT..NX) and the ten
-                      trailer slots (NZ..OI) on every boat row.
+   Dealer Fit (1)     Parts Module (3).xlsx · sheet
+                      "Dealer Fit Module" (header row 11). A
+                      DIFFERENT library from Parts Maintenance: the
+                      boat row's dealer-fit band resolves here at
+                      99.4% and there at 38.8%.
+   Joins (27)         Boat Module (5).xlsx — the four fan-out bands
+                      on every boat row: thirteen motor slots
+                      (KZ..LD, LF..LJ … NT..NX), six trailer slots
+                      (NZ..OE), forty-two dealer-fit lines
+                      (OL..QA) and ten P/D part lines (JT..KC).
+
+   THE THREE SYSTEM COLUMNS ON A JOIN — model.ts PAIR_FIELDS
+   ─────────────────────────────────────────────────────────────
+   Every join row carries `__origin`, `__recommended` and `__order`
+   under those EXACT field ids, because `readPairs` looks them up by
+   the literal string. They are not decoration:
+
+     __order       the slot index on the boat row, and the pair's
+                   only identity. (boat, motor) is not unique — a
+                   UNIQUE constraint would delete 641 live rows —
+                   and (boat, motor, rigging kit) still deletes 392.
+                   Never re-sort it by HP: the ladder RESTARTS at
+                   each change of control generation.
+     __recommended true for slot 1 of the motor and trailer bands
+                   only, where the header says "Recommended Motor
+                   Option" and "Std Trailer". Absent everywhere
+                   else, including for a boat that names no trailer
+                   at all — 462 of 812 live hulls are in that state
+                   and "no standard trailer" is not "we don't know".
+     __origin      'rule' where the boat cell is a live external
+                   link and the business POINTED at the library row,
+                   'added' where the same text was typed. 352 of
+                   61,854 live fan-out cells are formulas.
 
    TABLE ROLES — CONFIGURATOR_SPEC.md §3a
    ─────────────────────────────────────────────────────────────
@@ -101,11 +146,28 @@ HEADER = '''/* ============================================================
    "External Tank") it stays TEXT and the words are kept.
 
    Boat!J "Image Type" reads "Boat" on every row of every brand and
-   is not seeded. The 51 standard-inclusion, 166 factory-option,
-   42 dealer-fit, 30 paint/graphics and 81 pre-delivery-checklist
-   slot columns are likewise out of scope for a seed; the bands
-   that ARE seeded are named after the real spacer-separated runs
-   in MPF_GROUND_TRUTH.md §3.
+   is not seeded. The bands that ARE seeded are named after the real
+   spacer-separated runs in MPF_GROUND_TRUTH.md §3.
+
+   WHAT IS LEFT OUT OF THE FAN-OUT, and why — FITMENT_RULES.md §5.7
+   ─────────────────────────────────────────────────────────────
+   The 52 STANDARD FACTORY INCLUSIONS columns (W..BV): 0.33% of
+   25,932 cells resolve into any parts library, and the single most
+   common value is "NB: Factory Specifications are Subject to
+   Change without notice" — a disclaimer occupying a data column.
+   The 166 FACTORY OPTIONS columns (BX..IG): 0.00% resolve; they
+   belong to Factory Options Module.xlsx, a workbook that is not
+   here. "Additional Package Options" (OK): 819 cells, ONE distinct
+   value, and it is the header text — the owner asked about
+   packages and the column reserved for them is empty. The 80 PD
+   checklist columns and the four trailer slots OF..OI, which hold
+   "TRAILER NOT REQUIRED" on 811 of 812 live rows and nothing else.
+   Dealer-fit slots 18-42 are READ and never populated on any row.
+
+   Only what a seeded hull actually points at is imported from a
+   library: boat rows reach 7.0% of the 5,987 library rows, and
+   importing the three libraries whole would multiply the payload
+   14x while adding nothing any boat names.
 
    NOTE ON THE MOTOR WORKBOOK: `Motor Module (1).xlsx` in Downloads
    is a truncated download and will not open (BadZipFile). The
@@ -168,6 +230,13 @@ interface SeedColumn {
   /** reference columns only: the column on that table holding the natural
    *  key the workbook joins on (a name string, or the source cell address) */
   refKey?: string
+  /** reference columns only: this link is OPTIONAL. A pairing that leaves it
+   *  empty, or names something no seeded row carries, keeps the rest of itself
+   *  instead of being dropped — "no rigging kit" is an answer a boat row gives
+   *  411 times, and a pair that loses its motor because it has no kit would be
+   *  a worse lie than a missing link. The two links a pairing IS — the boat and
+   *  the partner — stay mandatory. */
+  soft?: boolean
 }
 
 interface SeedTable {
@@ -177,9 +246,13 @@ interface SeedTable {
   role: TableRole
   accent: AccentKey
   desc: string
+  /** history rather than stock — model.ts `EntityDef.retired`. Set where the
+   *  WHOLE table is below one of the workbooks' OBSOLETE dividers, not merely
+   *  where some of its rows are. */
+  retired?: boolean
   /** column keys forming the grouping levels, outermost first */
   levels: string[]
-  sections: Array<{ id: string; name: string; accent?: AccentKey }>
+  sections: Array<{ id: string; name: string; accent?: AccentKey; collapsed?: boolean }>
   cols: SeedColumn[]
   rows: Array<Record<string, SeedCell>>
   /** column key used to label rows elsewhere */
@@ -210,7 +283,15 @@ export function buildNorthsideProject(): NorthsideProject {
   const fieldId = new Map<string, string>()
   for (const t of TABLES) {
     entityId.set(t.k, newId())
-    for (const c of t.cols) fieldId.set(`${t.k}.${c.k}`, newId())
+    /* A column whose seed key starts `__` is one of the model's PAIR_FIELDS
+       and keeps that key AS its field id. `readPairs` looks the three up by
+       the literal strings `__origin` / `__recommended` / `__order`
+       (features/views/pairs.ts) — a minted id would be invisible to it, which
+       is exactly why the seed's own `rec` and `slot` columns left every quote
+       opening with an empty motor section. The ids are deliberately shared
+       across every join table; that is what makes a pair row readable without
+       a name lookup. */
+    for (const c of t.cols) fieldId.set(`${t.k}.${c.k}`, c.k.startsWith('__') ? c.k : newId())
   }
   const eid = (k: string): string => entityId.get(k) ?? ''
   const fid = (t: string, c: string): string => fieldId.get(`${t}.${c}`) ?? ''
@@ -220,6 +301,7 @@ export function buildNorthsideProject(): NorthsideProject {
     name: t.n,
     ...(t.kind ? { kind: t.kind } : {}),
     role: t.role,
+    ...(t.retired ? { retired: true } : {}),
     accent: t.accent,
     description: t.desc,
     displayFieldId: fid(t.k, t.display),
@@ -228,6 +310,7 @@ export function buildNorthsideProject(): NorthsideProject {
       id: s.id,
       name: s.name,
       ...(s.accent ? { accent: s.accent } : {}),
+      ...(s.collapsed ? { collapsed: true } : {}),
     })),
     position: t.pos,
     fields: t.cols.map((c): FieldDef => ({
@@ -293,10 +376,20 @@ export function buildNorthsideProject(): NorthsideProject {
         const raw = seed[c.k]
         const hit = typeof raw === 'string' ? byNaturalKey.get(`${c.ref}|${c.refKey}|${raw}`) : undefined
         if (!hit) {
+          /* A SOFT link that does not resolve leaves the cell EMPTY and the
+             pairing intact. It must never keep the raw text: a reference cell
+             holding a name instead of a row id is precisely the dangling
+             free-text join this table exists to replace. */
+          if (c.soft) {
+            delete resolved[c.k]
+            continue
+          }
           ok = false
           break
         }
-        if (typeof raw === 'string') names.push(raw)
+        /* The pairing's name is composed from the links that DEFINE it. A soft
+           link is a fact about the pairing, not one of its two sides. */
+        if (typeof raw === 'string' && !c.soft) names.push(raw)
         resolved[c.k] = hit
       }
       /* The pairing's own name, composed from the two display names the
@@ -431,6 +524,8 @@ def emit_col(c):
     if c.get("ref"):
         bits.append(f"ref: {ts_str(c['ref'])}")
         bits.append(f"refKey: {ts_str(c['refKey'])}")
+        if c.get("soft"):
+            bits.append("soft: true")
     return "      { " + ", ".join(bits) + " },"
 
 
@@ -455,12 +550,17 @@ def emit_row(cols, r):
 
 
 def main():
-    tables, sel = gen_all.main()
+    tables, sel, empty = gen_all.main()
 
     # positions
     boats = [t for t in tables if t["kind"] == "boat"]
     trls = [t for t in tables if t["kind"] == "trailer"]
-    mots = [t for t in tables if t["kind"] in ("motor", "accessory")]
+    mots = [t for t in tables if t["role"] == "base" and t["kind"] in ("motor", "accessory", "package")]
+    # The rate registers — Labour Rates, Oils & Consumables, Registration Costs.
+    # `custom` because none of the seven kinds describes a fee register and
+    # minting a kind for one table is how enums start (SERVICE_AND_THEMES §5.1).
+    # They need their own band or they would land at (0,0) under the boats.
+    rates = [t for t in tables if t["role"] == "base" and t["kind"] == "custom"]
     joins = [t for t in tables if t["role"] == "join"]
     # LAYOUT — the whole sheet must be framable on a laptop.
     # A single row per kind put 9 boats across 5,760px and the four bands
@@ -482,17 +582,21 @@ def main():
     y = lay(boats, 0)
     y = lay(trls, y)
     y = lay(mots, y)
+    y = lay(rates, y)
     lay(joins, y)
 
     # join reference wiring
     for t in joins:
         t["kind"] = None
+        soft = t.get("softrefs", ())
         cols = []
         for c in t["cols"]:
             c = dict(c)
             if c["k"] in t["refs"]:
                 c["ref"] = t["refs"][c["k"]]
                 c["refKey"] = t["refkeys"][c["k"]]
+                if c["k"] in soft:
+                    c["soft"] = True
             cols.append(c)
         # the pairing's own name, so a join row has something to be called
         label = dict(k="label", n="Label", t="text", s="pairing",
@@ -537,11 +641,15 @@ def main():
         buf.write(f"    role: {ts_str(t['role'])},\n")
         buf.write(f"    accent: {ts_str(t['accent'])},\n")
         buf.write(f"    desc: {ts_str(t['desc'])},\n")
+        if t.get("retired"):
+            buf.write("    retired: true,\n")
         buf.write(f"    levels: [{', '.join(ts_str(l) for l in t['levels'])}],\n")
         buf.write("    sections: [\n")
         for sid, sname in t["sections"]:
             acc = gen_all.SECTION_ACCENT.get(sid)
             extra = f", accent: {ts_str(acc)}" if acc else ""
+            if sid in gen_all.SECTION_COLLAPSED:
+                extra += ", collapsed: true"
             buf.write(f"      {{ id: {ts_str(sid)}, name: {ts_str(sname)}{extra} }},\n")
         buf.write("    ],\n")
         buf.write("    cols: [\n")
@@ -564,6 +672,9 @@ def main():
     print("bytes", len(text.encode("utf-8")))
     print("tables", len(tables), "rows", sum(len(t["rows"]) for t in tables))
     print("pool", len(pool))
+    print("joins", len(joins), "pairs", sum(len(t["rows"]) for t in joins))
+    for t in empty:
+        print("EMPTY IN THIS SUBSET:", t["name"])
 
 
 if __name__ == "__main__":

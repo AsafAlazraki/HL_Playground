@@ -7,13 +7,20 @@
    is picked — so an out-of-range item on the page is never a
    mystery, and never a silent contradiction of the rule.
 
+   ONE THING IS NOT AN ESCAPE HATCH. A row marked discontinued is
+   still LISTED here — this panel is the admin's, and hiding a row
+   from the person maintaining the page is how a page quietly stops
+   matching the sheet — but it cannot be picked, and it says why. The
+   block it would land on is a page a customer reads, and a pin is not
+   an argument that the business has resumed selling something.
+
    Typing in here stops every animation on the page.
    ============================================================ */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 import { MagnifyingGlass, Plus, X } from '@phosphor-icons/react'
-import { rowLabel, type CellValue, type EntityDef, type RowData } from '@/types/model'
+import { isDiscontinued, rowLabel, type CellValue, type EntityDef, type RowData } from '@/types/model'
 import { formatCell } from './columns'
 import { oneOf, singular } from './describe'
 import { useStillness } from './stillness'
@@ -110,14 +117,21 @@ export function AddPanel({
           {results.map((row) => {
             const here = presentIds.has(row.id)
             const inRule = fits(row)
+            const gone = isDiscontinued(row)
             return (
               <li key={row.id}>
                 <button
                   type="button"
                   className="vw-add-row"
-                  disabled={here}
+                  disabled={here || gone}
                   onClick={() => onPick(row.id)}
-                  title={here ? 'Already on this page' : `Add ${rowLabel(entity, row)}`}
+                  title={
+                    gone
+                      ? `${rowLabel(entity, row)} is no longer sold, so it cannot be put on a page a customer sees. Clear its Discontinued box on the sheet to bring it back.`
+                      : here
+                        ? 'Already on this page'
+                        : `Add ${rowLabel(entity, row)}`
+                  }
                 >
                   <span className="vw-add-plus" aria-hidden="true">
                     <Plus size={12} weight="bold" />
@@ -130,7 +144,9 @@ export function AddPanel({
                       </span>
                     ))}
                   </span>
-                  {here ? (
+                  {gone ? (
+                    <span className="vw-tag vw-tag--out">no longer sold</span>
+                  ) : here ? (
                     <span className="vw-tag vw-tag--quiet">already here</span>
                   ) : inRule ? null : (
                     <span className="vw-tag vw-tag--out">outside the rule</span>

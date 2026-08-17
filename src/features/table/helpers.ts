@@ -14,6 +14,7 @@ import type {
   RowData,
 } from '@/types/model'
 import { newId } from '@/lib/id'
+import { formatCell } from '@/features/views/columns'
 import {
   cellToText,
   formatNumber,
@@ -270,6 +271,43 @@ export function cellText(
 ): string {
   if (field.type === 'formula') return formulaText(value)
   return cellToText(value, field, refLabel)
+}
+
+/* ============================================================
+   WHAT A CELL PRINTS IS NOT WHAT A CELL COPIES.
+
+   `cellText` above is the CLIPBOARD text and the exact inverse of
+   `coerceCellText`, which is why it must keep printing 9097.1429:
+   a copy → paste round-trip has to be lossless, the editor has to
+   seed with the stored figure, and a person who types 41340 has to
+   store 41340.
+
+   What a DEALER reads is a different string. The register was
+   printing `9097.1429` in a column called Landed Hull Cost — four
+   decimal places, no currency mark, no thousands separator, in a
+   figure that gets read aloud to a customer.
+
+   There is exactly ONE money format in this app and it already lives
+   in `@/features/views/columns`: the same formatter the view pages,
+   the quote documents and the modules print with. This routes the
+   grid through it. It does not write a second one.
+   ============================================================ */
+
+/** The text a cell PAINTS, given the text it would COPY.
+ *
+ *  Only the two numeric column kinds are re-printed — a text column
+ *  that happens to hold digits is the author's own string and is
+ *  never regrouped behind their back. A non-finite formula result
+ *  keeps its raw text: a division by zero has to say so rather than
+ *  print an empty cell. */
+export function cellPrintText(
+  field: FieldDef,
+  value: CellValue,
+  text: string,
+): string {
+  if (field.type !== 'number' && field.type !== 'formula') return text
+  if (typeof value !== 'number' || !Number.isFinite(value)) return text
+  return formatCell(field, value)
 }
 
 /** The value one column shows for one row.

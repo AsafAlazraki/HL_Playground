@@ -24,6 +24,8 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Check, Gear, Plus, Warning, X } from '@phosphor-icons/react'
 import {
   accentVar,
+  isDiscontinued,
+  isRetired,
   rowLabel,
   type CellValue,
   type ClauseGroup,
@@ -35,6 +37,7 @@ import { ICON_SIZE } from '@/lib/icons'
 import { defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from './columns'
 import { levelCaption, levelOptions, levelValues, oneOf, rowsInScope, singular } from './describe'
 import { findJoinTable, makeEngine, type Ctx } from './pairs'
+import { retiredTablesSentence } from './sellable'
 import { addBlock, setBlockRule, useViewDef, walkBlocks } from './viewDefs'
 import { BlockCard, type PendingDrop } from './BlockCard'
 import { RuleOffer } from './RuleOffer'
@@ -106,8 +109,29 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
     if (!view || !root) return []
     const taken = new Set(view.blocks.map((b) => b.tableId))
     return Object.values(entities)
-      .filter((e) => e.role !== 'join' && e.id !== root.id && !taken.has(e.id))
+      .filter(
+        (e) =>
+          e.role !== 'join' &&
+          e.id !== root.id &&
+          !taken.has(e.id) &&
+          /* A RETIRED TABLE IS NEVER OFFERED as something that goes
+             with this one. It stays on the sheet — an old quote was
+             written against it — but this is a page a customer reads. */
+          !isRetired(e),
+      )
       .sort((a, b) => a.name.localeCompare(b.name))
+  }, [entities, view, root])
+
+  /** How many were left out of that list because they are history
+   *  rather than stock. Said out loud under the list, so a person who
+   *  can see the table in the panel behind this page is never left
+   *  wondering whether the app lost it. */
+  const retiredCount = useMemo(() => {
+    if (!view || !root) return 0
+    const taken = new Set(view.blocks.map((b) => b.tableId))
+    return Object.values(entities).filter(
+      (e) => e.role !== 'join' && e.id !== root.id && !taken.has(e.id) && isRetired(e),
+    ).length
   }, [entities, view, root])
 
   /* the safe answer is the narrow one, so the default is always
@@ -266,6 +290,20 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
           </button>
         </header>
 
+        {/* THE SUBJECT ITSELF IS HISTORY. Nothing sends a person here —
+            no module lists it and no block offers it — but the sheet
+            can still open it, so the page says what it is looking at
+            rather than presenting a discontinued hull as stock. */}
+        {isDiscontinued(row) || isRetired(root) ? (
+          <p className="vw-held" role="note">
+            {isRetired(root)
+              ? `${root.name} is history rather than stock, so nothing in it is listed in a module or offered on a page a customer reaches.`
+              : `${rowLabel(root, row)} is no longer sold, so it is not listed in a module and nothing offers it to a customer.`}{' '}
+            It stays on the sheet, and every quote already written against it still opens,
+            still totals and still prints.
+          </p>
+        ) : null}
+
         <AnimatePresence initial={false}>
           {configuring && levels.length > 1 ? (
             <motion.div
@@ -419,7 +457,9 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
 
                   {addable.length === 0 ? (
                     <p className="vw-add-none">
-                      Every other table is already on this page.
+                      {retiredCount > 0
+                        ? retiredTablesSentence(retiredCount)
+                        : 'Every other table is already on this page.'}
                     </p>
                   ) : (
                     <ul className="vw-add-list">
@@ -448,6 +488,10 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
                       ))}
                     </ul>
                   )}
+
+                  {addable.length > 0 && retiredCount > 0 ? (
+                    <p className="vw-add-none">{retiredTablesSentence(retiredCount)}</p>
+                  ) : null}
                 </section>
               ) : (
                 <button

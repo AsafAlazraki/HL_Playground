@@ -3,6 +3,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { seedWorkbookConstraints } from '@/features/constraints'
 import { StillnessProvider } from '@/features/views/stillness'
 import { Shell } from '@/app/Shell'
+import { UndoKeys } from '@/app/UndoKeys'
 
 export default function App() {
   const loaded = useProjectStore((s) => s.loaded)
@@ -44,6 +45,15 @@ export default function App() {
   return (
     <StillnessProvider>
       <Shell />
+      {/* UNDO IS BOUND HERE, NOT IN THE SHELL, for two reasons. It
+          belongs to the store rather than to any one screen — the
+          onboarding wizard is the only surface with nothing to undo,
+          and it has no data to lose either. And `Shell.tsx` states in
+          its own header that it binds no window key handler; that
+          decision is left standing rather than argued with in the file
+          that made it. `UndoKeys.tsx` explains what it does instead,
+          and why one chord in the capture phase is safe here. */}
+      <UndoKeys />
     </StillnessProvider>
   )
 }

@@ -31,6 +31,7 @@ import {
 import {
   accentVar,
   displayFieldOf,
+  isDiscontinued,
   rowLabel,
   type CellValue,
   type ClauseGroup,
@@ -54,6 +55,11 @@ import {
   type JoinRef,
   type RelatedRow,
 } from './pairs'
+import {
+  heldBackSentence,
+  retiredPairsSentence,
+  retiredTableSentence,
+} from './sellable'
 import { MAX_DEPTH, removeBlock, setBlockFilters, setBlockRule, updateBlock } from './viewDefs'
 import { AddPanel } from './AddPanel'
 import { RuleOffer } from './RuleOffer'
@@ -137,9 +143,17 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     [engine],
   )
 
-  const result = useMemo(() => {
+  const result = useMemo((): ReturnType<typeof relatedRows> => {
     if (!target) {
-      return { rows: [], removed: [], fitCount: 0, addedCount: 0, removedCount: 0 }
+      return {
+        rows: [],
+        removed: [],
+        fitCount: 0,
+        addedCount: 0,
+        removedCount: 0,
+        held: [],
+        heldCount: 0,
+      }
     }
     return relatedRows({
       ctx,
@@ -326,6 +340,18 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     result.addedCount,
     curated ? 'picked' : 'fit',
   )
+
+  /* NOTHING VANISHES SILENTLY. A block that would have offered eight
+     and offers six says so here, in words, with the reason and the
+     reassurance in the same breath — the count on its own is the
+     defect this sentence exists to fix. */
+  const joinName = join ? ctx.entities[join.entityId]?.name : undefined
+  const heldNote =
+    result.historic === 'table'
+      ? retiredTableSentence(target.name)
+      : result.historic === 'pairs'
+        ? retiredPairsSentence(target.name, joinName ?? 'That list')
+        : heldBackSentence(result.heldCount, target.name)
   const accent = accentVar(target.accent)
   const children = block.children ?? []
 
@@ -386,6 +412,7 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
           }
         >
           {chip}
+          {result.heldCount > 0 ? ` · ${result.heldCount} not sold` : ''}
           {filtering ? ` · ${shown.length} shown` : ''}
         </span>
         {depth > 2 && configuring ? (
@@ -668,7 +695,16 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
         </AnimatePresence>
       </ul>
 
-      {shown.length === 0 ? (
+      {/* THE ANSWER TO "WHERE DID THE TRAILER GO?" — drawn on the clean
+          page as well as in configure mode, because the person asking
+          is usually the salesperson looking at it. */}
+      {heldNote !== '' ? (
+        <p className="vw-held" role="note">
+          {heldNote}
+        </p>
+      ) : null}
+
+      {shown.length === 0 && !(heldNote !== '' && !filtering) ? (
         <p className="vw-empty">
           {filtering
             ? 'Nothing here matches what you are looking for.'

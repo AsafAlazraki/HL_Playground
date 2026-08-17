@@ -30,7 +30,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 import { CaretDown, CaretRight, Plus, Star, Warning, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
-import { OFFER_CAP, SUBJECT_BLOCK, candidatesFor, priceChanges, type PriceChange } from './freeze'
+import {
+  heldBackSentence,
+  retiredPairsSentence,
+  retiredTableSentence,
+} from '@/features/views/sellable'
+import {
+  OFFER_CAP,
+  SUBJECT_BLOCK,
+  candidateOffer,
+  priceChanges,
+  unsellableSubject,
+  type PriceChange,
+} from './freeze'
 import { money, parseAmount, quoteLevelChoices } from './pricing'
 import { lineAmount, linesOf, quoteTotals } from './totals'
 import {
@@ -85,11 +97,27 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
 
   const saveNote = persistNote()
 
+  /* THE LAST CHECKPOINT BEFORE A CUSTOMER SEES THIS. A live read, on
+     the DRAFT only: the subject was frozen onto the document when it
+     was minted and the document prints what it froze, so this can
+     never change a number — it is the sentence a salesperson needs
+     before pressing "Give it to the customer" on a hull the business
+     has stopped selling. `QuoteDocument` deliberately does not draw
+     it: an issued quote is a record of what was offered. */
+  const subjectNote = quote.state === 'draft' ? unsellableSubject(quote.rootTableId, quote.rootRowId) : ''
+
   return (
     <div className="qt-edit">
       <div className="qt-sheet">
         <span className="qt-tick qt-tick--tl" aria-hidden="true" />
         <span className="qt-tick qt-tick--tr" aria-hidden="true" />
+
+        {subjectNote !== '' ? (
+          <p className="qt-warn" role="status">
+            <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+            {subjectNote}
+          </p>
+        ) : null}
 
         {saveNote ? (
           <p className="qt-warn" role="status">
@@ -397,10 +425,23 @@ function SectionCard({
 
   /* LIVE READ, ON PURPOSE AND ONLY HERE. Deferred until the picker is
      open so a drawn quote never touches the store. */
-  const candidates = useMemo(
-    () => (picking ? candidatesFor(quote, section) : []),
+  const offer = useMemo(
+    () => (picking ? candidateOffer(quote, section) : { candidates: [], heldCount: 0 }),
     [picking, quote, section],
   )
+  const candidates = offer.candidates
+
+  /* WHAT THE PICKER REFUSED TO OFFER, in the same words the view page
+     uses. A menu that is quietly three items short is a menu nobody
+     can trust, and the salesperson looking at it is the person who
+     would otherwise have quoted a trailer the business stopped
+     selling. */
+  const refusedNote =
+    offer.historic === 'table'
+      ? retiredTableSentence(section.title)
+      : offer.historic === 'pairs'
+        ? retiredPairsSentence(section.title, 'The list it was picked from')
+        : heldBackSentence(offer.heldCount, section.title)
 
   return (
     <section className="qt-section">
@@ -426,9 +467,15 @@ function SectionCard({
             {section.pickedCount} {section.title} were picked for this one, so none was
             chosen for you — pick the one you are quoting. Starring it on the page makes
             it come across on its own next time.
+            {section.heldCount ? ` ${heldBackSentence(section.heldCount, section.title)}` : ''}
           </p>
         ) : (
-          <p className="qt-section-empty">Nothing from {section.title} on this quote yet.</p>
+          <p className="qt-section-empty">
+            Nothing from {section.title} on this quote yet.
+            {/* AND WHY THERE MIGHT BE NOTHING. Frozen at mint, so this
+                still reads true after the sheet changes. */}
+            {section.heldCount ? ` ${heldBackSentence(section.heldCount, section.title)}` : ''}
+          </p>
         )
       ) : null}
 
@@ -447,8 +494,9 @@ function SectionCard({
           </div>
           {candidates.length === 0 ? (
             <p className="qt-section-empty">
-              Nothing from {section.title} goes with this one yet. Set that up on the page that
-              says what goes with each one.
+              {refusedNote !== ''
+                ? refusedNote
+                : `Nothing from ${section.title} goes with this one yet. Set that up on the page that says what goes with each one.`}
             </p>
           ) : (
             <ul className="qt-picker-list">
@@ -490,6 +538,11 @@ function SectionCard({
               ))}
             </ul>
           )}
+          {candidates.length > 0 && refusedNote !== '' ? (
+            <p className="qt-section-empty" role="note">
+              {refusedNote}
+            </p>
+          ) : null}
           {candidates.length === OFFER_CAP ? (
             <p className="qt-section-empty mono-label">
               First {OFFER_CAP} — narrow the list on the sheet to see the rest

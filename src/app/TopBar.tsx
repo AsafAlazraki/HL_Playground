@@ -16,18 +16,41 @@
    14px SVGs used to live in this file — a fourth private copy of
    marks the app already had. Marks are library work now; this
    screen's job is layout and type.
+
+   AND ONE FIELD, WHICH IS THE ONE THING THIS BAR GAINED BACK.
+   With the real file loaded — 21 tables, 651 rows — the app had no
+   search anywhere: `querySelectorAll('input,textarea')` came back
+   empty and Ctrl+K opened nothing. Reaching one boat cost six
+   clicks, one dead end and a 1,203px scroll, and only worked
+   because the person already knew which of the 21 tables it was
+   in. The masthead is the only chrome on screen for all six stages
+   AND the sheet, so it is the only place a search field can be
+   unscoped. It sits in the actions compartment beside the one door
+   out; everything about how it behaves is `@/features/search`.
    ============================================================ */
 
 import { useRef, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ImportExportMenu } from '@/features/io'
+import { SearchField } from '@/features/search'
 import { ICON_SIZE, INDUSTRY_ICON, weightFor } from '@/lib/icons'
 import { INDUSTRIES } from '@/types/model'
 import type { IndustryKey } from '@/types/model'
 
 /* ------------------------------------------------------------ */
 
-export function TopBar() {
+export interface TopBarProps {
+  /** THE DOOR THE SEARCH FIELD NEEDS AND CANNOT OPEN ITSELF.
+   *  Choosing a result selects the table, and the sheet walks its
+   *  camera to it — but while a stage covers the sheet that pan
+   *  happens underneath something opaque. Only the shell knows a
+   *  stage is open and only the shell can close it, so the field
+   *  asks through here. Unset, the selection still lands and is
+   *  waiting the moment the stage is closed. */
+  onRevealTable?: (entityId: string) => void
+}
+
+export function TopBar({ onRevealTable }: TopBarProps = {}) {
   const org = useProjectStore((s) => s.meta.org)
   const projectName = useProjectStore((s) => s.meta.name)
   const setOrganisation = useProjectStore((s) => s.setOrganisation)
@@ -108,6 +131,7 @@ export function TopBar() {
       </div>
 
       <div className="shell-masthead-actions">
+        <SearchField onReveal={onRevealTable} />
         <ImportExportMenu />
       </div>
     </header>

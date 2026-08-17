@@ -68,7 +68,7 @@ import {
 } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 import { ArrowsInSimple, ArrowsOutSimple } from '@phosphor-icons/react'
-import { accentVar, type TableKind } from '@/types/model'
+import { accentVar, displayFieldOf, type TableKind } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   distinctValues,
@@ -270,6 +270,8 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
     slots: sectioned.slots,
     widths: colWidths,
     viewportRef,
+    /* the same column the grid freezes — see the pin note in `Grid` */
+    pinFieldId: entity ? displayFieldOf(entity)?.id : undefined,
   })
 
   const columns = useColumnCommands(entityId, pushToast)

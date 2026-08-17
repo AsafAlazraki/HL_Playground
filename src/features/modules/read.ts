@@ -24,6 +24,8 @@
    ============================================================ */
 
 import {
+  isDiscontinued,
+  isRetired,
   primaryImage,
   readCell,
   rowLabel,
@@ -36,6 +38,14 @@ import {
   type TableKind,
 } from '@/types/model'
 import { formatCell, normColumn } from '@/features/views/columns'
+/* the direct path, as `columns` already is: nothing here needs the
+   feature's React surface and a module must not pull ViewPage in to
+   count its rows */
+import {
+  heldBackRowCount,
+  sellableRowCount,
+  sellableTables,
+} from '@/features/views/sellable'
 import { isCostColumn, priceLevelsFor } from '@/features/quote'
 
 /* ---------------------------------------------------------- */
@@ -59,14 +69,39 @@ export function moduleTables(
   return out
 }
 
-/** Rows across every table in the module — the figure on the card. */
+/** The module's tables that a customer-facing surface may draw. A
+ *  retired table keeps its rows so an old quote still resolves; the
+ *  index simply never lists it and the card never counts it. */
+export function listedTables(
+  module: ModuleDef,
+  entities: Record<string, EntityDef>,
+): EntityDef[] {
+  return sellableTables(moduleTables(module, entities))
+}
+
+/** Rows across every table in the module — the figure on the card.
+ *
+ *  IT COUNTS WHAT THE INDEX WILL DRAW, which is why it needs the
+ *  tables and not just their rows: a card reading 40 over a page
+ *  drawing 39 is the disagreement this whole file exists to prevent,
+ *  and discontinued stock is now one more way to cause it. */
 export function moduleRowCount(
   module: ModuleDef,
+  entities: Record<string, EntityDef>,
   rowsByEntity: Record<string, RowData[]>,
 ): number {
-  let n = 0
-  for (const id of module.tableIds) n += rowsByEntity[id]?.length ?? 0
-  return n
+  return sellableRowCount(moduleTables(module, entities), rowsByEntity)
+}
+
+/** Rows the module holds back — discontinued rows on its live tables,
+ *  plus every row of a retired one. The number a card or an index
+ *  header states in words, so nothing vanishes silently. */
+export function moduleHeldCount(
+  module: ModuleDef,
+  entities: Record<string, EntityDef>,
+  rowsByEntity: Record<string, RowData[]>,
+): number {
+  return heldBackRowCount(moduleTables(module, entities), rowsByEntity)
 }
 
 /** The kind's own plural, as its author wrote it in TABLE_KINDS.
@@ -209,10 +244,19 @@ export function buildEntries(
 ): IndexEntry[] {
   const out: IndexEntry[] = []
   for (const entity of tables) {
+    /* A RETIRED TABLE LISTS NOTHING. It is history rather than stock,
+       and this list is the catalogue somebody shops. */
+    if (isRetired(entity)) continue
     const rows = rowsByEntity[entity.id] ?? []
     const price = priceReadOf(entity)
     const imgField = imageFieldOf(entity)
     for (const row of rows) {
+      /* DISCONTINUED NEVER REACHES A SALESPERSON. The row stays on the
+         sheet — an old quote was written against it — and the index,
+         which is a page a customer reads over a shoulder, never
+         offers it. The count held back is said in words by the
+         header, never left as a gap in the arithmetic. */
+      if (isDiscontinued(row)) continue
       const label = rowLabel(entity, row)
       /* A FORMULA PRICE PRINTS NOTHING. Formula cells are computed
          on read and are absent from `values` by design, so this

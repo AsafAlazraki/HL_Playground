@@ -582,6 +582,21 @@
   color: var(--ink-faint);
 }
 
+/* WHAT THIS CATALOGUE IS NOT SHOWING. Quieter than a warning —
+   nothing has gone wrong — but readable rather than decorative: the
+   person reading it is asking where a trailer went. */
+.md-held {
+  max-width: 1180px;
+  margin: 0 auto var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--hairline-strong);
+  background: var(--paper-sunken);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: var(--ui-m-lead);
+  color: var(--ink-soft);
+}
+
 .md-idx-find {
   position: relative;
   flex: 0 0 auto;
@@ -787,6 +802,579 @@
   border-top: 1px solid var(--hairline);
   text-align: center;
   color: var(--ink-faint);
+}
+
+/* ============================================================
+   THE DESIGNER — the handles the gear grows.
+
+   It is a strip UNDER the header, not a screen and not a modal,
+   because the page being set up must stay on screen while it is
+   set up. Everything in it is drawn in the chrome the rest of
+   this file already uses: sunken paper, hairlines, mono micro
+   labels, one accent. There is not a raw hex, a new font size or
+   a new colour here — every value is a token.
+   ============================================================ */
+
+/* -- the one control ----------------------------------------- */
+
+.md-gear {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: var(--micro-size);
+  font-weight: var(--micro-weight);
+  letter-spacing: var(--micro-track);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.md-gear:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.md-gear.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-high);
+}
+.md-gear.is-on:hover {
+  background: var(--blue-deep);
+  border-color: var(--blue-deep);
+  color: var(--paper-high);
+}
+
+/* -- the name and the sentence, as the fields they came from -- */
+
+/* SAME PLACE, SAME SIZE as the heading it replaces, so pressing the
+   gear does not move the page under the reader's eye. */
+.md-idx-name-edit {
+  width: 100%;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--display-m-size);
+  letter-spacing: var(--display-m-track);
+  line-height: var(--display-m-lead);
+  color: var(--ink);
+}
+
+.md-idx-desc-edit {
+  width: 100%;
+  margin-top: 4px;
+  resize: vertical;
+  font-family: var(--font-ui);
+  font-size: var(--ui-m-size);
+  letter-spacing: var(--ui-m-track);
+  line-height: var(--ui-m-lead);
+  color: var(--ink-soft);
+}
+
+/* -- the strip ----------------------------------------------- */
+
+.md-design {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: 1180px;
+  margin: 0 auto var(--sp-5);
+  animation: fade-in var(--t-fast) var(--ease-draft) both;
+}
+
+.md-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--paper-sunken);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--md-accent, var(--ink));
+  border-radius: var(--radius);
+}
+
+.md-panel-name {
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+.md-panel-say {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: var(--ui-s-lead);
+  color: var(--ink-soft);
+}
+
+.md-panel-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  padding: var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--red-wash);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: var(--ui-s-lead);
+  color: var(--ink);
+}
+
+/* -- a small square handle, used everywhere in here ---------- */
+
+.md-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-icon-btn:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+}
+.md-icon-btn--drop:hover:not(:disabled) {
+  color: var(--red);
+  border-color: var(--red);
+}
+.md-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.md-linkbtn {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  color: var(--blue-deep);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* -- the capability strip ------------------------------------ */
+
+.md-caps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--sp-2);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+.md-cap.is-refused {
+  background: var(--paper);
+}
+
+.md-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.md-switch:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* THE STATE IS THE KNOB'S POSITION, not a colour alone: a switch
+   read at a glance in a bright showroom must not depend on hue. */
+.md-switch-track {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 17px;
+  padding: 2px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 9px;
+  background: var(--paper-sunken);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-switch[aria-checked='true'] .md-switch-track {
+  background: var(--md-accent, var(--ink));
+  border-color: var(--md-accent, var(--ink));
+}
+
+.md-switch-knob {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--paper-high);
+  box-shadow: var(--e1);
+  transform: translateX(0);
+  transition: transform var(--t-fast) var(--ease-draft);
+}
+.md-switch[aria-checked='true'] .md-switch-knob {
+  transform: translateX(13px);
+}
+
+.md-cap-id {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.md-cap-label {
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  color: var(--ink);
+}
+
+.md-cap-says {
+  font-size: var(--ui-xs-size);
+  letter-spacing: var(--ui-xs-track);
+  line-height: var(--ui-xs-lead);
+  color: var(--ink-faint);
+}
+
+.md-cap-why,
+.md-cap-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 0;
+  font-size: var(--ui-xs-size);
+  letter-spacing: var(--ui-xs-track);
+  line-height: var(--ui-xs-lead);
+}
+.md-cap-why {
+  color: var(--ink);
+}
+.md-cap-note {
+  color: var(--ink-faint);
+}
+
+/* -- rows or tiles ------------------------------------------- */
+
+.md-shape {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.md-shape-btn {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1 1 200px;
+  padding: var(--sp-2);
+  text-align: left;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-shape-btn:hover {
+  border-color: var(--hairline-strong);
+}
+.md-shape-btn.is-on {
+  border-color: var(--md-accent, var(--ink));
+  box-shadow: inset 2px 0 0 var(--md-accent, var(--ink));
+}
+
+.md-shape-word {
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  color: var(--ink);
+}
+
+.md-shape-say {
+  font-size: var(--ui-xs-size);
+  letter-spacing: var(--ui-xs-track);
+  color: var(--ink-faint);
+}
+
+/* -- one table's binding, and one block ---------------------- */
+
+.md-binds,
+.md-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-bind,
+.md-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--sp-2);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+.md-bind.is-gone,
+.md-block.is-gone {
+  border-color: var(--red);
+}
+
+.md-bind-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.md-bind-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--md-accent, var(--ink-soft));
+}
+
+.md-bind-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  color: var(--ink);
+}
+
+.md-bind-count {
+  flex: 0 0 auto;
+  color: var(--ink-faint);
+}
+
+.md-bind-acts {
+  display: inline-flex;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.md-bind-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--sp-3);
+  margin: 0;
+  color: var(--ink-soft);
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+/* BOUND vs UNMAPPED. A resolved binding prints the column's own name;
+   an absent one prints the word for having none, dimmed — never a
+   blank, which reads as a rendering fault, and never a plausible
+   column name nobody chose. */
+.md-bound {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.md-bound.is-none {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.md-bound-word {
+  color: var(--ink-faint);
+}
+
+.md-bind-unmapped {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: var(--ui-s-lead);
+  text-transform: none;
+  color: var(--red);
+}
+
+/* -- the columns a block draws ------------------------------- */
+
+.md-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: var(--sp-2) 0 0;
+  border-top: 1px solid var(--hairline);
+  list-style: none;
+}
+
+.md-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 3px 5px;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+.md-col:hover {
+  background: var(--paper-sunken);
+  border-color: var(--hairline);
+}
+
+.md-col-tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 3px;
+  background: var(--paper-high);
+  color: var(--paper-high);
+}
+.md-col.is-on .md-col-tick {
+  background: var(--md-accent, var(--ink));
+  border-color: var(--md-accent, var(--ink));
+}
+
+/* the column's TYPE, in the one palette the whole app uses for it */
+.md-col-type {
+  flex: 0 0 auto;
+}
+
+.md-col-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  color: var(--ink);
+}
+
+/* -- which item page ----------------------------------------- */
+
+.md-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.md-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.md-tab.is-on {
+  border-color: var(--md-accent, var(--ink));
+  color: var(--ink);
+}
+
+/* -- adding a table, or a list ------------------------------- */
+
+.md-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+}
+
+.md-add-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  color: var(--ink-soft);
+}
+
+.md-add-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 240px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-add-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 4px 5px;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+.md-add-row:hover {
+  background: var(--paper-sunken);
+  border-color: var(--hairline);
+}
+
+.md-add-btn {
+  align-self: flex-start;
+}
+
+/* -- handles on the heading that is already there ------------ */
+
+.md-sec-acts {
+  display: inline-flex;
+  gap: 2px;
+  flex: 0 0 auto;
 }
 
 /* ============================================================

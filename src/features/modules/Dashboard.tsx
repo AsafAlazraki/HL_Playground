@@ -31,7 +31,7 @@ import {
 } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
-import { moduleRowCount, moduleTables } from './read'
+import { moduleHeldCount, moduleRowCount, moduleTables } from './read'
 import './modules.css'
 
 export interface DashboardProps {
@@ -102,7 +102,13 @@ export function Dashboard({ onOpen, onNew }: DashboardProps): ReactElement {
               <Card
                 key={m.id}
                 module={m}
-                rowCount={moduleRowCount(m, rowsByEntity)}
+                /* THE CARD COUNTS WHAT THE PAGE WILL DRAW. Discontinued
+                   rows and retired tables are held back by the index, so
+                   they are held back here too — a card reading 40 over a
+                   page drawing 39 is exactly the disagreement `read.ts`
+                   exists to prevent. */
+                rowCount={moduleRowCount(m, entities, rowsByEntity)}
+                heldCount={moduleHeldCount(m, entities, rowsByEntity)}
                 master={moduleTables(m, entities)[0]}
                 tableCount={m.tableIds.length}
                 onOpen={onOpen}
@@ -134,6 +140,10 @@ export function Dashboard({ onOpen, onNew }: DashboardProps): ReactElement {
 interface CardProps {
   module: ModuleDef
   rowCount: number
+  /** rows this module holds back because they are no longer sold.
+   *  Stated on the card rather than subtracted in silence — the
+   *  count on its own is what makes somebody think rows were lost. */
+  heldCount: number
   /** the primary table — `tableIds[0]`, and the one whose kind mark
    *  the card wears. Undefined when it has been deleted from under
    *  the module, which the card states rather than hiding. */
@@ -145,6 +155,7 @@ interface CardProps {
 function Card({
   module,
   rowCount,
+  heldCount,
   master,
   tableCount,
   onOpen,
@@ -159,7 +170,11 @@ function Card({
         /* NAMED EXPLICITLY. The card is six spans — a mark, a count, a
            name, a sentence, a provenance line and a row of verbs — and
            a reader announcing them run together is not a name. */
-        aria-label={`Open ${module.name}`}
+        aria-label={
+          heldCount > 0
+            ? `Open ${module.name}, ${rowCount} for sale, ${heldCount} no longer sold`
+            : `Open ${module.name}`
+        }
         onClick={() => onOpen(module.id)}
       >
         <span className="md-card-top">
@@ -168,8 +183,13 @@ function Card({
                 everywhere else — the same boat, whatever screen it is on. */}
             <TableKindSymbol kind={kindOf(master?.kind)} size={ICON_SIZE.medium} />
           </span>
+          {/* THE COUNT SAYS WHAT IT LEFT OUT. Six fewer than the sheet
+              holds is a question a person asks once and then stops
+              trusting the number; "645 items · 6 not sold" is an
+              answer they can act on. */}
           <span className="md-card-count mono-label">
             {rowCount} {rowCount === 1 ? 'item' : 'items'}
+            {heldCount > 0 ? ` · ${heldCount} not sold` : ''}
           </span>
         </span>
 

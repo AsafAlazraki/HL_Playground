@@ -153,6 +153,37 @@ export interface ColumnLayout {
   total: number
 }
 
+/** Where the pinned display column's slot sits in `placed`, or -1.
+ *  Keyed on the FIELD, never on a column index: folding a band
+ *  renumbers the columns and an index captured a render ago would then
+ *  pin the wrong one. */
+function pinIndexOf(
+  placed: readonly PlacedSlot[],
+  pinFieldId: string | undefined,
+): number {
+  if (pinFieldId === undefined) return -1
+  for (let i = 0; i < placed.length; i += 1) {
+    const slot = placed[i].slot
+    if (slot.kind === 'field' && slot.field.id === pinFieldId) return i
+  }
+  return -1
+}
+
+/** How much width the pinned display column holds against the left
+ *  edge — 0 when nothing is pinned (no display column, or its band is
+ *  folded away).
+ *
+ *  Anything that scrolls a column to the left edge has to subtract
+ *  this, or it parks the thing it just revealed UNDER the pin, which
+ *  is the failure the pin exists to prevent turned inside out. */
+export function pinWidthOf(
+  layout: ColumnLayout,
+  pinFieldId: string | undefined,
+): number {
+  const i = pinIndexOf(layout.placed, pinFieldId)
+  return i < 0 ? 0 : layout.placed[i].w
+}
+
 /* ============================================================
    A FOLDED SHAPE YOU HAVE TO SCROLL IS NOT A SHAPE.
 
@@ -234,35 +265,43 @@ export function layoutColumns(
    row stays a flex row of the same total width and the header, the
    band row and the data rows can never drift apart.
 
-   Two slots are always drawn whatever the scroll position:
+   Three slots are always drawn whatever the scroll position:
 
      THE LOCKED IDENTIFIER. Slot 0 is the row's permanent id. It is
-     the one column that says WHICH row you are looking at, it is
      addressed as column 0 by every keyboard, paste and fill path, and
      it is never allowed to leave the DOM.
 
+     THE PINNED DISPLAY COLUMN. The one column that says WHICH row you
+     are looking at by NAME. It is drawn `position: sticky`, and a
+     sticky element that has been windowed out of the DOM sticks to
+     nothing — so it is kept here for exactly the same reason the
+     identifier is.
+
      THE LIVE EDITOR'S COLUMN, when there is one. An editor that
      unmounted mid-keystroke because the sheet scrolled would commit
-     on the blur it caused; `keepCol` makes that unrepresentable.
+     on the blur it caused; `editCol` makes that unrepresentable.
+
+   The result is the row's whole lay-out, gaps included, rather than
+   four fields the caller has to assemble: with two slots that can be
+   dragged forward out of order there is dead width BETWEEN them as
+   well as either side, and a caller that forgot one would draw a row
+   narrower than the sheet says it is.
 
    Pure — no DOM, no React. Same file as the rest of the column
    geometry so the three can never disagree.
    ============================================================ */
 
-export interface ColumnWindow {
-  /** slot 0 when it is outside the window — drawn anyway, in place */
-  lead: PlacedSlot | null
-  /** skipped width between the lead and the first drawn slot */
-  padLeft: number
-  /** the slots to draw, in order */
-  drawn: PlacedSlot[]
-  /** skipped width after the last drawn slot */
-  padRight: number
-}
+/** One thing a row lays out: a drawn column, or the dead width of the
+ *  columns the window skipped. A gap carries no `data-r`/`data-c`, so
+ *  it is not a cell, cannot be selected and cannot be typed into. */
+export type DrawItem =
+  | { kind: 'slot'; placed: PlacedSlot }
+  | { kind: 'gap'; w: number; key: string }
 
-const NO_SLOTS: PlacedSlot[] = []
+const asSlot = (placed: PlacedSlot): DrawItem => ({ kind: 'slot', placed })
 
-/** The slots crossing `[scrollLeft, scrollLeft + available]`.
+/** The slots crossing `[scrollLeft, scrollLeft + available]`, in draw
+ *  order, with every skipped run held open as one gap.
  *
  *  `available` is the scroller's own client width; an unmeasured
  *  scroller (0) draws everything rather than nothing, which is what
@@ -272,18 +311,14 @@ export function windowColumns(
   scrollLeft: number,
   available: number,
   overscan: number,
-  keepCol?: number,
-): ColumnWindow {
+  editCol?: number,
+  pinFieldId?: string,
+): DrawItem[] {
   const placed = layout.placed
   const n = placed.length
-  if (n === 0) return { lead: null, padLeft: 0, drawn: NO_SLOTS, padRight: 0 }
+  if (n === 0) return []
 
-  const all = (): ColumnWindow => ({
-    lead: null,
-    padLeft: 0,
-    drawn: placed,
-    padRight: 0,
-  })
+  const all = (): DrawItem[] => placed.map(asSlot)
   if (!Number.isFinite(available) || available <= 0) return all()
 
   /* the frozen gutter covers the first `GUTTER_W` of the window, so a
@@ -299,10 +334,10 @@ export function windowColumns(
   from = Math.max(0, from - overscan)
   to = Math.min(n, to + overscan)
 
-  if (keepCol !== undefined) {
+  if (editCol !== undefined) {
     for (let i = 0; i < n; i += 1) {
       const slot = placed[i].slot
-      if (slot.kind === 'field' && slot.col === keepCol) {
+      if (slot.kind === 'field' && slot.col === editCol) {
         if (i < from) from = i
         if (i >= to) to = i + 1
         break
@@ -318,15 +353,33 @@ export function windowColumns(
   }
   if (from === 0 && to === n) return all()
 
-  const lead = from > 0 ? placed[0] : null
-  const startX = placed[from].x
-  const endSlot = placed[to - 1]
-  return {
-    lead,
-    padLeft: lead ? Math.max(0, startX - (lead.x + lead.w)) : Math.max(0, startX),
-    drawn: placed.slice(from, to),
-    padRight: Math.max(0, layout.total - (endSlot.x + endSlot.w)),
+  /* Slots dragged forward out of the window. The identifier is slot 0
+     and comes first by construction; the pin is only added when it is
+     a DIFFERENT slot that the window has already left behind — which
+     is what stops it being drawn twice when the display column is
+     itself the first column, or is still on screen. */
+  const ahead: number[] = []
+  if (from > 0) ahead.push(0)
+  const pin = pinIndexOf(placed, pinFieldId)
+  if (pin > 0 && pin < from) ahead.push(pin)
+
+  const items: DrawItem[] = []
+  let filled = 0
+  for (const i of ahead) {
+    const p = placed[i]
+    if (p.x > filled) items.push({ kind: 'gap', w: p.x - filled, key: `gap:${filled}` })
+    items.push(asSlot(p))
+    filled = p.x + p.w
   }
+
+  const startX = placed[from].x
+  if (startX > filled) items.push({ kind: 'gap', w: startX - filled, key: 'gap:l' })
+  for (let i = from; i < to; i += 1) items.push(asSlot(placed[i]))
+
+  const endSlot = placed[to - 1]
+  const tail = layout.total - (endSlot.x + endSlot.w)
+  if (tail > 0) items.push({ kind: 'gap', w: tail, key: 'gap:r' })
+  return items
 }
 
 /* ---------------------------------------------------------- */
@@ -396,18 +449,41 @@ export interface HeaderBand {
   /** absent = a run of columns in no band: drawn plainly, no header */
   section?: ColumnSection
   collapsed: boolean
-  /** how many columns this band covers */
+  /** how many columns this band covers — the aria-colspan */
   count: number
+  /** how many columns the whole RUN holds when the pin cut it in
+   *  half. The fold control still folds the entire section, so it has
+   *  to keep saying "11 columns" on a piece that spans one. */
+  runCount?: number
   /** first addressable column of the run, for aria-colindex */
   from: number
   x: number
   w: number
+  /** this run is exactly the pinned display column, and freezes with
+   *  it — so the pin never sits under another section's name */
+  pinned?: true
+  /** what is left of a run the pin cut in half: draws its section's
+   *  ink and stays the fold control, but does NOT repeat the name.
+   *  A section names itself ONCE, on the piece that is always on
+   *  screen — three IDENTITY labels in a row read as three sections. */
+  muted?: true
 }
 
 /** One entry per drawn run. Consecutive columns of the same band
  *  merge; a folded chip is its own run; everything unbanded merges
- *  into runs of its own so the caller draws nothing over it. */
-export function bandsOf(layout: ColumnLayout): HeaderBand[] {
+ *  into runs of its own so the caller draws nothing over it.
+ *
+ *  THE PINNED COLUMN BREAKS ITS RUN. A frozen column carries its own
+ *  header, or the reader is looking at a name that belongs to whatever
+ *  band happened to scroll under it. So the run holding the pin is cut
+ *  into up to three: what is before it, the pin on its own (frozen
+ *  with the column), and what is after. Every piece keeps the section
+ *  it always had and the same total width, so the heading row and the
+ *  data rows still line up to the pixel. */
+export function bandsOf(
+  layout: ColumnLayout,
+  pinFieldId?: string,
+): HeaderBand[] {
   const out: HeaderBand[] = []
   let open: HeaderBand | null = null
 
@@ -425,12 +501,13 @@ export function bandsOf(layout: ColumnLayout): HeaderBand[] {
       })
       continue
     }
-    if (open && open.section?.id === slot.section?.id) {
+    const isPin = pinFieldId !== undefined && slot.field.id === pinFieldId
+    if (!isPin && open && open.section?.id === slot.section?.id) {
       open.count += 1
       open.w = x + w - open.x
       continue
     }
-    open = {
+    const band: HeaderBand = {
       key: slot.section ? `b:${slot.section.id}:${x}` : `p:${x}`,
       ...(slot.section ? { section: slot.section } : {}),
       collapsed: false,
@@ -438,8 +515,34 @@ export function bandsOf(layout: ColumnLayout): HeaderBand[] {
       from: slot.col,
       x,
       w,
+      ...(isPin ? { pinned: true as const } : {}),
     }
-    out.push(open)
+    out.push(band)
+    /* a pinned run is closed the moment it opens: the column after it
+       starts a fresh run of the same section rather than joining the
+       frozen one and being dragged out of place with it */
+    open = isPin ? null : band
+  }
+
+  /* The pin cuts at most one same-section piece off each side of its
+     run — a pinned run closes immediately, so only the neighbours can
+     be halves of the run it split. They keep their ink and their fold
+     control and give up the name. */
+  const at = out.findIndex((b) => b.pinned === true)
+  const cut = at < 0 ? undefined : out[at].section?.id
+  if (cut !== undefined) {
+    const pieces = [out[at]]
+    for (const side of [out[at - 1], out[at + 1]]) {
+      if (side && !side.collapsed && side.section?.id === cut) {
+        side.muted = true
+        pieces.push(side)
+      }
+    }
+    /* every piece names the whole run: the fold control on any of them
+       folds all of it, and a tooltip that promised "1 column" while
+       folding eleven would be a lie about what the press does */
+    const runCount = pieces.reduce((n, p) => n + p.count, 0)
+    for (const p of pieces) p.runCount = runCount
   }
 
   return out

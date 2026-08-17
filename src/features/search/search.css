@@ -1,0 +1,339 @@
+/* ============================================================
+   search — the masthead field and the answer that hangs off it.
+
+   All classes are hs- prefixed. Every colour, size, tracking and
+   step comes from tokens.css; nothing here invents one. The visual
+   language is borrowed wholesale from the two surfaces this sits
+   between — the masthead's compartments and io.css's popover — so
+   the field reads as part of the title block rather than as a
+   guest in it.
+   ============================================================ */
+
+.hs-root {
+  position: relative;
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* -- the field ----------------------------------------------
+   A WELL, NOT A BOX. --paper-sunken is the token for "you may
+   type into this"; the masthead is --paper-high, so the field
+   reads as recessed into the title block without a second border
+   weight being invented for it. */
+.hs-input {
+  width: clamp(132px, 20vw, 244px);
+  min-width: 0;
+  height: 30px;
+  /* the glyph occupies the left inset and the hint the right */
+  padding: 0 46px 0 30px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-sunken);
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  line-height: var(--ui-lead);
+  color: var(--ink);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.hs-input::placeholder {
+  color: var(--ink-faint);
+}
+.hs-input:hover {
+  border-color: var(--hairline-strong);
+}
+.hs-input:focus {
+  background: var(--paper-high);
+  border-color: var(--blue);
+}
+
+/* A REAL FOCUS RING. The audit counted 29 of 88 tab stops with no
+   focus indicator at all; the one control added to the masthead is
+   not joining them. Stated here rather than left to base.css's
+   global rule so the offset clears the recessed well instead of
+   cutting into it. */
+.hs-input:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.hs-glyph {
+  position: absolute;
+  left: var(--sp-2);
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+.hs-root:focus-within .hs-glyph {
+  color: var(--blue);
+}
+
+/* the shortcut, stamped like every other micro-label in the app */
+.hs-kbd {
+  position: absolute;
+  right: 7px;
+  padding: 1px 4px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--micro-s-size);
+  font-weight: var(--micro-weight);
+  letter-spacing: var(--micro-s-track);
+  line-height: var(--micro-lead);
+  color: var(--ink-faint);
+  background: var(--paper-high);
+  pointer-events: none;
+  user-select: none;
+}
+.hs-root:focus-within .hs-kbd {
+  opacity: 0;
+}
+
+/* the stamp is the first thing to go when the window narrows; the
+   field itself never is — it is the whole point of this pass */
+@media (max-width: 900px) {
+  .hs-kbd {
+    display: none;
+  }
+  .hs-input {
+    padding-right: var(--sp-2);
+  }
+}
+
+/* -- the answer ----------------------------------------------
+   THE SAME MATERIAL AS io.css, FOR THE SAME REASON. It is summoned
+   by a press, its backdrop is the blueprint, and that backdrop is
+   static the whole time it is open — so the blur is rasterised once
+   and never invalidated. It is legal only because the masthead
+   itself is paint: glass on glass would separate from its ground at
+   1.07:1, which is not a weaker surface but no surface.
+
+   --ec2 rather than --shadow-popover, because this stands on the
+   navy where every --ink-built shadow is shadow-coloured light on
+   shadow-coloured ground. */
+.hs-pop {
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  right: 0;
+  width: min(420px, calc(100vw - var(--sp-6)));
+  display: flex;
+  flex-direction: column;
+  max-height: min(560px, calc(100vh - 96px));
+  background: var(--mat-light-bg);
+  backdrop-filter: var(--mat-light-blur);
+  -webkit-backdrop-filter: var(--mat-light-blur);
+  border: 1px solid var(--mat-light-edge);
+  border-radius: var(--radius);
+  box-shadow: var(--ec2);
+  z-index: 60;
+  animation: sheet-in var(--t-med) var(--ease-draft);
+  overflow: hidden;
+}
+
+/* GLASS IS PERMITTED ONLY OVER THE CANVAS. Every stage covers the
+   sheet with a --paper surface, and this field hangs off the
+   masthead so it opens over whichever of those is up. Same state
+   io.css keys on — the `inert` the shell already sets on the sheet
+   the moment a stage covers it — rather than a second flag that can
+   disagree with it. */
+.shell-root:has(.shell-sheet-layer[inert]) .hs-pop {
+  background: var(--paper-high);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: var(--hairline-strong);
+  box-shadow: var(--e3);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .hs-pop {
+    background: var(--paper-high);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .hs-pop {
+    background: var(--paper-high);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: var(--ink);
+  }
+}
+
+.hs-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hs-list:empty {
+  display: none;
+}
+
+.hs-group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hs-section + .hs-section {
+  border-top: 1px solid var(--hairline);
+}
+
+/* -- the group heading: the lesson ---------------------------
+   Name, kind mark, count. This is the line that answers "which of
+   21 tables does this live in", so it is inked with the table's own
+   accent rather than left as another grey subhead. */
+.hs-head {
+  /* STICKY, BECAUSE THE NAME IS THE ANSWER. A row scrolled away from
+     its heading is a row that has stopped saying which table it is
+     in — the exact failure this whole field exists to fix.
+
+     AND OPAQUE, NOT A SECOND SHEET OF GLASS. Painted at the
+     popover's own --mat-light-bg the rows scrolling underneath
+     ghosted through it at 18% — measured on screen, "B-B-B" legible
+     through the word HIGHFIELD. Stacking a second translucent layer
+     to close that gap is the one thing apple-design §12 rules out,
+     so the shelf is paint: it is 11px of stamp on a 30px band, and
+     the material is spent on the 560px of list below it where there
+     is actually something to see through. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper-high);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) 4px;
+  font-family: var(--font-ui);
+  font-variation-settings: 'wdth' 118;
+  font-size: var(--stamp-s-size);
+  font-weight: var(--stamp-weight);
+  letter-spacing: var(--stamp-s-track);
+  line-height: var(--stamp-lead);
+  text-transform: uppercase;
+  color: var(--hs-ink, var(--ink-soft));
+}
+.hs-head--plain {
+  /* the TABLES group names no single table, so it takes no accent */
+  color: var(--ink-soft);
+}
+.hs-head-mark {
+  flex: none;
+  display: inline-flex;
+  color: var(--hs-ink, var(--ink-soft));
+}
+.hs-head-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hs-head-count {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+
+/* -- one answer ---------------------------------------------- */
+.hs-opt {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 5px var(--sp-3) 5px var(--sp-4);
+  cursor: pointer;
+  /* the active bar rides in the left inset, so nothing moves when
+     the cursor walks the list */
+  box-shadow: inset 2px 0 0 transparent;
+}
+/* a row sits one step in from its heading, and carries the kind mark
+   in that step — so the line itself still says WHAT it is, not only
+   what it is called */
+.hs-opt--row {
+  padding-left: var(--sp-3);
+}
+.hs-opt.is-active {
+  background: var(--blue-wash);
+  box-shadow: inset 2px 0 0 var(--blue);
+}
+
+.hs-opt-mark {
+  flex: none;
+  align-self: center;
+  /* a fixed gutter, so every label in a group starts on one line
+     however wide the mark it is given happens to be */
+  width: var(--sp-4);
+  display: inline-flex;
+  justify-content: center;
+  color: var(--hs-ink, var(--ink-soft));
+  opacity: 0.75;
+}
+.hs-opt-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ui-m-size);
+  line-height: var(--ui-m-lead);
+  letter-spacing: var(--ui-m-track);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hs-opt-where {
+  flex: none;
+  max-width: 42%;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* THE MATCHED RUN. <mark>'s user-agent style is a yellow highlight
+   from a different century; this ink is the app's own pen, and the
+   weight does the work the background used to. */
+.hs-mark {
+  background: none;
+  color: var(--blue-deep);
+  font-weight: 600;
+}
+
+.hs-more {
+  padding: 3px var(--sp-3) var(--sp-2) calc(var(--sp-3) + var(--sp-4));
+  color: var(--ink-faint);
+}
+
+/* -- what to do next ------------------------------------------
+   Both the empty state and the no-results state end in an
+   instruction. A dead-end panel that only says "no results" is the
+   same dead end the audit measured, moved one screen later. */
+.hs-say {
+  flex: none;
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
+  font-size: var(--ui-size);
+  line-height: var(--ui-lead);
+  letter-spacing: var(--ui-track);
+  color: var(--ink-soft);
+}
+.hs-say-count {
+  display: block;
+  margin-top: var(--sp-2);
+  color: var(--ink-faint);
+}
+
+.hs-foot {
+  flex: none;
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-pop {
+    animation: none;
+  }
+}

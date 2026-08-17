@@ -38,6 +38,109 @@ export interface Selection {
 
 export type InspectorTab = 'schema' | 'data'
 
+/* ============================================================
+   UNDO — history over the DATA, and over nothing else.
+
+   WHAT IT COVERS, and why exactly this line. A cell edit committed
+   silently and permanently; Ctrl+Z did nothing; the store had no
+   history key at all. The rule drawn here is:
+
+     A STEP IS RECORDED WHEN THE ACT DESTROYS SOMETHING A PERSON
+     CANNOT SEE ANY MORE.
+
+   Cell edits, add/delete row, add/rename/retype/reorder/delete
+   column, add/delete table, and paste — those are the acts where a
+   dealership's real price file loses work. Every one of them is
+   recorded.
+
+   WHAT IT DELIBERATELY DOES NOT COVER, and why. Where a table sits
+   on the blueprint (`moveEntity`), where a zone sits or how big it
+   is (`updateGroup`), where a rule node sits (`moveRuleNode`),
+   what is selected, which stage is open, which section is folded.
+   None of those destroy anything: the drawing is on screen, and a
+   drag is re-draggable in the second it took to make. Recording
+   them is how an undo stack becomes useless — fifty entries deep in
+   scroll positions, with the cell edit you actually wanted back
+   pushed off the bottom. "Undo" has never meant "un-scroll".
+
+   Views, modules and rules are also out for this pass. They are
+   configuration surfaces with their own confirm gates, and they are
+   the obvious next ring — the machinery below takes them with one
+   `record()` call each when somebody decides they belong.
+
+   ONE ACT IS ONE STEP. A paste is forty `updateCell` calls and a
+   dozen `addRow`s; deleting eight selected rows is eight
+   `deleteRow`s; applying a structure preset is a run of field
+   moves. The call sites for those live in files this session does
+   not own, so the grouping cannot be a `transact()` wrapper they
+   opt into — it is done HERE, by noticing that every one of them is
+   a single synchronous loop inside one event handler. All the
+   recording that happens in one turn of the event loop collapses
+   into one entry, closed on the following microtask. A second
+   keypress is a second turn, so it is a second step.
+
+   TYPED TEXT IS ALSO ONE STEP. A few surfaces write on every
+   keystroke (a table's description box, a column's option list), so
+   an op may carry a coalescing `key`: consecutive single-op steps
+   with the same key, inside TYPING_MS, fold into the one that is
+   already on the stack — which keeps its original `before`, so
+   undoing gives back the whole word rather than its last letter.
+
+   THE STACK IS BOUNDED AT 50. Say the number and defend it: fifty
+   is past anything a person holds in their head, and it is what
+   bounds the memory. The entries are cheap because the state is
+   immutable and structurally shared — an entry keeps six object
+   references, and the only thing it actually retains is whatever
+   that step replaced. A cell edit retains one row array (651
+   pointers, ~5 KB); the expensive step is a column retype, which
+   rewrites every row object on the table (~130 KB on the largest
+   seeded table). Fifty of the worst case is single-digit megabytes
+   with a hard ceiling; unbounded history over 651 rows of image
+   cells is a leak with a nice name.
+
+   A PROJECT SWAP CLEARS BOTH STACKS. `replaceProject` (import, a
+   demo set, the sample), `resetProject` and `init` are not steps —
+   they are a different project. Undoing into a project that is no
+   longer open would restore tables the views and modules on screen
+   have never heard of, and each swap left on the stack would pin a
+   whole previous workbook in memory. A new document has no past.
+   ============================================================ */
+
+/** the six maps history restores — everything that is project DATA.
+ *  `meta`, `selection` and `inspectorTab` are deliberately not in it. */
+type DataSlice = Pick<
+  ProjectStore,
+  'entities' | 'groups' | 'rules' | 'rowsByEntity' | 'views' | 'modules'
+>
+
+export interface HistoryEntry {
+  /** what a person would call it — "40 cell edits · Boats" */
+  label: string
+  /** the data as it stood BEFORE this step */
+  before: DataSlice
+  /** coalescing identity, or '' for a step that never merges */
+  sig: string
+  /** when it was recorded, for the typing window */
+  at: number
+}
+
+/** One recorded act, in the words the toast will use. */
+interface Op {
+  /** singular form: "Cell edit", "Row deleted" */
+  one: string
+  /** plural form when a burst held several of exactly this op */
+  many?: (n: number) => string
+  /** the table it happened in, resolved BEFORE the mutation ran */
+  where?: string
+  /** set only for per-keystroke writes — see TYPING_MS above */
+  key?: string
+}
+
+/** See the defence above. Fifty steps, hard ceiling. */
+export const HISTORY_DEPTH = 50
+/** consecutive same-key steps closer together than this are one step */
+const TYPING_MS = 900
+
 interface ProjectStore {
   loaded: boolean
   meta: ProjectMeta
@@ -48,6 +151,16 @@ interface ProjectStore {
   rowsByEntity: Record<string, RowData[]>
   selection: Selection | null
   inspectorTab: InspectorTab
+
+  /* undo — oldest first, so the last element is the next step back */
+  past: HistoryEntry[]
+  future: HistoryEntry[]
+  /** Reverts the last recorded change and returns its label, so the
+   *  caller can SAY what was undone. null when there was nothing. */
+  undo: () => string | null
+  /** Puts back the last undone change; null when there was nothing.
+   *  The redo stack is cleared by any new recorded change. */
+  redo: () => string | null
 
   /* lifecycle */
   init: () => Promise<void>
@@ -208,6 +321,34 @@ const touch = <T extends { updatedAt: string }>(obj: T): T => ({
   updatedAt: nowIso(),
 })
 
+const sliceOf = (s: ProjectStore): DataSlice => ({
+  entities: s.entities,
+  groups: s.groups,
+  rules: s.rules,
+  rowsByEntity: s.rowsByEntity,
+  views: s.views,
+  modules: s.modules,
+})
+
+/** "Row deleted · Trailers" · "40 cell edits · Boats" · "12 changes" */
+function labelFor(ops: Op[]): string {
+  const first = ops[0]
+  const where = ops.every((o) => o.where === first.where) ? first.where : undefined
+  const body =
+    ops.length === 1
+      ? first.one
+      : ops.every((o) => o.one === first.one) && first.many
+        ? first.many(ops.length)
+        : `${ops.length} changes`
+  return where ? `${body} · ${where}` : body
+}
+
+/** two cell values that are the same value. Two distinct arrays are
+ *  never assumed equal — a picture list is re-ordered in place by
+ *  building a new one, and calling that "unchanged" would lose it. */
+const cellUnchanged = (a: CellValue | undefined, b: CellValue): boolean =>
+  a === b || (a == null && b == null)
+
 export const useProjectStore = create<ProjectStore>()((set, get) => {
   /** wrap a mutation so it also stamps meta.updatedAt and persists */
   const mutate = (fn: (s: ProjectStore) => Partial<ProjectStore>) => {
@@ -220,7 +361,105 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     schedulePersist(get)
   }
 
+  /* -- history: one turn of the event loop is one step ---------- */
+
+  /** ops recorded so far in the open burst */
+  let burstOps: Op[] = []
+  /** the data as it stood before the FIRST of them */
+  let burstBefore: DataSlice | null = null
+  /** bumped whenever a burst closes, so a microtask queued for a burst
+   *  that has already been flushed by hand finds itself stale */
+  let burstSeq = 0
+
+  const closeBurst = () => {
+    burstSeq += 1
+    const before = burstBefore
+    const ops = burstOps
+    burstBefore = null
+    burstOps = []
+    if (!before || ops.length === 0) return
+
+    const at = Date.now()
+    /* only a lone per-keystroke op can continue the step above it */
+    const sig = ops.length === 1 ? (ops[0].key ?? '') : ''
+    set((s) => {
+      const top = s.past[s.past.length - 1]
+      const merge = sig !== '' && top?.sig === sig && at - top.at < TYPING_MS
+      const past = merge
+        ? [...s.past.slice(0, -1), { ...top, at }]
+        : [...s.past, { label: labelFor(ops), before, sig, at }].slice(-HISTORY_DEPTH)
+      /* ANY new change clears redo. Everyone expects it; nobody says it. */
+      return { past, future: [] }
+    })
+  }
+
+  /** Note what is about to happen. MUST be called before the mutation
+   *  runs — the pre-state and the table's name are read from `get()`. */
+  const record = (op: Op) => {
+    if (burstBefore === null) {
+      burstBefore = sliceOf(get())
+      const seq = burstSeq
+      queueMicrotask(() => {
+        if (seq === burstSeq) closeBurst()
+      })
+    }
+    burstOps.push(op)
+  }
+
+  /** the name to print beside a step, read before the act */
+  const nameOf = (entityId: string): string | undefined => get().entities[entityId]?.name
+
+  /** a swap is not a step — see the header */
+  const forgetHistory = () => {
+    burstSeq += 1
+    burstOps = []
+    burstBefore = null
+  }
+
+  /** shared by undo and redo: swap the live data for `entry.before`,
+   *  hand the current data to the opposite stack, persist. */
+  const travel = (dir: 'undo' | 'redo'): string | null => {
+    closeBurst() // anything still open belongs on the stack first
+    const s = get()
+    const from = dir === 'undo' ? s.past : s.future
+    const entry = from[from.length - 1]
+    if (!entry) return null
+    const mirror: HistoryEntry = { ...entry, before: sliceOf(s) }
+    const rest = from.slice(0, -1)
+    const onto = [...(dir === 'undo' ? s.future : s.past), mirror].slice(-HISTORY_DEPTH)
+
+    /* A SELECTION MUST NOT OUTLIVE ITS SUBJECT. Undoing "table added"
+       strikes the table the inspector is pointing at; leaving the id
+       behind is how a panel draws a rectangle with nothing in it. */
+    const sel = s.selection
+    const alive =
+      sel === null ||
+      (sel.kind === 'entity'
+        ? entry.before.entities[sel.id] !== undefined
+        : sel.kind === 'group'
+          ? entry.before.groups[sel.id] !== undefined
+          : entry.before.rules[sel.id] !== undefined)
+
+    set({
+      ...entry.before,
+      meta: touch(s.meta),
+      selection: alive ? sel : null,
+      past: dir === 'undo' ? rest : onto,
+      future: dir === 'undo' ? onto : rest,
+    })
+    /* AND IT HAS TO SURVIVE A RELOAD. The store writes through to
+       Dexie 400ms after a mutation; an undo that skipped this would
+       be re-clobbered by the very edit it just reverted. */
+    schedulePersist(get)
+    return entry.label
+  }
+
   return {
+    past: [],
+    future: [],
+    undo: () => travel('undo'),
+    redo: () => travel('redo'),
+
     loaded: false,
     meta: defaultMeta(),
     entities: {},
@@ -235,6 +474,9 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     /* -- lifecycle ---------------------------------------- */
     init: async () => {
       const snap = await repository.load()
+      /* what was on disk is the starting point, not a step back from
+         whatever this tab had in it a moment ago */
+      forgetHistory()
       if (snap) {
         const rowsByEntity: Record<string, RowData[]> = {}
         for (const row of snap.rows) {
@@ -254,9 +496,11 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
              loads with none, which is the correct empty state */
           views: Object.fromEntries((snap.views ?? []).map((v) => [v.id, v])),
           modules: Object.fromEntries((snap.modules ?? []).map((m) => [m.id, m])),
+          past: [],
+          future: [],
         })
       } else {
-        set({ loaded: true, meta: defaultMeta() })
+        set({ loaded: true, meta: defaultMeta(), past: [], future: [] })
       }
     },
 
@@ -273,8 +517,11 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     resetProject: async () => {
       if (persistTimer) clearTimeout(persistTimer)
       persistTimer = null
+      forgetHistory()
       await repository.wipe()
       set({
+        past: [],
+        future: [],
         meta: defaultMeta(),
         entities: {},
         groups: {},
@@ -287,7 +534,14 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     replaceProject: (data) => {
+      /* A SWAP IS NOT A STEP. Undoing into a project that is no longer
+         open would restore tables the views on screen have never heard
+         of, and every swap left on the stack pins a whole previous
+         workbook in memory. A new document has no past. */
+      forgetHistory()
       mutate(() => ({
+        past: [],
+        future: [],
         meta: {
           id: 'default',
           name: data.name,
@@ -414,6 +668,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         updatedAt: nowIso(),
       }
 
+      record({ one: 'Table added', where: entity.name })
       mutate((s) => ({
         entities: { ...s.entities, [entity.id]: entity },
         selection: { kind: 'entity', id: entity.id },
@@ -435,6 +690,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         createdAt: nowIso(),
         updatedAt: nowIso(),
       }
+      record({ one: 'Table added', where: entity.name })
       mutate((s) => ({
         entities: { ...s.entities, [entity.id]: entity },
         selection: { kind: 'entity', id: entity.id },
@@ -444,6 +700,22 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     updateEntity: (id, patch) => {
+      const keys = Object.keys(patch)
+      if (get().entities[id] && keys.length > 0) {
+        record({
+          one:
+            keys.length === 1 && keys[0] === 'name'
+              ? 'Table renamed'
+              : keys.length === 1 && keys[0] === 'description'
+                ? 'Description edited'
+                : 'Table changed',
+          many: (n) => `${n} table changes`,
+          where: nameOf(id),
+          /* the description box writes on every keystroke — fold a
+             typed sentence into the one step it looks like */
+          key: `entity:${id}:${keys.join(',')}`,
+        })
+      }
       mutate((s) => {
         const e = s.entities[id]
         if (!e) return {}
@@ -460,6 +732,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     deleteEntity: (id) => {
+      if (get().entities[id]) record({ one: 'Table deleted', where: nameOf(id) })
       mutate((s) => {
         const entities: Record<string, EntityDef> = {}
         for (const [eid, e] of Object.entries(s.entities)) {
@@ -496,6 +769,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         name: partial?.name?.trim() || `Field ${e.fields.length + 1}`,
         type: partial?.type ?? 'text',
       }
+      record({ one: 'Column added', many: (n) => `${n} columns added`, where: e.name })
       mutate((s) => ({
         entities: {
           ...s.entities,
@@ -532,6 +806,24 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     updateField: (entityId, fieldId, patch) => {
+      const e0 = get().entities[entityId]
+      const f0 = e0?.fields.find((f) => f.id === fieldId)
+      const keys = Object.keys(patch)
+      if (f0 && keys.length > 0) {
+        /* A RETYPE IS THE DESTRUCTIVE ONE — it drops every stored value
+           in the column — so it is named separately from a rename. */
+        const retype = patch.type !== undefined && patch.type !== f0.type
+        record({
+          one: retype
+            ? 'Column retyped'
+            : keys.length === 1 && keys[0] === 'name'
+              ? 'Column renamed'
+              : 'Column changed',
+          many: (n) => `${n} column changes`,
+          where: e0?.name,
+          key: `field:${entityId}:${fieldId}:${keys.join(',')}`,
+        })
+      }
       mutate((s) => {
         const e = s.entities[entityId]
         if (!e) return {}
@@ -568,6 +860,10 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     removeField: (entityId, fieldId) => {
+      const e0 = get().entities[entityId]
+      if (e0?.fields.some((f) => f.id === fieldId)) {
+        record({ one: 'Column deleted', many: (n) => `${n} columns deleted`, where: e0.name })
+      }
       mutate((s) => {
         const e = s.entities[entityId]
         if (!e) return {}
@@ -592,6 +888,13 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     moveField: (entityId, fieldId, dir) => {
+      const e0 = get().entities[entityId]
+      const i0 = e0 ? e0.fields.findIndex((f) => f.id === fieldId) : -1
+      /* only when the move is legal — an entry that reverts to itself
+         is a Ctrl+Z that visibly does nothing */
+      if (e0 && i0 >= 0 && i0 + dir >= 0 && i0 + dir < e0.fields.length) {
+        record({ one: 'Column moved', many: (n) => `${n} columns moved`, where: e0.name })
+      }
       mutate((s) => {
         const e = s.entities[entityId]
         if (!e) return {}
@@ -670,6 +973,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         createdAt: nowIso(),
         updatedAt: nowIso(),
       }
+      record({ one: 'Row added', many: (n) => `${n} rows added`, where: e.name })
       mutate((s) => ({
         rowsByEntity: {
           ...s.rowsByEntity,
@@ -680,6 +984,17 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     updateCell: (entityId, rowId, fieldId, value) => {
+      /* A COMMIT THAT CHANGED NOTHING IS NOT A STEP. Opening a cell and
+         pressing Enter writes the value straight back; recording it
+         would spend an undo on a keystroke that did nothing, and after
+         three of them Ctrl+Z appears broken. The write itself still
+         goes through — this only decides whether history hears about
+         it — so no existing behaviour moves. */
+      const s0 = get()
+      const prev = s0.rowsByEntity[entityId]?.find((r) => r.id === rowId)
+      if (prev && !cellUnchanged(prev.values[fieldId], value)) {
+        record({ one: 'Cell edit', many: (n) => `${n} cell edits`, where: nameOf(entityId) })
+      }
       mutate((s) => {
         const list = s.rowsByEntity[entityId]
         if (!list) return {}
@@ -695,6 +1010,9 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     deleteRow: (entityId, rowId) => {
+      if (get().rowsByEntity[entityId]?.some((r) => r.id === rowId)) {
+        record({ one: 'Row deleted', many: (n) => `${n} rows deleted`, where: nameOf(entityId) })
+      }
       mutate((s) => {
         const list = s.rowsByEntity[entityId]
         if (!list) return {}
@@ -1000,6 +1318,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         createdAt: nowIso(),
         updatedAt: nowIso(),
       }
+      record({ one: 'Table added', where: entity.name })
       mutate((s) => ({
         entities: { ...s.entities, [entity.id]: entity },
         selection: { kind: 'entity', id: entity.id },

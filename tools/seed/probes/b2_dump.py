@@ -1,11 +1,24 @@
+"""Dump the Boat Module grid into extracts/b2_*.json. READ-ONLY on the workbook.
+
+Writes into ../extracts, which is committed — stage two runs for a collaborator
+who does not have the workbooks at all. It used to write into a machine-specific
+temp directory, which meant the only copy of the seed's input lived somewhere
+that gets cleaned up; gen_all.py was fixed the same way and this follows it.
+"""
 import openpyxl, json, sys
+from pathlib import Path
 from openpyxl.utils import get_column_letter, column_index_from_string as ci
 
 P = r"C:/Users/AsafA/Downloads/Boat Module (5).xlsx"
-OUT = r"C:/Users/AsafA/AppData/Local/Temp/claude/C--Users-AsafA--claude-projects-HelmLogic-Dynamic-Config/1bf40b7d-3f26-4235-aa97-875a41f0e4fc/scratchpad/"
+OUT = str(Path(__file__).resolve().parent.parent / "extracts") + "/"
 
+# OK..QA is the dealer-fit band: OK "Additional Package Options" (one distinct
+# value, and it is the header text) and OL..QA "Additional Dealer Fit Options -
+# Line 01..42". FITMENT_RULES.md R3 resolves that band into the Dealer Fit
+# Module sheet at 99.4%, which is the largest relationship the seed did not
+# carry; without these columns the join cannot be built at all.
 KEEP = []
-for a, b in [("A", "U"), ("II", "LD"), ("LF", "OI"), ("QC", "RK"), ("SV", "UJ")]:
+for a, b in [("A", "U"), ("II", "LD"), ("LF", "OI"), ("OK", "QA"), ("QC", "RK"), ("SV", "UJ")]:
     KEEP += list(range(ci(a), ci(b) + 1))
 KEEPSET = set(KEEP)
 MAXC = max(KEEP)

@@ -204,6 +204,20 @@ export interface QuoteSection {
    *  reads as "you configured nothing" when in fact four choices were
    *  waiting. Absent on quotes minted before this existed. */
   pickedCount?: number
+  /** How many rows the view page would have offered for this block
+   *  that were HELD BACK because they are no longer sold — a
+   *  discontinued row, or every row of a retired table.
+   *
+   *  It exists for the same reason `pickedCount` does. A section that
+   *  quietly offered five of eight is a section a salesperson stops
+   *  trusting; the picker says the number in words instead. Frozen
+   *  with everything else, so the sentence still reads true if the
+   *  sheet changes afterwards.
+   *
+   *  NOTHING ABOUT IT REACHES AN EXISTING LINE. A line on the quote
+   *  is a frozen copy and prints what it froze — this number only
+   *  describes what the PICKER declined to offer. */
+  heldCount?: number
 }
 
 export interface QuoteDef {

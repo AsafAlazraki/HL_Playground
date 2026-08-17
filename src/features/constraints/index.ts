@@ -166,6 +166,9 @@ export {
   WORKBOOK,
   WORKBOOK_RULES,
   WORKBOOK_RULES_BLOCKED,
+  /* the candidates a measurement killed — never seeds, and here so
+     that nobody re-derives one from the column headings */
+  WORKBOOK_RULES_REFUTED,
   buildWorkbookConstraints,
   clauseId,
   forgetWorkbookSeeds,
@@ -173,7 +176,14 @@ export {
   seedFieldId,
   seedWorkbookConstraints,
 } from './workbookRules'
-export type { ResolvedColumns, SeedReport, WorkbookRuleSeed } from './workbookRules'
+export type {
+  RefutedRuleRecord,
+  ResolvedColumns,
+  SeedReport,
+  WorkbookEvidence,
+  WorkbookRuleRef,
+  WorkbookRuleSeed,
+} from './workbookRules'
 
 export {
   addOneOfValue,

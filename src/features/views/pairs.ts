@@ -40,6 +40,8 @@ import {
   PAIR_ORIGIN_FIELD,
   PAIR_RECOMMENDED_FIELD,
   UID_FIELD_ID,
+  isDiscontinued,
+  isRetired,
   readCell,
   rowLabel,
   type CellValue,
@@ -326,6 +328,17 @@ export interface BlockResult {
   fitCount: number
   addedCount: number
   removedCount: number
+  /** Rows the rule or the curation WOULD have offered, held back
+   *  because they are no longer sold. A block that would have drawn
+   *  eight and draws six must not simply read six — every surface
+   *  reading this says the number in words. */
+  held: RelatedRow[]
+  heldCount: number
+  /** Set when the reason is a whole table rather than individual
+   *  rows: 'table' — the related table is history rather than stock;
+   *  'pairs' — the join recording which of its rows go with this one
+   *  is. Either way every candidate lands in `held`, never in `rows`. */
+  historic?: 'table' | 'pairs'
 }
 
 const UNORDERED = 1_000_000
@@ -347,6 +360,21 @@ const UNORDERED = 1_000_000
  * point of pinning one in. A pair marked 'rule' does NOT force a row to
  * stay when a rule is in force — it only carries a star or a position —
  * so narrowing the rule genuinely narrows the page.
+ *
+ * DISCONTINUED NEVER REACHES A SALESPERSON, and this is the one gate
+ * it has to pass. A block on a view page, the candidates a quote picks
+ * from and the starred row a quote is minted with all come through
+ * here, so the rule is applied ONCE, at the moment the set is decided:
+ *
+ *   · a row flagged discontinued is moved to `held`, never to `rows`
+ *   · a RETIRED related table holds everything back — `historic:'table'`
+ *   · a RETIRED join holds everything back — `historic:'pairs'`;
+ *     "Surtees x OBSOLETE Trailers" is a whole join of retired stock
+ *
+ * Held is not the same as gone. Nothing is deleted, the rows are
+ * returned so a surface can SAY how many it dropped, and no quote line
+ * ever comes back through here — a line is a frozen copy, so a
+ * document naming a now-discontinued trailer still opens and totals.
  */
 export function relatedRows(args: {
   ctx: Ctx
@@ -359,12 +387,27 @@ export function relatedRows(args: {
 }): BlockResult {
   const { ctx, engine, sourceEntity, sourceRow, targetEntityId, rule, join } = args
   const targetRows = ctx.rowsByEntity[targetEntityId] ?? []
+
+  const targetEntity = ctx.entities[targetEntityId]
+  const joinEntity = join ? ctx.entities[join.entityId] : undefined
+  /* the table itself is history — the whole block is a memorial */
+  const tableHistoric = targetEntity !== undefined && isRetired(targetEntity)
+  /* the RELATIONSHIP is history: the pairs on a retired join are what
+     an old quote was written against, not what may be sold today */
+  const pairsHistoric = joinEntity !== undefined && isRetired(joinEntity)
+  const historic: 'table' | 'pairs' | undefined = tableHistoric
+    ? 'table'
+    : pairsHistoric
+      ? 'pairs'
+      : undefined
+
   const pairs = join ? readPairs(ctx, join, sourceEntity, sourceRow) : new Map<string, PairInfo>()
 
   const sourceRef: RowRef = { entityId: sourceEntity.id, row: sourceRow }
   const curated = isCuratedOnly(rule)
 
   const rows: RelatedRow[] = []
+  const held: RelatedRow[] = []
   const removed: Array<{ row: RowData; pair: PairInfo }> = []
 
   targetRows.forEach((row, index) => {
@@ -378,38 +421,50 @@ export function relatedRows(args: {
        put here by a person */
     if (curated) {
       if (!pair) return
-      rows.push({
+      const candidate: RelatedRow = {
         row,
         origin: 'rule',
         recommended: pair.recommended,
         pair,
         sortKey: pair.order ?? UNORDERED + index,
-      })
+      }
+      if (historic || isDiscontinued(row)) held.push(candidate)
+      else rows.push(candidate)
       return
     }
 
     const fits = evalPairRule(engine, rule, { entityId: targetEntityId, row }, sourceRef)
     const pinned = pair?.origin === 'added'
     if (!fits && !pinned) return
-    rows.push({
+    const candidate: RelatedRow = {
       row,
       origin: fits ? 'rule' : 'added',
       recommended: pair?.recommended ?? false,
       pair,
       sortKey: pair?.order ?? UNORDERED + index,
-    })
+    }
+    /* A PIN DOES NOT OVERRIDE THIS. Pinning a row in says the rule was
+       wrong about it; it does not say the business is still selling it,
+       and a salesperson cannot be handed a discontinued trailer because
+       somebody once pressed ADD. */
+    if (historic || isDiscontinued(row)) held.push(candidate)
+    else rows.push(candidate)
   })
 
   rows.sort((a, b) => a.sortKey - b.sortKey)
+  held.sort((a, b) => a.sortKey - b.sortKey)
 
   /* at most one star, ever — the first one wins so a duplicate written
-     by an older build can never draw two */
+     by an older build can never draw two. Held rows are cleared
+     outright: a star on a row nobody may be offered would otherwise
+     carry it onto a fresh quote through `mintQuoteFromView`. */
   let starred = false
   for (const r of rows) {
     if (!r.recommended) continue
     if (starred) r.recommended = false
     starred = true
   }
+  for (const r of held) r.recommended = false
 
   return {
     rows,
@@ -417,6 +472,9 @@ export function relatedRows(args: {
     fitCount: rows.filter((r) => r.origin === 'rule').length,
     addedCount: rows.filter((r) => r.origin === 'added').length,
     removedCount: removed.length,
+    held,
+    heldCount: held.length,
+    ...(historic ? { historic } : {}),
   }
 }
 

@@ -22,40 +22,92 @@
       "unconfigured" sentinel ('' for an id, `{fieldId:''}` for a path)
       — which `validateRule` reports as a designed blocker rather than
       letting the rule run quietly with a different meaning.
+
+   V2 — WHAT A PERSON MADE, not just what the seed produced.
+
+   Until version 2 this validator read ten of EntityDef's fourteen
+   keys and dropped `kind`, `role`, `hierarchy` and `sections` on the
+   floor, plus `sectionId` on every column. A round trip therefore
+   returned every table as an untyped, ungrouped, unbanded flat list:
+   the file still LOOKED complete because the counts matched, and the
+   thing that was lost — the shape of the table — is exactly the work
+   this product exists to let someone do. Those five keys are read
+   here now, and the tests beside this file are why they cannot go
+   quiet again.
+
+   The same silence covered the whole of the design layer. Modules,
+   view pages, the organisation and the business rules were not in
+   the file at all, so nothing anybody designed could leave the
+   browser it was made in. `ProjectExport` carries all four as of
+   version 2 and each one is validated here to the same standard as
+   the rest: ids through `isSafeId`, every field narrowed, nothing
+   left `unknown`.
+
+   REFERENTIAL SANITY. A module or a page pointing at a table that is
+   not in the file cannot draw. Rather than import a broken pointer
+   and hope a stage notices, the pointer is resolved HERE against the
+   tables that actually arrived, and what cannot resolve is dropped —
+   see `normModule` and `normView` for exactly what goes and why.
+
+   A V1 FILE STILL IMPORTS. Every key added above is optional, so an
+   older file arrives with none of them and is read as "a project
+   with no modules, no pages and no rules" rather than refused. That
+   is true of the file a person saved yesterday, and refusing it
+   would be the version bump destroying the thing it was made to
+   protect.
    ============================================================ */
 
 import {
   ACCENT_KEYS,
+  DEFAULT_CAPABILITIES,
   ELSE_HANDLE,
   EXPORT_KIND,
   EXPORT_VERSION,
   FIELD_TYPES,
+  INDUSTRIES,
+  isPairFieldId,
+  isSystemFieldId,
   LOOP_BODY_HANDLE,
   LOOP_NEXT_HANDLE,
+  MODULE_CAPABILITIES,
   OUT_HANDLE,
   RULE_NODE_KINDS,
+  TABLE_KINDS,
   type AccentKey,
   type ActionOp,
   type CellValue,
   type Clause,
   type ClauseGroup,
+  type ColumnFilter,
+  type ColumnSection,
   type CompareOp,
   type ConditionBranch,
+  type ConstraintDef,
+  type ConstraintKind,
   type EntityDef,
   type FieldDef,
   type FieldPath,
   type FieldType,
   type GroupDef,
   type ImageRef,
+  type IndustryKey,
   type LoopSource,
+  type ModuleCapability,
+  type ModuleDef,
+  type ModuleIndexMode,
+  type OrgProfile,
   type ProjectExport,
   type RowData,
   type RuleDef,
   type RuleEdge,
   type RuleNode,
   type RuleNodeKind,
+  type TableKind,
+  type TableRole,
   type ValueExpr,
+  type ViewBlock,
   type ViewColumn,
+  type ViewDef,
   type XY,
 } from '@/types/model'
 import { isStorableSource } from '@/lib/imageSources'
@@ -138,6 +190,30 @@ const clampAccent = (v: unknown, fallback: AccentKey): AccentKey =>
 const isFieldType = (v: unknown): v is FieldType =>
   typeof v === 'string' && Object.hasOwn(FIELD_TYPES, v)
 
+/* WHAT A TABLE HOLDS AND WHAT IT IS. Both were dropped by every
+   import before version 2, and neither is cosmetic: `kind` is what
+   lets a fitment rule written against `boat` bite on Highfield and
+   Stacer alike, and `role` is what keeps a join out of the module
+   master picker. A value this build does not know is left ABSENT
+   rather than guessed — the model reads an absent role as 'base',
+   which is the safe default, and an absent kind as "no presets",
+   which is merely plain. Guessing either would silently re-file the
+   table as something it is not. */
+const isTableKind = (v: unknown): v is TableKind =>
+  typeof v === 'string' && Object.hasOwn(TABLE_KINDS, v)
+
+const isTableRole = (v: unknown): v is TableRole =>
+  v === 'base' || v === 'join' || v === 'view'
+
+const isIndustryKey = (v: unknown): v is IndustryKey =>
+  typeof v === 'string' && Object.hasOwn(INDUSTRIES, v)
+
+const isModuleCapability = (v: unknown): v is ModuleCapability =>
+  typeof v === 'string' && Object.hasOwn(MODULE_CAPABILITIES, v)
+
+const isConstraintKind = (v: unknown): v is ConstraintKind =>
+  v === 'implies' || v === 'excludes' || v === 'requires' || v === 'table'
+
 /* Imported ids become object keys downstream (store keyed records,
    rowsByEntity, row.values, Dexie primary keys, run hit counters).
    A key colliding with Object.prototype ("__proto__", "constructor", …)
@@ -146,6 +222,26 @@ const isFieldType = (v: unknown): v is FieldType =>
    restricted to the nanoid charset minus prototype property names. */
 export const isSafeId = (v: unknown): v is string =>
   typeof v === 'string' && /^[A-Za-z0-9_-]+$/.test(v) && !(v in Object.prototype)
+
+/* ============================================================
+   THE COLUMN IDS THAT ARE MEANT TO REPEAT.
+
+   `__origin`, `__recommended`, `__order` and `__uid` are CONSTANTS,
+   not minted ids: every curated join carries the same three so a pair
+   row can be read without a name lookup (`PAIR_FIELDS` in the model),
+   and the model says so out loud.
+
+   The file-wide uniqueness rule below did not know that, so it read
+   the second join's `__origin` as a collision and REFUSED THE WHOLE
+   FILE — "DUPLICATE ID __origin". Any project with two curated joins
+   therefore exported a file it could never open again, and the real
+   seed has several. Found by exporting the seed and importing it
+   back, which is the one test nobody had run end to end.
+
+   They still may not repeat WITHIN one table: two columns sharing an
+   id in one table would shadow each other in every cell lookup. */
+export const isWellKnownFieldId = (id: string): boolean =>
+  isSystemFieldId(id) || isPairFieldId(id)
 
 /** An id we can keep, or the model's "not configured yet" sentinel. */
 const safeIdOr = (v: unknown, fallback: string): string => (isSafeId(v) ? v : fallback)
@@ -499,8 +595,319 @@ function normRuleEdges(raw: unknown, nodes: RuleNode[], remaps: RuleRemaps): Rul
 }
 
 /* ------------------------------------------------------------ */
+/* table shape — the bands and the nesting                       */
+/* ------------------------------------------------------------ */
+
+/** The named bands of columns. A band with no NAME is dropped rather
+ *  than given one: `buildSections` already draws a column whose
+ *  `sectionId` nobody declared as a plain column, so the table still
+ *  reads, and naming a band ourselves would put a word on screen that
+ *  nobody in the business wrote. Ids are checked because a band id is
+ *  a Map key in the section model and a Set key in the collapse
+ *  state. */
+function normSections(raw: unknown): ColumnSection[] {
+  const out: ColumnSection[] = []
+  const seen = new Set<string>()
+  for (const s of arr(raw)) {
+    if (!isRecord(s) || !isSafeId(s.id) || seen.has(s.id)) continue
+    const name = str(s.name)?.trim()
+    if (!name) continue
+    seen.add(s.id)
+    out.push({
+      id: s.id,
+      name,
+      ...(typeof s.accent === 'string' && (ACCENT_KEYS as string[]).includes(s.accent)
+        ? { accent: s.accent as AccentKey }
+        : {}),
+      ...(typeof s.collapsed === 'boolean' ? { collapsed: s.collapsed } : {}),
+    })
+  }
+  return out
+}
+
+/** The grouping levels, outermost first — ordered ids of columns ON
+ *  THIS TABLE. A level naming a column the file does not carry cannot
+ *  group anything and would draw an empty tier in the grouped view, so
+ *  it is dropped here rather than becoming a hole later. Order is
+ *  meaning (Series ▸ Model ▸ Variant), so nothing is re-sorted. */
+function normHierarchy(raw: unknown, fieldIds: ReadonlySet<string>): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const v of arr(raw)) {
+    if (!isSafeId(v) || seen.has(v) || !fieldIds.has(v)) continue
+    seen.add(v)
+    out.push(v)
+  }
+  return out
+}
+
+/* ------------------------------------------------------------ */
+/* v2 — the organisation                                         */
+/* ------------------------------------------------------------ */
+
+/** Whose set this is. An organisation with no name is no
+ *  organisation: the name is the only identity `OrgProfile` carries,
+ *  it is the key the constraint registry is scoped by, and inventing
+ *  one would put a business name on screen that nobody typed. */
+function normOrg(raw: unknown, stamp: string): OrgProfile | undefined {
+  if (!isRecord(raw)) return undefined
+  const name = str(raw.name)?.trim()
+  if (!name || !isIndustryKey(raw.industry)) return undefined
+  return { name, industry: raw.industry, createdAt: str(raw.createdAt) ?? stamp }
+}
+
+/* ------------------------------------------------------------ */
+/* v2 — view pages                                               */
+/* ------------------------------------------------------------ */
+
+/** Root, related, related-to-the-related. The authority is `MAX_DEPTH`
+ *  in `@/features/views`; it is restated rather than imported so this
+ *  validator keeps depending on the model and nothing else. A block
+ *  deeper than this could be built by hand but never by the page, and
+ *  `walkBlocks` would draw it below the level the layout allows for. */
+const BLOCK_MAX_DEPTH = 3
+
+/** What a block SHOWS right now — never what it relates. A filter
+ *  naming a column that is not in the file narrows nothing and would
+ *  read as "no rows match" with no way to see why, so it goes. */
+function normColumnFilters(raw: unknown, fieldIds: ReadonlySet<string>): ColumnFilter[] {
+  const out: ColumnFilter[] = []
+  for (const f of arr(raw)) {
+    if (!isRecord(f) || !isSafeId(f.fieldId) || !fieldIds.has(f.fieldId)) continue
+    if (f.kind === 'values') {
+      out.push({
+        kind: 'values',
+        fieldId: f.fieldId,
+        selected: arr(f.selected).filter((s): s is string => typeof s === 'string'),
+      })
+      continue
+    }
+    if (f.kind === 'contains') {
+      const text = str(f.text)
+      if (text === undefined) continue
+      out.push({ kind: 'contains', fieldId: f.fieldId, text })
+    }
+  }
+  return out
+}
+
+/** One related table on a page.
+ *
+ *  A block whose TABLE is not in the file is dropped: the block IS the
+ *  table, so there is nothing left to draw and a heading over nothing
+ *  reads as a bug. A block whose JOIN table is missing keeps the
+ *  block and loses the join — the relationship becomes "everything in
+ *  that table" rather than the curated pairs, which is visibly wider
+ *  rather than silently empty, and the page says so.
+ *
+ *  Block ids are made unique per page because they are React keys and
+ *  `findBlock` returns the first match; they are deliberately NOT in
+ *  the file-wide id namespace, since they never key a shared store
+ *  record. */
+function normBlocks(
+  raw: unknown,
+  depth: number,
+  tableIds: ReadonlySet<string>,
+  fieldIds: ReadonlySet<string>,
+  seen: Set<string>,
+): ViewBlock[] {
+  if (depth > BLOCK_MAX_DEPTH) return []
+  const out: ViewBlock[] = []
+  for (const b of arr(raw)) {
+    if (!isRecord(b)) continue
+    if (!isSafeId(b.tableId) || !tableIds.has(b.tableId)) continue
+    let id = safeIdOr(b.id, '')
+    if (id === '' || seen.has(id)) id = newId()
+    seen.add(id)
+
+    const filters = b.filters !== undefined ? normColumnFilters(b.filters, fieldIds) : undefined
+    const columns =
+      b.columns !== undefined
+        ? arr(b.columns).filter((c): c is string => isSafeId(c) && fieldIds.has(c))
+        : undefined
+    const children = normBlocks(b.children, depth + 1, tableIds, fieldIds, seen)
+
+    out.push({
+      id,
+      tableId: b.tableId,
+      ...(isSafeId(b.joinTableId) && tableIds.has(b.joinTableId)
+        ? { joinTableId: b.joinTableId }
+        : {}),
+      ...(isRecord(b.rule) ? { rule: normClauseGroup(b.rule) } : {}),
+      ...(filters ? { filters } : {}),
+      ...(columns ? { columns } : {}),
+      ...(children.length ? { children } : {}),
+    })
+  }
+  return out
+}
+
+/** A page is "for" one table's rows. With that table gone there is no
+ *  row to open it on and nothing for the blocks to hang off, so the
+ *  page is dropped whole rather than imported as an empty shell. */
+function normView(
+  raw: unknown,
+  stamp: string,
+  tableIds: ReadonlySet<string>,
+  fieldIds: ReadonlySet<string>,
+): ViewDef | undefined {
+  if (!isRecord(raw) || !isSafeId(raw.id)) return undefined
+  if (!isSafeId(raw.rootTableId) || !tableIds.has(raw.rootTableId)) return undefined
+  const root = raw.rootTableId
+  return {
+    id: raw.id,
+    name: str(raw.name)?.trim() || 'View',
+    rootTableId: root,
+    blocks: normBlocks(raw.blocks, 2, tableIds, fieldIds, new Set()),
+    createdAt: str(raw.createdAt) ?? stamp,
+    updatedAt: str(raw.updatedAt) ?? stamp,
+  }
+}
+
+/* ------------------------------------------------------------ */
+/* v2 — modules                                                  */
+/* ------------------------------------------------------------ */
+
+/** A place in the business.
+ *
+ *  THE DECISION ON A DANGLING TABLE, stated once: a module's dead
+ *  pointers are dropped and the module survives on whatever is left;
+ *  a module with NOTHING left is dropped entirely. That is not a new
+ *  rule, it is the one the rest of the app already keeps — `createModule`
+ *  filters its `tableIds` the same way and `moduleTables` skips a table
+ *  that has since been struck "rather than drawn as a hole". Importing
+ *  the dead pointer instead would put a card on the dashboard that opens
+ *  onto nothing, and a module is the thing a person navigates BY: an
+ *  empty page reached through it reads as the product being broken.
+ *
+ *  A consequence worth naming: `tableIds[0]` is the primary, so a module
+ *  whose primary alone is missing is imported with its SECOND table
+ *  promoted. That is the smallest honest outcome — the alternative is
+ *  discarding a module over one absent pointer.
+ *
+ *  `viewId` is different again. A module with no detail surface is a
+ *  legitimate module — it lists but does not open — so a viewId naming
+ *  a page that did not arrive is simply not carried. */
+function normModule(
+  raw: unknown,
+  index: number,
+  stamp: string,
+  entities: ReadonlyMap<string, EntityDef>,
+  viewIds: ReadonlySet<string>,
+): ModuleDef | undefined {
+  if (!isRecord(raw) || !isSafeId(raw.id)) return undefined
+
+  const tableIds: string[] = []
+  const seen = new Set<string>()
+  for (const t of arr(raw.tableIds)) {
+    if (!isSafeId(t) || seen.has(t) || !entities.has(t)) continue
+    seen.add(t)
+    tableIds.push(t)
+  }
+  if (tableIds.length === 0) return undefined
+  const primary = entities.get(tableIds[0]) as EntityDef
+
+  /* the key ABSENT means an older or damaged file said nothing, and
+     the model's own answer to that is "look, do not touch". An empty
+     ARRAY is a person having switched everything off, which is theirs
+     to have done. */
+  const capabilities = Array.isArray(raw.capabilities)
+    ? (raw.capabilities as unknown[]).filter(isModuleCapability)
+    : [...DEFAULT_CAPABILITIES]
+
+  const index_: ModuleIndexMode = raw.index === 'tiles' ? 'tiles' : 'rows'
+
+  return {
+    id: raw.id,
+    /* the module's own words first, then the primary table's name —
+       both are the file's, and neither is invented here */
+    name: str(raw.name)?.trim() || primary.name,
+    description: str(raw.description)?.trim() ?? '',
+    tableIds,
+    capabilities: [...new Set(capabilities)],
+    index: index_,
+    ...(isSafeId(raw.viewId) && viewIds.has(raw.viewId) ? { viewId: raw.viewId } : {}),
+    accent: clampAccent(raw.accent, primary.accent),
+    order: num(raw.order, index),
+    createdAt: str(raw.createdAt) ?? stamp,
+    updatedAt: str(raw.updatedAt) ?? stamp,
+  }
+}
+
+/* ------------------------------------------------------------ */
+/* v2 — constraints                                              */
+/* ------------------------------------------------------------ */
+
+/** The approved combinations of a `table` constraint: field id → the
+ *  allowed value. Keys are written into value maps downstream, so they
+ *  are checked like any other id. */
+function normCombinations(raw: unknown): Array<Record<string, CellValue>> {
+  const out: Array<Record<string, CellValue>> = []
+  for (const combo of arr(raw)) {
+    if (!isRecord(combo)) continue
+    const row: Record<string, CellValue> = {}
+    for (const [fieldId, v] of Object.entries(combo)) {
+      if (!isSafeId(fieldId)) continue
+      if (Array.isArray(v)) continue /* a picture is not an approved value */
+      if (isCellValue(v)) row[fieldId] = v
+    }
+    out.push(row)
+  }
+  return out
+}
+
+/** A business rule as a sentence.
+ *
+ *  A KIND THIS BUILD DOES NOT KNOW DROPS THE RULE. Everywhere else in
+ *  this file an unreadable value is blanked so the thing still arrives
+ *  and reports itself unfinished; here that would be dangerous, because
+ *  `implies` and `excludes` are near-opposites — defaulting an unknown
+ *  kind would import a rule that says the reverse of what was written
+ *  and switch it on.
+ *
+ *  Field ids inside the clauses are NOT resolved against the file. A
+ *  constraint names a COLUMN CONCEPT (kind + name) through one
+ *  representative id, and `evaluateConstraint` already reports a rule
+ *  whose columns are absent as unscoped rather than as satisfied. */
+function normConstraint(raw: unknown, stamp: string): ConstraintDef | undefined {
+  if (!isRecord(raw) || !isSafeId(raw.id)) return undefined
+  if (!isConstraintKind(raw.kind)) return undefined
+  const why = str(raw.why)
+  const source = str(raw.source)
+  return {
+    id: raw.id,
+    kind: raw.kind,
+    if: normClauseGroup(raw.if),
+    ...(isRecord(raw.then) ? { then: normClauseGroup(raw.then) } : {}),
+    ...(raw.kind === 'table' && raw.combinations !== undefined
+      ? { combinations: normCombinations(raw.combinations) }
+      : {}),
+    /* the reason printed after "because…". Blank when the file has
+       none — the rule card shows its own prompt for that, and any
+       sentence written here would read on screen as the business's */
+    because: str(raw.because) ?? '',
+    ...(why !== undefined ? { why } : {}),
+    enabled: typeof raw.enabled === 'boolean' ? raw.enabled : true,
+    ...(typeof raw.edited === 'boolean' ? { edited: raw.edited } : {}),
+    ...(source !== undefined ? { source } : {}),
+    ...(typeof raw.priority === 'number' && Number.isFinite(raw.priority)
+      ? { priority: raw.priority }
+      : {}),
+    createdAt: str(raw.createdAt) ?? stamp,
+    updatedAt: str(raw.updatedAt) ?? stamp,
+  }
+}
+
+/* ------------------------------------------------------------ */
 /* validateEnvelope                                              */
 /* ------------------------------------------------------------ */
+
+/** Versions this build can READ. A v1 file carries none of the v2 keys
+ *  and every one of them is optional, so it opens as a project with no
+ *  modules, no pages and no rules — which is exactly what it is. A file
+ *  from a FUTURE version is still refused, because the failure that
+ *  matters is opening a set and silently keeping half of it. */
+const READABLE_VERSIONS: readonly number[] = [1, EXPORT_VERSION]
 
 /** Defensive envelope check + normalisation. Never throws; anything that
  *  passes comes out shaped exactly like a native ProjectExport. */
@@ -511,8 +918,8 @@ export function validateEnvelope(raw: unknown): Validated {
   if (!isRecord(raw)) return { ok: false, error: 'NOT A HELMLOGIC SHEET FILE' }
   if (raw.kind !== EXPORT_KIND)
     return { ok: false, error: 'NOT A HELMLOGIC SHEET FILE' }
-  if (raw.version !== EXPORT_VERSION)
-    return { ok: false, error: `SAVED BY A DIFFERENT VERSION — EXPECTED V${EXPORT_VERSION}` }
+  if (typeof raw.version !== 'number' || !READABLE_VERSIONS.includes(raw.version))
+    return { ok: false, error: `SAVED BY A DIFFERENT VERSION — EXPECTED V${EXPORT_VERSION} OR OLDER` }
   if (!Array.isArray(raw.entities))
     return { ok: false, error: 'THIS FILE HAS NO TABLES IN IT' }
   if (raw.groups !== undefined && !Array.isArray(raw.groups))
@@ -521,6 +928,14 @@ export function validateEnvelope(raw: unknown): Validated {
     return { ok: false, error: 'FILE IS DAMAGED — BAD RULES BLOCK' }
   if (raw.rows !== undefined && !isRecord(raw.rows))
     return { ok: false, error: 'FILE IS DAMAGED — ROWS ARE NOT GROUPED BY TABLE' }
+  /* the v2 blocks: a wrong SHAPE is a damaged file and is said so;
+     an ABSENT one is a v1 file and is silence, not an error */
+  if (raw.views !== undefined && !Array.isArray(raw.views))
+    return { ok: false, error: 'FILE IS DAMAGED — BAD PAGES BLOCK' }
+  if (raw.modules !== undefined && !Array.isArray(raw.modules))
+    return { ok: false, error: 'FILE IS DAMAGED — BAD MODULES BLOCK' }
+  if (raw.constraints !== undefined && !Array.isArray(raw.constraints))
+    return { ok: false, error: 'FILE IS DAMAGED — BAD RULES BLOCK' }
 
   const stamp = nowIso()
 
@@ -552,18 +967,33 @@ export function validateEnvelope(raw: unknown): Validated {
     if (!isSafeId(e.id)) return { ok: false, error: `TABLE ${i + 1} HAS AN UNSAFE ID` }
     if (isDuplicate(e.id)) return { ok: false, error: `DUPLICATE ID "${e.id}"` }
     const fields: FieldDef[] = []
+    const seenInTable = new Set<string>()
     for (const f of e.fields as unknown[]) {
       if (!isRecord(f) || typeof f.id !== 'string' || typeof f.name !== 'string') {
         return { ok: false, error: `DAMAGED COLUMN IN TABLE "${e.name}"` }
       }
       if (!isSafeId(f.id)) return { ok: false, error: `UNSAFE COLUMN ID IN TABLE "${e.name}"` }
-      if (isDuplicate(f.id)) return { ok: false, error: `DUPLICATE ID "${f.id}"` }
+      /* a well-known column id is the SAME id on every table that has
+         one, by design — so it is checked against this table only */
+      if (isWellKnownFieldId(f.id)) {
+        if (seenInTable.has(f.id))
+          return { ok: false, error: `TABLE "${e.name}" HAS TWO "${f.name}" COLUMNS` }
+      } else if (isDuplicate(f.id)) {
+        return { ok: false, error: `DUPLICATE ID "${f.id}"` }
+      }
+      seenInTable.add(f.id)
       fields.push({
         id: f.id,
         name: f.name,
         type: isFieldType(f.type) ? f.type : 'text',
         ...(str(f.description) !== undefined ? { description: str(f.description) } : {}),
         ...(typeof f.required === 'boolean' ? { required: f.required } : {}),
+        /* WHICH BAND THIS COLUMN IS IN. Dropped by every import before
+           version 2, which is what turned a banded 59-column price
+           sheet back into 59 undifferentiated columns on the way in.
+           A band that was not declared draws the column plainly, so a
+           surviving id that names nothing costs nothing. */
+        ...(isSafeId(f.sectionId) ? { sectionId: f.sectionId } : {}),
         ...(Array.isArray(f.options)
           ? { options: (f.options as unknown[]).filter((o): o is string => typeof o === 'string') }
           : {}),
@@ -575,11 +1005,23 @@ export function validateEnvelope(raw: unknown): Validated {
       })
     }
     const pos = isRecord(e.position) ? e.position : {}
+    /* the four keys a round trip used to lose. `hierarchy` names
+       columns ON THIS TABLE, so it is resolved against the fields
+       just read rather than trusted. */
+    const hierarchy = normHierarchy(
+      e.hierarchy,
+      new Set(fields.map((f) => f.id)),
+    )
+    const sections = normSections(e.sections)
     entities.push({
       id: e.id,
       name: e.name,
       ...(str(e.description) !== undefined ? { description: str(e.description) } : {}),
       accent: clampAccent(e.accent, ACCENT_KEYS[i % ACCENT_KEYS.length]),
+      ...(isTableKind(e.kind) ? { kind: e.kind } : {}),
+      ...(isTableRole(e.role) ? { role: e.role } : {}),
+      ...(hierarchy.length ? { hierarchy } : {}),
+      ...(sections.length ? { sections } : {}),
       fields,
       ...(isSafeId(e.displayFieldId) ? { displayFieldId: e.displayFieldId } : {}),
       position: {
@@ -678,6 +1120,47 @@ export function validateEnvelope(raw: unknown): Validated {
     }
   }
 
+  /* -- v2: the design layer --------------------------------- */
+
+  /* every pointer below is resolved against THESE, never against
+     whatever the file claims — that is the whole of "referential
+     sanity" and it is why a module cannot arrive aimed at nothing */
+  const entityById = new Map(entities.map((e) => [e.id, e]))
+  const tableIds: ReadonlySet<string> = new Set(entityById.keys())
+  const fieldIds = new Set<string>()
+  for (const e of entities) for (const f of e.fields) fieldIds.add(f.id)
+
+  const org = normOrg(raw.org, stamp)
+
+  const views: ViewDef[] = []
+  for (const v of (raw.views ?? []) as unknown[]) {
+    const view = normView(v, stamp, tableIds, fieldIds)
+    if (!view) continue
+    if (isDuplicate(view.id)) return { ok: false, error: `DUPLICATE ID "${view.id}"` }
+    views.push(view)
+  }
+  const viewIds: ReadonlySet<string> = new Set(views.map((v) => v.id))
+
+  const modules: ModuleDef[] = []
+  ;((raw.modules ?? []) as unknown[]).forEach((m, i) => {
+    const mod = normModule(m, i, stamp, entityById, viewIds)
+    if (mod) modules.push(mod)
+  })
+  /* a duplicate module id would make two dashboard cards share one
+     store record, so the second edit would silently move the first */
+  for (const m of modules) {
+    if (isDuplicate(m.id)) return { ok: false, error: `DUPLICATE ID "${m.id}"` }
+  }
+
+  const constraints: ConstraintDef[] = []
+  for (const c of (raw.constraints ?? []) as unknown[]) {
+    const constraint = normConstraint(c, stamp)
+    if (!constraint) continue
+    if (isDuplicate(constraint.id))
+      return { ok: false, error: `DUPLICATE ID "${constraint.id}"` }
+    constraints.push(constraint)
+  }
+
   const projectRaw = isRecord(raw.project) ? raw.project : {}
   const data: ProjectExport = {
     kind: EXPORT_KIND,
@@ -694,6 +1177,13 @@ export function validateEnvelope(raw: unknown): Validated {
     groups,
     rules,
     ...(rows ? { rows } : {}),
+    /* omitted rather than empty: an absent key and an empty array mean
+       the same thing to every reader, and the smaller file is the one
+       a person can diff */
+    ...(org ? { org } : {}),
+    ...(views.length ? { views } : {}),
+    ...(modules.length ? { modules } : {}),
+    ...(constraints.length ? { constraints } : {}),
   }
   return { ok: true, data }
 }

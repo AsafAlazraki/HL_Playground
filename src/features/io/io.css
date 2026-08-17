@@ -384,6 +384,23 @@
   text-transform: uppercase;
   color: var(--ink-faint);
 }
+/* WHAT ELSE IS IN THE FILE — the modules, pages and rules a person
+   made, which the three-stat grid above has no column for. Without
+   this line the preview cannot tell you whether the file you are
+   about to REPLACE your sheet with carries your dashboard, and
+   "Tables 21 · Rows 651" looks identical either way. Same plate
+   idiom as the source line below it; drawn only when there is
+   something to say. */
+.io-plate-also {
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
 .io-plate-src {
   padding: var(--sp-2) var(--sp-3);
   border-top: 1px solid var(--hairline);
