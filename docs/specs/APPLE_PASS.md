@@ -1,3 +1,11 @@
+> **SUPERSEDED.** This describes "The Chart Room" - the navy blueprint field,
+> the Instrument Serif display face, and the glass pass - which was replaced by
+> **Quiet Precision** in the redesign. It is kept for history and for the
+> reasoning in it, which is still worth reading.
+>
+> **The current rules are `docs/specs/DESIGN_PRINCIPLES.md`.** Where this file
+> and that one disagree, that one wins.
+
 # THE APPLE PASS — MATERIALS, TYPE, RESPONSE, MOTION
 
 > One plan, six steps, five slots. It decides four systems and refuses a

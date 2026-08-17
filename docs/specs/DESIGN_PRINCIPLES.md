@@ -1,0 +1,296 @@
+# DESIGN PRINCIPLES — how to build a screen here
+
+**This supersedes `ART_DIRECTION.md` and `APPLE_PASS.md`.** Both describe "The
+Chart Room" — the navy blueprint, the display serif, the glass pass — which was
+replaced. They are kept for history. If they disagree with this file, this file
+wins.
+
+**Who this is for.** Anyone adding a screen, a component or a rule to this app,
+including a future session that has never seen the redesign. Follow it and your
+screen will look like it belongs. Ignore it and it will look like the thing we
+just spent a redesign removing.
+
+**The name of the system is Quiet Precision.** It is a tool people use all day,
+over a business's real price file. It should be calm, legible, and boring in the
+way good instruments are boring.
+
+---
+
+## 0 · THE TEN RULES, IF YOU READ NOTHING ELSE
+
+1. **Never write a colour.** Use a token. The app is 97.6% tokenised and that is
+   why a whole re-skin cost one import line.
+2. **Never write a font-size below 11px.** That is the floor, and it is enforced.
+3. **Uppercase is a label style, never a name style.** Names and values keep
+   their own case.
+4. **Every text/background pair clears 4.5:1.** Measured, not eyeballed.
+5. **One accent.** Kind colour is an eighth-note, not a theme.
+6. **Type steps are sets.** Take size, weight, leading and tracking together.
+7. **Tracking is negative as size grows, ~0 at reading size.** Never positive on
+   display text.
+8. **Every pressable thing has hover, press and focus.** Press lands on
+   pointer-down.
+9. **If it is undoable, it gets a toast — not a dialog.**
+10. **A thing that cannot be done says why, where it is.**
+
+---
+
+## 1 · COLOUR
+
+### Never write a literal colour
+
+```css
+/* NO  */  color: #5f6c7b;   background: rgba(18,40,63,.08);
+/* YES */  color: var(--ink-soft);   background: var(--blue-wash);
+```
+
+There are exactly two exceptions, and both are already written: **print rules**
+(print has no theme) and **the quote document's paper** (it is paper in both
+themes, deliberately).
+
+### The ink ramp, and the floor
+
+| token | use | contrast on white |
+|---|---|---|
+| `--ink` | names, values, anything read | 18.9 : 1 |
+| `--ink-soft` | descriptions, help, sentences | 7.7 : 1 |
+| `--ink-faint` | metadata beside the thing it describes | **4.7 : 1 — the floor** |
+| `--fg-quaternary` | rules, ticks, disabled marks | 2.8 : 1 — **may never carry meaning** |
+
+`--ink-faint` is the floor for anything a person must read. If your text sits on
+a tinted or translucent background, **the tint counts** — `--ink-faint` measures
+4.72:1 on white but 4.26:1 over a 3.5% tint, which fails. That mistake was made
+and caught during the redesign; do not repeat it.
+
+### One accent, and the kinds
+
+`--blue` is the single accent. It should appear roughly **four times per screen**
+— the primary action, the current nav row, the focused control, the computed
+column. If a screen has accent everywhere, nothing on it is primary.
+
+The eight kind hues (`--accent-blue`, `--accent-ochre`, …) are for **what a table
+holds**. They are cut to roughly equal luminance so a sheet of mixed tables reads
+as one drawing. Use them for a 3px rail, a dot, or a glyph — never for a fill
+behind text, and never for chrome.
+
+### Field types have three roles, not eight
+
+Grey by default, accent for computed (`fx`), one cool hue for linked (`ref`,
+`img`). A type chip is metadata about a column and must not compete with the
+column's name.
+
+---
+
+## 2 · TYPE
+
+### Two faces
+
+**Inter** for everything a person reads. **IBM Plex Mono** for every figure,
+code, SKU and identifier. There is no third face. The display serif was retired
+because it was being set at 9px, where a serif is blur.
+
+Mono is not decoration — it is what makes a column of money line up on the
+decimal. If it is a number in a column, it is mono and `font-variant-numeric:
+tabular-nums`.
+
+### Six steps plus one label
+
+Take the whole step. Size, weight, leading and tracking travel together.
+
+| step | size | use |
+|---|---|---|
+| display | 28px | stage titles, the quote header, empty states |
+| title | 20px | panel headers, dialog titles |
+| heading | 15px | card names, row heads — the thing you scan for |
+| body | 14px | the default |
+| small | 13px | secondary text, help |
+| caption | 12px | metadata beside what it describes |
+| **label** | 11px | **the one uppercase style** |
+
+**The floor is 11px.** 222 declarations were raised to it during the redesign,
+from a low of 7px. A guard is not yet automated for this; treat it as absolute.
+
+### Tracking runs negative as size grows
+
+The outgoing system had **all 24 of its non-zero tracking values positive**,
+including at 38px. That is backwards. Large text needs letters pulled together;
+body sits at ~0; only the 11px uppercase label gets `+0.06em`.
+
+### Uppercase, precisely
+
+Allowed on: **section captions, group captions, and mono stamps.** That is the
+list.
+
+Never on: a table name, a row label, a column value, a button, a sentence.
+Uppercasing content is **lossy** — a proper noun loses its word-shape, and
+`PVC` uppercased cannot be told from a value the dealer actually typed as `Pvc`.
+Those are different facts about their data.
+
+---
+
+## 3 · SPACE, DEPTH, GEOMETRY
+
+- **Spacing** comes from `--sp-1` … `--sp-7`. Never a literal px gap.
+- **Radius**: `--radius-sm` (6px) for controls, `--radius` (10px) for cards.
+- **Elevation** is `--e1` / `--e2` / `--e3` plus `--ec1`…`--ec4` on the canvas.
+  On light, the shadow does the lifting; on dark, the surface step does, and the
+  shadow is second. Both are already defined — never hand-roll a `box-shadow`.
+- **Rows** are 40px. The grid was tighter than a spreadsheet while claiming to
+  be easier than one.
+- **Nothing truncates mid-word.** `IDEN… 8` shipped as final once. If a strip
+  does not fit, it **scrolls**; if a name does not fit, it wraps or clamps to two
+  lines with the full text still in the DOM.
+
+---
+
+## 4 · RESPONSE AND MOTION
+
+### Every pressable surface has three states
+
+Hover, press, focus. No exceptions. The outgoing build had 16 `:active` rules of
+which **one** served the design system and **three cancelled feedback** with
+`transform: none`.
+
+Press lands on **pointer-down**, not on release. The moment feedback waits for
+the click, directness falls off a cliff.
+
+Scale the press to the surface: `0.97` on a control, `0.994` plus losing the
+hover lift on a card. `0.97` on a 236px card is a 7px shrink and reads as a
+glitch. A list row **darkens** instead of scaling, so its neighbours do not look
+like they moved.
+
+### Two motion systems, and the split is not stylistic
+
+**CSS transitions own state** — hover, press, focus, open. One curve
+(`--ease-draft`), the durations in `--t-fast` / `--t-med`. Zero `transition: all`.
+Zero transitions on layout properties. This part of the app was already right
+before the redesign; keep it that way.
+
+**Springs own anything a person can grab** — dragging a node, reordering a
+block, throwing a sheet closed. Tokens are `--spring-ui-*`, `--spring-momentum-*`.
+`bounce: 0` by default; `bounce: 0.2` **only when the gesture itself carried
+momentum**. Overshoot on a menu that merely opened is wrong.
+
+Three rules a spring call must keep: animate from the **presentation** value
+(read the live transform on interrupt, or a grabbed element jumps); never lock
+out input during a transition; hand the release velocity to the spring.
+
+### Accessibility signals are honoured, not optional
+
+`prefers-reduced-motion`, `prefers-reduced-transparency` and
+`prefers-contrast: more` are all wired. Reduced motion means **gentler feedback,
+not no feedback** — movement goes, colour and opacity stay.
+
+---
+
+## 5 · MATERIALS
+
+**Glass is retired.** It was tried, it produced the design that got replaced, and
+Quiet Precision was chosen over Glass & Depth deliberately.
+
+Surfaces are paint. The material tokens still resolve — `--mat-*-blur` is `0px`
+— so no existing rule needs finding and deleting, but **do not add a new
+`backdrop-filter`**. If you believe a surface needs to be translucent, it needs
+to be argued first.
+
+---
+
+## 6 · LANGUAGE
+
+The app talks to a boat dealer, not to a database.
+
+- **Use the dealer's nouns.** "40 boats in 3 series", not "29 VARIANTS · 56
+  COLUMNS · 11 SECTIONS". The row noun comes from the table, so a motorcycle
+  shop reads "40 bikes" for free.
+- **No jargon in chrome.** Not "entity", not "UID", not "cardinality".
+- **Say what a thing does, not what it is.** "What goes with each one" beats
+  "Join editor" — but keep it to a phrase. The outgoing build wrote door
+  captions as ad copy (*"WALK EVERY ROW, COLLECT THE MATCHES"*) and it read as a
+  brochure, not a tool.
+- **A refusal is a sentence with a reason**, in the place where the thing is
+  refused: *"Nothing on this table is marked as a price. Set price columns on
+  Highfield Inflatables first."* Never a disabled control with no explanation.
+- **Never name a file the user did not import.** A dealer who sees another
+  dealer's price file named on their own screen learns this app does not know
+  whose data is whose.
+
+---
+
+## 7 · SAFETY, WHICH IS ALSO DESIGN
+
+- **If an act is undoable it gets a toast with UNDO, not a dialog.** Dialogs are
+  for the genuinely irreversible. Every confirm sheet is a full stop in the
+  middle of somebody's work.
+- **What is not undoable says so at the moment it happens** — never in a spec,
+  never in a tooltip.
+- **A confirm states its blast radius**, computed: *"3 business rules name this
+  column, 1 formula reads it, 38 of 40 rows hold a value."*
+- **Structure is never a side effect.** A new table, column or join is never
+  created by a browse or pick action. It is offered, in a sentence that names it,
+  and it is undoable.
+- **A suggestion that is confidently wrong is worse than no suggestion.** If a
+  guess is weak, say it is a guess.
+
+---
+
+## 8 · HOW THIS IS ENFORCED
+
+```bash
+npm test
+```
+
+| guard | catches |
+|---|---|
+| `vitest` | logic regressions |
+| `check-reachability` | a feature reachable from nothing |
+| `check-styles` | **a class written in TSX that no CSS declares** |
+
+`check-styles` is the one written for the redesign. The characteristic failure of
+a stylesheet change is an element that still renders and is silently unstyled —
+`tsc` green, build green, feature reachable, screen wrong. **35 pre-existing
+orphans are baselined in `tools/style-baseline.json`; you may not add a 36th.**
+When you clear one, run `node tools/check-styles.mjs --update-baseline`.
+
+### What the guards cannot see
+
+Say it out loud rather than assume coverage:
+
+- **Contrast** — not automated. Measure in the browser when you add a surface.
+- **Layout at a width** — no visual regression tooling exists.
+- **Whether the screen makes sense** — that is a person's job.
+
+### If you re-run a contrast sweep, get the ruler right
+
+Three sweeps during the redesign reported false catastrophes before one was
+correct. The first could not parse `color(srgb …)`. The second read its 0–1
+channels as 0–255 and condemned every card title at 1.1:1. The third ignored
+alpha, so a 3.5% tint over white read as near-black. **Parse `color()`,
+composite the full ancestor chain, and composite translucent text over it** — or
+you will spend an hour fixing an app that is fine.
+
+---
+
+## 9 · WHERE THINGS LIVE
+
+| file | what it owns |
+|---|---|
+| `src/styles/ds.css` | the system — tokens, both themes, type steps, press, focus |
+| `src/styles/bridge.css` | maps the app's original token names onto the system |
+| `src/styles/tokens.css`, `base.css` | the ORIGINAL system. Do not add to these |
+| `src/features/*/*.css` | each feature's own appearance, appended per feature |
+| `/design.html` | every surface drawn, both themes — the reference |
+
+**Adding a screen?** Use existing tokens, append to the feature's own stylesheet,
+and check it against `/design.html`. **Do not** create a shared override layer:
+two stylesheets fighting over one screen is worse than the problem it solves.
+
+**Changing the system itself?** That is `ds.css`, and it changes every screen at
+once — so it wants a reason, and a note in this file.
+
+---
+
+## 10 · THE ONE-LINE ROLLBACK
+
+`src/main.tsx` imports `./styles/bridge.css`. Deleting that line returns the app
+to The Chart Room. It is there so this was safe to do at speed — not because
+anyone should.
