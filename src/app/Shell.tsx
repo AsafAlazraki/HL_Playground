@@ -177,8 +177,26 @@ export function Shell() {
     })
   }, [])
 
+  /* A WINDOW OUTLIVES ITS OWN REMOVAL by the length of its exit.
+     Dropping it from the array immediately is what made closing
+     and minimising instantaneous - there was nothing left on
+     screen to animate. It is marked, it plays, and then it goes. */
+  const [leaving, setLeaving] = useState<Record<string, 'closing' | 'minimising'>>({})
+
   const closeWin = useCallback((id: string) => {
-    setWins((prev) => prev.filter((w) => w.id !== id))
+    setLeaving((l) => ({ ...l, [id]: 'closing' }))
+    window.setTimeout(() => {
+      setWins((prev) => prev.filter((w) => w.id !== id))
+      setLeaving(({ [id]: _gone, ...rest }) => rest)
+    }, 180)
+  }, [])
+
+  const minimiseWin = useCallback((id: string) => {
+    setLeaving((l) => ({ ...l, [id]: 'minimising' }))
+    window.setTimeout(() => {
+      setWins((prev) => prev.map((w) => (w.id === id ? { ...w, mini: true } : w)))
+      setLeaving(({ [id]: _gone, ...rest }) => rest)
+    }, 300)
   }, [])
 
   const raiseWin = useCallback((id: string) => {
@@ -201,7 +219,7 @@ export function Shell() {
     ids: wins.map((w) => w.id),
     raise: raiseWin,
     close: closeWin,
-    minimise: (id) => patchWin(id, { mini: true }),
+    minimise: minimiseWin,
     zoom: (id) =>
       setWins((prev) =>
         prev.map((w) => (w.id === id ? { ...w, zoomed: !w.zoomed } : w)),
@@ -304,9 +322,10 @@ export function Shell() {
                 z={20 + i}
                 focused={w.id === focusedId}
                 zoomed={w.zoomed}
+                leaving={leaving[w.id]}
                 onFocus={() => raiseWin(w.id)}
                 onClose={() => closeWin(w.id)}
-                onMinimise={() => patchWin(w.id, { mini: true })}
+                onMinimise={() => minimiseWin(w.id)}
                 onZoom={() => patchWin(w.id, { zoomed: !w.zoomed })}
                 onMove={(xy) => patchWin(w.id, { frame: { ...w.frame, ...xy } })}
               >

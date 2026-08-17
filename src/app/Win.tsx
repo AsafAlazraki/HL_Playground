@@ -40,6 +40,8 @@ export interface WinProps {
   z: number
   focused: boolean
   zoomed: boolean
+  /** playing its exit — see the note in Shell.tsx */
+  leaving?: 'closing' | 'minimising'
   onFocus: () => void
   onClose: () => void
   onMinimise: () => void
@@ -54,6 +56,7 @@ export function Win({
   z,
   focused,
   zoomed,
+  leaving,
   onFocus,
   onClose,
   onMinimise,
@@ -104,7 +107,9 @@ export function Win({
 
   return (
     <section
-      className={`win${focused ? ' is-focused' : ''}${zoomed ? ' is-zoomed' : ''}`}
+      className={`win${focused ? ' is-focused' : ''}${zoomed ? ' is-zoomed' : ''}${
+        leaving ? ` is-${leaving}` : ''
+      }`}
       style={style}
       onPointerDown={onFocus}
       aria-label={typeof title === 'string' ? title : undefined}

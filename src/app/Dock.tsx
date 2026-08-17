@@ -89,14 +89,14 @@ function DockItem({
   active?: boolean
   hasPanel?: boolean
   open?: boolean
-  onPress: () => void
+  onPress: (e?: React.MouseEvent<HTMLButtonElement>) => void
   onHover?: () => void
 }) {
   return (
     <button
       type="button"
       className={`dk-item${active ? ' is-active' : ''}${open ? ' is-open' : ''}`}
-      onClick={onPress}
+      onClick={(e) => onPress(e)}
       onPointerEnter={onHover}
       aria-label={label}
       aria-haspopup={hasPanel ? 'menu' : undefined}
@@ -132,6 +132,11 @@ export function Dock({
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const [open, setOpen] = useState<string | null>(null)
+  /* WHERE THE PANEL GREW FROM (apple-design §7: anchor an
+     interaction to its source). Without this the panel scaled out
+     of its own centre and the relationship between the icon you
+     pressed and the thing that appeared was left to be guessed. */
+  const [originX, setOriginX] = useState<string>('50%')
   const close = useCallback(() => setOpen(null), [])
   const rootRef = useRef<HTMLDivElement | null>(null)
 
@@ -179,7 +184,11 @@ export function Dock({
 
   const panel = (id: string, body: ReactNode) =>
     open === id ? (
-      <div className="dk-panel" role="menu">
+      <div
+        className="dk-panel"
+        role="menu"
+        style={{ ['--dk-origin' as string]: originX }}
+      >
         {body}
       </div>
     ) : null
@@ -255,7 +264,16 @@ export function Dock({
           hasPanel
           open={open === 'tables'}
           active={current === 'table'}
-          onPress={() => setOpen(open === 'tables' ? null : 'tables')}
+          onPress={(e) => {
+            const b = (e?.currentTarget as HTMLElement) ?? null
+            const wrap = rootRef.current
+            if (b && wrap) {
+              const br = b.getBoundingClientRect()
+              const wr = wrap.getBoundingClientRect()
+              setOriginX(`${Math.round(br.left + br.width / 2 - wr.left)}px`)
+            }
+            setOpen(open === 'tables' ? null : 'tables')
+          }}
           onHover={() => {
             if (open && open !== 'tables') setOpen('tables')
           }}

@@ -3383,3 +3383,133 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+
+/* ============================================================
+   FLUIDITY — apple-design applied to the desktop.
+
+   Audited against the skill after the window manager landed.
+   Four gaps, each fixed here, each named.
+
+   1  WINDOWS POPPED. A window appeared and disappeared with no
+      motion at all, which is the single thing that reads as
+      "not a desktop". They now MATERIALISE - scale and blur and
+      opacity together (§12: materialize, don't just fade) - and
+      leave along the same path they arrived on (§7: symmetric).
+
+   2  MINIMISE WENT NOWHERE. It vanished. It now travels toward
+      the dock and shrinks into it, so the window has somewhere
+      it went and the dock is visibly where it is (§7: if
+      something disappears one way, we expect it to emerge from
+      where it came).
+
+   3  THE DOCK PANEL SCALED FROM ITS OWN CENTRE, not from the
+      icon that opened it (§7: anchor interactions to their
+      source).
+
+   4  THE TRAFFIC LIGHTS HAD NO PRESS. Feedback on pointer-down
+      is the foundation of §1, and three of the most-clicked
+      controls in the app were missing it.
+
+   THE CURVE. `--ease-draft` is the app's own out-curve and is
+   used for state. Anything that arrives carrying weight gets the
+   critically-damped spring curve below instead - overshoot is
+   reserved for motion a GESTURE caused (§4), and a window
+   opening was not thrown by anybody.
+   ============================================================ */
+
+:root {
+  /* critically damped, no overshoot — the §4 default */
+  --ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ---------- 1 · a window materialises ------------------------ */
+
+@keyframes win-in {
+  from {
+    opacity: 0;
+    transform: scale(0.955) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.win {
+  animation: win-in 260ms var(--ease-settle);
+  /* the compositor is told what is about to move (§11) */
+  will-change: transform, opacity;
+}
+
+/* leaves the way it came (§7) */
+@keyframes win-out {
+  to {
+    opacity: 0;
+    transform: scale(0.955) translateY(8px);
+  }
+}
+.win.is-closing {
+  animation: win-out 180ms var(--ease-settle) forwards;
+  pointer-events: none;
+}
+
+/* ---------- 2 · minimise travels to the dock ----------------- */
+
+/* it shrinks toward the bottom of the screen, where the dock is,
+   so the window has somewhere it went */
+@keyframes win-min {
+  to {
+    opacity: 0;
+    transform: scale(0.18) translateY(70vh);
+  }
+}
+.win.is-minimising {
+  animation: win-min 300ms var(--ease-settle) forwards;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+/* ---------- 3 · the dock panel comes from its icon ----------- */
+
+/* was `bottom center` — the panel grew out of its own middle
+   rather than out of the thing that was pressed */
+.dk-panel {
+  transform-origin: var(--dk-origin, 50%) bottom;
+}
+
+/* ---------- 4 · the lights answer the press ------------------ */
+
+.win-light {
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    transform 90ms var(--ease-settle);
+}
+.win-light:active {
+  transform: scale(0.86);
+}
+/* the glyph a Mac shows inside the light on hover */
+.win-lights:hover .win-light::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
+}
+
+/* ---------- §14 · and none of it against the user's wishes --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .win,
+  .win.is-closing,
+  .win.is-minimising {
+    animation: none;
+  }
+  /* reduced motion is a GENTLER equivalent, not none at all — the
+     window still fades so its arrival and departure are legible */
+  .win.is-closing,
+  .win.is-minimising {
+    opacity: 0;
+    transition: opacity 140ms linear;
+  }
+}
