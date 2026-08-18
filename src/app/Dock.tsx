@@ -224,6 +224,9 @@ export function Dock({
   const barRef = useRef<HTMLDivElement | null>(null)
   const [roved, setRoved] = useState<string | null>(null)
   const stopLabel = roved ?? (current === null ? 'Data model' : LIT_BY_STAGE[current] ?? null)
+  /* ONE PREDICATE, ASKED BY EVERY ITEM, so "which one holds the stop"
+     is a single expression and two items can never both answer yes. */
+  const isStop = (label: string): boolean => stopLabel === label
 
   /* arriving somewhere hands the stop back to the item that is lit */
   useEffect(() => {
@@ -388,11 +391,18 @@ export function Dock({
           the navigation bar below moved to build it. */}
       <ActionBar />
 
-      <div className="dk" role="toolbar" aria-label="Navigation">
+      <div
+        className="dk"
+        role="toolbar"
+        aria-label="Navigation"
+        ref={barRef}
+        onKeyDown={onBarKeys}
+      >
         {onOpenHome ? (
           <DockItem
             icon={SquaresFour}
             label="Home"
+            stop={isStop('Home')}
             active={current === 'home'}
             onPress={() => {
               close()
@@ -404,6 +414,7 @@ export function Dock({
           <DockItem
             icon={TreeStructure}
             label="Data model"
+            stop={isStop('Data model')}
             active={current === null}
             onPress={() => {
               close()
@@ -415,6 +426,7 @@ export function Dock({
         <DockItem
           icon={TableIcon}
           label="Tables"
+          stop={isStop('Tables')}
           count={tableCount}
           hasPanel
           open={open === 'tables'}
@@ -431,6 +443,7 @@ export function Dock({
           <DockItem
             icon={Stack}
             label="Modules"
+            stop={isStop('Modules')}
             active={current === 'module'}
             onPress={() => {
               close()
@@ -442,6 +455,7 @@ export function Dock({
           <DockItem
             icon={ArrowsLeftRight}
             label="Fitment"
+            stop={isStop('Fitment')}
             active={current === 'flow'}
             onPress={() => {
               close()
@@ -453,6 +467,7 @@ export function Dock({
           <DockItem
             icon={ListChecks}
             label="Business rules"
+            stop={isStop('Business rules')}
             active={current === 'rules'}
             onPress={() => {
               close()
@@ -477,6 +492,7 @@ export function Dock({
           <DockItem
             icon={FileText}
             label="Quotes"
+            stop={isStop('Quotes')}
             count={quoteCount}
             active={current === 'quote'}
             onPress={() => {
@@ -507,6 +523,7 @@ export function Dock({
           <DockItem
             icon={UsersThree}
             label="Customers"
+            stop={isStop('Customers')}
             count={customerCount}
             active={current === 'customer'}
             onPress={() => {
@@ -523,6 +540,7 @@ export function Dock({
           <DockItem
             icon={MagnifyingGlass}
             label="Find anything"
+            stop={isStop('Find anything')}
             onPress={() => {
               close()
               onSearch()
@@ -533,6 +551,7 @@ export function Dock({
           <DockItem
             icon={Plus}
             label="New table"
+            stop={isStop('New table')}
             onPress={() => {
               close()
               onAddTable()

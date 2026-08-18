@@ -116,6 +116,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import {
   accentVar,
   isRetired,
+  rowLabel,
   TABLE_KINDS,
   type ImageRef,
   type ModuleDef,
@@ -132,6 +133,13 @@ import {
   useImageDisplay,
 } from '@/lib/imageSources'
 import { heldBackRowCount } from '@/features/views/sellable'
+/* THE SUBMODULES, NOT THE BARREL. `@/features/views` re-exports
+   `ViewPage` and everything under it; this file wants one rule and one
+   registry, and naming them directly keeps the whole item page out of
+   the module chunk. It is the same import shape `read.ts` beside it
+   already uses. */
+import { bestAnsweredRow, LANDING_SCAN } from '@/features/views/landing'
+import { createViewFor } from '@/features/views/viewDefs'
 import { useQuotes } from '@/features/quote'
 import {
   buildEntries,
@@ -301,6 +309,95 @@ export function ModuleIndex({
     [module, entities, rowsByEntity, quotes],
   )
   const anythingLately = lately.quoteCount > 0 || lately.edited > 0
+
+  /* ============================================================
+     WHERE TO START — the one row in this catalogue that shows what the
+     catalogue is FOR, chosen by a rule and never by a favourite.
+
+     WHAT WAS MEASURED. The tiles are in the dealer's own order, cut by
+     table and then by their own hierarchy, and that order is right: a
+     catalogue that reordered itself by how complete each row was would
+     be unrecognisable to the person whose price file it is. But the row
+     a demonstration lands on is the FIRST tile, and on the real set the
+     first tile of the first table of the first module is
+     "Highfield - RU230KAM (PVC) WH", whose page answers two of six
+     blocks. Four of the six headings on it read "0 picked". Nothing is
+     wrong with that boat — it is a 2.3 m roll-up that takes no trailer
+     and no rigging kit — but it is the worst possible first impression
+     of a page whose whole job is showing what goes with what.
+
+     THE VIEW STAGE ALREADY HAD THE ANSWER AND COULD NOT GIVE IT. Its
+     landing rule fires only for a door that names a TABLE; a tile names
+     a ROW, and it is right that it does — a person who pressed a boat
+     must get that boat. So the rule is asked HERE instead, once, about
+     the table the catalogue opens with, and its answer is offered as a
+     door beside the reason it was chosen. Nothing is reordered, nothing
+     is hidden, and the sparse rows are exactly where they were.
+
+     WHY THE FIRST LISTED TABLE AND NOT THE WHOLE MODULE. `listed[0]` is
+     the section a reader's eye lands in — it is the top of the
+     catalogue and the first chip in INSIDE — so "where to start" means
+     the start of what is actually in front of them. Asking all seven of
+     Boats' tables would cost seven scans on open (47 ms for Highfield
+     alone) to answer a question nobody asked, and would offer a boat
+     from a brand five screens down.
+
+     IT USES THE SAME SCAN DEPTH AS THE TABLE'S OWN DOOR, so pressing
+     this and pressing Fitment on that table land on the SAME boat. Two
+     surfaces answering one question differently is worse than either
+     answer.
+
+     AND IT ONLY OFFERS WHAT IS SOLD — but that is the RULE's promise
+     now, not a filter applied here. `bestAnsweredRow` skips a
+     discontinued row as a candidate and still counts it against its
+     window, so this door and the table's own Fitment door cannot answer
+     the same question with two different boats. The rows themselves stay
+     exactly where they are.
+     ============================================================ */
+  const start = useMemo(() => {
+    const primary = listed[0]
+    if (!canOpen || !browsing || !primary) return undefined
+    const rows = rowsByEntity[primary.id] ?? []
+    if (rows.length === 0) return undefined
+    const view = createViewFor(primary.id)
+    const best = bestAnsweredRow({
+      entities,
+      rowsByEntity,
+      entity: primary,
+      rows,
+      viewId: view.id,
+      limit: LANDING_SCAN,
+    })
+    if (!best) return undefined
+
+    /* THE SENTENCE MAY NOT CLAIM MORE THAN THE SCAN SAW. The rule stops
+       at the first row that answers everything and otherwise stops at
+       `LANDING_SCAN`, so on a 588-variant table "the most of any" would
+       be a statement about hundreds of rows nobody read. `scanned` is how
+       far it really got, and the sentence says so. */
+    const say =
+      best.answered >= best.of
+        ? /* A PERFECT ROW IS ALLOWED THE WHOLE TABLE'S NAME. The scan
+             starts at the top and stops at the first row that answers
+             everything, so every row above this one was read and none of
+             them did — "the first one in Highfield Inflatables that is"
+             is exactly what happened, not a claim about rows nobody
+             looked at. */
+          `Everything that goes with it is picked — all ${best.of}. It is the first one in ${primary.name} that is.`
+        : `${best.answered} of the ${best.of} tables that go with it ${
+            best.answered === 1 ? 'has' : 'have'
+          } something picked, which is the most in ${
+            best.scanned >= rows.length ? primary.name : `the first ${best.scanned} of ${primary.name}`
+          }.`
+
+    return {
+      tableId: primary.id,
+      rowId: best.row.id,
+      name: rowLabel(primary, best.row),
+      say,
+    }
+  }, [canOpen, browsing, listed, entities, rowsByEntity])
+
 
   /* A CHIP SCROLLS TO ITS RUN, and clears the find box on the way:
      "show me Stacer" while three letters are typed into search would
@@ -623,6 +720,42 @@ export function ModuleIndex({
                   edited since {lately.edited === 1 ? 'it was' : 'they were'} added.
                 </p>
               ) : null}
+            </div>
+          ) : null}
+
+          {/* WHERE TO START — LAST IN THE BAND, AND THE ONLY THING IN
+              IT THAT GOES ANYWHERE. The three strips above say what
+              this place is; DESIGN_CONTRACT §6 is explicit that a
+              surface says what a thing IS before it offers the action,
+              so the door comes after them and immediately above the
+              catalogue it points into. See the `start` memo for the
+              rule, the measurement, and why it is the first listed
+              table rather than all seven.
+
+              ABSENT RATHER THAN EMPTY. A module that cannot open a row,
+              cannot browse, has no rows still sold, or whose rows
+              answer nothing at all draws no strip — the same promise
+              WHAT HAS HAPPENED LATELY makes above it. There is no such
+              thing as a quiet recommendation. */}
+          {start ? (
+            <div className="md-over-strip">
+              <p className="md-over-cap mono-label">Where to start</p>
+              <div className="md-start">
+                <button
+                  type="button"
+                  className="md-start-door"
+                  aria-label={`Open ${start.name} — ${start.say}`}
+                  onClick={() => onOpen(start.tableId, start.rowId)}
+                >
+                  <span className="md-start-name">{start.name}</span>
+                  <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                </button>
+                {/* THE REASON TRAVELS WITH THE OFFER. A suggestion with
+                    no stated basis is the "confidently wrong" case
+                    DESIGN_CONTRACT §7 names; this one states exactly
+                    what it counted and how far it looked. */}
+                <span className="md-start-say">{start.say}</span>
+              </div>
             </div>
           ) : null}
         </section>

@@ -40,7 +40,7 @@ import { ArrowLeft, MagnifyingGlass, Receipt } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar, readCell, rowLabel, type EntityDef, type RowData } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
-import { ViewPage, createViewFor, firstAnsweredRow } from '@/features/views'
+import { ViewPage, createViewFor, bestAnsweredRow, LANDING_SCAN } from '@/features/views'
 import { createQuoteFromView } from '@/features/quote'
 import { useActionBar } from '@/lib/actions'
 import type { ActionGroup } from '@/lib/actions'
@@ -98,16 +98,18 @@ export function ViewStage({
 
   /* WHAT THIS OPENS ON WHEN THE DOOR NAMED ONLY A TABLE.
      `rows[0]` is the sheet's own first row, and on the real Northside
-     sheet that is the worst page in the catalogue: walked all 40 rows of
-     Highfield Inflatables and the eight with three of five blocks empty
-     are rows 1–8, while 18 of the 40 have every block full. So a demo
-     opening the first brand of the first module landed on the emptiest
-     boat, eight times running.
-     The first row with an answer in every block is offered instead —
-     the dealer's own order, first match, no ranking and no favourite.
-     `firstAnsweredRow` carries the whole rule and the measurement; it
-     answers `undefined` when no row qualifies, and then `rows[0]` is
-     still what happens.
+     sheet that is the worst page in the catalogue: on the full price
+     file the first 120 Highfield Inflatables variants answer 2, 3 or 4
+     of the page's six blocks and rows 1–4 answer two, while a 4-of-6
+     variant sits 105 rows down the same order. So a demo opening the
+     first brand of the first module landed on the emptiest boat.
+     The row that answers the MOST blocks is offered instead — earliest
+     one on a tie, so it is still the dealer's own order deciding, with
+     no ranking of their stock and no favourite. `bestAnsweredRow`
+     carries the whole rule and the measurement, including why the
+     previous all-or-nothing version went silently dead the day the
+     whole price file arrived; it answers `undefined` when there is
+     nothing to prefer, and then `rows[0]` is still what happens.
 
      DECIDED ONCE PER TABLE, AND READ IMPERATIVELY ON PURPOSE. The scan
      needs the whole sheet — the blocks read other tables and the joins
@@ -122,14 +124,19 @@ export function ViewStage({
   const landing = useMemo(() => {
     if (!entity || !view) return undefined
     const { entities, rowsByEntity } = useProjectStore.getState()
-    return firstAnsweredRow({
+    /* LANDING_SCAN, not RAIL_CAP — they are the same number today and
+       they are not the same fact. The rail's cap is about how much this
+       stage draws; the scan depth belongs to the rule, so the module
+       index asking the same question about the same table gets the same
+       boat back. See landing.ts. */
+    return bestAnsweredRow({
       entities,
       rowsByEntity,
       entity,
       rows: rowsByEntity[entity.id] ?? NO_ROWS,
       viewId: view.id,
-      limit: RAIL_CAP,
-    })
+      limit: LANDING_SCAN,
+    })?.row
   }, [entity, view])
 
   /* Never trust the remembered row: a swap, an import or a deleted

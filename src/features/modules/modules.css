@@ -2237,23 +2237,163 @@
   gap: 3px;
   padding-right: 5px;
   border-color: var(--blue);
-  color: var(--blue-deep);
+  color: var(--ink);
   cursor: pointer;
   transition:
     var(--press-fx),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
+/* ============================================================
+   MEASURED IN BOTH THEMES, AND ONE OF THEM WAS FAILING.
+
+   This rule set its label to `var(--blue-deep)` over a
+   `var(--blue-wash)` hover — a LIGHT-THEME pair reasoned about in the
+   light theme only. `--blue-deep` is the accent deepened for white
+   paper; in dark it is #5a66e0 against a #131519 panel, and a blue wash
+   then lifts the ground TOWARDS the ink instead of away from it.
+   Measured by parsing `color(srgb …)`, compositing the full ancestor
+   chain to an opaque base and compositing the text over that:
+
+       state                light   dark
+       rest                  8.99   3.84   <- fails
+       hover  (wash)         7.91   3.24   <- fails
+       press  (wash)         7.24   2.87   <- fails
+
+   `--blue` instead of `--blue-deep` is not enough on its own — it
+   measures 5.11:1 at rest in dark but only 4.31:1 once the wash is
+   under it, and the hover is where a person is looking. So the LABEL
+   takes `--ink`, which is the widest margin available and the same
+   margin in both themes:
+
+       state                light   dark
+       rest    (sunken)     16.89  17.26
+       hover   (wash)       16.65  13.28
+       press   (wash-str)   15.25  11.76
+
+   NOTHING THAT MADE IT A DOOR IS GONE. This rule's own note says what
+   separates a door from a live statement — "the caret and the accent
+   border" — and both are untouched. The wash a person came here to see
+   on hover is untouched too; only the ink it sits under changed, and
+   the press now steps to `--blue-wash-strong` so hover and press are
+   two marks rather than one mark and a scale.
+   ============================================================ */
 .md-act-verb.is-door:hover {
   background: var(--blue-wash);
 }
 /* the press lands on pointer-down, and at control scale */
 .md-act-verb.is-door:active {
-  background: var(--blue-wash);
+  background: var(--blue-wash-strong);
   transform: scale(0.97);
 }
 .md-act-verb.is-door:focus-visible {
   outline: none;
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* ============================================================
+   WHERE TO START — the last strip in the overview band, and the
+   only door in it that leads to a ROW.
+
+   IT IS A LINE, NOT A CARD. The rule it draws — "the one in this
+   catalogue with the most already picked" — is a suggestion, and a
+   suggestion drawn as a card competes with the 240 tiles beneath
+   it that are the actual catalogue. `.md-act` above is the shape
+   this borrows: a pill that presses, a sentence beside it that
+   says why, both on one baseline. On a narrow window the sentence
+   wraps under the pill rather than squeezing it, which is what
+   `flex-wrap` and the pill's `flex: 0 0 auto` are for.
+
+   THE NAME KEEPS ITS OWN CASE. "Highfield - CL290 (PVC) W-W-WD" is
+   a value out of the dealer's sheet, so it is sentence case at
+   reading size, never the 11px uppercase label — DESIGN_CONTRACT
+   §3, uppercase is for a caption and a stamp and nothing else. The
+   caption above it is the uppercase one.
+
+   ONE ACCENT, AND THIS IS THE PAGE'S. The index draws its accent
+   on the module's own rail and on this door; the tiles below carry
+   none, so a screen with 240 items on it has exactly one thing
+   asking to be pressed first. That is the four-times budget spent
+   deliberately rather than spread.
+   ============================================================ */
+
+.md-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.md-start-door {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 6px 0 10px;
+  border: 1px solid var(--blue);
+  border-radius: 999px;
+  background: transparent;
+  /* THE ACCENT IS THE BORDER; THE WORDS ARE INK. Same arithmetic as the
+     verb door above, and the same conclusion: accent ink over an accent
+     wash closes to 4.31:1 in dark. `--ink` here measures 18.91:1 light
+     and 15.74:1 dark at rest, 16.65:1 and 13.28:1 over the hover. The
+     1px `--blue` border is itself 5.91:1 / 5.11:1 against the panel, so
+     the thing carrying the accent is the thing that can afford it. */
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-start-door:hover {
+  background: var(--blue-wash);
+}
+/* press on pointer-down, at control scale — DESIGN_CONTRACT §5 — and a
+   second wash step so hover and press are two marks, not one */
+.md-start-door:active {
+  background: var(--blue-wash-strong);
+  transform: scale(0.97);
+}
+.md-start-door:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* A NAME IS NEVER CUT MID-WORD. It is one line here because the
+   strip is one line, so it ellipsises at a word boundary and the
+   whole string is on the button's own accessible name either way. */
+/* The ink is inherited from the button, deliberately: one declaration
+   for the whole control means the name and the caret can never end up
+   at two different contrasts. */
+.md-start-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* --ink-soft, NOT --ink-faint, AND THE REASON IS MEASURED. This
+   sentence sits inside `.md-over`, which is `--paper-high` — white —
+   so --ink-faint's 4.72:1 would pass here. It steps up anyway
+   because it is a SENTENCE a person reads rather than metadata
+   beside a figure, which is the split DESIGN_CONTRACT §1 draws, and
+   because it is the same 12px/1.45 role `.md-act-say` beside it
+   already carries. Two sentences in one band at two different inks
+   would read as two different kinds of fact. */
+.md-start-say {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }

@@ -54,9 +54,12 @@ export { ViewPage } from './ViewPage'
 export type { ViewPageProps } from './ViewPage'
 
 /* WHICH ROW A PAGE OPENS ON when the door named a table and nothing
-   more. See landing.ts for the measurement and the rule. */
-export { firstAnsweredRow } from './landing'
-export type { FirstAnsweredArgs } from './landing'
+   more — and which row a CATALOGUE should offer as the way in, which is
+   the same question asked from one screen further out. One rule, one
+   scan depth, so the two can never name different boats. See landing.ts
+   for the measurement and the rule. */
+export { bestAnsweredRow, LANDING_SCAN } from './landing'
+export type { BestAnswered, BestAnsweredArgs } from './landing'
 
 export {
   createViewFor,
