@@ -265,9 +265,21 @@
   text-decoration: line-through;
 }
 
+/* THE STAR IS A COLUMN, NOT AN ORNAMENT. Every `.qt-line-main` is its
+   own grid, so a row that omitted the star pulled the whole row one
+   track left: the boat line — never "recommended", because nothing
+   recommends the boat you started from — put its price in the 46px
+   QUANTITY track and its chevron in the 130px MONEY track. Measured on
+   the Stabicraft 1450 quote: "$20,900" wanted 58.6px in a 46px box and
+   sat 125px left of the "$3,806" below it. Money that does not line up
+   is the one thing mono type is here to prevent (DESIGN_PRINCIPLES §2).
+   So the cell is always drawn and always 11px — the icon's own size —
+   and the star inside it is what is conditional. */
 .qt-star {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 11px;
   color: var(--accent-ochre);
 }
 
@@ -498,7 +510,7 @@
 }
 .qt-line-main {
   display: grid;
-  grid-template-columns: auto minmax(160px, 1.4fr) minmax(0, 1fr) 46px 130px 22px 22px;
+  grid-template-columns: 11px minmax(160px, 1.4fr) minmax(0, 1fr) 46px 130px 22px 22px;
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) 0;

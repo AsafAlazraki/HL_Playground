@@ -341,6 +341,10 @@
 .rl-route + .rl-route {
   border-top: 1px solid color-mix(in srgb, var(--rl-ink) 18%, transparent);
 }
+/* a branch's own label — `route.label`, which for a Condition node is
+   the name whoever wrote the rule typed for that way out. A name, so
+   it keeps its case (§3). Mono stays: these sit in a column of
+   handles on the canvas and they have to line up. */
 .rl-route-label {
   min-width: 0;
   overflow: hidden;
@@ -348,8 +352,7 @@
   white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--canvas-ink);
 }
 .rl-route-test {

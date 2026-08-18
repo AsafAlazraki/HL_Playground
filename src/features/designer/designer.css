@@ -1101,8 +1101,11 @@
   background: none;
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  /* the way out of a blocker, and a BUTTON with a phrase on it —
+     "Open options", "Set a price column". §3. It is the only thing a
+     person can press on a note that is telling them they are stuck,
+     so it must read as an offer rather than an alarm. */
+  letter-spacing: 0.01em;
   color: var(--red);
   cursor: pointer;
   transition:
@@ -1419,7 +1422,18 @@
   gap: var(--sp-3);
   padding: var(--sp-4) var(--sp-5);
 }
+/* the counted line the sheet is FOR — "19 of 19 rows hold a value ·
+   3 distinct values". It borrowed `.mono-label` and inherited its
+   uppercase with it; see the note on `ConfirmFacts`. Mono and
+   tabular because it is figures, at the caption step because it is a
+   sentence, and --ink-soft because it is the evidence rather than
+   the decoration. */
 .ds-cs-facts {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
 }
 .ds-cs-dot {

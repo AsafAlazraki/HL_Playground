@@ -1394,14 +1394,17 @@
   color: var(--ink-faint);
 }
 
+/* "Or press New table on the bar." — a sentence, with a full stop on
+   it, pointing at a control. §3 forbids uppercase on a sentence, and
+   this one is on the first screen a new user ever sees. The eyebrow
+   above it (`.shell-invite-kicker`, "Nothing on the sheet yet") is
+   the sanctioned 11px uppercase eyebrow of DESIGN_CONTRACT §6's
+   empty-state anatomy and is left exactly as it is; a kicker and a
+   sentence are different parts of that shape. */
 .shell-invite-hint {
   margin-top: var(--sp-4);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  line-height: 1.7;
+  font-size: 12.5px;
+  line-height: 1.6;
   color: var(--ink-faint);
 }
 
@@ -3335,6 +3338,15 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+/* THREE LINES, BECAUSE ONE TABLE IN FIFTY-ONE NEEDS THREE. The clamp
+   is a wall against a pathological name, not a cut on the longest true
+   one the sheet holds. Measured across every card on Home at 1280,
+   1440 and 1920 — the grid is `minmax(230px, 1fr)` so the name box is
+   221px at all three — exactly one name overflows two lines:
+   "Haines Signature × Dunbier/Haines BMT — Trailer Fitment", which
+   wants 56px of a 38px box. Every other name on the sheet fits in two,
+   so raising the clamp costs no card a row of height it was not
+   already going to take. */
 .hm-card-name {
   font-family: var(--font-ui);
   font-size: 15px;
@@ -3343,7 +3355,7 @@
   letter-spacing: -0.009em;
   color: var(--ink);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

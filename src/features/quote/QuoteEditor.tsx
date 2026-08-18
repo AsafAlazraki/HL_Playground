@@ -1026,11 +1026,12 @@ function LineRow({
   return (
     <div className={`qt-line${open ? ' is-open' : ''}`}>
       <div className="qt-line-main">
-        {line.recommended ? (
-          <span className="qt-star" title="Recommended">
-            <Star size={11} weight="fill" />
-          </span>
-        ) : null}
+        {/* ALWAYS THE CELL, CONDITIONALLY THE STAR — see `.qt-star` in
+            quote.css. Dropping the element dropped the grid track with
+            it and moved every figure on the row. */}
+        <span className="qt-star" title={line.recommended ? 'Recommended' : undefined}>
+          {line.recommended ? <Star size={11} weight="fill" /> : null}
+        </span>
         <span className="qt-line-name">{line.label}</span>
 
         <span className="qt-line-detail">

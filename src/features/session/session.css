@@ -23,7 +23,9 @@
 
 .ts-note {
   position: fixed;
-  bottom: 96px;
+  /* `bottom` is set inline from the MEASURED floor (src/lib/noteFloor.ts).
+     It used to be a hardcoded 96px, which cleared the dock and was then
+     covered by the action bar when that landed between them. */
   left: var(--sp-5);
   z-index: 150;
   width: min(400px, calc(100vw - var(--sp-6)));

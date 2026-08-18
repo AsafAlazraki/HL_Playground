@@ -192,7 +192,7 @@ export function TableSheet({
      press back is a `delete` and "restores the previous widths" is true
      by construction. */
   const [sheetBox, sheetW] = useBoxWidth()
-  const nameW = useNameColumnWidth(entity, rows, sheetW)
+  const nameW = useNameColumnWidth(entity, rows, sheetW, data.refLabelOf)
   const fit = useFitWidths(entityId)
   const widths = useMemo(
     () => ({ ...nameW, ...colWidths, ...(fit ?? {}) }),

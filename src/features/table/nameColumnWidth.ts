@@ -43,7 +43,7 @@
    Pure at the bottom (`widestOf`, `nameColumnWidth`), a hook on top.
    ============================================================ */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { displayFieldOf, type EntityDef, type RowData } from '@/types/model'
+import { displayFieldOf, type EntityDef, type FieldDef, type RowData } from '@/types/model'
 import { cellPrintText, DEFAULT_COL_W, MAX_COL_W, valueForField } from './helpers'
 import { cellToText } from '@/features/table/core'
 
@@ -57,6 +57,14 @@ export const NAME_MAX_SHARE = 0.38
  *  twice, its 1px right-hand rule, and a pixel of slack so a name that
  *  measures exactly its box does not ellipsise on a rounding error. */
 export const CELL_TEXT_INSET = 12 * 2 + 1 + 1
+
+/** What `.tb-grid-grouped .tb-cell-lead` adds to the FIRST column's
+ *  left padding, so the run of leaves reads as belonging to its drawer
+ *  (table.css). It is stolen from the same box the value is painted in,
+ *  so a level column measured without it is 18px short of what it
+ *  needs the moment the register is grouped — which is the state a
+ *  levelled register is always in. */
+export const LEAD_INDENT_W = 18
 
 /** How many of the longest strings are actually measured. */
 const PROBE = 24
@@ -91,6 +99,67 @@ export function nameColumnWidth(widestText: number, available: number): number {
     Math.min(MAX_COL_W, Math.round(available * NAME_MAX_SHARE)),
   )
   return Math.max(floor, Math.min(ceiling, Math.ceil(widestText + CELL_TEXT_INSET)))
+}
+
+/* ============================================================
+   AND THE SAME ARGUMENT FOR THE OTHER TWO COLUMNS THAT HOLD A NAME.
+
+   THE FAULT, MEASURED, TWICE.
+
+   A LEVEL COLUMN. Haines Signature groups by `Series`, and every one of
+   its nine rows drew "Fisher Series (as at 18.03.2026)" as "Fisher
+   Series (as at 18…" — 186px of text in a 141px box, on all three of
+   1280, 1440 and 1920, because a level column took
+   `DEFAULT_COL_W.text` (184px) and then gave 18px of it back to the
+   grouping indent.
+
+   A REFERENCE COLUMN. Every one of the 27 relationship registers is
+   made of them, and every one of them clipped: "Highfield × Yamaha —
+   Motor Fitment" drew 54 clipped cells at 1280, 56 at 1440 and 64 at
+   1920, all of them `Boat` and `Motor` at the 184px default while
+   "Highfield - RU230KAM (HYP) WH" wanted 197px. "Stacer × Stacer
+   Trailers" drew 73. Those registers are 27 of the 51 cards on Home.
+
+   WHY IT IS THE SAME FIX AND NOT A NEW ONE. All three columns hold a
+   NAME the dealer chose, not a figure of a known shape: a level column
+   holds the value the register is grouped by ("Roll-Up ▸ RU230KAM"), a
+   reference column holds another table's display value — the very
+   string this module already measures on that other table. A per-TYPE
+   default cannot know that this dealer's names run to forty-four
+   characters, which is the argument `nameColumnWidth` was written for.
+
+   AND WHY THE CEILING IS THE SAME CEILING. `NAME_MAX_SHARE` was chosen
+   so a frozen column could not eat a 1280px screen. The same number
+   does a second job here: `available` is the SCROLLER, which is the
+   window on a table page and a 520px card on the blueprint, so one
+   rule keeps a page generous (456px at 1280) and a card a card (198px)
+   without either needing to know which it is. Anything past the
+   ceiling still clips and still says so by ellipsis — a register is
+   allowed to be wider than the window (DESIGN_CONTRACT §2) but a
+   column is not allowed to be wider than the sheet it is on. `Fit
+   columns` still overlays all of this, still says out loud what it
+   did, and a drag still wins.
+   ============================================================ */
+
+/** The width a level or reference column wants, given the widest value
+ *  in it. Never narrower than its own type default, never wider than
+ *  the name column's ceiling, and it pays for the grouping indent when
+ *  it will be drawn with one. */
+export function dataColumnWidth(
+  widestText: number,
+  floor: number,
+  available: number,
+  /** the grouping indent, for a column that will be drawn as the lead */
+  indent = 0,
+): number {
+  const ceiling = Math.max(
+    floor,
+    Math.min(MAX_COL_W, Math.round(available * NAME_MAX_SHARE)),
+  )
+  return Math.max(
+    floor,
+    Math.min(ceiling, Math.ceil(widestText + CELL_TEXT_INSET + indent)),
+  )
 }
 
 /* ---------------------------------------------------------- */
@@ -270,14 +339,22 @@ export function useBoxWidth(): [(el: HTMLElement | null) => void, number] {
 
 const NO_WIDTHS: Record<string, number> = {}
 
-/** The name column's width, as a one-entry width map to merge UNDER the
- *  reader's own. `{}` when the table has no display column, no rows, or
- *  nothing has been painted yet. */
+/** The measured widths of every column that holds a NAME — the display
+ *  column, the levels the register groups by, and the references — as a
+ *  width map to merge UNDER the reader's own. `{}` when the table has
+ *  no such column, no rows, or nothing has been painted yet. */
 export function useNameColumnWidth(
   entity: EntityDef | undefined,
   rows: readonly RowData[],
   /** the scroller the pin freezes inside; 0 before it is measured */
   available: number,
+  /* WITHOUT THIS A REFERENCE MEASURES ITS ROW ID. `cellToText` falls
+     back to the raw id when it has no resolver (coerce.ts), so a `Boat`
+     column would be measured at the width of "kZ8pQm3xTb" — 70px, under
+     its own 184px default, and the column would silently keep the width
+     that was clipping it. The two call sites already build this for the
+     grid; it is the same function, passed rather than rebuilt. */
+  refLabelOf?: (f: FieldDef) => ((rowId: string) => string | undefined) | undefined,
 ): Record<string, number> {
   const [font, setFont] = useState<string | null>(null)
 
@@ -307,6 +384,33 @@ export function useNameColumnWidth(
 
   const field = entity ? displayFieldOf(entity) : undefined
 
+  /* THE OTHER COLUMNS THAT HOLD A NAME: the levels the register is
+     grouped by, and every reference. The display column is excluded
+     even when it is one of them — it is measured below against the
+     frozen budget, and measuring it twice would let the two answers
+     disagree. `indent` is the grouping inset, which only the FIRST
+     column is drawn with, so only the first level pays for it. */
+  const namedFields = useMemo(() => {
+    if (!entity) return [] as { field: FieldDef; indent: number }[]
+    const out: { field: FieldDef; indent: number }[] = []
+    const seen = new Set<string>()
+    const levels = entity.hierarchy ?? []
+    levels.forEach((id, i) => {
+      if (id === field?.id || seen.has(id)) return
+      const f = entity.fields.find((x) => x.id === id)
+      if (!f) return
+      seen.add(id)
+      out.push({ field: f, indent: i === 0 ? LEAD_INDENT_W : 0 })
+    })
+    for (const f of entity.fields) {
+      if (f.type !== 'reference') continue
+      if (f.id === field?.id || seen.has(f.id)) continue
+      seen.add(f.id)
+      out.push({ field: f, indent: 0 })
+    }
+    return out
+  }, [entity, field])
+
   const widest = useMemo(() => {
     if (!field || font === null || rows.length === 0) return 0
     const measure = measurerFor(font)
@@ -318,8 +422,32 @@ export function useNameColumnWidth(
     /* `facesIn` is a re-measure trigger and is read for no other reason */
   }, [field, font, rows, facesIn])
 
+  const namedWidths = useMemo(() => {
+    if (namedFields.length === 0 || font === null || rows.length === 0) return NO_WIDTHS
+    if (available <= 0) return NO_WIDTHS
+    const measure = measurerFor(font)
+    const out: Record<string, number> = {}
+    for (const { field: nf, indent } of namedFields) {
+      const label = refLabelOf?.(nf)
+      const texts = rows.map((row) => {
+        const value = valueForField(row, nf, row.values)
+        return cellPrintText(nf, value, cellToText(value, nf, label))
+      })
+      const w = widestOf(texts, measure)
+      if (w === 0) continue
+      out[nf.id] = dataColumnWidth(w, DEFAULT_COL_W[nf.type], available, indent)
+    }
+    return Object.keys(out).length === 0 ? NO_WIDTHS : out
+    /* `facesIn` is a re-measure trigger and is read for no other reason */
+  }, [namedFields, font, rows, available, refLabelOf, facesIn])
+
   return useMemo(() => {
-    if (!field || widest === 0 || available <= 0) return NO_WIDTHS
-    return { [field.id]: nameColumnWidth(widest, available) }
-  }, [field, widest, available])
+    const name =
+      !field || widest === 0 || available <= 0
+        ? undefined
+        : { [field.id]: nameColumnWidth(widest, available) }
+    if (name === undefined) return namedWidths
+    if (namedWidths === NO_WIDTHS) return name
+    return { ...namedWidths, ...name }
+  }, [field, widest, available, namedWidths])
 }

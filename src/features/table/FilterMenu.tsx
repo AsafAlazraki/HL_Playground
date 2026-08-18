@@ -113,7 +113,9 @@ export function FilterMenu({
       onPaste={(e) => e.stopPropagation()}
     >
       <header className="tb-menu-head">
-        <span className="tb-menu-title">{field.name}</span>
+        {/* a name, so `tb-menu-name` — see ColumnMenu.tsx and the
+            note on `.tb-menu-title` in table.css */}
+        <span className="tb-menu-name">{field.name}</span>
         <span className="tb-menu-kind">{kind.label}</span>
       </header>
 

@@ -127,7 +127,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
           </p>
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary cx-new"
             onClick={() => ensureCustomerRegister()}
           >
             <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
@@ -175,7 +175,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
           ) : null}
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary cx-new"
             onClick={() => {
               const row = addCustomer()
               if (row) onOpen(row.id)

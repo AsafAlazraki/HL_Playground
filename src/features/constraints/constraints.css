@@ -114,12 +114,18 @@
   font-style: italic;
 }
 
+/* "12 rules · 3 conflicts" — a count line, which is the exact shape
+   DESIGN_PRINCIPLES §6 rules against: '"40 boats in 3 series", not
+   "29 VARIANTS · 56 COLUMNS · 11 SECTIONS"'. The nouns being the
+   app's rather than the dealer's does not change the finding — the
+   counter-example §6 prints is the app's nouns too. The figures stay
+   mono and tabular so the line settles; the words are words. */
 .cn-count {
   margin: var(--sp-3) 0 0;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink-faint);
 }
 .cn-count-bad {
@@ -644,11 +650,29 @@
   border-top: 1px solid var(--hairline);
 }
 
+/* WHAT THE RULE IS DOING TO THE DATA — a clause with a verb in it,
+   so it is set as one.
+
+   `statusNote` (state.ts:272) writes "15 rows break this · 7 tables",
+   "no rows match yet · 3 tables" or "switched off"; `constraint.source`
+   beside it writes the provenance, which for a rule the dealer just
+   made is the sentence "You, just now". An earlier pass ruled these
+   two "mono stamps" and left them uppercase. They are not stamps: a
+   stamp is one word the app owns for a state, and DESIGN_CONTRACT §3
+   forbids uppercase on a sentence in the same breath as it allows it
+   on a stamp. `.cn-new-why` above is the same fix already made once
+   on this surface — it is 12.5px prose for the same reason.
+
+   +0.12em on eleven-pixel mono was also doing the damage twice: the
+   tracking that makes a four-letter caption legible pulls a
+   twenty-eight-character clause apart. It goes back to the reading
+   step: --font-ui, the caption size, no tracking, and the words in
+   the case they were written in. Both colours are unchanged, and
+   both were measured in place on a card after the change —
+   --ink-soft 7.65:1, --ink-faint 4.72:1 on `.cn-card`. */
 .cn-meta {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--ink-soft);
 }
 .cn-meta--dim {
@@ -1148,6 +1172,19 @@
 
 /* The verdict leads the card, the way the status leads a workbook
    rule — "is this coming back?" is the only question here. */
+/* AND THE VERDICT IS A SENTENCE, which the pass that ruled this a
+   "card caption in the app's words" did not check against what the
+   app's words actually are. `VERDICT_WORD.later` (LeftOutList.tsx:29)
+   is "Not yet — and here is what it is waiting for" — forty-three
+   characters with a verb in them, printed as NOT YET — AND HERE IS
+   WHAT IT IS WAITING FOR at 11px and +0.12em. §3 forbids uppercase
+   on a sentence; `.cn-lo-size` immediately below already carries
+   `text-transform: none` and gives the reason in the same words.
+   The line still leads the card — it takes the reading step and
+   --ink-soft rather than a shout, and `.cn-lo-what` under it is
+   still the larger of the two. Measured in place on both card
+   grounds: 7.65:1 on `.is-later` (--paper-high) and 7.40:1 on
+   `.is-out` (--paper). */
 .cn-lo-verdict {
   display: flex;
   flex-wrap: wrap;
@@ -1155,12 +1192,10 @@
   justify-content: space-between;
   gap: var(--sp-2);
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  font-size: 12.5px;
+  font-weight: 550;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }
 
 /* The size. NOT uppercased: it carries units and counts, and
@@ -1455,13 +1490,15 @@
    card. The word goes back to the app's chrome voice, the same one
    `Add rule` and `Keep it` use.
 
-   Everything the pass above deliberately kept is untouched. The one
-   call worth a second look is `.cn-meta`: "15 rows break this · 7
-   tables" is a clause with a verb in it rather than a stamp, and
-   uppercase on a sentence is forbidden by the same paragraph — but
-   it was ruled on explicitly and reversing that is a design decision
-   with an owner, not a fix, so it is left as it is and written down
-   here instead.
+   Everything the pass above deliberately kept is untouched EXCEPT
+   `.cn-meta`, which this note flagged and left: "15 rows break this
+   · 7 tables" is a clause with a verb in it rather than a stamp, and
+   uppercase on a sentence is forbidden by the same paragraph. It was
+   left because reversing an explicit ruling looked like a design
+   decision with an owner. The owner has since ruled: it is a
+   sentence, it is fixed, and the reasoning now lives on the rule
+   itself rather than in this postscript. Nothing else on this
+   surface changed.
    ============================================================ */
 .cn-done {
   font-family: var(--font-ui);

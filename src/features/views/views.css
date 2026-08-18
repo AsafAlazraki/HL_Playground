@@ -766,9 +766,11 @@
   border-radius: var(--radius-sm);
   background: transparent;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  /* a button ("3 removed") that opens the list and puts rows back —
+     §3, and the count-line ruling from DESIGN_PRINCIPLES §6 besides */
+  letter-spacing: 0.01em;
   color: var(--ink-faint);
 }
 .vw-removed-chip:disabled {

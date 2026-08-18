@@ -129,6 +129,7 @@
   text-transform: uppercase;
 }
 
+/* "Table kinds" — the way back out of step two. A button, §3. */
 .tk-back {
   display: inline-flex;
   align-items: center;
@@ -138,11 +139,10 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: transparent;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   color: var(--ink-faint);
   cursor: pointer;
   transition:
@@ -360,6 +360,15 @@
   color: var(--tk-ink);
 }
 
+/* THE LEVEL PLATES CARRY THE DEALER'S OWN WORDS, and the caption
+   under them says so out loud: "These levels are yours — click one to
+   rename it, × takes it out." A chain reading SERIES › MODEL ›
+   VARIANT is uppercasing four things §3 forbids at once — they are
+   names, they are values, `.tk-lvl-in` is an INPUT that inherits this
+   transform so the rename box answered in capitals while the store
+   saved the case that was typed, and `.tk-plate-add` is a button
+   ("+ level"). The plates keep the mono face and the chain shape;
+   the words are the dealer's, in the dealer's case. */
 .tk-plate {
   display: inline-flex;
   align-items: center;
@@ -370,9 +379,8 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.01em;
   line-height: 1.4;
-  text-transform: uppercase;
   color: var(--ink);
   white-space: nowrap;
 }
@@ -471,11 +479,16 @@
 
 /* The empty slot at the end of the chain: dashed, because nothing is
    in it yet. */
+/* MEASURED ON THIS SCREEN, NOT ON WHITE. --ink-faint is 4.72:1 on
+   paper and the contract's named trap is that a tint counts: inside
+   `.tk-opt.is-on`, over the chosen option's wash, "+ level" came out
+   4.33:1 and failed. --ink-soft carries it to 6.87:1 in the same
+   place and is still the quietest thing on the chain. */
 .tk-plate-add {
   border-style: dashed;
   border-color: var(--hairline-strong);
   background: transparent;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   cursor: pointer;
   transition:
     color var(--t-fast) var(--ease-draft),
@@ -484,7 +497,7 @@
 .tk-opt.is-on .tk-plate-add {
   border-color: var(--hairline-strong);
   background: transparent;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 .tk-plate-add:hover,
 .tk-opt.is-on .tk-plate-add:hover {
@@ -535,9 +548,13 @@
   border-bottom: 1px solid var(--hairline);
 }
 
+/* "how your rows will sit" and the counts down the preview both sat
+   at --ink-faint over `--paper-sunken` and measured 4.22:1 — under
+   the floor, and for the same reason as `.tk-plate-add` above: the
+   tint counts. Both go to --ink-soft, 6.87:1 on the same ground. */
 .tk-preview-sub {
   font-size: 11px;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .tk-prev-list {
@@ -564,21 +581,28 @@
   color: var(--ink-faint);
 }
 
+/* THE PREVIEW IS THE DEALER'S REAL DATA, at every depth. The
+   outermost line was uppercased to make it the loudest, which turned
+   a brand called "Highfield" into "HIGHFIELD" one line above "Sport"
+   and "SP520" in their own case — the preview disagreeing with
+   itself about whose words these are. §3: a value keeps its case.
+   The hierarchy is still drawn, by the weight and colour steps the
+   rule below already sets; it no longer needs a transform to carry
+   it, and a transform could not carry it honestly. */
 .tk-prev-label {
   font-family: var(--font-ui);
   font-variation-settings: 'wdth' 112;
   font-weight: 620;
   font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* deeper groups step back down to sentence case — the outermost level
-   is the loudest, exactly as it is on the finished sheet */
+/* deeper groups step back down — the outermost level is the
+   loudest, exactly as it is on the finished sheet */
 .tk-prev-line.tk-d1 .tk-prev-label,
 .tk-prev-line.tk-d2 .tk-prev-label,
 .tk-prev-line.tk-d3 .tk-prev-label {
@@ -606,8 +630,9 @@
   margin-left: auto;
   padding-left: var(--sp-2);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .tk-preview-note {

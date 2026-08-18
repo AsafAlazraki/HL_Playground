@@ -205,6 +205,35 @@
 }
 
 /* ============================================================
+   THE LAST UPPERCASE BUTTON IN THE APP.
+
+   `.btn` in `src/styles/base.css` still stamps `text-transform:
+   uppercase` on its label, and every feature that draws one has
+   already opted out locally — the register's confirm buttons
+   ("Keep it" / "Remove"), the quote's "Print" and "Make a new
+   version", Modules' "New module", Fitment's "New rule". Swept live
+   across all ten dock places, a module page, a register and an issued
+   quote, exactly two `.btn`s were left inheriting it, and both are
+   here.
+
+   One of them read "CREATE THE CUSTOMERS TABLE" — a button AND a
+   sentence, which is two of the four things DESIGN_PRINCIPLES §2 says
+   uppercase is never allowed on, on the primary action of an empty
+   state whose whole job is to be pressed.
+
+   The fix is local because that is the convention: the base primitive
+   is not this feature's file to write, and a shared override layer is
+   the thing the design notes say never to build. `--ui-s-size` is
+   13px, the size every other opted-out button in the app landed on. */
+.cx-new {
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 550;
+  letter-spacing: var(--ui-s-track);
+  text-transform: none;
+}
+
+/* ============================================================
    THE LIST — a register is a list you scan, so a row DARKENS on
    press rather than scaling: neighbours must not appear to move.
    ============================================================ */

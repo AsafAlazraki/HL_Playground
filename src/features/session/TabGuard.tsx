@@ -32,6 +32,8 @@
    as it did before this feature existed.
    ============================================================ */
 
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { FALLBACK_FLOOR, floorAbove } from '@/lib/noteFloor'
 import type { ReactElement } from 'react'
 import { useTabSession } from './useTabSession'
 import './session.css'
@@ -39,12 +41,32 @@ import './session.css'
 export function TabGuard(): ReactElement | null {
   const { role, tookOver, refused, coordinated, acknowledge } = useTabSession()
 
+  /* THE FLOOR IS MEASURED, NOT CHOSEN — see src/lib/noteFloor.ts.
+     This note used to sit at a fixed `bottom: 96px`, which cleared the
+     dock and was then covered by the action bar when that arrived
+     between them, taking its search field with it. It now floors
+     itself above everything that has declared `[data-note-clear]`,
+     the same way the undo note does, so the next instrument to park
+     over a page costs one attribute and no arithmetic here. */
+  const standing = coordinated && role !== 'electing' && (role === 'following' || tookOver)
+  const [floor, setFloor] = useState(0)
+  const remeasure = useCallback(() => setFloor(floorAbove()), [])
+  useLayoutEffect(() => {
+    if (standing) remeasure()
+  }, [standing, remeasure])
+  useEffect(() => {
+    if (!standing) return
+    window.addEventListener('resize', remeasure)
+    return () => window.removeEventListener('resize', remeasure)
+  }, [standing, remeasure])
+  const lift = { bottom: `${floor > 0 ? floor + 16 : FALLBACK_FLOOR + 16}px` }
+
   /* no referee, or the referee has not answered yet */
   if (!coordinated || role === 'electing') return null
 
   if (role === 'following') {
     return (
-      <div className="ts-note" role="status" aria-live="polite">
+      <div className="ts-note" style={lift} role="status" aria-live="polite">
         <span className="mono-label ts-eyebrow">Another tab</span>
         <p className="ts-say">
           This sheet is already open in another tab, and only one tab at a time
@@ -70,7 +92,7 @@ export function TabGuard(): ReactElement | null {
   if (!tookOver) return null
 
   return (
-    <div className="ts-note" role="status" aria-live="polite">
+    <div className="ts-note" style={lift} role="status" aria-live="polite">
       <span className="mono-label ts-eyebrow">This tab</span>
       <p className="ts-say">
         The other tab let the sheet go, so this one has it now and is saving

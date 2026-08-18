@@ -213,6 +213,18 @@
   outline-offset: -2px;
 }
 
+/* THE BOX YOU RENAME THE TABLE IN, AND IT MUST SHOW WHAT YOU TYPED.
+   This carried the stamp treatment — 'wdth' 118, 640, +0.06em and
+   `text-transform: uppercase` — while `.tb-node-name` a few lines
+   above, the resting state of the very same text, is 11.5px in the
+   reading face. So the name jumped to SHOUTING the instant you
+   clicked it, and a dealer typing "Highfield Inflatables" watched
+   the box print "HIGHFIELD INFLATABLES" over a value the store was
+   saving in the case they typed. DESIGN_CONTRACT §3 forbids
+   uppercase on a name; an INPUT is the sharpest case of it, because
+   the transform is lying about the data as it is entered. The box
+   now matches the label it replaces, so the only thing renaming
+   changes is the border and the caret. */
 .tb-node-nameedit {
   flex: 1;
   min-width: 0;
@@ -221,17 +233,18 @@
   border-radius: var(--radius-sm);
   background: var(--paper-high);
   font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 640;
   font-size: 11.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--ink);
   caret-color: var(--blue);
   outline: none;
 }
 
 
+/* "Narrowed" is a BUTTON with a word on it — press it and the
+   filters clear — and §3 names a button as one of the four things
+   uppercase may never touch. It keeps the mono face and the blue
+   wash, because it is still a state chip; it loses the shout and
+   the caption tracking that went with it. */
 .tb-node-filtered {
   flex: none;
   display: inline-flex;
@@ -244,8 +257,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--blue-deep);
   cursor: pointer;
   transition:
@@ -264,7 +276,17 @@
 }
 
 /* the count is the last thing on the bar, and the auto margin is what
-   keeps the name from ever crowding it */
+   keeps the name from ever crowding it.
+
+   THE NOUN IN IT IS THE DEALER'S, SO IT IS NOT SHOUTED.
+   `countLabel(rows.length, noun)` prints "26 models", "16 trailers",
+   "40 bikes" in a motorcycle shop — the row noun comes from the
+   table, which is the whole point of it. Uppercased it printed
+   "26 MODELS", which is verbatim the counter-example
+   DESIGN_PRINCIPLES §6 names: '"40 boats in 3 series", not
+   "29 VARIANTS · 56 COLUMNS · 11 SECTIONS"'. The figure stays mono
+   and tabular so a column of cards lines up; the word beside it is a
+   word. */
 .tb-node-rows {
   flex: none;
   margin-left: auto;
@@ -272,9 +294,9 @@
   border-radius: var(--radius-sm);
   background: var(--paper-sunken);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
   white-space: nowrap;
 }
@@ -510,21 +532,35 @@
   max-width: 100%;
   overflow: hidden;
 }
+/* THE BAND CHIP CARRIES A NAME THE ADMIN TYPED, so it keeps the case
+   they typed it in. These are the column sections off the workbook —
+   "Identity & Spec", "Capacity", "Hull & Build" — and the pair rule
+   below used to shout them as "IDENTITY & SPEC". They are the same
+   strings the section strip and the column setup print in their own
+   case, and a plate that disagrees with the two screens either side
+   of it is telling the reader the name is decoration. Uppercase on a
+   name is also lossy in the way §3 describes: a section the admin
+   typed "PDI" and one they typed "Pdi" arrive here identical.
+
+   `.tb-lod-more` — "+3" — is a figure with no letters in it, so it
+   keeps the stamp treatment it shares nothing else with; the rules
+   are split so the two can never be changed by accident again. */
 .tb-lod-band,
 .tb-lod-more {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 .tb-lod-band {
   padding-bottom: 3px;
   border-bottom: 1.5px solid var(--tb-band-ink, var(--hairline-strong));
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
 }
 .tb-lod-more {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--ink-faint);
 }
 
@@ -552,12 +588,17 @@
   line-height: 1;
   color: var(--ink);
 }
+/* THE UNIT IS THE DEALER'S NOUN — `noun.one` / `noun.many` off the
+   table (SheetPlate.tsx:141), so it reads "packages", "trailers",
+   "bikes". Shouted at +0.14em it was the plate's loudest text and it
+   was the one word on the plate this app did not write. Same ruling
+   as `.tb-node-rows` above and the same source: DESIGN_PRINCIPLES
+   §6. The figure above it is still 22px mono; this is the word. */
 .tb-lod-unit {
   font-family: var(--font-mono);
   font-size: 11px;
   font-style: normal;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -641,7 +682,16 @@
 
 /* THE STRIP IS THE CARD'S INSTRUMENT PANEL, and every one of these
    was 21px tall. The footer is 30px, so 24 costs nothing and no
-   control on it moves: only the box around the words grows. */
+   control on it moves: only the box around the words grows.
+
+   THREE BUTTONS WITH WORDS ON THEM — "Expand", "Collapse", "Focus",
+   and the add control, whose label is `+ {noun.one}` and therefore
+   the dealer's own singular noun off the table: "+ model", "+ boat",
+   "+ bike". So this rule was breaking §3 twice over, on a button and
+   on a value, and "+ MODEL" beside a card headed "Surtees" read like
+   a system command rather than the quietest act on the card. It
+   keeps the mono face — it is an instrument panel and the labels sit
+   beside figures — and drops the shout and the caption tracking. */
 .tb-node-act {
   flex: none;
   display: inline-flex;
@@ -655,8 +705,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
   cursor: pointer;
   transition:
@@ -723,14 +772,18 @@
   opacity: 0.7;
 }
 
+/* "12 of 26 showing" — a sentence, not a stamp, and only ever drawn
+   when the sheet is narrowed. §3 forbids uppercase on a sentence,
+   and "12 OF 26 SHOWING" between two quiet controls read as an
+   alarm about the ordinary act of filtering. */
 .tb-node-tally {
   flex: 1;
   min-width: 0;
   text-align: center;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -827,12 +880,18 @@
   text-overflow: ellipsis;
 }
 
+/* `plural(rowCount, 'row', 'rows')` — a count and its noun, the same
+   ruling as `.tb-node-rows` and `.tb-lod-unit`. (This one is drawn
+   by TableFocusOverlay.tsx, which EntityTableNode.tsx imports and
+   never renders; it is fixed with its neighbours so the class does
+   not become the one that regresses when the overlay is wired back
+   up. See the note in the sweep.) */
 .tb-focus-tally {
   flex: none;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
 }
 

@@ -257,7 +257,7 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
      register on the blueprint does not hand two thirds of itself to one
      column — see `NAME_MAX_SHARE`. */
   const [cardBox, cardW] = useBoxWidth()
-  const nameW = useNameColumnWidth(entity, rows, cardW)
+  const nameW = useNameColumnWidth(entity, rows, cardW, data.refLabelOf)
   const fit = useFitWidths(entityId)
   const colWidths = useMemo(
     () => ({ ...nameW, ...ownWidths, ...(fit ?? {}) }),

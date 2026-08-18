@@ -255,6 +255,8 @@
   font-size: 11px;
   color: var(--ink-soft);
 }
+/* a button with a word on it — §3's fourth prohibition. It sits
+   inside the readout, so it keeps the mono face and loses the shout. */
 .tb-count-clear {
   align-self: center;
   min-height: 24px;
@@ -264,8 +266,7 @@
   background: transparent;
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--blue);
   cursor: pointer;
   transition: background var(--t-fast) var(--ease-draft);
@@ -1009,6 +1010,18 @@
 }
 
 /* renaming happens in place, in the heading's own well */
+/* THE BOX YOU RENAME A COLUMN IN. `.tb-th-name` beside it — the same
+   text at rest — already carries `text-transform: none`, so this was
+   the one place in the register where a column name was shouted, and
+   it was the place a person was TYPING one. A dealer entering "Pvc
+   Tube Colour" watched the box answer "PVC TUBE COLOUR" while the
+   store saved what they typed; §3 calls that lossy and it is worse
+   than lossy in an input, where the transform contradicts the value.
+   It now matches the header it replaces, so renaming changes the
+   frame and the caret and nothing about the word. The four type
+   values are copied from `.tb-th-name`'s settled form at the foot of
+   this file (12px / 580 / 0 / none), so the word does not move a
+   pixel when the box opens over it. */
 .tb-th-edit {
   width: 100%;
   height: 100%;
@@ -1017,11 +1030,9 @@
   background: var(--paper-high);
   box-shadow: inset 0 0 0 2px var(--blue);
   font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 640;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 580;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--ink);
   caret-color: var(--blue);
   outline: none;
@@ -1349,8 +1360,11 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  /* a button, and its label carries the dealer's own singular noun
+     ("+ add model", "+ add bike") from `countLabel`'s row noun — so
+     §3 was broken on the button clause and the value clause at once.
+     It is the quietest control on the sheet and it now looks it. */
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
   cursor: pointer;
   transition:
@@ -1931,15 +1945,17 @@
   padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--hairline);
 }
+/* the picture's own label, or the column's name when it has none —
+   a NAME either way, and `imageLabel` reads it off a file the dealer
+   uploaded. §3. It takes the same 12px/580 step as the column
+   headings it is named after. */
 .tb-lightbox-name {
   flex: 1;
   min-width: 0;
   font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 640;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 580;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -1957,6 +1973,13 @@
    picture this is a stamp; on any other it is the button that makes
    the stamp true. Both are the same move — to index 0 — because
    order is the only thing that elects the primary. */
+/* THE PAIR THAT SAYS THE RULE, AND NEITHER OF THEM IS A STAMP.
+   One is the sentence "The one that shows"; the other is a BUTTON
+   reading "Make this the one that shows". §3 forbids uppercase on
+   both, and at +0.13em an eight-word clause was the loudest thing in
+   a window whose whole subject is a photograph. They keep the mono
+   face — they are a matched pair and the switch between them must
+   not move the header — and lose the shout. */
 .tb-lightbox-primary {
   flex: none;
   padding: 3px var(--sp-2);
@@ -1966,8 +1989,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--blue-deep);
   white-space: nowrap;
 }
@@ -1980,8 +2002,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
   white-space: nowrap;
   cursor: pointer;
@@ -2381,6 +2402,18 @@ body.tb-resizing {
   padding: var(--sp-2) var(--sp-3);
   border-bottom: 1px solid var(--hairline);
 }
+/* THE CAPTION AT THE TOP OF A POPOVER — and only a caption now.
+   This class was shared by all four popovers that open off the
+   register, and two of them put the dealer's COLUMN NAME in it, so
+   "Matrix" opened as "MATRIX" and a column the dealer typed as
+   "Pvc" could not be told from one they typed "PVC". Those are
+   different facts about their data. DESIGN_CONTRACT §3 allows
+   uppercase on a section caption, a mono stamp and the card kind
+   eyebrow, and on nothing else — so the two that carry a name now
+   take `.tb-menu-name` below, and what is left here is what this
+   class always claimed to be: "Add a column" (AddColumnPopover) and
+   "Add pictures" (ImageCell), two captions naming the act the
+   popover performs. */
 .tb-menu-title {
   font-family: var(--font-ui);
   font-variation-settings: 'wdth' 118;
@@ -2393,6 +2426,32 @@ body.tb-resizing {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* THE COLUMN'S OWN NAME, WHICH IS NOT A CAPTION — ColumnMenu.tsx
+   and FilterMenu.tsx, the two popovers that open ON a column and
+   name it back to the person who typed it.
+
+   The step is the contract's page-title-name step (§3: 13px / 600 /
+   -0.006em, `--ink`), because that is the step a NAME takes
+   everywhere else in this app. It wraps to two lines rather than
+   ellipsising: the popover head is 248px and "Recommended trailer"
+   beside a type chip does not fit on one line, and nothing in this
+   app truncates mid-word. The full text is in the DOM either way,
+   and the Popover's own aria-label already reads it out whole. */
+.tb-menu-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  line-height: 1.25;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
 .tb-menu-bulk {
   display: flex;
   align-items: center;
@@ -2402,6 +2461,7 @@ body.tb-resizing {
 .tb-menu-dot {
   color: var(--ink-faint);
 }
+/* "All" and "None" — two buttons, §3. */
 .tb-menu-link {
   display: inline-flex;
   align-items: center;
@@ -2412,8 +2472,7 @@ body.tb-resizing {
   background: transparent;
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--blue);
   cursor: pointer;
   transition: background var(--t-fast) var(--ease-draft);

@@ -197,11 +197,21 @@ export function ConfirmSheet({
 /* Evidence blocks — the parts a caller shows inside the sheet   */
 /* ------------------------------------------------------------ */
 
-/** A row of counts: `33 of 40 rows hold a value · 5 distinct`. */
+/** A row of counts: `33 of 40 rows hold a value · 5 distinct`.
+ *
+ *  NOT `mono-label`, and the doc line above is the whole argument:
+ *  that is a sentence with a verb in it, and `mono-label` is the
+ *  app's 11px uppercase caption primitive, so the blast radius this
+ *  sheet exists to state was being shouted — "33 OF 40 ROWS HOLD A
+ *  VALUE". DESIGN_CONTRACT §3 allows uppercase on a caption, a mono
+ *  stamp and a card kind eyebrow, and forbids it on a sentence. The
+ *  caption beside it (`ds-cs-samples-lab`, "In it now") IS a caption
+ *  and keeps the primitive; `.ds-cs-facts` now carries its own type
+ *  in designer.css rather than borrowing one that does not fit. */
 export function ConfirmFacts({ items }: { items: string[] }): ReactElement | null {
   if (items.length === 0) return null
   return (
-    <p className="ds-cs-facts mono-label">
+    <p className="ds-cs-facts">
       {items.map((t, i) => (
         <span key={t}>
           {i > 0 ? <span className="ds-cs-dot" aria-hidden="true"> · </span> : null}

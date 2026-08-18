@@ -123,7 +123,10 @@ export function ColumnMenu({
   return (
     <Popover anchor={anchor} width={248} label={`${field.name} column`} onClose={onClose}>
       <header className="tb-menu-head">
-        <span className="tb-menu-title">{field.name}</span>
+        {/* `tb-menu-name`, not `tb-menu-title`: this is the dealer's
+            own column name and it keeps its case. The caption class
+            still exists for the two popovers that hold a caption. */}
+        <span className="tb-menu-name">{field.name}</span>
         <span className="tb-menu-kind">{kind.label}</span>
       </header>
 

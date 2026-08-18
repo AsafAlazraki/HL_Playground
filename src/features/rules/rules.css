@@ -200,6 +200,9 @@
 .rl-seg--wide {
   width: 100%;
 }
+/* a segmented BUTTON, §3. ClauseEditor.tsx writes "And" and "Or";
+   RuleInspector.tsx writes whatever an option's `label` says. Both
+   were being shouted by the stylesheet rather than by their author. */
 .rl-seg-btn {
   flex: 1;
   appearance: none;
@@ -209,8 +212,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
   cursor: pointer;
   white-space: nowrap;
@@ -326,13 +328,16 @@
   border-color: var(--red);
   background: var(--red-wash);
 }
+/* "Nothing selected", "Pick a table first", "No links to follow",
+   "Nothing links back" — sentences, every one, and §3's fifth
+   prohibition. They are the lead line of an empty state, so they
+   take the reading step and let `.rl-empty-hint` beneath them carry
+   the explanation. */
 .rl-empty-title {
   font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 640;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  font-size: 13px;
   color: var(--ink);
 }
 .rl-empty-hint {
@@ -992,15 +997,17 @@
     opacity var(--t-fast) var(--ease-draft),
     transform var(--t-fast) var(--ease-draft);
 }
+/* the node's own name, repeated at the head of its tip. The chip the
+   tip belongs to prints the same word in its own case one line
+   below ("RUN / Start"), so the tip was the only place in the
+   palette that shouted it. A name, §3. */
 .rl-strip-tip-head {
   display: block;
   margin-bottom: 2px;
   font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 640;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.004em;
   color: var(--ink);
 }
 /* the little pin that ties the tip to its chip */
@@ -1317,6 +1324,12 @@
   color: var(--red);
 }
 
+/* the checks readout, and it is a BUTTON — pressing it opens the
+   notes. §3 names a button whatever else it also is, and the same
+   ruling was applied to `.tb-node-filtered` on the register, which
+   is the identical shape: a state chip you can press. It keeps the
+   mono face, the rule box and the tilt that make it a rubber stamp;
+   it loses the shout. */
 .rl-check {
   flex: none;
   padding: 2px 7px;
@@ -1325,8 +1338,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   transform: rotate(-1.2deg);
 }
 .rl-check.is-ok {
@@ -1436,8 +1448,9 @@
   background: transparent;
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  /* a tab is a button, and its label is the result set's own key —
+     a name this app did not choose. §3 twice over. */
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
   cursor: pointer;
   transform: translateY(1px);
@@ -1571,12 +1584,14 @@
 .rl-effect-text {
   flex: 1;
 }
+/* why an effect will not run — a reason, written as a sentence, and
+   the one line on this list a person has to actually read. §3. */
 .rl-effect-why {
   flex: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: 0;
   color: var(--red);
 }
 .rl-effect.is-skipped .rl-effect-text {
@@ -1589,12 +1604,14 @@
   gap: var(--sp-2);
   padding: 0 var(--sp-3) var(--sp-3);
 }
+/* "12 writes committed to the sheet." — a sentence, full stop and
+   all. §3. */
 .rl-applied {
   padding: 0 var(--sp-3) var(--sp-3);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--accent-viridian);
 }
 

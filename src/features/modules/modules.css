@@ -194,11 +194,18 @@
    notes and run to forty words; the full sentence is the first
    thing on the module's own page, so nothing is lost by cutting it
    here — only the card's height is. */
+/* FOUR LINES, BECAUSE ONE OF THE FIVE MODULES NEEDS FOUR. Measured on
+   the seeded sheet at 1280, 1440 and 1920 — the card is a fixed 316px
+   of text at every one of them — Motors' description wants 78px of a
+   59px box and shipped as "…held apart because they are not moto…".
+   The clamp is what stops a pathological description from turning a
+   row of cards into a wall; it is not there to cut the longest true
+   one the app ships with. Nothing else on the index passes three. */
 .md-card-desc {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
   overflow: hidden;
   font-size: var(--ui-size);
   letter-spacing: var(--ui-track);
@@ -819,12 +826,24 @@
   color: var(--ink);
 }
 
+/* THE MONO VOICE, BUT NOT THE UPPERCASE — this is a SENTENCE.
+   It read "570 MORE — TYPE ABOVE TO NARROW", and the second half of it
+   is an instruction to the reader; the other branch is worse still
+   ("SWITCH SEARCH ON FOR THIS MODULE TO REACH THEM").
+   DESIGN_PRINCIPLES §2 allows uppercase on section captions, group
+   captions and mono stamps, and names a sentence as one of the things
+   it is never allowed on. `.qt-line-where` in quote.css makes the same
+   correction the same way: keep `mono-label`'s type step, drop the one
+   property that is wrong here, and open the tracking back up so
+   lowercase mono does not read tight. */
 .md-more {
   max-width: 1180px;
   margin: var(--sp-4) auto 0;
   padding-top: var(--sp-3);
   border-top: 1px solid var(--hairline);
   text-align: center;
+  text-transform: none;
+  letter-spacing: 0.01em;
   color: var(--ink-faint);
 }
 
