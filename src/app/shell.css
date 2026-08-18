@@ -1419,33 +1419,14 @@
         getting out of the way.
    ============================================================ */
 
-/* THE WAY IN, on the view stage's own bar. Pushed to the far right
-   so it is never mistaken for part of the crumb beside it, and given
-   the pen's ink because it is the one control on that bar that MAKES
-   something rather than moving you somewhere. */
-/* SENTENCE CASE. "QUOTE THIS ONE" was `.btn`'s 11px uppercase mono
-   stamp, which the contract lists among the things uppercase may
-   never be: a button. It is the toolbar control step instead —
-   12.5px Inter at 500, the same step `.shell-view-back` two tracks
-   away already takes, so the two controls on this bar finally read
-   as belonging to the same bar. Narrower too: 14 characters go from
-   ~111px of mono at +0.12em to ~89px of Inter, so nothing on the bar
-   got tighter for it. */
-.btn.shell-view-quote {
-  flex: 0 0 auto;
-  margin-left: auto;
-  padding: 6px 12px;
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  border-color: var(--blue);
-  color: var(--blue-deep);
-}
-.btn.shell-view-quote:hover {
-  background: var(--blue-wash);
-}
+/* "QUOTE THIS ONE" IS NOT ON THIS BAR ANY MORE. It was the whole of
+   track 3 — the most consequential press on the page, drawn as a small
+   pill in the far corner — and it is the PRIMARY on the action bar
+   above the dock now, in the same place the register's own primary
+   stands. Its type and colour are declared once, for every page, in
+   `src/app/actionbar.css`. See the block above `back` in
+   `ViewStage.tsx` for the argument. */
+
 
 /* -- the bar's right-hand side ------------------------------- */
 .shell-quote-acts {
@@ -2486,34 +2467,12 @@
   min-height: 0;
 }
 
-/* the doors travel with the table, beside its name */
-.shell-table-doors {
-  grid-column: 3;
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-.shell-table-door {
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.shell-table-door:hover {
-  border-color: var(--blue);
-  color: var(--ink);
-}
+/* THE DOORS TRAVEL WITH THE TABLE, and they now travel all the way to
+   the action bar. `.shell-table-doors` / `.shell-table-door` styled
+   Fitment and Columns in track 3 of the table stage's bar; both are
+   published as actions instead (see `TableStage.tsx`), so the top of a
+   register is the way back and the subject's name and nothing else —
+   which is what every other stage in the app already does. */
 
 /* THE SHEET TAKES THE WHOLE WINDOW now that nothing sits beside it */
 .shell-body {
@@ -2986,29 +2945,6 @@
 }
 .shell-view-back:active {
   background: var(--paper-sunken);
-  transform: scale(0.98);
-}
-
-/* toolbar buttons on the right, same bezel */
-.shell-table-door {
-  height: 28px;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
-}
-.shell-table-door:hover {
-  background: var(--paper-sunken);
-  color: var(--ink);
-  border-color: var(--hairline-strong);
-}
-.shell-table-door:active {
   transform: scale(0.98);
 }
 
@@ -3584,6 +3520,88 @@
   background: var(--hairline-strong);
 }
 
+/* ============================================================
+   THE DOOR WHILE THE FILE IS COMING, AND WHEN IT DOES NOT COME.
+
+   The prepared set is its own bundle chunk (demos/seedChunk.ts), so
+   between the press and the sheet changing there is a fetch. On a
+   fast connection it is a frame; on a phone in a boat shed it is
+   not, and a door that looks pressed and does nothing is the worst
+   reading of that gap.
+
+   THE RAIL IS WHAT MOVES, and only the rail. It is already the one
+   accent on this screen and it already means "this is the door that
+   loads the file", so a slow travel down it says the file is on its
+   way without introducing a spinner, a second colour or a fifth
+   accent appearance. The words say the rest — `startingPointWords`
+   writes them, and they name the document being fetched.
+
+   NOTHING IS DISABLED. `aria-busy` announces the wait and the hook
+   refuses a second press; a `disabled` button would drop focus to
+   the body mid-press and take the words with it.
+   ============================================================ */
+.hm-first-door[aria-busy='true'] {
+  cursor: progress;
+}
+.hm-first-door[aria-busy='true']::before {
+  animation: door-wait 1.4s var(--ease-draft) infinite;
+}
+/* transform and opacity only — a rail that animated `top`/`bottom`
+   would relayout the card sixty times a second while a megabyte is
+   being fetched, which is the one moment the main thread is busy */
+@keyframes door-wait {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleY(0.3);
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hm-first-door[aria-busy='true']::before {
+    animation: none;
+    opacity: 0.55;
+  }
+}
+
+/* AND WHEN IT REFUSES. No second hue: what changes is that the
+   sentence stops being a quiet provenance note and becomes the thing
+   on the door you are meant to read — full ink, at the size it
+   already had. DESIGN_CONTRACT §6.5: a refusal is a sentence with a
+   reason, in the place where the thing was refused. The control
+   stays pressable, because pressing it again is the retry. */
+.hm-first-door--failed .hm-first-door-note {
+  color: var(--ink);
+}
+
+.shell-invite-alt[aria-busy='true'] {
+  cursor: progress;
+}
+
+/* THE SAME TWO SENTENCES ON THE INVITATION'S QUIETER DOOR — and set
+   as sentences. `.shell-invite-alt-note` is a LABEL treatment (11px
+   mono, 0.1em, uppercase), which is right for the four-word
+   provenance line it was written for and wrong for a sentence: a
+   two-line refusal in uppercase mono is shouted, and uppercase is
+   never a sentence's style. So the phase lines take the UI face at
+   reading size, and the provenance line is left exactly as it was. */
+.shell-invite-alt-say {
+  max-width: 44ch;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 450;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.shell-invite-alt--failed .shell-invite-alt-say {
+  color: var(--ink);
+}
+
 
 /* ============================================================
    THE DESKTOP, AND THE WINDOWS ON IT
@@ -3975,10 +3993,6 @@
   border-bottom: 1px solid var(--hairline);
 }
 .win-body .shell-view-bar > *:last-child {
-  grid-column: 2;
-  justify-self: end;
-}
-.win-body .shell-table-doors {
   grid-column: 2;
   justify-self: end;
 }

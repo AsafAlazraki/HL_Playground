@@ -2082,3 +2082,178 @@
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* ============================================================
+   THE RULES A MODULE GOES BY — the designer's fourth panel, and
+   the door on the index that opens it.
+
+   ONE DECISION GOVERNS THE WHOLE BLOCK: EVERYTHING NESTED HERE
+   DRAWS ON WHITE. `.md-panel` is `--paper-sunken` (#f1f2f5), and
+   `--ink-faint` over it measures 4.22:1 — it is 4.72:1 on white
+   and the contract names exactly this trap. The panel reuses the
+   rule cards, the sentence builder and the workbook list from
+   `constraints.css`, every one of which carries `--ink-faint`
+   metadata, so each section sits in a `--paper-high` well rather
+   than being re-coloured one selector at a time. A well, not an
+   override layer: nothing here restyles a `cn-*` rule, it only
+   gives it the ground it was drawn for.
+
+   THE SAME PASS FIXED `.md-panel-name`, which had `--ink-faint`
+   on the sunken panel across all four panels — 4.22:1, drawn
+   since the designer shipped, and behind the gear where the
+   redesign's nine-surface sweep never reached it.
+   ------------------------------------------------------------- */
+
+/* WAS --ink-faint, WHICH FAILS ON --paper-sunken. `.mono-label`
+   already carries `--ink-soft` (7.7:1 on white, 6.9:1 here); this
+   declaration existed only to step it down, and it stepped it below
+   the floor. */
+.md-panel-name {
+  color: var(--ink-soft);
+}
+
+.md-rules-well {
+  padding: var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+.md-rules-cap {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-soft);
+}
+
+.md-rules-say {
+  margin: 0 0 var(--sp-3);
+  max-width: 62ch;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+/* FITMENT, named as a place. The other rule surface is a door on
+   the bar, and a person sent to the wrong one concludes the thing
+   they wanted cannot be done — the same reason `.cn-lede--other`
+   sets the word apart in the rules pane. */
+.md-rules-say b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* A FIGURE, SO IT IS MONO AND TABULAR. */
+.md-rules-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* NOTHING HERE, SAID IN A SENTENCE THAT NAMES THE WAY OUT. Never a
+   dash, never a zero, and never silence — an empty section that
+   says nothing is indistinguishable from one that failed to draw. */
+.md-rules-none {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  max-width: 62ch;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.md-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+/* The workbook list is drawn here as its own section rather than as
+   the footnote it is in the rules pane, so it does not need the rule
+   above it that separates it from the rules a person authored. */
+.md-rules-well .cn-wb {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* -- the derivations ----------------------------------------- */
+
+.md-flows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--sp-2);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+
+/* THE REASON IS SEVERAL HUNDRED WORDS OF MEASUREMENT on the seeded
+   rules, which is what makes them trustworthy and what cannot be
+   dumped into a panel. Three lines, the whole of it in the DOM, and
+   one press opens it. Nothing truncates mid-word. */
+.md-flow-say {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.md-flow-say.is-open {
+  display: block;
+  -webkit-line-clamp: none;
+  line-clamp: none;
+  overflow: visible;
+}
+
+/* -- the verb that is a door --------------------------------- */
+
+/* THREE STATES IN ONE ROW, AND THEY MUST NOT LOOK LIKE TWO. A
+   disabled stub, a live statement and a live DOOR. The caret and
+   the accent border are what separate the third from the second;
+   without them a person presses the statements too and learns the
+   row is unreliable. */
+.md-act-verb.is-door {
+  gap: 3px;
+  padding-right: 5px;
+  border-color: var(--blue);
+  color: var(--blue-deep);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-act-verb.is-door:hover {
+  background: var(--blue-wash);
+}
+/* the press lands on pointer-down, and at control scale */
+.md-act-verb.is-door:active {
+  background: var(--blue-wash);
+  transform: scale(0.97);
+}
+.md-act-verb.is-door:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}

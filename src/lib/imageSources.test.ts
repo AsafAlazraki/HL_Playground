@@ -35,6 +35,8 @@ const {
   nameFromUrl,
   heldAsLinkNote,
   measuredClosedHost,
+  registerSeededPictures,
+  seededCopy,
   HELD_AS_LINK,
 } = await import('./imageSources')
 
@@ -209,5 +211,108 @@ describe('the words on the plate', () => {
     expect(imageLabel({ id: 'i3', src: 'https://plates.invalid' })).toBe('plates.invalid')
     expect(imageLabel({ id: 'i4', src: '' })).toBe('Picture')
     expect(imageHostOf('https://plates.invalid:8443/x.jpg')).toBe('plates.invalid')
+  })
+})
+
+/* ============================================================
+   THE COPY THIS REPOSITORY HOLDS.
+
+   `registerSeededPictures` is what stops the app hotlinking: a data
+   set hands over the addresses it shipped a copy of, and every
+   surface paints the copy instead of going to the manufacturer.
+
+   Three properties, and each of them is a way the change could have
+   gone wrong quietly:
+
+     · A held address makes NO request to its host and takes NO
+       probe. If it still did, the demo would still be on somebody
+       else's wifi and nobody would notice, because it works.
+     · The RECORD is untouched. `imageHostOf` still names the maker,
+       because that is where the photograph is from; a copy is not a
+       provenance, and an export that started saying `/seed-images/…`
+       would be a project file nobody else could read.
+     · An address recorded as UNOBTAINABLE is closed without a
+       request, and says the measured reason — which is the whole
+       difference between a plate that is a decision and a plate that
+       is a shrug.
+
+   `*.invalid` throughout, for the reason at the top of this file:
+   there is no reset hook, so a real hostname would leak into the
+   assertions above.
+   ============================================================ */
+describe('a picture the repository already holds', () => {
+  const held = 'https://maker.invalid/boats/sp560.jpg'
+  const gone = 'https://maker.invalid/boats/deleted.jpg'
+
+  registerSeededPictures(
+    [[held, 'sp560-1a2b3c4d.webp', 2560, 1440]],
+    [['walled.invalid', 'walled.invalid serves its pictures to its own site only']],
+    [[gone, 'maker.invalid no longer has that picture']],
+  )
+
+  it('resolves to our own origin, at the ORIGINAL size', () => {
+    expect(seededCopy(held)).toEqual({ at: '/seed-images/sp560-1a2b3c4d.webp', w: 2560, h: 1440 })
+    expect(seededCopy(gone)).toBeNull()
+    expect(seededCopy('https://maker.invalid/never-seen.jpg')).toBeNull()
+  })
+
+  it('is open whatever its host is doing, and is never a plate', () => {
+    expect(hostIsClosed(held)).toBe(false)
+    /* two failures on the host would close it for everything else — a
+       held address must not be dragged down with them */
+    noteImageFailed('https://maker.invalid/a.jpg')
+    noteImageFailed('https://maker.invalid/b.jpg')
+    expect(hostIsClosed('https://maker.invalid/c.jpg')).toBe(true)
+    expect(hostIsClosed(held)).toBe(false)
+  })
+
+  it('still names the manufacturer, because that is where it came from', () => {
+    expect(imageHostOf(held)).toBe('maker.invalid')
+    expect(imageLabel({ id: 'i', src: held })).toBe('sp560.jpg')
+  })
+
+  it('degrades to a plate if the copy itself will not load', () => {
+    const shaky = 'https://maker.invalid/boats/shaky.jpg'
+    registerSeededPictures([[shaky, 'shaky-00000000.webp', 800, 600]], [], [])
+    expect(hostIsClosed(shaky)).toBe(false)
+    noteImageFailed(shaky)
+    expect(hostIsClosed(shaky)).toBe(true)
+    noteImageLoaded(shaky)
+    expect(hostIsClosed(shaky)).toBe(false)
+  })
+})
+
+describe('a picture measured at build time and not obtainable', () => {
+  const gone = 'https://maker.invalid/boats/deleted.jpg'
+  const dead = 'https://walled.invalid/x.jpg'
+
+  it('is closed without a request having been spent on it', () => {
+    expect(hostIsClosed(gone)).toBe(true)
+    expect(hostIsClosed(dead)).toBe(true)
+  })
+
+  it('says the measured reason rather than only where it lives', () => {
+    expect(heldAsLinkNote(gone)).toBe(
+      `${HELD_AS_LINK} — maker.invalid no longer has that picture.`,
+    )
+    expect(heldAsLinkNote(dead)).toBe(
+      `${HELD_AS_LINK} — walled.invalid serves its pictures to its own site only.`,
+    )
+  })
+
+  it('is counted by the page-level total, which still cannot move', () => {
+    expect(measuredClosedHost(gone)).toEqual({
+      host: 'maker.invalid',
+      why: 'maker.invalid no longer has that picture',
+    })
+    expect(measuredClosedHost(dead)).toEqual({
+      host: 'walled.invalid',
+      why: 'walled.invalid serves its pictures to its own site only',
+    })
+  })
+
+  it('leaves an address nobody measured to the probe, as before', () => {
+    expect(measuredClosedHost('https://unmeasured.invalid/x.jpg')).toBeNull()
+    expect(hostIsClosed('https://unmeasured.invalid/x.jpg')).toBe(false)
   })
 })

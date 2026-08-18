@@ -557,7 +557,65 @@ not.
 purpose rather than by accident: a column whose default is a photograph is
 meaningless.
 
-### 5.4 Why we cannot simply localise the remote ones
+### 5.3a WHAT CHANGED, 2026-08-18 — the pictures are here now
+
+Everything in §5.1 and §5.2 stands. What follows does not contradict it; it
+answers a question §5.2 was not asked.
+
+**The problem §5.2 does not cover.** An address is a promise that somebody
+else's web server will answer, at the moment somebody is looking. Eleven of
+them, over whatever wifi the laptop is standing on. Two can never answer a
+browser at all. That is fine for a catalogue somebody is maintaining and it is
+the largest environmental risk on a screen somebody is *presenting* — the
+module page's whole visual argument is rented by the minute.
+
+**What was done.** `tools/seed/fetch_images.py` fetches each distinct address
+**once, at build time**, downscales it to 1100 px on the long edge at WebP q74
+— which is what a 3:2 card at 2× and an 880 px lightbox actually need — and
+commits it to `public/seed-images`. `src/lib/imageSources.ts` gained a
+resolution layer: an address with a copy paints from **our own origin**, with
+no host verdict, no probe and no request.
+
+**Why this is not the byte-holding §5.2 refuses.** §5.2 is about what a ROW
+holds: base64 inside `ImageRef.src`, in IndexedDB, rewritten in full every
+400 ms by `repository.saveAll` (§5.1), and carried out in every export. None of
+that happens. `ImageRef.src` is the same manufacturer's address at the same
+~124 bytes, `northside.ts` is byte-for-byte unchanged, the export is unchanged,
+and a frozen quote cites the same place it always did. The pixels are a build
+artefact beside the app. **§5.2 governs what a row holds; this governs what the
+repository ships.**
+
+**Measured.**
+
+| | |
+|---|---|
+| distinct addresses in the seed | **184** (437 image cells) |
+| obtained | **108** |
+| not obtained | **76** — 71 Northside, 4 SharePoint, 1 Stacer 404 |
+| source bytes | 16,991,127 |
+| committed bytes | **3,525,146** — 108 files, 32.6 kB mean |
+| entry chunk cost of the map | **+19.6 kB, +4.55 kB gzip** (1,403.13 → 1,422.72 kB) |
+| Boats module, live | 63 `<img>`, **all `/seed-images/`**, 0 remote, 0 console lines |
+
+**Nothing is substituted, and this is the load-bearing sentence.** A map from
+address to photograph is exactly the shape §6.6's failure takes. Every key is
+an address the seed itself carries, every seeded address is accounted for
+exactly once, and both are asserted in `src/demos/northsideImages.test.ts`
+against a freshly built seed. An address with no copy keeps its address and
+says "Held as a link" with the reason measured at fetch time — the Stacer 404
+now says *"stacer.com.au no longer has that picture"* where it used to say only
+where it lived, and it costs no request to say it.
+
+**§1.5's probe machinery is untouched** and still decides every picture we do
+not hold: a pasted address, a dropped file, a host nobody has measured. On the
+seeded catalogue it is now almost never consulted, which is the point.
+
+### 5.4 Why we cannot simply localise the remote ones IN THE BROWSER
+
+*(2026-08-18: this section is about canvas work at RUNTIME, and it is still
+correct. It is not an argument against §5.3a, which fetches with a Python
+client where CORS does not exist. The two were conflated once; they are
+different questions.)*
 
 The Firebase Storage download endpoint sends **no `Access-Control-Allow-Origin`**
 on the GET. (The preflight `OPTIONS` does, which is misleading; the GET is what
@@ -647,6 +705,17 @@ down once must not be dead forever in somebody's browser.
 Every URL in this document was read from the workbook-derived seed or from a
 committed evidence file in the read-only repo, and every placeholder in the new
 UI is an instruction, never a specimen.
+
+**6.11 We will not talk our way past Cloudflare to get the 93 Northside
+pictures.** Measured 2026-08-18 from a plain Python client with a current
+Chrome user-agent, an image `Accept`, an `Accept-Language`, a same-site
+`Referer` and the `Sec-Fetch-*` triplet: `www.northsidemarine.com.au` answers
+**403** with `Cf-Mitigated: challenge` to every one of the 71 addresses. What
+remains between us and those bytes is a TLS/JA3 fingerprint and a JavaScript
+challenge — which is the site saying no. It is the dealership's own site and
+the answer is theirs to change (an allow-list, or a copy they hand us); it is
+not ours to defeat. Recorded as unavailable with the measured reason, which is
+the truth and reads as one.
 
 ---
 

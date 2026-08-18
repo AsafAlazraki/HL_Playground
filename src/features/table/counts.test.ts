@@ -80,8 +80,8 @@ describe('how many columns', () => {
     expect(asTheReadoutCounts(yamaha)).toBe(27)
   })
 
-  it('agrees on every one of the seed’s 52 tables', () => {
-    expect(project.entities.length).toBe(52)
+  it('agrees on every one of the seed’s 53 tables', () => {
+    expect(project.entities.length).toBe(53)
     for (const e of project.entities) {
       expect(asTheReadoutCounts(e), e.name).toBe(asHomeCounts(e))
     }
@@ -124,7 +124,7 @@ describe('what the rows are called', () => {
     expect(leafNoun(byName('Highfield Inflatables')).many).toBe('variants')
   })
 
-  it('never falls back to the jargon noun on ANY of the 52 tables', () => {
+  it('never falls back to the jargon noun on ANY of the 53 tables', () => {
     /* joins used to be exempt from this and were the reason 26 of the 50
        cards still counted in "rows" */
     for (const e of project.entities) {
@@ -169,11 +169,17 @@ describe('what the rows are called', () => {
   })
 
   it('gives a relationship the dealer’s word — its rows are pairings', () => {
-    /* 26 of the 50 cards on the front door are Relationships, and every
+    /* 27 of the 51 cards on the front door are Relationships, and every
        one read "· 71 rows". `Pairing` is the name of the band each join
-       files its two ends under, so the word is the seed's own. */
+       files its two ends under, so the word is the seed's own.
+
+       The figures moved with the seed: the catalogue is at full scale
+       (SEED_AT_FULL_SCALE.md §2.2), so `Highfield × GFAB — Trailer
+       Fitment` — admitted by the specification and empty while Highfield
+       carried 40 of its 588 hulls — now has 51 pairings and is a real
+       table. It is the 53rd. */
     const joins = project.entities.filter((e) => e.role === 'join')
-    expect(joins.length).toBe(27)
+    expect(joins.length).toBe(28)
     for (const j of joins) {
       expect(leafNoun(j), j.name).toEqual({ one: 'pairing', many: 'pairings' })
     }

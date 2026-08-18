@@ -42,6 +42,8 @@ import { accentVar, readCell, rowLabel, type EntityDef, type RowData } from '@/t
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ViewPage, createViewFor, firstAnsweredRow } from '@/features/views'
 import { createQuoteFromView } from '@/features/quote'
+import { useActionBar } from '@/lib/actions'
+import type { ActionGroup } from '@/lib/actions'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
 
@@ -165,6 +167,52 @@ export function ViewStage({
      goes back to that module's list, because both are `onClose`. */
   useStageEscape(onClose)
 
+  /* ============================================================
+     THE SECOND STAGE ON THE ACTION BAR, and it is here to prove the
+     mechanism is not a table-only hack.
+
+     "Quote this one" was the whole of track 3 on this bar. It is the
+     most consequential press on the page — it turns the configured rig
+     in front of a salesperson into a document — and it was drawn as
+     one small pill in the top right corner, as far from the rig as the
+     window allows. On the action bar it is the PRIMARY, in the same
+     place the register's own primary stands, a thumb's travel from the
+     dock the salesperson's hand is already near.
+
+     Nothing about the page's own logic moved: the same guard (a row
+     has to be open for "this one" to mean anything), the same
+     `aria-label` naming WHICH one, and still no `aria-pressed` —
+     it makes a new document every time it is pressed and is not a
+     toggle.
+     ============================================================ */
+  const quoting = onQuote && view && openRow ? { view, openRow } : null
+  const bar = useMemo<ActionGroup[] | null>(() => {
+    if (!quoting || !entity || !onQuote) return null
+    return [
+      {
+        id: 'vw-acts',
+        rank: 90,
+        items: [
+          {
+            kind: 'button',
+            id: 'vw-quote',
+            label: 'Quote this one',
+            /* the words alone do not say WHICH one, and a reader who
+               cannot see the page needs the rig's own name */
+            say: `Quote ${rowLabel(entity, quoting.openRow)}`,
+            icon: Receipt,
+            tone: 'primary',
+            onPick: () => {
+              const made = createQuoteFromView(quoting.view.id, quoting.openRow.id)
+              if (made) onQuote(made.id)
+            },
+          },
+        ],
+      },
+    ]
+  }, [quoting, entity, onQuote])
+  useActionBar('view-stage', bar)
+
   /* NO `btn` — see DesignStage. `.btn`'s 11px uppercase mono stamp
      turned this into "BACK TO BOATS" when a module passed the name of
      the place it came from, which is uppercase on a NAME as well as on
@@ -216,40 +264,25 @@ export function ViewStage({
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>
-          <span className="shell-view-what-say">what goes with each one</span>
+          {/* NOT "what goes with each one". That is the exact phrase
+              the owner named as confusing, and the rule behind the
+              complaint is DESIGN_CONTRACT §9: a place is named with a
+              NOUN that says what is on the screen. The door that
+              opened this page was renamed to Fitment for the same
+              reason; the aside beside the subject's name was left
+              behind, so the door and the page it opened disagreed
+              about what this place is called. The aside's own job is
+              to say what SORT of place this is, and this is the
+              fitment of one rig. */}
+          <span className="shell-view-what-say">fitment for this one</span>
         </p>
 
-        {/* QUOTE THIS ONE — the one way a rig becomes a document.
-            The page in front of the salesperson IS the configured rig:
-            the star, the order, the rigging kit and prop sitting on the
-            join row. Carrying that straight onto a quote is what stops
-            them configuring the same boat twice, which is the cost the
-            spec exists to remove.
-
-            A SENTENCE, NOT A GLYPH, like every other door in this app —
-            nobody guesses an icon. It carries `aria-label` because the
-            words alone do not say WHICH one, and it carries NO
-            `aria-pressed`: this is not a toggle. It makes a new
-            document every time it is pressed, and telling a screen
-            reader it is "pressed" would promise a state it does not
-            have.
-
-            It is drawn only when there is a row on screen, because
-            "this one" has to mean something. */}
-        {onQuote && view && openRow ? (
-          <button
-            type="button"
-            className="btn shell-quote-act shell-view-quote"
-            aria-label={`Quote ${rowLabel(entity, openRow)}`}
-            onClick={() => {
-              const made = createQuoteFromView(view.id, openRow.id)
-              if (made) onQuote(made.id)
-            }}
-          >
-            <Receipt size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-            Quote this one
-          </button>
-        ) : null}
+        {/* TRACK 3 IS EMPTY AND STAYS DECLARED — the same arrangement
+            Home and the table stage use. "Quote this one" stood here
+            and is on the action bar now; see the block above `back`.
+            Both outer tracks are `minmax(0, 1fr)`, so the title keeps
+            the middle of the window whether or not anything stands in
+            them. */}
       </div>
 
       <div className="shell-view-split">

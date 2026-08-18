@@ -25,6 +25,16 @@
    entry says what it is waiting for. `out` means the decision was
    no. Neither is a promise, and one entry (the Retail Sliding Scale)
    says out loud that one word from the owner reverses it.
+
+   TWO KINDS OF `later`, AND THEY READ THE SAME TO A DEALER. Some
+   things are waiting on a decision nobody has made — the job
+   catalogue waits for a work order to exist. Four are waiting on a
+   PLACE: `FOUR_MODULES.md` §2 ruled the exchange rates, the brand
+   margins, the container freight rate and the finance card SETTINGS,
+   which is a verdict this app has no surface for yet. They are in
+   here because a person looking for the exchange rates and finding
+   nothing cannot tell "placed, and waiting on one page" from "never
+   read", and the two are worth very different amounts of patience.
    ============================================================ */
 
 export type LeftOutVerdict = 'out' | 'later'
@@ -137,6 +147,73 @@ export const LEFT_OUT: LeftOutRecord[] = [
       'all 818 cells target the live range · and nothing reads it: Excel caches only sheets a formula references, and the cache carries 3,039 rows for the kit sheet and 0 for this one',
     source: 'Rigging Module (1).xlsx · Rigging Spec Enquiry · FOUR_MODULES.md §3.8',
   },
+  /* -- decided, and waiting on a place to keep them ------------
+     FOUR_MODULES.md §2 reaches twelve verdicts in four vocabularies:
+     TABLE, EMBEDDED, SETTING and LEAVE. The LEAVEs are above. The
+     TABLEs and the EMBEDDEDs are built — the rigging kits are a table
+     and the rigging column on every boat × motor pairing points into
+     it. The four below were ruled SETTING: real, kept, admin-owned,
+     and homeless, because this app has no organisation settings page
+     and no record to put one on.
+
+     THEY ARE HERE FOR THE SAME REASON THE SERVICE SCHEDULE IS. A
+     person who knows the price file looks for the exchange rates,
+     finds nothing, and concludes the import stopped halfway. It did
+     not: every one of these was read, measured and placed, and what
+     is missing is one surface rather than four decisions.
+
+     AND EACH ONE CARRIES THE REASON IT IS NOT A TABLE, because that
+     is the judgement the owner asked for in his own words — "they
+     might not need to be their own tables". Four exchange rates, six
+     finance rows, two container rates and 47 brand margins would be
+     four more places on the dashboard holding 963 rows between them,
+     of which about 900 are scalars, mirrors and one-off workings. */
+  {
+    what: 'The exchange rates the landed cost of every imported hull passes through',
+    size: '4 rates — AUD, NZ, USD, EURO',
+    verdict: 'later',
+    why: 'Four rows that change a few times a year, in a sheet with nothing editable in it, are not a table anybody browses — they are a setting an admin owns. They cannot be a constant in our code either: a single-currency dealer has one and an importer from three origins has three, so this is data or it is wrong. What the app must add that the workbook has not got is staleness: there is one row per currency for ever, with no effective-from and no previous value, and the review date beside each one is read by nothing.',
+    measured:
+      'the three live rates were 249, 401 and 463 days old when the file was last saved, and the notes beside them are dated AFTER every review date · one rate cell feeds 1,434 boat rows, another sets the trade price of all 485 motors, and 84 more cells in the rigging module read them',
+    source: 'Price Matrix.xlsx · Exchange Rates · FOUR_MODULES.md §4.4',
+    reopensWhen:
+      'there is somewhere in the app for an admin to keep a rate — and the thing that reads it ships in the same change, because a setting with no reader is worse than a constant',
+  },
+  {
+    what: 'The margin ladder — what each brand is marked up by',
+    size: '47 brands × 7 percentages',
+    verdict: 'later',
+    why: 'One table per brand means a brand’s margins are the same on every row of that brand’s table, so they are a property of the TABLE — not a column copied onto 588 identical rows, and not a row anybody browses. The rungs themselves have to be data as well: CTD, Sub Dealer, Trade, Sell, Factory Options, Dealer Fit, Warranty Allowance and Admin Load is a marine dealer’s ladder, and a caravan dealer has different ones. And a rung needs a MODE, not a nullable number, because half of these do not hold a number at all.',
+    measured:
+      'both rate sheets are protected with 0 editable cells, and a cell-by-cell scan found no filter and no validation — the file itself saying nobody browses this · of 47 rows, 22 hold a number, 17 hold the word RRP and 8 hold a non-breaking space, so 53 % of a numeric lookup returns text · 15 rows carry a review date and every boat brand’s was 499 days before the file was last saved',
+    source: 'Price Matrix.xlsx · Price Matrix · FOUR_MODULES.md §4.1, §4.2',
+    reopensWhen:
+      'a table can carry values of its own beside its kind and its sections — which is where a per-brand number belongs, being neither a row nor a column',
+  },
+  {
+    what: 'The container freight rate — dollars per metre of boat',
+    size: '2 forwarders, 1 number each',
+    verdict: 'later',
+    why: 'It is a packing-density rate, not a freight rate, and it is meaningless away from the brand it was measured on: inflatables deflate and stack, welded alloy hardtops do not. So it belongs on the brand’s own table rather than in an app-wide bag — and only two of the seven boat brands have one at all, because every other brand is priced by hand per model and should keep being. A twenty-second table for one number that has not moved in six months is exactly the tax this app is meant not to charge.',
+    measured:
+      'one cell, 128.47 dollars per hull metre, identical across four snapshots of the boat file spanning February to August · 70.5 metres of Highfield fit a container against 10.7 metres of Surtees, a 3.4× gap · the Surtees rate is 2 years 4 months older than the Highfield one and nothing anywhere says so',
+    source:
+      'Freight Module.xlsx · FCL Import - Highfield, Quadrant Pacific - Surtees · FOUR_MODULES.md §5.1',
+    reopensWhen:
+      'a table can carry a dated, attributed rate of its own — at which point one brand’s road freight stops being 1,146 copies of the same sum',
+  },
+  {
+    what: 'The finance rate card, and the list of what a document is called',
+    size: '1 lender, 6 rate/term rows, 9 document types',
+    verdict: 'later',
+    why: 'Finance is not a property of a product — no boat, motor or trailer has an interest rate — so it is neither a table nor a band of columns on one; it attaches to the deal, after everything has been chosen. Six rows and one lender is a rate card somebody edits in one sitting and never browses. The document list is the same shape and matters more than it looks: our predecessor hardcoded it as a closed set of three, and this dealer has nine of its own. A furniture dealer has Estimate and Proforma. That vocabulary is rows an admin edits or it is wrong.',
+    measured:
+      'the 5-year term quotes at 0 % interest today, because its rate lookup points one column past the rate · a flat $5 is added to every monthly repayment ever quoted and is named nowhere in either workbook · the establishment fee is typed twice rather than linked, so changing it leaves the quote charging the old one · 8 of the 9 document rows lost their flag where the quote file mirrors them',
+    source: 'Administration Module.xlsx · Finance Module, Dropdowns · FOUR_MODULES.md §6.2, §6.3',
+    reopensWhen:
+      'the owner says what the $5 is — no unnamed constant goes into a figure a customer is handed — and there is a settings surface for the rate card to live on',
+  },
+
   {
     what: 'The labour-hours matrix and its two worked checklists',
     size: '483 non-blank cells, no formulas',

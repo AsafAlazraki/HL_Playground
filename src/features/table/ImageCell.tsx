@@ -27,8 +27,8 @@
    TWO DOORS IN, NOT ONE (IMAGE_SPEC §2).
 
    Every picture this business owns is ALREADY A URL — the catalogue
-   carries addresses, not photographs, which is why 305 pictures cost
-   37,857 bytes. Until now the only way in was dropping a file, so the
+   carries addresses, not photographs, which is why 1,411 pictures
+   cost 170,274 bytes. Until now the only way in was dropping a file, so the
    obvious route was the missing one. Now the `+` plate and a
    double-click on the cell open one small sheet with both doors on
    it: the file chooser, and a box to paste an address into. Ctrl+V on
@@ -92,6 +92,7 @@ import {
   nameFromUrl,
   noteImageFailed,
   noteImageLoaded,
+  seededCopy,
   useImageDisplay,
 } from '@/lib/imageSources'
 import { Popover } from './Popover'
@@ -423,7 +424,7 @@ function ThumbButton({
   isActive: boolean
   onOpen: (index: number) => void
 }): JSX.Element {
-  const { paint, probe } = useImageDisplay(img.src)
+  const { paint, probe, at } = useImageDisplay(img.src)
   const first = index === 0
   return (
     <button
@@ -464,7 +465,12 @@ function ThumbButton({
       {paint ? (
         <img
           className="tb-imgpic"
-          src={img.src}
+          /* `at`, not `img.src`: the repository ships a copy of most of
+             the catalogue's photographs and this paints it from our own
+             origin. The cell's VALUE is untouched — the address it
+             carries is still the maker's, and still what leaves in an
+             export. */
+          src={at}
           alt={img.alt ?? ''}
           draggable={false}
           /* THE PROBE IS THE ONE PICTURE on an unknown host allowed to
@@ -852,12 +858,12 @@ function ReferencePlate({
 /** The big picture, or its reference plate. Same decision as the
  *  thumbnail, taken once, in one place. */
 function Plate({ image, kind }: { image: ImageRef; kind?: TableKind }): JSX.Element {
-  const { paint, probe } = useImageDisplay(image.src)
+  const { paint, probe, at } = useImageDisplay(image.src)
   if (!paint) return <ReferencePlate image={image} kind={kind} />
   return (
     <img
       className="tb-lightbox-pic"
-      src={image.src}
+      src={at}
       alt={image.alt ?? image.name ?? ''}
       loading={probe ? 'eager' : 'lazy'}
       decoding="async"
@@ -940,6 +946,7 @@ export function ImageLightbox({
       >
         <header className="tb-lightbox-head">
           <span className="tb-lightbox-name">{imageLabel(image) || fieldName}</span>
+          <Dimensions image={image} />
           <span className="tb-lightbox-of">
             {index + 1} / {images.length}
           </span>
@@ -998,21 +1005,42 @@ export function ImageLightbox({
           </footer>
         )}
 
-        {image.w && image.h ? (
-          <span className="tb-lightbox-dim" aria-hidden="true">
-            {image.w} × {image.h}
-          </span>
-        ) : null}
       </div>
     </div>,
     document.body,
   )
 }
 
+/** HOW BIG THE PHOTOGRAPH IS — the ORIGINAL's size, never the copy's.
+ *
+ *  `ImageRef.w/h` is filled in when a person adds a file, because
+ *  `readImageFiles` measures what they chose. A seeded picture has
+ *  neither: the workbook gave an address and nothing else, so this
+ *  caption was blank on every one of the catalogue's photographs.
+ *
+ *  It is not blank now, because `tools/seed/fetch_images.py` opened
+ *  each one and wrote down what it found. What is printed is the
+ *  MAKER'S file — 1920 × 1440 — and not the downscaled copy this app
+ *  actually draws, for the same reason the plate names the maker's
+ *  host: the record is about the photograph, and the copy is only how
+ *  we are showing it. The row's own value still wins where it has one.
+ */
+function Dimensions({ image }: { image: ImageRef }): JSX.Element | null {
+  const held = seededCopy(image.src)
+  const w = image.w ?? held?.w
+  const h = image.h ?? held?.h
+  if (!w || !h) return null
+  return (
+    <span className="tb-lightbox-dim" aria-hidden="true">
+      {w} × {h}
+    </span>
+  )
+}
+
 /** The 30px mark in the plate's footer. Same verdict, same module —
  *  a picture that is a plate in the strip is a plate here too. */
 function ThumbDot({ img, kind }: { img: ImageRef; kind?: TableKind }): JSX.Element {
-  const { paint, probe } = useImageDisplay(img.src)
+  const { paint, probe, at } = useImageDisplay(img.src)
   if (!paint) {
     return (
       <span className="tb-imgmiss" aria-hidden="true">
@@ -1022,7 +1050,7 @@ function ThumbDot({ img, kind }: { img: ImageRef; kind?: TableKind }): JSX.Eleme
   }
   return (
     <img
-      src={img.src}
+      src={at}
       alt=""
       draggable={false}
       loading={probe ? 'eager' : 'lazy'}

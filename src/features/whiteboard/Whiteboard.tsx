@@ -143,7 +143,7 @@ const MIN_FRAME_H = 720
    THE OPENING FRAME HAS A FLOOR, AND IT IS A MEASUREMENT.
 
    A drawing nobody can read is not a drawing. Measured at 1440x900 on
-   the seeded sheet — 52 tables spanning 2,920 x 5,600 drawing units,
+   the seeded sheet — 53 tables spanning 2,920 x 5,600 drawing units,
    the height binding — the one framing licence landed the camera at
    zoom 0.138571. `.tb-lod-name` is authored at 34px inside the canvas
    transform, so it drew at 4.7px: under the 8.4px floor `tableLod.ts`

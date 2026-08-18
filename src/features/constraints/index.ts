@@ -110,6 +110,15 @@ export type { NewConstraint } from './constraintDefs'
 export { RuleCard, Switch, BECAUSE_PLACEHOLDER } from './RuleCard'
 export type { RuleCardProps } from './RuleCard'
 export { NewRuleSentence, NEW_RULE_CAPTION } from './NewRuleSentence'
+export type { NewRuleSentenceProps } from './NewRuleSentence'
+
+/* THE PRICE FILE'S OWN RULES, DRAWABLE ANYWHERE. Exported for the
+   module rules panel, which shows the subset naming a column of a
+   kind its tables carry. There is one card design and one set of
+   words for a workbook rule, and this is how a second surface gets
+   them rather than writing a third. */
+export { WorkbookRuleList } from './WorkbookRuleList'
+export type { WorkbookRuleListProps } from './WorkbookRuleList'
 
 export {
   evaluateConstraint,

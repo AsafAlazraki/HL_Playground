@@ -93,6 +93,64 @@ function asNumber(v: CellValue): number | undefined {
   return undefined
 }
 
+/* ============================================================
+   A MEASUREMENT IS A NUMBER WITH ITS UNIT STILL ATTACHED.
+
+   THE FAILURE THIS FIXES, MEASURED. A spreadsheet writes "10 HP" in a
+   column of numbers, because a person typed the unit. `asNumber` says
+   `Number("10 HP")` is NaN, so the comparison fell through to the last
+   branch of `compareValues` and ordered the two sides as TEXT. On the
+   seeded rule "Motor fitment — Highfield", running the real price file
+   at full scale, that made "8" > "10 HP" — lexicographically true, and
+   wrong about outboards — and it REJECTED 243 of the 2,519 pairings
+   the workbook itself writes, silently, with nothing on screen to say
+   why. Alphabetical order over a column of horsepower is not an
+   opinion about the data; it is a bug wearing a result's clothes.
+
+   WHAT IS PARSED, and nothing else: an optional sign, digits with
+   optional thousands separators and decimals, then an OPTIONAL short
+   unit token of letters, degree, per-cent, inch or foot marks. It is
+   deliberately the same shape the seed generator parses when it reads
+   a workbook (tools/seed/gen_lib.py `parse_num`), because these values
+   arrive from exactly there.
+
+   WHAT IS REFUSED, on purpose. "2 x 300 HP" — a twin rig — has no
+   single number, so it does not parse, and a clause over it reports a
+   mismatch rather than guessing. That is FITMENT_RULES.md F1's own
+   position: Max HP has to be decomposed into total, rig count and
+   per-engine AT IMPORT before a twin rig can be ordered, and inventing
+   an order for it here would be answering a question nobody settled.
+
+   TWO DIFFERENT UNITS DO NOT ORDER EITHER. "500 mm" against "20 in" is
+   a mismatch with a sentence, not a silent false. A bare number orders
+   against a measurement, because a column of unitless numbers compared
+   with a column that spells its unit out is the ordinary case and the
+   one that started this.
+   ============================================================ */
+
+interface Measure {
+  n: number
+  /** lower-cased unit token, or '' when the value carries none */
+  unit: string
+}
+
+const MEASURE = /^([+-]?[\d,]*\.?\d+)\s*([A-Za-z°%"']{1,6})?$/
+
+function asMeasure(v: CellValue): Measure | undefined {
+  if (typeof v === 'number') return Number.isFinite(v) ? { n: v, unit: '' } : undefined
+  if (typeof v !== 'string') return undefined
+  const m = MEASURE.exec(v.trim())
+  if (!m) return undefined
+  const n = Number(m[1].replace(/,/g, ''))
+  if (!Number.isFinite(n)) return undefined
+  return { n, unit: (m[2] ?? '').toLowerCase() }
+}
+
+/** Two measurements are comparable when they agree on the unit, or when
+ *  one of them does not name one. */
+const commensurable = (a: Measure, b: Measure): boolean =>
+  a.unit === b.unit || a.unit === '' || b.unit === ''
+
 function asStrictBoolean(v: CellValue): boolean | undefined {
   if (typeof v === 'boolean') return v
   if (typeof v === 'string') {
@@ -127,6 +185,12 @@ function typeName(v: CellValue): string {
   if (typeof v === 'number') return 'a number'
   if (typeof v === 'boolean') return 'a yes/no value'
   if (typeof v === 'string' && ISO_DATE.test(v.trim())) return 'a date'
+  /* "a measurement" rather than "text", or the sentence a person reads
+     when a plate reading "50 HP" meets a twin rig reading "2 x 300 HP"
+     is "text cannot be compared with text", which explains nothing and
+     is the kind of message that makes somebody distrust the whole
+     screen. Named after the date test so an ISO string stays a date. */
+  if (typeof v === 'string' && asMeasure(v) !== undefined) return 'a measurement'
   return 'text'
 }
 
@@ -181,7 +245,7 @@ function orderStrings(op: CompareOp, a: string, b: string): boolean {
 
 /**
  * Compare two cell values with a binary operator.
- * - number vs number (or numeric text) -> numeric
+ * - number vs number (or numeric text, "10 HP" included) -> numeric
  * - date vs date -> ISO text order, which is chronological
  * - text vs text -> trimmed + case-insensitive
  * - yes/no vs yes/no -> equality only
@@ -219,10 +283,16 @@ export function compareValues(
 
   /* a real number on either side forces a numeric comparison */
   if (typeof left === 'number' || typeof right === 'number') {
-    const a = asNumber(left)
-    const b = asNumber(right)
+    const a = asMeasure(left)
+    const b = asMeasure(right)
     if (a === undefined || b === undefined) return mismatch()
-    return { result: orderNumbers(op, a, b) }
+    if (!commensurable(a, b)) {
+      return {
+        result: false,
+        mismatch: `“${a.unit}” and “${b.unit}” are different units, so these cannot be put in order`,
+      }
+    }
+    return { result: orderNumbers(op, a.n, b.n) }
   }
 
   /* a real boolean on either side forces an equality comparison */
@@ -243,9 +313,24 @@ export function compareValues(
   const rs = asText(right).trim()
   if (ISO_DATE.test(ls) && ISO_DATE.test(rs)) return { result: orderStrings(op, ls, rs) }
 
-  const ln = asNumber(ls)
-  const rn = asNumber(rs)
-  if (ln !== undefined && rn !== undefined) return { result: orderNumbers(op, ln, rn) }
+  const lm = asMeasure(ls)
+  const rm = asMeasure(rs)
+  if (lm !== undefined && rm !== undefined) {
+    if (commensurable(lm, rm)) return { result: orderNumbers(op, lm.n, rm.n) }
+    return {
+      result: false,
+      mismatch: `“${lm.unit}” and “${rm.unit}” are different units, so these cannot be put in order`,
+    }
+  }
+  /* ONE SIDE IS A MEASUREMENT AND THE OTHER IS PROSE. Ordering those
+     alphabetically is what put "8" above "10 HP"; it is refused with a
+     sentence instead, and equality still answers, because "same text"
+     is a question that has an answer whatever the two sides are. */
+  if (lm !== undefined || rm !== undefined) {
+    if (op === 'eq') return { result: ls.toLowerCase() === rs.toLowerCase() }
+    if (op === 'neq') return { result: ls.toLowerCase() !== rs.toLowerCase() }
+    return mismatch()
+  }
 
   return { result: orderStrings(op, ls.toLowerCase(), rs.toLowerCase()) }
 }

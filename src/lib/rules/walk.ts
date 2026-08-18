@@ -24,10 +24,13 @@
    single candidate test inside a match each cost one step, so a
    quadratic scan cannot hang the tab); `MAX_LOOP_ITERATIONS` caps one
    For-each node. Exceeding either is a WARNING naming the node, not an
-   error: the run stops cleanly and the partial results still come back
-   with `ok: true`. A cycle that no For-each bounds is a `validateRule`
-   blocker, checked before the first row is read, so this walk can never
-   spin forever.
+   error: the run stops cleanly, whatever finished still comes back, and
+   `ok` stays true. The warning says WHICH of those two happened —
+   because this walk is breadth-first, a rule stopped inside its Match
+   has produced no rows at all, and telling that person the table below
+   is "part of the answer" would be a lie about their own data. A cycle
+   that no For-each bounds is a `validateRule` blocker, checked before
+   the first row is read, so this walk can never spin forever.
 
    NEVER THROWS, for any input.
    ============================================================ */
@@ -48,8 +51,26 @@ import { buildEffect } from './effects'
 import { validateRule } from './validate'
 import type { PendingEffect, RuleRunContext, RuleRunResult, RuleView } from './types'
 
-/** Total pair-steps a single run may spend. */
-export const MAX_PAIR_STEPS = 100_000
+/**
+ * Total pair-steps a single run may spend.
+ *
+ * WHY 500,000 AND NOT 100,000, WHICH IS WHAT IT WAS. The cap exists so
+ * a quadratic scan cannot hang the tab, and 100,000 was a round number
+ * chosen before there was a catalogue big enough to test it. There is
+ * one now, and it did not fit: the seeded rule "Motor fitment —
+ * Highfield" runs 588 hulls against 209 outboards, which is 122,892
+ * candidate tests plus 588 node visits plus one visit per pair that
+ * survives — 187,300 steps, MEASURED. At 100,000 the walk stopped
+ * two-thirds of the way through and the rule produced NOTHING (see
+ * `spend`), on the app's own flagship rule over the real price file.
+ *
+ * The whole run costs 499 ms, measured on the full-scale seed, so a
+ * step is ~2.7 µs. 500,000 admits that rule with 2.7× headroom and
+ * still bounds the worst case at about 1.4 s — which is what the cap
+ * is really for. Raise it again the same way: measure a real rule on a
+ * real catalogue, and write down what it cost.
+ */
+export const MAX_PAIR_STEPS = 500_000
 /** Rounds a single For-each node may run across the whole run. */
 export const MAX_LOOP_ITERATIONS = 10_000
 
@@ -212,18 +233,25 @@ function execute(rule: RuleDef, ctx: RuleRunContext): RuleRunResult {
 
   /* -- budget ----------------------------------------------- */
 
-  const budget = { steps: 0, stopped: false }
+  const budget: {
+    steps: number
+    stopped: boolean
+    stoppedAt: NodeSite | undefined
+    stoppedLabel: string
+  } = { steps: 0, stopped: false, stoppedAt: undefined, stoppedLabel: '' }
   const spend = (site: NodeSite): boolean => {
     if (budget.stopped) return false
     budget.steps += 1
     if (budget.steps > MAX_PAIR_STEPS) {
       budget.stopped = true
-      eng.warn(
-        site,
-        `${site.label}: this rule was stopped after ${fmtCount(
-          MAX_PAIR_STEPS,
-        )} steps — the results below are only part of the answer.`,
-      )
+      /* The sentence is decided at the END of the run, not here: this
+         walk is breadth-first, so every match node runs before the
+         first output node does, and a rule stopped inside its match
+         has produced no rows at all. Saying "the results below are
+         only part of the answer" over an empty table is the app
+         telling a person something untrue about their own data. */
+      budget.stoppedAt = site
+      budget.stoppedLabel = site.label
       return false
     }
     return true
@@ -515,6 +543,25 @@ function execute(rule: RuleDef, ctx: RuleRunContext): RuleRunResult {
         })
       }
     }
+  }
+
+  /* -- what the ceiling actually did ------------------------ */
+
+  /* Written once the walk is over, because only then is it known
+     whether anything reached an output. Rule 10 of the design
+     principles: what cannot be done says WHY, where it is. */
+  if (budget.stopped && budget.stoppedAt) {
+    const produced = Object.values(result.views).reduce((n, v) => n + v.rows.length, 0)
+    eng.warn(
+      budget.stoppedAt,
+      produced > 0
+        ? `${budget.stoppedLabel}: this rule was stopped after ${fmtCount(
+            MAX_PAIR_STEPS,
+          )} steps — the results below are only part of the answer.`
+        : `${budget.stoppedLabel}: this rule was stopped after ${fmtCount(
+            MAX_PAIR_STEPS,
+          )} steps, before it reached a result. There is nothing below because nothing finished, not because nothing matched. Narrow what it searches — a Filter before the Match, or a smaller table — and run it again.`,
+    )
   }
 
   return result

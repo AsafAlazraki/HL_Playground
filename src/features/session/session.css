@@ -1,0 +1,186 @@
+/* ============================================================
+   THE TWO-TAB NOTICE.
+
+   ONE OBJECT, drawn the way every other floating notice in this app
+   is drawn — `--paper-high` on a hairline, 10px radius, `--ec3` at
+   rest so it reads as lifted off the page rather than part of it.
+   `io.css`'s freshness card is the calibration and this matches it
+   deliberately: two notifications that look like two different kinds
+   of thing teach a person to read them twice.
+
+   BOTTOM LEFT, 96px UP. The 78px the dock reserves plus a gap, so it
+   never sits under the bar. Bottom right is the freshness notice,
+   bottom centre is the toast stack, top centre covers the page a
+   person just opened.
+
+   NO ACCENT AT REST. Blue appears here exactly once, on the focus
+   ring of the one control — which is one of the four appearances the
+   contract budgets for a screen, not a fifth.
+
+   NO NEW TRANSLUCENCY. The roster is the dock and the page toolbar.
+   This is opaque.
+   ============================================================ */
+
+.ts-note {
+  position: fixed;
+  bottom: 96px;
+  left: var(--sp-5);
+  z-index: 150;
+  width: min(400px, calc(100vw - var(--sp-6)));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--ec3);
+  animation: ts-arrive var(--t-med) var(--ease-settle) both;
+}
+
+.ts-eyebrow {
+  color: var(--ink-faint);
+}
+
+/* WHAT HAS HAPPENED — a sentence, in the voice the rest of the app
+   uses for one. `--ink-soft` is 7.7:1 on this card. */
+.ts-say {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+/* WHAT TO DO ABOUT IT — full ink, because it is the line the reader
+   came for and the only one that asks anything of them. */
+.ts-do {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* THE COUNT OF WHAT WAS DECLINED. It only appears once something
+   actually has been, which is the difference between a warning and
+   a report. */
+.ts-refused {
+  margin: 0;
+  padding-top: var(--sp-2);
+  width: 100%;
+  border-top: 1px solid var(--hairline);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.ts-count {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.ts-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+/* A TOOLBAR CONTROL, NOT `.btn`. `.btn` stamps its label in 11px
+   uppercase mono, and uppercase on a button is one of the three
+   things the design contract forbids outright. 28px / 7px radius /
+   12.5px is the geometry every other control in the chrome uses. */
+.ts-act {
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+
+.ts-act:hover {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+/* PRESS LANDS ON POINTER-DOWN, and it is never cancelled — the
+   darken is what survives when the scale is taken away below. */
+.ts-act:active {
+  transform: scale(0.97);
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+.ts-act:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* ARRIVES, RATHER THAN APPEARING — `--ease-settle`, the critically
+   damped curve everything that arrives in this app uses. */
+@keyframes ts-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* REDUCED MOTION TAKES THE MOVEMENT, NOT THE MESSAGE. The card still
+   fades in, because a notice that snaps into existence under a
+   pointer is its own kind of startle. */
+@keyframes ts-arrive-still {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ts-note {
+    animation: ts-arrive-still var(--t-med) linear both;
+  }
+  .ts-act {
+    transition: none;
+  }
+  /* THE PRESS IS NOT CANCELLED, only its movement. The darken on
+     `:active` above is still the feedback — the design contract's
+     item 12 (`:active { transform: none }`) is about a control that
+     answers a press with nothing at all. */
+  .ts-act:active {
+    transform: none;
+  }
+}

@@ -141,10 +141,12 @@ export function forgetSeedStamp(): void {
  *  business but the owner's: it is somebody who deleted a table or
  *  two, not a build of the set from six months ago. */
 export const COHORT_MIN = 6
-/** And it has to be a real share of the set. With 52 tables declared
- *  the effective floor is 13 — the copy this mechanism was built for
+/** And it has to be a real share of the set. With 53 tables declared
+ *  the effective floor is 14 — the copy this mechanism was built for
  *  was missing 31 of them, and a person tidying up their sheet is
- *  nowhere near that. */
+ *  nowhere near that. A SHARE rather than a count precisely so that
+ *  the set growing (52 tables to 53, 3,566 rows to 11,116) moves the
+ *  floor by itself and nobody has to remember to. */
 export const COHORT_SHARE = 0.25
 
 export interface StaleArgs {

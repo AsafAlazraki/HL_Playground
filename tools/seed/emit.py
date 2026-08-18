@@ -190,6 +190,8 @@ import type {
   FieldType,
   GroupDef,
   ImageRef,
+  ModuleCapability,
+  ModuleDef,
   RowData,
   RuleDef,
   RuleEdge,
@@ -199,6 +201,11 @@ import type {
   ViewColumn,
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
+import { isStaleSeedCopy, readSeedStamp, writeSeedStamp } from './seedStamp'
+
+/** What this project is called on the sheet, and the one string that
+ *  says a project on somebody's machine came from this set. */
+export const NORTHSIDE_NAME = 'Northside Marine — Master Price File'
 
 export interface NorthsideProject {
   name: string
@@ -206,6 +213,10 @@ export interface NorthsideProject {
   groups: GroupDef[]
   rules: RuleDef[]
   rowsByEntity: Record<string, RowData[]>
+  /** seed key → the id that table was minted with, so the module seed
+   *  below can name its tables by the key it already reads them by
+   *  rather than by matching on a display name. */
+  idByKey: Record<string, string>
 }
 
 /* ---------------------------------------------------------- */
@@ -499,7 +510,7 @@ export function buildNorthsideProject(): NorthsideProject {
   const rules: RuleDef[] = [
     mkRule(
       'Motor fitment — Highfield',
-      'Every Yamaha at or below the hull’s Max HP (Boat Module!KW) — the ceiling the spec plate states, and the only half of the envelope that may gate. FITMENT_RULES.md F1 measures 0 of 1,424 live slot-1/slot-2 motors above it, and 0 of the 134 Highfield × Yamaha pairings this seed carries. MIN HP IS SHOWN AND NEVER TESTED: F2 admits it as a warning only, because the dealer breaks it on purpose — 72 of 757 live standard-fit motors (9.51%) sit below the plate, since slot 1 is the row’s lowest-HP motor on 99.9% of rows and is the cheapest way onto the water. ANDing it in deleted 16 of those 134 pairings (11.9%), which is the failure A2 is on record refusing to make twice. Shaft and control are deliberately not compared: the Boat Module writes XL / L / UL while the Motor Module writes 25" / 20" / 30" — the same axis in two vocabularies. KNOWN LIMIT: Motor Library!E is text, so a twin-rig row like “2 x 225” cannot be ordered against a number and is reported as not matching rather than silently passed; F1 asks for Max HP to be decomposed into total, rig count and per-engine at import before that can be fixed.',
+      'Every Yamaha at or below the hull’s Max HP (Boat Module!KW) — the ceiling the spec plate states, and the only half of the envelope that may gate. FITMENT_RULES.md F1 measures 0 of 1,424 live slot-1/slot-2 motors above it. AT FULL SCALE THAT IS NO LONGER ZERO, and the number is here rather than rounded away: of the 2,519 Highfield × Yamaha pairings this seed now carries, 9 sit ABOVE the hull’s own plate — every one of them a Classic CL400 whose Boat Module!KW reads “50 HP”, paired by the workbook with the Yamaha F60LC. The rule refuses those 9, which is the ceiling doing exactly what A1 admitted it for; whether the plate or the pairing is wrong is the dealer’s call and not this rule’s. It was invisible while the seed carried 40 of Highfield’s 588 hulls. MIN HP IS SHOWN AND NEVER TESTED: F2 admits it as a warning only, because the dealer breaks it on purpose — 72 of 757 live standard-fit motors (9.51%) sit below the plate, since slot 1 is the row’s lowest-HP motor on 99.9% of rows and is the cheapest way onto the water. ANDing it in would now delete 102 of the 2,519 pairings (4.05%), which is the failure A2 is on record refusing to make twice. Shaft and control are deliberately not compared: the Boat Module writes XL / L / UL while the Motor Module writes 25" / 20" / 30" — the same axis in two vocabularies. KNOWN LIMIT, MEASURED: 281 pairings have a twin-rig plate — Boat Module!KW reads “350 / 2 x 200 HP”, “425 / 2 x 300 HP”, “450 / 2 x 300 HP” or “2 x 300 HP”, which is not one number. 76 of those sit beside a single-engine motor and cannot be ordered at all: they are reported as not matching rather than silently passed. The other 205 sit beside a twin-rig motor (“2 x 250”), where neither side is a measurement and the comparison falls back to text order — it answers correctly on all 205, by the shape of the strings rather than by arithmetic, and that is exactly why F1 asks for Max HP to be decomposed into total, rig count and per-engine AT IMPORT. Nothing here guesses what “2 x 300” totals to. So 2,434 of 2,519 pairings are offered.',
       'boat_highfield',
       'mot_yamaha',
       [clauseVsSource(fid('mot_yamaha', 'e'), 'lte', fid('boat_highfield', 'kw'))],
@@ -517,7 +528,7 @@ export function buildNorthsideProject(): NorthsideProject {
     ),
     mkRule(
       'Trailer fitment — Highfield',
-      'Trailers whose series banner names Highfield — Trailer Module!A’s own heading, read here off the Series column that carries it verbatim. This is FITMENT_RULES.md F8, the one candidate in either workbook that holds at 100% AND rejects something: 581 of 581 testable live pairings with zero counter-examples, leaving 0.92–7.83% of the 434 live trailers standing (Highfield 12 of 434 = 2.76%). On this seed’s 145 live trailers it leaves 2. ATM IS SHOWN AND NEVER TESTED: F9 settles ATM ≥ the hull’s weight as a FLOOR rather than a selector — 530 of 530 live pairings hold it, but so does a mean 97.70% of the catalogue, so gating on it chooses no trailer. The weight column beside it is Boat Module!S “Boat Weight”, which is what the hull tows; Boat Module!P “Max Load” is an afloat PAYLOAD and the rule built on it is refuted at 52.5% (F10). THIS RULE USED TO MATCH ON ATM ≥ Max Load and returned 1,758 pairs — the whole NSM Custom table against every Highfield hull, offering a Highfield UL240 the “REDCO 575 Surtees Alum”, “REDCO Stabicraft Alloy” and Formosa cradles. It is the same selector src/features/constraints/trailerFitment.ts runs; the sentence surface still cannot say it, because the boat’s brand is the name of its table (§6.4).',
+      'Trailers whose series banner names Highfield — Trailer Module!A’s own heading, read here off the Series column that carries it verbatim. This is FITMENT_RULES.md F8, the one candidate in either workbook that holds at 100% AND rejects something: 581 of 581 testable live pairings with zero counter-examples, leaving 0.92–7.83% of the 434 live trailers standing (Highfield 12 of 434 = 2.76%). The seed now carries all 434 of them and reproduces that figure exactly: a Highfield hull is left 12. THIS RULE REACHES 8 OF THOSE 12, and the reason is structural rather than a disagreement about fitment: a Match node searches ONE table, and Highfield’s twelve are split across two — 8 on NSM Custom Trailers and 4 under “GFAB - Highfield Series” on GFAB Trailers. src/features/constraints/trailerFitment.ts, which is not limited to one table, returns all 12, and seededRules.test.ts asserts the two agree ON THE TABLE THIS ONE SEARCHES. Naming the other four needs a Match that can take more than one table, or a Brand column at import (§6.4); neither is invented here. ATM IS SHOWN AND NEVER TESTED: F9 settles ATM ≥ the hull’s weight as a FLOOR rather than a selector — 530 of 530 live pairings hold it, but so does a mean 97.70% of the catalogue, so gating on it chooses no trailer. The weight column beside it is Boat Module!S “Boat Weight”, which is what the hull tows; Boat Module!P “Max Load” is an afloat PAYLOAD and the rule built on it is refuted at 52.5% (F10). THIS RULE USED TO MATCH ON ATM ≥ Max Load and returned 1,758 pairs — the whole NSM Custom table against every Highfield hull, offering a Highfield UL240 the “REDCO 575 Surtees Alum”, “REDCO Stabicraft Alloy” and Formosa cradles. It is the same selector src/features/constraints/trailerFitment.ts runs; the sentence surface still cannot say it, because the boat’s brand is the name of its table (§6.4).',
       'boat_highfield',
       'trl_nsmcustom',
       [clauseVsWord(fid('trl_nsmcustom', 'series'), 'contains', 'Highfield')],
@@ -535,16 +546,182 @@ export function buildNorthsideProject(): NorthsideProject {
   ]
 
   return {
-    name: 'Northside Marine — Master Price File',
+    name: NORTHSIDE_NAME,
     entities,
     groups: [],
     rules,
     rowsByEntity,
+    idByKey: Object.fromEntries(entityId),
+  }
+}
+
+/* ============================================================
+   THE FIVE MODULES — the places in this business.
+
+   WHY THE LIST LIVES HERE AND NOWHERE ELSE. A module name is a
+   BUSINESS string: "Boats", "Rates & Charges". Marine content lives
+   only in src/demos, so src/app and src/store stay generic and a
+   pharmacy loading its own set gets its own places with no code
+   change. Nothing below is invented — every name is a seeded table's
+   own name or a heading from docs/specs, and every figure is the sum
+   of row counts already in this file.
+
+   THE BRAND IS THE SECTION, which is the owner's ruling taken
+   literally: Boats holds all seven brand price files rather than one
+   flattened list of hulls, because the workbook reads each brand's
+   columns from THAT brand's banner row — "Max People" on Highfield is
+   a different column on Stacer. `ModuleIndex` cuts its index by table
+   and then by that table's own hierarchy, so seven tables draw seven
+   brand heads with the levels each brand declares underneath.
+
+   JOINS AND VIEWS ARE NEVER DOORS. Only `role: "base"` tables are
+   named here; the 27 join tables appear INSIDE a module as related
+   blocks on an item's page, seeded per table by `createModule`.
+
+   EVERY BASE TABLE BELONGS TO SOME MODULE. That includes the retired
+   OBSOLETE Trailers table, which is why it is in the Trailers list:
+   `sellableTables` then drops it from the catalogue and the index
+   says so in words. A table nobody filed would be a table nobody
+   could reach except through the sheet.
+
+   THE DESCRIPTION IS PASSED EXPLICITLY, and that is not decoration.
+   `createModule` falls back to the primary table's own description
+   when none is given, and Highfield's is a 202-character note about
+   which spreadsheet row its columns came from — the exact string
+   ModuleStage.tsx's header records as the failure that taught this.
+   ============================================================ */
+
+interface SeedModule {
+  name: string
+  /**
+   * One line under the name — what is in here and why, and NEVER a
+   * count.
+   *
+   * A COUNT IN PROSE IS A LIE WAITING TO HAPPEN, and two of these five
+   * had already told it. Rates & Charges read "64 charges" beside a live
+   * badge saying 65 the moment a row was added, and Parts & Accessories
+   * read "719 lines" against 738 actually seeded — nobody wrote a wrong
+   * number, the rows moved and the sentence could not. The card already
+   * counts its own rows from the store, live, one line above this one
+   * (`md-card-count` in features/modules/Dashboard.tsx), so a figure
+   * typed here is duplication that can only ever drift out of true.
+   *
+   * Every fact these sentences do carry is a fact that does not move:
+   * which workbook sheet the tables came from, and what kind of thing
+   * is in them.
+   */
+  desc: string
+  /** seed keys, primary first. A key that does not resolve is skipped. */
+  tables: string[]
+  /** what may be DONE here. Omitted = DEFAULT_CAPABILITIES. */
+  can?: ModuleCapability[]
+}
+
+/* The verbs, and why each module has the ones it has. `browse`,
+   `search` and `open` are DEFAULT_CAPABILITIES — look, do not touch —
+   and nothing that writes is switched on anywhere, deliberately.
+
+   `relate` is on where this side of the relationship OWNS the
+   decision: a boat is the source of every fitment join, and a motor's
+   page turns those round. It is OFF on trailers and parts because
+   FITMENT_RULES.md puts the selector on the boat's series banner —
+   the pair is written on the boat's join, so a relate verb here would
+   promise a decision this side does not make.
+
+   `quote` is on where the table declares a selling price. It is off
+   on Parts & Accessories because a part is quoted as a LINE on a
+   boat's quote, and off on Rates & Charges because registration is a
+   third-party recovery that SERVICE_AND_THEMES.md §3.1 forbids
+   marking up — a quote verb over a fee register invites the double
+   charge that document rules out.
+
+   `open` is off on Rates & Charges, and that is measured rather than
+   preferred: no join names Labour Rates, Oils & Consumables or
+   Registration Costs, so an item page for a labour rate would carry
+   zero blocks and be a row shown twice. SERVICE_AND_THEMES.md §1.4
+   calls these "a register that other places read". */
+const MODULES: SeedModule[] = [
+  {
+    name: "Boats",
+    desc: "Seven brand price files off the Boat Module sheet, each brand keeping its own columns.",
+    tables: [
+      "boat_highfield",
+      "boat_stabicraft",
+      "boat_stacer",
+      "boat_formosa",
+      "boat_jeanneau",
+      "boat_surtees",
+      "boat_haines",
+    ],
+    can: ["browse", "search", "open", "relate", "quote"],
+  },
+  {
+    name: "Motors",
+    desc: "Yamaha and ePropulsion outboards, plus the two factory package files the workbook keeps in the Motor Library — boat-plus-engine bundles, held apart because they are not motors.",
+    tables: ["mot_yamaha", "mot_pkg_haines", "mot_pkg_jeanneau", "mot_epropulsion"],
+    can: ["browse", "search", "open", "relate", "quote"],
+  },
+  {
+    name: "Trailers",
+    desc: "Seven trailer brands off the Trailer Module sheet, plus the obsolete band kept so an old quote still opens and never offered here.",
+    tables: [
+      "trl_nsmcustom",
+      "trl_dunbier",
+      "trl_bmt",
+      "trl_mackay",
+      "trl_redco",
+      "trl_gfab",
+      "trl_stacertrailers",
+      "trl_obsolete",
+    ],
+    can: ["browse", "search", "open", "quote"],
+  },
+  {
+    name: "Parts & Accessories",
+    desc: "Parts & Accessories, Rigging Kits and Dealer Fit Packages — the lines that go ONTO a boat rather than being one.",
+    tables: ["parts", "rig_kits", "dealer_fit"],
+  },
+  {
+    name: "Rates & Charges",
+    desc: "Labour Rates, Oils & Consumables and Registration Costs — the charges the other places read. A register rather than a catalogue.",
+    tables: ["labour_rates", "oils_lubes", "registration"],
+    can: ["browse", "search"],
+  },
+]
+
+/** Mints the five modules through the store's own `createModule`, on a
+ *  project that has just been replaced.
+ *
+ *  THROUGH THE REAL ACTION, NEVER AROUND IT. `createModule` mints each
+ *  member table's detail page and seeds it from that table's own joins;
+ *  a module written straight into the `modules` map would have none of
+ *  that, and would then be indistinguishable from a user's own module
+ *  until somebody clicked into it. It also means these persist exactly
+ *  as a hand-made module does — the store writes to Dexie, and a
+ *  reload finds them there.
+ *
+ *  Exported for the test that walks the real seed through the real
+ *  store; nothing in the app calls it but `loadNorthsideProject`. */
+export function seedNorthsideModules(idByKey: Record<string, string>): void {
+  const store = useProjectStore.getState()
+  for (const m of MODULES) {
+    const ids = m.tables
+      .map((k) => idByKey[k])
+      .filter((id): id is string => {
+        const e = id ? store.entities[id] : undefined
+        /* A JOIN OR A VIEW IS NEVER A DOOR. `canBeModuleMaster` admits
+           role 'view', which the ruling forbids, so the filter is
+           written here rather than borrowed. */
+        return e !== undefined && (e.role === undefined || e.role === "base")
+      })
+    if (ids.length === 0) continue
+    const mod = store.createModule(ids, m.name, m.desc)
+    if (mod && m.can) store.updateModule(mod.id, { capabilities: m.can })
   }
 }
 
 /** Builds the Northside set and applies it wholesale (replaces the
- *  current project). */
+ *  current project), then mints the five modules on top of it. */
 export function loadNorthsideProject(): void {
   const p = buildNorthsideProject()
   useProjectStore.getState().replaceProject({
@@ -554,7 +731,194 @@ export function loadNorthsideProject(): void {
     rules: p.rules,
     rowsByEntity: p.rowsByEntity,
   })
+  /* AFTER the swap, never before: `replaceProject` clears `modules`
+     and `views` wholesale, because a module surviving a swap points at
+     tables that are gone. */
+  seedNorthsideModules(p.idByKey)
+  /* THE ONE MOMENT THE PROVENANCE IS KNOWN. This browser now holds
+     THIS build of the set, and nothing a person does to the sheet
+     afterwards changes that fact. See seedStamp.ts — the freshness
+     notice used to guess it from row counts and fired on the user's
+     own edit. */
+  writeSeedStamp(northsideSeedFingerprint())
 }
+
+/* ============================================================
+   IS THIS COPY OF THE EXAMPLE THE CURRENT ONE?
+
+   THE FAILURE THIS ANSWERS, and it is a demo-day failure rather
+   than a bug. This app is local-first: the sheet lives in the
+   browser's own IndexedDB and is hydrated on load. So a person who
+   loaded the example weeks ago opens the app and gets THAT copy —
+   21 tables, 43 Yamahas — while a browser seeded today holds 25 base
+   tables and 83. Nothing is broken and nothing was lost, but it
+   reads exactly like data reverting, and the owner has already been
+   caught by it once.
+
+   THE TEST IS THE DATA, NOT A VERSION NUMBER TYPED BY HAND. A stamp
+   that had to be bumped by a person would go quiet the first time
+   somebody forgot, at the moment it mattered. So the version of this
+   set is DERIVED from the set — `northsideSeedFingerprint` hashes
+   every table name and row count below — and it changes by itself the
+   moment the seed changes.
+
+   AND WHAT IS COMPARED IS THE FINGERPRINT THIS BROWSER WAS SEEDED
+   WITH, NOT THE ROWS ON THE SHEET TODAY. That distinction is the
+   whole correctness of this mechanism, and getting it wrong caused
+   the worst bug in the app: comparing row counts, ADDING ONE ROW
+   raised this notice, and the notice then offered to load the current
+   example — replacing the sheet, and destroying the row that had just
+   been typed. An edit is not staleness. The provenance is recorded at
+   the one moment it is certain, by `loadNorthsideProject`, and lives
+   in `seedStamp.ts`; an edit cannot reach it.
+
+   THE COUNTS BELOW ARE THEREFORE EVIDENCE, NOT THE VERDICT. They are
+   gathered so the notice can say what differs in the dealer's own
+   nouns; `isStaleSeedCopy` decides whether there is anything to say.
+
+   AND THE IDENTITY TEST IS THE DATA TOO, WHICH WAS LEARNED THE HARD
+   WAY. This first asked "is `meta.name` the name this file gives the
+   project?", and it never once answered yes: `setOrganisation`
+   overwrites `meta.name` with the BUSINESS name, and `Shell.tsx`
+   deliberately re-applies the organisation after every project swap
+   so a demo load cannot un-name the dealer. So a project loaded from
+   this file is called "Northside Marine" a frame later and the
+   comparison was dead on arrival. The honest question is not what the
+   project is CALLED but what is IN it: this set is recognised when
+   most of the tables on the sheet are tables this file declares, by
+   name. That also survives the case the whole mechanism exists for —
+   an OLDER copy, which has fewer tables than the set does now and
+   would fail any test written the other way round.
+
+   IT SAYS NOTHING ABOUT ANYBODY ELSE'S SHEET. A real dealer's own
+   tables, an import, a blank sheet: none of them share thirty table
+   names with this file, so all of them return null and are never
+   nagged.
+
+   AND IT IS NOT A JUDGEMENT ABOUT EDITS, which it once claimed to be
+   while being exactly that. A person who has typed in cells, added
+   rows, added tables, deleted tables or renamed anything is not stale
+   and is never told they are: the only thing that decides is the
+   fingerprint this browser was seeded with.
+   ============================================================ */
+
+/** THE VERSION OF THE SET, DERIVED FROM THE SET.
+ *
+ *  Every table name and — for anything that is not a join, whose size
+ *  is a function of its two sides rather than a fact this file states
+ *  — its row count, plus how many modules the set mints. Change a row
+ *  in the workbook and regenerate, and this changes with it. Nobody
+ *  has to remember anything.
+ *
+ *  FNV-1a, 32-bit, base 36: this is a version tag being compared for
+ *  equality, not a checksum defending against anybody. */
+let seedFingerprintCache: string | null = null
+export function northsideSeedFingerprint(): string {
+  if (seedFingerprintCache !== null) return seedFingerprintCache
+  let h = 2166136261
+  const push = (s: string): void => {
+    for (let i = 0; i < s.length; i += 1) {
+      h ^= s.charCodeAt(i)
+      h = Math.imul(h, 16777619)
+    }
+  }
+  for (const t of TABLES) push(`${t.n}:${t.role === "join" ? "j" : String(t.rows.length)}`)
+  push(`m${String(MODULES.length)}`)
+  seedFingerprintCache = (h >>> 0).toString(36)
+  return seedFingerprintCache
+}
+
+export interface SeedDrift {
+  /** what this example calls itself, so a notice about it can name it
+   *  without reading `meta.name` — which is the BUSINESS name by the
+   *  time anybody asks (see the header above) */
+  setName: string
+  /** tables this set carries that the sheet does not have, by name */
+  missing: string[]
+  /** tables the sheet has at a different size */
+  resized: { name: string; has: number; wants: number }[]
+  /** the set now brings modules and this sheet carries none */
+  noModules: boolean
+  /** how many places the current set would put on the dashboard */
+  moduleCount: number
+  /** THE VERDICT, and the only field anything may act on: this sheet
+   *  came from an OLDER BUILD of the set. Decided by the fingerprint
+   *  this browser was seeded with (`seedStamp.ts`) — never by the
+   *  counts above, which are the notice's evidence and are as easily
+   *  produced by a person adding a row. */
+  stale: boolean
+}
+
+/** Below this many of the set's own tables, a sheet is somebody's own
+ *  work that happens to share a name or two — never this example. */
+const RECOGNISE_FLOOR = 8
+/** And this share of what is ON the sheet has to come from the set,
+ *  so a dealer who loaded the example and then built their own thirty
+ *  tables beside it is not told their project is an old copy.
+ *
+ *  HALF, NOT MORE. The copy this exists to catch is an OLD one, and
+ *  an old one is allowed to disagree about names as well as counts —
+ *  a table renamed since it was taken would count against it twice.
+ *  Half of a sheet being tables this file declares by name is still
+ *  nothing a dealer's own workbook would ever do by accident. */
+const RECOGNISE_SHARE = 0.5
+
+/** What the current set holds, compared with what is on the sheet, or
+ *  null when the sheet did not come from this set. */
+export function northsideDrift(
+  entities: Record<string, EntityDef>,
+  rowsByEntity: Record<string, RowData[]>,
+  modules: Record<string, ModuleDef>,
+): SeedDrift | null {
+  const onSheet = new Map<string, number>()
+  for (const e of Object.values(entities)) {
+    onSheet.set(e.name, rowsByEntity[e.id]?.length ?? 0)
+  }
+  if (onSheet.size === 0) return null
+
+  const missing: string[] = []
+  const resized: { name: string; has: number; wants: number }[] = []
+  let recognised = 0
+  for (const t of TABLES) {
+    /* JOIN TABLES ARE NOT COMPARED BY SIZE. A pairing whose either
+       side does not resolve is dropped at build time (pass 2 above),
+       so a join's row count is a function of the base tables and not
+       a fact this list can state. Their presence still counts. */
+    const has = onSheet.get(t.n)
+    if (has === undefined) {
+      missing.push(t.n)
+      continue
+    }
+    recognised += 1
+    if (t.role !== "join" && has !== t.rows.length) {
+      resized.push({ name: t.n, has, wants: t.rows.length })
+    }
+  }
+
+  if (recognised < RECOGNISE_FLOOR) return null
+  if (recognised < onSheet.size * RECOGNISE_SHARE) return null
+
+  return {
+    setName: NORTHSIDE_NAME,
+    missing,
+    resized,
+    noModules: Object.keys(modules).length === 0,
+    moduleCount: MODULES.length,
+    stale: isStaleSeedCopy({
+      stamp: readSeedStamp(),
+      current: northsideSeedFingerprint(),
+      missing: missing.length,
+      setTables: TABLES.length,
+    }),
+  }
+}
+
+/** True when the sheet came from an OLDER BUILD of this set.
+ *
+ *  It is not "the sheet no longer matches the set", which is what this
+ *  used to mean and what made it fire on a person's own edit. */
+export const isStaleNorthside = (drift: SeedDrift | null): boolean =>
+  drift !== null && drift.stale
 '''
 
 
@@ -590,7 +954,49 @@ def emit_row(cols, r):
     return "      { " + ", ".join(parts) + " },"
 
 
-def main():
+# ============================================================
+# THE GENERATOR HAD FALLEN BEHIND THE FILE IT WRITES. IT HAS CAUGHT UP.
+#
+# MEASURED 2026-08-18: running this command used to remove 366 lines of the
+# committed src/demos/northside.ts — `NORTHSIDE_NAME`,
+# `NorthsideProject.idByKey`, the whole `seedNorthsideModules` block (the FIVE
+# MODULES, which are the app's applications) and the seedStamp wiring — because
+# those lines had been added to the OUTPUT rather than to this generator. The
+# command refused rather than truncating a megabyte of a real business's price
+# file, and the refusal said the fix was to teach this file to emit them.
+#
+# THAT IS DONE. HEADER and FOOTER above are now the committed file's own prelude
+# and tail, character for character, so a run reproduces every one of those
+# lines. The refusal is therefore inverted: instead of stopping when the file
+# holds something this generator cannot write, it stops when what this generator
+# is ABOUT to write has lost one of the markers. Same three names, same reason —
+# a run must never be silently destructive again — but now the check reads the
+# output rather than the file, so it cannot be satisfied by simply deleting the
+# thing it protects.
+#
+# `--force` still writes anyway, for whoever is deliberately changing the shape.
+# ============================================================
+MUST_EMIT = ("seedNorthsideModules", "NORTHSIDE_NAME", "idByKey")
+
+
+def refuse_to_truncate(text, force):
+    """Check the TEXT ABOUT TO BE WRITTEN, not the file on disk."""
+    if force:
+        return
+    lost = [m for m in MUST_EMIT if m not in text]
+    if not lost:
+        return
+    raise SystemExit(
+        "REFUSED — this run would write a seed missing work the app needs.\n"
+        "  Absent from the generated text: " + ", ".join(lost) + "\n"
+        "  Writing it would leave the sheet with no modules on it and tsc\n"
+        "  failing in eight files. HEADER/FOOTER in emit.py are the seed's own\n"
+        "  prelude and tail; if you changed one, put the marker back. Pass\n"
+        "  --force if losing it is what you mean to do."
+    )
+
+
+def main(force=False):
     tables, sel, empty = gen_all.main()
 
     # positions
@@ -708,6 +1114,7 @@ def main():
     buf.write(FOOTER)
 
     text = buf.getvalue()
+    refuse_to_truncate(text, force)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     print("bytes", len(text.encode("utf-8")))
@@ -717,6 +1124,19 @@ def main():
     for t in empty:
         print("EMPTY IN THIS SUBSET:", t["name"])
 
+    # THE SECOND GENERATED FILE, written from the same command so the two can
+    # never be regenerated one without the other. It needs no network: the
+    # measurement is committed in extracts/images.json, exactly like every
+    # other stage-two input. Re-take that measurement with
+    # `python tools/seed/fetch_images.py`.
+    import emit_images
+    held, absent, size, unmeasured, stale, no_entry = emit_images.main(tables)
+    print("images", held, "held", absent, "absent", unmeasured, "unmeasured",
+          "(of", no_entry, "with no entry)", stale, "stale", size, "bytes of map")
+    if unmeasured:
+        print("       ^ run `python tools/seed/fetch_images.py` to measure those;",
+              "until then they draw as “Held as a link”, which is true.")
+
 
 if __name__ == "__main__":
-    main()
+    main(force="--force" in sys.argv[1:])

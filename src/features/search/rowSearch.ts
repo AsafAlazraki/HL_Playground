@@ -43,9 +43,11 @@
    pair (`northside.ts`: `resolved.label = names.join(' · ')`). So a
    match inside one is always a match on one of the two things it
    pairs — and those things are already in this index, under their
-   own tables, spelled the same way. Measured over the real file:
-   2,260 of 2,260 pair rows are named entirely by the rows they point
-   at, zero counter-examples. A pair row therefore adds no reachable
+   own tables, spelled the same way. Measured over the real file at
+   full scale: 8,679 of 8,679 pair rows are named entirely by the rows
+   they point at, zero counter-examples — it was 2,260 of 2,260 when
+   the finding was made, and going to the whole catalogue found no
+   exception either. A pair row therefore adds no reachable
    thing, and is searched THROUGH rather than INTO.
 
    Two consequences, both deliberate:
@@ -201,7 +203,7 @@ const isPairList = (entity: EntityDef, links: FieldDef[]): boolean =>
  *
  *  A composed pair name — "Stacer - Crossfire 449 · Yamaha - F90XB" —
  *  leaves nothing once both sides are struck out, which is the whole
- *  file's case (2,260 of 2,260). Anything left over is wording
+ *  file's case (8,679 of 8,679). Anything left over is wording
  *  somebody typed onto the pair itself, and it is kept. */
 function residueOf(hay: string, sides: string[]): string {
   let rest = hay
@@ -384,8 +386,10 @@ const isWordEdge = (ch: string): boolean => !/[a-z0-9]/.test(ch)
 /** WHAT A TABLE IS OUTRANKS HOW WELL IT MATCHED, and this is the
  *  single most important line in the file.
  *
- *  Measured on the real sheet as it stands (52 tables, 3,566 rows):
- *  searching the Highfield Sport 560 by name returns 211 matches, and
+ *  Measured on the real sheet when this was written (52 tables,
+ *  3,566 rows; it now holds 53 and 11,116, of which 8,679 ARE pair
+ *  rows, so the ratio this paragraph is about has only got worse):
+ *  searching the Highfield Sport 560 by name returned 211 matches, and
  *  151 of them were PAIR rows — "Highfield - SP560 (HYP) B-B-B ·
  *  Yamaha - F90XB" and the like — because a pair row's label is the
  *  two sides of the pair written out, so every product name appears

@@ -1422,3 +1422,160 @@
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* ============================================================
+   WHO IT IS FOR — the customer field, and the register under it.
+
+   THE INPUT DID NOT MOVE. It is the same `.qt-input--name` in the
+   same place at the same size; everything below is drawn UNDER it
+   and only while it is being used, so a quote to a walk-in looks
+   exactly as it always did and costs the page nothing.
+
+   THE LIST IS IN FLOW, NOT FLOATING. A popover over a document
+   would need a third translucent surface and a z-index conversation
+   the design has already had (DESIGN_CONTRACT §8.10). The sheet is
+   long, the field is at the top of it, and pushing three rows down
+   is cheaper than a layer.
+   ============================================================ */
+
+.qt-who {
+  position: relative;
+  margin-bottom: var(--sp-3);
+}
+/* the field's own bottom margin belongs to the group now, so the
+   two do not stack into a gap twice the size */
+.qt-who > .qt-field {
+  margin-bottom: 0;
+}
+
+/* A CONTROL BESIDE A SENTENCE, in sentence case. Deliberately NOT
+   `.qt-linkbtn`, which stamps 11px uppercase mono: uppercase is a
+   label style and never a button (DESIGN_CONTRACT §3). */
+.qt-who-act {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--hairline-strong);
+  text-underline-offset: 3px;
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.qt-who-act:hover {
+  color: var(--blue);
+  text-decoration-color: var(--blue);
+}
+.qt-who-act:active {
+  color: var(--blue-deep);
+}
+.qt-who-act:focus-visible {
+  outline: none;
+  color: var(--blue);
+  text-decoration-color: var(--blue);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* the "file this typed name" offer sits on its own line under the
+   field rather than in the sentence row, because it appears and
+   disappears as somebody types and must not reflow a row of text */
+.qt-who-file {
+  display: inline-block;
+  margin-top: 6px;
+}
+
+/* -- what this document is filed under ----------------------- */
+
+.qt-who-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.qt-who-link-say strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* -- the register, matched against what has been typed -------- */
+
+.qt-who-list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 420px;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.qt-who-list li + li {
+  border-top: 1px solid var(--hairline);
+}
+
+.qt-who-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 7px 10px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.qt-who-opt:hover {
+  background: var(--paper-sunken);
+}
+/* a list row darkens on press; it never scales, so its neighbours
+   cannot look as though they moved */
+.qt-who-opt:active {
+  background: var(--blue-wash);
+}
+.qt-who-opt:focus-visible {
+  outline: none;
+  background: var(--blue-wash);
+  border-left-color: var(--blue);
+}
+
+.qt-who-opt-name {
+  font-size: var(--ui-size);
+  font-weight: 560;
+  letter-spacing: var(--ui-track);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.qt-who-opt-say {
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* THERE IS NOWHERE TO FILE THEM YET — a fact, in the app's voice,
+   naming the place where a register is made. `--ink-soft` on the
+   white sheet: 7.7:1. */
+.qt-who-none {
+  margin: 6px 0 0;
+  max-width: 60ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.qt-who-none em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--ink);
+}

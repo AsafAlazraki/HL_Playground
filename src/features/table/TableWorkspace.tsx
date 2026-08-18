@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { JSX } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { EntityDef } from '@/types/model'
+import type { ActionItem } from '@/lib/actions'
 import { EntityTabs } from './EntityTabs'
 import { NoEntitiesPlate } from './EmptyPlates'
 import { TableSheet } from './TableSheet'
@@ -26,9 +27,19 @@ import './table.css'
 
 export function TableWorkspace({
   entityId,
+  doors,
+  onCount,
 }: {
   /** FOCUS lens: pin the workspace to this one entity and hide the tabs */
   entityId?: string
+  /** THE HOST'S OWN DOORS, carried to the register so they land on the
+   *  same action bar as its controls. A workspace with no host stage —
+   *  the blueprint's focus lens — passes none, and the bar simply has
+   *  one group fewer. */
+  doors?: ActionItem[]
+  /** how many rows the sheet is showing, and how many it holds; the
+   *  title block that says it lives above this component */
+  onCount?: (shown: number, total: number) => void
 } = {}): JSX.Element {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -102,6 +113,8 @@ export function TableWorkspace({
           colWidths={colWidths}
           onResizeColumn={onResizeColumn}
           pushToast={toasts.push}
+          doors={doors}
+          onCount={onCount}
         />
       ) : (
         <NoEntitiesPlate

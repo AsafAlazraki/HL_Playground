@@ -143,6 +143,14 @@ export {
   loadQuotes,
   persistNote,
   patchQuote,
+  /* -- the customer link: an id kept for ONE question ---------
+     "What else have we quoted them?" Nothing drawn, nothing
+     totalled and nothing printed reads it — see the header of
+     types.ts and the field's own note. */
+  linkCustomer,
+  unlinkCustomer,
+  quotesForCustomer,
+  useCustomerQuotes,
   setLevel,
   setLineLevel,
   addLine,
@@ -171,6 +179,13 @@ export {
   priceChanges,
   referenceFor,
   subjectStillOnSheet,
+  /* the customer picker's live half — the register is a table a
+     person types into all day, so reading it is a PICK-TIME act and
+     lives in the one file of this feature that may touch the store */
+  customerBook,
+  hasCustomerRegister,
+  freezeCustomer,
+  fileCustomer,
   /* WHY A NEW QUOTE FOR THIS ROW WOULD BE WRONG, in one sentence, or
      '' when it would not. Any surface offering "Quote this one" — the
      view stage's button is the one that exists today — should draw

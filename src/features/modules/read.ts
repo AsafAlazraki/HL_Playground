@@ -223,15 +223,15 @@ const ACTIVITY_CAP = 4
  *      "raised here" is a set membership and never a guess;
  *    · `updatedAt !== createdAt` is precisely "this row has been
  *      changed since it was made". `buildNorthsideProject` stamps
- *      every one of its 3,566 rows with ONE `nowIso()` for both
+ *      every one of its 11,116 rows with ONE `nowIso()` for both
  *      fields, and the store's `touch()` moves `updatedAt` alone —
- *      measured on the live seed: 3,566 rows, 0 edited, 1 distinct
+ *      measured on the live seed: 11,116 rows, 0 edited, 1 distinct
  *      stamp.
  *
  *  So a freshly loaded example reports nothing and the strip is not
  *  drawn, which is the honest answer: nothing HAS happened. The
  *  moment somebody quotes a boat or corrects a price, it appears. A
- *  recency list on a fresh seed would have printed 3,566 identical
+ *  recency list on a fresh seed would have printed 11,116 identical
  *  timestamps, and that is exactly the fabrication this avoids.
  *
  *  EVERY member table counts, including a retired one. Its rows are

@@ -18,7 +18,7 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
-import { ArrowUUpLeft, Printer } from '@phosphor-icons/react'
+import { ArrowUUpLeft, Printer, UserCircle } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { localDay } from './day'
 import { QuoteDocument } from './QuoteDocument'
@@ -30,6 +30,9 @@ export interface QuotePageProps {
   quoteId: string
   /** the stage's navigation — used when a new version is made */
   onOpenQuote?: (quoteId: string) => void
+  /** open the customer this quote was addressed to. Absent = the
+   *  door is not drawn, and both branches below still work. */
+  onOpenCustomer?: (rowId: string) => void
 }
 
 /* THE DAY IS READ IN THE DEALER'S OWN CALENDAR, not UTC. This banner
@@ -39,7 +42,11 @@ export interface QuotePageProps {
    measurement — and the quotes list had the same fault, which is why
    it is one shared function and not two. */
 
-export function QuotePage({ quoteId, onOpenQuote }: QuotePageProps): ReactElement {
+export function QuotePage({
+  quoteId,
+  onOpenQuote,
+  onOpenCustomer,
+}: QuotePageProps): ReactElement {
   const quote = useQuote(quoteId)
 
   /* `qt-root--doc` IS "NOTHING IN HERE IS STICKY", and it is on the two
@@ -66,7 +73,7 @@ export function QuotePage({ quoteId, onOpenQuote }: QuotePageProps): ReactElemen
   if (quote.state === 'draft') {
     return (
       <div className="qt-root qt-root--edit">
-        <QuoteEditor quote={quote} />
+        <QuoteEditor quote={quote} onOpenCustomer={onOpenCustomer} />
       </div>
     )
   }
@@ -95,6 +102,25 @@ export function QuotePage({ quoteId, onOpenQuote }: QuotePageProps): ReactElemen
             <ArrowUUpLeft size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
             Make a new version
           </button>
+          {/* THE WAY TO THE REST OF THE CONVERSATION. An issued quote
+              is frozen and this changes nothing on it — the id it
+              follows is the "open this row" pointer, and every word
+              printed below came from the document's own frozen copy.
+              Drawn outside `.qt-doc`, so it is on the screen and
+              never on the customer's paper. */}
+          {quote.customerRef && onOpenCustomer ? (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => {
+                const ref = quote.customerRef
+                if (ref) onOpenCustomer(ref.rowId)
+              }}
+            >
+              <UserCircle size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+              Their other quotes
+            </button>
+          ) : null}
         </div>
 
         {/* ============================================================

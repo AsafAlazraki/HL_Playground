@@ -1,13 +1,54 @@
 /* ============================================================
-   TableSheet — one table's full-window workspace: toolbar, grid,
-   and the row commands the toolbar owns.
+   TableSheet — one table's full-window workspace: the grid, and the
+   row commands that used to sit in a toolbar above it.
 
    Every editing behaviour (selection, keys, clipboard, fill) is
    performed by `useSheetCommands`; the nesting, the in-group + ROW
    and the column commands come from the same hooks the on-canvas
    register uses. This file owns only what is specific to the
-   full-window lens: the search/narrow chrome, the row commands the
-   toolbar issues, and the designed empty plates.
+   full-window lens: the narrowing state, the row commands, and the
+   designed empty plates.
+
+   THE THREE BARS ARE GONE, AND NOTHING WITH THEM.
+
+   Measured on Highfield Inflatables at 1440: the page spent 131px and
+   three stacked bands before a row of data — back/title/doors, then
+   search plus seven controls, then the sections strip. That is the
+   same fault the 260px rail had, and this design killed the rail for
+   exactly that reason: "the first table row drawn 608px down a 744px
+   column". The register then grew three bands back on top.
+
+   Every control that was in them is still here. It is PUBLISHED
+   rather than drawn: `useActionBar` puts it on the floating bar above
+   the dock (see `@/lib/actions` and `src/app/ActionBar.tsx`), which
+   costs the page 50px while it exists and nothing at all on a page
+   that has no actions. What is left at the top of the stage is the
+   way back and the subject's name, which is what every other stage
+   in the app already does.
+
+   THREE THINGS DECIDED HERE RATHER THAN INHERITED:
+
+   1. THE COUNTS DO NOT COME WITH THEM. `Rows 588` was a fact, and the
+      title block one band above it already said "588 variants". It is
+      reported UP to the stage now (`onCount`), so the title says it
+      once and says the narrowed figure too — "12 of 588 variants".
+      `Columns 33` is the other half of the same fact and had no home
+      in the title at all; it is said in the sections panel, which is
+      the one place in the app that is about columns.
+
+   2. THE SECTIONS STRIP IS FOLDED BEHIND ONE CONTROL, NOT DELETED.
+      It is a MAP — its own header says so — and a map is consulted,
+      not watched. A 33-column register cannot lose it, so it keeps
+      every chip, every count, the folded state and the "in view"
+      answer; what it loses is a permanent 32px band across the page
+      for a thing used a few times an hour. The one answer a map has
+      to give at a glance — which band am I in — is not behind the
+      press: it is the second word ON the closed control.
+
+   3. NOTHING BECAME A TOOLTIP. The two refusals ("no columns yet",
+      "no rows picked") travel with their buttons as `refusal`, and
+      the bar prints them in its own type, for a Tab as readily as for
+      a pointer.
 
    THE ROW CONFIRM IS GONE, AND THIS IS THE ARGUMENT FOR IT. It was a
    scrim, a dialog and two buttons that said "This entry leaves the
@@ -39,13 +80,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { displayFieldOf } from '@/types/model'
+import type { FieldDef, RowData } from '@/types/model'
 import {
   distinctValues,
   type ColumnFilter,
   type SortState,
 } from '@/features/table/core'
+import {
+  ArrowsInLineHorizontal,
+  ArrowsOutLineHorizontal,
+  ArrowsOutSimple,
+  Broom,
+  Columns,
+  FrameCorners,
+  Plus,
+  TrashSimple,
+} from '@phosphor-icons/react'
+import { useTableRoundTrip } from '@/features/io/TableRoundTrip'
+import { useActionBar } from '@/lib/actions'
+import type { ActionGroup, ActionItem } from '@/lib/actions'
 import { Grid } from './Grid'
-import { TableToolbar } from './TableToolbar'
 import { BandStrip } from './BandStrip'
 import { NoFieldsPlate, NoMatchPlate, NoRowsPlate } from './EmptyPlates'
 import { useTableData } from './useTableData'
@@ -64,17 +118,41 @@ import { offerUndo } from '@/store/notes'
 import { plural, singleSel } from './helpers'
 import { clearRowReveal, useRowReveal } from './rowRevealState'
 
+/** A narrowing, in the dealer's own words — moved here unchanged from
+ *  `TableToolbar`, which no longer exists because every one of its
+ *  controls is now on the action bar. */
+function chipLabel(f: ColumnFilter, field: FieldDef | undefined): string {
+  const name = field?.name ?? 'Column'
+  if (f.kind === 'contains') return `${name} ∋ ${f.text}`
+  if (f.selected.length === 0) return `${name}: none`
+  if (f.selected.length <= 2) return `${name}: ${f.selected.join(', ')}`
+  return `${name}: ${f.selected.length} values`
+}
+
 export function TableSheet({
   entityId,
   colWidths,
   onResizeColumn,
   pushToast,
+  doors,
+  onCount,
 }: {
   entityId: string
   colWidths: Record<string, number>
   /** width <= 0 resets the column to its type default */
   onResizeColumn: (fieldId: string, w: number) => void
   pushToast: PushToast
+  /** THE STAGE'S OWN DOORS, published on the SHEET'S bar rather than
+   *  drawn in the stage's top bar. They belong to whoever hosts this
+   *  register — the blueprint's expanded card has no doors and passes
+   *  none — and they are handed down rather than published separately
+   *  so one page cannot end up with two half-bars. */
+  doors?: ActionItem[]
+  /** HOW MANY ROWS ARE ON SCREEN, and how many the table holds. The
+   *  narrowing lives in this component and the title block that says
+   *  it lives two levels up, so the fact travels up rather than being
+   *  said twice in two places that can disagree. */
+  onCount?: (shown: number, total: number) => void
 }): JSX.Element {
   const deleteRow = useProjectStore((s) => s.deleteRow)
   const addField = useProjectStore((s) => s.addField)
@@ -292,21 +370,279 @@ export function TableSheet({
     gridRef.current?.focus()
   }, [cmd, deleteRow, entityId, pushToast, gridRef])
 
+  /* -- what the page can do, published to the bar ----------------
+     Everything below this line used to be JSX in `TableToolbar` and
+     `BandStrip`, drawn in two bands across the top of the register.
+     The controls are the same controls; only where they stand moved.
+     See the header of this file, and `@/lib/actions` for what `rank`
+     means. */
+
+  /* the sheet draws the table's own columns and nothing else, so an
+     empty column list really is an empty sheet */
+  const noFields = entity === undefined || entity.fields.length === 0
+  const noRows = rows.length === 0
+  /* the whole-table controls act on a SHEET: with a designed plate in
+     its place there is nothing to fold, fit or scroll to, so they step
+     aside rather than sitting there doing nothing. A sheet whose
+     drawers are all folded is still a sheet. */
+  const onSheet = !noFields && !noRows && !(rowCount === 0 && viewActive)
+
+  /* the title block says it, so the title block is told */
+  useEffect(() => {
+    onCount?.(rowCount, rows.length)
+  }, [onCount, rowCount, rows.length])
+
+  /* -- out to Excel, and back ------------------------------------
+     THE ROUND TRIP STARTS HERE, at the table, which is what
+     ACTION_BAR §4.1 asked for: "A person edits a register, exports
+     it, works in Excel, and brings it back." The io feature owns the
+     file format, the preflight and the merge; this register owns only
+     the two facts nothing else can supply — which rows are SHOWING,
+     and how a link column's names resolve — and the place on the bar
+     the controls stand in. */
+  const shownRows = useMemo<RowData[]>(() => {
+    const out: RowData[] = []
+    for (const vr of data.viewRows) {
+      const r = data.rowById.get(vr.rowId)
+      if (r) out.push(r)
+    }
+    return out
+  }, [data.viewRows, data.rowById])
+
+  const roundTrip = useTableRoundTrip({
+    entityId,
+    allRows: rows,
+    shownRows,
+    computedFor: data.computedFor,
+    refLabelOf: data.refLabelOf,
+    refMapOf: data.refMapOf,
+    viewActive,
+    pushToast,
+  })
+
+  const selectedCount = cmd.selectedRowIds.length
+  const sortField = sort ? data.fields.find((f) => f.id === sort.fieldId) : undefined
+  /* TAKEN APART BEFORE THE MEMO, not read through `whole` inside it.
+     `useWholeTable` memoises every field it returns and then returns a
+     fresh OBJECT LITERAL, so a dependency on `whole` is a dependency on
+     nothing — the bar would be rebuilt and republished on every
+     keystroke typed into a cell. Named fields make the memo mean what
+     it says. */
+  const {
+    bands,
+    atBandName,
+    allFolded,
+    totalColumns,
+    shownColumns,
+    fitted,
+    toggleAllBands,
+    revealBand,
+    toggleFit,
+  } = whole
+  const hasBands = onSheet && bands.length > 0
+  const bandCount = bands.length
+  const foldedColumns = totalColumns - shownColumns
+
+  const bar = useMemo<ActionGroup[]>(() => {
+    const out: ActionGroup[] = []
+
+    /* 10 · NARROW IT. Absent on a table with no columns, where there
+       is nothing to search through — the same condition that puts a
+       designed plate in the grid's place. */
+    if (!noFields) {
+      out.push({
+        id: 'tb-find',
+        rank: 10,
+        items: [
+          {
+            kind: 'search',
+            id: 'tb-search',
+            value: search,
+            placeholder: 'Search rows…',
+            label: 'Search every column of this table, including calculated ones',
+            onChange: setSearch,
+          },
+        ],
+      })
+    }
+
+    /* 20 · WHAT IS NARROWING IT, and one press to stop. The chips are
+       the sort and the filters exactly as the toolbar drew them; the
+       broom is the toolbar's `Clear`, which had been living inside the
+       count read-out where nobody would look for it. */
+    const narrowing: ActionItem[] = []
+    if (sort && sortField) {
+      narrowing.push({
+        kind: 'chip',
+        id: 'tb-chip-sort',
+        key: 'Sort',
+        value: `${sortField.name} ${sort.dir === 'asc' ? '↑' : '↓'}`,
+        hint: `Sorted by ${sortField.name}, ${
+          sort.dir === 'asc' ? 'ascending' : 'descending'
+        }. Clear it and rows return to entry order.`,
+        onRemove: () => setSort(null),
+      })
+    }
+    for (const f of filters) {
+      const field = data.fields.find((x) => x.id === f.fieldId)
+      narrowing.push({
+        kind: 'chip',
+        id: `tb-chip-${f.fieldId}`,
+        key: 'Filter',
+        value: chipLabel(f, field),
+        hint: `Remove the ${field?.name ?? 'column'} filter.`,
+        onRemove: () => onFilter(f.fieldId, null),
+      })
+    }
+    if (viewActive) {
+      narrowing.push({
+        kind: 'button',
+        id: 'tb-clear',
+        label: 'Clear',
+        icon: Broom,
+        onPick: clearView,
+      })
+    }
+    if (narrowing.length > 0) {
+      out.push({ id: 'tb-narrow', rank: 20, items: narrowing })
+    }
+
+    /* 30 · SEE ALL OF IT. The map, then the two whole-table controls,
+       in the order the toolbar had them. */
+    const shape: ActionItem[] = []
+    if (hasBands) {
+      shape.push({
+        kind: 'panel',
+        id: 'tb-sections',
+        label: 'Sections',
+        /* the one answer a map owes at a glance, ON the closed
+           control — see decision 2 in this file's header */
+        at: atBandName,
+        icon: Columns,
+        panelLabel: 'Sections',
+        panelSay:
+          foldedColumns > 0
+            ? `${shownColumns} of ${plural(totalColumns, 'column', 'columns')} on the sheet, in ${plural(bandCount, 'section', 'sections')}. ${foldedColumns} folded away.`
+            : `${plural(totalColumns, 'column', 'columns')} in ${plural(bandCount, 'section', 'sections')}.`,
+        closeOnAct: true,
+        content: (
+          <BandStrip
+            bands={bands}
+            atBandName={atBandName}
+            onReveal={revealBand}
+          />
+        ),
+      })
+      shape.push({
+        kind: 'button',
+        id: 'tb-fold',
+        label: allFolded ? 'Expand all' : 'Collapse all',
+        icon: allFolded ? ArrowsOutLineHorizontal : ArrowsInLineHorizontal,
+        pressed: allFolded,
+        onPick: toggleAllBands,
+      })
+    }
+    if (onSheet) {
+      shape.push({
+        kind: 'button',
+        id: 'tb-fit',
+        label: fitted ? 'Reset widths' : 'Fit columns',
+        icon: fitted ? ArrowsOutSimple : FrameCorners,
+        pressed: fitted,
+        onPick: toggleFit,
+      })
+    }
+    if (shape.length > 0) out.push({ id: 'tb-shape', rank: 30, items: shape })
+
+    /* 40 · TAKE IT AWAY AND BRING IT BACK. Between "see all of it"
+       and the doors, because that is the reading: this acts on the
+       whole register, like the two controls above it, and it is not
+       somewhere to go. ACTION_BAR §4.1 — the round trip starts at the
+       table. */
+    out.push({ id: 'tb-trip', rank: 40, items: roundTrip.items })
+
+    /* 50 · THE DOORS, if this register is standing on a stage that has
+       any. They are the host's, not ours. */
+    if (doors && doors.length > 0) {
+      out.push({ id: 'tb-doors', rank: 50, items: doors })
+    }
+
+    /* 90 · CHANGE IT. Both refusals are the toolbar's own sentences,
+       word for word, and both controls stay reachable while they
+       stand — see `refusal` in @/lib/actions for why this is not the
+       `disabled` attribute. */
+    out.push({
+      id: 'tb-rows',
+      rank: 90,
+      items: [
+        {
+          kind: 'button',
+          id: 'tb-del',
+          label:
+            selectedCount === 0
+              ? 'Delete rows'
+              : `Delete ${plural(selectedCount, 'row', 'rows')}`,
+          icon: TrashSimple,
+          tone: 'danger',
+          refusal:
+            selectedCount === 0
+              ? 'Pick rows in the number gutter to delete them.'
+              : undefined,
+          onPick: doDeleteRows,
+        },
+        {
+          kind: 'button',
+          id: 'tb-add',
+          label: 'Row',
+          icon: Plus,
+          tone: 'primary',
+          refusal: noFields ? 'Draft a column before adding rows.' : undefined,
+          onPick: groups.addRow,
+        },
+      ],
+    })
+
+    return out
+  }, [
+    noFields,
+    onSheet,
+    hasBands,
+    bandCount,
+    foldedColumns,
+    search,
+    sort,
+    sortField,
+    filters,
+    data.fields,
+    viewActive,
+    clearView,
+    onFilter,
+    bands,
+    atBandName,
+    allFolded,
+    totalColumns,
+    shownColumns,
+    fitted,
+    toggleAllBands,
+    revealBand,
+    toggleFit,
+    doors,
+    roundTrip.items,
+    selectedCount,
+    doDeleteRows,
+    groups.addRow,
+  ])
+
+  /* ONE OWNER PER REGISTER. Two sheets are never mounted at once on a
+     stage, and the key is the table's own id so a swap between two
+     tables replaces the bar rather than stacking two. */
+  useActionBar(`table-sheet:${entityId}`, bar)
+
   /* -- render ---------------------------------------------------- */
 
   if (!entity) {
     return <div className="tb-sheet-wrap" />
   }
-
-  /* the sheet draws the table's own columns and nothing else, so an
-     empty column list really is an empty sheet */
-  const noFields = entity.fields.length === 0
-  const noRows = rows.length === 0
-  /* the four whole-table controls act on a SHEET: with a designed plate
-     in its place there is nothing to fold, fit or scroll to, so they
-     step aside rather than sitting there doing nothing. A sheet whose
-     drawers are all folded is still a sheet. */
-  const onSheet = !noFields && !noRows && !(rowCount === 0 && viewActive)
 
   return (
     <section
@@ -317,38 +653,15 @@ export function TableSheet({
       role="tabpanel"
       aria-labelledby={`tb-tab-${entityId}`}
     >
-      <TableToolbar
-        fields={data.fields}
-        search={search}
-        onSearch={setSearch}
-        filters={filters}
-        onRemoveFilter={(id) => onFilter(id, null)}
-        sort={sort}
-        onClearSort={() => setSort(null)}
-        onClearView={clearView}
-        shown={rowCount}
-        total={rows.length}
-        columns={whole.totalColumns}
-        shownColumns={whole.shownColumns}
-        hasBands={onSheet && whole.bands.length > 0}
-        allFolded={whole.allFolded}
-        fitted={whole.fitted}
-        canFit={onSheet}
-        onToggleBands={whole.toggleAllBands}
-        onToggleFit={whole.toggleFit}
-        selectedRows={cmd.selectedRowIds.length}
-        onAddRow={groups.addRow}
-        onDeleteRows={doDeleteRows}
-        canEdit={!noFields}
-      />
+      {/* THE ROUND TRIP'S OWN FURNITURE — the file picker, which is
+          hidden, and the preflight, which is a portalled confirm. It
+          costs the page no height at all; the two controls that open
+          it are on the bar with everything else. */}
+      {roundTrip.surface}
 
-      {/* the map of the sheet, drawn only when the sheet is */}
-      {onSheet && <BandStrip
-          bands={whole.bands}
-          atBandName={whole.atBandName}
-          onReveal={whole.revealBand}
-        />}
-
+      {/* THE PAGE STARTS AT THE DATA. The toolbar and the sections
+          strip that stood here are on the action bar above the dock —
+          see this file's header, and `useActionBar` above. */}
       {noFields ? (
         <NoFieldsPlate
           entityName={entity.name}

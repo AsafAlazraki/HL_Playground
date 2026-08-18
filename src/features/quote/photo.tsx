@@ -40,12 +40,16 @@ export function FrozenPhoto({
 }: FrozenPhotoProps): ReactElement | null {
   /* the hook must run on every render, so the early return for
      "there is no picture" happens after it, not before */
-  const { paint, probe } = useImageDisplay(img?.src ?? '')
+  const { paint, probe, at } = useImageDisplay(img?.src ?? '')
   if (!img || !paint) return null
   return (
     <img
       className={className}
-      src={img.src}
+      /* THE FROZEN VALUE IS `img.src` AND STAYS `img.src`. `at` is
+         only where the pixels are fetched from — the repository's own
+         copy when it holds one, the maker's address when it does not.
+         A quote raised today cites the same place it always did. */
+      src={at}
       alt={img.alt && img.alt.trim() !== '' ? img.alt.trim() : fallbackAlt}
       /* the box is reserved before the bytes arrive, so a picture
          landing late never moves the line it sits in — and never

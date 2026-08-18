@@ -23,8 +23,8 @@
    longest few strings by character count are the only ones actually put
    through the canvas: a proportional face means the longest string is
    not always the widest, but among the longest two dozen it is, and
-   twenty-four measurements per table is nothing while 3,566 would be
-   felt.
+   twenty-four measurements per table is nothing while 2,519 — the
+   largest seeded table — would be felt.
 
    THE CEILING IS A SHARE OF THE WINDOW, WHICH IS THE POINT.
    DESIGN_CONTRACT §2: "a register is allowed to be wider than the

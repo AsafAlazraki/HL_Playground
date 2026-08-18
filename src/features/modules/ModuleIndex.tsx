@@ -105,6 +105,7 @@ import type { CSSProperties, ReactElement } from 'react'
 import {
   ArrowDown,
   ArrowUp,
+  CaretRight,
   Check,
   Gear,
   LinkSimple,
@@ -145,6 +146,8 @@ import {
 } from './read'
 import { capabilityStates, moveId, NOT_YET_SAYS } from './designer'
 import { ModuleDesigner } from './ModuleDesigner'
+import { rulesPanelId } from './ModuleRulesPanel'
+import { RULE_CAPABILITY, useModuleConfiguresRules } from './ruleCapability'
 import './modules.css'
 
 /** How many items are drawn before the page asks you to narrow.
@@ -283,9 +286,10 @@ export function ModuleIndex({
      either the sentence for what it does or the sentence for where
      it is done instead. `capabilityStates` is the same reader the
      designer strip uses, so the two can never disagree. */
+  const configures = useModuleConfiguresRules(module.id)
   const acts = useMemo(
-    () => capabilityStates(module, tables).filter((s) => s.on),
-    [module, tables],
+    () => capabilityStates(module, tables, configures).filter((s) => s.on),
+    [module, tables, configures],
   )
 
   /* WHAT HAS HAPPENED HERE — quotes raised against these tables, and
@@ -314,6 +318,27 @@ export function ModuleIndex({
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
   }, [goingTo, module.id])
+
+  /* THE RULE VERB'S DOOR. It grows the designer — the same handles the
+     gear grows, never a second surface — and then takes you to the
+     panel it promised. Two steps, because the panel does not exist
+     until the render that mounted the strip, which is exactly the
+     reason the chip above goes through state too. */
+  const [goingToRules, setGoingToRules] = useState(false)
+  const openRules = (): void => {
+    setDesigning(true)
+    setGoingToRules(true)
+  }
+  useEffect(() => {
+    if (!goingToRules || !designing) return
+    setGoingToRules(false)
+    const el = document.getElementById(rulesPanelId(module.id))
+    if (!el) return
+    const still =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+  }, [goingToRules, designing, module.id])
 
   const style = { '--md-accent': accentVar(module.accent) } as CSSProperties
 
@@ -490,11 +515,35 @@ export function ModuleIndex({
                      a verb quietly missing from the row is worse,
                      because the dashboard card already promised it. */
                   const elsewhere = a.refused ?? NOT_YET_SAYS[a.key]
+
+                  /* A VERB WITH A DOOR IS A DOOR. `configure` is the
+                     first capability whose act happens on THIS screen
+                     rather than on an item's page, so it is the first
+                     one drawn as something to press: it grows the
+                     designer and takes you to the rules panel. The
+                     caret is what tells a pill apart from a label —
+                     three states in this row now (a door, a live
+                     statement, a disabled stub) and they must not
+                     look like two. */
+                  const door = !elsewhere && a.key === RULE_CAPABILITY ? openRules : undefined
                   return (
                     <li className="md-act" key={a.key}>
                       {elsewhere ? (
                         <button type="button" className="md-act-verb" disabled>
                           {a.label}
+                        </button>
+                      ) : door ? (
+                        <button
+                          type="button"
+                          className="md-act-verb is-live is-door"
+                          onClick={door}
+                        >
+                          {a.label}
+                          <CaretRight
+                            size={ICON_SIZE.tiny}
+                            weight="bold"
+                            aria-hidden="true"
+                          />
                         </button>
                       ) : (
                         <span className="md-act-verb is-live">{a.label}</span>
@@ -966,12 +1015,15 @@ function HeldAsLink({ img }: { img: ImageRef }): ReactElement {
 }
 
 function Painted({ img, alt }: { img: ImageRef; alt: string }): ReactElement | null {
-  const { paint, probe } = useImageDisplay(img.src)
+  const { paint, probe, at } = useImageDisplay(img.src)
   if (!paint) return <HeldAsLink img={img} />
   return (
     <img
       className="md-tile-img"
-      src={img.src}
+      /* `at`, not `img.src` — the repository ships a copy of most of
+         these and paints it from our own origin. The RECORD still says
+         the manufacturer's address; only the request changes. */
+      src={at}
       /* the author's own words when they wrote any; the row's label
          is the only honest fallback and nothing here invents one */
       alt={img.alt && img.alt.trim() !== '' ? img.alt.trim() : alt}

@@ -56,8 +56,9 @@ export function LeftOutList(): ReactElement | null {
       <p className="cn-band-eyebrow mono-label">Not in here</p>
       <h3 className="cn-band-title">What your price file has that this does not</h3>
       <p className="cn-band-lede">
-        Every one of these was read, measured and decided against — not missed. The number
-        that settled it is on the card, so you can disagree with the decision rather than
+        Every one of these was read, measured and decided — not missed. Some were decided
+        against; some are decided and waiting on somewhere to keep them. The number that
+        settled each one is on its card, so you can disagree with the decision rather than
         wonder whether one was made.
       </p>
 

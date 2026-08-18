@@ -79,6 +79,7 @@ import {
 } from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
 import { Dock } from './Dock'
+import { useHasPageActions } from '@/lib/actions'
 import { Win } from './Win'
 import { useWindowKeys } from './useWindowKeys'
 import {
@@ -98,14 +99,10 @@ import { FlowStage } from './FlowStage'
 import { QuoteStage } from './QuoteStage'
 import { ModuleStage } from './ModuleStage'
 import { useQuotes } from '@/features/quote'
+import { CUSTOMER_TABLE_ID } from '@/features/crm'
 import { Finder } from '@/features/search'
 import { Freshness } from '@/features/io'
-import {
-  isStaleNorthside,
-  keepSeedVersion,
-  northsideDrift,
-  northsideSeedFingerprint,
-} from '@/demos'
+import { keepSeedVersion, northsideFreshness, type SeedFreshness } from '@/demos'
 import { applyDemoSet, realDemoSet } from './demoLoad'
 import { useViewPersistence } from './viewPersistence'
 import './shell.css'
@@ -145,14 +142,40 @@ export function Shell() {
      loaded the example months ago meets THAT one — and it reads like
      data reverting rather than like an old file. The comparison is
      the set's own (`@/demos`), the notice is `features/io`'s, and
-     the shell only decides whether to draw it. */
+     the shell only decides whether to draw it.
+
+     IT IS ASKED ASYNCHRONOUSLY BECAUSE THE SET IS ITS OWN CHUNK NOW
+     (demos/seedChunk.ts). Two consequences, both wanted: a sheet with
+     fewer tables than the set could ever be recognised in never
+     fetches the price file to be told it is not the price file — a
+     blank sheet, a dealer's own six tables, an import — and on the
+     sheet that IS the set, the notice arrives a moment after first
+     paint instead of holding the entry chunk hostage before it. The
+     answer is a notice about a months-old copy of a catalogue; it has
+     never been urgent to the frame. */
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const modules = useProjectStore((s) => s.modules)
   const [keeping, setKeeping] = useState(false)
-  const drift = useMemo(
-    () => northsideDrift(entities, rowsByEntity, modules),
-    [entities, rowsByEntity, modules],
-  )
+  const [fresh, setFresh] = useState<SeedFreshness | null>(null)
+  useEffect(() => {
+    /* the sheet can change while the chunk is in flight — an answer
+       about the sheet as it was is worse than no answer */
+    let live = true
+    void northsideFreshness(entities, rowsByEntity, modules).then(
+      (r) => {
+        if (live) setFresh(r)
+      },
+      () => {
+        /* the chunk did not arrive. Nobody asked for it out loud, so
+           nobody is told: the notice simply is not drawn, and the
+           doors that DO ask out loud report their own failures. */
+        if (live) setFresh(null)
+      },
+    )
+    return () => {
+      live = false
+    }
+  }, [entities, rowsByEntity, modules])
 
   /* view pages survive a refresh — see viewPersistence.ts */
   useViewPersistence()
@@ -163,6 +186,14 @@ export function Shell() {
      lagged the list by a render is how a door disappears while its
      stage is still open. */
   const quoteCount = useQuotes().length
+
+  /* HOW MANY PEOPLE ARE IN THE REGISTER, for the badge on the dock.
+     Read here for the same reason the quote count is: the door and
+     the stage must be answering the same data in the same frame. A
+     project with no register reads 0 and the badge is not drawn —
+     `DockItem` only paints one above zero — so a cleared install
+     gets a door to press and nothing to ignore. */
+  const customerCount = (rowsByEntity[CUSTOMER_TABLE_ID] ?? []).length
 
   /* what is over the sheet right now, or null for the sheet itself */
   /* ============================================================
@@ -366,13 +397,24 @@ export function Shell() {
     setOrganisation(remembered.name, remembered.industry)
   }, [org, tableCount, setOrganisation])
 
+  /* WHAT THE ACTION BAR COSTS THE PAGE, AND ONLY WHILE THERE IS ONE.
+     The dock's 78px strip is reserved once, by `.shell-stage`; the
+     second tier adds 50 more (40px of bar plus `.dk-wrap`'s 10px gap)
+     and is charged the same way — from this one class, read out of the
+     same register the bar itself draws from, so the reservation and the
+     bar can never disagree about whether a bar exists. A page with no
+     actions pays nothing at all, which is the whole reason the
+     register's three bands could come DOWN rather than merely move.
+     See the foot of `actionbar.css`. */
+  const hasActions = useHasPageActions()
+
   /* THE GATE. Onboarding replaces the whole shell — it is not a modal
      over a configurator with nothing in it. Tables on the sheet outrank
      a missing organisation: a drawing is never hidden behind a wizard. */
   if (!org && tableCount === 0) return <Onboarding />
 
   return (
-    <div className="shell-root">
+    <div className={`shell-root${hasActions ? ' has-acts' : ''}`}>
 
       {/* THE DESKTOP. The drawing stays live underneath and is the
           desktop picture; windows stand on it. */}
@@ -472,9 +514,11 @@ export function Shell() {
         onOpenRules={() => setStage({ kind: 'rules' })}
         onOpenFlow={() => setStage({ kind: 'flow' })}
         onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
+        onOpenCustomers={() => setStage({ kind: 'customer', customerId: null })}
         onAddTable={() => setPicking(true)}
         onSearch={() => setFinding(true)}
         quoteCount={quoteCount}
+        customerCount={customerCount}
       />
 
       {/* FIND ANYTHING. The state was declared and the dock button was
@@ -509,24 +553,29 @@ export function Shell() {
           answer about, so it is not asked again on every reload; a
           later change to the set may ask once more. See
           @/demos/seedStamp. */}
-      {drift && !keeping && isStaleNorthside(drift) ? (
+      {fresh && !keeping && fresh.stale ? (
         <Freshness
-          setName={drift.setName}
-          missing={drift.missing}
-          resized={drift.resized}
-          noModules={drift.noModules}
-          moduleCount={drift.moduleCount}
+          setName={fresh.drift.setName}
+          missing={fresh.drift.missing}
+          resized={fresh.drift.resized}
+          noModules={fresh.drift.noModules}
+          moduleCount={fresh.drift.moduleCount}
           onDismiss={() => {
-            keepSeedVersion(northsideSeedFingerprint())
+            /* the version this was an answer about, carried out of the
+               set with the drift so the shell never reaches into the
+               chunk a second time to ask */
+            keepSeedVersion(fresh.fingerprint)
             setKeeping(true)
           }}
           onLoadCurrent={() => {
             const set = realDemoSet()
             /* every question — including the offer to save a copy of
                this sheet first — has already been asked by the notice,
-               in the app's own voice. `applyDemoSet` only loads. */
+               in the app's own voice. `applyDemoSet` only loads.
+               The chunk it needs is already here: this notice is only
+               ever drawn after `northsideFreshness` resolved it. */
             if (set) {
-              applyDemoSet(set)
+              void applyDemoSet(set)
               setKeeping(true)
             }
           }}

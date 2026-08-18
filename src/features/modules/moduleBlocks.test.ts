@@ -162,7 +162,7 @@ describe('the blocks a module seeds, measured on the real seed', () => {
       Surtees: 5,
       Jeanneau: 6,
       'Haines Signature': 3,
-      'Highfield Inflatables': 5,
+      'Highfield Inflatables': 6,
       Formosa: 4,
     })
 
@@ -198,7 +198,7 @@ describe('the blocks a module seeds, measured on the real seed', () => {
     }
   })
 
-  it('gives Highfield its four joins — five blocks, because one join carries rigging', () => {
+  it('gives Highfield its five joins — six blocks, because one join carries rigging', () => {
     const s = seedBoatsModule()
     const highfield = s.byName('Highfield Inflatables')
     const blocks = s.viewFor(highfield.id)?.blocks ?? []
@@ -207,12 +207,21 @@ describe('the blocks a module seeds, measured on the real seed', () => {
     expect(new Set(drawn)).toEqual(
       new Set([
         'NSM Custom Trailers',
+        'GFAB Trailers',
         'Yamaha Outboards',
         'Rigging Kits',
         'Parts & Accessories',
         'Dealer Fit Packages',
       ]),
     )
+    /* GFAB IS THE SIXTH AND IT IS NOT A NEW RULE. `Highfield × GFAB —
+       Trailer Fitment` is a join the specification always admitted and
+       the seed could never fill: while Highfield carried 40 of its 588
+       hulls, not one of the 40 named a GFAB trailer, so the table came
+       out empty and the block was not there to draw. At full scale the
+       join has 51 pairings (SEED_AT_FULL_SCALE.md §2.2) and the same
+       derivation, unchanged, finds it. A block appearing because the
+       data arrived is the behaviour this file is asserting. */
     /* rigging arrives BECAUSE THE JOIN CARRIES IT — the Motor Fitment
        join names boat, outboard and kit, so the kit is a declared
        relationship rather than a guess from the motor */

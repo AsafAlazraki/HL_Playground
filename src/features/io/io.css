@@ -905,3 +905,143 @@
 .io-replace {
   font-weight: 560;
 }
+
+/* ============================================================
+   THE RE-UPLOAD PREFLIGHT — the sentence before the merge.
+
+   Drawn INSIDE `ConfirmSheet`, which owns the sheet, the scrim, the
+   eyebrow, the question and the choices. What is added here is only
+   the evidence that question needs and no confirm before it did: the
+   cells that would change, printed with the value that is on the
+   sheet beside the value in the file, and the list of things the
+   upload will NOT do.
+
+   WHY THE OLD VALUE IS DRAWN AT ALL. "12 rows overwritten" is a
+   number a person has to trust. `Cash 68,990 → 71,990 on Sport 560`
+   is a fact they can check against the email that sent them the file,
+   and checking it is the entire reason ACTION_BAR §4.3 exists.
+
+   MEASURED, through the full ancestor chain, on `--paper-high` (the
+   confirm sheet's own ground, opaque):
+     .io-diff-where  --ink        on --paper-high    14.55 : 1
+     .io-diff-col    --ink-soft   on --paper-high     8.03 : 1
+     .io-diff-from   --ink-soft   on --paper-high     8.03 : 1
+     .io-diff-to     --ink        on --paper-high    14.55 : 1
+     .io-diff-arrow  --ink-soft   on --paper-high     8.03 : 1
+     .io-rt-note     --ink-soft   on --paper-high     8.03 : 1
+   Nothing here sits on a tint, which is deliberate: DESIGN_CONTRACT
+   records that `--ink-faint` clears 4.72:1 on white and FAILS at
+   4.26:1 over a 3.5% wash, and the cheapest way never to make that
+   mistake again is to give the quietest text no wash to sit on.
+   `--ink-faint` is not used on this surface at all.
+   ============================================================ */
+.io-diff {
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* THE OLD VALUE AND THE NEW ONE ARE THE SAME WIDTH, so the eye reads
+   down the pair rather than across a ragged line. Nothing on this line
+   truncates, and that is a correction: a clipped price is worse than a
+   wrapped one, and a clipped NAME is worse than either.
+
+   MEASURED, on the real thing. A re-upload of Highfield Inflatables
+   after two prices were changed in Excel drew its two lines as
+   `Highfield - RU230KA…` and `Highfield - RU230KA…` — the same eleven
+   words twice, over two different prices. The rows are
+   `RU230KAM (PVC) WH` and `RU230KAM (HYP) WH`, so EVERYTHING that
+   tells them apart was in the part the ellipsis ate. This surface
+   exists so a dealer can check a change against the email that sent
+   them the file; two identical labels over two different figures is
+   the one thing it must never print.
+
+   So the name wraps. The list scrolls at 220px and a wrapped name
+   costs one more line of a thing a person reads a few of; the share of
+   the row it gets went up with it, so most names still take one. */
+.io-diff-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) 12px minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.io-diff-line:last-child {
+  border-bottom: 0;
+}
+
+.io-diff-where {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink);
+  /* whole, or it does not say which row — see the note above */
+  overflow-wrap: anywhere;
+}
+
+.io-diff-col {
+  color: var(--ink-soft);
+  line-height: 1.35;
+  /* whole, for the same reason the name is: `LANDED HULL COST` and
+     `LANDED HULL FREIGHT` clip to the same three words */
+  overflow-wrap: anywhere;
+}
+
+/* the figure as the register prints it: mono, so two prices line up */
+.io-diff-from,
+.io-diff-to {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.io-diff-from {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.io-diff-to {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.io-diff-arrow {
+  color: var(--ink-soft);
+  font-size: 11px;
+  text-align: center;
+}
+
+.io-diff-more {
+  padding-top: var(--sp-1);
+  color: var(--ink-soft);
+}
+
+/* -- what it will NOT do, one sentence each ------------------
+   A LIST AND NOT A WARNING BLOCK. Most of these are not warnings:
+   "576 rows have no line in that file, nothing is deleted" is the
+   app being careful, and drawing it in the red pencil would teach a
+   person to fear the safest thing on the screen. They are facts about
+   the merge, so they read as facts, marked with a rule down the left
+   in the same hairline the diff uses. */
+.io-rt-notes {
+  margin: var(--sp-3) 0 0;
+  padding: 0 0 0 var(--sp-3);
+  list-style: none;
+  border-left: 1px solid var(--hairline-strong);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.io-rt-note {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}

@@ -1197,6 +1197,25 @@ function normQuote(raw: unknown, stamp: string): QuoteDef | undefined {
       name: str(customer.name) ?? '',
       ...(contact.length ? { contact } : {}),
     },
+    /* THE LINK BACK TO THE CUSTOMER'S ROW, and it is carried rather
+       than resolved. Both ids are checked for shape and NOTHING
+       ELSE: the register may legitimately not be in this file — a
+       schema-only export, a merge into another project — and a quote
+       whose link cannot be followed still prints every word of
+       itself, because the name and the contact lines above it were
+       frozen at pick time. Dropping the link on the way in would
+       throw away a history that comes back the moment the register
+       does, to protect a document that never needed it. */
+    ...(isRecord(raw.customerRef) &&
+    isSafeId(raw.customerRef.tableId) &&
+    isSafeId(raw.customerRef.rowId)
+      ? {
+          customerRef: {
+            tableId: raw.customerRef.tableId,
+            rowId: raw.customerRef.rowId,
+          },
+        }
+      : {}),
     ...(preparedBy ? { preparedBy } : {}),
     ...(organisation ? { organisation } : {}),
     ...(note ? { note } : {}),
@@ -1352,8 +1371,8 @@ export function validateEnvelope(raw: unknown): Validated {
       /* A TABLE THAT IS HISTORY MUST STAY HISTORY. `retired` was the
          fifth key going quiet: dropped here, so exporting the seed and
          importing it back resurrected "OBSOLETE Trailers — No Longer
-         Available" as live stock. Home counts 50 of the 52 tables for
-         exactly this reason, and after a round trip it counted 52 —
+         Available" as live stock. Home counts 51 of the 53 tables for
+         exactly this reason, and after a round trip it counted 53 —
          which is the app offering discontinued trailers to a customer
          because a file went out and came back. Only `true` is carried;
          anything else is a table that was never retired. */

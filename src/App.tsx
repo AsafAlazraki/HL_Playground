@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { seedWorkbookConstraints } from '@/features/constraints'
 import { StillnessProvider } from '@/features/views/stillness'
+import { TabGuard } from '@/features/session'
 import { Shell } from '@/app/Shell'
 import { UndoKeys } from '@/app/UndoKeys'
 
@@ -32,7 +33,6 @@ export default function App() {
     seedWorkbookConstraints()
   }, [loaded, entities])
 
-  if (!loaded) return null
   /* THE MOTION POLICY WRAPS THE WHOLE APP, not one feature.
      `StillnessProvider` was mounted at exactly one site — inside
      `ViewPage` — so "nothing moves while the user is working" was
@@ -44,16 +44,31 @@ export default function App() {
      unchanged — the context is simply found further up. */
   return (
     <StillnessProvider>
-      <Shell />
-      {/* UNDO IS BOUND HERE, NOT IN THE SHELL, for two reasons. It
-          belongs to the store rather than to any one screen — the
-          onboarding wizard is the only surface with nothing to undo,
-          and it has no data to lose either. And `Shell.tsx` states in
-          its own header that it binds no window key handler; that
-          decision is left standing rather than argued with in the file
-          that made it. `UndoKeys.tsx` explains what it does instead,
-          and why one chord in the capture phase is safe here. */}
-      <UndoKeys />
+      {/* THE TWO-TAB GUARD IS MOUNTED BEFORE THE SHEET IS, and that
+          is why `loaded` no longer short-circuits the whole tree.
+          Two tabs on one IndexedDB both write it and the last flush
+          wins; the tabs settle which of them may write over a
+          BroadcastChannel, and the sooner that conversation starts
+          the smaller the window in which both of them believe they
+          may. It draws nothing at all in the tab that is saving. */}
+      <TabGuard />
+      {/* EVERYTHING ELSE STILL WAITS FOR THE SHEET, exactly as it did
+          when this was a bare `if (!loaded) return null`. */}
+      {loaded ? (
+        <>
+          <Shell />
+          {/* UNDO IS BOUND HERE, NOT IN THE SHELL, for two reasons. It
+              belongs to the store rather than to any one screen — the
+              onboarding wizard is the only surface with nothing to
+              undo, and it has no data to lose either. And `Shell.tsx`
+              states in its own header that it binds no window key
+              handler; that decision is left standing rather than
+              argued with in the file that made it. `UndoKeys.tsx`
+              explains what it does instead, and why one chord in the
+              capture phase is safe here. */}
+          <UndoKeys />
+        </>
+      ) : null}
     </StillnessProvider>
   )
 }

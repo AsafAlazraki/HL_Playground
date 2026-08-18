@@ -48,9 +48,17 @@ export function resolveKey(ctx: KeyContext): GridCommand
  *  char, no ctrl/meta). Exposed so the component can ignore dead keys. */
 export function isPrintableKey(key: string): boolean
 
-/* ---------- clipboard ---------- */
+/* ---------- clipboard, and the file dialect of the same codec ---------- */
 export function serializeTsv(cells: string[][]): string
 export function parseTsv(text: string): string[][]
+
+/** The same codec for any single-character delimiter. The clipboard is
+ *  tab-separated; a `.csv` file handed to Excel is comma-separated, and
+ *  nothing else about the two dialects differs — same quoting rule, same
+ *  doubled inner quote, same accepted line endings, same "a trailing
+ *  terminator is not a row". `@/features/io/csv` is the file caller. */
+export function serializeDelimited(cells: string[][], delimiter: string): string
+export function parseDelimited(text: string, delimiter: string): string[][]
 
 export type CoerceResult =
   | { ok: true; value: CellValue }

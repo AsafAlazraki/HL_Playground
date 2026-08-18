@@ -26,8 +26,18 @@ export const kebab = (s: string): string =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'project'
 
-export function downloadJson(json: string, fileName: string): void {
-  const blob = new Blob([json], { type: 'application/json' })
+/** Hand the browser a file. ONE implementation, because there are now
+ *  two kinds of file leaving this app — the JSON envelope that is a
+ *  backup of the whole sheet, and the `.csv` of one register that a
+ *  person opens in Excel — and a second copy of the anchor poke is how
+ *  the two would drift into two different revoke timings.
+ *
+ *  `charset=utf-8` on the CSV is not decoration: it is the second half
+ *  of the byte-order mark `@/features/io/csv` writes, and between them
+ *  a mail client previewing the attachment shows `5.6m — PVC` rather
+ *  than mojibake. */
+export function downloadFile(text: string, fileName: string, mime: string): void {
+  const blob = new Blob([text], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -36,6 +46,15 @@ export function downloadJson(json: string, fileName: string): void {
   a.click()
   a.remove()
   window.setTimeout(() => URL.revokeObjectURL(url), 4000)
+}
+
+export function downloadJson(json: string, fileName: string): void {
+  downloadFile(json, fileName, 'application/json')
+}
+
+/** One register, as the file Excel opens. */
+export function downloadCsv(text: string, fileName: string): void {
+  downloadFile(text, fileName, 'text/csv;charset=utf-8')
 }
 
 /** Builds the export envelope, bumps REV, triggers the download.

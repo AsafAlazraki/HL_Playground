@@ -58,10 +58,21 @@ export interface QuoteStageProps {
    *  the stage can never disagree about what is on screen. Passing
    *  null goes back to the list without closing the stage. */
   onOpen: (quoteId: string | null) => void
+  /** WHO THIS QUOTE IS FILED UNDER. Only the shell knows a customer
+   *  opens in a window of its own, so the route comes from here —
+   *  the same arrangement the module stage's `onQuote` uses. Absent
+   *  = the link is still SAID on the document's own screen and not
+   *  offered as a door, so this stage still works on its own. */
+  onOpenCustomer?: (customerId: string) => void
   onClose: () => void
 }
 
-export function QuoteStage({ quoteId, onOpen, onClose }: QuoteStageProps): ReactElement {
+export function QuoteStage({
+  quoteId,
+  onOpen,
+  onOpenCustomer,
+  onClose,
+}: QuoteStageProps): ReactElement {
   const quote = useQuote(quoteId)
   /* the id counts as open only when the document is really there */
   const openId = quote ? quote.id : null
@@ -149,7 +160,11 @@ export function QuoteStage({ quoteId, onOpen, onClose }: QuoteStageProps): React
 
       <div className="shell-quote-well">
         {quote ? (
-          <QuotePage quoteId={quote.id} onOpenQuote={(id) => onOpen(id)} />
+          <QuotePage
+            quoteId={quote.id}
+            onOpenQuote={(id) => onOpen(id)}
+            onOpenCustomer={onOpenCustomer}
+          />
         ) : (
           <QuoteList onOpen={(id) => onOpen(id)} openId={openId} tableCount={tableCount} />
         )}

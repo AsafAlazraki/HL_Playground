@@ -22,3 +22,8 @@ __pycache__/
 
 # agent screenshots — never committed; they belong in the scratchpad
 *.png
+
+# the originals tools/seed/fetch_images.py downloaded, kept so re-encoding at a
+# different size costs nobody else's bandwidth. 17 MB, machine-local; the
+# DOWNSCALED copies under public/seed-images are the ones that are committed.
+tools/seed/.imgcache/

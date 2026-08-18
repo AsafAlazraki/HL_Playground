@@ -97,9 +97,19 @@ const AUTO_WHY =
 export interface NewRuleSentenceProps {
   /** the pane opens the rule it just added */
   onAdded?: (id: string) => void
+  /** the heading over the builder. Defaults to the pane's own words;
+   *  a module names its own subject — "Write a rule for Boats" — so
+   *  the sentence a person is about to write says where they are. */
+  title?: string
+  /** the columns the sentence may name — see `RuleSentenceProps`. */
+  conceptKeys?: ReadonlySet<string>
 }
 
-export function NewRuleSentence({ onAdded }: NewRuleSentenceProps): ReactElement | null {
+export function NewRuleSentence({
+  onAdded,
+  title = 'Write a new rule',
+  conceptKeys,
+}: NewRuleSentenceProps): ReactElement | null {
   const ctx = useSentenceCtx()
   const [draft, setDraft] = useState<ConstraintDef | null>(() => makeDraft(ctx))
 
@@ -134,11 +144,17 @@ export function NewRuleSentence({ onAdded }: NewRuleSentenceProps): ReactElement
         <span className="cn-new-mark">
           <Plus size={ICON_SIZE.small} weight={weightFor(ICON_SIZE.small)} />
         </span>
-        <h3 className="cn-new-title">Write a new rule</h3>
+        <h3 className="cn-new-title">{title}</h3>
         <p className="cn-new-cap">{NEW_RULE_CAPTION}</p>
       </header>
 
-      <RuleSentence constraint={draft} editable big onChange={setDraft} />
+      <RuleSentence
+        constraint={draft}
+        editable
+        big
+        onChange={setDraft}
+        conceptKeys={conceptKeys}
+      />
 
       <p className="cn-because is-editing">
         <label className="cn-because-kw" htmlFor="cn-new-because">

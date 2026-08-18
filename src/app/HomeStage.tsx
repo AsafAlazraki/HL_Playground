@@ -40,7 +40,8 @@ import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { countLabel, leafNoun } from '@/features/table/grouping'
 import { ImportExportMenu } from '@/features/io'
 import { ICON_SIZE } from '@/lib/icons'
-import { loadDemoSet, realDemoSet, startingPointWords } from './demoLoad'
+import { realDemoSet, startingPointWords } from './demoLoad'
+import { useDemoLoad } from './useDemoLoad'
 import { useClipTitles } from './useClipTitles'
 
 const KIND_ORDER: TableKind[] = [
@@ -79,7 +80,10 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
      belongs to a stranger. `startingPointWords` holds the whole
      argument; both doors read the same three lines off it, so they
      cannot drift apart again. */
-  const words = real ? startingPointWords(real, org?.name) : undefined
+  /* THE SET IS ITS OWN CHUNK NOW, so the door has a phase and the
+     words are written from it — see useDemoLoad.ts. */
+  const { phase, press, warm } = useDemoLoad()
+  const words = real ? startingPointWords(real, org?.name, phase) : undefined
 
   /* NO FIND BOX HERE ANY MORE, and that is a ruling rather than a
      tidy-up: "i don't want search in top bar I want it in the bottom
@@ -126,13 +130,17 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
     useMemo(() => groups.flatMap((g) => g.items.map((e) => e.name)).join('|'), [groups]),
   )
 
-  /* HOW MUCH THE PREPARED SET PUTS ON THE SHEET, COUNTED FROM THE SET.
-     A door that replaces somebody's whole sheet has to say what arrives,
-     and a hand-typed "52 tables, 3,566 rows" goes stale the first time
-     the seed changes and nobody remembers — so `DemoSet.holds` builds
-     the set and counts it. It is not free (one `buildNorthsideProject`),
-     which is why it is behind a `useMemo` and only reached on the one
-     screen that draws the offer. */
+  /* HOW MUCH THE PREPARED SET PUTS ON THE SHEET. A door that replaces
+     somebody's whole sheet has to say what arrives — and it says it
+     BEFORE the file is here, which is the point: the figures are what
+     make the wait after the press mean something.
+
+     IT USED TO BUILD THE SET TO COUNT IT, and this screen is exactly
+     where that was worst: it is drawn only on an EMPTY sheet, so
+     counting the price file downloaded the price file for the one
+     visitor who had not asked for it. The figures are pinned and
+     guarded now — `demos/northsideHolds.ts` — so this is free, and the
+     `useMemo` stays only because the door reads it every render. */
   const holds = useMemo(
     () => (groups.length === 0 ? real?.holds?.() : undefined),
     [groups.length, real],
@@ -272,13 +280,26 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
               {real && words ? (
                 <button
                   type="button"
-                  className="hm-first-door hm-first-door--data"
-                  onClick={() => loadDemoSet(real)}
+                  className={`hm-first-door hm-first-door--data${
+                    phase === 'failed' ? ' hm-first-door--failed' : ''
+                  }`}
+                  /* the fetch is announced, so the wait is heard as well
+                     as seen */
+                  aria-busy={phase === 'loading'}
+                  onClick={() => press(real)}
+                  /* a pointer or a focus ring on THIS control is the
+                     earliest honest evidence somebody wants the file —
+                     see useDemoLoad.ts for why it is not fetched sooner */
+                  onPointerEnter={() => warm(real)}
+                  onFocus={() => warm(real)}
                 >
                   <span className="mono-label hm-first-door-tag">{words.tag}</span>
                   <span className="hm-first-door-name">{words.label}</span>
                   {/* where the numbers came from — the demos module's own
-                      sentence, because the demos module is what knows */}
+                      sentence, because the demos module is what knows.
+                      While the file is coming, and if it never comes,
+                      this line says so instead: one sentence with a
+                      reason, on the control it is about. */}
                   <span className="hm-first-door-note">{words.note}</span>
                   {holds ? (
                     <span className="hm-first-door-foot">

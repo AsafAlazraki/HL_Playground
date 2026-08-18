@@ -40,7 +40,8 @@
    ============================================================ */
 
 import { useProjectStore } from '@/store/useProjectStore'
-import { loadDemoSet, realDemoSet, startingPointWords } from './demoLoad'
+import { realDemoSet, startingPointWords } from './demoLoad'
+import { useDemoLoad } from './useDemoLoad'
 
 export interface EmptyStateProps {
   onCreateTable: () => void
@@ -56,9 +57,13 @@ export function EmptyState({ onCreateTable }: EmptyStateProps) {
      blank sheet ships this is undefined and the second door simply is
      not drawn — the screen never offers a button that loads nothing. */
   const real = realDemoSet()
+  /* THE SET IS A FETCH NOW, so the door has a phase — and the words
+     are written from it, so what the door says is what is actually
+     happening. See useDemoLoad.ts; the words are demoLoad.ts's. */
+  const { phase, press, warm } = useDemoLoad()
   /* the same name the headline above prints, so what the door says and
      who the screen is addressed to can never disagree */
-  const words = real ? startingPointWords(real, name) : undefined
+  const words = real ? startingPointWords(real, name, phase) : undefined
 
   return (
     <div className="shell-invite">
@@ -90,14 +95,27 @@ export function EmptyState({ onCreateTable }: EmptyStateProps) {
         {real && words && (
           <button
             type="button"
-            className="shell-invite-alt"
-            onClick={() => loadDemoSet(real)}
+            className={`shell-invite-alt${phase === 'failed' ? ' shell-invite-alt--failed' : ''}`}
+            /* the fetch is announced, so a screen reader hears the wait
+               the same way the eye sees it */
+            aria-busy={phase === 'loading'}
+            onClick={() => press(real)}
+            /* the earliest honest sign somebody wants the file — both
+               pointers and keyboards get it */
+            onPointerEnter={() => warm(real)}
+            onFocus={() => warm(real)}
           >
             <span className="shell-invite-alt-tag mono-label">{words.tag}</span>
             <span className="shell-invite-alt-label">{words.label}</span>
             {/* the provenance line — the demos module writes it, because
-                the demos module is what knows where the numbers came from */}
-            <span className="shell-invite-alt-note">{words.note}</span>
+                the demos module is what knows where the numbers came from.
+                While the file is in flight, and if it never arrives, this
+                is where that is said: one line, in the place it happened. */}
+            <span
+              className={`shell-invite-alt-note${phase === 'idle' ? '' : ' shell-invite-alt-say'}`}
+            >
+              {words.note}
+            </span>
           </button>
         )}
 

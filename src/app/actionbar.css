@@ -1,0 +1,611 @@
+/* ============================================================
+   THE ACTION BAR — the second, smaller bar above the dock.
+
+   READ `ActionBar.tsx` FIRST; this file is only its measurements.
+
+   THE GEOMETRY, AND EVERY NUMBER IS THE CONTRACT'S:
+
+     bar height        40px   — the dock is 60. Subordinate, and
+                               obviously a different tier at a glance
+     control           28px, radius 7px, padding 0 10px
+                               (DESIGN_CONTRACT §2, "toolbar control")
+     bar radius        18px   — the low end of the contract's 18–20px
+                               floating-panel band, because a 40px bar
+                               at 20px would be a lozenge
+     gap to the dock   10px   — `.dk-wrap`'s own `gap`, not a margin
+                               of ours. One number, one owner
+     the strip         50px   — 40 + the 10 gap, added to the dock's
+                               78 by the ONE rule at the foot of this
+                               file. Nothing pads a stage to clear it
+
+   WHY IT IS THE DOCK'S MATERIAL. `Dock.tsx` calls itself "the one
+   glass surface in the app", and this does not make a second one so
+   much as widen the first: the two are one piece of furniture in two
+   tiers, drawn in the same place, floating over the same page. A
+   different material here would read as a different app's toolbar
+   that happened to dock underneath. Nothing translucent is stacked on
+   it — the popover it opens is opaque — and the
+   `prefers-reduced-transparency` fallback is in this file, beside the
+   thing it falls back from.
+
+   COLOUR, MEASURED. Every label on this bar is `--ink-soft`
+   (`--fg-secondary` #4b5462) at rest and `--ink` on hover.
+   `--ink-faint` appears NOWHERE on this surface and that is
+   deliberate: DESIGN_CONTRACT §1 records it as 4.72:1 on white but
+   **4.26:1 over a 3.5% tint**, and this whole bar is a tint over the
+   page. The search field's placeholder — the one piece of text most
+   likely to have been given the faint tier out of habit — is
+   `--ink-soft` over `--bg-sunken` #f1f2f5, which measures 6.8:1.
+
+   NO `var(--press-fx)` IN ANY TRANSITION LIST HERE. It is remapped in
+   `src/styles/bridge.css` to `var(--surface-3)`, a colour, so a
+   shorthand that names it is invalid and the WHOLE list is dropped —
+   including the hover colours beside it. That file belongs to another
+   pass; this one writes `transform var(--t-press) var(--ease-press)`
+   out in full and keeps its hovers.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   the wrapper — no box of its own, so the refusal note can hang
+   above the bar without ever changing the bar's height
+   ------------------------------------------------------------ */
+.ab-shell {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.ab {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 40px;
+  max-width: calc(100vw - 24px);
+  padding: 0 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--paper-high) 78%, transparent);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: var(--e2);
+}
+
+.ab-grp {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ab-sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--hairline-strong);
+}
+
+/* ------------------------------------------------------------
+   a control
+   ------------------------------------------------------------ */
+.ab-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--t-press) var(--ease-press),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.ab-btn:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+/* Rule 8 asks for hover, press AND focus on everything pressable.
+   The press is the app's own shared `:active` scale (base.css); the
+   focus ring is drawn here because a floating bar over a register has
+   no other edge to show it against. */
+.ab-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* a latch, and an open panel. `--blue-wash` over the bar composites to
+   #f0f1fb; `--blue` on it measures 5.3:1. */
+.ab-btn.is-on {
+  background: var(--blue-wash);
+  border-color: color-mix(in srgb, var(--blue) 24%, transparent);
+  color: var(--blue);
+}
+.ab-btn.is-on:hover {
+  background: var(--blue-wash-strong);
+  color: var(--blue);
+}
+
+/* THE PRIMARY IS INK, NOT ACCENT, because that is what this app's
+   primary button already is (`base.css .btn.btn-primary`) and the
+   register's `+ Row` has been drawn that way all along. Relocating a
+   control must not restyle it. `--paper-high` on `--ink` is 18.9:1. */
+.ab-btn--primary {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper-high);
+}
+.ab-btn--primary:hover {
+  border-color: var(--blue-deep);
+  background: var(--blue-deep);
+  color: var(--paper-high);
+}
+
+/* Danger is quiet until it is reached for — the same escalation
+   `.btn.btn-danger` already uses, WITHOUT its wash.
+
+   MEASURED, AND THE WASH IS WHY IT CHANGED. `--red` on `--red-wash`
+   over this bar is **4.49:1** — a hundredth under the floor, on the
+   one control in the app that deletes a dealer's rows. The wash was
+   buying almost nothing: the bar composites to near-white, so a 9%
+   red tint is barely a tint. The border says "destructive" on its own
+   and the label goes to `--red` on the paper ground, which measures
+   5.20:1. */
+.ab-btn--danger:hover {
+  border-color: var(--red);
+  background: var(--paper-high);
+  color: var(--red);
+}
+
+/* THE CONTROL THAT CANNOT ACT KEEPS ITS LABEL LEGIBLE. The obvious
+   move is to fade it, and it is wrong twice: `--fg-quaternary` is
+   2.8:1 and DESIGN_CONTRACT forbids it carrying meaning, and a label
+   is meaning even on a control that will not fire. So the LABEL does
+   not move — it stays `--ink-soft` at 7.6:1 — and what goes is the
+   affordance: no hover ground, no border, no pointer. The reason
+   appears above the bar the moment it is reached for. */
+.ab-btn.is-inert {
+  color: var(--ink-soft);
+  cursor: default;
+}
+.ab-btn.is-inert:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-soft);
+}
+.ab-btn.is-inert svg {
+  opacity: 0.55;
+}
+
+/* A CONTROL THAT OPENS SOMETHING IS SHAPED LIKE ONE. It carries two
+   words instead of one — the name and where you are — so it gets the
+   air to hold them without the pair reading as two controls that have
+   been squashed together. */
+.ab-btn--panel {
+  gap: 5px;
+  padding-right: 11px;
+}
+
+.ab-btn-label {
+  min-width: 0;
+}
+/* The same mark, in the same tier, as the title block's own separator
+   (`.shell-view-what-sep`, `--ink-faint`). It is `aria-hidden` and
+   carries nothing, but it is a GLYPH rather than a rule, so it is set
+   from the ink ramp and not from the hairline: `--hairline-strong`
+   measured 1.57:1 here and was a smudge. Measured at this size, on
+   this bar, over the page: see the sweep in the commit message. */
+.ab-btn-sep {
+  color: var(--ink-faint);
+}
+/* the live half of a map control — "Sections · Capacity". A name, so
+   it is sentence case and never a stamp. */
+.ab-btn-at {
+  max-width: 13ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+/* THE LIT STATE TAKES THE WHOLE CONTROL WITH IT, separator included.
+   Measured: `--ink-faint` over `--blue-wash` is 4.13:1 and fails,
+   while `--blue` on the same ground is 5.17:1 — the same figure the
+   name beside it measures. One state, one ink. */
+.ab-btn.is-on .ab-btn-at,
+.ab-btn.is-on .ab-btn-sep {
+  color: var(--blue);
+}
+
+/* ------------------------------------------------------------
+   search within the page
+   ------------------------------------------------------------ */
+.ab-find {
+  flex: 0 1 200px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  min-width: 0;
+  padding: 0 6px 0 9px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-sunken);
+  color: var(--ink-soft);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.ab-find:hover {
+  border-color: var(--hairline-strong);
+}
+.ab-find:focus-within {
+  border-color: var(--blue);
+  background: var(--paper-high);
+}
+.ab-find-mark {
+  flex: none;
+  display: inline-flex;
+  color: var(--ink-soft);
+}
+.ab-find-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  outline: none;
+}
+/* --ink-soft, not --ink-faint: the field's ground is a tint and the
+   faint tier fails on it. 6.8:1 measured. */
+.ab-find-input::placeholder {
+  color: var(--ink-soft);
+  opacity: 1;
+}
+.ab-find-x {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    transform var(--t-press) var(--ease-press),
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.ab-find-x:hover {
+  background: var(--hairline);
+  color: var(--ink);
+}
+.ab-find-x:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------------
+   what is narrowing the page, and how to stop it
+   ------------------------------------------------------------ */
+.ab-grp--chips {
+  max-width: 300px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ab-grp--chips::-webkit-scrollbar {
+  height: 0;
+}
+
+.ab-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  max-width: 220px;
+  padding: 0 8px 0 9px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    transform var(--t-press) var(--ease-press),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.ab-chip:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+.ab-chip:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+/* the one uppercase style the contract allows — a group caption, at
+   its exact step. `--ink-soft` rather than `--ink-faint` because this
+   sits on a chip on a tint. */
+.ab-chip-key {
+  flex: none;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+/* the dealer's own words, so: sentence case, exactly as typed */
+.ab-chip-val {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+.ab-chip:hover .ab-chip-val,
+.ab-chip:hover .ab-chip-key {
+  color: var(--red);
+}
+
+/* ------------------------------------------------------------
+   a control that opens something — the sections map
+   ------------------------------------------------------------ */
+.ab-hold {
+  position: relative;
+  display: inline-flex;
+}
+
+.ab-panel {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  z-index: 1;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  max-height: min(52vh, 440px);
+  overflow-y: auto;
+  padding: var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-overlay);
+  box-shadow: var(--e3);
+  transform: translateX(-50%);
+  animation: ab-panel-in var(--t-med) var(--ease-settle);
+}
+@keyframes ab-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+/* movement goes, opacity stays — never silence */
+@media (prefers-reduced-motion: reduce) {
+  .ab-panel {
+    animation: ab-fade var(--t-fast) var(--ease-draft);
+  }
+  @keyframes ab-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+.ab-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 var(--sp-1) var(--sp-2);
+}
+/* the contract's page-title step, one level down for a popover */
+.ab-panel-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  color: var(--ink);
+}
+/* THE FACT ABOUT COLUMNS LIVES HERE, and this is the whole of the
+   argument: a count is not an action, so it may not sit on the bar —
+   but the shape of the register is exactly what somebody opening the
+   sections map came to find out. It is said once, here, and nowhere
+   else in the app. */
+.ab-panel-say {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.ab-panel-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ------------------------------------------------------------
+   THE SECTIONS MAP, RE-LAID FROM THIS SCOPE.
+
+   `BandStrip` is a horizontal strip because it was drawn across the
+   top of a sheet, and it still is on the blueprint's expanded card,
+   which is its other host. Inside a popover the same eight chips read
+   better as a list — one line each, the count where the eye can
+   compare them, and no scrolling to reach the last band. The host
+   restyles from its own scope, which is the arrangement
+   `WholeTableControls.tsx` already states for these shared pieces:
+   the component is not forked, so the two hosts can never drift into
+   two controls that share a name.
+   ------------------------------------------------------------ */
+.ab-panel .tb-strip {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  height: auto;
+  padding: 0;
+  border-bottom: 0;
+  background: transparent;
+}
+/* the panel's own heading already says Sections */
+.ab-panel .tb-strip-label {
+  display: none;
+}
+/* `align-self: center` is right in a 28px horizontal strip and wrong
+   in a column, where it centres one line under a left-aligned
+   heading. */
+.ab-panel .tb-strip-at {
+  align-self: stretch;
+  max-width: none;
+  padding: 0 var(--sp-1) var(--sp-2);
+  text-align: left;
+}
+/* THE EXPLICIT WIDTHS ARE NOT DECORATION. Turned on its side, the rail
+   and its chips shrink to their own content — measured at 135px inside
+   a 315px panel — so eight bands drew as a narrow column against a
+   wide white margin, and the counts they exist to be compared by did
+   not line up. `stretch` does not reach them through two nested flex
+   containers whose main axis has just been rotated; `100%` does, in
+   one declaration, at every panel width. */
+.ab-panel .tb-strip-rail {
+  flex-direction: column;
+  width: 100%;
+  overflow: visible;
+}
+.ab-panel .tb-strip-chip {
+  justify-content: space-between;
+  width: 100%;
+  height: 34px;
+  max-width: none;
+  padding: 0 var(--sp-2);
+  border-top: 1px solid var(--hairline);
+  border-left: 0;
+  border-radius: var(--radius-sm);
+}
+.ab-panel .tb-strip-chip:first-child {
+  border-top: 0;
+}
+.ab-panel .tb-strip-rule {
+  right: auto;
+  left: var(--sp-2);
+  width: 26px;
+  bottom: 5px;
+}
+
+/* ------------------------------------------------------------
+   WHY A CONTROL WILL NOT ACT — rule 10, and it is not a tooltip.
+
+   A rendered line, in the app's own type, with a live region, that
+   appears for a keyboard Tab exactly as it does for a pointer. It
+   hangs above THE CONTROL THAT REFUSED — not above the middle of the
+   bar, which is where it started and which made it a sentence about
+   the bar rather than about a button 360px away. The bar's height
+   never changes under it, and it takes no presses: a sentence that
+   intercepts a click on the page underneath is a worse bug than the
+   one it explains.
+   ------------------------------------------------------------ */
+.ab-why {
+  position: absolute;
+  /* the control is 28px inside a 40px bar, so 6px of that clears the
+     bar's own top edge and 8 is the air above it */
+  bottom: calc(100% + 14px);
+  left: 50%;
+  /* `max-content` because the containing block is now the CONTROL, and
+     an absolutely-positioned block shrink-fits to that: over a 90px
+     button the sentence drew as a nine-line ribbon. It takes the width
+     its own words want, and only wraps when it reaches the measure. */
+  width: max-content;
+  max-width: min(38ch, calc(100vw - 32px));
+  padding: 5px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: var(--e1);
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: ab-why-in var(--t-fast) var(--ease-draft);
+}
+@keyframes ab-why-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ab-why {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   THE FALLBACK, BESIDE THE THING IT FALLS BACK FROM.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-transparency: reduce) {
+  .ab {
+    background: var(--paper-high);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ============================================================
+   WHAT THE BAR COSTS THE PAGE, OWNED IN ONE PLACE.
+
+   `shell.css` reserves the dock's strip once — `.shell-stage { inset:
+   0 0 78px 0 }` — with the note "nothing inside the app can reach
+   into the bottom 78px" and the instruction never to pad a stage to
+   clear it. This is the same rule, once, for the second tier: 40px of
+   bar plus the 10px `.dk-wrap` gap is 50 more, and it is charged ONLY
+   while there is a bar. A page with no actions pays nothing, which is
+   the entire reason the register's three bands could be taken down
+   rather than merely rearranged.
+
+   `.shell-root.has-acts` is set by the shell from the same register
+   the bar reads, so the reservation and the bar can never disagree
+   about whether there is one. Specificity (0,3,0) beats shell.css's
+   (0,1,0) outright, so it does not depend on import order.
+
+   No transition: this is a layout property, and DESIGN_CONTRACT §1
+   says never.
+   ============================================================ */
+.shell-root.has-acts .shell-stage {
+  /* 22 off the bottom + 60 of dock + 10 of gap + 40 of bar = 132, and
+     it is the WHOLE 132 rather than the dock's own 78-for-82. The
+     dock's 4px of overlap lands on a page's bottom margin and has
+     never cost anything; this bar's bottom edge would land on the
+     register's horizontal scrollbar, which is a control. "It must not
+     cover anything interactive" is a requirement, so the page stops
+     exactly where the bar starts. */
+  inset: 0 0 132px 0;
+}

@@ -41,9 +41,11 @@ import {
   Stack,
   Table as TableIcon,
   TreeStructure,
+  UsersThree,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { ActionBar } from './ActionBar'
 import { TABLE_KINDS, isRetired, type EntityDef, type TableKind } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
@@ -66,11 +68,13 @@ export interface DockProps {
   onOpenRules?: () => void
   onOpenFlow?: () => void
   onOpenQuotes?: () => void
+  onOpenCustomers?: () => void
   onAddTable?: () => void
   onSearch?: () => void
   onBackToSheet?: () => void
   onOpenHome?: () => void
   quoteCount?: number
+  customerCount?: number
   current?: string | null
 }
 
@@ -118,11 +122,13 @@ export function Dock({
   onOpenRules,
   onOpenFlow,
   onOpenQuotes,
+  onOpenCustomers,
   onAddTable,
   onSearch,
   onBackToSheet,
   onOpenHome,
   quoteCount = 0,
+  customerCount = 0,
   current = null,
 }: DockProps) {
   const entities = useProjectStore((s) => s.entities)
@@ -256,6 +262,22 @@ export function Dock({
         </div>
       ) : null}
 
+      {/* THE ACTION BAR — the second, smaller tier, and it is drawn
+          HERE rather than in the shell for one reason that matters:
+          `.dk-wrap` is the element carrying `data-note-clear`, so a
+          bar inside it is measured by the note layer along with the
+          dock, at every window width, with no second attribute for
+          anybody to forget. The whole layering question — toasts over
+          the dock, then toasts over the Fitment palette — is answered
+          by being inside the thing that already answered it.
+
+          It also inherits `.dk-wrap > * { pointer-events: auto }`, so
+          it takes its own presses and lets everything else through.
+
+          The dock is where you GO; this is what you DO. Nothing on
+          the navigation bar below moved to build it. */}
+      <ActionBar />
+
       <div className="dk" role="toolbar" aria-label="Navigation">
         {onOpenHome ? (
           <DockItem
@@ -350,6 +372,36 @@ export function Dock({
             onPress={() => {
               close()
               onOpenQuotes()
+            }}
+          />
+        ) : null}
+
+        {/* CUSTOMERS IS THE TENTH ITEM, and it is the only addition
+            this bar has taken since the naming rule was settled.
+
+            THE RULE IT HAD TO EARN ITS WAY PAST: "do not add a tenth
+            item without a strong reason — every addition dilutes the
+            nine that are there" (DESIGN_CONTRACT §9). The reason is
+            that the item BESIDE it is Quotes, and every quote is
+            addressed to somebody: without this the people those
+            documents were written to are reachable only through a
+            table in a submenu, and "what else have we quoted them?"
+            has no door at all. It is a NOUN naming what is on the
+            screen, it is one word, and it sits next to the place it
+            is about rather than at the end of the bar.
+
+            THE BADGE IS THE SAME PROMISE THE QUOTES BADGE MAKES: a
+            number only once there is one, so a cleared install shows
+            a door and never a nag. */}
+        {onOpenCustomers ? (
+          <DockItem
+            icon={UsersThree}
+            label="Customers"
+            count={customerCount}
+            active={current === 'customer'}
+            onPress={() => {
+              close()
+              onOpenCustomers()
             }}
           />
         ) : null}

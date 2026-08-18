@@ -185,7 +185,7 @@ describe('search — a pair is never a place', () => {
      them".
      A pair row's name is not a name. It is the two names it links,
      and both of those rows are in this index already — measured over
-     the whole file at 2,260 of 2,260 pair rows, zero
+     the whole file at 8,679 of 8,679 pair rows, zero
      counter-examples. So a pair row answers THROUGH its sides. */
   const base = table('tp', 'Products', { kind: 'boat' })
   const partners = table('tw', 'Partners', { kind: 'motor' })

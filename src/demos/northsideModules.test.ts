@@ -4,7 +4,7 @@
    THE HOLE THIS CLOSES. Pressing Modules on a freshly seeded
    browser landed on the dashboard's empty state — correct, well
    written, and the wrong screen for a set that ships 25 base
-   tables and 3,566 rows. `modules: 0` was measured on the live
+   tables and 11,116 rows. `modules: 0` was measured on the live
    IndexedDB the morning this was written.
 
    WHAT IS ASSERTED, and why each one is here rather than left to
@@ -117,11 +117,11 @@ describe('the Northside demo seeds its own modules', () => {
     const sections = groupEntries(buildEntries(listed, rowsByEntity), listed)
 
     expect(sections.map((s) => `${s.name} ${s.count}`)).toEqual([
-      'Highfield Inflatables 40',
-      'Stabicraft 30',
-      'Stacer 26',
-      'Formosa 26',
-      'Jeanneau 24',
+      'Highfield Inflatables 588',
+      'Stabicraft 37',
+      'Stacer 91',
+      'Formosa 39',
+      'Jeanneau 27',
       'Surtees 19',
       'Haines Signature 9',
     ])
@@ -143,24 +143,24 @@ describe('the Northside demo seeds its own modules', () => {
     }
 
     expect(shapeOf('Motors')).toEqual([
-      'Yamaha Outboards 83',
+      'Yamaha Outboards 209',
       'Haines Signature Factory Packages 39',
-      'Jeanneau Factory Packages 39',
-      'ePropulsion Outboards 14',
+      'Jeanneau Factory Packages 50',
+      'ePropulsion Outboards 32',
     ])
     expect(shapeOf('Trailers')).toEqual([
-      'NSM Custom Trailers 53',
-      'Dunbier Trailers 16',
+      'NSM Custom Trailers 73',
+      'Dunbier Trailers 102',
       'Dunbier / Haines BMT Trailers 16',
-      'Mackay Trailers 16',
-      'REDCO / Tinka Trailers 16',
-      'GFAB Trailers 14',
-      'Stacer Trailers 14',
+      'Mackay Trailers 125',
+      'REDCO / Tinka Trailers 52',
+      'GFAB Trailers 32',
+      'Stacer Trailers 34',
     ])
     expect(shapeOf('Parts & Accessories')).toEqual([
-      'Parts & Accessories 67',
+      'Parts & Accessories 68',
       'Rigging Kits 622',
-      'Dealer Fit Packages 30',
+      'Dealer Fit Packages 70',
     ])
     expect(shapeOf('Rates & Charges')).toEqual([
       'Labour Rates 18',
@@ -378,7 +378,7 @@ describe('the Northside demo seeds its own modules', () => {
 
     const drift = northsideDrift(entities, rows, {})
     expect(drift?.missing).toContain('Parts & Accessories')
-    expect(drift?.resized).toContainEqual({ name: 'Yamaha Outboards', has: 43, wants: 83 })
+    expect(drift?.resized).toContainEqual({ name: 'Yamaha Outboards', has: 43, wants: 209 })
     expect(drift?.noModules).toBe(true)
     expect(drift?.moduleCount).toBe(5)
     /* seeded from THIS build, so none of the above makes it an older

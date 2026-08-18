@@ -23,8 +23,8 @@ export {
 export type { KeyContext, GridCommand } from './keys'
 export { resolveKey, isPrintableKey } from './keys'
 
-/* ---------- clipboard ---------- */
-export { serializeTsv, parseTsv } from './clipboard'
+/* ---------- clipboard, and the file dialect of the same codec ---------- */
+export { serializeTsv, parseTsv, serializeDelimited, parseDelimited } from './clipboard'
 
 /* ---------- coercion ---------- */
 export type { CoerceResult } from './coerce'

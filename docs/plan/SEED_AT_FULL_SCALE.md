@@ -1,10 +1,15 @@
 # The seed at full scale — the shape, the caps, and how to regenerate it
 
-Northside Marine is the first customer. Today `src/demos/northside.ts` carries a
-curated fraction of their Master Price File and says so in its own provenance
-lines. This document decides what "the whole thing" is, where the sampling caps
-live, what the full-scale numbers actually are, and how a person repeats the
-regeneration end to end.
+Northside Marine is the first customer. This document decided what "the whole
+thing" is, where the sampling caps lived, what the full-scale numbers actually
+are, and how a person repeats the regeneration end to end.
+
+> **IT HAS BEEN DONE — see §7.** `src/demos/northside.ts` now carries the whole
+> live catalogue: 53 tables, 11,116 rows, 2.42 MB. Sections 1–6 are kept as
+> written, because they are the measurement the decision was made on and §7
+> reports against them; where §7 corrects one it says so. The caps described in
+> §1.1 are lifted (§7.2), the generator described in §3.2 as unrunnable is
+> repaired (§7.1), and three defects the sample was hiding are in §7.6.
 
 **Nothing here is estimated unless it says ESTIMATE.** Every count was produced
 by running the committed generator with its budgets lifted, or by opening the
@@ -23,6 +28,12 @@ Every sampling cap in the pipeline is one of four mechanisms. There is no
 central limit and no configuration file; each is a literal in a table of dicts.
 
 ### 1.1 The `budget` key — the main mechanism
+
+> **LIFTED — §7.2.** Every live band now reads `budget=ALL`. The zero-budget
+> bands are deliberately still zero, because lifting them would overturn
+> `FITMENT_RULES.md` §5.7. The old literals are preserved in `gen_all.py`'s own
+> comment beside `ALL`, so a small table reads as a decision rather than a
+> forgotten cap.
 
 `tools/seed/gen_all.py` gives each brand band a `budget`, and three identical
 round-robin loops fill up to that many rows, one per series at a time, so a
@@ -140,6 +151,10 @@ Labour Rates 18 · Registration 19. Oils is **27**, not ~30 — and the seed's o
 `desc` already says so and explains the two blank rows.
 
 ### 2.2 Per-table target counts
+
+> **These were reproduced exactly — §7.3.** The *today* column is now history.
+> Two of its entries were wrong when written (`join_formosa_pd` was 82, not 130;
+> `join_jeanneau_pd` was 104, not 118); both **full scale** figures were right.
 
 Produced by running the committed `gen_all.py` with every boat, trailer and
 motor budget raised to 10⁹ — the packages, `trl_obsolete`, `dealer_fit`, `parts`
@@ -287,6 +302,11 @@ there.
 
 ### 3.2 The working tree is not HEAD, and regeneration would destroy work
 
+> **RESOLVED — §7.1.** The 252 hand-written lines were committed and grew to
+> 366; `emit.py`'s `HEADER` and `FOOTER` are now the committed file's own
+> prelude and tail, so a run reproduces every one of them. Verified byte for
+> byte at the old budgets before anything else changed.
+
 `python tools/seed/emit.py` reproduces `HEAD:src/demos/northside.ts` byte for
 byte — 1,076,153 bytes, verified. It does **not** reproduce the working tree.
 `src/demos/northside.ts` currently carries **+252 hand-written lines** over HEAD
@@ -362,6 +382,56 @@ scale, and the data arrives only when a person asks for Northside Marine.
 The `DemoSet.load(): void` signature becomes `Promise<void>`, and the two call
 sites (`src/demos/index.ts`, `src/app/demoLoad.ts`) are both **outside this
 session's lane** — recorded, not changed.
+
+### 4.4 It was done, and this is what it measured
+
+Built on `redesign`, 18 August 2026, `npm run build`, one JS chunk before and
+two after. Every figure below is off the build report or off `performance` in
+the browser; nothing is extrapolated.
+
+| | before | after |
+|---|---:|---:|
+| entry chunk | 2,291.80 kB · **551.32 kB gzip** | 1,402.85 kB · **421.07 kB gzip** |
+| the seed's own chunk | — (inside the entry) | 892.12 kB · **131.22 kB gzip** |
+
+**The entry chunk lost 888.95 kB raw and 130.25 kB gzip — 23.6% of what a
+first-time visitor downloads.** `dist/index.html` carries no `modulepreload` for
+the seed chunk, so a visitor who never asks for Northside Marine never fetches
+it: measured on a cold profile (storage cleared), through onboarding to Home's
+first screen, `performance.getEntriesByType('resource')` lists **no request for
+`northside-*.js`**, DOM interactive at **390 ms**, DOMContentLoaded **585 ms**.
+
+Home's door still says **52 tables · 3,566 rows** with none of those bytes on
+the machine: the figures moved to `src/demos/northsideHolds.ts` and
+`northsideHolds.test.ts` builds the set and fails if they drift. `DemoSet.holds`
+used to build the whole project to count them — on the one screen a person with
+an EMPTY sheet sees, which is what made the split worth nothing on that screen.
+
+Pressing the door: the chunk transfers in **66 ms** and the sheet is complete
+**1,285 ms** after the press, of which the fetch is a twentieth — the rest is
+`buildNorthsideProject` + `replaceProject`, which is what it always was. Hovering
+the door first (`DemoSet.warm`) fetches AND evaluates the chunk on intent, and
+the same press then completes in **262 ms**.
+
+A returning visitor whose sheet IS the set: DOM interactive **172 ms**, the sheet
+paints from IndexedDB, and the seed chunk is fetched at **484 ms** — after the
+paint, to answer the freshness question only. A sheet with fewer than
+`DRIFT_GATE` (8) tables never fetches it at all, which is every blank sheet,
+every import and every dealer's own small workbook.
+
+**Offline.** With the chunk already fetched, the network was cut and the door
+pressed: the set loaded in **262 ms** and all 50 tables landed. Without it, the
+door refuses in place — *"The file did not download. It is fetched the first time
+you open it, so this needs a connection. Press again to try."* — and stays
+pressable. What is NOT true, before or after this change, is that the app
+survives a cold offline start: there is no service worker, so the document
+itself is `ERR_INTERNET_DISCONNECTED`. The seed chunk is cached by exactly the
+mechanism the entry chunk is, and nothing became more network-dependent than it
+already was.
+
+The boundary is `src/demos/seedChunk.ts` — the only file allowed to name
+`./northside` — and `entryChunk.test.ts` fails if any shipped file imports the
+seed statically, or re-exports a value out of it, which is the same act.
 
 ### 4.3 The options that were rejected, and why
 
@@ -469,6 +539,11 @@ The only command that writes `src/demos/northside.ts`. Prints `bytes`, `tables`,
 characters into mojibake and the repair corrupted the file to binary. Change the
 generator; run the generator.
 
+The command prints one more line than it used to: the picture map's `held`,
+`absent` and **`unmeasured`** counts. `unmeasured` is not a failure — it is how
+many of the seed's image addresses nobody has asked for yet (§7.8). It clears
+with `python tools/seed/fetch_images.py` and needs a network.
+
 ### Stage four — verify
 
 ```bash
@@ -489,10 +564,14 @@ python -c "import hashlib;print(hashlib.sha256(open('src/demos/northside.ts','rb
 ### To change the scale
 
 Edit only the `budget` values (§1.1) and, for parts, the `[:5]` and
-`P_CATEGORIES` (§1.2). To reproduce the full-scale measurements in this
-document, set every boat, trailer and non-package motor budget to a large
-number and leave the zero-budget tables at zero — they fill by reachability.
-Then run stage two, stage three, stage four.
+`P_CATEGORIES` (§1.2). **They are at full scale already** — every live band
+reads `budget=ALL`. To take a SAMPLE again, put a number back on the bands you
+want sampled and leave the zero-budget tables at zero; they fill by
+reachability either way. Then run stage two, stage three, stage four.
+
+Anything you change here changes the seed's own `desc` lines, which count
+themselves — that is what §"After regeneration" is about, and it is the reason
+a sampled table can never quietly claim to be complete.
 
 ### After regeneration
 
@@ -515,3 +594,218 @@ something that is no longer true, the generator's f-string is the bug.
 3. **Parts beyond reachability (§4.3).** Does a salesperson need to sell a part
    no boat's P/D band names? If yes, `parts` should be imported whole and the
    size decision follows the requirement rather than leading it.
+
+---
+
+## 7. IT WAS BUILT. What the full-scale seed actually cost, and what it uncovered
+
+Built on `redesign`, 18 August 2026. Every figure below was produced by running
+the thing, not by extrapolating §2.2.
+
+### 7.1 The generator had to be repaired before it could be run
+
+`emit.py` **refused**, and the refusal was correct: the committed seed carried
+366 lines the generator had never known how to write — `NORTHSIDE_NAME`,
+`NorthsideProject.idByKey`, the seedStamp wiring, and the whole
+`seedNorthsideModules` block, which is the app's five modules. §3.2 recorded
+this as another session's lane; it is now this document's, because you cannot
+change the scale without running the command.
+
+**The fix is the one the refusal named.** `HEADER` and `FOOTER` in `emit.py` are
+now the committed file's own prelude and tail, character for character. Verified
+before anything else changed: with the budgets still at their old values,
+`python tools/seed/emit.py` reproduced `HEAD:src/demos/northside.ts` **byte for
+byte** — 1,096,952 bytes, `sha256
+d6f1928a36d530c374e0faf522b1073187f309b44f12748d382f01aa4164de85`, and `git
+diff --stat` empty.
+
+The refusal was then **inverted rather than deleted**: `refuse_to_truncate` now
+reads the text about to be WRITTEN and stops if one of the three markers is
+missing from it. The old check could be satisfied by deleting the thing it
+protected; this one cannot.
+
+### 7.2 The caps, replaced by a word
+
+`budget` now takes one of three values and `gen_all.py` says so where they are
+declared: `ALL` (take the whole band), `0` (reachability only — *not* "none";
+`chosen` is pre-seeded from `forced_names`), or a number, **which nothing uses
+any more**. The old literals are kept in that comment so a person reading a
+small table knows to look for a `0` rather than suspecting a forgotten cap.
+
+The zero-budget bands were deliberately left at zero. Lifting them would
+overturn `FITMENT_RULES.md` §5.7, which is adjudicated and not a size decision.
+
+### 7.3 What came out, against what §2.2 predicted
+
+| | predicted (§2.2) | **built** |
+|---|---:|---:|
+| tables | 53 | **53** |
+| rows | 11,116 | **11,116** |
+| base-table rows | 2,437 | **2,437** |
+| join rows | 8,679 | **8,679** |
+| `Highfield × GFAB` | 51 | **51** — the 53rd table, real |
+
+Every per-table figure in §2.2 was reproduced exactly. Two entries in §2.2's
+*today* column were wrong at the time and are corrected here for the record:
+`join_formosa_pd` was 82 rather than 130, and `join_jeanneau_pd` 104 rather than
+118. Both **full-scale** figures were right.
+
+### 7.4 Size, build and load — measured
+
+| | before | **after** |
+|---|---:|---:|
+| `src/demos/northside.ts` | 1,096,952 B · 7,606 lines | **2,418,102 B · 16,446 lines** |
+| that file gzipped | 139 kB | **259.5 kB** |
+| string pool | 1,241 | **2,506** |
+| `npx tsc --noEmit -p tsconfig.app.json` | 3.6 s | **12.7 s** |
+| `npm run build` | 3.5 s | **4.4 s** (Rolldown 1.35 s) |
+| `npm test` (vitest + 2 guards) | 6.4 s | **34 s**, 642 tests in 45 files |
+| **entry chunk** | 1,402.85 kB · **421.07 kB gzip** | **1,425.22 kB · 426.54 kB gzip** |
+| the seed's own chunk | 892.12 kB · 131.22 kB gzip | **1,982.78 kB · 243.18 kB gzip** |
+
+§4.1 projected 2.28 MB and 16,041 lines. It came out 2.42 MB and 16,446,
+because the projection was taken against a `HEAD` that did not yet carry the 366
+module lines, and because four `desc` lines got longer on purpose (§7.6, §7.8).
+The gzip projection of 246 kB against 259.5 kB is the same difference.
+
+**The entry chunk barely moved — 22 kB raw, 5.5 kB gzip — and that is the whole
+point of §4.4's split holding at scale.** The seed more than doubled and a
+first-time visitor pays 5.5 kB of it. Confirmed in the built app on a cold
+profile (IndexedDB and localStorage cleared, `vite preview` on 5371): through
+onboarding to Home's first screen, `performance.getEntriesByType('resource')`
+lists **no request for `northside-*.js`**, DOM interactive **20 ms**,
+DOMContentLoaded **26 ms**.
+
+The one real cost is `tsc`, at 12.7 s. §4.2 estimated 6–8 s by linear
+extrapolation and under-called it; 12.7 s for a whole project including a 2.4 MB
+typed data literal is still a build, once, on a machine.
+
+**Pressing the door**, cold profile, chunk in the disk cache: **207 ms** from
+press to the complete sheet — 53 tables, 11,116 rows, Home reading
+"51 tables" (the two retired ones withheld, which is the discontinued contract
+working). At 3,566 rows the same measurement was 262 ms warm and 1,285 ms cold,
+so **three times the rows arrive no slower**.
+
+### 7.5 It is not slow to use, and that was checked rather than assumed
+
+Measured in the built app at 1440×900, frames counted with `requestAnimationFrame`
+while driving the surface:
+
+| surface | opens in | frames |
+|---|---:|---:|
+| Data model, whole sheet, panning | 559 ms | **54 fps** |
+| Boats module index (588 items), scrolling | 712 ms | **60 fps** |
+| `Highfield Inflatables` table, 588 × 33, scrolling | 58 ms | **61 fps** |
+| `Highfield × Yamaha` table, 2,519 × 11, scrolling | 38 ms | **60 fps** |
+
+A full walk — onboarding, Home, Data model, Modules, Boats, a brand page, two
+table pages, Business rules, Fitment, running a rule — logged **zero console
+errors and zero warnings**.
+
+**The suite got slower, and two tests were given an explicit budget for it.**
+`npx vitest run` went from 6.4 s to 34 s, and two tests that walk every hull
+against every trailer began exceeding vitest's 5 s default under parallel load
+while their assertions were passing. They carry a `20_000` timeout each, with
+the measurement written beside them — deliberately per-test rather than a global
+`testTimeout`, which would hide the next slow thing instead of naming this
+one.
+
+Modules survive the scale, which §2.2 could not promise: Boats opens on 810
+items across 7 tables with Highfield at 588, and its related-block list gained
+**GFAB Trailers, on 3 of 7** — a block that appears because the data arrived,
+through the same derivation, with no code change.
+
+### 7.6 Three things full scale uncovered that the sample was hiding
+
+These are the reason this section is longer than a row count. None is invented;
+each was measured and each is now stated on the surface that shows it.
+
+**1. The rule engine was ordering horsepower alphabetically.** `compareValues`
+read `"10 HP"` with `Number()`, got `NaN`, and fell through to comparing the two
+sides as text — so `"8" > "10 HP"` and `"115" < "20 HP"`, both true
+lexicographically and both wrong about outboards. On 40 Highfield hulls the
+column profiled as numeric and this never fired. At 588 hulls, 31 of them carry
+a twin-rig plate (`"2 x 300 HP"`), the column is correctly TEXT, and the bug
+becomes the app's answer. **"Motor fitment — Highfield" was returning 63,232
+rows; it returns exactly 32,000 now, and the 31,232 that left were motors above
+the hull's own plate.** `src/lib/rules/evaluate.ts` parses a leading number with
+an optional unit — the same shape `tools/seed/gen_lib.py` parses out of the
+workbook — and refuses two different units, and refuses a twin rig, each with a
+sentence rather than a silent `false`. `src/lib/rules/measure.test.ts` pins it.
+
+**2. The walk's ceiling was below the real catalogue.** `MAX_PAIR_STEPS` was
+100,000. The motor rule needs 588 starts + 122,892 candidate tests + one visit
+per surviving pair — **187,300 steps, measured** — so it stopped two-thirds
+through. Worse, because the walk is breadth-first, it stopped *inside the match
+node*, so the output node never ran and the rule produced **nothing** while
+warning "the results below are only part of the answer" over an empty table.
+The cap is 500,000 (a step is ~2.7 µs, so the worst case is still bounded near
+1.4 s), and the warning now says which of the two happened.
+
+**3. `A1/F1` has counter-examples at this scale, and the seed says so.**
+`FITMENT_RULES.md` F1 measured 0 of 1,424 live slot-1/slot-2 motors above Max
+HP. Over the 2,519 Highfield × Yamaha pairings the seed now carries, **9 sit
+above the plate** — every one a Classic CL400 read `"50 HP"`, paired by the
+workbook with a Yamaha F60LC. The rule refuses them, which is what A1 admitted
+the ceiling for; whether the plate or the pairing is wrong is the dealer's call.
+A further **76** cannot be ordered at all (single-engine motor against a
+twin-rig plate) and **205** are ordered as text because *both* sides are twin
+rigs — right on all 205 by the shape of the strings rather than by arithmetic,
+which is exactly F1's case for decomposing Max HP at import. **2,434 of 2,519
+are offered.** All of it is in the seeded rule's own description, on screen.
+
+### 7.7 What the fitment suite gained: the specification, reproduced
+
+`trailerFitment.test.ts` used to open by explaining that the seed was "a curated
+sample of 145 live trailers out of 434, so counts differ and RATES do not". It
+no longer has to. The seed carries all 434 live trailers and all 810 live hulls,
+and `FITMENT_RULES.md`'s own figures come back exactly:
+
+- a Highfield hull is left **12 of 434** trailers — the **2.76 %** F8 measured;
+- the per-brand spread is **0.92 %–7.83 %** — the range F8 quotes, to the
+  decimal, Merry Fisher at the bottom and Stacer at the top;
+- **626 of 626** testable live pairings hold, zero counter-examples;
+- the ATM floor is evaluable on **351 of 351** pairings and holds on all of
+  them, while leaving a mean **94.23 %** of the catalogue standing — which is
+  why it is a floor and not a selector.
+
+The suite's share bound was tightened from 0.14 to **0.08** accordingly: there
+is no longer a sample to allow for.
+
+### 7.8 The photographs are the one thing NOT finished, and it is deliberate
+
+The catalogue now carries **453 distinct image addresses**, up from 184. The
+measurement in `tools/seed/extracts/images.json` covers the original 184 — 108
+obtained, 76 refused — so **234 addresses have no answer of any kind**. That
+figure is now:
+
+- computed by `emit_images.py` from the assembled tables, so it cannot drift;
+- exported as `NORTHSIDE_PICTURES.unmeasured` and written into the generated
+  file's own header;
+- printed by `python tools/seed/emit.py` on every run, with the command that
+  clears it;
+- guarded by `northsideImages.test.ts`, which fails if it moves.
+
+An unmeasured address behaves **exactly** as a refused one: the row keeps the
+manufacturer's address, the app draws "Held as a link", and nothing is
+substituted. Clearing it means a few hundred requests to nine third-party
+servers, which is somebody's decision and not a side effect of a regeneration.
+Run `python tools/seed/fetch_images.py`; it fetches only what is missing.
+
+### 7.9 What §6's open questions look like now
+
+Question 1 (obsolete boats) is **unchanged** — nothing here touched the probe
+caps, so the 1,193 obsolete SKUs are still outside the extract and still a
+decision for the owner.
+
+Question 2 (the unresolvable motor names) is **unchanged in kind and larger in
+evidence**: the row-band cap of §1.5 is now stated on the motor tables' own
+`desc`, counted at run time — Yamaha carries 238 rows by `Motor Library!Q` and
+209 by the row band, and 5 of the 29 outside are named by live boat rows
+(`R549`, `R550`, `R555`, `R557`, `R559`) and are named there too. Switching the
+selection to `by="supplier"` would change which rows the fitment joins resolve
+against and is a research question, not a knob.
+
+Question 3 (parts beyond reachability) is **unchanged**, and the `parts` table's
+own `desc` now says how many are left out (2,879) and why, and points at this
+document rather than implying the number is a sampling accident.

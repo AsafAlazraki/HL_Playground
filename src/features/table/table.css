@@ -146,151 +146,28 @@
   background: var(--paper);
 }
 
-.tb-toolbar {
-  flex: none;
-  display: flex;
-  /* the stage narrows when the review rail opens — the actions drop to
-     a second line rather than being amputated by .tb-root's overflow */
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-4);
-  background: var(--paper-high);
-  border-bottom: 1px solid var(--hairline);
-}
+/* ------------------------------------------------------------
+   THE TOOLBAR IS GONE FROM THIS FILE, AND SO ARE ITS RULES.
 
-/* -- search ------------------------------------------------- */
+   `.tb-toolbar`, `.tb-search*`, `.tb-chip` layout, `.tb-actions`,
+   `.tb-del-btn:disabled` and `.tb-why` all styled ONE component,
+   `TableToolbar.tsx`, which no longer exists: every control it drew is
+   published to the floating action bar above the dock instead (see
+   `src/lib/actions.ts`, `src/app/ActionBar.tsx`, and the header of
+   `TableSheet.tsx`). Nothing was removed — the search, the chips, the
+   whole-table controls, the refusals and the row commands are all
+   still there, in one place, on every stage rather than on this one.
 
-.tb-search {
-  flex: 0 1 236px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-width: 130px;
-  height: 30px;
-  padding: 0 var(--sp-2);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-sunken);
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft);
-}
-.tb-search:hover {
-  border-color: var(--hairline-strong);
-}
-.tb-search:focus-within {
-  border-color: var(--blue);
-  background: var(--paper-high);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-.tb-search-icon {
-  flex: none;
-  display: flex;
-  color: var(--ink-faint);
-}
-.tb-search-input {
-  flex: 1;
-  min-width: 0;
-  padding: 0 var(--sp-2);
-  border: none;
-  background: transparent;
-  font-size: 12.5px;
-  outline: none;
-}
-.tb-search-input::placeholder {
-  color: var(--ink-faint);
-}
-.tb-search-clear {
-  position: relative;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--ink-faint);
-  cursor: pointer;
-  transition:
-    color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft);
-}
-/* the cross stays 16px — a search box is not the place for a button
-   the size of a cell — but the POINTER gets 24×24 of it */
-.tb-search-clear::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-}
-.tb-search-clear:hover {
-  color: var(--red);
-  background: var(--red-wash);
-}
-
-/* -- filter chips ------------------------------------------- */
-
-.tb-chips {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.tb-chip {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  height: 24px;
-  padding: 0 var(--sp-2);
-  border: 1px solid var(--blue);
-  border-radius: var(--radius-sm);
-  background: var(--blue-wash);
-  color: var(--blue-deep);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.tb-chip:hover {
-  background: var(--red-wash);
-  border-color: var(--red);
-  color: var(--red);
-}
-.tb-chip-key {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.72;
-}
-.tb-chip-val {
-  max-width: 220px;
-  font-size: 11.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.tb-chip .tb-glyph {
-  width: 8px;
-  height: 8px;
-  opacity: 0.7;
-}
-.tb-chip-sort {
-  border-color: var(--hairline-strong);
-  background: var(--paper-sunken);
-  color: var(--ink-soft);
-}
+   WHAT STAYED, AND WHY. `.tb-whole*`, `.tb-count*` and `.tb-strip*`
+   below have a SECOND host — the expanded register card on the
+   blueprint (`EntityTableNode.tsx`) — which is not a stage and has no
+   action bar, so it still draws its own instruments on itself. That is
+   the arrangement `WholeTableControls.tsx` states in its own header,
+   and it is why those three families are not deleted with the rest.
+   The action bar's own chip is a different element with its own step,
+   declared once in `actionbar.css`, so nothing here needed to be kept
+   for it.
+   ------------------------------------------------------------ */
 
 /* -- seeing the whole table ---------------------------------
    Two controls, and they are the answer to "I want to see the entire
@@ -395,57 +272,6 @@
 }
 .tb-count-clear:hover {
   background: var(--blue-wash);
-}
-
-.tb-actions {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  /* keeps the actions in the same right-hand corner once they wrap */
-  margin-left: auto;
-}
-/* A DISABLED CONTROL STILL HAS TO BE READ, and this was the worst one
-   in the app: `opacity: 0.4` over `.btn:disabled`'s own 0.45 put
-   "Delete rows" at **2.62:1** on the live register at 1280 and 1920.
-   `--fg-quaternary` sits at 2.8:1 and DESIGN_CONTRACT says even that
-   may never carry meaning — so the label naming the one destructive act
-   on the page was below the line the contract draws for a TICK MARK.
-   How a person knows what is unavailable is by reading it.
-
-   Opacity is the wrong instrument for "not now": it fades the words,
-   which are the part that has to survive, and by an amount that depends
-   on whatever is behind the button. The state is said structurally
-   instead — a flat plate instead of a raised bezel, the ink one tier
-   down at `--ink-soft` (7.65:1 on `--paper-high`), no hover, no press —
-   and the REASON is printed beside it in `.tb-why`. Same treatment for
-   the primary "+ Row", which had the same 3.0:1 fault whenever a table
-   has no column to put a row in.
-   See modules.css for the identical call on `.md-stub .btn`. */
-.tb-actions .btn:disabled,
-.tb-del-btn:disabled {
-  opacity: 1;
-  color: var(--ink-soft);
-  background: var(--paper-high);
-  border-color: var(--hairline);
-}
-
-/* THE REFUSAL ITSELF — a sentence, in the place where the thing is
-   refused, which is DESIGN_CONTRACT §6.5 and rule 10. It sits in the
-   toolbar's own flow immediately before the actions it explains and is
-   absorbed by `.tb-chips`'s empty spacer, so it costs no width; it is
-   gone the moment the refusal is. Sentence case, a full stop, and the
-   dealer's noun — the voice the empty states use. */
-.tb-why {
-  flex: 0 1 auto;
-  min-width: 0;
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.35;
-  letter-spacing: 0;
-  color: var(--ink-soft);
-  text-wrap: balance;
 }
 
 /* ============================================================
@@ -2296,15 +2122,24 @@
   border-color: var(--blue);
 }
 
+/* HOW BIG THE PHOTOGRAPH IS — in the head strip, beside the count.
+   IT USED TO BE ABSOLUTELY POSITIONED OVER THE BOTTOM OF THE PICTURE,
+   and that was a contrast failure waiting for an occasion: `--ink-soft`
+   over an arbitrary photograph clears 4.5:1 against nothing anybody can
+   measure, and the occasion arrived the moment seeded pictures started
+   carrying a size (the caption had never been drawn before, because no
+   seeded ImageRef had `w`/`h`). Measured on a Stacer hero shot: dark
+   grey lettering over blue water, illegible.
+   Here it sits on `--paper-high` beside `.tb-lightbox-of`, which is the
+   same 11px mono in the same `--ink-soft` and is a pair the contract
+   has already measured. */
 .tb-lightbox-dim {
-  position: absolute;
-  right: var(--sp-4);
-  bottom: var(--sp-2);
+  flex: none;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-soft);
-  pointer-events: none;
+  white-space: nowrap;
 }
 
 /* -- painted values ------------------------------------------ */
@@ -3219,26 +3054,10 @@ body.tb-resizing {
   color: var(--ink);
 }
 
-/* THE TYPE CHIP lost its eight colours in the bridge; here it
-   loses its weight too. It is metadata about a column and has no
-   business competing with the column's name.
-   NOT 10.5px. That was the third thing in the app drawn under the
-   11px floor DESIGN_PRINCIPLES calls absolute, and it is the sort of
-   place it happens: the chip is metadata, so it was made quiet by
-   being made small. The floor does not have an exemption for
-   unimportant text — quiet comes from the mono face and --ink-soft,
-   which is what the note under `.tb-cell-sys` below already worked
-   out for the UID column. `.tb-chip-key` is a caption ("SORT",
-   "FILTER") and keeps its capitals; `.tb-chip-val` beside it is the
-   dealer's column name and already had its own 11.5px. */
-.tb-chip,
-.tb-chip-key {
-  border-radius: 4px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-}
+/* THE FILTER CHIP'S TYPE RULE went with the toolbar that drew it. The
+   argument it carried is not lost — it is the reason `.ab-chip-key` on
+   the action bar is 11px and not the 10.5px this one had to be
+   corrected up from. See `src/app/actionbar.css`. */
 
 /* ROWS GET AIR. The grid was tighter than a spreadsheet while
    claiming to be easier than one. */
@@ -3452,12 +3271,13 @@ body.tb-resizing {
    in src/styles/base.css — the shared foundation, not ours to re-cut
    for ~200 controls the redesign has not reached — so they are
    corrected here, beside the classes, exactly as modules.css:1518 did
-   for `.md-sec-name`. `.tb-actions .btn` catches the primary "+ Row",
-   which carries no class of its own.
+   for `.md-sec-name`. "DELETE ROWS" and "+ ROW" are no longer among
+   them: those two live on the action bar now, which sets its own type
+   and never inherits `.btn`.
 
    KEPT UPPERCASE, because all three are captions and captions are one
    of the sanctioned uses: `.tb-count-label` ("ROWS"), `.tb-th-sys-tag`
-   ("SYSTEM"), `.tb-strip-label` ("SECTIONS"), `.tb-chip-key`.
+   ("SYSTEM"), `.tb-strip-label` ("SECTIONS").
 
    TRACKING: +0.18em and +0.12em are the uppercase caption's tracking.
    DESIGN_CONTRACT §3 — tracking runs negative as size grows and
@@ -3503,8 +3323,6 @@ body.tb-resizing {
    Same declaration as the block below, not a new one, because these
    are the same kind of thing: a button with a word on it. */
 .tb-whole-btn,
-.tb-del-btn,
-.tb-actions .btn,
 .tb-menu-foot .btn {
   font-family: var(--font-ui);
   font-size: 12.5px;

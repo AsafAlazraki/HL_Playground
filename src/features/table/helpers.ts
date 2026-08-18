@@ -92,10 +92,82 @@ export const FIT_MIN_COL_W = 116
  *  property of a NARROW COLUMN, not of fit mode, so a column dragged
  *  down to 80px reads the same way. */
 export const TIGHT_COL_W = 112
-/** Rows rendered either side of the viewport while windowing. */
+/** Rows rendered either side of the viewport while windowing — the
+ *  CEILING, not the constant. See `rowOverscan` below: ten rows is 340
+ *  drawing units, which is more than a 250px card's scroller HOLDS, so
+ *  a flat ten made the overscan bigger than the window it was
+ *  protecting. */
 export const OVERSCAN = 10
-/** Below this many rows every row is rendered; above it we window. */
+
+/** Half a scroller either side, never more than `OVERSCAN` and never
+ *  less than two.
+ *
+ *  WHAT AN OVERSCAN IS FOR: a scroll must never show a gap before
+ *  React has caught up. What decides that is how far a gesture travels
+ *  between two paints, which is a distance in PIXELS — and half the
+ *  scroller is a generous reading of it on any size of window. On the
+ *  full-window sheet (a ~700px body, 20 lines) the answer is still the
+ *  ten it has always been, so nothing about the register changes. On a
+ *  250px card it is three, which is the whole point. */
+export function rowOverscan(bodyRoom: number, rowH: number): number {
+  if (!(bodyRoom > 0) || !(rowH > 0)) return OVERSCAN
+  return Math.max(2, Math.min(OVERSCAN, Math.round(bodyRoom / rowH / 2)))
+}
+
+/** Below this many rows every row is rendered; above it we window.
+ *
+ *  A FLOOR ON THE BOOKKEEPING, NOT THE WHOLE RULE — see
+ *  `shouldWindowRows`. */
 export const VIRTUALIZE_ABOVE = 150
+
+/* ============================================================
+   A ROW BELOW THE FOLD COSTS WHAT A ROW BELOW LINE 150 COSTS.
+
+   THE MEASUREMENT. `VIRTUALIZE_ABOVE` was written for the full-window
+   sheet, where 150 rows is about six screens and anything shorter is
+   drawn whole for nothing. On the blueprint the same register is a
+   404 x 249 card that shows SEVEN lines — and every table in the
+   Northside file is under 150 rows, so every card drew every row it
+   had. Measured on the seeded sheet at zoom 0.777, nine cards on
+   screen: 205 rows rendered to show about 63, and
+
+       205 rows  ->  565 sticky elements  ->  690 COMPOSITED LAYERS
+
+   because the frozen name cell and the row-number gutter are each
+   `position: sticky`, and Chrome gives every sticky element in a
+   scrolling box its own layer. A pan that mounts one card re-runs
+   Layerize over all 690, which traced at 275-911ms per gesture
+   against 17.6ms for the same pan over plates. It is not the fifty
+   plates and it is not the cell count: it is the LAYER count, and the
+   layer count is the rendered ROW count.
+
+   THE RULE, THEREFORE: window whenever the body does not fit its
+   scroller, whatever the row count. Above `VIRTUALIZE_ABOVE` we still
+   window unconditionally — a long table always overflows, and saying
+   so directly keeps the old behaviour exactly where it was. Below it,
+   a table that FITS is still drawn whole, which is the case the
+   constant was really protecting: windowing a 9-row card would be
+   bookkeeping for nothing.
+
+   NOTHING ABOUT THIS IS VISIBLE. A windowed row is one that is not on
+   screen; the scroller keeps its full height from `layout.bodyH`, so
+   the bar is the same length and lands in the same place.
+   ============================================================ */
+export function shouldWindowRows(
+  rowCount: number,
+  /** the body's own height in drawing units (`layout.bodyH`) */
+  bodyH: number,
+  /** what the scroller can show below the frozen header */
+  bodyRoom: number,
+  rowH: number,
+): boolean {
+  if (rowCount > VIRTUALIZE_ABOVE) return true
+  /* not measured yet — say no rather than window against a guess */
+  if (!(bodyRoom > 0)) return false
+  /* one row of slack: a body that overflows by less than a line is a
+     rounding difference, not a fold */
+  return bodyH > bodyRoom + rowH
+}
 /** Columns drawn either side of the window, per row.
  *
  *  Rows were windowed and columns never were, which is how a 520px

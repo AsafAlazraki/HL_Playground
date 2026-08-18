@@ -149,22 +149,66 @@ def disc_after(cols, after_key, d):
     """
     i = next(i for i, c in enumerate(cols) if c["k"] == after_key)
     cols.insert(i + 1, dict(k=DISC_K, n="Discontinued", t="boolean", s=cols[i]["s"], d=d))
+
+
+# ============================================================
+# THE THREE VALUES A `budget` MAY TAKE, AND WHAT EACH ONE MEANS.
+#
+# `budget` caps how many rows a brand band contributes. Three
+# round-robin loops (:boats, :trailers, :motors) spend it one row per
+# SERIES at a time, so a capped sample spreads across a brand's ranges
+# instead of taking the first N rows off the top of the sheet.
+#
+#   ALL   take the whole band. The loop stops when the series are
+#         exhausted rather than when a number is reached, so the table
+#         is the workbook's own band and the `desc` line reads
+#         "N of N". This is what every live catalogue now carries.
+#
+#   0     REACHABILITY ONLY — and this is not "none". `chosen` is
+#         pre-seeded from `forced_names` before the loop runs, so a
+#         zero-budget table gets exactly the rows a seeded hull points
+#         at and nothing else. It is how the packages, the obsolete
+#         trailers, the obsolete half of the rigging kits and the
+#         dealer-fit packages are scoped, and it is the standing
+#         policy of FITMENT_RULES.md §5.7: import what the catalogue
+#         actually names, not the whole library behind it. Those
+#         tables grow on their own when the boat bands grow, which is
+#         exactly what happened here.
+#
+#   a number   a deliberate sample. NOTHING USES ONE ANY MORE. Every
+#         live band was capped at 12-40 while the seed was a curated
+#         fraction of Northside's price file; the caps are lifted and
+#         the numbers are kept in this comment only so that a person
+#         reading a small table knows to look for a 0 rather than
+#         suspecting a forgotten literal. The old values were:
+#         boats — stacer 26 · stabicraft 30 · surtees 25 · jeanneau 24
+#         · haines 12 · highfield 40 · formosa 26; trailers — redco 16
+#         · nsmcustom 18 · gfab 14 · stacertrailers 14 · dunbier 16 ·
+#         mackay 16 · bmt 12; motors — yamaha 26 · epropulsion 14.
+#
+# The zero-budget bands are deliberately NOT lifted. Raising them
+# would overturn §5.7, which is adjudicated research and not a size
+# decision (SEED_AT_FULL_SCALE.md §4.3 records what that would buy:
+# 2,879 parts and 1,707 dealer-fit packages no seeded hull names).
+# ============================================================
+ALL = 10 ** 9
+
 BOAT_BRANDS = [
-    dict(key="stacer", name="Stacer", hdr=3, r0=4, r1=142, mode="series", budget=26),
-    dict(key="stabicraft", name="Stabicraft", hdr=143, r0=144, r1=199, mode="series", budget=30),
-    dict(key="surtees", name="Surtees", hdr=200, r0=201, r1=225, mode="series", budget=25),
+    dict(key="stacer", name="Stacer", hdr=3, r0=4, r1=142, mode="series", budget=ALL),
+    dict(key="stabicraft", name="Stabicraft", hdr=143, r0=144, r1=199, mode="series", budget=ALL),
+    dict(key="surtees", name="Surtees", hdr=200, r0=201, r1=225, mode="series", budget=ALL),
     # JEANNEAU IS ONE BRAND. The workbook gives Merry Fisher and Cap Camarat
     # their own banner rows, but they are Jeanneau RANGES, not manufacturers —
     # so they are SERIES inside one Jeanneau table, not three tables. `spans`
     # lets a brand be assembled from several banner blocks, each contributing
     # its own header row and its own series name.
-    dict(key="jeanneau", name="Jeanneau", hdr=226, mode="spans", budget=24,
+    dict(key="jeanneau", name="Jeanneau", hdr=226, mode="spans", budget=ALL,
          spans=[dict(hdr=226, r0=227, r1=232, series=""),
                 dict(hdr=233, r0=234, r1=247, series="Merry Fisher"),
                 dict(hdr=248, r0=249, r1=261, series="Cap Camarat")]),
-    dict(key="haines", name="Haines Signature", hdr=262, r0=263, r1=277, mode="series", budget=12),
-    dict(key="highfield", name="Highfield Inflatables", hdr=278, r0=281, r1=948, mode="hf", budget=40),
-    dict(key="formosa", name="Formosa", hdr=955, r0=956, r1=1004, mode="flat", budget=26),
+    dict(key="haines", name="Haines Signature", hdr=262, r0=263, r1=277, mode="series", budget=ALL),
+    dict(key="highfield", name="Highfield Inflatables", hdr=278, r0=281, r1=948, mode="hf", budget=ALL),
+    dict(key="formosa", name="Formosa", hdr=955, r0=956, r1=1004, mode="flat", budget=ALL),
 ]
 HF_SERIES = [("Coaster", "Coaster"), ("ADV", "Adventure"), ("SP", "Sport"), ("CL", "Classic"),
              ("PA", "Patrol"), ("UL", "Ultralite"), ("RU", "Roll-Up")]
@@ -330,13 +374,13 @@ T_BANDS = [
     ("registration", "Registration", ["BY", "BZ", "CA"]),
 ]
 T_BRANDS = [
-    dict(key="redco", name="REDCO / Tinka Trailers", r0=4, r1=85, budget=16),
-    dict(key="nsmcustom", name="NSM Custom Trailers", r0=87, r1=184, budget=18),
-    dict(key="gfab", name="GFAB Trailers", r0=186, r1=231, budget=14),
-    dict(key="stacertrailers", name="Stacer Trailers", r0=232, r1=280, budget=14),
-    dict(key="dunbier", name="Dunbier Trailers", r0=281, r1=454, budget=16),
-    dict(key="mackay", name="Mackay Trailers", r0=455, r1=625, budget=16),
-    dict(key="bmt", name="Dunbier / Haines BMT Trailers", r0=626, r1=655, budget=12),
+    dict(key="redco", name="REDCO / Tinka Trailers", r0=4, r1=85, budget=ALL),
+    dict(key="nsmcustom", name="NSM Custom Trailers", r0=87, r1=184, budget=ALL),
+    dict(key="gfab", name="GFAB Trailers", r0=186, r1=231, budget=ALL),
+    dict(key="stacertrailers", name="Stacer Trailers", r0=232, r1=280, budget=ALL),
+    dict(key="dunbier", name="Dunbier Trailers", r0=281, r1=454, budget=ALL),
+    dict(key="mackay", name="Mackay Trailers", r0=455, r1=625, budget=ALL),
+    dict(key="bmt", name="Dunbier / Haines BMT Trailers", r0=626, r1=655, budget=ALL),
     # A6's TWIN. Trailer Module!A656 reads "OBSOLETE" and C656 "OBSOLETE
     # TRAILERS - Trailers No Longer Available" at 14pt bold — the same divider
     # mechanism the Boat Module uses at row 1005, asserted the same way. These
@@ -468,8 +512,8 @@ M_BANDS = [
     ("bundled", "Bundled Accessories", ["FF", "FG", "FI"]),
 ]
 M_BRANDS = [
-    dict(key="yamaha", name="Yamaha Outboards", r0=5, r1=293, budget=26, supplier="Yamaha"),
-    dict(key="epropulsion", name="ePropulsion Outboards", r0=294, r1=341, budget=14,
+    dict(key="yamaha", name="Yamaha Outboards", r0=5, r1=293, budget=ALL, supplier="Yamaha"),
+    dict(key="epropulsion", name="ePropulsion Outboards", r0=294, r1=341, budget=ALL,
          supplier="EPROPULSION - Electric Outboards"),
     # THESE TWO ARE NOT MOTOR TABLES, and the kind says so. Their rows are
     # boat+engine bundles — "SIG 620BRX w Yamaha - F200XSA2 (White)",
@@ -585,14 +629,68 @@ def build_motors(forced_names):
                     f"contaminates the real motors (FITMENT_RULES.md §1.3, §1.5, §5.1). ")
         else:
             where = f"rows {b['r0']}–{b['r1']}. "
+            # "209 of 209 seeded" IS TRUE OF THE BAND AND READS AS COMPLETE.
+            # It is not complete. This band is selected by a ROW RANGE while
+            # the sheet's own answer to "is this a Yamaha" is Motor Library!Q,
+            # the Supplier column — the same column the two package tables above
+            # are selected BY, and for the reason stated there: the workbook does
+            # not keep a supplier's rows together. Yamaha's run to R564 and
+            # ePropulsion's to R589, past the end of both bands.
+            #
+            # While every band was capped this was invisible — "83 of 209" told
+            # a reader the table was a sample and they went looking. Lifting the
+            # cap is what makes the sentence dangerous, so the sentence now
+            # measures the gap instead of hiding behind the band.
+            #
+            # NOT SILENTLY FIXED BY SWITCHING TO `by="supplier"`. That would
+            # change which rows the fitment joins resolve against, and the
+            # Motor Library carries 27 duplicate display names whose ownership
+            # between these tables and the two package tables is what
+            # gen_all's own partner-claim assertion protects (FITMENT_RULES.md
+            # §1.5, §5.1 J7/J8). It is a research question with a measured
+            # cost, recorded at SEED_AT_FULL_SCALE.md §1.5 and §6, not a knob.
+            sup = b.get("supplier")
+            outside = sorted(r for r, v in MDATA.items()
+                             if v.get("Q") and norm(v["Q"]) == sup and not (b["r0"] <= r <= b["r1"]))
+            named = [r for r in outside if norm(MDATA[r].get("C") or "") in forced_names]
             what = ""
+            if outside:
+                what = (f"SELECTED BY THE ROW BAND, NOT BY Motor Library!Q. {len(rows_all) + len(outside)} rows "
+                        f"carry Supplier “{sup}” and {len(outside)} of them "
+                        f"({', '.join('R' + str(r) for r in outside[:6])}"
+                        f"{' …' if len(outside) > 6 else ''}) fall outside rows {b['r0']}–{b['r1']} and are NOT "
+                        f"in this table. ")
+                if named:
+                    what += (f"{len(named)} of those "
+                             f"({', '.join('R' + str(r) + ' “' + norm(MDATA[r]['C']) + '”' for r in named)}) "
+                             f"are named by a live boat row, so those fitment edges do not resolve and the "
+                             f"pairing is absent rather than wrong. ")
+                what += ("The band is what the generator has always read and changing it moves which rows the "
+                         "fitment joins resolve against, so it is recorded rather than quietly altered "
+                         "(SEED_AT_FULL_SCALE.md §1.5). ")
         tables.append(dict(key="mot_" + b["key"], name=b["name"], kind=b.get("kind", "motor"), role="base",
                            accent="carmine", levels=["series", "c"], sections=sections, cols=cols,
                            rows=rows, keycol="c", display="c",
                            desc=f"Motor Module · sheet “Motor Library” (header row 4), {where}"
                                 f"{what}"
                                 f"Motor Library!C is the primary key of the whole Master Price File — every other "
-                                f"workbook joins on this display name as free text. {len(rows)} of {len(rows_all)} seeded."))
+                                f"workbook joins on this display name as free text. {len(rows)} of "
+                                f"{len(rows_all)} seeded"
+                                f"{' — every row of the band above' if b.get('by') != 'supplier' and len(rows) == len(rows_all) else ''}"
+                                f"."
+                                # A ZERO BUDGET IS A POLICY AND HAS TO SAY SO.
+                                # "39 of 85 seeded" with nothing after it reads
+                                # like a sample somebody forgot to finish. It is
+                                # not: these tables take exactly the rows a
+                                # seeded hull names and no others, which is
+                                # FITMENT_RULES.md §5.7. Written from the budget
+                                # rather than typed, so it can only appear on a
+                                # table that really is scoped that way.
+                                + (f" The other {len(rows_all) - len(rows)} are absent BY REACHABILITY, not by "
+                                   f"sampling: this table takes exactly the rows a seeded hull's motor slot "
+                                   f"names and no others (FITMENT_RULES.md §5.7). A bundle nothing points at "
+                                   f"has nothing in this set to belong to; seed the hull and it arrives."
+                                   if b["budget"] == 0 and len(rows) < len(rows_all) else "")))
     return tables
 
 
@@ -699,17 +797,34 @@ def build_parts(forced_names):
 
     ncat = len({cat_of.get(r) for r in sel})
     ndisc = sum(1 for r in rows if r[DISC_K])
+    # Counted, not quoted. The desc used to carry a literal "216 category
+    # banners"; SEED_AT_FULL_SCALE.md §2.1 counts 217 from the same extract.
+    # Neither is worth defending by hand, and neither is what a reader wants:
+    # `nbanner` is banner ROWS (a category can be banner'd more than once) and
+    # `len(cats)` is DISTINCT category names, which is the thing `ncat` is a
+    # fraction of. Both are counted from the index this function just built, so
+    # the sentence reports what this run actually saw.
+    nbanner = sum(1 for r in sorted(PDATA) if r > 2 and PDATA[r].get("C") and not PDATA[r].get("E"))
+    all_parts = [r for rows_ in cats.values() for r in rows_]
     return [dict(key="parts", name="Parts & Accessories", kind="accessory", role="base",
                  accent="viridian", levels=["cat", "c"], sections=sections, cols=cols, rows=rows,
                  keycol="c", display="c",
                  desc=f"Parts Module (3).xlsx · sheet “Parts Maintenance”. Category is a banner ROW, never a field: "
                       f"everything under a banner belongs to it until the next one. {len(rows)} parts seeded from "
-                      f"{ncat} of the 216 category banners — the ones the seeded hulls actually name, in their "
+                      f"{ncat} of the {len(cats)} categories the sheet names ({nbanner} banner rows carry them) "
+                      f"— the ones the seeded hulls actually name, in their "
                       f"single-valued columns (Standard Safety Gear, PFD Type, Anchor Kit, Tie Downs) and in the "
                       f"ten-slot P/D band at Boat Module!JT..KC. Boat Module!JT..KC resolves into THIS sheet's "
-                      f"column C at 99.59% over all 5,918 populated cells. {ndisc} of them sit below the "
-                      f"OBSOLETE PARTS divider at C{PARTS_OBSOLETE_ROW} and are marked Discontinued — kept, "
-                      f"because a live hull still names them, and never offered.")]
+                      f"column C at 99.59% over all 5,918 populated cells. "
+                      f"{ndisc} {'of them sits' if ndisc == 1 else 'of them sit'} below the "
+                      f"OBSOLETE PARTS divider at C{PARTS_OBSOLETE_ROW} and "
+                      f"{'is' if ndisc == 1 else 'are'} marked Discontinued — kept, "
+                      f"because a live hull still names {'it' if ndisc == 1 else 'them'}, and never offered. "
+                      f"The other {len(all_parts) - len(rows)} parts in the library are NOT here, and that is "
+                      f"the reachability policy of FITMENT_RULES.md §5.7 rather than a sampling cap: a part no "
+                      f"seeded hull names has nothing in this set to belong to. Selling a part off the shelf "
+                      f"that no boat's P/D band lists is a real requirement if the dealer has it, and it is "
+                      f"raised as one in SEED_AT_FULL_SCALE.md §6 rather than settled by a size decision.")]
 
 
 # ============================================================ DEALER FIT

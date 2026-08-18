@@ -28,6 +28,16 @@
    view's idempotency by root table) consistent instead of hand-built.
    Constraints go home through `registerConstraints`, the seam their own
    registry exports for exactly this.
+
+   AND THEY KEEP THEIR OWN IDS ON THE WAY BACK. Those two doors MINT, so
+   for as long as the design layer went home through them unchanged, a
+   restored page came back under a NEW id — and a quote keeps `viewId`
+   among the exactly two ids it is allowed to keep (see
+   features/quote/types.ts), so a dealer who restored a backup found
+   every quote's "make another like this one" pointing at a page that no
+   longer existed. Both doors now take a `keepId` that a RESTORE passes
+   and a MERGE does not; `restoreDesign`'s `fresh` flag is the whole of
+   that distinction, and the note there says why both answers are right.
    ============================================================ */
 
 import { OUT_HANDLE } from '@/types/model'
@@ -510,7 +520,16 @@ function restoreDesign(
        no row to open it on and nothing for its blocks to hang off */
     if (!rootTableId) continue
     const blocks = remapBlocks(v.blocks, m, fresh)
-    const record = store().createView(rootTableId, v.name)
+    /* A RESTORED PAGE KEEPS ITS OWN ID; A MERGED ONE MUST NOT.
+       `fresh` is the whole distinction: on a replace this file IS the
+       sheet, so every id in it is free and a page that came back under
+       a new one would orphan every quote that names it (a quote keeps
+       `viewId` — features/quote/types.ts). On a merge the same file is
+       being added BESIDE work that is already here, and reissuing is
+       the only thing that keeps two copies of one backup from
+       colliding. So the id is offered on one path and withheld on the
+       other, and `createView` refuses it anyway if it is taken. */
+    const record = store().createView(rootTableId, v.name, fresh ? undefined : v.id)
     store().updateView(record.id, { name: v.name, blocks })
     viewIdMap.set(v.id, record.id)
     restored.push({ id: record.id, name: v.name, blocks, from: v })
@@ -525,7 +544,13 @@ function restoreDesign(
        take a name from and nowhere for the card to lead — the module
        is not imported at all rather than imported broken */
     if (tableIds.length === 0) continue
-    const made = store().createModule(tableIds, mod.name, mod.description)
+    const made = store().createModule(
+      tableIds,
+      mod.name,
+      mod.description,
+      /* same rule as the page above — see the note there */
+      fresh ? undefined : mod.id,
+    )
     /* the store refuses a master that cannot be one (a join records
        pairs and is not a place to stand) — its rule, kept, not copied */
     if (!made) continue

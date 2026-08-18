@@ -136,7 +136,7 @@ describe('the real seed survives a round trip through its own file', () => {
     if (!result.ok) return
     expect(result.data.entities).toHaveLength(before.tables)
     expect(rowsIn(result.data.rows)).toBe(before.rows)
-    /* 3,566 rows across 52 tables is the seed as measured; a trip that
+    /* 11,116 rows across 53 tables is the seed as measured; a trip that
        silently halved it would still pass a "more than zero" check */
     expect(before.rows).toBeGreaterThan(3000)
   })
@@ -191,7 +191,7 @@ describe('the real seed survives a round trip through its own file', () => {
     if (!result.ok) return
     /* the seed retires "OBSOLETE Trailers — No Longer Available". The
        import used to drop the flag, so Home went from counting 50 of
-       52 tables to counting 52 — the app offering discontinued
+       53 tables to counting 53 — the app offering discontinued
        trailers to a customer because a file went out and came back. */
     expect(wasRetired.length).toBeGreaterThan(0)
     expect(result.data.entities.filter((e) => e.retired === true).map((e) => e.name)).toEqual(

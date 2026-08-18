@@ -41,18 +41,51 @@ import {
 } from '@/types/model'
 import { defaultColumns } from '@/features/views/columns'
 import { registerViewDef } from '@/features/views'
+import { buildConcepts } from '@/features/constraints/columns'
 import { nowIso } from '@/lib/id'
 import { imageFieldOf, priceReadOf, type PriceRead } from './read'
+import { RULE_CAPABILITY, RULE_CAPABILITY_META } from './ruleCapability'
 
 /* ---------------------------------------------------------- */
 /* The verbs                                                  */
 /* ---------------------------------------------------------- */
 
+/** The nine verbs the contract carries, plus the one it does not yet.
+ *  See `ruleCapability.ts` for the exact line `MODULE_CAPABILITIES`
+ *  needs and why it is not written there this session. Everything
+ *  below this line treats all ten identically — only the two writers
+ *  (`ModuleDesigner`'s switch handler, and `capabilityStates`' third
+ *  argument) know one of them is stored somewhere else. */
+export type DesignerCapability = ModuleCapability | typeof RULE_CAPABILITY
+
+/** Every verb in the contract's own declaration order, with the tenth
+ *  spliced in where it will live: after `relate`, before `quote`.
+ *
+ *  STILL ITERATED FROM `MODULE_CAPABILITIES`, so a verb added there
+ *  appears here — and on the dashboard card, and on the index — without
+ *  this file changing. That is the property `capabilityStates` has
+ *  always had and it does not get traded away for one insertion. */
+export const DESIGNER_CAPABILITIES: DesignerCapability[] = (() => {
+  const out: DesignerCapability[] = []
+  for (const key of Object.keys(MODULE_CAPABILITIES) as ModuleCapability[]) {
+    if (key === 'quote') out.push(RULE_CAPABILITY)
+    out.push(key)
+  }
+  /* If `quote` is ever renamed away, the tenth verb still appears
+     rather than vanishing silently. */
+  if (!out.includes(RULE_CAPABILITY)) out.push(RULE_CAPABILITY)
+  return out
+})()
+
 /** What a capability that is SWITCHED ON but not yet performed will
  *  do when it is. Shared with the index's own stub strip, so the
  *  promise made on the switch and the promise made on the disabled
- *  control are the same sentence and can never drift apart. */
-export const NOT_YET_SAYS: Partial<Record<ModuleCapability, string>> = {
+ *  control are the same sentence and can never drift apart.
+ *
+ *  `configure` IS ABSENT FROM THIS RECORD ON PURPOSE — it is
+ *  performed, in the designer's fourth panel, which is the whole
+ *  point of the wave that added it. */
+export const NOT_YET_SAYS: Partial<Record<DesignerCapability, string>> = {
   add: 'Adding an item from here is not built yet — the sheet is where rows are made today.',
   edit: 'Editing from here is not built yet — the sheet is where data changes today.',
   delete: 'Removing an item from here is not built yet.',
@@ -62,7 +95,7 @@ export const NOT_YET_SAYS: Partial<Record<ModuleCapability, string>> = {
 }
 
 export interface CapabilityState {
-  key: ModuleCapability
+  key: DesignerCapability
   label: string
   /** the plain sentence the contract carries for this verb */
   says: string
@@ -80,18 +113,33 @@ export interface CapabilityState {
 /** Every verb in the contract's own order, with its state on this
  *  module. Iterated from MODULE_CAPABILITIES so a verb added there
  *  appears here — and on the dashboard card — without this file
- *  changing, and so nothing has to invent a name for one. */
+ *  changing, and so nothing has to invent a name for one.
+ *
+ *  `configures` is the tenth verb's state, which lives outside
+ *  `ModuleDef` for as long as `ModuleCapability` does not carry it.
+ *  It defaults to OFF, which is the same deliberate default
+ *  `DEFAULT_CAPABILITIES` sets for everything that writes. */
 export function capabilityStates(
   module: ModuleDef,
   tables: EntityDef[],
+  configures = false,
 ): CapabilityState[] {
   const gone = tables.length === 0
   const priced = tables.some((e) => priceReadOf(e) !== undefined)
   const browsing = module.capabilities.includes('browse')
 
-  return (Object.keys(MODULE_CAPABILITIES) as ModuleCapability[]).map((key) => {
-    const meta = MODULE_CAPABILITIES[key]
-    const on = module.capabilities.includes(key)
+  /* WHAT A RULE MAY TALK ABOUT, read through the sentence surface's
+     OWN vocabulary rather than a second opinion about it. A picture is
+     not a value anybody states in a sentence and a calculated total is
+     an outcome rather than a choice, so `buildConcepts` refuses both —
+     and a module whose tables carry nothing else has no rule to write. */
+  const ruleable = gone
+    ? []
+    : buildConcepts(Object.fromEntries(tables.map((e) => [e.id, e])))
+
+  return DESIGNER_CAPABILITIES.map((key) => {
+    const meta = key === RULE_CAPABILITY ? RULE_CAPABILITY_META : MODULE_CAPABILITIES[key]
+    const on = key === RULE_CAPABILITY ? configures : module.capabilities.includes(key)
     let refused: string | undefined
     let note: string | undefined
 
@@ -103,6 +151,12 @@ export function capabilityStates(
          unavailable" would send an admin looking for a setting on the
          module, and there is none: a price is a column on a table. */
       refused = `Nothing on ${tables[0].name} is marked as a price, so there is no figure to quote. Give the table a price column on the sheet and this switches on.`
+    } else if (key === RULE_CAPABILITY && ruleable.length === 0) {
+      /* SAME SHAPE AS THE QUOTE REFUSAL, AND THE SAME REASON. A rule
+         reads words, numbers, yes/no, dates and lists; a table of
+         pictures and totals gives a sentence nothing to name. The fix
+         is a column on the sheet, so the sentence says so. */
+      refused = `No column on ${tables[0].name} is one a rule can talk about — a rule reads words, numbers, yes/no, dates and lists, and a picture or a calculated total is an outcome rather than a choice. Give the table one of those columns on the sheet and this switches on.`
     }
 
     if (!refused && on) {
@@ -115,6 +169,21 @@ export function capabilityStates(
 
     return { key, label: meta.label, says: meta.says, on, refused, note }
   })
+}
+
+/** The verbs a module carries, as the WORDS a card prints, in the
+ *  contract's own declaration order — the tenth included.
+ *
+ *  THE DASHBOARD CARD AND THE INDEX MUST AGREE. The card used to map
+ *  `module.capabilities` directly, which was right while every verb
+ *  lived there; with one held outside it, a module whose index says
+ *  "Set rules" and whose card does not is the same class of lie as a
+ *  disabled control with no reason on it. One reader, so they cannot
+ *  drift while the tenth verb is waiting for the contract. */
+export function capabilityWords(module: ModuleDef, configures = false): string[] {
+  return DESIGNER_CAPABILITIES.filter((key) =>
+    key === RULE_CAPABILITY ? configures : module.capabilities.includes(key),
+  ).map((key) => (key === RULE_CAPABILITY ? RULE_CAPABILITY_META : MODULE_CAPABILITIES[key]).label)
 }
 
 /** The capability list after one switch moves, in the contract's own

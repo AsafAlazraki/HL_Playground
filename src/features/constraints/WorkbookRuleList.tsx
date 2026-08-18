@@ -42,6 +42,20 @@ export interface WorkbookRuleListProps {
    *  This list is the truth; the seed's own `blocked` is only a
    *  default for when the id is absent. */
   liveIds: ReadonlySet<string>
+  /** which of them to draw. Absent = all of them, which is what
+   *  BUSINESS RULES wants. A MODULE passes the ones naming a column of
+   *  a kind its own tables carry — the same rules, cut to the subject
+   *  a person is standing in. */
+  seeds?: readonly WorkbookRuleSeed[]
+  /** one sentence saying what the cut is and where the rest are.
+   *
+   *  REQUIRED WHENEVER `seeds` IS A SUBSET, and the reason is the
+   *  reason this whole file exists: a list that quietly drops six
+   *  rules tells a person the price file states ten, and they will
+   *  believe it. The count in the title is the count of what is
+   *  drawn, so without this line it is a true number about a set
+   *  nobody named. */
+  scope?: string
 }
 
 type Status =
@@ -75,19 +89,21 @@ function StatusMark({ status }: { status: Status }): ReactElement {
 }
 
 /** The workbook's own rules, all of them, with an honest status. */
-export function WorkbookRuleList({ liveIds }: WorkbookRuleListProps): ReactElement | null {
-  if (WORKBOOK_RULES.length === 0) return null
+export function WorkbookRuleList({
+  liveIds,
+  seeds = WORKBOOK_RULES,
+  scope,
+}: WorkbookRuleListProps): ReactElement | null {
+  if (seeds.length === 0) return null
 
-  const running = WORKBOOK_RULES.filter(
-    (s) => liveIds.has(s.id) || s.enforcedIn,
-  ).length
+  const running = seeds.filter((s) => liveIds.has(s.id) || s.enforcedIn).length
 
   return (
     <section className="cn-wb" aria-label="Rules found in your price file">
       <header className="cn-wb-head">
         <p className="cn-wb-eyebrow mono-label">From your price file</p>
         <h3 className="cn-wb-title">
-          {WORKBOOK_RULES.length} rules your workbook already states
+          {seeds.length} {seeds.length === 1 ? 'rule' : 'rules'} your workbook already states
         </h3>
         {/* NAMED THE ONE WORKBOOK, AND THERE ARE NOW FIVE. This read
             "Read out of Boat Module (5).xlsx" from the day six rules
@@ -98,14 +114,18 @@ export function WorkbookRuleList({ liveIds }: WorkbookRuleListProps): ReactEleme
             telling a person to go and check the wrong spreadsheet. */}
         <p className="cn-wb-lede">
           Read out of your price file — each one traced to the cell that says it, on the
-          line under the rule. {running} of {WORKBOOK_RULES.length} are being checked. The
+          line under the rule. {running} of {seeds.length} are being checked. The
           rest are listed so you know what is <em>not</em> being checked, which is the part
           you would otherwise have to guess.
         </p>
+        {/* WHAT THE CUT IS, WHEN THERE IS ONE. Drawn as a second lede
+            rather than folded into the first, so the sentence about
+            provenance stays the sentence about provenance. */}
+        {scope ? <p className="cn-wb-lede">{scope}</p> : null}
       </header>
 
       <ul className="cn-wb-list">
-        {WORKBOOK_RULES.map((seed) => {
+        {seeds.map((seed) => {
           const status = statusOf(seed, liveIds)
           return (
             <li key={seed.id} className={`cn-wb-item is-${status.key}`}>

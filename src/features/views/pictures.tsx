@@ -77,7 +77,7 @@ interface PaintedProps {
 /** One picture, or nothing at all. There is no third outcome on this
  *  page: no placeholder, no frame, no filename. */
 function Painted({ img, alt, className, w, h }: PaintedProps): ReactElement | null {
-  const { paint, probe } = useImageDisplay(img.src)
+  const { paint, probe, at } = useImageDisplay(img.src)
   /* NOT a plate, not a frame, not the filename — nothing. On the page
      that sells the boat there is nobody to fix a broken address, so
      the header and the row read exactly as they did before pictures
@@ -87,7 +87,9 @@ function Painted({ img, alt, className, w, h }: PaintedProps): ReactElement | nu
   return (
     <img
       className={className}
-      src={img.src}
+      /* the copy the repository holds when there is one — see
+         `useImageDisplay`. The record keeps the maker's address. */
+      src={at}
       alt={alt}
       /* the box is reserved before the bytes arrive, so a picture
          landing late never moves the row it sits in */

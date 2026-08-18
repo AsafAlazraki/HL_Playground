@@ -2,18 +2,19 @@
    THE FOUR THINGS "FIND ANYTHING" GOT WRONG, AT FULL SCALE.
 
    `rowSearch.test.ts` next door proves the rules on synthetic
-   fixtures. This file proves them on the real prepared file — 52
-   tables, 27 of them pair lists, 3,566 rows — because every one of
-   the four defects was invisible at fixture size and obvious at
-   this one:
+   fixtures. This file proves them on the real prepared file — 53
+   tables, 28 of them pair lists, 11,116 rows, of which 8,679 are pair
+   rows — because every one of the four defects was invisible at
+   fixture size and obvious at this one:
 
-     1. all 27 pair lists were doors, so `crossfire` answered with
+     1. all the pair lists were doors, so `crossfire` answered with
         two boats and then twenty rows of pair records;
      2. the retired table was offered as an ordinary result, reading
         "10 rows" beside live stock;
      3. picking a row never carried the row;
      4. the count said 52 while Home's header and the dock badge
-        both said 50.
+        both said 50. (51 of 53 today; the invariant is what is
+        asserted, not the figure.)
 
    The assertions are INVARIANTS wherever a number would do, because
    the seed is a living document: "no answer is ever a live pair

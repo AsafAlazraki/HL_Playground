@@ -23,15 +23,12 @@ import type { CSSProperties, ReactElement } from 'react'
 import { useMemo } from 'react'
 import { Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
-import {
-  accentVar,
-  MODULE_CAPABILITIES,
-  type EntityDef,
-  type ModuleDef,
-} from '@/types/model'
+import { accentVar, type EntityDef, type ModuleDef } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import { moduleHeldCount, moduleRowCount, moduleTables } from './read'
+import { capabilityWords } from './designer'
+import { useModuleConfiguresRules } from './ruleCapability'
 import './modules.css'
 
 export interface DashboardProps {
@@ -195,6 +192,11 @@ function Card({
   tableCount,
   onOpen,
 }: CardProps): ReactElement {
+  /* The tenth verb, which does not live on `ModuleDef` yet. Read here
+     rather than passed in, so the dashboard's own list stays four
+     facts about a module and does not grow a fifth prop that
+     disappears the day the contract carries it. */
+  const configures = useModuleConfiguresRules(module.id)
   const style = { '--md-accent': accentVar(module.accent) } as CSSProperties
   return (
     <li>
@@ -250,13 +252,19 @@ function Card({
           <span className="md-card-from mono-label">{master.name}</span>
         )}
 
-        {/* THE VERBS, AS WORDS. Read from the model's own labels, so a
-            capability added there appears here without this file
-            changing — and so nothing has to invent a name for one. */}
+        {/* THE VERBS, AS WORDS. Read through `capabilityWords`, which
+            iterates the contract's own labels — so a capability added
+            there appears here without this file changing, nothing has
+            to invent a name for one, and the card says the same list
+            the module's index says. That last part is why this is not
+            `module.capabilities.map` any more: one verb is held
+            outside the type until the contract carries it, and a card
+            that quietly omitted it would promise less than the place
+            it opens onto. */}
         <span className="md-card-verbs">
-          {module.capabilities.map((c) => (
-            <span className="md-verb mono-label" key={c}>
-              {MODULE_CAPABILITIES[c].label}
+          {capabilityWords(module, configures).map((word) => (
+            <span className="md-verb mono-label" key={word}>
+              {word}
             </span>
           ))}
         </span>

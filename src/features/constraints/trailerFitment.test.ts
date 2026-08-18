@@ -11,22 +11,41 @@
 
    So every number below is re-measured from src/demos/northside.ts on
    every run, and the specification's own figure is quoted beside it.
-   Where the seed and the workbook differ the reason is stated — the
-   seed is a curated sample of 145 live trailers out of 434, so counts
-   differ and RATES do not.
+
+   THE COUNTS AND THE SPECIFICATION'S NOW AGREE, WHICH THEY DID NOT.
+   This file used to say "the seed is a curated sample of 145 live
+   trailers out of 434, so counts differ and RATES do not". The seed is
+   at full scale (SEED_AT_FULL_SCALE.md §2.2): all 434 live trailers,
+   all 810 live hulls. So FITMENT_RULES.md's own figures are now
+   reproduced rather than approximated — a Highfield hull is left
+   12 of 434, which is the 2.76 % the adjudication measured, and the
+   per-brand spread is 0.92 %–7.83 %, which is the range it quotes.
+   Where a number below differs from the specification's, that is now
+   a real disagreement and not a sampling artefact.
 
    THE THREE THINGS THIS SUITE EXISTS TO PROVE
    ─────────────────────────────────────────────────────────────
-     1 · the series banner selects, and it is doing so — 308 of 308
-         testable live pairings, and a Highfield hull is left 2 of 145
+     1 · the series banner selects, and it is doing so — 626 of 626
+         testable live pairings, and a Highfield hull is left 12 of 434
          trailers rather than the catalogue;
      2 · the ATM floor warns and never filters — the same selection
-         comes back with the floor and without it, on all 174 hulls;
+         comes back with the floor and without it, on all 810 hulls;
      3 · there is no trailer length rule anywhere — asserted against
          the selector's own source text, and against the refutations
          still standing in workbookRules.ts.
    ============================================================ */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+/* THIS SUITE IS SLOWER THAN THE DEFAULT ALLOWS, ON PURPOSE. Every
+   assertion re-measures the selector against the WHOLE seed rather
+   than a fixture — 810 live hulls against 434 live trailers — which
+   is the only way a silent rot in the rule gets caught. At the
+   curated sample that fitted inside vitest's 5s default; at full
+   scale (SEED_AT_FULL_SCALE.md) four of the thirty-six do not, and a
+   guard that times out is a guard that is switched off. The work is
+   legitimately three times bigger, so the allowance grows with it.
+   Measured: the slowest is ~10s, so 60s is room, not a mask. */
+vi.setConfig({ testTimeout: 60_000 })
 import selectorSource from '@/features/constraints/trailerFitment.ts?raw'
 import { buildNorthsideProject } from '@/demos/northside'
 import { readCell } from '@/types/model'
@@ -172,7 +191,15 @@ describe('the marques come out of the project, not out of a list', () => {
 
   it('quotes the banner verbatim so the derivation can be checked by eye', () => {
     const highfield = marques.find((m) => m.name === 'Highfield')
-    expect(highfield?.banners).toEqual(['REDCO - Highfield'])
+    /* TWO banners, and the second arrived with the data rather than
+       with a code change: "GFAB - Highfield Series" is a real GFAB
+       Trailers heading that no seeded Highfield hull could reach while
+       Highfield carried 40 of its 588 SKUs. Sorted, so the assertion
+       does not depend on table order. */
+    expect([...(highfield?.banners ?? [])].sort()).toEqual([
+      'GFAB - Highfield Series',
+      'REDCO - Highfield',
+    ])
     const haines = marques.find((m) => m.name === 'Haines')
     /* Trailer Module!A626 in the workbook; the seed carries its three
        sub-series banners */
@@ -187,8 +214,11 @@ describe('the marques come out of the project, not out of a list', () => {
 describe('the series banner is the selector', () => {
   it('holds on every testable live pairing in the seed', () => {
     /* FITMENT_RULES.md F8: 581 of 581 testable live pairings, 0
-       counter-examples; independently 615/615 on a wider cut. The
-       seed's equivalent, re-measured here every run. */
+       counter-examples; independently 615/615 on a wider cut. The seed
+       carries the whole live catalogue now, and re-measured here every
+       run it is 626 of 626 — the same finding over a slightly wider
+       set of pairings than either adjudicated cut, and still not one
+       counter-example. */
     let hit = 0
     let testable = 0
     for (const join of trailerJoins) {
@@ -201,23 +231,27 @@ describe('the series banner is the selector', () => {
         if (result.selected.some((v) => v.rowId === pair.trailerRowId)) hit += 1
       }
     }
-    expect(testable).toBe(308)
+    expect(testable).toBe(626)
     expect(hit).toBe(testable)
   })
 
   it('holds per brand, at the rate the adjudication measured', () => {
     /* Per-brand 100 % in FITMENT_RULES.md §1.2 — Highfield 197/197,
        Stacer 142/142, Stabicraft 121/121, Surtees 29/29, Formosa
-       92/92. The counts here are the seed's sample of the same
-       pairings; the RATE is what has to survive. */
+       92/92. At full scale three of those five come back exactly —
+       Stacer 142, Surtees 29, Formosa 92 — and Highfield's 197 arrives
+       as 146 + 51, because the seed splits that brand's pairings
+       across the two trailer tables its hulls actually name. The RATE
+       is what has to survive, and it is 100 % on every one. */
     const expected: Record<string, number> = {
-      'Highfield × NSM Custom — Trailer Fitment': 18,
-      'Stacer × Stacer Trailers — Trailer Fitment': 46,
-      'Formosa × NSM Custom — Trailer Fitment': 71,
-      'Stabicraft × NSM Custom — Trailer Fitment': 69,
+      'Highfield × NSM Custom — Trailer Fitment': 146,
+      'Stacer × Stacer Trailers — Trailer Fitment': 142,
+      'Formosa × NSM Custom — Trailer Fitment': 92,
+      'Stabicraft × NSM Custom — Trailer Fitment': 84,
       'Surtees × NSM Custom — Trailer Fitment': 29,
       'Jeanneau × NSM Custom — Trailer Fitment': 16,
-      'Stabicraft × GFAB — Trailer Fitment': 30,
+      'Highfield × GFAB — Trailer Fitment': 51,
+      'Stabicraft × GFAB — Trailer Fitment': 37,
       'Surtees × GFAB — Trailer Fitment': 11,
       'Haines Signature × Dunbier/Haines BMT — Trailer Fitment': 18,
     }
@@ -240,18 +274,21 @@ describe('the series banner is the selector', () => {
 
   it('leaves a Highfield hull Highfield trailers, not the catalogue', () => {
     /* THE POINT OF THE WHOLE FILE. F8 leaves 0.92–7.83 % of the 434
-       live trailers standing — Highfield 12 of 434 = 2.76 %. Measured
-       on the seed's 145 live trailers: 2, which is 1.38 %. */
+       live trailers standing — Highfield 12 of 434 = 2.76 %. The seed
+       now carries all 434 and reproduces that figure exactly: 12. */
     const highfield = boatTables.find((e) => e.name.startsWith('Highfield'))
     expect(highfield).toBeDefined()
     const row = (seed.rowsByEntity[highfield!.id] ?? [])[0]
     const result = select(highfield!, row.id)
     expect(result).not.toBeNull()
-    expect(result!.catalogue).toBe(145)
-    expect(result!.selected).toHaveLength(2)
-    expect(result!.rejected).toHaveLength(93)
-    expect(result!.unnamed).toHaveLength(50)
-    for (const v of result!.selected) expect(v.banner).toBe('REDCO - Highfield')
+    expect(result!.catalogue).toBe(434)
+    expect(result!.selected).toHaveLength(12)
+    expect(result!.rejected).toHaveLength(131)
+    expect(result!.unnamed).toHaveLength(291)
+    /* both of Highfield's banners, and nothing outside them */
+    expect(new Set(result!.selected.map((v) => v.banner))).toEqual(
+      new Set(['REDCO - Highfield', 'GFAB - Highfield Series']),
+    )
   })
 
   it('counts the catalogue the panel prints its shares against', () => {
@@ -260,9 +297,11 @@ describe('the series banner is the selector', () => {
        heading" — is under test rather than typed in. */
     const catalogue = readCatalogue(project, TRAILER_FITMENT, marques)
     expect(catalogue.tables).toBe(7)
-    expect(catalogue.live).toBe(145)
-    expect(catalogue.named).toBe(95)
-    expect(catalogue.unnamed).toBe(50)
+    /* 434 is the workbook's whole live trailer band; the seed is no
+       longer a fraction of it (SEED_AT_FULL_SCALE.md §2.1). */
+    expect(catalogue.live).toBe(434)
+    expect(catalogue.named).toBe(143)
+    expect(catalogue.unnamed).toBe(291)
     expect(catalogue.named + catalogue.unnamed).toBe(catalogue.live)
     expect(catalogue.retiredRows).toBe(10)
     expect(catalogue.retiredTables).toEqual(['OBSOLETE Trailers — No Longer Available'])
@@ -272,13 +311,17 @@ describe('the series banner is the selector', () => {
   it('leaves every brand a small enough slice to have chosen something', () => {
     /* The tiebreak the adjudication settled §1.2 on: "a gate that
        leaves 97.7 % of the catalogue has not chosen a trailer. A gate
-       that leaves 3 % has." Measured on the seed: no marque's banner
-       leaves more than 13.10 % of the 145 live trailers. */
+       that leaves 3 % has." Measured on the whole live catalogue: no
+       marque's banner leaves more than 7.83 % of the 434 live
+       trailers, which is the top of the specification's own
+       0.92–7.83 % range — reproduced now rather than approximated.
+       The bound is 0.08 rather than the old 0.14 because the seed is
+       no longer a sample and there is nothing left to allow for. */
     const readings = readMarques(project, TRAILER_FITMENT, { marques })
     expect(readings).toHaveLength(8)
     for (const r of readings) {
-      expect(r.catalogue).toBe(145)
-      expect(r.share, `${r.marque.name} leaves too much of the catalogue`).toBeLessThanOrEqual(0.14)
+      expect(r.catalogue).toBe(434)
+      expect(r.share, `${r.marque.name} leaves too much of the catalogue`).toBeLessThanOrEqual(0.08)
       expect(r.selected, `${r.marque.name} selects nothing`).toBeGreaterThan(0)
     }
   })
@@ -328,15 +371,27 @@ describe('a banner that names no brand is not a rejection', () => {
     expect([...joins]).toEqual(['Stabicraft × GFAB — Trailer Fitment'])
   })
 
-  it('never files an unnamed banner as rejected', () => {
-    for (const boatTable of boatTables) {
-      for (const row of seed.rowsByEntity[boatTable.id] ?? []) {
-        const result = select(boatTable, row.id)
-        for (const v of result?.rejected ?? []) expect(v.bannerMarque).not.toBeNull()
-        for (const v of result?.unnamed ?? []) expect(v.bannerMarque).toBeNull()
+  /* THE BUDGET IS EXPLICIT BECAUSE THE WORK IS REAL, AND NAMED HERE
+     RATHER THAN RAISED GLOBALLY. This walks every one of the 810 live
+     hulls against all 434 live trailers and asserts on every verdict:
+     351,540 verdicts, and the selection is memoised so the cost is
+     paid once for the file. It runs in about 3 s alone and over 5 s
+     when 45 test files are sharing the machine, which is how it began
+     failing on a green assertion. A global testTimeout would hide the
+     next slow thing; this says which test is expensive and why. */
+  it(
+    'never files an unnamed banner as rejected',
+    () => {
+      for (const boatTable of boatTables) {
+        for (const row of seed.rowsByEntity[boatTable.id] ?? []) {
+          const result = select(boatTable, row.id)
+          for (const v of result?.rejected ?? []) expect(v.bannerMarque).not.toBeNull()
+          for (const v of result?.unnamed ?? []) expect(v.bannerMarque).toBeNull()
+        }
       }
-    }
-  })
+    },
+    20_000,
+  )
 })
 
 /* ============================================================
@@ -404,12 +459,15 @@ describe('the ATM floor is a floor', () => {
         expect(withFloor!.unnamed).toHaveLength(without!.unnamed.length)
       }
     }
-    expect(hulls).toBe(174)
+    expect(hulls).toBe(810)
   })
 
   it('is never broken by a pairing the business actually makes', () => {
     /* FITMENT_RULES.md F9: 530 of 530 live pairings hold = 100.00 %.
-       Measured on the seed: 115 of 115 evaluable pairings. */
+       Measured on the full-scale seed: 351 of 351 evaluable pairings,
+       still 100 %. It is under 530 because a pairing is evaluable only
+       where the boat band has a weight-headed column, and Jeanneau,
+       Merry Fisher, Cap Camarat and Haines Signature have none. */
     let clears = 0
     let evaluable = 0
     for (const join of trailerJoins) {
@@ -426,15 +484,17 @@ describe('the ATM floor is a floor', () => {
         if (verdict.floor.kind === 'clears') clears += 1
       }
     }
-    expect(evaluable).toBe(115)
+    expect(evaluable).toBe(351)
     expect(clears).toBe(evaluable)
   })
 
   it('selects nothing, which is why it is not the trailer rule', () => {
     /* The tiebreak, both halves in one place. The floor leaves a mean
-       87.42 % of the seed's catalogue standing; the banner leaves at
-       most 13.10 %. FITMENT_RULES.md measures the same two numbers on
-       the workbook at 97.70 % and 0.92–7.83 %. */
+       94.23 % of the catalogue standing; the banner leaves at most
+       7.83 %. FITMENT_RULES.md measures the same two numbers on the
+       workbook at 97.70 % and 0.92–7.83 % — the second is now exact
+       and the first is close, over the same 434 trailers. A gate that
+       leaves nineteen trailers in twenty has not chosen one. */
     let evaluable = 0
     let total = 0
     let maxBanner = 0
@@ -450,9 +510,9 @@ describe('the ATM floor is a floor', () => {
         total += all.filter((v) => v.floor.kind === 'clears').length / all.length
       }
     }
-    expect(evaluable).toBe(77)
+    expect(evaluable).toBe(643)
     expect(total / evaluable).toBeGreaterThan(0.8)
-    expect(maxBanner).toBeLessThanOrEqual(0.14)
+    expect(maxBanner).toBeLessThanOrEqual(0.08)
   })
 
   it('says "not evaluable here" for the bands with no weight column', () => {
@@ -513,11 +573,20 @@ describe('the three regimes are read separately', () => {
     /* R11 ASSERTS model-locked for Highfield, Formosa, Stabicraft,
        Haines, Merry Fisher and Cap Camarat. Five of the six are
        reproduced from the data. */
-    expect(of('Stabicraft').hullsNamingModel).toBe(30)
-    expect(of('Formosa').hullsNamingModel).toBe(26)
+    expect(of('Stabicraft').hullsNamingModel).toBe(37)
+    expect(of('Formosa').hullsNamingModel).toBe(39)
     expect(of('Haines').hullsNamingModel).toBe(9)
-    expect(of('Surtees').hullsNamingModel).toBe(17)
-    expect(of('Highfield').hullsNamingModel).toBe(18)
+    expect(of('Surtees').hullsNamingModel).toBe(19)
+    /* Stabicraft, Formosa, Haines and Surtees are now EVERY hull in
+       the brand — 37 of 37, 39 of 39, 9 of 9, 19 of 19 — which is what
+       model-locked ought to look like once a sample stops hiding it.
+       Highfield reads 81 of 588 and that one is worth stating plainly:
+       the designator is read where a hull's model token appears in a
+       trailer name, and most of Highfield's SKUs are colourway and
+       material variants whose token does not. It is recorded at what
+       it measures, because raising it would mean loosening the token
+       test until it agreed. */
+    expect(of('Highfield').hullsNamingModel).toBe(81)
     expect(of('Merry Fisher').hullsNamingModel).toBe(5)
   })
 
@@ -526,7 +595,7 @@ describe('the three regimes are read separately', () => {
        the stock is picked against ATM and a size band. Stacer is the
        one brand whose hulls are offered a full series and never find
        their own model in it. */
-    expect(of('Stacer').hulls).toBe(26)
+    expect(of('Stacer').hulls).toBe(91)
     expect(of('Stacer').hullsNamingModel).toBe(0)
     const zero = readings.filter((r) => r.hulls > 0 && r.hullsNamingModel === 0)
     expect(zero.map((r) => r.marque.name).sort()).toEqual(['Cap Camarat', 'Stacer'])
@@ -534,14 +603,14 @@ describe('the three regimes are read separately', () => {
 
   it('records Cap Camarat as unread rather than calling it size-selected', () => {
     /* R11 asserts Cap Camarat is model-locked and the reading here is
-       0 of 10, because its models are `5.5` / `6.5` / `7.5` and its
+       0 of 11, because its models are `5.5` / `6.5` / `7.5` and its
        trailers are `CC5.5` / `CC6.5` — a two-character designator
        inside another token. Lowering the token floor until it passes
        would be fitting the rule to the answer. The number is asserted
        so that a change to it is visible rather than silent, and the
        engine returns a MEASUREMENT rather than a regime label, so
        nothing on screen claims Cap Camarat is size-selected. */
-    expect(of('Cap Camarat').hulls).toBe(10)
+    expect(of('Cap Camarat').hulls).toBe(11)
     expect(of('Cap Camarat').hullsNamingModel).toBe(0)
   })
 
@@ -715,7 +784,7 @@ describe('a project this rule has nothing to say about', () => {
     const result = selectPartners(flat, TRAILER_FITMENT, table.id, row.id)!
     expect(result.selected).toHaveLength(0)
     expect(result.rejected).toHaveLength(0)
-    expect(result.unnamed).toHaveLength(145)
+    expect(result.unnamed).toHaveLength(434)
   })
 })
 

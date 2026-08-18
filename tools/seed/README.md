@@ -1,7 +1,7 @@
 # The seed pipeline
 
-`src/demos/northside.ts` is **generated**. 685 KB, 48 tables, 2,862 rows — of
-which 27 tables and 2,260 rows are the fitment joins — produced from Northside
+`src/demos/northside.ts` is **generated**. 2.42 MB, 53 tables, 11,116 rows — of
+which 28 tables and 8,679 rows are the fitment joins — produced from Northside
 Marine's real workbooks. Never edit it by hand and never text-process it with a
 shell tool — a PowerShell rewrite once turned 171 `×` characters into mojibake,
 and the attempted repair corrupted the file to binary. There were no commits at
@@ -11,15 +11,84 @@ the time. Change the generator; run the generator.
 python tools/seed/emit.py
 ```
 
-That command reproduces the committed `northside.ts` **byte for byte** — verified
-by SHA-256 before and after. If your run produces a different hash, you changed
-something; diff before you commit it.
+**It writes, and it reproduces every line of the committed file.** That was not
+true for a while and the README should say so plainly, because the repair is
+what makes the rest of this document trustworthy again. Measured 2026-08-18:
+`emit.py` had fallen *behind the file it writes*. The committed `northside.ts`
+carried 366 lines the generator had never known how to emit — `NORTHSIDE_NAME`,
+`NorthsideProject.idByKey`, the seedStamp wiring, and the whole
+`seedNorthsideModules` block, which is the app's **five modules**. A run
+overwrote all of it silently and left the sheet with no modules on it and `tsc`
+failing in eight files, so the command was made to REFUSE rather than truncate
+a megabyte of a real business's price file.
 
-`emit.py` is the one that WRITES. `python tools/seed/gen_all.py` assembles the
-same tables and prints a row-count summary without touching the file, which is
-what you want while you are changing a rule. (This README used to name
-`gen_all.py` as the build command; it never wrote anything, so "byte for byte"
-was trivially true of a run that did nothing.)
+**The refusal has been answered rather than removed.** `HEADER` and `FOOTER` in
+`emit.py` are now the seed's own prelude and tail, character for character, so
+a run writes all 366 of those lines. The check is INVERTED: it now reads the
+text about to be written and stops if one of the three markers is missing from
+it — a guard that cannot be satisfied by deleting the thing it protects.
+`--force` writes anyway, for whoever is deliberately changing the shape.
+
+Verified by hash: with the budgets at their pre-full-scale values, `emit.py`
+reproduced the committed file byte for byte (`sha256`
+`d6f1928a36d530c374e0faf522b1073187f309b44f12748d382f01aa4164de85`,
+1,096,952 bytes) before the budgets were lifted.
+
+`python tools/seed/gen_all.py` assembles the same tables and prints a row-count
+summary **without touching the file**, which is what you want while you are
+changing a rule.
+
+---
+
+## The photographs — a third stage, and it stands on its own
+
+The catalogue's pictures used to be 184 live hotlinks to eleven manufacturers'
+web servers. They are fetched once, here, and committed:
+
+```bash
+python tools/seed/fetch_images.py      # needs the network. Writes the pictures
+python tools/seed/emit_images.py       # needs nothing. Writes the map
+```
+
+| what | where | committed |
+|---|---|---|
+| the pictures, downscaled | `public/seed-images/*.webp` | yes — 108 files, 3,525,146 bytes |
+| the measurement | `tools/seed/extracts/images.json` | yes |
+| what the app reads | `src/demos/northsideImages.ts` | yes — generated, 24 KB |
+| the originals as fetched | `tools/seed/.imgcache/` | **no** — 17 MB, gitignored |
+
+`emit_images.py` is the only writer in this repository that is *not* affected
+by the `emit.py` problem above: it reads the committed measurement and writes
+one generated file that nothing else has ever hand-edited. `emit.py` calls it
+too, so the day the seed generator is repaired the two stay in step.
+
+**It does not touch `northside.ts`.** The rows still hold the manufacturer's
+address, at ~124 bytes each; `src/lib/imageSources.ts` resolves an address to a
+local copy at PAINT time and never in the data. That is what keeps
+IMAGE_SPEC.md §5.2 — no bytes on a row, no bytes in IndexedDB, no bytes in an
+export — while still ending the hotlink.
+
+**108 of the 184 addresses MEASURED were obtained; 76 were refused. The
+catalogue then went to full scale and now carries 453 addresses, so 234 of them
+have no answer of any kind** — `NORTHSIDE_PICTURES.unmeasured`, printed by
+`emit.py` on every run and guarded by `northsideImages.test.ts`. An unmeasured
+address behaves exactly like a refused one: the row keeps its address, the app
+says "Held as a link", and nothing is substituted. Clearing it means a few
+hundred requests to nine third-party servers, which is a decision somebody
+makes rather than something a regeneration does on its own — run
+`python tools/seed/fetch_images.py`, which fetches only what is missing.
+
+**Why the 76 were refused, recorded rather than papered over:** 71 on `www.northsidemarine.com.au`, which answers 403 from
+Cloudflare with `Cf-Mitigated: challenge` to a plain client exactly as it does
+to a browser; 4 on `northsidemarine1.sharepoint.com`, which redirects to a
+Microsoft sign-in; and one `www.stacer.com.au` file that 404s on a host serving
+seventeen others. Nothing is substituted for any of them — they keep their
+address and the app says "Held as a link" with the measured reason.
+
+Re-run `fetch_images.py` when the workbook's addresses change. It keeps what it
+already has (`--refetch` to ignore the cache, `--probe` to report without
+writing), and deletes any picture in `public/seed-images` that nothing points
+at any more.
 
 ---
 

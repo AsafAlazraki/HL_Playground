@@ -93,10 +93,8 @@ import {
   COL_OVERSCAN,
   GUTTER_W,
   INDENT_W,
-  OVERSCAN,
   ROW_H,
   TIGHT_COL_W,
-  VIRTUALIZE_ABOVE,
   cellInsetW,
   cellPrintText,
   cellText,
@@ -110,7 +108,9 @@ import {
   pad2,
   plural,
   primaryRange,
+  rowOverscan,
   selContains,
+  shouldWindowRows,
   singleSel,
   valueFaceOf,
   valueForField,
@@ -440,13 +440,22 @@ export function Grid(props: GridProps): JSX.Element {
 
   /* -- windowing ------------------------------------------------
      Body coordinates start below the frozen header — bands included —
-     so the visible slice is measured from (scrollTop - headH). */
+     so the visible slice is measured from (scrollTop - headH).
+
+     THE FOLD DECIDES, NOT THE ROW COUNT. `shouldWindowRows` and
+     `rowOverscan` carry the measurement and the reason: on a 249px
+     card every table in the file is under `VIRTUALIZE_ABOVE`, so
+     every card drew every row, and each row costs two composited
+     layers. Nothing about this is visible — the scroller keeps its
+     full height from `layout.bodyH` either way. */
   const lines = layout.lines
-  const virtual = rows > VIRTUALIZE_ABOVE
+  const bodyRoom = Math.max(0, viewport.h - headH)
+  const virtual = shouldWindowRows(rows, layout.bodyH, bodyRoom, ROW_H)
+  const over = rowOverscan(bodyRoom, ROW_H)
   const viewTop = scrollTop - headH
-  const first = virtual ? Math.max(0, firstLineAt(lines, viewTop) - OVERSCAN) : 0
+  const first = virtual ? Math.max(0, firstLineAt(lines, viewTop) - over) : 0
   const last = virtual
-    ? Math.min(lines.length, firstLineAt(lines, viewTop + viewport.h) + OVERSCAN + 1)
+    ? Math.min(lines.length, firstLineAt(lines, viewTop + viewport.h) + over + 1)
     : lines.length
 
   /* -- keep the active cell in view ----------------------------- */

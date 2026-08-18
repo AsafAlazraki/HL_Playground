@@ -56,6 +56,22 @@ export interface RuleSentenceProps {
   onChange?: (next: ConstraintDef) => void
   /** the builder's sentence is set one step larger */
   big?: boolean
+  /** THE COLUMNS THIS SENTENCE MAY NAME, as ColumnConcept keys.
+   *
+   *  Absent means all of them, which is what BUSINESS RULES wants: a
+   *  rule written there is about the whole sheet. A module passes the
+   *  columns that live on ITS tables, so an admin standing in Boats
+   *  writes about boats rather than scrolling past every column in the
+   *  business to find one.
+   *
+   *  IT NARROWS THE PICKER AND NOTHING ELSE. The rule that comes out
+   *  is an ordinary rule: one column is one column wherever it
+   *  appears, so it bites on every table of that kind and the builder
+   *  prints that reach before it is added. And it never empties a
+   *  picker — a scope that keeps nothing falls back to the full list,
+   *  the same way the obligation picker already falls back when the
+   *  condition's kind has no other column. */
+  conceptKeys?: ReadonlySet<string>
 }
 
 /* ---------------------------------------------------------- */
@@ -122,6 +138,7 @@ export function RuleSentence({
   editable = false,
   onChange,
   big = false,
+  conceptKeys,
 }: RuleSentenceProps): ReactElement {
   const ctx = useSentenceCtx()
   /* a `table` constraint is a curated whitelist: readable as a
@@ -157,13 +174,22 @@ export function RuleSentence({
     apply(next)
   }
 
+  /** The caller's scope, applied last and never to the point of
+   *  emptiness: a picker with no options is a control that cannot be
+   *  answered, which is the one thing worse than a long list. */
+  const inScope = (list: ColumnConcept[]): ColumnConcept[] => {
+    if (!conceptKeys) return list
+    const kept = list.filter((c) => conceptKeys.has(c.key))
+    return kept.length > 0 ? kept : list
+  }
+
   const sideConcepts = (side: Side): ColumnConcept[] => {
-    if (side === 'if') return ctx.concepts
+    if (side === 'if') return inScope(ctx.concepts)
     const head = constraint.if.clauses[0]
     const kind = head ? ctx.index.get(head.left.fieldId)?.kind : undefined
-    if (!kind) return ctx.concepts
+    if (!kind) return inScope(ctx.concepts)
     const same = ctx.concepts.filter((c) => c.kind === kind)
-    return same.length > 0 ? same : ctx.concepts
+    return inScope(same.length > 0 ? same : ctx.concepts)
   }
 
   const renderToken = (token: SentenceToken): ReactNode => {

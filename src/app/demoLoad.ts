@@ -82,6 +82,33 @@ export function realDemoSet(): DemoSet | undefined {
    claim nothing.
    ============================================================ */
 
+/* ============================================================
+   AND WHAT IT SAYS WHILE IT IS FETCHING, WHICH IS NEW.
+
+   The prepared set is its own chunk now (`demos/seedChunk.ts`): a
+   megabyte of real price file that is NOT in the bundle which drew
+   this button, and arrives when somebody asks for it. So there is a
+   moment — short on a fast connection, not short on a phone in a
+   boat shed — where the press has happened and the sheet has not
+   changed. A door that looks pressed and does nothing is the worst
+   reading of that moment, and it is the one you get for free.
+
+   THE SAME FUNCTION WRITES ALL THREE PHASES, deliberately. Two
+   functions would let the idle door and the busy door disagree
+   about whose file it is — which is the exact mistake
+   `startingPointWords` exists to prevent, made twice.
+
+   FAILURE IS A SENTENCE WITH A REASON, WHERE IT FAILED
+   (DESIGN_CONTRACT §6.5). `import()` can only really fail one way
+   here — the chunk was never fetched and there is no connection to
+   fetch it with — so the note says that, and the door stays
+   pressable because pressing it again is the retry.
+   ============================================================ */
+
+/** Where the press has got to. `idle` is also what a door wears
+ *  before anybody touches it. */
+export type LoadPhase = 'idle' | 'loading' | 'failed'
+
 /** The three lines the door wears, and which reading produced them. */
 export interface StartingPointWords {
   /** the tag, drawn as a LABEL — never a name and never a value */
@@ -121,22 +148,45 @@ export function isSameBusiness(
   return own.every((w, i) => org[i] === w)
 }
 
+/** WHILE IT IS COMING. It names the document, because that is what
+ *  the wait is about, and it is the same document the idle line
+ *  named a moment ago. */
+export const LOADING_NOTE =
+  'The file downloads the first time you open it, and stays on this computer afterwards.'
+
+/** AND WHEN IT DOES NOT COME. There is one honest reason — the
+ *  chunk has never been fetched and cannot be now — so it is the
+ *  reason given, on the control that refused. */
+export const LOAD_FAILED_NOTE =
+  'The file did not download. It is fetched the first time you open it, so this needs a connection. Press again to try.'
+
 export function startingPointWords(
   demo: DemoSet,
   orgName: string | undefined,
+  phase: LoadPhase = 'idle',
 ): StartingPointWords {
-  const note = demo.blurb
+  const note =
+    phase === 'loading' ? LOADING_NOTE : phase === 'failed' ? LOAD_FAILED_NOTE : demo.blurb
   const { business, file } = demo
   if (!business || !file) {
     /* a set that is nobody's data claims nothing about whose it is */
-    return { tag: 'Example data', label: `Load ${demo.name}`, note, own: false }
+    const label = phase === 'loading' ? `Loading ${demo.name}…` : `Load ${demo.name}`
+    return { tag: 'Example data', label, note, own: false }
   }
   if (isSameBusiness(orgName, business)) {
-    return { tag: 'Your data', label: `Load your ${file}`, note, own: true }
+    return {
+      tag: 'Your data',
+      label: phase === 'loading' ? `Loading your ${file}…` : `Load your ${file}`,
+      note,
+      own: true,
+    }
   }
   return {
     tag: 'Example data',
-    label: `Load ${business}’s ${file} — a worked example`,
+    label:
+      phase === 'loading'
+        ? `Loading ${business}’s ${file}…`
+        : `Load ${business}’s ${file} — a worked example`,
     note,
     own: false,
   }
@@ -148,13 +198,19 @@ export function startingPointWords(
  *  over a full sheet — the freshness notice — asks in the app's own
  *  voice and offers to save a copy first, which `window.confirm` had
  *  no room to do. See features/io/Freshness.tsx. */
-export function applyDemoSet(demo: DemoSet): void {
+export async function applyDemoSet(demo: DemoSet): Promise<void> {
   const store = useProjectStore.getState()
   /* the old rule id would survive the swap and leave the canvas drawing
      a flow that no longer exists — drop it before the sheet changes */
   store.setActiveRule(null)
   store.select(null)
-  demo.load()
+  /* AWAITED, AND THE REJECTION IS THE CALLER'S. The prepared set is
+     its own chunk (demos/seedChunk.ts), so `load()` has a fetch in it
+     and can fail — on a first visit with no connection there is
+     nothing to fall back on, and the honest thing is to say so on the
+     button that was pressed. Swallowing it here would leave a door
+     that looks pressed and does nothing. */
+  await demo.load()
 }
 
 /**
@@ -181,10 +237,12 @@ export function applyDemoSet(demo: DemoSet): void {
  *
  * @returns true if the set was put on the sheet; false if the sheet
  * was not empty and nothing was touched — see above for who asks.
+ * REJECTS if the set's own chunk could not be fetched; `useDemoLoad`
+ * is what turns that into words on the door.
  */
-export function loadDemoSet(demo: DemoSet): boolean {
+export async function loadDemoSet(demo: DemoSet): Promise<boolean> {
   const store = useProjectStore.getState()
   if (Object.keys(store.entities).length > 0) return false
-  applyDemoSet(demo)
+  await applyDemoSet(demo)
   return true
 }

@@ -83,6 +83,7 @@ export type { PriceRead, IndexEntry, IndexGroup, IndexSection } from './read'
    screen) says the same sentences the strip says. */
 export {
   capabilityStates,
+  capabilityWords,
   nextCapabilities,
   tableBindings,
   blockBindings,
@@ -90,6 +91,46 @@ export {
   effectiveColumns,
   moveId,
   moveViewBlock,
+  DESIGNER_CAPABILITIES,
   NOT_YET_SAYS,
 } from './designer'
-export type { CapabilityState, TableBinding, BlockBinding } from './designer'
+export type {
+  CapabilityState,
+  DesignerCapability,
+  TableBinding,
+  BlockBinding,
+} from './designer'
+
+/* THE TENTH VERB — `configure`, "set what must always be true here".
+   It is not in `ModuleCapability` yet and `ruleCapability.ts` carries
+   the exact line the contract needs, plus the registry holding it in
+   the meantime. Exported so a host can reset it with the project and
+   so a test can assert the deliberate default: OFF. */
+export {
+  RULE_CAPABILITY,
+  RULE_CAPABILITY_META,
+  forgetModuleRuleCapabilities,
+  moduleConfiguresRules,
+  setModuleConfiguresRules,
+  useModuleConfiguresRules,
+} from './ruleCapability'
+export type { RuleCapabilityKey } from './ruleCapability'
+
+/* WHICH RULES GOVERN A MODULE — computed off the columns, never
+   stored. Exported because a quote, an export or a review that has to
+   explain a module must reach the same answer this panel draws. */
+export {
+  constraintsFor,
+  flowRulesFor,
+  kindOfConceptKey,
+  moduleConceptKeys,
+  moduleKinds,
+  workbookRulesFor,
+} from './moduleRules'
+export type { FlowRole, GoverningFlowRule, GoverningSeed } from './moduleRules'
+
+/* The rules panel — exported for completeness like the designer, not
+   because a host mounts it. `ModuleDesigner` grows it as its fourth
+   panel exactly when the verb that promises it is on. */
+export { ModuleRulesPanel, rulesPanelId } from './ModuleRulesPanel'
+export type { ModuleRulesPanelProps } from './ModuleRulesPanel'

@@ -3,9 +3,27 @@
 
    The catalogue does not carry photographs, it carries ADDRESSES:
    a cell holds `https://www.highfieldboats.com/…/sp560.jpg`, not a
-   megabyte of JPEG. That is why 305 pictures cost 37,857 bytes, and
-   it is the reason this module exists — an address is only a picture
-   where the browser is allowed to fetch it.
+   megabyte of JPEG. That is why 1,411 pictures cost 170,274 bytes —
+   121 bytes each — and it is the reason this module exists: an
+   address is only a picture where the browser is allowed to fetch it.
+
+   READ THIS FIRST, BECAUSE IT CHANGES WHAT MOST OF THE FILE IS FOR.
+   Since `registerSeededPictures` (about a third of the way down), the
+   repository SHIPS A COPY of 108 of the seed's 453 distinct addresses,
+   taken once at build time and served from our own origin. The whole
+   probe apparatus below — verdicts, claims, the two-failure rule —
+   now decides every picture we do NOT hold: a user's own pasted
+   address, the 76 the manufacturers refused us, and the 269 nobody
+   has asked for yet.
+
+   THE 269 ARE THE CATALOGUE GROWING, NOT A FETCH FAILING. The seed
+   went to full scale — Highfield alone from 40 hulls to 588
+   (SEED_AT_FULL_SCALE.md §2.2) — and the pictures were measured
+   before that. An unmeasured address takes exactly the path a
+   refused one takes: it is probed here, and where it cannot be drawn
+   the row says "Held as a link", which is true. Nothing is
+   substituted. `python tools/seed/fetch_images.py` is what turns one
+   into a copy, and it needs a network and somebody's say-so.
 
    THE FAILURE THIS PREVENTS, AND THE ONE IT REFUSES TO RE-INTRODUCE.
 
@@ -128,6 +146,114 @@ function hostKey(src: string): string | null {
   return parseSource(src)?.host ?? null
 }
 
+/* ---------------------------------------------------------- */
+/* pictures the repository already holds                      */
+/* ---------------------------------------------------------- */
+
+/* ============================================================
+   THE COPY TAKEN ONCE, AT BUILD TIME — and why this is not the
+   byte-holding IMAGE_SPEC.md §5.2 refuses.
+
+   Everything above this point is about a picture we can only ever
+   ADDRESS: a cell holds `https://…/sp560.jpg`, the browser fetches it
+   live, and half the machinery in this file exists because that fetch
+   is somebody else's server, on somebody else's wifi, under somebody
+   else's CORP header. That was the demo's largest environmental risk
+   — the module page's whole visual argument rented by the minute.
+
+   So the pictures were fetched ONCE, by `tools/seed/fetch_images.py`,
+   downscaled to what this app can actually draw, and committed under
+   `public/seed-images`. A source that has a copy is painted from OUR
+   origin: no request leaves the machine, no host verdict is needed, no
+   probe is spent, and the page is the same on a plane as on fibre.
+
+   §5.2 SAYS "AN ADDRESS IS THE PREFERRED FORM OF A PICTURE. WE NEVER
+   FETCH A REACHABLE PICTURE IN ORDER TO HOLD ITS BYTES", AND IT IS
+   STILL OBEYED. What it forbids is bytes ON A ROW — base64 inside
+   `ImageRef.src`, written into IndexedDB, rewritten in full every
+   400 ms by `repository.saveAll`, and carried out in every export.
+   None of that happens here. `ImageRef.src` is the same manufacturer's
+   address it always was, at the same ~124 bytes; the row, the store,
+   the export and a frozen quote are unchanged to the byte. The copy is
+   a BUILD ARTEFACT BESIDE THE APP, resolved at paint time, exactly the
+   way this module already separates what a record SAYS from what a
+   browser may DRAW.
+
+   AND THE ADDRESS REMAINS THE TRUTH. `imageHostOf`, the plate, the
+   lightbox caption and the export all keep naming the manufacturer,
+   because that is where the photograph is FROM. A copy is not a
+   provenance.
+
+   NOTHING IS SUBSTITUTED. A picture with no copy is not given
+   somebody else's — it keeps its address and says so. `absent` is the
+   list of addresses that were TRIED and could not be obtained, with
+   the reason measured at the time, so a plate can say the specific
+   true thing instead of a shrug.
+   ============================================================ */
+
+interface SeededCopy {
+  /** file name under `public/seed-images` */
+  file: string
+  /** the ORIGINAL's natural size, which is what the plate prints */
+  w: number
+  h: number
+}
+
+const copies = new Map<string, SeededCopy>()
+/** hosts that answered nothing at all, keyed by `host` */
+const absentHosts = new Map<string, string>()
+/** single addresses that failed on a host which otherwise serves */
+const absent = new Map<string, string>()
+
+/** The measured reason there is no copy of this picture, or `undefined`.
+ *  The host's sentence outranks the address's: a site that serves nothing
+ *  is the larger and more useful truth, and it is the one a page can say
+ *  once instead of ninety-three times. */
+function absentWhy(src: string): string | undefined {
+  const host = parseSource(src)?.host
+  return (host === undefined ? undefined : absentHosts.get(host)) ?? absent.get(src)
+}
+
+/** Whether we already know, without asking anybody, that this address
+ *  cannot be drawn. */
+function knownAbsent(src: string): boolean {
+  return absentWhy(src) !== undefined
+}
+
+/** Where `public/` is served from. Written once: `import.meta.env.BASE_URL`
+ *  always ends in `/`, and a deployment under a sub-path would otherwise
+ *  give every photograph a 404 nobody tested for. */
+const PUBLIC_BASE = `${import.meta.env.BASE_URL}seed-images/`
+
+/**
+ * WHAT SHIPPED WITH THIS BUILD, handed over by the data set that owns
+ * it. The engine never learns what a boat is: it is told a list of
+ * addresses and where their copies are, and a list of addresses that
+ * have no copy and why.
+ *
+ * Called from `@/demos`, which the shell imports, so the answer is in
+ * place before the first thumbnail asks. Additive and idempotent — a
+ * second data set may register its own without disturbing the first.
+ */
+export function registerSeededPictures(
+  held: ReadonlyArray<readonly [string, string, number, number]>,
+  deadHosts: ReadonlyArray<readonly [string, string]>,
+  unavailable: ReadonlyArray<readonly [string, string]>,
+): void {
+  for (const [src, file, w, h] of held) copies.set(src, { file, w, h })
+  for (const [host, why] of deadHosts) absentHosts.set(host, why)
+  for (const [src, why] of unavailable) absent.set(src, why)
+  announce()
+}
+
+/** The copy of this picture the repository holds, or `null`. The address
+ *  it is keyed by is never rewritten — this answers a display question
+ *  and nothing else. */
+export function seededCopy(src: string): { at: string; w: number; h: number } | null {
+  const held = copies.get(src)
+  return held === undefined ? null : { at: PUBLIC_BASE + held.file, w: held.w, h: held.h }
+}
+
 /** Where a referenced picture actually lives — the words on the plate,
  *  so "why can't I see it" answers itself. */
 export function imageHostOf(src: string): string {
@@ -192,7 +318,7 @@ export const HELD_AS_LINK = 'Held as a link'
 export function heldAsLinkNote(src: string): string {
   const host = imageHostOf(src)
   if (host === '') return `${HELD_AS_LINK} — the picture itself is not here.`
-  const measured = MEASURED_CLOSED.get(parseSource(src)?.host ?? '')
+  const measured = MEASURED_CLOSED.get(parseSource(src)?.host ?? '') ?? absentWhy(src)
   if (measured !== undefined) return `${HELD_AS_LINK} — ${measured}.`
   return `${HELD_AS_LINK} — the picture itself lives at ${host}.`
 }
@@ -214,11 +340,20 @@ export function heldAsLinkNote(src: string): string {
  * The trade is stated rather than hidden: a host that dies TODAY is a
  * plate on the tile and is not in this count. The sentence therefore
  * names the hosts it counted, and claims nothing about any other.
+ *
+ * TWO RECORDED MEASUREMENTS NOW FEED IT, and the per-HOST one wins.
+ * `MEASURED_CLOSED` is a statement about a whole host and is the older
+ * and broader claim; `absent` is a statement about ONE address that
+ * `tools/seed/fetch_images.py` tried and could not take a copy of —
+ * the single Stacer file that 404s on a host serving seventeen others.
+ * Both are measurements taken off the wire and written down; neither
+ * moves while somebody is reading the page, which is the whole
+ * requirement.
  */
 export function measuredClosedHost(src: string): { host: string; why: string } | null {
   const host = parseSource(src)?.host
   if (host === undefined) return null
-  const why = MEASURED_CLOSED.get(host)
+  const why = MEASURED_CLOSED.get(host) ?? absentWhy(src)
   return why === undefined ? null : { host: imageHostOf(src), why }
 }
 
@@ -288,6 +423,18 @@ const MAX_PROBES = 2
    re-measurement when somebody changes this list. The addresses are
    third-party marketing sites the dealership does not control; the
    dealership's own host is the one behind Cloudflare.
+
+   AND SINCE 2026-08-18 IT HAS A YOUNGER SIBLING, `absentHosts`, which
+   the data set registers from what `tools/seed/fetch_images.py`
+   actually measured on the wire. The two agree today, sentence for
+   sentence — the generator's wording was written to match this one, so
+   nobody meets two voices for one fact. They are kept apart rather
+   than merged because they are different KINDS of claim: this one is
+   the engine's own, hand-measured, tested by name in
+   imageSources.test.ts, and true whether or not any data set is
+   loaded; the other is a property of a particular set's addresses and
+   arrives with it. Where they overlap THIS ONE WINS, so a data set can
+   never talk the engine out of a refusal it took for its own reasons.
    ============================================================ */
 const MEASURED_CLOSED = new Map<string, string>([
   [
@@ -374,6 +521,10 @@ function nextCandidate(rec: HostRecord): string | null {
  *  a plate there says "there is a record here you may want to fix". */
 export function hostIsClosed(src: string): boolean {
   if (broken.has(src)) return true
+  /* A picture we already hold is open whatever its host is doing —
+     nothing will be fetched from that host to draw it. */
+  if (copies.has(src)) return false
+  if (knownAbsent(src)) return true
   const kind = sourceKind(src)
   if (kind === 'refused') return true
   if (kind !== 'remote') return false
@@ -422,28 +573,51 @@ export interface ImageDisplay {
   /** this one is the host's probe: it loads eagerly, and its load or
    *  error is the verdict for every other picture on that host */
   probe: boolean
+  /**
+   * THE ADDRESS TO ACTUALLY PUT IN THE `<img src>`, which is not
+   * always the one on the record. When the repository ships a copy
+   * (see `registerSeededPictures`) this is the copy, same-origin; for
+   * everything else it is the source as given. Callers must use it
+   * rather than reaching for `ImageRef.src` themselves, or one surface
+   * paints from disk while its neighbour goes to the network.
+   *
+   * Meaningless when `paint` is false, and empty for an empty source.
+   */
+  at: string
 }
 
-const PLATE: ImageDisplay = { paint: false, probe: false }
-const PAINT: ImageDisplay = { paint: true, probe: false }
-const PROBE: ImageDisplay = { paint: true, probe: true }
+const PLATE = { paint: false, probe: false } as const
+const PAINT = { paint: true, probe: false } as const
+const PROBE = { paint: true, probe: true } as const
 
 function displayFor(src: string, host: string | null): ImageDisplay {
-  if (broken.has(src)) return PLATE
-  if (host === null) return sourceKind(src) === 'refused' ? PLATE : PAINT
+  /* Ours already: nothing to fetch, nothing to probe, nothing to
+     refuse. Checked after `broken`, so a copy that somehow will not
+     load still degrades to a plate rather than a broken glyph. */
+  if (broken.has(src)) return { ...PLATE, at: src }
+  const copy = copies.get(src)
+  if (copy !== undefined) return { ...PAINT, at: PUBLIC_BASE + copy.file }
+  /* Measured at build time as unobtainable: never requested, so it
+     costs no console line and no wait. */
+  if (knownAbsent(src)) return { ...PLATE, at: src }
+  if (host === null) return { ...(sourceKind(src) === 'refused' ? PLATE : PAINT), at: src }
   const verdict = verdictFor(host)
-  if (verdict === 'open') return PAINT
-  if (verdict === 'closed') return PLATE
-  return hosts.get(host)?.claim === src ? PROBE : PLATE
+  if (verdict === 'open') return { ...PAINT, at: src }
+  if (verdict === 'closed') return { ...PLATE, at: src }
+  return { ...(hosts.get(host)?.claim === src ? PROBE : PLATE), at: src }
 }
 
-/** Whether to draw this picture, and whether this one is the probe.
- *  Every consumer — the thumbnail, the enlarged plate, the page that
- *  sells the boat — asks the question here, so a picture that is a
- *  plate in the cell is never a broken glyph somewhere else. */
+/** Whether to draw this picture, where to draw it from, and whether
+ *  this one is the probe. Every consumer — the thumbnail, the enlarged
+ *  plate, the page that sells the boat — asks the question here, so a
+ *  picture that is a plate in the cell is never a broken glyph
+ *  somewhere else. */
 export function useImageDisplay(src: string): ImageDisplay {
   const [, bump] = useReducer((n: number) => n + 1, 0)
-  const host = hostKey(src)
+  /* A picture we hold needs no host record at all: `null` here takes
+     it out of the probe machinery entirely, so forty local thumbnails
+     never claim, never fail and never wake each other. */
+  const host = copies.has(src) || knownAbsent(src) ? null : hostKey(src)
   const verdict = host === null ? 'open' : verdictFor(host)
 
   useEffect(() => {

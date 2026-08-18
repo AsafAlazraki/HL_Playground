@@ -20,7 +20,7 @@
 
    A row leaves in front of you. The register is one line shorter and
    the line that went is the line you had selected. A COLUMN does not:
-   it takes one value out of every row in the table — 3,566 of them on
+   it takes one value out of every row in the table — 2,519 of them on
    the largest seeded one, most of them not on screen — and it can also
    put “Unknown field [Matrix]” into every row of a calculated column,
    and hand a business rule a blocker, neither of which this header

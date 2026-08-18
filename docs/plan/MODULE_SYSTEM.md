@@ -347,6 +347,89 @@ So in this plan:
 
 When roles arrive, the DESIGN gear becomes a capability like any other.
 
+### `configure` — the rule verb, shipped ahead of the contract
+
+**What shipped.** `MODULE_CAPABILITIES` carries nine verbs; the plan's `import`
+was never built and is not counted here. A tenth — **`configure`** — is now
+live, and it is the one this section did not have: *setting the rules a module's
+subject goes by.* A full rule engine already existed in `src/features/rules/`
+(the flow builder) and `src/features/constraints/` (the sentence rules and the
+workbook's own adjudicated rules), and none of it could be switched on per
+module, so the "rule configurator" the product is named for had no door.
+
+**The exact contract addition**, and it is two lines:
+
+```ts
+export type ModuleCapability =
+  | 'browse' | 'search' | 'open' | 'add' | 'edit' | 'delete' | 'relate'
+  | 'configure'          // <- between 'relate' and 'quote'
+  | 'quote' | 'export'
+
+configure: { label: 'Set rules', says: 'set what must always be true here' },
+```
+
+Between `relate` and `quote` because the record's order is the display order:
+the three reads, the three writes, then the three acts a manager does — say what
+goes with what, set what must always be true, raise a price.
+
+**Where it lives until the contract carries it.** `src/types/model.ts` was owned
+by another hand in the session that built this, so the flag is held in
+`src/features/modules/ruleCapability.ts` — a module registry mirrored to
+localStorage, the same seam `constraintDefs.ts` uses for `ConstraintDef` and for
+the same reason. `capabilityStates` speaks for all ten and everything downstream
+draws them identically; the deletion when the contract grows the verb is that
+file, `capabilityStates`' third argument, and one branch in the designer's
+switch handler. **It costs one thing, stated here rather than discovered:**
+`ProjectFile` cannot carry a verb the type does not have, so this switch does
+not travel with an export.
+
+**Default OFF**, like everything that writes. Writing a business rule is the
+most consequential write in the product.
+
+**Refused, with the fix named**, when no table in the module carries a column a
+sentence can talk about — a rule reads words, numbers, yes/no, dates and lists,
+and `buildConcepts` refuses a picture and a formula. Same shape as `quote`'s
+price refusal, and the same reason: the fix is a column on a table, so the
+sentence says so.
+
+### What the verb opens onto
+
+`ModuleDesigner`'s fourth panel — `ModuleRulesPanel` — drawn exactly while the
+verb is on, and reachable from the index's WHAT YOU CAN DO HERE strip, where
+`Set rules` is the first capability drawn as a **door** rather than a statement.
+Three sections, and each reuses the surface that already draws it in BUSINESS
+RULES rather than growing a second one:
+
+| section | what it draws | reused from |
+|---|---|---|
+| What must always be true | the limits reaching these tables, each with its live switch and conflict count, plus a builder whose column picker is narrowed to this module's own columns | `RuleCard`, `NewRuleSentence` |
+| What this place works out | the flow rules that WALK (`rootEntityId`) or SEARCH (a match node's `targetEntityId`) a table here, each with its switch and its measured reason | `RuleDef` + `updateRule` |
+| From your price file | the workbook rules naming a column of a kind these tables carry, with evidence, status and the measured rate | `WorkbookRuleList` |
+
+**Scope is COMPUTED, never assigned.** There is no `ModuleDef.ruleIds` and there
+must not be: a stored pointer is a second opinion about a fact the columns
+already state, and the day it disagrees with the sheet a rule silently stops
+being shown where it bites. `moduleRules.ts` intersects the module's tables and
+kinds with the rules' columns, so pointing a module at another table changes the
+rules it goes by in the same render. Measured against the real seed:
+
+| module | kinds | workbook rules | flow rules | columns a rule may name |
+|---|---|---|---|---|
+| Boats | boat | 10 | 2 (walks) | 73 |
+| Motors | motor, package | 6 | 1 (searches) | 53 |
+| Trailers | trailer | 4 | 1 (searches) | 28 |
+| Parts & Accessories | accessory, package | 4 | 0 | 75 |
+| Rates & Charges | custom | 2 | 0 | 19 |
+
+A cross-kind rule is claimed from BOTH sides and each side is told which half is
+its own — A1 compares the boat's Max HP with the motor's HP Rating, and it is a
+fact a person standing in either place needs.
+
+**A subset never hides the rest.** `WorkbookRuleList` takes a `scope` sentence
+whenever it is given a subset, because the count in its title is then a true
+number about a set nobody named, and a list that quietly drops six rules tells a
+person the price file states four.
+
 ---
 
 ## 6 · THE TWO WORKED MODULES

@@ -203,7 +203,7 @@ describe('the index cap', () => {
    The failure guarded here is FABRICATED ACTIVITY. A recency list
    is the easiest thing in this app to fake into life: every seeded
    row carries one identical stamp, so any test looser than "changed
-   since it was added" reports 3,566 events on a sheet where nothing
+   since it was added" reports 11,116 events on a sheet where nothing
    has happened, and a stakeholder is shown a busy dealership that
    does not exist.
 

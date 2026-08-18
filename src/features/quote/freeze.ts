@@ -25,6 +25,7 @@
    ============================================================ */
 
 import {
+  displayFieldOf,
   isDiscontinued,
   isRetired,
   primaryImage,
@@ -49,6 +50,19 @@ import {
   type RelatedRow,
 } from '@/features/views'
 import { bandOf, defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from '@/features/views/columns'
+/* DEEP IMPORT, DELIBERATELY. `@/features/crm` draws customer screens
+   that read quotes, so its barrel imports this feature; reaching for
+   the barrel here would close that circle. `crm/customers` is the
+   pure half — no store, no React, no import of ours — and importing
+   the leaf rather than the package is the same move QuoteEditor
+   already makes with `@/features/views/sellable`. */
+import {
+  CUSTOMER_CONTACT_FIELDS,
+  customerRegister,
+  readCustomer,
+  readCustomers,
+  type CustomerRead,
+} from '@/features/crm/customers'
 import { freezeLevels, isCostColumn, looksMonetary, normName, priceAtLevel, defaultLevelKey } from './pricing'
 import type { FrozenLevel, QuoteDef, QuoteLine, QuoteSection } from './types'
 
@@ -731,4 +745,105 @@ export function subjectStillOnSheet(quote: QuoteDef): EntityDef | undefined {
     (r) => r.id === quote.rootRowId,
   )
   return row ? entity : undefined
+}
+
+/* ---------------------------------------------------------- */
+/* The customer — read live, written by value                 */
+/* ---------------------------------------------------------- */
+
+/**
+ * WHY THE CUSTOMER PICKER LIVES IN THIS FILE AND NOWHERE ELSE.
+ *
+ * This feature keeps `useProjectStore` to exactly one file so that
+ * no drawn quote can touch live data, and a customer is live data:
+ * the register is an ordinary table a person types into all day.
+ * Picking one is a PICK, in the same sense a candidate line is —
+ * "The ONE place that reads live data is the candidate list — which
+ * is the picker, and a candidate is not part of the quote until it
+ * is minted" (QuoteEditor's own header). So the picker reads here,
+ * at pick time, and what it hands back is already frozen.
+ *
+ * The pure half of this — which table is the register, which of its
+ * columns may be printed, how a row is read and how a query is
+ * matched — is `@/features/crm/customers`, which imports nothing
+ * and reads nothing. This file supplies the only thing that file
+ * refuses to: the current state of somebody's project.
+ */
+
+/** Everybody in the register, right now, or [] when the project has
+ *  no register yet. An empty book is a normal state and never an
+ *  error: the field falls back to a typed name, which is how every
+ *  quote in this app was addressed before there was a register. */
+export function customerBook(): CustomerRead[] {
+  const { entities, rowsByEntity } = useProjectStore.getState()
+  const table = customerRegister(entities)
+  if (!table) return []
+  return readCustomers(table, rowsByEntity[table.id] ?? [])
+}
+
+/** True when this project has somewhere to put a customer. The
+ *  quote screen asks so it can offer to FILE a typed name rather
+ *  than silently doing nothing with it. */
+export const hasCustomerRegister = (): boolean =>
+  customerRegister(useProjectStore.getState().entities) !== undefined
+
+/** What a quote records when a customer is picked: the details BY
+ *  VALUE, and the row id beside them.
+ *
+ *  Read once, here, and never again. Everything the document prints
+ *  is in `customer`; `customerRef` is the "open this row" pointer
+ *  and is read by exactly one screen, to answer "what else have we
+ *  quoted them?". Returns null when the row has gone, so the caller
+ *  says so instead of writing a link to nothing. */
+export function freezeCustomer(
+  rowId: string,
+): Pick<QuoteDef, 'customer' | 'customerRef'> | null {
+  const { entities, rowsByEntity } = useProjectStore.getState()
+  const table = customerRegister(entities)
+  if (!table) return null
+  const row = (rowsByEntity[table.id] ?? []).find((r) => r.id === rowId)
+  if (!row) return null
+  const read = readCustomer(table, row)
+  return {
+    customer: {
+      name: read.name,
+      ...(read.contact.length > 0 ? { contact: read.contact } : {}),
+    },
+    customerRef: { tableId: table.id, rowId: row.id },
+  }
+}
+
+/**
+ * File a name somebody typed on a quote as a real customer.
+ *
+ * IT REFUSES WHEN THERE IS NO REGISTER, and that refusal is the
+ * point. DESIGN_CONTRACT §7: structure is never a side effect. A
+ * salesperson typing a name into a quote has not asked for a new
+ * TABLE, so this will not make one — the screen offers the register
+ * by name, at the place where registers are made, and this only
+ * ever adds a ROW to one that already exists.
+ *
+ * The contact lines already typed on the quote go in with the name,
+ * in the order the three printed columns are declared, so a repeat
+ * buyer is not typed twice. Returns the frozen link, ready to be
+ * written onto the quote in the same turn.
+ */
+export function fileCustomer(
+  name: string,
+  contact: readonly string[] = [],
+): Pick<QuoteDef, 'customer' | 'customerRef'> | null {
+  const store = useProjectStore.getState()
+  const table = customerRegister(store.entities)
+  if (!table) return null
+  const nameField = displayFieldOf(table)
+  if (!nameField) return null
+
+  const values: Record<string, CellValue> = { [nameField.id]: name.trim() }
+  CUSTOMER_CONTACT_FIELDS.forEach((fieldId, i) => {
+    const line = contact[i]
+    if (typeof line === 'string' && line.trim() !== '') values[fieldId] = line.trim()
+  })
+
+  const row = store.addRow(table.id, values)
+  return row ? freezeCustomer(row.id) : null
 }

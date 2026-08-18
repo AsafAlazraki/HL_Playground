@@ -27,7 +27,7 @@
    ============================================================ */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactElement } from 'react'
+import type { ReactElement, RefObject } from 'react'
 import { CaretDown, CaretRight, Plus, Star, Warning, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import {
@@ -35,10 +35,22 @@ import {
   retiredPairsSentence,
   retiredTableSentence,
 } from '@/features/views/sellable'
+/* PURE, AND THEREFORE SAFE TO READ HERE. `crm/customers` imports no
+   store, no React and nothing of ours — the deep path is what keeps
+   this out of the barrel cycle described in freeze.ts. */
+import {
+  exactCustomer,
+  matchCustomers,
+  type CustomerRead,
+} from '@/features/crm/customers'
 import {
   OFFER_CAP,
   SUBJECT_BLOCK,
   candidateOffer,
+  customerBook,
+  fileCustomer,
+  freezeCustomer,
+  hasCustomerRegister,
   priceChanges,
   unsellableSubject,
   type PriceChange,
@@ -50,6 +62,7 @@ import {
   addLine,
   applyPriceChanges,
   issueQuote,
+  linkCustomer,
   patchQuote,
   persistNote,
   removeAdjustment,
@@ -59,7 +72,9 @@ import {
   setLineLevel,
   setOverride,
   setQty,
+  unlinkCustomer,
   updateAdjustment,
+  useCustomerQuotes,
 } from './quotes'
 import { FrozenPhoto } from './photo'
 import type { AdjustmentKind, QuoteDef, QuoteLine, QuoteSection } from './types'
@@ -90,9 +105,18 @@ export interface QuoteEditorProps {
   /** the stage's own "it is issued now" move — drawing the document
    *  is the stage's business, not this screen's */
   onIssued?: (quote: QuoteDef) => void
+  /** Open the customer this quote is addressed to. Absent = the link
+   *  is still SAID (a fact is better than a control that does
+   *  nothing) but not offered as a door, so this screen still works
+   *  wherever it is mounted. */
+  onOpenCustomer?: (rowId: string) => void
 }
 
-export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement {
+export function QuoteEditor({
+  quote,
+  onIssued,
+  onOpenCustomer,
+}: QuoteEditorProps): ReactElement {
   const totals = quoteTotals(quote)
   const levels = useMemo(() => quoteLevelChoices(quote.lines), [quote.lines])
   const [details, setDetails] = useState(false)
@@ -104,6 +128,19 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
      caret is already there — one field, focused on open */
   useEffect(() => {
     nameRef.current?.focus()
+  }, [quote.id])
+
+  /* WHAT THE DOCUMENT ALREADY SAYS ABOUT THE CUSTOMER IS NOT HIDDEN.
+     The contact block is a quiet disclosure because most quotes have
+     nothing in it — but a quote that DOES carry contact lines is a
+     quote whose lines print on the customer's page and travel into
+     the register when the name beside them is filed, and a person
+     cannot check what they cannot see. So it opens itself exactly
+     when there is something in it, once per document, and closes
+     again on a quote that has none. Collapsing it by hand still
+     works: this only runs when a different quote arrives. */
+  useEffect(() => {
+    setContact((quote.customer.contact ?? []).length > 0)
   }, [quote.id])
 
   const saveNote = persistNote()
@@ -125,7 +162,6 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
      refused for a second reason nobody mentioned has been told half
      the truth. */
   const refusals = issueBlockers(quote)
-  const noCustomer = quote.customer.name.trim() === ''
 
   return (
     /* THE DOCUMENT SCROLLS AND THE TOTAL DOES NOT — and they are
@@ -174,25 +210,11 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
           {/* -- who it is for, and at which rung ---------------- */}
           <header className="qt-edit-head">
             <div className="qt-edit-for">
-              <label className="qt-field">
-                <span className="mono-label">Customer</span>
-                <input
-                  ref={nameRef}
-                  className="field-input qt-input qt-input--name"
-                  value={quote.customer.name}
-                  placeholder="the customer's name"
-                  spellCheck={false}
-                  aria-describedby={noCustomer ? `${quote.id}-who` : undefined}
-                  onChange={(e) =>
-                    patchQuote(quote.id, { customer: { ...quote.customer, name: e.target.value } })
-                  }
-                />
-                {noCustomer ? (
-                  <span className="qt-field-why" id={`${quote.id}-who`}>
-                    {NO_CUSTOMER_WHY}
-                  </span>
-                ) : null}
-              </label>
+              <CustomerField
+                quote={quote}
+                nameRef={nameRef}
+                onOpenCustomer={onOpenCustomer}
+              />
 
               {levels.length > 1 ? (
                 <div className="qt-levels" role="group" aria-label="Price level">
@@ -485,6 +507,229 @@ export function QuoteEditor({ quote, onIssued }: QuoteEditorProps): ReactElement
 }
 
 /* ============================================================
+   WHO IT IS FOR — a typed name, or a customer.
+
+   BOTH WAYS IN STAY OPEN, and that is the whole design. Every quote
+   this app has ever raised was addressed to a name somebody typed,
+   and a walk-in who gives a name and no details is a real deal, not
+   a filing error. So the control is the same input it always was:
+   typing works, typing is enough, and the quote can be issued on a
+   typed name alone.
+
+   What is NEW sits underneath it. When the project has a customer
+   register, what has been typed is matched against it, and choosing
+   somebody does two separate things that must not be confused:
+
+     · it FREEZES their name and contact lines onto this document,
+       exactly the way a price is frozen onto a line — corrected in
+       the register on Friday, the quote handed over on Monday still
+       says what it said;
+     · it writes the ROW ID beside them, and that id answers exactly
+       one question ever — "what else have we quoted them?".
+
+   WHY THE PICKER READS LIVE DATA AND THE DOCUMENT NEVER DOES. This
+   feature keeps `useProjectStore` to freeze.ts so a drawn quote can
+   never touch the store; a picker is the declared exception, in this
+   screen's own header — "The ONE place that reads live data is the
+   candidate list ... and a candidate is not part of the quote until
+   it is minted". The register is read on FOCUS, into state, and
+   nothing on this screen re-reads it while it is being drawn.
+
+   IT NEVER MAKES A TABLE. Filing a typed name adds a ROW to a
+   register that already exists. If there is none, this says so and
+   names the place where one is made — DESIGN_CONTRACT §7, structure
+   is never a side effect of typing.
+   ============================================================ */
+
+/** What was read out of the register when the field was last
+ *  focused. `has` and an empty `list` are different facts: no
+ *  register at all, and a register with nobody in it yet. */
+interface Book {
+  has: boolean
+  list: CustomerRead[]
+}
+
+function CustomerField({
+  quote,
+  nameRef,
+  onOpenCustomer,
+}: {
+  quote: QuoteDef
+  nameRef: RefObject<HTMLInputElement | null>
+  onOpenCustomer?: (rowId: string) => void
+}): ReactElement {
+  const [book, setBook] = useState<Book | null>(null)
+  const [open, setOpen] = useState(false)
+
+  const typed = quote.customer.name
+  const noCustomer = typed.trim() === ''
+  const ref = quote.customerRef
+
+  /* THE HISTORY, counted from the quote registry rather than looked
+     up: `useCustomerQuotes` subscribes to the same published list the
+     diary draws from, so this number and that page can never
+     disagree. Called unconditionally with '' when there is no link,
+     because a hook may not be conditional. */
+  const theirs = useCustomerQuotes(ref?.rowId ?? '')
+  const others = Math.max(0, theirs.length - 1)
+
+  /* THE ONE LIVE READ, and it is an event. */
+  const read = (): Book => {
+    const next = { has: hasCustomerRegister(), list: customerBook() }
+    setBook(next)
+    return next
+  }
+
+  const suggestions = book && book.has ? matchCustomers(book.list, typed) : []
+  const already = book && book.has ? exactCustomer(book.list, typed) : undefined
+  /* offered only for a name that is really new, in a register that
+     really exists, and never while this quote is already linked */
+  const canFile = book?.has === true && !ref && !already && !noCustomer
+
+  const link = (frozen: ReturnType<typeof freezeCustomer>): void => {
+    if (!frozen) return
+    linkCustomer(quote.id, frozen)
+    setOpen(false)
+  }
+
+  return (
+    <div
+      className="qt-who"
+      /* the list closes when focus leaves the whole control, never on
+         the input's own blur — a blur fires on the way to the option
+         being clicked, and closing there is why so many pickers
+         cannot be clicked at all */
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false)
+      }}
+    >
+      <label className="qt-field">
+        <span className="mono-label">Customer</span>
+        <input
+          ref={nameRef}
+          className="field-input qt-input qt-input--name"
+          value={typed}
+          placeholder="the customer's name"
+          spellCheck={false}
+          autoComplete="off"
+          aria-describedby={noCustomer ? `${quote.id}-who` : undefined}
+          onFocus={() => {
+            read()
+            setOpen(true)
+          }}
+          onChange={(e) => {
+            /* TYPING OVER A LINKED NAME DOES NOT SILENTLY UNLINK IT.
+               The document is what the person is editing; the link is
+               a separate fact with its own control beneath, which
+               says what it does. Quietly dropping a pointer because
+               somebody fixed a spelling is the kind of invisible
+               state change this app is being written against. */
+            patchQuote(quote.id, { customer: { ...quote.customer, name: e.target.value } })
+            if (!open) read()
+            setOpen(true)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && open) {
+              e.stopPropagation()
+              setOpen(false)
+            }
+          }}
+        />
+      </label>
+
+      {/* -- who this document is addressed to, as a record -------- */}
+      {ref ? (
+        <p className="qt-who-link">
+          <span className="qt-who-link-say">
+            Filed under <strong>{typed.trim() === '' ? 'this customer' : typed}</strong> in
+            Customers
+            {others > 0
+              ? ` · ${others} other quote${others === 1 ? '' : 's'} to them`
+              : ' · this is their first quote'}
+          </span>
+          {onOpenCustomer ? (
+            <button
+              type="button"
+              className="qt-who-act"
+              onClick={() => onOpenCustomer(ref.rowId)}
+            >
+              Open them
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="qt-who-act"
+            /* it takes the POINTER off and leaves every word of the
+               document where it is — see `unlinkCustomer` */
+            title="Keep the name on this quote and stop it pointing at that record"
+            onClick={() => unlinkCustomer(quote.id)}
+          >
+            Not them
+          </button>
+        </p>
+      ) : null}
+
+      {/* -- the picker ------------------------------------------- */}
+      {open && book && book.has && suggestions.length > 0 ? (
+        <ul className="qt-who-list" role="listbox" aria-label="Customers">
+          {suggestions.map((c) => (
+            <li key={c.rowId}>
+              <button
+                type="button"
+                className="qt-who-opt"
+                onClick={() => link(freezeCustomer(c.rowId))}
+              >
+                <span className="qt-who-opt-name">
+                  {c.name === '' ? 'no name yet' : c.name}
+                </span>
+                <span className="qt-who-opt-say">{c.contact.join('  ·  ')}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {/* THE NAME IS NOT IN THE BOOK YET. An offer, in the words of
+          what it does, and it adds a ROW — never a table. */}
+      {open && canFile ? (
+        <button
+          type="button"
+          className="qt-who-act qt-who-file"
+          onClick={() => link(fileCustomer(typed, quote.customer.contact ?? []))}
+        >
+          Add {typed.trim()} to your customers
+        </button>
+      ) : null}
+
+      {/* THERE IS NOWHERE TO FILE THEM YET, said once the field has
+          been used and only then — a permanent instruction under an
+          empty field is furniture nobody reads. It names the place
+          rather than offering to build a table from inside a quote. */}
+      {open && book && !book.has && !noCustomer ? (
+        <p className="qt-who-none">
+          This quote will print their name and details either way. To keep them —
+          so a second quote to them starts from what you already know — open{' '}
+          <em>Customers</em> on the bar and start the register there.
+        </p>
+      ) : null}
+
+      {/* THE REFUSAL COMES LAST, UNDER EVERYTHING. It used to sit
+          straight beneath the input, which pushed the register's own
+          matches three lines away from the field they belong to — a
+          picker that is not attached to its control reads as an
+          unrelated list. The sentence is still in place (rule 10) and
+          still the field's `aria-describedby`, which is what a screen
+          reader follows; only the visual order moved. */}
+      {noCustomer ? (
+        <span className="qt-field-why" id={`${quote.id}-who`}>
+          {NO_CUSTOMER_WHY}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
+/* ============================================================
    ONE SECTION — what goes with the subject, from one table
    ============================================================ */
 
@@ -573,7 +818,12 @@ function SectionCard({
             <p className="qt-section-empty">
               {refusedNote !== ''
                 ? refusedNote
-                : `Nothing from ${section.title} goes with this one yet. Set that up on the page that says what goes with each one.`}
+                : /* THE PLACE IS CALLED FITMENT, and this sentence was the
+                     last copy in the app still directing somebody to a
+                     page by a name that page no longer uses — the phrase
+                     the owner named outright as confusing. Same door,
+                     same act, the name the bar and the button both use. */
+                  `Nothing from ${section.title} goes with this one yet. Set that up on the table's Fitment page.`}
             </p>
           ) : (
             <ul className="qt-picker-list">

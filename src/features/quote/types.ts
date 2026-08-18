@@ -23,6 +23,17 @@
    in five separate places that already disagree about rounding
    and cost fallbacks; nobody looking at the page can tell which
    numbers on it are yesterday's.
+
+   THE CUSTOMER JOINED THAT LIST AND CHANGED NOTHING ABOUT IT.
+   `customerRef` (below) is a row pointer of the FIRST kind — "open
+   this row on the sheet" — and it sits beside the frozen
+   `customer` block the document actually prints, never in place of
+   it. The rule to check a change against is one sentence: EVERY
+   WORD AND EVERY FIGURE ON THE PRINTED DOCUMENT COMES FROM A
+   FROZEN FIELD. A quote whose customer block were resolved through
+   that id would re-address itself when somebody fixed a typo in
+   the register, and would print nothing at all in a project that
+   register never reached.
    ============================================================ */
 
 import type { ImageRef } from '@/types/model'
@@ -242,7 +253,34 @@ export interface QuoteDef {
    *  defaulted: `1.1` hardcoded in seven production files while
    *  `organisation.gstPercentage` sat unread is the exact trap. */
   taxRate?: number
+  /** WHAT THE DOCUMENT PRINTS, and the only thing it prints. Frozen
+   *  the moment a customer is picked, exactly like a line's price:
+   *  a name corrected in the register on Friday does not rewrite the
+   *  quote handed over on Monday, and a customer deleted from the
+   *  register does not blank the document they were given. */
   customer: { name: string; contact?: string[] }
+  /** WHO IT WAS ADDRESSED TO, AS A ROW — kept for exactly ONE thing:
+   *  "show me this customer's other quotes".
+   *
+   *  It is not an exception to the rule at the top of this file, it
+   *  is the FIRST of the two ids that rule already allows — the
+   *  "open this row on the sheet" id — and it is the same shape, and
+   *  the same promise, as `rootTableId` / `rootRowId` one field up:
+   *  a pointer nothing drawn or totalled ever reads.
+   *
+   *  THE TEST THIS MUST KEEP PASSING: delete the customer from the
+   *  register, or open the quote in a project where that register
+   *  never existed, and the printed document is UNCHANGED — because
+   *  every word on it came from `customer` above. If this field ever
+   *  becomes something a renderer resolves, the quote has stopped
+   *  being a photograph and Monday's number can move by Friday.
+   *
+   *  `tableId` travels with `rowId` because the register is an
+   *  ordinary table with an ordinary id, and a project may be
+   *  imported alongside another. Absent on every quote addressed to
+   *  a name somebody typed, which stays a legitimate way to write a
+   *  quote — a walk-in is not a filing error. */
+  customerRef?: { tableId: string; rowId: string }
   preparedBy?: string
   organisation?: string
   /** the validity sentence, typed. The workbook's own is a typed

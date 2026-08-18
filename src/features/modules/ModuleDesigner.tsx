@@ -8,10 +8,17 @@
    already ships (`ViewPage.tsx:252-266`) and the module inherits it
    rather than reinventing it (MODULE_SYSTEM §4, rule 7).
 
-   THREE THINGS, IN THE ORDER AN ADMIN ASKS THEM.
+   FOUR THINGS, IN THE ORDER AN ADMIN ASKS THEM. The fourth is new
+   and it is the reason the strip grew: a module now configures the
+   RULES governing its own subject, reusing the two engines the app
+   already has rather than growing a third (see ModuleRulesPanel).
 
-     1. WHAT MAY BE DONE HERE — the capability strip. Ten verbs from
-        the contract, drawn as switches. A verb that cannot be
+     1. WHAT MAY BE DONE HERE — the capability strip. Ten verbs,
+        drawn as switches. Nine come from the contract; the tenth,
+        `configure`, is held in `ruleCapability.ts` with the exact
+        line `MODULE_CAPABILITIES` needs, because `model.ts` is not
+        this session's to edit. Nothing below the switch handler can
+        tell the difference. A verb that cannot be
         switched on says what is missing, in a sentence, naming the
         table the fix lives on. A verb that is ON but which this app
         does not yet perform says so on the switch AND draws a
@@ -28,6 +35,15 @@
         views feature's own helpers. It does the two things
         `ViewPage` cannot: reorder the blocks, and choose the
         columns each one draws.
+
+     4. THE RULES IT GOES BY — drawn only while `configure` is on,
+        which is the affordance that verb promises. Limits, the
+        derivations that walk or search these tables, and what the
+        price file itself states about this subject with its
+        evidence and its measured rate. It assigns nothing: which
+        rules reach a module is computed off the columns, so
+        pointing the module at another table changes them in the
+        same render.
 
    NOTHING HERE INVENTS DATA. Every column offered is read from
    `EntityDef.fields`; every verb from `MODULE_CAPABILITIES`; every
@@ -52,11 +68,16 @@ import {
   FIELD_TYPES,
   isRetired,
   type EntityDef,
-  type ModuleCapability,
   type ModuleDef,
   type ModuleIndexMode,
   type ViewDef,
 } from '@/types/model'
+import {
+  RULE_CAPABILITY,
+  setModuleConfiguresRules,
+  useModuleConfiguresRules,
+} from './ruleCapability'
+import { ModuleRulesPanel } from './ModuleRulesPanel'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import {
@@ -79,6 +100,7 @@ import {
   nextCapabilities,
   tableBindings,
   type BlockBinding,
+  type DesignerCapability,
   type TableBinding,
 } from './designer'
 import './modules.css'
@@ -94,21 +116,36 @@ export function ModuleDesigner({ module }: ModuleDesignerProps): ReactElement {
 
   const tables = moduleTables(module, entities)
   const bindings = tableBindings(module, entities, rowsByEntity)
-  const caps = capabilityStates(module, tables)
+
+  /* THE TENTH VERB LIVES SOMEWHERE ELSE, AND ONLY THESE TWO LINES
+     KNOW IT. `capabilityStates` speaks for all ten and the strip
+     draws all ten the same way; when `ModuleCapability` grows
+     'configure', this hook and the branch in `onSet` are the whole of
+     the deletion. See `ruleCapability.ts`. */
+  const configures = useModuleConfiguresRules(module.id)
+  const caps = capabilityStates(module, tables, configures)
+
+  const setCapability = (key: DesignerCapability, on: boolean): void => {
+    if (key === RULE_CAPABILITY) {
+      setModuleConfiguresRules(module.id, on)
+      return
+    }
+    updateModule(module.id, {
+      capabilities: nextCapabilities(module.capabilities, key, on),
+    })
+  }
 
   return (
     <div className="md-design" role="group" aria-label={`Set up ${module.name}`}>
-      <Capabilities
-        module={module}
-        states={caps}
-        onSet={(key, on) =>
-          updateModule(module.id, {
-            capabilities: nextCapabilities(module.capabilities, key, on),
-          })
-        }
-      />
+      <Capabilities module={module} states={caps} onSet={setCapability} />
       <IndexPanel module={module} bindings={bindings} />
       <DetailPanel module={module} tables={tables} />
+
+      {/* 4 · THE RULES IT GOES BY — present exactly when the verb that
+          promises it is on. A capability that is ON is an affordance
+          where a person can act; one that is OFF is absent, and the
+          switch above is where it comes back. */}
+      {configures ? <ModuleRulesPanel module={module} tables={tables} /> : null}
     </div>
   )
 }
@@ -124,7 +161,7 @@ function Capabilities({
 }: {
   module: ModuleDef
   states: ReturnType<typeof capabilityStates>
-  onSet: (key: ModuleCapability, on: boolean) => void
+  onSet: (key: DesignerCapability, on: boolean) => void
 }): ReactElement {
   return (
     <section className="md-panel">

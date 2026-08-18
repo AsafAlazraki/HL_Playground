@@ -140,7 +140,7 @@ describe('undo — a row delete', () => {
    every value in it." A sentence in front of somebody deciding whether
    to risk their price file has to be exactly true, and "it comes back"
    is not the same claim as "it comes back WHERE IT WAS" — a row that
-   returned to the foot of a 3,566-row table, or a column that returned
+   returned to the foot of an 11,116-row sheet, or a column that returned
    to the far right of a banded sheet, would make both sentences lies of
    a quieter kind. The tests above prove the values survive; these prove
    the POSITION does, which is the half the wording now rests on.

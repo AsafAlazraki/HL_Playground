@@ -29,6 +29,11 @@ import {
   type XY,
 } from '@/types/model'
 import { defaultMeta, repository, type ProjectSnapshot } from '@/db/repository'
+/* A LEAF, ON PURPOSE. `@/lib/writeGate` imports nothing at all, so
+   the store can read it without the layering inversion a
+   `@/features/session` import would be — the feature sets the flag,
+   the store reads it, and neither knows the other exists. */
+import { noteRefusedWrite, writesHeld } from '@/lib/writeGate'
 /* DIRECT PATH, DELIBERATELY. `@/features/views` is the feature's barrel and
    pulls React surfaces and this very store back in; `relations.ts` imports
    neither, which is what makes it safe here. Same precedent and same reason
@@ -224,7 +229,18 @@ interface ProjectStore {
   }) => EntityDef
 
   /* entities */
+  /** `keepId` IS FOR WELL-KNOWN TABLES, AND FOR NOTHING ELSE — the
+   *  same arrangement, and the same words, `createView` and
+   *  `createModule` below already carry. One table in a project can
+   *  be the CUSTOMER REGISTER, and the thing that says which is its
+   *  id, because an id is the only part of a table a person cannot
+   *  change by accident: rename it, re-order it, add six columns and
+   *  delete four, and it is still the register. It is IGNORED when a
+   *  table already holds that id, so asking twice never replaces the
+   *  one that is there. Everything a person creates gets a fresh
+   *  `newId()` and must keep doing so. */
   createEntity: (partial?: {
+    keepId?: string
     name?: string
     position?: XY
     accent?: AccentKey
@@ -280,9 +296,19 @@ interface ProjectStore {
 
   /* views — the configurable "what goes with this?" pages */
   views: Record<string, ViewDef>
-  /** Idempotent: asking twice for the same root table returns the same
-   *  view rather than a duplicate. */
-  createView: (rootTableId: string, name?: string) => ViewDef
+  /**
+   * Idempotent: asking twice for the same root table returns the same
+   * view rather than a duplicate.
+   *
+   * `keepId` IS FOR RESTORING, AND FOR NOTHING ELSE. A page that comes
+   * back out of a file is the same page it was when it went in — a
+   * quote keeps `viewId` among the two ids it is allowed to keep
+   * (features/quote/types.ts), so a page minted a new id on the way
+   * home would leave every quote's "make another like this one"
+   * pointing at nothing. Ignored when it is already taken, so a caller
+   * can never fuse two pages into one by asking for an id twice.
+   */
+  createView: (rootTableId: string, name?: string, keepId?: string) => ViewDef
   updateView: (id: string, patch: Partial<Omit<ViewDef, 'id' | 'createdAt'>>) => void
   deleteView: (id: string) => void
 
@@ -292,7 +318,14 @@ interface ProjectStore {
    *  from the table and tuned later, so a module works before it is
    *  configured. Also mints the detail view page, so opening an item
    *  works on the first click rather than after a second setup step. */
-  createModule: (tableIds: string[], name?: string, description?: string) => ModuleDef | null
+  createModule: (
+    tableIds: string[],
+    name?: string,
+    description?: string,
+    /** the id to keep when this module is being RESTORED from a file —
+     *  see `createView`'s note. Ignored when it is already taken. */
+    keepId?: string,
+  ) => ModuleDef | null
   updateModule: (id: string, patch: Partial<Omit<ModuleDef, 'id' | 'createdAt'>>) => void
   deleteModule: (id: string) => void
 
@@ -331,14 +364,55 @@ interface ProjectStore {
   ) => { entity: EntityDef; aFieldId: string; bFieldId: string } | null
 }
 
-/* -- persistence: debounced write-behind -------------------- */
+/* ============================================================
+   PERSISTENCE — debounced write-behind, WITH A CEILING.
+
+   THE DEBOUNCE. A quarter of a second of quiet and the sheet is on
+   disk. Unchanged, and it is the right instrument: nobody wants a
+   write per keystroke.
+
+   THE CEILING IS NEW, AND IT IS A CORRECTNESS FIX. A pure debounce
+   starves under continuous input — reset on every mutation, it never
+   fires while somebody is actually typing, so a long spell of work
+   sits entirely in memory until they stop. The failure that hides
+   behind that is the one this app can least afford: a tab closed, a
+   crash, a reload, and everything since the last pause is gone.
+
+   So a burst may defer the write, but not for ever: `PERSIST_MAX_MS`
+   after the FIRST unwritten change the sheet is written whatever is
+   still happening. Two seconds is chosen against the debounce it
+   guards — five debounce windows, so ordinary typing never reaches it
+   and a sustained one reaches it repeatedly.
+
+   IT IS AFFORDABLE NOW AND WAS NOT BEFORE. A mid-burst flush used to
+   mean re-writing the whole project (measured: 10,539ms at 10,698
+   rows) and would have made typing worse, not safer. With the
+   differential write in `repository.ts` a flush costs the records
+   that actually changed — one row for one cell — so the ceiling
+   is a few milliseconds of work that a person cannot feel.
+   ============================================================ */
+const PERSIST_DEBOUNCE_MS = 400
+const PERSIST_MAX_MS = 2000
+
 let persistTimer: ReturnType<typeof setTimeout> | null = null
+/** when the oldest change still unwritten was made; 0 when none */
+let unwrittenSince = 0
+
 function schedulePersist(get: () => ProjectStore) {
+  const now = Date.now()
+  if (unwrittenSince === 0) unwrittenSince = now
   if (persistTimer) clearTimeout(persistTimer)
+  /* whichever comes first: a quarter-second of quiet, or the ceiling
+     measured from the first change in this burst */
+  const wait = Math.max(
+    0,
+    Math.min(PERSIST_DEBOUNCE_MS, unwrittenSince + PERSIST_MAX_MS - now),
+  )
   persistTimer = setTimeout(() => {
     persistTimer = null
+    unwrittenSince = 0
     void repository.saveAll(get().snapshot())
-  }, 400)
+  }, wait)
 }
 
 const touch = <T extends { updatedAt: string }>(obj: T): T => ({
@@ -377,6 +451,24 @@ const cellUnchanged = (a: CellValue | undefined, b: CellValue): boolean =>
 export const useProjectStore = create<ProjectStore>()((set, get) => {
   /** wrap a mutation so it also stamps meta.updatedAt and persists */
   const mutate = (fn: (s: ProjectStore) => Partial<ProjectStore>) => {
+    /* THE TWO-TAB GUARD, AT THE ONE SEAM EVERY CHANGE PASSES THROUGH.
+       Two tabs on one IndexedDB both hold the whole project and both
+       write it back; the last flush wins and the other tab's work is
+       gone with no error anywhere. So exactly one tab may change the
+       sheet, the tabs agree which one over a BroadcastChannel
+       (`@/features/session`), and the other one declines here rather
+       than accepting an edit it is never going to keep.
+
+       DECLINED, NOT UNSAVED. Blocking only the flush would let a
+       person type for an hour into a tab that keeps none of it —
+       the same loss, later, with more of it. And the refusal is
+       COUNTED, because a control that silently does nothing is the
+       failure DESIGN_PRINCIPLES rule 10 exists to prevent: the
+       count is what the notice on screen turns into a sentence. */
+    if (writesHeld()) {
+      noteRefusedWrite()
+      return
+    }
     set((s) => {
       const patch = fn(s)
       // stamp updatedAt on whichever meta survives — the patch's if the
@@ -444,6 +536,14 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
   /** shared by undo and redo: swap the live data for `entry.before`,
    *  hand the current data to the opposite stack, persist. */
   const travel = (dir: 'undo' | 'redo'): string | null => {
+    /* Undo writes to the disk too (see the note beside its
+       `schedulePersist` below), so it is gated with everything else.
+       Returning null is the same answer this already gives when
+       there is nothing on the stack, and the caller draws no toast. */
+    if (writesHeld()) {
+      noteRefusedWrite()
+      return null
+    }
     closeBurst() // anything still open belongs on the stack first
     const s = get()
     const from = dir === 'undo' ? s.past : s.future
@@ -540,8 +640,18 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     resetProject: async () => {
+      /* THE ONE THAT WOULD HURT MOST. `wipe()` clears every store on
+         the shared database, so a tab that is not the writer must
+         never reach it — it would empty the sheet out from under the
+         tab that IS writing. */
+      if (writesHeld()) {
+        noteRefusedWrite()
+        return
+      }
       if (persistTimer) clearTimeout(persistTimer)
       persistTimer = null
+      /* the burst this cancels is not owed a write any more */
+      unwrittenSince = 0
       forgetHistory()
       await repository.wipe()
       set({
@@ -704,8 +814,9 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     /* -- entities ----------------------------------------- */
     createEntity: (partial) => {
       const count = Object.keys(get().entities).length
+      const keep = partial?.keepId
       const entity: EntityDef = {
-        id: newId(),
+        id: keep && !get().entities[keep] ? keep : newId(),
         name: partial?.name?.trim() || `Entity ${count + 1}`,
         accent: partial?.accent ?? ACCENT_KEYS[count % ACCENT_KEYS.length],
         fields: [
@@ -1082,12 +1193,17 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     /* -- views -------------------------------------------- */
-    createView: (rootTableId, name) => {
+    createView: (rootTableId, name, keepId) => {
       const existing = Object.values(get().views).find((v) => v.rootTableId === rootTableId)
       if (existing) return existing
       const root = get().entities[rootTableId]
       const view: ViewDef = {
-        id: newId(),
+        /* A RESTORED PAGE KEEPS ITS OWN ID — unless something already
+           holds it, in which case minting is the only safe answer: two
+           pages under one key is one page, and a merge that fused two
+           of somebody's screens together would be far worse than a
+           merged page arriving under a new name. */
+        id: keepId && !get().views[keepId] ? keepId : newId(),
         name: name?.trim() || `${root?.name ?? 'Table'} view`,
         rootTableId,
         blocks: [],
@@ -1117,7 +1233,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     /* -- modules ------------------------------------------------ */
 
 
-    createModule: (tableIds, name, description) => {
+    createModule: (tableIds, name, description, keepId) => {
       const clean = tableIds.filter((id) => {
         const e = get().entities[id]
         return e !== undefined && canBeModuleMaster(e)
@@ -1178,7 +1294,9 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
 
       const order = Object.values(get().modules).length
       const mod: ModuleDef = {
-        id: newId(),
+        /* the same rule as `createView` above: a restored module is the
+           module it was, and an id already in use is never taken */
+        id: keepId && !get().modules[keepId] ? keepId : newId(),
         name: name?.trim() || primary.name,
         description: description?.trim() || primary.description?.trim() || '',
         tableIds: clean,

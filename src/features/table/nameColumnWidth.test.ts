@@ -36,8 +36,8 @@ describe('widestOf', () => {
     expect(widestOf(['ab', 'abcd', 'abc'], flat)).toBe(28)
   })
 
-  /* the probe is the whole reason this is cheap: 3,566 rows must not
-     cost 3,566 canvas measurements */
+  /* the probe is the whole reason this is cheap: 11,116 rows must not
+     cost 11,116 canvas measurements */
   it('only measures the longest few, and still finds the widest', () => {
     const values = [...Array(500).keys()].map((i) => 'x'.repeat((i % 20) + 1))
     values.push('y'.repeat(60))

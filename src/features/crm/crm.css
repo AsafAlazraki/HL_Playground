@@ -1,0 +1,530 @@
+/* ============================================================
+   CUSTOMERS (cx-) — the register, and one person in it.
+
+   Co-located with its feature, as every stylesheet in this tree is:
+   no shared override layer, nothing here reaches into another
+   feature's rules, and nothing outside this directory writes a
+   `cx-` class.
+
+   IT IS BUILT FROM THE SAME PARTS AS THE MODULE INDEX, deliberately.
+   A dealer moving between Modules and Customers must not feel they
+   have crossed into a second application, so the page well, the
+   head, the find box, the empty card and the row measurements are
+   the ones `modules.css` already settled on — 1180px measure, the
+   `--sp` scale, the `--ui`/`--data`/`--micro` ramps, `--ec1` at rest
+   and `--ec3` on hover. Every value below is a token; there is not a
+   literal colour in this file.
+
+   THE ONE ACCENT, roughly four times: the primary button, the
+   focused control, the open row's rail, and the money column. That
+   is the whole budget and it is not spent anywhere else.
+
+   NO NEW TRANSLUCENT SURFACE. The dock and the page toolbar are the
+   two this design allows and neither of them is here.
+   ============================================================ */
+
+/* ============================================================
+   THE WELL
+   ============================================================ */
+
+.cx-root {
+  height: 100%;
+  overflow: auto;
+  background: var(--paper);
+  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 2);
+}
+
+/* the prose form of an absent answer — 44ch, the house measure */
+.cx-void {
+  max-width: 44ch;
+  margin: var(--sp-6) auto 0;
+  font-size: var(--ui-size);
+  line-height: 1.7;
+  letter-spacing: var(--ui-track);
+  color: var(--ink-soft);
+}
+
+.cx-none {
+  max-width: 1180px;
+  margin: var(--sp-5) auto 0;
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  color: var(--ink-faint);
+}
+
+/* A NAME NOBODY HAS TYPED IS NOT A NAME. It is set apart from real
+   data so a screenshot can never be read as a customer called "no
+   name yet" — the same device `.qt-doc-blank` uses on a quote. */
+.cx-blank {
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+/* every figure on these screens: mono, tabular, aligned */
+.cx-num {
+  font-family: var(--font-mono);
+  font-size: var(--data-size);
+  letter-spacing: var(--data-track);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ============================================================
+   THE HEAD OF THE REGISTER
+   ============================================================ */
+
+.cx-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  max-width: 1180px;
+  margin: 0 auto var(--sp-5);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.cx-head-id {
+  min-width: 0;
+}
+
+.cx-head-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--display-m-size);
+  letter-spacing: var(--display-m-track);
+  line-height: var(--display-m-lead);
+  color: var(--ink);
+}
+
+.cx-head-desc {
+  margin: 4px 0 0;
+  max-width: 68ch;
+  font-size: var(--ui-m-size);
+  letter-spacing: var(--ui-m-track);
+  line-height: var(--ui-m-lead);
+  color: var(--ink-soft);
+}
+
+.cx-head-facts {
+  margin: 6px 0 0;
+  color: var(--ink-faint);
+}
+
+.cx-head-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+}
+
+.cx-find {
+  position: relative;
+  width: 240px;
+}
+
+.cx-find-mark {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.cx-find-input {
+  padding-left: 26px;
+}
+
+/* ============================================================
+   THE EMPTY STATES — four parts, in the house order
+   ============================================================ */
+
+.cx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sp-6);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--e2);
+}
+
+.cx-empty-eyebrow {
+  color: var(--ink-faint);
+}
+
+.cx-empty-say {
+  margin: 0;
+  font-size: var(--ui-l-size);
+  line-height: var(--ui-l-lead);
+  letter-spacing: var(--ui-l-track);
+  color: var(--ink-soft);
+}
+
+.cx-empty-count {
+  margin: 0;
+  font-size: var(--ui-m-size);
+  line-height: var(--ui-m-lead);
+  color: var(--ink);
+}
+.cx-empty-count strong {
+  font-family: var(--font-mono);
+  font-size: var(--data-l-size);
+  font-weight: 500;
+  letter-spacing: var(--data-l-track);
+}
+
+/* WHAT THE ONE BUTTON WILL ACTUALLY MAKE, under the button. A
+   structural act is named before it is taken (DESIGN_CONTRACT §7),
+   and a column name is a NAME — weight and full ink, never italic,
+   which is the same treatment `.md-empty-why em` gives a control. */
+.cx-empty-why {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  line-height: 1.6;
+  letter-spacing: var(--ui-s-track);
+  color: var(--ink-soft);
+}
+.cx-empty-why em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--ink);
+}
+
+/* ============================================================
+   THE LIST — a register is a list you scan, so a row DARKENS on
+   press rather than scaling: neighbours must not appear to move.
+   ============================================================ */
+
+.cx-rows {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  overflow: hidden;
+}
+
+.cx-row + .cx-row {
+  border-top: 1px solid var(--hairline);
+}
+
+.cx-row-open {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 10px var(--sp-4);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+
+.cx-row-open:hover {
+  background: var(--paper-sunken);
+}
+
+.cx-row-open:active {
+  background: var(--blue-wash);
+}
+
+.cx-row-open:focus-visible {
+  outline: none;
+  background: var(--blue-wash);
+  border-left-color: var(--blue);
+}
+
+/* the one already open, when the stage has one */
+.cx-row.is-open > .cx-row-open {
+  border-left-color: var(--blue);
+  background: var(--blue-wash);
+}
+
+.cx-row-name {
+  min-width: 0;
+  font-size: var(--ui-m-size);
+  font-weight: 560;
+  letter-spacing: var(--ui-m-track);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.cx-row-contact {
+  min-width: 0;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.cx-row-when {
+  justify-self: end;
+  color: var(--ink-faint);
+}
+
+.cx-row-count {
+  justify-self: end;
+  min-width: 9ch;
+  text-align: right;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 720px) {
+  /* nothing truncates: the two figures drop under the name rather
+     than being cut off the end of the row */
+  .cx-row-open {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .cx-row-contact {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ============================================================
+   ONE CUSTOMER
+   ============================================================ */
+
+.cx-one-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  max-width: 1180px;
+  margin: 0 auto var(--sp-5);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.cx-one-id {
+  min-width: 0;
+}
+
+.cx-one-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--display-m-size);
+  letter-spacing: var(--display-m-track);
+  line-height: var(--display-m-lead);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.cx-one-contact {
+  margin: 4px 0 0;
+  font-size: var(--ui-m-size);
+  letter-spacing: var(--ui-m-track);
+  line-height: var(--ui-m-lead);
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.cx-one-facts {
+  margin: 6px 0 0;
+  color: var(--ink-faint);
+}
+
+.cx-one-drop {
+  flex: 0 0 auto;
+}
+
+/* -- their details ------------------------------------------- */
+
+.cx-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: var(--sp-4);
+  max-width: 1180px;
+  margin: 0 auto var(--sp-6);
+}
+
+.cx-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* the label column is the widest thing a person types here */
+.cx-field--name {
+  grid-column: 1 / -1;
+  max-width: 520px;
+}
+
+.cx-field--tick {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: end;
+  padding-bottom: 7px;
+}
+
+.cx-input {
+  width: 100%;
+}
+
+/* what the column is FOR, from the column's own description — the
+   same sentence the sheet shows, not a second one written here */
+.cx-field-say {
+  font-size: var(--ui-s-size);
+  line-height: 1.5;
+  letter-spacing: var(--ui-s-track);
+  color: var(--ink-soft);
+}
+
+/* A COLUMN THIS PAGE WILL NOT PRETEND TO EDIT. Not a disabled text
+   box — an empty box with a grey border is a control that looks
+   broken. A recessed panel with the reason in it, which is what the
+   dashed stub does one screen over. */
+.cx-field--stub {
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--paper-sunken);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-sm);
+}
+
+.cx-field-stub-say {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  line-height: 1.5;
+  letter-spacing: var(--ui-s-track);
+  color: var(--ink-soft);
+}
+.cx-field-stub-say em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--ink);
+}
+
+/* -- the history with them ----------------------------------- */
+
+.cx-hist {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.cx-hist-head {
+  margin: 0 0 var(--sp-2);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-soft);
+}
+
+.cx-hist-none {
+  margin: var(--sp-3) 0 0;
+  max-width: 60ch;
+  font-size: var(--ui-size);
+  line-height: 1.7;
+  letter-spacing: var(--ui-track);
+  color: var(--ink-soft);
+}
+.cx-hist-none em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--ink);
+}
+
+.cx-hist-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cx-hist-row + .cx-hist-row {
+  border-top: 1px solid var(--hairline);
+}
+
+.cx-hist-open {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 9px 6px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+
+.cx-hist-open:hover {
+  background: var(--paper-sunken);
+}
+
+.cx-hist-open:active {
+  background: var(--blue-wash);
+}
+
+.cx-hist-open:focus-visible {
+  outline: none;
+  background: var(--blue-wash);
+  box-shadow: inset 2px 0 0 0 var(--blue);
+}
+
+.cx-hist-open:disabled {
+  cursor: default;
+}
+.cx-hist-open:disabled:hover {
+  background: transparent;
+}
+
+.cx-hist-when {
+  color: var(--ink-faint);
+}
+
+.cx-hist-what {
+  min-width: 0;
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* the name the DOCUMENT carries, when the register has since moved
+   on. Quieter than the subject it follows, and never a warning —
+   nothing has gone wrong. */
+.cx-hist-as {
+  color: var(--ink-soft);
+}
+
+.cx-hist-state {
+  justify-self: end;
+  color: var(--ink-faint);
+}
+
+.cx-hist-total {
+  justify-self: end;
+  min-width: 11ch;
+  text-align: right;
+}
+
+.cx-hist-go {
+  color: var(--ink-faint);
+}
+
+@media (max-width: 720px) {
+  .cx-hist-open {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .cx-hist-state {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+  .cx-hist-go {
+    display: none;
+  }
+}

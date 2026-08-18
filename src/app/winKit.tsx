@@ -19,6 +19,7 @@ import { RulesStage } from './RulesStage'
 import { FlowStage } from './FlowStage'
 import { QuoteStage } from './QuoteStage'
 import { ModuleStage } from './ModuleStage'
+import { CustomerStage } from './CustomerStage'
 
 /** Everything that can be a window. */
 export type Stage =
@@ -30,6 +31,7 @@ export type Stage =
   | { kind: 'flow' }
   | { kind: 'quote'; quoteId: string | null }
   | { kind: 'module'; moduleId: string | null }
+  | { kind: 'customer'; customerId: string | null }
 
 export interface WinFrame {
   x: number
@@ -55,7 +57,9 @@ export const winKey = (s: Stage): string =>
       ? `quote:${s.quoteId ?? 'list'}`
       : s.kind === 'module'
         ? `module:${s.moduleId ?? 'dash'}`
-        : s.kind
+        : s.kind === 'customer'
+          ? `customer:${s.customerId ?? 'list'}`
+          : s.kind
 
 /** THE TOP OF THE DESKTOP, measured rather than guessed.
 
@@ -103,6 +107,7 @@ export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNo
   if (s.kind === 'flow') return 'Fitment'
   if (s.kind === 'quote') return s.quoteId ? 'Quote' : 'Quotes'
   if (s.kind === 'module') return s.moduleId ? 'Module' : 'Modules'
+  if (s.kind === 'customer') return s.customerId ? 'Customer' : 'Customers'
   const e = entities[s.entityId]
   if (!e) return 'Table'
   const mark = <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.tiny} />
@@ -180,6 +185,22 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
         <QuoteStage
           quoteId={s.quoteId}
           onOpen={(quoteId) => h.openWin({ kind: 'quote', quoteId })}
+          /* THE OTHER HALF OF THE LINK. A quote says who it is filed
+             under; pressing that opens them, with every other quote
+             to them under it. The id travelled by value on the quote
+             and nothing about the document was resolved to draw it. */
+          onOpenCustomer={(customerId) => h.openWin({ kind: 'customer', customerId })}
+          onClose={h.close}
+        />
+      )
+    case 'customer':
+      return (
+        <CustomerStage
+          customerId={s.customerId}
+          onOpen={(customerId) => h.openWin({ kind: 'customer', customerId })}
+          /* the history is a list of DOORS, not a readout — a quote
+             opens in a window of its own, which only the shell knows */
+          onOpenQuote={(quoteId) => h.openWin({ kind: 'quote', quoteId })}
           onClose={h.close}
         />
       )

@@ -27,7 +27,7 @@
    while toasting "Saved".
    ============================================================ */
 
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { newId, nowIso } from '@/lib/id'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
 import { priceAtLevel } from './pricing'
@@ -278,6 +278,79 @@ export function patchQuote(
     }
     return bag as unknown as QuoteDef
   })
+}
+
+/* -- the customer --------------------------------------------- */
+
+/**
+ * Address this quote to somebody in the register.
+ *
+ * ONE WRITE, BOTH HALVES. The details arrive already frozen from
+ * `freezeCustomer` and are copied onto the document; the row id is
+ * written beside them. Doing it in two patches would leave a frame
+ * where a document carried one person's name and another's link.
+ *
+ * IT OVERWRITES WHAT WAS TYPED, and that is the intent: choosing a
+ * customer is saying "this one", and a name half-typed underneath a
+ * chosen customer is the ambiguity this control exists to end. What
+ * it writes is still ordinary frozen text — the contact lines can be
+ * edited on the quote afterwards without touching the register,
+ * because they are this document's copy.
+ */
+export const linkCustomer = (
+  id: string,
+  frozen: Pick<QuoteDef, 'customer' | 'customerRef'>,
+): void => mutate(id, (q) => ({ ...q, customer: frozen.customer, customerRef: frozen.customerRef }))
+
+/**
+ * Stop this quote pointing at a row, and KEEP THE NAME.
+ *
+ * A walk-in who gave a name and no details is a real quote, and so
+ * is a quote to somebody who has since been taken out of the
+ * register. Both are "a name on a document with no row behind it",
+ * which is what this app did for every quote before there was a
+ * register at all. So unlinking is subtraction of a pointer and
+ * nothing else: not one word of the document moves.
+ */
+export function unlinkCustomer(id: string): void {
+  mutate(id, (q) => {
+    const next = { ...q }
+    delete next.customerRef
+    return next
+  })
+}
+
+/**
+ * THE HISTORY WITH THEM — every quote addressed to one row of the
+ * register, newest first.
+ *
+ * It matches on the id, never on the name, because two people
+ * called R. Kelleher are two customers and one person who changed
+ * their name is still one. A quote addressed to a typed name has no
+ * id and therefore no history; that is honest rather than a gap —
+ * nothing in this app ever knew those were the same person.
+ */
+export function quotesForCustomer(rowId: string): QuoteDef[] {
+  loadQuotes()
+  if (rowId === '') return []
+  return list.filter((q) => q.customerRef?.rowId === rowId)
+}
+
+/** The same list, subscribed, for a screen that is drawn while a
+ *  quote is being raised in another window. */
+export function useCustomerQuotes(rowId: string): QuoteDef[] {
+  loadQuotes()
+  /* A FILTER IS NOT A SNAPSHOT. `useSyncExternalStore` compares what
+     its getter returns by identity, and a getter that filters builds
+     a fresh array every time it is asked — which React reads as "it
+     changed again" and re-renders forever. So the SUBSCRIPTION takes
+     the published list, which is stable between publishes, and the
+     filtering happens after it in a memo. */
+  const all = useSyncExternalStore(subscribe, getList, getList)
+  return useMemo(
+    () => (rowId === '' ? [] : all.filter((q) => q.customerRef?.rowId === rowId)),
+    [all, rowId],
+  )
 }
 
 /* -- the level ----------------------------------------------- */
