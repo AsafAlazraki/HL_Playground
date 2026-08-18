@@ -967,13 +967,59 @@
   justify-content: flex-start;
   gap: var(--sp-5);
   border-top-color: var(--hairline);
+  /* the two figures wrap onto a second line on a hand-narrowed card
+     rather than ellipsising "columns" to "colum…" — DESIGN_CONTRACT §3,
+     nothing truncates mid-word. `.tb-lod-field` above is `flex: 1 1 auto;
+     min-height: 0`, so the extra line comes out of the field's air and
+     never off the plate's foot */
+  flex-wrap: wrap;
+  row-gap: var(--sp-1);
 }
 .tb-node--plate .tb-lod-num {
   font-size: 26px;
   letter-spacing: -0.02em;
 }
+/* ============================================================
+   THE DEALER'S NOUN IS PART OF THE FIGURE, SO IT IS SET AT THE
+   PLATE'S SCALE AND NOT AT CHROME'S.
+
+   THE MEASUREMENT. Everything on this plate is drawn inside the canvas
+   transform, so the reader gets the authored size times the camera's
+   zoom, and the opening frame is pinned at `MIN_READABLE = 0.4`
+   (Whiteboard.tsx). Against `tableLod`'s 8.4px floor — the size below
+   which neither face resolves at all — the plate read:
+
+       element            authored   at 0.40   verdict
+       .tb-lod-name          34px     13.6px   clear
+       .tb-lod-num           26px     10.4px   clear
+       .tb-lod-unit          11px      4.4px   <- half the floor
+
+   "39 models · 25 columns" is `leafNoun` read out of the dealer's own
+   data — "bikes" for a motorcycle shop — and it is what stops the two
+   numbers on the plate being two bare numbers. It was inherited from
+   the base rule at 11px, which is the CHROME step: right for a toolbar
+   drawn at 1:1, half-legible on a drawing viewed at 0.4. The bands
+   above were answered by removing them, because eleven chips were
+   texture; a noun that gives a figure its meaning cannot be answered
+   that way, so it is answered with size.
+
+   21px x 0.4 = 8.4px, the floor exactly, and the plate is never seen
+   above 0.6 (`PLATE_ZOOM_IN`), where it draws at 12.6px against the
+   figure's 15.6px — subordinate at both ends of the range it is drawn
+   in. The floor DESIGN_PRINCIPLES calls absolute is about DECLARED
+   size and this went up, not down.
+
+   AND THE TRACKING COMES WITH IT. This rule carried +0.06em, which is
+   the 11px UPPERCASE label's tracking, and it out-specifies the
+   sentence-case pass at the foot of this file (`.tb-lod-unit`,
+   +0.01em) — so the plate kept the shouted spacing after the shouting
+   was removed, and at 21px positive tracking is doubly wrong
+   (DESIGN_CONTRACT §3: tracking goes negative as size grows). It takes
+   the same +0.01em hair the pass gave every other stamp it lowercased.
+   ============================================================ */
 .tb-node--plate .tb-lod-unit {
-  letter-spacing: 0.06em;
+  font-size: 21px;
+  letter-spacing: 0.01em;
   color: var(--ink-faint);
 }
 

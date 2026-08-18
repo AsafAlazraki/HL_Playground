@@ -917,12 +917,30 @@
   color: var(--ink);
   transition: background var(--t-fast) var(--ease-draft);
 }
+/* HOVER IS NOT CHOSEN, AND IT WAS DRAWN AS IF IT WERE. Both states
+   computed to exactly rgba(74, 86, 210, 0.09), so the moment a pointer
+   rested anywhere on this rail TWO rows read as the open one and the
+   page underneath belonged to neither of them by any visible sign. The
+   2px accent bar was carrying the whole distinction and it is 2px wide
+   at the far left of a 12px name.
+
+   The two states are now two different KINDS of mark, which is the only
+   way a person tells them apart without comparing: hover is a neutral
+   darken on the same paper (`--paper-sunken`, DESIGN_CONTRACT §1's
+   "hover on chrome", and §5's "a list row DARKENS instead of scaling"),
+   the open row is the accent wash plus its bar. Hovering the open row
+   deepens the wash rather than replacing it, so the pointer still gets
+   an answer on the row it is already on and the row never stops looking
+   chosen. */
 .shell-view-row:hover {
-  background: var(--blue-wash);
+  background: var(--paper-sunken);
 }
 .shell-view-row.is-open {
   background: var(--blue-wash);
   box-shadow: inset 2px 0 0 var(--view-accent, var(--ink));
+}
+.shell-view-row.is-open:hover {
+  background: var(--blue-wash-strong);
 }
 .shell-view-row:focus-visible {
   outline: 2px solid var(--blue);
@@ -961,6 +979,14 @@
    before this pass too; it is fixed here because this is the rule
    that was open. */
 .shell-view-row.is-open .shell-view-row-trail {
+  color: var(--ink-soft);
+}
+/* …and the same arithmetic for the neutral hover the rule above now
+   draws. `--ink-faint` measures 4.72:1 on white and 4.22:1 on
+   `--paper-sunken` #f1f2f5 — a fail introduced by the tint, not by the
+   ink, which is exactly the trap the note above records. The trail
+   steps up for the same reason on both lit states. */
+.shell-view-row:hover .shell-view-row-trail {
   color: var(--ink-soft);
 }
 /* A NAME WRAPS. DESIGN_CONTRACT §3: "if a name does not fit it wraps or
@@ -2610,22 +2636,48 @@
   line-height: 1;
 }
 
-/* THE NAME, ABOVE, ON HOVER. The resting bar is icons; nothing has
-   to be guessed at, because the label is one hover away and it is
-   never covering the thing it names. */
+/* ============================================================
+   THE NAME, BELOW THE BAR — because below the bar is the only band
+   on this screen that is guaranteed to be empty.
+
+   It was ABOVE, at `bottom: calc(100% + 10px)`, and the claim in this
+   note used to be "it is never covering the thing it names". Measured
+   at 1440 x 900 with the Tables menu open: the item is 44px tall inside
+   a bar padded 8px, so the tip's box landed at y 792–819 while the
+   menu's panel ended at y 806 and the page's own content runs to y 822.
+   The "Tables" label was painting over the lower-left corner of the
+   very panel that press had just opened, and over a page heading behind
+   it. A tooltip that covers its own subject is worse than no tooltip.
+
+   THE ARITHMETIC FOR THE OTHER DIRECTION. `.dk-wrap` sits 22px off the
+   bottom and `.dk` pads 8px, so a tip hung under the item starts at
+   30px from the floor and has 30px to live in. At 12px/1.2 with 3px of
+   padding the box is 20.4px tall and, offset 4px, occupies roughly
+   y 873–893 of a 900px window — inside the 78px strip `.shell-stage`
+   already reserves for the dock, where by construction no page content
+   and no menu panel is ever drawn. Nothing was made smaller than the
+   11px floor to fit: the type step DESIGN_CONTRACT §3 records for this
+   element (12px / 500) is untouched and only the leading and the
+   padding came in.
+
+   It rises INTO place from below now, for the same reason it used to
+   fall into place from above: the movement points back at the thing it
+   is describing.
+   ============================================================ */
 .dk-tip {
   position: absolute;
-  bottom: calc(100% + 10px);
-  padding: 5px 9px;
+  top: calc(100% + 4px);
+  padding: 3px 9px;
   border-radius: 8px;
   background: var(--ink);
   color: var(--paper-high);
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 500;
+  line-height: 1.2;
   white-space: nowrap;
   opacity: 0;
-  transform: translateY(4px);
+  transform: translateY(-4px);
   pointer-events: none;
   transition:
     opacity var(--t-fast) var(--ease-draft),
@@ -2713,10 +2765,29 @@
   text-align: left;
   cursor: pointer;
 }
-.dk-row:hover,
+/* THE SAME FAULT THE ROW RAIL HAD, IN THE SAME FILE. Hover, focus and
+   "this branch is open" (`.dk-row--branch.is-on`, below) all painted
+   rgba(74, 86, 210, 0.09), so pointing at Motors while Boats was open
+   showed two open branches and only one list. Hover is the neutral
+   darken now; the accent wash is reserved for the branch whose panel is
+   actually beside it, and focus draws a ring rather than borrowing a
+   state's colour. */
+.dk-row:hover {
+  background: var(--paper-sunken);
+}
 .dk-row:focus-visible {
-  background: var(--blue-wash);
-  outline: none;
+  background: var(--paper-sunken);
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+/* --ink-faint is 4.72:1 on white and 4.22:1 on --paper-sunken, so the
+   mark and the count step up on a lit row — DESIGN_CONTRACT §1's tint
+   trap, answered where the tint is drawn. */
+.dk-row:hover .dk-row-mark,
+.dk-row:focus-visible .dk-row-mark,
+.dk-row:hover .dk-row-count,
+.dk-row:focus-visible .dk-row-count {
+  color: var(--ink-soft);
 }
 .dk-row-mark {
   flex: none;
@@ -2765,6 +2836,11 @@
     animation: none;
   }
   .dk-item:hover {
+    transform: none;
+  }
+  /* the label still arrives, it just stops travelling to get here —
+     reduced motion means movement goes and opacity stays */
+  .dk-tip {
     transform: none;
   }
 }
@@ -4227,6 +4303,11 @@
 }
 .dk-row--branch.is-on svg {
   color: var(--blue);
+}
+/* the accent wash takes --ink-faint to 4.12:1, so the count on the open
+   branch steps up the same way it does on hover */
+.dk-row--branch.is-on .dk-row-count {
+  color: var(--ink-soft);
 }
 .dk-row--branch .dk-row-name {
   font-weight: 550;

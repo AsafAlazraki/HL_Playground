@@ -3,9 +3,14 @@
 
    The column setup is where a column's TYPE is changed, and the
    change wipes every cell in it. Until now the screen showed a name,
-   a type tag and a band chip: the single most destructive decision in
-   an app with no undo was made without one value of the data in
-   sight. The case that names the failure is real — a column of
+   a type tag and a band chip: the most destructive decision on the
+   page was made without one value of the data in sight. (That
+   sentence used to read "in an app with no undo". It was wrong —
+   Ctrl+Z takes a retype back with every value — and the argument was
+   never undo's anyway: the reason to show the data is that a person
+   cannot judge a type change they cannot see, and being able to
+   reverse a decision is no help to somebody who does not know it was
+   the wrong one.) The case that names the failure is real — a column of
    people-capacities looked like numbers and was typed as text, and
    the reason was one cell reading "3 + 1". Nothing on that screen
    could have told anyone.

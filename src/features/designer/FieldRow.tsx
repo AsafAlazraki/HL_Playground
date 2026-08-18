@@ -284,8 +284,12 @@ export function FieldRow({
 
       {/* THE REVIEWER IS NOT DRAWN HERE, and this is a decision rather
           than an omission. `<FieldMark>` puts a one-click "Apply fix"
-          in this margin with no confirmation, and this app has no undo.
-          On the real sheet its commonest suggestion — "this column only
+          in this margin with no confirmation and nothing computed
+          beside it. (The clause that used to close this sentence —
+          "and this app has no undo" — was false and has been struck:
+          Ctrl+Z takes a fix back like any other column change. Undo is
+          not the argument. A fix that is applied before anybody is told
+          what it costs is.) On the real sheet its commonest suggestion — "this column only
           ever holds one value, make it a choice list" — fires on 26
           columns where the fix would LOCK the column to that single
           value, and `updateField` wipes every cell in the column on the
@@ -603,9 +607,26 @@ function RetypeSheet({
           values={plan.lostSamples}
         />
       ) : null}
+      {/* THE SENTENCE THAT USED TO BE FALSE. It said "This app has no
+          undo. Whatever is cleared here can only come back from a file
+          you exported earlier." Measured in the running app on Surtees:
+          retype "Model Code" from text to number, take "Clear the
+          column and change the type", press Ctrl+Z — the column is a
+          text column again and all 19 values are back, this row still
+          open on it. `updateField` calls `record()` BEFORE it mutates,
+          so the snapshot on the stack is the column as it stood; the
+          "keep what converts" branch writes its carried cells in the
+          same event-loop turn, which the store folds into the one step.
+          Either choice is one press of Ctrl+Z.
+
+          Why the sheet stays anyway is ColumnMenu.tsx's argument,
+          verbatim: undo repairs the damage, it does not TELL you about
+          it, and DESIGN_CONTRACT §7 wants a confirm that states its
+          blast radius, computed. This one shows the values it is about
+          to clear. */}
       <p className="ds-cs-line">
-        This app has no undo. Whatever is cleared here can only come back from a
-        file you exported earlier.
+        Ctrl+Z takes the whole change back — the type it was, and every value
+        cleared here.
       </p>
     </ConfirmSheet>
   )
@@ -638,10 +659,15 @@ function DeleteSheet({
       choices={[
         {
           label: 'Remove it',
+          /* "and cannot be recovered" stood on the end of this line and
+             was the same falsehood as the paragraph below, in the one
+             place a person reads last before pressing. What leaves is
+             true and worth counting; what happens to it afterwards is
+             the paragraph's to say, and it says Ctrl+Z. */
           note:
             facts.filled === 0
               ? 'The column is empty, so no values go with it.'
-              : `${facts.filled} values go with it, and cannot be recovered.`,
+              : `${facts.filled} values go with it.`,
           destructive: true,
           onPick: onConfirm,
         },
@@ -679,9 +705,18 @@ function DeleteSheet({
           {r.messages.join(' ')}
         </p>
       ))}
+      {/* THE SENTENCE THAT USED TO BE FALSE, and the same one the
+          register's own column menu already corrected — the two sheets
+          remove the same column and must not answer differently.
+          Measured in the running app on Surtees: remove "Matrix", press
+          Ctrl+Z, and the column is back as the FOURTH row of this page,
+          inside its Identity band, with all 19 of its values on the
+          sheet behind it. `removeField` records one step, and the store
+          restores a whole DataSlice, which is why the index and the
+          band come back and not just the name. */}
       <p className="ds-cs-line">
-        This app has no undo. The column can only come back from a file you
-        exported earlier.
+        Ctrl+Z brings the column back, at its own place in this list and in its
+        own band, with every value in it.
       </p>
     </ConfirmSheet>
   )

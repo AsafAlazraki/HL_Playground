@@ -293,9 +293,18 @@ export function ReferenceEditor({
             ]}
           />
           <ConfirmSamples label="Linked to" values={filledLabels} />
+          {/* THE SENTENCE THAT USED TO BE FALSE. Measured in the running
+              app on "Haines Signature × Dunbier/Haines BMT — Trailer
+              Fitment": re-point Boat from Haines Signature to Formosa,
+              press Ctrl+Z. The tick goes back on Haines Signature and
+              all 18 links are on the rows again — and the note says
+              "Undone — 19 changes", which is the whole of it: the
+              field's own change plus 18 emptied cells, folded into ONE
+              step because `commitRetarget` does them in one event-loop
+              turn. Two presses were never needed and one is enough. */}
           <p className="ds-cs-line">
-            This app has no undo. The links can only come back from a file you
-            exported earlier.
+            Ctrl+Z takes the whole re-point back — the table it pointed at, and
+            every link emptied here.
           </p>
         </ConfirmSheet>
       ) : null}

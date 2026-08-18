@@ -1144,17 +1144,42 @@
    these two 20px buttons held 47px of a 192px rail permanently, even at
    `opacity: 0` — which is why both seeded rules read as "Motor fitme…"
    and "Trailer fitme…", told apart by eleven characters. Lifted out of
-   the flow they cost nothing until a pointer or the keyboard arrives. */
+   the flow they cost nothing until a pointer or the keyboard arrives.
+
+   BUT THEY MUST NOT LAND ON THE STAMP, AND THEY DID. Measured on the
+   Fitment stage at 1440 x 900: `.rl-icon--danger` occupied
+   [159, 107, 20, 20] and `.rl-dotstamp` — "Ready to run" — occupied
+   [161, 109, 16, 17]. The delete control was drawn inside the status
+   mark's own box, revealed by the same hover that a person uses to read
+   the mark. Deleting a rule you were only checking on is not a slip the
+   person made; it is the geometry.
+
+   THE CLUSTER STOPS SHORT OF IT. `.rl-ruleopen` pads 6px, so the stamp
+   ends 6px in from the row's right edge and, at its 16px minimum, its
+   left edge is 22px in. `right: 26px` puts the cluster's right edge 4px
+   clear of that, so the stamp stays read-only, stays visible while the
+   delete is being aimed, and the two never share a pixel. What the
+   cluster now covers is the tail of a name that is already clamped to
+   two lines and already carried in full on the row's `title` — which is
+   the trade this note made in the first place.
+
+   AND IT COVERS RATHER THAN SHOWS THROUGH. `background-color: inherit`
+   inherited `--blue-wash`, an 9% tint, so letters ran under the icons
+   and out the other side. It is its own small plane now — paper, a
+   hairline and the resting elevation — which reads as a control that
+   arrived over the row instead of a smudge on it. */
 .rl-ruleacts {
   position: absolute;
-  right: 4px;
+  right: 26px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   gap: 1px;
-  padding-left: var(--sp-2);
+  padding: 2px;
+  border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
-  background-color: inherit;
+  background: var(--paper-high);
+  box-shadow: var(--ec1);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--t-fast) var(--ease-draft);

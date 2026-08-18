@@ -29,6 +29,7 @@
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import {
   ArrowsLeftRight,
   CaretRight,
@@ -49,6 +50,28 @@ import { ActionBar } from './ActionBar'
 import { TABLE_KINDS, isRetired, type EntityDef, type TableKind } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
+
+/* ============================================================
+   WHICH ITEM THE KEYBOARD'S ONE STOP RESTS ON.
+
+   A stage kind, mapped to the label of the dock item that is lit for
+   it, so the tab stop lands on WHERE YOU ARE rather than on the first
+   icon. `null` is the sheet, which is "Data model"; `view` and
+   `design` are pages opened from inside a table and light nothing on
+   this bar, so they fall through to the self-heal below and the stop
+   sits on the first item. Kept beside the items rather than derived
+   from them because an item's `active` prop is the same fact and the
+   two must not be able to disagree.
+   ============================================================ */
+const LIT_BY_STAGE: Record<string, string> = {
+  home: 'Home',
+  table: 'Tables',
+  module: 'Modules',
+  flow: 'Fitment',
+  rules: 'Business rules',
+  quote: 'Quotes',
+  customer: 'Customers',
+}
 
 const KIND_ORDER: TableKind[] = [
   'boat',
@@ -85,6 +108,7 @@ function DockItem({
   active,
   open,
   hasPanel,
+  stop,
   onPress,
   onHover,
 }: {
@@ -94,6 +118,9 @@ function DockItem({
   active?: boolean
   open?: boolean
   hasPanel?: boolean
+  /** true on the ONE item that holds the bar's tab stop — see the
+   *  block above `Dock` for why there is only ever one. */
+  stop?: boolean
   onPress: () => void
   onHover?: () => void
 }) {
@@ -101,6 +128,7 @@ function DockItem({
     <button
       type="button"
       className={`dk-item${active ? ' is-active' : ''}${open ? ' is-open' : ''}`}
+      tabIndex={stop ? 0 : -1}
       onClick={onPress}
       onPointerEnter={onHover}
       aria-label={label}
@@ -163,6 +191,88 @@ export function Dock({
 
   const tableCount = groups.reduce((n, g) => n + g.items.length, 0)
   const branchGroup = groups.find((g) => g.key === branch) ?? null
+
+  /* ============================================================
+     THE WHOLE BAR IS ONE TAB STOP.
+
+     WHAT WAS MEASURED. Ten `<button>`s inside a `role="toolbar"`, every
+     one of them in the tab order, and no arrow-key handling at all — so
+     the element declared itself a toolbar and behaved like ten
+     unrelated controls. Walked from `document.body` on Home at
+     1440 x 900: the ten navigation items, then the end of the document,
+     then back round to Import / export and the fifty table cards. A
+     person who pressed a dock item to open a page and then reached for
+     the keyboard had to walk the other nine and wrap all the way round
+     before touching the thing they had just opened.
+
+     THE PAGE IS ALREADY FIRST and stays first: `.dk-wrap` is the last
+     child of the shell, after `.shell-body`, so a document-order walk
+     reaches the page's own controls before it reaches navigation, which
+     is the right way round for chrome that floats. What was wrong was
+     the PRICE of passing it — ten presses — and that is what a roving
+     tab stop fixes: one press in, one press out, arrows to move inside.
+     Home and End jump to the ends, which is the rest of the pattern
+     `role="toolbar"` promises.
+
+     THE STOP RESTS ON WHERE YOU ARE. `LIT_BY_STAGE` puts it on the item
+     that is lit, so tabbing into the bar lands on the place you are in
+     and one ArrowRight is the next place — not ten presses from Home.
+     Moving it with the arrows overrides that until you go somewhere,
+     and arriving somewhere clears the override, so the two never
+     disagree about which item is the one.
+     ============================================================ */
+  const barRef = useRef<HTMLDivElement | null>(null)
+  const [roved, setRoved] = useState<string | null>(null)
+  const stopLabel = roved ?? (current === null ? 'Data model' : LIT_BY_STAGE[current] ?? null)
+
+  /* arriving somewhere hands the stop back to the item that is lit */
+  useEffect(() => {
+    setRoved(null)
+  }, [current])
+
+  /* NO STOP AT ALL WOULD BE WORSE THAN TEN. A stage that lights no item
+     — a view or a column-setup page, both opened from inside a table —
+     leaves `stopLabel` naming nothing, and a bar where every item is
+     `tabIndex={-1}` cannot be reached by keyboard at all. So the bar
+     checks itself after each render and, finding no stop, gives it to
+     the first item it actually drew. Reading the name off the DOM
+     rather than from a second list of labels is deliberate: a list
+     would go stale the first time an item was added below and nobody
+     would hear about it. */
+  useEffect(() => {
+    const bar = barRef.current
+    if (!bar) return
+    if (bar.querySelector('.dk-item[tabindex="0"]')) return
+    const first = bar.querySelector<HTMLButtonElement>('.dk-item')
+    const name = first?.getAttribute('aria-label')
+    if (name) setRoved(name)
+  })
+
+  const onBarKeys = (e: ReactKeyboardEvent<HTMLDivElement>): void => {
+    const k = e.key
+    if (k !== 'ArrowRight' && k !== 'ArrowLeft' && k !== 'Home' && k !== 'End') return
+    const bar = barRef.current
+    if (!bar) return
+    const items = [...bar.querySelectorAll<HTMLButtonElement>('.dk-item')]
+    const at = items.indexOf(document.activeElement as HTMLButtonElement)
+    if (at < 0) return
+    e.preventDefault()
+    /* the sheet underneath is made of editable grids and its own
+       handlers are still live; an arrow spent moving along this bar is
+       not an arrow spent on a cell */
+    e.stopPropagation()
+    const to =
+      k === 'Home'
+        ? 0
+        : k === 'End'
+          ? items.length - 1
+          : k === 'ArrowRight'
+            ? (at + 1) % items.length
+            : (at - 1 + items.length) % items.length
+    const next = items[to]
+    setRoved(next.getAttribute('aria-label'))
+    next.focus()
+  }
 
   useEffect(() => {
     if (!open) return

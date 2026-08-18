@@ -1,9 +1,9 @@
 /* ============================================================
    THE MOMENT BEFORE SOMETHING IS DESTROYED.
 
-   Three acts in the column setup cannot be undone — this app has no
-   undo, and the only recovery from any of them is Import/Export — and
-   all three used to be gated by `window.confirm`. Two failures came
+   Four acts in the column setup destroy something in one press —
+   remove a column, retype one, re-point a link, delete the table — and
+   all of them used to be gated by `window.confirm`. Two failures came
    out of that:
 
    1. The one moment the drawing office handed off to OS chrome. A
@@ -19,8 +19,28 @@
    sentence in the reader's words, whatever evidence the caller wants
    to show, and as many named choices as the decision honestly has.
 
+   AND WHY THESE SHEETS SURVIVED RULE 9, when the register's row
+   confirm did not. This header used to open "three acts cannot be
+   undone — this app has no undo", and every sheet drawn through here
+   repeated it in the body. It was false in all four: the store's
+   history stack takes each of these acts back whole, measured act by
+   act in the running app and written down beside each sentence.
+
+   Rule 9 retires a dialog whose only job is the way back. That is not
+   this dialog's only job. DESIGN_CONTRACT §7: "a confirm states its
+   blast radius, computed." A column leaves one value out of every row
+   in the table, most of them not on screen; a retype clears a column
+   the person may not have looked at; a re-point empties every link at
+   once; a table takes its rows, its rooted rules and the link columns
+   aimed at it. Undo repairs every one of those and TELLS you about
+   none of them in advance. So the sheets stay, they count what they
+   are about to take, they show a few of the actual values — and their
+   last line now says the true thing, which is Ctrl+Z. ColumnMenu.tsx
+   makes the same argument for the same act on the register side; the
+   two surfaces must never answer one question two ways.
+
    CANCEL TAKES THE FOCUS, not the confirming button. Every path
-   through here ends in something unrecoverable, and a person who
+   through here ends in a lot of data moving at once, and a person who
    presses Enter out of habit must land on the one answer that costs
    nothing. Escape does the same thing, and the sheet owns the
    keyboard while it is up — Backspace must never reach the

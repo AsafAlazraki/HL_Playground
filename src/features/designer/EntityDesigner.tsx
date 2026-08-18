@@ -368,10 +368,16 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
           kinds and roles: on the real sheet `entity-plural` fires on
           eleven brand price files and offers a ONE-CLICK rename of
           "Surtees" to "Surtee", and `island-entity` tells a person
-          their Stabicraft catalogue may not belong on the sheet. There
-          is no undo behind any of those buttons. The data reviewer
-          gets its own door once its rules know what a brand table is;
-          until then the column setup must not be the back way in. */}
+          their Stabicraft catalogue may not belong on the sheet. Each
+          of those buttons writes on one press with nothing computed
+          beside it. (The sentence that used to stand here — "There is
+          no undo behind any of those buttons" — was false and is
+          struck: Ctrl+Z takes a rename or a retype back like any other
+          change. The objection is not recovery, it is that a rule which
+          does not know what a brand table is should not be offering a
+          one-press rewrite of one.) The data reviewer gets its own door
+          once its rules know what a brand table is; until then the
+          column setup must not be the back way in. */}
 
       {/* ==================== fields ========================= */}
       <section className="ds-fields-sect">
@@ -491,7 +497,11 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
               note:
                 rowCount === 0
                   ? 'It has no rows, so no data goes with it.'
-                  : `Its ${rowCount === 1 ? '1 row' : `${rowCount} rows`} go with it, and cannot be recovered.`,
+                  : /* "and cannot be recovered" closed this line and was
+                       the same falsehood as the paragraph above it. What
+                       goes is worth counting; where it can be got back
+                       from is the paragraph's sentence, and it is Ctrl+Z. */
+                    `Its ${rowCount === 1 ? '1 row' : `${rowCount} rows`} go with it.`,
               destructive: true,
               onPick: () => {
                 setConfirmingDelete(false)
@@ -536,9 +546,21 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             </p>
           ))}
 
+          {/* THE SENTENCE THAT USED TO BE FALSE, and the largest of the
+              four: this act takes a whole table AND cascades. Measured
+              in the running app: delete "Surtees" — 19 rows, 30 columns,
+              and the sheet named 5 link columns on other tables that go
+              with it — then press Ctrl+Z. Home is back to 51 tables with
+              Surtees showing "19 models · 30 columns", and the note says
+              "Undone — Table deleted · Surtees". The cascade returns too,
+              and not by luck: `deleteEntity` calls `record()` before it
+              mutates, and a history entry holds the whole DataSlice —
+              entities, rows, rules, groups, views and modules — so the
+              link columns and the rules rooted here are inside the same
+              snapshot as the table itself. */}
           <p className="ds-cs-line">
-            This app has no undo. The table can only come back from a file you exported
-            earlier.
+            Ctrl+Z brings the table back, with every row on it and every link
+            column and rule that went with it.
           </p>
         </ConfirmSheet>
       ) : null}
