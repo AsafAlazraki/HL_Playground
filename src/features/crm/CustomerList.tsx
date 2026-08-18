@@ -35,7 +35,12 @@ import { MagnifyingGlass, Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { localDay, useQuotes } from '@/features/quote'
-import { customerRegister, matchCustomers, readCustomers } from './customers'
+import {
+  customerRegister,
+  liveTableCount,
+  matchCustomers,
+  readCustomers,
+} from './customers'
 import { addCustomer, ensureCustomerRegister } from './register'
 import './crm.css'
 
@@ -56,7 +61,9 @@ interface Activity {
 export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
-  const tableCount = Object.keys(entities).length
+  /* THE SAME NUMBER HOME SAYS — see `liveTableCount`, which carries
+     the reason and the test. */
+  const tableCount = useMemo(() => liveTableCount(entities), [entities])
   const quotes = useQuotes()
   const [find, setFind] = useState('')
 

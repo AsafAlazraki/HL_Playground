@@ -39,6 +39,16 @@ import { noteRefusedWrite, writesHeld } from '@/lib/writeGate'
    neither, which is what makes it safe here. Same precedent and same reason
    as src/features/modules/read.ts. */
 import { defaultBlocksFor } from '@/features/views/relations'
+/* THE SAME PRECEDENT ONE MORE TIME. One module verb — `configure`,
+   "set what must always be true here" — is held in a browser-local
+   registry rather than on `ModuleDef.capabilities`, because
+   `ModuleCapability` is a closed union in a file this session does not
+   own (see src/features/modules/ruleCapability.ts, which writes down
+   the exact line the contract wants). `ruleCapability.ts` imports
+   `react` and nothing else: no barrel, no surface, not this store. So
+   the wipe below can reach it, and a wiped project cannot come back
+   with the last one's most consequential write switched on. */
+import { forgetModuleRuleCapabilities } from '@/features/modules/ruleCapability'
 import { newId, nowIso } from '@/lib/id'
 
 export interface Selection {
@@ -653,6 +663,14 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
       /* the burst this cancels is not owed a write any more */
       unwrittenSince = 0
       forgetHistory()
+      /* THE VERBS GO WITH THE MODULES. `modules` is emptied below, so
+         every module id this registry holds is now a pointer to
+         nothing — and the ids `createModule` mints are not guaranteed
+         to differ from the ones just thrown away. Left behind, the
+         first module made after a wipe could arrive with rule
+         configuration already on, which is precisely the default
+         `DEFAULT_CAPABILITIES` exists to hold. */
+      forgetModuleRuleCapabilities()
       await repository.wipe()
       set({
         past: [],

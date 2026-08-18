@@ -55,7 +55,14 @@ import {
   unsellableSubject,
   type PriceChange,
 } from './freeze'
-import { money, parseAmount, quoteLevelChoices } from './pricing'
+import {
+  chargeAlreadyIn,
+  chargeAlreadyInSentence,
+  chargeNamedBy,
+  money,
+  parseAmount,
+  quoteLevelChoices,
+} from './pricing'
 import { issueBlockers, lineAmount, linesOf, needsOverrideReason, quoteTotals } from './totals'
 import {
   addAdjustment,
@@ -77,7 +84,15 @@ import {
   useCustomerQuotes,
 } from './quotes'
 import { FrozenPhoto } from './photo'
-import type { AdjustmentKind, QuoteDef, QuoteLine, QuoteSection } from './types'
+import { CHARGE_TITLE } from './types'
+import type {
+  AdjustmentKind,
+  FrozenLevel,
+  QuoteDef,
+  QuoteLine,
+  QuoteSection,
+  RungCharge,
+} from './types'
 
 /** The four controls under the sections. Each is a sentence, and
  *  each signs what a person types (see SIGN in quotes.ts) so nobody
@@ -331,6 +346,7 @@ export function QuoteEditor({
                 >
                   <X size={12} weight="bold" />
                 </button>
+                <AlreadyInThePrice label={a.label} lines={quote.lines} />
               </div>
             ))}
             <div className="qt-adj-doors">
@@ -890,6 +906,106 @@ function SectionCard({
 }
 
 /* ============================================================
+   WHAT THIS PRICE ALREADY HAS IN IT
+
+   Four cells in the Master Price File say a price column contains a
+   charge, and they were a paragraph at the head of `pricing.ts`
+   until `RungContents` made them data. This draws them where a
+   person can act on them: beside the column name the line was
+   priced from, on the panel that already answers "where did this
+   number come from".
+
+   ONLY WHAT A CELL SAYS. `true` prints; `false` prints, because "the
+   fitting is NOT in this one" is the sentence that tells a
+   salesperson the fitting charge below it is correct; `undefined`
+   prints nothing, because a rung nobody has measured has nothing to
+   report and a row of "unknown" on every line would be noise wearing
+   the shape of information.
+   ============================================================ */
+
+function ContainedCharges({ level }: { level: FrozenLevel | undefined }): ReactElement | null {
+  const c = level?.contains
+  if (!c) return null
+
+  const said: Array<{ charge: RungCharge; has: boolean }> = []
+  if (c.includesRegistration !== undefined)
+    said.push({ charge: 'registration', has: c.includesRegistration })
+  if (c.includesInstall !== undefined) said.push({ charge: 'install', has: c.includesInstall })
+  if (c.includesPreDelivery !== undefined)
+    said.push({ charge: 'preDelivery', has: c.includesPreDelivery })
+  if (said.length === 0) return null
+
+  return (
+    <p className="qt-line-holds">
+      {said.map((s, i) => (
+        <span key={s.charge}>
+          {i > 0 ? ' ' : ''}
+          {s.has ? 'Has ' : 'Does not have '}
+          <b>{CHARGE_TITLE[s.charge]}</b> in it.
+        </span>
+      ))}
+      <span className="qt-line-holds-src">{c.source}</span>
+    </p>
+  )
+}
+
+/* ============================================================
+   IT IS ALREADY IN THE PRICE — the one place a fee gets charged
+   twice, and the sentence that catches it.
+
+   THE FAILURE, from `docs/specs/SERVICE_AND_THEMES.md` §5.2:
+   "The trailer must not get a second rego line. Its fee is inside
+   `Sell inc Rego`. That is a fact about the column and is enforced
+   by the `rung` flags of theme 5, NOT by a developer remembering."
+   A free line is where a person types the word `Registration` and an
+   amount, and until now nothing in this app knew that the trailer
+   two rows above already had that fee inside its price.
+
+   IT SAYS, IT DOES NOT STOP. Six of the nineteen rows in
+   `Registration Costs` are fees that are NOT the one already inside
+   `Sell inc Rego` — the boat and trailer transfer fees, the
+   replacement plate, the unregistered vehicle permit, the VIN plate
+   and the PPSR fee — and every one of them is a legitimate second
+   registration line on a document that also carries a trailer. A
+   guard that refused those would be refusing a charge the business
+   makes, and a warning that is wrong is a warning people learn to
+   click past. So this is DESIGN_PRINCIPLES rule 10 (say why, where
+   it is) and not rule 9: nothing is undone, nothing is blocked, and
+   the evidence is on screen beside the field that caused it.
+
+   IT COSTS NOTHING WHEN IT HAS NOTHING TO SAY. No typed label, no
+   matching charge, or no line whose column contains it, and this
+   draws nothing at all — chrome charged to the page only when it is
+   used.
+   ============================================================ */
+
+function AlreadyInThePrice({
+  label,
+  lines,
+}: {
+  label: string
+  lines: QuoteLine[]
+}): ReactElement | null {
+  const charge = chargeNamedBy(label)
+  if (!charge) return null
+  const found = chargeAlreadyIn(lines, charge)
+  const say = chargeAlreadyInSentence(found, charge)
+  if (!say) return null
+
+  /* one cell per distinct source, in the order the lines are on the
+     quote — two trailers cite the same formula and it is said once */
+  const cells = [...new Set(found.map((f) => f.source).filter((x) => x !== ''))]
+
+  return (
+    <p className="qt-adj-already" role="status">
+      {say} Adding it here charges it twice — unless this one is a different fee, which is
+      a thing the fee table has several of.
+      <span className="qt-adj-already-src">{cells.join(' · ')}</span>
+    </p>
+  )
+}
+
+/* ============================================================
    ONE LINE — frozen, and every control on it says which number
    it is changing
    ============================================================ */
@@ -977,6 +1093,13 @@ function LineRow({
               : `read from ${line.priceColumnName}`}
             {line.sourceNote ? ` · ${line.sourceNote}` : ''}
           </p>
+
+          {/* WHAT IS INSIDE THAT NUMBER, where the number's provenance
+              already is. It is drawn only where a cell says something —
+              a rung nobody has measured says nothing rather than
+              "unknown", which would be a label on every line in the app
+              for a question nobody asked. */}
+          <ContainedCharges level={line.levels.find((l) => l.key === line.levelResolved)} />
 
           {otherLevels.length > 0 ? (
             <div className="qt-levels" role="group" aria-label="Which price on this line">

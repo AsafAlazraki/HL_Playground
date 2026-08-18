@@ -34,7 +34,41 @@
    THE FORMAT IS UNCHANGED: `YYYY-MM-DD`, so it still sits in
    `mono-label`'s tabular figures at the same width it always did.
    Only which day it names has moved.
+
+   AND THE THIRD SURFACE, FOUND BY FINISHING THE SWEEP. The two above
+   were what a reader SEES; the fault was also in what the reference
+   COUNTS. `nthToday` in quotes.ts derived the `-01` suffix by
+   comparing `.slice(0, 10)` of the stored instants against
+   `.slice(0, 10)` of now — both UTC days — and then handed the count
+   to `referenceFor`, whose stamp is built from LOCAL
+   getFullYear/getMonth/getDate. So the two halves of one reference
+   were reading different calendars for ten hours of every day at
+   UTC+10.
+
+   MEASURED, same zone, same morning. Three quotes raised on 17 Aug
+   local between 10:00 and 23:59 all carry the UTC day 2026-08-17.
+   The first quote of the NEXT local day, raised 18 Aug at 02:28,
+   stamps `20260818` from the local fields — and counted 3 quotes on
+   its UTC day, so it printed `20260818-04`. It was the first of the
+   18th. Worse in the other direction: two quotes raised either side
+   of 10:00 local on the same local day fall in different UTC days,
+   so both can be the "first" and both print `-01` — one reference,
+   two documents.
+
+   `localDayOf` below is the fix's shape: ONE function that takes the
+   instant and reads the same three fields the reference stamps from.
+   `localDay` is now that function with a parse in front of it, so a
+   stored string and a live `Date` can never disagree.
    ============================================================ */
+
+/** The calendar day an INSTANT falls on, in the reader's own zone, as
+ *  `YYYY-MM-DD`. This is the whole rule, in one place: the three
+ *  fields `referenceFor` stamps a reference from, in the same order,
+ *  so nothing that calls either can name two days for one moment. */
+export function localDayOf(date: Date): string {
+  const p = (n: number): string => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`
+}
 
 /** The calendar day a stored instant falls on, in the reader's own
  *  zone, as `YYYY-MM-DD`. An unparseable value is returned as its own
@@ -43,6 +77,5 @@
 export function localDay(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso.slice(0, 10)
-  const p = (n: number): string => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+  return localDayOf(d)
 }

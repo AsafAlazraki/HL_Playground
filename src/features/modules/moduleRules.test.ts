@@ -45,6 +45,7 @@ import {
 import {
   RULE_CAPABILITY,
   RULE_CAPABILITY_META,
+  configuringCount,
   forgetModuleRuleCapabilities,
   moduleConfiguresRules,
   setModuleConfiguresRules,
@@ -382,6 +383,24 @@ describe('the rule-configuring verb', () => {
     for (const state of capabilityStates(gone, [])) {
       expect(state.refused).toBeTruthy()
     }
+  })
+
+  it('counts only the modules it is asked about, never the registry', () => {
+    /* WHY THE COUNT TAKES IDS. Deleting a module leaves its entry
+       here on purpose — `deleteModule` is undoable, and a switch
+       dropped on delete would not come back with the module. So the
+       registry legitimately holds ids nothing points at, and the
+       figure the export panel prints has to be about the modules that
+       exist rather than about the set's size. */
+    setModuleConfiguresRules(BOATS.id, true)
+    setModuleConfiguresRules('m_deleted', true)
+
+    expect(configuringCount([BOATS.id, MOTORS.id])).toBe(1)
+    expect(configuringCount([MOTORS.id])).toBe(0)
+    expect(configuringCount([])).toBe(0)
+
+    /* and the stale one is still there to be restored by an undo */
+    expect(moduleConfiguresRules('m_deleted')).toBe(true)
   })
 
   it('is never described as not-yet-built — it is performed', () => {

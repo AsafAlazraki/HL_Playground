@@ -57,6 +57,7 @@
 
 import {
   displayFieldOf,
+  isRetired,
   isSystemFieldId,
   type CellValue,
   type EntityDef,
@@ -132,6 +133,25 @@ export function customerRegister(
   entities: Record<string, EntityDef>,
 ): EntityDef | undefined {
   return entities[CUSTOMER_TABLE_ID]
+}
+
+/** How many tables this project has, COUNTED THE WAY HOME COUNTS
+ *  THEM — which is the only reason this function exists rather than
+ *  a `length`.
+ *
+ *  Home's header builds its groups from live tables and drops a
+ *  RETIRED one before it counts, so `Object.keys(entities).length`
+ *  said 53 on the real price file while the screen a person had just
+ *  come from said 51. A count is a CLAIM about somebody's project;
+ *  two screens making different claims about one project is the
+ *  fault the "dialogs stop lying" pass went after, and an empty
+ *  state that miscounts is teaching a dealer something false on the
+ *  first screen they meet.
+ *
+ *  Joins stay IN, because Home counts them too — it lists them as
+ *  "Relationships". The only thing dropped is what Home drops. */
+export function liveTableCount(entities: Record<string, EntityDef>): number {
+  return Object.values(entities).filter((e) => !isRetired(e)).length
 }
 
 /* ---------------------------------------------------------- */

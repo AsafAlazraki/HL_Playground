@@ -38,6 +38,16 @@
        Never L + P.
    That is why this feature needs no labour arithmetic at all.
 
+   AND THOSE FOUR SENTENCES ARE NOW DATA, which is the change
+   SERVICE_AND_THEMES.md §3.2 theme 5 calls "the highest-value change
+   in this document". They were a paragraph in a source file for as
+   long as this feature has existed: correct, cited, and unable to
+   stop anything. `RUNG_CONTENTS` below carries the same four facts
+   with the same four cells, `priceLevelsFor` hangs them on the rung,
+   `freezeLevels` freezes them onto the line, and `chargeAlreadyIn`
+   turns them into a sentence a surface can print at the moment
+   somebody is about to charge a fee twice.
+
    AND NO MARKUP, EVER. The workbook applies exactly one — 29% on
    the hull, `Boat Module!AB265` — and `BMT - MU` is not a column in
    the seeded data. The `Cash` / `Trade` / `Warranty` rungs we read
@@ -55,10 +65,13 @@ import type {
 } from '@/types/model'
 import { money } from '@/lib/money'
 import {
+  CHARGE_TITLE,
   LEVEL_TITLE,
   QUOTE_LEVEL_ORDER,
   type FrozenLevel,
   type PriceLevel,
+  type RungCharge,
+  type RungContents,
 } from './types'
 
 /* ---------------------------------------------------------- */
@@ -151,6 +164,60 @@ interface NamedLevel {
   key: string
   column: string
   scope: 'quote' | 'line'
+  contains?: RungContents
+}
+
+/* ---------------------------------------------------------- */
+/* What each named column already contains                     */
+/* ---------------------------------------------------------- */
+
+/** `Sell inc Rego` contains the registration fee. ASSERTED by the
+ *  trailer sheet's own formula — SERVICE_AND_THEMES.md §3.1 reads
+ *  `CA = ROUNDUP(BW+BZ,)`, the sell price plus `BZ Rego ($)` at face
+ *  value with no markup, which is the same paragraph's proof that a
+ *  registration fee is never marked up. */
+const TRAILER_SELL_INC_REGO: RungContents = {
+  includesRegistration: true,
+  source: 'Trailer Module!CA “Sell inc Rego” = ROUNDUP(BW+BZ,) · SERVICE_AND_THEMES.md §3.1',
+}
+
+/** A motor's `Sell Price` contains pre-delivery. ASSERTED by the
+ *  chain the head of this file already cites. Registration and
+ *  fitting are NOT stated either way for a motor, so neither is
+ *  claimed. */
+const MOTOR_SELL: RungContents = {
+  includesPreDelivery: true,
+  source: 'Motor Library!BF ← AX ← AV “Total PD Allowance”',
+}
+
+/** A part's fitted rung contains the labour to fit it. */
+const PART_SELL_INC_INSTALL: RungContents = {
+  includesInstall: true,
+  source: 'Parts Maintenance!Y “Sell inc Install (if appl.)” ← P ← O “TTF (Hours)”',
+}
+
+/** A part's supply rung does NOT — and saying so is the whole reason
+ *  `false` exists beside `undefined`. `L` is the supply price and `Y`
+ *  is the fitted one; charging fitting on a line priced at `L` is
+ *  correct, and a guard that could not tell the two apart would
+ *  refuse the right thing as loudly as the wrong one. */
+const PART_SELL: RungContents = {
+  includesInstall: false,
+  source: 'Parts Maintenance!L “Sell” — the supply rung; the fitted rung is Y',
+}
+
+/** A boat's hull-only rungs do NOT contain registration. ASSERTED by
+ *  the quote sheet publishing both numbers side by side:
+ *  `D41 = 110,600` hull only and `D42 = ROUNDUP(D41+A23,) = 111,014`
+ *  hull plus rego — a difference of exactly the 414 fee. So a
+ *  registration line beside a boat is right, and beside a trailer is
+ *  a second charge. That is §3.1's "never add it twice", and it is
+ *  the one place in this table where the two subjects of one concept
+ *  disagree. */
+const BOAT_HULL_ONLY: RungContents = {
+  includesRegistration: false,
+  source:
+    "Managers View!D41 “HULL ONLY SALE” vs D42 “HULL ONLY inc Boat Registration” — they differ by the fee · SERVICE_AND_THEMES.md §2.4, §3.1",
 }
 
 /** The named price columns per kind of table, in the order the
@@ -176,18 +243,28 @@ interface NamedLevel {
  *  ACCIDENT, which is exactly what a regex is. */
 const NAMED_LEVELS: Partial<Record<TableKind, NamedLevel[]>> = {
   boat: [
-    { key: 'cash', column: 'Cash', scope: 'quote' },
-    { key: 'trade', column: 'Trade', scope: 'quote' },
-    { key: 'warranty', column: 'Warranty', scope: 'line' },
+    { key: 'cash', column: 'Cash', scope: 'quote', contains: BOAT_HULL_ONLY },
+    { key: 'trade', column: 'Trade', scope: 'quote', contains: BOAT_HULL_ONLY },
+    { key: 'warranty', column: 'Warranty', scope: 'line', contains: BOAT_HULL_ONLY },
   ],
   motor: [
-    { key: 'cash', column: 'Sell Price', scope: 'quote' },
+    { key: 'cash', column: 'Sell Price', scope: 'quote', contains: MOTOR_SELL },
+    /* `Trade Price` (Motor Library!BL) — no cell says whether
+       pre-delivery is inside it, so nothing is claimed. Silence here
+       is the third state doing its job. */
     { key: 'trade', column: 'Trade Price', scope: 'quote' },
   ],
-  trailer: [{ key: 'cash', column: 'Sell inc Rego', scope: 'quote' }],
+  trailer: [
+    { key: 'cash', column: 'Sell inc Rego', scope: 'quote', contains: TRAILER_SELL_INC_REGO },
+  ],
   accessory: [
-    { key: 'cash', column: 'Sell', scope: 'quote' },
-    { key: 'fitted', column: 'Sell inc Install (if appl.)', scope: 'line' },
+    { key: 'cash', column: 'Sell', scope: 'quote', contains: PART_SELL },
+    {
+      key: 'fitted',
+      column: 'Sell inc Install (if appl.)',
+      scope: 'line',
+      contains: PART_SELL_INC_INSTALL,
+    },
   ],
   /* a package's price is a view's business, a dealer has none, and a
      custom table has told us nothing — all three are UNPRICED rather
@@ -228,7 +305,7 @@ export function priceLevelsFor(entity: EntityDef | undefined): PriceLevel[] {
   const wanted = entity.kind ? NAMED_LEVELS[entity.kind] : undefined
   if (!wanted) return []
   const out: PriceLevel[] = []
-  for (const { key, column, scope } of wanted) {
+  for (const { key, column, scope, contains } of wanted) {
     const want = normName(column)
     const field = entity.fields.find(
       (f) =>
@@ -236,7 +313,7 @@ export function priceLevelsFor(entity: EntityDef | undefined): PriceLevel[] {
         normName(f.name) === want &&
         !isCostColumn(entity, f),
     )
-    if (field) out.push({ key, label: field.name, fieldId: field.id, scope })
+    if (field) out.push({ key, label: field.name, fieldId: field.id, scope, contains })
   }
   return out
 }
@@ -283,7 +360,120 @@ export function freezeLevels(
     fieldId: l.fieldId,
     value: asNumber(values[l.fieldId] ?? null),
     scope: l.scope,
+    ...(l.contains ? { contains: l.contains } : {}),
   }))
+}
+
+/* ---------------------------------------------------------- */
+/* THE MECHANICAL RULE — never charge it twice                 */
+/* ---------------------------------------------------------- */
+
+/**
+ * Does this rung already contain that charge? `undefined` means no
+ * cell says either way, and it is never coerced to `false`.
+ */
+export function rungIncludes(
+  level: Pick<FrozenLevel, 'contains'> | undefined,
+  charge: RungCharge,
+): boolean | undefined {
+  const c = level?.contains
+  if (!c) return undefined
+  if (charge === 'registration') return c.includesRegistration
+  if (charge === 'install') return c.includesInstall
+  return c.includesPreDelivery
+}
+
+/** One line on a quote, as much of it as this question needs. */
+export interface ChargeableLine {
+  label: string
+  levelResolved: string
+  priceColumnName: string | null
+  levels: FrozenLevel[]
+}
+
+/** A line whose own price column already contains a charge somebody
+ *  is about to add a second time. */
+export interface AlreadyIncluded {
+  /** the line, by the name on the quote */
+  line: string
+  /** the column its price was read from */
+  column: string
+  /** the cell that says the charge is inside it */
+  source: string
+}
+
+/**
+ * Every line on this quote whose own price column already contains
+ * `charge`.
+ *
+ * IT ASKS THE RUNG THE LINE IS ACTUALLY PRICED AT, and only that
+ * one. A trailer carries `Sell inc Rego` and nothing else, so the
+ * question has one answer; but a part carries both `Sell` and `Sell
+ * inc Install (if appl.)` and the answer is entirely which of the
+ * two this line is on. Asking the table rather than the line would
+ * refuse a fitting charge on a supply line, which is a correct
+ * charge, and a guard that cries wolf is a guard people learn to
+ * click past.
+ *
+ * IT REFUSES NOTHING AND CHANGES NOTHING. A free line is a
+ * salesperson's typed sentence and they may mean something this app
+ * has never heard of — a transfer fee, a second trailer, a replacement
+ * plate are all real rows in `Registration Costs` and none of them is
+ * the fee already inside `Sell inc Rego`. So this returns evidence
+ * and the surface says it out loud; the person decides. That is
+ * DESIGN_PRINCIPLES rule 10 — say why, where it is — and NOT rule 9,
+ * because nothing is being undone.
+ */
+export function chargeAlreadyIn(
+  lines: readonly ChargeableLine[],
+  charge: RungCharge,
+): AlreadyIncluded[] {
+  const out: AlreadyIncluded[] = []
+  for (const line of lines) {
+    const level = line.levels.find((l) => l.key === line.levelResolved)
+    if (rungIncludes(level, charge) !== true) continue
+    out.push({
+      line: line.label,
+      column: line.priceColumnName ?? level?.label ?? '',
+      source: level?.contains?.source ?? '',
+    })
+  }
+  return out
+}
+
+/** The words a person actually reads, or null when there is nothing
+ *  to say. Built here rather than in the component so the sentence
+ *  and the rule cannot drift apart. */
+export function chargeAlreadyInSentence(
+  found: readonly AlreadyIncluded[],
+  charge: RungCharge,
+): string | null {
+  if (found.length === 0) return null
+  const what = CHARGE_TITLE[charge]
+  if (found.length === 1) {
+    const one = found[0]
+    return `${one.line} is priced at ${one.column}, and that number already has ${what} in it.`
+  }
+  const names = found.map((f) => f.line).join(', ')
+  return `${found.length} lines are priced at a column that already has ${what} in it — ${names}.`
+}
+
+/** Which of the three charges a typed label is naming, or null.
+ *
+ *  DELIBERATELY NARROW. It matches the charge's own noun and the
+ *  words the workbook itself uses for it — `Registration`, `Rego`,
+ *  `Pre Delivery` — and nothing that merely rhymes. A guard that
+ *  fires on "Regular service" would be worse than no guard: a warning
+ *  a person has learned to ignore is how the real one gets ignored
+ *  too. Missing a spelling costs nothing that is not already the
+ *  situation today. */
+export function chargeNamedBy(label: string): RungCharge | null {
+  const n = normName(label)
+  if (n === '') return null
+  if (/\b(registration|rego)\b/.test(n)) return 'registration'
+  if (/\b(pre delivery|predelivery|pdi)\b/.test(n)) return 'preDelivery'
+  if (/\b(install|installation|fitting|fitment labour)\b/.test(n)) return 'install'
+  return null
 }
 
 export interface PricedAt {

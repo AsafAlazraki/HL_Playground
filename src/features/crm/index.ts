@@ -95,6 +95,7 @@ export {
   matchCustomers,
   exactCustomer,
   customerFormFields,
+  liveTableCount,
 } from './customers'
 export type { CustomerRead } from './customers'
 

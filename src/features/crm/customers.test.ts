@@ -27,6 +27,7 @@ const {
   customerRegister,
   exactCustomer,
   isCustomerRegister,
+  liveTableCount,
   matchCustomers,
   readCustomer,
   readCustomers,
@@ -193,5 +194,44 @@ describe('the form is the table’s own columns', () => {
   it('leaves out a calculated column, which is not something to type into', () => {
     const table = register([{ id: 'f-calc', name: 'Age', type: 'formula', formula: '1' }])
     expect(customerFormFields(table).some((f) => f.type === 'formula')).toBe(false)
+  })
+})
+
+/* ---------------------------------------------------------- */
+
+/* THE EMPTY STATE'S ONE FIGURE. It is tested because it was WRONG:
+   the screen said "You have 53 tables and no customer register"
+   while Home, one press earlier, said 51 — the two retired tables in
+   the real price file. A first-run screen that miscounts a dealer's
+   own project is teaching them something false about it. */
+describe('counting a project’s tables the way Home counts them', () => {
+  const table = (id: string, extra: Partial<EntityDef> = {}): EntityDef => ({
+    ...register(),
+    id,
+    name: id,
+    ...extra,
+  })
+
+  it('counts the ordinary tables', () => {
+    const es = { a: table('a'), b: table('b'), c: table('c') }
+    expect(liveTableCount(es)).toBe(3)
+  })
+
+  it('DROPS A RETIRED TABLE, because Home drops it before it counts', () => {
+    const es = { a: table('a'), b: table('b', { retired: true }) }
+    expect(liveTableCount(es)).toBe(1)
+  })
+
+  it('KEEPS A JOIN TABLE, because Home counts those as Relationships', () => {
+    const es = { a: table('a'), j: table('j', { role: 'join' }) }
+    expect(liveTableCount(es)).toBe(2)
+  })
+
+  it('counts the register itself — it is an ordinary table', () => {
+    expect(liveTableCount({ [CUSTOMER_TABLE_ID]: register() })).toBe(1)
+  })
+
+  it('is zero for an empty project rather than throwing', () => {
+    expect(liveTableCount({})).toBe(0)
   })
 })

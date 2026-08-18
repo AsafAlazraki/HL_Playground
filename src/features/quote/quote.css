@@ -1579,3 +1579,67 @@
   font-weight: 560;
   color: var(--ink);
 }
+
+/* ============================================================
+   WHAT A PRICE ALREADY HAS IN IT — the rung flags, drawn.
+
+   `SERVICE_AND_THEMES.md` §3.2 theme 5 turned four sentences about
+   what a price column contains into data; these are the two places
+   a person reads them. Both are prose about the thing beside them,
+   so both are `--ink-soft` (7.7:1 on the white sheet) with the cell
+   reference under them in `--ink-faint`. NEITHER sits on a tint —
+   §1 of the design contract records that `--ink-faint` is 4.72:1 on
+   white and 4.26:1 over a 3.5% tint, which fails, so the surface
+   under both of these is left as it is.
+
+   NO ACCENT, NO HUE, NO ICON. This is a fact about a number, not an
+   alarm: the app has one accent and it is spent on the primary
+   action, the current dock item, the focused control and a computed
+   column. A fifth appearance here would take the eye off the button
+   the person came to press.
+   ============================================================ */
+
+/* on the open line panel, under "read from Cash · Boat Module!R282" */
+.qt-line-holds {
+  margin: 0 0 var(--sp-2);
+  max-width: 60ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.qt-line-holds b {
+  font-weight: 560;
+  color: var(--ink);
+}
+.qt-line-holds-src {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+/* under the free line whose typed label names a charge a line on
+   this quote is already carrying. It spans the adjustment row's own
+   four-column grid rather than living outside it: the sentence
+   belongs to THAT adjustment and moves with it when one above is
+   removed. */
+.qt-adj-already {
+  grid-column: 1 / -1;
+  margin: 2px 0 var(--sp-2);
+  max-width: 68ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.qt-adj-already-src {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}

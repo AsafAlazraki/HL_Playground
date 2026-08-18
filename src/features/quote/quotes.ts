@@ -29,6 +29,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { newId, nowIso } from '@/lib/id'
+import { localDay, localDayOf } from './day'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
 import { priceAtLevel } from './pricing'
 import { issueBlockers } from './totals'
@@ -206,11 +207,29 @@ function mutate(id: string, fn: (q: QuoteDef) => QuoteDef): void {
 
 /* -- making one --------------------------------------------- */
 
-/** How many quotes were made today — the second half of a
- *  reference. */
-function nthToday(): number {
-  const today = nowIso().slice(0, 10)
-  return list.filter((q) => q.createdAt.slice(0, 10) === today).length + 1
+/** How many quotes were made on `day` — the second half of a
+ *  reference, where `day` is a LOCAL `YYYY-MM-DD` from `localDayOf`.
+ *
+ *  THE TWO HALVES OF A REFERENCE MUST READ ONE CALENDAR. This took
+ *  `.slice(0, 10)` off the stored instants and off `nowIso()` — the
+ *  UTC day — while `referenceFor` stamps `20260818` from local
+ *  getFullYear/getMonth/getDate. At UTC+10 the two disagreed for the
+ *  first ten hours of every local day: the first quote of 18 Aug,
+ *  raised at 02:28, stamped `20260818` and counted the 17th's three,
+ *  printing `20260818-04`; and two quotes either side of 10:00 local
+ *  could both print `-01`. The day now comes from the SAME instant
+ *  the stamp is made from, read the same way. See `day.ts`. */
+function nthToday(day: string): number {
+  return list.filter((q) => localDay(q.createdAt) === day).length + 1
+}
+
+/** The reference for a quote minted right now: one `Date`, read once,
+ *  so the stamp and the count can never straddle midnight between two
+ *  clock reads. All three mints call this rather than pairing
+ *  `new Date()` with a separate `nthToday()`. */
+function referenceForNow(): string {
+  const now = new Date()
+  return referenceFor(now, nthToday(localDayOf(now)))
 }
 
 /**
@@ -230,7 +249,7 @@ export function createQuoteFromView(
   const quote = mintQuoteFromView({
     viewId,
     rowId,
-    reference: referenceFor(new Date(), nthToday()),
+    reference: referenceForNow(),
     ...(preparedBy ? { preparedBy } : {}),
   })
   if (!quote) return null
@@ -246,7 +265,7 @@ export function quoteLikeThisOne(quote: QuoteDef): QuoteDef | null {
   const made = mintQuoteFromView({
     viewId: quote.viewId,
     rowId: quote.rootRowId,
-    reference: referenceFor(new Date(), nthToday()),
+    reference: referenceForNow(),
     ...(quote.preparedBy ? { preparedBy: quote.preparedBy } : {}),
   })
   if (!made) return null
@@ -620,7 +639,7 @@ export function makeNewVersion(id: string): QuoteDef | null {
   const copy: QuoteDef = {
     ...from,
     id: newId(),
-    reference: referenceFor(new Date(), nthToday()),
+    reference: referenceForNow(),
     state: 'draft',
     lines,
     sections: from.sections.map((s) => ({

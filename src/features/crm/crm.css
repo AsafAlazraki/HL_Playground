@@ -54,10 +54,16 @@
 
 /* A NAME NOBODY HAS TYPED IS NOT A NAME. It is set apart from real
    data so a screenshot can never be read as a customer called "no
-   name yet" — the same device `.qt-doc-blank` uses on a quote. */
+   name yet" — the same device `.qt-doc-blank` uses on a quote.
+
+   THE ITALIC CARRIES THAT, NOT THE COLOUR, which is why this is
+   --ink-soft: the span renders in TWO beds — over the page on a
+   customer's own screen, and inside .cx-row-open on the register,
+   which is tinted whenever that row is the open one. It measured
+   4.16:1 there at --ink-faint. */
 .cx-blank {
   font-style: italic;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 /* every figure on these screens: mono, tabular, aligned */
@@ -270,9 +276,29 @@
   overflow-wrap: anywhere;
 }
 
+/* --ink-soft, NOT --ink-faint, AND THE REASON IS MEASURED.
+
+   This text rides inside .cx-row-open, which is tinted in three of its
+   states, and DESIGN_CONTRACT is explicit that --ink-faint "is 4.72:1
+   on white but 4.26:1 over a 3.5% tint, which fails". Measured in the
+   browser, compositing the whole ancestor chain: over --paper-sunken
+   4.22:1, over --blue-wash 4.16:1 light and 3.98:1 dark. All three
+   fail. At --ink-soft the same beds give 6.84:1, 6.74:1 and 6.29:1.
+
+   THE STATE THAT MAKES THIS MORE THAN A HOVER FLICKER IS
+   :focus-visible, which holds the tint for as long as the row is
+   keyboard-focused — so the reader most likely to be sitting on this
+   bed is the one navigating without a mouse. (.cx-row.is-open paints
+   the same tint but is not reachable today: CustomerStage swaps in
+   CustomerPage whenever it has an id, so the list only ever renders
+   with openId null. The rule is kept because the prop is part of this
+   component's contract and a second mount would light it up.)
+
+   The cost is half a step of hierarchy against a row it is now
+   legible on. */
 .cx-row-when {
   justify-self: end;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .cx-row-count {
@@ -482,8 +508,9 @@
   background: transparent;
 }
 
+/* tinted-bed rule, same measurement as .cx-row-when above */
 .cx-hist-when {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .cx-hist-what {
@@ -503,7 +530,7 @@
 
 .cx-hist-state {
   justify-self: end;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .cx-hist-total {
@@ -513,7 +540,7 @@
 }
 
 .cx-hist-go {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 @media (max-width: 720px) {

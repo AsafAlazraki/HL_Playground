@@ -210,8 +210,17 @@ export {
   money,
   signedMoney,
   parseAmount,
+  /* NEVER CHARGE IT TWICE — SERVICE_AND_THEMES.md §3.2 theme 5.
+     What a price column already contains, as data rather than as a
+     paragraph, and the three functions that let a surface act on it:
+     ask a rung, find every line already carrying a charge, and read
+     which charge a typed label is naming. */
+  rungIncludes,
+  chargeAlreadyIn,
+  chargeAlreadyInSentence,
+  chargeNamedBy,
 } from './pricing'
-export type { PricedAt, QuoteLevelChoice } from './pricing'
+export type { PricedAt, QuoteLevelChoice, AlreadyIncluded, ChargeableLine } from './pricing'
 
 /* -- THE ONE SUMMATION --------------------------------------- */
 export {
@@ -233,11 +242,13 @@ export type { QuoteTotals, LineAmount } from './totals'
 export { localDay } from './day'
 
 /* -- the shapes (move these to model.ts) --------------------- */
-export { QUOTE_LEVEL_ORDER, LEVEL_TITLE } from './types'
+export { QUOTE_LEVEL_ORDER, LEVEL_TITLE, CHARGE_TITLE } from './types'
 export type {
   AdjustmentKind,
   FrozenLevel,
   PriceLevel,
+  RungCharge,
+  RungContents,
   QuoteAdjustment,
   QuoteDef,
   QuoteLine,

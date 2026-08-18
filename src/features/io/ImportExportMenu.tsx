@@ -41,6 +41,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { forgetSeedStamp } from '@/demos/seedStamp'
 import { ConfirmFacts, ConfirmSheet } from '@/features/designer/ConfirmSheet'
 import { useQuotes } from '@/features/quote'
+import { useConfiguringCount } from '@/features/modules'
 import { applyMerge, applyReplace } from './apply'
 /* the envelope this build reads and writes: ProjectExport plus the
    quotes, declared beside the validator that narrows them */
@@ -183,6 +184,21 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
      this panel, so the figure on the card is the figure the export
      writes rather than a count taken at a different moment. */
   const quoteCount = useQuotes().length
+  /* THE ONE SWITCH THE FILE CANNOT CARRY. A module's tenth verb —
+     "Set rules" — is held in a browser-local registry rather than on
+     `ModuleDef.capabilities`, because `ModuleCapability` is a closed
+     union this session does not own (features/modules/ruleCapability.ts
+     writes down the exact line the contract wants). So it does not
+     travel, and this panel has twice been fixed for exactly this shape
+     of silence: quotes, and retired tables. It is named below rather
+     than discovered by a dealer who opened their copy and found the
+     rules panel gone.
+
+     THE RECORD, NOT ITS KEYS. `Object.keys` would be a new array on
+     every render and zustand compares with Object.is; the record's
+     identity only changes when a module does. */
+  const modules = useProjectStore((s) => s.modules)
+  const configuringCount = useConfiguringCount(Object.keys(modules))
 
   const closeMenu = useCallback(() => {
     setOpen(false)
@@ -519,6 +535,22 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                     >
                       {plural(retiredCount, 'retired table', 'retired tables')} included — Home
                       counts the other {tableCount - retiredCount}
+                    </p>
+                  )}
+                  {/* SAID ON THE CARDS, NOT IN A RELEASE NOTE. Both
+                      cards carry modules, so both lose this, and the
+                      sentence names the fix where the loss happens —
+                      the switch is one press in the module's own set-up
+                      panel, so a person told about it can undo it in
+                      seconds and a person not told cannot know to. It
+                      is drawn only when there is something to lose. */}
+                  {!blank && configuringCount > 0 && (
+                    <p
+                      className="io-kept-note"
+                      title="Every other verb a module carries is a field on the module and travels with it. This one is held in this browser until the module contract can name it, so the copy arrives with the module intact and this switch off."
+                    >
+                      {plural(configuringCount, 'module sets', 'modules set')} rules — that
+                      switch stays in this browser, so switch it back on in the copy
                     </p>
                   )}
                 </section>

@@ -116,7 +116,7 @@ export const REGISTRATION_POLICY: RegistrationRequirement[] = [
     because:
       "a trailer's fee is already inside its Sell inc Rego, and a boat's sits outside Cash — so the same document can charge one fee twice if a surface trusts the word “Sell”",
     source:
-      'SERVICE_AND_THEMES.md §3.1 and §3.2 theme 5 · Trailer Module!CA “Sell inc Rego” contains it; Boat Module!QR “Cash” does not. It becomes mechanical the day PriceLevel carries includesRegistration (§3.2 theme 5)',
+      'SERVICE_AND_THEMES.md §3.1 and §3.2 theme 5 · Trailer Module!CA “Sell inc Rego” = ROUNDUP(BW+BZ,) contains it; Boat Module!QR “Cash” does not, which Managers View!D41 and D42 publish side by side. It is mechanical rather than remembered: every price rung carries what it already contains, the quote freezes that onto the line, and the editor says so beside a typed line that would charge it again',
   },
   {
     rule: 'Never default the concession.',
@@ -494,12 +494,24 @@ function labelOf(row: RowData, field: FieldDef | undefined): string {
        frozen quote line records the CELL today and cannot record the
        SCHEDULE — which is the one thing `sourceNote` cannot express.
 
-   2 · `PriceLevel.includesRegistration` (src/features/quote/types.ts).
-       "Never add it twice" is prose here and must become mechanical:
-       `Sell inc Rego` contains the fee and `Cash` does not
-       (§3.2 theme 5). Until it lands, any surface adding a
-       registration line to a trailer priced at `Sell inc Rego`
-       double-charges, and nothing stops it but a developer's memory.
+   2 · DONE — `PriceLevel.contains` (src/features/quote/types.ts),
+       and the reason it is recorded here rather than deleted is that
+       the next person to read REGISTRATION_POLICY's "Never add it
+       twice" needs to know where the machine that enforces it lives.
+
+       `RungContents` carries §3.2 theme 5's three booleans plus the
+       cell that says so; `pricing.ts` hangs them on each named rung
+       (`Trailer Module!CA` contains the fee, `Managers View!D41`
+       vs `D42` says a boat's hull-only price does not); `freezeLevels`
+       freezes them onto the line so a document renders the fact from
+       itself; and `chargeAlreadyIn` answers "is somebody about to
+       charge this twice" from the rung the line is ACTUALLY priced
+       at. `QuoteEditor` says it beside the free line that caused it.
+
+       It says and does not refuse, on purpose: six of the nineteen
+       rows in this fee table — the two transfer fees, the
+       replacement plate, the unregistered vehicle permit, the VIN
+       plate, the PPSR fee — are legitimate second registration lines.
 
    3 · The two curated joins (tools/seed → src/demos/northside.ts).
        §3.1 asks for `boat.<Boat Registration> → registration.Band` on

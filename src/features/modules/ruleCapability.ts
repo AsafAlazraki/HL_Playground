@@ -134,6 +134,29 @@ export function useModuleConfiguresRules(moduleId: string): boolean {
   return useSyncExternalStore(subscribe, read, read)
 }
 
+/** How many of these modules carry the verb.
+ *
+ *  INTERSECTED WITH THE MODULES THAT EXIST, never read off the
+ *  registry's own size. Deleting a module does NOT drop its entry here,
+ *  and must not: `deleteModule` goes through `mutate`, so it is
+ *  undoable, and a switch thrown away on delete would come back off
+ *  after an undo that restored everything else. The consequence is that
+ *  this set can hold ids nothing points at, and any count taken from it
+ *  has to say which modules it means. */
+export const configuringCount = (moduleIds: readonly string[]): number => {
+  let n = 0
+  for (const id of moduleIds) if (on.has(id)) n += 1
+  return n
+}
+
+/** The same count, live. A NUMBER, so the snapshot identity that
+ *  `useSyncExternalStore` compares is a primitive and a list rebuilt
+ *  each read can never loop it. */
+export function useConfiguringCount(moduleIds: readonly string[]): number {
+  const read = (): number => configuringCount(moduleIds)
+  return useSyncExternalStore(subscribe, read, read)
+}
+
 /** Move the switch. A no-op write publishes nothing, so a re-render
  *  cannot loop through here. */
 export function setModuleConfiguresRules(moduleId: string, wanted: boolean): void {

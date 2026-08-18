@@ -110,8 +110,10 @@ export {
   RULE_CAPABILITY,
   RULE_CAPABILITY_META,
   forgetModuleRuleCapabilities,
+  configuringCount,
   moduleConfiguresRules,
   setModuleConfiguresRules,
+  useConfiguringCount,
   useModuleConfiguresRules,
 } from './ruleCapability'
 export type { RuleCapabilityKey } from './ruleCapability'
