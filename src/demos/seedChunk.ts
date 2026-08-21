@@ -9,8 +9,11 @@
      Northside literal is ~139 kB gzip — a quarter of everything a
      first-time visitor downloads, PAID EVEN BY SOMEBODY WHO OPENS A
      BLANK SHEET, because `demos/index.ts` imported `./northside`
-     statically. At full scale (11,116 rows) that becomes ~246 kB
-     gzip of a dealer's price file most sessions never touch.
+     statically. At full scale that became 243 kB gzip at 11,116
+     rows, and 461 kB at the 15,691 the whole parts and dealer-fit
+     libraries bring (SEED_AT_FULL_SCALE.md §8.5) — a dealer's price
+     file most sessions never touch, and the split is the reason none
+     of it is in the entry chunk.
 
    WHAT WAS NOT CHANGED, and the reasons are adjudicated in §4.2:
    the seed stays a generated TypeScript literal. It is type-checked

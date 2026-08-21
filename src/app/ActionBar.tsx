@@ -353,12 +353,28 @@ function PanelItem({
                is shared with the blueprint's expanded card and must not
                learn that a popover exists. A press that was refused
                (`aria-disabled`) leaves the panel standing, so the chip
-               that says "already in view" can say it. */
+               that says "already in view" can say it.
+
+               A PANEL WITH A STEP IN IT SAYS WHICH PRESSES ARE THE
+               STEP. `closeOnAct` reads every button as the act, which
+               is right for a map — every chip on it is a destination.
+               It is wrong for a panel whose first press only ASKS the
+               second question: the rule builder's "Relate two things"
+               picks a pair, and then offers the columns that bind it,
+               and a panel that shut on the first press would put a
+               person back where they started every time. So a control
+               that advances a panel rather than finishing with it
+               marks itself `data-ab-keep-open`, and the delegate
+               leaves the panel standing. The vocabulary stays closed:
+               this is one attribute the bar owns, not arbitrary JSX. */
             onClick={
               item.closeOnAct === true
                 ? (e) => {
                     const hit = (e.target as HTMLElement).closest('button')
-                    if (hit && hit.getAttribute('aria-disabled') !== 'true') onToggle()
+                    if (!hit) return
+                    if (hit.getAttribute('aria-disabled') === 'true') return
+                    if (hit.closest('[data-ab-keep-open]') !== null) return
+                    onToggle()
                   }
                 : undefined
             }

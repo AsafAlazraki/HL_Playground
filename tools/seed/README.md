@@ -1,6 +1,6 @@
 # The seed pipeline
 
-`src/demos/northside.ts` is **generated**. 2.42 MB, 53 tables, 11,116 rows — of
+`src/demos/northside.ts` is **generated**. 3.97 MB, 53 tables, 15,691 rows — of
 which 28 tables and 8,679 rows are the fitment joins — produced from Northside
 Marine's real workbooks. Never edit it by hand and never text-process it with a
 shell tool — a PowerShell rewrite once turned 171 `×` characters into mojibake,

@@ -38,7 +38,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
-import { Article, Plus } from '@phosphor-icons/react'
+import { Article, ArrowsLeftRight, Plus } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { newId, nowIso } from '@/lib/id'
 import { useActionBar, type ActionGroup } from '@/lib/actions'
@@ -57,6 +57,15 @@ import { missingChoice, previewConstraint } from './state'
 import { RuleSentence } from './RuleSentence'
 import { ConsequenceMeter } from './ConsequenceMeter'
 import { StartingPointList } from './StartingPointList'
+import { RelateTwoThings } from './RelateTwoThings'
+import {
+  draftFromBinding,
+  relatablePairs,
+  stillFromBinding,
+  type BindingOffer,
+  type RelatablePair,
+} from './relate'
+import { n } from './discoverSay'
 import { draftFrom, startingPoints, stillFrom, tally, type StartingPoint } from './startingPoints'
 import { BECAUSE_PLACEHOLDER } from './RuleCard'
 import { useSentenceCtx } from './useCtx'
@@ -152,6 +161,10 @@ export function NewRuleSentence({
   const ctx = useSentenceCtx()
   const [draft, setDraft] = useState<ConstraintDef | null>(() => makeDraft(ctx))
   const [from, setFrom] = useState<StartingPoint | null>(null)
+  /* WHERE THE THIRD DOOR LEFT THE SENTENCE. Two doors, two
+     provenance blocks, and never both: whichever one opened the
+     sentence last is the one describing it. */
+  const [bound, setBound] = useState<{ offer: BindingOffer; pair: RelatablePair } | null>(null)
 
   useEffect(() => {
     setDraft((current) =>
@@ -177,37 +190,91 @@ export function NewRuleSentence({
       if (!next) return
       setDraft(next)
       setFrom(offer)
+      setBound(null)
     },
     [ctx],
   )
 
-  /* THE CATALOGUE IS A PAGE ACTION, AND IT GOES ON THE BAR.
-     It is withheld entirely when this sheet is not the one those rules
-     were read out of: every offer reporting a column the sheet does not
-     have is not a catalogue, it is sixteen rows of somebody else's
-     business. */
+  /* THE THIRD DOOR LANDS IN THE SAME SENTENCE. It answers no verb
+     and no value — see `draftFromBinding`, which holds exactly the
+     line `draftFrom` holds and for a harder reason: what was just
+     read is a MEASUREMENT, and a measurement is not a rule this
+     business stated. */
+  const bind = useCallback(
+    (offer: BindingOffer, pair: RelatablePair) => {
+      const next = draftFromBinding(offer, ctx)
+      if (!next) return
+      setDraft(next)
+      setFrom(null)
+      setBound({ offer, pair })
+    },
+    [ctx],
+  )
+
+  /* WHICH TWO THINGS THIS PRICE FILE RELATES, counted off its own
+     join tables. One pass over the join rows and no product column
+     read — about 18 ms on the full seed — so it is affordable here,
+     where the measurement behind the second step is not, and it is
+     taken ONCE: the control on the bar counts them for its label and
+     the panel below draws the same array. */
+  const pairs = useMemo(
+    () => relatablePairs({ entities: ctx.entities, rowsByEntity: ctx.rowsByEntity }),
+    [ctx.entities, ctx.rowsByEntity],
+  )
+
+  /* THE DOORS ARE PAGE ACTIONS, AND THEY GO ON THE BAR, side by side
+     in one group. They are two ways into the SAME sentence — the
+     catalogue names the columns the workbooks' own rules are about,
+     and the second names two things and lets the file say which
+     column binds them — so a person may move between them, and the
+     card below never grows a control that is used once and then
+     charges the page its height all session.
+
+     THE CATALOGUE IS WITHHELD when this sheet is not the one those
+     rules were read out of: every offer reporting a column the sheet
+     does not have is not a catalogue, it is sixteen rows of somebody
+     else's business. The second door has no such dependency — it
+     reads only what is loaded — so it stands either way and says, in
+     place, when there is nothing to relate. */
   const bar = useMemo<ActionGroup[] | null>(() => {
-    if (counted.total === 0 || counted.points + counted.crossKind === 0) return null
-    return [
-      {
-        id: 'cn-start',
-        rank: 40,
-        items: [
-          {
-            kind: 'panel',
-            id: 'cn-start-panel',
-            label: 'From the price file',
-            at: `${counted.points} of ${counted.total}`,
-            icon: Article,
-            panelLabel: 'From the price file',
-            panelSay: `${counted.total} rules read out of the workbooks. ${counted.points} name columns this sentence can be pointed at; the rest say what stops them.`,
-            closeOnAct: true,
-            content: <StartingPointList offers={offers} onPick={pick} />,
-          },
-        ],
-      },
-    ]
-  }, [counted, offers, pick])
+    const items: ActionGroup['items'] = []
+
+    if (counted.total > 0 && counted.points + counted.crossKind > 0) {
+      items.push({
+        kind: 'panel',
+        id: 'cn-start-panel',
+        label: 'From the price file',
+        at: `${counted.points} of ${counted.total}`,
+        icon: Article,
+        panelLabel: 'From the price file',
+        panelSay: `${counted.total} rules read out of the workbooks. ${counted.points} name columns this sentence can be pointed at; the rest say what stops them.`,
+        closeOnAct: true,
+        content: <StartingPointList offers={offers} onPick={pick} />,
+      })
+    }
+
+    items.push({
+      kind: 'panel',
+      id: 'cn-relate-panel',
+      label: 'Relate two things',
+      at: pairs.length > 0 ? `${n(pairs.length)} pairs` : 'none yet',
+      icon: ArrowsLeftRight,
+      panelLabel: 'Relate two things',
+      panelSay:
+        'Name two things your price file already pairs, and it will offer the columns that could bind them — each with how much of the far list it would keep, measured on the sheet you have loaded.',
+      closeOnAct: true,
+      content: (
+        <RelateTwoThings
+          pairs={pairs}
+          tables={Object.keys(ctx.entities).length}
+          conceptKeys={conceptKeys}
+          onPick={bind}
+        />
+      ),
+    })
+
+    return items.length > 0 ? [{ id: 'cn-start', rank: 40, items }] : null
+  }, [bind, conceptKeys, counted, ctx.entities, offers, pairs, pick])
 
   useActionBar('constraints-new-rule', bar)
 
@@ -235,10 +302,12 @@ export function NewRuleSentence({
      opened, so a block still saying "started from S1" would be
      describing a rule that is not there. */
   const started = from && stillFrom(from, draft, ctx) ? from : null
+  const measured = bound && stillFromBinding(bound.offer, draft, ctx) ? bound : null
 
   const blank = (): void => {
     setDraft(makeDraft(ctx))
     setFrom(null)
+    setBound(null)
   }
 
   const add = (): void => {
@@ -266,6 +335,8 @@ export function NewRuleSentence({
 
       {started ? (
         <StartedFrom offer={started} tables={preview.tables.length} onBlank={blank} />
+      ) : measured ? (
+        <MeasuredFrom bound={measured} onBlank={blank} />
       ) : (
         counted.points > 0 && (
           <p className="cn-new-offer">
@@ -371,6 +442,65 @@ function StartedFrom({
           up. The workbook list and both theme bands already share it;
           a fourth copy would guarantee two of them eventually differ. */}
       <p className="cn-wb-src">{offer.seed.source}</p>
+      <button type="button" className="cn-from-blank" onClick={onBlank}>
+        Start from a blank sentence instead
+      </button>
+    </aside>
+  )
+}
+
+/* ---------------------------------------------------------- */
+/* Where the sentence was measured from                       */
+/* ---------------------------------------------------------- */
+
+/** THE THIRD DOOR'S PROVENANCE, AND THE HALF IT CANNOT KEEP EITHER.
+ *
+ *  What a person just read was a MEASUREMENT across two kinds of
+ *  table — a trailer's column against a boat's — and a
+ *  `ConstraintDef` sentence talks about one kind at a time
+ *  (`state.tablesFor` keeps only tables carrying every column the
+ *  sentence names, so a two-kind sentence reaches none). So this
+ *  block says exactly what happened: the sentence is pointed at the
+ *  column that was chosen, every verb and value below is the
+ *  person's, and the comparison itself is not written here — with
+ *  the figures it was chosen on, and the cell the column was read
+ *  out of.
+ *
+ *  IT CARRIES NO REASON ACROSS. `draftFromBinding` leaves `because`
+ *  empty on purpose: the candidate's own reason is the measurement
+ *  of the cross-kind claim, and attaching it to a sentence that is
+ *  not that claim would be a justification belonging to a different
+ *  rule — the most convincing kind of wrong. */
+function MeasuredFrom({
+  bound,
+  onBlank,
+}: {
+  bound: { offer: BindingOffer; pair: RelatablePair }
+  onBlank: () => void
+}): ReactElement {
+  const { offer, pair } = bound
+  const far = pair.partner.label.toLowerCase()
+  return (
+    <aside className="cn-from">
+      <p className="cn-from-label">MEASURED ON YOUR PRICE FILE</p>
+      <p className="cn-from-says">
+        <span className="cn-fig">
+          {offer.kept !== null && offer.catalogue !== null
+            ? `${n(offer.kept)} of ${n(offer.catalogue)}`
+            : offer.holds}
+        </span>{' '}
+        {far} stay standing when {offer.name} decides, {offer.against}.
+      </p>
+      <p className="cn-from-note">
+        The sentence is pointed at <b>{offer.name}</b> on your {pair.partner.label} tables. The
+        verbs and the values below are yours. What was measured runs between your{' '}
+        {pair.subject.label} and your {pair.partner.label}, and one sentence talks about one kind
+        of table at a time — so the comparison itself is not written here.
+      </p>
+      <p className="cn-from-plainly">
+        {offer.holds} pairings your price file writes hold it.
+      </p>
+      {offer.desc !== undefined && <p className="cn-wb-src">{offer.desc}</p>}
       <button type="button" className="cn-from-blank" onClick={onBlank}>
         Start from a blank sentence instead
       </button>

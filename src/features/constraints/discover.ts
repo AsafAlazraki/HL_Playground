@@ -302,6 +302,46 @@ export interface UniquenessReading {
   exampleTotal: number
 }
 
+/** One column, named the way the rest of the app names columns.
+ *
+ *  `conceptKey` is the key `columns.buildConcepts` mints — kind plus
+ *  the normalised name — so a surface can resolve a measured column
+ *  back to the `ColumnConcept` a SENTENCE may be pointed at, without
+ *  parsing `Candidate.id`. The id carries the same facts and is an
+ *  identifier; an identifier that has to be parsed is a schema
+ *  nobody wrote down. */
+export interface BoundColumn {
+  kind: TableKind
+  /** the column's own name, as the price file writes it */
+  name: string
+  /** `kind::normalised name` */
+  conceptKey: string
+  /** how many tables of the kind carry it */
+  tables: number
+}
+
+/**
+ * THE TWO COLUMNS A CANDIDATE BINDS, and which side each sits on.
+ *
+ * `far` is the side being CHOSEN FROM — the catalogue
+ * `discrimination` counts, and therefore the column a person is
+ * actually deciding about when they ask "which column decides?".
+ * `near` is the side being chosen FOR, and it is `null` on the
+ * categorical selector, where the near side's identity is read from
+ * its own table's name rather than from any column of its own (see
+ * `groupVocabulary`).
+ *
+ * It is `null` on the three shapes that bind no catalogue: a join
+ * key, a functional dependency and a uniqueness reading all carry
+ * `discrimination: null`, so none of them can say how much of a far
+ * catalogue it leaves standing, and a surface that ranks columns by
+ * what they would DO has nothing to rank them by.
+ */
+export interface CandidateBinding {
+  far: BoundColumn
+  near: BoundColumn | null
+}
+
 export interface Candidate {
   /** stable and deterministic — a re-run of the same project
    *  produces the same id, so a person's decision about a candidate
@@ -310,6 +350,11 @@ export interface Candidate {
   shape: CandidateShape
   /** which two sides it was measured across, in the project's words */
   relationship: string
+  /** `Relationship.key` — the two sides as `kind·column`, so a
+   *  caller that asked for one relationship can prove it got it */
+  relationshipKey: string
+  /** the columns it binds, where it binds a catalogue at all */
+  binds: CandidateBinding | null
   /** the rule, in one sentence, using the file's own column names */
   statement: string
   /** reads after "because" — always the measurement, never a claim
@@ -358,9 +403,23 @@ export interface Candidate {
 /* The report                                                  */
 /* ---------------------------------------------------------- */
 
+/** One side of a relationship: what kind of table it is, and the
+ *  price file's OWN word for the side — the join's reference column
+ *  name, "Boat", "Trailer", "Rigging Kit Option". A surface offering
+ *  a pair says the dealer's word, never the app's. */
+export interface RelationshipSide {
+  kind: TableKind
+  /** the join's reference column name, trimmed */
+  column: string
+  /** live rows of the kind — the catalogue this side draws from */
+  catalogue: number
+}
+
 export interface RelationshipReading {
   key: string
   label: string
+  left: RelationshipSide
+  right: RelationshipSide
   /** the join tables it was read from */
   joins: string[]
   /** live pairings the price file writes across them */
@@ -430,6 +489,35 @@ export interface DiscoverOptions {
   maxPerShape?: number
   /** limit the run to these shapes */
   shapes?: CandidateShape[]
+  /**
+   * LIMIT THE RUN TO THESE RELATIONSHIPS, by `RelationshipReading.key`.
+   *
+   * The whole-file run measures eight relationships across five
+   * shapes and takes about 0.9 s. A surface that asks "which column
+   * binds THESE TWO THINGS" has already been told which relationship
+   * it means, and measuring the other seven is work whose answer is
+   * thrown away — so the caller names the one it wants and the engine
+   * walks that one.
+   *
+   * It is a BOUND ON THE WORK, never on the truth: a relationship
+   * that is measured is measured exactly as it would be in a full
+   * run, against the same catalogues (`Ctx` is built over the whole
+   * project either way, so `live(kind)` is still the whole live
+   * catalogue of that kind). `relate.test.ts` asserts a scoped run
+   * and a full run agree candidate for candidate.
+   *
+   * An unknown key measures nothing, which is honest: the report
+   * comes back with no relationships and no candidates rather than
+   * silently widening to all of them.
+   *
+   * IT SUPPRESSES THE JOIN-KEY SHAPE. A join key is a property of a
+   * KIND and not of a relationship — `joinKeySteps` walks kinds, not
+   * pairings — so there is no such thing as "the join keys of this
+   * relationship". Reporting the whole file's keys inside a run that
+   * was asked for one pair would be answering a question nobody
+   * asked, at the cost this option exists to avoid.
+   */
+  relationships?: string[]
 }
 
 const DEFAULTS = {
@@ -487,6 +575,21 @@ interface MeasurableColumn {
   /** table id -> field id on that table */
   fieldByTable: Map<string, string>
 }
+
+/** A measured column, named the way a SENTENCE names columns.
+ *
+ *  `columns.buildConcepts` mints `kind::normalised name` and `exact`
+ *  is the same normalisation it uses — trimmed, whitespace-collapsed,
+ *  lower-cased — so the key produced here resolves against the very
+ *  concept list the rule builder offers. The two are asserted equal
+ *  in `relate.test.ts`; if either normalisation ever moves, that test
+ *  fails rather than the door quietly offering nothing. */
+const boundColumn = (col: MeasurableColumn): BoundColumn => ({
+  kind: col.kind,
+  name: col.name,
+  conceptKey: `${col.kind}::${exact(col.name)}`,
+  tables: col.fieldByTable.size,
+})
 
 const kindOf = (e: EntityDef): TableKind | null => e.kind ?? null
 
@@ -844,7 +947,7 @@ function groupOf(side: SideRow, groups: readonly Group[]): Group | null {
 interface ShapeCtx {
   ctx: Ctx
   rel: Relationship
-  opts: Required<Omit<DiscoverOptions, 'shapes'>>
+  opts: Required<Omit<DiscoverOptions, 'shapes' | 'relationships'>>
   comparisons: { n: number }
   /** numeric column pairs declined because the two headers do not
      declare the same unit — see `unitOf` */
@@ -980,6 +1083,11 @@ function selectorCandidates(sc: ShapeCtx): Candidate[] {
         id: `dx:selector:${sc.rel.key}:${subjectKind}<-${partnerKind}·${exact(col.name)}`,
         shape: 'categorical-selector',
         relationship: sc.rel.label,
+        relationshipKey: sc.rel.key,
+        /* the near side has no column of its own here: its identity
+           is read from its table's name, or from its outermost
+           level — see `groupVocabulary` */
+        binds: { far: boundColumn(col), near: null },
         statement: `A ${partnerKind} is only offered with a ${subjectKind} whose own identity its “${col.name}” names.`,
         because: `${hits} of ${tested} pairings the price file writes agree`,
         source: `${col.name} on ${col.fieldByTable.size} ${partnerKind} table${col.fieldByTable.size === 1 ? '' : 's'}, against the ${subjectKind} identities read out of the project: ${colGroups
@@ -1176,6 +1284,11 @@ function boundCandidates(sc: ShapeCtx): Candidate[] {
       id: `dx:bound:${sc.rel.key}:${upperKind}·${exact(d.upper.name)}>=${lowerKind}·${exact(d.lower.name)}`,
       shape: 'numeric-bound',
       relationship: sc.rel.label,
+      relationshipKey: sc.rel.key,
+      /* `upper` is the side the discrimination catalogue is drawn
+         from — every live row of `upperKind` that clears the lower
+         column's value — so `upper` is the FAR side by construction */
+      binds: { far: boundColumn(d.upper), near: boundColumn(d.lower) },
       statement: `A ${upperKind}’s “${d.upper.name}” is never below the ${lowerKind}’s “${d.lower.name}”.`,
       because: `${d.hits} of ${t.tested} pairings the price file writes hold it`,
       source: `“${d.upper.name}” on ${d.upper.fieldByTable.size} ${upperKind} table${d.upper.fieldByTable.size === 1 ? '' : 's'} against “${d.lower.name}” on ${d.lower.fieldByTable.size} ${lowerKind} table${d.lower.fieldByTable.size === 1 ? '' : 's'}`,
@@ -1261,7 +1374,7 @@ function joinTextSegments(ctx: Ctx, join: EntityDef, joinRow: RowData): Set<stri
  *  in the run, and the only one left over 150 ms. */
 function* joinKeySteps(
   ctx: Ctx,
-  opts: Required<Omit<DiscoverOptions, 'shapes'>>,
+  opts: Required<Omit<DiscoverOptions, 'shapes' | 'relationships'>>,
 ): Generator<{ kind: TableKind; candidates: Candidate[] }, void, void> {
   /* every reference from a join row to a table, grouped by kind */
   const refsByKind = new Map<TableKind, Array<{ join: EntityDef; joinRow: RowData; target: SideRow }>>()
@@ -1357,6 +1470,8 @@ function* joinKeySteps(
         id: `dx:joinkey:${kind}·${exact(col.name)}`,
         shape: 'join-key',
         relationship: `pairings that name a ${kind}`,
+        relationshipKey: `join-key·${kind}`,
+        binds: null,
         statement: `The price file identifies a ${kind} by its “${col.name}”.`,
         because: `the pairing’s own text names it on ${hits} of ${tested} references, and ${distinct} distinct values cover ${rows} rows`,
         source: `“${col.name}” on ${col.fieldByTable.size} ${kind} table${col.fieldByTable.size === 1 ? '' : 's'}, measured over every row of the kind including history`,
@@ -1625,6 +1740,8 @@ function dependencyCandidates(sc: ShapeCtx, attrs: ReadAttr[]): Candidate[] {
         id: `dx:fd:${sc.rel.key}:${det.key}->${dep.key}`,
         shape: 'functional-dependency',
         relationship: sc.rel.label,
+        relationshipKey: sc.rel.key,
+        binds: null,
         statement: `Choosing the ${det.label} settles the ${dep.label}.`,
         because: `${hits} of ${tested} pairings take the value that ${det.label} most often carries`,
         source: `${det.label} against ${dep.label} on ${sc.rel.joins.length} join table${sc.rel.joins.length === 1 ? '' : 's'}, sentinels excluded from both sides`,
@@ -1741,6 +1858,8 @@ function uniquenessCandidates(sc: ShapeCtx, attrs: ReadAttr[]): Candidate[] {
       id: `dx:unique:${sc.rel.key}:${combo.map((a) => a.key).join('+')}`,
       shape: 'uniqueness',
       relationship: sc.rel.label,
+      relationshipKey: sc.rel.key,
+      binds: null,
       statement: `(${combo.map((a) => a.label).join(', ')}) identifies one pairing.`,
       because: admitted
         ? `${distinct} distinct combinations cover all ${tested} pairings the price file writes`
@@ -1819,6 +1938,59 @@ function rank(a: Candidate, b: Candidate): number {
   return b.tested - a.tested
 }
 
+/* THE SAME FILE MUST GIVE THE SAME ANSWER, WHICHEVER DOOR IT CAME
+   THROUGH — see the note inside `discoverSteps`. Both entry points
+   below order the project the same way, in one place, because two
+   doors that ordered it differently would be exactly the fault that
+   note was written about. */
+function inOrder(project: DiscoveryProject): DiscoveryProject {
+  return {
+    ...project,
+    entities: Object.fromEntries(
+      Object.keys(project.entities)
+        .sort()
+        .map((id) => [id, project.entities[id]]),
+    ),
+  }
+}
+
+const readingOf = (ctx: Ctx, r: Relationship): RelationshipReading => ({
+  key: r.key,
+  label: r.label,
+  left: { kind: r.left.kind, column: r.left.fieldName, catalogue: ctx.live(r.left.kind).length },
+  right: {
+    kind: r.right.kind,
+    column: r.right.fieldName,
+    catalogue: ctx.live(r.right.kind).length,
+  },
+  joins: r.joins.map((j) => j.name),
+  pairings: r.pairings.length,
+  recommended: r.pairings.filter((p) => p.recommended).length,
+  leftCatalogue: ctx.live(r.left.kind).length,
+  rightCatalogue: ctx.live(r.right.kind).length,
+  heldBack: r.heldBack,
+})
+
+/**
+ * WHICH TWO THINGS THIS PRICE FILE ACTUALLY RELATES, and how much of
+ * each side stands behind the relationship — without measuring a
+ * single candidate.
+ *
+ * The relationships are not a guess and not a walk written for this
+ * function: they are `relationshipsOf`, the engine's own reading of
+ * the join tables' reference columns, so the pairs a person is
+ * offered are exactly the pairs the measurement can be run over. A
+ * second walk would eventually offer a pair the engine cannot
+ * measure, which is a door to nowhere.
+ *
+ * It costs one pass over the join rows and reads no product columns,
+ * so it is affordable on the render path where a full run is not.
+ */
+export function relatedPairs(project: DiscoveryProject): RelationshipReading[] {
+  const ctx = new Ctx(inOrder(project))
+  return relationshipsOf(ctx).map((r) => readingOf(ctx, r))
+}
+
 /**
  * The engine, as a generator, so a caller can drive it from an idle
  * callback and never block a frame. Yields once per unit of work and
@@ -1848,17 +2020,20 @@ export function* discoverSteps(
      not measuring, so the order is fixed here, once, before anything
      reads it. Sorted by id because it is stable, opaque and does not
      move when somebody renames a table. */
-  const ordered: DiscoveryProject = {
-    ...project,
-    entities: Object.fromEntries(
-      Object.keys(project.entities)
-        .sort()
-        .map((id) => [id, project.entities[id]]),
-    ),
-  }
+  const ordered = inOrder(project)
 
   const ctx = new Ctx(ordered)
-  const relationships = relationshipsOf(ctx)
+  /* THE BOUND ON THE WORK, APPLIED HERE AND NOWHERE ELSE. `Ctx` is
+     still built over the whole project — every catalogue a scoped run
+     measures against is the same catalogue a full run measures
+     against — and only which relationships are WALKED changes. */
+  const wanted = options.relationships
+  const relationships = relationshipsOf(ctx).filter(
+    (r) => !wanted || wanted.includes(r.key),
+  )
+  /* see `DiscoverOptions.relationships`: a join key belongs to a
+     KIND, so a relationship-scoped run has none to report */
+  const keys = wants('join-key') && !wanted
   const comparisons = { n: 0 }
   const incomparable = { n: 0 }
   const restated = { n: 0 }
@@ -1876,17 +2051,21 @@ export function* discoverSteps(
     ['functional-dependency', dependencyCandidates],
     ['uniqueness', uniquenessCandidates],
   ]
-  /* an upper bound: one step per relationship per shape, plus one
-     per kind that any pairing names. `done` is clamped to it on the
-     last yield, so a caller drawing a progress bar never sees it
-     overshoot. */
+  /* an upper bound: one step per relationship per shape ASKED FOR,
+     plus one per kind that any pairing names when the keys are asked
+     for. `done` is clamped to it on the last yield, so a caller
+     drawing a progress bar never sees it overshoot — and a caller
+     that narrowed the run does not watch a bar stop at a third,
+     which is what counting the skipped shapes produced. */
   const total =
-    relationships.length * perRelationship.length +
-    new Set(
-      Object.values(ordered.entities)
-        .map((e) => e.kind)
-        .filter((k): k is TableKind => k !== undefined),
-    ).size +
+    relationships.length * perRelationship.filter(([shape]) => wants(shape)).length +
+    (keys
+      ? new Set(
+          Object.values(ordered.entities)
+            .map((e) => e.kind)
+            .filter((k): k is TableKind => k !== undefined),
+        ).size
+      : 0) +
     1
 
   let done = 0
@@ -1896,16 +2075,15 @@ export function* discoverSteps(
     /* read once, used by the dependency and uniqueness shapes alike */
     let attrs: ReadAttr[] | null = null
     for (const [shape, run] of perRelationship) {
-      if (wants(shape)) {
-        if (attrs === null) attrs = readAttributes(sc)
-        all.push(...run(sc, attrs))
-      }
+      if (!wants(shape)) continue
+      if (attrs === null) attrs = readAttributes(sc)
+      all.push(...run(sc, attrs))
       done += 1
       yield { step: `${rel.label} · ${shape}`, done, total, ms: Date.now() - mark }
       mark = Date.now()
     }
   }
-  if (wants('join-key')) {
+  if (keys) {
     for (const step of joinKeySteps(ctx, opts)) {
       all.push(...step.candidates)
       done += 1
@@ -1967,16 +2145,7 @@ export function* discoverSteps(
     proposalsTotal: proposals.length,
     notProposed: shownNotProposed,
     notProposedTotal: notProposed.length,
-    relationships: relationships.map((r) => ({
-      key: r.key,
-      label: r.label,
-      joins: r.joins.map((j) => j.name),
-      pairings: r.pairings.length,
-      recommended: r.pairings.filter((p) => p.recommended).length,
-      leftCatalogue: ctx.live(r.left.kind).length,
-      rightCatalogue: ctx.live(r.right.kind).length,
-      heldBack: r.heldBack,
-    })),
+    relationships: relationships.map((r) => readingOf(ctx, r)),
     scanned: {
       tables: ctx.tables,
       rows: ctx.rows,

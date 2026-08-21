@@ -20,16 +20,10 @@
    pure and synchronous by design; what it needs is somewhere to
    stop, and it has thirty-three of them.
 
-   WHY ONE STEP PER CALLBACK RATHER THAN A DEADLINE LOOP. A step is
-   ATOMIC — the generator cannot be interrupted inside one — and the
-   longest is ~165 ms, so a loop that keeps going "while there is
-   time left" would routinely overshoot its own deadline by ten
-   frames. Instead each callback runs a single step and yields the
-   thread back, unless the step it just ran was cheap (the engine
-   reports what each step cost, on `progress.ms`, for exactly this
-   decision), in which case another one is affordable inside the same
-   idle period. The browser gets a chance to paint, scroll and take a
-   keystroke between every unit of work.
+   WHY ONE STEP PER CALLBACK RATHER THAN A DEADLINE LOOP, and the
+   pump itself, are in `driveDiscovery.ts` — shared with `useBinding`,
+   which drives the same engine over one relationship for the rule
+   builder's third door.
 
    IT NEVER RUNS ITSELF TWICE. A run in flight is cancelled before a
    new one starts, and the effect cancels on unmount, so navigating
@@ -46,6 +40,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { discoverSteps } from './discover'
 import type { DiscoveryProgress, DiscoveryReport, DiscoveryProject } from './discover'
+import { drive, type Cancel } from './driveDiscovery'
 
 export type DiscoveryPhase = 'idle' | 'working' | 'done'
 
@@ -59,24 +54,6 @@ export interface DiscoveryState {
   /** how much of the run is done, 0–1, for a determinate bar */
   share: number
   run: () => void
-}
-
-/** A step under this many milliseconds leaves room for another
- *  inside the same idle period. Half a frame at 60Hz, so even two of
- *  them cannot cost a frame. */
-const CHEAP_MS = 8
-
-type Cancel = () => void
-
-function schedule(fn: () => void): Cancel {
-  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
-    /* the timeout is a floor, not a target: an app that never goes
-       idle would otherwise never measure anything */
-    const id = window.requestIdleCallback(fn, { timeout: 300 })
-    return () => window.cancelIdleCallback(id)
-  }
-  const id = setTimeout(fn, 0)
-  return () => clearTimeout(id)
 }
 
 /**
@@ -120,27 +97,22 @@ export function useDiscovery(autoStart = true): DiscoveryState {
     setPhase('working')
     setProgress(null)
 
-    const pump = (): void => {
-      if (!alive.current || gen.current !== it) return
-      for (;;) {
-        const step = it.next()
-        if (step.done) {
-          measured.current = project
-          setReport(step.value)
-          setProgress(null)
-          setPhase('done')
-          gen.current = null
-          cancel.current = null
-          return
-        }
-        setProgress(step.value)
-        /* CHEAP STEPS TRAVEL TOGETHER, expensive ones do not. */
-        if (step.value.ms > CHEAP_MS) break
-      }
-      cancel.current = schedule(pump)
-    }
-
-    cancel.current = schedule(pump)
+    /* THE PUMP IS `driveDiscovery.drive` and it is shared with the
+       rule builder's third door — one set of decisions about when
+       the browser gets the thread back, in one place. */
+    cancel.current = drive(
+      it,
+      () => alive.current && gen.current === it,
+      setProgress,
+      (report) => {
+        measured.current = project
+        setReport(report)
+        setProgress(null)
+        setPhase('done')
+        gen.current = null
+        cancel.current = null
+      },
+    )
   }, [project, stop])
 
   /* THE LIFETIME, ON ITS OWN. `stop` takes no dependencies, so this

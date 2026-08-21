@@ -4,7 +4,7 @@
    THE HOLE THIS CLOSES. Pressing Modules on a freshly seeded
    browser landed on the dashboard's empty state — correct, well
    written, and the wrong screen for a set that ships 25 base
-   tables and 11,116 rows. `modules: 0` was measured on the live
+   tables and 15,691 rows. `modules: 0` was measured on the live
    IndexedDB the morning this was written.
 
    WHAT IS ASSERTED, and why each one is here rather than left to
@@ -157,10 +157,18 @@ describe('the Northside demo seeds its own modules', () => {
       'GFAB Trailers 32',
       'Stacer Trailers 34',
     ])
+    /* THE COUNT A MODULE PRINTS IS LIVE STOCK, NOT ROWS ON THE SHEET, and
+       that is the whole reason these three numbers are not the table sizes:
+       Parts & Accessories holds 2,937 rows and shows 2,238, because 699 sit
+       below the OBSOLETE PARTS divider; Dealer Fit holds 1,777 and shows
+       1,576, because 201 sit below its own; Rigging Kits holds 650 and shows
+       622. Both libraries used to be scoped by what a seeded hull names — 68
+       and 70 — and now carry their whole sheet, which is what a parts counter
+       is for. */
     expect(shapeOf('Parts & Accessories')).toEqual([
-      'Parts & Accessories 68',
+      'Parts & Accessories 2238',
       'Rigging Kits 622',
-      'Dealer Fit Packages 70',
+      'Dealer Fit Packages 1576',
     ])
     expect(shapeOf('Rates & Charges')).toEqual([
       'Labour Rates 18',

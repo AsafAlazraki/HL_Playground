@@ -60,24 +60,73 @@ UNIT_NORM = {
 }
 
 
+# ONE ODD CELL IN A THOUSAND DOES NOT MAKE A PRICE COLUMN PROSE.
+#
+# `profile_column` used to be all-or-nothing: one value that does not parse and
+# the whole column is text. That was right while every table was a curated
+# sample of a few dozen rows, where an outlier is usually the column's real
+# shape. It stops being right at library scale. Parts Maintenance!L is the
+# dealer's Sell column, 2,913 cells deep; three of them are words — "Std" twice,
+# on two Yamaha factory-fit rows whose every other price cell reads 0, and one
+# "POA". All-or-nothing turns the register's price column into prose over three
+# cells, and a parts table whose Sell column is text cannot be quoted from.
+#
+# So: judged on the cells that CAN be judged, and tolerant by a stated margin.
+#   · SENTINELS ARE NOT EVIDENCE. A bare ".", "0", "N/A", "-", "TRAILER NOT
+#     REQUIRED" already becomes EMPTY in `coerce`; a cell this file promises to
+#     drop cannot also be allowed to decide the column's type.
+#   · FEWER THAN ONE IN A HUNDRED, AND ONLY WITH ENOUGH CELLS TO MEAN
+#     ANYTHING. Below NUM_FLOOR judgeable cells nothing is tolerated at all —
+#     a short column with an odd value IS a text column, and a percentage over
+#     twenty cells is not a measurement.
+#   · NOTHING IS GUESSED, AND NOTHING GOES QUIET. A tolerated cell is EMPTY,
+#     exactly as `coerce` already leaves it, and the dropped values come back
+#     in `outliers` so the column's own description names them and counts them.
+#
+# MEASURED OVER THE WHOLE SEED: two columns are affected, both in Parts &
+# Accessories, four cells in total. Nothing else in 53 tables changes type.
+NUM_FLOOR = 200
+NUM_TOL = 0.01
+
+
 def profile_column(values):
     """values: list of raw non-empty, non-quarantined cell values.
-    -> dict(type='number'|'text', unit=str|None, scale={unit:factor})"""
+    -> dict(type='number'|'text', unit=str|None, scale={unit:factor},
+            outliers={value: count}, judged=int) — the last two only when a
+    number column is leaving cells empty that it could not carry."""
     if not values:
         return None
-    parsed = [parse_num(v) for v in values]
-    if any(p is None for p in parsed):
+    live = [v for v in values if not is_sentinel(v)]
+    if not live:
+        # Every cell is a sentinel. Text, so `make_col` drops the column
+        # outright — which is what it did before, and still the right answer.
         return {"type": "text", "unit": None}
+    parsed = [parse_num(v) for v in live]
+    bad = [v for v, p in zip(live, parsed) if p is None]
+    if bad:
+        if len(live) < NUM_FLOOR or len(bad) / len(live) >= NUM_TOL:
+            return {"type": "text", "unit": None}
+        parsed = [p for p in parsed if p is not None]
     units = {UNIT_NORM.get(p[1], p[1]) for p in parsed if p[1]}
     if len(units) == 0:
-        return {"type": "number", "unit": None}
-    if len(units) == 1:
-        return {"type": "number", "unit": next(iter(units))}
-    if units == {"cm", "m"}:
-        return {"type": "number", "unit": "cm", "scale": {"m": 100.0, "cm": 1.0}}
-    if units == {"kg", "t"}:
-        return {"type": "number", "unit": "kg", "scale": {"t": 1000.0, "kg": 1.0}}
-    return {"type": "text", "unit": None}
+        out = {"type": "number", "unit": None}
+    elif len(units) == 1:
+        out = {"type": "number", "unit": next(iter(units))}
+    elif units == {"cm", "m"}:
+        out = {"type": "number", "unit": "cm", "scale": {"m": 100.0, "cm": 1.0}}
+    elif units == {"kg", "t"}:
+        out = {"type": "number", "unit": "kg", "scale": {"t": 1000.0, "kg": 1.0}}
+    else:
+        # two units this file cannot reconcile — the column is what it is
+        return {"type": "text", "unit": None}
+    if bad:
+        counts = {}
+        for v in bad:
+            k = str(v).strip()
+            counts[k] = counts.get(k, 0) + 1
+        out["outliers"] = counts
+        out["judged"] = len(live)
+    return out
 
 
 def coerce(v, prof):

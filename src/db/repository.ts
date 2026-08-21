@@ -47,9 +47,11 @@ export const defaultMeta = (): ProjectMeta => ({
       10,698             10,783 (+7 clears)           10,539 ms
 
    Ten and a half seconds to record ONE typed letter, at a scale the
-   file is heading for. IT ARRIVED: the seed is 11,116 rows now
-   (SEED_AT_FULL_SCALE.md §2.2), so the second row of that table is no
-   longer the projection — it is the sheet a dealer opens. Worse than the length is the arithmetic: the
+   file is heading for. IT ARRIVED, and then it kept going: the seed
+   is 15,691 rows now (SEED_AT_FULL_SCALE.md §8.2, since both
+   libraries carry their whole sheet), so the second row of that table
+   is not the projection any more — it is below the sheet a dealer
+   opens. Worse than the length is the arithmetic: the
    flush is debounced at 400ms, so a person typing at a normal pace
    starts a new ten-second write every six hundred milliseconds, and
    the queue never drains — eight keystrokes issued eight full-project

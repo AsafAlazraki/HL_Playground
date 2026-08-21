@@ -1831,7 +1831,12 @@
   outline-offset: -1px;
 }
 
-/* the adjudication's reference — an identifier, so mono */
+/* the adjudication's reference — an identifier, so mono.
+   `--ink-soft` AND NOT `--ink-faint`: the ink tiers are calibrated
+   against `--surface-1`, and this panel is `--paper-overlay` =
+   `--surface-2`, where `--ink-faint` measures 4.32:1 in dark and
+   misses the bar. Every colour in this panel follows the same rule —
+   see the `cn-rel-*` block's header for the measurement. */
 .cn-offer-ref {
   grid-row: 1 / span 2;
   align-self: start;
@@ -1840,7 +1845,7 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 /* ONE OF THE SIXTEEN CAN BE ACTED ON, AND THE MARGIN SAYS WHICH. The
    accent goes on the reference rather than on the row, so a list of
@@ -1862,7 +1867,7 @@
   grid-column: 2;
   font-size: 11.5px;
   line-height: 1.35;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 /* WHY IT CANNOT BE THE START OF A SENTENCE, IN THE PLACE IT IS
@@ -1886,7 +1891,7 @@
   margin-top: 6px;
 }
 .cn-offer-where {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .cn-offer-gone {
@@ -1905,7 +1910,7 @@
   overflow-wrap: anywhere;
 }
 .cn-offer-key-on {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 /* ============================================================
@@ -2232,4 +2237,328 @@
 
 .cn-mine .cn-new {
   margin-top: var(--sp-4);
+}
+
+/* ============================================================
+   THE THIRD DOOR (cn-rel-*) — name two things, then let the file
+   offer the columns that could bind them.
+
+   IT IS THE SAME PANEL AS THE CATALOGUE ABOVE: 340px wide,
+   `--paper-overlay`, chrome type rather than page type, because this
+   is furniture hanging off a control on the action bar and not a
+   block on the page.
+
+   ── ONE COLOUR RULE THAT IS DIFFERENT IN HERE, AND WHY ──────────
+
+   `--ink-faint` IS NOT USED ANYWHERE IN THIS BLOCK. The four ink
+   tiers are calibrated against `--surface-1`, where `--ink-faint`
+   measures 4.7:1 and clears the bar. This panel is drawn on
+   `--paper-overlay` = `--surface-2`, which in dark is one step
+   lighter (#1a1d22 against #131519), and the same ink measures
+   4.32:1 there — under the bar, on a surface where every word is a
+   figure somebody is deciding on. So metadata in here steps up to
+   `--ink-soft`, which measures 6.8:1 on the same ground.
+
+   That is also why the shared provenance line is lifted below rather
+   than copied: `.cn-wb-src` is one thing (mono, 11px, wrapping, so a
+   cell address can be looked up) and three of them would guarantee
+   two eventually differ — but its page colour does not survive this
+   surface, so this scope restates the colour and nothing else.
+   ============================================================ */
+
+/* the one uppercase style: a group caption, 11px / 0.06em */
+.cn-rel-cap {
+  margin: var(--sp-2) 0 var(--sp-1);
+  padding: 0 8px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.cn-rel-cap:first-child {
+  margin-top: 0;
+}
+
+/* -- the two sides, as the price file writes them ------------ */
+
+.cn-rel-sides {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink-soft);
+}
+.cn-rel-side {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.cn-rel-pairs,
+.cn-rel-cols {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+}
+.cn-rel-pair,
+.cn-rel-col {
+  list-style: none;
+}
+
+.cn-rel-pair-hit {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+/* a list row DARKENS instead of scaling, so its neighbours do not
+   look like they moved */
+.cn-rel-pair-hit:hover,
+.cn-rel-col-hit:hover {
+  background: var(--paper-sunken);
+}
+.cn-rel-pair-hit:active,
+.cn-rel-col-hit.is-live:active {
+  background: var(--blue-wash);
+}
+.cn-rel-pair-hit:focus-visible,
+.cn-rel-col-hit:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+
+/* the counts under a pair — every figure is mono and tabular */
+.cn-rel-pair-at {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* -- where you are, once a pair is picked -------------------- */
+
+.cn-rel-here {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: 0 8px var(--sp-2);
+  border-bottom: 1px solid var(--hairline);
+}
+.cn-rel-back {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.cn-rel-back:hover {
+  color: var(--ink);
+}
+.cn-rel-back:active {
+  color: var(--blue);
+}
+.cn-rel-back:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* -- saying it is working, while it works -------------------- */
+
+.cn-rel-work {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--sp-2) 8px;
+}
+.cn-rel-work-say {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.cn-rel-bar {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--paper-sunken);
+  overflow: hidden;
+}
+.cn-rel-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--blue);
+  transform-origin: left center;
+  transition: transform var(--t-med) var(--ease-settle);
+}
+/* movement goes, the state stays — never silence */
+@media (prefers-reduced-motion: reduce) {
+  .cn-rel-bar-fill {
+    transition: none;
+  }
+}
+.cn-rel-work-step {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+/* -- the bands: what a column would DO ----------------------- */
+
+.cn-rel-band {
+  margin-top: var(--sp-3);
+}
+.cn-rel-band-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0 8px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+}
+.cn-rel-band-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+.cn-rel-band-say {
+  margin: 2px 0 6px;
+  padding: 0 8px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* -- one column, with what it would keep and reject ---------- */
+
+.cn-rel-col-hit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--sp-2);
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.cn-rel-col-name {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+/* THE FIGURE THAT DECIDES, and it is the reason the row exists:
+   how much of the far catalogue is still standing. Mono, tabular,
+   so eighteen rows of it can be compared down the column. */
+.cn-rel-col-fig {
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.cn-rel-col-against {
+  grid-column: 1 / -1;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.cn-rel-col-holds {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+/* THE CITATION, ON THE PANEL'S GROUND. See the block header: the
+   shared rule's `--ink-faint` measures 4.32:1 on `--surface-2`, so
+   this scope lifts the colour and changes nothing else. */
+.cn-rel-col-hit .cn-wb-src {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  color: var(--ink-soft);
+}
+/* WHY THE SENTENCE CANNOT BE POINTED AT IT, IN THE PLACE IT IS
+   REFUSED. The row keeps its place in the tab order (`aria-disabled`,
+   not `disabled`) precisely so this can be reached and read. */
+.cn-rel-col-why {
+  margin: 2px 0 var(--sp-2);
+  padding: var(--sp-2) 8px var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--hairline-strong);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* -- nothing to offer, and why, counted ---------------------- */
+
+.cn-rel-void {
+  padding: var(--sp-2) 8px;
+}
+.cn-rel-void-say {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.cn-rel-void-count {
+  margin: 6px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.cn-rel-void-count b {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--ink);
 }

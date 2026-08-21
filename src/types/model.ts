@@ -707,6 +707,32 @@ export interface ConstraintDef {
   /** optional longer explanation for the why panel */
   why?: string
 
+  /** WHAT THIS RULE IS ALLOWED TO DO WHEN IT DISAGREES WITH A ROW.
+   *
+   *  'block' — the value leaves the picker. This is what every rule did
+   *            before this field existed, and it stays the default so
+   *            nothing already written changes meaning.
+   *  'warn'  — the value STAYS and is annotated with `because`. Nothing
+   *            is pruned.
+   *
+   *  IT EXISTS BECAUSE A MEASURED PATTERN IS NOT A STATED RULE. The
+   *  discovery engine reads a price file and proposes the rules it
+   *  already follows; every one of those is OBSERVED — read off values,
+   *  not off a formula — and an observed pattern can be a coincidence.
+   *  Pruning on a coincidence deletes real business, so `workbookRules`
+   *  has always refused to build an observed seed with a kind that
+   *  prunes. That refusal was enforced by keeping discovered patterns
+   *  out of this store altogether, in a register of their own.
+   *
+   *  One field lets them come home. A discovered rule is a rule — it can
+   *  be listed, edited, turned off and reasoned about like any other —
+   *  and it carries, in the type, the one thing that must never be true
+   *  of it: that it may quietly remove something a dealer sells.
+   *
+   *  ANYTHING THAT PRUNES MUST READ THIS. Absent means 'block', for the
+   *  rules written before it. */
+  severity?: 'block' | 'warn'
+
   /** Turning a rule OFF beats deleting it: the experiment is reversible
    *  and the authoring survives. */
   enabled: boolean

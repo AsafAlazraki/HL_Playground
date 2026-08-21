@@ -18,12 +18,28 @@
    unknown field ids, constraints pointing at deleted columns, cyclic
    implications and empty inputs all return a valid ConfigureState.
 
-     solve(input)                       -> ConfigureState
+     solve(input)                       -> SolveState
      explain(state, fieldId, value)     -> BlockedValue | undefined
+     warningsFor(state, fieldId, value) -> ValueWarning[]
      describeChange(before, after, …)   -> the note after a choice
 
    ConfigureState is defined in '@/types/model' and is returned exactly
    as declared there: { domains, blocked, settled, fired, problems }.
+
+   TWO CHANNELS, AND THE DIFFERENCE IS THE WHOLE POINT. `solve` returns
+   `SolveState`, which IS a ConfigureState — those five keys, unchanged,
+   meaning exactly what they meant — plus two more:
+
+     warned    fieldId -> value -> what disagrees with a value that is
+               STILL IN `domains`. Never overlaps `blocked`.
+     warnedBy  the constraints that raised at least one of them.
+
+   They exist because `ConstraintDef.severity` may be 'warn', and a
+   warning must not be able to empty a picker. `blocked` means
+   UNAVAILABLE to everything downstream; a warning that borrowed that
+   word would delete the very business it was flagging. Absent
+   severity is 'block' and behaves EXACTLY as it always has —
+   `warn.test.ts` proves it by solving the same model twice.
 
    READING `domains`: every field given to solve() has an entry.
    A Choice or Yes/No column lists the values still available. A
@@ -37,8 +53,8 @@
    this solve — that is what an "ACTIVE NOW" tag should read.
    ============================================================ */
 
-export { solve, explain, MAX_ROUNDS } from './solve'
-export type { ConfigureInput } from './solve'
+export { solve, explain, warningsFor, MAX_ROUNDS } from './solve'
+export type { ConfigureInput, SolveState, ValueWarning } from './solve'
 
 export { describeChange } from './describe'
 

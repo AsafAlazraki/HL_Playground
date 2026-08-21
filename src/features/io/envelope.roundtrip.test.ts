@@ -136,7 +136,7 @@ describe('the real seed survives a round trip through its own file', () => {
     if (!result.ok) return
     expect(result.data.entities).toHaveLength(before.tables)
     expect(rowsIn(result.data.rows)).toBe(before.rows)
-    /* 11,116 rows across 53 tables is the seed as measured; a trip that
+    /* 15,691 rows across 53 tables is the seed as measured; a trip that
        silently halved it would still pass a "more than zero" check */
     expect(before.rows).toBeGreaterThan(3000)
   })
@@ -177,9 +177,13 @@ describe('the real seed survives a round trip through its own file', () => {
     const carrying = result.data.entities.filter((e) =>
       e.fields.some((f) => f.id === '__discontinued'),
     )
-    /* OBSOLETE Trailers, Parts & Accessories and Rigging Kits — the
-       three that made the seed un-reimportable */
-    expect(carrying).toHaveLength(3)
+    /* OBSOLETE Trailers, Parts & Accessories, Rigging Kits — the three
+       that made the seed un-reimportable — and now Dealer Fit Packages,
+       which joined them the moment that table stopped being scoped to the
+       70 packages a hull names and started carrying its whole sheet. Its
+       own divider was there all along, at Dealer Fit Module!C2032; nothing
+       had ever read far enough down to meet it. */
+    expect(carrying).toHaveLength(4)
   })
 
   it('keeps a retired table retired, instead of resurrecting it as live stock', () => {

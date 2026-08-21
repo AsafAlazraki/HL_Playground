@@ -58,23 +58,22 @@ consumed at `:238`) so the owner's own worked example is always present.
 
 ### 1.2 A hard slice — the only literal `[:N]` in the generator
 
-`gen_all.py:646`
-
-```python
-rest = [r for r in rows if r not in forced][:5]
-```
-
-Five non-reachable parts per category, and only for the six categories named in
-`P_CATEGORIES` (`gen_all.py:620–627`) out of **217** category banners in the
-sheet. Everything else in `parts` is there by reachability (`gen_all.py:655`).
+**GONE — see §8.** This described five non-reachable parts per category, for six
+of the sheet's 217 category banners. Both the `[:5]` and `P_CATEGORIES` were
+removed when `parts` began carrying its whole sheet; there is now no literal
+`[:N]` anywhere in the generator.
 
 ### 1.3 Reachability, which is a cap with no number
 
-`dealer_fit` (`gen_all.py:748`), the obsolete half of `rig_kits`
-(`gen_all.py:945`), `trl_obsolete` and both package tables take only rows a
-*seeded* hull names. They are therefore capped **transitively** by the boat
-budgets: raise the boat budgets and these grow on their own. This is the
-standing policy of `FITMENT_RULES.md` §5.7 and it is not a defect.
+The obsolete half of `rig_kits`, `trl_obsolete` and both factory-package tables
+take only rows a *seeded* hull names. They are therefore capped **transitively**
+by the boat budgets: raise the boat budgets and these grow on their own. This is
+the standing policy of `FITMENT_RULES.md` §5.7 and it is not a defect.
+
+`dealer_fit` **was** on this list and is not any more — see §8. §5.7 is a rule
+about FAN-OUT, and it stops at a library: the three tables left here are each
+reached through a hull and have no counter of their own, which is exactly what a
+parts register and a dealer-fit register do have.
 
 ### 1.4 The probe caps — `max_row` in `tools/seed/probes/`
 
@@ -450,13 +449,18 @@ import already delivers, because the demo is all-or-nothing: a sheet with the
 boats but not the joins is not a usable sheet. Revisit only if a surface ever
 needs one table without the rest.
 
-**Every catalogue imported whole (16,406 rows, 3.99 MB, 518 KB gzip).** This
-would abandon `FITMENT_RULES.md` §5.7's reachability policy — adjudicated, and
-not this document's to overturn. It buys 2,879 parts and 1,707 dealer-fit
-packages that no seeded hull names. If a salesperson needs to sell a part off
-the shelf that no boat's P/D band lists, that is a real requirement and it
-should be raised as one, with the owner, rather than smuggled in as a size
-decision.
+**Every catalogue imported whole (16,406 rows, 3.99 MB, 518 KB gzip).**
+**ACCEPTED LATER — see §8.** The reasoning below stands as written: the
+requirement had to be raised with the owner rather than smuggled in as a size
+decision. It was, and the owner ruled for it. The estimate held almost exactly —
+15,691 rows, 3.97 MB, 450 KB gzip.
+
+> This would abandon `FITMENT_RULES.md` §5.7's reachability policy —
+> adjudicated, and not this document's to overturn. It buys 2,879 parts and
+> 1,707 dealer-fit packages that no seeded hull names. If a salesperson needs to
+> sell a part off the shelf that no boat's P/D band lists, that is a real
+> requirement and it should be raised as one, with the owner, rather than
+> smuggled in as a size decision.
 
 **Note on IndexedDB:** the data lands in Dexie either way, and the store is the
 same size in all four variants. The shape question is only about how the bytes
@@ -591,9 +595,10 @@ something that is no longer true, the generator's f-string is the bug.
 2. **The 25 unresolvable motor names (§2.3).** Cap Camarat and Merry Fisher twin
    bundles, mostly Mercury, named by live boat rows and absent from the Motor
    Library. A hole in the workbook. Where should those motors be recorded?
-3. **Parts beyond reachability (§4.3).** Does a salesperson need to sell a part
-   no boat's P/D band names? If yes, `parts` should be imported whole and the
-   size decision follows the requirement rather than leading it.
+3. **Parts beyond reachability (§4.3).** ~~Does a salesperson need to sell a
+   part no boat's P/D band names?~~ **ANSWERED — yes. See §8.** Both libraries
+   are imported whole now, and the size decision followed the requirement
+   instead of leading it.
 
 ---
 
@@ -806,6 +811,143 @@ evidence**: the row-band cap of §1.5 is now stated on the motor tables' own
 selection to `by="supplier"` would change which rows the fitment joins resolve
 against and is a research question, not a knob.
 
-Question 3 (parts beyond reachability) is **unchanged**, and the `parts` table's
-own `desc` now says how many are left out (2,879) and why, and points at this
-document rather than implying the number is a sampling accident.
+Question 3 (parts beyond reachability) was **answered next, and the answer was
+yes** — §8. The `desc` that used to say how many parts were left out now says
+that none are.
+
+---
+
+## 8. A LIBRARY IS NOT FAN-OUT. Both registers now carry their whole sheet
+
+§4.3 rejected "every catalogue imported whole" and was right to: the question it
+raised — *does a salesperson need to sell a part no boat's P/D band names?* —
+belonged to the owner and not to a size estimate. It was raised, and the owner
+ruled for it. §6 question 3 is answered.
+
+### 8.1 The argument, stated once
+
+`FITMENT_RULES.md` §5.7 says *import what the catalogue actually names, not the
+whole library behind it*. That is a rule about FAN-OUT — which rows a boat row's
+P/D and dealer-fit bands point at — and it was the right rule while every table
+was a curated sample. It is the wrong rule for a **register**. Nobody reaches a
+bilge pump through a hull; they look it up by name, because a customer is at the
+desk asking for one. A parts manager who opened their own register and found 69
+of their 2,948 rows would conclude the app had lost their data, and they would
+be right to. The same argument took Highfield from 40 hulls to 588; this was the
+last table where it had not been made.
+
+The three bands still on §1.3's list are genuinely fan-out and keep their `0`: a
+Haines factory package, an obsolete trailer and an obsolete rigging kit are each
+reached through the hull that names them.
+
+### 8.2 What landed
+
+| table | before | after | of the sheet's |
+|---|---:|---:|---|
+| `parts` | 69 | **2,937** | 2,948 rows, less 11 reprinted header rows (§8.3) |
+| `dealer_fit` | 70 | **1,777** | 1,777 — all of it |
+| **whole seed** | 11,116 | **15,691** | 53 tables, unchanged |
+
+Nothing is excluded. The rows below both OBSOLETE dividers are carried and
+flagged: 699 in `parts` (below `Parts Maintenance!C2918`) and 201 in
+`dealer_fit` (below `Dealer Fit Module!C2032`). `dealer_fit` had never carried a
+`__discontinued` column, because nothing had ever selected a row far enough down
+that sheet to meet its divider. It has one now, and the export round-trip guard
+counts four tables carrying that field where it counted three.
+
+### 8.3 Three things the whole sheet uncovered that 69 rows were hiding
+
+1. **`Parts Maintenance` reprints its own header eleven times.** Rows 2373,
+   2411, 2447, 2488, 2500, 2680, 2695, 2756, 2887, 2900 and 2904 put a category
+   name in `C` and then re-type the master row-1 labels across the row — `D`
+   "Supplier", `E` "Code", `I` "CTD", `J` "MU", `L` "Sell". The banner rule
+   ("`C` filled, `E` empty") read them as PARTS. Wrong twice: eleven header rows
+   land in the register as products, and the eleven categories they announce
+   never open, so their contents file under whatever banner came before. A row
+   is now treated as a reprinted header when `D` **and** `E` both hold the
+   master labels verbatim — both, because either alone could be a real value.
+   The sheet names 187 categories, not 179.
+
+2. **One odd cell in a thousand was turning a price column into prose.**
+   `profile_column` was all-or-nothing: one value that does not parse and the
+   whole column is text. At 69 rows that is right. At 2,937 it cost the register
+   its `Sell` column — and a parts table whose `Sell` is text cannot be quoted
+   from, so `priceLevelsFor` quietly stopped returning the supply rung. The
+   profiler now judges only the cells it can judge (sentinels already become
+   EMPTY in `coerce`, and a cell the seed promises to drop cannot also decide
+   the column's type) and tolerates fewer than one non-numeric cell in a
+   hundred, with a floor of 200 judgeable cells so a percentage is never taken
+   over twenty. Tolerated cells are EMPTY, exactly as `coerce` already left
+   them, and **the column's own `desc` names and counts them** —
+   `Parts Maintenance!L` reads *"3 of 2913 cells here are not a number
+   ("Std"×2, "POA")"*. Measured across all 53 tables: two columns affected, four
+   cells in total.
+
+3. **Two dealer-fit packages a live hull names do not exist in the sheet.**
+   "Engine Flush Kit t/s Merry Fisher Well (Twin Motor Installations)" and
+   "Lewmar AA150 Chain Counter in Dash w 10mtr Sensor Cable (Jeanneau
+   Installations)". The old selector intersected the hull's names with the sheet
+   and so dropped them in silence. A whole-sheet import cannot drop anything,
+   which leaves the shortfall visible; the table's `desc` names both. That is a
+   hole in the workbook and the dealer's to fix.
+
+Two smaller corrections came with it. A bare `.` in a category banner is a
+SPACER and not a category — the seed reads a bare `.` as EMPTY in every other
+cell and now does so here, so the 27 parts and 74 dealer-fit rows the sheet
+leaves unbannered land in the register's designed `(unassigned)` drawer instead
+of one named ".". And `boat_haines`'s `Topsides` column went from text to
+number: its only non-numeric values were `N/A` sentinels.
+
+### 8.4 The emitter had to change, and it is not cosmetic
+
+`tsc` fails on the seed at this size with **`TS2590: Expression produces a union
+type that is too complex to represent`**, on the `parts` and `dealer_fit` row
+arrays. An array of a few thousand object literals with different key sets makes
+the checker build a union of a few thousand distinct shapes, and it gives up.
+
+The obvious fix does not work, and that was measured rather than assumed:
+annotating the array `: SeedRow[]` still fails, because the checker infers the
+literal's own type before it checks assignability. What removes the union is
+handing the records to a **rest parameter** — every argument then has the same
+declared type and there is no union to reduce. Rows are emitted in blocks of 400
+through `rs(...)` and spread into a `const` named for its table, so no single
+call approaches an engine's argument limit however large a register grows. The
+runtime cost is one call per block and nothing per row.
+
+### 8.5 Measured
+
+| | before | after |
+|---|---:|---:|
+| `src/demos/northside.ts` | 2,418,102 B | **3,969,132 B** |
+| seed chunk `northside-*.js` | 1,982.78 kB / 243.17 kB gzip | **3,294.33 kB / 460.60 kB gzip** |
+| entry chunk `index-*.js` | 1,599.36 kB | 1,618.77 kB (unrelated work; the seed is still not in it) |
+| `npm run build` | 4.37 s wall, 1.25 s vite | **6.71 s wall, 2.04 s vite** |
+| `npm test` | 978 tests, 67 files | **1,068 tests, 72 files** |
+
+Measured in the browser against `vite preview` of the production build:
+
+- **Loading the demo:** 440 ms from pressing *Load your Master Price File* to
+  the sheet drawn (1,292 ms on the first, cold run of the chunk). The chunk is
+  fetched in 88 ms, 455,617 B over the wire, and it is still a **separate
+  chunk** — a first-time visitor does not download it.
+- **The 2,937-row parts register opens in 0.2 ms of synchronous work** and holds
+  **24 rows in the DOM**. A 200-step sweep of the full 111,451 px scroll span
+  costs a **median 0.5 ms** per step, p95 0.7 ms, max 0.9 ms — about 3% of a
+  16.7 ms frame. The 588-row Highfield register measures 3.9 ms median on the
+  same instrument, so the register that grew five-fold is the *cheaper* of the
+  two: scroll cost is per-viewport and per-column, never per-row.
+- **The 1,777-row dealer-fit register:** 0.4 ms to open, median 1.8 ms per
+  scroll step, 24 DOM rows.
+- **The discovery engine:** 1,347 ms at 11,116 rows to **1,680 ms at 15,691** —
+  +25% for +41% rows, against a guard ceiling of 10,000 ms.
+- **Zero console messages**, errors or warnings, across onboarding, Home, the
+  Modules index, the Data model canvas and both registers.
+- **All five modules still stand**, and the counts stayed row-aware: Parts &
+  Accessories reads **"4436 items · 928 not sold"** (2,238 + 622 + 1,576 live;
+  699 + 28 + 201 flagged).
+
+Frames per second could **not** be measured: the browser pane never composited
+during this session, so `requestAnimationFrame` did not tick. The figures above
+are synchronous work per scroll step, which is what a frame budget is spent on,
+and they are reported as that rather than converted into an fps number nobody
+observed.

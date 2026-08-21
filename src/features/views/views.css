@@ -1208,3 +1208,64 @@
   letter-spacing: 0.01em;
   text-transform: none;
 }
+
+/* ============================================================
+   A WARNING ON A ROW THAT IS STILL HERE
+
+   `severity: 'warn'` removes nothing, so this annotates rather than
+   refuses — and the drawing has to say that before the words are
+   read. Rule 10 puts it WHERE THE VALUE IS: under the row it is
+   about, inside the row's own box, never in a banner at the top of
+   the block and never in a dialog.
+
+   IT MUST NOT LOOK LIKE AN ERROR. Every red thing in this app means
+   something is wrong or gone — `.qt-warn` is a red-washed box,
+   `--red` is refusal. A warning is softer than a refusal, so:
+   no wash behind the row, no border across it, no red. One small
+   mark in `--warning`, and the sentence in ordinary secondary ink.
+
+   AND IT MUST STILL BE READ, which is why the sentence is NOT in the
+   warning hue. `--warning` over `--warning-wash` composites to
+   4.28:1 and FAILS — the same trap `--ink-faint` over a tint falls
+   into — so there is no wash here at all and the hue carries the
+   small mark only. Every pair MEASURED IN THE BROWSER, compositing
+   the full ancestor chain, on the two grounds this line can ever sit
+   on (a block is `--paper-high`; a NESTED block is `--paper`):
+
+     words   --ink-soft   7.65 / 7.40 light · 7.46 / 8.04 dark
+     mark    --warning    4.87 / 4.71 light · 9.39 / 10.12 dark
+
+   The row's hover and its recommended tint are painted on
+   `.vw-row-line`, which is this list's SIBLING — neither ever sits
+   behind these words, and `--warning` would read 4.35:1 if one did.
+   That is why the note is outside the line and not inside it.
+
+   12px, above the 11px floor. Sentence case: a warning is a
+   sentence, and uppercase is a label style.
+   ============================================================ */
+
+.vw-warns {
+  list-style: none;
+  margin: 0 var(--sp-4) 6px calc(var(--sp-6) + var(--sp-2));
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.vw-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* the mark sits on the sentence's first line rather than centred on a
+   note that has wrapped to two */
+.vw-warn-mark {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--warning);
+}

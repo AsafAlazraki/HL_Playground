@@ -43,10 +43,21 @@ describe('find anything, on the real file — a pair is never a place', () => {
   it('answers the query that measured the defect with the things, not the pairs', () => {
     /* MEASURED BEFORE: two real Stacer boats, then STACER × P/D PARTS
        (8), STACER × YAMAHA — MOTOR FITMENT (8) and STACER × STACER
-       TRAILERS (4) — 2 answers under 20 rows of plumbing. */
+       TRAILERS (4) — 2 answers under 20 rows of plumbing.
+
+       THE DEFECT WAS PLUMBING IN THE ANSWERS, never the number of
+       answers. This used to read `toEqual(['base'])`, which was true only
+       because one register happened to hold the word; Dealer Fit Packages
+       now carries its whole sheet and holds fourteen Crossfire pre-delivery
+       packages, which is a dealer's own catalogue answering a dealer's own
+       question. So the property is stated as the property: every group is a
+       PLACE, and the total is those places and nothing else. */
     const result = search(index, 'crossfire')
-    expect(result.groups.map((g) => g.table.role ?? 'base')).toEqual(['base'])
-    expect(result.rowTotal).toBe(result.groups[0].total)
+    expect(result.groups.length).toBeGreaterThan(0)
+    expect(result.groups.map((g) => g.table.role ?? 'base')).toEqual(
+      result.groups.map(() => 'base'),
+    )
+    expect(result.rowTotal).toBe(result.groups.reduce((n, g) => n + g.total, 0))
   })
 
   it('never lands a row answer on a pair list, for any query', () => {

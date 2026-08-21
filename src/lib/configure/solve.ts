@@ -27,6 +27,36 @@
       deleted columns, cyclic implications, empty inputs — all return a
       valid state. Propagation is capped and reports a warning rather
       than spinning.
+
+   ── AND A FIFTH, ADDED WHEN `severity` ARRIVED ────────────────
+
+   5. A WARNING NEVER TAKES ANYTHING AWAY. `ConstraintDef.severity`
+      is 'block' by default and every word above describes 'block'.
+      A rule written 'warn' runs through exactly the same machinery —
+      the same evaluation, the same both-ways reasoning, the same
+      `keep` predicate — and then, at the single moment of removal,
+      ANNOTATES instead of removing.
+
+      It gets its own channel, `warned`, because `blocked` does not
+      mean "flagged": everything downstream reads `blocked` as
+      UNAVAILABLE, and a warning that borrowed it would empty a
+      picker exactly as hard as a rule that meant to. So:
+
+        blocked   the value is gone, and here is why
+        warned    the value is STILL THERE, and here is what
+                  disagrees with it
+
+      A warned rule therefore cannot empty a domain, cannot raise a
+      `problem`, cannot appear in `fired`, and cannot change the
+      fixpoint — `prune` returns false when it warns, so a warning
+      can never drive another pass. It appears in `warnedBy`.
+
+      WHY IT MATTERS. The discovery engine reads a price file and
+      proposes the rules the file already follows. Every one of those
+      is OBSERVED — read off values, never off a formula — and an
+      observed pattern can be a coincidence. Pruning on a coincidence
+      deletes real business. 'warn' is how such a rule may be stored,
+      listed and reasoned about without ever being given that power.
    ============================================================ */
 
 import {
@@ -60,6 +90,36 @@ export interface ConfigureInput {
   chosen: Record<string, CellValue>
 }
 
+/** WHAT DISAGREES WITH A VALUE THAT IS STILL AVAILABLE.
+ *
+ *  Deliberately the same two fields as `BlockedValue`, so a surface
+ *  drawing "why" reads one shape whichever channel it came from. The
+ *  difference is not in the record, it is in which list it is on. */
+export interface ValueWarning {
+  constraintId: string
+  /** the constraint's `because` clause, ready to print after "because" */
+  because: string
+}
+
+/**
+ * `ConfigureState` plus the channel `blocked` may never carry.
+ *
+ * It EXTENDS rather than replaces: every existing reader keeps the
+ * exact five keys `@/types/model` declares, and `solve` still
+ * satisfies `ConfigureState` everywhere it is already assigned to
+ * one. A caller that wants warnings asks for this type.
+ */
+export interface SolveState extends ConfigureState {
+  /** fieldId -> valueKey -> what disagrees with it, in fire order.
+   *  A key here is a value that is STILL in `domains`; it never
+   *  overlaps `blocked` for the same field and value. */
+  warned: Record<string, Record<string, ValueWarning[]>>
+  /** constraints that raised at least one warning during this solve —
+   *  the warning half of `fired`, and disjoint from it for any one
+   *  constraint, because a rule is one severity or the other. */
+  warnedBy: string[]
+}
+
 /** Safety cap on propagation passes. Every pass either removes at
  *  least one value or ends the loop, so a real model converges in two
  *  or three; the cap exists so no input can ever spin. */
@@ -69,11 +129,19 @@ interface Ctx {
   doms: Domains
   chosen: Record<string, CellValue>
   blocked: Record<string, Record<string, BlockedValue>>
+  warned: Record<string, Record<string, ValueWarning[]>>
   fired: string[]
   firedSet: Set<string>
+  warnedBy: string[]
+  warnedBySet: Set<string>
   problems: Array<{ constraintId: string; message: string }>
   problemKeys: Set<string>
 }
+
+/** ABSENT MEANS 'block'. Said once, here, so no other line in this
+ *  file has to remember it: everything written before `severity`
+ *  existed keeps its meaning exactly. */
+const isWarn = (c: ConstraintDef): boolean => c?.severity === 'warn'
 
 /* ---------------------------------------------------------- */
 /* Reporting                                                  */
@@ -86,7 +154,13 @@ const becauseTail = (c: ConstraintDef): string => {
   return b ? `, because ${b}` : ''
 }
 
-function addProblem(ctx: Ctx, constraintId: string, message: string): void {
+/** A WARNING IS NEVER A PROBLEM. `problems` means "the current
+ *  choices contradict a rule" and a surface treats it as a dead end;
+ *  a rule that removes nothing cannot make a dead end, so it takes
+ *  the constraint itself rather than an id and declines to speak. */
+function addProblem(ctx: Ctx, c: ConstraintDef | undefined, message: string): void {
+  if (c && isWarn(c)) return
+  const constraintId = c?.id ?? ''
   const key = `${constraintId}|${message}`
   if (ctx.problemKeys.has(key)) return
   ctx.problemKeys.add(key)
@@ -97,6 +171,12 @@ function markFired(ctx: Ctx, id: string): void {
   if (ctx.firedSet.has(id)) return
   ctx.firedSet.add(id)
   ctx.fired.push(id)
+}
+
+function markWarned(ctx: Ctx, id: string): void {
+  if (ctx.warnedBySet.has(id)) return
+  ctx.warnedBySet.add(id)
+  ctx.warnedBy.push(id)
 }
 
 const fieldName = (d: FieldDomain | undefined): string => {
@@ -114,6 +194,12 @@ const fieldName = (d: FieldDomain | undefined): string => {
  * Returns true when something actually changed.
  *
  * A predicate that throws keeps the value: rules fail open.
+ *
+ * AND THE ONE FORK: a constraint whose `severity` is 'warn' works out
+ * exactly the same rejection set and then writes it to `warned`
+ * instead, leaving the domain untouched. It returns FALSE — nothing
+ * changed, so a warning can neither drive another propagation pass
+ * nor be the `lastMover` a runaway is blamed on.
  */
 function prune(
   ctx: Ctx,
@@ -141,6 +227,25 @@ function prune(
   if (removed.length === 0) return false
 
   const because = becauseOf(c)
+
+  if (isWarn(c)) {
+    let notes = Object.prototype.hasOwnProperty.call(ctx.warned, fieldId)
+      ? ctx.warned[fieldId]
+      : undefined
+    if (!notes) {
+      notes = {}
+      setKey(ctx.warned, fieldId, notes)
+    }
+    for (const v of removed) {
+      const k = valueKey(v)
+      const list = Object.prototype.hasOwnProperty.call(notes, k) ? notes[k] : undefined
+      if (!list) setKey(notes, k, [{ constraintId: c.id, because }])
+      else if (!list.some((w) => w.constraintId === c.id)) list.push({ constraintId: c.id, because })
+    }
+    markWarned(ctx, c.id)
+    return false
+  }
+
   let bucket = Object.prototype.hasOwnProperty.call(ctx.blocked, fieldId)
     ? ctx.blocked[fieldId]
     : undefined
@@ -172,7 +277,7 @@ function prune(
       d.fixed && chosen !== undefined && chosen !== null
         ? `Your choice of ${formatValue(chosen)} for ${name} no longer works${tail}.`
         : `Nothing is left for ${name}${tail}.`
-    addProblem(ctx, c.id, message)
+    addProblem(ctx, c, message)
   }
   return true
 }
@@ -285,7 +390,7 @@ function enforceGroup(ctx: Ctx, group: ClauseGroup | undefined, c: ConstraintDef
   const live = clauses.filter((_, i) => truths[i] !== 'F')
   if (live.length === 1) return enforceClause(ctx, live[0], c)
   if (live.length === 0) {
-    addProblem(ctx, c.id, `This rule can no longer be satisfied${becauseTail(c)}.`)
+    addProblem(ctx, c, `This rule can no longer be satisfied${becauseTail(c)}.`)
   }
   return false
 }
@@ -317,7 +422,7 @@ function applyTable(ctx: Ctx, c: ConstraintDef): boolean {
   if (live.length === 0) {
     addProblem(
       ctx,
-      c.id,
+      c,
       `None of the ${combos.length} approved combination${combos.length === 1 ? '' : 's'} fit${becauseTail(c)}.`,
     )
     return false
@@ -411,13 +516,16 @@ function orderConstraints(list: ConstraintDef[]): ConstraintDef[] {
  *
  * Pure, deterministic, and total: it never throws, for any input.
  */
-export function solve(input: ConfigureInput): ConfigureState {
+export function solve(input: ConfigureInput): SolveState {
   const ctx: Ctx = {
     doms: new Map(),
     chosen: {},
     blocked: {},
+    warned: {},
     fired: [],
     firedSet: new Set(),
+    warnedBy: [],
+    warnedBySet: new Set(),
     problems: [],
     problemKeys: new Set(),
   }
@@ -467,7 +575,7 @@ export function solve(input: ConfigureInput): ConfigureState {
         const tail = lastMover ? ` — the last one to act was: ${becauseOf(lastMover) || lastMover.id}` : ''
         addProblem(
           ctx,
-          lastMover?.id ?? '',
+          lastMover,
           `Stopped after ${MAX_ROUNDS} passes because the rules were still changing the answer${tail}.`,
         )
       }
@@ -483,11 +591,32 @@ export function solve(input: ConfigureInput): ConfigureState {
     if (d.values.length === 1) setKey(settled, id, d.values[0])
   }
 
+  /* A NOTE ABOUT A VALUE THAT IS NO LONGER THERE IS NOT A WARNING.
+     A warning and a removal can land on the same value in one solve —
+     the warning first, then some other rule takes the value away.
+     `warned` promises the value is still in the picker, so the note
+     goes with the value. */
+  const warned: Record<string, Record<string, ValueWarning[]>> = {}
+  for (const [fieldId, notes] of Object.entries(ctx.warned)) {
+    const d = ctx.doms.get(fieldId)
+    if (!d) continue
+    const live: Record<string, ValueWarning[]> = {}
+    let any = false
+    for (const [k, list] of Object.entries(notes)) {
+      if (!d.keys.has(k)) continue
+      setKey(live, k, list)
+      any = true
+    }
+    if (any) setKey(warned, fieldId, live)
+  }
+
   return {
     domains,
     blocked: ctx.blocked,
+    warned,
     settled,
     fired: ctx.fired,
+    warnedBy: ctx.warnedBy,
     problems: ctx.problems,
   }
 }
@@ -511,4 +640,27 @@ export function explain(
   if (!bucket) return undefined
   const k = valueKey(value)
   return Object.prototype.hasOwnProperty.call(bucket, k) ? bucket[k] : undefined
+}
+
+const NO_WARNINGS: ValueWarning[] = []
+
+/**
+ * What disagrees with a value that is STILL AVAILABLE — the answer
+ * rule 10 needs to draw beside the value rather than in a dialog.
+ *
+ * Empty for a value nothing warns about, and empty for a blocked one:
+ * a blocked value's answer is `explain`, and no value is ever both.
+ */
+export function warningsFor(
+  state: Pick<SolveState, 'warned'> | undefined,
+  fieldId: string,
+  value: CellValue,
+): ValueWarning[] {
+  if (!state || !fieldId || !state.warned) return NO_WARNINGS
+  const bucket = Object.prototype.hasOwnProperty.call(state.warned, fieldId)
+    ? state.warned[fieldId]
+    : undefined
+  if (!bucket) return NO_WARNINGS
+  const k = valueKey(value)
+  return Object.prototype.hasOwnProperty.call(bucket, k) ? bucket[k] : NO_WARNINGS
 }

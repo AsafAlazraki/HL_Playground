@@ -61,6 +61,11 @@ const base: Candidate = {
   id: 'dx:test:1',
   shape: 'categorical-selector',
   relationship: 'Boat (boat) × Trailer (trailer)',
+  relationshipKey: 'boat·boat × trailer·trailer',
+  binds: {
+    far: { kind: 'trailer', name: 'Series', conceptKey: 'trailer::series', tables: 8 },
+    near: null,
+  },
   statement: 'A trailer is only offered with a boat whose own identity its “Series” names.',
   because: '581 of 581 pairings the price file writes agree',
   source: 'Series on 8 trailer tables',

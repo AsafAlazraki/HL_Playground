@@ -26,6 +26,7 @@ import {
   Sliders,
   Star,
   Trash,
+  WarningCircle,
   X,
 } from '@phosphor-icons/react'
 import {
@@ -40,7 +41,8 @@ import {
   type RowData,
   type ViewBlock,
 } from '@/types/model'
-import type { RuleEngine } from '@/lib/rules/evaluate'
+import type { RowRef, RuleEngine } from '@/lib/rules/evaluate'
+import { useConstraints } from '@/features/constraints'
 import { bandOf, defaultColumns, formatCell } from './columns'
 import { countChip, isCuratedOnly, oneOf, plural, singular, summariseRule } from './describe'
 import { applyFilters, filterableColumns, valuesInUse } from './filter'
@@ -67,6 +69,7 @@ import { KindMark } from './marks'
 import { RowPicture, pictureField } from './pictures'
 import { SPRING, SPRING_QUICK, SPRING_SLOW, transitionFor, useStillness } from './stillness'
 import { isRowDrag, isTableDrag, readRowDrag, readTableDrag, setRowDragData } from './dnd'
+import { pairWarnings, warnRules, type PairWarning } from './warnings'
 
 /** A table dropped in and waiting for an answer. Nothing exists yet. */
 export interface PendingDrop {
@@ -170,6 +173,37 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     () => (target ? (block.columns ?? defaultColumns(target)) : []),
     [target, block.columns],
   )
+
+  /* ── WHAT DISAGREES WITH A ROW THAT IS STILL HERE ─────────────
+
+     A rule carrying `severity: 'warn'` removes nothing, so none of
+     these rows are missing and none of them are refused. The list is
+     exactly what it was; some of it now carries a note.
+
+     Every rule in the app is read, not just the discovered ones — a
+     warning is a property of the RULE, and a hand-written rule set to
+     warn draws the same line for the same reason. The filter is done
+     once for the block rather than once per row. */
+  const rules = useConstraints()
+  const warning = useMemo(() => warnRules(rules), [rules])
+  const sourceRef = useMemo<RowRef>(
+    () => ({ entityId: sourceEntity.id, row: sourceRow }),
+    [sourceEntity.id, sourceRow],
+  )
+  const warnings = useMemo(() => {
+    const out = new Map<string, PairWarning[]>()
+    if (!target || warning.length === 0) return out
+    for (const r of result.rows) {
+      const found = pairWarnings({
+        engine,
+        rules: warning,
+        candidate: { entityId: target.id, row: r.row },
+        source: sourceRef,
+      })
+      if (found.length > 0) out.set(r.row.id, found)
+    }
+    return out
+  }, [target, warning, result.rows, engine, sourceRef])
 
   /* THE PICTURE TRACK IS A PROPERTY OF THE BLOCK, NOT OF THE ROW.
      Resolved once here: if it were decided per row, a block where
@@ -674,6 +708,35 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                   ) : null}
                 </span>
               </div>
+
+              {/* THE WARNING GOES WHERE THE VALUE IS — rule 10, and the
+                  reason `severity: 'warn'` exists at all. The row is
+                  still on the list, still pickable, still counted; this
+                  says what disagrees with it, in the rule's own words.
+                  It is NOT an error: no red, no cross, no bar across the
+                  row. It sits OUTSIDE `.vw-row-line` on purpose — the
+                  hover and recommended tints are painted there, and
+                  `--warning` fails 4.5:1 over either. Measured grounds
+                  and ratios are in `views.css` above `.vw-warns`. */}
+              {(warnings.get(r.row.id) ?? []).length > 0 ? (
+                <ul className="vw-warns">
+                  {(warnings.get(r.row.id) ?? []).map((w) => (
+                    <li key={w.constraintId} className="vw-warn">
+                      <WarningCircle
+                        size={13}
+                        weight="regular"
+                        aria-hidden="true"
+                        className="vw-warn-mark"
+                      />
+                      <span>
+                        {w.because === ''
+                          ? 'A rule set to warn disagrees with this one, and it does not say why.'
+                          : `Worth a look, because ${w.because}.`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
 
               {children.length > 0 ? (
                 <div className="vw-nest">

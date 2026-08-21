@@ -130,6 +130,46 @@ export { ConsequenceMeter } from './ConsequenceMeter'
 export type { ConsequenceMeterProps } from './ConsequenceMeter'
 export { StartingPointList } from './StartingPointList'
 export type { StartingPointListProps } from './StartingPointList'
+
+/* THE THIRD DOOR. `startingPoints` above begins with a COLUMN — the
+   sixteen workbook rules, and which of their columns this sheet has.
+   `relate` begins with two THINGS: name a pair the price file
+   already writes pairings for, and the file offers the columns that
+   could bind them, each carrying how much of the far catalogue it
+   would keep and how much it would reject.
+
+   IT MEASURES NOTHING ITSELF. Every figure comes off a `Candidate`
+   the discovery engine produced, bounded to the one relationship a
+   person named (`DiscoverOptions.relationships`) and the two shapes
+   that bind a catalogue — about 50 ms against 0.9 s for a whole
+   file, and the same answer either way.
+
+   THE OFFERS ARE BANDED BY WHAT A COLUMN WOULD DO, never by how
+   often it holds, because those are not the same thing and the
+   difference is the most valuable thing this screen can teach: a
+   trailer's ATM against a boat's weight holds on every pairing the
+   file writes and still leaves 97.70 % of the trailer catalogue
+   standing. It is a FLOOR, and the caption over it says so. */
+export { RelateTwoThings } from './RelateTwoThings'
+export type { RelateTwoThingsProps } from './RelateTwoThings'
+export {
+  BAND_SAY,
+  BINDING_SHAPES,
+  bindingBands,
+  bindingOffers,
+  draftFromBinding,
+  relatablePairs,
+  stillFromBinding,
+} from './relate'
+export type {
+  Band,
+  BindingBand,
+  BindingOffer,
+  PairSide,
+  RelatablePair,
+} from './relate'
+export { useBinding } from './useBinding'
+export type { BindingPhase, BindingState } from './useBinding'
 export {
   draftFrom,
   offerKindWords,
@@ -426,9 +466,12 @@ export {
   WARNING_RATE,
   discover,
   discoverSteps,
+  relatedPairs,
 } from './discover'
 export type {
+  BoundColumn,
   Candidate,
+  CandidateBinding,
   CandidateShape,
   CounterExample,
   DiscoveryBounds,
@@ -438,11 +481,14 @@ export type {
   DiscriminationReading,
   Enforcement,
   RelationshipReading,
+  RelationshipSide,
   UniquenessReading,
   Verdict,
 } from './discover'
 export {
   KEPT_MAY_PRUNE,
+  adoptKeptPatterns,
+  adoptionBlocker,
   clearDecisions,
   decide,
   decisionFrom,
@@ -450,7 +496,7 @@ export {
   getDecisions,
   useDiscoveryDecisions,
 } from './discoveredRules'
-export type { DiscoveryDecision, KeptPattern } from './discoveredRules'
+export type { AdoptionReport, DiscoveryDecision, KeptPattern } from './discoveredRules'
 export {
   OBSERVED_SAY,
   SHAPE_SAY,
@@ -459,8 +505,9 @@ export {
   enforcementSay,
   excludedSay,
   figuresFor,
+  narrowingOf,
   recommendationSay,
   uniquenessSay,
   verdictSay,
 } from './discoverSay'
-export type { Figures, Standing } from './discoverSay'
+export type { Figures, Narrowing, Standing } from './discoverSay'

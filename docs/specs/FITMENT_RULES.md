@@ -91,7 +91,69 @@ same way. Re-measured over the **434 live trailers**, per boat (`adj/a3_gate.py`
 | gate | hit rate on live pairings | share of the live catalogue it leaves |
 |---|---|---|
 | `ATM ≥ boat weight` | **530 / 530 = 100.00 %** | mean **97.70 %**, median **100.00 %**, min 48.33 % (n = 1,696 boats) |
-| series banner names the boat's brand | **581 / 581 = 100.00 %**, 0 counter-examples | **0.92 % – 7.83 %** by brand (Highfield 12 of 434 = **2.76 %**; Stacer 34 = 7.83 %; Stabicraft 26; Formosa 24; Haines 16; Surtees 14; Cap Camarat 5; Merry Fisher 4) |
+| series banner names the boat's brand | **581 / 581 = 100.00 %**, 0 counter-examples | **0.92 % – 7.83 %** by brand (Highfield 12 of 434 = **2.76 %**; Stacer 34 = 7.83 %; Stabicraft 26; Formosa 24; Haines 16; **Surtees 22**; Cap Camarat 5; Merry Fisher 4) |
+
+##### CORRECTED 2026-08-21 — Surtees was **14** in this table and is **22**
+
+The discrimination column was re-measured on 2026-08-21, twice, and neither
+pass went through the app. One read `C:/Users/AsafA/Downloads/Trailer
+Module.xlsx` directly with `openpyxl` — a row is a trailer when column `C`
+carries text and column `E Code` is filled; its banner is the nearest preceding
+`C` cell that has **no** `E Code`; it is live when it sits above the
+`OBSOLETE TRAILERS` divider at row 656. The other read the generated seed
+`src/demos/northside.ts`, taking each trailer row's own `series` value and
+excluding the retired table. A brand matches its banner on a whole-word test,
+so `Stacer` cannot be found inside another word.
+
+The two passes agree exactly. Both count **434 live trailers**; joined on each
+seed row's `src` cell they cover the same 434 workbook rows with **0 banner
+mismatches**. Seven of the eight per-brand figures stand, and one does not:
+
+| brand | this table said | re-measured 2026-08-21 | |
+|---|---|---|---|
+| Highfield | 12 of 434 = 2.76 % | 12 of 434 = **2.76 %** | agrees |
+| Stacer | 34 = 7.83 % | 34 of 434 = **7.83 %** | agrees |
+| Stabicraft | 26 | 26 of 434 = **5.99 %** | agrees |
+| Formosa | 24 | 24 of 434 = **5.53 %** | agrees |
+| Haines | 16 | 16 of 434 = **3.69 %** | agrees |
+| **Surtees** | **14** | **22 of 434 = 5.07 %** | **CORRECTED** |
+| Cap Camarat | 5 | 5 of 434 = **1.15 %** | agrees |
+| Merry Fisher | 4 | 4 of 434 = **0.92 %** | agrees |
+
+Surtees stands on three banners, not two: `REDCO - Surtees Trailers` (6 rows),
+`REDCO - Surtees Alloy Trailers` (8) and `GFAB - Surtees Series (as at
+6.07.2026)` (8). **14 was the first two.** The third was lost to a reading of
+column `A` rather than column `C`, and R11 below now says so and lists it. The
+app had already been computing 22 from the seed, and an independent whole-word
+matcher written from scratch agreed at 22 before this pass ran: the app is
+right and this table was stale. **The `0.92 % – 7.83 %` range is unchanged** —
+5.07 % sits inside it and its endpoints are still Merry Fisher and Stacer.
+
+The eight cells now sum to **143**, which is `Series Brand`'s corrected coverage
+in §6.4 and the figure the app already shows. With `Surtees 14` they summed to
+135, which is what §6.4 used to say: **the two figures were stale together, by
+the same eight rows, and they are consistent again.**
+
+**Not re-measured, and left alone:** the hit-rate column (581/581, and the
+per-brand pairing rates below). Only the discrimination column was in scope.
+
+##### A KNOWN LIMIT, DELIBERATELY NOT FIXED — Cap Camarat and the token floor
+
+Cap Camarat's cell in this table is **5** and is correct. A *different* Cap
+Camarat reading — the model-designator corroboration under R11, which asks how
+many of a brand's hulls are offered a trailer whose text names that hull's own
+model — reads **0 of 11** for Cap Camarat, and that is a limit of the reading
+rather than a disagreement with R11. Cap Camarat models are designated `5.5`,
+`6.5`, `7.5`; their cradles carry `CC5.5`, `CC6.5`. The designator is two
+characters and sits inside a longer token, and the tokenizer
+(`src/features/constraints/trailerFitment.ts`, `designators()`) keeps tokens of
+three characters or more. **Lowering that floor to force a pass would be
+fitting the rule to the answer, so it stays at three and the reading stays 0.**
+This has now been derived three times. It is written here so it is not derived
+a fourth. The denominator is **11**, not the 10 that circulated: 10 was measured
+on the pre-full-scale sample seed, and against the seed as it now stands
+`trailerFitment.test.ts` asserts eleven Cap Camarat hulls and **0** of them
+naming their own model.
 
 **SETTLED: the series banner is the selector; ATM is a floor.** A gate that
 leaves 97.7 % of the catalogue has not chosen a trailer. A gate that leaves 3 %
@@ -498,14 +560,33 @@ none.
 **Statement.** Three different mechanisms put a trailer under a boat, and they
 need different modelling.
 
-**Evidence — ASSERTED.** `Trailer Module!A` carries 47 series banners, ten of
-which name a boat brand: `REDCO - Highfield` (A140), `REDCO - Formosa` (A152),
-`REDCO - Stabicraft Steel Trailers` (A105), `REDCO - Stabicraft Alloy Trailers`
-(A113), `GFAB - Stabicraft Series` (A197), `GFAB - Highfield Series` (A212),
-`REDCO - Surtees Trailers` (A87), `REDCO - Surtees Alloy Trailers` (A95),
-`REDCO - Merry Fisher Trailers` (A127), `REDCO - Cap Camarat Trailers` (A133),
-`DUNBIER / HAINES BMT TRAILERS (NB: Only available in Haines BMT Package)`
-(A626). And `Trailer Module!E Code` embeds the boat model in parentheses on
+**Evidence — ASSERTED.** The banner is a **column `C`** row — a `C` cell with no
+`E Code` under it — and the sheet carries **53** of them. Above the
+`OBSOLETE TRAILERS` divider at row 656, **twenty-two name a boat brand**.
+**Fifteen of those sit over a bespoke cradle:** `REDCO - Surtees Trailers`
+(row 87), `REDCO - Surtees Alloy Trailers` (95), `REDCO - Stabicraft Steel
+Trailers` (105), `REDCO - Stabicraft Alloy Trailers` (113), `REDCO - Merry
+Fisher Trailers` (127), `REDCO - Cap Camarat Trailers` (133),
+`REDCO - Highfield` (140), `REDCO - Formosa` (152), **`GFAB - Surtees Series
+(as at 6.07.2026)` (187)**, `GFAB - Stabicraft Series (as at 6.07.2026)` (197),
+`GFAB - Highfield Series` (212), and `DUNBIER / HAINES BMT TRAILERS (NB: Only
+available in Haines BMT Package)` (626) with its three sub-series at 627, 634
+and 650, which carry the sixteen BMT cradles between them. The other seven name
+Stacer (232, 233, 241, 254, 261, 266, 274) — the size-selected regime below,
+where the banner names the brand and the trailers under it never do.
+
+> **CORRECTED 2026-08-21.** This paragraph used to read "`Trailer Module!A`
+> carries 47 series banners, ten of which name a boat brand", and its list
+> omitted `GFAB - Surtees Series`. Re-measured straight off `Trailer
+> Module.xlsx` with `openpyxl`: column `A` merely repeats the banner, and it
+> repeats it on **52 of the 53** banner rows. **Row 187 is the one it does not
+> — `A187` is empty and the banner exists only in `C187`.** Hierarchy in this
+> sheet is the font size of column `C`, so column `A` was never the authority.
+> Any figure derived by enumerating column `A` is short by that series' **8
+> live trailers**, which is exactly what happened to the Surtees cell in §1.2
+> above: it read 14 instead of 22.
+
+And `Trailer Module!E Code` embeds the boat model in parentheses on
 seven rows, **every one of them Highfield**: `TA600-MOB (SP560)`,
 `TA600T-MOB (SP660)`, `TA700T-EH (SP700)`, `TA730T-EH (SP800)`,
 `TA800T-EH (SP760)`, `TA800T-EH1 (SP800)`, `RS480-MO (PA460)`.
@@ -520,6 +601,31 @@ seven rows, **every one of them Highfield**: `TA600-MOB (SP560)`,
 trailer joins, and it says the split should widen rather than merge: a
 model-locked pair is a curated row, a size-selected pair is a lookup, and they
 should not share a rule.
+
+**A zero here is not evidence of size-selected, and Cap Camarat is the case
+that proves it.** The corroborating reading — how many of a brand's hulls are
+offered a trailer whose text names that hull's own model designator — is
+asserted against the full-scale seed by `trailerFitment.test.ts`: Stabicraft
+37 of 37, Formosa 39 of 39, Haines 9 of 9, Surtees 19 of 19, Highfield 81 of
+588, Merry Fisher 5 (that test asserts the numerator only), **Stacer 0 of 91**
+(which is the size-selected finding reproduced) — **and Cap Camarat 0 of 11,
+which is not.** Cap Camarat designators are `5.5`, `6.5` and `7.5`, and the
+cradles carry `CC5.5`, `CC6.5`: two characters, inside a longer
+token, below the three-character floor the tokenizer keeps
+(`src/features/constraints/trailerFitment.ts`, `designators()`). **The floor is
+not lowered.** Dropping it to two would fit the rule to the answer and would
+start matching digits out of every code in the sheet. Cap Camarat stays
+model-locked on the banner and the `E Code`, its reading stays 0, and the app
+returns a measurement rather than a regime label, so nothing on screen calls it
+size-selected. Derived three times now, and written down so it is not derived a
+fourth.
+
+> The pre-full-scale figures — Stabicraft 30/30, Formosa 26/26, Surtees 17/19,
+> Highfield 18/40, Merry Fisher 5/10, Stacer 0/26, Cap Camarat 0/10 — were
+> measured on the sample seed and are superseded by the line above. The header
+> comment of `src/features/constraints/trailerFitment.ts` still carries them
+> and disagrees with the test beside it; noted 2026-08-21, not edited here
+> because that directory was owned by another change at the time.
 
 **The Highfield correction, worth stating because the owner asked in these
 words.** "Highfield have special trailers" is true and asserted — but **bespoke
@@ -1010,8 +1116,12 @@ each measured:
    throw away the answer 78 % of the time.
 2. **The rules cannot reproduce the menu.** The one rule that discriminates
    (F8, the series banner) leaves 3.9 % of the trailer catalogue — 17 trailers
-   where the boat row names 1.35. Every motor rule we have (F1, F2, F6, F7) is
-   an envelope, not a selection: the Max HP filter on a Highfield SP560 admits
+   where the boat row names 1.35. *(NOT re-measured 2026-08-21, and it may run
+   low: it is a mean over the quoted deals, and any Surtees deal in that set was
+   counted against the stale 14 rather than 22 — see §1.2. The argument does not
+   turn on it; 22 trailers against 1.35 named is the same point.)* Every motor
+   rule we have (F1, F2, F6, F7) is an envelope, not a selection: the Max HP
+   filter on a Highfield SP560 admits
    every Yamaha from 90 to 115 HP, and the sheet names four. **The narrowing
    from "rated" to "offered" exists nowhere but in the typed values themselves,
    which is precisely what a join table is for.** `map-trailers.md §3.2`
@@ -1172,7 +1282,18 @@ table (J7/J8) or exclude them; never silently count them as motors.
 | column | on | how | what it unblocks |
 |---|---|---|---|
 | **`Brand`** | every boat table | the table's own identity, written as a real column | **F8's left side.** Today the brand is the table name, so no clause can name it. |
-| **`Series Brand`** | every trailer table | the boat brand named in the series banner (`Trailer Module!A`), where one is named — 135 of 476 rows | **F8's right side.** Today it is recoverable only by parsing a banner string. |
+| **`Series Brand`** | every trailer table | the boat brand named in the series banner (`Trailer Module!C`, the row with no `E Code`), where one is named — **143 of 476 rows**, and all 143 are live | **F8's right side.** Today it is recoverable only by parsing a banner string. |
+
+> **CORRECTED 2026-08-21 — `Series Brand` was 135 of 476 and is 143 of 476.**
+> Re-measured off `Trailer Module.xlsx` with `openpyxl`. 135 is exactly what
+> the column-`A` reading returns: `A187` is empty, so that reading loses the
+> `GFAB - Surtees Series` banner and the **8** trailers under it, and
+> 143 − 8 = 135. The corrected figure is the sum of §1.2's corrected per-brand
+> cells (12 + 34 + 26 + 24 + 16 + 22 + 5 + 4 = **143**), and it is what the app
+> already computes — its relationship reading shows "Series 143 of 434 kept".
+> The two stale numbers agreed with each other because they shared one omission.
+> **No obsolete trailer sits under a brand-naming banner**, so live and all-row
+> counts are the same 143 here.
 
 Plus two booleans: **`Obsolete`** on boats (A6) and on trailers (its twin), read
 from the divider at import.

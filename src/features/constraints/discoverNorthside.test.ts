@@ -82,7 +82,7 @@ const every = (part: string): Candidate[] => all.filter((c) => c.statement.inclu
 describe('what the engine was pointed at', () => {
   it('reads the whole seed', () => {
     expect(report.scanned.tables).toBe(53)
-    expect(report.scanned.rows).toBe(11116)
+    expect(report.scanned.rows).toBe(15691)
     expect(report.scanned.relationships).toBeGreaterThanOrEqual(8)
   })
 

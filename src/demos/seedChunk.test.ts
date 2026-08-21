@@ -47,11 +47,20 @@ const { forgetSeedStamp, writeSeedStamp } = await import('./seedStamp')
 
 /** A sheet carrying the first `n` of the set's own tables, by name —
  *  the friendliest possible input to recognition, so what fails here
- *  fails for every sheet of that size. */
+ *  fails for every sheet of that size.
+ *
+ *  BUILT ONCE. This used to call `buildNorthsideProject()` on every
+ *  invocation, and the gate test calls it DRIFT_GATE times in a loop —
+ *  so the suite built the whole price file once per iteration. That was
+ *  invisible while the set was 11,116 rows and timed out at 15,691, and
+ *  the reason it timed out is not the thing under test: recognition
+ *  reads NAMES off the entities it is handed. One build, sliced, is the
+ *  same input to `northsideDrift` and a fraction of the work. */
+let built: ReturnType<typeof buildNorthsideProject> | null = null
 const sheetOf = (n: number): Record<string, EntityDef> => {
-  const p = buildNorthsideProject()
+  built ??= buildNorthsideProject()
   const out: Record<string, EntityDef> = {}
-  for (const e of p.entities.slice(0, n)) out[e.id] = e
+  for (const e of built.entities.slice(0, n)) out[e.id] = e
   return out
 }
 

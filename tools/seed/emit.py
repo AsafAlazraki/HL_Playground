@@ -6,12 +6,17 @@ This is the command that WRITES the seed; gen_all.py only assembles and prints
 a summary. Paths are derived from this file's own location, for the reason
 recorded at the top of gen_all.py.
 """
-import sys, io
+import re, sys, io
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import gen_all
+
+# Records per `rs(...)` call in the emitted seed. 400 is comfortably inside
+# every engine's argument ceiling and comfortably inside the checker's union
+# budget, with room for the register to keep growing at both ends.
+ROW_BLOCK = 400
 from gen_lib import ts_val, ts_str
 
 OUT = str(HERE.parent.parent / "src" / "demos" / "northside.ts")
@@ -226,6 +231,26 @@ export interface NorthsideProject {
 
 type SeedCell = string | number | boolean | null
 
+/** One record, keyed by its table's short column keys. Rows are emitted as
+ *  their OWN annotated `const` below rather than inline in `TABLES`, and that
+ *  is load-bearing rather than cosmetic: an inline array of a few thousand
+ *  object literals with different key sets makes the checker build a union of
+ *  a few thousand distinct shapes, and at full scale it gives up —
+ *  `TS2590: Expression produces a union type that is too complex to
+ *  represent`, measured on the parts and dealer-fit registers the moment they
+ *  carried their whole library. Annotating the array does NOT fix it — the
+ *  checker still infers the literal's own type first. Passing the records as
+ *  ARGUMENTS does: a rest parameter gives every one of them the same declared
+ *  type, so there is no union to reduce. */
+type SeedRow = Record<string, SeedCell>
+
+/** The identity of a run of records, and the only reason it exists is the
+ *  paragraph above. It is called in blocks rather than once per table so that
+ *  no single call approaches an engine's argument limit however large a
+ *  register grows; the blocks are spread back into one array, and the runtime
+ *  cost is one call per block and nothing per row. */
+const rs = (...r: SeedRow[]): SeedRow[] => r
+
 interface SeedColumn {
   /** short key used by the row literals */
   k: string
@@ -265,7 +290,7 @@ interface SeedTable {
   levels: string[]
   sections: Array<{ id: string; name: string; accent?: AccentKey; collapsed?: boolean }>
   cols: SeedColumn[]
-  rows: Array<Record<string, SeedCell>>
+  rows: SeedRow[]
   /** column key used to label rows elsewhere */
   display: string
   pos: { x: number; y: number }
@@ -1078,6 +1103,26 @@ def main(force=False):
         buf.write("  " + ts_str(v) + ",\n")
     buf.write("]\n")
 
+    # ROWS HOISTED, AND WHY — see the SeedRow/`rs` doc comments in HEADER.
+    # An inline `rows: [ ...2,948 object literals... ]` makes tsc form a union of
+    # every distinct key set and give up with TS2590 the moment a register
+    # carries a real library. MEASURED, because the obvious fix does not work:
+    # annotating the array `: SeedRow[]` still fails, since the checker infers
+    # the literal's own type before it checks assignability. Handing the records
+    # to a rest parameter is what removes the union. Blocks of ROW_BLOCK keep
+    # any one call well under an engine's argument limit. The const is named for
+    # its table, so the file still reads top-down and a stack names a register.
+    ident = {t["key"]: "ROWS_" + re.sub(r"[^0-9A-Za-z_]", "_", t["key"]) for t in tables}
+    for t in tables:
+        buf.write(f"\nconst {ident[t['key']]}: SeedRow[] = [\n")
+        rws = t["rows"]
+        for i in range(0, len(rws), ROW_BLOCK):
+            buf.write("  ...rs(\n")
+            for r in rws[i:i + ROW_BLOCK]:
+                buf.write(emit_row(t["cols"], r) + "\n")
+            buf.write("  ),\n")
+        buf.write("]\n")
+
     buf.write("\nconst TABLES: SeedTable[] = [\n")
     for t in tables:
         buf.write("  {\n")
@@ -1103,10 +1148,7 @@ def main(force=False):
         for c in t["cols"]:
             buf.write(emit_col(c) + "\n")
         buf.write("    ],\n")
-        buf.write("    rows: [\n")
-        for r in t["rows"]:
-            buf.write(emit_row(t["cols"], r) + "\n")
-        buf.write("    ],\n")
+        buf.write(f"    rows: {ident[t['key']]},\n")
         buf.write(f"    display: {ts_str(t['display'])},\n")
         buf.write(f"    pos: {{ x: {t['pos'][0]}, y: {t['pos'][1]} }},\n")
         buf.write("  },\n")

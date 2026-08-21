@@ -6,7 +6,7 @@
    button that replaces the whole sheet, and a button like that
    which does not say how much lands is asking a person to accept
    something they cannot see. So the door's foot reads
-   "53 tables · 11,116 rows".
+   "53 tables · 15,691 rows".
 
    IT USED TO BE COUNTED, and the reasoning for that was right:
    a hand-typed figure goes stale the first time the seed changes
@@ -35,5 +35,5 @@
  *  IS a table on this sheet and lands with the rest. */
 export const NORTHSIDE_HOLDS: { tables: number; rows: number } = {
   tables: 53,
-  rows: 11116,
+  rows: 15691,
 }

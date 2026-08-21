@@ -184,6 +184,45 @@ export function figuresFor(c: Candidate): Figures {
 }
 
 /* ---------------------------------------------------------- */
+/* The same reading, as two counts                             */
+/* ---------------------------------------------------------- */
+
+/** WHAT A CANDIDATE WOULD KEEP AND WHAT IT WOULD REJECT, as rows of
+ *  the far catalogue rather than as a share of it. */
+export interface Narrowing {
+  /** live rows on the far side the share was measured against */
+  catalogue: number
+  /** how many of them a typical subject still has left */
+  kept: number
+  /** and how many it does not */
+  rejected: number
+  /** how many subjects the mean was taken over */
+  over: number
+}
+
+/**
+ * THE SHARE, TURNED BACK INTO ROWS.
+ *
+ * `pct(meanLeft)` is the exact reading and `figuresFor` prints it;
+ * this is the same reading counted in the units a person shops in.
+ * "It leaves 97.7 %" and "424 of your 434 trailers are still on the
+ * list" are the same fact, and only the second one is obviously bad
+ * news to somebody who has never read a discrimination figure.
+ *
+ * IT IS A MEAN AND IT SAYS SO. `over` is how many subjects it was
+ * averaged across, and every surface that prints `kept` prints that
+ * too — a single number implying every boat leaves exactly 424
+ * trailers would be inventing a precision the engine never
+ * measured. `null` where the shape narrows no catalogue at all.
+ */
+export function narrowingOf(c: Candidate): Narrowing | null {
+  const d = c.discrimination
+  if (!d) return null
+  const kept = Math.round(d.meanLeft * d.catalogue)
+  return { catalogue: d.catalogue, kept, rejected: d.catalogue - kept, over: d.over }
+}
+
+/* ---------------------------------------------------------- */
 /* Checking it                                                 */
 /* ---------------------------------------------------------- */
 

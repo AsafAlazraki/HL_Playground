@@ -26,6 +26,7 @@ import { useCallback, useSyncExternalStore } from 'react'
 import type { ClauseGroup, ConstraintDef, ConstraintKind, ProjectMeta } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { newId, nowIso } from '@/lib/id'
+import { sanitiseAllObserved, sanitiseObserved } from '@/lib/observed/adopt'
 
 /* ---------------------------------------------------------- */
 /* Scope                                                      */
@@ -116,7 +117,11 @@ function load(): void {
       if (!Array.isArray(list)) continue
       const map = orgMap(key)
       for (const c of list) {
-        if (c && typeof c.id === 'string' && c.if) map.set(c.id, c)
+        /* THROUGH THE COERCION ON THE WAY IN. Storage is a text file a
+           person can edit, and an observed rule that came back from it
+           claiming to block would have acquired, by hand, the one
+           power `src/lib/observed/adopt.ts` exists to withhold. */
+        if (c && typeof c.id === 'string' && c.if) map.set(c.id, sanitiseObserved(c))
       }
     }
     const next: Record<string, ConstraintDef[]> = {}
@@ -200,11 +205,13 @@ export function createConstraint(input: NewConstraint): ConstraintDef {
 export function putConstraint(constraint: ConstraintDef): void {
   const map = orgMap(currentKey())
   const current = map.get(constraint.id)
-  map.set(constraint.id, {
+  /* an EDIT is a seam too: rewording an observed rule may not be a
+     way to change what it is allowed to do */
+  map.set(constraint.id, sanitiseObserved({
     ...constraint,
     createdAt: current?.createdAt ?? constraint.createdAt,
     updatedAt: nowIso(),
-  })
+  }))
   publish()
 }
 
@@ -225,7 +232,7 @@ export function registerConstraints(
   orgKey: string = currentKey(),
 ): void {
   const map = orgMap(orgKey)
-  for (const c of constraints) map.set(c.id, c)
+  for (const c of sanitiseAllObserved(constraints)) map.set(c.id, c)
   publish()
 }
 

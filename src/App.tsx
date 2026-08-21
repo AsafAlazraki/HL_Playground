@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { seedWorkbookConstraints } from '@/features/constraints'
+import { adoptKeptPatterns, seedWorkbookConstraints } from '@/features/constraints'
 import { StillnessProvider } from '@/features/views/stillness'
 import { TabGuard } from '@/features/session'
 import { Shell } from '@/app/Shell'
@@ -31,6 +31,14 @@ export default function App() {
        one to bind to, and a seed must never be written half-bound */
     if (Object.keys(entities).length === 0) return
     seedWorkbookConstraints()
+    /* AND THE PATTERNS A PERSON KEPT, on the same seam and for the
+       same reason. A kept pattern becomes a rule carrying severity
+       'warn' — it flags a pairing that disagrees and removes none —
+       and it is offered here rather than only at the moment of
+       keeping, so a decision made before this existed, or before the
+       table it names was loaded, still comes home. Idempotent: an
+       edit survives, a rule switched off stays off. */
+    adoptKeptPatterns()
   }, [loaded, entities])
 
   /* THE MOTION POLICY WRAPS THE WHOLE APP, not one feature.

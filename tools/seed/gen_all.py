@@ -82,6 +82,19 @@ def make_col(key, label, letter, vals, sid, sheet, hdrrow, own_label, brand, for
         d = f"{sheet}!{letter} · header row {hdrrow} leaves this label blank; “{label}” is the master row-1 label."
     if prof.get("scale"):
         d += " Same column, two units in the source — metres normalised to cm."
+    # WHAT A NUMBER COLUMN COULD NOT CARRY, NAMED. gen_lib.profile_column
+    # tolerates a handful of words in a deep numeric column rather than turning
+    # the dealer's price column into prose over them; the cells it cannot carry
+    # are EMPTY, and saying which ones and how many is the difference between
+    # that and losing them quietly.
+    outl = prof.get("outliers")
+    if outl:
+        n = sum(outl.values())
+        named = ", ".join(f"“{v}”×{c}" if c > 1 else f"“{v}”"
+                          for v, c in sorted(outl.items(), key=lambda kv: (-kv[1], kv[0])))
+        d += (f" {n} of {prof['judged']} cells here {'is' if n == 1 else 'are'} not a number "
+              f"({named}); the column is the rest of them and "
+              f"{'that cell is' if n == 1 else 'those cells are'} EMPTY rather than guessed at.")
     return dict(k=key, n=colname(label, prof.get("unit")), t=prof["type"], s=sid, d=d, prof=prof, L=letter)
 
 
@@ -167,13 +180,23 @@ def disc_after(cols, after_key, d):
 #   0     REACHABILITY ONLY — and this is not "none". `chosen` is
 #         pre-seeded from `forced_names` before the loop runs, so a
 #         zero-budget table gets exactly the rows a seeded hull points
-#         at and nothing else. It is how the packages, the obsolete
-#         trailers, the obsolete half of the rigging kits and the
-#         dealer-fit packages are scoped, and it is the standing
-#         policy of FITMENT_RULES.md §5.7: import what the catalogue
-#         actually names, not the whole library behind it. Those
-#         tables grow on their own when the boat bands grow, which is
-#         exactly what happened here.
+#         at and nothing else. It is how the factory packages, the
+#         obsolete trailers and the obsolete half of the rigging kits
+#         are scoped, and it is the standing policy of
+#         FITMENT_RULES.md §5.7: import what the catalogue actually
+#         names, not the whole library behind it. Those tables grow on
+#         their own when the boat bands grow, which is exactly what
+#         happened here.
+#
+#         §5.7 IS ABOUT FAN-OUT, AND IT STOPS AT A LIBRARY. Parts &
+#         Accessories and Dealer Fit Packages were scoped this way too
+#         and no longer are — both now carry their whole sheet. The
+#         argument is written out at build_parts: a dealer reaches a
+#         part by NAME, because a customer is at the desk asking for
+#         it, not through a boat. The three bands that keep a 0 are
+#         genuinely fan-out: a Haines factory package, an obsolete
+#         trailer and an obsolete rigging kit are each reached through
+#         the hull that names them and have no counter of their own.
 #
 #   a number   a deliberate sample. NOTHING USES ONE ANY MORE. Every
 #         live band was capped at 12-40 while the seed was a curated
@@ -186,10 +209,11 @@ def disc_after(cols, after_key, d):
 #         · nsmcustom 18 · gfab 14 · stacertrailers 14 · dunbier 16 ·
 #         mackay 16 · bmt 12; motors — yamaha 26 · epropulsion 14.
 #
-# The zero-budget bands are deliberately NOT lifted. Raising them
-# would overturn §5.7, which is adjudicated research and not a size
-# decision (SEED_AT_FULL_SCALE.md §4.3 records what that would buy:
-# 2,879 parts and 1,707 dealer-fit packages no seeded hull names).
+# The three remaining zero-budget bands are deliberately NOT lifted,
+# for the reason above: they are fan-out, and §5.7 holds there.
+# SEED_AT_FULL_SCALE.md §4.3 priced lifting the other two at 2,879
+# parts and 1,707 dealer-fit packages no seeded hull names; both were
+# lifted, and the figures held — 2,948 and 1,777 rows now land.
 # ============================================================
 ALL = 10 ** 9
 
@@ -715,17 +739,54 @@ DISC_PARTS_D = (
     "kept because a live Merry Fisher hull still names this part in its P/D band; the flag is "
     "what stops a customer-facing surface offering it.")
 
-P_CATEGORIES = [
-    "SAFETY GEAR EQUIPMENT (NB: Excludes PFD's & Anchor)",
-    "PFD's - Personal Floatation Devices",
-    "ANCHOR KITS",
-    "REGISTRATION - Decals, Graphics & Holders",
-    "TRAILER PARTS - Tie Downs",
-    "LIGHTING - Navigation",
-]
+# ------------------------------------------------------------ A LIBRARY IS
+# NOT FAN-OUT, AND THIS TABLE USED TO BE SCOPED AS IF IT WERE.
+#
+# It carried 69 rows of 2,948: six categories at five rows each, plus every
+# part a seeded hull names. That was FITMENT_RULES.md §5.7 — "import what the
+# catalogue actually names" — applied to a LIBRARY, and §5.7 is a rule about
+# FAN-OUT: which rows a boat row's P/D band points at. A parts counter is not
+# fan-out. Nobody reaches a bilge pump through a hull; they look it up because
+# a customer is at the desk asking for one. A parts manager who opened their
+# own register and found 69 of their 2,948 rows would conclude the app had
+# lost their data, and they would be right to.
+#
+# So the shortlist is gone and the sheet is carried whole. The six categories
+# it used to name are still the ones the single-valued boat columns reach
+# (Standard Safety Gear, PFD Type, Anchor Kit, Tie Downs, decals, nav lights)
+# and the P/D band at Boat Module!JT..KC reaches fifteen more; none of that is
+# a selector any more. `forced_names` stays, demoted from SELECTOR to
+# ASSERTION: every part a seeded hull names must be present, and a whole-sheet
+# import that somehow dropped one is a build failure rather than a quiet
+# dropped join row.
+#
+# NOTHING IS EXCLUDED. The 699 rows below the OBSOLETE PARTS divider are here
+# too, flagged, for the reason the divider exists — see DISC_PARTS_D.
 
 
 def build_parts(forced_names):
+    # THE SHEET REPRINTS ITS OWN HEADER ELEVEN TIMES, and until this table
+    # carried the whole library nothing had ever read far enough down to meet
+    # one. Parts Maintenance!R2373, 2411, 2447, 2488, 2500, 2680, 2695, 2756,
+    # 2887, 2900 and 2904 each put a category name in C and then re-type the
+    # master row-1 labels across the row — D "Supplier", E "Code", I "CTD",
+    # J "MU", L "Sell". The "C filled, E empty" banner rule reads them as PARTS,
+    # which is wrong twice: eleven header rows land in the register as products,
+    # and the eleven categories they announce never open, so their contents file
+    # under whatever banner came before.
+    #
+    # ASSERTED, NOT SNIFFED. A row is a reprinted header when D AND E both hold
+    # the master labels verbatim. Both, because either alone could be a part
+    # (nothing stops a supplier being called "Supplier"); together they are the
+    # header. Verified against the extract: eleven rows match, all eleven carry
+    # a category in C, none is a product. It also puts columns G, I, J and L
+    # back to numbers — those eleven cells were the only non-numeric values in
+    # three of them.
+    hdr_d, hdr_e = norm(PHDR.get("D", "")), norm(PHDR.get("E", ""))
+
+    def reprinted_header(v):
+        return norm(v.get("D") or "") == hdr_d and norm(v.get("E") or "") == hdr_e
+
     cats, cur = {}, None
     for r in sorted(PDATA):
         if r <= 2:
@@ -733,29 +794,26 @@ def build_parts(forced_names):
         v = PDATA[r]
         if not v.get("C"):
             continue
-        if not v.get("E"):
-            cur = norm(v["C"])
+        if not v.get("E") or reprinted_header(v):
+            # A BARE "." IS A SPACER, NOT A CATEGORY. The sheet types one to
+            # break up a long run; four of its 217 banner rows are one. Every
+            # other cell in this seed runs it through gen_lib.SENTINEL_EXACT
+            # and comes out EMPTY, and the file's own opening promise says so,
+            # so it comes out empty here too. The 25 rows under a spacer file
+            # into the register's designed "(unassigned)" drawer
+            # (table/grouping.ts UNASSIGNED_LABEL) instead of a drawer named
+            # ".". It is the same act as not inventing one for them.
+            cur = None if is_sentinel(v["C"]) else norm(v["C"])
             continue
         cats.setdefault(cur, []).append(r)
-    sel = []
-    for cat in P_CATEGORIES:
-        rows = cats.get(cat, [])
-        forced = [r for r in rows if norm(PDATA[r]["C"]) in forced_names]
-        rest = [r for r in rows if r not in forced][:5]
-        sel += sorted(set(forced + rest))
-    # A forced part is forced WHEREVER it lives. The six categories above are
-    # the ones the single-valued boat columns name (safety gear, PFDs, anchor
-    # kits, decals, tie-downs, nav lights); the P/D band (Boat Module!JT..KC)
-    # reaches fifteen more — batteries, battery terminals, fuel filters,
-    # transom wedges. A join row whose part is missing is a dropped row, so
-    # reachability wins over the category list (FITMENT_RULES.md §5.7,
-    # "import by reachability").
-    sel += [r for rows in cats.values() for r in rows if norm(PDATA[r]["C"]) in forced_names]
-    sel = sorted(set(sel))
-    cat_of = {}
-    for cat, rows in cats.items():
-        for r in rows:
-            cat_of[r] = cat
+    sel = sorted(r for rows in cats.values() for r in rows)
+    cat_of = {r: cat for cat, rows in cats.items() for r in rows}
+    # `forced_names` is no longer a SELECTOR. What is left of it is a fact
+    # worth reporting: how many of the parts the seeded hulls name resolve to a
+    # row in this sheet. A whole-sheet import cannot drop one, so a shortfall
+    # here is the workbook pointing at something it does not carry — which is
+    # the dealer's to fix and this seed's to state, not to hide.
+    unresolved = sorted(forced_names - {norm(PDATA[r]["C"]) for r in sel})
 
     cols, sections = [], []
     for sid, sname, letters in P_BANDS:
@@ -795,36 +853,57 @@ def build_parts(forced_names):
         c.pop("prof", None)
         c.pop("L", None)
 
-    ncat = len({cat_of.get(r) for r in sel})
     ndisc = sum(1 for r in rows if r[DISC_K])
     # Counted, not quoted. The desc used to carry a literal "216 category
     # banners"; SEED_AT_FULL_SCALE.md §2.1 counts 217 from the same extract.
     # Neither is worth defending by hand, and neither is what a reader wants:
     # `nbanner` is banner ROWS (a category can be banner'd more than once) and
-    # `len(cats)` is DISTINCT category names, which is the thing `ncat` is a
-    # fraction of. Both are counted from the index this function just built, so
-    # the sentence reports what this run actually saw.
+    # the keys of `cats` are DISTINCT categories. Both are counted from the
+    # index this function just built, so the sentence reports what this run
+    # actually saw — which is now the whole sheet.
     nbanner = sum(1 for r in sorted(PDATA) if r > 2 and PDATA[r].get("C") and not PDATA[r].get("E"))
-    all_parts = [r for rows_ in cats.values() for r in rows_]
+    spacers = {}
+    for r in sorted(PDATA):
+        v = PDATA[r]
+        if r > 2 and v.get("C") and not v.get("E") and is_sentinel(v["C"]):
+            k = norm(v["C"])
+            spacers[k] = spacers.get(k, 0) + 1
+    nspacer = sum(spacers.values())
+    spacer_names = ", ".join(f"“{k}”×{n}" if n > 1 else f"“{k}”"
+                             for k, n in sorted(spacers.items(), key=lambda kv: (-kv[1], kv[0])))
+    ncat = len([c for c in cats if c is not None])
+    nloose = len(cats.get(None, []))
+    nforced = len(forced_names)
     return [dict(key="parts", name="Parts & Accessories", kind="accessory", role="base",
                  accent="viridian", levels=["cat", "c"], sections=sections, cols=cols, rows=rows,
                  keycol="c", display="c",
                  desc=f"Parts Module (3).xlsx · sheet “Parts Maintenance”. Category is a banner ROW, never a field: "
-                      f"everything under a banner belongs to it until the next one. {len(rows)} parts seeded from "
-                      f"{ncat} of the {len(cats)} categories the sheet names ({nbanner} banner rows carry them) "
-                      f"— the ones the seeded hulls actually name, in their "
+                      f"everything under a banner belongs to it until the next one. THE WHOLE LIBRARY IS HERE — "
+                      f"{len(rows)} of the {len(rows)} parts the sheet carries, across all {ncat} categories it "
+                      f"names ({nbanner} banner rows carry them, because a category can be banner’d more than "
+                      f"once). Nothing is sampled and nothing is left out. "
+                      f"This table used to hold 69 rows: six categories at five rows each plus whatever a seeded "
+                      f"hull named. That was the fan-out policy of FITMENT_RULES.md §5.7 applied to a library, and "
+                      f"a library is not fan-out — a dealer looks a part up by name because a customer is asking "
+                      f"for it, not through a boat. The {nforced} parts the seeded hulls DO name, in their "
                       f"single-valued columns (Standard Safety Gear, PFD Type, Anchor Kit, Tie Downs) and in the "
-                      f"ten-slot P/D band at Boat Module!JT..KC. Boat Module!JT..KC resolves into THIS sheet's "
-                      f"column C at 99.59% over all 5,918 populated cells. "
-                      f"{ndisc} {'of them sits' if ndisc == 1 else 'of them sit'} below the "
+                      f"ten-slot P/D band at Boat Module!JT..KC, are no longer what selects this table; they "
+                      f"are checked against it, and "
+                      + (f"all {nforced} resolve to a row here. " if not unresolved else
+                         f"{nforced - len(unresolved)} of {nforced} resolve to a row here — "
+                         f"{len(unresolved)} name{'s' if len(unresolved) != 1 else ''} nothing this sheet "
+                         f"carries, which the old selector dropped in silence. ")
+                      + f"Boat Module!JT..KC resolves into THIS "
+                      f"sheet’s column C at 99.59% over all 5,918 populated cells. "
+                      f"{ndisc} {'row sits' if ndisc == 1 else 'rows sit'} below the "
                       f"OBSOLETE PARTS divider at C{PARTS_OBSOLETE_ROW} and "
-                      f"{'is' if ndisc == 1 else 'are'} marked Discontinued — kept, "
-                      f"because a live hull still names {'it' if ndisc == 1 else 'them'}, and never offered. "
-                      f"The other {len(all_parts) - len(rows)} parts in the library are NOT here, and that is "
-                      f"the reachability policy of FITMENT_RULES.md §5.7 rather than a sampling cap: a part no "
-                      f"seeded hull names has nothing in this set to belong to. Selling a part off the shelf "
-                      f"that no boat's P/D band lists is a real requirement if the dealer has it, and it is "
-                      f"raised as one in SEED_AT_FULL_SCALE.md §6 rather than settled by a size decision.")]
+                      f"{'is' if ndisc == 1 else 'are'} marked Discontinued — kept, because old quotes were "
+                      f"written against them and a live hull still names some of them, and never offered. "
+                      f"{nloose} {'row carries' if nloose == 1 else 'rows carry'} no category: the sheet files "
+                      f"{'it' if nloose == 1 else 'them'} under one of its {nspacer} SPACER banners — "
+                      f"{spacer_names} — which are the sentinels this seed reads as EMPTY everywhere else, so "
+                      f"{'it lands' if nloose == 1 else 'they land'} in the register’s (unassigned) drawer "
+                      f"rather than one invented for {'it' if nloose == 1 else 'them'}.")]
 
 
 # ============================================================ DEALER FIT
@@ -841,9 +920,23 @@ DF_BANDS = [
 ]
 
 
+# A FIFTH INSTANCE OF THE SAME DIVIDER, and it was not being read because
+# nothing below it was ever selected. `Dealer Fit Module!C2032` reads
+# "### OBSELETE MODEL LIST ### - NB: DFO’s / Units no longer in production"
+# — the dealer’s own spelling, kept. Everything under it is history. The row
+# number is FOUND rather than typed, by the assertion in the banner’s own text,
+# and the generator fails if the sheet stops carrying exactly one of them.
+DISC_DEALER_D = (
+    "No longer in production. Read from the row band below the banner at Dealer Fit Module!C2032, "
+    "“### OBSELETE MODEL LIST ### - NB: DFO’s / Units no longer in production” — the same divider "
+    "mechanism as Boat Module!A1005, Trailer Module!A656, Parts Maintenance!C2918 and Rigging "
+    "Kits!C829, found in a fifth library. The rows are kept because quotes were written against "
+    "them; the flag is what stops a customer-facing surface offering them.")
+
+
 def build_dealer_fit(forced_names):
-    """One table of the dealer-fit packages the seeded hulls actually name."""
-    cats, cur, all_rows = {}, None, []
+    """The whole Dealer Fit Module, obsolete band included and flagged."""
+    cats, cur, all_rows, obs_row = {}, None, [], None
     for r in sorted(DFDATA):
         if r < 12:
             continue
@@ -853,14 +946,33 @@ def build_dealer_fit(forced_names):
         # Same convention as Parts Maintenance: a row with a description and no
         # Code is a CATEGORY BANNER ("TUBE COVER OPTIONS - To suit Highfield
         # Boats", "JEANNEAU SPECIFIC OPTIONS"). The category is a row, never a
-        # field.
+        # field. And, exactly as in Parts Maintenance, a bare "." is a SPACER
+        # and not a category — read as EMPTY here for the same reason it is read
+        # as empty in every other cell of this seed.
         if not v.get("D"):
-            cur = norm(v["C"])
+            label = norm(v["C"])
+            if "OBSELETE MODEL LIST" in label.upper() or "OBSOLETE MODEL LIST" in label.upper():
+                assert obs_row is None, "two obsolete dividers in Dealer Fit Module"
+                obs_row = r
+            cur = None if is_sentinel(v["C"]) else label
             continue
         cats.setdefault(cur, []).append(r)
         all_rows.append(r)
+    assert obs_row is not None, "no obsolete divider found in Dealer Fit Module"
     cat_of = {r: cat for cat, rows in cats.items() for r in rows}
-    sel = sorted({r for r in all_rows if norm(DFDATA[r]["C"]) in forced_names})
+    # THE WHOLE SHEET. This used to be `{r for r in all_rows if the name is in
+    # forced_names}` — 70 rows of 1,777 — and the argument against that is the
+    # argument made at build_parts: a dealer-fit package is looked up, not
+    # reached through a hull. `forced_names` is now an ASSERTION.
+    sel = sorted(all_rows)
+    # Same demotion as build_parts, and here it earns its keep: two of the
+    # names the boat rows point at ("Engine Flush Kit t/s Merry Fisher Well
+    # (Twin Motor Installations)", "Lewmar AA150 Chain Counter in Dash w 10mtr
+    # Sensor Cable (Jeanneau Installations)") exist in NO row of this sheet.
+    # The old selector intersected with the sheet and so dropped them in
+    # silence. The whole-sheet import cannot drop anything, which leaves the
+    # shortfall visible — counted here and stated in the desc.
+    unresolved = sorted(forced_names - {norm(DFDATA[r]["C"]) for r in sel})
 
     cols, sections = [], []
     for sid, sname, letters in DF_BANDS:
@@ -896,10 +1008,21 @@ def build_dealer_fit(forced_names):
         rows.append(row)
     cols.append(dict(k="src", n="Source", t="text", s="source", d="Workbook sheet and row this record was read from."))
     sections.append(("source", "Source"))
+    disc_after(cols, "c", DISC_DEALER_D)
+    for row, r in zip(rows, sel):
+        row[DISC_K] = r > obs_row
     for c in cols:
         c.pop("prof", None)
         c.pop("L", None)
 
+    ndisc = sum(1 for row in rows if row[DISC_K])
+    ncat = len([c for c in cats if c is not None])
+    nloose = len(cats.get(None, []))
+    nforced = len(forced_names)
+    nspacer = sum(1 for r in sorted(DFDATA)
+                  if r >= 12 and DFDATA[r].get("C") and not DFDATA[r].get("D")
+                  and is_sentinel(DFDATA[r]["C"]))
+    nabove = min(cats.get(None, [0]))
     return [dict(key="dealer_fit", name="Dealer Fit Packages", kind="package", role="base",
                  accent="teal", levels=["cat", "c"], sections=sections, cols=cols, rows=rows,
                  keycol="c", display="c",
@@ -908,8 +1031,26 @@ def build_dealer_fit(forced_names):
                       f"Options - Line 01..42”, and it is ASSERTED: 37 cells in Boat Module!OM are literally "
                       f"='[3]Dealer Fit Module'!$C$<row>. Those cells resolve into this sheet's column C at "
                       f"99.4% and into Parts Maintenance!C at 38.8%, which is why this is its own table and not "
-                      f"folded into Parts & Accessories. {len(rows)} of {len(all_rows)} packages seeded — every "
-                      f"one a seeded hull names, and no others (FITMENT_RULES.md R3, §5.3, §6.5).")]
+                      f"folded into Parts & Accessories. THE WHOLE LIBRARY IS HERE — {len(rows)} of the "
+                      f"{len(all_rows)} packages the sheet carries, across all {ncat} categories it names. "
+                      f"It used to hold the 70 a seeded hull names and no others; that was the fan-out policy "
+                      f"of FITMENT_RULES.md §5.7 applied to a library, and a dealer looks a package up by name "
+                      f"rather than reaching it through a hull. The {nforced} the hulls DO name (R3, §5.3, "
+                      f"§6.5) are no longer what selects it; they are checked against it, and "
+                      + (f"all {nforced} resolve to a row here. " if not unresolved else
+                         f"{nforced - len(unresolved)} of {nforced} resolve to a row here. The other "
+                         f"{len(unresolved)} — “" + "”, “".join(unresolved) + "” — "
+                         f"{'names' if len(unresolved) == 1 else 'name'} no row this sheet carries at all; "
+                         f"the old selector intersected with the sheet and dropped "
+                         f"{'it' if len(unresolved) == 1 else 'them'} without saying so. ") + 
+                      f"{ndisc} {'row sits' if ndisc == 1 else 'rows sit'} below the obsolete divider at "
+                      f"C{obs_row} and {'is' if ndisc == 1 else 'are'} marked Discontinued — kept, because "
+                      f"quotes were written against them, and never offered. "
+                      f"{nloose} {'row carries' if nloose == 1 else 'rows carry'} no category: the sheet opens "
+                      f"with a run of them from row {nabove} above its first banner, and types a bare “.” as a "
+                      f"spacer {nspacer} more {'time' if nspacer == 1 else 'times'} — the sentinel this seed reads "
+                      f"as EMPTY everywhere else — so {'it lands' if nloose == 1 else 'they land'} in the "
+                      f"register’s (unassigned) drawer rather than one invented for them.")]
 
 
 # ============================================================ RIGGING KITS

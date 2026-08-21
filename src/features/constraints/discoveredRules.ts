@@ -2,36 +2,51 @@
    WHAT A PERSON DECIDED ABOUT A DISCOVERED PATTERN — kept, or
    dismissed, and either way it stays decided.
 
-   WHY THIS IS NOT `constraintDefs.ts`. A kept pattern is NOT a
-   `ConstraintDef` and must not become one, and the reason is
-   structural rather than stylistic:
+   ── THE FIELD ARRIVED, AND A KEPT PATTERN CAN NOW GO HOME ────
+
+   This file used to open by explaining why a kept pattern is NOT a
+   `ConstraintDef` and must never become one. The argument was:
 
      · `ConstraintDef` has no severity. Its four kinds — implies,
-       excludes, requires, table — all PRUNE: `src/lib/configure`
-       propagates them into `ConfigureState.blocked`, which is how a
-       value disappears from a picker. There is no way to write "warn
-       about this and change nothing", so writing a measured pattern
-       into that store would hand it exactly the power this engine
-       exists to withhold.
-     · `workbookRules.ts` states the rule this obeys: "an 'observed'
-       seed may never be built with a kind that prunes", and
-       `discover.ts` states it again as `MAY_PRUNE = false`.
+       excludes, requires, table — all PRUNE, so writing a measured
+       pattern into that store would hand it exactly the power this
+       engine exists to withhold;
+     · so a kept pattern lives here, in a register nothing in the
+       configurator reads; it cannot delete a row from anybody's list
+       because there is no code path from this file to a domain.
 
-   So a kept pattern lives HERE, in its own register, which nothing
-   in the configurator reads. It can warn, it can be listed, it can
-   be exported; it cannot delete a row from anybody's list, because
-   there is no code path from this file to a domain. That is the
-   safety property, and `discovery.test.ts` asserts it by asserting
-   that nothing kept ever carries an enforcement other than 'warn' or
-   'report' — the `Enforcement` type has no third member, so a
-   pruning kept-rule cannot be written without editing `discover.ts`
-   and arguing with `MAY_PRUNE` in writing.
+   That was true and it was also the whole problem. A kept pattern
+   was LISTED AND INERT — it could not be edited, switched off,
+   exported or reasoned about like a rule, and the panel that offered
+   to keep it promised a warning that nothing anywhere delivered.
 
-   WHAT THE ORCHESTRATOR WOULD NEED TO CHANGE THAT. One field on
-   `ConstraintDef` — `severity: 'block' | 'warn'` — with the
-   configurator honouring 'warn' by annotating rather than blocking.
-   Until that exists, this register is the honest home. `src/types/
-   model.ts` is orchestrator-owned and was not touched.
+   The paragraph that used to end this section said what would change
+   it: "One field on `ConstraintDef` — `severity: 'block' | 'warn'` —
+   with the configurator honouring 'warn' by annotating rather than
+   blocking." BOTH NOW EXIST. `severity` is on the type (absent means
+   'block', so nothing already written changed meaning) and
+   `src/lib/configure/solve.ts` honours 'warn' on its own channel,
+   `warned`, which never overlaps `blocked`.
+
+   SO A KEPT PATTERN IS ADOPTED AS A REAL RULE — see
+   `adoptKeptPatterns` at the foot of this file and the door it goes
+   through, `src/lib/observed/adopt.ts`.
+
+   THE GUARANTEE DID NOT MOVE, IT GOT STRONGER. It used to rest on
+   there being no code path; it now rests on a coercion applied at
+   every seam a ConstraintDef can enter the registry — adoption,
+   `registerConstraints`, `putConstraint` and the localStorage
+   `load`. Nothing carrying observed provenance can hold 'block',
+   including a rule hand-edited in storage, and `observed.test.ts`
+   proves it by trying.
+
+   THIS REGISTER STILL EXISTS AND IS STILL THE DECISION OF RECORD.
+   Adoption does not replace it: it holds the MEASUREMENT that earned
+   the decision (see `KeptPattern` below on why the figures are
+   copied rather than referenced), it holds dismissals, which are not
+   rules at all, and it holds every kept pattern whose shape this app
+   cannot yet state as a sentence — with the blocker, in words, the
+   same way `WorkbookRuleList` draws the sixteen workbook seeds.
 
    THE SHAPE IS `constraintDefs.ts`'s, deliberately: a module-level
    registry keyed by organisation, a synchronous snapshot, a
@@ -47,12 +62,19 @@
    ============================================================ */
 
 import { useSyncExternalStore } from 'react'
-import type { ProjectMeta } from '@/types/model'
+import type { ConstraintDef, EntityDef, ProjectMeta } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { nowIso } from '@/lib/id'
+import {
+  adoptObserved,
+  OBSERVED_ID_PREFIX,
+  type Adoption,
+  type ObservedPattern,
+} from '@/lib/observed/adopt'
 import { MAY_PRUNE } from './discover'
-import type { Candidate, CandidateShape, Enforcement } from './discover'
-import { orgKeyOf } from './constraintDefs'
+import type { Candidate, CandidateBinding, CandidateShape, Enforcement } from './discover'
+import { buildConcepts, representativeFieldId, type ColumnConcept } from './columns'
+import { getConstraint, orgKeyOf, registerConstraints, setConstraintEnabled } from './constraintDefs'
 
 /* ---------------------------------------------------------- */
 /* What is stored                                              */
@@ -83,6 +105,12 @@ export interface KeptPattern {
   evidence: 'observed'
   /** never prunes — there is no third member of `Enforcement` */
   enforcement: Enforcement
+  /** THE TWO COLUMNS THE FINDING BINDS, so the decision can be turned
+   *  into a rule that points at something. A decision stored before
+   *  adoption existed has no `binds`, and adoption answers it with a
+   *  blocker rather than a guess — which is why this is optional and
+   *  why nothing here back-fills it. */
+  binds?: CandidateBinding | null
   hits: number
   tested: number
   /** mean share of the catalogue left standing, where the shape has
@@ -225,6 +253,7 @@ export function decisionFrom(c: Candidate, decision: DiscoveryDecision): KeptPat
     source: c.source,
     evidence: 'observed',
     enforcement: c.enforcement,
+    binds: c.binds ?? null,
     hits: c.hits,
     tested: c.tested,
     meanLeft: c.discrimination ? c.discrimination.meanLeft : null,
@@ -244,6 +273,11 @@ export function decide(
   const stored = decisionFrom(c, decision)
   orgMap(orgKey).set(stored.id, stored)
   publish()
+  /* KEEPING IT IS WHAT MAKES THE RULE. The toast says the pattern now
+     flags a pairing that disagrees; this is the line that makes that
+     sentence true. It is safe to fail — `adoptKeptPatterns` reports
+     rather than throws, and the decision above is already stored. */
+  if (decision === 'kept') adoptKeptPatterns(orgKey)
   return stored
 }
 
@@ -253,6 +287,11 @@ export function forget(orgKey: string, id: string): void {
   if (!map || !map.has(id)) return
   map.delete(id)
   publish()
+  /* STOP KEEPING IT AND THE RULE STOPS, but it is switched off and
+     never deleted — the registry has no per-rule delete by design,
+     and UNDO on the toast has to be able to bring it back with the
+     person's own edits and wording intact. */
+  if (isCurrentOrg(orgKey)) setConstraintEnabled(`${OBSERVED_ID_PREFIX}${id}`, false)
 }
 
 /** For `resetProject()`, beside `clearConstraints()`. A wiped project
@@ -261,4 +300,137 @@ export function forget(orgKey: string, id: string): void {
 export function clearDecisions(): void {
   byOrg.clear()
   publish()
+}
+
+/* ---------------------------------------------------------- */
+/* Adoption — the register's one door into the rule store      */
+/* ---------------------------------------------------------- */
+
+const isCurrentOrg = (orgKey: string): boolean =>
+  orgKey === orgKeyOf(useProjectStore.getState().meta)
+
+/**
+ * conceptKey -> the field id a clause may point at.
+ *
+ * NOT `conceptIndex`, which is keyed by FIELD ID. A finding names a
+ * column the way `buildConcepts` mints keys — `kind::normalised name`,
+ * e.g. 'trailer::atm (kg)' — and `conceptByKey` is what reads one.
+ * Getting this wrong does not throw: every adoption simply comes back
+ * blocked with "no table carries that column any more", which is a
+ * sentence about the project rather than about the code. Hence the
+ * note, and hence `adoptKept.test.ts` resolving a real one.
+ */
+function resolverFor(entities: Record<string, EntityDef>): (key: string) => string | undefined {
+  const byKey = new Map<string, ColumnConcept>()
+  for (const c of buildConcepts(entities)) byKey.set(c.key, c)
+  return (conceptKey) => {
+    const concept = byKey.get(conceptKey)
+    return concept ? representativeFieldId(concept) : undefined
+  }
+}
+
+/** What one call did, in the shape `SeedReport` already uses, so the
+ *  two seeding surfaces read the same. */
+export interface AdoptionReport {
+  /** ids adopted as rules by THIS call */
+  adopted: string[]
+  /** already in the rule store — left exactly as they are, so an edit
+   *  survives and a rule switched off stays off */
+  alreadyAdopted: string[]
+  /** kept, but this app cannot state it as a sentence yet; the reason
+   *  is the value, in the words a card prints */
+  blocked: Array<{ id: string; why: string }>
+}
+
+/**
+ * Every kept pattern this organisation holds, offered to the rule
+ * store as a real `ConstraintDef` carrying severity 'warn'.
+ *
+ * IDEMPOTENT, AND NON-DESTRUCTIVE IN BOTH DIRECTIONS. A pattern
+ * whose rule already exists is never rebuilt — the wording a person
+ * changed and the switch they threw are theirs — except that
+ * re-keeping something they had stopped keeping switches its rule
+ * back on, which is the only thing "keep it again" can honestly
+ * mean.
+ *
+ * Safe to call on every load and every time the tables change: a
+ * pattern whose columns are not in this project yet comes back under
+ * `blocked` and is tried again next time, rather than being written
+ * bound to nothing. That is `seedWorkbookConstraints`'s contract,
+ * deliberately.
+ */
+export function adoptKeptPatterns(orgKey?: string): AdoptionReport {
+  const report: AdoptionReport = { adopted: [], alreadyAdopted: [], blocked: [] }
+  const state = useProjectStore.getState()
+  const key = orgKey ?? orgKeyOf(state.meta)
+  /* the rule registry writes to the CURRENT organisation; adopting
+     into a different one from here would put rules somewhere nobody
+     asked for them */
+  if (!isCurrentOrg(key)) return report
+
+  const kept = (snapshot[key] ?? EMPTY).filter((k) => k.decision === 'kept')
+  if (kept.length === 0) return report
+
+  const resolve = resolverFor(state.entities)
+
+  const now = nowIso()
+  const fresh: ConstraintDef[] = []
+  for (const k of kept) {
+    const id = `${OBSERVED_ID_PREFIX}${k.id}`
+    const existing = getConstraint(id)
+    if (existing) {
+      report.alreadyAdopted.push(k.id)
+      /* re-keeping switches it back on; nothing else about it moves */
+      if (existing.enabled === false) setConstraintEnabled(id, true)
+      continue
+    }
+    const result: Adoption = adoptObserved(asObservedPattern(k), resolve, now)
+    if (result.adopted) {
+      fresh.push(result.adopted)
+      report.adopted.push(k.id)
+    } else {
+      report.blocked.push({ id: k.id, why: result.blocked })
+    }
+  }
+
+  if (fresh.length > 0) registerConstraints(fresh, key)
+  return report
+}
+
+/** The register's record, reduced to what the door takes. Written out
+ *  rather than spread, so a field added here is a decision and not an
+ *  accident. */
+function asObservedPattern(k: KeptPattern): ObservedPattern {
+  return {
+    id: k.id,
+    shape: k.shape,
+    statement: k.statement,
+    because: k.because,
+    source: k.source,
+    binds: k.binds ?? null,
+    hits: k.hits,
+    tested: k.tested,
+  }
+}
+
+/**
+ * WHY ONE KEPT PATTERN IS NOT A RULE, or undefined when it is one.
+ *
+ * Rule 10 in one function: a card listing a kept pattern that this
+ * app cannot state has to say so IN PLACE, in words a person can
+ * argue with, rather than leaving a row that quietly does nothing.
+ * `WorkbookRuleList` already draws exactly this for the sixteen
+ * workbook seeds; this is the same answer for a measured one.
+ *
+ * PURE — it takes the tables rather than reading the store, so a
+ * render may ask it and a test may prove it. It answers "could this
+ * be stated as a rule at all", which is the question the card asks;
+ * whether it already HAS been is `adoptKeptPatterns`'s report.
+ */
+export function adoptionBlocker(
+  k: KeptPattern,
+  entities: Record<string, EntityDef>,
+): string | undefined {
+  if (!k || k.decision !== 'kept') return undefined
+  return adoptObserved(asObservedPattern(k), resolverFor(entities), k.decidedAt).blocked
 }
