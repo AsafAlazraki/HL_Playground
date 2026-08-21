@@ -2,19 +2,6 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "helmlogic",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5401",
-        "--strictPort"
-      ],
-      "port": 5401
-    },
-    {
       "name": "hl5090",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
@@ -26,32 +13,6 @@
         "--strictPort"
       ],
       "port": 5090
-    },
-    {
-      "name": "hl5714",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5714",
-        "--strictPort"
-      ],
-      "port": 5714
-    },
-    {
-      "name": "hl5911",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5911",
-        "--strictPort"
-      ],
-      "port": 5911
     }
   ]
 }
