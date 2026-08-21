@@ -1836,7 +1836,28 @@ export function* discoverSteps(
   }
   const wants = (s: CandidateShape): boolean => !options.shapes || options.shapes.includes(s)
 
-  const ctx = new Ctx(project)
+  /* THE SAME FILE MUST GIVE THE SAME ANSWER, WHICHEVER DOOR IT CAME
+     THROUGH. Every walk below is `Object.values(project.entities)`,
+     and a string-keyed object iterates in INSERTION order — which is
+     seed order on a fresh load and IndexedDB primary-key order after a
+     reload. That made the report depend on how the project got into
+     memory: the proof pass measured a different proposal count before
+     and after a refresh, on identical data, and its advice was "do not
+     reload the page mid-demo".
+     A discovery engine whose answer changes when nothing changed is
+     not measuring, so the order is fixed here, once, before anything
+     reads it. Sorted by id because it is stable, opaque and does not
+     move when somebody renames a table. */
+  const ordered: DiscoveryProject = {
+    ...project,
+    entities: Object.fromEntries(
+      Object.keys(project.entities)
+        .sort()
+        .map((id) => [id, project.entities[id]]),
+    ),
+  }
+
+  const ctx = new Ctx(ordered)
   const relationships = relationshipsOf(ctx)
   const comparisons = { n: 0 }
   const incomparable = { n: 0 }
@@ -1862,7 +1883,7 @@ export function* discoverSteps(
   const total =
     relationships.length * perRelationship.length +
     new Set(
-      Object.values(project.entities)
+      Object.values(ordered.entities)
         .map((e) => e.kind)
         .filter((k): k is TableKind => k !== undefined),
     ).size +
