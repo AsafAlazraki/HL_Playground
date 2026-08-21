@@ -112,6 +112,33 @@ export type { RuleCardProps } from './RuleCard'
 export { NewRuleSentence, NEW_RULE_CAPTION } from './NewRuleSentence'
 export type { NewRuleSentenceProps } from './NewRuleSentence'
 
+/* -- the create half: where a rule starts, and what it would do --
+
+   WHAT IT WOULD DO, BEFORE THE COMMIT. `previewConstraint` counts a
+   half-written draft against the loaded sheet — the rows it reaches,
+   the rows its condition engages, and of those the ones that keep it
+   and the ones that break it today. `ConsequenceMeter` draws that.
+   Exported because any surface that lets somebody write a rule owes
+   them the same arithmetic, and there must be exactly one of it.
+
+   WHERE A RULE STARTS. `startingPoints` reads the sixteen adjudicated
+   workbook rules against the loaded sheet and says, per rule, whether
+   this sentence can be pointed at the columns it names — and when it
+   cannot, which part stops it. It is pure and it invents nothing: the
+   words come off the seed, the columns and kinds off the sheet. */
+export { ConsequenceMeter } from './ConsequenceMeter'
+export type { ConsequenceMeterProps } from './ConsequenceMeter'
+export { StartingPointList } from './StartingPointList'
+export type { StartingPointListProps } from './StartingPointList'
+export {
+  draftFrom,
+  offerKindWords,
+  startingPoints,
+  stillFrom,
+  tally,
+} from './startingPoints'
+export type { MissingColumn, OfferState, OfferTally, StartingPoint } from './startingPoints'
+
 /* THE PRICE FILE'S OWN RULES, DRAWABLE ANYWHERE. Exported for the
    module rules panel, which shows the subset naming a column of a
    kind its tables carry. There is one card design and one set of
@@ -120,6 +147,36 @@ export type { NewRuleSentenceProps } from './NewRuleSentence'
 export { WorkbookRuleList } from './WorkbookRuleList'
 export type { WorkbookRuleListProps } from './WorkbookRuleList'
 
+/* THE SAME RULES, LED BY THEIR MEASUREMENT AND GROUPED BY SUBJECT.
+   `WorkbookRuleList` above leads with STATUS, which is right for a
+   module page asking "what is being checked about the thing I am
+   standing in". BUSINESS RULES asks a different question — "what does
+   this price file assert" — and a list of sixteen cards stamped "Not
+   checked yet" answered it badly enough that the owner called the
+   whole page half baked. `RulesLedger` is that second reading: the
+   rate first, the rule, its qualification, what this app measured on
+   the loaded sheet, and only then what is not checked and why.
+
+   TWO READINGS, ONE SET OF FACTS. `ruleState()` decides which rules
+   are in which state for both of them, so the two surfaces can differ
+   in emphasis and can never differ about what is true. */
+export { RulesLedger } from './RulesLedger'
+export type { RulesLedgerProps, LiveReading } from './RulesLedger'
+export {
+  RULE_GROUPS,
+  RULE_LEDGER,
+  holdRate,
+  ledgerFor,
+  ruleState,
+} from './ruleLedger'
+export type {
+  RuleGroup,
+  RuleGroupId,
+  RuleLedgerEntry,
+  RuleMeasure,
+  RuleState,
+} from './ruleLedger'
+
 export {
   evaluateConstraint,
   evaluateConstraints,
@@ -127,8 +184,10 @@ export {
   sortConstraints,
   statusNote,
   BADGE_LABEL,
+  previewConstraint,
+  previewCount,
 } from './state'
-export type { ConstraintStatus, BadgeKind } from './state'
+export type { ConstraintStatus, BadgeKind, RulePreview } from './state'
 
 /* -- the vocabulary, for the why-panel and any future solver -- */
 
@@ -325,3 +384,83 @@ export {
   setClauseValue,
   singleGroup,
 } from './edit'
+
+/* -- THE DISCOVERY ENGINE, AND THE SCREEN THAT PLACES IT ----------
+
+   `discover(project)` measures the rules a price file is ALREADY
+   FOLLOWING out of its own values — the shapes the adjudication in
+   docs/specs/FITMENT_RULES.md §0 found by hand, applied by machine,
+   each with its numerator, its denominator, how much of the
+   catalogue it leaves standing, and the rows that disagree by name.
+
+   EVERYTHING IT PRODUCES IS OBSERVED. `MAY_PRUNE` is an exported
+   `false` and the `Enforcement` type has no 'filter' member, so a
+   pruning rule cannot be written against this API without changing
+   the type. A verdict of 'filter' means "it clears the bar a filter
+   would have to clear", never "filter it".
+
+   `DiscoveryPanel` takes no props, reads the store itself and brings
+   its own stylesheet, exactly like `TrailerFitmentPanel` — so
+   drawing it on a module page is one line. It drives the engine's
+   generator from an idle callback, so the app never freezes while it
+   thinks.
+
+   A KEPT PATTERN IS NOT A `ConstraintDef` and must not become one:
+   all four `ConstraintKind`s prune, and `ConstraintDef` has no
+   severity, so writing a measured pattern there would hand it the
+   one power this engine withholds. Kept patterns live in
+   `discoveredRules.ts`, which nothing in the configurator reads.
+   `clearDecisions()` belongs beside `clearConstraints()` in
+   `resetProject()`. */
+
+export { DiscoveryPanel } from './DiscoveryPanel'
+export { useDiscovery } from './useDiscovery'
+export type { DiscoveryPhase, DiscoveryState } from './useDiscovery'
+export {
+  DISCRIMINATION_CEILING,
+  FILTER_RATE,
+  JOIN_KEY_MATCH_RATE,
+  JOIN_KEY_UNIQUE_RATE,
+  MAY_PRUNE,
+  THRESHOLDS,
+  WARNING_RATE,
+  discover,
+  discoverSteps,
+} from './discover'
+export type {
+  Candidate,
+  CandidateShape,
+  CounterExample,
+  DiscoveryBounds,
+  DiscoveryProgress,
+  DiscoveryProject,
+  DiscoveryReport,
+  DiscriminationReading,
+  Enforcement,
+  RelationshipReading,
+  UniquenessReading,
+  Verdict,
+} from './discover'
+export {
+  KEPT_MAY_PRUNE,
+  clearDecisions,
+  decide,
+  decisionFrom,
+  forget,
+  getDecisions,
+  useDiscoveryDecisions,
+} from './discoveredRules'
+export type { DiscoveryDecision, KeptPattern } from './discoveredRules'
+export {
+  OBSERVED_SAY,
+  SHAPE_SAY,
+  counterSay,
+  deleteSay,
+  enforcementSay,
+  excludedSay,
+  figuresFor,
+  recommendationSay,
+  uniquenessSay,
+  verdictSay,
+} from './discoverSay'
+export type { Figures, Standing } from './discoverSay'

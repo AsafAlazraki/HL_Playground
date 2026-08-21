@@ -21,6 +21,41 @@
         clicked OR the results of the last run — never both, because
         this stage is over the sheet and a third column is a wall.
 
+   ── WHAT CHANGED, AND WHY THE CANVAS IS NOW BEHIND A DOOR ─────
+
+   Everything above is still true of the CANVAS. What was wrong was
+   that the canvas was the whole of FITMENT:
+
+     > "the what fits what and the business rules and stuff look half
+     >  baked with how good everything else is … the really beautiful
+     >  ways to visualise AND create those should be based on the MPF
+     >  stuff that you have defined"
+
+   A person pressing FITMENT is asking what goes with what. They were
+   given a rail holding two rules, a blank sheet of paper and an
+   instruction to pick one — a RULE EDITOR wearing the name of a
+   question, beside a Modules page that opens onto seven brands with
+   their counts. The answer was already on the sheet and nothing drew
+   it: 28 relationship tables, 8,679 pairings, every one traced to a
+   cell it was read out of.
+
+   So this stage has two faces and the DEFAULT is the reading:
+
+     'fanout'  @/features/fitment — what each table is paired with,
+               how much of each catalogue that leaves standing, what
+               a person decided against what a formula worked out,
+               and what does not resolve. Every figure computed on
+               render from the loaded rows.
+     'canvas'  everything the file already did, unchanged.
+
+   NOTHING WAS REMOVED. Removing a capability is forbidden and this
+   removes none: the rail, the palette, the inspector, the results
+   rail, the framing licence and MIN_READABLE are all still here, one
+   press away, published into the ACTION BAR under `Rule builder`
+   like every other page action. The two faces name each other, in
+   the same voice the rules pane and this stage already use to name
+   each other.
+
    IT SITS OVER THE SHEET, like the view and rules stages, so the
    blueprint keeps its zoom and node state underneath and closing is
    instant.
@@ -42,7 +77,7 @@
    at a plate from deleting a price file.
    ============================================================ */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 import {
   Background,
@@ -63,7 +98,7 @@ import type {
   OnConnect,
   OnNodeDrag,
 } from '@xyflow/react'
-import { ArrowLeft } from '@phosphor-icons/react'
+import { ArrowLeft, ChartBar, TreeStructure } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { sayUndoable } from '@/store/notes'
 import type { RuleNode } from '@/types/model'
@@ -79,7 +114,10 @@ import {
   useRuleGraph,
   useRuleRun,
 } from '@/features/rules'
+import { FanOut } from '@/features/fitment'
 import { ICON_SIZE } from '@/lib/icons'
+import { useActionBar } from '@/lib/actions'
+import type { ActionGroup } from '@/lib/actions'
 import { stageKeys, useStageEscape } from './stageKeys'
 
 /* The sheet's grid, so plates and tables sit on the same paper. */
@@ -100,9 +138,17 @@ const FRAME_PAD = 32
 
 export interface FlowStageProps {
   onClose: () => void
+  /** open one of the relationship tables a figure was counted off.
+   *  A count nobody can reach the rows of is a claim, not a reading. */
+  onOpenTable?: (entityId: string) => void
 }
 
-export function FlowStage({ onClose }: FlowStageProps): ReactElement {
+/** Which face of Fitment is up. The reading is the default because
+ *  it is the answer to the question the door asks. */
+type Face = 'fanout' | 'canvas'
+
+export function FlowStage({ onClose, onOpenTable }: FlowStageProps): ReactElement {
+  const [face, setFace] = useState<Face>('fanout')
   const rules = useProjectStore((s) => s.rules)
   const activeRuleId = useProjectStore((s) => s.activeRuleId)
 
@@ -157,6 +203,47 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
 
   const showResults = !!ruleId && side === 'results' && (running || !!result)
 
+  /* ============================================================
+     THE TWO FACES, ON THE ACTION BAR AND NOWHERE ELSE.
+
+     `ACTION_BAR.md`: page actions belong on the bar above the dock,
+     not in a strip of this page's own. Rank 50 is "go somewhere about
+     this subject", which is exactly what these are — one door each
+     way, never both drawn at once, so there is one way out of one
+     place. The labels are what the destination HOLDS, sentence case,
+     because a button is one of the four things uppercase may never
+     touch.
+     ============================================================ */
+  const bar = useMemo<ActionGroup[]>(
+    () => [
+      {
+        id: 'flow-face',
+        rank: 50,
+        items: [
+          face === 'fanout'
+            ? {
+                kind: 'button',
+                id: 'flow-canvas',
+                label: 'Rule builder',
+                say: 'Open the rule builder',
+                icon: TreeStructure,
+                onPick: () => setFace('canvas'),
+              }
+            : {
+                kind: 'button',
+                id: 'flow-fanout',
+                label: 'The counts',
+                say: 'Back to what fits what, counted',
+                icon: ChartBar,
+                onPick: () => setFace('fanout'),
+              },
+        ],
+      },
+    ],
+    [face],
+  )
+  useActionBar('flow-stage', bar)
+
   return (
     <div
       className="shell-viewstage shell-flowstage"
@@ -192,10 +279,18 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
               point here ("to work out what goes with something, use
               Fitment"), so the two doors describe each other the same
               way round. */}
-          <span className="shell-view-what-say">the rules that work out what fits</span>
+          {/* THE ASIDE SAYS WHAT SORT OF PLACE THIS IS, and this page
+              is now two sorts, so it says which one is up. Neither is
+              a question and neither is the shape of the screen. */}
+          <span className="shell-view-what-say">
+            {face === 'fanout' ? 'what goes with what, counted' : 'the rules that work out what fits'}
+          </span>
         </p>
       </div>
 
+      {face === 'fanout' ? (
+        <FanOut onOpenTable={onOpenTable} />
+      ) : (
       <div className="shell-view-split">
         <aside className="shell-view-rail shell-flow-rail" aria-label="Rules">
           <RulesList />
@@ -272,6 +367,7 @@ export function FlowStage({ onClose }: FlowStageProps): ReactElement {
           </aside>
         ) : null}
       </div>
+      )}
     </div>
   )
 }

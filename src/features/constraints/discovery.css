@@ -1,0 +1,728 @@
+/* ============================================================
+   THE DISCOVERY BAND (dx-) — the rules a price file already
+   follows, drawn on the Business rules sheet.
+
+   IT IS A BLOCK ON AN EXISTING SURFACE, NOT A NEW PAGE, so it takes
+   the shell the two bands beside it already take — `.cn-band`, its
+   eyebrow, its title and its lede all come from `constraints.css`
+   and are not restated here. Only what is new to this band is in
+   this file, which is the co-location rule: append beside the
+   feature, never build a shared override layer.
+
+   THE ONE PIECE OF TYPE THIS FILE DOES NOT INHERIT is the eyebrow.
+   Its neighbours stamp `.mono-label`, which resolves to `--micro-size`
+   = 10px, and the floor is 11px — absolute. So this band writes its
+   own eyebrow at 11px with the same mono, weight and tracking, and
+   the 1px is on the right side of the rule rather than the
+   consistent side of it.
+
+   THE CARD IS `.cn-rl`'s, deliberately: white, hairline, 10px
+   radius, a 3px rail on the left edge and `--ec1` at rest. Two rule
+   lists on one page that disagree about what a rule card looks like
+   is the drift this feature has already been through once.
+
+   COLOUR BUDGET. There is no colour in this band at all beyond the
+   ink ramp and one accent: the progress fill while it is measuring,
+   and the focus ring. Nothing here is coloured to mean anything —
+   the two figures say what they say in words beneath them, because
+   a person who cannot tell 4.1 % from 97.7 % by hue can read
+   "it rejects almost nothing" in either theme.
+
+   CONTRAST. `--ink-faint` is 4.72:1 on white and 4.21:1 on
+   `--paper-sunken`, which FAILS. So everything inside `.dx-check`,
+   which is drawn on the sunken plane, steps up to `--ink-soft`
+   (6.8:1 there). That mistake has been made in this repo before and
+   is written down in DESIGN_CONTRACT §1.
+   ============================================================ */
+
+/* ============================================================
+   THE BAND
+   ============================================================ */
+
+/* The band itself takes `.cn-band`'s rule and margin; this is only
+   here so a grid child of the sheet can never refuse to shrink. */
+.dx {
+  min-width: 0;
+}
+
+.dx-eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: var(--micro-weight);
+  letter-spacing: var(--micro-track);
+  line-height: var(--micro-lead);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* THE LINE THAT MAY NOT BE CROSSED, said first and in prose. Set off
+   by a rule rather than by a colour, because it is the frame for
+   everything below it and not a warning about any one card. */
+.dx-line {
+  margin: var(--sp-3) 0 0;
+  padding-left: var(--sp-3);
+  max-width: 62ch;
+  border-left: 2px solid var(--hairline-strong);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.dx-line b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ============================================================
+   WHILE IT IS WORKING
+
+   It says that it is working, what it is on and how far through it
+   is. The fill is a transform, never a width — a transition on a
+   layout property is the one motion rule this design states twice.
+   ============================================================ */
+
+.dx-working {
+  margin-top: var(--sp-4);
+}
+
+.dx-working-say {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.dx-bar {
+  margin-top: var(--sp-2);
+  height: 3px;
+  border-radius: 999px;
+  background: var(--paper-sunken);
+  overflow: hidden;
+}
+
+.dx-bar-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  border-radius: 999px;
+  background: var(--blue);
+  transition: transform var(--t-med) var(--ease-settle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dx-bar-fill {
+    transition: none;
+  }
+}
+
+.dx-working-step {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   WHAT IT WAS POINTED AT
+   ============================================================ */
+
+.dx-scan {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+}
+
+.dx-scan-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.dx-scan-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dx-scan-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.dx-scan-what {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.dx-stale {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   A SECTION INSIDE THE BAND
+   ============================================================ */
+
+.dx-sec {
+  margin-top: var(--sp-5);
+}
+
+.dx-sec-name {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+}
+
+.dx-sec-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+
+.dx-sec-say {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.dx-none {
+  margin: var(--sp-4) 0 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   THE CARD — `.cn-rl`'s shell, so two rule lists on one page
+   cannot disagree about what a rule looks like
+   ============================================================ */
+
+.dx-list,
+.dx-no-list,
+.dx-kept {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.dx-card {
+  min-width: 0;
+  padding: var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--ec1);
+  transition:
+    box-shadow var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.dx-card:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--ec3);
+}
+
+.dx-meta {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.dx-tag {
+  color: var(--ink-soft);
+}
+
+/* A SEPARATOR IS STILL A PAIR THAT GETS MEASURED. `--fg-quaternary`
+   is 2.8:1 and the contract permits it for rules and ticks, but a
+   sweep over this band reported two pairs under 4.5 and a reader of
+   that sweep has to stop and decide whether they matter. They take
+   the same ink as the words either side of them instead, and the
+   band clears 4.5:1 everywhere with nothing to argue about. */
+.dx-meta-sep {
+  color: var(--ink-faint);
+}
+
+.dx-meta-rel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The rule itself, in the price file's own column names. */
+.dx-says {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* ============================================================
+   THE TWO FIGURES, SIDE BY SIDE
+
+   This pair is the argument of the whole screen: a rule that holds
+   530 of 530 times and still leaves 97.7 % of the catalogue standing
+   has not chosen anything, and a person who sees both figures at
+   once works that out without being told. They are drawn as one grid
+   so they can never be separated by a wrap, and each carries its own
+   sentence underneath rather than a colour.
+   ============================================================ */
+
+.dx-figs {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.dx-fig {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dx-fig-k {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: var(--micro-weight);
+  letter-spacing: var(--micro-track);
+  line-height: var(--micro-lead);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.dx-fig-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.dx-fig-say {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.dx-because {
+  margin: var(--sp-3) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   THE ACTS
+
+   Every one of them has hover, press and focus, and the press lands
+   on pointer-down. The note beside them says what keeping does, at
+   the place where keeping is done.
+   ============================================================ */
+
+.dx-acts {
+  margin-top: var(--sp-3);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.dx-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.dx-act:hover {
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+}
+.dx-act:active {
+  transform: scale(0.97);
+}
+.dx-act:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* The one that accepts a pattern. Louder by a hairline and by its
+   ink, never by a fill — an accepted pattern is still an observation
+   and a green button would say otherwise. */
+.dx-act--keep {
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+}
+
+.dx-acts-note {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   CHECKING IT — the rows that disagree, by name
+
+   Drawn on the sunken plane, so every word in here is `--ink-soft`
+   or `--ink`. `--ink-faint` fails at 4.21:1 over this background.
+   ============================================================ */
+
+.dx-check {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--paper-sunken);
+  border-radius: var(--radius-sm);
+}
+
+.dx-check-head {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.dx-ce {
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dx-ce-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+
+.dx-ce-pair {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dx-ce-subject {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.dx-ce-arrow {
+  color: var(--ink-faint);
+}
+
+.dx-ce-partner {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.dx-ce-why {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* The sharp one: the price file itself recommends this pairing. */
+.dx-ce-rec {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 0 8px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+}
+
+.dx-check-note {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.dx-check-note--sharp {
+  color: var(--ink);
+}
+
+.dx-check-rule {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+  max-width: 68ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.dx-check-src {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.dx-check-observed {
+  margin: 6px 0 0;
+  max-width: 68ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* ============================================================
+   KEPT, AND DISMISSED
+   ============================================================ */
+
+.dx-kept-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+.dx-kept-says {
+  grid-column: 1;
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.dx-kept-fig {
+  grid-column: 1;
+  margin: 4px 0 0;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.dx-kept-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.dx-kept-of {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.dx-kept-row .dx-act {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  justify-self: end;
+}
+
+/* ============================================================
+   WHAT WAS MEASURED AND NOT PROPOSED
+   ============================================================ */
+
+.dx-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 4px;
+  margin-left: -4px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.dx-toggle:hover {
+  background: var(--paper-sunken);
+}
+.dx-toggle:active {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+}
+.dx-toggle:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+.dx-toggle-mark {
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+
+.dx-more {
+  margin-top: var(--sp-3);
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.dx-more:hover {
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+}
+.dx-more:active {
+  transform: scale(0.97);
+}
+.dx-more:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+.dx-no {
+  min-width: 0;
+  padding: var(--sp-3);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+.dx-no-says {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.dx-no-why {
+  margin: 4px 0 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.dx-no-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.dx-no-left {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.dx-no-rule {
+  min-width: 0;
+  flex: 1 1 100%;
+  color: var(--ink-soft);
+}

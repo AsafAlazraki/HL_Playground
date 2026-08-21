@@ -754,7 +754,7 @@
    ============================================================ */
 
 .cn-wb {
-  margin-top: var(--sp-7);
+  margin-top: calc(var(--sp-6) + var(--sp-2));
   padding-top: var(--sp-5);
   border-top: 1px solid var(--hairline);
 }
@@ -907,7 +907,7 @@
    ============================================================ */
 
 .cn-band {
-  margin-top: var(--sp-7);
+  margin-top: calc(var(--sp-6) + var(--sp-2));
   padding-top: var(--sp-5);
   border-top: 1px solid var(--hairline);
 }
@@ -1505,4 +1505,731 @@
   font-size: 12.5px;
   letter-spacing: 0;
   text-transform: none;
+}
+
+/* ============================================================
+   THE CREATE HALF — where a rule comes FROM, what its columns
+   ARE, and what it would DO before anybody presses anything.
+
+   Three blocks, one card. They are drawn on the composer's own white
+   (`.cn-new` is `--paper-high`) and NOT on a tint, deliberately: every
+   one of them leans on `--ink-faint` for the quiet half of its text,
+   and `--ink-faint` measures 4.72:1 on white and 4.26:1 over the 3.5 %
+   sunken tint, which fails. The tint would have to be paid for in a
+   step up to `--ink-soft` on four separate rules; a hairline and a
+   left rail cost nothing and say the same thing.
+
+   Nothing here introduces a colour, a radius, a spacing step or a
+   shadow that is not already in the contract. The only saturated ink
+   on the whole surface is `--red`, on the one figure that means a row
+   of this dealership's own data disagrees with what is about to be
+   written.
+   ============================================================ */
+
+/* -- the pointer at the catalogue on the bar ----------------- */
+
+/* It names the control and where it is, which is the same move
+   `.cn-lede--other` makes for Fitment: a door a person cannot see is
+   a door that does not exist, and the action bar only draws itself
+   while there is something on it. */
+.cn-new-offer {
+  margin: 0 0 var(--sp-3);
+  max-width: 68ch;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.cn-new-offer b {
+  font-weight: 550;
+  color: var(--ink);
+}
+
+/* -- where the sentence was started from --------------------- */
+
+.cn-from {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+}
+
+/* the one uppercase style: 11px / 0.06em, and it carries an
+   adjudication reference, which is an identifier */
+.cn-from-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.cn-from-says {
+  margin: 6px 0 0;
+  max-width: 68ch;
+  font-size: 13.5px;
+  font-weight: 550;
+  line-height: 1.45;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+}
+
+.cn-from-note,
+.cn-from-plainly {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-from-plainly {
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+}
+
+/* THE WAY BACK OUT, AND IT IS A SENTENCE. Re-pointing a column drops
+   this block on its own, so this exists only for the person who wants
+   the blank sentence back without hunting for the column that would
+   release it. */
+.cn-from-blank {
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-decoration-color: var(--hairline-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.cn-from-blank:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ink-faint);
+}
+.cn-from-blank:active {
+  color: var(--blue-deep);
+}
+.cn-from-blank:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* -- what the columns are, in the workbook's own words -------- */
+
+.cn-cols {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+}
+.cn-col {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-2);
+  min-width: 0;
+}
+.cn-col-name {
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--ink);
+}
+.cn-col-where {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+/* the cell it was read out of. Same job, same face and same wrap as
+   `.cn-wb-src`, one step smaller because it sits inside a sentence
+   rather than under a card. */
+.cn-col-desc {
+  flex: 1 1 24ch;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   WHAT IT WOULD DO — the consequence meter
+   ============================================================ */
+
+.cn-conseq {
+  margin: var(--sp-4) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.cn-conseq-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+/* A CONTROL DRAWN AND NOT YET ABLE TO ACT SAYS WHAT IT WILL DO — the
+   dashed stub of DESIGN_CONTRACT section 5. It is deliberately not a
+   row of zeroes: a zero is a measurement, and nothing has been
+   measured. The sentence takes `--ink-soft`, not `--ink-faint`,
+   because the stub's ground is the one tinted surface in this block. */
+.cn-conseq-stub {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-3);
+  max-width: 68ch;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* THE BAR. The track is every row the sentence can reach; the ink is
+   what it engages; the red is what disagrees with it as the sheet
+   stands today. Two inks and a track — no accent, because the accent
+   is spent on the sentence's own values and the primary action. */
+.cn-bar {
+  display: flex;
+  overflow: hidden;
+  height: 8px;
+  margin: var(--sp-2) 0;
+  border-radius: 999px;
+  background: var(--paper-sunken);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+.cn-bar-keeps,
+.cn-bar-breaks {
+  display: block;
+  height: 100%;
+  /* a width that moves as a value is typed is a state change, not a
+     layout animation: the element's own box never reflows anything */
+  transition: width var(--t-med) var(--ease-settle);
+}
+.cn-bar-keeps {
+  background: var(--ink);
+}
+.cn-bar-breaks {
+  background: var(--red);
+}
+
+.cn-conseq-say {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-conseq-say--none {
+  color: var(--ink);
+}
+
+.cn-conseq-split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.cn-conseq-keeps,
+.cn-conseq-breaks,
+.cn-conseq-share {
+  white-space: nowrap;
+}
+.cn-conseq-breaks.is-bad,
+.cn-conseq-breaks.is-bad .cn-fig {
+  color: var(--red);
+}
+.cn-conseq-share {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.cn-conseq-sep {
+  color: var(--ink-faint);
+}
+
+/* THE ONE SENTENCE A PERSON COULD NOT HAVE COUNTED THEMSELVES —
+   FITMENT_RULES F9's lesson, said at the moment it is being made. */
+.cn-conseq-note {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* every figure in this app is mono and tabular, and these move while
+   somebody is typing — a proportional digit would make the line
+   shuffle sideways on every keystroke */
+.cn-fig {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* ============================================================
+   THE CATALOGUE — sixteen workbook rules, in the action bar's panel.
+
+   The panel is 340px and `--paper-overlay`. Type steps are the bar's
+   own, not the page's, because this is chrome hanging off a control.
+   ============================================================ */
+
+.cn-offers {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+}
+.cn-offer {
+  list-style: none;
+}
+
+.cn-offer-hit {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px var(--sp-2);
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+/* a list row DARKENS instead of scaling, so its neighbours do not
+   look like they moved */
+.cn-offer-hit:hover {
+  background: var(--paper-sunken);
+}
+.cn-offer-hit:active {
+  background: var(--blue-wash);
+}
+.cn-offer-hit:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+
+/* the adjudication's reference — an identifier, so mono */
+.cn-offer-ref {
+  grid-row: 1 / span 2;
+  align-self: start;
+  padding-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+/* ONE OF THE SIXTEEN CAN BE ACTED ON, AND THE MARGIN SAYS WHICH. The
+   accent goes on the reference rather than on the row, so a list of
+   sixteen does not become sixteen accents. */
+.cn-offer-hit.is-live .cn-offer-ref {
+  color: var(--blue);
+}
+
+.cn-offer-says {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+.cn-offer-hit.is-live .cn-offer-says {
+  color: var(--ink);
+}
+
+.cn-offer-state {
+  grid-column: 2;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ink-faint);
+}
+
+/* WHY IT CANNOT BE THE START OF A SENTENCE, IN THE PLACE IT IS
+   REFUSED. The row keeps its place in the tab order (`aria-disabled`,
+   not `disabled`) precisely so this can be reached and read. */
+.cn-offer-why {
+  margin: 2px 0 var(--sp-2);
+  padding: var(--sp-2) 8px var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--hairline-strong);
+}
+.cn-offer-why-say,
+.cn-offer-plainly,
+.cn-offer-where {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.cn-offer-plainly,
+.cn-offer-where {
+  margin-top: 6px;
+}
+.cn-offer-where {
+  color: var(--ink-faint);
+}
+
+.cn-offer-gone {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+/* the column the rule names and this sheet has not got. It is the
+   seed's own key rather than a name anybody typed into a cell, so it
+   is set as the identifier it is. */
+.cn-offer-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.cn-offer-key-on {
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   THE LEDGER (cn-tally, cn-grp, cn-rl) — what this price file
+   asserts, drawn as findings rather than as a to-do list.
+
+   THE FAULT IT FIXES, stated once so nobody re-composes it back.
+   Every rule on this page carried a status stamp as its FIRST line,
+   and ten of the sixteen stamps read "Not checked yet". All ten were
+   true. Read down the page they were also the loudest thing on it, so
+   a screen whose subject is sixteen rules mined out of a real price
+   file — with their cell references, their evidence class and their
+   measured hit rates — read as an unbuilt feature.
+
+   So the FIGURE leads and the status is a pill at the end of the same
+   line. Nothing was removed: the reason a rule is not checked is still
+   on every card that is not checked, one line above the provenance.
+
+   COLOUR BUDGET, and it is tight on purpose.
+     · The 3px left rail is the KIND HUE of the tables the rule bites
+       on, read off the loaded project by accentVar(entity.accent) —
+       so the trailer rules are the same ochre as the trailer tables on
+       Home, and a sheet with no trailer tables gets a hairline.
+     · --viridian marks a rule that IS being checked, whether here or
+       in Fitment. Those two say the same thing to a reader and there
+       is no reason to give them two colours.
+     · BLUE IS SPENT ELSEWHERE. It is the accent, and on this page it
+       belongs to the one primary — "Write a rule", on the action bar.
+       Six blue pills in a list is an accent with nothing left to say.
+
+   NO TINT UNDER SMALL TEXT. Every card is --paper-high, because
+   --ink-faint measures 4.72:1 on white and 4.26:1 over a 3.5 % tint,
+   which fails. The one recessed strip here — the live reading — steps
+   its label up to --ink-soft for exactly that reason.
+   ============================================================ */
+
+/* -- the header's tally ------------------------------------- */
+
+.cn-tally {
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  /* TWO ACROSS, NOT FOUR. At 200px the four figures fitted the sheet
+     and their sentences did not — the fourth wrapped to a row of its
+     own and the block read as three tiles and an orphan. 300px gives
+     a 2 x 2 that holds at every width this sheet is drawn at, because
+     `.cn-sheet` is capped at 840px and does not grow past it. */
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: var(--sp-4) var(--sp-5);
+}
+
+.cn-tally-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline-strong);
+}
+
+.cn-tally-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* The slash between two counted things. It carries meaning — the
+   words beside it say which is which — so it is --ink-faint and not
+   the quaternary tick grey. */
+.cn-tally-sep {
+  padding: 0 3px;
+  color: var(--ink-faint);
+}
+
+.cn-tally-what {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* -- the ledger, grouped by subject ------------------------- */
+
+.cn-ledger {
+  margin-top: calc(var(--sp-6) + var(--sp-2));
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.cn-grp {
+  min-width: 0;
+}
+
+.cn-grp-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The kind hue as a DOT — never a fill behind text, never chrome. */
+.cn-grp-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--cn-grp-accent, var(--hairline-strong));
+}
+
+.cn-grp-name {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+}
+
+.cn-grp-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.cn-grp-say {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.cn-grp-list {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* -- one rule ----------------------------------------------- */
+
+.cn-rl {
+  min-width: 0;
+  padding: var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--cn-rl-accent, var(--hairline-strong));
+  border-radius: var(--radius);
+  box-shadow: var(--ec1);
+}
+
+.cn-rl-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.cn-rl-rate {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  flex: 1 1 260px;
+}
+
+/* A rule the workbook asserts without a rate — a formula, a divider
+   label. It draws the assertion instead, and it may not be given a
+   denominator it never had. */
+.cn-rl-rate--stated {
+  align-items: flex-start;
+}
+
+.cn-rl-rate-n {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.cn-rl-rate-of {
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.cn-rl-rate-of b {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* The status, at the end of the line it used to open. Sentence case:
+   a status is not a label style, and uppercasing it was half of why
+   "NOT CHECKED YET" shouted. */
+.cn-rl-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 9px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+}
+/* Checked here and checked in Fitment mean the same thing to whoever
+   is reading, so they take the same mark. */
+.cn-rl-pill.is-here,
+.cn-rl-pill.is-elsewhere {
+  color: var(--viridian);
+  border-color: var(--hairline-strong);
+}
+.cn-rl-pill.is-pending {
+  color: var(--ink-soft);
+}
+
+.cn-rl-says {
+  margin: var(--sp-3) 0 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.cn-rl-because {
+  margin: 6px 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* The qualification, which may never be separated from the figure. */
+.cn-rl-caveat {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* What this app measured on THIS sheet, on this render. Recessed,
+   because it is an observation about the data rather than a statement
+   about the rule — and its label steps up to --ink-soft, since
+   --ink-faint fails over a tint. */
+.cn-rl-live {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px var(--sp-2);
+  background: var(--paper-sunken);
+  border-radius: var(--radius-sm);
+}
+
+.cn-rl-live-k {
+  flex: 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.cn-rl-live-n {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cn-rl-live-what {
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* The reason, and it is required. "Not checked yet" on its own is a
+   shrug; this line is the position. */
+.cn-rl-why {
+  margin: var(--sp-2) 0 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cn-rl-why-k {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* -- the person's own rules, below the workbook's ------------ */
+
+.cn-mine .cn-new {
+  margin-top: var(--sp-4);
 }

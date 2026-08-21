@@ -179,7 +179,14 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
     case 'rules':
       return <RulesStage onClose={h.close} />
     case 'flow':
-      return <FlowStage onClose={h.close} />
+      return (
+        <FlowStage
+          onClose={h.close}
+          /* the fan-out counts pairings off relationship tables; this
+             is how a person reaches the rows behind a figure */
+          onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
+        />
+      )
     case 'quote':
       return (
         <QuoteStage

@@ -562,6 +562,33 @@ export interface SelectOptions {
    *  honest answer for a project whose load column has never been
    *  identified. */
   floor?: FloorSpec
+  /**
+   * TWO MEMOS, AND THEY ARE NOT AN OPTIMISATION FOR ITS OWN SAKE.
+   *
+   * MEASURED on the running app at full scale: BUSINESS RULES took
+   * **8.8 s** to paint, effectively all of it in `readMarques`, which
+   * runs this selection once per subject row — 810 hulls against 434
+   * live trailers. Each of those 351,540 candidates re-derived the
+   * same two things: which marque a banner names (a whole-word test
+   * against every marque, each folding both strings again), and the
+   * folded text of the same trailer row. There are 47 distinct
+   * banners and 434 trailers on the sheet, so the work was being done
+   * thousands of times over for an answer that cannot change while
+   * the vocabulary is fixed.
+   *
+   * NEITHER CHANGES AN ANSWER. Both are pure functions of their key
+   * — `marqueOfBanner(banner, marques)` and `foldedPartnerText(row)`
+   * — and the whole selection is asserted against the seed either
+   * way. Pass a map to share it across calls; omit it and each call
+   * keeps its own, which is still the right saving within one hull.
+   *
+   * The key is the banner text and the ROW ID; a caller reusing a map
+   * across two different marque vocabularies would be asking one
+   * question and reading another's answer, so `readMarques` builds
+   * one map per vocabulary and nothing else shares them.
+   */
+  bannerIndex?: Map<string, Marque | null>
+  textIndex?: Map<string, string>
 }
 
 /**
@@ -590,6 +617,25 @@ export function selectPartners(
 
   const marques = options.marques ?? marqueVocabulary(project, scope)
   const marque = marqueOfSubject(subject, subjectRow, marques)
+
+  /* see SelectOptions — same answers, two orders of magnitude fewer
+     folds when the caller runs this over a whole catalogue */
+  const bannerIndex = options.bannerIndex ?? new Map<string, Marque | null>()
+  const namedBy = (banner: string): Marque | null => {
+    const hit = bannerIndex.get(banner)
+    if (hit !== undefined) return hit
+    const found = marqueOfBanner(banner, marques)
+    bannerIndex.set(banner, found)
+    return found
+  }
+  const textIndex = options.textIndex ?? new Map<string, string>()
+  const textOf = (entity: EntityDef, row: RowData): string => {
+    const hit = textIndex.get(row.id)
+    if (hit !== undefined) return hit
+    const folded = foldedPartnerText(entity, row)
+    textIndex.set(row.id, folded)
+    return folded
+  }
 
   const loadField = options.floor ? loadFieldFor(subject, options.floor) : null
   const load = loadField ? readCell(subjectRow, loadField.id) : null
@@ -631,7 +677,7 @@ export function selectPartners(
       catalogue += 1
 
       const banner = bannerOf(partner, row)
-      const bannerMarque = marqueOfBanner(banner, marques)
+      const bannerMarque = namedBy(banner)
       const series: SeriesVerdict =
         bannerMarque === null
           ? 'unnamed'
@@ -665,7 +711,7 @@ export function selectPartners(
       const namesModel =
         series === 'built-for-this' &&
         (() => {
-          const hay = foldedPartnerText(partner, row)
+          const hay = textOf(partner, row)
           return wanted.some((token) => hay.includes(token))
         })()
 
@@ -824,6 +870,12 @@ export function readMarques(
   options: SelectOptions = {},
 ): MarqueReading[] {
   const marques = options.marques ?? marqueVocabulary(project, scope)
+  /* ONE MEMO FOR THE WHOLE SWEEP — see SelectOptions. This loop is
+     what made BUSINESS RULES take 8.8 s: it runs the selection once
+     per subject row, and every one of those runs re-folded the same
+     47 banners and the same 434 trailer rows. */
+  const bannerIndex = new Map<string, Marque | null>()
+  const textIndex = new Map<string, string>()
   const out: MarqueReading[] = []
 
   for (const marque of marques) {
@@ -840,7 +892,12 @@ export function readMarques(
 
     for (const row of project.rowsByEntity[subject.id] ?? []) {
       if (marqueOfSubject(subject, row, marques)?.name !== marque.name) continue
-      const result = selectPartners(project, scope, subject.id, row.id, { ...options, marques })
+      const result = selectPartners(project, scope, subject.id, row.id, {
+        ...options,
+        marques,
+        bannerIndex,
+        textIndex,
+      })
       if (!result) continue
       selected = result.selected.length
       catalogue = result.catalogue

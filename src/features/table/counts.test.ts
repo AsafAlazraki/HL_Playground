@@ -50,7 +50,7 @@ import { describe, expect, it } from 'vitest'
 import { isSystemFieldId, visibleFields, type EntityDef } from '@/types/model'
 import { buildNorthsideProject } from '@/demos/northside'
 import { buildSections } from './sections'
-import { countLabel, leafNoun } from './grouping'
+import { countLabel, kindNoun, leafNoun } from './grouping'
 
 const project = buildNorthsideProject()
 const byName = (name: string): EntityDef => {
@@ -187,6 +187,24 @@ describe('what the rows are called', () => {
       '71 pairings',
     )
     expect(countLabel(1, leafNoun(joins[0]))).toBe('1 pairing')
+  })
+
+  it('gives the KIND its own word, for a count that spans several tables', () => {
+    /* FITMENT totals 810 rows across seven boat tables whose naming
+       columns disagree — Highfield names rows "Variant", its six
+       siblings name them "Model". Both are the dealer's own word for
+       their own table and neither is the word for the sum. */
+    const boats = project.entities.filter((e) => e.kind === 'boat')
+    expect(boats.length).toBeGreaterThan(1)
+    expect(new Set(boats.map((e) => leafNoun(e).many)).size).toBeGreaterThan(1)
+
+    expect(kindNoun('boat')).toEqual({ one: 'boat', many: 'boats' })
+    expect(countLabel(810, kindNoun('boat') ?? leafNoun(undefined))).toBe('810 boats')
+    expect(kindNoun('accessory')).toEqual({ one: 'accessory', many: 'accessories' })
+
+    /* a kind that declares no word says so, so a caller says something
+       else rather than inventing one */
+    expect(kindNoun('custom')).toBeNull()
   })
 
   it('keeps the neutral word for a table a person has only just made', () => {

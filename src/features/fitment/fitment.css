@@ -1,0 +1,689 @@
+/* ============================================================
+   FITMENT — the fan-out.
+
+   Co-located with its feature, as every stylesheet in this tree is.
+   It owns the `fo-` prefix and nothing else, and it overrides
+   nothing: no rule here reaches outside `.fo-root`.
+
+   THE GEOMETRY IS THE CONTRACT'S. Page padding
+   `--sp-5 --sp-6 --sp-6`, content capped at 1180px and centred,
+   cards on `repeat(auto-fill, minmax(min(320px, 100%), 1fr))` with
+   `--sp-4` between them, 10px radius, hairline border, a 3px kind
+   rail on the left edge, `--ec1` at rest. Every figure is
+   `--font-mono`, tabular. Nothing is smaller than 11px.
+
+   THE ONE NEW SHAPE IS THE BAR, and it is two elements: a recessed
+   track in `--paper-sunken` and a fill in the partner table's own
+   kind hue, handed in as `--fo-bar-accent`. See FanOut.tsx's header
+   for why that is in-system rather than a fill behind text.
+   ============================================================ */
+
+.fo-root {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--paper);
+}
+
+.fo-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+}
+
+/* ---------------------------------------------------------- */
+/* The head                                                    */
+/* ---------------------------------------------------------- */
+
+.fo-head {
+  min-width: 0;
+}
+
+.fo-eyebrow,
+.fo-band-eyebrow,
+.fo-void-eyebrow {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.fo-title {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.fo-lede {
+  margin: var(--sp-3) 0 0;
+  max-width: 68ch;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.fo-ledger {
+  list-style: none;
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-4) 0 0;
+  border-top: 1px solid var(--hairline);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: var(--sp-4);
+}
+
+.fo-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fo-stat-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.016em;
+  color: var(--ink);
+}
+
+.fo-stat-word {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------- */
+/* The fans                                                    */
+/* ---------------------------------------------------------- */
+
+/* MULTI-COLUMN, NOT A GRID, AND THE REASON IS THE DATA. These cards
+   are wildly uneven — the biggest table carries five relationships and
+   two of them split across two catalogues, the smallest carries two —
+   and a grid row is as tall as its tallest cell, so a grid left a
+   hand's width of white under every short card. Columns let a short
+   card be short. Reading order stays "biggest first", down column one
+   and on to column two, which is the order they are sorted in. */
+.fo-fans {
+  list-style: none;
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  column-width: 336px;
+  column-gap: var(--sp-4);
+}
+
+.fo-fan {
+  position: relative;
+  min-width: 0;
+  break-inside: avoid;
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3) calc(var(--sp-4) + 3px);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--ec1);
+}
+
+/* the kind rail, inset top and bottom exactly as Home draws it */
+.fo-fan::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--fo-accent, var(--accent-graphite));
+}
+
+.fo-fan-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  min-width: 0;
+}
+
+.fo-fan-mark {
+  display: inline-flex;
+  align-self: center;
+  color: var(--fo-accent, var(--accent-graphite));
+}
+
+.fo-fan-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 570;
+  letter-spacing: -0.009em;
+  line-height: 1.25;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.fo-fan-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* ---- one relationship ---- */
+
+.fo-rows {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.fo-row {
+  min-width: 0;
+}
+
+.fo-row + .fo-row {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.fo-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 6px;
+  min-width: 0;
+}
+
+.fo-row-role {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.fo-row-n {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.fo-row-say {
+  margin: 6px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.fo-row-partner,
+.fo-row-derived {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* NOT THE ACCENT. Blue is the one accent and it appears about four
+   times on a screen (DESIGN_CONTRACT §1); "80 derived" occurs on
+   roughly a dozen rows here, and a dozen blue words is a screen with
+   no primary on it. The accent is spent on the block below, where
+   derivation is the subject rather than an aside. */
+.fo-row-derived {
+  color: var(--ink-soft);
+}
+
+.fo-row-held {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* ---- the bar ---- */
+
+.fo-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--paper-sunken);
+  overflow: hidden;
+}
+
+/* NO `min-width` HERE. The floor on a real reading is applied in
+   FanOut.tsx, where zero can be told from very small; a CSS floor
+   would paint a 3px mark for a relationship that has nothing in it,
+   which is the one thing the bar must never say. */
+.fo-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--fo-bar-accent, var(--accent-graphite));
+}
+
+/* ---- when one relationship comes off two tables ---- */
+
+.fo-strands {
+  list-style: none;
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fo-strand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.fo-strand-n {
+  flex: none;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.fo-strand-of {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* ---- the door onto the rows behind a figure ---- */
+
+.fo-door {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 2px 6px;
+  margin: 0 0 0 -6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+
+.fo-door > svg {
+  flex: none;
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+
+.fo-door-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.fo-door:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.fo-door:hover > svg {
+  opacity: 1;
+}
+
+/* A ROW DARKENS, IT DOES NOT SCALE — DESIGN_CONTRACT §5, so its
+   neighbours do not look as though they moved. On pointer-down. */
+.fo-door:active {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+.fo-door:focus-visible {
+  outline: none;
+  color: var(--ink);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+.fo-door-flat {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------- */
+/* The bands under the fans                                    */
+/* ---------------------------------------------------------- */
+
+.fo-band {
+  margin: var(--sp-6) 0 0;
+  padding: var(--sp-5) 0 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.fo-band-title {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.011em;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.fo-band-lede,
+.fo-band-note {
+  margin: var(--sp-3) 0 0;
+  max-width: 68ch;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.fo-band-note {
+  font-size: 12.5px;
+}
+
+.fo-src {
+  margin: var(--sp-4) 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+/* ---- derived versus typed ---- */
+
+.fo-derived {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-width: 640px;
+}
+
+.fo-derived-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px max-content;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.fo-derived-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--paper-sunken);
+  overflow: hidden;
+}
+
+.fo-derived-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--blue);
+}
+
+.fo-derived-n {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.fo-derived-n b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ---- the asymmetry ---- */
+
+.fo-roles {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.fo-role {
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+.fo-role-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.fo-role-name {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.fo-role-n {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.fo-role-say {
+  margin: 6px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.fo-role-none {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* ---- the selector ---- */
+
+.fo-picks {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: var(--sp-4);
+}
+
+.fo-pick {
+  min-width: 0;
+}
+
+.fo-pick-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 6px;
+}
+
+.fo-pick-name {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 570;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.fo-pick-n {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.fo-pick-n b {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.fo-pick-say {
+  margin: 6px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* ---- the gaps ---- */
+
+.fo-gaps {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-width: 720px;
+}
+
+.fo-gap {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.fo-gap-n {
+  flex: none;
+  min-width: 56px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.fo-gap-say {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------- */
+/* Nothing yet — the four parts, in order                      */
+/* ---------------------------------------------------------- */
+
+.fo-void {
+  max-width: 560px;
+  margin: var(--sp-6) auto 0;
+  padding: var(--sp-6);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--e2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.fo-void-say {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.fo-void-count,
+.fo-void-note {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.fo-void-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------- */
+/* The door to the other face                                  */
+/* ---------------------------------------------------------- */
+
+.fo-tail {
+  margin: var(--sp-6) 0 0;
+  padding: var(--sp-4) 0 0;
+  border-top: 1px solid var(--hairline);
+  max-width: 68ch;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}

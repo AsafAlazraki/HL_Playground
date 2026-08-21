@@ -50,6 +50,17 @@ export interface ColumnConcept {
   kind: TableKind
   /** the name as written on the first table that carries it */
   name: string
+  /** WHAT THE COLUMN IS, IN THE WORKBOOK'S OWN WORDS — the cell it was
+   *  read out of and the header row that labelled it, e.g.
+   *  "Boat Module!KW · labelled here by header row 3."
+   *
+   *  It is `FieldDef.description`, taken off the first table that
+   *  carries the concept and has one; 2,026 of the seeded columns do.
+   *  A person choosing between "Max HP" and "Min HP" is choosing
+   *  between two cells of a spreadsheet they know, and this is the only
+   *  thing on screen that can say WHICH. Absent is normal — a column
+   *  somebody drew here rather than imported has no source cell. */
+  desc?: string
   type: FieldType
   /** every field id that IS this column — one per table */
   fieldIds: string[]
@@ -88,12 +99,14 @@ export function buildConcepts(entities: Record<string, EntityDef>): ColumnConcep
       if (isPairFieldId(field.id)) continue
       if (!RULEABLE.includes(field.type)) continue
       const key = `${kind}::${norm(field.name)}`
+      const desc = field.description?.trim()
       const existing = byKey.get(key)
       if (!existing) {
         byKey.set(key, {
           key,
           kind,
           name: field.name.trim(),
+          ...(desc ? { desc } : {}),
           type: field.type,
           fieldIds: [field.id],
           tableIds: [table.id],
@@ -101,6 +114,10 @@ export function buildConcepts(entities: Record<string, EntityDef>): ColumnConcep
         })
         continue
       }
+      /* the first table that HAS a description wins, rather than the
+         first table: seven brand tables carry "Max HP" and only the
+         imported ones cite a cell */
+      if (!existing.desc && desc) existing.desc = desc
       existing.fieldIds.push(field.id)
       existing.tableIds.push(table.id)
       for (const o of field.options ?? []) {

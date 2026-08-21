@@ -384,13 +384,38 @@ function leafColumnName(entity: EntityDef): string {
   return name
 }
 
-export function leafNoun(entity: EntityDef | undefined): LeafNoun {
-  if (!entity) return { one: 'row', many: 'rows' }
-  if (entity.role === 'join') return { ...PAIRING }
-  const one = leafColumnName(entity) || KIND_NOUN[kindOfEntity(entity)] || 'row'
+/** One word, and its plural. Written once so `leafNoun` and
+ *  `kindNoun` can never disagree about "accessories". */
+function pluralise(one: string): LeafNoun {
   if (/[^aeiou]y$/.test(one)) return { one, many: `${one.slice(0, -1)}ies` }
   if (/(s|x|z|ch|sh)$/.test(one)) return { one, many: `${one}es` }
   return { one, many: `${one}s` }
+}
+
+export function leafNoun(entity: EntityDef | undefined): LeafNoun {
+  if (!entity) return { one: 'row', many: 'rows' }
+  if (entity.role === 'join') return { ...PAIRING }
+  return pluralise(leafColumnName(entity) || KIND_NOUN[kindOfEntity(entity)] || 'row')
+}
+
+/**
+ * The word for a KIND, when the thing being counted spans several
+ * tables and their own naming columns disagree.
+ *
+ * FITMENT totals 810 rows across seven boat tables. `leafNoun` gives
+ * each of them the dealer's own word — 588 "variants", 91 "models" —
+ * and both are right about their own table and neither is right about
+ * the sum: "810 variants" is false and "810 rows" is the jargon this
+ * whole file exists to keep off the screen. The kind's word is the
+ * one true word for the set, and it is still the dealer's vocabulary
+ * rather than a schema term.
+ *
+ * Empty for `custom`, which declares nothing — a caller with no word
+ * to use should say something else rather than invent one.
+ */
+export function kindNoun(kind: TableKind): LeafNoun | null {
+  const one = KIND_NOUN[kind]
+  return one ? pluralise(one) : null
 }
 
 export const countLabel = (n: number, noun: LeafNoun): string =>
