@@ -34,10 +34,17 @@ import {
   type FieldDef,
   type ImageRef,
   type ModuleDef,
+  type ModuleIndexMode,
   type RowData,
   type TableKind,
 } from '@/types/model'
 import { bandOf, formatCell, normColumn } from '@/features/views/columns'
+/* THE DEALER'S OWN NOUNS — one row's word, one heading's word, and the
+   kind's word when two tables disagree. Written once in the table
+   feature and read here rather than copied: a census that invented
+   "206 groups" would be the jargon `leafNoun` exists to keep off the
+   screen, and a second pluraliser is a second answer. */
+import { branchNoun, kindNoun, leafNoun } from '@/features/table/grouping'
 /* the direct path, as `columns` already is: nothing here needs the
    feature's React surface and a module must not pull ViewPage in to
    count its rows */
@@ -394,11 +401,35 @@ export interface IndexEntry {
    *  The row's own level is dropped because `rowLabel` already says
    *  it, which is the convention the view stage's rail uses. */
   trail: string
+  /** the FIRST grouping level's value on its own — "Sport", "Anodes".
+   *  `trail` is every level above the row and is what a heading prints;
+   *  this is the one drawers are cut by, so a three-level table
+   *  (Highfield runs Series ▸ Model ▸ Variant) opens onto its series
+   *  rather than onto every series-and-model pair. '' when the table
+   *  declares no grouping, or when the row's own banner cell is empty —
+   *  which is a real state on this sheet and is drawn as such. */
+  branch: string
+  /** the price as a NUMBER, when the cell holds one. `price` above is
+   *  already formatted and is what a face prints; this is what a
+   *  range is computed from, so nothing re-parses a rendered string. */
+  amount?: number
   /** formatted and ready to print; '' when this table prices nothing */
   price: string
   img?: ImageRef
   /** lower-cased label, for the search box */
   hay: string
+}
+
+/** The FIRST grouping level's value for one row — the banner it sits
+ *  under. '' when the table groups by nothing, and '' when the cell
+ *  itself is empty: 27 parts and 74 dealer-fit packages on this sheet
+ *  really do sit under a spacer banner, and they land in a drawer that
+ *  says so rather than in one invented for them. */
+export function branchOf(entity: EntityDef, row: RowData): string {
+  const levels = entity.hierarchy ?? []
+  if (levels.length < 2) return ''
+  const v = readCell(row, levels[0])
+  return v === null || v === undefined ? '' : String(v).trim()
 }
 
 /** The grouping trail for one row. Same rule as the view stage's
@@ -454,6 +485,8 @@ export function buildEntries(
         rowId: row.id,
         label,
         trail: trailOf(entity, row),
+        branch: branchOf(entity, row),
+        amount: typeof raw === 'number' && Number.isFinite(raw) ? raw : undefined,
         price: price ? formatCell(price.field, raw, undefined, bandOf(entity, price.field)) : '',
         img: imgField ? primaryImage(row.values[imgField.id] ?? null) : undefined,
         hay: label.toLowerCase(),
@@ -590,6 +623,295 @@ export function groupEntries(
         entries: group,
       })),
     })
+  }
+  return out
+}
+
+/* ============================================================
+   WHAT THIS PLACE IS MADE OF — the census
+
+   "2,937 products" is a fact. "2,238 products across 179 categories,
+   699 no longer sold" is a picture, and everything in it was already
+   on the sheet: the categories are the banner column the workbook
+   heads itself, the 699 are the rows below its own OBSOLETE divider.
+
+   ONE READER, for the same reason the rest of this file has one: the
+   dashboard card, the index header and the designer all want the same
+   sentence, and three copies of it is three chances for a card to say
+   one thing and the page it opens to say another.
+
+   EVERY FIGURE IS COUNTED OVER THE ROWS THE CATALOGUE WILL DRAW, not
+   over the sheet — a census that counted rows nobody can reach would
+   be the disagreement `moduleRowCount` exists to prevent, restated at
+   greater length.
+
+   AND EVERY NOUN IS THE DEALER'S. `leafNoun` gives the word for one
+   row and `branchNoun` the word for one heading, both read off the
+   columns they headed themselves. Where two member tables disagree —
+   Parts runs Category then Product and Rigging Kits runs Section then
+   Rigging Kit — BOTH are said, because "206 groups" is jargon and
+   picking one table's word over the other's is a small lie about the
+   other. The kind's own plural is the fall-back for the row noun, and
+   that is `kindNoun`'s stated job.
+   ============================================================ */
+
+/** One grouping level a module is cut by, and how many distinct values
+ *  of it the live rows carry. */
+export interface CensusBranch {
+  /** the dealer's own plural for one heading — 'categories', 'sections' */
+  noun: string
+  count: number
+}
+
+export interface ModuleCensus {
+  /** live rows the catalogue will draw */
+  items: number
+  /** the dealer's own plural for one of them */
+  noun: string
+  /** the tables the catalogue draws */
+  tables: number
+  /** every grouping level the module is cut by, biggest first */
+  branches: CensusBranch[]
+  /** rows held back — discontinued on a live table, every row of a
+   *  retired one. Said in words, never subtracted in silence. */
+  held: number
+  /** live rows that carry a picture of their own */
+  pictured: number
+  /** live rows that carry a price this surface may print */
+  priced: number
+}
+
+/** What is in this place, counted. */
+export function moduleCensus(
+  module: ModuleDef,
+  entities: Record<string, EntityDef>,
+  rowsByEntity: Record<string, RowData[]>,
+): ModuleCensus {
+  const listed = listedTables(module, entities)
+  const entries = buildEntries(listed, rowsByEntity)
+
+  /* THE ROW NOUN. One word when the member tables agree on it, the
+     kind's own word when they do not — `kindNoun` was written for
+     exactly this and says why: "810 variants" is false over seven
+     tables and "810 rows" is the jargon this is all here to avoid. */
+  const leaves = new Set(listed.map((e) => leafNoun(e).many))
+  const kinds = new Set<TableKind>(
+    listed.map((e) => (e.kind && e.kind in TABLE_KINDS ? e.kind : 'custom')),
+  )
+  const noun =
+    leaves.size === 1
+      ? [...leaves][0]
+      : kinds.size === 1
+        ? (kindNoun([...kinds][0])?.many ?? 'items')
+        : 'items'
+
+  /* THE HEADINGS, PER WORD. Two tables heading their banner column
+     the same way are one figure; two heading it differently are two,
+     and the sentence says both. */
+  const byNoun = new Map<string, Set<string>>()
+  for (const entity of listed) {
+    const word = branchNoun(entity)
+    if (!word) continue
+    const seen = byNoun.get(word.many) ?? new Set<string>()
+    for (const e of entries) {
+      if (e.tableId !== entity.id) continue
+      if (e.branch !== '') seen.add(`${entity.id}::${e.branch}`)
+    }
+    byNoun.set(word.many, seen)
+  }
+
+  let pictured = 0
+  let priced = 0
+  for (const e of entries) {
+    if (e.img) pictured += 1
+    if (e.price !== '') priced += 1
+  }
+
+  return {
+    items: entries.length,
+    noun,
+    tables: listed.length,
+    branches: [...byNoun]
+      .map(([n, set]) => ({ noun: n, count: set.size }))
+      .filter((b) => b.count > 0)
+      .sort((a, b) => b.count - a.count || a.noun.localeCompare(b.noun)),
+    held: moduleHeldCount(module, entities, rowsByEntity),
+    pictured,
+    priced,
+  }
+}
+
+const grouped = (n: number): string => n.toLocaleString('en-AU')
+
+/** The census as one sentence a card or a header can print.
+ *
+ *  IT NEVER PRINTS A FIGURE IT DID NOT COUNT. A module with no
+ *  grouping says only how many it holds; a module that holds back
+ *  nothing says nothing about holding back. Each clause is present
+ *  exactly when it is true, which is why this is a builder and not a
+ *  template. */
+export function censusLine(c: ModuleCensus): string {
+  const parts: string[] = [`${grouped(c.items)} ${c.noun}`]
+  if (c.branches.length > 0) {
+    parts.push(
+      `across ${c.branches.map((b) => `${grouped(b.count)} ${b.noun}`).join(' and ')}`,
+    )
+  }
+  const head = parts.join(' ')
+  return c.held > 0 ? `${head} · ${grouped(c.held)} no longer sold` : head
+}
+
+/* ============================================================
+   WHICH FACE — a catalogue somebody shops, or a register somebody
+   keeps.
+
+   THE DEFECT THIS ENDS. The face used to be decided once, at the
+   moment a module was made, from ONE question about ONE table: does
+   `tableIds[0]` declare a picture column? That is the right question
+   asked of the wrong thing. A module spans its tables — Motors runs
+   Yamaha, which pictures 203 of its 209, beside ePropulsion, which
+   has no picture column at all — and a column existing is not the
+   same fact as the rows carrying anything in it.
+
+   SO IT IS COUNTED OVER THE ROWS, and the answer on the real set is
+   not close to the line anywhere: Boats 723 of 810, Trailers 420 of
+   434, Motors 203 of 241, Factory Packages 61 of 89 — and Parts,
+   Dealer Fit, Labour Rates, Oils and Registration are all exactly
+   ZERO of theirs. Half is the floor, and half is nowhere near any of
+   those eight numbers, which is the only reason a floor may be
+   written down at all.
+
+   IT IS A DEFAULT, NOT A LOCK. `ModuleDef.index` is still the stored
+   field and the designer still writes it; this is what a module is
+   BORN with, and the sentence it comes with is what the designer
+   shows an admin who wants to know why.
+   ============================================================ */
+
+/** Below this share of pictured rows, a grid of tiles is a grid of
+ *  empty wells. See above for why half is safe on this data. */
+export const PICTURE_FLOOR = 0.5
+
+export interface ModuleFace {
+  mode: ModuleIndexMode
+  /** live rows carrying a picture, and live rows altogether */
+  pictured: number
+  live: number
+  /** the measurement, in a sentence, for the designer to show */
+  why: string
+}
+
+/** The face these tables' own rows ask for. */
+export function moduleFace(
+  tables: EntityDef[],
+  rowsByEntity: Record<string, RowData[]>,
+): ModuleFace {
+  const entries = buildEntries(sellableTables(tables), rowsByEntity)
+  const live = entries.length
+  let pictured = 0
+  for (const e of entries) if (e.img) pictured += 1
+  const mode: ModuleIndexMode = live > 0 && pictured >= live * PICTURE_FLOOR ? 'tiles' : 'rows'
+
+  const why =
+    live === 0
+      ? 'There are no rows here yet, so there is nothing to draw a face from.'
+      : pictured === 0
+        ? `Nothing here carries a picture — ${grouped(live)} of ${grouped(live)} — so this is a register to keep rather than a catalogue to shop.`
+        : mode === 'tiles'
+          ? `${grouped(pictured)} of ${grouped(live)} carry a picture, so this is a catalogue.`
+          : `Only ${grouped(pictured)} of ${grouped(live)} carry a picture, so tiles would draw mostly empty wells.`
+
+  return { mode, pictured, live, why }
+}
+
+/* ============================================================
+   THE DRAWERS — a register's things.
+
+   A CATALOGUE'S THING IS ITS ITEM, because an item has a face: a
+   photograph and a price, and 810 of those is a page somebody shops.
+   A REGISTER'S THING IS ITS HEADING. Parts & Accessories is 2,860
+   live lines under 204 headings the workbook itself banners — plus
+   one drawer per table for the lines it banners under a spacer, and
+   2,860 lines in one scroll is the spreadsheet the owner already
+   has. 206 drawers is a place: you press Anodes because a customer
+   asked for an anode.
+
+   NOTHING HERE IS A LIST OF CATEGORIES SOMEBODY TYPED. Every drawer
+   is a distinct value of the first rung of that table's own
+   `hierarchy`, counted over the rows the catalogue draws, and a
+   table that groups by nothing produces no drawers at all.
+
+   THE PRICE RANGE IS THE DRAWER'S OWN ROWS, formatted by the same
+   `formatCell` that formatted the faces, taken from the cheapest and
+   the dearest line it holds. It is not an average and it is not a
+   guess: both ends are a real row in the drawer.
+   ============================================================ */
+
+export interface Drawer {
+  key: string
+  tableId: string
+  tableName: string
+  kind: TableKind
+  /** the banner value as the sheet wrote it; '' when the rows under
+   *  it carry no banner cell at all */
+  name: string
+  /** the dealer's own singular for what this is a value of — 'category' */
+  of: string
+  count: number
+  /** the cheapest and dearest line in the drawer, already formatted.
+   *  Both '' when nothing in it prices. */
+  low: string
+  high: string
+}
+
+/** Fewer headings than this and the ordinary grouped list is the
+ *  better page: a register of four bands does not need drawers, it
+ *  needs to be read. Twelve is one screen of them at any sensible
+ *  width, which is the same reasoning `INDEX_CAP` uses one file up. */
+export const DRAWER_FLOOR = 12
+
+export const drawerKey = (tableId: string, branch: string): string => `${tableId}::${branch}`
+
+/** The drawers these entries fall into, biggest first inside each
+ *  table, tables in the module's own order. */
+export function categoryDrawers(entries: IndexEntry[], tables: EntityDef[]): Drawer[] {
+  const out: Drawer[] = []
+  for (const entity of tables) {
+    const word = branchNoun(entity)
+    if (!word) continue
+    const byBranch = new Map<string, IndexEntry[]>()
+    for (const e of entries) {
+      if (e.tableId !== entity.id) continue
+      const bucket = byBranch.get(e.branch)
+      if (bucket) bucket.push(e)
+      else byBranch.set(e.branch, [e])
+    }
+    const kind = entity.kind && entity.kind in TABLE_KINDS ? entity.kind : 'custom'
+    const mine: Drawer[] = []
+    for (const [name, group] of byBranch) {
+      let low: IndexEntry | undefined
+      let high: IndexEntry | undefined
+      for (const e of group) {
+        if (e.amount === undefined || e.price === '') continue
+        if (low === undefined || e.amount < (low.amount ?? 0)) low = e
+        if (high === undefined || e.amount > (high.amount ?? 0)) high = e
+      }
+      mine.push({
+        key: drawerKey(entity.id, name),
+        tableId: entity.id,
+        tableName: entity.name,
+        kind,
+        name,
+        of: word.one,
+        count: group.length,
+        low: low?.price ?? '',
+        high: high?.price ?? '',
+      })
+    }
+    /* BIGGEST FIRST INSIDE A TABLE, and never across tables: a
+       module's table order is the admin's own and is not a size
+       ranking. An empty banner sorts on its count like any other. */
+    mine.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    out.push(...mine)
   }
   return out
 }

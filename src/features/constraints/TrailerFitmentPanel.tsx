@@ -45,6 +45,8 @@
 import { useMemo } from 'react'
 import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { curationNote, measuredRate } from '@/features/curation'
+import { ledgerFor } from './ruleLedger'
 import {
   TRAILER_ATM_FLOOR,
   TRAILER_FITMENT,
@@ -55,6 +57,24 @@ import {
 } from './trailerFitment'
 
 const pct = (share: number): string => `${(share * 100).toFixed(1)}%`
+
+/* ── F8'S RATE, READ FROM THE ADJUDICATION AND NEVER TYPED ────────
+   `RULE_LEDGER`'s F8 entry restates the seed's own `source` line, and
+   `ruleLedger.test.ts` asserts that it does. So this clause changes
+   when the measurement changes and cannot be left behind by it — the
+   one thing a hand-written "581 of 581" in this file could not
+   promise. `''` where the project measured nothing, which is what
+   `Narrowing.measured` being optional is for. */
+const F8 = ledgerFor('F8')
+const F8_RATE = F8?.measure
+  ? measuredRate(F8.measure.held, F8.measure.tested, 'testable pairings in the price file')
+  : ''
+
+/* WHAT THIS PANEL CALLS THE THINGS IT IS NARROWING. The prose around
+   it has said "trailers" since it was written, and the mechanism's
+   sentences have to read as part of that prose rather than as a
+   component that wandered in. */
+const PARTNER = 'trailers'
 
 export function TrailerFitmentPanel(): ReactElement | null {
   const entities = useProjectStore((s) => s.entities)
@@ -98,6 +118,7 @@ export function TrailerFitmentPanel(): ReactElement | null {
         series built for its own brand and nothing else. It is the one test that both holds
         on every pairing in the price file and actually narrows the list — the weight floor
         below holds too, and leaves almost the whole catalogue standing.
+        {F8_RATE !== '' ? ` It ${F8_RATE}.` : ''}
       </p>
 
       {/* ---- one line per brand ---- */}
@@ -194,6 +215,18 @@ export function TrailerFitmentPanel(): ReactElement | null {
 /* ---------------------------------------------------------- */
 
 function BrandLine({ reading: r }: { reading: MarqueReading }): ReactElement {
+  /* The narrowing carries no `measured` here — see the note beside
+     `cn-tf-hidden` below — and no discontinued half either: this
+     reading's own denominator is already the LIVE catalogue, so
+     folding the withheld rows in would count them twice. They have
+     their own line, once, under "set aside". */
+  const hidden = curationNote({
+    name: PARTNER,
+    counts: { pool: r.catalogue, matched: r.selected, offered: r.selected },
+    narrowings: [{ id: 'f8', what: 'the series banner names this brand' }],
+    showingAll: false,
+  })
+
   return (
     <li className="cn-tf-item">
       <p className="cn-tf-brand">
@@ -209,6 +242,17 @@ function BrandLine({ reading: r }: { reading: MarqueReading }): ReactElement {
       </p>
 
       <p className="cn-tf-series">{r.marque.banners.join(' · ')}</p>
+
+      {/* ── THE COUNT OF WHAT WAS HIDDEN, STATED ────────────────────
+          "12 of 434" is a true line that leaves the reader to work out
+          422, and a number a person has to compute is a number they
+          were not told. `@/features/curation` owns the arithmetic, so
+          this count and the one above it are read off the same three
+          figures and can never drift apart. The measured rate is on
+          the band's lede rather than on all eight of these lines: it
+          is the same clause every time, and eight copies of it is
+          furniture. */}
+      <p className="cn-tf-hidden">{hidden}</p>
 
       <p className="cn-tf-how">
         {r.hulls === 0 ? (

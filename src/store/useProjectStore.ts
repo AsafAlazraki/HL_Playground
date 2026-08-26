@@ -49,6 +49,11 @@ import { defaultBlocksFor } from '@/features/views/relations'
    the wipe below can reach it, and a wiped project cannot come back
    with the last one's most consequential write switched on. */
 import { forgetModuleRuleCapabilities } from '@/features/modules/ruleCapability'
+/* AND ONE READER FOR THE FACE A NEW MODULE IS BORN WITH. By direct
+   path for the same reason `defaultBlocksFor` is above: `read.ts`
+   knows about no React surface and must not drag one back in through
+   the feature's barrel. */
+import { moduleFace } from '@/features/modules/read'
 import { newId, nowIso } from '@/lib/id'
 
 export interface Selection {
@@ -1319,9 +1324,21 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         description: description?.trim() || primary.description?.trim() || '',
         tableIds: clean,
         capabilities: [...DEFAULT_CAPABILITIES],
-        /* a table carrying pictures is a catalogue and wants tiles;
-           everything else is a list somebody scans */
-        index: primary.fields.some((f) => f.type === 'image') ? 'tiles' : 'rows',
+        /* THE FACE IS COUNTED OFF THE ROWS, NOT GUESSED OFF ONE
+           TABLE'S COLUMN LIST. This used to ask whether `tableIds[0]`
+           declared a picture column — the right question asked of the
+           wrong thing, because a module spans its tables and a column
+           existing is not the same fact as the rows carrying anything
+           in it. Motors runs Yamaha (203 pictured of 209) beside
+           ePropulsion (no picture column at all); Boats runs Highfield
+           beside Formosa, which pictures 18 of its 39. `moduleFace`
+           counts the whole module and says so in a sentence the
+           designer shows. It is a DEFAULT: `index` is still stored and
+           the designer still writes it. */
+        index: moduleFace(
+          clean.map((id) => get().entities[id]).filter((e): e is EntityDef => e !== undefined),
+          get().rowsByEntity,
+        ).mode,
         viewId: view.id,
         accent: primary.accent,
         order,

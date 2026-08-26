@@ -269,6 +269,13 @@ const observedRow = (severity: 'block' | 'warn' | undefined): Record<string, unk
 
 describe('the registry seams', () => {
   beforeEach(() => {
+    /* A PENDING SAVE FROM THE PREVIOUS CASE MUST NOT LAND IN THIS ONE.
+       constraintDefs debounces its localStorage write by 300ms, so a
+       case that registers a rule leaves a timer in flight; the next
+       case stubs a fresh `window`, and that timer then fires against
+       storage it was never meant to touch. Clearing timers before
+       resetting modules makes each case start with nothing owed. */
+    vi.clearAllTimers()
     vi.resetModules()
     vi.unstubAllGlobals()
   })

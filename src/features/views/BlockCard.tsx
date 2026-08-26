@@ -43,8 +43,18 @@ import {
 } from '@/types/model'
 import type { RowRef, RuleEngine } from '@/lib/rules/evaluate'
 import { useConstraints } from '@/features/constraints'
+import { CurationNote, readCuration, searchReach } from '@/features/curation'
+import type { Narrowing } from '@/features/curation'
 import { bandOf, defaultColumns, formatCell } from './columns'
-import { countChip, isCuratedOnly, oneOf, plural, singular, summariseRule } from './describe'
+import {
+  countChip,
+  isCuratedOnly,
+  oneOf,
+  plural,
+  ruleReason,
+  singular,
+  summariseRule,
+} from './describe'
 import { applyFilters, filterableColumns, valuesInUse } from './filter'
 import {
   clearRecommended,
@@ -57,11 +67,7 @@ import {
   type JoinRef,
   type RelatedRow,
 } from './pairs'
-import {
-  heldBackSentence,
-  retiredPairsSentence,
-  retiredTableSentence,
-} from './sellable'
+import { retiredPairsSentence, retiredTableSentence } from './sellable'
 import { MAX_DEPTH, removeBlock, setBlockFilters, setBlockRule, updateBlock } from './viewDefs'
 import { AddPanel } from './AddPanel'
 import { RuleOffer } from './RuleOffer'
@@ -127,6 +133,12 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
   const { still, beginTyping, endTyping } = useStillness()
   const [panel, setPanel] = useState<'none' | 'rule' | 'filter' | 'add' | 'remove'>('none')
   const [search, setSearch] = useState('')
+  /* THE NARROWING, SWITCHED OFF — property 3 of the curation
+     mechanism. Component state and never a stored setting: it is a
+     pair of spectacles, exactly like the filters next to it, and a
+     person who switched a rule off to look for one trailer must not
+     find it switched off on somebody else's screen tomorrow. */
+  const [showAll, setShowAll] = useState(false)
   const [openRemoved, setOpenRemoved] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [dropRowId, setDropRowId] = useState<string | null>(null)
@@ -164,10 +176,16 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       sourceEntity,
       sourceRow,
       targetEntityId: target.id,
-      rule: block.rule,
+      /* SWITCHING THE NARROWING OFF IS PASSING NO RULE, and that is
+         the whole change — `relatedRows` already answers "every row
+         of the table, minus what a person removed" for an absent
+         rule, and it still applies the discontinued contract on the
+         way through. So SHOW EVERYTHING cannot become a hole in the
+         one gate that keeps retired stock away from a salesperson. */
+      rule: showAll ? undefined : block.rule,
       join,
     })
-  }, [ctx, engine, sourceEntity, sourceRow, target, block.rule, join])
+  }, [ctx, engine, sourceEntity, sourceRow, target, block.rule, join, showAll])
 
   const columns = useMemo(
     () => (target ? (block.columns ?? defaultColumns(target)) : []),
@@ -235,6 +253,97 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       read: readRelated,
     })
   }, [result.rows, filters, search, searchFieldIds, target, readRelated])
+
+  /* ── THE CURATION MECHANISM ───────────────────────────────────
+
+     hl-journeys.md §4, applied here rather than described. Before
+     this, a block narrowed by a rule drew a count and nothing else:
+     "6 fit" on a table of 434 said nothing about the 428, the
+     search reached only the six, and the only way past the rule was
+     to enter configure mode and edit it. That is HelmLogic's own
+     failure mode — "curation hides silently nearly everywhere and
+     offers no way back" — sitting in our app.
+
+     THE POOL A SEARCH MAY ADVERTISE IS THE SELLABLE POOL. A search
+     that reported "3 more match" and then, on SHOW EVERYTHING,
+     produced two, would be worse than no search: the missing one is
+     discontinued and `relatedRows` will never hand it over. So
+     retired stock is out of the reach pool entirely, and it is
+     accounted for in the note instead, in the contract's own words.
+     A historic table has no reachable pool at all. */
+  const poolRows = useMemo(
+    () => ctx.rowsByEntity[block.tableId] ?? [],
+    [ctx.rowsByEntity, block.tableId],
+  )
+
+  const reachPool = useMemo(
+    () => (result.historic ? [] : poolRows.filter((r) => !isDiscontinued(r))),
+    [poolRows, result.historic],
+  )
+
+  /* ONE STRING PER ROW, BUILT ONCE PER DATA CHANGE and never per
+     keystroke — the lesson `ModuleIndex.buildEntries` already
+     learned at 651 rows, and this pool is 434. The name comes
+     first because it is the first thing anybody types. */
+  const hay = useMemo(() => {
+    const out = new Map<string, string>()
+    if (!target) return out
+    const byField = new Map(target.fields.map((f) => [f.id, f]))
+    for (const row of reachPool) {
+      const parts: string[] = [rowLabel(target, row)]
+      for (const c of columns) {
+        parts.push(
+          formatCell(byField.get(c), read(row, c, target.id), undefined, bandOf(target, byField.get(c))),
+        )
+      }
+      out.set(row.id, parts.join(' ').toLowerCase())
+    }
+    return out
+  }, [target, reachPool, columns, read])
+
+  const reach = useMemo(
+    () =>
+      searchReach({
+        pool: reachPool,
+        offered: new Set(result.rows.map((r) => r.row.id)),
+        idOf: (r: RowData) => r.id,
+        hayOf: (r: RowData) => hay.get(r.id) ?? '',
+        term: search,
+      }),
+    [reachPool, result.rows, hay, search],
+  )
+
+  const reading = useMemo(() => {
+    const reason = ruleReason(block.rule, sourceEntity, target)
+    /* NO MEASURED RATE IS OFFERED HERE, and that is deliberate. A
+       view block's rule is written by whoever built the page; the
+       app has never run it over the whole sheet, so it has no rate
+       to quote. `Narrowing.measured` is optional for exactly this
+       case — the fitment surface, which HAS measured, supplies one. */
+    const narrowings: Narrowing[] =
+      showAll || reason === '' ? [] : [{ id: 'rule', what: reason }]
+    return readCuration({
+      name: target?.name ?? 'rows',
+      counts: {
+        pool: poolRows.length,
+        matched: result.rows.length + result.heldCount,
+        offered: result.rows.length,
+      },
+      narrowings,
+      showingAll: showAll,
+      search: { term: search, beyond: reach.beyond.length },
+    })
+  }, [
+    block.rule,
+    sourceEntity,
+    target,
+    showAll,
+    poolRows.length,
+    result.rows.length,
+    result.heldCount,
+    search,
+    reach.beyond.length,
+  ])
 
   if (!target) {
     return (
@@ -375,17 +484,21 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     curated ? 'picked' : 'fit',
   )
 
-  /* NOTHING VANISHES SILENTLY. A block that would have offered eight
-     and offers six says so here, in words, with the reason and the
-     reassurance in the same breath — the count on its own is the
-     defect this sentence exists to fix. */
+  /* NOTHING VANISHES SILENTLY, AND IT SAYS SO ONCE.
+     A WHOLE TABLE that is history, or a whole JOIN that is, is not a
+     narrowing anybody can switch off — there is nothing behind it to
+     reach — so it keeps its own sentence and the curation note stands
+     down entirely. Individual rows that are no longer sold ARE part
+     of the accounting, and `curation` prints them in the discontinued
+     contract's own words, merged with the rule's count into one
+     paragraph rather than two competing ones. */
   const joinName = join ? ctx.entities[join.entityId]?.name : undefined
-  const heldNote =
+  const historicNote =
     result.historic === 'table'
       ? retiredTableSentence(target.name)
       : result.historic === 'pairs'
         ? retiredPairsSentence(target.name, joinName ?? 'That list')
-        : heldBackSentence(result.heldCount, target.name)
+        : ''
   const accent = accentVar(target.accent)
   const children = block.children ?? []
 
@@ -552,6 +665,31 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
           onFilters={(next) => setBlockFilters(viewId, block.id, next)}
           onTypingStart={beginTyping}
           onTypingEnd={endTyping}
+        />
+      ) : null}
+
+      {/* ── WHAT NARROWED THIS, AND HOW TO GET PAST IT ──────────────
+          Drawn on the CLEAN page, not behind the configure handle.
+          The person who needs to find a trailer by name is the
+          salesperson, and until now the only search on this block
+          lived inside a panel only whoever built the page ever
+          opened — a search a salesperson cannot reach is the same
+          defect as no search. */}
+      {historicNote === '' ? (
+        <CurationNote
+          reading={reading}
+          showingAll={showAll}
+          onShowAll={setShowAll}
+          search={{
+            value: search,
+            onChange: setSearch,
+            label: `Find ${oneOf(target.name)} by name, whether or not it fits this ${singular(
+              sourceEntity.name,
+            )}`,
+            placeholder: `Find ${oneOf(target.name)}…`,
+            onTypingStart: beginTyping,
+            onTypingEnd: endTyping,
+          }}
         />
       ) : null}
 
@@ -766,16 +904,19 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
         </AnimatePresence>
       </ul>
 
-      {/* THE ANSWER TO "WHERE DID THE TRAILER GO?" — drawn on the clean
-          page as well as in configure mode, because the person asking
-          is usually the salesperson looking at it. */}
-      {heldNote !== '' ? (
+      {/* THE ANSWER TO "WHERE DID THE TRAILER GO?" when the answer is a
+          whole retired table or a whole retired join — the one case the
+          curation note stands down for, because there is no narrowing
+          to switch off and nothing behind it to search past. Every
+          other case is in the note above the rows, where the count that
+          goes with it is. */}
+      {historicNote !== '' ? (
         <p className="vw-held" role="note">
-          {heldNote}
+          {historicNote}
         </p>
       ) : null}
 
-      {shown.length === 0 && !(heldNote !== '' && !filtering) ? (
+      {shown.length === 0 && !(historicNote !== '' && !filtering) ? (
         <p className="vw-empty">
           {filtering
             ? 'Nothing here matches what you are looking for.'
@@ -917,26 +1058,16 @@ function FilterBar({
 
   return (
     <div className="vw-filter" role="group" aria-label={`Narrow what is shown from ${entity.name}`}>
-      <div className="vw-filter-search">
-        <MagnifyingGlass size={14} weight="light" aria-hidden="true" />
-        <input
-          className="vw-add-input"
-          type="text"
-          value={search}
-          placeholder="Search what is shown…"
-          aria-label={`Search the ${entity.name} shown here`}
-          spellCheck={false}
-          onFocus={onTypingStart}
-          onBlur={onTypingEnd}
-          onChange={(e) => onSearch(e.target.value)}
-        />
-        {search !== '' ? (
-          <button type="button" className="vw-icon-btn" title="Clear" onClick={() => onSearch('')}>
-            <X size={13} weight="bold" />
-          </button>
-        ) : null}
-      </div>
-
+      {/* THE SEARCH BOX THAT WAS HERE IS NOW ON THE BLOCK ITSELF.
+          It was reachable only from inside this panel, which only
+          opens in configure mode, so the one control that lets a
+          person find a row by name was hidden from the person most
+          likely to want it. The curation note carries it in READ
+          mode, bound to this same state — and it searches the whole
+          table rather than only what the rule already admitted, which
+          is the half of the job this box never did. Two boxes on one
+          card writing one value would be a second, quieter search
+          result, so there is one. */}
       {cols.map((fieldId) => {
         const values = valuesInUse(rows, fieldId, read)
         if (values.length < 2) return null

@@ -43,17 +43,20 @@ import {
   matchCustomers,
   type CustomerRead,
 } from '@/features/crm/customers'
+import { CurationNote, readCuration } from '@/features/curation'
+import type { Narrowing } from '@/features/curation'
 import {
   OFFER_CAP,
   SUBJECT_BLOCK,
-  candidateOffer,
   customerBook,
   fileCustomer,
   freezeCustomer,
   hasCustomerRegister,
   priceChanges,
+  stepOffer,
   unsellableSubject,
   type PriceChange,
+  type StepOffer,
 } from './freeze'
 import {
   chargeAlreadyIn,
@@ -565,7 +568,13 @@ interface Book {
   list: CustomerRead[]
 }
 
-function CustomerField({
+/* EXPORTED, AND ONLY FOR THE SEQUENCE NEXT DOOR. `QuoteBuild` ends
+   on the same question this field asks and must ask it the same way:
+   the same match against the register, the same freeze, the same
+   refusal underneath. A second customer field with its own wording
+   is how production ended up typing five free-text fields in a
+   dialog while a CustomerPicker sat unused in the same file. */
+export function CustomerField({
   quote,
   nameRef,
   onOpenCustomer,
@@ -749,6 +758,21 @@ function CustomerField({
    ONE SECTION — what goes with the subject, from one table
    ============================================================ */
 
+/** A CLOSED PICKER READS THE STORE NEVER, so the shape it holds until
+ *  somebody opens it is a constant rather than a fresh object per
+ *  render — the same reason `EMPTY_STEP_OFFER` exists next door. */
+const EMPTY_OFFER: StepOffer = {
+  candidates: [],
+  narrowed: 0,
+  catalogue: 0,
+  pool: 0,
+  admitted: 0,
+  beyond: 0,
+  matched: 0,
+  capped: false,
+  heldCount: 0,
+}
+
 function SectionCard({
   quote,
   section,
@@ -757,16 +781,66 @@ function SectionCard({
   section: QuoteSection
 }): ReactElement {
   const [picking, setPicking] = useState(false)
+  /* THE TWO WAYS PAST THE NARROWING, both of them session state and
+     neither of them written to the quote. A salesperson who searched
+     the whole catalogue to find one trailer has not changed what this
+     section is FOR, and a stored setting would say they had. */
+  const [search, setSearch] = useState('')
+  const [showAll, setShowAll] = useState(false)
   const lines = linesOf(quote, section.lineIds)
   const subject = section.blockId === SUBJECT_BLOCK
 
   /* LIVE READ, ON PURPOSE AND ONLY HERE. Deferred until the picker is
-     open so a drawn quote never touches the store. */
-  const offer = useMemo(
-    () => (picking ? candidateOffer(quote, section) : { candidates: [], heldCount: 0 }),
-    [picking, quote, section],
+     open so a drawn quote never touches the store.
+
+     `stepOffer` RATHER THAN `candidateOffer`, and that is the whole of
+     this change. `candidateOffer` answers "what may this section still
+     take" and never leaves the narrowed list, so the picker it fed was
+     a menu that could be three short with no way to reach the fourth —
+     the same shape as production's trailer step, which has no
+     catalogue browse at all and sends a salesperson back to edit the
+     boat model. `stepOffer` answers the same question AND carries the
+     way past it: the search runs over the whole live table, the switch
+     turns the narrowing off, and anything reached that way arrives
+     marked `outside` so nothing looks like a pairing the price file
+     made when it did not. */
+  const offer: StepOffer = useMemo(
+    () =>
+      picking
+        ? stepOffer(quote, section, { all: showAll, query: search })
+        : EMPTY_OFFER,
+    [picking, quote, section, showAll, search],
   )
   const candidates = offer.candidates
+
+  /* ── WHAT NARROWED THIS PICKER, IN ONE SENTENCE ───────────────
+     The arithmetic is the mechanism's, so the count in the note and
+     the list under it are read off the same three figures.
+
+       pool      every row of the table, before anything narrowed it
+       admitted  what the block's rule let through, held rows included
+       narrowed  what is on the menu
+
+     `heldCount` is NOT quietly folded into the denominator. It is the
+     second half of the paragraph, in the discontinued contract's own
+     words, which is how the picker and the view page say the same
+     thing rather than two nearly-identical things. */
+  const reading = useMemo(() => {
+    const narrowings: Narrowing[] =
+      showAll || !offer.reason ? [] : [{ id: 'rule', what: offer.reason }]
+    return readCuration({
+      name: section.title,
+      counts: { pool: offer.pool, matched: offer.admitted, offered: offer.narrowed },
+      narrowings,
+      showingAll: showAll,
+      /* THE SEARCH HAS ALREADY REACHED THEM. `stepOffer` puts the
+         matches from outside the narrowing straight into the list and
+         tags each one, so there is nothing left "beyond" to offer a
+         door to — the reach line would be describing rows the reader
+         is looking at. */
+      search: { term: search, beyond: 0 },
+    })
+  }, [section.title, offer.pool, offer.admitted, offer.narrowed, offer.reason, showAll, search])
 
   /* WHAT THE PICKER REFUSED TO OFFER, in the same words the view page
      uses. A menu that is quietly three items short is a menu nobody
@@ -778,7 +852,12 @@ function SectionCard({
       ? retiredTableSentence(section.title)
       : offer.historic === 'pairs'
         ? retiredPairsSentence(section.title, 'The list it was picked from')
-        : heldBackSentence(offer.heldCount, section.title)
+        : /* THE ROW-BY-ROW CASE MOVED INTO THE CURATION NOTE, where it
+             is one paragraph with the rule's own count instead of a
+             second sentence underneath it. What is left here is the
+             two whole-table refusals, which are not narrowings and
+             have nothing behind them to switch off. */
+          ''
 
   return (
     <section className="qt-section">
@@ -830,16 +909,42 @@ function SectionCard({
               <X size={12} weight="bold" />
             </button>
           </div>
+
+          {/* ── THE CURATION MECHANISM, IN THE PICKER ──────────────
+              The same four properties the view page's blocks now
+              carry, drawn by the same component: the count and the
+              rule in words, a search that runs over the whole live
+              table, the switch that turns the narrowing off, and the
+              tally of what is not on the menu. A retired table or a
+              retired join has no narrowing to explain and nothing
+              behind it to reach, so the switch says why instead of
+              greying out. */}
+          {refusedNote === '' ? (
+            <CurationNote
+              reading={reading}
+              showingAll={showAll}
+              onShowAll={setShowAll}
+              search={{
+                value: search,
+                onChange: setSearch,
+                label: `Find something in ${section.title} by name, whether or not it goes with this one`,
+                placeholder: `Find in ${section.title}…`,
+              }}
+            />
+          ) : null}
+
           {candidates.length === 0 ? (
             <p className="qt-section-empty">
               {refusedNote !== ''
                 ? refusedNote
-                : /* THE PLACE IS CALLED FITMENT, and this sentence was the
-                     last copy in the app still directing somebody to a
-                     page by a name that page no longer uses — the phrase
-                     the owner named outright as confusing. Same door,
-                     same act, the name the bar and the button both use. */
-                  `Nothing from ${section.title} goes with this one yet. Set that up on the table's Fitment page.`}
+                : search.trim() !== ''
+                  ? `Nothing in ${section.title} is named that — not on this one, and not in the rest of the table either.`
+                  : /* THE PLACE IS CALLED FITMENT, and this sentence was the
+                       last copy in the app still directing somebody to a
+                       page by a name that page no longer uses — the phrase
+                       the owner named outright as confusing. Same door,
+                       same act, the name the bar and the button both use. */
+                    `Nothing from ${section.title} goes with this one yet. Set that up on the table's Fitment page.`}
             </p>
           ) : (
             <ul className="qt-picker-list">
@@ -879,6 +984,15 @@ function SectionCard({
                     {c.alreadyLineId !== undefined ? (
                       <span className="mono-label qt-pick-on">on the quote</span>
                     ) : null}
+                    {/* REACHED PAST THE NARROWING, AND SAYING SO. A row
+                        the search or the switch fetched from the rest of
+                        the table is pickable — that is the whole point,
+                        and it is what production's trailer step cannot
+                        do at all — but it must never look like a pairing
+                        the price file actually made. */}
+                    {c.outside ? (
+                      <span className="qt-pick-outside">outside the narrowing</span>
+                    ) : null}
                   </button>
                 </li>
               ))}
@@ -889,9 +1003,16 @@ function SectionCard({
               {refusedNote}
             </p>
           ) : null}
-          {candidates.length === OFFER_CAP ? (
-            <p className="qt-section-empty mono-label">
-              First {OFFER_CAP} — narrow the list on the sheet to see the rest
+          {/* THE CAP SAYS WHAT IT CUT, and now it knows the number.
+              "First 40 — narrow the list on the sheet" told a person
+              a list had been trimmed and left the size of the trim to
+              their imagination; `matched` is what the search and the
+              switch really selected, so the sentence can name it and
+              point at the box that shortens it. */}
+          {offer.capped ? (
+            <p className="qt-section-empty" role="note">
+              The first {OFFER_CAP} of {offer.matched} are drawn here. Type a name above to
+              reach the rest.
             </p>
           ) : null}
         </div>

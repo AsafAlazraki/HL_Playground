@@ -42,13 +42,24 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { newId, nowIso } from '@/lib/id'
 import {
   getViewDef,
+  isCuratedOnly,
   joinRefFor,
   makeEngine,
   relatedRows,
+  sellableRows,
   type Ctx,
   type JoinRef,
   type RelatedRow,
 } from '@/features/views'
+/* DEEP, for the same reason `crm/customers` is deep below: `describe`
+   is the pure half of the view feature — no store, no React — and the
+   barrel does not export the two word-benders a sentence needs. */
+import { describeRule, plural, ruleReason } from '@/features/views/describe'
+/* THE MEASUREMENTS, READ AND NEVER TYPED. `ruleLedger` imports only
+   `@/types/model` and one table name; it touches no store and no React,
+   so reading it here closes no cycle. Every figure in it is asserted
+   against its own seed's source line by `ruleLedger.test.ts`. */
+import { holdRate, ledgerFor } from '@/features/constraints/ruleLedger'
 import { bandOf, defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from '@/features/views/columns'
 /* DEEP IMPORT, DELIBERATELY. `@/features/crm` draws customer screens
    that read quotes, so its barrel imports this feature; reaching for
@@ -497,6 +508,18 @@ export interface Candidate {
   line: QuoteLine
   /** the line on the quote this candidate is already on, if any */
   alreadyLineId?: string
+  /** THIS ROW IS OUTSIDE THE NARROWING, and is being offered anyway
+   *  because a person searched past it or asked to see the whole
+   *  catalogue. Set only by `stepOffer`; `candidateOffer` never
+   *  leaves the narrowed list, so it never sets this.
+   *
+   *  It exists so the card can SAY so. Production's trailer step has
+   *  no catalogue browse at all — "operators assign trailers in the
+   *  boat model editor" — so a salesperson who needs a trailer the
+   *  model never named must abandon the build. Ours can reach the
+   *  whole table from every step; what it may not do is let a row the
+   *  price file never paired with this hull look like one it did. */
+  outside?: true
 }
 
 /** What a section may still take, and what it refused to offer.
@@ -515,6 +538,26 @@ export interface Offer {
    *  'pairs' — the list recording which of its rows go with this one
    *  is. Absent when the reason is individual rows. */
   historic?: 'table' | 'pairs'
+  /**
+   * THE THREE FIGURES `@/features/curation` NEEDS, and the reason
+   * they come back from here rather than being counted again on the
+   * screen: a picker that worked out its own denominator would be a
+   * second, quieter answer to "how many trailers are there", and two
+   * numbers for one question is the fault the whole mechanism exists
+   * to end.
+   *
+   *   `pool`    every live row of the table, before anything narrowed it
+   *   `matched` what the block's rule admitted — offered plus held back
+   *
+   * `candidates.length` is the third, and it is capped at `OFFER_CAP`,
+   * so a surface reads `offered` off `matched - heldCount` rather than
+   * off the list it drew.
+   */
+  pool: number
+  matched: number
+  /** the block rule, as a clause a sentence can sit "because" in front
+   *  of — '' when nothing narrowed this section at all */
+  reason: string
 }
 
 /** How many candidates a section offers before it asks you to narrow
@@ -536,7 +579,7 @@ export const OFFER_CAP = 40
  * was never written (see index.ts, "what this feature wants").
  */
 export function candidateOffer(quote: QuoteDef, section: QuoteSection): Offer {
-  const none: Offer = { candidates: [], heldCount: 0 }
+  const none: Offer = { candidates: [], heldCount: 0, pool: 0, matched: 0, reason: '' }
   /* there is exactly one boat on a quote for one boat */
   if (section.blockId === SUBJECT_BLOCK) return none
   const { ctx, engine } = live()
@@ -603,6 +646,13 @@ export function candidateOffer(quote: QuoteDef, section: QuoteSection): Offer {
     candidates,
     heldCount: result.heldCount,
     ...(result.historic ? { historic: result.historic } : {}),
+    /* THE DENOMINATOR IS THE LIVE TABLE, and it is counted here so the
+       picker never counts it again. `sellableRows` is not used for it:
+       the rows no longer sold are part of the accounting the curation
+       note prints, not something to quietly leave out of the total. */
+    pool: (ctx.rowsByEntity[target.id] ?? []).length,
+    matched: result.rows.length + result.heldCount,
+    reason: ruleReason(block?.rule, root, target),
   }
 }
 
@@ -611,6 +661,357 @@ export function candidateOffer(quote: QuoteDef, section: QuoteSection): Offer {
  *  that shows five of eight without saying so is the defect. */
 export function candidatesFor(quote: QuoteDef, section: QuoteSection): Candidate[] {
   return candidateOffer(quote, section).candidates
+}
+
+/* ---------------------------------------------------------- */
+/* One step of a build — the narrowing, and the way past it    */
+/* ---------------------------------------------------------- */
+
+/**
+ * WHAT ONE STEP OFFERS, AND WHAT IT IS HOLDING BACK.
+ *
+ * `candidateOffer` above answers "what may this section still take",
+ * which is the right question for a picker inside a document. A STEP
+ * asks a harder one, because it is the whole of what a salesperson can
+ * see at that moment, and three of production's cited failures are
+ * failures of exactly this answer:
+ *
+ *   · the motor grid inside a boat quote is unsearchable and unsorted
+ *     (highfield-quote-flow.tsx:1225-1226, 2875 — search exists, but
+ *     only in motor-only mode);
+ *   · the trailer step has no catalogue browse AT ALL, so a trailer
+ *     the model never named cannot be reached without abandoning the
+ *     build (`:3085-3088`);
+ *   · curation elsewhere hides silently and offers no way back
+ *     (hl-journeys.md §4).
+ *
+ * So this returns the narrowed list AND the way past it, in one shape,
+ * with every figure it took to get there:
+ *
+ *   `narrowed`   what the rule or the pairings leave
+ *   `catalogue`  live rows the table holds, narrowing ignored
+ *   `matched`    what the current search and switch actually select
+ *   `capped`     whether `OFFER_CAP` trimmed the list that is drawn
+ *
+ * SEARCH IGNORES THE NARROWING, always — that is the half of the
+ * step-5 pattern most easily lost, because it is the half that costs
+ * a second pool. A typed query searches the whole live table and marks
+ * anything outside the narrowing `outside`, so a person can find the
+ * trailer they know the name of without being told it does not exist,
+ * and can still see that the price file never paired it with this hull.
+ */
+export interface StepOffer {
+  candidates: Candidate[]
+  /** offerings the narrowing leaves — pairings, not distinct rows.
+   *  `CurationCounts.offered`. */
+  narrowed: number
+  /** live rows the table holds, narrowing ignored */
+  catalogue: number
+  /** EVERY row of the table, before anything narrowed it and before
+   *  the discontinued contract held anything back — `CurationCounts.
+   *  pool`. It is not `catalogue`: the rows no longer sold are part of
+   *  the accounting the curation note prints, not something to quietly
+   *  leave out of the denominator. */
+  pool: number
+  /** what the narrowing ADMITTED — the offered rows plus the ones the
+   *  discontinued contract then withheld. `CurationCounts.matched`,
+   *  and the number that makes `pool = offered + narrowedOut +
+   *  withheld` add up. */
+  admitted: number
+  /** matches for the current search that sit OUTSIDE the narrowing —
+   *  the figure `reachNote` prints, and the whole of what makes a
+   *  search "past" a narrowing rather than merely inside it. */
+  beyond: number
+  /** what the current search and switch select, before the cap */
+  matched: number
+  /** true when `OFFER_CAP` trimmed what is drawn */
+  capped: boolean
+  /** rows held back because they are no longer sold */
+  heldCount: number
+  historic?: 'table' | 'pairs'
+  /**
+   * THE NARROWING, AS A CLAUSE — "HP is between this boat's Min HP
+   * and Max HP" — for `@/features/curation` to sit the word "because"
+   * in front of.
+   *
+   * It comes back from here rather than being re-derived on the
+   * screen for the same reason the counts do: a step that explained
+   * its narrowing in words it worked out separately from the rule it
+   * actually ran would be one refactor away from explaining the wrong
+   * one. '' when nothing narrowed this step at all.
+   *
+   * OPTIONAL, so a caller holding its own empty literal for the
+   * not-yet-picked case does not have to know about it.
+   */
+  reason?: string
+}
+
+const EMPTY_STEP_OFFER: StepOffer = {
+  candidates: [],
+  narrowed: 0,
+  catalogue: 0,
+  pool: 0,
+  admitted: 0,
+  beyond: 0,
+  matched: 0,
+  capped: false,
+  heldCount: 0,
+  reason: '',
+}
+
+/** Every typed word must appear somewhere in the row's own text.
+ *  Word by word rather than as one string, for the reason the view
+ *  stage's rail records: "Sport 560" is not a substring of
+ *  "sport ▸ sp560 highfield - sp560 (pvc)" and a whole-string test
+ *  answers "nothing matches" for a row two screens down. */
+const needlesOf = (query: string): string[] =>
+  query.trim().toLowerCase().split(/\s+/).filter((w) => w !== '')
+
+/** The text a search runs over: the row's name, its grouping trail,
+ *  and the join's own facts where there is a pairing. Built off the
+ *  row rather than off a minted line, so searching a 434-row table
+ *  does not freeze 434 lines to throw 422 of them away. */
+function haystack(ctx: Ctx, entity: EntityDef, r: RelatedRow, join: JoinRef | null): string {
+  const parts: string[] = [rowLabel(entity, r.row)]
+  for (const fieldId of entity.hierarchy ?? []) {
+    const v = r.row.values[fieldId]
+    if (typeof v === 'string' || typeof v === 'number') parts.push(String(v))
+  }
+  const joinRow = joinRowOf(ctx, join, r)
+  if (joinRow) {
+    const { facts } = pairFactsOf(ctx, join ?? null, joinRow)
+    for (const f of facts) parts.push(f.value)
+  }
+  return parts.join(' ').toLowerCase()
+}
+
+export interface StepOfferOptions {
+  /** show the whole live table, narrowing switched off */
+  all?: boolean
+  /** a search that ignores the narrowing entirely */
+  query?: string
+}
+
+export function stepOffer(
+  quote: QuoteDef,
+  section: QuoteSection,
+  options: StepOfferOptions = {},
+): StepOffer {
+  if (section.blockId === SUBJECT_BLOCK) return EMPTY_STEP_OFFER
+  const { ctx, engine } = live()
+  const view = getViewDef(quote.viewId)
+  const root = ctx.entities[quote.rootTableId]
+  const row = root ? rowOf(ctx, root.id, quote.rootRowId) : undefined
+  const target = ctx.entities[section.tableId]
+  if (!view || !root || !row || !target) return EMPTY_STEP_OFFER
+
+  const block = view.blocks.find((b) => b.id === section.blockId)
+  const join = joinRefFor(ctx.entities, block?.joinTableId, root.id, target.id)
+  const result = relatedRows({
+    ctx,
+    engine,
+    sourceEntity: root,
+    sourceRow: row,
+    targetEntityId: target.id,
+    rule: block?.rule,
+    join,
+  })
+
+  /* THE WHOLE TABLE, ON THE SAME TERMS THE NARROWED LIST WAS BUILT ON.
+     A row the discontinued contract holds back is held back here too —
+     "see all" means the whole CATALOGUE, never the whole sheet, and a
+     retired table offers nothing at all however hard anybody looks. */
+  const live_rows = result.historic ? [] : sellableRows(ctx.rowsByEntity[target.id] ?? [])
+  const inList = new Set(result.rows.map((r) => r.row.id))
+  const extras: RelatedRow[] = live_rows
+    .filter((r) => !inList.has(r.id))
+    .map((r, i) => ({ row: r, origin: 'added' as const, recommended: false, sortKey: i }))
+
+  const needles = needlesOf(options.query ?? '')
+  const searching = needles.length > 0
+  /* the switch and the search both reach past the narrowing; nothing
+     else does, so the default list is exactly the curated one */
+  const reachable: RelatedRow[] =
+    searching || options.all === true ? [...result.rows, ...extras] : result.rows
+
+  const selected = searching
+    ? reachable.filter((r) => {
+        const hay = haystack(ctx, target, r, join)
+        return needles.every((n) => hay.includes(n))
+      })
+    : reachable
+
+  /* PROPERTY 2, AS A NUMBER. How many of the search's hits the
+     narrowing is standing in front of — what `reachNote` prints, and
+     the difference between a search that ignores a narrowing and one
+     that merely says it does. */
+  let beyond = 0
+  if (searching) for (const r of selected) if (!inList.has(r.row.id)) beyond += 1
+
+  const onQuote = new Map<string, string>()
+  for (const line of quote.lines) {
+    if (line.entityId !== target.id) continue
+    onQuote.set(line.pairRowId ?? line.rowId, line.id)
+  }
+
+  const candidates = selected.slice(0, OFFER_CAP).map((r) => {
+    const already = onQuote.get(r.pair?.rowId ?? r.row.id)
+    return {
+      line: mintLine({
+        ctx,
+        engine,
+        entity: target,
+        row: r.row,
+        levelKey: quote.levelKey,
+        join,
+        joinRow: joinRowOf(ctx, join, r),
+        recommended: r.recommended,
+      }),
+      ...(already ? { alreadyLineId: already } : {}),
+      ...(inList.has(r.row.id) ? {} : { outside: true as const }),
+    }
+  })
+
+  return {
+    candidates,
+    narrowed: result.rows.length,
+    catalogue: live_rows.length,
+    /* THE DENOMINATOR IS THE WHOLE TABLE, held-back rows included —
+       the same reading `candidateOffer` above makes, so the two
+       pickers can never print two different totals for one table. */
+    pool: (ctx.rowsByEntity[target.id] ?? []).length,
+    admitted: result.rows.length + result.heldCount,
+    beyond,
+    matched: selected.length,
+    capped: selected.length > OFFER_CAP,
+    heldCount: result.heldCount,
+    ...(result.historic ? { historic: result.historic } : {}),
+    reason: ruleReason(block?.rule, root, target),
+  }
+}
+
+/* ---------------------------------------------------------- */
+/* Why this list — and what the price file measures about it   */
+/* ---------------------------------------------------------- */
+
+/**
+ * WHY A STEP IS SHOWING WHAT IT IS SHOWING, in the operator's words,
+ * with the measurement behind it where the price file carries one.
+ *
+ * hl-journeys.md §4 names the one interaction in either production
+ * journey that is unambiguously right, and states it as a rule rather
+ * than a widget: a filter that can EXPLAIN ITSELF, be SEARCHED PAST
+ * and be SWITCHED OFF, with the hidden count said out loud. `stepOffer`
+ * above is the searching and the switching. This is the explaining.
+ *
+ * WE CAN DO THE EXPLAINING BETTER THAN PRODUCTION CAN, and the reason
+ * is data rather than design: their curation toolbar names its rules in
+ * a tooltip and stops there, because there is no measurement to quote.
+ * Ours were adjudicated against the price file cell by cell and every
+ * one carries a rate. `RULE_LEDGER` holds them, `ruleLedger.test.ts`
+ * asserts each figure appears verbatim in its seed's own source line,
+ * and NOTHING IS TYPED HERE — this file selects an entry and reads it.
+ *
+ * WHICH ENTRY, AND WHY ONLY THESE TWO. A measurement may be shown
+ * beside a list only when it is a measurement OF THAT LIST. F8 is a
+ * finding about boat×trailer pairings and A1 about boat×motor
+ * pairings; both are facts about exactly the pairings a step of that
+ * kind draws. Nothing else in the ledger is about a pairing a step
+ * shows, so nothing else is offered, and a step over a table this
+ * project has never measured says the count and the rule and stops.
+ */
+export interface StepMeasure {
+  /** the adjudication's reference — 'F8', 'A1' */
+  ref: string
+  /** '581 of 581' — the adjudication's own numerator and denominator */
+  holds: string
+  /** the derived percentage, never typed */
+  rate: string
+  /** what was counted, in the dealer's words */
+  of: string
+  /** the qualification that may never be separated from the figure */
+  caveat: string
+  /**
+   * THE ONE-CLAUSE FORM, for `@/features/curation` to carry on its
+   * chip and to sit the word "it" in front of inside a sentence.
+   *
+   * The full reading above is a plate of its own and does not fit on
+   * a chip; a chip with no rate at all gives away the one advantage
+   * this app has over the flow it is answering. So: both, from the
+   * same two numbers, composed here rather than in either screen.
+   */
+  clause: string
+}
+
+/** WHY A STEP'S LIST IS THE LENGTH IT IS, in the vocabulary
+ *  `@/features/curation` reads. `what` is a clause with no leading
+ *  capital and no trailing stop, because the mechanism puts "because"
+ *  in front of it and a full stop after it. */
+export interface StepReason {
+  /** the table this step is about, as the dealer named it */
+  tableName: string
+  /** what narrowed the list, in the operator's words */
+  what: string
+  /** the list that carries the pairings, where the narrowing is one */
+  via?: string
+  /** what the price file measures about pairings of this kind */
+  measured?: StepMeasure
+}
+
+/** The ledger entry whose finding is about the pairings THIS step
+ *  draws, or null. Deliberately a short, closed map: see the header. */
+function measureFor(root: EntityDef, target: EntityDef): StepMeasure | null {
+  if (root.kind !== 'boat') return null
+  const ref = target.kind === 'trailer' ? 'F8' : target.kind === 'motor' ? 'A1' : null
+  if (ref === null) return null
+  const entry = ledgerFor(ref)
+  if (!entry?.measure) return null
+  const rate = holdRate(entry.measure)
+  return {
+    ref,
+    holds: `${entry.measure.held.toLocaleString()} of ${entry.measure.tested.toLocaleString()}`,
+    rate,
+    of: entry.measure.of,
+    caveat: entry.caveat,
+    clause: `holds at ${rate} across the price file (${ref})`,
+  }
+}
+
+export function stepReason(quote: QuoteDef, section: QuoteSection): StepReason | null {
+  if (section.blockId === SUBJECT_BLOCK) return null
+  const { entities } = useProjectStore.getState()
+  const view = getViewDef(quote.viewId)
+  const root = entities[quote.rootTableId]
+  const target = entities[section.tableId]
+  if (!view || !root || !target) return null
+
+  const block = view.blocks.find((b) => b.id === section.blockId)
+  const join = joinRefFor(entities, block?.joinTableId, root.id, target.id)
+  const joinName = join ? entities[join.entityId]?.name : undefined
+  const measured = measureFor(root, target)
+
+  /* CURATED IS THE COMMON CASE ON THIS SHEET and it is not a rule at
+     all: the join rows ARE the menu, so `ruleReason` — correctly, for
+     a list somebody built by hand — answers "this list is picked by
+     hand rather than by a rule". On this sheet it was not picked by
+     hand: it was read out of the price file, and the list that
+     recorded it HAS A NAME. Naming it is both more useful and more
+     checkable, and it is a fact rather than a characterisation.
+     Without a join there is nothing to name and the rule's own words
+     stand. */
+  const what =
+    joinName && block !== undefined && isCuratedOnly(block.rule)
+      ? `${joinName} names which ones go with this one`
+      : block === undefined
+        ? `nothing narrows this list — every ${plural(target.name)} row is offered`
+        : ruleReason(block.rule, root, target)
+
+  return {
+    tableName: target.name,
+    what,
+    ...(joinName ? { via: joinName } : {}),
+    ...(measured ? { measured } : {}),
+  }
 }
 
 /**

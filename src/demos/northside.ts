@@ -23027,7 +23027,7 @@ export function buildNorthsideProject(): NorthsideProject {
 }
 
 /* ============================================================
-   THE FIVE MODULES — the places in this business.
+   THE PLACES IN THIS BUSINESS.
 
    WHY THE LIST LIVES HERE AND NOWHERE ELSE. A module name is a
    BUSINESS string: "Boats", "Rates & Charges". Marine content lives
@@ -23036,6 +23036,34 @@ export function buildNorthsideProject(): NorthsideProject {
    change. Nothing below is invented — every name is a seeded table's
    own name or a heading from docs/specs, and every figure is the sum
    of row counts already in this file.
+
+   ONE PLACE IS ONE SORT OF THING, and that is what split this list
+   from five names into nine. Two of the five were bags, and both were
+   bags for a reason the app can state without knowing what a boat is:
+
+     Parts & Accessories held the parts library and the rigging kits,
+     which are `kind: "accessory"`, beside Dealer Fit Packages, which
+     is `kind: "package"`. Different sorts of thing, so different
+     places — and the dealer fit library is 1,777 rows in its own
+     right, filed under 91 of its own banners.
+
+     Rates & Charges held labour rates, oils and consumables, and
+     registration bands. All three are `kind: "custom"` — which is not
+     agreement, it is the absence of a kind. The hourly rate of a
+     workshop, the price of a litre of oil and a government fee
+     schedule share no column but Source, are read by different people
+     and are maintained on different days. Three tables, three
+     registers.
+
+     Motors held Yamaha and ePropulsion, which are `kind: "motor"`,
+     beside the two Factory Packages files, which are `kind: "package"`
+     and whose own seed note says in capitals that they are NOT motors.
+
+   `src/features/modules/split.ts` is that rule as code, and it reads
+   this list back: every module below is coherent under it. It is not
+   consulted at seed time — a seed that computed its own names would
+   have nothing to call them — but a module an admin builds by hand
+   gets the same reading in the designer, with the parts named.
 
    THE BRAND IS THE SECTION, which is the owner's ruling taken
    literally: Boats holds all seven brand price files rather than one
@@ -23101,13 +23129,15 @@ interface SeedModule {
 
    `quote` is on where the table declares a selling price. It is off
    on Parts & Accessories because a part is quoted as a LINE on a
-   boat's quote, and off on Rates & Charges because registration is a
-   third-party recovery that SERVICE_AND_THEMES.md §3.1 forbids
-   marking up — a quote verb over a fee register invites the double
-   charge that document rules out.
+   boat's quote, off on Dealer Fit Packages because that sheet's own
+   sell column is not one `priceReadOf` will print, and off on
+   Registration Costs because registration is a third-party recovery
+   that SERVICE_AND_THEMES.md §3.1 forbids marking up — a quote verb
+   over a fee register invites the double charge that document rules
+   out.
 
-   `open` is off on Rates & Charges, and that is measured rather than
-   preferred: no join names Labour Rates, Oils & Consumables or
+   `open` is off on the three registers, and that is measured rather
+   than preferred: no join names Labour Rates, Oils & Consumables or
    Registration Costs, so an item page for a labour rate would carry
    zero blocks and be a row shown twice. SERVICE_AND_THEMES.md §1.4
    calls these "a register that other places read". */
@@ -23128,9 +23158,19 @@ const MODULES: SeedModule[] = [
   },
   {
     name: "Motors",
-    desc: "Yamaha and ePropulsion outboards, plus the two factory package files the workbook keeps in the Motor Library — boat-plus-engine bundles, held apart because they are not motors.",
-    tables: ["mot_yamaha", "mot_pkg_haines", "mot_pkg_jeanneau", "mot_epropulsion"],
+    desc: "The outboards themselves, off the Motor Library sheet — Yamaha and ePropulsion, and nothing that is a boat as well.",
+    tables: ["mot_yamaha", "mot_epropulsion"],
     can: ["browse", "search", "open", "relate", "quote"],
+  },
+  {
+    name: "Factory Packages",
+    desc: "Boat-plus-engine bundles the Motor Library files under the boat row's motor slot. The workbook keeps them as their own price files because they are not motors.",
+    tables: ["mot_pkg_haines", "mot_pkg_jeanneau"],
+    /* NO `relate`. A bundle is chosen ON a hull, so the decision and
+       the join both belong to the boat's side — the same reason
+       trailers do not carry it. `quote` is on because both files
+       declare a selling price. */
+    can: ["browse", "search", "open", "quote"],
   },
   {
     name: "Trailers",
@@ -23149,18 +23189,35 @@ const MODULES: SeedModule[] = [
   },
   {
     name: "Parts & Accessories",
-    desc: "Parts & Accessories, Rigging Kits and Dealer Fit Packages — the lines that go ONTO a boat rather than being one.",
-    tables: ["parts", "rig_kits", "dealer_fit"],
+    desc: "The parts library and the rigging kits — the lines that go ONTO a boat rather than being one, looked up by name because a customer is asking for one.",
+    tables: ["parts", "rig_kits"],
   },
   {
-    name: "Rates & Charges",
-    desc: "Labour Rates, Oils & Consumables and Registration Costs — the charges the other places read. A register rather than a catalogue.",
-    tables: ["labour_rates", "oils_lubes", "registration"],
+    name: "Dealer Fit Packages",
+    desc: "The Parts Module's own Dealer Fit sheet — a bundle of parts and the labour to put them on, which the workbook resolves against its own column and not against the parts library.",
+    tables: ["dealer_fit"],
+  },
+  {
+    name: "Labour Rates",
+    desc: "The price of an hour of workshop time, off the Service Module sheet. Nobody browses it; sheets in four workbooks reach into it by cell.",
+    tables: ["labour_rates"],
+    can: ["browse", "search"],
+  },
+  {
+    name: "Oils & Consumables",
+    desc: "The price of a litre, off the Service Module sheet — oils, lubes and the fuel a pre-delivery build reads, each with its unit stated.",
+    tables: ["oils_lubes"],
+    can: ["browse", "search"],
+  },
+  {
+    name: "Registration Costs",
+    desc: "The government fees and the bands they fall in, off the Registration Module sheet. A third-party recovery the workbook forbids marking up.",
+    tables: ["registration"],
     can: ["browse", "search"],
   },
 ]
 
-/** Mints the five modules through the store's own `createModule`, on a
+/** Mints the modules through the store's own `createModule`, on a
  *  project that has just been replaced.
  *
  *  THROUGH THE REAL ACTION, NEVER AROUND IT. `createModule` mints each
@@ -23192,7 +23249,7 @@ export function seedNorthsideModules(idByKey: Record<string, string>): void {
 }
 
 /** Builds the Northside set and applies it wholesale (replaces the
- *  current project), then mints the five modules on top of it. */
+ *  current project), then mints its modules on top of it. */
 export function loadNorthsideProject(): void {
   const p = buildNorthsideProject()
   useProjectStore.getState().replaceProject({

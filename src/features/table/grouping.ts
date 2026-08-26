@@ -420,3 +420,31 @@ export function kindNoun(kind: TableKind): LeafNoun | null {
 
 export const countLabel = (n: number, noun: LeafNoun): string =>
   `${n} ${n === 1 ? noun.one : noun.many}`
+
+/**
+ * THE DEALER'S WORD FOR THE LEVEL A TABLE IS CUT INTO — the FIRST rung
+ * of its own hierarchy, as they headed the column. `leafNoun` above
+ * answers "what is one row"; this answers "what is one heading".
+ *
+ * It is what lets a register say "2,238 products across 180 categories"
+ * without a marine word anywhere in the sentence: `Parts & Accessories`
+ * runs Category ▸ Product, `Rigging Kits` runs Section ▸ Rigging Kit,
+ * and a pharmacy's own table would read whatever it headed its own
+ * banner column. Null when a table declares no grouping at all, so a
+ * caller with nothing true to say says nothing rather than inventing a
+ * heading it does not have.
+ *
+ * A NAME THAT ALREADY ENDS IN `s` IS LEFT ALONE. `pluralise` is written
+ * for a row noun — "variant", "trailer" — and a banner column is far
+ * more often already a plural: this workbook heads one `Series`, and
+ * "44 serieses" is not a sentence anybody would ship. Taking the
+ * heading as it stands is the honest read of a word the dealer typed.
+ */
+export function branchNoun(entity: EntityDef | undefined): LeafNoun | null {
+  const levels = entity?.hierarchy
+  if (!entity || !levels || levels.length < 2) return null
+  const field = entity.fields.find((f) => f.id === levels[0])
+  const one = (field?.name ?? '').trim().toLowerCase()
+  if (one === '') return null
+  return one.endsWith('s') ? { one, many: one } : pluralise(one)
+}

@@ -72,10 +72,40 @@ export {
   hasPrices,
   kindPlural,
   trailOf,
+  branchOf,
   buildEntries,
   groupEntries,
+  /* WHAT THIS PLACE IS MADE OF, and how it should be drawn. Exported
+     because the dashboard card, the index header and the designer all
+     print the same sentence, and because the store asks `moduleFace`
+     what a new module is born looking like. Nothing else may grow a
+     second opinion about any of it. */
+  moduleCensus,
+  censusLine,
+  moduleFace,
+  PICTURE_FLOOR,
+  categoryDrawers,
+  drawerKey,
+  DRAWER_FLOOR,
 } from './read'
-export type { PriceRead, IndexEntry, IndexGroup, IndexSection } from './read'
+export type {
+  PriceRead,
+  IndexEntry,
+  IndexGroup,
+  IndexSection,
+  ModuleCensus,
+  CensusBranch,
+  ModuleFace,
+  Drawer,
+} from './read'
+
+/* IS THIS MODULE ONE PLACE, OR A BAG? The rule the owner's "split the
+   modules better" becomes when it is written down: every table agrees
+   on what sort of thing it holds, and `custom` is the absence of a
+   kind rather than one two tables can share. Exported so an export, a
+   review or a role screen reaches the same verdict the designer draws. */
+export { splitReading } from './split'
+export type { SplitPart, SplitReading } from './split'
 
 /* Reading a module as the DESIGNER reads it — which verbs are on, off
    or refused, and what every block is bound to. Exported so a future

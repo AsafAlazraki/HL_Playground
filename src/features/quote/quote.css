@@ -1655,3 +1655,25 @@
   color: var(--ink-faint);
   overflow-wrap: anywhere;
 }
+
+/* ============================================================
+   REACHED PAST THE NARROWING — the tag on a picker row the
+   search or the SHOW EVERYTHING switch fetched from the rest of
+   the table.
+
+   IT IS A SENTENCE, so it is sentence case and Inter. `.mono-label`
+   would have been the quickest thing to reach for and it uppercases
+   — DESIGN_CONTRACT §3 names a sentence outright as one of the four
+   things uppercase may never be. It sits on the card's own opaque
+   paper, so `--ink-faint` clears 4.7:1; it would not over a tint.
+   ============================================================ */
+.qt-pick-outside {
+  flex: 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.4;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}

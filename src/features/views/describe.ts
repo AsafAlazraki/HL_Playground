@@ -214,6 +214,46 @@ export function describeRule(
   return `Show ${many} where ${parts.join(join)}.`
 }
 
+/**
+ * THE RULE AS A REASON — "HP is between this boat's Min HP and Max
+ * HP", with no "Show", no subject and no trailing stop.
+ *
+ * `describeRule` writes a whole instruction, which is right on a
+ * rule editor where the rule is the subject. `@/features/curation`
+ * has already named the count and the table, and needs the clause to
+ * sit after the word "because" — an instruction there reads as a
+ * non-sequitur ("422 are not offered here, because Show Trailers
+ * where…"). Same derivation, same words for the same clause; only
+ * the frame around them is dropped.
+ *
+ * '' when nothing narrows, so a caller can test for "no reason to
+ * give" rather than matching on a sentence.
+ */
+export function ruleReason(
+  group: ClauseGroup | undefined,
+  root: EntityDef | undefined,
+  target: EntityDef | undefined,
+): string {
+  if (!group) return ''
+  /* A CURATED BLOCK IS THE BIGGEST SILENT NARROWING IN THE APP, and
+     it took the mechanism to notice: Parts & Accessories on a hull's
+     page drew nothing at all out of 2,937 rows and said only "none
+     picked yet", which reads as "there are none" rather than "nobody
+     has chosen from these yet". The reason has to be the RULE, in
+     one clause, so the sentence around it works: "2,937 Parts &
+     Accessories are not offered here, because only what somebody
+     picked for this one shows here." */
+  if (isCuratedOnly(group)) return 'only what somebody picked for this one shows here'
+  const between = betweenPhrase(group, root, target)
+  if (between) return between
+  const parts = group.clauses.map((c) => clausePhrase(c, root, target))
+  if (parts.length === 0) return ''
+  if (parts.length === 1 && parts[0].startsWith('it is linked')) {
+    return `it is linked to ${thisOne(root)}`
+  }
+  return parts.join(group.combinator === 'OR' ? ' or ' : ' and ')
+}
+
 /** The short form for a header strip — no trailing stop, no "Show". */
 export function summariseRule(
   group: ClauseGroup | undefined,

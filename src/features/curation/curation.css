@@ -1,0 +1,264 @@
+/* ============================================================
+   THE CURATION NOTE — one drawing, every curated surface.
+
+   CO-LOCATED WITH ITS FEATURE, which is the convention CLAUDE.md
+   states outright: no shared override layer, no second stylesheet
+   fighting over somebody else's card. This file styles `.cur-*`
+   and nothing else, and no other file writes a `.cur-*` rule.
+
+   WHAT IT IS MADE OF, and why each choice:
+
+   · The row of controls is a wrapping flex line, not a bar. A bar
+     would be a fifth stacked toolbar over the data, which is the
+     one thing DESIGN_CONTRACT §4 refuses. It sits INSIDE the card
+     or the section it explains, so it moves with the thing it is
+     about.
+   · The count is IBM Plex Mono, tabular, because it is a figure.
+     The reason beside it is Inter, because it is a sentence. They
+     share one line and it reads as one register.
+   · Everything here is ink, hairline and the sunken ground. The
+     accent appears once — the focus ring — which is the contract's
+     own third permitted appearance.
+   · `--ink-faint` is 4.72:1 on white and 4.26:1 over a tint, which
+     FAILS. The note and the reach line sit on `--paper-sunken`, so
+     both take `--ink-soft` (7.7:1). Only the chip, which sits on
+     the card's own opaque paper, is allowed the faint tier.
+   ============================================================ */
+
+.cur {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.cur--block {
+  padding: var(--sp-2) 0 var(--sp-3);
+}
+
+.cur--page {
+  max-width: 1180px;
+  margin: 0 auto var(--sp-4);
+  padding: var(--sp-3) 0;
+}
+
+/* -- the controls ------------------------------------------- */
+
+.cur-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* the search box — property 2, and it is in READ mode */
+.cur-find {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 28px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  color: var(--ink-faint);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background-color var(--t-fast) var(--ease-draft);
+}
+
+.cur-find:hover {
+  border-color: var(--hairline-strong);
+}
+
+.cur-find:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+.cur-find-input {
+  width: 15ch;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.cur-find-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.cur-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+
+.cur-clear:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.cur-clear:active {
+  background: var(--paper-sunken);
+  transform: scale(0.94);
+}
+
+.cur-clear:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* the switch — property 3. A latch, labelled with its ACT. */
+.cur-switch {
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+
+.cur-switch:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+/* press on POINTER-DOWN, which is what `:active` is */
+.cur-switch:active {
+  background: var(--paper-sunken);
+}
+
+.cur-switch:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* the narrowing is OFF — a latch that is on says so by sitting in,
+   not by taking the accent. The accent on this screen is spent. */
+.cur-switch[aria-pressed='true'] {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+  box-shadow: var(--e1);
+}
+
+.cur-switch[aria-disabled='true'] {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+.cur-switch[aria-disabled='true']:hover {
+  border-color: var(--hairline);
+  color: var(--ink-faint);
+}
+
+/* -- the words ---------------------------------------------- */
+
+/* "12 of 434 trailers · the series banner names this brand · …"
+   Mono for the whole line: the figures are what a reader is
+   checking, and a line that switched face mid-sentence would put
+   the reason on a different baseline rhythm from the count it
+   explains. Sentence case throughout — a reason is a sentence, and
+   DESIGN_CONTRACT §3 names uppercase sentences outright. */
+.cur-chip {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.cur-reach,
+.cur-note,
+.cur-why {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--hairline-strong);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--paper-sunken);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 450;
+  letter-spacing: 0;
+  line-height: 1.55;
+  /* over a tint, so `--ink-soft` and never `--ink-faint` */
+  color: var(--ink-soft);
+  max-width: 62ch;
+}
+
+/* what the search can still reach is an OFFER, so it reads a shade
+   louder than the accounting under it */
+.cur-reach {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* the same sentence, pressable. It keeps the shape of the note it
+   replaces so nothing moves when the search finds something — only
+   the affordances arrive. */
+.cur-reach-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast) var(--ease-draft),
+    border-left-color var(--t-fast) var(--ease-draft);
+}
+
+.cur-reach-btn:hover {
+  border-left-color: var(--blue);
+  background: var(--blue-wash);
+}
+
+.cur-reach-btn:active {
+  background: var(--paper-sunken);
+}
+
+.cur-reach-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.cur-why {
+  border-left-color: var(--hairline-strong);
+}
+
+/* the page form gives the sentences the index's own column */
+.cur--page .cur-reach,
+.cur--page .cur-note,
+.cur--page .cur-why {
+  max-width: none;
+}

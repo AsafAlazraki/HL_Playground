@@ -914,14 +914,11 @@
   border-radius: var(--radius-sm);
   background: var(--paper);
 }
-.vw-filter-search {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding-bottom: var(--sp-2);
-  border-bottom: 1px solid var(--hairline);
-  color: var(--ink-faint);
-}
+/* the search that was in this panel now lives on the block itself,
+   in READ mode, drawn by `@/features/curation` — a person looking for
+   a row by name should not have to enter configure mode to type. What
+   is left in here is the column tick-lists, which are genuinely a
+   builder's tool. */
 .vw-filter-row {
   display: flex;
   align-items: baseline;

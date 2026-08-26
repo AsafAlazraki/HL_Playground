@@ -98,6 +98,15 @@ function save(): void {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     saveTimer = null
+    /* CHECKED AGAIN HERE, NOT ONLY ABOVE. The guard at the top of
+       `save()` runs when the write is REQUESTED; this runs 300ms
+       later, and in between the global can go. That is not
+       hypothetical in tests — a suite that stubs `window` per case
+       will unstub it while this timer is still pending — and it is
+       the shape of a real teardown too. A timer that dereferences a
+       global it checked a third of a second ago is a latent bug
+       whether or not it is the one being chased. */
+    if (typeof window === 'undefined' || !window.localStorage) return
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
     } catch {

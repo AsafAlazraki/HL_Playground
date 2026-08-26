@@ -81,6 +81,40 @@
                      explains why both signals are exactly zero there
                      and why neither can be faked into life.
 
+   A REGISTER'S THING IS ITS HEADING, NOT ITS ROW — and this is the
+   drawing that answers "show the data as things rather than rows".
+
+   A CATALOGUE HAS FACES. 810 boats carry 723 photographs and 810
+   prices, so a grid of tiles is a thing a person shops, and that is
+   what Boats, Motors, Factory Packages and Trailers draw.
+
+   A REGISTER HAS NONE. Parts & Accessories is 2,860 live lines and
+   exactly ZERO pictures, and 2,860 names in one scroll is the
+   spreadsheet the dealer already has, one screen further in. But the
+   workbook itself banners those lines under 206 headings — 179
+   Categories on the parts sheet, 25 Sections on the rigging sheet,
+   and one drawer each for the lines banner'd under a spacer —
+   and a heading IS a thing: you press Anodes because a customer has
+   asked for an anode. So a register with more headings than
+   `DRAWER_FLOOR` opens onto its DRAWERS, each carrying its own count
+   and the cheapest and dearest line inside it, and pressing one
+   narrows the page to that drawer.
+
+   THE NARROWING OBEYS THE ONE PATTERN WORTH TAKING (hl-journeys §4),
+   and beats it on the part that matters: the rule is NAMED in the
+   dealer's own column word ("one Category on Parts & Accessories"),
+   the count put away is STATED rather than left as a silence, SHOW
+   ALL switches it off entirely, and SEARCH LOOKS STRAIGHT PAST IT —
+   type three letters with a drawer open and you are searching all
+   2,860 again, with a sentence saying so. HelmLogic's own parts grid
+   inside a quote has no search at all.
+
+   NOTHING IS HIDDEN AND NOTHING IS REORDERED. A drawer is a distinct
+   value of the first rung of that table's own `hierarchy`, counted
+   over the rows this page already built; a table that banners nothing
+   produces none, and a register of four bands (Registration Costs)
+   stays the plain list it should be.
+
    THE FIRST THREE ANSWER WHAT A CATALOGUE ANSWERS. The fourth is
    what makes this an application: a place that remembers what was
    done in it. It arrives during a demonstration rather than before
@@ -120,6 +154,7 @@ import {
   TABLE_KINDS,
   type ImageRef,
   type ModuleDef,
+  type TableKind,
 } from '@/types/model'
 import { TableKindSymbol } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
@@ -144,11 +179,17 @@ import { useQuotes } from '@/features/quote'
 import {
   buildEntries,
   capEntries,
+  categoryDrawers,
+  censusLine,
+  DRAWER_FLOOR,
+  drawerKey,
   groupEntries,
   listedTables,
   moduleActivity,
+  moduleCensus,
   moduleTables,
   relatedTables,
+  type Drawer,
   type IndexEntry,
   type IndexSection,
 } from './read'
@@ -188,6 +229,10 @@ export function ModuleIndex({
   const quotes = useQuotes()
   const [query, setQuery] = useState('')
   const [designing, setDesigning] = useState(false)
+  /* WHICH DRAWER IS OPEN, or none. A position inside this page and
+     nowhere else: it is not stored on the module, because which
+     heading somebody is reading is not a fact about the place. */
+  const [openKey, setOpenKey] = useState<string | null>(null)
 
   /* THE LAST NAME THAT WAS ACTUALLY A NAME. The name field is a live
      control on a stored value, so clearing it to retype it writes an
@@ -217,6 +262,14 @@ export function ModuleIndex({
      leaving a person to work out why 651 became 645. */
   const held = useMemo(() => heldBackRowCount(tables, rowsByEntity), [tables, rowsByEntity])
   const retiredTables = useMemo(() => tables.filter(isRetired), [tables])
+
+  /* WHAT THIS PLACE IS MADE OF, in the dealer's own nouns. The same
+     reader the dashboard card prints, so the card and the page it
+     opens can never say two different things about one module. */
+  const census = useMemo(
+    () => moduleCensus(module, entities, rowsByEntity),
+    [module, entities, rowsByEntity],
+  )
 
   /* THE PICTURES THIS CATALOGUE CANNOT PAINT, COUNTED AND EXPLAINED
      ONCE — the same instinct as `held` above, aimed at the other thing
@@ -265,13 +318,54 @@ export function ModuleIndex({
     return entries.filter((e) => needles.every((n) => e.hay.includes(n)))
   }, [entries, canSearch, query])
 
+  /* THE DRAWERS — the headings this register is banner'd under, built
+     off the entries this page already made rather than off the rows a
+     second time. Empty for a table that banners nothing. */
+  const drawers = useMemo(() => categoryDrawers(entries, listed), [entries, listed])
+
+  /* A REGISTER WITH MANY HEADINGS FILES ITSELF. A catalogue never
+     does — its rows have faces — and neither does a register of four
+     bands, which wants reading rather than opening. */
+  const filing = module.index === 'rows' && drawers.length >= DRAWER_FLOOR
+  const searching = canSearch && query.trim() !== ''
+
+  /* SEARCH LOOKS PAST THE NARROWING. That is the rule taken from the
+     one interaction hl-journeys.md calls unambiguously right, and it
+     is the half HelmLogic's own parts grid does not have at all. */
+  const drawer = filing && !searching ? drawers.find((d) => d.key === openKey) : undefined
+
+  /* A DRAWER FROM ANOTHER MODULE IS NOT A DRAWER HERE. Switching
+     modules without unmounting would otherwise leave a key pointing
+     at a heading on a table this place does not list. */
+  useEffect(() => setOpenKey(null), [module.id])
+
+  const scope = useMemo(
+    () =>
+      drawer === undefined
+        ? matches
+        : matches.filter((e) => drawerKey(e.tableId, e.branch) === drawer.key),
+    [matches, drawer],
+  )
+
   /* THE CAP IS SHARED OUT, NOT SPENT IN ORDER. A flat slice gave the
      whole budget to the first tables and left the last one undrawn —
      and an undrawn table has no section head, so the member chip that
      promises to go to it pressed to no effect. See `capEntries`. */
-  const shown = useMemo(() => capEntries(matches, INDEX_CAP), [matches])
-  const hidden = matches.length - shown.length
+  const shown = useMemo(() => capEntries(scope, INDEX_CAP), [scope])
+  const hidden = scope.length - shown.length
   const sections = useMemo(() => groupEntries(shown, listed), [shown, listed])
+
+  /* The drawers cut by table, so each run keeps the head — and the
+     anchor — a member chip already scrolls to. */
+  const drawerRuns = useMemo(() => {
+    const out: { tableId: string; list: Drawer[] }[] = []
+    for (const d of drawers) {
+      const last = out[out.length - 1]
+      if (last && last.tableId === d.tableId) last.list.push(d)
+      else out.push({ tableId: d.tableId, list: [d] })
+    }
+    return out
+  }, [drawers])
 
   const multiTable = tables.length > 1
   const browsing = module.capabilities.includes('browse')
@@ -494,10 +588,15 @@ export function ModuleIndex({
               )}
             </>
           )}
+          {/* WHAT IS IN HERE, NOT JUST HOW MUCH. This read "2,937
+              items · 3 tables · 699 not sold", which is three true
+              figures and no picture of the place. `censusLine` names
+              the dealer's own word for one of them and how many of
+              their own headings they fall under, and it is the same
+              sentence the dashboard card prints. */}
           <p className="md-idx-facts mono-label">
-            {entries.length} {entries.length === 1 ? 'item' : 'items'}
+            {censusLine(census)}
             {multiTable ? ` · ${tables.length} tables` : ''}
-            {held > 0 ? ` · ${held} not sold` : ''}
           </p>
         </div>
 
@@ -561,7 +660,14 @@ export function ModuleIndex({
                         className="md-chip"
                         disabled={n === 0}
                         aria-label={`Go to ${t.name}, ${n} ${n === 1 ? 'item' : 'items'}`}
-                        onClick={() => setGoingTo(t.id)}
+                        /* AND IT CLEARS THE NARROWING ON THE WAY, for
+                           the same reason it clears the find box: "show
+                           me Rigging Kits" while a Parts drawer is open
+                           would scroll to a head that is not drawn. */
+                        onClick={() => {
+                          setOpenKey(null)
+                          setGoingTo(t.id)
+                        }}
                       >
                         <span className="md-chip-mark">
                           <TableKindSymbol
@@ -761,6 +867,36 @@ export function ModuleIndex({
         </section>
       ) : null}
 
+      {/* THE NARROWING, NAMED — hl-journeys.md §4's own five parts,
+          and every figure measured rather than asserted: what the rule
+          IS in the dealer's own column word, how many are drawn, how
+          many were put away, that search looks past it, and one
+          control that switches it off entirely. */}
+      {drawer ? (
+        <div className="md-narrow" role="note">
+          <p className="md-narrow-say">
+            <span className="md-narrow-name">
+              {drawer.name === '' ? `Under no ${drawer.of}` : drawer.name}
+            </span>
+            {` — one ${drawer.of} on ${drawer.tableName}. `}
+            {scope.length.toLocaleString('en-AU')} of{' '}
+            {entries.length.toLocaleString('en-AU')} drawn,{' '}
+            {(entries.length - scope.length).toLocaleString('en-AU')} put away in the other{' '}
+            {(drawers.length - 1).toLocaleString('en-AU')} drawers. Typing in Find looks past
+            this.
+          </p>
+          <button type="button" className="md-narrow-off" onClick={() => setOpenKey(null)}>
+            Show all
+          </button>
+        </div>
+      ) : filing && searching ? (
+        <p className="md-narrow-note" role="note">
+          Find is looking across all {entries.length.toLocaleString('en-AU')} {census.noun}{' '}
+          here, past the {drawers.length.toLocaleString('en-AU')} drawers. Clear it to go back
+          to them.
+        </p>
+      ) : null}
+
       {!canOpen ? (
         <p className="md-idx-note">
           Opening one is switched off for this module, so these are a list to read
@@ -833,8 +969,49 @@ export function ModuleIndex({
                 ? 'Nothing in this module is still being sold. The rows stay on the sheet and a quote already naming one still opens.'
                 : 'These tables have no rows yet. Add rows on the sheet and they appear here.'}
         </p>
-      ) : matches.length === 0 ? (
+      ) : scope.length === 0 ? (
         <p className="md-none">Nothing here matches “{query.trim()}”.</p>
+      ) : filing && drawer === undefined && !searching ? (
+        /* THE REGISTER, FILED. Its things are its headings, and each
+           one carries what the sheet says about it: how many lines,
+           and the cheapest and dearest of them. */
+        drawerRuns.map((run) => {
+          const section = listed.find((t) => t.id === run.tableId)
+          if (!section) return null
+          return (
+            <section
+              className="md-sec"
+              key={run.tableId}
+              id={`md-sec-${module.id}-${run.tableId}`}
+              aria-label={section.name}
+            >
+              {multiTable ? (
+                <SectionHead
+                  name={section.name}
+                  kind={section.kind && section.kind in TABLE_KINDS ? section.kind : 'custom'}
+                  count={memberCounts.get(section.id) ?? 0}
+                  tableId={section.id}
+                  designing={designing}
+                  first={module.tableIds[0] === section.id}
+                  last={module.tableIds[module.tableIds.length - 1] === section.id}
+                  only={module.tableIds.length === 1}
+                  moduleName={module.name}
+                  onMove={moveTable}
+                  onDrop={(tableId) =>
+                    updateModule(module.id, {
+                      tableIds: module.tableIds.filter((id) => id !== tableId),
+                    })
+                  }
+                />
+              ) : null}
+              <ul className="md-drawers">
+                {run.list.map((d) => (
+                  <DrawerFace key={d.key} drawer={d} onOpen={() => setOpenKey(d.key)} />
+                ))}
+              </ul>
+            </section>
+          )
+        })
       ) : (
         sections.map((section) => (
           <Section
@@ -923,51 +1100,19 @@ function Section({
   return (
     <section className="md-sec" id={domId} aria-label={section.name}>
       {showHead ? (
-        <div className="md-sec-head">
-          <span className="md-sec-mark">
-            <TableKindSymbol kind={section.kind} size={ICON_SIZE.small} />
-          </span>
-          <h3 className="md-sec-name block-heading">{section.name}</h3>
-          <span className="md-sec-count mono-label">{section.count}</span>
-          {designing ? (
-            <span className="md-sec-acts">
-              <button
-                type="button"
-                className="md-icon-btn"
-                title="Move this table up the list"
-                aria-label={`Move ${section.name} up`}
-                disabled={first}
-                onClick={() => onMove(section.tableId, -1)}
-              >
-                <ArrowUp size={ICON_SIZE.tiny} weight="bold" />
-              </button>
-              <button
-                type="button"
-                className="md-icon-btn"
-                title="Move this table down the list"
-                aria-label={`Move ${section.name} down`}
-                disabled={last}
-                onClick={() => onMove(section.tableId, 1)}
-              >
-                <ArrowDown size={ICON_SIZE.tiny} weight="bold" />
-              </button>
-              <button
-                type="button"
-                className="md-icon-btn md-icon-btn--drop"
-                /* NOTHING IS DELETED. The table, its rows and every
-                   join on it stay exactly where they are; this module
-                   stops listing them, and putting the table back
-                   brings all of it with it. */
-                title={`Take ${section.name} out of this module — the table and its rows stay on the sheet`}
-                aria-label={`Take ${section.name} out of ${moduleName}`}
-                disabled={only}
-                onClick={() => onDrop(section.tableId)}
-              >
-                <X size={ICON_SIZE.tiny} weight="bold" />
-              </button>
-            </span>
-          ) : null}
-        </div>
+        <SectionHead
+          name={section.name}
+          kind={section.kind}
+          count={section.count}
+          tableId={section.tableId}
+          designing={designing}
+          first={first}
+          last={last}
+          only={only}
+          moduleName={moduleName}
+          onMove={onMove}
+          onDrop={onDrop}
+        />
       ) : null}
 
       {section.groups.map((group) => (
@@ -991,6 +1136,136 @@ function Section({
         </div>
       ))}
     </section>
+  )
+}
+
+/* ---------------------------------------------------------- */
+/* One table's head — and its designer handles                */
+/* ---------------------------------------------------------- */
+
+/** THE SAME HEAD OVER BOTH DRAWINGS. A register that files itself
+ *  into drawers still belongs to a table, still keeps that table's
+ *  anchor so a member chip reaches it, and still grows the same move
+ *  and take-out handles under the gear. Extracted rather than copied
+ *  because two heads that could drift apart is two heads. */
+function SectionHead({
+  name,
+  kind,
+  count,
+  tableId,
+  designing,
+  first,
+  last,
+  only,
+  moduleName,
+  onMove,
+  onDrop,
+}: {
+  name: string
+  kind: TableKind
+  count: number
+  tableId: string
+  designing: boolean
+  first: boolean
+  last: boolean
+  only: boolean
+  moduleName: string
+  onMove: (tableId: string, dir: -1 | 1) => void
+  onDrop: (tableId: string) => void
+}): ReactElement {
+  return (
+    <div className="md-sec-head">
+      <span className="md-sec-mark">
+        <TableKindSymbol kind={kind} size={ICON_SIZE.small} />
+      </span>
+      <h3 className="md-sec-name block-heading">{name}</h3>
+      <span className="md-sec-count mono-label">{count}</span>
+      {designing ? (
+        <span className="md-sec-acts">
+          <button
+            type="button"
+            className="md-icon-btn"
+            title="Move this table up the list"
+            aria-label={`Move ${name} up`}
+            disabled={first}
+            onClick={() => onMove(tableId, -1)}
+          >
+            <ArrowUp size={ICON_SIZE.tiny} weight="bold" />
+          </button>
+          <button
+            type="button"
+            className="md-icon-btn"
+            title="Move this table down the list"
+            aria-label={`Move ${name} down`}
+            disabled={last}
+            onClick={() => onMove(tableId, 1)}
+          >
+            <ArrowDown size={ICON_SIZE.tiny} weight="bold" />
+          </button>
+          <button
+            type="button"
+            className="md-icon-btn md-icon-btn--drop"
+            /* NOTHING IS DELETED. The table, its rows and every join on
+               it stay exactly where they are; this module stops listing
+               them, and putting the table back brings all of it with
+               it. */
+            title={`Take ${name} out of this module — the table and its rows stay on the sheet`}
+            aria-label={`Take ${name} out of ${moduleName}`}
+            disabled={only}
+            onClick={() => onDrop(tableId)}
+          >
+            <X size={ICON_SIZE.tiny} weight="bold" />
+          </button>
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
+/* ---------------------------------------------------------- */
+/* A drawer — a register's thing                              */
+/* ---------------------------------------------------------- */
+
+/** One heading, as an object rather than a row: the sheet's own banner
+ *  word, how many lines sit under it, and the cheapest and dearest of
+ *  those lines. Both ends of the range are a REAL row in the drawer —
+ *  never an average, never a rounding, and absent altogether when the
+ *  table prices nothing. */
+function DrawerFace({
+  drawer,
+  onOpen,
+}: {
+  drawer: Drawer
+  onOpen: () => void
+}): ReactElement {
+  const range =
+    drawer.low === '' ? '' : drawer.low === drawer.high ? drawer.low : `${drawer.low} – ${drawer.high}`
+  /* THE SHEET REALLY DOES BANNER SOME LINES UNDER NOTHING — 27 parts
+     and 74 dealer-fit packages sit under a spacer — so the drawer that
+     holds them says so rather than being given a name it never had. */
+  const name = drawer.name === '' ? `Under no ${drawer.of}` : drawer.name
+  return (
+    <li>
+      <button
+        type="button"
+        className="md-drawer"
+        aria-label={
+          range === ''
+            ? `${name}, ${drawer.count} of ${drawer.count === 1 ? 'one' : 'them'}`
+            : `${name}, ${drawer.count}, ${range}`
+        }
+        onClick={onOpen}
+      >
+        <span className="md-drawer-top">
+          <span className="md-drawer-mark">
+            <TableKindSymbol kind={drawer.kind} size={ICON_SIZE.tiny} />
+          </span>
+          <span className="md-drawer-n mono-label">{drawer.count.toLocaleString('en-AU')}</span>
+        </span>
+        <span className="md-drawer-name">{name}</span>
+        {range === '' ? null : <span className="md-drawer-range">{range}</span>}
+      </button>
+    </li>
   )
 }
 

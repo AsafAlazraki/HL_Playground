@@ -123,7 +123,9 @@ describe('an older copy of the example still says so', () => {
     expect(isStaleNorthside(drift)).toBe(true)
     expect(drift!.missing.length).toBeGreaterThan(20)
     expect(drift!.noModules).toBe(true)
-    expect(drift!.moduleCount).toBe(5)
+    /* nine places now: the set was five names and two of them were
+       bags — see northsideModules.test.ts and features/modules/split.ts */
+    expect(drift!.moduleCount).toBe(9)
   })
 
   it('still says nothing about a sheet that is somebody else’s work', () => {

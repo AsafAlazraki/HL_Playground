@@ -52,7 +52,7 @@
    plausible value somebody could mistake for their own words.
    ============================================================ */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import {
   ArrowDown,
@@ -90,7 +90,20 @@ import {
   updateBlock,
   useViewDef,
 } from '@/features/views'
-import { kindPlural, moduleTables } from './read'
+import {
+  categoryDrawers,
+  DRAWER_FLOOR,
+  buildEntries,
+  kindPlural,
+  listedTables,
+  moduleFace,
+  moduleTables,
+} from './read'
+/* THE READING THAT SAYS WHETHER THIS IS ONE PLACE OR A BAG. The owner
+   asked for the modules to be split better twice; this is that request
+   as a rule the app can apply to a module an admin builds tomorrow,
+   rather than as a one-off tidy of the demo's own list. */
+import { splitReading } from './split'
 import {
   blockBindings,
   capabilityStates,
@@ -240,8 +253,30 @@ function IndexPanel({
   const [adding, setAdding] = useState(false)
 
   const primary = bindings[0]?.entity
-  const anyPictures = bindings.some((b) => b.image !== undefined)
   const only = module.tableIds.length === 1
+
+  /* WHICH FACE THE ROWS THEMSELVES ASK FOR — counted, not guessed off
+     one table's column list. The control below still writes the stored
+     field and an admin's choice still wins; this is the measurement
+     that lets them make it. */
+  const mine = useMemo(
+    () => bindings.map((b) => b.entity).filter((e): e is EntityDef => e !== undefined),
+    [bindings],
+  )
+  const face = useMemo(() => moduleFace(mine, rowsByEntity), [mine, rowsByEntity])
+
+  /* AND HOW MANY HEADINGS A REGISTER WOULD FILE ITSELF INTO, so the
+     Rows control can say what pressing it actually produces on THIS
+     data rather than describing a list in the abstract. */
+  const drawerCount = useMemo(() => {
+    const listed = listedTables(module, entities)
+    return categoryDrawers(buildEntries(listed, rowsByEntity), listed).length
+  }, [module, entities, rowsByEntity])
+
+  /* IS THIS ONE PLACE? See split.ts — the rule is that every table
+     agrees on what sort of thing it holds, and that `custom` is the
+     absence of a kind rather than a kind two tables can share. */
+  const reading = useMemo(() => splitReading(module, entities), [module, entities])
 
   /* Every table on the sheet that could be a section of this index.
      A join is never offered: it is a relationship, not a place to
@@ -270,6 +305,15 @@ function IndexPanel({
     <section className="md-panel">
       <h3 className="md-panel-name mono-label">What this place lists</h3>
 
+      {/* -- is this one place? --------------------------------- */}
+      {reading.coherent ? null : (
+        <p className="md-panel-warn">
+          <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+          {reading.say} Take one out with the × beside its name below — the table and its
+          rows stay on the sheet — then give it its own card from the dashboard.
+        </p>
+      )}
+
       {/* -- the shape ------------------------------------------ */}
       <div className="md-shape" role="group" aria-label="How the list is drawn">
         {SHAPES.map((s) => (
@@ -289,10 +333,24 @@ function IndexPanel({
         ))}
       </div>
 
-      {module.index === 'tiles' && !anyPictures ? (
+      {/* THE MEASUREMENT, NOT AN OPINION. This used to say only that no
+          table declared a picture column, which is the right question
+          asked of the wrong thing: a column existing is not the same
+          fact as the rows carrying anything in it. `moduleFace` counts
+          the rows and says what it counted. */}
+      <p className="md-panel-say">
+        {face.why}
+        {module.index === 'rows' && drawerCount >= DRAWER_FLOOR
+          ? ` These tables banner their rows under ${drawerCount.toLocaleString('en-AU')} headings, so the list opens onto those and one press narrows it to one of them.`
+          : ''}
+      </p>
+
+      {module.index !== face.mode && face.live > 0 ? (
         <p className="md-panel-warn">
           <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-          None of these tables has a picture column, so tiles draw names on plain paper.
+          {module.index === 'tiles'
+            ? 'This is set to tiles, so most faces here draw on plain paper. Your choice stands.'
+            : 'This is set to rows, so the pictures these rows carry are not drawn. Your choice stands.'}
         </p>
       ) : null}
 

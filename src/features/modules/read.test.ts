@@ -143,6 +143,7 @@ const entryOf = (tableId: string, n: number): IndexEntry[] =>
     rowId: `${tableId}-${i}`,
     label: `${tableId} ${i}`,
     trail: '',
+    branch: '',
     price: '',
     hay: `${tableId} ${i}`,
   }))

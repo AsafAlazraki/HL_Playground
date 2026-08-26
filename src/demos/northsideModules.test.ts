@@ -10,7 +10,7 @@
    WHAT IS ASSERTED, and why each one is here rather than left to
    a screenshot:
 
-     1. FIVE PLACES, through the real store action. A module
+     1. NINE PLACES, through the real store action. A module
         written straight into the map would persist and draw and
         still be wrong — `createModule` is what mints each member
         table's detail page and seeds it from that table's own
@@ -31,6 +31,14 @@
         modules and meets the dashboard's own empty state; that
         state is a real dealer's first screen and must not be
         collateral damage.
+     6. EVERY PLACE IS ONE SORT OF THING. `splitReading` is the rule
+        the owner's "split the modules better" became when it was
+        written down, and this asserts the seeded list satisfies it —
+        so the demo cannot quietly grow a bag again. It was five
+        names and two of them were bags: Parts & Accessories held
+        accessories beside a package library, and Rates & Charges
+        held three tables whose only agreement was that the app
+        cannot classify any of them.
    ============================================================ */
 import { describe, expect, it, vi } from 'vitest'
 import type { EntityDef, RowData } from '@/types/model'
@@ -58,6 +66,10 @@ const { loadNorthsideProject, northsideDrift, isStaleNorthside } = await import(
 const { buildEntries, groupEntries, listedTables, moduleTables, relatedTables } =
   await import('@/features/modules/read')
 const { capabilityStates } = await import('@/features/modules/designer')
+const { splitReading } = await import('@/features/modules/split')
+const { categoryDrawers, censusLine, DRAWER_FLOOR, moduleCensus, moduleFace } = await import(
+  '@/features/modules/read'
+)
 
 const ordered = () =>
   Object.values(useProjectStore.getState().modules).sort((a, b) => a.order - b.order)
@@ -69,16 +81,71 @@ const named = (name: string) => {
 }
 
 describe('the Northside demo seeds its own modules', () => {
-  it('lands five places on the dashboard, in order', () => {
+  it('lands nine places on the dashboard, in order', () => {
     loadNorthsideProject()
     expect(ordered().map((m) => m.name)).toEqual([
       'Boats',
       'Motors',
+      'Factory Packages',
       'Trailers',
       'Parts & Accessories',
-      'Rates & Charges',
+      'Dealer Fit Packages',
+      'Labour Rates',
+      'Oils & Consumables',
+      'Registration Costs',
     ])
-    expect(ordered().map((m) => m.order)).toEqual([0, 1, 2, 3, 4])
+    expect(ordered().map((m) => m.order)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8])
+  })
+
+  /* -- ruling 6: one place is one sort of thing --------------- */
+
+  it('leaves no bag on the dashboard', () => {
+    loadNorthsideProject()
+    const { entities } = useProjectStore.getState()
+    const bags = ordered()
+      .map((m) => splitReading(m, entities))
+      .filter((r) => !r.coherent)
+      .map((r) => r.say)
+    expect(bags).toEqual([])
+  })
+
+  it('would have called the old list a bag, twice', () => {
+    loadNorthsideProject()
+    const st = useProjectStore.getState()
+    const byName = (n: string) => Object.values(st.entities).find((e) => e.name === n)!
+    /* THE TWO THAT WERE WRONG, rebuilt exactly as they were seeded
+       before this split, so the rule is shown catching them rather
+       than merely agreeing with the answer. */
+    const asBefore = (name: string, names: string[]) => ({
+      ...ordered()[0],
+      name,
+      tableIds: names.map((n) => byName(n).id),
+    })
+    const parts = splitReading(
+      asBefore('Parts & Accessories', [
+        'Parts & Accessories',
+        'Rigging Kits',
+        'Dealer Fit Packages',
+      ]),
+      st.entities,
+    )
+    expect(parts.coherent).toBe(false)
+    expect(parts.say).toContain('2 tables of accessories')
+    expect(parts.say).toContain('1 table of packages')
+
+    const rates = splitReading(
+      asBefore('Rates & Charges', [
+        'Labour Rates',
+        'Oils & Consumables',
+        'Registration Costs',
+      ]),
+      st.entities,
+    )
+    expect(rates.coherent).toBe(false)
+    /* three tables, three parts — `custom` is the absence of a kind
+       and never an agreement between two tables that carry it */
+    expect(rates.parts).toHaveLength(3)
+    expect(rates.say).toContain('declares no kind at all')
   })
 
   it('gives every module its own words, never the table’s provenance note', () => {
@@ -144,9 +211,15 @@ describe('the Northside demo seeds its own modules', () => {
 
     expect(shapeOf('Motors')).toEqual([
       'Yamaha Outboards 209',
+      'ePropulsion Outboards 32',
+    ])
+    /* THE TWO PACKAGE FILES ARE THEIR OWN PLACE NOW. Their own seed
+       note says in capitals that they are NOT motors, and their
+       `kind` says the same thing in a field: 'package' against the
+       outboards' 'motor'. */
+    expect(shapeOf('Factory Packages')).toEqual([
       'Haines Signature Factory Packages 39',
       'Jeanneau Factory Packages 50',
-      'ePropulsion Outboards 32',
     ])
     expect(shapeOf('Trailers')).toEqual([
       'NSM Custom Trailers 73',
@@ -168,13 +241,11 @@ describe('the Northside demo seeds its own modules', () => {
     expect(shapeOf('Parts & Accessories')).toEqual([
       'Parts & Accessories 2238',
       'Rigging Kits 622',
-      'Dealer Fit Packages 1576',
     ])
-    expect(shapeOf('Rates & Charges')).toEqual([
-      'Labour Rates 18',
-      'Oils & Consumables 27',
-      'Registration Costs 19',
-    ])
+    expect(shapeOf('Dealer Fit Packages')).toEqual(['Dealer Fit Packages 1576'])
+    expect(shapeOf('Labour Rates')).toEqual(['Labour Rates 18'])
+    expect(shapeOf('Oils & Consumables')).toEqual(['Oils & Consumables 27'])
+    expect(shapeOf('Registration Costs')).toEqual(['Registration Costs 19'])
   })
 
   it('files the retired trailer table without listing it', () => {
@@ -215,7 +286,9 @@ describe('the Northside demo seeds its own modules', () => {
     /* a part is quoted as a line on a boat's quote */
     expect(verbs('Parts & Accessories')).not.toContain('quote')
     /* a fee register is read, not opened: no join names these three */
-    expect(verbs('Rates & Charges')).not.toContain('open')
+    for (const r of ['Labour Rates', 'Oils & Consumables', 'Registration Costs']) {
+      expect(verbs(r), r).not.toContain('open')
+    }
     /* nothing that WRITES is on anywhere */
     for (const m of ordered()) {
       for (const w of ['add', 'edit', 'delete'] as const) {
@@ -388,10 +461,180 @@ describe('the Northside demo seeds its own modules', () => {
     expect(drift?.missing).toContain('Parts & Accessories')
     expect(drift?.resized).toContainEqual({ name: 'Yamaha Outboards', has: 43, wants: 209 })
     expect(drift?.noModules).toBe(true)
-    expect(drift?.moduleCount).toBe(5)
+    expect(drift?.moduleCount).toBe(9)
     /* seeded from THIS build, so none of the above makes it an older
        copy — one deleted table and one shortened table is a person
        working, not a stale seed */
     expect(isStaleNorthside(drift)).toBe(false)
+  })
+})
+
+/* ============================================================
+   AND WHAT EACH PLACE SAYS ABOUT ITSELF.
+
+   "2,937 products" is a fact. "2,238 products across 180 categories ·
+   699 no longer sold" is a picture, and the difference between them is
+   the whole of the owner's "the counts should mean something". Every
+   figure below is read off the loaded sheet by the same functions the
+   dashboard card and the index header print, so a number that moves in
+   the workbook moves here and nothing has to be re-typed.
+
+   THE FACE IS COUNTED, NOT DECLARED. `moduleFace` asks how many of a
+   module's live rows actually carry a picture, which is a different
+   question from whether some table declares a picture column — Motors
+   runs Yamaha beside ePropulsion, which has no such column at all, and
+   Boats runs Highfield beside Formosa, which fills its column on 18
+   rows of 39. The gap between the two sides of the floor is what makes
+   half a safe place to put it, and this asserts that gap.
+   ============================================================ */
+describe('what a module says it is made of', () => {
+  it('counts a register in the dealer’s own nouns, not in rows', () => {
+    loadNorthsideProject()
+    const { entities, rowsByEntity } = useProjectStore.getState()
+    const parts = moduleCensus(named('Parts & Accessories'), entities, rowsByEntity)
+
+    /* 2,937 parts less the 699 below the sheet's own OBSOLETE divider,
+       plus 650 rigging kits less the 28 below theirs */
+    expect(parts.items).toBe(2238 + 622)
+    expect(parts.held).toBe(699 + 28)
+    /* both tables are `accessory` and their leaf columns disagree
+       (Product / Rigging Kit), so the kind's own plural is the one
+       true word for the set — that is `kindNoun`'s stated job */
+    expect(parts.noun).toBe('accessories')
+    /* and BOTH banner words are said, because "206 groups" is jargon
+       and picking one table's word over the other's is a small lie
+       about the other */
+    expect(parts.branches).toEqual([
+      { noun: 'categories', count: 179 },
+      { noun: 'sections', count: 25 },
+    ])
+    expect(censusLine(parts)).toBe(
+      '2,860 accessories across 179 categories and 25 sections · 727 no longer sold',
+    )
+  })
+
+  it('says nothing it did not count', () => {
+    loadNorthsideProject()
+    const { entities, rowsByEntity } = useProjectStore.getState()
+    /* a flat register with nothing held back: no "across", no
+       "no longer sold", and the dealer's own word for one row */
+    const rates = moduleCensus(named('Labour Rates'), entities, rowsByEntity)
+    expect(rates.branches).toEqual([])
+    expect(rates.held).toBe(0)
+    expect(censusLine(rates)).toBe('18 rates')
+
+    const oils = moduleCensus(named('Oils & Consumables'), entities, rowsByEntity)
+    expect(censusLine(oils)).toBe('27 consumables')
+  })
+
+  it('holds the retired trailer table back in words, never in silence', () => {
+    loadNorthsideProject()
+    const { entities, rowsByEntity } = useProjectStore.getState()
+    const trailers = moduleCensus(named('Trailers'), entities, rowsByEntity)
+    expect(trailers.items).toBe(434)
+    /* the ten rows of the OBSOLETE table, which is history rather
+       than stock and has no section in the catalogue at all */
+    expect(trailers.held).toBe(10)
+    expect(censusLine(trailers)).toContain('10 no longer sold')
+  })
+
+  /* -- the face, counted off the rows ------------------------ */
+
+  it('gives a catalogue tiles and a register rows, from the rows themselves', () => {
+    loadNorthsideProject()
+    const { entities, rowsByEntity } = useProjectStore.getState()
+    const faceOf = (name: string) =>
+      moduleFace(listedTables(named(name), entities), rowsByEntity)
+
+    const boats = faceOf('Boats')
+    expect(boats.mode).toBe('tiles')
+    expect([boats.pictured, boats.live]).toEqual([724, 810])
+
+    /* THE CASE THE OLD RULE GOT WRONG BY ACCIDENT AND THE NEW ONE GETS
+       RIGHT ON PURPOSE. Motors is Yamaha, which pictures 203 of 209,
+       beside ePropulsion, which declares no picture column at all. The
+       column question answers "yes" off the primary table and says
+       nothing about the other 32 rows; the row question counts them. */
+    const motors = faceOf('Motors')
+    expect(motors.mode).toBe('tiles')
+    expect([motors.pictured, motors.live]).toEqual([203, 241])
+
+    /* and every register is EXACTLY zero, which is why a floor at half
+       is nowhere near either side of the line on this data */
+    for (const r of [
+      'Parts & Accessories',
+      'Dealer Fit Packages',
+      'Labour Rates',
+      'Oils & Consumables',
+      'Registration Costs',
+    ]) {
+      const face = faceOf(r)
+      expect(face.pictured, r).toBe(0)
+      expect(face.mode, r).toBe('rows')
+    }
+  })
+
+  it('is the face every seeded module was actually born with', () => {
+    loadNorthsideProject()
+    const { entities, rowsByEntity } = useProjectStore.getState()
+    /* `createModule` asks `moduleFace`, so the stored field and the
+       measurement can never be two different answers on a fresh seed */
+    for (const m of ordered()) {
+      expect(m.index, m.name).toBe(
+        moduleFace(listedTables(m, entities), rowsByEntity).mode,
+      )
+    }
+  })
+
+  /* -- the drawers ------------------------------------------- */
+
+  it('files a big register into its own banners, and leaves a small one alone', () => {
+    loadNorthsideProject()
+    const { entities, rowsByEntity } = useProjectStore.getState()
+    const drawersOf = (name: string) => {
+      const listed = listedTables(named(name), entities)
+      return categoryDrawers(buildEntries(listed, rowsByEntity), listed)
+    }
+
+    const parts = drawersOf('Parts & Accessories')
+    expect(parts).toHaveLength(206)
+    expect(parts.length).toBeGreaterThanOrEqual(DRAWER_FLOOR)
+    /* 179 categories and 25 sections that carry a name, plus one
+       drawer per table for the lines the sheet banners under a spacer
+       — every line lands in exactly one of them, so the page can state
+       what a narrowing put away without a remainder */
+    expect(parts.reduce((n, d) => n + d.count, 0)).toBe(2238 + 622)
+    /* the sheet really does banner some lines under nothing, and the
+       drawer that holds them says so rather than being given a name */
+    expect(parts.some((d) => d.name === '')).toBe(true)
+    /* the dealer's own banner word, per table */
+    expect(new Set(parts.map((d) => d.of))).toEqual(new Set(['category', 'section']))
+
+    /* four bands is a register to read, not one to open */
+    expect(drawersOf('Registration Costs').length).toBeLessThan(DRAWER_FLOOR)
+  })
+
+  it('takes both ends of a drawer’s range off real rows in it', () => {
+    loadNorthsideProject()
+    const { entities, rowsByEntity } = useProjectStore.getState()
+    const listed = listedTables(named('Parts & Accessories'), entities)
+    const entries = buildEntries(listed, rowsByEntity)
+    const drawers = categoryDrawers(entries, listed)
+
+    for (const d of drawers) {
+      const mine = entries.filter(
+        (e) => e.tableId === d.tableId && e.branch === d.name,
+      )
+      const priced = mine.filter((e) => e.price !== '' && e.amount !== undefined)
+      if (priced.length === 0) {
+        expect(d.low, d.name).toBe('')
+        expect(d.high, d.name).toBe('')
+        continue
+      }
+      /* both ends are a row that is really in the drawer — never an
+         average, never a rounding, never a figure nobody can find */
+      expect(priced.map((e) => e.price), d.name).toContain(d.low)
+      expect(priced.map((e) => e.price), d.name).toContain(d.high)
+    }
   })
 })

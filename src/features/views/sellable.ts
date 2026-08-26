@@ -95,15 +95,39 @@ export function heldBackRowCount(
  *  and deleting it would make yesterday's documents unreadable. */
 const STILL_OPENS = 'a quote that already names one still opens, still totals and still prints'
 
+/** "2 NSM Custom Trailers are no longer sold" — the CLAUSE, with no
+ *  stop and no tail.
+ *
+ *  IT IS EXPORTED SO THERE IS ONE SET OF WORDS AND NOT TWO. A
+ *  narrowed list is short for two different reasons at once — the
+ *  rule did not admit a row, and the discontinued contract held one
+ *  back — and `@/features/curation` prints them as one paragraph. It
+ *  could have written its own phrasing for this half; then a person
+ *  would be reading "no longer sold" here and something almost the
+ *  same three lines up, with no way to tell whether the two counts
+ *  overlap. The clause is assembled once, here, and everything that
+ *  says it says it identically. */
+export function withheldClause(count: number, tableName: string): string {
+  if (count <= 0) return ''
+  const one = count === 1
+  const noun = one ? singular(tableName) : plural(tableName)
+  return `${count} ${noun} ${one ? 'is' : 'are'} no longer sold`
+}
+
+/** The reassurance, on its own — the reason the data was kept, which
+ *  is the answer to the question "no longer sold" always raises. */
+export function stillOnTheSheet(count: number): string {
+  return `${count === 1 ? 'It stays' : 'They stay'} on the sheet, and ${STILL_OPENS}.`
+}
+
 /** "2 NSM Custom Trailers are no longer sold…" — said in words,
  *  never left as the difference between two numbers. */
 export function heldBackSentence(count: number, tableName: string): string {
   if (count <= 0) return ''
   const one = count === 1
-  const noun = one ? singular(tableName) : plural(tableName)
-  return `${count} ${noun} ${one ? 'is' : 'are'} no longer sold, so ${
+  return `${withheldClause(count, tableName)}, so ${
     one ? 'it is' : 'they are'
-  } not offered here. ${one ? 'It stays' : 'They stay'} on the sheet, and ${STILL_OPENS}.`
+  } not offered here. ${stillOnTheSheet(count)}`
 }
 
 /** The whole table is history rather than stock. */

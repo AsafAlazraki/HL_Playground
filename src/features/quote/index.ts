@@ -129,6 +129,11 @@ export { QuoteDocument } from './QuoteDocument'
 export type { QuoteDocumentProps } from './QuoteDocument'
 export { QuoteEditor } from './QuoteEditor'
 export type { QuoteEditorProps } from './QuoteEditor'
+/* THE SEQUENCE. `QuotePage` mounts it for a draft and it is not a
+   third state of a quote — see that file's own note. Exported so a
+   stage that wants the walk without the switch can mount it. */
+export { QuoteBuild } from './QuoteBuild'
+export type { QuoteBuildProps } from './QuoteBuild'
 
 /* -- making, reading and changing one ------------------------ */
 export {
@@ -176,6 +181,13 @@ export {
   mintFreeLine,
   candidatesFor,
   candidateOffer,
+  /* ONE STEP OF A BUILD — the narrowed list, the whole catalogue
+     behind it, the search that ignores the narrowing, and the reason,
+     with the adjudicated rate where the price file carries one. The
+     numbers come back in `@/features/curation`'s vocabulary so a
+     surface can hand them straight to `readCuration`. */
+  stepOffer,
+  stepReason,
   priceChanges,
   referenceFor,
   subjectStillOnSheet,
@@ -196,7 +208,33 @@ export {
   OFFER_CAP,
   SUBJECT_BLOCK,
 } from './freeze'
-export type { Candidate, Offer, MintLineArgs, MintQuoteArgs, PriceChange } from './freeze'
+export type {
+  Candidate,
+  Offer,
+  MintLineArgs,
+  MintQuoteArgs,
+  PriceChange,
+  StepMeasure,
+  StepOffer,
+  StepOfferOptions,
+  StepReason,
+} from './freeze'
+
+/* -- THE SEQUENCE, AS A READING OF A DOCUMENT ----------------
+   Pure: `buildSteps` takes a QuoteDef and nothing else, because a
+   step's state is not state — it is a reading of a quote that is
+   already written down. That is the whole answer to the friction
+   hl-journeys.md §3.4 calls the most damaging one in production. */
+export {
+  buildSteps,
+  decidedCount,
+  firstOpenStep,
+  savedNote,
+  stepAfter,
+  stepBefore,
+  SUBJECT_STEP,
+} from './steps'
+export type { BuildStep, StepState } from './steps'
 
 /* -- the price ladder ---------------------------------------- */
 export {
