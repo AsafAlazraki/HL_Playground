@@ -116,7 +116,12 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
           label: 'Undo',
           onPick: () => {
             restore(before)
-            say({ text: `Undone — ${text.toLowerCase()}` })
+            /* NOT lower-cased. Every one of these sentences opens
+               with a card's NAME or a person's own word for a
+               button, and §2 rule 3 keeps a name in its own case —
+               "undone — my quotes moved to 3 of 5" is this page
+               re-typing something the person wrote. */
+            say({ text: `Undone — ${text}` })
           },
         },
       })

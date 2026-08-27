@@ -183,9 +183,13 @@
   align-items: center;
 }
 
-/* Said once, until the person changes something. */
+/* Said once, until the person changes something. It sits under
+   the greeting and on the same left edge as everything else —
+   `margin-inline: auto` (shared with the blocks above) would
+   centre a 62ch paragraph in a 1180px column and leave it
+   floating in the middle of the page with nothing under it. */
 .dsh-hint {
-  margin: 0 auto var(--s-5);
+  margin: 0 0 var(--s-5);
   color: var(--fg-secondary);
   max-width: 62ch;
 }
@@ -602,9 +606,20 @@
   color: var(--fg-secondary);
 }
 
+/* A MODULE'S OWN LINE IS A SENTENCE THE ADMIN WROTE, and some of
+   Northside's run to forty words. Measured on the real set: the
+   modules card was 1,100px tall and pushed every card beside it
+   out of the row. Two lines, with the whole of it still in the
+   DOM — §3: nothing truncates mid-word, and a name that does not
+   fit clamps rather than disappearing. */
 .dsh-when {
   color: var(--fg-secondary);
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 /* A state, as a dotted word. NOT uppercase: 'Draft' and 'Issued'

@@ -16,6 +16,14 @@ import '@fontsource/ibm-plex-mono/600.css'
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/bridge.css'
+/* THE TOAST STRIP'S OWN STYLESHEET. `Toasts.tsx` does not import
+   it — `TableSheet` does — so in the real app it is on the page
+   long before a note is raised, and in a harness that mounts
+   `UndoKeys` alone it is not. Without it the note renders
+   unstyled at the top of the page and inherits the host layer's
+   `pointer-events: none`, so UNDO cannot be pressed. That is a
+   fact about this harness and not about the app. */
+import './features/table/table.css'
 import { Dashboard } from './features/dashboard'
 import { StillnessProvider } from './features/views/stillness'
 import { UndoKeys } from './app/UndoKeys'

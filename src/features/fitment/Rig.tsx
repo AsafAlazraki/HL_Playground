@@ -43,14 +43,16 @@
 
    ── WHY THE COLUMNS ARE HIDDEN UNTIL YOU ASK ──────────────────
 
-   On the loaded price file 63 columns across these catalogues hold
-   few enough live values to be a menu. Drawing all 63 would bury the
-   two the business actually wrote a rule about under sixty-one it
-   did not. So the rig leads with the columns a rule in force READS
-   — that is `RigSlot.narrowed`, a fact rather than a guess — plus
-   anything a person has set, and says in one line how many more
-   there are and where they went. Nothing is removed; one press
-   shows every one of them.
+   Measured on the Northside seed: 63 columns across the catalogues
+   one hull draws from hold few enough live values to be a menu, and
+   93 more hold too many. Drawing all 63 would bury the one or two
+   the business actually wrote a rule about under sixty-one it did
+   not. So the rig leads with the columns a rule in force READS —
+   that is `RigSlot.narrowed`, a fact about the rules rather than a
+   guess — plus anything a person has set, and says in one line how
+   many more there are. Nothing is removed; one press shows every one
+   of them, and both figures are counted on render so neither can go
+   stale the way the two in this paragraph would.
 
    ── AND WHAT IT SAYS WHEN THE BUSINESS HAS STATED NO RULE ─────
 

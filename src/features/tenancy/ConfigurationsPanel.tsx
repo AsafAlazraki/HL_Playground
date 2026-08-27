@@ -19,9 +19,11 @@
    `replaceProject` calls `forgetHistory()` — a swap is not a step —
    so Ctrl+Z will not bring the previous sheet back. That is the
    narrow case rule 9 keeps a confirm for, and §7 says a confirm
-   states its blast radius COMPUTED: `sheetNow` and `sheetFacts`
-   already do that counting for the three other surfaces that destroy
-   a sheet, so this uses them and cannot disagree with them.
+   states its blast radius COMPUTED: `sheetNow` already does that
+   counting for the three other surfaces that destroy a sheet, so
+   this uses it and cannot disagree with them. See `atStake` below
+   for the one thing it does NOT reuse, and the measurement that
+   settled it.
 
    The confirm is INLINE, in the row it belongs to, rather than a
    modal over the panel. A modal would hide the list the person is
@@ -43,7 +45,7 @@
    than printing a nought.
    ============================================================ */
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { FormEvent, JSX } from 'react'
 import { say } from '@/store/notes'
 import { sheetNow, quotesSurviveSentence, type SheetNow } from '@/features/io/sheetNow'
@@ -271,10 +273,12 @@ export function ConfigurationsPanel({ user }: ConfigurationsPanelProps): JSX.Ele
                       <>
                         The sheet now holds{' '}
                         {atStake().facts.map((f, i) => (
-                          <span className="tn-fact" key={f.noun}>
+                          <Fragment key={f.noun}>
                             {i > 0 ? ' · ' : ''}
-                            <span className="tn-fig">{f.n.toLocaleString()}</span> {f.noun}
-                          </span>
+                            <span className="tn-fact">
+                              <span className="tn-fig">{f.n.toLocaleString()}</span> {f.noun}
+                            </span>
+                          </Fragment>
                         ))}
                         . All of it is replaced.
                       </>

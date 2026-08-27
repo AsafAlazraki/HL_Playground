@@ -107,12 +107,10 @@ export interface ReorderApi {
   instant: boolean
   /** put this on the scroller/grid that holds the slots */
   containerRef: (el: HTMLElement | null) => void
-  /** put these on each item's grab handle */
+  /** put these on each item's grab handle. Two, not five: the rest
+   *  of the drag is bound to the window — see `begin` below. */
   handleProps: (index: number) => {
     onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void
-    onPointerMove: (e: ReactPointerEvent<HTMLElement>) => void
-    onPointerUp: (e: ReactPointerEvent<HTMLElement>) => void
-    onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void
     onKeyDown: (e: ReactKeyboardEvent<HTMLElement>) => void
   }
 }
@@ -134,6 +132,17 @@ export function useReorder({ count, onMove, slotAttr }: ReorderOptions): Reorder
   const [to, setTo] = useState(-1)
   const [instant, setInstant] = useState(false)
 
+  /* the live drag, in refs as well as in state — see the note on
+     `begin` below for why the handlers cannot read the state */
+  const fromLive = useRef(-1)
+  const toLive = useRef(-1)
+  const detach = useRef<(() => void) | null>(null)
+
+  /* the commit, always the current one, without re-binding a
+     window listener every render */
+  const commit = useRef(onMove)
+  commit.current = onMove
+
   /* one frame of no motion, then back to the spring — see the
      header. Cleared by a frame rather than a timer so it cannot
      outlive the render it was raised for. */
@@ -142,6 +151,9 @@ export function useReorder({ count, onMove, slotAttr }: ReorderOptions): Reorder
     const id = requestAnimationFrame(() => setInstant(false))
     return () => cancelAnimationFrame(id)
   }, [instant])
+
+  /* a drag must not outlive the surface it started on */
+  useEffect(() => () => detach.current?.(), [])
 
   const measure = useCallback((): void => {
     const el = container.current
@@ -159,42 +171,92 @@ export function useReorder({ count, onMove, slotAttr }: ReorderOptions): Reorder
     container.current = el
   }, [])
 
+  /* ============================================================
+     THE DRAG IS BOUND TO THE WINDOW, AND THAT IS A FIX, NOT A
+     STYLE CHOICE.
+
+     The first version put `onPointerMove` / `onPointerUp` on the
+     handle and called `setPointerCapture` on pointer-down, which
+     is the ordinary way to do this and is wrong HERE for a
+     specific reason: this drag REORDERS ITS OWN DOM. As the
+     preview order changes, React moves the card — and the grip
+     inside it — with `insertBefore`, which is a removal followed
+     by an insertion. Pointer capture is released when the
+     capturing element leaves the document, so from the first slot
+     the pointer crossed, the capture was gone and every later
+     event went to whatever was under the cursor instead.
+
+     MEASURED, before the fix: the card followed the pointer
+     correctly, `pointerup` never reached the handler, the card
+     stayed lifted after the mouse was released, and no move was
+     ever committed — a drag that looked like it worked and did
+     nothing. Bound to the window, the listeners survive the
+     element being moved, which is the whole requirement.
+
+     AND THE HANDLERS READ REFS, NOT STATE. They are closures made
+     once per drag; the state they captured would be the state at
+     pointer-down for the entire gesture.
+     ============================================================ */
+  const begin = useCallback(
+    (index: number, e: ReactPointerEvent<HTMLElement>): void => {
+      /* THE PRIMARY BUTTON ONLY. A right-click on a handle is a
+         context menu, not the start of a drag. */
+      if (e.button !== 0) return
+      /* one drag at a time */
+      detach.current?.()
+      e.preventDefault()
+      measure()
+
+      fromLive.current = index
+      toLive.current = index
+      setFrom(index)
+      setTo(index)
+
+      const onPointerMove = (ev: PointerEvent): void => {
+        if (fromLive.current < 0) return
+        const next = slotAt(slots.current, ev.clientX, ev.clientY)
+        if (next >= 0 && next !== toLive.current) {
+          toLive.current = next
+          setTo(next)
+        }
+      }
+
+      const finish = (keep: boolean): void => {
+        const a = fromLive.current
+        const b = toLive.current
+        fromLive.current = -1
+        toLive.current = -1
+        setFrom(-1)
+        setTo(-1)
+        off()
+        if (keep && a >= 0 && b >= 0 && b !== a) commit.current(a, b)
+      }
+
+      const onPointerUp = (): void => finish(true)
+      /* A CANCELLED DRAG PUTS EVERYTHING BACK. The browser cancels
+         a pointer when a scroll takes over or the window loses it,
+         and committing a half-finished drag would move a card the
+         person never let go of. */
+      const onPointerCancel = (): void => finish(false)
+
+      const off = (): void => {
+        window.removeEventListener('pointermove', onPointerMove)
+        window.removeEventListener('pointerup', onPointerUp)
+        window.removeEventListener('pointercancel', onPointerCancel)
+        detach.current = null
+      }
+
+      window.addEventListener('pointermove', onPointerMove)
+      window.addEventListener('pointerup', onPointerUp)
+      window.addEventListener('pointercancel', onPointerCancel)
+      detach.current = off
+    },
+    [measure],
+  )
+
   const handleProps = useCallback(
     (index: number) => ({
-      onPointerDown: (e: ReactPointerEvent<HTMLElement>): void => {
-        /* THE PRIMARY BUTTON ONLY. A right-click on a handle is a
-           context menu, not the start of a drag. */
-        if (e.button !== 0) return
-        e.preventDefault()
-        measure()
-        e.currentTarget.setPointerCapture(e.pointerId)
-        setFrom(index)
-        setTo(index)
-      },
-      onPointerMove: (e: ReactPointerEvent<HTMLElement>): void => {
-        if (from < 0) return
-        const next = slotAt(slots.current, e.clientX, e.clientY)
-        if (next >= 0 && next !== to) setTo(next)
-      },
-      onPointerUp: (e: ReactPointerEvent<HTMLElement>): void => {
-        if (from < 0) return
-        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-          e.currentTarget.releasePointerCapture(e.pointerId)
-        }
-        const a = from
-        const b = to
-        setFrom(-1)
-        setTo(-1)
-        if (b >= 0 && b !== a) onMove(a, b)
-      },
-      onPointerCancel: (): void => {
-        /* A CANCELLED DRAG PUTS EVERYTHING BACK. The browser cancels
-           a pointer when a scroll takes over or the window loses it,
-           and committing a half-finished drag would move a card the
-           person never let go of. */
-        setFrom(-1)
-        setTo(-1)
-      },
+      onPointerDown: (e: ReactPointerEvent<HTMLElement>): void => begin(index, e),
       onKeyDown: (e: ReactKeyboardEvent<HTMLElement>): void => {
         const back = e.key === 'ArrowLeft' || e.key === 'ArrowUp'
         const on = e.key === 'ArrowRight' || e.key === 'ArrowDown'
@@ -203,10 +265,10 @@ export function useReorder({ count, onMove, slotAttr }: ReorderOptions): Reorder
         if (target < 0 || target >= count) return
         e.preventDefault()
         setInstant(true)
-        onMove(index, target)
+        commit.current(index, target)
       },
     }),
-    [count, from, to, measure, onMove],
+    [count, begin],
   )
 
   return {

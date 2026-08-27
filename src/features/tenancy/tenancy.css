@@ -249,10 +249,13 @@
   font-size: var(--t-caption-size);
   color: var(--fg-secondary);
 }
+/* INLINE, NOT INLINE-FLEX. A fact appears twice on this screen: as a
+   flex item in the holdings row, where the parent's gap separates
+   them, and INSIDE A SENTENCE in the confirm, where the separators
+   are text nodes and a flex box would eat the spaces around them. */
 .tn-fact {
-  display: inline-flex;
-  gap: 5px;
-  align-items: baseline;
+  display: inline;
+  white-space: nowrap;
 }
 /* every figure is mono, and lines up on the decimal */
 .tn-fig {

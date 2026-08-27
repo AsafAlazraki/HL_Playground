@@ -12,6 +12,17 @@
    `@/features/constraints/trailerFitment` and is called, never
    re-implemented. There is one selector in this app and there will
    go on being one.
+
+   ── AND ONE THING THAT IS NOT A COUNT ─────────────────────────
+
+   `Rig` takes ONE hull and runs the business's own rules against it
+   through `@/lib/configure` — an arc-consistency solver that records
+   the reason at the moment an option is removed, and that nothing in
+   this app had ever called. Same discipline as the fan-out: the
+   reading (`rigReading.ts`) is pure and is measured against the whole
+   price file in `rig.test.ts`, and no sentence a person reads is
+   written here. The solver is not re-implemented either, and it is
+   the second engine this directory draws and never duplicates.
    ============================================================ */
 
 export { FanOut } from './FanOut'

@@ -254,11 +254,19 @@
   color: var(--fg-secondary);
 }
 
+/* A SENTENCE WITH A FIGURE IN IT, not a stamp. Sentence case, at the
+   caption step; the figure inside it is the only mono part. */
 .hy-card-when {
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  color: var(--fg-tertiary);
+}
+
+.hy-stamp {
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
 }
 
 .hy-card-foot {

@@ -438,7 +438,14 @@ function DraftCard({
         onClick={() => onOpen(quote.id)}
         aria-label={`Resume draft ${quote.reference} — ${quote.subjectLabel}`}
       >
-        <span className="mono-label hy-card-when">Last worked on {touched}</span>
+        {/* NOT `mono-label`. That is the 11px UPPERCASE label style, and
+            "Last worked on 2026-08-27" is a sentence with a VALUE in it —
+            uppercasing it makes a date read as a stamp and breaks rule 3
+            the same way `crm.css` records having broken it. The words are
+            sentence case; only the figure is mono. */}
+        <span className="hy-card-when">
+          Last worked on <span className="hy-stamp">{touched}</span>
+        </span>
         <span className="hy-card-what">{quote.subjectLabel}</span>
         <span className="hy-card-who">
           {who === '' ? <span className="hy-blank">no customer yet</span> : who}
