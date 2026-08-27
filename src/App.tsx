@@ -3,7 +3,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { adoptKeptPatterns, seedWorkbookConstraints } from '@/features/constraints'
 import { StillnessProvider } from '@/features/views/stillness'
 import { TabGuard } from '@/features/session'
-import { SignIn, currentUser, type AppUser } from '@/features/auth'
+import { SignIn, currentUser, signOut, readTheme, applyTheme, type AppUser } from '@/features/auth'
 import { Shell } from '@/app/Shell'
 import { UndoKeys } from '@/app/UndoKeys'
 
@@ -28,6 +28,16 @@ export default function App() {
   const entities = useProjectStore((s) => s.entities)
   const org = useProjectStore((s) => s.meta.org)
   const setOrganisation = useProjectStore((s) => s.setOrganisation)
+
+  /* THE REMEMBERED THEME, BEFORE ANYTHING IS DRAWN. `ds.css`
+     carries a complete measured dark palette and `data-theme` was
+     written in exactly one place in this repository — the
+     /design.html reference page — so no user could ever reach it.
+     Light stays the default; this only restores a choice already
+     made. */
+  useEffect(() => {
+    applyTheme(readTheme())
+  }, [])
 
   useEffect(() => {
     void init()
@@ -108,7 +118,13 @@ export default function App() {
           when this was a bare `if (!loaded) return null`. */}
       {loaded ? (
         <>
-          <Shell user={user} />
+          <Shell
+            user={user}
+            onSignOut={() => {
+              signOut()
+              setUser(null)
+            }}
+          />
           {/* UNDO IS BOUND HERE, NOT IN THE SHELL, for two reasons. It
               belongs to the store rather than to any one screen — the
               onboarding wizard is the only surface with nothing to

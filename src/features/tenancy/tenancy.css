@@ -388,3 +388,74 @@
     transform: none;
   }
 }
+
+/* ============================================================
+   THE CONFIGURATIONS DIALOG — the shell's frame around the panel.
+
+   The panel itself is a page; this is only the sheet it arrives
+   on when it is reached from the person chip. It is a DIALOG
+   rather than a stage for two reasons: it is about the ACCOUNT
+   rather than about anything on screen, and it is genuinely
+   modal — opening a saved configuration replaces the working set,
+   which is one of the few acts in this app that is not undoable
+   by a toast.
+   ============================================================ */
+.cfg-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: grid;
+  place-items: center;
+  padding: var(--s-8);
+  background: rgba(8, 27, 46, 0.5);
+  animation: ds-fade var(--d-fast) var(--ease);
+}
+.cfg-sheet {
+  position: relative;
+  width: min(760px, 100%);
+  max-height: min(84vh, 780px);
+  overflow-y: auto;
+  padding: var(--s-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-1);
+  box-shadow: var(--e-hero);
+  animation: ds-scale-in var(--d-med) var(--ease-out-expo);
+}
+.cfg-shut {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.cfg-shut:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+.cfg-shut:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.cfg-shut:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cfg-scrim,
+  .cfg-sheet {
+    animation: none;
+  }
+}

@@ -79,6 +79,7 @@ import {
 } from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
 import type { AppUser } from '@/features/auth'
+import { ConfigurationsPanel } from '@/features/tenancy'
 import { SideNav } from './SideNav'
 import { ActionBar } from './ActionBar'
 import { useHasPageActions } from '@/lib/actions'
@@ -141,13 +142,15 @@ import './shell.css'
  *  nodes underneath and is one press away. */
 
 export interface ShellProps {
+  /** end the session. It lives in App, which owns the user. */
+  onSignOut: () => void
   /** who is signed in. The dashboard is "my day" and a quote is
    *  prepared BY somebody; the shell is where that person reaches
    *  the stages that need to know. */
   user: AppUser
 }
 
-export function Shell({ user }: ShellProps) {
+export function Shell({ user, onSignOut }: ShellProps) {
   const org = useProjectStore((s) => s.meta.org)
   const entities = useProjectStore((s) => s.entities)
   const tableCount = Object.keys(entities).length
@@ -408,6 +411,25 @@ export function Shell({ user }: ShellProps) {
      to "find me a row" and the wrong first thing to put in front of
      somebody who has just said they are making a sale. */
   const [starting, setStarting] = useState(false)
+  const [configuring, setConfiguring] = useState(false)
+
+  /* ESCAPE SHUTS THE CONFIGURATIONS SHEET. It had a scrim you could
+     press and no key at all — a modal you can only leave with a
+     mouse. Caught by driving it, not by reading it.
+
+     It stops there rather than bubbling: a stage binds Escape to
+     its own way out (stageKeys.ts), and one press should not both
+     shut a dialog and leave the page underneath it. */
+  useEffect(() => {
+    if (!configuring) return
+    const key = (e: KeyboardEvent): void => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      setConfiguring(false)
+    }
+    document.addEventListener('keydown', key, true)
+    return () => document.removeEventListener('keydown', key, true)
+  }, [configuring])
 
   /* THE ONE KEY THE SHELL BINDS, AND IT IS MODIFIED. The header above
      says this shell binds nothing globally, and the reason it gives
@@ -484,6 +506,9 @@ export function Shell({ user }: ShellProps) {
           onOpenGallery={() => setStage({ kind: 'gallery' })}
           onOpenHistory={() => setStage({ kind: 'history', customerId: null })}
           onOpenLevels={() => setStage({ kind: 'levels', entityId: null })}
+          user={user}
+          onSignOut={onSignOut}
+          onOpenConfigurations={() => setConfiguring(true)}
           onOpenTable={(id) => setStage({ kind: 'table', entityId: id })}
           onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
           onOpenRules={() => setStage({ kind: 'rules' })}
@@ -666,6 +691,34 @@ export function Shell({ user }: ShellProps) {
           that `useProjectStore` appears in `freeze.ts` alone, and
           this shell is already reading all three of these for the
           rail beside it. */}
+      {/* SAVED CONFIGURATIONS — the organisation's whole working
+          set, named, listed and re-openable. Reached from the person
+          chip at the foot of the rail, because it is a rare act
+          about the ACCOUNT rather than about anything on screen. */}
+      {configuring ? (
+        <div
+          className="cfg-scrim"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Saved configurations"
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) setConfiguring(false)
+          }}
+        >
+          <div className="cfg-sheet">
+            <button
+              type="button"
+              className="cfg-shut"
+              aria-label="Close"
+              onClick={() => setConfiguring(false)}
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+            <ConfigurationsPanel user={user} />
+          </div>
+        </div>
+      ) : null}
+
       {starting ? (
         <QuoteStart
           modules={modules}

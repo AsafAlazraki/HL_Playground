@@ -114,6 +114,7 @@ import {
   type TableKind,
 } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
+import { WhoChip, type AppUser } from '@/features/auth'
 import { ImportExportMenu } from '@/features/io'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 
@@ -156,6 +157,11 @@ export interface SideNavProps {
   onOpenHistory: () => void
   /** set a value once at a brand, range or model */
   onOpenLevels: () => void
+  /** who is signed in, so the foot of the rail can say so */
+  user: AppUser
+  onSignOut: () => void
+  /** the organisation's saved configurations */
+  onOpenConfigurations: () => void
   onOpenHome: () => void
   onOpenTable: (entityId: string) => void
   onOpenDashboard: () => void
@@ -227,6 +233,9 @@ export function SideNav({
   onOpenGallery,
   onOpenHistory,
   onOpenLevels,
+  user,
+  onSignOut,
+  onOpenConfigurations,
   onOpenHome,
   onOpenTable,
   onOpenDashboard,
@@ -571,6 +580,16 @@ export function SideNav({
           <span className="sn-new-say">New quote</span>
         </button>
         <ImportExportMenu align="left" />
+        {/* THE PERSON, LAST. Sign out, the theme and the saved
+            configurations all live behind one press, because they
+            are rare acts and the foot of the rail is where a person
+            looks for "me". */}
+        <WhoChip
+          user={user}
+          collapsed={collapsed}
+          onSignOut={onSignOut}
+          onOpenConfigurations={onOpenConfigurations}
+        />
       </div>
     </nav>
   )

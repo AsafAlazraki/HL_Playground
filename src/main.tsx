@@ -34,6 +34,7 @@ import './styles/base.css'
    Delete this one line to put the old design back. */
 import './styles/bridge.css'
 import './features/auth/auth.css'
+import './features/tenancy/tenancy.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(
