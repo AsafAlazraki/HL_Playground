@@ -194,33 +194,15 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
           `prefers-reduced-motion` — see ds.css. */}
       <div className="ds-aurora ds-grain hm-sky" aria-hidden="true" />
 
-      <div className="shell-view-bar">
-        {/* TRACK 1, WHICH WAS AN EMPTY SPACER. Taking a copy of the
-            project out and bringing one back had no home anywhere in
-            the app — `features/io` was left imported by nothing when
-            the masthead went, which is half of what the reachability
-            guard has been red about. The front door is where a
-            document's own controls belong, and this is the only
-            place in the app that is about the project rather than
-            about one thing inside it. */}
-        <span className="hm-bar-left">
-          <ImportExportMenu align="left" />
-        </span>
-        <p className="shell-view-what">
-          <span className="shell-view-what-name">{org?.name ?? 'Your tables'}</span>
-          <span className="shell-view-what-sep" aria-hidden="true">
-            ·
-          </span>
-          <span className="shell-view-what-say">{total} tables</span>
-        </p>
-        {/* TRACK 3 IS EMPTY AND STAYS DECLARED. Both outer tracks are
-            `minmax(0, 1fr)` on `.shell-view-bar`, so they hold equal
-            width whether or not anything stands in them and the title
-            keeps the middle of the window — which is the whole reason
-            commit 0d3b1e7 put the cap on the track rather than on the
-            title. Every child here names its own column, so nothing
-            auto-places into the gap this leaves. */}
-      </div>
+      {/* THE VIEW BAR STOOD HERE AND IS GONE. It carried the
+          business name, the table count and Import/export — and the
+          rail beside it now carries all three, permanently, while
+          the masthead below states the name again at hero size. A
+          strip that repeats its neighbours twice is not chrome, it
+          is noise, and on the one screen that IS the sheet it was
+          costing 56px of the gallery to say nothing new. Every
+          other stage keeps its bar, because on those it says which
+          ONE thing you are in. */}
 
       {/* THE SCROLLPORT CENTRES ITS ONE CHILD WHEN THAT CHILD IS THE
           FIRST SCREEN, and goes back to being a top-anchored gallery the
