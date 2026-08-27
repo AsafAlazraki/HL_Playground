@@ -156,18 +156,18 @@ function heroFor(step: Step, org: string): { line: string; note: string } {
   if (step === 'industry') {
     return {
       line: org,
-      note: 'That name heads every quote you hand a customer, and you can change it whenever you like.',
+      note: 'It heads every quote you hand over.',
     }
   }
   if (step === 'file') {
     return {
       line: 'From a file',
-      note: 'A copy this app saved earlier goes back on the sheet exactly as it was — tables, rows, modules and pages.',
+      note: 'Back on the sheet exactly as it was.',
     }
   }
   return {
     line: 'Two questions',
-    note: 'What the business is called, and what it sells. Then the sheet is yours.',
+    note: 'What it is called, and what it sells.',
   }
 }
 
@@ -435,9 +435,12 @@ function IndustryStep({
           not claim Marine "arrives ready" — both answers land on the
           same empty sheet; what Marine gets you is table presets
           already drawn for boats, motors and trailers. */}
+      {/* The refusal beneath — which industries cannot be picked, and
+          why — stays in full; a refusal always keeps its sentence. This
+          line is not a refusal, it is the difference between the two
+          live answers, so it is a clause. */}
       <p className="ob-why ob-in" style={{ ['--i' as string]: 3 } as CSSProperties}>
-        Marine is the one the table presets are drawn for. Other starts you on a blank
-        sheet and you draw your own.
+        Marine has the table presets drawn. Other starts blank.
       </p>
 
       <div className="ob-grid" role="group" aria-label="Choose an industry">

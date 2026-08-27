@@ -37,13 +37,18 @@
 .tn-head {
   max-width: 62ch;
 }
+/* SOMETHING ON THIS STAGE IS BIG. It was 20px — the title step — on
+   a surface that is a whole stage rather than a panel in a rail, so
+   nothing on it was larger than a card name. `--t-display-lg` is the
+   step under hero: 26px at the narrow end, 34px at the wide, which is
+   the right voice for a stage this short. */
 .tn-title {
   margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--t-title-size);
-  font-weight: var(--t-title-weight);
-  line-height: var(--t-title-lead);
-  letter-spacing: var(--t-title-track);
+  font-family: var(--font-hero);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
   color: var(--fg);
 }
 .tn-lede {

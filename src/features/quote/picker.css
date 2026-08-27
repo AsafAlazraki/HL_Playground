@@ -1,69 +1,25 @@
 /* ============================================================
-   THE QUOTE PICKER (qs-) — "What are you quoting?", drawn.
+   THE PICKER (qs-) — a popup of small module cards.
 
-   CO-LOCATED WITH ITS FEATURE and appended to nothing. It styles
-   `QuoteStart.tsx` and only that: it shares no selector with
-   `quote.css` or `build.css` and re-declares none of theirs, which
-   is the whole reason it is a third file rather than 400 lines
-   pushed onto the end of a 2,500-line stylesheet. One declaration
-   per selector, and every selector in here appears exactly once.
+   WHAT THIS REPLACED. A two-pane dialog: a list of places down the
+   left with a paragraph under each, and rows on the right. It was
+   asked for as cards twice and shipped as a list twice. PHASE_TWO
+   §1 draws the shape:
 
-   ── THE SHAPE ────────────────────────────────────────────────
+       ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐
+       │ HF │ │ YA │ │ ST │ │ DU │ │ GF │
+       └────┘ └────┘ └────┘ └────┘ └────┘
 
-   A dialog of three bands, and only the middle one scrolls:
+   The grid IS the first screen, and pressing a card opens it IN
+   PLACE to that module's rows. Same dialog, one layer deeper.
 
-     .qs-head   the question, once, in Archivo over the gradient.
-     .qs-body   two panes — the places, and what the place holds.
-                Each pane scrolls itself; the dialog never does.
-     .qs-foot   what this choice buys: the walk it opens, what the
-                rules already decide, and the one onward act.
+   COLOUR. Every card carries its kind as a full-height rail and
+   lifts on hover in the kind's own light (`.k-lift`), which is the
+   amendment PHASE_TWO §1b makes to DESIGN_PRINCIPLES §1. The
+   figure on the card — the count — is INK, never a hue.
 
-   ── THE RULES THIS FILE IS ACCOUNTABLE TO ────────────────────
-
-     · NO LITERAL COLOUR. Every value is a token.
-     · NOTHING BELOW 11px, and the display face only at 26px+ —
-       `.ds-display-lg` is the only place Archivo appears here.
-     · UPPERCASE ONLY ON `.mono-label`. No name, no value, no
-       button, no sentence.
-     · EVERY FIGURE is mono with tabular numerals, and every price
-       is right-aligned so a column of them stacks on the decimal.
-     · ONE ACCENT, four times: the place you are in, the row you
-       are on, the focus ring, and the one onward action. Nothing
-       else on this dialog is blue.
-     · EVERY PRESSABLE THING has hover, press AND focus, and the
-       press lands on pointer-down.
-     · A LIST ROW DARKENS, never scales — its neighbours must not
-       look like they moved.
-
-   ── CONTRAST, MEASURED, AND THE ONE TRAP IN IT ───────────────
-
-   The left pane is `--surface-3`, which is a TINT, and the tint
-   counts. On light (#eef3f8) `--fg-tertiary` measures 4.87:1 and
-   passes; ON DARK IT DOES NOT — `#7d94a9` over `#1d3145` measures
-   **4.23:1**, which fails, and would have failed silently because
-   nothing automates contrast in this repo.
-
-   So NOTHING ON `--surface-3` IS `--fg-tertiary`. The sunken pane
-   and the footer use `--fg-secondary` for every secondary word
-   (7.2:1 light, 6.8:1 dark, both measured), and `--fg-tertiary`
-   appears only over `--surface-1`, where it is 5.5:1 light and
-   5.3:1 dark. If you add a rule here, check which ground it lands
-   on first.
-
-   ── MOTION: NONE ON OPEN ─────────────────────────────────────
-
-   No entrance, no scrim fade, no rise. This dialog is opened from a
-   button on the rail, which means it is opened with a key, and the
-   motion budget's one absolute is that a keyboard-initiated act is
-   never animated. `QuoteStart.tsx` carries the full argument.
-
-   What is here is feedback: `--d-press` on the down state,
-   `--d-fast` on hover and focus, transform and opacity only, with
-   the reduced-motion escape at the foot of this file.
-   ============================================================ */
-
-/* ============================================================
-   §THE GROUND
+   THE FLOOR. Nothing under 11px. Names wrap rather than truncate;
+   the one place a strip cannot fit, it scrolls.
    ============================================================ */
 
 .qs-overlay {
@@ -75,81 +31,140 @@
   padding: var(--s-6);
 }
 
-/* A FLAT WASH, NOT A BLUR. Glass is retired with two exceptions and
-   a dialog scrim is neither of them — the page behind stays legible
-   enough to say where you will land, and nothing here is translucent
-   material pretending to be depth. */
+/* NO FADE. A scrim that fades IS the dialog animating on open under
+   another name, and this dialog is opened from a key. */
 .qs-scrim {
   position: absolute;
   inset: 0;
-  background: var(--bg-sunken);
-  opacity: 0.72;
+  background: rgb(8 27 46 / 38%);
 }
 
 .qs-dialog {
   position: relative;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  width: min(1140px, 100%);
-  height: min(780px, calc(100vh - var(--s-6) * 2));
-  min-height: 0;
-  background: var(--grad-surface);
-  border: 1px solid var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  width: min(960px, 100%);
+  /* A MIN AS WELL AS A MAX. Layer one is a grid of nine cards and
+     layer two is a list of fifty rows; without a floor the dialog
+     grew by 300px the moment somebody pressed a card, which reads as
+     the panel jumping rather than as a door opening. */
+  min-height: min(560px, 86vh);
+  max-height: min(760px, 92vh);
+  border: 1px solid var(--line);
   border-radius: var(--r-panel);
-  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
+  background: var(--surface-1);
+  box-shadow: var(--e-hero);
   overflow: hidden;
 }
 
-/* ============================================================
-   §THE HEAD — the question, asked once
-   ============================================================ */
+/* ------------------------------------------------------------
+   THE HEAD — one question, or the module you opened
+   ------------------------------------------------------------ */
 
 .qs-head {
   display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-5) var(--s-6) var(--s-5);
-  border-bottom: 1px solid var(--line);
-}
-
-.qs-head-top {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--s-3);
-  min-height: 24px;
+  flex: none;
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
 }
 
-.qs-eyebrow {
-  color: var(--fg-tertiary);
-}
-
-/* THE ONE PLACE ARCHIVO APPEARS. `.ds-display-lg` bottoms out at
-   26px, which is the floor the third face is allowed at, and the
-   gradient is a headline treatment and never sits behind a value. */
 .qs-q {
   margin: 0;
-  background: var(--grad-brand-wide);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  width: fit-content;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-hero);
+  font-size: clamp(26px, 2.6vw, 40px);
+  font-weight: 680;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: var(--fg);
 }
 
-.qs-sub {
-  margin: 0;
-  max-width: 68ch;
-  font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
-  letter-spacing: var(--t-small-track);
+.qs-q--here {
+  font-size: clamp(22px, 2vw, 30px);
+}
+
+.qs-here {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.qs-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
   color: var(--fg-secondary);
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.qs-back:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+.qs-back:active {
+  transform: scale(0.94);
+}
+
+.qs-back:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.qs-here-mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--fg-tertiary);
+  overflow: hidden;
+}
+
+.qs-here-logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--surface-1);
+}
+
+.qs-here-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
 }
 
 .qs-close {
-  display: grid;
-  place-items: center;
-  width: var(--h-sm);
-  height: var(--h-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
   border: 1px solid transparent;
   border-radius: var(--r-control);
   background: transparent;
@@ -167,126 +182,115 @@
 }
 
 .qs-close:active {
-  transform: scale(0.97);
-  background: var(--surface-4);
+  transform: scale(0.94);
 }
 
 .qs-close:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: var(--glow-sm);
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
-/* ============================================================
-   §THE BODY — two panes, each scrolling itself
-   ============================================================ */
+/* ------------------------------------------------------------
+   LAYER ONE — the grid
+   ------------------------------------------------------------ */
 
 .qs-body {
-  display: grid;
-  grid-template-columns: 304px minmax(0, 1fr);
+  flex: 1;
   min-height: 0;
+  overflow: auto;
+  padding: var(--s-5);
 }
 
-/* ---------------------------------------------------------- */
-/* §LAYER ONE — the places                                     */
-/* ---------------------------------------------------------- */
-
-.qs-places {
+.qs-body--rows {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  padding: var(--s-3) var(--s-3) 0;
-  background: var(--surface-3);
-  border-right: 1px solid var(--line);
-  overflow-y: auto;
-}
-
-.qs-place-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.qs-place-slot {
-  display: block;
-}
-
-/* A ROW DARKENS. No lift, no scale — eight of these stacked, and a
-   press that moved one would look like the list shifted. */
-.qs-place {
-  position: relative;
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  align-items: center;
   gap: var(--s-3);
-  width: 100%;
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease);
 }
 
-.qs-place:hover {
-  background: var(--surface-1);
-}
-
-.qs-place:active {
-  background: var(--surface-4);
-}
-
-.qs-place:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: var(--glow-sm);
-}
-
-/* THE PLACE YOU ARE IN — one of the four accents on this dialog. It
-   is a ground and a rail, not a tint behind a coloured word: the
-   name stays `--fg`, which measures 15.8:1 over a 9% blue wash. */
-.qs-place.is-on {
-  background: var(--accent-wash);
-}
-
-.qs-place.is-on::before {
-  content: '';
-  position: absolute;
-  inset: var(--s-2) auto var(--s-2) 0;
-  width: 3px;
-  border-radius: var(--r-full);
-  background: var(--accent);
-}
-
-/* A SHUT DOOR IS QUIETER AND STILL FULLY READABLE. It is not
-   disabled — pressing it opens the reason, which is the whole point
-   of drawing it at all — so it keeps every state a button has. */
-.qs-place.is-shut .qs-place-name {
+.qs-void {
+  margin: 0;
+  max-width: 62ch;
+  font-size: var(--t-body-size);
+  line-height: 1.6;
   color: var(--fg-secondary);
 }
 
-.qs-place-mark {
-  position: relative;
+.qs-grid {
   display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-control);
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qs-cell {
+  display: flex;
+  min-width: 0;
+}
+
+/* THE CARD CARRIES ITS KIND AS A FULL-HEIGHT RAIL. This is what
+   phase one demoted to a 7px dot when the navy chrome arrived, and
+   the reason the content area went colourless. */
+.qs-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--kind);
+  border-radius: var(--r-card);
   background: var(--surface-1);
-  border: 1px solid var(--line-subtle);
-  /* THE KIND HUE, AS A GLYPH AND NOTHING ELSE. Never a fill behind a
-     word — the mark inherits this and the ground stays paper. */
-  color: var(--qs-mark, var(--fg-tertiary));
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.qs-card:hover {
+  border-color: var(--line-strong);
+  border-left-color: var(--kind);
+}
+
+/* 0.994 on a card, not 0.97 — §4: a 7px shrink reads as a glitch. */
+.qs-card:active {
+  transform: scale(0.994);
+  box-shadow: var(--e1);
+}
+
+.qs-card:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qs-card {
+    transition: border-color var(--d-fast) var(--ease);
+  }
+  .qs-card:active {
+    transform: none;
+  }
+}
+
+.qs-card-mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--kind);
   overflow: hidden;
 }
 
-.qs-place-logo {
+.qs-card-logo {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -295,238 +299,315 @@
   background: var(--surface-1);
 }
 
-.qs-place-say {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+.qs-card-name {
+  font-size: var(--t-heading-size);
+  font-weight: 620;
+  letter-spacing: var(--t-heading-track);
+  line-height: 1.25;
+  color: var(--fg);
+  overflow-wrap: break-word;
   min-width: 0;
 }
 
-.qs-place-name {
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  line-height: var(--t-heading-lead);
-  letter-spacing: var(--t-heading-track);
-  color: var(--fg);
-  /* NOTHING TRUNCATES MID-WORD. Two lines, then a clamp at a word
-     boundary, with the whole name still in the DOM. */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* THE CENSUS IS FIGURES, so it is mono and tabular — and it is
-   `--fg-secondary` because this pane is a tint. See §CONTRAST. */
-.qs-place-census {
+/* A FIGURE IS NEVER A HUE. */
+.qs-card-n {
   font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  line-height: var(--t-mono-lead);
   font-variant-numeric: tabular-nums;
-  color: var(--fg-secondary);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
 }
 
-.qs-place-shut {
-  color: var(--fg-secondary);
-  white-space: nowrap;
-}
+/* ---- the quiet band of shut doors --------------------------- */
 
-.qs-places-foot {
-  position: sticky;
-  bottom: 0;
-  margin: var(--s-3) 0 0;
-  padding: var(--s-3) var(--s-3);
-  font-size: var(--t-caption-size);
-  line-height: var(--t-caption-lead);
-  color: var(--fg-secondary);
-  background: var(--surface-3);
+.qs-shut {
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
   border-top: 1px solid var(--line-subtle);
 }
 
-.qs-places-none {
-  margin: var(--s-3);
-  font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
-  color: var(--fg-secondary);
+.qs-shut-head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-2);
+  margin: 0 0 var(--s-2) calc(var(--s-2) * -1);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
 }
 
-/* ---------------------------------------------------------- */
-/* §LAYER TWO — what the place holds                           */
-/* ---------------------------------------------------------- */
+.qs-shut-head:hover {
+  background: var(--surface-3);
+  border-color: var(--line);
+}
 
-.qs-hold {
+.qs-shut-head:active {
+  background: var(--surface-4);
+}
+
+.qs-shut-head:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.qs-shut-cap {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.qs-shut-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  font-weight: 550;
+  color: var(--fg);
+}
+
+.qs-shut-list {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qs-shut-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.5fr) minmax(0, 1.5fr) auto;
+  gap: var(--s-3);
+  align-items: baseline;
+  padding: var(--s-2) var(--s-3);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--surface-2);
+}
+
+.qs-shut-name {
+  font-size: var(--t-small-size);
+  font-weight: 570;
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.qs-shut-why {
   min-width: 0;
 }
 
-.qs-void {
-  margin: var(--s-6);
-  font-size: var(--t-body-size);
+.qs-shut-go {
+  padding: 5px var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  font-size: var(--t-caption-size);
+  font-weight: 550;
   color: var(--fg-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
 }
 
+.qs-shut-go:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+.qs-shut-go:active {
+  transform: scale(0.97);
+}
+
+.qs-shut-go:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.qs-refusal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.qs-refusal-why {
+  margin: 0;
+  max-width: 62ch;
+  font-size: var(--t-body-size);
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.qs-refusal-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 8px var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  font-size: var(--t-small-size);
+  font-weight: 570;
+  color: var(--fg);
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.qs-refusal-go:hover {
+  border-color: var(--line-strong);
+}
+
+.qs-refusal-go:active {
+  transform: scale(0.97);
+}
+
+.qs-refusal-go:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   LAYER TWO — the module's own rows
+   ------------------------------------------------------------ */
+
 .qs-find {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  position: relative;
+  display: flex;
   align-items: center;
   gap: var(--s-2);
   flex: none;
-  padding: var(--s-3) var(--s-5);
-  border-bottom: 1px solid var(--line);
+  padding: 0 var(--s-3);
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.qs-find:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
 }
 
 .qs-find-mark {
   color: var(--fg-tertiary);
+  flex: none;
 }
 
 .qs-find-in {
-  width: 100%;
-  height: var(--h-md);
-  padding: 0 var(--s-2);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
+  flex: 1;
+  min-width: 0;
+  border: 0;
   background: transparent;
   font-family: var(--font-sans);
   font-size: var(--t-body-size);
   color: var(--fg);
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease);
+}
+
+.qs-find-in:focus {
+  outline: none;
 }
 
 .qs-find-in::placeholder {
   color: var(--fg-tertiary);
 }
 
-.qs-find-in:hover {
-  background: var(--surface-3);
-}
-
-/* the same lift, for the same measured reason — the placeholder is
-   an instruction and has to clear 4.5 on the ground it lands on */
-.qs-find-in:hover::placeholder {
-  color: var(--fg-secondary);
-}
-
-.qs-find-in:focus {
-  outline: none;
-  background: var(--surface-1);
-  border-color: var(--accent);
-  box-shadow: var(--glow-sm);
-}
-
-/* THE COUNT IS THE CENSUS THE DASHBOARD PRINTS, so the card and this
-   can never disagree about how much is in a place. */
-.qs-find-count {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
-  white-space: nowrap;
-}
-
 .qs-note {
-  margin: var(--s-3) var(--s-5) 0;
-  font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
+  margin: 0;
+  max-width: 78ch;
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
   color: var(--fg-secondary);
 }
 
 .qs-note--cap {
-  flex: none;
-  margin-bottom: var(--s-3);
   padding-top: var(--s-2);
   border-top: 1px solid var(--line-subtle);
 }
 
 .qs-list {
   flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0 var(--s-5) var(--s-4);
+  min-height: 120px;
+  overflow: auto;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-2);
 }
 
-.qs-list:focus-visible {
-  outline: none;
-}
-
-.qs-sec {
-  padding-top: var(--s-4);
+.qs-sec + .qs-sec {
+  border-top: 1px solid var(--line-subtle);
 }
 
 .qs-sec-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s-3);
-  padding-bottom: var(--s-2);
-  border-bottom: 1px solid var(--line);
+  padding: var(--s-2) var(--s-3);
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--line-subtle);
 }
 
-/* A TABLE'S NAME KEEPS ITS OWN CASE. Uppercasing it is lossy — a
-   proper noun loses its word-shape — and it is a NAME, which is the
-   one thing the label style may never be used on. */
 .qs-sec-name {
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  letter-spacing: var(--t-heading-track);
+  font-size: var(--t-caption-size);
+  font-weight: 620;
   color: var(--fg);
 }
 
 .qs-sec-count {
   font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
   color: var(--fg-tertiary);
 }
 
 .qs-grp {
-  padding-top: var(--s-2);
+  padding: var(--s-2) 0;
 }
 
-/* THE BANNER THE ROWS SIT UNDER — a group caption, which is one of
-   the three places uppercase is allowed. */
 .qs-grp-head {
-  margin: var(--s-2) 0 var(--s-1);
+  margin: 0;
+  padding: 0 var(--s-3) 4px;
   color: var(--fg-tertiary);
 }
 
 .qs-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .qs-row-slot {
-  display: block;
+  display: flex;
+  min-width: 0;
 }
 
+/* A LIST ROW DARKENS RATHER THAN SCALING, so its neighbours never
+   look like they moved. §4. */
 .qs-row {
-  position: relative;
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--s-3);
   width: 100%;
-  min-height: var(--h-row);
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
+  padding: 5px var(--s-3);
+  border: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease);
+  transition: background var(--d-fast) var(--ease);
 }
 
 .qs-row:hover {
@@ -538,45 +619,28 @@
 }
 
 .qs-row:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: var(--glow-sm);
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
 }
 
-/* THE ROW YOU ARE ON — the second of the four accents. It darkens;
-   it does not scale, and it does not lift. */
 .qs-row.is-on {
   background: var(--accent-wash);
-}
-
-.qs-row.is-on::before {
-  content: '';
-  position: absolute;
-  inset: var(--s-1) auto var(--s-1) 0;
-  width: 3px;
-  border-radius: var(--r-full);
-  background: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .qs-row-pic {
   position: relative;
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 38px;
-  border-radius: var(--r-chip);
-  background: var(--surface-3);
-  /* THE KIND MARK IS NOT DECORATION. It is what a row shows when its
-     photograph cannot be fetched, so it carries the one fact left —
-     what sort of thing this is — and `--fg-quaternary` may never
-     carry meaning. `--fg-secondary` because the well is a tint. */
-  color: var(--fg-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 30px;
+  border-radius: var(--r-control);
+  background: var(--surface-4);
+  color: var(--fg-tertiary);
   overflow: hidden;
 }
 
-/* THE PHOTOGRAPH, WHEN THERE IS ONE. `FrozenPhoto` renders NOTHING
-   for an address that cannot be painted — no broken glyph and no
-   hatched box — so the kind's own mark underneath is what shows. */
 .qs-row-img {
   position: absolute;
   inset: 0;
@@ -593,162 +657,43 @@
 }
 
 .qs-row-name {
-  font-size: var(--t-body-size);
-  font-weight: 520;
-  line-height: var(--t-body-lead);
-  letter-spacing: var(--t-body-track);
+  font-size: var(--t-small-size);
+  font-weight: 550;
   color: var(--fg);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow-wrap: break-word;
 }
 
 .qs-row-trail {
   font-size: var(--t-caption-size);
-  line-height: var(--t-caption-lead);
   color: var(--fg-tertiary);
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow-wrap: break-word;
 }
 
-/* THE TRAIL LIFTS THE MOMENT THE ROW GAINS A GROUND, and this is the
-   trap §CONTRAST at the top of the file warns about, caught here.
-   `--fg-tertiary` is 5.3:1 on the resting paper and legal; over the
-   hover tint it measures 4.23:1 in dark, and over the selected row's
-   9% accent wash 4.15:1 — both fail, and neither is visible to any
-   guard in this repo. Two colours per state, exactly as `build.css`
-   does on its navy; do not simplify one of these away. */
-.qs-row:hover .qs-row-trail,
-.qs-row.is-on .qs-row-trail {
-  color: var(--fg-secondary);
-}
-
-/* MONEY STACKS ON THE DECIMAL. Mono, tabular, right-aligned — the
-   whole reason the third face exists. */
 .qs-row-price {
   font-family: var(--font-mono);
-  font-size: var(--t-mono-size);
   font-variant-numeric: tabular-nums;
-  text-align: right;
-  color: var(--fg-secondary);
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg);
   white-space: nowrap;
 }
 
-/* ---------------------------------------------------------- */
-/* §A SHUT DOOR — the reason, where the thing is refused        */
-/* ---------------------------------------------------------- */
+/* ------------------------------------------------------------
+   THE FOOTER — what this choice buys
+   ------------------------------------------------------------ */
 
-.qs-refusal {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-3);
-  max-width: 62ch;
-  margin: auto;
-  padding: var(--s-8) var(--s-6);
-}
-
-.qs-refusal-eyebrow {
-  color: var(--fg-tertiary);
-}
-
-.qs-refusal-name {
-  margin: 0;
-  font-size: var(--t-title-size);
-  font-weight: var(--t-title-weight);
-  line-height: var(--t-title-lead);
-  letter-spacing: var(--t-title-track);
-  color: var(--fg);
-}
-
-.qs-refusal-why {
-  margin: 0;
-  font-size: var(--t-body-size);
-  line-height: var(--t-body-lead);
-  color: var(--fg);
-}
-
-.qs-refusal-desc {
-  margin: 0;
-  font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
-  color: var(--fg-secondary);
-}
-
-.qs-refusal-count {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
-}
-
-.qs-refusal-go {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  color: var(--fg);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.qs-refusal-go:hover {
-  background: var(--surface-3);
-  border-color: var(--accent-line);
-}
-
-.qs-refusal-go:active {
-  transform: scale(0.97);
-  background: var(--surface-4);
-}
-
-.qs-refusal-go:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: var(--glow-sm);
-}
-
-/* ============================================================
-   §THE FOOT — what this choice buys
-
-   It is a SIBLING of the scrollport and never sticky inside it, for
-   the reason `build.css` measures at length: a sticky box is floored
-   by its scroll container's content box, so every pixel of bottom
-   padding lifts it and hands the list a strip to paint through.
-   ============================================================ */
-
-/* MEASURED, AND THEN TIGHTENED. At 1280 x 720 the first build gave
-   the head 154px, the two panes 273 and the footer 245 — so the
-   catalogue, which is the thing a person came here to read, showed
-   TWO rows. Every value below is smaller than it was for that one
-   reason, and `.qs-verdict` carries a ceiling so a rule that removes
-   a lot cannot push the list off the screen either. */
 .qs-foot {
+  flex: none;
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-3) var(--s-6) var(--s-4);
-  background: var(--surface-3);
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
   border-top: 1px solid var(--line);
+  background: var(--surface-2);
 }
 
 .qs-foot-hint {
   margin: 0;
   font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
   color: var(--fg-secondary);
 }
 
@@ -757,6 +702,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s-4);
+  min-width: 0;
 }
 
 .qs-picked-say {
@@ -768,93 +714,68 @@
 
 .qs-picked-trail {
   font-size: var(--t-caption-size);
-  line-height: var(--t-caption-lead);
-  color: var(--fg-secondary);
+  color: var(--fg-tertiary);
 }
 
 .qs-picked-name {
   font-size: var(--t-title-size);
-  font-weight: var(--t-title-weight);
-  line-height: var(--t-title-lead);
+  font-weight: 620;
   letter-spacing: var(--t-title-track);
   color: var(--fg);
+  overflow-wrap: break-word;
 }
 
 .qs-picked-price {
   font-family: var(--font-mono);
-  font-size: var(--t-mono-lg-size);
   font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-lg-size);
+  font-weight: 600;
   color: var(--fg);
   white-space: nowrap;
 }
 
-/* NEVER A ZERO WHERE THERE IS NO PRICE. A blank cell and a $0 boat
-   are different facts and only one of them is honest. */
 .qs-picked-nil {
   font-size: var(--t-caption-size);
-  color: var(--fg-secondary);
-  white-space: nowrap;
+  color: var(--fg-tertiary);
 }
 
-/* ---------------------------------------------------------- */
-/* §THE WALK — the flow, before it runs                        */
-/* ---------------------------------------------------------- */
+/* THE STRIP WRAPS RATHER THAN BEING CUT.
 
+   It scrolled first, which §3 allows — and measured at 1600 the
+   last chip read "Rigging Ki" against the dialog's edge with no
+   scrollbar to say there was more. A hidden scrollbar is exactly
+   the anti-pattern the playbook names in McLaren's step rail. Eight
+   short chips wrap to two rows and every one of them is legible,
+   which is the better answer at every width. */
 .qs-walk {
+  min-width: 0;
+}
+
+.qs-walk-stops {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
-}
-
-.qs-walk-lab {
-  color: var(--fg-secondary);
-}
-
-/* IT SCROLLS RATHER THAN TRUNCATES. Nine stops at a narrow width is
-   a strip that does not fit, and §3 forbids the alternative. */
-.qs-walk-stops {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: var(--s-1);
   margin: 0;
-  padding: 0 0 2px;
-  min-width: 0;
-  overflow-x: auto;
+  padding: 0;
+  list-style: none;
 }
 
 .qs-walk-stop {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: 3px var(--s-2);
-  border: 1px solid var(--line-subtle);
-  border-radius: var(--r-chip);
+  flex: none;
+  padding: 3px var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
   background: var(--surface-1);
   font-size: var(--t-caption-size);
-  line-height: var(--t-caption-lead);
   color: var(--fg-secondary);
   white-space: nowrap;
 }
 
-.qs-walk-stop + .qs-walk-stop::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  margin-left: -3px;
-  border-top: 1px solid var(--line-strong);
-  border-right: 1px solid var(--line-strong);
-  transform: rotate(45deg);
-}
-
-/* THE SUBJECT IS THE STOP THE DOCUMENT IS ABOUT. It is heavier ink,
-   not a colour — the accent budget is spent elsewhere on this
-   dialog and a fourth blue thing would make none of them primary. */
 .qs-walk-stop.is-subject {
+  border-color: var(--accent-line);
   color: var(--fg);
-  font-weight: 550;
-  border-color: var(--line-strong);
+  font-weight: 570;
 }
 
 .qs-walk-stop.is-end {
@@ -862,38 +783,29 @@
 }
 
 .qs-walk-note {
-  flex-basis: 100%;
-  margin: 0;
-  font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
+  margin: var(--s-2) 0 0;
+  max-width: 78ch;
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
   color: var(--fg-secondary);
 }
 
-/* ---------------------------------------------------------- */
-/* §THE VERDICT — what the rules already decide                */
-/* ---------------------------------------------------------- */
+/* ------------------------------------------------------------
+   THE SOLVER'S CONTRADICTION — a refusal, so it keeps its sentence
+   ------------------------------------------------------------ */
 
 .qs-verdict {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-  /* THE CEILING IS THE FOOTER'S GUARANTEE TO THE LIST. Four
-     narrowings, four disagreements and a contradiction is a tall
-     block, and the catalogue must not shrink because a rule fired. */
-  max-height: 150px;
-  overflow-y: auto;
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--line-subtle);
+  padding: var(--s-3);
   border-left: 3px solid var(--line-strong);
-  border-radius: var(--r-control);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
   background: var(--surface-1);
 }
 
-/* A CONTRADICTION IS THE ONE THING HERE THAT CHANGES THE RAIL. Kind
-   colour as a 3px rail — never as a fill behind the sentence, which
-   stays on paper at full ink. */
 .qs-verdict.is-loud {
-  border-left-color: var(--danger);
+  border-left-color: var(--warning);
 }
 
 .qs-verdict-say {
@@ -902,217 +814,159 @@
   gap: var(--s-2);
   margin: 0;
   font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
-  color: var(--fg);
-}
-
-.qs-verdict-say > svg {
-  flex: none;
-  margin-top: 1px;
-  color: var(--fg-tertiary);
+  line-height: 1.5;
+  color: var(--fg-secondary);
 }
 
 .qs-verdict-list {
-  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 2px;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .qs-verdict-item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--s-2);
-  padding-left: var(--s-5);
   font-size: var(--t-caption-size);
-  line-height: var(--t-caption-lead);
+  line-height: 1.5;
   color: var(--fg-secondary);
 }
 
 .qs-verdict-item--stop {
   color: var(--fg);
+  font-weight: 550;
 }
-
-.qs-verdict-item--warn .qs-verdict-gone {
-  text-decoration: none;
-  border-bottom: 1px dashed var(--line-strong);
-}
-
-.qs-verdict-where {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  color: var(--fg-tertiary);
-}
-
-/* THE VALUE THAT IS GONE, DRAWN IN PLACE AND STRUCK — the whole
-   difference between this and a list that is silently shorter. */
-.qs-verdict-gone {
-  color: var(--fg);
-  text-decoration: line-through;
-  text-decoration-color: var(--fg-quaternary);
-}
-
-.qs-verdict-why {
-  color: var(--fg-secondary);
-}
-
-/* ---------------------------------------------------------- */
-/* §THE ONE ONWARD ACT                                         */
-/* ---------------------------------------------------------- */
 
 .qs-go {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-3);
+  justify-content: center;
+  gap: var(--s-2);
   align-self: flex-start;
-  height: var(--h-lg);
-  padding: 0 var(--s-4);
-  border: 1px solid transparent;
+  padding: 9px var(--s-5);
+  border: 1px solid var(--accent);
   border-radius: var(--r-control);
   background: var(--accent);
-  color: var(--accent-fg);
+  color: var(--accent-fg, #fff);
   cursor: pointer;
   transition:
     background var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease),
-    box-shadow var(--d-fast) var(--ease);
+    transform var(--d-press) var(--ease);
 }
 
 .qs-go:hover {
   background: var(--accent-hover);
-  box-shadow: var(--glow-md);
 }
 
 .qs-go:active {
   transform: scale(0.97);
-  background: var(--accent-press);
-  box-shadow: none;
 }
 
 .qs-go:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-
-/* THE ONE UPPERCASE STAMP ON A CONTROL, AND IT IS THE CAPTION AND
-   NOT THE NAME. §2 bars uppercase on a button; what it bars is a
-   BUTTON'S NAME being uppercased, because that is content. This
-   control is the same two-part shape `build.css`'s `.qb-onward`
-   already uses — a caption that says what the press does, and the
-   thing's own name beside it in its own case, which is `.qs-go-name`
-   below. The name is never touched. */
-.qs-go-lab {
-  color: var(--accent-fg);
-  opacity: 0.82;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .qs-go-name {
-  font-size: var(--t-body-size);
-  font-weight: 600;
-  letter-spacing: var(--t-body-track);
-  max-width: 34ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--t-small-size);
+  font-weight: 620;
 }
 
-/* A THING THAT CANNOT BE DONE SAYS WHY, WHERE IT IS — never a
-   disabled button with a tooltip. The button is not drawn at all;
-   the sentence stands in its place. */
 .qs-barred {
   display: flex;
   align-items: flex-start;
   gap: var(--s-2);
   margin: 0;
   padding: var(--s-3);
-  border: 1px solid var(--line-subtle);
   border-left: 3px solid var(--warning);
-  border-radius: var(--r-control);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
   background: var(--surface-1);
   font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
-  color: var(--fg);
+  line-height: 1.5;
+  color: var(--fg-secondary);
 }
 
-.qs-barred > svg {
+.qs-barred svg {
   flex: none;
-  margin-top: 2px;
   color: var(--warning);
+  margin-top: 2px;
 }
 
 /* ============================================================
-   §NARROWER THAN A LAPTOP — the two panes become one column
+   EVERY WIDTH. The dialog is already fluid; what changes is how
+   many cards fit and where the footer's two halves sit.
    ============================================================ */
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .qs-overlay {
-    padding: var(--s-3);
+    padding: var(--s-4);
   }
-
   .qs-dialog {
-    height: calc(100vh - var(--s-3) * 2);
+    max-height: 94vh;
   }
+}
 
-  .qs-body {
+@media (max-width: 768px) {
+  .qs-overlay {
+    padding: 0;
+  }
+  .qs-dialog {
+    width: 100%;
+    max-height: 100vh;
+    height: 100%;
+    border-radius: 0;
+    border: 0;
+  }
+  .qs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .qs-shut-row {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    row-gap: 2px;
   }
-
-  .qs-places {
-    max-height: 34vh;
-    border-right: none;
-    border-bottom: 1px solid var(--line);
+  .qs-head,
+  .qs-body,
+  .qs-foot {
+    padding-left: var(--s-4);
+    padding-right: var(--s-4);
   }
-}
-
-/* ============================================================
-   §SHORTER THAN A LAPTOP — the head gives its space to the list
-
-   On a 720px-tall window the dialog is 672px and the head was
-   spending 154 of them, most of it on a sentence explaining a
-   dialog that is already on screen and already labelled. The
-   explanation is worth its room when there is room; when there is
-   not, the catalogue wins, because the catalogue is what a person
-   opened this to read. Nothing is removed at any width the
-   sentence can actually be afforded.
-   ============================================================ */
-
-@media (max-height: 820px) {
-  .qs-head {
-    padding-top: var(--s-4);
-    padding-bottom: var(--s-3);
-  }
-
-  .qs-sub {
-    display: none;
+  .qs-picked {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-1);
   }
 }
 
-/* ============================================================
-   §REDUCED MOTION — movement goes, colour and opacity stay
+@media (max-width: 600px) {
+  .qs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  }
+  .qs-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+    row-gap: 2px;
+  }
+  .qs-row-price {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
 
-   There is nothing to remove on open, because nothing animates on
-   open. What goes is the press transform; the ground still darkens
-   under a finger, which is the feedback, and the feedback is the
-   part that must not be taken away.
-   ============================================================ */
+.qs-shut-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-tertiary);
+  transform: rotate(-90deg);
+  transition: transform var(--d-fast) var(--ease);
+}
+
+.qs-shut-mark.is-open {
+  transform: rotate(0deg);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .qs-close,
-  .qs-refusal-go,
-  .qs-go {
-    transition:
-      background var(--d-fast) var(--ease),
-      border-color var(--d-fast) var(--ease),
-      box-shadow var(--d-fast) var(--ease);
-  }
-
-  .qs-close:active,
-  .qs-refusal-go:active,
-  .qs-go:active {
-    transform: none;
+  .qs-shut-mark {
+    transition: none;
   }
 }

@@ -642,7 +642,20 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       : result.historic === 'pairs'
         ? retiredPairsSentence(target.name, joinName ?? 'That list')
         : ''
-  const accent = accentVar(target.accent)
+  /* THE HUE IS THE KIND'S, NOT THE TABLE'S ACCENT.
+     ------------------------------------------------------------------
+     DESIGN_PRINCIPLES §1, as amended: "a hue only ever appears on
+     something that HAS that kind, and two things of one kind are one
+     colour everywhere in the app." A trailer block drawn in the
+     trailer table's own accent and a trailer tile drawn in
+     `--kind-trailer` are two amber-ish colours for one noun, which is
+     the difference between colour and colouring in.
+
+     A table with no kind at all — a join, a table somebody drew
+     themselves — keeps its accent, because `kindOf` would answer
+     'custom' for it and slate is a worse answer than the colour its
+     author chose. */
+  const accent = target.kind ? 'var(--kind)' : accentVar(target.accent)
   const children = block.children ?? []
 
   return (
@@ -660,6 +673,8 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
          still declared here is the one thing every card in this block
          shares: the kind hue its rail is drawn in. */
       style={{ '--vw-accent': accent } as CSSProperties}
+      /* ds.css resolves this to the hue; see `accent` above */
+      data-kind={target.kind ?? undefined}
       aria-label={`${target.name} for ${rowLabel(sourceEntity, sourceRow)}`}
       initial={still ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -686,7 +701,11 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       }}
       onDrop={onBlockDrop}
     >
-      <header className="vw-block-head">
+      {/* A BAND OF ONE KIND OF THING, which is what `.k-band` is
+          for — see the foot of ds.css. It is the surface the amended
+          §1 allows a hue to carry, and it is what stops a page of
+          five blocks reading as five identical white panels. */}
+      <header className="vw-block-head k-band">
         <KindMark entity={target} />
         <h2 className="vw-block-name block-heading">{target.name}</h2>
         <span

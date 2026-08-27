@@ -331,7 +331,7 @@ export function SideNav({
                 say. ------------------------------------------------ */}
         <div className="sn-grp">
           <NavRow
-            label="Today"
+            label="Home"
             on={current === 'home'}
             collapsed={collapsed}
             glyph={mark(House)}
@@ -392,13 +392,16 @@ export function SideNav({
                     type="button"
                     key={m.id}
                     /* THE KIND CARRIES THE ROW. `data-kind` sets
-                       `--kind` (ds.css) and `.k-rail` draws it at
-                       full height; the count takes the same hue as
-                       ink, which is the one place §1b lets a figure
-                       sit near a colour — the hue IS the kind of the
-                       thing being counted, and the ink is measured
-                       above 4.5:1 on the rail's navy. */
-                    className={`sn-mod k-rail${
+                       `--kind` (ds.css) and this row draws it as a
+                       full-height rail down its left edge.
+
+                       IT DOES NOT TAKE `.k-rail`, deliberately, and
+                       the reason is cascade rather than taste:
+                       `.k-rail` and `.sn-mod` are both (0,1,0), and
+                       shell.css loads after ds.css, so any border
+                       shorthand written here would silently win. One
+                       declaration, in the rule that draws the row. */
+                    className={`sn-mod${
                       currentModuleId === m.id ? ' is-on' : ''
                     }`}
                     data-kind={m.kind}

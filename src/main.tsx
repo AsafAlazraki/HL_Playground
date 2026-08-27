@@ -36,6 +36,7 @@ import './styles/bridge.css'
 import './features/auth/auth.css'
 import './features/tenancy/tenancy.css'
 import './features/banner/banner.css'
+import './features/activity/activity.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

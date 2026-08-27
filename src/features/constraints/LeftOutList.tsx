@@ -97,7 +97,18 @@ export function LeftOutList(): ReactElement | null {
 
       <ul className="cn-lo-list">
         {records.map((r) => (
-          <li key={r.what} className={`cn-lo-item is-${r.verdict}`}>
+          /* TWO OF THE FOUR STATES THAT WERE ALL GREY. `out` is a
+             decision against — `.s-refused`, a --danger rail. `later`
+             is decided and waiting on somewhere to keep it —
+             `.s-held`, which is the one of the four that reads as "not
+             yet" rather than "no". Both were the same grey card, which
+             is exactly PHASE_TWO §1b's complaint: "refused,
+             discontinued, over-rating and unchecked are four different
+             states currently sharing one appearance". */
+          <li
+            key={r.what}
+            className={`cn-lo-item is-${r.verdict} ${r.verdict === 'out' ? 's-refused' : 's-held'}`}
+          >
             <p className="cn-lo-verdict">
               {VERDICT_WORD[r.verdict]}
               <span className="cn-lo-size">{r.size}</span>

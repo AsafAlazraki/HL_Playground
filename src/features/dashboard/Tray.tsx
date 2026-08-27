@@ -1,7 +1,7 @@
 /* ============================================================
    THE TRAY — what is left to put on.
 
-   IT OFFERS ONLY WHAT EXISTS. The cards are the seven this
+   IT OFFERS ONLY WHAT EXISTS. The cards are the ones this
    build can draw; the fast actions are the seven doors the app
    really has, this dealer's own tables and this dealer's own
    modules. Nothing in here is a suggestion, a template or a

@@ -1538,14 +1538,7 @@
    down the left says "this is an aside" without a ground.
    ============================================================ */
 
-.vw-once {
-  margin: var(--sp-5) 0 0;
-  padding: 2px 0 2px var(--sp-4);
-  border-left: 2px solid var(--hairline-strong);
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
+/* `.vw-once` is gone with the sentence it drew — see ViewPage.tsx. */
 
 /* ============================================================
    THE CURATION MECHANISM, INSIDE A BLOCK.
@@ -1834,6 +1827,33 @@
   z-index: 2;
   border-radius: var(--radius) var(--radius) 0 0;
   background: var(--paper);
+}
+
+/* ------------------------------------------------------------
+   AND THE HEAD IS A BAND OF ITS KIND.
+
+   `.k-band` at the foot of ds.css is exactly this surface — "the
+   band head of a section that holds one kind of thing" — and the
+   values below are ITS values, restated rather than invented. They
+   have to be restated because the sticky rule one line up sets
+   `background: var(--paper)` at three classes of specificity and
+   would quietly cancel the tint; a one-class utility cannot win
+   that, and a `!important` would be worse than a copy.
+
+   Everything else about the head is unchanged. The tint is 10% —
+   under the threshold at which the ink on it moves by a contrast
+   point, which is the same argument the aurora is capped by.
+   ------------------------------------------------------------ */
+.vw-blocks > .vw-block > .vw-block-head.k-band {
+  background: color-mix(in srgb, var(--kind) 10%, var(--surface-1));
+}
+[data-theme='dark'] .vw-blocks > .vw-block > .vw-block-head.k-band {
+  background: color-mix(in srgb, var(--kind) 16%, var(--surface-1));
+}
+@media (prefers-contrast: more) {
+  .vw-blocks > .vw-block > .vw-block-head.k-band {
+    background: var(--surface-1);
+  }
 }
 
 /* JUST ARRIVED AT, from a press in the ledger above. A moment,

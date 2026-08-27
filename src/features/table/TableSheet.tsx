@@ -77,7 +77,7 @@
    `ColumnMenu.tsx`.
    ============================================================ */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { JSX } from 'react'
+import type { Dispatch, JSX, SetStateAction } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { displayFieldOf, isSystemFieldId } from '@/types/model'
@@ -118,6 +118,11 @@ import { useColumnCommands } from './useColumnCommands'
 import type { NewColumn } from './useColumnCommands'
 import type { PushToast } from './Toasts'
 import { offerUndo } from '@/store/notes'
+/* DEEP, not through the barrel: `views/columns` reads the model, the
+   money format and the quote's own price levels, and nothing of ours
+   — so this closes no cycle. The barrel would. */
+import { formatNumber as printFigure } from '@/features/views/columns'
+import { bandWords } from './facets'
 import { cellText, isEmptyCell, plural, singleSel, valueForField } from './helpers'
 import { UNASSIGNED_LABEL } from './grouping'
 import {
@@ -133,7 +138,7 @@ import { clearRowReveal, useRowReveal } from './rowRevealState'
    the '/' key, which has to find that box on a bar this component does
    not own and must not reach into by class name. An aria-label this
    file WROTE is a handle this file is allowed to hold. */
-const SEARCH_LABEL = 'Search every column of this table, including calculated ones'
+export const SEARCH_LABEL = 'Search every column of this table, including calculated ones'
 
 /** Put the caret in the row search, wherever the bar has drawn it. */
 function focusRowSearch(): void {
@@ -196,9 +201,43 @@ function columnsWithValues(
 function chipLabel(f: ColumnFilter, field: FieldDef | undefined): string {
   const name = field?.name ?? 'Column'
   if (f.kind === 'contains') return `${name} ∋ ${f.text}`
+  /* A BAND SAYS ITS BOUNDS, not "2 values". It is set from the
+     catalogue's rail, and the chip on this bar is the one place a
+     person in the register can see what the gallery narrowed to —
+     so it has to read as the amount it is. */
+  if (f.kind === 'between') {
+    return `${name}: ${bandWords(f.min, f.max, (n) => printFigure(n, field?.name ?? ''))}`
+  }
   if (f.selected.length === 0) return `${name}: none`
   if (f.selected.length <= 2) return `${name}: ${f.selected.join(', ')}`
   return `${name}: ${f.selected.length} values`
+}
+
+/* ============================================================
+   WHO OWNS THE NARROWING.
+
+   By default this component does, and that is the FOCUS lens and
+   the on-canvas card: a register opened on its own answers its own
+   search box and its own filter menus.
+
+   The CATALOGUE owns it instead, because the catalogue and the
+   register are two densities of ONE surface and a narrowing that
+   evaporated when you pressed `List` would make them two surfaces
+   that happen to share a table. A person who filters to `Patrol ·
+   4–6 hp` in the gallery and then asks for the register expects
+   1,148 fewer rows, not 588 again.
+
+   The state travels rather than the sheet being rebuilt, so every
+   capability below this line — sort, sections, grouping, the fill
+   handle, the row detail, the column menus — is untouched by it.
+   ============================================================ */
+export interface SheetViewState {
+  sort: SortState | null
+  setSort: Dispatch<SetStateAction<SortState | null>>
+  filters: ColumnFilter[]
+  setFilters: Dispatch<SetStateAction<ColumnFilter[]>>
+  search: string
+  setSearch: Dispatch<SetStateAction<string>>
 }
 
 export function TableSheet({
@@ -208,6 +247,7 @@ export function TableSheet({
   pushToast,
   doors,
   onCount,
+  view: hosted,
 }: {
   entityId: string
   colWidths: Record<string, number>
@@ -225,13 +265,26 @@ export function TableSheet({
    *  it lives two levels up, so the fact travels up rather than being
    *  said twice in two places that can disagree. */
   onCount?: (shown: number, total: number) => void
+  /** the host owns the narrowing — see SheetViewState above. Its
+   *  presence also takes the search box off this bar, because the
+   *  host has drawn one and two boxes bound to one string is a
+   *  puzzle rather than an affordance. */
+  view?: SheetViewState
 }): JSX.Element {
   const deleteRow = useProjectStore((s) => s.deleteRow)
   const addField = useProjectStore((s) => s.addField)
 
-  const [sort, setSort] = useState<SortState | null>(null)
-  const [filters, setFilters] = useState<ColumnFilter[]>([])
-  const [search, setSearch] = useState('')
+  /* Declared unconditionally, as hooks must be, and then the hosted
+     ones win. The unhosted register pays one unused `useState` each. */
+  const [ownSort, setOwnSort] = useState<SortState | null>(null)
+  const [ownFilters, setOwnFilters] = useState<ColumnFilter[]>([])
+  const [ownSearch, setOwnSearch] = useState('')
+  const sort = hosted ? hosted.sort : ownSort
+  const setSort = hosted ? hosted.setSort : setOwnSort
+  const filters = hosted ? hosted.filters : ownFilters
+  const setFilters = hosted ? hosted.setFilters : setOwnFilters
+  const search = hosted ? hosted.search : ownSearch
+  const setSearch = hosted ? hosted.setSearch : setOwnSearch
 
   const data = useTableData(entityId, { sort, filters, search })
   const { entity, rows, hasFormula, viewActive, buildViewRows } = data
@@ -511,14 +564,14 @@ export function TableSheet({
 
   const onSort = useCallback((fieldId: string, dir: SortState['dir'] | null) => {
     setSort(dir === null ? null : { fieldId, dir })
-  }, [])
+  }, [setSort])
 
   const onFilter = useCallback((fieldId: string, f: ColumnFilter | null) => {
     setFilters((prev) => {
       const without = prev.filter((x) => x.fieldId !== fieldId)
       return f ? [...without, f] : without
     })
-  }, [])
+  }, [setFilters])
 
   const distinctFor = useCallback(
     (fieldId: string) => distinctValues(buildViewRows(rows, hasFormula), fieldId),
@@ -529,7 +582,7 @@ export function TableSheet({
     setSort(null)
     setFilters([])
     setSearch('')
-  }, [])
+  }, [setSort, setFilters, setSearch])
 
   const addColumn = columns.addColumn
   const onAddColumn = useCallback(
@@ -660,8 +713,9 @@ export function TableSheet({
 
     /* 10 · NARROW IT. Absent on a table with no columns, where there
        is nothing to search through — the same condition that puts a
-       designed plate in the grid's place. */
-    if (!noFields) {
+       designed plate in the grid's place — and absent when the host
+       has drawn the box itself. */
+    if (!noFields && !hosted) {
       out.push({
         id: 'tb-find',
         rank: 10,
@@ -819,6 +873,7 @@ export function TableSheet({
     return out
   }, [
     noFields,
+    hosted,
     onSheet,
     hasBands,
     bandCount,

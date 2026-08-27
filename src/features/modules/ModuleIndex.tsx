@@ -44,42 +44,27 @@
    remainder stated in words — the same discipline, and the same
    sentence shape, as the view stage's rail.
 
-   WHAT A MODULE IS THAT A TABLE IS NOT — the overview band, drawn
-   above the catalogue and derived from nothing but the data.
+   IT IS THE STOCK TAB NOW, AND IT IS SCOPED TO ONE PLACE.
 
-   A module opening onto rows alone is the table again, one screen
-   further in, and that is exactly what it looked like. A place in
-   the business has to say, in the first two seconds, WHAT YOU CAN
-   DO HERE — not only what is in it. Four strips do that, and
-   every figure in them is read, never written:
+   Two things changed and both are subtractions. The overview band
+   that stood above these tiles — INSIDE, WHAT GOES WITH THESE, WHAT
+   YOU CAN DO HERE, WHO MAY WORK HERE, WHAT HAS HAPPENED LATELY,
+   WHERE TO START — was a module's own overview drawn on top of its
+   catalogue because there was nowhere else to put it. There is now:
+   `ModuleWorkspace` gives a module five tabs and this is one of
+   them, so the overview is the Dashboard tab and the gear is the
+   Settings tab. Every reader that fed those strips is unchanged and
+   every one of them still runs; only where their answers are drawn
+   moved. And nothing was deleted — `capabilityStates`, `accessRows`,
+   `relatedTables` and `moduleActivity` are all still called, one
+   room over.
 
-     INSIDE          the member tables as chips, each with its own
-                     count, each scrolling to that run. This is the
-                     brand level made navigable: seven price files,
-                     not one flat list of 174 hulls.
-     WHAT GOES WITH  the tables reachable through a declared join,
-                     and on how many of these tables each one is —
-                     "Yamaha Outboards, on 6 of 7". The asymmetry
-                     is real (Haines Signature and Jeanneau take
-                     factory packages instead) and saying it is the
-                     alternative to shipping headings that are
-                     empty for four brands out of seven.
-     WHAT YOU CAN DO the verbs that are switched on. One that this
-                     renderer performs is stated with the contract's
-                     own sentence; one it does not is a DISABLED
-                     control saying where the act happens instead.
-                     That second case used to be a separate strip
-                     below the header; it belongs here, beside the
-                     verbs that do work, because a person reading a
-                     row of capabilities wants the whole row.
-     WHAT HAS        the quotes raised against these tables, and the
-     HAPPENED        rows changed since they were added. THE ONLY
-     LATELY          STRIP THAT CAN BE ABSENT, and it is absent on a
-                     freshly loaded sheet, because nothing has
-                     happened yet and saying so in a heading would be
-                     four words where the truth is none. `read.ts`
-                     explains why both signals are exactly zero there
-                     and why neither can be faked into life.
+   AND `place` NARROWS THE MODULE TO ONE TABLE. The modules grid
+   draws one card per PLACE, so pressing Highfield must open
+   Highfield and not the seven-brand bag it is filed in. That is one
+   line — `moduleAt(owner, place)` — because every reader below takes
+   a `ModuleDef`, so narrowing the module narrows the census, the
+   entries, the drawers and the face at once.
 
    A REGISTER'S THING IS ITS HEADING, NOT ITS ROW — and this is the
    drawing that answers "show the data as things rather than rows".
@@ -137,9 +122,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import {
   CaretRight,
-  Gear,
   LinkSimple,
+  ListBullets,
   MagnifyingGlass,
+  SquaresFour,
 } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
@@ -172,14 +158,6 @@ import { heldBackRowCount } from '@/features/views/sellable'
    for. See the note above `curation` in the body for what each of the
    four properties now maps onto here. */
 import { CurationNote, readCuration, searchReach } from '@/features/curation'
-/* THE SUBMODULES, NOT THE BARREL. `@/features/views` re-exports
-   `ViewPage` and everything under it; this file wants one rule and one
-   registry, and naming them directly keeps the whole item page out of
-   the module chunk. It is the same import shape `read.ts` beside it
-   already uses. */
-import { bestAnsweredRow, LANDING_SCAN } from '@/features/views/landing'
-import { createViewFor } from '@/features/views/viewDefs'
-import { useQuotes } from '@/features/quote'
 import {
   buildEntries,
   capEntries,
@@ -189,17 +167,13 @@ import {
   drawerKey,
   groupEntries,
   listedTables,
-  moduleActivity,
   moduleCensus,
   moduleTables,
-  relatedTables,
   type Drawer,
   type IndexEntry,
   type IndexSection,
 } from './read'
-import { accessRows, capabilityLabel, isUnrestricted } from './access'
-import { capabilityStates, NOT_YET_SAYS } from './designer'
-import { RULE_CAPABILITY, useModuleConfiguresRules } from './ruleCapability'
+import { moduleAt } from './places'
 import './modules.css'
 
 /** How many items are drawn before the page asks you to narrow.
@@ -208,41 +182,31 @@ import './modules.css'
  *  enough that seven brands at once stay instant. */
 const INDEX_CAP = 240
 
-export interface ModuleIndexProps {
+export interface ModuleStockProps {
   module: ModuleDef
+  /** WHICH OF THE MODULE'S TABLES THIS IS THE STOCK OF, when the
+   *  module holds more than one. The modules grid draws one card per
+   *  PLACE — Highfield inside Boats — so a stock page that listed all
+   *  seven brands would undo the split on the first press. Absent =
+   *  the whole module, which is what a one-table module always is. */
+  place?: string
   /** clicking an item — the table it belongs to and the row itself */
   onOpen: (tableId: string, rowId: string) => void
-  /** Opening one of the quotes raised here. Absent = the quotes are
-   *  still NAMED, as a fact about this place, but they are not doors —
-   *  the same shape `canOpen` gives an item, and the reason this
-   *  feature still imports nothing from the app. */
-  onOpenQuote?: (quoteId: string) => void
-  /** THE ONE DOOR OUT OF THE CATALOGUE AND INTO THE SET-UP OF THIS
-   *  PLACE. `focus` names the panel to land on: the rules verb on this
-   *  page promises a rules panel, and a door that opened the top of a
-   *  five-panel page would not be keeping that promise. */
-  onSettings: (focus?: 'rules') => void
 }
 
-export function ModuleIndex({
-  module,
+export function ModuleStock({
+  module: owner,
+  place,
   onOpen,
-  onOpenQuote,
-  onSettings,
-}: ModuleIndexProps): ReactElement {
+}: ModuleStockProps): ReactElement {
+  /* THE PLACE, NOT THE BAG IT IS FILED IN. Every reader below takes a
+     `ModuleDef`, so narrowing the module to one of its tables narrows
+     the census, the entries, the drawers and the face in one line —
+     rather than each of them growing a second argument. */
+  const module = useMemo(() => moduleAt(owner, place), [owner, place])
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const updateModule = useProjectStore((s) => s.updateModule)
-  /* THE JOBS AT THIS DEALERSHIP. Read here rather than counted from
-     `ModuleDef.access` alone, because a grant is a role ID and a strip
-     that could not name the job would be a permission read as an
-     identifier. `accessRows` intersects with what this place still
-     offers, so a verb switched off an hour ago stops being listed the
-     same instant. */
-  const roleMap = useProjectStore((s) => s.roles)
-  /* Quotes live in their own registry rather than the project store —
-     a document is frozen and must not move when the sheet does. */
-  const quotes = useQuotes()
   const [query, setQuery] = useState('')
   /* WHICH DRAWER IS OPEN, or none. A position inside this page and
      nowhere else: it is not stored on the module, because which
@@ -254,6 +218,13 @@ export function ModuleIndex({
      only ever go one way and "Show what fits" would have nothing to
      go back to. The drawer is remembered and the rule is suspended. */
   const [showAll, setShowAll] = useState(false)
+
+  /* GALLERY OR LIST — the catalogue and the register as one page at
+     two densities. `moduleFace` decides which a place is BORN as and
+     `ModuleDef.index` stores that decision; this is the person
+     standing here overruling it for as long as they are, which is
+     exactly why it is not written back. */
+  const [dense, setDense] = useState<ModuleDef['index']>(() => owner.index)
 
   /* EVERY table the module points at — what the designer strip
      reorders and takes out. It has to include a retired one, or an
@@ -328,6 +299,12 @@ export function ModuleIndex({
     return { hosts, total: hosts.reduce((n, h) => n + h.count, 0) }
   }, [entries])
 
+  /* MORE THAN ONE TABLE IN VIEW — which, standing at a PLACE, is
+     false by construction. It stays because a module whose tables an
+     admin has not split is still one place, and its brand heads are
+     the only thing telling seven runs apart. */
+  const multiTable = tables.length > 1
+  const browsing = module.capabilities.includes('browse')
   const canSearch = module.capabilities.includes('search')
   const canOpen = module.capabilities.includes('open')
 
@@ -335,6 +312,15 @@ export function ModuleIndex({
      off the entries this page already made rather than off the rows a
      second time. Empty for a table that banners nothing. */
   const drawers = useMemo(() => categoryDrawers(entries, listed), [entries, listed])
+
+  /* How many items each member table brings, counted off the WHOLE
+     list and not off what the search left — a head whose number
+     changed as you typed would be a second, quieter search result. */
+  const memberCounts = useMemo(() => {
+    const out = new Map<string, number>()
+    for (const e of entries) out.set(e.tableId, (out.get(e.tableId) ?? 0) + 1)
+    return out
+  }, [entries])
 
   /* A REGISTER WITH MANY HEADINGS FILES ITSELF. A catalogue never
      does — its rows have faces — and neither does a register of four
@@ -486,205 +472,31 @@ export function ModuleIndex({
     return out
   }, [drawers])
 
-  const multiTable = tables.length > 1
-  const browsing = module.capabilities.includes('browse')
-
-  /* -- the overview band ------------------------------------- */
-
-  /* How many items each member table brings, counted off the WHOLE
-     list and not off what the search left — a chip whose number
-     changed as you typed would be a second, quieter search result. */
-  const memberCounts = useMemo(() => {
-    const out = new Map<string, number>()
-    for (const e of entries) out.set(e.tableId, (out.get(e.tableId) ?? 0) + 1)
-    return out
-  }, [entries])
-
-  /* What is reachable from here through a join somebody declared. */
-  const related = useMemo(() => relatedTables(module, entities), [module, entities])
-
-  /* The verbs that are ON, in the contract's own order, each with
-     either the sentence for what it does or the sentence for where
-     it is done instead. `capabilityStates` is the same reader the
-     designer strip uses, so the two can never disagree. */
-  const configures = useModuleConfiguresRules(module.id)
-  const acts = useMemo(
-    () => capabilityStates(module, tables, configures).filter((s) => s.on),
-    [module, tables, configures],
-  )
-
-  /* WHAT HAS HAPPENED HERE — quotes raised against these tables, and
-     rows changed since they were loaded. Both are exactly zero on a
-     freshly loaded sheet, so the strip below draws nothing at all
-     until something really has happened. */
-  const lately = useMemo(
-    () => moduleActivity(module, entities, rowsByEntity, quotes),
-    [module, entities, rowsByEntity, quotes],
-  )
-  const anythingLately = lately.quoteCount > 0 || lately.edited > 0
-
-  /* ============================================================
-     WHERE TO START — the one row in this catalogue that shows what the
-     catalogue is FOR, chosen by a rule and never by a favourite.
-
-     WHAT WAS MEASURED. The tiles are in the dealer's own order, cut by
-     table and then by their own hierarchy, and that order is right: a
-     catalogue that reordered itself by how complete each row was would
-     be unrecognisable to the person whose price file it is. But the row
-     a demonstration lands on is the FIRST tile, and on the real set the
-     first tile of the first table of the first module is
-     "Highfield - RU230KAM (PVC) WH", whose page answers two of six
-     blocks. Four of the six headings on it read "0 picked". Nothing is
-     wrong with that boat — it is a 2.3 m roll-up that takes no trailer
-     and no rigging kit — but it is the worst possible first impression
-     of a page whose whole job is showing what goes with what.
-
-     THE VIEW STAGE ALREADY HAD THE ANSWER AND COULD NOT GIVE IT. Its
-     landing rule fires only for a door that names a TABLE; a tile names
-     a ROW, and it is right that it does — a person who pressed a boat
-     must get that boat. So the rule is asked HERE instead, once, about
-     the table the catalogue opens with, and its answer is offered as a
-     door beside the reason it was chosen. Nothing is reordered, nothing
-     is hidden, and the sparse rows are exactly where they were.
-
-     WHY THE FIRST LISTED TABLE AND NOT THE WHOLE MODULE. `listed[0]` is
-     the section a reader's eye lands in — it is the top of the
-     catalogue and the first chip in INSIDE — so "where to start" means
-     the start of what is actually in front of them. Asking all seven of
-     Boats' tables would cost seven scans on open (47 ms for Highfield
-     alone) to answer a question nobody asked, and would offer a boat
-     from a brand five screens down.
-
-     IT USES THE SAME SCAN DEPTH AS THE TABLE'S OWN DOOR, so pressing
-     this and pressing Fitment on that table land on the SAME boat. Two
-     surfaces answering one question differently is worse than either
-     answer.
-
-     AND IT ONLY OFFERS WHAT IS SOLD — but that is the RULE's promise
-     now, not a filter applied here. `bestAnsweredRow` skips a
-     discontinued row as a candidate and still counts it against its
-     window, so this door and the table's own Fitment door cannot answer
-     the same question with two different boats. The rows themselves stay
-     exactly where they are.
-     ============================================================ */
-  const start = useMemo(() => {
-    const primary = listed[0]
-    if (!canOpen || !browsing || !primary) return undefined
-    const rows = rowsByEntity[primary.id] ?? []
-    if (rows.length === 0) return undefined
-    const view = createViewFor(primary.id)
-    const best = bestAnsweredRow({
-      entities,
-      rowsByEntity,
-      entity: primary,
-      rows,
-      viewId: view.id,
-      limit: LANDING_SCAN,
-    })
-    if (!best) return undefined
-
-    /* THE SENTENCE MAY NOT CLAIM MORE THAN THE SCAN SAW. The rule stops
-       at the first row that answers everything and otherwise stops at
-       `LANDING_SCAN`, so on a 588-variant table "the most of any" would
-       be a statement about hundreds of rows nobody read. `scanned` is how
-       far it really got, and the sentence says so. */
-    const say =
-      best.answered >= best.of
-        ? /* A PERFECT ROW IS ALLOWED THE WHOLE TABLE'S NAME. The scan
-             starts at the top and stops at the first row that answers
-             everything, so every row above this one was read and none of
-             them did — "the first one in Highfield Inflatables that is"
-             is exactly what happened, not a claim about rows nobody
-             looked at. */
-          `Everything that goes with it is picked — all ${best.of}. It is the first one in ${primary.name} that is.`
-        : `${best.answered} of the ${best.of} tables that go with it ${
-            best.answered === 1 ? 'has' : 'have'
-          } something picked, which is the most in ${
-            best.scanned >= rows.length ? primary.name : `the first ${best.scanned} of ${primary.name}`
-          }.`
-
-    return {
-      tableId: primary.id,
-      rowId: best.row.id,
-      name: rowLabel(primary, best.row),
-      say,
-    }
-  }, [canOpen, browsing, listed, entities, rowsByEntity])
 
 
-  /* A CHIP SCROLLS TO ITS RUN, and clears the find box on the way:
-     "show me Stacer" while three letters are typed into search would
-     otherwise scroll to a heading that is not drawn. Done through
-     state rather than in the handler because the run only exists
-     after the render that cleared the query. */
-  const [goingTo, setGoingTo] = useState<string | null>(null)
-  useEffect(() => {
-    if (goingTo === null) return
-    setGoingTo(null)
-    const el = document.getElementById(`md-sec-${module.id}-${goingTo}`)
-    if (!el) return
-    const still =
-      typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
-  }, [goingTo, module.id])
 
-  /* THE RULE VERB'S DOOR. It opens the one set-up surface and names
-     the panel it promised, so pressing "Set rules" lands on the rules
-     rather than at the top of five panels. The scroll belongs to the
-     page that mounts, which is why this hands over a name and not a
-     scroll. */
-  const openRules = (): void => onSettings('rules')
 
-  /* WHO MAY WORK HERE — and nothing at all when nobody has closed the
-     door. `able` are the jobs holding something this place still does;
-     `silent` are the jobs named here holding nothing that is in force,
-     which is a different fact and is stated as one rather than
-     subtracted in silence. */
-  const access = useMemo(() => {
-    if (isUnrestricted(module)) return { restricted: false, able: [], silent: 0 }
-    const roles = Object.values(roleMap).sort(
-      (a, b) => a.createdAt.localeCompare(b.createdAt) || a.name.localeCompare(b.name),
-    )
-    const rows = accessRows(module, roles)
-    const named = new Set((module.access ?? []).map((a) => a.roleId))
-    return {
-      restricted: true,
-      able: rows.filter((r) => r.granted.length > 0),
-      silent: rows.filter((r) => r.granted.length === 0 && named.has(r.role.id)).length,
-    }
-  }, [module, roleMap])
 
   const style = { '--md-accent': accentVar(module.accent) } as CSSProperties
 
   return (
     <section className="md-index" style={style} aria-label={module.name}>
-      <header className="md-idx-head">
-        <div className="md-idx-id">
-          {/* THE NAME AND THE SENTENCE ARE THE FIELDS THEY CAME FROM.
-              In design mode the heading becomes the control that writes
-              it, in the same place, at the same size — so a description
-              is changed where it is read. There is exactly one place a
-              module's description comes from, and this is it: HelmLogic
-              derives its equivalent by substring-matching the name and
-              therefore tells every trailer and service user they are
-              configuring boat packages. */}
-          <h2 className="md-idx-name">{module.name}</h2>
-          {module.description === '' ? null : (
-            <p className="md-idx-desc">{module.description}</p>
-          )}
-          {/* WHAT IS IN HERE, NOT JUST HOW MUCH. This read "2,937
-              items · 3 tables · 699 not sold", which is three true
-              figures and no picture of the place. `censusLine` names
-              the dealer's own word for one of them and how many of
-              their own headings they fall under, and it is the same
-              sentence the dashboard card prints. */}
-          <p className="md-idx-facts mono-label">
-            {censusLine(census)}
-            {multiTable ? ` · ${tables.length} tables` : ''}
-          </p>
-        </div>
+      {/* THE BAR OF THE STOCK TAB — the find box and the density
+          switch, and nothing else.
 
+          WHAT LEFT THIS HEADER, AND WHERE IT WENT. The module's name,
+          its description and its census stood here; they are now the
+          workspace's own header, one level up, where they are true of
+          every tab rather than of this one. The overview band that
+          followed — INSIDE, WHAT GOES WITH THESE, WHAT YOU CAN DO
+          HERE, WHO MAY WORK HERE, WHAT HAS HAPPENED LATELY, WHERE TO
+          START — is the Dashboard tab, which is what those six strips
+          always were: a module's own overview drawn above its stock
+          because there was nowhere else to put it. Nothing was
+          deleted; every one of them is still read by the same reader
+          in `read.ts`. And the gear is gone because Settings is a tab
+          now, beside this one. */}
+      <header className="md-idx-head">
         {canSearch ? (
           <div className="md-idx-find">
             <MagnifyingGlass
@@ -705,300 +517,35 @@ export function ModuleIndex({
           </div>
         ) : null}
 
-        {/* THE ONE CONTROL. It grows handles on this page; it never
-            opens another. Drawn last so it sits at the end of the bar
-            whether or not the module has a search box. */}
-        <button
-          type="button"
-          className="md-gear"
-          title={`Set up ${module.name} — what may be done here, who may do it, and what it is attached to`}
-          onClick={() => onSettings()}
-        >
-          <Gear size={ICON_SIZE.small} weight="light" aria-hidden="true" />
-          <span className="md-gear-word">Settings</span>
-        </button>
+        {/* THE CATALOGUE AND THE REGISTER ARE ONE PAGE AT TWO
+            DENSITIES. The register is the spreadsheet earning its
+            place as a VIEW rather than as the front door: same rows,
+            same order, same prices, one line each. `moduleFace`
+            already decides which a place is BORN as; this is the
+            person overruling it for as long as they are standing
+            here, which is why it is not stored. */}
+        <div className="md-density" role="group" aria-label="How much of each item to show">
+          <button
+            type="button"
+            className="md-density-one"
+            aria-pressed={dense === 'tiles'}
+            onClick={() => setDense('tiles')}
+          >
+            <SquaresFour size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+            Gallery
+          </button>
+          <button
+            type="button"
+            className="md-density-one"
+            aria-pressed={dense === 'rows'}
+            onClick={() => setDense('rows')}
+          >
+            <ListBullets size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+            List
+          </button>
+        </div>
       </header>
 
-      {/* THE OVERVIEW BAND — see the header. Three strips, all
-          derived, drawn above the catalogue rather than instead of
-          it. A module with no tables left draws none of them: there
-          is nothing true to say, and the sentence below says so. */}
-      {tables.length > 0 ? (
-        <section className="md-over" aria-label={`About ${module.name}`}>
-          {multiTable ? (
-            <div className="md-over-strip">
-              <p className="md-over-cap mono-label">Inside</p>
-              <ul className="md-chips">
-                {listed.map((t) => {
-                  const n = memberCounts.get(t.id) ?? 0
-                  return (
-                    <li key={t.id}>
-                      <button
-                        type="button"
-                        className="md-chip"
-                        disabled={n === 0}
-                        aria-label={`Go to ${t.name}, ${n} ${n === 1 ? 'item' : 'items'}`}
-                        /* AND IT CLEARS THE NARROWING ON THE WAY, for
-                           the same reason it clears the find box: "show
-                           me Rigging Kits" while a Parts drawer is open
-                           would scroll to a head that is not drawn. */
-                        onClick={() => {
-                          setOpenKey(null)
-                          setShowAll(false)
-                          setGoingTo(t.id)
-                        }}
-                      >
-                        <span className="md-chip-mark">
-                          <TableKindSymbol
-                            kind={t.kind && t.kind in TABLE_KINDS ? t.kind : 'custom'}
-                            size={ICON_SIZE.tiny}
-                          />
-                        </span>
-                        <span className="md-chip-name">{t.name}</span>
-                        <span className="md-chip-n mono-label">{n}</span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          ) : null}
-
-          {related.length > 0 ? (
-            <div className="md-over-strip">
-              <p className="md-over-cap mono-label">What goes with these</p>
-              <ul className="md-links">
-                {related.map((r) => (
-                  <li className="md-link" key={r.tableId}>
-                    <span className="md-link-mark">
-                      <TableKindSymbol kind={r.kind} size={ICON_SIZE.tiny} />
-                    </span>
-                    <span className="md-link-name">{r.name}</span>
-                    {/* THE SHARE, NOT A TICK. "on 3 of 7" is the fact
-                        a person can act on; a tick would say only
-                        that the relationship exists somewhere. */}
-                    <span className="md-link-share">
-                      on {r.on} of {r.of}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {acts.length > 0 ? (
-            <div className="md-over-strip">
-              <p className="md-over-cap mono-label">What you can do here</p>
-              <ul className="md-acts">
-                {acts.map((a) => {
-                  /* NOT PERFORMED ON THIS SCREEN = A DISABLED CONTROL
-                     THAT SAYS WHERE IT IS. An enabled control that
-                     does nothing is a lie told to whoever is looking;
-                     a verb quietly missing from the row is worse,
-                     because the dashboard card already promised it. */
-                  const elsewhere = a.refused ?? NOT_YET_SAYS[a.key]
-
-                  /* A VERB WITH A DOOR IS A DOOR. `configure` is the
-                     first capability whose act happens on THIS screen
-                     rather than on an item's page, so it is the first
-                     one drawn as something to press: it grows the
-                     designer and takes you to the rules panel. The
-                     caret is what tells a pill apart from a label —
-                     three states in this row now (a door, a live
-                     statement, a disabled stub) and they must not
-                     look like two. */
-                  const door = !elsewhere && a.key === RULE_CAPABILITY ? openRules : undefined
-                  return (
-                    <li className="md-act" key={a.key}>
-                      {elsewhere ? (
-                        <button type="button" className="md-act-verb" disabled>
-                          {a.label}
-                        </button>
-                      ) : door ? (
-                        <button
-                          type="button"
-                          className="md-act-verb is-live is-door"
-                          onClick={door}
-                        >
-                          {a.label}
-                          <CaretRight
-                            size={ICON_SIZE.tiny}
-                            weight="bold"
-                            aria-hidden="true"
-                          />
-                        </button>
-                      ) : (
-                        <span className="md-act-verb is-live">{a.label}</span>
-                      )}
-                      <span className="md-act-say">{elsewhere ?? a.says}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          ) : null}
-
-          {/* WHO MAY WORK HERE — drawn only where somebody has closed
-              the door.
-
-              ABSENT MEANS UNRESTRICTED, and unrestricted is not a
-              decision anybody made, so a place nobody has closed says
-              NOTHING about access. That is the same rule the dashboard
-              card keeps, and for the same reason: a strip stamped on
-              every module would turn a catalogue into an admin console
-              and would report nine decisions that were never taken.
-
-              WHERE IT IS CLOSED, THE PERSON STANDING HERE IS ENTITLED
-              TO KNOW. The row of verbs directly above says what may be
-              done in this place; without this strip it says so without
-              the qualification on it, and a salesperson reading "Quote
-              · Export" has no way to learn that neither is theirs. It
-              names the jobs and what each holds, and it says plainly
-              when the answer is nobody — which is a real state, and
-              the one worth catching. */}
-          {access.restricted ? (
-            <div className="md-over-strip">
-              <p className="md-over-cap mono-label">Who may work here</p>
-              {access.able.length > 0 ? (
-                <ul className="md-who">
-                  {access.able.map((row) => (
-                    <li className="md-who-one" key={row.role.id}>
-                      <span className="md-who-name">{row.role.name}</span>
-                      <span className="md-who-can">
-                        {row.granted.map((c) => capabilityLabel(c)).join(' · ')}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              <p className="md-who-say">
-                {access.able.length === 0 ? (
-                  <>
-                    <strong>{module.name} is closed and no job may act in it.</strong>{' '}
-                    Every verb above is switched on for this place and granted to nobody.
-                    Tick one in <em>Settings</em>, or clear the last tick to open it to
-                    everyone again.
-                  </>
-                ) : access.silent > 0 ? (
-                  <>
-                    Everybody else may do nothing here — including {access.silent} named{' '}
-                    {access.silent === 1 ? 'job' : 'jobs'} holding nothing this place still
-                    does. Change it in <em>Settings</em>.
-                  </>
-                ) : (
-                  <>Everybody else may do nothing here. Change it in <em>Settings</em>.</>
-                )}
-              </p>
-            </div>
-          ) : null}
-
-          {/* WHAT HAS HAPPENED LATELY — the fourth question, and the
-              one that makes this an application rather than a
-              catalogue. DRAWN ONLY WHEN SOMETHING HAS: a freshly
-              loaded sheet has raised no quotes and changed no rows, so
-              this strip is absent, and the absence is the true answer.
-              It arrives the moment somebody quotes a boat. */}
-          {anythingLately ? (
-            <div className="md-over-strip">
-              <p className="md-over-cap mono-label">What has happened lately</p>
-              {lately.quotes.length > 0 ? (
-                <ul className="md-lately">
-                  {lately.quotes.map((q) => {
-                    /* The subject as the QUOTE froze it, its reference,
-                       the word the quotes list prints for its state,
-                       and the day. Four facts, one line, no summary. */
-                    const body = (
-                      <>
-                        <span className="md-late-what">{q.subject}</span>
-                        <span className="md-late-state mono-label">{q.state}</span>
-                        {/* MONO BECAUSE THEY ARE FIGURES, and not
-                            `mono-label`, because a reference and a date
-                            are values a person reads back to somebody
-                            on the phone. */}
-                        <span className="md-late-ref">{q.reference}</span>
-                        <span className="md-late-when">{q.day}</span>
-                      </>
-                    )
-                    return (
-                      <li key={q.id}>
-                        {onOpenQuote ? (
-                          <button
-                            type="button"
-                            className="md-late"
-                            aria-label={`Open the quote for ${q.subject}, ${q.reference}`}
-                            onClick={() => onOpenQuote(q.id)}
-                          >
-                            {body}
-                          </button>
-                        ) : (
-                          <div className="md-late is-flat">{body}</div>
-                        )}
-                      </li>
-                    )
-                  })}
-                </ul>
-              ) : null}
-
-              {lately.quoteCount > lately.quotes.length ? (
-                <p className="md-late-say">
-                  {lately.quoteCount - lately.quotes.length} more raised here — all of
-                  them are in Quotes.
-                </p>
-              ) : null}
-
-              {/* THE ROWS SOMEBODY HAS WORKED ON. Not a door: there is
-                  no one honest destination for a count spread across
-                  two tables, and inventing one would be worse than
-                  stating the fact. `updatedAt !== createdAt` is exact,
-                  so this sentence can never appear for data nobody has
-                  touched. */}
-              {lately.edited > 0 ? (
-                <p className="md-late-say">
-                  {lately.edited} {lately.edited === 1 ? 'item' : 'items'} on{' '}
-                  {lately.editedOn.join(', ')} {lately.edited === 1 ? 'has' : 'have'} been
-                  edited since {lately.edited === 1 ? 'it was' : 'they were'} added.
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* WHERE TO START — LAST IN THE BAND, AND THE ONLY THING IN
-              IT THAT GOES ANYWHERE. The three strips above say what
-              this place is; DESIGN_CONTRACT §6 is explicit that a
-              surface says what a thing IS before it offers the action,
-              so the door comes after them and immediately above the
-              catalogue it points into. See the `start` memo for the
-              rule, the measurement, and why it is the first listed
-              table rather than all seven.
-
-              ABSENT RATHER THAN EMPTY. A module that cannot open a row,
-              cannot browse, has no rows still sold, or whose rows
-              answer nothing at all draws no strip — the same promise
-              WHAT HAS HAPPENED LATELY makes above it. There is no such
-              thing as a quiet recommendation. */}
-          {start ? (
-            <div className="md-over-strip">
-              <p className="md-over-cap mono-label">Where to start</p>
-              <div className="md-start">
-                <button
-                  type="button"
-                  className="md-start-door"
-                  aria-label={`Open ${start.name} — ${start.say}`}
-                  onClick={() => onOpen(start.tableId, start.rowId)}
-                >
-                  <span className="md-start-name">{start.name}</span>
-                  <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                </button>
-                {/* THE REASON TRAVELS WITH THE OFFER. A suggestion with
-                    no stated basis is the "confidently wrong" case
-                    DESIGN_CONTRACT §7 names; this one states exactly
-                    what it counted and how far it looked. */}
-                <span className="md-start-say">{start.say}</span>
-              </div>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
 
       {/* THE NARROWING, NAMED — through `@/features/curation` and not
           in this file's own words. See the `curation` memo above for
@@ -1156,7 +703,7 @@ export function ModuleIndex({
             domId={`md-sec-${module.id}-${section.tableId}`}
             section={section}
             showHead={multiTable}
-            mode={module.index}
+            mode={dense}
             canOpen={canOpen}
             onOpen={onOpen}
           />

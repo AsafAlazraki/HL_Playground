@@ -149,13 +149,18 @@
    `+0.02em` at 21px, which is the tracking rule backwards: letters
    read too far apart as they grow. The title step takes them
    together — size, weight, leading and tracking — as §2 asks. */
+/* THE QUESTION IS THE SUBJECT OF THE SHEET, so it is the largest
+   thing on it. It was 20px, the same size as the panel headings
+   inside the sheet it heads. `--t-display-lg` bottoms at 26px, which
+   is where Archivo is allowed to start, and tops at 34px — a dialog
+   is not a stage and does not take the hero step. */
 .tk-question {
   margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--t-title-size);
-  font-weight: var(--t-title-weight);
-  line-height: var(--t-title-lead);
-  letter-spacing: var(--t-title-track);
+  font-family: var(--font-hero);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
   text-transform: none;
   color: var(--fg);
   text-wrap: balance;

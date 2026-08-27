@@ -2651,19 +2651,23 @@
   color: var(--fg-tertiary);
 }
 
-/* SUPERSEDES the 32px display step. `--t-display-lg-*` is the step
-   above it, and it is a clamp: at 1280 this lands at 27px and at
-   1920 at 34px, so the title is the same weight of voice on a
-   laptop and on the desk screen the dealership actually uses.
-   NO GRADIENT. §2 allows one display treatment and Home spent it
-   on the business's own name; a page title is not a headline. */
+/* SOMETHING ON THIS STAGE IS BIG, AND IT IS THIS. It was
+   `--t-display-lg` in Inter, which tops out at 34px — the exact
+   figure PHASE_TWO §1a measured on this surface and called "the
+   absence of a hierarchy, not one". `--t-hero` is the step above:
+   34px at 1024 and 52px at 1600, so the smallest screen is unchanged
+   and the desk screen gets a focal point. Archivo, because that is
+   the face `--font-hero` names and its 26px floor is what stops the
+   old display-serif failure repeating.
+   NO GRADIENT. §2 allows one display treatment and Home spent it on
+   the business's own name; a page title is not a headline. */
 .cn-title {
   margin: var(--s-3) 0 0;
-  font-family: var(--font-sans);
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
+  font-family: var(--font-hero);
+  font-size: var(--t-hero-size);
+  font-weight: var(--t-hero-weight);
+  line-height: var(--t-hero-lead);
+  letter-spacing: var(--t-hero-track);
   color: var(--fg);
 }
 
@@ -4332,10 +4336,11 @@
    every card, in full, one press away.
    ============================================================ */
 
-/* THE DISCLOSURE. A `details` rather than a button and a state,
-   because the open/shut of a paragraph is exactly what the element
-   is for, and it takes the keyboard for free. The summary is a
-   pressable thing, so it takes all three states. */
+/* THE DISCLOSURE. A button and a state rather than a `details`: a
+   closed `::details-content` measured a 19.5px box in this browser,
+   so the paragraph it was meant to put away was still laid out. It
+   is a pressable thing, so it takes hover, press and focus, and the
+   press lands on pointer-down. */
 .cn-rl-why-more {
   margin: var(--sp-2) 0 0;
 }
@@ -4356,8 +4361,10 @@
     color var(--t-fast) var(--ease-draft),
     transform var(--t-fast) var(--ease-draft);
 }
-.cn-rl-why-sum::-webkit-details-marker {
-  display: none;
+.cn-rl-why-sum {
+  border: 0;
+  background: none;
+  font-family: inherit;
 }
 /* the wedge, drawn rather than a glyph import, so it can turn */
 .cn-rl-why-sum::before {
@@ -4369,7 +4376,7 @@
   border-bottom: 3.5px solid transparent;
   transition: transform var(--t-fast) var(--ease-draft);
 }
-.cn-rl-why-more[open] > .cn-rl-why-sum::before {
+.cn-rl-why-sum[aria-expanded='true']::before {
   transform: rotate(90deg);
 }
 .cn-rl-why-sum:hover {
@@ -4401,4 +4408,71 @@
 }
 .cn-rl.is-here {
   border-left-color: var(--cn-rl-accent, var(--hairline-strong));
+}
+
+/* ============================================================
+   PHASE TWO — THE GROUP HEAD IS A BAND, NOT A DOT ON WHITE.
+
+   `.k-band` from ds.css does the tint and the bottom rule; what a
+   band needs on top of a gap is padding, a radius and the hairline
+   the old head drew with a gradient `::after` — which now fights a
+   tint that already has an edge, so it is retired here.
+   ============================================================ */
+.cn-grp-head.k-band {
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  margin-bottom: var(--s-3);
+}
+/* the gradient rule was the band; the band is the band now */
+.cn-grp-head.k-band::after {
+  content: none;
+}
+/* the count sits on the kind's own tint, so it takes the surface
+   under it rather than the chip tint measured over white */
+.cn-grp-head.k-band .cn-grp-count {
+  background: var(--surface-1);
+}
+
+/* THE GROUP'S CAPTION, which now sits under a tinted band rather
+   than beside a dot. It is a phrase, so it is set as one. */
+.cn-grp-say {
+  margin: 0 0 var(--s-4);
+  padding: 0 var(--s-4);
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+}
+
+/* THE LEFT-OUT CARDS TAKE THE STATE RAIL FROM ds.css. `.s-refused`
+   and `.s-held` each set `border-left: 3px`, so the 2px hairline
+   this card drew on that edge is overridden by them and only needs
+   getting out of the way where a state is absent. Nothing else on
+   the card moves: the reason and the measurement stay ink, because
+   a hue may not sit behind reading text. */
+.cn-lo-item.s-refused,
+.cn-lo-item.s-held {
+  border-left-width: 3px;
+}
+
+/* THE BRAND LINES TAKE A RAIL. `.k-rail`, `.s-warned` and
+   `.s-unchecked` all set `border-left: 3px` from ds.css; the row only
+   has to make room for it and stop drawing its own edge. Three
+   different facts about a band — it runs and holds, it warns, it
+   cannot run at all — read as three different things now instead of
+   as one grey line with a different sentence at the bottom. */
+.cn-tf-item.k-rail,
+.cn-tf-item.s-warned,
+.cn-tf-item.s-unchecked {
+  padding-left: var(--s-4);
+}
+
+/* THE REGISTRATION ROWS TAKE A STATE RAIL. Two different facts —
+   this row's band disagrees with its own weight, and this row is
+   already withheld from anything a customer sees — were one grey
+   card. `.s-warned` and `.s-held` set the 3px edge; the row only
+   has to make room for it. Neither is corrected: the rail is a
+   statement about the data, not an act on it. */
+.cn-rg-row.s-warned,
+.cn-rg-row.s-held {
+  padding-left: var(--s-4);
 }

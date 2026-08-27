@@ -26,6 +26,55 @@
    ============================================================ */
 export { TableWorkspace } from './TableWorkspace'
 
+/* ============================================================
+   3. THE CATALOGUE — the front door of a table, and the seam a
+      MODULE mounts as its Stock tab.
+
+   `TableWorkspace` mounts this; the register is its `List`
+   density. A module wants it directly, without the workspace's
+   tab strip:
+
+       import { Catalogue } from '@/features/table'
+
+       <Catalogue
+         entityId={table.id}
+         colWidths={widths}            // yours, so they outlive a tab
+         onResizeColumn={setWidth}
+         pushToast={toast}
+         heading={false}               // your header already names it
+         doors={[...]}                 // published on the action bar
+         onOpenRow={(rowId) => …}      // default: go to it in the register
+       />
+
+   IT FILLS THE BOX IT IS PUT IN and scrolls inside it; give it a
+   parent with a height and nothing else. `colWidths` /
+   `onResizeColumn` / `pushToast` are the register's own three
+   housekeeping props and are passed straight through — hold them
+   above the Catalogue so a person moving between two tables and
+   back finds their columns the width they left them.
+
+   WHAT IT WILL NOT DO WITHOUT BEING ASKED: it does not route, it
+   does not open a quote, and it does not know what a module is.
+   `onOpenRow` is the whole of its outward wiring.
+   ============================================================ */
+export { Catalogue } from './Catalogue'
+export type { CatalogueProps } from './Catalogue'
+export {
+  LENS_LABEL,
+  forgetCatalogueLens,
+  lensOf,
+  setCatalogueLens,
+  useCatalogueLens,
+} from './catalogueLens'
+export type { CatalogueLens } from './catalogueLens'
+
+/* THE RAIL A TABLE CAN HONESTLY OFFER, read off its own columns —
+   pure, and measured against the whole seed in `facets.test.ts`.
+   Exported because a module's Stock tab may want to say how a
+   table can be browsed before it draws it. */
+export { readFacets, bandWords, CHIPS_SHOWN } from './facets'
+export type { Facet, ValuesFacet, BandFacet, EnvelopeFacet, FacetValue } from './facets'
+
 export { EntityTableNode, tableNodeTypes } from './EntityTableNode'
 export {
   ENTITY_TABLE_NODE_TYPE,

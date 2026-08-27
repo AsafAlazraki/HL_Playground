@@ -214,9 +214,27 @@ export interface ProvenanceProps {
   /** the words over it. "Read out of" by default; the left-out list
    *  and the registration band each name their own subject. */
   label?: string
+  /** WHERE THE ADJUDICATOR'S NARRATIVE GOES, and it is the one part
+   *  of a citation that is prose rather than reference.
+   *
+   *  A citation is the FILE and the CELL — "Boat Module (5).xlsx",
+   *  "Trailer Module!A" — and those are never moved: they are how a
+   *  person checks the claim, which is the whole argument for drawing
+   *  provenance at all. The `said` pieces beside them are the
+   *  adjudicator's paragraph ABOUT the evidence, and on the ledger
+   *  that paragraph is printed sixteen times down one column. Passing
+   *  `narrative="omit"` leaves it to the caller to draw where it
+   *  belongs — on the ledger, inside the card's own Why disclosure,
+   *  beside the reason it qualifies. Nothing is dropped: `readSource`
+   *  is exported and the caller reads the same pieces. */
+  narrative?: 'draw' | 'omit'
 }
 
-export function Provenance({ text, label = 'Read out of' }: ProvenanceProps): ReactElement {
+export function Provenance({
+  text,
+  label = 'Read out of',
+  narrative = 'draw',
+}: ProvenanceProps): ReactElement {
   const { verdict, parts } = readSource(text)
 
   /* NOT A CITATION, OR NOT ONE THIS CAN READ. Print it whole, in the
@@ -227,7 +245,7 @@ export function Provenance({ text, label = 'Read out of' }: ProvenanceProps): Re
 
   const cells = parts.filter((p) => p.k === 'cell')
   const files = parts.filter((p) => p.k === 'file')
-  const said = parts.filter((p) => p.k === 'said')
+  const said = narrative === 'omit' ? [] : parts.filter((p) => p.k === 'said')
   const working = parts.filter((p) => p.k === 'working')
 
   return (

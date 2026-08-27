@@ -248,9 +248,14 @@ export function DiscoveryPanel({ showActions = true }: DiscoveryPanelProps = {})
                 <span className="dx-sec-count">{n(kept.length)}</span>
               </h4>
               {/* said once, above, for every section on this panel */}
+              {/* A KEPT PATTERN IS A WARNING, AND NOW IT LOOKS LIKE ONE.
+                  The line above this section states the ceiling on all
+                  of it — these may warn, none may remove — and every one
+                  of them was drawn in the same grey as a dismissed one.
+                  `.s-warned` is a --warning rail, from ds.css. */}
               <ul className="dx-kept">
                 {kept.map((k) => (
-                  <li key={k.id} className="dx-kept-row">
+                  <li key={k.id} className="dx-kept-row s-warned">
                     <p className="dx-kept-says">{k.statement}</p>
                     <p className="dx-kept-fig">
                       <b className="dx-kept-n">
@@ -341,10 +346,12 @@ export function DiscoveryPanel({ showActions = true }: DiscoveryPanelProps = {})
                 Dismissed by you
                 <span className="dx-sec-count">{n(dismissed.length)}</span>
               </button>
+              {/* dismissed: still measured, still counted, offered to
+                  nothing — `.s-held`, the fourth of the four */}
               {showDismissed && (
                 <ul className="dx-kept">
                   {dismissed.map((k) => (
-                    <li key={k.id} className="dx-kept-row">
+                    <li key={k.id} className="dx-kept-row s-held">
                       <p className="dx-kept-says">{k.statement}</p>
                       <p className="dx-kept-fig">
                         <b className="dx-kept-n">

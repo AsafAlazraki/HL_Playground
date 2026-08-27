@@ -202,11 +202,24 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
     return placeable.length
   }, [modules, entities])
 
+  /* THE MODULES IN THE ORDER THEY ARE DRAWN IN — which is what
+     `reorderPlan` works against, and which is NOT the order of the
+     grid: a filter shows five of twenty-six cards and the first one
+     visible is not necessarily the first module. An "earlier" refused
+     on the wrong card, or offered on a card that cannot move, is a
+     control that lies about what it will do. */
+  const order = useMemo(
+    () =>
+      Object.values(modules).sort(
+        (a, b) => a.order - b.order || a.name.localeCompare(b.name),
+      ),
+    [modules],
+  )
+  const firstModule = order[0]?.id
+  const lastModule = order[order.length - 1]?.id
+
   const move = (id: string, dir: -1 | 1): void => {
-    const cards = Object.values(modules).sort(
-      (a, b) => a.order - b.order || a.name.localeCompare(b.name),
-    )
-    for (const at of reorderPlan(cards, id, dir)) updateModule(at.id, { order: at.order })
+    for (const at of reorderPlan(order, id, dir)) updateModule(at.id, { order: at.order })
   }
 
   const moduleCount = Object.keys(modules).length
@@ -329,7 +342,8 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                 cover={seat.cover}
                 onOpen={onOpen}
                 ordering={ordering}
-                first={i === 0}
+                first={seat.place.moduleId === firstModule}
+                last={seat.place.moduleId === lastModule}
                 onMove={move}
                 index={i}
               />
@@ -386,9 +400,12 @@ interface PlaceCardProps {
   cover: CoverPhoto | null
   onOpen: (moduleId: string, tableId?: string) => void
   ordering: boolean
-  /** first card in the grid — the end of the list, where one of the
-   *  two moves is refused */
+  /** the ends of the module ORDER, where one of the two moves is
+   *  refused. Not the ends of the grid: a filter can show any five of
+   *  twenty-six cards, and a control refused because of where a card
+   *  happens to sit under a filter would be refusing the wrong thing. */
   first: boolean
+  last: boolean
   onMove: (moduleId: string, dir: -1 | 1) => void
   index: number
 }
@@ -401,6 +418,7 @@ function PlaceCard({
   onOpen,
   ordering,
   first,
+  last,
   onMove,
   index,
 }: PlaceCardProps): ReactElement {
@@ -517,8 +535,11 @@ function PlaceCard({
             type="button"
             className="md-place-move"
             aria-label={`Move ${place.moduleName} later`}
-            title={`Move ${place.moduleName} later`}
-            onClick={() => onMove(place.moduleId, 1)}
+            title={last ? `${place.moduleName} is already last` : `Move ${place.moduleName} later`}
+            aria-disabled={last || undefined}
+            onClick={() => {
+              if (!last) onMove(place.moduleId, 1)
+            }}
           >
             <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
           </button>

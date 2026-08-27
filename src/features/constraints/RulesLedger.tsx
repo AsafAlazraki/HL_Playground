@@ -55,7 +55,7 @@
    out of the store on render.
    ============================================================ */
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import { ArrowSquareOut, CheckCircle, Circle } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
@@ -71,7 +71,7 @@ import {
   type RuleState,
 } from './ruleLedger'
 import { WORKBOOK_RULES, type WorkbookRuleRef, type WorkbookRuleSeed } from './workbookRules'
-import { Provenance } from './Provenance'
+import { Provenance, readSource, withFigures } from './Provenance'
 
 /** One sentence, measured off the loaded sheet on render, for a rule
  *  this app is actually running. Keyed by the adjudication's reference
@@ -139,13 +139,28 @@ export function RulesLedger({ liveIds, live }: RulesLedgerProps): ReactElement |
   return (
     <section className="cn-ledger" aria-label="What this price file asserts">
       {grouped.rows.map(({ group, seeds }) => (
-        <section key={group.id} className="cn-grp" aria-label={group.name}>
-          <header className="cn-grp-head">
-            <span
-              className="cn-grp-dot"
-              aria-hidden="true"
-              style={{ '--cn-grp-accent': accents.get(group.id) ?? 'var(--hairline-strong)' } as CSSProperties}
-            />
+        /* THE GROUP HOST CARRIES THE KIND, and everything inside it
+           reads `--kind` rather than being handed a colour. A group
+           names a TableKind and the hue is read off a live table of
+           that kind in the loaded project, so trailer rules are the
+           same ochre as the trailer tables on Home — which is the
+           discipline that keeps this identity rather than decoration:
+           a hue only ever appears on something that HAS that kind. */
+        <section
+          key={group.id}
+          className="cn-grp"
+          aria-label={group.name}
+          style={{ '--kind': accents.get(group.id) ?? 'var(--kind-slate)' } as CSSProperties}
+        >
+          {/* A TINTED BAND HEAD, WHICH IS WHAT DESIGN_PRINCIPLES §1 NOW
+              ALLOWS: "a kind hue may carry a SURFACE — a tinted band
+              head, a card rail at full height". It was a 7px dot on
+              white, which is the demotion PHASE_TWO §1b calls going
+              backwards. The name and the count are ink on the tint, not
+              hue, and the tint is 10 % — under the point at which any
+              ink on it moves by a contrast point. */}
+          <header className="cn-grp-head k-band">
+            <span className="k-dot" aria-hidden="true" />
             <h3 className="cn-grp-name">{group.name}</h3>
             <span className="cn-grp-count">
               {seeds.length} {seeds.length === 1 ? 'rule' : 'rules'}
@@ -170,8 +185,10 @@ export function RulesLedger({ liveIds, live }: RulesLedgerProps): ReactElement |
 
       {grouped.unfiled.length > 0 && (
         <section className="cn-grp" aria-label="Not yet filed">
-          <header className="cn-grp-head">
-            <span className="cn-grp-dot" aria-hidden="true" />
+          {/* no kind, so no hue — the host does not set `--kind` and the
+              band falls back to the neutral ds.css parks there */}
+          <header className="cn-grp-head k-band">
+            <span className="k-dot" aria-hidden="true" />
             <h3 className="cn-grp-name">Not yet filed</h3>
             <span className="cn-grp-count">{grouped.unfiled.length}</span>
           </header>
@@ -212,11 +229,21 @@ function RuleRow({
   live?: LiveReading
 }): ReactElement {
   const measure = entry?.measure
+  /* THE REASONING, SHUT BY DEFAULT. See the note at the disclosure. */
+  const [why, setWhy] = useState(false)
+  /* the `said` pieces of the citation — read from the seed's own
+     string, so this and the citation below can never disagree */
+  const narrative = readSource(seed.source)
+    .parts.filter((p) => p.k === 'said')
+    .map((p) => p.text)
 
   return (
     <li
       className={`cn-rl is-${state}`}
-      style={{ '--cn-rl-accent': accent } as CSSProperties}
+      /* the FULL-HEIGHT rail in the kind's hue — `k-rail` is 3px by
+         the system's own definition, and `--cn-rl-accent` is kept as
+         the name the stylesheet already knows it by */
+      style={{ '--cn-rl-accent': accent, '--kind': accent } as CSSProperties}
     >
       <div className="cn-rl-top">
         {measure ? (
@@ -271,11 +298,42 @@ function RuleRow({
           of the catalogue standing; FITMENT_RULES.md calls quoting the
           first without the second "the A2 failure … it does not get
           made twice", and a closed detail quotes neither. */}
-      <details className="cn-rl-why-more">
-        <summary className="cn-rl-why-sum">Why</summary>
-        <p className="cn-rl-because">Because {seed.because}.</p>
-        {entry ? <p className="cn-rl-caveat">{entry.caveat}</p> : null}
-      </details>
+      <div className="cn-rl-why-more">
+        {/* NOT A `details`. It was one, and this browser's closed
+            `::details-content` still reported a box — measured: the
+            `because` paragraph had a 19.5px client rect with `open`
+            false, so every word of it was still on screen to anything
+            reading the layout, and to a person if the UA ever changed
+            its mind. State and a conditional render is the version
+            that is actually shut, and it is the version that can carry
+            hover, press and focus. */}
+        <button
+          type="button"
+          className="cn-rl-why-sum"
+          aria-expanded={why}
+          onPointerDown={() => setWhy((v) => !v)}
+        >
+          Why
+        </button>
+        {why ? (
+          <>
+            <p className="cn-rl-because">Because {seed.because}.</p>
+            {entry ? <p className="cn-rl-caveat">{entry.caveat}</p> : null}
+            {/* THE ADJUDICATOR'S NARRATIVE, drawn here rather than in
+                the citation below. The citation itself — the file and
+                the cell addresses — is never moved; this is the
+                paragraph about the evidence, and sixteen of them
+                stacked down one column is the app talking about its
+                own workings. Same words, same source, read by
+                `readSource` from the same string. */}
+            {narrative.map((t, i) => (
+              <p key={`n${i}`} className="cn-rl-caveat">
+                {withFigures(t)}
+              </p>
+            ))}
+          </>
+        ) : null}
+      </div>
 
       {/* WHAT IT FOUND ON THIS SHEET, walked on render. A figure that
           moves with the data cannot go stale, and it is the argument
@@ -302,7 +360,7 @@ function RuleRow({
           the business asked for it; this line is how you check. Mono
           because it is a reference, and it wraps rather than truncating
           — a half-printed cell address cannot be looked up. */}
-      <Provenance text={seed.source} />
+      <Provenance text={seed.source} narrative="omit" />
     </li>
   )
 }

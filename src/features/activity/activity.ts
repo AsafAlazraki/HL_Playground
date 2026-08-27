@@ -1,0 +1,182 @@
+/* ============================================================
+   WHAT HAPPENED, AND WHO DID IT.
+
+   THE GAP. Nothing in this application recorded a change. A rule
+   was written, a column removed, 199 rows re-priced at a level, a
+   quote issued — each raised a toast that lived for four seconds
+   and then no trace of it existed anywhere. On a shared
+   dealership machine with roles and access control, "who changed
+   the Highfield prices on Tuesday" had no answer at all.
+
+   THE SEAM THAT MAKES IT CHEAP. Every undoable act in this app
+   ALREADY announces itself: `store/notes.ts` is a bus, 27 files
+   call `say` / `sayUndoable` / `offerUndo`, and `UndoKeys` at the
+   root draws whatever comes through. The app has been telling
+   itself what happened the whole time and nobody was writing it
+   down.
+
+   So this is a LISTENER, not a new instrumentation pass. It adds
+   no call sites, cannot miss an act that raises a toast, and
+   cannot invent one that does not.
+
+   WHAT IT DOES NOT DO, deliberately:
+
+     - It does not replace undo. `notes.ts` already explains why a
+       global undo stack is dishonest a second after the act; this
+       records that a thing happened, not how to reverse it.
+     - It does not record READS. Opening a table is not a change,
+       and a log that fills with navigation hides the four entries
+       that matter.
+     - It does not invent an actor. The entry carries whoever was
+       signed in when it was written, or nobody — never a guess.
+
+   SCOPE. Per organisation, because a configuration belongs to a
+   business; the signed-in person is recorded ON the entry rather
+   than being the key, so a log survives somebody signing out and
+   a colleague signing in — which is the case the log exists for.
+   ============================================================ */
+
+import { useCallback, useSyncExternalStore } from 'react'
+import { onSaid, type Note } from '@/store/notes'
+import { currentUser } from '@/features/auth'
+
+export interface Entry {
+  id: string
+  /** epoch ms. Stored as a number so a sort never parses a string. */
+  at: number
+  /** exactly what the app said at the time — never re-worded later,
+   *  because a log that improves its own prose is not a log. */
+  text: string
+  /** who was signed in. Undefined is honest; "System" is not. */
+  who?: string
+  whoId?: string
+  /** the module this happened in, where the act named one */
+  moduleId?: string
+  /** the table this happened to, where the act named one */
+  entityId?: string
+  tone?: Note['tone']
+}
+
+/** How many are kept. An activity log is a recent history, not an
+ *  archive: 400 entries is roughly a fortnight of heavy use, and
+ *  an unbounded list in localStorage eventually refuses to write. */
+const KEEP = 400
+const key = (orgSlug: string): string => `hl.activity.v1:${orgSlug}`
+
+let cache: { slug: string; rows: Entry[] } | null = null
+const listeners = new Set<() => void>()
+
+function read(slug: string): Entry[] {
+  if (cache && cache.slug === slug) return cache.rows
+  let rows: Entry[] = []
+  try {
+    const raw = globalThis.localStorage?.getItem(key(slug))
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw)
+      if (Array.isArray(parsed)) rows = parsed as Entry[]
+    }
+  } catch {
+    /* a browser refusing storage still gets a working session log */
+  }
+  cache = { slug, rows }
+  return rows
+}
+
+function write(slug: string, rows: Entry[]): void {
+  cache = { slug, rows }
+  try {
+    globalThis.localStorage?.setItem(key(slug), JSON.stringify(rows))
+  } catch {
+    /* the in-memory copy stands for this session */
+  }
+  for (const l of listeners) l()
+}
+
+export function activityOf(orgSlug: string): Entry[] {
+  return read(orgSlug)
+}
+
+/** Record one act. Called by the recorder below, and by a caller
+ *  that knows something the note text cannot carry — which module
+ *  or table it happened to. */
+export function record(
+  orgSlug: string,
+  entry: Omit<Entry, 'id' | 'at' | 'who' | 'whoId'> & { at?: number },
+): void {
+  const user = currentUser()
+  const row: Entry = {
+    id: `a${Date.now().toString(36)}${Math.floor(performance.now() * 1000) % 46656}`,
+    at: entry.at ?? Date.now(),
+    text: entry.text,
+    ...(user ? { who: user.name, whoId: user.id } : {}),
+    ...(entry.moduleId ? { moduleId: entry.moduleId } : {}),
+    ...(entry.entityId ? { entityId: entry.entityId } : {}),
+    ...(entry.tone ? { tone: entry.tone } : {}),
+  }
+  write(orgSlug, [row, ...read(orgSlug)].slice(0, KEEP))
+}
+
+export function clearActivity(orgSlug: string): void {
+  write(orgSlug, [])
+}
+
+/* ------------------------------------------------------------
+   THE RECORDER. Mounted once, at the root, beside the toast host.
+
+   `notes.ts` hands every note to every listener, so this simply
+   listens. The one judgement it makes is what NOT to keep: a note
+   with no act and fewer than three words is a status blip ("Saved",
+   "Copied") rather than a change, and forty of those bury the one
+   entry somebody is looking for.
+   ------------------------------------------------------------ */
+export function startRecording(orgSlug: string): () => void {
+  return onSaid((note) => {
+    const words = note.text.trim().split(/\s+/).length
+    if (!note.act && words < 3) return
+    record(orgSlug, { text: note.text, ...(note.tone ? { tone: note.tone } : {}) })
+  })
+}
+
+/* ------------------------------------------------------------
+   READING IT
+   ------------------------------------------------------------ */
+function subscribe(l: () => void): () => void {
+  listeners.add(l)
+  return () => {
+    listeners.delete(l)
+  }
+}
+
+export function useActivity(orgSlug: string, limit?: number): Entry[] {
+  const snap = useCallback(() => read(orgSlug), [orgSlug])
+  const rows = useSyncExternalStore(subscribe, snap, snap)
+  return limit ? rows.slice(0, limit) : rows
+}
+
+/** Just this module's, for a module dashboard. */
+export function useModuleActivity(
+  orgSlug: string,
+  moduleId: string,
+  limit?: number,
+): Entry[] {
+  const rows = useActivity(orgSlug)
+  const mine = rows.filter((r) => r.moduleId === moduleId)
+  return limit ? mine.slice(0, limit) : mine
+}
+
+/** "4 minutes ago", "Tuesday", "12 Mar" — the shortest true form.
+ *  Takes `now` so a test is not at the mercy of the clock. */
+export function whenSay(at: number, now = Date.now()): string {
+  const s = Math.max(0, Math.floor((now - at) / 1000))
+  if (s < 45) return 'just now'
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m} minute${m === 1 ? '' : 's'} ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`
+  const d = new Date(at)
+  const days = Math.floor(h / 24)
+  if (days < 7) {
+    return d.toLocaleDateString(undefined, { weekday: 'long' })
+  }
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+}

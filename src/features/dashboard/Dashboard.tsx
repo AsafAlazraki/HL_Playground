@@ -16,6 +16,13 @@
    second person signing into the same browser gets their own
    dashboard rather than inheriting somebody else's.
 
+   AND IT FITS THE VIEWPORT. Three cards, not five, and they are
+   sized to the room the page has rather than stacked into a
+   scroller — an overview you have to scroll is a list. The three
+   quote boxes that used to sit across the top are one card with
+   the states as filters inside it, opening on DRAFTS, because a
+   resumable draft is the most valuable thing on this screen.
+
    THE FOUR RULES THIS SCREEN IS BUILT AGAINST:
 
      · NOTHING IS INVENTED. Every figure is counted at paint from
@@ -269,16 +276,36 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
           changes because it is there. */}
       <div className="dsh-sky ds-aurora" aria-hidden="true" />
 
-      <div className="dsh-in">
+      {/* THE RESTING DASHBOARD DOES NOT SCROLL, AND ARRANGE MODE
+          DOES. An overview you have to scroll is a list (PHASE_TWO
+          §1c), so the cards size to the space instead of stacking
+          past the bottom of it — measured before this pass, the
+          page overflowed by 51px at 1440x900, 469px at 1280x800 and
+          799px at 1024x768.
+
+          Arrange mode is the one exception and it is a mode, not
+          the screen: it adds a tray of every card and link this
+          build has, and squeezing that into a fixed box would give
+          a person a 40px-tall list to pick from. It is entered
+          deliberately, it is left the same way, and nothing is
+          measured in it. */}
+      <div className={`dsh-in${arranging ? ' is-arranging' : ''}`}>
         <header className="dsh-head ds-rise">
           <div className="dsh-head-say">
             <p className="ds-label dsh-stamp">{stamp}</p>
-            <h1 className="ds-display-lg dsh-hail">
+            {/* THE ONE BIG THING ON THIS SCREEN. Nothing on the
+                dashboard exceeded 34px across seven sizes, which is
+                the absence of a hierarchy rather than one. Its step
+                is declared in dashboard.css — size, weight, leading
+                and tracking together (§2 rule 6) — and its floor is
+                38px, well clear of the 26px below which Archivo may
+                not be set. The person's title and the org name were
+                under it and are gone: the rail already carries both,
+                and a line that repeats what is 200px to its left is
+                a line spent on nothing. */}
+            <h1 className="dsh-hail">
               {greeting(now)}, {firstName(user.name)}
             </h1>
-            <p className="dsh-who ds-small">
-              {user.title} · {user.orgName}
-            </p>
           </div>
 
           <div className="dsh-head-acts">
@@ -308,16 +335,20 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
           </div>
         </header>
 
-        {/* SAID ONCE, AND THEN NEVER AGAIN. `touched` is false only
-            until the person changes something; a permanent hint is
-            a permanent apology. */}
-        {!arrangement.touched && !arranging ? (
-          <p className="dsh-hint ds-small">
-            This is the dashboard everybody starts with. Press Arrange to choose
-            what is on it, what it is called and what order it goes in.
-          </p>
-        ) : null}
+        {/* THE PARAGRAPH THAT WAS HERE IS GONE, AND THIS COMMENT IS
+            ITS ENTIRE REPLACEMENT.
 
+            "This is the dashboard everybody starts with. Press
+            Arrange to choose what is on it, what it is called and
+            what order it goes in." — twenty-four words, on the
+            screen a person sees most often, explaining a button
+            eighteen pixels away that says Arrange. Measured at
+            1600x1000 it was 24 of the 246 visible words on this
+            surface and the single largest run of prose on it.
+
+            The button is the explanation. If Arrange is not
+            self-evident the fix is a better button, not a paragraph
+            defending it. */}
         <QuickLinks
           links={resolved.live}
           stranded={resolved.stranded}

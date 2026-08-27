@@ -813,6 +813,16 @@
   color: var(--fg);
 }
 
+/* the one line an empty state gets under its sentence — on the
+   customer page it is the act, and on the diary it was a 36-word
+   gloss on the heading, which the prose cull took out. */
+.hy-none-say {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
 .hy-none-count {
   margin: var(--s-4) 0 0;
   font-size: var(--t-body-size);

@@ -1885,12 +1885,26 @@
    same control one keystroke apart, and a name that changes size
    when you click it is a name that looks like it moved.
    ============================================================ */
+/* SOMETHING ON THIS STAGE IS BIG, AND IT IS THE TABLE'S OWN NAME.
+   Measured across this surface, the largest type on it was 15px:
+   the name at the title step, the columns beneath it, and the doors
+   all within two steps of each other, which is the flatness
+   PHASE_TWO §1a counted on the dashboard and called "the absence of
+   a hierarchy, not one". `--t-display-lg` clamps 26→34px — the step
+   under hero, because this is an editor rather than an overview and
+   the rows below it are the work.
+
+   THE INPUT TAKES IT TOO, which is the point of the pair: the view
+   and the edit are the same control one keystroke apart, and a name
+   that changes size when you click it is a name that looks like it
+   moved. Inter on both, not Archivo — this is a value the dealer
+   typed, and the display face is for headlines. */
 .ds-name-view,
 .ds-name-input {
-  font-size: var(--t-title-size);
-  font-weight: var(--t-title-weight);
-  line-height: var(--t-title-lead);
-  letter-spacing: var(--t-title-track);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
 }
 
 /* ============================================================

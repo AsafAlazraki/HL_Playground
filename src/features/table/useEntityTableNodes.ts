@@ -31,6 +31,7 @@ import { foldedTableIds, forgetGroupState } from './tableGroupState'
 import { foldedSectionTableIds, forgetSectionState } from './tableSectionState'
 import { fittedTableIds, forgetFitState } from './tableFitState'
 import { forgetReadState, readTableIds } from './tableReadState'
+import { forgetCatalogueLens, lensTableIds } from './catalogueLens'
 
 /** React Flow node type key. One key, one component. */
 export const ENTITY_TABLE_NODE_TYPE = 'entity-table'
@@ -159,6 +160,12 @@ export function useEntityTableNodes(): EntityTableFlowNode[] {
        table must never inherit a stale key's way of being read. */
     for (const id of readTableIds()) {
       if (!entities[id]) forgetReadState(id)
+    }
+    /* and which DENSITY it was being read at — the catalogue or the
+       register. Fifth of a kind, same rule: a struck table takes
+       every way of looking at it with it. */
+    for (const id of lensTableIds()) {
+      if (!entities[id]) forgetCatalogueLens(id)
     }
   }, [entities])
 

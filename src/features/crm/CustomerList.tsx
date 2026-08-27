@@ -49,12 +49,7 @@ import { MagnifyingGlass, Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { localDay, useQuotes } from '@/features/quote'
-import {
-  customerRegister,
-  liveTableCount,
-  matchCustomers,
-  readCustomers,
-} from './customers'
+import { customerRegister, matchCustomers, readCustomers } from './customers'
 import { addCustomer, ensureCustomerRegister } from './register'
 import './crm.css'
 
@@ -88,9 +83,6 @@ function Fig({ n, of }: { n: number; of: string }): ReactElement {
 export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
-  /* THE SAME NUMBER HOME SAYS — see `liveTableCount`, which carries
-     the reason and the test. */
-  const tableCount = useMemo(() => liveTableCount(entities), [entities])
   const quotes = useQuotes()
   const [find, setFind] = useState('')
 
@@ -151,15 +143,11 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
               So the second quote to somebody starts from what you know.
             </p>
 
-            {/* WHAT IS TRUE RIGHT NOW, COUNTED. Zero is an honest
-                figure and it is printed as one; the two beside it are
-                what makes the zero mean something. */}
-            <dl className="cx-tally">
-              <Fig n={tableCount} of={tableCount === 1 ? 'table' : 'tables'} />
-              <Fig n={quotes.length} of={quotes.length === 1 ? 'quote' : 'quotes'} />
-              <Fig n={0} of="customers" />
-            </dl>
-
+            {/* THE COUNTED STRIP GOES — PHASE_TWO §1, "a count belongs on
+                the thing it counts". Three big figures on an empty
+                state, one of them a count of TABLES, is the schema
+                announcing itself on the one screen whose whole job is a
+                sentence and a button. */}
             <button
               type="button"
               className="cx-act cx-act--primary"
@@ -238,15 +226,6 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
             <span className="cx-empty-eyebrow">Nobody in it yet</span>
             <h2 className="cx-empty-title">The register is here and waiting.</h2>
             <p className="cx-empty-say">Add somebody, or file them from a quote.</p>
-
-            <dl className="cx-tally">
-              <Fig n={quotes.length} of={quotes.length === 1 ? 'quote' : 'quotes'} />
-              <Fig n={0} of="customers" />
-              <Fig
-                n={table.fields.length}
-                of={table.fields.length === 1 ? 'column' : 'columns'}
-              />
-            </dl>
 
             <button
               type="button"

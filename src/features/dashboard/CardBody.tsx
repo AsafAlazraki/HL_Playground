@@ -1,5 +1,5 @@
 /* ============================================================
-   THE SEVEN CARDS.
+   THE SIX CARDS, AND ONE OF THEM USED TO BE THREE.
 
    EVERY FIGURE ON THIS PAGE IS COUNTED HERE AND NOW. The
    arithmetic is in `cards.ts` so it can be tested; this file is
@@ -29,8 +29,9 @@
         decimal because of it.
 
    ONE ACCENT, AND IT IS NOT SPENT HERE. §1 asks for roughly four
-   appearances a screen, and a page of five cards each with an
-   accent figure on it is five before anything else is counted.
+   appearances a screen, and a page of cards each with an accent
+   figure on it is that budget spent before anything else is
+   counted.
    So the cards are ink and surface only: the large figure leads
    by SIZE, not by colour. The accent on this screen is the one
    primary fast action, the focus ring, and hover.
@@ -41,7 +42,7 @@
    mark in the kind's own hue: a glyph, which is exactly what §1
    allows a second hue to be, beside a rail and a dot. It is
    never a tint behind a name, and never on a card's chrome — a
-   dashboard of seven differently-tinted cards is still the theme
+   dashboard of differently-tinted cards is still the theme
    §1 forbids, and that is not what this is. What it is, is the
    same fact the rail and the sheet already draw, drawn the same
    way: `EntityDef.kind` is what the dealer said the table holds.
@@ -54,12 +55,11 @@
    both themes — against a 3:1 floor for a graphical object.
    ============================================================ */
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { JSX, ReactNode } from 'react'
 import {
   ClockCounterClockwise,
   FileText,
-  Files,
   Scales,
   SealWarning,
   SquaresFour,
@@ -67,7 +67,8 @@ import {
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { useQuotes, quoteTotals, localDay } from '@/features/quote'
+import { useQuotes, quoteTotals } from '@/features/quote'
+import type { QuoteDef } from '@/features/quote'
 import { useLintFindings } from '@/features/review'
 /* BY DIRECT PATH, and for the reason the store's own imports
    give: `@/features/constraints` is the feature's barrel and
@@ -87,29 +88,34 @@ import { ICON_SIZE, weightFor } from '@/lib/icons'
 import type { CardId } from './arrangement'
 import {
   CARDS,
+  LENS_NAME,
+  LENS_NONE,
+  QUOTE_LENSES,
   biggestTables,
+  byCustomer,
+  countLenses,
   fileTally,
   moduleRows,
   plural,
+  quotesUnder,
   resolveRecent,
   rollFindings,
-  rollQuotes,
   rollRules,
 } from './cards'
+import type { QuoteLens } from './cards'
 import type { DashboardActs } from './acts'
 import { useRecentPicks } from './useRecentPicks'
 
 const MARK = ICON_SIZE.small
 const MARK_WEIGHT = weightFor(MARK)
 
-/** The mark on each card's header. One size, one weight, so seven
+/** The mark on each card's header. One size, one weight, so all
  *  of them read as one set — the rail's own discipline. */
 export const CARD_ICON: Record<CardId, Icon> = {
   'my-quotes': FileText,
-  'quotes-by-state': Files,
-  'recently-opened': ClockCounterClockwise,
   'my-modules': SquaresFour,
   'the-price-file': Table,
+  'recently-opened': ClockCounterClockwise,
   'data-quality': SealWarning,
   'rules-warning': Scales,
 }
@@ -178,7 +184,23 @@ function Figure({
 }
 
 /** A row in a card's list. It DARKENS on press rather than
- *  scaling (§4) so its neighbours do not look like they moved. */
+ *  scaling (§4) so its neighbours do not look like they moved.
+ *
+ *  AND WHEN IT HAS A KIND, THE KIND CARRIES A SURFACE. `data-kind`
+ *  is set on the ROW, not on the mark, which is what lets `--kind`
+ *  resolve for both the full-height rail (`.k-rail`, ds.css) and
+ *  the glyph inside it. That is the amendment §1 now carries: a
+ *  hue may carry a rail, and it only ever appears on something
+ *  that HAS that kind. Two things of one kind are one colour
+ *  everywhere in the app.
+ *
+ *  THE FIGURE IN THE TAIL IS NEVER THE HUE. A price is not
+ *  decorative, so `tail` stays ink and mono however loud the rail
+ *  beside it is.
+ *
+ *  THE HUE IS NEVER THE ONLY CARRIER either: the glyph is a
+ *  different SHAPE per kind, so the row reads the same to
+ *  somebody who cannot separate indigo from amber. */
 function Row({
   title,
   under,
@@ -190,11 +212,7 @@ function Row({
   title: string
   under?: ReactNode
   tail?: ReactNode
-  /** WHAT THIS ROW IS, WHEN THE ROW IS A TABLE OR A PLACE MADE OF
-   *  ONE. Drawn as the kind's own mark in the kind's own hue —
-   *  which is the whole of what §1 allows a second hue to be: a
-   *  rail, a dot or a glyph, never a fill behind text. It is not
-   *  decoration either: `EntityDef.kind` is a fact the dealer set,
+  /** WHAT THIS ROW IS. `EntityDef.kind` is a fact the dealer set,
    *  and it is why "Rigging Kits" and "Highfield Inflatables" stop
    *  reading as two lines of the same thing. */
   kind?: TableKind
@@ -202,9 +220,15 @@ function Row({
   onPick: () => void
 }): JSX.Element {
   return (
-    <button type="button" className="dsh-row" onClick={onPick} aria-label={label}>
+    <button
+      type="button"
+      className={`dsh-row${kind ? ' k-rail' : ''}`}
+      data-kind={kind}
+      onClick={onPick}
+      aria-label={label}
+    >
       {kind ? (
-        <span className="dsh-row-mark" data-kind={kind} aria-hidden="true">
+        <span className="dsh-row-mark" aria-hidden="true">
           <TableKindSymbol kind={kind} size={ICON_SIZE.small} />
         </span>
       ) : null}
@@ -227,125 +251,148 @@ function More({ say, onPick }: { say: string; onPick: () => void }): JSX.Element
 }
 
 /* ---------------------------------------------------------- */
-/* My quotes                                                  */
+/* Quotes — ONE card, with the states as filters inside it    */
 /* ---------------------------------------------------------- */
 
-const QUOTE_ROWS = 5
+/* WHY THIS IS ONE CARD AND WAS THREE.
 
-function MyQuotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element {
+   "My quotes", "Quotes by state" and "Where I have been" were
+   three boxes across the top of the front door. Two of them were
+   a heading over a number, and the number was a count of the
+   list the third one drew — so the screen asked one question
+   three times and answered it best in the box with the least
+   room.
+
+   The states are FILTERS now, inside the card that lists them,
+   which means the chip and the rows under it are computed from
+   one array by one predicate (`lensHolds`, cards.ts) and cannot
+   disagree. It opens on DRAFTS, because a resumable draft is the
+   most valuable thing on this screen and it was four levels down.
+
+   NOTHING IS INVENTED HERE EITHER. Every chip's figure is a
+   count of quotes that exist; "By customer" gathers the same
+   rows under the name FROZEN on each document and resolves
+   nothing through the register. */
+
+const QUOTE_ROWS = 8
+
+function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element {
   const quotes = useQuotes()
-  const roll = useMemo(() => rollQuotes(quotes, me), [quotes, me])
+  const entities = useProjectStore((s) => s.entities)
+  /* NULL UNTIL THE PERSON PICKS ONE, so the card can open on
+     drafts and still fall back to All the day there are none —
+     without overwriting a choice they made. A `useState('drafts')`
+     would strand somebody on an empty filter the moment their
+     last draft was issued. */
+  const [picked, setPicked] = useState<QuoteLens | null>(null)
+  const [grouped, setGrouped] = useState(false)
 
-  if (roll.mine.length === 0) {
-    /* THE HONEST MIDDLE CASE. There are quotes and none is
-       yours: saying "you have not prepared a quote yet" is true,
-       but drawing it alone would read as "nothing has happened
-       here", which is false. So it says both. */
+  const counts = useMemo(() => countLenses(quotes, me), [quotes, me])
+  const lens: QuoteLens = picked ?? (counts.drafts > 0 ? 'drafts' : 'all')
+  const list = useMemo(() => quotesUnder(quotes, lens, me), [quotes, lens, me])
+  const bands = useMemo(
+    () => (grouped ? byCustomer(list.slice(0, QUOTE_ROWS)) : []),
+    [grouped, list],
+  )
+
+  if (quotes.length === 0) {
+    return <Nothing say={CARDS['my-quotes'].empty} act="New quote" onAct={acts.onNewQuote} />
+  }
+
+  /* THE SUBJECT'S OWN KIND. A quote is raised FROM a row on a
+     table, and that table's kind is what the rig is — so the same
+     hue marks the same boat here, in the modules card and on the
+     sheet. A quote whose root table has since been struck gets no
+     mark rather than a grey one: an absent fact is drawn absent. */
+  const kindFor = (q: QuoteDef): TableKind | undefined => {
+    const entity = entities[q.rootTableId]
+    return entity ? kindOf(entity.kind) : undefined
+  }
+
+  const line = (q: QuoteDef): JSX.Element => {
+    const totals = quoteTotals(q)
+    const customer = q.customer.name.trim()
     return (
-      <Nothing
-        say={
-          roll.othersOnly
-            ? `${CARDS['my-quotes'].empty} ${plural(roll.total, 'quote', 'quotes')} here were prepared by somebody else.`
-            : CARDS['my-quotes'].empty
+      <Row
+        key={q.id}
+        kind={kindFor(q)}
+        title={q.subjectLabel}
+        under={
+          <>
+            <span className="dsh-ref ds-mono-sm">{q.reference}</span>
+            <span className={`dsh-state${q.state === 'issued' ? ' is-issued' : ' is-draft'}`}>
+              {q.state === 'issued' ? 'Issued' : 'Draft'}
+            </span>
+            {customer && !grouped ? <span className="dsh-when">{customer}</span> : null}
+          </>
         }
-        act={roll.othersOnly ? 'All quotes' : 'New quote'}
-        onAct={roll.othersOnly ? acts.onOpenQuotes : acts.onNewQuote}
+        tail={
+          /* A QUOTE WITH AN UNPRICED LINE DOES NOT PRINT A
+             CONFIDENT TOTAL. The document itself says so out loud;
+             a dashboard that rounded it into one number would be
+             the quieter version of the same fault. */
+          totals.unpricedCount > 0 ? (
+            <span className="dsh-sum is-partial ds-mono">
+              {money(totals.total)}
+              <span className="dsh-sum-note ds-caption">
+                {plural(totals.unpricedCount, 'line unpriced', 'lines unpriced')}
+              </span>
+            </span>
+          ) : (
+            <span className="dsh-sum ds-mono">{money(totals.total)}</span>
+          )
+        }
+        label={`Open quote ${q.reference} — ${q.subjectLabel}`}
+        onPick={() => acts.onOpenQuote(q.id)}
       />
     )
   }
 
   return (
     <>
-      <div className="dsh-list">
-        {roll.mine.slice(0, QUOTE_ROWS).map((q) => {
-          const totals = quoteTotals(q)
-          return (
-            <Row
-              key={q.id}
-              title={q.subjectLabel}
-              under={
-                <>
-                  <span className="dsh-ref ds-mono-sm">{q.reference}</span>
-                  <span className={`dsh-state${q.state === 'issued' ? ' is-issued' : ' is-draft'}`}>
-                    {q.state === 'issued' ? 'Issued' : 'Draft'}
-                  </span>
-                  <span className="dsh-when">{localDay(q.updatedAt)}</span>
-                </>
-              }
-              tail={
-                /* A QUOTE WITH AN UNPRICED LINE DOES NOT PRINT A
-                   CONFIDENT TOTAL. The document itself says so out
-                   loud; a dashboard that rounded it into one number
-                   would be the quieter version of the same fault. */
-                totals.unpricedCount > 0 ? (
-                  <span className="dsh-sum is-partial ds-mono">
-                    {money(totals.total)}
-                    <span className="dsh-sum-note ds-caption">
-                      {plural(totals.unpricedCount, 'line unpriced', 'lines unpriced')}
-                    </span>
-                  </span>
-                ) : (
-                  <span className="dsh-sum ds-mono">{money(totals.total)}</span>
-                )
-              }
-              label={`Open quote ${q.reference} — ${q.subjectLabel}`}
-              onPick={() => acts.onOpenQuote(q.id)}
-            />
-          )
-        })}
+      <div className="dsh-lenses" role="group" aria-label="Which quotes">
+        {QUOTE_LENSES.map((l) => (
+          <button
+            key={l}
+            type="button"
+            className="dsh-lens"
+            aria-pressed={l === lens}
+            onClick={() => setPicked(l)}
+          >
+            {LENS_NAME[l]}
+            <span className="dsh-lens-n ds-mono-sm">{counts[l].toLocaleString()}</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          className="dsh-lens dsh-lens-by"
+          aria-pressed={grouped}
+          onClick={() => setGrouped((v) => !v)}
+        >
+          By customer
+        </button>
       </div>
-      {roll.mine.length > QUOTE_ROWS ? (
-        <More
-          say={`All ${plural(roll.mine.length, 'quote', 'quotes')} of mine`}
-          onPick={acts.onOpenQuotes}
-        />
+
+      {list.length === 0 ? (
+        /* A FILTER THAT HOLDS NOTHING SAYS SO WHERE IT IS
+           REFUSED (rule 10), and it is a fact rather than an
+           apology: there ARE quotes here, just none under this
+           chip. */
+        <p className="dsh-none ds-small">{LENS_NONE[lens]}</p>
+      ) : grouped ? (
+        <div className="dsh-list">
+          {bands.map((band) => (
+            <div className="dsh-band" key={band.name || '—'}>
+              <p className="dsh-band-name">{band.name || 'Not addressed'}</p>
+              {band.quotes.map(line)}
+            </div>
+          ))}
+        </div>
       ) : (
-        <More say="All quotes" onPick={acts.onOpenQuotes} />
+        <div className="dsh-list">{list.slice(0, QUOTE_ROWS).map(line)}</div>
       )}
-    </>
-  )
-}
 
-/* ---------------------------------------------------------- */
-/* Quotes by state                                            */
-/* ---------------------------------------------------------- */
-
-function QuotesByState({ acts }: { acts: DashboardActs }): JSX.Element {
-  const quotes = useQuotes()
-  const roll = useMemo(() => rollQuotes(quotes, ''), [quotes])
-
-  if (roll.total === 0) {
-    return (
-      <Nothing say={CARDS['quotes-by-state'].empty} act="New quote" onAct={acts.onNewQuote} />
-    )
-  }
-
-  return (
-    <>
-      <div className="dsh-figures">
-        {/* "1 still drafts" is the kind of line that makes a tool
-            feel unfinished — every count on this page picks its
-            own words. "issued" is a past participle and reads
-            correctly at any number; "draft" is a noun and does
-            not. The sentence under the pair is what carries the
-            meaning of the two states, so the captions stay nouns
-            rather than becoming a clause. */}
-        <Figure
-          n={roll.drafts}
-          say={roll.drafts === 1 ? 'draft' : 'drafts'}
-          onPick={acts.onOpenQuotes}
-          lead
-        />
-        <Figure n={roll.issued} say="issued" onPick={acts.onOpenQuotes} />
-      </div>
-      {/* TWO STATES AND NO THIRD. `QuoteState` is exactly
-          'draft' | 'issued' — there is no expiry engine and no
-          order conversion (quote/index.ts §7) — so this is the
-          whole of it and the card does not imply a funnel it
-          cannot count. */}
-      <p className="dsh-note ds-caption">
-        A quote stays a draft until it is issued. Issuing freezes it.
-      </p>
+      <More say="All quotes" onPick={acts.onOpenQuotes} />
     </>
   )
 }
@@ -393,7 +440,7 @@ function RecentlyOpened({ acts }: { acts: DashboardActs }): JSX.Element {
 /* My modules                                                 */
 /* ---------------------------------------------------------- */
 
-const MODULE_ROWS = 5
+const MODULE_ROWS = 8
 
 function MyModules({ acts }: { acts: DashboardActs }): JSX.Element {
   const modules = useProjectStore((s) => s.modules)
@@ -408,6 +455,15 @@ function MyModules({ acts }: { acts: DashboardActs }): JSX.Element {
     return <Nothing say={CARDS['my-modules'].empty} act="Modules" onAct={acts.onOpenModules} />
   }
 
+  /* THE MODULE'S OWN SENTENCE IS GONE FROM THIS ROW, and it is
+     the largest single deletion in this pass. Northside's
+     descriptions run to forty words — "Boat-plus-engine bundles
+     the Motor Library files under the boat row's motor slot…" —
+     and five of them made this card the loudest block of prose on
+     the front door. A card gets a name and ONE fact; the fact
+     here is how much is in the place, which is what tells you
+     whether to open the door. The sentence is still the admin's,
+     still stored, and still read on the module's own screen. */
   return (
     <>
       <div className="dsh-list">
@@ -421,19 +477,12 @@ function MyModules({ acts }: { acts: DashboardActs }): JSX.Element {
                module; the kind is what the place SELLS, and the
                same fact colours the same brand in the rail, on
                the sheet and here. A module whose primary table
-               has been struck gets no mark rather than a grey
+               has been struck gets no rail rather than a grey
                one — an absent fact is drawn as absent. */
             kind={
               r.module.tableIds[0] !== undefined && entities[r.module.tableIds[0]]
                 ? kindOf(entities[r.module.tableIds[0]].kind)
                 : undefined
-            }
-            under={
-              r.module.description.trim() ? (
-                <span className="dsh-when">{r.module.description.trim()}</span>
-              ) : r.master ? (
-                <span className="dsh-when">{r.master}</span>
-              ) : undefined
             }
             tail={<span className="dsh-sum ds-mono">{r.rows.toLocaleString()}</span>}
             label={`Open ${r.module.name}`}
@@ -453,7 +502,7 @@ function MyModules({ acts }: { acts: DashboardActs }): JSX.Element {
 /* The price file                                             */
 /* ---------------------------------------------------------- */
 
-const BIG_ROWS = 4
+const BIG_ROWS = 8
 
 function ThePriceFile({ acts }: { acts: DashboardActs }): JSX.Element {
   const entities = useProjectStore((s) => s.entities)
@@ -470,14 +519,18 @@ function ThePriceFile({ acts }: { acts: DashboardActs }): JSX.Element {
     )
   }
 
+  /* ONE FIGURE, AND IT USED TO BE THREE. "24 tables" and "27
+     relationships" beside it were the counted strip PHASE_TWO §1
+     names and kills: nobody selling a boat needs to know how many
+     tables are in use, and three big figures in the strongest
+     position on a card say the app is proud of its schema. The
+     count that survives is the one a salesperson reads — how much
+     stock there is to sell from — and the tables are still
+     counted, one per row, on the thing each count belongs to. */
   return (
     <>
       <div className="dsh-figures">
         <Figure n={tally.rows} say="rows you sell from" lead />
-        <Figure n={tally.tables} say="tables" />
-        {tally.relationships > 0 ? (
-          <Figure n={tally.relationships} say="relationships" />
-        ) : null}
       </div>
       <div className="dsh-list">
         {big.map((t) => (
@@ -616,9 +669,7 @@ export interface CardBodyProps {
 export function CardBody({ id, me, acts }: CardBodyProps): JSX.Element {
   switch (id) {
     case 'my-quotes':
-      return <MyQuotes me={me} acts={acts} />
-    case 'quotes-by-state':
-      return <QuotesByState acts={acts} />
+      return <Quotes me={me} acts={acts} />
     case 'recently-opened':
       return <RecentlyOpened acts={acts} />
     case 'my-modules':

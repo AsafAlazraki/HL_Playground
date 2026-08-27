@@ -12,6 +12,12 @@
 
    Column widths live here so they survive a tab switch; every other
    view concern resets with the sheet.
+
+   WHAT IT MOUNTS IS THE CATALOGUE, NOT THE SHEET. The register is
+   the catalogue's `List` density (see `Catalogue.tsx`), so opening a
+   table lands on its photographs and the spreadsheet is one press
+   away rather than the other way round. This component's job is
+   unchanged: which table, and the widths that outlive it.
    ============================================================ */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { JSX } from 'react'
@@ -20,7 +26,7 @@ import type { EntityDef } from '@/types/model'
 import type { ActionItem } from '@/lib/actions'
 import { EntityTabs } from './EntityTabs'
 import { NoEntitiesPlate } from './EmptyPlates'
-import { TableSheet } from './TableSheet'
+import { Catalogue } from './Catalogue'
 import { Toasts, useToasts } from './Toasts'
 import { byCreatedAt } from './helpers'
 import './table.css'
@@ -107,7 +113,14 @@ export function TableWorkspace({
       )}
 
       {active ? (
-        <TableSheet
+        /* THE FRONT DOOR IS THE CATALOGUE, and the register is a
+           density of it. That inversion is PHASE_TWO §2.2 and §5 —
+           "the register stops being the front door and becomes a
+           view" — and it is why this component now mounts one thing
+           instead of the sheet directly. Every prop the sheet had is
+           still handed to it, one level down; nothing about editing,
+           sorting, sectioning or the round trip moved. */
+        <Catalogue
           key={active.id}
           entityId={active.id}
           colWidths={colWidths}

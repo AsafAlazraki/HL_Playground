@@ -54,8 +54,33 @@ export type { DashboardProps } from './Dashboard'
 export { NewModuleDialog } from './NewModuleDialog'
 export type { NewModuleDialogProps } from './NewModuleDialog'
 
-export { ModuleIndex } from './ModuleIndex'
-export type { ModuleIndexProps } from './ModuleIndex'
+/* THE WORKSPACE IS WHAT A HOST MOUNTS FOR A MODULE — five tabs, of
+   which the catalogue is one. It keeps the name `ModuleIndex` because
+   that is the name a host already asks for and the props it already
+   passes; what changed is what stands behind it. `ModuleStock` is the
+   catalogue on its own, exported because the workspace is not the only
+   honest place to draw one. */
+export { ModuleIndex } from './ModuleWorkspace'
+export type { ModuleIndexProps, ModuleTab } from './ModuleWorkspace'
+
+export { ModuleStock } from './ModuleIndex'
+export type { ModuleStockProps } from './ModuleIndex'
+
+export { ModuleHome, ModulePricing, ModuleQuotes } from './ModulePanels'
+export type { ModuleHomeProps, ModulePricingProps, ModuleQuotesProps } from './ModulePanels'
+
+/* WHAT THE MODULES GRID DRAWS A CARD FOR. A module holding one table
+   is one place; a module holding more is one place per table, so
+   Highfield, Yamaha and Stacer are doors rather than names inside a
+   card called Boats. Exported because a picker, an export or a review
+   that has to list the places must reach the same answer this grid
+   draws. */
+export { moduleAt, placeFilters, placesOf, placesUnder } from './places'
+export type { Place, PlaceFilter } from './places'
+
+/* WHICH DOOR SOMEBODY CAME THROUGH — the seam the shell's route does
+   not carry yet, and what it is and is not. */
+export { forgetPlaces, placeFor, rememberPlace } from './openPlace'
 
 export { ModuleSettings } from './ModuleSettings'
 export type { ModuleSettingsProps } from './ModuleSettings'

@@ -214,10 +214,7 @@ export function ConfigurationsPanel({ user }: ConfigurationsPanelProps): JSX.Ele
       {rows === null ? (
         <p className="tn-quiet">Reading what is saved…</p>
       ) : rows.length === 0 ? (
-        <p className="tn-quiet">
-          Nothing is saved for {user.orgName} yet. The first save on this machine becomes what
-          a new browser opens with.
-        </p>
+        <p className="tn-quiet">Nothing is saved for {user.orgName} yet.</p>
       ) : (
         <ol className="tn-list">
           {rows.map((r) => (

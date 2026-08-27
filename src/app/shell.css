@@ -39,7 +39,13 @@
    An undefined custom property does not warn; it just makes every
    calc() that touches it disappear. Declare it here, once. */
 :root {
-  --rail: 264px;
+  /* 224px, FROM 264. Forty pixels back on every screen in the app,
+     which is what the fifty-one-table tree cost and no longer buys.
+     The business's name still fits whole: the head hands
+     `.sn-head-name` 132px and "Northside Marine" wants 118 at the
+     heading step. Below 1100 it narrows again — see RESPONSIVE at
+     the foot of this file. */
+  --rail: 224px;
 
   /* ============================================================
      THE CHROME PALETTE, DECLARED ONCE AND FOR LIGHT.
@@ -47,26 +53,72 @@
      THIS WENT MISSING THE SAME WAY `--rail` DID. A duplicate-
      collapsing pass removed the light declarations and left only
      the dark override at the foot of this file — so in the theme
-     that ships by default, `--chrome` and its three ink tiers
-     resolved to NOTHING, and 132 rules across six stylesheets
-     silently lost their ground: the rail, the sign-in panel, the
-     onboarding, the quote deck's step band and the banner.
+     that ships by default, `--chrome` and its ink tiers resolved
+     to NOTHING, and 132 rules across six stylesheets silently lost
+     their ground: the rail, the sign-in panel, the onboarding, the
+     quote deck's step band and the banner. Measured, in the
+     browser, at 1600x1000 on the default theme:
 
-     An undefined custom property does not warn. It voids the
-     declaration that reads it. That is twice now, so both are
+       getComputedStyle(:root)['--chrome']      →  ""
+       getComputedStyle('.sn').backgroundColor  →  rgba(0, 0, 0, 0)
+       getComputedStyle('.sn').color            →  rgb(8, 27, 46)
+
+     The "navy rail with white ink" was a transparent column of
+     page-coloured text, and its own five hundred lines of
+     stylesheet were describing a material that was not being
+     painted. An undefined custom property does not warn; it voids
+     the declaration that reads it. That is twice now, so both are
      declared at the head of the file where they can be seen.
 
-     Measured on --chrome (#0b2138): --chrome-fg 15.0:1,
-     --chrome-fg-soft 8.5:1, --chrome-fg-faint 5.2:1. The accent
-     is BARRED here — #0a5fc2 on this ground is 2.7:1 — which is
-     why a lit state on the rail is white at 14-16%.
+     THIRTEEN ARE READ ACROSS THE APP AND SIX WERE DECLARED. The
+     rail alone reads `--chrome-wash`, `-wash-hover`, `-wash-press`,
+     `-wash-on`, `-edge`, `-line-soft` and `-line-strong`, and none
+     of them existed either — so every hover, press, lit row and
+     hairline on the one permanent surface in the application was
+     also resolving to nothing. All thirteen are here.
+
+     EVERY RATIO IS COMPUTED — sRGB relative luminance, WCAG 2.x,
+     on the exact grounds named:
+
+       --chrome-fg        on --chrome  15.1 : 1   on raised  12.5 : 1
+       --chrome-fg-soft   on --chrome   8.6 : 1   on raised   7.1 : 1
+       --chrome-fg-faint  on --chrome   5.5 : 1   on raised   4.5 : 1
+
+     The faint tier is a shade lighter than the 5.2 first written
+     here, and the reason is the RAISED ground: at 5.2 on --chrome
+     it measures 4.31 on --chrome-raised, which is under the floor —
+     the exact hole `build.css` had to work around by hand, in a
+     comment that says so. Lifting it three steps clears 4.5 on both
+     grounds and lets that workaround be deleted rather than copied
+     the next time something lifts off the frame.
+
+     THE ACCENT IS BARRED HERE — #0a5fc2 on this ground is 2.7:1 —
+     which is why a lit state on the rail is white at 13-17%.
+
+     THEY BELONG IN `ds.css`. `src/app/**` is this pass's territory
+     and the system file is not; the moment the system declares
+     them, DELETE THIS BLOCK — it loads after ds.css and would
+     silently win, which is the fight §9 of DESIGN_PRINCIPLES tells
+     you not to start.
      ============================================================ */
   --chrome: #0b2138;
   --chrome-raised: #14304c;
-  --chrome-line: rgba(255, 255, 255, 0.1);
-  --chrome-fg: #f2f6fb;
-  --chrome-fg-soft: #a9bdd2;
-  --chrome-fg-faint: #7e94ab;
+  --chrome-fg: #f2f7fc;
+  --chrome-fg-soft: #abbfd2;
+  --chrome-fg-faint: #8298ad;
+
+  /* THE WASHES AND HAIRLINES ARE MIXED FROM THE INK, not written
+     as eight more literals. One value moves and the whole family
+     follows, and a wash can never drift off the hue of the text
+     standing on it. */
+  --chrome-wash: color-mix(in srgb, var(--chrome-fg) 6%, transparent);
+  --chrome-wash-hover: color-mix(in srgb, var(--chrome-fg) 10%, transparent);
+  --chrome-wash-press: color-mix(in srgb, var(--chrome-fg) 17%, transparent);
+  --chrome-wash-on: color-mix(in srgb, var(--chrome-fg) 13%, transparent);
+  --chrome-edge: color-mix(in srgb, var(--chrome-fg) 15%, transparent);
+  --chrome-line: color-mix(in srgb, var(--chrome-fg) 13%, transparent);
+  --chrome-line-soft: color-mix(in srgb, var(--chrome-fg) 9%, transparent);
+  --chrome-line-strong: color-mix(in srgb, var(--chrome-fg) 26%, transparent);
 }
 
 .shell-body {
@@ -4744,17 +4796,19 @@
 }
 
 /* ============================================================
-   THE RAIL, SECOND PASS — sections, and a width it can give back.
+   THE RAIL, THIRD PASS — four doors, and a colour it can carry.
 
-   The first rail was a flat list. This one is shaped like the
-   business: DATA (the shape of what you sell) · MODULES (the
-   places) · SELLING (rules, quotes, customers) · SETTINGS (who
-   may do what). See SideNav.tsx's header for the argument.
+   The second rail was shaped like the schema: DATA (with a
+   fifty-one-item tree in it), MODULES, SELLING, SETTINGS —
+   fourteen rows at one weight, one size and one colour, 264px
+   wide, 69 visible words. Six faults were named against it and
+   SideNav.tsx's header answers each one by number; this file is
+   the half of the answer that is paint.
 
-   Everything below REPLACES the corresponding first-pass rule
-   rather than layering over it — the earlier `.sn-*` block was
-   deleted in the same commit, because two declarations of one
-   selector is how a stylesheet stops being a design.
+   Everything below REPLACES the second-pass rule rather than
+   layering over it — the earlier `.sn-*` block was deleted in the
+   same commit, because two declarations of one selector is how a
+   stylesheet stops being a design.
    ============================================================ */
 
 .sn {
@@ -4769,36 +4823,91 @@
   /* the rail is the one element whose WIDTH animates, and it is a
      deliberate exception: it is a layout property, but it is a
      direct manipulation the person asked for and there is nothing
-     to interrupt. 200ms keeps it inside the drawer budget. */
+     to interrupt. Inside the drawer budget. */
   transition: width var(--d-slow) var(--ease-out-expo);
+
+  /* ============================================================
+     THE KIND HUES, ON NAVY — and this is why the rail could not
+     simply take the ones the page uses.
+
+     `--kind-indigo` and its eight siblings are cut for WHITE. On
+     `--chrome` they measure, in order: indigo 2.4, cyan 3.0, teal
+     3.0, green 3.3, amber 3.3, orange 3.2, rose 2.6, violet 2.9,
+     slate 2.2. Every one of them fails, and half of them fail as
+     badly as the accent does (2.7), which is why the accent is
+     barred here at all.
+
+     ds.css already owns a set cut for a dark ground — its
+     `[data-theme='dark']` block — and the rail is navy in BOTH
+     themes, so it takes that set in both. Measured on --chrome:
+
+       indigo 6.8 · cyan 7.9 · teal 8.0 · green 8.4 · amber 7.7
+       orange 6.6 · rose 5.7 · violet 5.7 · slate 5.3
+
+     All nine clear 4.5, which is what lets a module's COUNT be set
+     in its own hue rather than in grey — the one figure in the app
+     that carries a hue, and it carries it because the hue IS the
+     kind of the thing being counted (§1b).
+
+     It is set on `.sn` rather than on `:root`, so it inherits down
+     the rail and nowhere else. The page keeps its own set. */
+  --kind-indigo: #6ea8ff;
+  --kind-cyan: #4fc3d9;
+  --kind-teal: #3fcba8;
+  --kind-green: #5fd07e;
+  --kind-amber: #e2a83e;
+  --kind-orange: #f08a4b;
+  --kind-rose: #f26d8b;
+  --kind-violet: #b182f5;
+  --kind-slate: #8a93a3;
+
+  /* AND THE MAPPING HAS TO BE RESTATED, which is not redundancy —
+     it is how custom properties actually resolve, and getting it
+     wrong is silent.
+
+     `--kind-boat: var(--kind-indigo)` is declared on `:root`, so it
+     SUBSTITUTES THERE, at computed-value time, against `:root`'s
+     indigo. The result — a literal `#1d4ed8` — is what inherits
+     down; re-declaring `--kind-indigo` further in has nothing left
+     to affect. Measured, on the rail's first module row:
+     `borderLeftColor` came back `rgb(29, 78, 216)`, the light hue
+     at 2.4:1 on navy, with the block above already in place and
+     apparently doing its job.
+
+     The mapping is restated, not rewritten: a boat is still indigo
+     and the product decision still lives in ds.css. This says only
+     WHICH indigo, on this one navy surface. */
+  --kind-boat: var(--kind-indigo);
+  --kind-motor: var(--kind-orange);
+  --kind-trailer: var(--kind-amber);
+  --kind-accessory: var(--kind-teal);
+  --kind-package: var(--kind-violet);
+  --kind-dealer: var(--kind-cyan);
+  --kind-custom: var(--kind-slate);
+  --kind-join: var(--kind-rose);
 }
 
-/* ---- head ------------------------------------------------- */
+/* ---- head — whose business this is, and nothing else --------- */
 .sn-head {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-5) var(--s-3) var(--s-4);
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-3) var(--s-3);
 }
 .sn-crest {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   flex: none;
   border-radius: var(--r-control);
   background: var(--chrome-wash-hover);
   color: var(--chrome-fg);
 }
-.sn-head-say {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 1px;
-  flex: 1;
-}
 .sn-head-name {
+  flex: 1;
+  min-width: 0;
   font-size: var(--t-heading-size);
   font-weight: 600;
   letter-spacing: var(--t-heading-track);
@@ -4806,14 +4915,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-/* 5.2:1 on --chrome, measured — metadata beside the thing it
-   describes, which is exactly what the floor is for */
-.sn-head-note {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  color: var(--chrome-fg-faint);
-  white-space: nowrap;
 }
 .sn-fold {
   display: inline-flex;
@@ -4826,9 +4927,10 @@
   border-radius: var(--r-control);
   background: transparent;
   color: var(--chrome-fg-faint);
-  font-size: 13px;
   cursor: pointer;
-  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
 }
 .sn-fold:hover {
   background: var(--chrome-wash-hover);
@@ -4843,7 +4945,7 @@
   outline-offset: 2px;
 }
 
-/* ---- find ------------------------------------------------- */
+/* ---- find --------------------------------------------------- */
 .sn-find {
   display: flex;
   align-items: center;
@@ -4869,7 +4971,7 @@
   color: var(--chrome-fg);
 }
 .sn-find:active {
-  background: var(--chrome-wash-on);
+  background: var(--chrome-wash-press);
   transition-duration: var(--d-press);
 }
 .sn-find:focus-visible {
@@ -4895,11 +4997,9 @@
 .sn-kbd {
   flex: none;
   font-family: var(--font-mono);
-  /* 11px, THE FLOOR, and it was 10.5 — the only declaration in this
-     file under it. Rule 2 is absolute and unautomated, which is
-     exactly how a half-pixel gets in: it reads as a rounding, not as
-     a decision. A key cap is a mono stamp and mono stamps have a
-     step. */
+  /* 11px, THE FLOOR. A key cap is a mono stamp and mono stamps
+     have a step; this was 10.5 once, which reads as a rounding
+     rather than as a decision, which is exactly how it got in. */
   font-size: var(--t-mono-sm-size);
   letter-spacing: 0.04em;
   color: var(--chrome-fg-faint);
@@ -4908,7 +5008,7 @@
   padding: 1px 5px;
 }
 
-/* ---- the scrolling middle --------------------------------- */
+/* ---- the scrolling middle ----------------------------------- */
 .sn-scroll {
   flex: 1;
   min-height: 0;
@@ -4921,62 +5021,17 @@
 .sn-grp + .sn-grp {
   margin-top: var(--s-4);
 }
-.sn-grp-head {
-  margin: 0 0 var(--s-1);
-  padding: 0 var(--s-2);
-  color: var(--chrome-fg-faint);
-}
 
-/* ---- a section header (DATA) ------------------------------ */
-.sn-sec {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  padding: var(--s-1) var(--s-2);
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-}
-.sn-sec-name {
-  flex: 1;
-  color: var(--chrome-fg-faint);
-  transition: color var(--d-fast) var(--ease);
-}
-.sn-sec:hover .sn-sec-name {
-  color: var(--chrome-fg-soft);
-}
-.sn-sec:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: -2px;
-  border-radius: var(--r-control);
-}
-/* a wedge that turns rather than two glyphs that swap */
-.sn-sec-wedge {
-  width: 0;
-  height: 0;
-  flex: none;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--chrome-fg-faint);
-  transform: rotate(-90deg);
-  transition: transform var(--d-fast) var(--ease-out-expo);
-}
-.sn-sec.is-open .sn-sec-wedge {
-  transform: rotate(0deg);
-}
-.sn-sec-body {
-  margin-top: 2px;
-}
-
-/* ---- a row ------------------------------------------------ */
+/* ---- a door ------------------------------------------------- */
+/* 38px, and the module rows under them are 30. Fourteen rows at
+   one height was fault 3; four doors that are taller than the
+   list beneath them is a rail with a top and a bottom. */
 .sn-row {
   display: flex;
   align-items: center;
   gap: var(--s-2);
   width: 100%;
-  height: 34px;
+  height: 38px;
   padding: 0 var(--s-2);
   border: 0;
   border-radius: var(--r-control);
@@ -4987,7 +5042,12 @@
   font-weight: 500;
   text-align: left;
   cursor: pointer;
-  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.sn-row + .sn-row {
+  margin-top: 1px;
 }
 .sn-row:hover {
   background: var(--chrome-wash);
@@ -5009,63 +5069,25 @@
   font-weight: 600;
   box-shadow: inset 2px 0 0 var(--chrome-fg);
 }
-/* THE MARK SLOT. `position: relative` so the count pin has
-   something to sit on the corner of, and `line-height: 0` so a
-   drawn glyph is not given a text box to be centred inside twice. */
+/* THE MARK SLOT — 20px, which is the size the brief measures
+   distinguishability at and the size at which a house, a grid of
+   squares, a sheet of paper and three people stop being four grey
+   smudges. */
 .sn-row-mark {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   flex: none;
   line-height: 0;
   color: inherit;
-  /* the glyph rides the row's own ink: faint at rest, full when the
-     row is lit, so the mark and the word change together */
-  opacity: 0.8;
+  opacity: 0.85;
   transition: opacity var(--d-fast) var(--ease);
 }
 .sn-row:hover .sn-row-mark,
 .sn-row.is-on .sn-row-mark {
   opacity: 1;
-}
-/* the fallback for a row with no glyph. Nothing in SideNav takes it
-   any more — all seven rows are drawn — and it stays as the honest
-   default for a row somebody adds without one, rather than as a
-   silent gap in the column. */
-.sn-row-pip {
-  width: 5px;
-  height: 5px;
-  border-radius: var(--r-full);
-  background: currentColor;
-  opacity: 0.5;
-}
-.sn-row.is-on .sn-row-pip {
-  opacity: 1;
-}
-/* ---- the count, when 64px has no room for the count ---------
-   Drawn on every row that has one and revealed only by
-   `.sn.is-tight` below, so folding the rail reveals rather than
-   mounts. It is a MARK, not a figure: a legible number here would
-   have to break the 11px floor. */
-.sn-row-pin {
-  position: absolute;
-  top: -1px;
-  right: -2px;
-  width: 6px;
-  height: 6px;
-  border-radius: var(--r-full);
-  background: var(--accent);
-  /* a ring of the rail's own navy, so the dot reads as sitting ON
-     the glyph rather than merged into it */
-  box-shadow: 0 0 0 2px var(--chrome);
-  opacity: 0;
-  transform: scale(0.4);
-  transition:
-    opacity var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease-out-back);
 }
 .sn-row-name {
   flex: 1;
@@ -5074,6 +5096,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* THE COUNT, AND IT IS A FIGURE AT EVERY WIDTH. It used to be a
+   pill of digits that turned into a 6px dot when the rail folded,
+   which threw away the half worth keeping (fault 4). It stays a
+   number; at 64px it moves under the mark. Mono and tabular,
+   because it is a figure (§2). */
 .sn-row-count {
   flex: none;
   font-family: var(--font-mono);
@@ -5088,118 +5115,110 @@
   color: var(--chrome-fg);
 }
 
-/* ---- bands: Tables, then each kind ------------------------ */
-.sn-band-head,
-.sn-kind {
+/* ---- the one section, and it collapses ---------------------- */
+.sn-sec {
   display: flex;
   align-items: center;
   gap: var(--s-2);
   width: 100%;
-  height: 30px;
+  height: 26px;
   padding: 0 var(--s-2);
   border: 0;
-  border-radius: var(--r-control);
   background: transparent;
-  color: var(--chrome-fg-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  text-align: left;
   cursor: pointer;
-  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+  text-align: left;
 }
-.sn-band-head:hover,
-.sn-kind:hover {
-  background: var(--chrome-wash);
-  color: var(--chrome-fg);
+.sn-sec-name {
+  flex: 1;
+  color: var(--chrome-fg-faint);
+  transition: color var(--d-fast) var(--ease);
 }
-.sn-band-head:active,
-.sn-kind:active {
-  background: var(--chrome-wash-press);
-  transition-duration: var(--d-press);
+.sn-sec:hover .sn-sec-name,
+.sn-sec:hover .sn-sec-count {
+  color: var(--chrome-fg-soft);
 }
-.sn-band-head:focus-visible,
-.sn-kind:focus-visible {
+.sn-sec:focus-visible {
   outline: 2px solid var(--chrome-fg);
   outline-offset: -2px;
+  border-radius: var(--r-control);
 }
-.sn-band-head.is-open,
-.sn-kind.is-open {
-  color: var(--chrome-fg);
-}
-/* the kind's own hue, as a DOT — never a fill behind text (§1) */
-.sn-band-dot {
-  width: 7px;
-  height: 7px;
-  flex: none;
-  margin-left: 4px;
-  border-radius: var(--r-full);
-  background: var(--tbn-accent, var(--chrome-fg-faint));
-}
-.sn-band-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sn-band-count {
+/* HOW MANY ARE INSIDE WHEN IT IS SHUT — fault 6. Drawn only while
+   shut; open, it would be a count of rows you can see. */
+.sn-sec-count {
   flex: none;
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
   color: var(--chrome-fg-faint);
 }
-.sn-band-body,
-.sn-leaves {
+/* a wedge that turns rather than two glyphs that swap */
+.sn-sec-wedge {
+  width: 0;
+  height: 0;
+  flex: none;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--chrome-fg-faint);
+  transform: rotate(-90deg);
+  transition: transform var(--d-fast) var(--ease-out-expo);
+}
+.sn-sec.is-open .sn-sec-wedge {
+  transform: rotate(0deg);
+}
+.sn-sec-body {
   display: flex;
   flex-direction: column;
-  margin-left: 11px;
-  padding-left: var(--s-3);
-  border-left: 1px solid var(--chrome-line-soft);
-}
-.sn-band + .sn-band {
-  margin-top: 1px;
+  gap: 1px;
+  margin-top: 2px;
 }
 
-/* ---- a table ---------------------------------------------- */
-.sn-leaf {
+/* ---- a module you have been in ------------------------------ */
+/* THE ONE PLACE COLOUR ENTERS THE RAIL. A full-height rail in the
+   kind's own hue — which is what phase one had before the navy
+   arrived and demoted it to a 7px dot — and the count in the same
+   hue as ink, measured 5.3–8.4:1 above. §1b, amended: a hue may
+   carry a surface, and a hue only ever appears on something that
+   HAS that kind. */
+.sn-mod {
   display: flex;
   align-items: center;
   gap: var(--s-2);
   width: 100%;
-  min-height: 28px;
-  padding: 4px var(--s-2);
+  min-height: 30px;
+  padding: 4px var(--s-2) 4px 9px;
   border: 0;
-  border-radius: var(--r-control);
+  border-left: 3px solid var(--kind);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
   background: transparent;
-  color: var(--chrome-fg-faint);
+  color: var(--chrome-fg-soft);
   font-family: var(--font-sans);
   font-size: var(--t-small-size);
   text-align: left;
   cursor: pointer;
-  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
 }
-.sn-leaf:hover {
-  background: var(--chrome-wash);
+.sn-mod:hover {
+  background: color-mix(in srgb, var(--kind) 14%, transparent);
   color: var(--chrome-fg);
 }
-.sn-leaf:active {
-  background: var(--chrome-wash-press);
+.sn-mod:active {
+  background: color-mix(in srgb, var(--kind) 22%, transparent);
   transition-duration: var(--d-press);
 }
-.sn-leaf:focus-visible {
+.sn-mod:focus-visible {
   outline: 2px solid var(--chrome-fg);
   outline-offset: -2px;
 }
-.sn-leaf.is-on {
-  background: var(--chrome-wash-on);
+.sn-mod.is-on {
+  background: color-mix(in srgb, var(--kind) 20%, transparent);
   color: var(--chrome-fg);
   font-weight: 600;
 }
 /* NOTHING TRUNCATES MID-WORD (§3): a brand name that does not fit
    wraps to two lines rather than losing its word-shape. */
-.sn-leaf-name {
+.sn-mod-name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -5208,47 +5227,15 @@
   -webkit-box-orient: vertical;
   line-height: 1.3;
 }
-.sn-leaf-count {
+.sn-mod-count {
   flex: none;
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
-  color: var(--chrome-fg-faint);
+  color: var(--kind);
 }
 
-/* new table sits WITH the tables, not with the primary act */
-.sn-add {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  min-height: 28px;
-  margin-top: 2px;
-  padding: 4px var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--chrome-fg-faint);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
-}
-.sn-add:hover {
-  background: var(--chrome-wash);
-  color: var(--chrome-fg);
-}
-.sn-add:active {
-  background: var(--chrome-wash-press);
-  transition-duration: var(--d-press);
-}
-.sn-add:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: -2px;
-}
-
-/* ---- the foot --------------------------------------------- */
+/* ---- the foot ----------------------------------------------- */
 .sn-foot {
   display: flex;
   flex-direction: column;
@@ -5287,74 +5274,108 @@
   outline: 2px solid var(--chrome-fg);
   outline-offset: 2px;
 }
-/* the two `+` glyphs are drawn marks now, not typed ones — a slot
-   with no type metrics in it, so the icon sits on the button's
-   optical centre instead of on a text baseline */
 .sn-new-mark,
-.sn-add-mark {
+.sn-admin-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: none;
   line-height: 0;
 }
-.sn-add-mark {
-  width: 16px;
+
+/* THE PERSON, THEN THE WORKSHOP — stacked, which is what
+   PHASE_TWO §1 draws and what the arithmetic forces.
+
+   MEASURED SIDE BY SIDE, at the full 224px rail: the foot has
+   200px of room, "⚙ Admin" wants 85 and the gap 8, which leaves
+   the chip 107 — and inside that the initials disc takes 28 and
+   the wedge 8, so "Asaf Alazraki" was handed 41px of the 83 it
+   wants. Every width in the sweep truncated it, and a person's
+   own name cut mid-word in the corner of every screen is §3
+   broken in the one place a reader will always look.
+
+   Two rare acts, two doors, two lines: the chip is about ME, and
+   Admin is about the BUSINESS. */
+.sn-who {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-1);
+  min-width: 0;
 }
-.sn-foot .io-trigger {
+.sn-who .who {
+  min-width: 0;
+}
+.sn-admin {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
   width: 100%;
-  justify-content: center;
-  color: var(--chrome-fg-soft);
-  background: transparent;
+  height: var(--h-md);
+  padding: 0 var(--s-2);
   border: 1px solid var(--chrome-edge);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
 }
-.sn-foot .io-trigger:hover {
+.sn-admin:hover {
+  background: var(--chrome-wash-hover);
+  border-color: var(--chrome-line-strong);
   color: var(--chrome-fg);
-  background: var(--chrome-wash);
+}
+.sn-admin:active {
+  background: var(--chrome-wash-press);
+  transition-duration: var(--d-press);
+}
+.sn-admin:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+.sn-admin.is-on {
+  background: var(--chrome-wash-on);
+  border-color: var(--chrome-line-strong);
+  color: var(--chrome-fg);
 }
 
 /* ============================================================
    TIGHT — the rail gives its width back.
 
-   264px is 20% of a 1280 laptop. Collapsed it is 64px of glyphs
-   and counts. Every row keeps its accessible name (SideNav sets
-   aria-label and title when tight), so this is not a guessing
-   game, and the choice is remembered in localStorage.
+   224px is 17% of a 1280 laptop. Collapsed it is 64px of marks
+   and FIGURES: the count is the half worth keeping when the words
+   go (fault 4), so it moves under the mark and stays an 11px
+   tabular number rather than becoming a 6px dot that says "there
+   are some".
 
-   THIS BLOCK PROMISED GLYPHS AND HID A DOOR, and both halves are
-   corrected here and in SideNav.tsx.
+   WHAT GOES AND WHY, each one named:
 
-   THE GLYPHS ARE REAL NOW. `NavRow` drew a 5px dot for any row not
-   handed a mark, and no row was handed one — so the collapsed rail
-   was seven identical dots and the `title` attribute was the only
-   way to tell Quotes from Customers. Seven drawn marks, one size,
-   one weight; see SideNav.tsx's header.
+     the head's NAME       — a business name in 48px of column is
+                             an ellipsis, and the crest already
+                             says whose rail this is
+     the find box's WORDS  — the glyph and Ctrl K are the control
+     the row NAMES         — replaced by the mark, which is why
+                             the marks had to be four silhouettes
+     the RECENT SECTION    — an 11px uppercase caption with a
+                             disclosure, over rows whose whole
+                             content is a brand name. Reported
+                             honestly: this is the one thing the
+                             fold costs, and the alternative was
+                             abbreviating "Highfield" to "HI",
+                             which is a word cut in half (§3).
+     the Admin WORD        — the gear stays, labelled
 
-   AND `sn-sec-body` MAY NOT BE HIDDEN WHOLESALE. It held the DATA
-   MODEL row — the canvas, the app's one permanent surface — and
-   folding the rail deleted the only door to it. What genuinely does
-   not fit in 64px is the section CAPTION (an 11px uppercase word)
-   and the TABLE TREE (fifty-one names, three levels deep). Those go;
-   the door stays, and it is a row exactly like the other six.
-
-   THE COUNTS SURVIVE AS MARKS. `.sn-row-count` is a pill of tabular
-   digits and there is no room for it; the fact it carries — there
-   are quotes waiting — becomes `.sn-row-pin`, a 6px accent dot on
-   the corner of the glyph. A figure small enough to fit would be
-   under the 11px floor, so it is not drawn as a figure.
-
-   Words are hidden with `display: none` rather than width/opacity:
-   the rail's WIDTH is what animates, and a word that keeps its box
-   while the column shrinks is a word that reflows on every frame of
-   the 260ms. The text goes on the first frame and the column glides.
+   Words are hidden with `display: none` rather than width or
+   opacity: the rail's WIDTH is what animates, and a word that
+   keeps its box while the column shrinks reflows on every frame.
+   The text goes on the first frame and the column glides.
    ============================================================ */
-/* THE WIDTH IS THE COLLAPSE, and it was the one thing missing.
-   `.shell-body` is a grid whose first column is `var(--rail)`, so
-   hiding the rail's text without changing that token left a 264px
-   column of hidden words — the toggle appeared to do nothing.
-   `:has()` lets the GRID react to a state held on its child, which
-   is the honest place for it: the rail knows it is tight, the
-   layout asks. */
 .shell-body:has(.sn.is-tight) {
   --rail: 64px;
 }
@@ -5367,49 +5388,32 @@
   gap: var(--s-2);
   padding: var(--s-4) var(--s-2) var(--s-3);
 }
-.sn.is-tight .sn-head-say,
+.sn.is-tight .sn-head-name,
 .sn.is-tight .sn-find-say,
 .sn.is-tight .sn-kbd,
 .sn.is-tight .sn-row-name,
-.sn.is-tight .sn-row-count,
-.sn.is-tight .sn-grp-head,
 .sn.is-tight .sn-new-say,
-.sn.is-tight .sn-foot .io-trigger,
-/* the section CAPTION and its wedge — an 11px uppercase word and a
-   disclosure with nothing left to disclose. The BODY under it is
-   NOT in this list any more: see the note above. */
-.sn.is-tight .sn-sec,
-/* the table tree: fifty-one names, three levels deep, inside 64px.
-   `sn-band-head` is "Tables" and its count; `sn-band-body` is every
-   kind and every table under it; `sn-add` is New table, which is a
-   structure act and belongs beside the tables it adds to. All three
-   come back the instant the rail is widened. */
-.sn.is-tight .sn-band-head,
-.sn.is-tight .sn-band-body,
-.sn.is-tight .sn-add {
+.sn.is-tight .sn-admin-say,
+.sn.is-tight .sn-grp-recent {
   display: none;
-}
-/* THE DATA MODEL DOOR SURVIVES, and it needs no left margin to do
-   it: the body indents its rows under a caption that is no longer
-   drawn, so at 64px the row would sit off its own centre. */
-.sn.is-tight .sn-sec-body {
-  margin-top: 0;
 }
 .sn.is-tight .sn-find {
   justify-content: center;
   margin: 0 var(--s-2) var(--s-3);
   padding: 0;
 }
+/* THE ROW BECOMES A STACK: the mark, and its figure under it. */
 .sn.is-tight .sn-row {
+  flex-direction: column;
   justify-content: center;
-  padding: 0;
+  gap: 1px;
+  height: auto;
+  min-height: 46px;
+  padding: 5px 0;
 }
-/* the count, as a mark. See `.sn-row-pin` above — it is drawn at
-   every width and only ever REVEALED here, so the fold cannot flash
-   a badge in halfway through its 260ms. */
-.sn.is-tight .sn-row-pin {
-  opacity: 1;
-  transform: scale(1);
+.sn.is-tight .sn-row-count {
+  background: transparent;
+  padding: 0;
 }
 .sn.is-tight .sn-scroll {
   padding: 0 var(--s-2) var(--s-3);
@@ -5420,64 +5424,372 @@
 .sn.is-tight .sn-new {
   padding: 0;
 }
+.sn.is-tight .sn-admin {
+  justify-content: center;
+  padding: 0;
+}
 
 /* MOVEMENT GOES; LIGHT AND COLOUR STAY (§4). The rail's WIDTH and
    the wedge's ROTATION are movement and they go — the column snaps
-   to 64px and the wedge swaps. The count pin's SCALE is movement
-   too, so it goes and the pin simply appears; its opacity, and every
-   ink transition on every row, is not movement and is kept. */
+   to 64px and the wedge swaps. Every ink transition on every row
+   is not movement and is kept. */
 @media (prefers-reduced-motion: reduce) {
   .sn,
   .sn-sec-wedge {
     transition: none;
   }
-  .sn-row-pin {
-    transform: none;
-    transition: opacity var(--d-fast) var(--ease);
-  }
 }
 
 /* ============================================================
-   AND THE BUSINESS'S NAME HAS TO SURVIVE THE 48px THE RAIL GIVES
-   BACK AT 1100.
+   AND THE BUSINESS'S NAME HAS TO SURVIVE EVERY WIDTH.
 
-   MEASURED, at 1024 x 768: `.sn-head-name` wants 123px and the
-   head hands it 111. So the one word every screen opens with read
-   `Northside Ma…` — a name cut mid-word, which §3 forbids
-   outright, on every surface in the app at once. It was the only
-   truncation in the build that a WIDTH switched on: a sweep of
-   eight screens at 1600 / 1440 / 1280 / 1024 turned up this class
-   and no other.
+   Measured at 1024 x 768 against the second-pass rail: the head
+   handed `.sn-head-name` 111px and the name wanted 123, so the
+   first word on every screen in the app read `Northside Ma…` — a
+   name cut mid-word, which §3 forbids outright.
 
-   THE 12px IS TAKEN FROM THE AIR, NOT FROM THE NAME. The head's
-   two flex gaps drop a step (12 → 8), and the name takes the BODY
-   step rather than the heading one — size and tracking together,
-   as §2 asks, with the local 600 weight kept because that is what
-   separates the name from the note under it. 14px is three above
-   the floor.
+   At 224px the head hands it 132px and the name wants 118, so the
+   base rule is already whole. Below 1100 the rail narrows again
+   (see RESPONSIVE below) and the name takes the BODY step rather
+   than the heading one — size and tracking together, as §2 asks,
+   with the local 600 weight kept because that is what separates
+   the name from the doors under it. 14px is three above the floor.
 
-   119px of ink in 119px of room: the name is whole. A longer one
-   still ellipsises, and that is the base rule doing its job —
-   this moves the width at which it starts, it does not promise it
-   never will.
-
-   IT IS DOWN HERE RATHER THAN INSIDE THE `--rail: 216px` QUERY IT
-   BELONGS WITH, and that is not filing: a media query adds no
-   specificity, and `.sn-head-name`'s base declaration is 380
-   lines BELOW that query, so an identical selector written up
-   there loses the cascade and changes nothing. Measured: the name
-   still wanted 123px in 111. Same rule, after the thing it
-   answers, works.
+   IT IS DOWN HERE RATHER THAN INSIDE THE QUERY IT BELONGS WITH,
+   and that is not filing: a media query adds no specificity, and
+   `.sn-head-name`'s base declaration is above, so an identical
+   selector written earlier loses the cascade and changes nothing.
+   Same rule, after the thing it answers, works.
 
    `.sn.is-tight .sn-head` (0,2,1) outranks `.sn-head` (0,1,0), so
    the 64px rail is untouched by this at any width.
    ============================================================ */
+
+/* ============================================================
+   RESPONSIVE — driven, not hoped for.
+
+   The brief's table, and what the rail does at each stop:
+
+     >= 1600  the full composition, 224px
+     1440     the same
+     1280     the same — 224 is 17.5% and the stage keeps 1056
+     1024     200px, and the name drops to the body step
+     768      168px, and the doors keep their marks and figures
+     <= 600   the rail becomes a strip: 64px, permanently, with
+              the same marks and the same figures the fold gives
+
+   Rules that hold at every one: nothing under 11px, nothing
+   truncates mid-word, and `.shell-root` scrollWidth ==
+   clientWidth. The rail is a grid COLUMN, so narrowing it is one
+   token and the stage takes back every pixel automatically.
+   ============================================================ */
 @media (max-width: 1100px) {
+  :root {
+    --rail: 200px;
+  }
   .sn-head {
-    gap: var(--s-2);
+    gap: 6px;
+    padding: var(--s-3) var(--s-2) var(--s-2);
   }
   .sn-head-name {
     font-size: var(--t-body-size);
     letter-spacing: var(--t-body-track);
+  }
+  .sn-find,
+  .sn-scroll {
+    margin-inline: var(--s-2);
+    padding-inline: 0;
+  }
+  .sn-scroll {
+    margin-inline: 0;
+    padding-inline: var(--s-2);
+  }
+  .sn-foot {
+    padding: var(--s-2);
+  }
+}
+
+@media (max-width: 860px) {
+  :root {
+    --rail: 168px;
+  }
+  /* the key cap goes before the words do — Ctrl K is a reminder
+     about a shortcut, and the words are the control */
+  .sn-kbd {
+    display: none;
+  }
+  /* AND THE CREST GOES BEFORE THE NAME DOES. Measured at 768: the
+     head had 87px for a name wanting 117, so it read
+     "Northside Mar…". The crest is a decoration that says the same
+     thing the name says; the name is the fact. Without it the head
+     hands over 123px and the name is whole. */
+  .sn-crest {
+    display: none;
+  }
+}
+
+/* AT 600 THE RAIL IS A STRIP, whatever the reader last chose.
+   `--rail` is overridden rather than the class forced, because the
+   collapse is a PREFERENCE and a width is not: widening the window
+   hands the reader's own choice straight back. Everything the
+   tight rules hide is hidden here by the same selectors, which is
+   why they are listed once, above, keyed on `.sn.is-tight` — this
+   query adds `.sn` to each of them rather than restating them. */
+@media (max-width: 600px) {
+  :root {
+    --rail: 64px;
+  }
+  .sn {
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .sn .sn-head {
+    flex-direction: column;
+    gap: var(--s-2);
+    padding: var(--s-3) var(--s-2) var(--s-2);
+  }
+  .sn .sn-head-name,
+  .sn .sn-find-say,
+  .sn .sn-kbd,
+  .sn .sn-row-name,
+  .sn .sn-new-say,
+  .sn .sn-admin-say,
+  .sn .sn-grp-recent {
+    display: none;
+  }
+  .sn .sn-find {
+    justify-content: center;
+    margin: 0 var(--s-2) var(--s-3);
+    padding: 0;
+  }
+  .sn .sn-row {
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    height: auto;
+    min-height: 46px;
+    padding: 5px 0;
+  }
+  .sn .sn-row-count {
+    background: transparent;
+    padding: 0;
+  }
+  .sn .sn-admin {
+    justify-content: center;
+    padding: 0;
+  }
+  /* THE CHIP FOLDS WITH THE RAIL, and at 600 the rail is folded by
+     the WIDTH rather than by the reader — so `auth.css`'s
+     `.sn.is-tight .who-say` never fires and the person's name was
+     handed 0px. Scoped to `.sn`, which this stylesheet owns; the
+     chip's own appearance is still auth.css's. */
+  .sn .who-say,
+  .sn .who-wedge {
+    display: none;
+  }
+  .sn .who-chip {
+    justify-content: center;
+  }
+  .sn .sn-fold {
+    display: none;
+  }
+}
+
+/* ============================================================
+   ADMIN — the workshop behind the shop.
+
+   The one risk PHASE_TWO names first about this whole phase is
+   that Admin becomes a graveyard. So this screen is built the way
+   a selling screen is built and not the way a settings page is:
+
+     ONE THING DOMINATES — the business's name, in the display
+     face, clamped 34→64px against 15px doors and 11px captions.
+     The dashboard's largest element measured 34px across seven
+     sizes, which is the absence of a hierarchy rather than one.
+
+     EVERY DOOR IS A NAME AND ONE FACT, and the fact is a figure
+     off the live store. No card here has a description.
+
+     NO KIND HUE. A rule, a role and an import are not boats,
+     motors, trailers or rigging kits, and the discipline is that a
+     hue only ever appears on something that HAS that kind. Admin
+     is ink, accent and paper. That is the rule being kept where
+     keeping it costs something.
+   ============================================================ */
+.ad-well {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--sp-6) var(--sp-6);
+}
+/* A MEASURE, NOT A STRETCH. At 1600 an unbounded grid made the
+   drawing's door 1300px wide with a 40px mark in the corner of it —
+   generous and empty are the two densities allowed and that was
+   neither. Bounded, the bands read as one block under the name. */
+.ad-well > * {
+  max-width: 1080px;
+}
+.ad-head {
+  max-width: 62ch;
+  margin-bottom: var(--sp-6);
+}
+.ad-eyebrow {
+  margin: 0 0 var(--s-2);
+  color: var(--fg-tertiary);
+}
+/* `ds-hero` carries the face, the clamp and the tracking; the only
+   thing said here is the colour and that it does not wrap into the
+   grid below it. */
+.ad-name {
+  margin: 0;
+  color: var(--fg);
+}
+/* THE ONE LINE THE WHOLE STAGE GETS (§1a). */
+.ad-say {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+
+.ad-band + .ad-band {
+  margin-top: var(--sp-6);
+}
+.ad-band-name {
+  margin: 0 0 var(--s-3);
+  color: var(--fg-tertiary);
+}
+.ad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--s-3);
+}
+
+.ad-door {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px var(--s-3);
+  min-height: 84px;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--grad-surface);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.ad-door:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
+  transform: translateY(-1px);
+}
+/* 0.994 ON A CARD, not 0.97 — a 7px shrink on a 236px card reads
+   as a glitch (§4). The hover lift goes at the same moment. */
+.ad-door:active {
+  transform: scale(0.994);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  transition-duration: var(--d-press);
+}
+.ad-door:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* the first door is the drawing, and it is the widest thing in the
+   band because it is the surface every other door is about */
+.ad-door.is-wide {
+  grid-column: 1 / -1;
+}
+/* A DOOR WITH NO HONEST FIGURE carries none, and its name takes the
+   whole box rather than sitting above an empty line. */
+.ad-door.is-bare {
+  grid-template-rows: auto;
+}
+.ad-door.is-bare .ad-door-mark {
+  grid-row: 1;
+}
+.ad-door.is-bare .ad-door-name {
+  align-self: center;
+}
+.ad-door-mark {
+  grid-row: 1 / 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--blue-wash);
+  color: var(--accent);
+  line-height: 0;
+}
+.ad-door-name {
+  align-self: end;
+  min-width: 0;
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+/* THE ONE FACT. Mono and tabular, because most of them are
+   figures and a column of facts that does not line up is a column
+   somebody reads twice. */
+.ad-door-fact {
+  align-self: start;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+/* THE IMPORT/EXPORT DOOR IS A MENU, not a page, so it keeps its
+   own trigger — one control, one behaviour, one place that knows
+   what an import costs — and takes the door's shape around it. The
+   trigger's own frame goes: two borders inside one card reads as a
+   button somebody forgot to style, which is what it looked like the
+   first time this was driven. */
+.ad-door-io {
+  cursor: default;
+  align-items: center;
+}
+.ad-door-io .io-trigger {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  justify-self: start;
+  padding: 0;
+  height: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+.ad-door-io .io-trigger:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .ad-well {
+    padding: var(--sp-5) var(--sp-4);
+  }
+  .ad-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .ad-grid {
+    grid-template-columns: 1fr;
   }
 }

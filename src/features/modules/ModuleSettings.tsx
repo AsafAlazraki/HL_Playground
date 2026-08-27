@@ -105,12 +105,24 @@ export interface ModuleSettingsProps {
   /** the panel to land on. A door that promised the rules and opened
    *  the top of five panels would not be keeping its promise. */
   focus?: 'rules'
+  /**
+   * Drawn as a TAB of the module's workspace rather than as a page of
+   * its own, so the way out is the tab bar and the back control here
+   * would be a second one pointing at the same place.
+   *
+   * THE HEADING STAYS. Set-up is about the MODULE — Boats — and the
+   * workspace above it may be standing at one brand inside it, so a
+   * page that dropped its own name would be editing "Boats" under a
+   * header saying "Highfield Inflatables" with nothing saying which.
+   */
+  bare?: boolean
 }
 
 export function ModuleSettings({
   module,
   onDone,
   focus,
+  bare,
 }: ModuleSettingsProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -150,10 +162,12 @@ export function ModuleSettings({
             and a button is one of the four things uppercase is never
             for. `Catalogue` is a noun naming what is on the screen you
             land on, which is the same rule the dock's own items keep. */}
-        <button type="button" className="md-set-back" onClick={onDone}>
-          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-          <span>Catalogue</span>
-        </button>
+        {bare ? null : (
+          <button type="button" className="md-set-back" onClick={onDone}>
+            <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+            <span>Catalogue</span>
+          </button>
+        )}
       </header>
 
       <div className="md-set-body">
@@ -185,12 +199,12 @@ function Identity({ module }: { module: ModuleDef }): ReactElement {
   return (
     <section className="md-panel">
       <h3 className="md-panel-name mono-label">What it is called</h3>
-      <p className="md-panel-say">
-        Your words, on the dashboard card and at the top of this place. Nothing here is
-        worked out from the name — a module called Yamaha Repower says what you say it
-        says.
-      </p>
-
+      {/* THE PARAGRAPH THAT STOOD HERE IS GONE. It explained that a
+          name is your words and is not worked out from anything —
+          which is what a text field labelled Name already says, 18px
+          below it. Measured on this surface: 74% of its visible words
+          were the app narrating itself, and three paragraphs like
+          this one were most of that. */}
       <label className="md-field">
         <span className="mono-label">Name</span>
         <input
@@ -277,12 +291,9 @@ function Mark({
   return (
     <section className="md-panel">
       <h3 className="md-panel-name mono-label">Its mark</h3>
-      <p className="md-panel-say">
-        The badge you already use for this place — the brand you sell, the workshop’s
-        sign. It is optional: a module with no mark shows the symbol for what its tables
-        hold, in this module’s colour, which already reads as itself.
-      </p>
-
+      {/* No paragraph: the plate beside the control already shows
+          what a module with no mark looks like, which is the whole of
+          what the sentence here used to say. */}
       <div className="md-mark">
         <span className="md-mark-plate">
           {module.logo ? (
@@ -354,11 +365,15 @@ function Mark({
         </p>
       ) : null}
 
-      <p className="md-set-note">
-        A file under 96 KB is stored exactly as it is. Anything larger is redrawn to fit{' '}
-        {LOGO_MAX_EDGE} pixels — a mark is drawn at 22 to 56 pixels on screen, and a
-        photograph carried whole would travel inside this module through every save and
-        every export. An address is stored as an address and costs nothing.
+      {/* THE CEILING IS SAID WHERE IT BITES, NOT IN ADVANCE. This was
+          a standing four-line paragraph about 96 KB and 512 pixels,
+          on screen whether or not anybody had ever picked a file.
+          `shrinkNote` says what actually happened to the file that
+          was chosen, and `sizeSay` says why one was refused — both
+          above, both at the moment they are true. The bound itself is
+          on the control, for a person who wants it before they pick. */}
+      <p className="md-set-note mono-label">
+        Under 96 KB kept as is · larger redrawn to {LOGO_MAX_EDGE}px
       </p>
     </section>
   )
@@ -413,9 +428,8 @@ function Access({ module }: { module: ModuleDef }): ReactElement {
       <p className={`md-set-state${open ? ' is-open' : ''}`}>
         {open ? (
           <>
-            <strong>{module.name} is open to everyone.</strong> Nothing has been
-            restricted here. The moment you tick one box below, only the roles with a
-            tick may act in this module — everybody else may do nothing here.
+            <strong>{module.name} is open to everyone.</strong> Tick a box below and
+            only the ticked roles may act here.
           </>
         ) : (
           <>
@@ -428,9 +442,8 @@ function Access({ module }: { module: ModuleDef }): ReactElement {
 
       {/* WHAT IS NOT TRUE YET, SAID WHERE IT WOULD BE ASSUMED. */}
       <p className="md-set-note">
-        Nobody signs in to this build, so nothing here is enforced today. What you set is
-        recorded on the module, travels with it, and is what will be enforced the day
-        people sign in.
+        Nobody signs in to this build, so nothing here is enforced yet. It is recorded
+        and travels with the module.
       </p>
 
       {roles.length === 0 ? (
@@ -538,11 +551,9 @@ function Attached({ module }: { module: ModuleDef }): ReactElement {
   return (
     <section className="md-panel">
       <h3 className="md-panel-name mono-label">What is attached to it</h3>
-      <p className="md-panel-say">
-        Everything this place reaches, counted off your own sheet rather than filled in on
-        a form. Point the module at another table and every line here moves with it.
-      </p>
-
+      {/* No paragraph. Every line below is a counted fact off the
+          sheet, and a list of counted facts does not need to be
+          introduced as one. */}
       <ul className="md-atts">
         {things.map((thing) => (
           <Attachment key={thing.key} thing={thing} />

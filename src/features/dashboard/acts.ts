@@ -10,9 +10,9 @@
    feature be tested and read without a router.
 
    IT IS ONE INTERFACE RATHER THAN TEN PROPS SO THAT A CARD CAN
-   BE HANDED THE WHOLE SET. Seven card bodies each need two or
-   three of them; threading them individually through a switch
-   would be forty props that all mean "go there".
+   BE HANDED THE WHOLE SET. Each card body needs two or three of
+   them; threading them individually through a switch would be
+   forty props that all mean "go there".
 
    NOTHING HERE WRITES. No verb on this page changes the price
    file, so the dashboard needs no undo of its own for anything

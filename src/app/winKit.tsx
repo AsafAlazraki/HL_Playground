@@ -8,7 +8,7 @@
    ============================================================ */
 
 import type { ReactNode } from 'react'
-import type { EntityDef } from '@/types/model'
+import type { EntityDef, TableKind } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import { HomeStage } from './HomeStage'
@@ -84,6 +84,28 @@ export type Stage =
   | { kind: 'module'; moduleId: string | null; tab?: ModuleTab }
   | { kind: 'customer'; customerId: string | null }
   /* ============================================================
+     THE CATALOGUE — agreed with the CATALOGUE agent (territory
+     key: `catalogue`). "The screen that does not exist today and
+     should be the most-used in the app" (PHASE_TWO §2.2): a
+     photographic grid entered by KIND, with the register as a
+     density toggle on it rather than as the front door.
+
+     `kindKey` is which door was pressed — boat, motor, trailer,
+     accessory — or `null` for everything at once, which is what
+     Ctrl+K and the landing screen's "browse it all" want.
+     `TableKind` rather than a free string, so a door can only ever
+     name a kind the model has.
+
+     WHAT IT DRAWS TODAY, SAID PLAINLY RATHER THAN STUBBED: the
+     gallery of tables, which is a real screen and the closest
+     honest answer until the catalogue exists. Nothing in this
+     application routes here yet — the rail's four doors do not,
+     and Admin's do not — so no door currently lands on the wrong
+     screen. The catalogue agent replaces ONE line in `renderStage`
+     below, marked with the same words, and the seam is done.
+     ============================================================ */
+  | { kind: 'catalogue'; kindKey: TableKind | null }
+  /* ============================================================
      ADMIN — the drawing, the tables, the rules, what fits what,
      who may do what, and the two doors a file comes in and goes
      out by. Eight doors came off the rail into one stage; see
@@ -122,7 +144,11 @@ export const winKey = (s: Stage): string =>
         ? `module:${s.moduleId ?? 'dash'}`
         : s.kind === 'customer'
           ? `customer:${s.customerId ?? 'list'}`
-          : s.kind
+          : s.kind === 'catalogue'
+            ? /* one window per DOOR — Boats and Motors are two
+                 places, the way two modules are */
+              `catalogue:${s.kindKey ?? 'all'}`
+            : s.kind
 
 /** THE TOP OF THE DESKTOP, measured rather than guessed.
 
@@ -177,6 +203,7 @@ export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNo
   if (s.kind === 'module') return s.moduleId ? 'Module' : 'Modules'
   if (s.kind === 'customer') return s.customerId ? 'Customer' : 'Customers'
   if (s.kind === 'admin') return 'Admin'
+  if (s.kind === 'catalogue') return 'Catalogue'
   const e = entities[s.entityId]
   if (!e) return 'Table'
   const mark = <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.tiny} />
@@ -290,6 +317,21 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           onNewTable={h.newTable}
         />
       )
+    case 'catalogue':
+      /* THE ONE LINE THE CATALOGUE AGENT REPLACES. Until their
+         surface exists this door lands on the gallery of tables —
+         a real screen, not a placeholder — and nothing in the app
+         routes here yet, so no door currently lands on the wrong
+         one. `s.kindKey` is the door that was pressed and is what
+         the catalogue filters by; it is deliberately read here so
+         the field cannot be dropped as unused. */
+      return (
+        <HomeStage
+          key={s.kindKey ?? 'all'}
+          onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
+          onNewTable={h.newTable}
+        />
+      )
     case 'table':
       return (
         <TableStage
@@ -365,6 +407,7 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           onOpenModule={(moduleId) =>
             h.openWin({ kind: 'module', moduleId, tab: 'settings' })
           }
+          user={h.user ?? null}
           onClose={h.close}
         />
       )

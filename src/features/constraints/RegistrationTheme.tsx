@@ -166,8 +166,9 @@ function BandCheckBlock({
       <p className="cn-rg-check-head">
         {check.tested === 0 ? (
           <>
-            No trailer here carries both a registration band and a rated weight, so this
-            check has nothing to compare. It is not passing — it has not run.
+            {/* A CHECK THAT HAS NOT RUN MUST NEVER READ AS ONE THAT
+                PASSED — a refusal keeps its sentence. */}
+            Nothing here carries both a band and a rated weight. This check has not run.
           </>
         ) : n === 0 ? (
           <>
@@ -184,15 +185,25 @@ function BandCheckBlock({
       {n > 0 && (
         <ul className="cn-rg-list">
           {check.disagreements.map((d) => (
-            <li key={`${d.tableName}:${d.rowLabel}`} className="cn-rg-row">
+            /* A ROW WHOSE OWN BAND CONTRADICTS ITS WEIGHT IS A WARNING,
+               and it was drawn in the same grey as everything else on
+               the page. `.s-warned` — a --warning rail from ds.css —
+               and `.s-held` for one already withheld from anything a
+               customer sees, which is a different fact and had the same
+               appearance. Nothing is corrected either way. */
+            <li
+              key={`${d.tableName}:${d.rowLabel}`}
+              className={`cn-rg-row ${d.heldBack ? 's-held' : 's-warned'}`}
+            >
               <p className="cn-rg-row-name">
                 {d.rowLabel}
                 <span className="cn-rg-row-table">{d.tableName}</span>
               </p>
               <p className="cn-rg-row-fact">
-                Registered <b>{d.band}</b>, which its own words say is {d.says} — and this
-                one is rated {d.atmKg.toLocaleString('en-AU')} kg.
-                {d.heldBack ? ' This row is already held back from anything a customer sees.' : ''}
+                Registered <b>{d.band}</b>, {d.says} — rated{' '}
+                {d.atmKg.toLocaleString('en-AU')} kg.
+                {/* "already held back" is the rail on this row now, and
+                    the rail says it on every one of them at once */}
               </p>
               <p className="cn-wb-src">
                 {d.source} · read from {d.readFrom}

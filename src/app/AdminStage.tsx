@@ -46,7 +46,7 @@
    in Shell.tsx.
    ============================================================ */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { ReactElement } from 'react'
 import {
   ArrowLeft,
@@ -66,6 +66,12 @@ import { isRetired } from '@/types/model'
 import { useConstraints } from '@/features/constraints'
 import { AccessScreen } from '@/features/modules'
 import { ImportExportMenu } from '@/features/io'
+import {
+  archiveVersion,
+  listConfigurations,
+  subscribeToArchive,
+} from '@/features/tenancy'
+import type { AppUser } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
 
@@ -88,6 +94,10 @@ export interface AdminStageProps {
   onOpenConfigurations: () => void
   /** one module's own set-up, from the access grid */
   onOpenModule: (moduleId: string) => void
+  /** who is signed in. Their `orgSlug` scopes the saved
+   *  configurations, which is the one figure on this screen that
+   *  cannot be read straight off the project. */
+  user: AppUser | null
   onClose: () => void
 }
 
@@ -101,14 +111,17 @@ function Door({
 }: {
   glyph: Icon
   name: string
-  fact: string
+  /** ONE fact, and only when there is an honest one. A door whose
+   *  figure has not resolved — or has none to give — carries no
+   *  line rather than a placeholder; the name centres instead. */
+  fact?: string
   wide?: boolean
   onPick: () => void
 }): ReactElement {
   return (
     <button
       type="button"
-      className={`ad-door${wide ? ' is-wide' : ''}`}
+      className={`ad-door${wide ? ' is-wide' : ''}${fact ? '' : ' is-bare'}`}
       onClick={onPick}
     >
       <span className="ad-door-mark" aria-hidden="true">
@@ -118,7 +131,7 @@ function Door({
       {/* THE ONE FACT. Mono, tabular, because most of them are
           figures and a column of facts that do not line up on the
           decimal is a column somebody has to read twice. */}
-      <span className="ad-door-fact">{fact}</span>
+      {fact ? <span className="ad-door-fact">{fact}</span> : null}
     </button>
   )
 }
@@ -131,6 +144,7 @@ export function AdminStage({
   onOpenFitment,
   onOpenConfigurations,
   onOpenModule,
+  user,
   onClose,
 }: AdminStageProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
@@ -142,6 +156,35 @@ export function AdminStage({
   /* WHOSE SET-UP IS ON SCREEN. Held here rather than in the shell's
      Stage union — see the header. */
   const [showing, setShowing] = useState<'index' | 'access'>('index')
+
+  /* HOW MANY WORKING SETS THIS ORGANISATION HAS SAVED. The one
+     figure on this screen that is not in the project: the archive is
+     asked, asynchronously, and re-asked when it changes — the same
+     pair `ConfigurationsPanel` uses, so the door and the sheet
+     behind it can never disagree. `null` until it answers and if it
+     never answers: the door carries no fact rather than a zero it
+     has not earned. */
+  const version = useSyncExternalStore(
+    subscribeToArchive,
+    archiveVersion,
+    archiveVersion,
+  )
+  const [saved, setSaved] = useState<number | null>(null)
+  useEffect(() => {
+    if (!user) return
+    let live = true
+    void listConfigurations(user.orgSlug).then(
+      (list) => {
+        if (live) setSaved(list.length)
+      },
+      () => {
+        if (live) setSaved(null)
+      },
+    )
+    return () => {
+      live = false
+    }
+  }, [user, version])
 
   /* Escape is the control in track 1 of the bar, on the keyboard.
      Inside the access screen it is that screen's own way back, so the
@@ -173,7 +216,7 @@ export function AdminStage({
 
   return (
     <div
-      className="ad"
+      className="shell-viewstage ad"
       role="region"
       aria-label="Admin"
       /* Delete and Backspace stop at this root, the same line every
@@ -290,7 +333,11 @@ export function AdminStage({
               <Door
                 glyph={Archive}
                 name="Saved configurations"
-                fact="this organisation's working sets"
+                fact={
+                  saved === null
+                    ? undefined
+                    : one(saved, 'working set', 'working sets')
+                }
                 onPick={onOpenConfigurations}
               />
               {/* THE TWO DOORS A FILE COMES IN AND GOES OUT BY. It is

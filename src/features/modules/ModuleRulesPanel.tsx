@@ -159,17 +159,14 @@ export function ModuleRulesPanel({ module, tables }: ModuleRulesPanelProps): Rea
       aria-label={`The rules ${module.name} goes by`}
     >
       <h3 className="md-panel-name mono-label">The rules it goes by</h3>
-      <p className="md-panel-say">
-        Every rule here names a column on a table this module is about. Nothing is assigned:
-        point this module at another table and the rules it goes by change with it.
-      </p>
+      {/* NO PARAGRAPH UNDER THE HEADING. It said every rule here
+          names a column on a table this module is about — which is
+          what the two captions below already say by naming them. */}
 
       {/* -- 1 · WHAT MUST ALWAYS BE TRUE ----------------------- */}
       <div className="md-rules-well">
         <p className="md-rules-cap mono-label">What must always be true</p>
         <p className="md-rules-say">
-          A limit has no output — you can only ever break it. Switch one off and everything
-          it ruled out comes straight back.
           {limits.length > 0 ? (
             <>
               {' '}
@@ -219,10 +216,9 @@ export function ModuleRulesPanel({ module, tables }: ModuleRulesPanelProps): Rea
       {/* -- 2 · WHAT THIS PLACE WORKS OUT ---------------------- */}
       <div className="md-rules-well">
         <p className="md-rules-cap mono-label">What this place works out</p>
-        <p className="md-rules-say">
-          A derivation has no truth value — it walks the rows and hands back a list. These are
-          drawn in <b>Fitment</b> on the bar; the switch here is the same switch.
-        </p>
+        {/* The sentence that stood here explained what a derivation
+            is. The rows below name each one and carry its own switch,
+            which is the explanation. */}
 
         {flows.length === 0 ? (
           <p className="md-rules-none">

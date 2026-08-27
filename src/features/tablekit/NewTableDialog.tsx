@@ -680,10 +680,15 @@ export function NewTableDialog({
                 that would read as seven alternatives if they shared a
                 grid. */}
             <div className="tk-csv-door">
+              {/* THE PROMISE STAYS, THE DESCRIPTION GOES. "Nothing is
+                  created until you press the button" is the sentence
+                  that makes a person willing to try the door — and it
+                  is the one thing the button next to it does not say.
+                  What the reader does with the columns is the whole of
+                  the next screen. */}
               <p className="tk-csv-door-say">
-                Already have it in a spreadsheet? Choose a CSV and this reads its own
-                columns — one column here for each column there, typed from the values in
-                it. You check every one before anything is made.
+                Already have it in a spreadsheet? You check every column before anything is
+                made.
               </p>
               <button type="button" className="btn tk-csv-door-pick" onClick={pickCsv}>
                 Read a CSV
@@ -782,10 +787,7 @@ export function NewTableDialog({
                   )
                 })}
                 {levels.length > 0 && (
-                  <p className="tk-lvl-hint">
-                    These levels are yours — click one to rename it, × takes it
-                    out.
-                  </p>
+                  <p className="tk-lvl-hint">Click to rename, × to remove.</p>
                 )}
               </div>
 

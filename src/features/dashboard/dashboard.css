@@ -88,37 +88,51 @@
   z-index: 0;
 }
 
+/* ------------------------------------------------------------
+   IT MUST NOT SCROLL, AND BEFORE THIS PASS IT ALWAYS DID.
+
+   Measured in the browser on the real project, resting state,
+   `.dsh-in` overflowed its box by:
+
+       1600x1000     0px
+       1600x760    180px
+       1440x900     51px
+       1280x800    469px
+       1024x768    799px
+        768x900    750px
+
+   The cause was a fixed-height grid stacked into a scroller: the
+   cards were as tall as their content and the page absorbed the
+   difference. So the column is a FLEX COLUMN now — the greeting
+   and the fast actions take what they need, the grid takes the
+   rest, and the cards size to the space they are given rather
+   than the space they would like.
+
+   WHAT SCROLLS INSTEAD, and it is never the page: a card's BODY,
+   inside its own box, when its list is longer than the room the
+   row has. And if the viewport is too short even for the row
+   minimum, the GRID scrolls inside its own box — the same
+   discipline the modules grid keeps. `body` never scrolls
+   horizontally at any width.
+   ------------------------------------------------------------ */
 .dsh-in {
   position: relative;
   z-index: 1;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: var(--s-10) var(--s-8) var(--s-16);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--s-6) var(--s-8) var(--s-6);
 }
 
-/* THE COLUMN, AND WHY IT IS WIDER THAN IT WAS.
-
-   It was 1180px. Measured on the real shell at a 1600px window:
-   the rail takes 264, the page padding 64, leaving 1336 — so
-   156px of the column the dashboard had been given was drawn as
-   nothing, three 380px cards floated left of a permanent gutter,
-   and the module descriptions clamped at two lines while the
-   space they wanted sat empty beside them.
-
-   1440 is the first stop that FILLS 1600 (1336 < 1440, so the
-   cap does not bind and the grid takes the lot) and still holds
-   a reading limit at 1920 and beyond, where an uncapped grid
-   would run a row of nine cards across a monitor. The paragraph
-   under the greeting keeps its own 62ch and is unaffected. */
-.dsh-head,
-.dsh-hint,
-.dsh-fast,
-.dsh-tray,
-.dsh-grid,
-.dsh-bare {
-  max-width: 1440px;
-  margin-inline: auto;
+/* ARRANGE MODE IS A MODE, NOT THE SCREEN. It adds a tray holding
+   every card and every link this build has; squeezing that into a
+   fixed box would hand somebody a 40px list to pick from. It is
+   entered deliberately and left the same way, and the no-scroll
+   promise is about the dashboard a person lands on. */
+.dsh-in.is-arranging {
+  overflow-y: auto;
 }
 
 /* ============================================================
@@ -131,7 +145,7 @@
   justify-content: space-between;
   gap: var(--s-6);
   flex-wrap: wrap;
-  margin-bottom: var(--s-6);
+  margin-bottom: var(--s-5);
 }
 
 .dsh-head-say {
@@ -149,15 +163,37 @@
   color: var(--fg-tertiary);
 }
 
-/* Archivo, through the one step that reaches it above 26px. */
+/* ------------------------------------------------------------
+   THE ONE BIG THING, AND IT IS A WHOLE TYPE STEP.
+
+   Measured before this pass: the largest type on the dashboard
+   was 34px at 1600 and 26px at 1024, across seven sizes. Seven
+   sizes with a 34px ceiling is not a hierarchy, it is the absence
+   of one, and a screen whose largest element is 34px has no focal
+   point at all.
+
+   `--t-display-lg` tops out at 34px, so this is declared here —
+   size, weight, leading and tracking together (§2 rule 6), with
+   the tracking negative because the size is large (rule 7). It is
+   Archivo through `--font-hero`, and its FLOOR is 38px: §2 bars
+   the display face below 26px and there is no width at which this
+   clamp can reach it.
+
+   THE CLAMP TAKES THE SMALLER OF TWO MEASURES. `cqi` is the
+   column, because the rail collapses and one viewport width is
+   two different dashboard widths; `vh` is there because this
+   screen must FIT, and a 72px greeting on a 700px-tall window is
+   a tenth of the room the cards need. Whichever is tighter wins.
+   ------------------------------------------------------------ */
 .dsh-hail {
   margin: 0;
   color: var(--fg);
-}
-
-.dsh-who {
-  margin: 0;
-  color: var(--fg-secondary);
+  font-family: var(--font-hero);
+  font-size: clamp(38px, min(5.4cqi, 8.6vh), 72px);
+  font-weight: 680;
+  line-height: 1.02;
+  letter-spacing: -0.034em;
+  overflow-wrap: anywhere;
 }
 
 .dsh-head-acts {
@@ -215,23 +251,12 @@
   align-items: center;
 }
 
-/* Said once, until the person changes something. It sits under
-   the greeting and on the same left edge as everything else —
-   `margin-inline: auto` (shared with the blocks above) would
-   centre a 62ch paragraph in a 1180px column and leave it
-   floating in the middle of the page with nothing under it. */
-.dsh-hint {
-  margin: 0 0 var(--s-5);
-  color: var(--fg-secondary);
-  max-width: 62ch;
-}
-
 /* ============================================================
    THE FAST ACTIONS
    ============================================================ */
 
 .dsh-fast {
-  margin-bottom: var(--s-6);
+  margin-bottom: var(--s-5);
 }
 
 .dsh-fast-row {
@@ -460,9 +485,28 @@
    THE GRID OF CARDS
    ============================================================ */
 
-/* 340, NOT 320. The two numbers pick different column counts on
-   every width this app is used at, and 340 is the one that keeps
-   a card wide enough to hold a boat's name on one line:
+/* ------------------------------------------------------------
+   THE GRID, AND WHAT CHANGED IN IT.
+
+   IT TAKES THE ROOM THAT IS LEFT AND DIVIDES IT. `grid-auto-rows:
+   minmax(176px, 1fr)` is the whole of "the cards size to the
+   space rather than a fixed grid overflowing": every row is an
+   equal share of what the column has after the greeting and the
+   fast actions, and 176px is the floor below which a card is a
+   header and a scrollbar. When even that does not fit — a 600px
+   window with three rows in it — the GRID scrolls inside its own
+   box and the page still does not.
+
+   `align-items` is gone with it. `start` was right when a card
+   was as tall as its content and the page absorbed the
+   difference; now the row IS the height and every card fills it,
+   which is what puts the three cards of the default set on one
+   line with their feet aligned at 1600.
+
+   340, NOT 320, and that decision stands. The two numbers pick
+   different column counts on every width this app is used at, and
+   340 is the one that keeps a card wide enough to hold a boat's
+   name on one line:
 
      column        340                320
      1280 window   2 cols  x 466px    2 cols x 466px
@@ -470,77 +514,129 @@
      1600 window   3 cols  x 432px    4 cols x 314px
      1920 window   4 cols  x 345px    4 cols x 345px
 
-   At 1600 the 320 track buys a fourth column by making every card
-   narrower than the 380 they already were, which is the opposite
-   of the complaint. `auto-fill` rather than `auto-fit` on purpose:
-   with two cards on the page, auto-fit would stretch them across
-   the whole 1440 and a dashboard of two cards would draw as two
-   billboards.
-
-   ALIGN-ITEMS: START IS DELIBERATE AND WAS RE-DECIDED. `stretch`
-   makes every card in a row the height of the tallest, which
-   aligns their feet and looks tidy — and on this page puts a
-   one-sentence empty card in a 434px box beside the modules card,
-   which is 300px of nothing inside a border. A card is as tall as
-   what is in it. */
+   `auto-fill` rather than `auto-fit` on purpose: with two cards
+   on the page, auto-fit would stretch them across the whole 1440
+   and a dashboard of two cards would draw as two billboards.
+   ------------------------------------------------------------ */
 .dsh-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-auto-rows: minmax(176px, 1fr);
   gap: var(--s-5);
-  align-items: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ------------------------------------------------------------
-   A CARD THAT ASKS FOR TWO COLUMNS, AND THE TWO CONDITIONS ON IT.
+   ONE CARD ASKS FOR TWO COLUMNS, AND THE TWO CONDITIONS ON IT.
 
-   `data-wide` is set from `CardMeta.wide` (cards.ts) by the three
-   cards that draw a list of named things with a figure on the
-   right. The grid grants it only when:
+   `data-wide` is set from `CardMeta.wide` (cards.ts) by the one
+   card that carries a filter row AND a list of named things with
+   money on the right. The grid grants it only when:
 
-     1. there are at least three columns to spend. At two, a
-        span-2 card is a full-width band, and a dashboard of
-        full-width bands is a list with borders on it. 1120px of
-        column is the first width that fits three 340px tracks
-        plus their gaps inside the page's own padding.
+     1. there are at least four tracks to spend. At two, a span-2
+        card is a full-width band, and a dashboard of full-width
+        bands is a list with borders on it.
 
      2. the card is not currently empty. `:has()` lets the GRID
         react to a state its child owns, so the width follows the
-        content rather than the id — a "My quotes" with nothing in
+        content rather than the id — a quotes card with nothing in
         it takes one column, and takes the second the day it has
-        five quotes to line up. This is the whole of "cards should
-        size to their content".
+        five quotes to line up.
    ------------------------------------------------------------ */
 @container dsh (min-width: 1300px) {
-  /* FOUR EXPLICIT TRACKS, and this is the arithmetic that decided
-     it. The default set is three compact cards and two wide ones,
-     and the grid has to swallow 3x1 + 2x2 = 7 cells:
+  /* FOUR TRACKS, BUT ONLY WHEN THERE IS A WIDE CARD TO FILL THEM.
+     The set a person starts with is one wide card and two compact
+     ones — 2 + 1 + 1 = 4 cells, one full row, no hole, and
+     `cards.test.ts` checks that multiple.
 
-       3 tracks  |  c c c | W W . | P P . |   two holes, stacked
-                    into one empty column down the right — which
-                    is the "does not fill 1600" complaint restated
-                    one layer down.
-       4 tracks  |  c c c W | W P P . |  ... no: the wide card
-                    cannot break across a row, so it wraps whole:
-                 |  c c c . | W W P P |   one hole, 300px wide.
-
-     And once the person has quoted anything, "My quotes" stops
-     being empty and takes its second column:
-
-                 |  Q Q c c | W W P P |   no holes at all.
+     THE DAY THE QUOTES CARD IS EMPTY THAT ARITHMETIC BREAKS, and
+     it broke on the first screen this pass drew: an unquoted
+     dealer got three single cards in four tracks and the fourth
+     was 313px of nothing on the right of the front door,
+     measured. An empty card does not span (below), so the grid
+     asks whether one is actually spanning before laying the
+     track it would go in.
 
      `minmax(0, 1fr)` rather than `1fr`: a 1fr track floors at its
      content's min width, and a module name that will not break
      would push the track — and every track beside it — wider than
-     its share.
-
-     Below 1300 the grid falls back to the auto-fill rule above:
-     at three tracks a span-2 card is two-thirds of a row and
-     strands the third, so no card is wide there. */
+     its share. */
   .dsh-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* `:has()` MAY NOT BE NESTED INSIDE `:has()` — the whole
+     selector is thrown away if you try, silently, and the first
+     version of this rule was `:has(> .dsh-card[data-wide]:not(:has(
+     .dsh-empty)))`. It parsed as invalid, the override never
+     applied, and a populated quotes card spanned two of three
+     tracks and pushed the price file onto a second row. `:not()`
+     around a `:has()` is legal; `:has()` inside one is not. */
+  .dsh-grid:has(.dsh-card[data-wide]):not(:has(.dsh-card[data-wide] .dsh-empty)) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .dsh-card[data-wide]:not(:has(.dsh-empty)) {
+    grid-column: span 2;
+  }
+
+  /* and the three-track case at this width — no wide card, or one
+     that is currently empty — takes the same no-hole arithmetic as
+     the range below it */
+  .dsh-grid:not(:has(.dsh-card[data-wide])) > .dsh-card:not(.dsh-add):nth-last-child(1):nth-child(3n + 1),
+  .dsh-grid:has(.dsh-card[data-wide] .dsh-empty) > .dsh-card:not(.dsh-add):nth-last-child(1):nth-child(3n + 1) {
+    grid-column: span 3;
+  }
+
+  .dsh-grid:not(:has(.dsh-card[data-wide])) > .dsh-card:not(.dsh-add):nth-last-child(1):nth-child(3n + 2),
+  .dsh-grid:has(.dsh-card[data-wide] .dsh-empty) > .dsh-card:not(.dsh-add):nth-last-child(1):nth-child(3n + 2) {
+    grid-column: span 2;
+  }
+}
+
+/* ------------------------------------------------------------
+   AND NO HOLES ANYWHERE ELSE EITHER: THE LAST CARD TAKES WHAT IS
+   LEFT OF ITS ROW.
+
+   Measured on the default three cards, before this rule: a hole
+   at 1920, 1600, 1280, 1180 and 1024 — five of the ten widths
+   driven — because three cards do not divide by two tracks and
+   the leftover was drawn as a card-shaped absence. A full-width
+   card at the foot of the grid is a worse composition than three
+   equal ones and a better one than a gap.
+
+   IT IS WRITTEN AS ARITHMETIC ON THE TRACK COUNT, which is why
+   the ranges below are exact rather than round: the column is the
+   window minus a rail that collapses, so the numbers come from
+   driving it — 2 tracks hold between 764px and 1123px of column,
+   3 above that.
+
+   The wide card's span makes `nth-child` a lie about which column
+   a card starts in, so the three-track rules stand down while one
+   is spanning. At four tracks the arithmetic already divides.
+
+   AND IT STANDS DOWN WHILE ARRANGING. `:nth-last-child(1)` stops
+   matching any card the moment the Add tile joins the grid as the
+   last child, which is what we want: a full-width "Add a card — 3
+   left" was 1,152px of dashed rectangle, and in a mode whose whole
+   purpose is moving cards about, the leftover track is where the
+   next one goes.
+   ------------------------------------------------------------ */
+@container dsh (min-width: 764px) and (max-width: 1123px) {
+  .dsh-grid > .dsh-card:not(.dsh-add):nth-last-child(1):nth-child(odd) {
+    grid-column: span 2;
+  }
+}
+
+@container dsh (min-width: 1124px) and (max-width: 1299px) {
+  .dsh-grid > .dsh-card:not(.dsh-add):nth-last-child(1):nth-child(3n + 1) {
+    grid-column: span 3;
+  }
+
+  .dsh-grid > .dsh-card:not(.dsh-add):nth-last-child(1):nth-child(3n + 2) {
     grid-column: span 2;
   }
 }
@@ -549,6 +645,12 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* THE CARD IS AS TALL AS ITS ROW, NOT AS TALL AS ITS LIST. The
+     row is a share of the space the page has left; `min-height: 0`
+     is what lets the body inside it be shorter than its content
+     and scroll, rather than pushing the grid past the bottom of
+     the viewport. */
+  min-height: 0;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--grad-surface);
@@ -590,23 +692,12 @@
   background: none;
   box-shadow: none;
   border-color: var(--line);
-  /* AND IT IS THE ONE CARD THAT TAKES ITS ROW'S HEIGHT.
-
-     `align-items: start` on the grid is right for a card with
-     something in it — a filled card is as tall as its contents,
-     and stretching one leaves paper with nothing on it. An empty
-     card is not paper. It is an outline, and an outline that
-     matches the row it is in reads as a slot waiting rather than
-     as a short box that fell out of the row: measured on the
-     first-run set at 1600, the notch between a 137px empty card
-     and the 254px card beside it was the loudest hole on the
-     page, and it was a hole made entirely of nothing.
-
-     This is why the flat treatment above had to come first. The
-     same stretch applied to a lifted white card would be 120px
-     of blank paper inside a border, which is the reason the grid
-     is not simply `align-items: stretch`. */
-  align-self: stretch;
+  /* AND IT NO LONGER NEEDS `align-self: stretch`. It had it
+     because the grid was `align-items: start` and an empty card
+     fell short of the row it was in, leaving the loudest hole on
+     the page. The grid's rows are now an equal share of the
+     column's height and every card fills its own, so the notch
+     that rule existed to close cannot open. */
 }
 
 /* the mark on an unwritten card steps back with the ground it
@@ -642,6 +733,7 @@
   align-items: center;
   gap: var(--s-2);
   padding: var(--s-4) var(--s-4) var(--s-2);
+  flex: none;
 }
 
 .dsh-card-mark {
@@ -663,6 +755,9 @@
   display: flex;
   flex-direction: column;
   padding: 0 var(--s-2) var(--s-2);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ============================================================
@@ -708,11 +803,16 @@
 }
 
 /* THE ONE A PERSON READS FIRST. It leads by SIZE and by INK, and
-   never by the accent — see the header. */
+   never by the accent — see the header. It was a flat 30px; it is
+   a clamp on the COLUMN now, because the card it sits in is one
+   of four tracks at 1600 and the whole width at 768, and a figure
+   that is the same size in both is the same "nothing is bigger
+   than anything else" this pass exists to fix. It floors at 30px,
+   which is where it was. */
 .dsh-fig-n.is-lead {
-  font-size: 30px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: clamp(30px, 3.2cqi, 44px);
+  line-height: 1.06;
+  letter-spacing: -0.022em;
   color: var(--fg);
 }
 
@@ -746,11 +846,43 @@
    A ROW DARKENS RATHER THAN SCALING (§4) so its neighbours never
    look like they moved. */
 
+/* THE LIST IS THE THING THAT SCROLLS, AND IT IS THE ONLY THING.
+   It was the whole card body for one build, and the way out of the
+   card went with it: "All 9 modules" was scrolled off the bottom
+   of the modules card at 1600x1000 and clipped mid-word. The
+   filters above and the door below are chrome — they stay put, and
+   the rows move under them. */
 .dsh-list {
   display: flex;
   flex-direction: column;
+  /* `0 1 auto`, NOT `1 1 auto`. It may SHRINK to whatever the row
+     left it — that is what makes it the thing that scrolls — but
+     it may not GROW: a four-row list stretched down a 780px card
+     pushed "All quotes" to the very foot and left 400px of white
+     between the last quote and the way out. The rows sit under the
+     filters, the door sits under the rows, and the space the card
+     did not need is at the bottom where it reads as room rather
+     than as a gap. */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 }
 
+/* THE RAIL GUTTER IS ALWAYS THERE, LIT OR NOT. `.k-rail` (ds.css)
+   sets a 3px left border in the kind's hue; a row without a kind
+   declares the same border transparent, so a list of mixed rows
+   keeps one left edge for its names instead of stepping in and
+   out by three pixels per row.
+
+   AND THE LIT ONE IS RE-STATED BELOW rather than left to ds.css.
+   `.dsh-row` and `.k-rail` are the same specificity and this file
+   is imported by the component, which puts it AFTER ds.css in the
+   cascade — so the transparent gutter silently won and the rails
+   did not draw at all on the first screen this pass rendered.
+   That is exactly the class of failure `check-styles` cannot see:
+   green build, green guard, colourless page. */
 .dsh-row {
   display: flex;
   align-items: center;
@@ -759,12 +891,17 @@
   min-height: var(--h-row);
   padding: var(--s-2) var(--s-3);
   border: 0;
+  border-left: 3px solid transparent;
   border-radius: var(--r-control);
   background: none;
   color: var(--fg);
   text-align: left;
   cursor: pointer;
   transition: background var(--d-fast) var(--ease);
+}
+
+.dsh-row.k-rail {
+  border-left-color: var(--kind);
 }
 
 .dsh-row:hover {
@@ -777,32 +914,150 @@
   background: var(--accent-wash);
 }
 
-/* THE KIND'S OWN MARK, IN THE KIND'S OWN HUE — the one place a
-   second colour appears on this page, and the sanctioned form of
-   it (§1: a rail, a dot or a glyph, never a fill behind text).
-   It carries a fact rather than a decoration: `EntityDef.kind` is
-   what the dealer said this table holds, and the same hue marks
-   the same brand in the rail and on the sheet.
+/* ------------------------------------------------------------
+   THE KIND CARRIES A SURFACE HERE, AND THAT IS THE AMENDMENT.
+
+   §1 read "an eighth-note: a 3px rail, a dot or a glyph, never a
+   fill". It now reads that a kind hue may carry a SURFACE — and
+   the surface it carries on this page is the row's own full-height
+   rail, which is what phase one demoted to a 7px dot when the navy
+   chrome arrived and the content area went white-on-white.
+
+   `data-kind` is on the ROW, so one `--kind` feeds both the rail
+   and the glyph and they can never disagree. The hue only ever
+   appears on something that HAS that kind: a module coloured by
+   what it sells, a table by what it holds, a quote by the table
+   its subject came off. Two things of one kind are one colour
+   everywhere in the app.
+
+   AND THE FIGURE IN THE TAIL IS NEVER THE HUE. `.dsh-sum` stays
+   ink and mono however loud the rail beside it is — a price is
+   not decorative, and a count that changed colour with its
+   subject would be the app decorating arithmetic.
 
    THE HUE IS NEVER THE ONLY CARRIER. The glyph is a different
    SHAPE per kind as well as a different colour, so the row reads
-   the same to somebody who cannot tell indigo from amber — which
-   is why this is a symbol and not the 5px dot it started as. */
+   the same to somebody who cannot tell indigo from amber, which
+   is why this is a symbol and not the 5px dot it started as.
+   Measured on the real set, the marks clear 4.09:1 at worst
+   against every ground a row wears — rest, hover and press, in
+   both themes — against a 3:1 floor for a graphical object.
+   ------------------------------------------------------------ */
 .dsh-row-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: none;
-  color: var(--kind-custom);
+  color: var(--kind);
 }
 
-.dsh-row-mark[data-kind='boat'] { color: var(--kind-boat); }
-.dsh-row-mark[data-kind='motor'] { color: var(--kind-motor); }
-.dsh-row-mark[data-kind='trailer'] { color: var(--kind-trailer); }
-.dsh-row-mark[data-kind='accessory'] { color: var(--kind-accessory); }
-.dsh-row-mark[data-kind='package'] { color: var(--kind-package); }
-.dsh-row-mark[data-kind='dealer'] { color: var(--kind-dealer); }
-.dsh-row-mark[data-kind='custom'] { color: var(--kind-custom); }
+/* -- the filters inside the quotes card -----------------------
+   FOUR CHIPS AND A GROUPING, AND THEY ARE NOT KIND-COLOURED. A
+   quote's state is not a kind — it is not what the thing IS — so
+   the discipline that lets a boat be indigo everywhere is exactly
+   what bars a hue here. The one that is on takes the accent,
+   which is one of this screen's four appearances of it. */
+
+.dsh-lenses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-3) var(--s-3);
+  flex: none;
+}
+
+.dsh-lens {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 550;
+  line-height: var(--t-caption-lead);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.dsh-lens:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+/* PRESS ON POINTER-DOWN, and 0.97 is the control scale. */
+.dsh-lens:active {
+  transform: scale(0.97);
+  background: var(--surface-4);
+}
+
+.dsh-lens[aria-pressed='true'] {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+/* THE GROUPING IS NOT ONE OF THE FOUR. It does not narrow the
+   list, it re-gathers it — so it sits apart from the filters with
+   a gap the eye reads as "and also", rather than pretending to be
+   a fifth thing you can be on. */
+.dsh-lens-by {
+  margin-left: auto;
+}
+
+/* the count is mono because it is a figure, and it is ink rather
+   than the accent even inside the chip that is on — §1's rule
+   about a figure, kept in the one place it would be easy to break */
+.dsh-lens-n {
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.dsh-lens[aria-pressed='true'] .dsh-lens-n {
+  color: var(--accent);
+}
+
+/* -- a filter that holds nothing ------------------------------
+   A statement of fact in the place it is true (rule 10), not an
+   apology and not a lecture: there ARE quotes here, none under
+   this chip. */
+.dsh-none {
+  margin: 0;
+  padding: var(--s-2) var(--s-3) var(--s-4);
+  color: var(--fg-secondary);
+}
+
+/* -- the same rows, gathered under who they are for ----------- */
+.dsh-band {
+  display: flex;
+  flex-direction: column;
+}
+
+/* A GROUP CAPTION THAT IS ALSO SOMEBODY'S NAME, which is why it
+   does NOT take `.ds-label`. §2 allows uppercase on a group
+   caption and bars it on a name, and this is both — so the name
+   wins: uppercasing "T. Nguyen" is the lossy act rule 3 is about.
+   It takes the caption step whole rather than borrowing the label
+   step and then undoing the two properties that define it. */
+.dsh-band-name {
+  margin: 0;
+  padding: var(--s-3) var(--s-3) var(--s-1);
+  color: var(--fg-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+}
 
 .dsh-row-main {
   display: flex;
@@ -922,12 +1177,6 @@
 
 .dsh-dot.is-advisory {
   background: var(--warning);
-}
-
-.dsh-note {
-  margin: 0;
-  padding: 0 var(--s-3) var(--s-2);
-  color: var(--fg-secondary);
 }
 
 /* -- the way out of a card ----------------------------------- */
@@ -1298,6 +1547,7 @@
   .dsh-fast-btn,
   .dsh-fast-add,
   .dsh-fig-btn,
+  .dsh-lens,
   .dsh-act,
   .dsh-add,
   .dsh-tray-item {
@@ -1309,6 +1559,7 @@
   .dsh-fast-btn:active,
   .dsh-fast-add:active,
   .dsh-fig-btn:active,
+  .dsh-lens:active,
   .dsh-act:active,
   .dsh-add:active,
   .dsh-tray-item:active {
@@ -1330,16 +1581,27 @@
 }
 
 /* ============================================================
-   NARROW — a laptop at 1280 is two columns; a tablet is one
+   NARROW, AND IT ASKS THE COLUMN RATHER THAN THE WINDOW.
+
+   This was `@media (max-width: 760px)`, which is the wrong
+   question for the same reason the grid's container query is the
+   right one: the rail collapses, so a 1024px window with the rail
+   folded away has more room for cards than a 768px window
+   without. Measured at 1024x768 with the rail at its full 264px,
+   the dashboard column is 696px — a window query says "wide" and
+   the column says "one card across". The column is the one with
+   an answer.
    ============================================================ */
 
-@media (max-width: 760px) {
+@container dsh (max-width: 720px) {
   .dsh-in {
-    padding: var(--s-6) var(--s-4) var(--s-12);
+    padding: var(--s-5) var(--s-4);
   }
 
   .dsh-head {
     align-items: flex-start;
+    gap: var(--s-3);
+    margin-bottom: var(--s-4);
   }
 
   .dsh-grid {
@@ -1348,5 +1610,30 @@
 
   .dsh-tray-items {
     grid-template-columns: 1fr;
+  }
+}
+
+/* A SHORT WINDOW, WHICH IS A DIFFERENT PROBLEM FROM A NARROW ONE
+   and is the one that decides whether this screen still fits. A
+   1600x760 laptop has all the width it needs and 240px less
+   height than the composition was drawn at, so the greeting and
+   the gutters give way before the cards do — the cards are the
+   screen. `vh` is legal here where `cqi` is not: the shortage is
+   the viewport's, not the column's. */
+@media (max-height: 820px) {
+  .dsh-in {
+    padding: var(--s-5) var(--s-8);
+  }
+
+  .dsh-head {
+    margin-bottom: var(--s-4);
+  }
+
+  .dsh-fast {
+    margin-bottom: var(--s-4);
+  }
+
+  .dsh-grid {
+    gap: var(--s-4);
   }
 }

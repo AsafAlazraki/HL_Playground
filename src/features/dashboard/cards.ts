@@ -45,36 +45,45 @@ export interface CardMeta {
   /** the sentence it draws when it has nothing to show. A
    *  statement of fact, never an apology and never a lecture. */
   empty: string
-  /** DOES THIS CARD HAVE SOMETHING TO DO WITH A SECOND COLUMN?
+  /** DOES THIS CARD ASK FOR A SECOND COLUMN?
    *
-   *  Three of the seven draw a LIST of named things with a figure
-   *  on the right and, on two of them, the admin's own sentence
-   *  underneath — that content wants width, and at 380px it was
-   *  clamping a module's description to two lines and hyphenating
-   *  a boat's name. Four of them draw two figures and at most
-   *  three short rows, and a wide box around those is a wide box
-   *  around nothing.
+   *  Exactly one card does, and it is the quotes card, because it
+   *  is the only one carrying a filter row AND a list of named
+   *  things with money on the right. The rest draw a short list of
+   *  a name and a figure, and a wide box around those is a wide
+   *  box around nothing.
    *
-   *  It is a REQUEST, not a guarantee: the grid lays four tracks
-   *  once the column is wide enough for them and gives a wide
-   *  card two of those (dashboard.css), and it gives none to a
-   *  card that is currently empty — a 626px rectangle saying
-   *  "you have not prepared a quote yet" is the opposite of what
-   *  the extra width was for. */
+   *  IT IS ALSO ARITHMETIC. The grid lays four tracks once the
+   *  column is wide enough (dashboard.css) and gives a wide card
+   *  two of them, so the set a person starts with spends
+   *  2 + 1 + 1 = 4 cells — one full row, no hole. `cards.test.ts`
+   *  checks the multiple, because a card-shaped gap on the front
+   *  door is what this pass was written to remove.
+   *
+   *  It is a REQUEST, not a guarantee: a card that is currently
+   *  empty is given one track, since a 626px rectangle saying
+   *  "no quotes have been raised here yet" is the opposite of
+   *  what the extra width was for. */
   wide: boolean
 }
 
 export const CARDS: Record<CardId, CardMeta> = {
   'my-quotes': {
-    name: 'My quotes',
-    says: 'The quotes you prepared, newest first, with what they came to.',
-    empty: 'You have not prepared a quote yet.',
+    name: 'Quotes',
+    says: 'Every quote raised here, filtered to drafts, mine or issued.',
+    empty: 'No quotes have been raised here yet.',
     wide: true,
   },
-  'quotes-by-state': {
-    name: 'Quotes by state',
-    says: 'How many are still drafts, and how many have been issued.',
-    empty: 'No quotes have been raised here yet.',
+  'my-modules': {
+    name: 'My modules',
+    says: 'The places in the business, and how much is in each.',
+    empty: 'No modules yet. A module is a place in the business — a brand, a workshop, a counter.',
+    wide: false,
+  },
+  'the-price-file': {
+    name: 'The price file',
+    says: 'What you sell, counted, and the biggest tables it is held in.',
+    empty: 'No tables yet. The price file is what everything else is built on.',
     wide: false,
   },
   'recently-opened': {
@@ -82,18 +91,6 @@ export const CARDS: Record<CardId, CardMeta> = {
     says: 'The tables and rows you opened last, so you can get back.',
     empty: 'Nothing opened yet. What you open shows up here.',
     wide: false,
-  },
-  'my-modules': {
-    name: 'My modules',
-    says: 'The places in the business, and how much is in each.',
-    empty: 'No modules yet. A module is a place in the business — a brand, a workshop, a counter.',
-    wide: true,
-  },
-  'the-price-file': {
-    name: 'The price file',
-    says: 'What you sell, counted: the tables, their rows, and the biggest of them.',
-    empty: 'No tables yet. The price file is what everything else is built on.',
-    wide: true,
   },
   'data-quality': {
     name: 'Worth fixing',
@@ -107,6 +104,119 @@ export const CARDS: Record<CardId, CardMeta> = {
     empty: 'No rule is set to warn. Every rule here removes what it disagrees with.',
     wide: false,
   },
+}
+
+/* ---------------------------------------------------------- */
+/* The one quotes card, and the filters inside it             */
+/* ---------------------------------------------------------- */
+
+/** THE FOUR QUESTIONS THAT WERE THREE CARDS.
+ *
+ *  "My quotes", "Quotes by state" and "Where I have been" drew
+ *  three boxes; two of them were a heading over a number that
+ *  the third could have carried as a filter. These are that
+ *  filter. Each is a predicate over the SAME list, so the counts
+ *  beside them and the rows under them can never disagree —
+ *  which is the fault three cards had structurally. */
+export type QuoteLens = 'drafts' | 'mine' | 'issued' | 'all'
+
+/** DRAFTS FIRST, and that is the order on screen as well as in
+ *  this array. A resumable draft is the most valuable thing on
+ *  the dashboard and it was four levels down. */
+export const QUOTE_LENSES: readonly QuoteLens[] = ['drafts', 'mine', 'issued', 'all']
+
+export const LENS_NAME: Record<QuoteLens, string> = {
+  drafts: 'Drafts',
+  mine: 'Mine',
+  issued: 'Issued',
+  all: 'All',
+}
+
+/** WHAT A FILTER THAT HOLDS NOTHING SAYS, WRITTEN OUT RATHER THAN
+ *  ASSEMBLED. The first version built the sentence from the chip's
+ *  own name — `"is a " + LENS_NAME[lens].toLowerCase()` — which
+ *  reads "is a draft" and then "is a issued" and "is a mine". A
+ *  sentence a person reads is not a template with a noun slot, and
+ *  the four cases are four different facts in any event: there ARE
+ *  quotes here, and this is what is true of them. */
+export const LENS_NONE: Record<QuoteLens, string> = {
+  drafts: 'Every quote here has been issued.',
+  mine: 'None of these was prepared by you.',
+  issued: 'Nothing here has been issued yet.',
+  all: 'No quotes have been raised here yet.',
+}
+
+/** `preparedBy` is a NAME, frozen onto the document when it was
+ *  raised, and it is matched case-insensitively and trimmed and
+ *  on nothing else — the same rule `rollQuotes` keeps, said once
+ *  here so the filter and the count cannot drift. */
+const mineIs = (q: QuoteDef, me: string): boolean => {
+  const m = me.trim().toLowerCase()
+  return m !== '' && (q.preparedBy ?? '').trim().toLowerCase() === m
+}
+
+export function lensHolds(q: QuoteDef, lens: QuoteLens, me: string): boolean {
+  if (lens === 'drafts') return q.state !== 'issued'
+  if (lens === 'issued') return q.state === 'issued'
+  if (lens === 'mine') return mineIs(q, me)
+  return true
+}
+
+/** How many are under each filter. Counted over every quote in
+ *  this browser, because the chips sit on one card and a chip
+ *  that counted a different set from its neighbour is the fault
+ *  the three cards had. */
+export function countLenses(
+  quotes: readonly QuoteDef[],
+  me: string,
+): Record<QuoteLens, number> {
+  const out: Record<QuoteLens, number> = { drafts: 0, mine: 0, issued: 0, all: 0 }
+  for (const q of quotes) {
+    out.all += 1
+    if (q.state === 'issued') out.issued += 1
+    else out.drafts += 1
+    if (mineIs(q, me)) out.mine += 1
+  }
+  return out
+}
+
+/** The quotes under one filter, newest first. Ties break on id so
+ *  the order is stable between paints rather than depending on
+ *  whatever order the registry handed them over in. */
+export function quotesUnder(
+  quotes: readonly QuoteDef[],
+  lens: QuoteLens,
+  me: string,
+): QuoteDef[] {
+  return quotes
+    .filter((q) => lensHolds(q, lens, me))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id))
+}
+
+export interface CustomerBand {
+  /** the name frozen onto the document, or '' when the quote was
+   *  never addressed — a walk-in is not a filing error */
+  name: string
+  quotes: QuoteDef[]
+}
+
+/** THE SAME LIST, GATHERED UNDER WHO IT IS FOR. Grouped on
+ *  `customer.name` — the name FROZEN onto the document, never
+ *  resolved through `customerRef`, because a quote is a
+ *  photograph and this must read the same in a project where
+ *  that register never existed.
+ *
+ *  Bands come back in the order of their newest quote, so the
+ *  customer somebody is working on today is at the top. */
+export function byCustomer(quotes: readonly QuoteDef[]): CustomerBand[] {
+  const bands = new Map<string, QuoteDef[]>()
+  for (const q of quotes) {
+    const name = q.customer.name.trim()
+    const held = bands.get(name)
+    if (held) held.push(q)
+    else bands.set(name, [q])
+  }
+  return [...bands.entries()].map(([name, list]) => ({ name, quotes: list }))
 }
 
 /* ---------------------------------------------------------- */

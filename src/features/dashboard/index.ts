@@ -106,7 +106,14 @@ export type {
 /* -- what each card is, and the arithmetic behind it --------- */
 export {
   CARDS,
+  LENS_NAME,
+  LENS_NONE,
+  QUOTE_LENSES,
   biggestTables,
+  byCustomer,
+  countLenses,
+  lensHolds,
+  quotesUnder,
   fileTally,
   firstName,
   greeting,
@@ -120,11 +127,13 @@ export {
 } from './cards'
 export type {
   CardMeta,
+  CustomerBand,
   FileTally,
   FindingRoll,
   ModuleRow,
   QuoteRoll,
   ResolvedRecent,
+  QuoteLens,
   RuleRoll,
   TableRow,
 } from './cards'

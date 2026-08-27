@@ -279,11 +279,10 @@ export function ModuleStage({
         {/* `shell-view-back`, no `btn`, labelled "Back" — TableStage is
             the calibration. `.btn` stamped this "BACK TO THE SHEET" in
             11px uppercase mono; uppercase is a label style and this is
-            a button. */}
-        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
-          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-          <span>Back</span>
-        </button>
+        {/* THE GENERIC "Back" IS GONE. This stage already draws
+            "All modules", which says WHERE it goes; two back
+            affordances eighteen pixels apart is one too many, and
+            the vague one is the one to lose. */}
 
         <p className="shell-view-what">
           {open && primary ? (

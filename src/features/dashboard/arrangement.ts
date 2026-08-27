@@ -53,7 +53,6 @@ import { newId } from '@/lib/id'
  *  — and nothing else, because the arrangement stores ids only. */
 export type CardId =
   | 'my-quotes'
-  | 'quotes-by-state'
   | 'recently-opened'
   | 'my-modules'
   | 'the-price-file'
@@ -62,10 +61,9 @@ export type CardId =
 
 export const CARD_IDS: readonly CardId[] = [
   'my-quotes',
-  'quotes-by-state',
-  'recently-opened',
   'my-modules',
   'the-price-file',
+  'recently-opened',
   'data-quality',
   'rules-warning',
 ]
@@ -135,12 +133,28 @@ export interface Arrangement {
 /* The arrangement a new person starts with                   */
 /* ---------------------------------------------------------- */
 
-/** THE DEFAULT IS A SALESPERSON'S DAY, IN ORDER. What I have
- *  quoted, what state those quotes are in, where I have been,
- *  the places in the business, and the stock underneath all of
- *  it. Data quality and warning rules are real cards and are NOT
- *  in the default: they are an admin's morning, not a
- *  salesperson's, and the tray offers both.
+/** THE DEFAULT IS THREE CARDS, AND IT USED TO BE FIVE.
+ *
+ *  'my-quotes', 'quotes-by-state' and 'recently-opened' were
+ *  three boxes asking three versions of one question, and two of
+ *  them were a headline over a number. The quotes card now holds
+ *  the states as filters INSIDE it, so the answer to "how many
+ *  are still drafts" is a chip on the card that lists them
+ *  rather than a card of its own — and drafts is the filter it
+ *  opens on, because a resumable draft is the most valuable
+ *  thing on this screen.
+ *
+ *  'quotes-by-state' is therefore gone from the catalogue and
+ *  not merely off the default: a card whose whole content is now
+ *  drawn inside another card is a duplicate, and an arrangement
+ *  holding its id drops it the same way it drops any id this
+ *  build does not know.
+ *
+ *  'recently-opened' SURVIVES and is offered by the tray. It is
+ *  a real capability and nothing here deletes one; it is not in
+ *  the set a person starts with because the finder answers the
+ *  same question from any screen and this one must fit the
+ *  viewport.
  *
  *  A card with nothing in it yet does not disqualify itself from
  *  the default — it says so in a sentence and offers the act
@@ -148,8 +162,6 @@ export interface Arrangement {
  *  person than an absence they cannot see. */
 export const DEFAULT_CARDS: readonly CardId[] = [
   'my-quotes',
-  'quotes-by-state',
-  'recently-opened',
   'my-modules',
   'the-price-file',
 ]

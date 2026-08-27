@@ -43,8 +43,9 @@
    ============================================================ */
 
 import { useMemo } from 'react'
-import type { ReactElement } from 'react'
+import type { CSSProperties, ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { accentVar, isRetired } from '@/types/model'
 import { curationNote } from '@/features/curation'
 import {
   TRAILER_ATM_FLOOR,
@@ -93,6 +94,18 @@ export function TrailerFitmentPanel(): ReactElement | null {
   const warned = readings.reduce((n, r) => n + r.floorWarned, 0)
   const unchecked = readings.filter((r) => r.loadColumn === null)
 
+  /* THE TRAILER KIND'S OWN HUE, READ OFF THE SHEET rather than typed.
+     Every line below is a trailer band, so they are all one kind, and
+     the discipline that keeps a hue identity rather than decoration is
+     that two things of one kind are one colour everywhere in the app —
+     which only holds if this is the same value Home and the ledger
+     read. A sheet with no trailer table draws the neutral. */
+  const trailerHue = (() => {
+    const live = Object.values(entities).filter((e) => !isRetired(e) && e.kind === 'trailer')
+    const one = live[0]
+    return one ? accentVar(one.accent) : 'var(--kind-slate)'
+  })()
+
   return (
     <section className="cn-band" aria-label="How a trailer is chosen">
       {/* THE EYEBROW IS THE POINTER. F8 and F9 in workbookRules.ts
@@ -115,7 +128,7 @@ export function TrailerFitmentPanel(): ReactElement | null {
       {/* ---- one line per brand ---- */}
       <ul className="cn-tf-list">
         {readings.map((r) => (
-          <BrandLine key={r.marque.name} reading={r} />
+          <BrandLine key={r.marque.name} reading={r} hue={trailerHue} />
         ))}
       </ul>
 
@@ -207,7 +220,7 @@ export function TrailerFitmentPanel(): ReactElement | null {
 /* One brand                                                   */
 /* ---------------------------------------------------------- */
 
-function BrandLine({ reading: r }: { reading: MarqueReading }): ReactElement {
+function BrandLine({ reading: r, hue }: { reading: MarqueReading; hue: string }): ReactElement {
   /* The narrowing carries no `measured` here — see the note beside
      `cn-tf-hidden` below — and no discontinued half either: this
      reading's own denominator is already the LIVE catalogue, so
@@ -220,8 +233,20 @@ function BrandLine({ reading: r }: { reading: MarqueReading }): ReactElement {
     showingAll: false,
   })
 
+  /* THE THREE STATES A BRAND LINE CAN BE IN, WHICH WERE ONE GREY.
+     A band with no weight column is a check that HAS NOT RUN, and
+     PHASE_TWO §1b names that as one of the four facts the app drew
+     identically; it takes the dashed `.s-unchecked`. A band where the
+     floor warned takes `.s-warned`. Everything else is the trailer
+     kind's own hue at full height, which is what a card rail is for
+     now that a kind may carry a surface. */
+  const state = !r.loadColumn ? 's-unchecked' : r.floorWarned > 0 ? 's-warned' : 'k-rail'
+
   return (
-    <li className="cn-tf-item">
+    <li
+      className={`cn-tf-item ${state}`}
+      style={{ '--kind': hue } as CSSProperties}
+    >
       <p className="cn-tf-brand">
         {r.marque.name}
         <span className="cn-tf-brand-table">{r.subjectTableName}</span>
@@ -248,18 +273,19 @@ function BrandLine({ reading: r }: { reading: MarqueReading }): ReactElement {
       <p className="cn-tf-hidden">{hidden}</p>
 
       <p className="cn-tf-how">
+        {/* THE FIGURE, AND THE NOUN IT COUNTS. Both branches ended in
+            a `so …` clause explaining what the figure means, on eight
+            lines, so the explanation was printed eight times and the
+            measurement once each. Why a cradle is cut to a hull is on
+            F8's own card, once. */}
         {r.hulls === 0 ? (
-          <>No hull of this brand is offered a trailer on this sheet.</>
+          <>No hull of this brand is offered a trailer.</>
         ) : r.hullsNamingModel > 0 ? (
           <>
-            {r.hullsNamingModel} of {r.hulls} hulls are offered a trailer that names their own
-            model, so the cradle is cut for the hull.
+            {r.hullsNamingModel} of {r.hulls} hulls offered a trailer naming their own model
           </>
         ) : (
-          <>
-            None of the {r.hulls} hulls finds its own model named in that series, so the pick
-            inside it is made on something other than the model.
-          </>
+          <>None of the {r.hulls} hulls finds its own model named</>
         )}
         {r.channel ? (
           <>

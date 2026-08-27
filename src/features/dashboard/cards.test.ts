@@ -29,7 +29,13 @@ import type { LintFinding } from '@/lib/lint'
 import type { QuoteDef } from '@/features/quote'
 import {
   CARDS,
+  LENS_NAME,
+  LENS_NONE,
+  QUOTE_LENSES,
   biggestTables,
+  byCustomer,
+  countLenses,
+  quotesUnder,
   fileTally,
   firstName,
   greeting,
@@ -41,6 +47,7 @@ import {
   rollQuotes,
   rollRules,
 } from './cards'
+import type { QuoteLens } from './cards'
 import { CARD_IDS, DEFAULT_CARDS } from './arrangement'
 
 /* ---------------------------------------------------------- */
@@ -158,6 +165,102 @@ describe('the catalogue', () => {
   it('the cards a person starts with fill whole rows of the four-track grid', () => {
     const cells = DEFAULT_CARDS.reduce((n, id) => n + (CARDS[id].wide ? 2 : 1), 0)
     expect(cells % 4).toBe(0)
+  })
+
+  /* ONE QUOTES CARD, NOT THREE. The front door drew "My quotes",
+     "Quotes by state" and "Where I have been" as three boxes
+     asking three versions of one question. Two of them are now
+     filters inside the first, and this is the guard that stops
+     the third and fourth growing back: a second card whose
+     subject is quotes is a card that will disagree with this one
+     the first time somebody edits only one of them. */
+  it('exactly one card in the catalogue is about quotes', () => {
+    const quoteCards = CARD_IDS.filter((id) => /quote/i.test(CARDS[id].name))
+    expect(quoteCards).toEqual(['my-quotes'])
+  })
+
+  /* AND THE DEFAULT SET IS THE ONE A SALESPERSON LANDS ON. Three
+     cards, because the screen must fit the viewport at 1024x768
+     where the column is 696px and one card wide — five did not,
+     measured, by 799px. */
+  it('the default set is three cards and the quotes card is first', () => {
+    expect(DEFAULT_CARDS).toEqual(['my-quotes', 'my-modules', 'the-price-file'])
+  })
+})
+
+/* ---------------------------------------------------------- */
+
+describe('the filters inside the one quotes card', () => {
+  const me = 'Asaf Alazraki'
+  const set = [
+    quote({ id: 'q-a', reference: 'Q-1', state: 'draft', preparedBy: me, customer: { name: 'Ellis' }, updatedAt: '2026-08-03T00:00:00.000Z' }),
+    quote({ id: 'q-b', reference: 'Q-2', state: 'issued', preparedBy: ' asaf alazraki ', customer: { name: 'Ellis' }, updatedAt: '2026-08-05T00:00:00.000Z' }),
+    quote({ id: 'q-c', reference: 'Q-3', state: 'issued', preparedBy: 'Somebody Else', customer: { name: 'Nguyen' }, updatedAt: '2026-08-04T00:00:00.000Z' }),
+    quote({ id: 'q-d', reference: 'Q-4', state: 'draft', customer: { name: '' }, updatedAt: '2026-08-02T00:00:00.000Z' }),
+  ]
+
+  it('counts every filter over the same list, so two chips cannot disagree', () => {
+    const n = countLenses(set, me)
+    expect(n.all).toBe(4)
+    expect(n.drafts).toBe(2)
+    expect(n.issued).toBe(2)
+    expect(n.mine).toBe(2)
+    /* the states partition the set; "mine" cuts across them */
+    expect(n.drafts + n.issued).toBe(n.all)
+  })
+
+  it('every chip’s figure is the length of the list under it', () => {
+    const n = countLenses(set, me)
+    for (const lens of QUOTE_LENSES) {
+      expect(quotesUnder(set, lens, me)).toHaveLength(n[lens])
+    }
+  })
+
+  it('matches the preparer by name, trimmed and case-insensitively, and on nothing else', () => {
+    expect(quotesUnder(set, 'mine', 'asaf ALAZRAKI').map((q) => q.id)).toEqual(['q-b', 'q-a'])
+    /* a person with no name matches nobody, rather than everybody */
+    expect(quotesUnder(set, 'mine', '   ')).toEqual([])
+  })
+
+  it('draws newest first, and breaks a tie on id so the order is stable between paints', () => {
+    expect(quotesUnder(set, 'all', me).map((q) => q.id)).toEqual(['q-b', 'q-c', 'q-a', 'q-d'])
+    const tied = [
+      quote({ id: 'q-z', updatedAt: STAMP }),
+      quote({ id: 'q-a', updatedAt: STAMP }),
+    ]
+    expect(quotesUnder(tied, 'all', me).map((q) => q.id)).toEqual(['q-a', 'q-z'])
+  })
+
+  it('a draft is anything not issued — there is no third state to invent', () => {
+    const lens: QuoteLens = 'drafts'
+    expect(quotesUnder(set, lens, me).every((q) => q.state !== 'issued')).toBe(true)
+  })
+
+  /* A FILTER THAT HOLDS NOTHING SAYS WHY, WHERE IT IS REFUSED
+     (rule 10) — and it says it as a SENTENCE. The first version
+     assembled one from the chip's own name and produced "is a
+     issued" and "is a mine"; this is the guard that stops a
+     template with a noun slot coming back. */
+  it('every filter has a written sentence for the day it holds nothing', () => {
+    for (const lens of QUOTE_LENSES) {
+      const say = LENS_NONE[lens]
+      expect(say.length).toBeGreaterThan(0)
+      expect(say.endsWith('.')).toBe(true)
+      /* not the chip's name with words round it */
+      expect(say).not.toContain(`a ${LENS_NAME[lens].toLowerCase()}`)
+    }
+  })
+
+  it('gathers by the name FROZEN on the document, newest band first', () => {
+    const bands = byCustomer(quotesUnder(set, 'all', me))
+    expect(bands.map((b) => b.name)).toEqual(['Ellis', 'Nguyen', ''])
+    expect(bands[0].quotes.map((q) => q.id)).toEqual(['q-b', 'q-a'])
+  })
+
+  it('a quote nobody was named on is its own band rather than being dropped', () => {
+    const bands = byCustomer(quotesUnder(set, 'all', me))
+    const walkIn = bands.find((b) => b.name === '')
+    expect(walkIn?.quotes.map((q) => q.id)).toEqual(['q-d'])
   })
 })
 

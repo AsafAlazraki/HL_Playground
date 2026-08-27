@@ -392,8 +392,10 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
      curated block says nothing here and leaves the clause where it
      was — there is nothing to de-duplicate, and a sentence about
      "every list below" would be a lie about one. */
-  const curatedBlocks = view.blocks.filter((b) => isCuratedOnly(b.rule)).length
-  const sayCuratedOnce = curatedBlocks > 1
+
+  /* the first list on the page that shows only what somebody picked;
+     it is the one that says so — see the note at the map below */
+  const firstCurated = view.blocks.find((b) => isCuratedOnly(b.rule))?.id
 
   return (
     <div
@@ -496,9 +498,13 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
           <p className="vw-held" role="note">
             {isRetired(root)
               ? `${root.name} is history rather than stock, so nothing in it is listed in a module or offered on a page a customer reaches.`
-              : `${rowLabel(root, row)} is no longer sold, so it is not listed in a module and nothing offers it to a customer.`}{' '}
-            It stays on the sheet, and every quote already written against it still opens,
-            still totals and still prints.
+              : `${rowLabel(root, row)} is no longer sold, so it is not listed in a module and nothing offers it to a customer.`}
+            {/* THE SECOND SENTENCE IS GONE. "It stays on the sheet,
+                and every quote already written against it still
+                opens, still totals and still prints" is reassurance
+                about something nobody asked, and a refusal is
+                allowed A sentence — one — with its reason in it.
+                The reason is in the first. */}
           </p>
         ) : null}
 
@@ -570,15 +576,41 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
           ) : null}
         </AnimatePresence>
 
-        {sayCuratedOnce ? (
-          <p className="vw-once" role="note">
-            Every list below shows only what somebody picked for this{' '}
-            {singular(root.name)}. Press “Show everything” on one to see its whole table.
-          </p>
-        ) : null}
+        {/* ============================================================
+            THE SENTENCE THAT WAS HERE IS GONE.
+
+              "Every list below shows only what somebody picked for
+               this Formosa. Press "Show everything" on one to see its
+               whole table."
+
+            Twenty-two words, permanently, above a page whose every
+            block already carries the fact in its own head — a count
+            chip that says `1 picked`, a line that says `1 of 73 NSM
+            Custom Trailers`, and a button eighteen pixels away that
+            says Show everything. It is PHASE_TWO §1a's worked example
+            exactly: a paragraph explaining a button that is already
+            legible, read once and read past forever.
+
+            NOTHING WAS LOST WITH IT. The blocks keep saying it —
+            `sayWhyCurated` is now always true, so each one states its
+            own narrowing beside its own count, which is where the
+            explanation was needed rather than where it was convenient
+            to put once. The prose budget's rule, not a deletion for
+            its own sake: it moves to where it is needed.
+            ============================================================ */}
 
         <div className="vw-blocks">
-          {view.blocks.map((block, i) => (
+          {view.blocks.map((block, i) => {
+            /* SAID ONCE, IN PLACE. Every curated block could state
+               why it is short and four of them stating it is the same
+               paragraph four times — which is how the page came to
+               have one detached sentence at the top instead. So it is
+               said on the FIRST list a person meets, beside that
+               list's own count, and the rest carry the count, the
+               chip and the Show everything button, which are the fact
+               shown rather than told. */
+            const explain = isCuratedOnly(block.rule) && block.id === firstCurated
+            return (
             <BlockCard
               key={block.id}
               viewId={view.id}
@@ -595,16 +627,19 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
               appliesTo={appliesTo}
               configuring={configuring}
               index={i}
-              /* the page has said it once already; the block keeps its
-                 own count and drops the repeated clause */
-              sayWhyCurated={!sayCuratedOnce}
+              /* the page no longer says it above the blocks; the
+                 first curated list says it where it applies — see
+                 `explain` just above and the note where that sentence
+                 used to be */
+              sayWhyCurated={explain}
               onDropTable={offerDrop}
               onRefuse={refuse}
               pending={pending}
               onPendingUse={acceptPending}
               onPendingCancel={cancelPending}
             />
-          ))}
+            )
+          })}
         </div>
 
         {/* THE JOINS THIS PAGE NEVER DREW, NAMED. See `withheld` above:
@@ -854,8 +889,20 @@ function RigPanel({
             <li
               key={`${l.blockId}-${l.tableId}-${l.label}`}
               className={`vw-rig-line${l.recommended ? ' is-star' : ''}`}
+              /* THE SAME HUE THE BLOCK BELOW IT IS DRAWN IN. A
+                 trailer line in the roll-up and the trailer block it
+                 points at were two different ambers, which is what
+                 §1's "two things of one kind are one colour
+                 everywhere" is there to stop. A table with no kind
+                 keeps its own accent — see the same reasoning in
+                 BlockCard.tsx. */
+              data-kind={entities[l.tableId]?.kind ?? undefined}
               style={
-                { '--vw-line-accent': accentVar(entities[l.tableId]?.accent) } as CSSProperties
+                {
+                  '--vw-line-accent': entities[l.tableId]?.kind
+                    ? 'var(--kind)'
+                    : accentVar(entities[l.tableId]?.accent),
+                } as CSSProperties
               }
             >
               {l.blockId === '' ? (

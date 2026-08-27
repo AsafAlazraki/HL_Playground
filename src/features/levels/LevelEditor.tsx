@@ -116,7 +116,7 @@ function TablePicker({ onPick }: { onPick: (id: string) => void }): JSX.Element 
       <section className="lv">
         <header className="lv-head">
           <p className="lv-eyebrow ds-label">Configure at every level</p>
-          <h1 className="lv-title ds-display">Nothing to configure yet</h1>
+          <h1 className="lv-title">Nothing to configure yet</h1>
           <p className="lv-sub ds-body">
             This door sets a value once and gives it to every row beneath. It needs a table
             with rows in it — import a price file, or open the sample workbook.
@@ -130,7 +130,7 @@ function TablePicker({ onPick }: { onPick: (id: string) => void }): JSX.Element 
     <section className="lv">
       <header className="lv-head">
         <p className="lv-eyebrow ds-label">Configure at every level</p>
-        <h1 className="lv-title ds-display">Which table?</h1>
+        <h1 className="lv-title">Which table?</h1>
         {/* ONE LINE. What happens to a row that disagrees is said on
             that row, by the editor, at the moment it is left alone —
             which is where a person can do something about it. */}
@@ -203,7 +203,7 @@ function LevelStage({ model, push, onBack }: StageProps): JSX.Element {
     <section className="lv ds-rise">
       <header className="lv-head">
         <p className="lv-eyebrow ds-label">Configure at every level</p>
-        <h1 className="lv-title ds-display">{model.entity.name}</h1>
+        <h1 className="lv-title">{model.entity.name}</h1>
         <p className="lv-sub ds-body">
           Set a value once at a level and every {model.noun.one} beneath it takes it. It is
           written onto the rows themselves, so a quote made afterwards reads it without

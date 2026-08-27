@@ -4,6 +4,7 @@ import { adoptKeptPatterns, seedWorkbookConstraints } from '@/features/constrain
 import { StillnessProvider } from '@/features/views/stillness'
 import { TabGuard } from '@/features/session'
 import { SignIn, currentUser, signOut, readTheme, applyTheme, type AppUser } from '@/features/auth'
+import { startRecording } from '@/features/activity'
 import { Shell } from '@/app/Shell'
 import { UndoKeys } from '@/app/UndoKeys'
 
@@ -38,6 +39,18 @@ export default function App() {
   useEffect(() => {
     applyTheme(readTheme())
   }, [])
+
+  /* WHAT HAPPENED, WRITTEN DOWN. Every undoable act in this app
+     already announces itself through `store/notes.ts` so the toast
+     can draw it — 27 files call it. The activity log listens to
+     that same bus rather than adding a second instrumentation
+     pass, so it cannot miss an act that raises a toast and cannot
+     invent one that does not. Mounted here, once, beside the
+     toast host it shares a source with. */
+  useEffect(() => {
+    if (!user) return
+    return startRecording(user.orgSlug)
+  }, [user])
 
   useEffect(() => {
     void init()

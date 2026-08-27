@@ -1,175 +1,128 @@
 /* ============================================================
-   THE BUILD — configuring a rig as a SEQUENCE OF DECISIONS.
+   THE CONFIGURATOR — one page, scrolled, with the boat held still
+   beside it.
 
-   WHAT IT IS FOR. `QuoteEditor` draws every section of a draft at
-   once. That is the right shape for reading a quote and the wrong
-   shape for making one: a person spec'ing a boat is walking a series
-   of choices — which motor, which trailer, which rigging, which parts
-   — and a page that shows them all at once shows none of them as a
-   choice. This is the same document, walked. Nothing is duplicated:
-   every line it puts on the quote is minted by `freeze.ts` and read
-   back through `steps.ts`, and the full sheet is one press away.
+   ── WHAT THIS REPLACED, AND WHY ──────────────────────────────
 
-   ── THE SHAPE, AND WHY IT CHANGED ────────────────────────────────
+   It was a SIX-STOP DECK: a navy rail of numbered stops across the
+   top, a progress meter under it, one decision on screen at a time,
+   and a "Next step" button at the foot of each. Everything worked.
+   The verdict on it was "a slight improvement", and all four of the
+   reasons given were the same reason — it still read as a form over
+   a schema rather than as a document about a boat.
 
-   IT WAS A SCROLLING PAGE. A rig plate, then a vertical list of
-   stops, then the open step, then the next one — all in one
-   scrollport, with the total bar underneath. Everything worked and
-   nothing was a STAGE: the progress lived halfway down the scroll and
-   left the screen the moment somebody started picking, so the one
-   question a person configuring a $90,000 rig asks constantly —
-   "where am I, and what have I chosen so far?" — was answered only by
-   scrolling back up.
+   PHASE_TWO §2.3 replaces it with the shape the reference actually
+   has, measured rather than remembered (CONFIGURATOR_PLAYBOOK):
 
-   It is a DECK now, and the three bands never move:
+     Porsche's configurator is ONE CONTINUOUS SCROLLING PAGE. ~300
+     inputs, all present at once, in eleven accordions in a fixed
+     order. The car is sticky on the left and fills the height;
+     ~9,700px of option rail scrolls past it. There is NO PROGRESS
+     INDICATOR AT ALL. The price never leaves the screen.
 
-     THE RAIL      navy, the full width, at the top. The subject, the
-                   step you are on, and every stop with WHAT WAS
-                   CHOSEN ON IT written underneath — so the rail is a
-                   readable summary of the whole rig and a way back
-                   into any part of it. §THE RAIL below.
-     THE SPLIT     the hull photographed large on the left, held
-                   still; the decision on the right, which is the one
-                   thing on this screen that changes and the one thing
-                   that animates. §THE SPLIT.
-     THE LEDGER    the running total, which OPENS INTO THE ARITHMETIC
-                   — every step, every line, every figure — rather
-                   than being a number a person has to take on trust.
-                   §THE LEDGER.
+   So: no step rail, no meter, no next-step button, no "step 5 of
+   8". A person reading a document does not need to be told how far
+   through it they are — and GOV.UK removed a twelve-step indicator
+   from Carer's Allowance and measured no change in completion rate
+   or completion time.
 
-   THE ACCENT APPEARS FOUR TIMES, which is the budget §1 of
-   DESIGN_PRINCIPLES sets: the open stop's disc (drawn white on navy,
-   where the accent measures 2.7:1 and is barred), the focus ring, the
-   card that is on the quote, and the one onward action. Everything
-   else on the deck is ink, hairline and photograph.
+   ── WHERE WE DIVERGE FROM THE REFERENCE, AND WHY WE MUST ─────
 
-   ── THE FIVE THINGS IT HAS TO BEAT ───────────────────────────────
-   Each a cited production failure (docs/plan/hl-journeys.md), and
-   where each one is answered here:
+   Porsche can put every option on one page because a 911 has eleven
+   groups. This rig has 2,519 pairings and a 434-row trailer
+   shortlist. A flat list would be a 40,000px page.
 
-   1 · IT CANNOT LOSE WORK. §3.4, "the single most damaging friction":
-       seven wizard steps in React state, no draft, no autosave, no
-       beforeunload, so a refresh at step 6 destroys the build. Here
-       the pick IS the write — `addLine` persists before this screen
-       redraws — so there is no build to lose. `savedNote` in steps.ts
-       says so beside the hull, in a sentence about coming back rather
-       than about a save succeeding, and it says the storage fault
-       instead when there is one. AND THE PLACE COMES BACK TOO now:
-       `place.ts` remembers which step was open, so a reload returns a
-       person to the decision they were making rather than to the
-       first undecided one. It is a cursor and never a fact about the
-       quote — see that file's header.
+   So we take the COMPOSITION and not the LIST. Every band is a
+   SOLVER-COMPUTED SHORTLIST with its own search and its own
+   switch — `stepOffer` narrows, `readCuration` explains, and the
+   rows the narrowing left out stay on screen with the measurement
+   that removed them written beside them. That shortlist is the
+   product's whole value and it is the one thing the reference
+   cannot copy back.
 
-   2 · EVERY NARROWING EXPLAINS ITSELF. §4, the one pattern in either
-       production journey worth taking, stated as a rule: a filter
-       that can explain itself, be searched past and be switched off,
-       with the hidden count said out loud. It is not drawn here:
-       `@/features/curation` owns all four so that a surface either
-       mounts the mechanism and gets every one of them or narrows
-       nothing at all. What this file supplies is the two halves only
-       a quote can know — `stepReason` (what narrowed it, and the
-       adjudicated rate behind it) and `stepOffer` (the search that
-       ignores the narrowing, and the switch that turns it off).
+   ── THE THREE BANDS OF THE SCREEN ────────────────────────────
 
-       AND NOW THE THIRD HALF, WHICH IS THE POINT OF BUILDING THIS
-       RATHER THAN COPYING IT: a row the narrowing left out says on
-       ITSELF why, with the two figures the rule turned on — "its Max
-       boat length (5.20 m) is less than this boat's Length (5.60 m)."
-       Production draws no such row at all. `Candidate.outsideWhy` in
-       freeze.ts computes it by re-running the clauses one at a time,
-       and `OfferCard` prints it under the name. Rule 10, on the row.
+     THE PRODUCT   left, never scrolling, full height. The
+                   photograph, the name at display scale, the specs
+                   as hairlines. IT CHANGES WITH THE BUILD: pick a
+                   motor and the render crossfades to it, 260ms,
+                   opacity only. §THE PRODUCT.
+     THE BANDS     right, scrolling. Accordions in a fixed order —
+                   the hull, motors, trailers, what the dealer fits,
+                   then the paperwork — several open at once, each
+                   head carrying its kind's own hue. `bands.ts` owns
+                   the order and the head's one fact.
+     THE PRICE     under both, a sibling of the scrollport so no
+                   line can ever pass behind it. Inclusive and
+                   exclusive, the rung, and the handover. §THE PRICE.
 
-   3 · NO EMPTY STEP WITHOUT AN EXPLANATION. §3.2 Q9: an empty
-       `motorConfigurations` draws an empty grid and says nothing.
-       `NothingOffered` below has the four parts every empty state in
-       this app has — eyebrow, what it is, what you already have
-       counted from the sheet, one action — and it never draws a blank
-       shelf at a person who has data.
+   ── THE PROSE BUDGET, WHICH IS MOSTLY DELETION ───────────────
 
-   4 · NOTHING IS UNREACHABLE. §3.2 Q7/Q8: only
-       `motorConfigurations[0]` is ever read, so a twin rig cannot be
-       chosen at all, and the trailer step has no catalogue browse, so
-       a trailer the model never named costs the whole build. Every
-       step here reaches its whole live table, from the same control,
-       whether or not the curated list is empty.
+   PHASE_TWO §1a counted the words on seven surfaces and found five
+   of them spending more than half on the app narrating itself. The
+   budget it sets is: a stage gets its name and at most one line, a
+   card gets a name and ONE fact, an empty state keeps its sentence
+   AND its act, and a refusal always keeps its sentence.
 
-   5 · THE PRICE MOVES AS THEY GO, HONESTLY. Every figure on this
-       screen was frozen onto its line at pick time with the column
-       and the cell it came from. The total under the deck is
-       `quoteTotals` — the ONE summation — the change it just made is
-       shown beside it for a moment, and the ledger opens onto the
-       lines that produced it.
+   What went from this screen, and where it went:
 
-   ── MOTION, AND ITS BUDGET ───────────────────────────────────────
+     the "step 5 of 8" plate         · deleted with the deck
+     the keyboard hint paragraph     · the keys are per-band now
+     "every pick is written…"        · deleted. It is still SAID
+                                       when the write actually
+                                       fails, which is the only
+                                       time it is news.
+     the subject step's paragraph    · deleted. The line carries its
+                                       own source cell.
+     the handover's paragraph        · deleted. `issueBlockers`
+                                       already says the same thing
+                                       as a refusal, in place.
+     the measured-rate plate         · deleted as a PLATE. The rate
+                                       still travels, on the
+                                       curation chip, where
+                                       `StepMeasure.clause` was
+                                       always meant to carry it.
 
-   THE STEP CHANGE IS THE ONE MOMENT THAT EARNS REAL MOTION and it is
-   the only place a spring is used: the outgoing decision leaves the
-   way the incoming one arrives, on transform and opacity only, at
-   SPRING_QUICK out (220ms) and SPRING in (300ms) from
-   `views/stillness`. Nothing invents a spring.
+   Nothing true was lost and no refusal was touched.
 
-   EVERYTHING ELSE IS FEEDBACK OR NOTHING. A card being picked is a
-   90–160ms press from ds.css. The shelf staggers in when a step
-   arrives and NEVER while somebody is typing — the `still` gate is
-   read on every card, which is why searching a 434-row trailer table
-   does not make the list flicker under the caret.
+   ── MOTION, AND ITS BUDGET ───────────────────────────────────
 
-   THE TOTAL DOES NOT COUNT UP. A dealer reading a price needs it to
-   be true on the frame it changes, not to be animated at them. The
-   figure is replaced; only the delta chip beside it moves.
+     the render crossfade   260ms, opacity only, on a build change
+     the accordion          a spring a person can interrupt
+     the shelf entrance     a 26ms stagger, once, and never while
+                            somebody is typing (`still`)
+     the conflict sheet     scales from the control that caused it
+     the money              DOES NOT MOVE. The figure is replaced on
+                            the frame it changes; only the delta
+                            chip beside it animates. A dealer reads
+                            a price aloud.
 
-   ── KEYS ─────────────────────────────────────────────────────────
+   ── WHAT THIS FILE MAY NOT DO ────────────────────────────────
 
-     ← →      the step before / after
-     ↑ ↓      the highlighted option on this step's shelf
-     Enter    take the highlighted one, or take it back off
-     Home End the first / last step
-
-   All four are refused while a caret is in a text field, so typing
-   "yamaha" into the search never walks off the step. The hint is
-   printed under the hull, because a shortcut nobody is told about is
-   a shortcut nobody has.
-
-   WHAT THIS FILE MAY NOT DO. It never reads the project store. The
-   live reads it needs — the candidates, the narrowing — are events,
-   they live in `freeze.ts`, and they are held in state between them.
+   It never reads the project store. The live reads it needs are
+   events and they live in `freeze.ts`.
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactElement } from 'react'
+import type { CSSProperties, ReactElement } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import {
-  ArrowRight,
-  CaretDown,
-  CaretLeft,
-  CaretRight,
-  Check,
-  Rows,
-  Star,
-  Warning,
-  X,
-} from '@phosphor-icons/react'
+import { CaretDown, Check, Rows, Star, Warning, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
-import { useActionBar, type ActionGroup } from '@/lib/actions'
+import { useActionBar } from '@/lib/actions'
 import { HELD_AS_LINK, heldAsLinkNote, useImageDisplay } from '@/lib/imageSources'
 import {
   heldBackSentence,
   retiredPairsSentence,
   retiredTableSentence,
 } from '@/features/views/sellable'
-/* THE MOTION POLICY IS THE APP'S, NOT THIS SCREEN'S. `still` is true
-   while a caret is in a text field anywhere and whenever the reader
-   has asked for reduced motion, and every animation below is gated on
-   it. Deep, like `sellable` above: the barrel does not export it. */
 import { SPRING, SPRING_QUICK, transitionFor, useStillness } from '@/features/views/stillness'
 /* THE ONE SHAPE EVERY NARROWED LIST TAKES — hl-journeys.md §4, built
-   once so a surface gets all four properties or narrows nothing. This
-   step imports the mechanism rather than drawing its own: a second
-   curation panel with its own wording is exactly the drift the shared
-   file exists to prevent. */
+   once so a surface gets all four properties or narrows nothing. A
+   band mounts the mechanism; it does not draw its own count chip. */
 import { CurationNote, readCuration, type CurationInput } from '@/features/curation'
 import {
   OFFER_CAP,
+  sectionKinds,
   stepOffer,
   stepReason,
   unsellableSubject,
@@ -180,26 +133,19 @@ import {
 import { money, quoteLevelChoices } from './pricing'
 import { issueBlockers, lineAmount, looseLines, quoteTotals } from './totals'
 import { addLine, issueQuote, persistNote, removeLine, setLevel, setQty } from './quotes'
-import { recallPlace, rememberPlace } from './place'
-import {
-  buildSteps,
-  decidedCount,
-  firstOpenStep,
-  savedNote,
-  stepAfter,
-  stepBefore,
-  HANDOVER_STEP,
-} from './steps'
+import { recallOpen, rememberOpen } from './place'
+import { buildSteps, savedNote } from './steps'
 import type { BuildStep } from './steps'
+import { ADMIN_BAND, openByDefault, orderBands, type Band } from './bands'
+import { deltaSay, levelConflict, type Conflict } from './conflict'
 import { CustomerField } from './QuoteEditor'
 import { FrozenPhoto } from './photo'
 import type { QuoteDef, QuoteLine } from './types'
 import './build.css'
 
-/** What a step that offers nothing reads as — the subject's step, and
+/** What a band that offers nothing reads as — the subject's band, and
  *  the moment before the first live read lands. Frozen so the memo
- *  below hands back the same object rather than a fresh empty one on
- *  every render. */
+ *  hands back the same object rather than a fresh empty one. */
 const NO_OFFER: StepOffer = {
   candidates: [],
   narrowed: 0,
@@ -212,40 +158,23 @@ const NO_OFFER: StepOffer = {
   heldCount: 0,
 }
 
-/* THE LAST STOP, AND IT IS NOT A SECTION.
- *
- * Every other stop is a `QuoteSection` — a table, and a decision about
- * which of its rows goes on the document. The last one is the question
- * the sequence has to end on and no section can carry: WHO IS IT FOR.
- *
- * It matters that this is a step rather than a dialog at the end.
- * Production asks it in a "Finalize Project" modal that types the
- * customer as five free-text fields, from scratch, every time, with no
- * lookup and no dedupe — while a `CustomerPicker` sits imported in the
- * same file, wired only into the stock branch (hl-journeys.md §3.2,
- * Q3/Q4). Here it is the visible end of the walk, it uses the register
- * the app already has, and `issueBlockers` refuses in the same words
- * whichever reading a person is in.
- *
- * THE ID ITSELF LIVES IN `steps.ts`, beside `SUBJECT_STEP`. It was
- * declared here as a literal while `place.ts` compared against its own
- * copy and the picker's flow preview named a third — one declaration
- * per fact, so a remembered place can never point at a stop nothing
- * matches.
- */
-const HANDOVER = HANDOVER_STEP
+/** How many rows the narrowing left out are drawn at once. They are
+ *  never hidden — the count is always said and the whole of it is one
+ *  press away — but a 2,934-row refusal list drawn in full is a page
+ *  nobody reads, and every one of those rows costs a re-run of the
+ *  clauses to say why. `OFFER_CAP` is the ceiling `stepOffer` itself
+ *  applies; this is what is drawn before asking. */
+const REFUSED_SHOWN = 8
 
 export interface QuoteBuildProps {
   quote: QuoteDef
   /** the stage's own "it is issued now" move */
   onIssued?: (quote: QuoteDef) => void
   /** open the customer this quote is addressed to. Absent = the link
-   *  is still SAID on the handover and not offered as a door, so this
-   *  screen still works wherever it is mounted. */
+   *  is still SAID on the paperwork band and not offered as a door. */
   onOpenCustomer?: (rowId: string) => void
   /** the door to the whole document at once — the adjustments, the
-   *  customer's contact lines, the tax rate, the re-read. The
-   *  sequence is for building; the sheet is for finishing. */
+   *  contact lines, the tax rate, the re-read. */
   onOpenSheet: () => void
 }
 
@@ -256,75 +185,472 @@ export function QuoteBuild({
   onOpenSheet,
 }: QuoteBuildProps): ReactElement {
   const steps = useMemo(() => buildSteps(quote), [quote])
+  /* ONE STORE READ FOR THE WHOLE DOCUMENT. The hue on a band head is
+     the kind of thing the band holds, read off the table rather than
+     chosen by this screen — DESIGN_PRINCIPLES §1's discipline: a hue
+     only ever appears on something that HAS that kind. */
+  const kinds = useMemo(() => sectionKinds(quote), [quote])
+  const bands = useMemo(() => orderBands(steps, kinds), [steps, kinds])
   const totals = quoteTotals(quote)
   const refusals = issueBlockers(quote)
   const { still } = useStillness()
 
-  /* WHICH STOP IS OPEN, AND WHY IT SURVIVES A RELOAD.
-
-     Every line the sequence has produced is already on the document,
-     so losing this loses a scroll position and never a decision —
-     which is exactly why it is safe to remember it in a place a quote
-     never travels through. `place.ts` hands back whatever it stored
-     and this is where it is CHECKED: a step id that no longer names a
-     step of this document (the sheet changed, the view's blocks moved)
-     is discarded here rather than trusted, and the fallback is the
-     same `firstOpenStep` this opened on before it remembered
-     anything. */
-  const [at, setAt] = useState(() => {
-    const back = recallPlace(quote.id)
-    if (back === HANDOVER || (back !== null && steps.some((s) => s.id === back))) return back
-    return firstOpenStep(steps)
+  /* WHICH BANDS ARE OPEN, AND WHY IT SURVIVES A RELOAD. Every line
+     the page has produced is already on the document, so losing this
+     loses a scroll position and never a decision. `place.ts` hands
+     back whatever it stored and this is where it is CHECKED: a band
+     id that no longer names a band of this document is discarded
+     here rather than trusted. */
+  const [open, setOpen] = useState<string[]>(() => {
+    const back = recallOpen(quote.id).filter(
+      (id) => id === ADMIN_BAND || bands.some((b) => b.id === id),
+    )
+    return back.length > 0 ? back : openByDefault(bands)
   })
-  const onHandover = at === HANDOVER
-  const step: BuildStep | undefined = onHandover
-    ? undefined
-    : (steps.find((s) => s.id === at) ?? steps[0])
-
-  /* a step that goes away — the sheet changed under a draft — must not
-     leave the sequence pointing at nothing */
   useEffect(() => {
-    if (at !== HANDOVER && !steps.some((s) => s.id === at)) setAt(firstOpenStep(steps))
-  }, [steps, at])
+    rememberOpen(quote.id, open)
+  }, [quote.id, open])
 
+  const toggle = useCallback((id: string) => {
+    setOpen((was) => (was.includes(id) ? was.filter((x) => x !== id) : [...was, id]))
+  }, [])
+
+  /* THE RENDER — which photograph the left column is showing.
+     `null` is the hull, which is where it starts and where it goes
+     back to when the line it was showing comes off the quote. */
+  const [showing, setShowing] = useState<string | null>(null)
+  const seenLines = useRef<string[]>([])
   useEffect(() => {
-    rememberPlace(quote.id, at)
-  }, [quote.id, at])
+    const ids = quote.lines.filter((l) => l.image).map((l) => l.id)
+    const fresh = ids.find((id) => !seenLines.current.includes(id))
+    seenLines.current = ids
+    /* THE BUILD CHANGED, SO THE RENDER CHANGES. This is the whole of
+       "it does not feel alive": a person who picks a motor watches
+       the picture become that motor. It is the newest photographed
+       line, never a guess at which one matters. */
+    if (fresh !== undefined) setShowing(fresh)
+    else setShowing((was) => (was !== null && !ids.includes(was) ? null : was))
+  }, [quote.lines])
 
-  /* THE LAST STOP IS DECIDED WHEN THERE IS A NAME ON THE DOCUMENT.
-     Read off the frozen `customer` block and nothing else — the same
-     field `issueBlockers` refuses on, so the tick beside the stop and
-     the sentence under the total can never disagree. */
-  const named = quote.customer.name.trim() !== ''
-  const stopCount = steps.length + 1
-  const doneCount = decidedCount(steps) + (named ? 1 : 0)
+  const delta = useTotalDelta(totals.total)
+  const saveProblem = persistNote()
+  const subjectNote = unsellableSubject(quote.rootTableId, quote.rootRowId)
 
-  /* the search and the switch are per-step: walking to the trailers
-     with "yamaha" still typed would be a narrowing nobody asked for */
+  /* THE PROPOSAL ON THE TABLE, AND IT IS NOT COMMITTED. While this is
+     set the price bar goes on showing the total the document actually
+     carries — Porsche's rule, and the difference between a sheet a
+     person decides and a notification they acknowledge. */
+  const [proposal, setProposal] = useState<{ conflict: Conflict; levelKey: string } | null>(null)
+
+  const levels = useMemo(() => quoteLevelChoices(quote.lines), [quote.lines])
+
+  /* CHANGING THE RUNG IS THE ONE CHOICE HERE THAT CHANGES EVERY LINE
+     ALREADY MADE, so it asks first — and only when there is something
+     to decide. `levelConflict` returns null when nothing moves, and
+     then the change simply happens. */
+  const askLevel = useCallback(
+    (key: string, label: string) => {
+      const conflict = levelConflict(quote, key, label)
+      if (conflict === null) {
+        setLevel(quote.id, key)
+        return
+      }
+      setProposal({ conflict, levelKey: key })
+    },
+    [quote],
+  )
+
+  /* THIS SCREEN PUBLISHES NO ACTION BAR, AND THAT IS THE POINT.
+     `.pagebar` is a fixed strip at the foot of the content column,
+     and the price bar below is a fixed strip at the foot of the
+     content column — two of them, one over the other, is how the
+     old deck ended up with "Give it to the customer" sitting on top
+     of the sentence explaining who the quote was addressed to.
+
+     There is exactly one bar now and it is the price. Both doors the
+     page used to publish are drawn on it: the whole sheet, and the
+     handover with its refusal beside it. */
+  useActionBar('quote-build', null)
+
+  return (
+    <>
+      <div className="qb-body">
+        <ProductPane
+          quote={quote}
+          showing={showing}
+          onShow={setShowing}
+          still={still}
+          subjectNote={subjectNote}
+          saveProblem={saveProblem}
+        />
+
+        <div className="qb-scroll">
+          <div className="qb-bands">
+            {bands.map((band) => (
+              <BandBlock
+                key={band.id}
+                quote={quote}
+                band={band}
+                open={open.includes(band.id)}
+                still={still}
+                onToggle={() => toggle(band.id)}
+              />
+            ))}
+
+            <AdminBand
+              quote={quote}
+              steps={steps}
+              open={open.includes(ADMIN_BAND)}
+              refusals={refusals}
+              onToggle={() => toggle(ADMIN_BAND)}
+              onOpenCustomer={onOpenCustomer}
+            />
+          </div>
+        </div>
+      </div>
+
+      <PriceBar
+        quote={quote}
+        steps={steps}
+        totals={totals}
+        delta={delta}
+        refusals={refusals}
+        levels={levels}
+        onLevel={askLevel}
+        onOpenSheet={onOpenSheet}
+        onIssue={() => {
+          if (issueQuote(quote.id)) onIssued?.(quote)
+        }}
+      />
+
+      <AnimatePresence>
+        {proposal ? (
+          <ConflictSheet
+            key={proposal.conflict.id}
+            conflict={proposal.conflict}
+            still={still}
+            onAccept={() => {
+              setLevel(quote.id, proposal.levelKey)
+              setProposal(null)
+            }}
+            onCancel={() => setProposal(null)}
+          />
+        ) : null}
+      </AnimatePresence>
+    </>
+  )
+}
+
+/* ============================================================
+   §THE PRODUCT — the boat, held still, at the scale of the thing
+   it actually is.
+
+   IT WAS 220px WIDE BESIDE A 21px NAME, then 380px beside a 34px
+   name, and it scrolled away the moment somebody started picking.
+   PHASE_TWO §3 names the fix as a number: a product name at
+   72–110px against 12px labels, and a photograph that is
+   full-height rather than a card header. Nothing on the outgoing
+   dashboard was larger than 34px across seven sizes, which is not
+   a hierarchy — it is the absence of one.
+
+   IT IS NOT STICKY, IT IS OUTSIDE THE SCROLL. `position: sticky`
+   inside a scrollport is floored by that scrollport's content box
+   and has to be told a height it cannot know. This pane is a flex
+   SIBLING of the scrolling column, so it is full height by
+   construction at every size, and at 1024 and below the two stack
+   and the whole page scrolls instead.
+
+   THE RENDER CROSSFADES. Two layers, opacity only, 260ms — the one
+   moment on this screen that earns real motion, and the thing the
+   app had none of. The plates under it are how a person goes back
+   to the hull, so the picture is never a mystery.
+   ============================================================ */
+
+function ProductPane({
+  quote,
+  showing,
+  onShow,
+  still,
+  subjectNote,
+  saveProblem,
+}: {
+  quote: QuoteDef
+  showing: string | null
+  onShow: (id: string | null) => void
+  still: boolean
+  subjectNote: string
+  saveProblem: string | null
+}): ReactElement {
+  const shot = quote.lines.find((l) => l.id === showing)
+  const img = shot ? shot.image : quote.subjectImage
+  const name = shot ? shot.label : quote.subjectLabel
+  const plates = quote.lines.filter((l) => l.image)
+
+  return (
+    <aside className="qb-product" aria-label="What this quote is about">
+      <Render img={img} name={name} still={still} />
+
+      {plates.length > 0 ? (
+        <div className="qb-plates" role="group" aria-label="The photographs of this build">
+          <Plate
+            img={quote.subjectImage}
+            name={quote.subjectLabel}
+            on={showing === null}
+            onPick={() => onShow(null)}
+          />
+          {plates.map((line) => (
+            <Plate
+              key={line.id}
+              img={line.image}
+              name={line.label}
+              on={showing === line.id}
+              onPick={() => onShow(line.id)}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      <div className="qb-ident">
+        <p className="qb-ref mono-label">{quote.reference}</p>
+        <h1 className="qb-name">{quote.subjectLabel}</h1>
+
+        {quote.subjectSpecs.length > 0 ? (
+          <ul className="qb-specs">
+            {quote.subjectSpecs.map((s) => (
+              <li key={s.label} className="qb-spec">
+                <span className="qb-spec-lab">{s.label}</span>
+                <span className="qb-spec-val">{s.value}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {/* A REFUSAL ALWAYS KEEPS ITS SENTENCE, wherever it is. */}
+        {subjectNote !== '' ? (
+          <p className="qb-alert" role="status">
+            <Warning size={ICON_SIZE.small} weight="light" aria-hidden="true" />
+            {subjectNote}
+          </p>
+        ) : null}
+
+        {/* AND SO DOES A FAULT. The promise that every pick is written
+            as it is made used to be printed here permanently — 22
+            words, on a screen a dealer sees four hundred times, about
+            our bookkeeping rather than their boat. It is deleted. The
+            STORAGE FAULT is not: a screen that says nothing while the
+            write is failing is the one version of this that costs
+            somebody a build. */}
+        {saveProblem !== null && saveProblem !== '' ? (
+          <p className="qb-saved" role="status">
+            {savedNote(saveProblem)}
+          </p>
+        ) : null}
+      </div>
+    </aside>
+  )
+}
+
+/** The photograph, crossfading. Opacity only, 260ms, and both layers
+ *  are in the same box so nothing reflows as one replaces the other. */
+function Render({
+  img,
+  name,
+  still,
+}: {
+  img: QuoteLine['image']
+  name: string
+  still: boolean
+}): ReactElement {
+  const { paint } = useImageDisplay(img?.src ?? '')
+  const key = img && paint ? img.src : `held:${name}`
+
+  return (
+    <div className="qb-render">
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={key}
+          className="qb-render-layer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: transitionFor(still, FADE) }}
+          exit={{ opacity: 0, transition: transitionFor(still, FADE) }}
+        >
+          {img && paint ? (
+            <FrozenPhoto img={img} fallbackAlt={name} className="qb-render-img" w={880} h={660} />
+          ) : (
+            <span className="qb-render-held">
+              <span className="qb-well-held-word">{HELD_AS_LINK}</span>
+              {img ? <span className="qb-well-held-why">{heldAsLinkNote(img.src)}</span> : null}
+            </span>
+          )}
+        </motion.div>
+      </AnimatePresence>
+      <p className="qb-render-say">{name}</p>
+    </div>
+  )
+}
+
+/** 260ms, transform and opacity only — PHASE_TWO §4.1's own number. */
+const FADE = { duration: 0.26, ease: [0.2, 0.8, 0.2, 1] } as const
+
+function Plate({
+  img,
+  name,
+  on,
+  onPick,
+}: {
+  img: QuoteLine['image']
+  name: string
+  on: boolean
+  onPick: () => void
+}): ReactElement {
+  const { paint } = useImageDisplay(img?.src ?? '')
+  return (
+    <button
+      type="button"
+      className={`qb-plate${on ? ' is-on' : ''}`}
+      aria-pressed={on}
+      aria-label={`Show ${name}`}
+      title={name}
+      onClick={onPick}
+    >
+      {img && paint ? (
+        <FrozenPhoto img={img} fallbackAlt={name} className="qb-plate-img" w={112} h={84} />
+      ) : (
+        <span className="qb-plate-mark" aria-hidden="true" />
+      )}
+    </button>
+  )
+}
+
+/* ============================================================
+   §ONE BAND — a name, one fact, and a shortlist when it is open.
+
+   THE HEAD CARRIES ITS KIND'S HUE (`.k-band`), which is
+   DESIGN_PRINCIPLES §1 as amended for this phase: a kind hue may
+   carry a SURFACE. It is not decoration and it is not a palette
+   this screen chose — `bands.ts` reads it off the table's own
+   `kind`, so a motor band is the same colour as a motor anywhere
+   else in the application, always. A figure is never a hue: the
+   money on the head is ink.
+
+   THE BODY IS A LIVE READ AND ONLY WHEN IT IS OPEN. `stepOffer`
+   runs the block's rule over the whole table; doing that for seven
+   shut bands on every redraw would be work nobody asked for. A shut
+   band costs one frozen count.
+   ============================================================ */
+
+function BandBlock({
+  quote,
+  band,
+  open,
+  still,
+  onToggle,
+}: {
+  quote: QuoteDef
+  band: Band
+  open: boolean
+  still: boolean
+  onToggle: () => void
+}): ReactElement {
+  const step = band.step
+  return (
+    <section className="qb-band" data-kind={band.kind}>
+      <h2 className="qb-band-h">
+        <button
+          type="button"
+          className="qb-band-head k-band"
+          aria-expanded={open}
+          onClick={onToggle}
+        >
+          <span className={`qb-band-mark${open ? ' is-open' : ''}`} aria-hidden="true">
+            <CaretDown size={ICON_SIZE.tiny} weight="bold" />
+          </span>
+          <span className="qb-band-name">{step.title}</span>
+          {band.fact === '' ? null : (
+            <span className="qb-band-fact" title={band.fact}>
+              {band.fact}
+            </span>
+          )}
+          <span className="qb-band-fig">{band.amount === null ? '' : money(band.amount)}</span>
+        </button>
+      </h2>
+
+      {open ? (
+        <motion.div
+          className="qb-band-body"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0, transition: transitionFor(still, SPRING) }}
+        >
+          {band.subject ? (
+            <ul className="qb-picked" aria-label={step.title}>
+              {step.lines.map((line) => (
+                <PickedLine key={line.id} quoteId={quote.id} line={line} removable={false} />
+              ))}
+            </ul>
+          ) : (
+            <Shortlist quote={quote} step={step} still={still} />
+          )}
+        </motion.div>
+      ) : null}
+    </section>
+  )
+}
+
+/* ============================================================
+   THE SHORTLIST — 2,519 pairings, honestly reduced.
+
+   Four things happen here and only the first is a list:
+
+     WHAT IS OFFERED   `stepOffer`'s candidates, in the price file's
+                       own order, never re-sorted by price behind the
+                       dealer's back.
+     WHY IT IS SHORT   `readCuration` — the count, the rule that
+                       narrowed it, the measured rate behind that
+                       rule, a search that reaches PAST the
+                       narrowing, and a switch that turns it off.
+     WHAT IS NOT       the rows the narrowing left out, still on
+                       screen, struck through, each carrying the
+                       measurement that removed it. Sea Ray hides
+                       these; McLaren swaps them silently.
+     WHAT IS ON        the lines this band has already put on the
+                       document, removable.
+   ============================================================ */
+
+function Shortlist({
+  quote,
+  step,
+  still,
+}: {
+  quote: QuoteDef
+  step: BuildStep
+  still: boolean
+}): ReactElement {
   const [query, setQuery] = useState('')
   const [all, setAll] = useState(false)
-  useEffect(() => {
-    setQuery('')
-    setAll(false)
-  }, [at])
+  const [showRefused, setShowRefused] = useState(false)
+  const [hi, setHi] = useState(-1)
+  const shelfRef = useRef<HTMLUListElement>(null)
 
-  /* THE LIVE READS, AND THEY ARE EVENTS. Both run when the step, the
-     search or the switch changes — never on a redraw of the document
-     — which is the invariant `index.ts` states in one grep: the store
-     is touched in freeze.ts and nowhere else in this feature. */
   const offer: StepOffer = useMemo(
-    () => (step && !step.subject ? stepOffer(quote, step.section, { all, query }) : NO_OFFER),
+    () => (step.subject ? NO_OFFER : stepOffer(quote, step.section, { all, query })),
     [quote, step, all, query],
   )
   const why: StepReason | null = useMemo(
-    () => (step && !step.subject ? stepReason(quote, step.section) : null),
+    () => (step.subject ? null : stepReason(quote, step.section)),
     [quote, step],
   )
 
-  /* THE FOUR PROPERTIES, RESOLVED ONCE. The chip in the header and the
-     paragraph under it come out of the same three numbers, which is
-     the whole reason the mechanism is shared: a surface that drew its
-     own count beside this one would be back where production is. */
+  /* THE ROWS THE NARROWING LEFT OUT, and their reasons — a SECOND
+     read, run only when a person asks for it. Each row costs one
+     re-run of the block's clauses to say what removed it, so this is
+     not work to do behind a shut disclosure. */
+  const refused: Candidate[] = useMemo(() => {
+    if (!showRefused || step.subject) return []
+    return stepOffer(quote, step.section, { all: true, query }).candidates.filter(
+      (c) => c.outside === true,
+    )
+  }, [showRefused, quote, step, query])
+
   const curation: CurationInput | null = why
     ? {
         name: why.tableName,
@@ -345,818 +671,303 @@ export function QuoteBuild({
     : null
   const reading = curation ? readCuration(curation) : null
 
-  const delta = useTotalDelta(totals.total)
-  const saveProblem = persistNote()
-
-  /* the last checkpoint before a customer sees this — a live read on
-     the draft only, exactly as the sheet makes it */
-  const subjectNote = unsellableSubject(quote.rootTableId, quote.rootRowId)
-
-  const before = step ? stepBefore(steps, step.id) : null
-  const after = step ? stepAfter(steps, step.id) : null
-  const beforeStep = steps.find((s) => s.id === before)
-  const afterStep = steps.find((s) => s.id === after)
-
-  /* WHERE THE WALK GOES FROM HERE, in both directions, as ONE pair of
-     functions — the arrow keys, the two chevrons under the hull and
-     the onward bar all call these, so a key and a press can never
-     disagree about what "next" means. The handover is the end of the
-     walk and the start of nothing: there is always a step before it
-     and never one after. */
-  const goBack = useCallback(() => {
-    if (onHandover) {
-      setAt(steps[steps.length - 1]?.id ?? HANDOVER)
-      return
-    }
-    if (before !== null) setAt(before)
-  }, [onHandover, steps, before])
-
-  const goOn = useCallback(() => {
-    if (onHandover) return
-    setAt(after ?? HANDOVER)
-  }, [onHandover, after])
-
-  /* ── THE HIGHLIGHT ────────────────────────────────────────────
-     Which option the keyboard is pointing at. It is a NUMBER and not
-     a focus ring: a roving tabindex would fight the shelf's own tab
-     order and would move focus off the card the moment the list
-     re-filtered under a search. −1 is "nothing is highlighted", which
-     is what a step opens on, so Enter never takes something a person
-     did not aim at. */
-  const [hi, setHi] = useState(-1)
+  const candidates = offer.candidates
   useEffect(() => {
     setHi(-1)
-  }, [at, query, all])
+  }, [query, all])
 
-  const shelfRef = useRef<HTMLUListElement>(null)
   useEffect(() => {
     if (hi < 0) return
     const el = shelfRef.current?.children[hi]
-    /* NO `behavior: 'smooth'`. This is keyboard-initiated and lands on
-       the same frame as the keypress — the motion budget's one
-       absolute: never animate a key. */
+    /* NO `behavior: 'smooth'` — keyboard-initiated, so it lands on the
+       same frame as the keypress. The motion budget's one absolute. */
     if (el instanceof HTMLElement) el.scrollIntoView({ block: 'nearest' })
   }, [hi])
 
-  const candidates = offer.candidates
-
-  /* Enter takes the highlighted option — or takes it back OFF, which
-     is the same key doing the same thing to the same row and is why
-     the card itself is a toggle rather than a card with an × on it.
-     Removal carries its own undo toast from `quotes.ts`. */
-  const takeHighlighted = useCallback(() => {
-    if (!step || step.subject || hi < 0) return
-    const c = candidates[hi]
-    if (!c) return
-    if (c.alreadyLineId !== undefined) removeLine(quote.id, c.alreadyLineId)
-    else addLine(quote.id, step.section.blockId, c.line)
-  }, [step, hi, candidates, quote.id])
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent): void {
-      if (e.metaKey || e.ctrlKey || e.altKey) return
-      /* SOMEBODY ELSE GOT THERE FIRST. A window listener is the last
-         handler to have an opinion, so anything that has already
-         claimed the key — a picker's own list, a sheet's Escape —
-         keeps it. */
-      if (e.defaultPrevented) return
-      /* A CARET OUTRANKS EVERY SHORTCUT ON THIS SCREEN. The step's own
-         search is a text field three inches from the shelf, and an
-         arrow key that walked off the step mid-word would make the one
-         control §4 asks for unusable. The same goes for anything
-         standing OVER this screen: the customer picker on the last
-         step is a `role="listbox"` whose own arrows move its
-         highlight, and a dialog owns every key inside it. */
-      const t = e.target
-      if (t instanceof HTMLElement) {
-        if (t.isContentEditable) return
-        const tag = t.tagName
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
-        if (t.closest('[role="listbox"], [role="dialog"], [role="menu"]')) return
-      }
-      switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault()
-          goBack()
-          return
-        case 'ArrowRight':
-          e.preventDefault()
-          goOn()
-          return
-        case 'Home':
-          if (steps.length > 0) {
-            e.preventDefault()
-            setAt(steps[0].id)
-          }
-          return
-        case 'End':
-          e.preventDefault()
-          setAt(HANDOVER)
-          return
-        case 'ArrowDown':
-          if (candidates.length === 0) return
-          e.preventDefault()
-          setHi((n) => (n + 1 >= candidates.length ? 0 : n + 1))
-          return
-        case 'ArrowUp':
-          if (candidates.length === 0) return
-          e.preventDefault()
-          setHi((n) => (n <= 0 ? candidates.length - 1 : n - 1))
-          return
-        case 'Enter':
-          if (hi < 0) return
-          e.preventDefault()
-          takeHighlighted()
-          return
-        default:
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [goBack, goOn, steps, candidates.length, hi, takeHighlighted])
-
-  /* THE BAR CARRIES THE PAGE'S ACTIONS AND NOT THE LIST'S.
-     The search and the show-everything switch belong to the list they
-     act on and are drawn on the curation note beside it — one
-     mechanism, one place, so a person looking at twelve trailers and
-     wondering where the other four hundred went finds the answer and
-     the way to them in the same three inches. What is left up here is
-     what the PAGE can do: leave for the whole sheet, and hand it over. */
-  const bar = useMemo<ActionGroup[] | null>(() => {
-    const groups: ActionGroup[] = [
-      {
-        id: 'qb-doors',
-        rank: 50,
-        items: [
-          {
-            kind: 'button',
-            id: 'qb-sheet',
-            label: 'The whole quote',
-            say: 'Open the whole quote on one sheet — adjustments, contact lines, tax',
-            icon: Rows,
-            onPick: onOpenSheet,
-          },
-        ],
-      },
-      {
-        id: 'qb-issue',
-        rank: 90,
-        items: [
-          {
-            kind: 'button',
-            id: 'qb-give',
-            label: 'Give it to the customer',
-            tone: 'primary',
-            /* NOT `disabled`. A disabled control drops out of the tab
-               order and takes its own explanation with it; the bar's
-               `refusal` keeps both. The first reason is the one a
-               person can act on now — the rest are under the total. */
-            ...(refusals.length > 0 ? { refusal: refusals[0] } : {}),
-            onPick: () => {
-              if (issueQuote(quote.id)) onIssued?.(quote)
-            },
-          },
-        ],
-      },
-    ]
-    return groups
-  }, [onOpenSheet, refusals, quote, onIssued])
-  useActionBar('quote-build', bar)
-
-  /* WHICH WAY THE DECK IS TRAVELLING, so the outgoing decision leaves
-     the way the incoming one arrives. Held in a ref rather than in
-     state: it is read during the render that follows a step change and
-     changing it must never itself cause one. */
-  const wasAt = useRef(at)
-  const order = useCallback(
-    (id: string): number => (id === HANDOVER ? steps.length : steps.findIndex((s) => s.id === id)),
-    [steps],
+  const take = useCallback(
+    (c: Candidate) => {
+      if (c.alreadyLineId !== undefined) removeLine(quote.id, c.alreadyLineId)
+      else addLine(quote.id, step.section.blockId, c.line)
+    },
+    [quote.id, step.section.blockId],
   )
-  const dir = order(at) < order(wasAt.current) ? -1 : 1
-  useEffect(() => {
-    wasAt.current = at
-  }, [at])
 
-  const stepIndex = onHandover ? stopCount : (step?.index ?? 1)
-  const stepTitle = onHandover ? 'Who it is for' : (step?.title ?? '')
+  /* THE KEYS BELONG TO THE BAND, not to the window. The deck had a
+     window listener because one step was open at a time; seven open
+     accordions cannot share one highlight, and a global arrow key
+     that moved a list somebody was not looking at would be worse
+     than no shortcut at all. */
+  const onKeyDown = (e: React.KeyboardEvent): void => {
+    if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (candidates.length === 0) return
+      e.preventDefault()
+      const s = e.key === 'ArrowDown' ? 1 : -1
+      setHi((n) => {
+        const next = n + s
+        if (next < 0) return candidates.length - 1
+        if (next >= candidates.length) return 0
+        return next
+      })
+      return
+    }
+    if (e.key === 'Enter' && hi >= 0) {
+      const c = candidates[hi]
+      if (!c) return
+      e.preventDefault()
+      take(c)
+    }
+  }
 
+  const held =
+    offer.historic === 'table'
+      ? retiredTableSentence(why?.tableName ?? step.title)
+      : offer.historic === 'pairs'
+        ? retiredPairsSentence(why?.tableName ?? step.title, 'The list it was picked from')
+        : undefined
+
+  const notOffered = offer.pool - offer.admitted
+
+  /* eslint-disable-next-line jsx-a11y/no-static-element-interactions */
   return (
-    <>
-      {/* ============================================================
-          §THE RAIL — the whole build, at a glance, never scrolling.
+    <div onKeyDown={onKeyDown}>
+      {reading ? (
+        <CurationNote
+          reading={reading}
+          tone="block"
+          showingAll={all}
+          onShowAll={setAll}
+          refusal={held}
+          search={{
+            value: query,
+            onChange: setQuery,
+            label: `Find a ${step.title} by name, past the narrowing`,
+            placeholder: `Find a ${step.title}…`,
+          }}
+        />
+      ) : null}
 
-          IT CARRIES WHAT WAS CHOSEN, not merely that something was.
-          The stops used to be a tick and a figure, which answers "is
-          this step done" and leaves "done with WHAT" to be found by
-          walking back into it. A rail that says "Yamaha F90XB" under
-          MOTOR is a summary of the rig a person can read across a desk
-          and press to correct — the single most useful thing this band
-          could be, and the reason it is worth the height.
+      {step.lines.length > 0 ? (
+        <ul className="qb-picked" aria-label={`On the quote from ${step.title}`}>
+          {step.lines.map((line) => (
+            <PickedLine key={line.id} quoteId={quote.id} line={line} removable />
+          ))}
+        </ul>
+      ) : null}
 
-          IT IS NAVY BECAUSE THE APP'S FRAME IS. The side rail and the
-          masthead are `--chrome`; a build that opened on a third
-          coloured band would be a third idea. THE ACCENT IS BARRED ON
-          THIS GROUND — #0a5fc2 measures 2.7:1 there — so the open stop
-          is lit in white, exactly as the dock's active item is, and
-          the three ink tiers are `--chrome-fg` (14.9:1),
-          `--chrome-fg-soft` (7.6:1) and `--chrome-fg-faint` (4.6:1,
-          the floor and the last tier allowed a word that matters).
-          ============================================================ */}
-      <header className="qb-rail">
-        <div className="qb-rail-head">
-          <div className="qb-rail-who">
-            <p className="qb-rail-ref mono-label">{quote.reference}</p>
-            <p className="qb-rail-subject">{quote.subjectLabel}</p>
-          </div>
-
-          <p className="qb-rail-where">
-            <span className="qb-rail-where-n mono-label">
-              Step {stepIndex} of {stopCount}
-            </span>
-            <span className="qb-rail-where-name">{stepTitle}</span>
-          </p>
-
-          <div className="qb-rail-tail">
-            <p className="qb-rail-done mono-label">
-              {doneCount} of {stopCount} decided
-            </p>
-            <button
-              type="button"
-              className="qb-rail-out"
-              onClick={onOpenSheet}
-              title="Adjustments, contact lines, tax — the whole document on one sheet"
-            >
-              <Rows size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-              <span>The whole quote</span>
-            </button>
-          </div>
-        </div>
-
-        <nav className="qb-rail-track" aria-label="The steps of this build">
-          <ol className="qb-rail-stops">
-            {steps.map((s) => (
-              <li key={s.id} className="qb-rail-slot">
-                <Stop
-                  index={s.index}
-                  title={s.title}
-                  chose={choseSay(s)}
-                  done={s.state === 'decided'}
-                  on={s.id === at}
-                  onPick={() => setAt(s.id)}
-                />
-              </li>
-            ))}
-            <li className="qb-rail-slot">
-              <Stop
-                index={stopCount}
-                title="Who it is for"
-                chose={named ? quote.customer.name.trim() : ''}
-                done={named}
-                on={onHandover}
-                onPick={() => setAt(HANDOVER)}
+      {candidates.length > 0 ? (
+        <ul className="qb-shelf" ref={shelfRef}>
+          {candidates.map((c, i) => (
+            <li key={c.line.id} className="qb-shelf-slot">
+              <OfferCard
+                candidate={c}
+                index={i}
+                still={still}
+                lit={i === hi}
+                onPick={() => {
+                  setHi(i)
+                  take(c)
+                }}
               />
             </li>
-          </ol>
-        </nav>
+          ))}
+        </ul>
+      ) : (
+        <NothingOffered
+          step={step}
+          offer={offer}
+          why={why}
+          query={query}
+          all={all}
+          onSeeAll={() => {
+            setQuery('')
+            setAll(true)
+          }}
+        />
+      )}
 
-        {/* HOW FAR ALONG, AS A LENGTH. The same two numbers the
-            sentence above states in words — no third fact, nothing
-            counted twice — which is why it is aria-hidden. */}
-        <span className="qb-rail-meter" aria-hidden="true">
-          <span
-            className="qb-rail-meter-fill"
-            style={{ ['--done' as string]: `${Math.round((doneCount / stopCount) * 100)}%` }}
-          />
-        </span>
-      </header>
-
-      {/* ============================================================
-          §THE SPLIT — the hull held still, the decision moving.
-
-          The atmosphere is painted on the SCROLLPORT'S OWN BACKGROUND
-          rather than mounted inside it. `.ds-aurora` is an absolutely
-          positioned element, and an absolutely positioned child of a
-          scroll container belongs to that container's scrollable
-          overflow — so it would sit over the first screen and slide
-          off the top the moment somebody scrolled, leaving the rest of
-          the page on flat paint. Two radial washes in `.qb-body`'s own
-          background do not scroll, carry nothing, and build.css takes
-          them away under prefers-reduced-transparency and
-          prefers-contrast: more.
-          ============================================================ */}
-      <div className="qb-body">
-        <div className="qb-split">
-          <HullPane
-            quote={quote}
-            saved={savedNote(saveProblem)}
-            saveFailed={saveProblem !== null}
-            subjectNote={subjectNote}
-            backTitle={onHandover ? (steps[steps.length - 1]?.title ?? '') : (beforeStep?.title ?? '')}
-            canBack={onHandover || before !== null}
-            onTitle={onHandover ? '' : (afterStep?.title ?? 'Who it is for')}
-            canOn={!onHandover}
-            onBack={goBack}
-            onOn={goOn}
-          />
-
-          <div className="qb-work">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.section
-                key={at}
-                className="qb-panel"
-                aria-label={stepTitle}
-                initial={{ opacity: 0, x: dir * 26 }}
-                animate={{ opacity: 1, x: 0, transition: transitionFor(still, SPRING) }}
-                exit={{ opacity: 0, x: dir * -18, transition: transitionFor(still, SPRING_QUICK) }}
-              >
-                <header className="qb-panel-head">
-                  <p className="qb-panel-n mono-label">
-                    Step {stepIndex} of {stopCount}
-                  </p>
-                  <h2 className="qb-panel-name">{stepTitle}</h2>
-                </header>
-
-                {onHandover ? (
-                  <Handover
-                    quote={quote}
-                    steps={steps}
-                    total={totals.total}
-                    refusals={refusals}
-                    onOpenCustomer={onOpenCustomer}
-                  />
-                ) : step && step.subject ? (
-                  <SubjectStep quote={quote} step={step} />
-                ) : step ? (
-                  <>
-                    {reading ? (
-                      <CurationNote
-                        reading={reading}
-                        tone="page"
-                        showingAll={all}
-                        onShowAll={setAll}
-                        /* RULE 10 — a control that cannot act says why,
-                           where it is. There is nothing past the
-                           narrowing on a table that is history, and a
-                           switch that simply greyed out would take its
-                           own explanation with it. */
-                        refusal={
-                          offer.historic === 'table'
-                            ? retiredTableSentence(step.title)
-                            : offer.historic === 'pairs'
-                              ? retiredPairsSentence(step.title, 'The list it was picked from')
-                              : undefined
-                        }
-                        search={{
-                          value: query,
-                          onChange: setQuery,
-                          label: `Find a ${step.title} by name, past the narrowing`,
-                          placeholder: `Find a ${step.title} by name…`,
-                        }}
-                      />
-                    ) : null}
-
-                    <MeasuredPlate why={why} />
-
-                    {step.lines.length > 0 ? (
-                      <section className="qb-chosen" aria-label={`On the quote from ${step.title}`}>
-                        <p className="qb-chosen-head mono-label">On the quote from this step</p>
-                        <ul className="qb-picked">
-                          {step.lines.map((line) => (
-                            <PickedLine key={line.id} quoteId={quote.id} line={line} removable />
-                          ))}
-                        </ul>
-                      </section>
-                    ) : null}
-
-                    {candidates.length > 0 ? (
-                      <ul className="qb-shelf" ref={shelfRef}>
-                        {candidates.map((c, i) => (
-                          <li key={c.line.id} className="qb-shelf-slot">
-                            <OfferCard
-                              candidate={c}
-                              index={i}
-                              still={still}
-                              lit={i === hi}
-                              onPick={() => {
-                                setHi(i)
-                                if (c.alreadyLineId !== undefined) {
-                                  removeLine(quote.id, c.alreadyLineId)
-                                } else {
-                                  addLine(quote.id, step.section.blockId, c.line)
-                                }
-                              }}
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <NothingOffered
-                        step={step}
-                        offer={offer}
-                        why={why}
-                        query={query}
-                        all={all}
-                        onSeeAll={() => {
-                          setQuery('')
-                          setAll(true)
-                        }}
-                      />
-                    )}
-
-                    {offer.capped ? (
-                      <p className="qb-note">
-                        The first {OFFER_CAP} of {offer.matched} are drawn. Type a word above to
-                        reach the rest — the search runs over the whole table.
-                      </p>
-                    ) : null}
-                  </>
-                ) : null}
-
-                {/* THE WALK ENDS ON THE HANDOVER, never on a dead
-                    control. The last section's "onward" is the
-                    customer, which is the one question left — and the
-                    handover itself has nowhere further to go, so it
-                    draws no bar at all rather than a disabled one. */}
-                {onHandover ? null : (
-                  <footer className="qb-onward">
-                    <button type="button" className="qb-onward-btn" onClick={goOn}>
-                      <span className="qb-onward-lab mono-label">Next step</span>
-                      <span className="qb-onward-name">
-                        {afterStep ? afterStep.title : 'Who it is for'}
-                      </span>
-                      <ArrowRight size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
-                    </button>
-                  </footer>
-                )}
-              </motion.section>
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-
-      {/* ============================================================
-          §THE LEDGER — the total, and the arithmetic under it.
-
-          IT IS NOT IN THE SCROLL, and that is measured rather than
-          stylistic: a sticky footer is floored by its scroll
-          container's content box, so it ends up painted across the
-          middle of its own document. This is a SIBLING of the
-          scrollport. DESIGN_CONTRACT §8.7.
-          ============================================================ */}
-      <Ledger
-        quote={quote}
-        steps={steps}
-        totals={totals}
-        delta={delta}
-        refusals={refusals}
-        onGoTo={setAt}
-      />
-    </>
-  )
-}
-
-/* ============================================================
-   ONE STOP ON THE RAIL
-
-   Three states and they are drawn as three different marks rather
-   than as three shades of one: a tick for decided, a lit disc for
-   the one you are on, the numeral for the rest. Shade alone would
-   be the only signal on a navy ground where the accent is barred,
-   and a person glancing at eight of these needs the shape to carry
-   it.
-   ============================================================ */
-
-function Stop({
-  index,
-  title,
-  chose,
-  done,
-  on,
-  onPick,
-}: {
-  index: number
-  title: string
-  /** what was chosen on it — '' when nothing has been */
-  chose: string
-  done: boolean
-  on: boolean
-  onPick: () => void
-}): ReactElement {
-  return (
-    <button
-      type="button"
-      className={`qb-stop${on ? ' is-on' : ''}${done ? ' is-done' : ''}`}
-      aria-current={on ? 'step' : undefined}
-      /* A READER WHO CANNOT SEE THE CHIP GETS THE SAME FACT. It used to
-         say "not chosen yet" over every open stop, including the ones
-         where nothing is on offer — so the one state that is not work
-         waiting to be done was the one state the label hid. */
-      aria-label={`Step ${index}, ${title}, ${
-        done ? `chosen: ${chose}` : chose === '' ? 'not chosen yet' : chose
-      }`}
-      onClick={onPick}
-    >
-      <span className="qb-stop-mark" aria-hidden="true">
-        {done ? <Check size={ICON_SIZE.tiny} weight="bold" /> : index}
-      </span>
-      <span className="qb-stop-say">
-        <span className="qb-stop-name">{title}</span>
-        {/* THE FULL TEXT STAYS IN THE DOM. The chip clamps to one line
-            at a word boundary — never mid-word (§3) — and `title`
-            carries the whole of it for a pointer. */}
-        <span className="qb-stop-chose" title={chose === '' ? undefined : chose}>
-          {chose === '' ? 'not chosen' : chose}
-        </span>
-      </span>
-    </button>
-  )
-}
-
-/** What a step put on the quote, short enough for a rail and counted
- *  rather than truncated: one line is named, more than one is named
- *  and counted. Nothing is invented — a step with lines that carry no
- *  price still says what was chosen, because the choice is the fact
- *  the rail is about and the money is the ledger's business.
- *
- *  AND WHEN NOTHING WAS CHOSEN IT SAYS WHY, WHICH IS FOUR DIFFERENT
- *  FACTS. "Not chosen" was printed over all of them: a stop with four
- *  curated motors waiting, a stop whose whole offer is no longer sold,
- *  and a stop the relationship is simply empty at all read the same,
- *  and only one of them is work a person can do. `step.reach` tells
- *  them apart off the frozen section — see `StepReach` in steps.ts. */
-function choseSay(s: BuildStep): string {
-  if (s.lines.length === 1) return s.lines[0].label
-  if (s.lines.length > 1) return `${s.lines[0].label}  +${s.lines.length - 1} more`
-  switch (s.reach) {
-    case 'waiting': {
-      const n = s.section.pickedCount ?? 0
-      return n === 1 ? 'one waiting' : `${n} waiting`
-    }
-    case 'held':
-      return `${s.section.heldCount ?? 0} no longer sold`
-    case 'bare':
-      return 'nothing curated yet'
-    default:
-      return 'not chosen'
-  }
-}
-
-/* ============================================================
-   THE PRICE MOVING — the fifth thing this screen has to do
-
-   A person who picks a $41,340 motor should SEE $41,340 arrive.
-   Production's running total simply becomes a different number and
-   the change is left to be inferred by whoever was watching closely.
-
-   It is derived from the ONE summation and never from the pick: two
-   subtractions of `quoteTotals` cannot disagree with `quoteTotals`.
-   It clears itself, so it is never a stale claim about something that
-   happened five minutes ago, and `null` — not 0 — is "nothing has
-   moved", so a pick worth nothing does not flash a zero.
-   ============================================================ */
-function useTotalDelta(total: number): number | null {
-  const seen = useRef<number | null>(null)
-  const [delta, setDelta] = useState<number | null>(null)
-
-  useEffect(() => {
-    const was = seen.current
-    seen.current = total
-    if (was === null || was === total) return
-    setDelta(total - was)
-    const t = window.setTimeout(() => setDelta(null), 2600)
-    return () => window.clearTimeout(t)
-  }, [total])
-
-  return delta
-}
-
-/* ============================================================
-   THE HULL — what is being configured, held still beside the
-   decision that is not.
-
-   IT IS THE BIGGEST THING ON THE SCREEN and it stays. The picture
-   was 220px wide beside a 21px name — a thumbnail of the one object
-   the whole document is about — and it scrolled away the moment
-   somebody started picking. It is sticky now, so a person four
-   steps into a rig is still looking at the boat they are building.
-
-   THE PACKAGE FIGURE IS NOT HERE, and that is deliberate. It was
-   drawn twice on one screen — once beside the hull and once in the
-   bar under the scrollport — with its own copy of the delta and its
-   own copy of the unpriced count. Two readings of one number is how
-   two numbers for one deal start to exist. The ledger is the honest
-   home for it: it is a SIBLING of the scrollport, so it is on screen
-   at every scroll position.
-   ============================================================ */
-
-function HullPane({
-  quote,
-  saved,
-  saveFailed,
-  subjectNote,
-  backTitle,
-  canBack,
-  onTitle,
-  canOn,
-  onBack,
-  onOn,
-}: {
-  quote: QuoteDef
-  saved: string
-  saveFailed: boolean
-  subjectNote: string
-  backTitle: string
-  canBack: boolean
-  onTitle: string
-  canOn: boolean
-  onBack: () => void
-  onOn: () => void
-}): ReactElement {
-  return (
-    <aside className="qb-hull" aria-label="What this quote is about">
-      <div className="qb-hull-stick">
-        <PictureWell img={quote.subjectImage} name={quote.subjectLabel} big />
-
-        <p className="qb-hull-ref mono-label">{quote.reference}</p>
-        <h1 className="qb-hull-name ds-display-lg">{quote.subjectLabel}</h1>
-
-        {quote.subjectSpecs.length > 0 ? (
-          <ul className="qb-hull-specs">
-            {quote.subjectSpecs.map((s) => (
-              <li key={s.label} className="qb-hull-spec">
-                <span className="qb-hull-spec-lab">{s.label}</span>
-                <span className="qb-hull-spec-val">{s.value}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        {subjectNote !== '' ? (
-          <p className="qb-alert" role="status">
-            <Warning size={ICON_SIZE.small} weight="light" aria-hidden="true" />
-            {subjectNote}
-          </p>
-        ) : null}
-
-        {/* THE TWO CHEVRONS, and they name where they go. A bare pair
-            of arrows makes a person press one to find out; the name
-            of the next decision is the whole affordance. */}
-        <div className="qb-walk">
-          <button
-            type="button"
-            className="qb-walk-btn"
-            disabled={!canBack}
-            aria-label={canBack ? `Back to ${backTitle}` : 'This is the first step'}
-            onClick={onBack}
-          >
-            <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-            <span className="qb-walk-name">{canBack ? backTitle : 'The start'}</span>
-          </button>
-          <button
-            type="button"
-            className="qb-walk-btn qb-walk-btn--on"
-            disabled={!canOn}
-            aria-label={canOn ? `On to ${onTitle}` : 'This is the last step'}
-            onClick={onOn}
-          >
-            <span className="qb-walk-name">{canOn ? onTitle : 'The end'}</span>
-            <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* A SHORTCUT NOBODY IS TOLD ABOUT IS A SHORTCUT NOBODY HAS.
-            Four keys, in the place a person's eye rests between
-            decisions, and each mark is a real key rather than a word
-            for one. */}
-        <p className="qb-keys">
-          <kbd className="qb-key">←</kbd>
-          <kbd className="qb-key">→</kbd>
-          <span className="qb-keys-say">walk the steps</span>
-          <kbd className="qb-key">↑</kbd>
-          <kbd className="qb-key">↓</kbd>
-          <span className="qb-keys-say">pick through the list</span>
-          <kbd className="qb-key">Enter</kbd>
-          <span className="qb-keys-say">take it, or take it off</span>
+      {offer.capped ? (
+        <p className="qb-note">
+          The first {OFFER_CAP} of {offer.matched} are drawn. Type a word above to reach the rest.
         </p>
+      ) : null}
 
-        <p className={`qb-hull-saved${saveFailed ? ' is-bad' : ''}`}>{saved}</p>
-      </div>
-    </aside>
+      {/* ── NEVER HIDE ────────────────────────────────────────────
+          `422 of 434` is not a number to be embarrassed by; it is the
+          number a dealer quotes down the phone. The count is always
+          said, the rule that produced it is named on the chip above,
+          and every one of those rows is one press away with the
+          measurement that removed it written on it. */}
+      {!all && notOffered > 0 ? (
+        <div className="qb-refused">
+          <button
+            type="button"
+            className="qb-refused-head"
+            aria-expanded={showRefused}
+            onClick={() => setShowRefused((v) => !v)}
+          >
+            <span className="mono-label qb-refused-lab">Not offered</span>
+            <span className="qb-refused-count">{notOffered.toLocaleString()}</span>
+            <span className={`qb-band-mark${showRefused ? ' is-open' : ''}`} aria-hidden="true">
+              <CaretDown size={ICON_SIZE.tiny} weight="bold" />
+            </span>
+          </button>
+
+          {showRefused ? (
+            <ul className="qb-refused-list">
+              {refused.slice(0, REFUSED_SHOWN).map((c) => (
+                <RefusedRow key={c.line.id} candidate={c} />
+              ))}
+              {refused.length === 0 ? (
+                <li className="qb-refused-none">
+                  Every row this narrowing left out is already on screen above.
+                </li>
+              ) : null}
+              {notOffered > REFUSED_SHOWN ? (
+                <li className="qb-refused-none">
+                  {REFUSED_SHOWN} of {notOffered.toLocaleString()} are drawn. The search above
+                  reaches every one of them.
+                </li>
+              ) : null}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
 /* ============================================================
-   THE SUBJECT STEP — one boat, and no candidates
+   ONE ROW THE RULE LEFT OUT — struck through, priced, and saying
+   what measured it out.
+
+   `.s-refused` is the state ds.css ships for exactly this: a
+   `--danger` rail, the reason at `--fg-secondary`, and the FIGURE
+   struck rather than hidden. A dealer needs to see that the option
+   exists and what it would have cost — Polestar's move, the best
+   precondition copy in the corpus, and the opposite of Ford's four
+   dedicated disabled tokens.
+
+   `aria-disabled`, never `disabled`: the row keeps its place in tab
+   order and keeps its explanation with it.
    ============================================================ */
 
-function SubjectStep({ quote, step }: { quote: QuoteDef; step: BuildStep }): ReactElement {
+function RefusedRow({ candidate }: { candidate: Candidate }): ReactElement {
+  const line = candidate.line
   return (
-    <>
-      <p className="qb-say">
-        This is what the quote is about. It was frozen onto the document when the quote was
-        raised — the name, the specs beside it and the price below all say what the sheet said
-        that day, and none of them moves if the price file is imported again.
-      </p>
-      <ul className="qb-picked" aria-label={step.title}>
-        {step.lines.map((line) => (
-          <PickedLine key={line.id} quoteId={quote.id} line={line} removable={false} />
-        ))}
-      </ul>
-    </>
+    <li className="qb-ref-row s-refused" aria-disabled="true">
+      <span className="qb-ref-name">{line.label}</span>
+      <span className="qb-ref-fig s-figure">
+        {line.unitPrice === null ? <span className="qb-nil">not priced here</span> : money(line.unitPrice)}
+      </span>
+      {candidate.outsideWhy ? (
+        <span className="qb-ref-why s-say">{candidate.outsideWhy}</span>
+      ) : null}
+    </li>
   )
 }
 
 /* ============================================================
-   §THE LEDGER — a total that opens onto its own arithmetic.
+   §THE PRICE — always on screen, and it does not move.
 
-   A RUNNING TOTAL IS A CLAIM, and a bar that makes one and offers
-   no way to check it is asking a salesperson to read $88,715 to a
-   customer on trust. Production's is a number and nothing else.
-   This one opens: every step, every line on it, what each line
-   cost and what it was priced at — the same frozen figures the
-   printed document will carry, summed by the same `quoteTotals`.
+   It is a SIBLING of the scrollport rather than a sticky child, for
+   the reason quote.css records at length: a sticky box is floored by
+   its scroll container's content box, so it ends up painted across
+   the middle of its own document.
 
-   NOTHING IS INVENTED HERE AND THAT IS MOSTLY WHAT THIS CODE IS
-   DOING. A line with no price says "not priced here" and is never
-   rendered as 0. A step whose lines are all unpriced says so
-   rather than showing a total of nothing. There is no tax rate
-   column anywhere in the seeded data, so tax appears ONLY when a
-   person typed a rate on the sheet, and when they have not the
-   ledger says where one goes rather than quietly showing an
-   inc-GST figure the business never stated.
+   THE FIGURE DOES NOT COUNT UP. Every configurator in the research
+   agrees, including both that show a price: Porsche's total simply
+   becomes the new number and Polestar's carries no transition at
+   all. Motion on money reads as a slot machine. Only the delta chip
+   beside it moves, and it clears itself.
 
-   THE FIGURES DO NOT ANIMATE. Every one is mono and tabular and
-   the column is right-aligned, so a change lands on the frame it
-   happens. What DOES move is a new line arriving — one `ds-rise`
-   on mount, which fires for exactly the row that was just added
-   and for nothing else — and the delta chip beside the total.
+   THE TAX LINE IS TWO WORDS WHERE THE FILE STATES NO RATE. There is
+   no tax-rate column anywhere in the seeded data and the document's
+   own clause is "inclusive of tax unless otherwise stated"; an
+   ex-tax figure appears only where a person typed a rate, and then
+   it names the rate it used. No 1.1 divisor, ever.
    ============================================================ */
 
-function Ledger({
+function PriceBar({
   quote,
   steps,
   totals,
   delta,
   refusals,
-  onGoTo,
+  levels,
+  onLevel,
+  onOpenSheet,
+  onIssue,
 }: {
   quote: QuoteDef
   steps: readonly BuildStep[]
   totals: ReturnType<typeof quoteTotals>
   delta: number | null
   refusals: readonly string[]
-  onGoTo: (stepId: string) => void
+  levels: ReturnType<typeof quoteLevelChoices>
+  onLevel: (key: string, label: string) => void
+  onOpenSheet: () => void
+  onIssue: () => void
 }): ReactElement {
-  const [open, setOpen] = useState(false)
-  const loose = looseLines(quote)
-  const levels = useMemo(() => quoteLevelChoices(quote.lines), [quote.lines])
+  const [ledger, setLedger] = useState(false)
 
   return (
-    <footer className="qb-ledger">
-      <div className="qb-ledger-bar">
+    <footer className="qb-price">
+      {ledger ? (
+        <Ledger quote={quote} steps={steps} totals={totals} refusals={refusals} />
+      ) : null}
+
+      {/* RULE 10, AND IT GETS ITS OWN LINE. The reason a quote cannot
+          go out is a SENTENCE — the prose budget's one permanent
+          exemption — and a sentence squeezed into a strip beside a
+          total, a rung control and two buttons wrapped to four lines
+          at 1024 and took a fifth of the window. Across the width it
+          is one line at every size, it is still beside the control it
+          refuses, and the control row stays a row. */}
+      {refusals.length > 0 ? (
+        <p className="qb-give-why" role="status">
+          {refusals[0]}
+        </p>
+      ) : null}
+
+      <div className="qb-price-bar">
         <button
           type="button"
-          className="qb-ledger-toggle"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
+          className="qb-price-fig"
+          aria-expanded={ledger}
+          onClick={() => setLedger((v) => !v)}
         >
-          <span className="qb-ledger-lab mono-label">Total</span>
-          <span className="qb-ledger-total">{money(totals.total)}</span>
-          <span className={`qb-ledger-caret${open ? ' is-open' : ''}`} aria-hidden="true">
-            <CaretDown size={ICON_SIZE.tiny} weight="bold" />
+          <span className="qb-price-lab mono-label">Total</span>
+          <span className="qb-price-now">{money(totals.total)}</span>
+          <span className="qb-price-tax">
+            {totals.totalExcludingTax === null
+              ? 'incl. tax'
+              : `${money(totals.totalExcludingTax)} ex · ${totals.taxRate}%`}
           </span>
-          <span className="qb-ledger-toggle-say">
-            {open ? 'Hide what it is made of' : 'See what it is made of'}
+          <span className={`qb-band-mark${ledger ? ' is-open' : ''}`} aria-hidden="true">
+            <CaretDown size={ICON_SIZE.tiny} weight="bold" />
           </span>
         </button>
 
         {delta !== null ? (
           <span className={`qb-delta${delta < 0 ? ' is-down' : ''}`} role="status">
-            {delta > 0 ? `+${money(delta)}` : money(delta)}
+            {deltaSay(delta)}
           </span>
         ) : null}
 
         {totals.unpricedCount > 0 ? (
-          <span className="qb-ledger-unpriced">{totals.unpricedCount} not priced</span>
+          <span className="qb-price-unpriced">{totals.unpricedCount} not priced</span>
         ) : null}
 
-        {/* THE RUNG THE WHOLE QUOTE IS READ AT, on the screen where the
-            picking happens rather than only on the sheet. It is pure
-            arithmetic on frozen data — every rung was captured at pick
-            time — so switching here re-reads nothing live and cannot
-            pick up a reimport. Drawn only when the lines actually carry
-            more than one rung: a control offering one choice is
-            furniture. */}
         {levels.length > 1 ? (
           <div className="qb-levels" role="group" aria-label="Price level">
-            <span className="qb-levels-lab mono-label">Priced at</span>
             {levels.map((l) => (
               <button
                 key={l.key}
                 type="button"
                 className={`qb-level${quote.levelKey === l.key ? ' is-on' : ''}`}
                 aria-pressed={quote.levelKey === l.key}
-                onClick={() => setLevel(quote.id, l.key)}
+                onClick={() => onLevel(l.key, l.label)}
               >
                 {l.label}
               </button>
@@ -1164,158 +975,182 @@ function Ledger({
           </div>
         ) : null}
 
-        {/* THE ACT IS ON THE ACTION BAR AND NOWHERE ELSE. It is
-            published above at rank 90 with its refusal attached, and
-            the bar is where a page's actions live (DESIGN_CONTRACT
-            §4). Drawing it here as well would be two ways out of one
-            place, and two primaries on one screen — the exact thing §1
-            says leaves nothing primary. */}
-        <p className="qb-ledger-where">
-          {refusals.length > 0
-            ? 'Not ready to go out yet:'
-            : 'Ready. “Give it to the customer” is on the bar below.'}
-        </p>
+        {/* THE HANDOVER LIVES ON THE PRICE BAR, which is where
+            PHASE_TWO §2.3 puts it and where a person's eye already
+            is. NOT `disabled`: a disabled control drops out of the
+            tab order and takes its own explanation with it, so the
+            first reason it cannot go is printed beside it and the
+            rest are under the total. */}
+        <button type="button" className="qb-door" onClick={onOpenSheet}>
+          <Rows size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+          The whole quote
+        </button>
+
+        <button
+          type="button"
+          className="qb-give"
+          aria-disabled={refusals.length > 0 || undefined}
+          onClick={() => {
+            if (refusals.length > 0) return
+            onIssue()
+          }}
+        >
+          Give it to the customer
+        </button>
       </div>
+    </footer>
+  )
+}
 
-      {open ? (
-        <div className="qb-ledger-open">
-          <ul className="qb-led">
-            {steps.map((s) => (
-              <li key={s.id} className="qb-led-group">
-                <button
-                  type="button"
-                  className="qb-led-head"
-                  onClick={() => onGoTo(s.id)}
-                  aria-label={`Go back to ${s.title}`}
-                >
-                  <span className="qb-led-head-name">{s.title}</span>
-                  <span className="qb-led-head-sum">
-                    {s.lines.length === 0 ? (
-                      <span className="qb-nil">nothing chosen</span>
-                    ) : s.amount === null ? (
-                      <span className="qb-nil">not priced</span>
-                    ) : (
-                      money(s.amount)
-                    )}
-                  </span>
-                </button>
-                {s.lines.length > 0 ? (
-                  <ul className="qb-led-lines">
-                    {s.lines.map((line, i) => (
-                      <LedgerLine key={line.id} line={line} index={i} />
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ))}
+/* ============================================================
+   THE LEDGER — a total that opens onto its own arithmetic.
 
-            {/* A TYPED LINE BELONGS TO NO SECTION and would otherwise
-                be summed into the total with nothing on screen to
-                account for it. `looseLines` is the reader for those. */}
-            {loose.length > 0 ? (
-              <li className="qb-led-group">
-                <p className="qb-led-head qb-led-head--flat">
-                  <span className="qb-led-head-name">Typed onto the quote</span>
-                  <span className="qb-led-head-sum" />
-                </p>
-                <ul className="qb-led-lines">
-                  {loose.map((line, i) => (
-                    <LedgerLine key={line.id} line={line} index={i} />
-                  ))}
-                </ul>
-              </li>
-            ) : null}
-          </ul>
+   A running total is a CLAIM, and a bar that makes one and offers
+   no way to check it is asking a salesperson to read $88,715 to a
+   customer on trust. This opens onto every band, every line, what
+   each cost and what it was priced at — the same frozen figures the
+   printed document carries, summed by the same `quoteTotals`.
 
-          <dl className="qb-sums">
-            <div className="qb-sum">
-              <dt className="qb-sum-lab">The package</dt>
-              <dd className="qb-sum-fig">{money(totals.packageTotal)}</dd>
-            </div>
-            {quote.adjustments.length > 0 ? (
-              <div className="qb-sum">
-                <dt className="qb-sum-lab">
-                  Adjustments
-                  <span className="qb-sum-note">
-                    {quote.adjustments.length === 1
-                      ? '1 on the sheet'
-                      : `${quote.adjustments.length} on the sheet`}
-                  </span>
-                </dt>
-                <dd className="qb-sum-fig">{money(totals.adjustmentsTotal)}</dd>
-              </div>
-            ) : null}
-            {totals.taxRate === null ? (
-              <div className="qb-sum">
-                <dt className="qb-sum-lab">
-                  Tax
-                  <span className="qb-sum-note">
-                    No rate is typed on this quote, so nothing is split out. The rate goes on the
-                    whole-quote sheet.
-                  </span>
-                </dt>
-                <dd className="qb-sum-fig">
-                  <span className="qb-nil">not stated</span>
-                </dd>
-              </div>
-            ) : (
-              <>
-                <div className="qb-sum">
-                  <dt className="qb-sum-lab">Before tax</dt>
-                  <dd className="qb-sum-fig">
-                    {totals.totalExcludingTax === null ? (
-                      <span className="qb-nil">not stated</span>
-                    ) : (
-                      money(totals.totalExcludingTax)
-                    )}
-                  </dd>
-                </div>
-                <div className="qb-sum">
-                  <dt className="qb-sum-lab">
-                    Tax<span className="qb-sum-note">{totals.taxRate}% typed on the sheet</span>
-                  </dt>
-                  <dd className="qb-sum-fig">
-                    {totals.taxAmount === null ? (
-                      <span className="qb-nil">not stated</span>
-                    ) : (
-                      money(totals.taxAmount)
-                    )}
-                  </dd>
-                </div>
-              </>
-            )}
-            <div className="qb-sum qb-sum--total">
-              <dt className="qb-sum-lab">Total</dt>
-              <dd className="qb-sum-fig">{money(totals.total)}</dd>
-            </div>
-          </dl>
+   Nothing is invented. A line with no price says so and is never
+   rendered as 0. Tax appears ONLY when a person typed a rate.
+   ============================================================ */
 
-          {totals.unpricedCount > 0 ? (
-            <p className="qb-ledger-say">
-              {totals.unpricedCount === 1
-                ? 'One line on this quote carries no price at all. It is on the document and it is not in the figure above — a blank is never summed as nothing.'
-                : `${totals.unpricedCount} lines on this quote carry no price at all. They are on the document and they are not in the figure above — a blank is never summed as nothing.`}
+function Ledger({
+  quote,
+  steps,
+  totals,
+  refusals,
+}: {
+  quote: QuoteDef
+  steps: readonly BuildStep[]
+  totals: ReturnType<typeof quoteTotals>
+  refusals: readonly string[]
+}): ReactElement {
+  const loose = looseLines(quote)
+
+  return (
+    <div className="qb-ledger">
+      <ul className="qb-led">
+        {steps.map((s) => (
+          <li key={s.id} className="qb-led-group">
+            <p className="qb-led-head">
+              <span className="qb-led-head-name">{s.title}</span>
+              <span className="qb-led-head-sum">
+                {s.lines.length === 0 ? (
+                  <span className="qb-nil">nothing chosen</span>
+                ) : s.amount === null ? (
+                  <span className="qb-nil">not priced</span>
+                ) : (
+                  money(s.amount)
+                )}
+              </span>
             </p>
-          ) : null}
+            {s.lines.length > 0 ? (
+              <ul className="qb-led-lines">
+                {s.lines.map((line, i) => (
+                  <LedgerLine key={line.id} line={line} index={i} />
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        ))}
+
+        {/* A TYPED LINE BELONGS TO NO BAND and would otherwise be
+            summed into the total with nothing on screen for it. */}
+        {loose.length > 0 ? (
+          <li className="qb-led-group">
+            <p className="qb-led-head">
+              <span className="qb-led-head-name">Typed onto the quote</span>
+              <span className="qb-led-head-sum" />
+            </p>
+            <ul className="qb-led-lines">
+              {loose.map((line, i) => (
+                <LedgerLine key={line.id} line={line} index={i} />
+              ))}
+            </ul>
+          </li>
+        ) : null}
+      </ul>
+
+      <dl className="qb-sums">
+        <div className="qb-sum">
+          <dt className="qb-sum-lab">The package</dt>
+          <dd className="qb-sum-fig">{money(totals.packageTotal)}</dd>
         </div>
+        {quote.adjustments.length > 0 ? (
+          <div className="qb-sum">
+            <dt className="qb-sum-lab">Adjustments</dt>
+            <dd className="qb-sum-fig">{money(totals.adjustmentsTotal)}</dd>
+          </div>
+        ) : null}
+        {totals.taxRate === null ? (
+          <div className="qb-sum">
+            <dt className="qb-sum-lab">
+              Tax
+              <span className="qb-sum-note">no rate typed on this quote</span>
+            </dt>
+            <dd className="qb-sum-fig">
+              <span className="qb-nil">not stated</span>
+            </dd>
+          </div>
+        ) : (
+          <>
+            <div className="qb-sum">
+              <dt className="qb-sum-lab">Before tax</dt>
+              <dd className="qb-sum-fig">
+                {totals.totalExcludingTax === null ? (
+                  <span className="qb-nil">not stated</span>
+                ) : (
+                  money(totals.totalExcludingTax)
+                )}
+              </dd>
+            </div>
+            <div className="qb-sum">
+              <dt className="qb-sum-lab">
+                Tax<span className="qb-sum-note">{totals.taxRate}% typed on the sheet</span>
+              </dt>
+              <dd className="qb-sum-fig">
+                {totals.taxAmount === null ? (
+                  <span className="qb-nil">not stated</span>
+                ) : (
+                  money(totals.taxAmount)
+                )}
+              </dd>
+            </div>
+          </>
+        )}
+        <div className="qb-sum qb-sum--total">
+          <dt className="qb-sum-lab">Total</dt>
+          <dd className="qb-sum-fig">{money(totals.total)}</dd>
+        </div>
+      </dl>
+
+      {totals.unpricedCount > 0 ? (
+        <p className="qb-ledger-say">
+          {totals.unpricedCount === 1
+            ? 'One line carries no price at all. It is on the document and it is not in the figure above — a blank is never summed as nothing.'
+            : `${totals.unpricedCount} lines carry no price at all. They are on the document and they are not in the figure above — a blank is never summed as nothing.`}
+        </p>
       ) : null}
 
-      {refusals.length > 0 ? (
+      {/* EVERY reason it may not go out. The bar above carries the
+          first one; a person who fixes that and is refused for a
+          second nobody mentioned has been told half the truth. */}
+      {refusals.length > 1 ? (
         <div className="qb-ledger-whys" role="status">
-          {refusals.map((w) => (
+          {refusals.slice(1).map((w) => (
             <p key={w} className="qb-ledger-why">
               {w}
             </p>
           ))}
         </div>
       ) : null}
-    </footer>
+    </div>
   )
 }
 
 /** One line in the breakdown. `ds-rise` fires on MOUNT and on nothing
- *  else, so the row that just arrived is the row that moves — no list
- *  of ten re-animating because an eleventh was added. */
+ *  else, so the row that just arrived is the row that moves. */
 function LedgerLine({ line, index }: { line: QuoteLine; index: number }): ReactElement {
   const { amount, overridden } = lineAmount(line)
   return (
@@ -1338,129 +1173,229 @@ function LedgerLine({ line, index }: { line: QuoteLine; index: number }): ReactE
 }
 
 /* ============================================================
-   THE HANDOVER — the end of the walk, and the one question no
-   section can carry.
+   §THE CONFLICT SHEET — Porsche's shape with our reasons in it.
 
-   THREE THINGS, in the order a person does them:
+   The committed total on the price bar DOES NOT MOVE while this is
+   open. Proposed cost and committed cost are two different numbers
+   in two different places, which is the difference between a sheet
+   a person decides and a notification they acknowledge.
 
-     WHO IT IS FOR   the same `CustomerField` the sheet uses, matched
-                     against the register, frozen onto the document
-                     the moment somebody is chosen. Not a modal at
-                     the end, and not five free-text boxes retyped
-                     for a repeat buyer.
-     WHAT THEY GET   every stop and what it added, so the last thing
-                     read before a document goes out is the document.
-     WHY NOT YET     every reason it may not go, in full — the bar
-                     above carries the first one, and a person who
-                     fixes that and is refused for a second nobody
-                     mentioned has been told half the truth.
+   The arithmetic is shown rather than hidden: every line that moves,
+   the column it moves from and to, every line that cannot move and
+   why, and the change to the total as one signed figure.
+
+   It scales from the control that caused it — PHASE_TWO §4.6 — at
+   200ms, transform and opacity only, and `still` turns it off.
    ============================================================ */
 
-function Handover({
-  quote,
-  steps,
-  total,
-  refusals,
-  onOpenCustomer,
+function ConflictSheet({
+  conflict,
+  still,
+  onAccept,
+  onCancel,
 }: {
-  quote: QuoteDef
-  steps: readonly BuildStep[]
-  total: number
-  refusals: readonly string[]
-  onOpenCustomer?: (rowId: string) => void
+  conflict: Conflict
+  still: boolean
+  onAccept: () => void
+  onCancel: () => void
 }): ReactElement {
-  const nameRef = useRef<HTMLInputElement>(null)
+  const okRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    okRef.current?.focus()
+  }, [])
 
   return (
-    <>
-      <p className="qb-say">
-        Giving it to them freezes the document, so the name has to be on it before it goes — it
-        cannot be added afterwards. Everything above is already written down.
-      </p>
+    <div className="qb-sheet-scrim" role="presentation">
+      <motion.div
+        className="qb-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={conflict.title}
+        initial={{ opacity: 0, scale: 0.97, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0, transition: transitionFor(still, SPRING_QUICK) }}
+        exit={{ opacity: 0, scale: 0.98, transition: transitionFor(still, SPRING_QUICK) }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.stopPropagation()
+            onCancel()
+          }
+        }}
+      >
+        <p className="qb-sheet-title">{conflict.title}</p>
 
-      <CustomerField quote={quote} nameRef={nameRef} onOpenCustomer={onOpenCustomer} />
+        {conflict.changed.length > 0 ? (
+          <div className="qb-sheet-group">
+            <p className="mono-label qb-sheet-cap">What changes</p>
+            <ul className="qb-sheet-rows">
+              {conflict.changed.map((row) => (
+                <li key={row.lineId} className="qb-sheet-row">
+                  <span className="qb-sheet-name">{row.label}</span>
+                  <span className="qb-sheet-move">
+                    <span className="qb-sheet-from">
+                      {row.from === null ? '—' : money(row.from)}
+                    </span>
+                    <span className="qb-sheet-arrow" aria-hidden="true">
+                      →
+                    </span>
+                    <span className="qb-sheet-to">{row.to === null ? '—' : money(row.to)}</span>
+                  </span>
+                  <span className="qb-sheet-why">{row.toColumn}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
-      <ul className="qb-tally" aria-label="What is on this quote">
-        {steps.map((s) => (
-          <li key={s.id} className="qb-tally-row">
-            <span className="qb-tally-name">{s.title}</span>
-            <span className="qb-tally-say">
-              {s.lines.length === 0
-                ? 'nothing chosen'
-                : s.lines.map((l) => l.label).join('  ·  ')}
-            </span>
-            <span className="qb-tally-amount">
-              {s.amount === null ? <span className="qb-nil">not priced</span> : money(s.amount)}
-            </span>
-          </li>
-        ))}
-        <li className="qb-tally-row qb-tally-row--sum">
-          <span className="qb-tally-name">Package</span>
-          <span className="qb-tally-say" />
-          <span className="qb-tally-amount">{money(total)}</span>
-        </li>
-      </ul>
+        {conflict.held.length > 0 ? (
+          <div className="qb-sheet-group">
+            <p className="mono-label qb-sheet-cap">What stays as it is</p>
+            <ul className="qb-sheet-rows">
+              {conflict.held.map((row) => (
+                <li key={row.lineId} className="qb-sheet-row s-held">
+                  <span className="qb-sheet-name">{row.label}</span>
+                  <span className="qb-sheet-move">
+                    <span className="qb-sheet-to">{row.to === null ? '—' : money(row.to)}</span>
+                  </span>
+                  <span className="qb-sheet-why s-say">{row.why}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
-      {refusals.length > 0 ? (
-        <div className="qb-whys" role="status">
-          {refusals.map((w) => (
-            <p key={w} className="qb-none-held">
-              {w}
-            </p>
-          ))}
+        <div className="qb-sheet-foot">
+          <p className="qb-sheet-delta">
+            <span className="qb-sheet-delta-lab mono-label">Change to the total</span>
+            <span className="qb-sheet-delta-fig">{deltaSay(conflict.delta)}</span>
+          </p>
+          <div className="qb-sheet-acts">
+            <button type="button" className="qb-sheet-no" onClick={onCancel}>
+              Leave it
+            </button>
+            <button type="button" className="qb-sheet-ok" ref={okRef} onClick={onAccept}>
+              {conflict.accept}
+            </button>
+          </div>
         </div>
-      ) : null}
-    </>
+      </motion.div>
+    </div>
   )
 }
 
 /* ============================================================
-   WHY THIS LIST — the one pattern worth taking, done better
+   THE PAPERWORK — the one question no table can carry.
 
-   hl-journeys.md §4: "A filter that can explain itself, be searched
-   past, and be switched off is the shape every curated-by-rule
-   surface in our modules should take." Four parts, and the fourth is
-   the one production has no way to draw: OUR RULES CARRY RATES.
-   Theirs names its reasons in a tooltip — "wrong HP band, wrong
-   length, wrong tube material" — and can say nothing about how often
-   any of that is true, because nobody measured it. Every figure here
-   comes out of `RULE_LEDGER`, each one asserted verbatim against the
-   adjudication's own source line by `ruleLedger.test.ts`.
+   It is the last band rather than a modal at the end. Production
+   asks it in a "Finalize Project" dialog that types the customer as
+   five free-text fields, from scratch, every time, with no lookup
+   and no dedupe — while a `CustomerPicker` sits imported in the same
+   file. Here it is the last thing on the page, it uses the register
+   the app already has, and `issueBlockers` refuses in the same words
+   on the price bar.
    ============================================================ */
 
-function MeasuredPlate({ why }: { why: StepReason | null }): ReactElement | null {
-  if (!why?.measured) return null
-  const m = why.measured
+function AdminBand({
+  quote,
+  steps,
+  open,
+  refusals,
+  onToggle,
+  onOpenCustomer,
+}: {
+  quote: QuoteDef
+  steps: readonly BuildStep[]
+  open: boolean
+  refusals: readonly string[]
+  onToggle: () => void
+  onOpenCustomer?: (rowId: string) => void
+}): ReactElement {
+  const nameRef = useRef<HTMLInputElement>(null)
+  const named = quote.customer.name.trim()
+
   return (
-    <section className="qb-measured" aria-label="What the price file measures about these">
-      {/* THE SUBJECT OF THE FIGURE, SAID OUT LOUD. Without it a rate
-          sitting under a curation note reads as a rate ABOUT that
-          note; it is a rate about the pairings the price file writes,
-          which is a different and larger claim. */}
-      <p className="qb-measured-head mono-label">Measured on the price file</p>
-      <p className="qb-measured-lede">
-        <span className="qb-measured-ref mono-label">{m.ref}</span>
-        <span className="qb-measured-rate">{m.rate}</span>
-        <span className="qb-measured-of">
-          <b>{m.holds}</b> {m.of}
-        </span>
-      </p>
-      {/* THE QUALIFICATION TRAVELS WITH THE FIGURE and may never be
-          separated from it — the ledger's own rule. A rate with its
-          caveat cut off is the kind of number that gets quoted back at
-          somebody six months later in a room they cannot correct it in. */}
-      <p className="qb-measured-caveat">{m.caveat}</p>
+    <section className="qb-band" data-kind="custom">
+      <h2 className="qb-band-h">
+        <button
+          type="button"
+          className="qb-band-head k-band"
+          aria-expanded={open}
+          onClick={onToggle}
+        >
+          <span className={`qb-band-mark${open ? ' is-open' : ''}`} aria-hidden="true">
+            <CaretDown size={ICON_SIZE.tiny} weight="bold" />
+          </span>
+          <span className="qb-band-name">Who it is for</span>
+          <span className="qb-band-fact">{named === '' ? 'nobody yet' : named}</span>
+          <span className="qb-band-fig" />
+        </button>
+      </h2>
+
+      {open ? (
+        <div className="qb-band-body">
+          <CustomerField quote={quote} nameRef={nameRef} onOpenCustomer={onOpenCustomer} />
+
+          <ul className="qb-tally" aria-label="What is on this quote">
+            {steps.map((s) => (
+              <li key={s.id} className="qb-tally-row">
+                <span className="qb-tally-name">{s.title}</span>
+                <span className="qb-tally-say">
+                  {s.lines.length === 0
+                    ? 'nothing chosen'
+                    : s.lines.map((l) => l.label).join('  ·  ')}
+                </span>
+                <span className="qb-tally-amount">
+                  {s.amount === null ? <span className="qb-nil">not priced</span> : money(s.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {refusals.length > 0 ? (
+            <div className="qb-ledger-whys" role="status">
+              {refusals.map((w) => (
+                <p key={w} className="qb-ledger-why">
+                  {w}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   )
 }
 
 /* ============================================================
+   THE PRICE MOVING — derived from the ONE summation.
+
+   A person who picks a $41,340 motor should SEE $41,340 arrive.
+   It comes out of `quoteTotals` and never off the pick: two
+   subtractions of one summation cannot disagree with it. It clears
+   itself, so it is never a stale claim, and `null` — not 0 — is
+   "nothing has moved".
+   ============================================================ */
+function useTotalDelta(total: number): number | null {
+  const seen = useRef<number | null>(null)
+  const [delta, setDelta] = useState<number | null>(null)
+
+  useEffect(() => {
+    const was = seen.current
+    seen.current = total
+    if (was === null || was === total) return
+    setDelta(total - was)
+    const t = window.setTimeout(() => setDelta(null), 2600)
+    return () => window.clearTimeout(t)
+  }, [total])
+
+  return delta
+}
+
+/* ============================================================
    NOTHING OFFERED — and why, and what to do about it
 
-   Production draws an empty grid here (`highfield-quote-flow.tsx:1945`)
-   and says nothing at all. This is the app's own empty state, in the
-   shape every other one has: an eyebrow, what the place IS, what the
-   person already has counted from the sheet, and ONE action.
+   Production draws an empty grid here and says nothing at all. An
+   empty state is the ONE place the prose budget spends: it keeps
+   its sentence AND its act.
    ============================================================ */
 
 function NothingOffered({
@@ -1488,65 +1423,38 @@ function NothingOffered({
         ? retiredPairsSentence(name, 'The list it was picked from')
         : heldBackSentence(offer.heldCount, name)
 
-  /* THE MIDDLE LINE IS THE LOAD-BEARING ONE and it is why this state
-     is worth writing: a person who has a 434-row trailer catalogue
-     loaded must never be shown a blank shelf. Each branch says what is
-     true, counted, and none of them is a shrug. */
   const say = searching
-    ? `Nothing in ${name} matches “${query.trim()}”. The search already covers the whole table, so this is the whole table's answer.`
+    ? `Nothing in ${name} matches “${query.trim()}”. The search already covers the whole table.`
     : offer.catalogue === 0
       ? `${name} has nothing in it that is still sold.`
       : all
-        ? `${name} holds ${offer.catalogue} still sold, and none of them can be offered here.`
-        : `Nothing in ${name} is paired with this one on the price file, so there is no shortlist to show. The catalogue is still there, and the control below reaches all of it.`
+        ? `${name} holds ${offer.catalogue} still sold, and none can be offered here.`
+        : `Nothing in ${name} is paired with this one on the price file. The catalogue is still there.`
 
   const showAll = !searching && !all && offer.catalogue > 0
 
   return (
     <div className="qb-none">
-      <p className="qb-none-eyebrow mono-label">Nothing to pick here</p>
       <p className="qb-none-say">{say}</p>
-      {offer.catalogue > 0 ? (
-        <p className="qb-none-have">
-          <strong>{offer.catalogue}</strong> {name} on the sheet are still sold.
-        </p>
-      ) : null}
       {held !== '' ? <p className="qb-none-held">{held}</p> : null}
       {showAll ? (
         <button type="button" className="qb-act" onClick={onSeeAll}>
           Show all {offer.catalogue} {name}
         </button>
       ) : null}
-      {!showAll && step.section.pickedCount && step.section.pickedCount > 1 ? (
-        <p className="qb-none-held">
-          {step.section.pickedCount} were picked for this one when the quote was raised, so none
-          was chosen for you. Starring one on the page makes it come across on its own next time.
-        </p>
-      ) : null}
     </div>
   )
 }
 
 /* ============================================================
-   ONE OFFER — a photograph, a name, what it costs, and WHY IT DOES
-   NOT FIT WHEN IT DOES NOT.
+   ONE OFFER — a photograph, a name, what it costs, and why it is
+   not on the shortlist when it is not.
 
-   THE CARD IS A TOGGLE. It used to be `disabled` once the row was on
-   the quote, which is the one state where a person is most likely to
-   press it — they have just realised they picked the wrong motor —
-   and a disabled control drops out of the tab order and takes its own
-   explanation with it. Pressing it again takes it off, and `quotes.ts`
-   raises the undo toast rule 9 asks for. The row on the quote keeps
-   its own × as well, so neither reading of the step loses the act.
-
-   AND IT SAYS WHY IT IS NOT ON THE SHORTLIST. `outsideWhy` is the
-   sentence `freeze.ts` computed by re-running the narrowing's clauses
-   one at a time against this row — "its Max boat length (5.20 m) is
-   less than this boat's Length (5.60 m)". Production omits the row
-   entirely; a nicer-looking omission would be the same failure. When
-   no single clause can honestly be blamed the field is absent and the
-   chip alone stands, which is the difference between saying nothing
-   and saying something wrong.
+   THE CARD IS A TOGGLE. It used to be `disabled` once the row was
+   on the quote, which is the one state where a person is most
+   likely to press it — they have just realised they picked the
+   wrong motor — and a disabled control drops out of the tab order
+   and takes its own explanation with it.
    ============================================================ */
 
 function OfferCard({
@@ -1557,13 +1465,8 @@ function OfferCard({
   onPick,
 }: {
   candidate: Candidate
-  /** where it sits in the shelf — the entrance stagger, capped in
-   *  ds.css at 14 steps so a long shelf never waits a second */
   index: number
-  /** the app's motion gate: true while somebody is typing, and the
-   *  reason a search does not make this shelf flicker */
   still: boolean
-  /** the keyboard is pointing at this one */
   lit: boolean
   onPick: () => void
 }): ReactElement {
@@ -1577,7 +1480,7 @@ function OfferCard({
       className={`qb-card ds-sheen${still ? '' : ' ds-rise'}${on ? ' is-on' : ''}${
         candidate.outside ? ' is-outside' : ''
       }${lit ? ' is-lit' : ''}`}
-      style={{ ['--i' as string]: index }}
+      style={{ ['--i' as string]: index } as CSSProperties}
       aria-pressed={on}
       aria-label={
         on
@@ -1588,7 +1491,7 @@ function OfferCard({
       }
       onClick={onPick}
     >
-      <PictureWell img={line.image} name={line.label} big={false} />
+      <PictureWell img={line.image} name={line.label} />
       <span className="qb-card-body">
         <span className="qb-card-top">
           {line.recommended ? (
@@ -1597,9 +1500,7 @@ function OfferCard({
               <span className="qb-card-star-word">Standard fit</span>
             </span>
           ) : null}
-          {candidate.outside ? (
-            <span className="qb-card-outside">Not on the shortlist</span>
-          ) : null}
+          {candidate.outside ? <span className="qb-card-outside">Off the shortlist</span> : null}
           {on ? (
             <span className="qb-card-on">
               <Check size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
@@ -1620,10 +1521,7 @@ function OfferCard({
           </span>
         ) : null}
 
-        {/* RULE 10, ON THE ROW. See the block above. */}
-        {candidate.outsideWhy ? (
-          <span className="qb-card-why">{candidate.outsideWhy}</span>
-        ) : null}
+        {candidate.outsideWhy ? <span className="qb-card-why">{candidate.outsideWhy}</span> : null}
 
         <span className="qb-card-foot">
           {line.unitPrice === null ? (
@@ -1654,34 +1552,20 @@ function OfferCard({
    A PICTURE, OR THE HONEST ABSENCE OF ONE
 
    108 of the seeded photographs are held in this repository and 76
-   are not. A picture we cannot fetch is never a broken glyph and
-   never a hatched box pretending to be one: it is a plate that says
-   what it is, in the one wording `imageSources` settled on, so a
-   catalogue of them reads as a convention somebody chose rather than
-   as ninety-three separate faults.
+   are not. A picture we cannot fetch is never a broken glyph: it is
+   a plate that says what it is, in the one wording `imageSources`
+   settled on.
    ============================================================ */
 
-function PictureWell({
-  img,
-  name,
-  big,
-}: {
-  img: QuoteLine['image']
-  name: string
-  big: boolean
-}): ReactElement {
+function PictureWell({ img, name }: { img: QuoteLine['image']; name: string }): ReactElement {
   const { paint } = useImageDisplay(img?.src ?? '')
-  /* The box is reserved at this size before the bytes land, so a
-     picture arriving late never moves the plate under it. */
-  const size = big ? 420 : 132
   return (
-    <span className={`qb-well${big ? ' qb-well--big' : ''}`}>
+    <span className="qb-well">
       {img && paint ? (
-        <FrozenPhoto img={img} fallbackAlt={name} className="qb-well-img" w={size} h={size} />
+        <FrozenPhoto img={img} fallbackAlt={name} className="qb-well-img" w={264} h={176} />
       ) : (
         <span className="qb-well-held">
           <span className="qb-well-held-word">{HELD_AS_LINK}</span>
-          {big && img ? <span className="qb-well-held-why">{heldAsLinkNote(img.src)}</span> : null}
         </span>
       )}
     </span>

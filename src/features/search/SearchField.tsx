@@ -892,16 +892,17 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
               accounting along the foot. What is left here is the three
               states that genuinely have nothing to show. */}
           {browsing && index.tableTotal === 0 ? (
-            <p className="hs-say">
-              There are no tables on the sheet yet. Put one there and everything in it
-              becomes findable from here.
-            </p>
+            <p className="hs-say">No tables on the sheet yet.</p>
           ) : tooShort ? (
             <p className="hs-say">Keep typing — two letters or more.</p>
           ) : nothing ? (
+            /* A REFUSAL KEEPS ITS SENTENCE, AND ITS REASON. What is
+               searched is the one thing a person cannot deduce from an
+               empty list, so the scope stays; the two suggestions after
+               it were the reason said twice. */
             <p className="hs-say">
-              Nothing is called “{query.trim()}”. Only the name of a row is searched, not
-              its other columns — try part of a name, or the name of a table.
+              Nothing is called “{query.trim()}”. Row and table names are searched, not
+              their other columns.
             </p>
           ) : null}
 

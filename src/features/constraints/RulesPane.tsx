@@ -177,17 +177,24 @@ export function RulesPane(): ReactElement {
     const { catalogue, readings } = trailers
 
     if (readings.length > 0 && catalogue.live > 0) {
+      /* THE LIVE READING NAMES WHAT WAS COUNTED AND STOPS. Each of
+         these was a full sentence restating the rule that is printed
+         eighteen pixels above it — the same duplication `RuleMeasure.of`
+         carried, from the other side. The figure is the point; it is
+         the one number on the card that moves with the sheet. */
       out.F8 = {
         figure: `${n(catalogue.named)} of ${n(catalogue.live)}`,
-        says: `trailers sit under a heading that names a boat brand, so a hull is offered that brand's series and nothing else.`,
+        says: 'trailers sit under a heading naming a boat brand.',
       }
       const warned = readings.reduce((sum, r) => sum + r.floorWarned, 0)
       out.F9 = {
         figure: n(warned),
+        /* the floor WARNS and never removes — that claim is the block
+           head on the trailer panel, said once, where the floor is */
         says:
           warned === 0
-            ? 'hulls are offered a trailer in their own series rated under their weight. The floor warns; it never removes one.'
-            : `${warned === 1 ? 'hull is' : 'hulls are'} offered a trailer in their own series rated under their weight, and ${warned === 1 ? 'it stays' : 'they stay'} on the list with the warning beside ${warned === 1 ? 'it' : 'them'}.`,
+            ? 'hulls offered a trailer rated under their weight.'
+            : `${warned === 1 ? 'hull' : 'hulls'} offered a trailer rated under their weight, warned.`,
       }
     }
 
@@ -196,8 +203,8 @@ export function RulesPane(): ReactElement {
         figure: `${n(band.disagreements.length)} of ${n(band.tested)}`,
         says:
           band.disagreements.length === 0
-            ? 'trailers checked sit inside the weight their own band states.'
-            : 'trailers checked are registered in a band their own rated weight contradicts. Shown, and never corrected.',
+            ? 'sit inside the weight their own band states.'
+            : 'registered in a band their own weight contradicts.',
       }
     }
 
@@ -310,44 +317,24 @@ export function RulesPane(): ReactElement {
             Limits every row must keep. What goes <em>with</em> something is <b>Fitment</b>.
           </p>
 
-          {/* THE TALLY, COUNTED. Four figures, none of them typed: how
-              many rules were found, what they rest on, how many are
-              being checked, and what those checks have caught on the
-              sheet that is loaded right now.
+          {/* ============================================================
+              THE COUNTED STRIP IS GONE, AND PHASE_TWO §1 NAMES THIS ONE.
 
-              THE FIGURE LEADS AND THE TERM SITS UNDER IT, which is the
-              order somebody scanning actually uses — they find the
-              number, then check what it was. Each term is now a phrase
-              rather than a clause: the four sentences this block used
-              to carry were a paragraph pretending to be a dashboard,
-              and the two qualifications worth keeping are the line
-              underneath, where they can be read once. */}
-          <dl className="cn-tally">
-            <div className="cn-tally-item">
-              <dt className="cn-tally-what">rules read out of it</dt>
-              <dd className="cn-tally-n">{tally.total}</dd>
-            </div>
-            <div className="cn-tally-item">
-              <dt className="cn-tally-what">stated · only seen</dt>
-              <dd className="cn-tally-n">
-                {tally.asserted}
-                <span className="cn-tally-sep" aria-hidden="true">
-                  /
-                </span>
-                {tally.observed}
-              </dd>
-            </div>
-            <div className="cn-tally-item">
-              <dt className="cn-tally-what">checked as you work</dt>
-              <dd className="cn-tally-n">{tally.checked}</dd>
-            </div>
-            {band.tested > 0 && (
-              <div className="cn-tally-item">
-                <dt className="cn-tally-what">registered against their weight</dt>
-                <dd className="cn-tally-n">{n(band.disagreements.length)}</dd>
-              </div>
-            )}
-          </dl>
+              "'9 Places · 6,074 Things in them · 24 Tables in use' sits
+              top-right of the modules screen, and the same shape sits on
+              Home and on Business rules. Delete them." It was four
+              figures in the strongest position on the page saying how
+              many rules the app had found and how many of them it
+              checks — a dashboard for the person who built the engine,
+              not for the person selling out of it.
+
+              NOTHING IS LOST, BECAUSE EVERY FIGURE HAD A HOME ALREADY.
+              The total and the checked count are on the two segments
+              below, which is a count ON the thing it counts; stated
+              against observed is a chip on every card; and the band
+              disagreements are drawn on the registration block, beside
+              the rows that disagree.
+              ============================================================ */}
 
           {/* THE 58-WORD NOTE UNDER THE TALLY IS GONE. Every claim in it
               was already drawn somewhere a person can act on it: which

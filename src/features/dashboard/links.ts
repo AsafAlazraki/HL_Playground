@@ -46,9 +46,18 @@ export interface ResolvedLink {
    *  they gave it one, and the subject's own name otherwise */
   label: string
   /** the second line: what kind of place this is, or how much is
-   *  in it. Always counted, never a slogan. Empty when there is
-   *  nothing true to add. */
+   *  in it. Empty when there is nothing true to add. */
   note: string
+  /** IS THE NOTE A COUNTED FACT, OR IS IT THE APP TALKING?
+   *
+   *  "588 rows" is a fact about the button's subject and changes
+   *  when the sheet does. "Pick what you are selling" is the app
+   *  explaining a button that already says New quote — twelve
+   *  such words sat permanently on the front door across three
+   *  buttons. The resting row draws the note only when this is
+   *  true; the arrange tray still shows every subject, because
+   *  there the second line is what you are renaming. */
+  counted: boolean
   mark: LinkMark
   /** true when the label came from the person rather than the
    *  project — the arrange tray shows the original underneath */
@@ -90,6 +99,7 @@ export function resolveLink(
       target: link.target,
       label: named || entity.name,
       note: rowWord(rowCount(entity.id)),
+      counted: true,
       mark: 'table',
       renamed: named !== '' && named !== entity.name,
       subject: entity.name,
@@ -106,6 +116,7 @@ export function resolveLink(
       target: link.target,
       label: named || module.name,
       note: module.description.trim(),
+      counted: false,
       mark: 'module',
       renamed: named !== '' && named !== module.name,
       subject: module.name,
@@ -119,6 +130,7 @@ export function resolveLink(
     target: link.target,
     label: named || plain.label,
     note: plain.note,
+    counted: false,
     mark: plain.mark,
     renamed: named !== '' && named !== plain.label,
     subject: plain.label,

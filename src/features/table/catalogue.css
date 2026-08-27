@@ -1,0 +1,639 @@
+/* ============================================================
+   THE CATALOGUE.
+
+   Co-located with its feature, as DESIGN_PRINCIPLES §9 requires:
+   nothing here reaches into table.css and table.css knows nothing
+   about this file. The register underneath keeps its own sheet
+   exactly as it was.
+
+   WHAT COLOUR IS SPENT ON, and it is the amendment in §1 being
+   used rather than argued about:
+
+     the head        a full-height kind rail and an 8% wash of the
+                     kind — the surface a hue is now allowed to
+                     carry, so a person knows they are in boats
+                     rather than trailers before reading a word
+     a band head     `.k-band`, the section of one kind of thing
+     a filter chip   `.k-filter`, on when it is narrowing
+     a tile          `.k-rail` down its left edge, `.k-lift` on
+                     hover — and `.s-held` INSTEAD of the rail when
+                     the row is no longer sold, because one edge
+                     carries one fact and never two
+     a figure        never a hue. `--fg` and mono, always.
+
+   THE PHOTOGRAPH IS THE REST OF THE COLOUR. 3:2, the ratio the
+   seed was shot at, and large enough that turquoise water is a
+   colour on the page rather than a 20px stamp in a cell.
+   ============================================================ */
+
+.cat-root {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ------------------------------------------------------------
+   THE HEAD — a name, one fact, and the way to change density.
+   The prose budget allows a stage its name and at most one line;
+   this is that line and there is nothing else on it.
+   ------------------------------------------------------------ */
+
+.cat-head {
+  /* same restatement as the tile below: this file loads after ds.css
+     and would otherwise cancel the rail it is asking for */
+  border-left: 4px solid var(--kind);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.cat-head--bare {
+  align-items: center;
+  padding: var(--s-3) var(--s-5);
+  background: var(--surface-1);
+}
+
+.cat-head-say {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cat-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-secondary);
+}
+
+.cat-name {
+  margin: 0;
+  color: var(--fg);
+  /* NOTHING TRUNCATES MID-WORD (§3). A brand with a long name wraps
+     to two lines and the head grows; it does not clip. */
+  overflow-wrap: break-word;
+}
+
+.cat-fact {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-caption-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--fg-secondary);
+}
+
+/* -- gallery / list ------------------------------------------ */
+
+.cat-lens {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+}
+
+.cat-lens-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.cat-lens-btn:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+.cat-lens-btn:active {
+  transform: scale(0.97);
+}
+.cat-lens-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.cat-lens-btn[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.cat-lens-btn[aria-pressed='true']:hover {
+  background: var(--accent-hover);
+  color: var(--accent-fg);
+}
+
+/* ------------------------------------------------------------
+   THE RAIL — search, then one control per facet.
+   ONE ROW, AND IT SCROLLS RATHER THAN BEING CUT (§3): eight facets
+   at 1024 do not fit, and a facet you cannot reach is a filter the
+   app does not have.
+   ------------------------------------------------------------ */
+
+.cat-rail {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-1);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.cat-find {
+  flex: none;
+  display: block;
+  width: clamp(160px, 22vw, 280px);
+}
+.cat-find .field-input {
+  width: 100%;
+}
+
+.cat-facets {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cat-facet {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: var(--r-full);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cat-facet:active {
+  transform: scale(0.97);
+}
+.cat-facet:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.cat-facet-name {
+  color: inherit;
+}
+.cat-facet-sep {
+  opacity: 0.5;
+}
+.cat-facet-at {
+  font-family: var(--font-mono);
+  font-size: var(--t-caption-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.cat-clear {
+  flex: none;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.cat-clear:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+.cat-clear:active {
+  transform: scale(0.97);
+}
+.cat-clear:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------------
+   THE BODY — one scroller, whichever density is in it.
+   ------------------------------------------------------------ */
+
+.cat-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cat-body > * {
+  min-height: 0;
+}
+
+.cat-gallery {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--s-4) var(--s-5) var(--s-10);
+}
+
+.cat-band + .cat-band {
+  margin-top: var(--s-5);
+}
+
+.cat-band-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+.cat-band-lab {
+  color: var(--fg-secondary);
+}
+.cat-band-name {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.cat-band-count {
+  margin-left: auto;
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+}
+
+/* -- the grid ------------------------------------------------- */
+
+.cat-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+}
+
+.cat-tile {
+  min-width: 0;
+  --rise: 8px;
+}
+
+.cat-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  box-shadow: var(--e1);
+  cursor: pointer;
+  transition:
+    box-shadow var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+/* THE KIND RAIL IS RESTATED, NOT INHERITED. `.cat-card` sets a
+   whole `border` and this stylesheet is loaded after ds.css, so the
+   shorthand would quietly win over `.k-rail`'s left edge and the
+   card would come out with no hue at all — which is the exact
+   failure §1b is written about. One extra class of specificity, and
+   the colour is still the token. */
+.cat-card.k-rail {
+  border-left: 3px solid var(--kind);
+}
+.cat-card.s-held {
+  /* ds.css's own value, restated for the same cascade reason and
+     NOT changed: a held-back line is one appearance everywhere in
+     the app or it is not a state. The 2.6:1 rail carries no meaning
+     on its own, which is why the card also says "No longer sold" in
+     words — rule 10, in the place the thing is refused. */
+  border-left: 3px solid var(--fg-quaternary);
+}
+.cat-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+}
+/* A CARD PRESSES AT 0.994 (§4). 0.97 on a 240px card is a 7px shrink
+   and reads as a glitch; the hover lift goes at the same moment. */
+.cat-card:active {
+  transform: scale(0.994);
+  box-shadow: var(--e1);
+}
+.cat-card:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.cat-shot {
+  display: block;
+  position: relative;
+  width: 100%;
+  /* 3:2 — the ratio the seed was shot at. The box is reserved before
+     the bytes land, so a photograph arriving late never moves the
+     grid it is in. */
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+
+.cat-shot-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* THE CREST, where a row has no photograph of its own. Not a
+   silhouette of a boat and not a sibling's shot — see the note in
+   Catalogue.tsx and in coverPhoto.ts. */
+.cat-shot-none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: color-mix(in srgb, var(--kind) 9%, var(--surface-2));
+  /* the kind's own hue, held back — a mark, not a figure and not a
+     word, so the ink ramp does not apply to it */
+  color: color-mix(in srgb, var(--kind) 52%, transparent);
+}
+
+.cat-card-say {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 12px;
+}
+
+.cat-tile-name {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.008em;
+  color: var(--fg);
+  /* two lines and then an ellipsis — never mid-word, and the full
+     name stays in the DOM for a reader and a tooltip (§3) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cat-tile-facts {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.cat-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.cat-price {
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.cat-spec {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+.cat-spec-lab {
+  color: var(--fg-tertiary);
+}
+
+.cat-tile-held {
+  font-size: var(--t-caption-size);
+}
+
+/* -- more ------------------------------------------------------ */
+
+.cat-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  padding: var(--s-5) 0 var(--s-3);
+}
+.cat-more-say {
+  margin: 0;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* ------------------------------------------------------------
+   THE FACET SHEETS. They live inside `.tb-pop`, which brings the
+   register's own sheet paint with it — one popover appearance in
+   this feature, not two.
+   ------------------------------------------------------------ */
+
+.cat-pop-find {
+  padding: 8px 10px 4px;
+}
+.cat-pop-find .field-input {
+  width: 100%;
+}
+
+.cat-pop-list {
+  max-height: 264px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.cat-pop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.cat-pop-row:hover {
+  background: var(--surface-3);
+}
+.cat-pop-row:active {
+  background: var(--surface-4);
+}
+.cat-pop-row:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.cat-pop-val {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  color: var(--fg);
+  overflow-wrap: break-word;
+}
+
+.cat-pop-count {
+  flex: none;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+.cat-pop-more {
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+}
+.cat-pop-more:hover {
+  background: var(--surface-3);
+}
+.cat-pop-more:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.cat-pop-none {
+  margin: 0;
+  padding: 10px;
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+.cat-pop-band {
+  display: flex;
+  gap: var(--s-2);
+  padding: 10px;
+}
+.cat-pop-bound {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+  color: var(--fg-secondary);
+}
+.cat-pop-bound--wide {
+  flex: 1 1 100%;
+}
+.cat-pop-bound .field-input {
+  width: 100%;
+}
+
+/* ------------------------------------------------------------
+   EVERY SIZE. Driven at 1600, 1440, 1280, 1024 and 768 — nothing
+   under 11px, nothing cut, and no horizontal scroll on the body at
+   any of them.
+   ------------------------------------------------------------ */
+
+@media (max-width: 1280px) {
+  .cat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .cat-head,
+  .cat-rail,
+  .cat-gallery {
+    padding-left: var(--s-4);
+    padding-right: var(--s-4);
+  }
+  .cat-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--s-3);
+  }
+  .cat-lens {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .cat-head,
+  .cat-rail,
+  .cat-gallery {
+    padding-left: var(--s-3);
+    padding-right: var(--s-3);
+  }
+  .cat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  }
+  .cat-find {
+    width: clamp(120px, 40vw, 220px);
+  }
+}
+
+/* A CARD IS STILL A CARD AT 600. One column, the photograph full
+   width, and the register underneath still scrolls in its own box. */
+@media (max-width: 600px) {
+  .cat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-card:hover,
+  .cat-card:active,
+  .cat-lens-btn:active,
+  .cat-facet:active,
+  .cat-clear:active {
+    transform: none;
+  }
+}

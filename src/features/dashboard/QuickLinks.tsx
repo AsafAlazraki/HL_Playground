@@ -218,7 +218,14 @@ export function QuickLinks({
                   </span>
                   <span className="dsh-fast-say">
                     <span className="dsh-fast-name">{link.label}</span>
-                    <span className="dsh-fast-note ds-caption">{link.note}</span>
+                    {/* ONLY WHEN IT IS A COUNTED FACT. See
+                        `ResolvedLink.counted` — "588 rows" earns its
+                        line, "Pick what you are selling" is the app
+                        explaining a button that already says New
+                        quote. */}
+                    {link.counted && link.note ? (
+                      <span className="dsh-fast-note ds-caption">{link.note}</span>
+                    ) : null}
                   </span>
                 </button>
               )}

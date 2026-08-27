@@ -28,7 +28,7 @@
    table is never a broken glyph on the page that sells the boat.
    ============================================================ */
 
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import {
   primaryImage,
   rowLabel,
@@ -72,24 +72,54 @@ export function rowPicture(row: RowData, field: FieldDef | undefined): ImageRef 
 /* Drawing one                                                */
 /* ---------------------------------------------------------- */
 
-interface PaintedProps {
+export interface PaintedProps {
   img: ImageRef
   alt: string
   className: string
   w: number
   h: number
+  /**
+   * WHAT TO DRAW WHERE THE PICTURE WILL NOT. Absent — and it is
+   * absent on this page, deliberately — the answer is NOTHING: there
+   * is nobody in front of a customer to fix a broken address, so the
+   * header and the row read exactly as they did before pictures
+   * existed (§4.1).
+   *
+   * A CATALOGUE TILE IS THE ONE PLACE THAT ANSWER IS WRONG. Its box
+   * is reserved at 3:2 before the bytes land, so "nothing" is not
+   * nothing — it is an empty grey rectangle, 125 of them down a
+   * trailer table whose maker's host we cannot fetch from. The tile
+   * passes its own kind's crest here, which is the same ruling
+   * `coverPhoto.ts` already made for a card: honest, unmistakably
+   * not a photograph, and never a picture borrowed from another row.
+   */
+  fallback?: ReactNode
 }
 
 /** One picture, or nothing at all. There is no third outcome on this
- *  page: no placeholder, no frame, no filename. */
-function Painted({ img, alt, className, w, h }: PaintedProps): ReactElement | null {
+ *  page: no placeholder, no frame, no filename.
+ *
+ *  EXPORTED AS `Picture` because the catalogue draws the same thing at
+ *  a third size and under a class of its own. The verdict, the probe
+ *  and the "nothing rather than a plate" rule are the whole value here
+ *  and they must not be re-implemented one directory over — a second
+ *  copy is how a picture ends up a broken glyph on one screen and a
+ *  photograph on the next. */
+export function Picture({
+  img,
+  alt,
+  className,
+  w,
+  h,
+  fallback,
+}: PaintedProps): ReactElement | null {
   const { paint, probe, at } = useImageDisplay(img.src)
   /* NOT a plate, not a frame, not the filename — nothing. On the page
      that sells the boat there is nobody to fix a broken address, so
      the header and the row read exactly as they did before pictures
      existed. `useImageDisplay` also turns this off the moment a source
      fails, so a broken glyph never survives a frame. */
-  if (!paint) return null
+  if (!paint) return fallback === undefined ? null : <>{fallback}</>
   return (
     <img
       className={className}
@@ -151,7 +181,7 @@ export function HeroPicture({
   const img = rowPicture(row, pictureField(entity))
   if (!img) return null
   return (
-    <Painted
+    <Picture
       img={img}
       alt={img.alt && img.alt.trim() !== '' ? img.alt.trim() : rowLabel(entity, row)}
       className="vw-hero-img"
@@ -190,7 +220,7 @@ export function RowPicture({
   const img = rowPicture(row, field)
   if (!img) return null
   return (
-    <Painted
+    <Picture
       img={img}
       /* the row's name is the very next thing in the card, so an alt
          that repeated it would make a screen reader say everything
