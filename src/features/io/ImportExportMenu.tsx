@@ -146,7 +146,13 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  const [stamp, setStamp] = useState<string | null>(null)
+  /* WHAT JUST HAPPENED, IN A SENTENCE AND A FIGURE. It used to be one
+     uppercase string — `REV 03 ISSUED`, `SHEET REPLACED` — drawn as a
+     rubber stamp rotated two degrees off true. Nothing else in this
+     design shouts, and the loudest object in the app was the one that
+     said "saved". The words are words; the revision is a figure and
+     takes the mono face. */
+  const [stamp, setStamp] = useState<{ say: string; fig?: string } | null>(null)
   const [asking, setAsking] = useState<Asking>(null)
 
   const rootRef = useRef<HTMLDivElement>(null)
@@ -242,9 +248,9 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
   }, [open])
 
   /* stamp toast lifecycle */
-  const showStamp = useCallback((msg: string) => {
+  const showStamp = useCallback((say: string, fig?: string) => {
     if (stampTimer.current !== null) window.clearTimeout(stampTimer.current)
-    setStamp(msg)
+    setStamp({ say, fig })
     stampTimer.current = window.setTimeout(() => {
       setStamp(null)
       stampTimer.current = null
@@ -261,7 +267,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
   const onExport = (includeData: boolean) => {
     const issued = saveCopyOfSheet(includeData)
     closeMenu()
-    showStamp(`REV ${pad2(issued)} ISSUED`)
+    showStamp('Copy saved', `REV ${pad2(issued)}`)
   }
 
   /* -- import ------------------------------------------------ */
@@ -288,7 +294,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
   const doReplace = (data: ProjectFile) => {
     applyReplace(data)
     closeMenu()
-    showStamp('SHEET REPLACED')
+    showStamp('Sheet replaced')
   }
 
   /** An empty sheet has nothing to overwrite, so it is not asked.
@@ -309,7 +315,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
     if (!pending) return
     applyMerge(pending.data)
     closeMenu()
-    showStamp('TABLES ADDED')
+    showStamp('Tables added')
   }
 
   /* -- clear sheet ------------------------------------------- */
@@ -320,7 +326,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
        which build seeded it goes too — see @/demos/seedStamp */
     forgetSeedStamp()
     closeMenu()
-    showStamp('SHEET CLEARED')
+    showStamp('Sheet cleared')
   }
 
   /* -- derived preview stats --------------------------------- */
@@ -377,13 +383,18 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
           ref={popRef}
           tabIndex={-1}
         >
-          <i className="io-tick io-tick-tl" aria-hidden="true" />
-          <i className="io-tick io-tick-tr" aria-hidden="true" />
-          <i className="io-tick io-tick-bl" aria-hidden="true" />
-          <i className="io-tick io-tick-br" aria-hidden="true" />
+          {/* THE FOUR CORNER TICKS ARE GONE. Registration marks are a
+              drafting-office motif from the art direction that was
+              replaced, and they were drawn on a control panel where
+              they carried nothing.
 
+              AND SO IS "DOCUMENT CONTROL". §6 asks for the dealer's
+              nouns in chrome; this panel is about their sheet, and
+              that is what it is called now. The revision stamp stays,
+              because the copies it counts really are numbered and the
+              plate below prints the same stamp for the file. */}
           <header className="io-head">
-            <span className="mono-label io-head-title">Document Control</span>
+            <span className="mono-label io-head-title">This sheet</span>
             <span className="io-head-rev">REV {pad2(rev)}</span>
           </header>
 
@@ -521,8 +532,11 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                       </span>
                     </button>
                   </div>
+                  {/* A SENTENCE, IN THE MARKUP. It was typed as literal
+                      capitals, which no `text-transform` pass could
+                      have caught. */}
                   {blank && (
-                    <p className="io-blank-note">NOTHING ON THE SHEET TO SAVE YET</p>
+                    <p className="io-blank-note">Nothing on the sheet to save yet.</p>
                   )}
                   {/* the one sentence that makes 52 and 50 the same
                       answer. Derived from the store, so it disappears on
@@ -589,10 +603,17 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                       e.target.value = ''
                     }}
                   />
+                  {/* THE REFUSAL SAYS WHY, WHERE IT WAS REFUSED — and
+                      it stopped shouting. It read `REJECTED — <reason>`
+                      in red letterspaced mono: a sentence set as a
+                      stamp. Same shape as onboarding's, which reads the
+                      same file with the same code and must refuse it in
+                      the same voice. */}
                   {error && (
-                    <p className="io-error" role="alert">
-                      <strong>REJECTED</strong> — {error}
-                    </p>
+                    <div className="io-error" role="alert">
+                      <span className="mono-label io-error-tag">Not opened</span>
+                      <span className="io-error-say">{error}</span>
+                    </div>
                   )}
                 </section>
               </>
@@ -610,13 +631,16 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
               disabled={blank}
               onClick={() => setAsking('clear')}
             >
-              Clear Sheet
+              Clear sheet
             </button>
+            {/* THE SIGNATURE SLOT IS GONE. "HELMLOGIC · DOC CTRL" said
+                nothing and stood between the most destructive button in
+                the app and the reason it is sometimes refused. The
+                reason has the slot to itself, and on a sheet with
+                something on it the footer is one button and air. */}
             {blank ? (
-              <span className="io-foot-sig io-foot-why">SHEET IS ALREADY EMPTY</span>
-            ) : (
-              <span className="io-foot-sig">HELMLOGIC · DOC CTRL</span>
-            )}
+              <span className="io-foot-why">Nothing on it to clear.</span>
+            ) : null}
           </footer>
         </div>
       )}
@@ -685,7 +709,8 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
 
       {stamp && (
         <div className="io-stamp" role="status" aria-live="polite">
-          {stamp}
+          {stamp.say}
+          {stamp.fig ? <> &middot; <b>{stamp.fig}</b></> : null}
         </div>
       )}
     </div>

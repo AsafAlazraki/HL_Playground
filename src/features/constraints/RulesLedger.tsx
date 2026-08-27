@@ -242,6 +242,21 @@ function RuleRow({
         <StatusPill state={state} where={seed.enforcedIn} />
       </div>
 
+      {/* THE SAME MEASUREMENT, SEEN. `held / tested` as a 4px rule in
+          the kind's own hue, so 685 of 757 does not read like 581 of
+          581 at a glance. It is `aria-hidden` because the figure
+          above it states the same thing in words, and drawn only
+          where there IS a measurement — a rule the workbook asserts
+          without a rate may never be given a bar it never had. */}
+      {measure && measure.tested > 0 ? (
+        <div className="cn-rl-meter" aria-hidden="true">
+          <span
+            className="cn-rl-meter-fill"
+            style={{ width: `${Math.min(100, (measure.held / measure.tested) * 100)}%` }}
+          />
+        </div>
+      ) : null}
+
       <p className="cn-rl-says">{seed.statement}</p>
       <p className="cn-rl-because">Because {seed.because}.</p>
 

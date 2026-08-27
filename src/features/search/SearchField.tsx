@@ -530,10 +530,19 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                   })}
                   {/* WHAT THE RESTING LIST LEFT OUT, said rather than
                       silently dropped — and it says what to do about
-                      it in the same breath. */}
+                      it in the same breath.
+
+                      IT NAMES WHAT IT IS COUNTING, and it has to. The
+                      foot says "51 tables" while this list holds 26
+                      PLACES, because twenty-five of those tables are
+                      relationships and a relationship opens the table
+                      it is about rather than standing as somewhere to
+                      be sent (`rowSearch.ts` argues it). Both figures
+                      are true; a bare "and 18 more" invited a reader
+                      to add it to 8 and find it did not reach 51. */}
                   {browsing && placesLeft > 0 ? (
                     <li className="hs-more" role="presentation">
-                      and {placesLeft} more — type any part of a name
+                      {placesLeft} more places to open — type any part of a name
                     </li>
                   ) : null}
                 </ul>

@@ -864,19 +864,23 @@
   margin-left: 2px;
   color: var(--red);
 }
-.tb-th-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-.tb-th-ro {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--accent-teal);
-}
+/* `.tb-th-meta` AND `.tb-th-ro` ARE GONE, AND SO IS THE LINE THEY
+   DREW. The heading carried a second row under the column's name
+   stamping CALCULATED in 11px uppercase mono on every formula
+   column — which cost the header row about fifteen pixels of height
+   on every register that has one, to say a thing the column was
+   already saying three other ways: a teal wash across the heading
+   (`.tb-th-fx`), a teal wash down every cell in it (`.tb-cell-fx`),
+   and every value in it painted in that same ink (`.tb-fx`). The
+   sentence a person actually needs — "worked out from other
+   columns, not typed into" — is in the heading's own title, where
+   it was already, and in the cell's.
+
+   A fourth statement of one fact is not emphasis; on a 33-column
+   register it is fifteen pixels of noise across the whole width.
+   See `Grid.tsx`, which no longer renders either — and the header
+   PROBE no longer renders them either, so the measured height and
+   the drawn height still agree exactly. */
 
 /* -- a column narrower than its own inset --------------------
    FIT shares the window out between every column, which on a
@@ -894,9 +898,6 @@
      covers the heading rather than sitting beside it, which is the
      right trade: the name is already unreadable, the menu is not */
   padding-right: 0;
-}
-.tb-th-tight .tb-th-meta {
-  display: none;
 }
 .tb-cell-tight {
   padding: 0 var(--sp-1);
@@ -934,14 +935,10 @@
   letter-spacing: 0.14em;
   color: var(--ink-soft);
 }
-.tb-th-sys-tag {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
+/* `.tb-th-sys-tag` went with `.tb-th-meta` above — same line, same
+   argument. The padlock beside the name (`.tb-th-lock`) and the
+   deeper well behind the column already say the app owns it, and
+   the heading's title says it in a sentence. */
 
 .tb-glyph {
   width: 10px;
@@ -3334,9 +3331,13 @@ body.tb-resizing {
    them: those two live on the action bar now, which sets its own type
    and never inherits `.btn`.
 
-   KEPT UPPERCASE, because all three are captions and captions are one
-   of the sanctioned uses: `.tb-count-label` ("ROWS"), `.tb-th-sys-tag`
-   ("SYSTEM"), `.tb-strip-label` ("SECTIONS").
+   KEPT UPPERCASE, because both are captions and captions are one of
+   the sanctioned uses: `.tb-count-label` ("ROWS") and
+   `.tb-strip-label` ("SECTIONS"). This list named a third —
+   `.tb-th-sys-tag` ("SYSTEM") — which no longer exists; it was one
+   half of the heading's second line, and the argument for removing
+   that line is at :938. `.tb-strip-NAME`, which this pass should
+   have caught and did not, is corrected at the foot of this file.
 
    TRACKING: +0.18em and +0.12em are the uppercase caption's tracking.
    DESIGN_CONTRACT §3 — tracking runs negative as size grows and
@@ -3543,4 +3544,684 @@ body.tb-resizing {
   background: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+
+/* ============================================================
+   ============================================================
+   THE REGISTER, RE-DRESSED.
+
+   Appended, never rewritten: every structural decision above —
+   the frozen gutter and name column, the spanning bands, the
+   116px column floor, the three-line heading clamp, the measured
+   header height, the 40px row — is kept exactly, and only the
+   SURFACE changes. Where a property is genuinely superseded it is
+   restated in full here with the reason on it.
+
+   WHAT WAS WRONG, from a screenshot of Highfield Inflatables at
+   1440 — 588 variants, 33 columns, eleven bands:
+
+     · it read as an HTML table. Flat grey, and the only thing
+       telling a name from a code was the mono face.
+     · the header did not feel PINNED. It is sticky and always
+       was; nothing on screen said so once rows went under it.
+     · sorting — the act a dealer performs dozens of times a day
+       — was two presses down a menu, while renaming a column,
+       which happens a handful of times ever, was one stray click
+       on a heading. Backwards.
+     · every figure was mono and right-aligned and NOT tabular,
+       and money printed $41,340 beside $41,340.50, so a column
+       of prices had its decimal points in two places.
+     · 24px thumbnails, on the 220 real photographs that are the
+       best asset this app has.
+     · two stripes — a zebra AND a rule on every cell edge — doing
+       the same job twice.
+     · the drawer bands (Series Sport, Model SP420) were 11px in
+       the figure face, at the same weight as the count beside
+       them and the level word above them.
+     · a filing column repeating its own drawer's name on every
+       one of 588 rows.
+
+   ONE ACCENT, COUNTED. `--blue` appears on this screen as: the
+   ordered column, the selected cells and their ring, the focused
+   control, and the frozen edge while it is lit. Nothing else here
+   takes it — the drawer bands, the counts and the section chips
+   are all ink and ground, which is what leaves the four that
+   matter legible as the four that matter.
+   ============================================================
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   1 · THE FROZEN CHROME SAYS IT IS FROZEN.
+
+   `.tb-headstack`, the gutter and the pinned name column have all
+   been sticky since they were written. What none of them ever did
+   was ADMIT it: at rest they are a row at the top and a column at
+   the left, and a shadow on either is ornament. The moment the
+   sheet moves they become the two things holding the reader's
+   place, and the shadow is the only thing that says so.
+
+   So it is a STATE, not decoration — ds.css's rule for every one
+   of these — and it is keyed off the scroll offsets `Grid` was
+   already tracking for windowing: no listener, no measurement, no
+   extra render.
+
+   THE EDGE TRAVELS IN A CUSTOM PROPERTY because the pinned cell
+   already spends its `box-shadow` on the selection ring and the
+   found-row rail. A rule strong enough to add an edge would have
+   been strong enough to erase those, so instead each of them
+   restates its own shadow WITH the edge appended, and the edge is
+   `0 0 0 0 transparent` until the sheet has actually moved.
+   ------------------------------------------------------------ */
+.tb-sheet {
+  --tb-edge: 0 0 0 0 transparent;
+}
+.tb-sheet[data-shifted] {
+  --tb-edge: 7px 0 12px -7px color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+.tb-headstack {
+  transition: box-shadow var(--t-med) var(--ease-draft);
+}
+.tb-sheet[data-lifted] .tb-headstack {
+  box-shadow:
+    0 1px 0 0 var(--hairline-strong),
+    0 8px 16px -10px color-mix(in srgb, var(--ink) 34%, transparent);
+}
+
+.tb-gut,
+.tb-corner,
+.tb-bandcorner,
+.tb-th-pin,
+.tb-band-pin,
+.tb-cell-pin {
+  box-shadow: var(--tb-edge);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft);
+}
+/* the three that already spend their shadow, each restating its own
+   and taking the edge as a second layer — see the note above */
+.tb-cell-pin[aria-selected='true'] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--blue) 45%, transparent),
+    var(--tb-edge);
+}
+.tb-cell-pin.tb-cell-pin-on {
+  box-shadow: inset 0 0 0 2px var(--blue), var(--tb-edge);
+}
+.tb-row-found .tb-gut {
+  box-shadow: inset 3px 0 0 var(--blue), var(--tb-edge);
+}
+
+
+/* ------------------------------------------------------------
+   2 · A HEADING THAT READS AS A HEADING.
+
+   12px/580 is a caption. The names of thirty-three columns are
+   the only thing telling a reader what a thousand figures MEAN,
+   so they take the heading weight, the ink, and a hair more size.
+   Still sentence case, still wrapping to three lines, still
+   ellipsised on the fourth — none of that moves.
+   ------------------------------------------------------------ */
+.tb-th-name {
+  font-size: 12.5px;
+  font-weight: 620;
+  letter-spacing: -0.004em;
+  line-height: 1.28;
+  color: var(--ink);
+}
+
+/* THE ORDERED COLUMN IS UNDERLINED, not merely tinted. A 9% wash
+   is invisible on a column that is also banded, also computed, or
+   also selected — and "which column is this ordered by" is the one
+   question a header row must answer from across the desk. */
+.tb-th-sorted::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--blue);
+  pointer-events: none;
+}
+
+/* THE WEDGE IS DRAWN AT REST. It used to appear only once the
+   column was already ordered, which is an affordance arriving
+   after the act it was meant to invite. At rest it is
+   `--fg-quaternary` — decoration, carrying no meaning of its own,
+   exactly as ds.css requires of that tier — and the STATE is
+   carried by the filled wedge and the accent, both of which clear
+   the floor. */
+.tb-sortglyph {
+  color: var(--fg-quaternary);
+  opacity: 1;
+  transition: color var(--t-fast) var(--ease-draft);
+}
+.tb-th-main:hover .tb-sortglyph {
+  opacity: 1;
+  color: var(--ink-soft);
+}
+.tb-sortglyph-on,
+.tb-th-main:hover .tb-sortglyph-on {
+  color: var(--blue);
+}
+
+/* A NAME SITS OVER ITS OWN FIGURES. Every number in this register
+   paints hard against the right rule of its column; a heading
+   left-aligned above it left the two ends of the column
+   disagreeing about where the column is. The wedge crosses to the
+   left with it, so the pair still reads as one control and the ⌄
+   menu keeps the 18px it has always had on the right. */
+.tb-th-num .tb-th-main {
+  align-items: flex-end;
+  text-align: right;
+}
+.tb-th-num .tb-th-top {
+  flex-direction: row-reverse;
+}
+.tb-th-num .tb-th-name {
+  text-align: right;
+}
+
+/* THE ⌄ MENU IS A CONTROL, so it is drawn as one the moment it is
+   reachable rather than as a hairline outline that appears from
+   nothing. */
+.tb-th-menu {
+  border-radius: var(--radius-sm);
+}
+.tb-th:hover .tb-th-menu {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+.tb-th-menu:hover {
+  background: var(--blue-wash);
+  border-color: transparent;
+}
+
+
+/* ------------------------------------------------------------
+   3 · PRESS, WHICH THIS SURFACE HAD ALMOST NONE OF.
+
+   Rule 8 is "every pressable thing has hover, press AND focus",
+   and the register had two of the three on eleven controls. The
+   press is added here for all of them, scaled to the surface as
+   the rule says: 0.97 on a control you can see the edges of, and
+   a DARKENING on anything that is part of the sheet's own grid —
+   a heading, a row gutter, a drawer line — because a 24px square
+   scaling inside a ruled table reads as the table twitching.
+
+   `:active` lands on pointer-down, which is the other half of
+   rule 8.
+   ------------------------------------------------------------ */
+.tb-th-main:active,
+.tb-corner:active,
+.tb-gut:active,
+.tb-band-btn:active,
+.tb-strip-chip:active {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+.tb-th-menu:active,
+.tb-grp-tw:active,
+.tb-addbtn:active,
+.tb-th-add:active,
+.tb-imgthumb:active,
+.tb-imgadd:active,
+.tb-count-clear:active {
+  transform: scale(0.97);
+}
+.tb-grp-name:active {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+}
+/* reduced motion keeps the feedback and loses the movement (§4) */
+@media (prefers-reduced-motion: reduce) {
+  .tb-th-menu:active,
+  .tb-grp-tw:active,
+  .tb-addbtn:active,
+  .tb-th-add:active,
+  .tb-imgthumb:active,
+  .tb-imgadd:active,
+  .tb-count-clear:active {
+    transform: none;
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   4 · ONE STRIPE, NOT TWO.
+
+   The sheet was ruled on every cell edge AND striped every second
+   row — two systems answering "which line am I on", neither of
+   them fully. Bands, computed columns, required marks and the
+   filing tint all sit on top of that, and a 1.6% zebra under all
+   of it is not a signal, it is fog.
+
+   THE RULE WINS and the zebra goes. A 40px row with a hairline
+   under it is how every register in this class is drawn, and it
+   is what leaves the HOVER band — the one that actually answers
+   the question, because it answers it about the row you are
+   pointing at — legible against a plain ground.
+
+   `.tb-row-alt` is kept as a declared class rather than pulled
+   out of the markup: the alternation is still TRUE about the data
+   (it counts the row's own index, which is the number the gutter
+   prints), and the day somebody wants it back it is one value.
+
+   THE VERTICAL RULE STEPS BACK. Horizontal is the axis a register
+   is read along; a column boundary only has to be findable.
+   ------------------------------------------------------------ */
+.tb-row-alt,
+.tb-row-alt .tb-cell-pin {
+  background: var(--paper-high);
+}
+.tb-cell {
+  border-right-color: var(--line-subtle);
+}
+
+/* THE HOVER BAND, and it has to out-weigh the page skin's own
+   (`.shell-tablestage .tb-row:hover`, two classes) or the register
+   inside a stage and the register on a card read differently. */
+.tb-grid .tb-row:hover,
+.tb-grid .tb-row:hover .tb-cell-pin {
+  background: color-mix(in srgb, var(--blue) 6%, var(--paper-high));
+}
+/* and the gutter lights with it, so the line is marked at the one
+   place that is on screen however far right the sheet is scrolled */
+.tb-grid .tb-row:hover .tb-gut {
+  background: color-mix(in srgb, var(--blue) 13%, var(--paper-sunken));
+  color: var(--ink);
+}
+
+
+/* ------------------------------------------------------------
+   5 · EVERY FIGURE IS TABULAR, AND MONEY LINES UP ON THE POINT.
+
+   §2: "Mono is not decoration — it is what makes a column of money
+   line up on the decimal." The faces were right and
+   `font-variant-numeric` was never set, so IBM Plex Mono's
+   proportional default was in force on every price in the file.
+
+   The cents slot is `GridCell.tsx`'s — see the note there. It is
+   exactly `.00` wide in this face, and a whole amount leaves it
+   empty so its point lands where the others' do.
+   ------------------------------------------------------------ */
+.tb-num,
+.tb-fx,
+.tb-date,
+.tb-sys,
+.tb-gut,
+.tb-money,
+.tb-grp-count,
+.tb-count-num,
+.tb-strip-count,
+.tb-imgcount {
+  font-variant-numeric: tabular-nums;
+}
+.tb-cents {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: left;
+}
+
+
+/* ------------------------------------------------------------
+   6 · THE FILING COLUMNS.
+
+   A nested register keeps the columns it is filed under on screen
+   — that is deliberate and argued in `useGroupedView`: retyping
+   one boat's Series is how that boat moves to another drawer, and
+   hiding the column takes the re-filing with it. The cost is that
+   every one of 588 rows repeats the drawer heading three lines
+   above it, in the same ink as the figures the reader came for.
+
+   So it is drawn as FILING: same value, same case, still typed
+   into, still copied, still ordered — a quieter ground and the
+   secondary ink, which measures 8.1:1 on white and holds above
+   7:1 over this tint, so nothing here goes near the floor.
+   ------------------------------------------------------------ */
+.tb-cell-filed {
+  background: color-mix(in srgb, var(--ink) 2.5%, transparent);
+}
+.tb-cell-filed .tb-val {
+  color: var(--ink-soft);
+}
+/* COLOUR ONLY, AND DELIBERATELY NOT WEIGHT. The header PROBE
+   (`.tb-headprobe`, and the argument for it at the foot of the
+   original file) measures every column's heading at the real width
+   to work out the row's height, and it carries `.tb-th` without
+   knowing which columns are filing columns. A lighter weight here
+   would make the live name narrower than the one that was measured,
+   so a name the probe wrapped to three lines would draw in two —
+   harmless, but the probe and the heading would no longer be the
+   same markup, which is the one property that makes it trustworthy. */
+.tb-th-filed .tb-th-name {
+  color: var(--ink-soft);
+}
+/* AND IF THE FILING COLUMN IS ALSO THE FROZEN ONE, IT STAYS OPAQUE.
+   Nothing forbids a table being filed under the same column it
+   displays by, and a translucent pin is the one thing `.tb-cell-pin`
+   exists to prevent — thirty columns of figures pass underneath it.
+   The same tint, stated as its opaque equivalent, exactly as the
+   selection wash above had to be. */
+.tb-cell-pin.tb-cell-filed {
+  background: color-mix(in srgb, var(--ink) 2.5%, var(--paper-high));
+}
+
+
+/* ------------------------------------------------------------
+   7 · THE DRAWERS READ AS BANDS.
+
+   "Series Sport" and "Model SP420" were 11px in the figure face,
+   at the same weight as the count beside them and the level word
+   above them — three things of equal voice on a line whose whole
+   job is to say which of 588 variants you are among. And the
+   drawer's own NAME was set in mono, which §2 reserves for
+   figures, codes and identifiers: "Sport" is a word the dealer
+   typed.
+
+   The outermost drawer becomes a BAND — a sunken ground, the
+   heading step, the ink — and the levels nested inside it step
+   down rather than repeating it. The count moves into a pill so
+   it reads as a fact ABOUT the band rather than as more of its
+   name, and the rule between them fades out the way the section
+   headings on the front door do.
+
+   THE GROUND IS MIXED HERE RATHER THAN TAKEN FROM `--grad-sunken`,
+   and the reason is the palette: that token is #f4f5f8 → #eef0f4,
+   a neutral grey from before the blue-and-white pass, and a grey
+   band across a sheet of blue-white surfaces reads as a different
+   material. `--surface-3` (#eef3f8 light, #1d3145 dark) is the
+   blue-tinted step, and settling INTO it downward is what makes the
+   band read as a header for the rows beneath rather than as a row.
+   ------------------------------------------------------------ */
+.tb-grpline[data-level='0'] {
+  background: linear-gradient(180deg, var(--paper-high) 0%, var(--surface-3) 100%);
+}
+.tb-grp-name {
+  font-family: var(--font-ui);
+  letter-spacing: -0.004em;
+}
+.tb-grpline[data-level='0'] .tb-grp-name {
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--ink);
+}
+.tb-grpline[data-level='1'] .tb-grp-name,
+.tb-grpline[data-level='2'] .tb-grp-name {
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--ink);
+}
+/* the level's own word — the dealer's column name, so it is the UI
+   face at the label step and never the figure face */
+.tb-grp-lab {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+}
+.tb-grp-count {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.tb-grp-rule {
+  background: linear-gradient(90deg, var(--hairline) 0%, transparent 100%);
+}
+.tb-grp-tw {
+  color: var(--ink-soft);
+}
+/* a folded drawer keeps the band's ground rather than inventing a
+   third one, so folding reads as a state of the same object */
+.tb-grpline-shut[data-level='0'] {
+  background: linear-gradient(180deg, var(--paper-high) 0%, var(--surface-3) 100%);
+}
+
+
+/* ------------------------------------------------------------
+   8 · SECTIONS — the map, as a control rather than a legend.
+
+   `.tb-strip-name` is the one place the uppercase pass at :3350
+   walked past. It sets a SECTION's name — "Retail Pricing", "Hull
+   & Rig", typed by whoever set the table up — in 11px mono at
+   +0.14em under `text-transform: uppercase`, which is §3's exact
+   prohibition: a name is not a label, and "PVC" uppercased cannot
+   be told from a value somebody typed as "Pvc". The band header
+   over the columns themselves was corrected there; its own map
+   was not, so the two have been printing the same word two ways.
+
+   It also gains the geometry of a control — a chip with a ground
+   and a radius — rather than a word between two hairlines.
+   ------------------------------------------------------------ */
+.tb-strip {
+  gap: var(--sp-2);
+  height: 34px;
+}
+.tb-strip-rail {
+  gap: 3px;
+  align-items: center;
+}
+.tb-strip-chip {
+  align-items: center;
+  height: 26px;
+  padding: 0 9px;
+  border-left: none;
+  border-radius: var(--r-control);
+  background: transparent;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-strip-name {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 520;
+  letter-spacing: -0.002em;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+.tb-strip-chip:hover .tb-strip-name,
+.tb-strip-chip-here .tb-strip-name {
+  color: var(--ink);
+}
+.tb-strip-count {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.tb-strip-chip-shut {
+  border-radius: var(--r-control);
+}
+.tb-strip-chip-shut .tb-strip-name {
+  font-weight: 560;
+  letter-spacing: -0.002em;
+  color: var(--ink);
+}
+
+/* THE BRACKET STAYS, AND THREE THINGS ABOVE IT ARE DELIBERATELY NOT
+   TOUCHED. The first draft of this block deleted `.tb-strip-rule` on
+   the grounds that the chip's own shape now says "these columns
+   belong together" — which is true, and would have been a defect,
+   because the bracket is ALSO the only mark distinguishing a chip
+   that cannot move the view (`:459` above, and the measured argument
+   at :467 for why the NAME may not carry that state instead). The
+   same draft dimmed a stuck chip to 55% opacity, which computes to
+   1.9:1 — a chip whose entire job is to explain itself, made
+   unreadable. And it re-grounded the lit chip in `--blue`, which is
+   a fifth appearance of the one accent on a screen that already
+   spends four, over a wash the note at :430 chose for §1's reason.
+
+   All three were reverted. What is left here is geometry and the
+   face — a chip instead of a word between hairlines, and a section's
+   name in the language face at reading size instead of stamped. */
+
+
+/* ------------------------------------------------------------
+   9 · THE PICTURES.
+
+   The single biggest untapped thing on this screen: 220 real
+   photographs, and the largest any of them was ever drawn inside
+   the register was a 24px square. A 40px row has room for 32
+   without moving a single rule, and the pointer now enlarges one
+   in place — see the plate below, and the note in `ImageCell.tsx`.
+   ------------------------------------------------------------ */
+.tb-imgslot,
+.tb-imgadd {
+  width: 32px;
+  height: 32px;
+}
+.tb-imgfront {
+  min-height: 32px;
+}
+.tb-imgstrip {
+  gap: 4px;
+}
+.tb-imgthumb {
+  border-radius: var(--radius-sm);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-press);
+}
+.tb-imgthumb:hover {
+  box-shadow: 0 2px 6px -2px color-mix(in srgb, var(--ink) 40%, transparent);
+}
+.tb-imgcount {
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------
+   THE HOVER PLATE. It is LOOKING, not working: no controls on it,
+   nothing to press, and it leaves with the pointer. The lightbox
+   is still where a picture is promoted, walked through or removed.
+
+   It is portalled to the body, so nothing about the cell's
+   `overflow: hidden` — which is what keeps a table of photographs
+   reading as a table — has to be relaxed for it.
+   ------------------------------------------------------------ */
+.tb-imgpeek {
+  position: fixed;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--e-float);
+  pointer-events: none;
+  animation: ds-fade var(--t-fast) var(--ease-draft);
+}
+.tb-imgpeek-frame {
+  display: block;
+  width: 100%;
+  height: 180px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  /* the ground the photograph decodes over — the app's own loading
+     field, and it is bounded: exactly one plate exists at a time */
+  background: linear-gradient(
+    90deg,
+    var(--surface-3) 0%,
+    var(--surface-4) 50%,
+    var(--surface-3) 100%
+  );
+  background-size: 220% 100%;
+  animation: ds-shimmer 1.4s linear infinite;
+}
+.tb-imgpeek-pic {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.tb-imgpeek-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 2px 2px;
+}
+.tb-imgpeek-name {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 560;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tb-imgpeek-of {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tb-imgpeek {
+    animation: none;
+  }
+  .tb-imgpeek-frame {
+    animation: none;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   10 · THE EMPTY PLATES.
+
+   `.tb-plate-title` was 11px mono uppercase at +0.14em — "NO
+   COLUMNS YET" stamped like a system alert directly above a
+   12.5px sentence explaining it kindly. §3 forbids uppercase on a
+   sentence, and this is the app's own voice at the one moment a
+   person has nothing on screen at all. It takes the title step,
+   which is what §2 puts empty states at.
+
+   THERE IS NO LOADING PLATE HERE AND THAT IS NOT AN OMISSION.
+   This register never waits: the rows are in the store before the
+   stage mounts, and a skeleton that flashes for one frame is a
+   thing invented to look busy. The one genuine wait on this
+   surface is a photograph decoding, and that has a ground of its
+   own above.
+   ------------------------------------------------------------ */
+.tb-plate {
+  gap: var(--sp-3);
+  max-width: 400px;
+  padding: var(--sp-7) var(--sp-6);
+  border-style: solid;
+  border-color: var(--hairline);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.tb-plate-glyph {
+  color: var(--fg-quaternary);
+}
+.tb-plate-title {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  font-weight: 620;
+  letter-spacing: -0.016em;
+  line-height: 1.22;
+  text-transform: none;
+  color: var(--ink);
+}
+.tb-plate-sub {
+  max-width: 34ch;
+  font-size: 13px;
+  line-height: 1.6;
 }

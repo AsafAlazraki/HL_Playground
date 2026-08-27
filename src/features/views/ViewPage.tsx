@@ -318,9 +318,6 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
       onDrop={onPageDrop}
     >
       <div className="vw-sheet">
-        <span className="vw-tick vw-tick--tl" aria-hidden="true" />
-        <span className="vw-tick vw-tick--tr" aria-hidden="true" />
-
         {/* ============================================================
             THE HERO — the boat, at the size a boat is worth.
 
@@ -343,59 +340,58 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
             <HeroPicture entity={root} row={row} />
           </figure>
 
-          <div className="vw-hero-body">
-            <div className="vw-hero-say">
-              <div className="vw-hero-top">
-                {trail.length > 0 ? (
-                  <p className="vw-trail mono-label">
-                    {trail.map((t, i) => (
-                      <span key={`${t}-${i}`} className="vw-trail-step">
-                        {i > 0 ? (
-                          <span className="vw-trail-sep" aria-hidden="true">
-                            ▸
-                          </span>
-                        ) : null}
-                        {t}
-                      </span>
-                    ))}
-                  </p>
-                ) : (
-                  <p className="vw-trail mono-label">
-                    <KindMark entity={root} size={ICON_SIZE.tiny} />
-                    {root.name}
-                  </p>
-                )}
+          <div className="vw-hero-say">
+            <div className="vw-hero-top">
+              {trail.length > 0 ? (
+                <p className="vw-trail mono-label">
+                  {trail.map((t, i) => (
+                    <span key={`${t}-${i}`} className="vw-trail-step">
+                      {i > 0 ? (
+                        <span className="vw-trail-sep" aria-hidden="true">
+                          ▸
+                        </span>
+                      ) : null}
+                      {t}
+                    </span>
+                  ))}
+                </p>
+              ) : (
+                <p className="vw-trail mono-label">
+                  <KindMark entity={root} size={ICON_SIZE.tiny} />
+                  {root.name}
+                </p>
+              )}
 
-                <button
-                  type="button"
-                  className={`vw-gear${configuring ? ' is-on' : ''}`}
-                  aria-pressed={configuring}
-                  title={configuring ? 'Done — back to the clean page' : 'Set up this page'}
-                  onClick={() => {
-                    setConfiguring((v) => !v)
-                    setPicking(false)
-                    setPending(null)
-                    setRefusal(null)
-                  }}
-                >
-                  {configuring ? (
-                    <Check size={16} weight="bold" />
-                  ) : (
-                    <Gear size={16} weight="light" />
-                  )}
-                  <span className="vw-gear-word">{configuring ? 'Done' : 'Set up'}</span>
-                </button>
-              </div>
-
-              {/* THE ONE HERO STEP IN THIS FEATURE. `--t-hero-*` is the
-                  step above display, and a rig's name in front of a
-                  customer is what it is for. */}
-              <h1 className="ds-hero vw-name">{rowLabel(root, row)}</h1>
-              <SpecStrip entity={root} row={row} engine={engine} />
+              <button
+                type="button"
+                className={`vw-gear${configuring ? ' is-on' : ''}`}
+                aria-pressed={configuring}
+                title={configuring ? 'Done — back to the clean page' : 'Set up this page'}
+                onClick={() => {
+                  setConfiguring((v) => !v)
+                  setPicking(false)
+                  setPending(null)
+                  setRefusal(null)
+                }}
+              >
+                {configuring ? <Check size={16} weight="bold" /> : <Gear size={16} weight="light" />}
+                <span className="vw-gear-word">{configuring ? 'Done' : 'Set up'}</span>
+              </button>
             </div>
 
-            <RigPanel rig={rig} root={root} />
+            {/* THE ONE HERO STEP IN THIS FEATURE. `--t-hero-*` is the
+                step above display, and a rig's name in front of a
+                customer is what it is for. */}
+            <h1 className="ds-hero vw-name">{rowLabel(root, row)}</h1>
           </div>
+
+          {/* FOUR GRID CHILDREN AND NO WRAPPERS, so the two columns
+              balance: the photograph over the measurements it is a
+              photograph of, and the name over what it comes to. With
+              no photograph the figure is `display: none`, drops out of
+              the grid entirely, and the three that are left stack. */}
+          <SpecStrip entity={root} row={row} engine={engine} />
+          <RigPanel rig={rig} root={root} />
         </header>
 
         {/* THE SUBJECT ITSELF IS HISTORY. Nothing sends a person here —

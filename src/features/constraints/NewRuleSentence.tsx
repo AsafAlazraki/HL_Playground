@@ -151,12 +151,19 @@ export interface NewRuleSentenceProps {
   title?: string
   /** the columns the sentence may name — see `RuleSentenceProps`. */
   conceptKeys?: ReadonlySet<string>
+  /** publish the two doors to the action bar. False while the
+   *  composer is mounted but not on screen: Business rules draws it
+   *  inside one of three views, and a bar carrying the verbs of a
+   *  surface a person cannot see is clutter. Default true, so every
+   *  other caller behaves exactly as it did. */
+  showActions?: boolean
 }
 
 export function NewRuleSentence({
   onAdded,
   title = 'Write a new rule',
   conceptKeys,
+  showActions = true,
 }: NewRuleSentenceProps): ReactElement | null {
   const ctx = useSentenceCtx()
   const [draft, setDraft] = useState<ConstraintDef | null>(() => makeDraft(ctx))
@@ -276,7 +283,7 @@ export function NewRuleSentence({
     return items.length > 0 ? [{ id: 'cn-start', rank: 40, items }] : null
   }, [bind, conceptKeys, counted, ctx.entities, offers, pairs, pick])
 
-  useActionBar('constraints-new-rule', bar)
+  useActionBar('constraints-new-rule', showActions ? bar : null)
 
   /* THE MEASUREMENT COSTS A ROW WALK, SO IT IS TAKEN ONLY WHEN THE
      SENTENCE CHANGES. `previewConstraint` reads every row of every

@@ -93,7 +93,14 @@ import './discovery.css'
  *  is folded away is always printed beside the control. */
 const FIRST_FEW = 8
 
-export function DiscoveryPanel(): ReactElement | null {
+export interface DiscoveryPanelProps {
+  /** publish this band's verb to the action bar. False while the
+   *  band is drawn but not on screen — see the note on the call to
+   *  `useActionBar` below. */
+  showActions?: boolean
+}
+
+export function DiscoveryPanel({ showActions = true }: DiscoveryPanelProps = {}): ReactElement | null {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const orgKey = useProjectStore((s) => orgKeyOf(s.meta))
@@ -183,7 +190,13 @@ export function DiscoveryPanel(): ReactElement | null {
       },
     ]
   }, [counts.tables, phase, run])
-  useActionBar('discovery', bar)
+  /* THE VERB TRAVELS WITH THE VIEW. Business rules draws this band
+     inside one of three views now, and an action bar carrying the
+     verbs of two surfaces a person cannot see is the clutter that
+     re-composition was for. The default is `true`, so anywhere this
+     band is simply mounted — a module page, a future surface — it
+     behaves exactly as it did. */
+  useActionBar('discovery', showActions ? bar : null)
 
   /* NOTHING TO MEASURE IS SAID WHERE IT IS REFUSED, not by drawing a
      panel about patterns over an empty project. */

@@ -1228,7 +1228,9 @@ export function Grid(props: GridProps): JSX.Element {
                             ? 'the row’s permanent identifier, never renamed or edited. '
                             : f.type === 'formula'
                               ? 'worked out from other columns, not typed into. '
-                              : `holds ${columnKindOf(f.type).label.toLowerCase()}. `) +
+                              : filed.has(f.id)
+                                ? 'the sheet is filed under this column, so every row repeats its drawer’s name. Retype one to move that row to another drawer. '
+                                : `holds ${columnKindOf(f.type).label.toLowerCase()}. `) +
                           (dir === 'asc'
                             ? 'Ordered first to last — click for last to first.'
                             : dir === 'desc'

@@ -73,11 +73,15 @@ export function CustomerPage({
   if (!table || !row) {
     return (
       <div className="cx-root">
-        <p className="cx-void">
+        <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
+        <div className="cx-scroll">
+          <p className="cx-void">
           That customer is no longer in the register. Every quote written to them still
           opens and still prints — a quote keeps its own copy of the name and details it
-          was given, so nothing on a document depends on this row still being here.
-        </p>
+            was given, so nothing on a document depends on this row still being
+            here.
+          </p>
+        </div>
       </div>
     )
   }
@@ -87,24 +91,27 @@ export function CustomerPage({
 
   return (
     <div className="cx-root">
+      <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
+      <div className="cx-scroll">
       <header className="cx-one-head">
         <div className="cx-one-id">
+          <span className="cx-head-eyebrow">Customer</span>
           <h1 className="cx-one-name">
             {read.name === '' ? <span className="cx-blank">no name yet</span> : read.name}
           </h1>
           {read.contact.length > 0 ? (
             <p className="cx-one-contact">{read.contact.join('  ·  ')}</p>
           ) : null}
-          <p className="mono-label cx-one-facts">
+          <p className="cx-one-facts">
             {theirs.length === 0
               ? 'No quotes yet'
-              : `${theirs.length} ${theirs.length === 1 ? 'quote' : 'quotes'}`}
+              : `${theirs.length} ${theirs.length === 1 ? 'quote' : 'quotes'} written`}
           </p>
         </div>
 
         <button
           type="button"
-          className="btn btn-ghost cx-one-drop"
+          className="cx-act cx-act--quiet cx-one-drop"
           onClick={() => {
             removeCustomer(row.id)
             onRemoved?.()
@@ -130,7 +137,7 @@ export function CustomerPage({
 
       {/* -- the history with them -------------------------------- */}
       <section className="cx-hist" aria-label="Quotes">
-        <p className="mono-label cx-hist-head">Quotes to them</p>
+        <p className="cx-hist-head">Quotes to them</p>
 
         {theirs.length === 0 ? (
           <p className="cx-hist-none">
@@ -157,14 +164,22 @@ export function CustomerPage({
                     onClick={() => onOpenQuote?.(q.id)}
                     aria-label={`Quote ${q.reference} — ${q.subjectLabel}`}
                   >
-                    <span className="mono-label cx-hist-when">{localDay(q.createdAt)}</span>
+                    <span className="cx-hist-when">{localDay(q.createdAt)}</span>
                     <span className="cx-hist-what">
                       {q.subjectLabel}
                       {as !== '' && as !== read.name ? (
                         <span className="cx-hist-as"> quoted as {as}</span>
                       ) : null}
                     </span>
-                    <span className="mono-label cx-hist-state">
+                    {/* A STATE IS A VALUE, so it keeps its own case.
+                        `mono-label` uppercased it, which turned
+                        "Given" and "Draft" — two words a person reads
+                        — into two more stamps on a screen that already
+                        had enough. */}
+                    <span
+                      className="cx-hist-state"
+                      data-state={q.state === 'issued' ? 'given' : 'draft'}
+                    >
                       {q.state === 'issued' ? 'Given' : 'Draft'}
                       {q.supersedesId ? ' · new version' : ''}
                     </span>
@@ -184,6 +199,7 @@ export function CustomerPage({
           </ul>
         )}
       </section>
+      </div>
     </div>
   )
 }
@@ -213,7 +229,7 @@ function CustomerCell({
   if (!EDITABLE.has(field.type)) {
     return (
       <div className="cx-field cx-field--stub">
-        <span className="mono-label">{field.name}</span>
+        <span className="cx-field-name">{field.name}</span>
         <p className="cx-field-stub-say">
           This column is edited on the {table.name} table — open it from <em>Tables</em>{' '}
           on the bar.
@@ -226,11 +242,12 @@ function CustomerCell({
     return (
       <label className="cx-field cx-field--tick">
         <input
+          className="cx-tick"
           type="checkbox"
           checked={raw === true}
           onChange={(e) => write(e.target.checked)}
         />
-        <span className="mono-label">{field.name}</span>
+        <span className="cx-field-name">{field.name}</span>
       </label>
     )
   }
@@ -238,9 +255,9 @@ function CustomerCell({
   if (field.type === 'select') {
     return (
       <label className="cx-field">
-        <span className="mono-label">{field.name}</span>
+        <span className="cx-field-name">{field.name}</span>
         <select
-          className="field-input cx-input"
+          className="cx-input"
           value={typeof raw === 'string' ? raw : ''}
           onChange={(e) => write(e.target.value === '' ? null : e.target.value)}
         >
@@ -260,9 +277,9 @@ function CustomerCell({
 
   return (
     <label className={`cx-field${isName ? ' cx-field--name' : ''}`}>
-      <span className="mono-label">{field.name}</span>
+      <span className="cx-field-name">{field.name}</span>
       <input
-        className="field-input cx-input"
+        className="cx-input"
         type={field.type === 'date' ? 'date' : 'text'}
         inputMode={field.type === 'number' ? 'decimal' : undefined}
         value={text}

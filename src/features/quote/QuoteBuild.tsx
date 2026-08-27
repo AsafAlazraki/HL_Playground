@@ -287,15 +287,18 @@ export function QuoteBuild({
 
   return (
     <>
+      {/* THE GROUND IS PAINTED ON THE SCROLLPORT ITSELF, not mounted
+          in it. `.ds-aurora` is an absolutely positioned element, and
+          an absolutely positioned child of a scroll container belongs
+          to that container's scrollable overflow — so it would sit
+          over the first screen of the build and slide off the top the
+          moment somebody scrolled to the trailers, leaving the rest of
+          the page on flat paint. Two radial washes in `.qb-scroll`'s
+          own background do not scroll (that is what
+          `background-attachment: scroll` means on a scroll container),
+          they carry nothing, and build.css takes them away under
+          `prefers-reduced-transparency` and `prefers-contrast: more`. */}
       <div className="qb-scroll">
-        {/* THE GROUND, AND IT CARRIES NOTHING. Two radial washes under
-            6% alpha and a grain tile, so a page that is mostly one
-            photograph and three cards has a surface rather than a
-            void. Removed outright under `prefers-reduced-transparency`
-            and `prefers-contrast: more`, and stops drifting under
-            `prefers-reduced-motion` — all three in ds.css. */}
-        <div className="ds-aurora ds-grain qb-sky" aria-hidden="true" />
-
         <div className="qb-page">
           <RigPlate
             quote={quote}

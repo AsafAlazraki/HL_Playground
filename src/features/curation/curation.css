@@ -23,23 +23,38 @@
      FAILS. The note and the reach line sit on `--paper-sunken`, so
      both take `--ink-soft` (7.7:1). Only the chip, which sits on
      the card's own opaque paper, is allowed the faint tier.
+
+   WHAT THIS PASS CHANGED. Nothing about the drawing — the shape was
+   already right and the argument above still holds. What went is the
+   hand-cut geometry: a 7px radius, a 28px height, a 12.5px type size
+   and a 0.94 press, all written as literals, none of which is a
+   value the system has a name for. They are now `--r-control`,
+   `--h-sm`, the small type step and 0.97 — so this note is made of
+   the same parts as the review rail's Apply button and the register's
+   find box, and a change to any of them reaches all three.
+
+   THE PRESS WAS ALSO THE WRONG SIZE. 0.94 on an 18px button is a
+   one-pixel shrink, which reads as a stutter rather than as a press;
+   and the reach line, which is a full-width SENTENCE, darkens instead
+   of scaling, because a block that scales makes its neighbours look
+   like they moved.
    ============================================================ */
 
 .cur {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   min-width: 0;
 }
 
 .cur--block {
-  padding: var(--sp-2) 0 var(--sp-3);
+  padding: var(--s-2) 0 var(--s-3);
 }
 
 .cur--page {
   max-width: 1180px;
-  margin: 0 auto var(--sp-4);
-  padding: var(--sp-3) 0;
+  margin: 0 auto var(--s-4);
+  padding: var(--s-3) 0;
 }
 
 /* -- the controls ------------------------------------------- */
@@ -48,7 +63,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   min-width: 0;
 }
 
@@ -56,16 +71,17 @@
 .cur-find {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-1);
-  height: 28px;
-  padding: 0 var(--sp-2);
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
+  gap: var(--s-1);
+  height: var(--h-sm);
+  padding: 0 var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
   color: var(--ink-faint);
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    background-color var(--t-fast) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
 }
 
 .cur-find:hover {
@@ -74,7 +90,11 @@
 
 .cur-find:focus-within {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
+  box-shadow: var(--glow-sm);
+}
+/* the glyph lights with the box it stands in */
+.cur-find:focus-within > svg {
+  color: var(--blue);
 }
 
 .cur-find-input {
@@ -84,9 +104,9 @@
   background: none;
   outline: none;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--t-small-size);
   font-weight: 500;
-  letter-spacing: 0;
+  letter-spacing: var(--t-small-track);
   color: var(--ink);
 }
 
@@ -102,47 +122,51 @@
   height: 18px;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: none;
   color: var(--ink-faint);
   cursor: pointer;
   transition:
-    background-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
+    background-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 
 .cur-clear:hover {
-  background: var(--paper-sunken);
+  background: var(--surface-3);
   color: var(--ink);
 }
 
 .cur-clear:active {
-  background: var(--paper-sunken);
-  transform: scale(0.94);
+  background: var(--surface-4);
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 
 .cur-clear:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 /* the switch — property 3. A latch, labelled with its ACT. */
 .cur-switch {
-  height: 28px;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
+  font-size: var(--t-small-size);
+  font-weight: 540;
+  letter-spacing: -0.003em;
   color: var(--ink-soft);
   cursor: pointer;
   transition:
-    background-color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
+    background-color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 
 .cur-switch:hover {
@@ -152,21 +176,24 @@
 
 /* press on POINTER-DOWN, which is what `:active` is */
 .cur-switch:active {
-  background: var(--paper-sunken);
+  background: var(--surface-4);
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 
 .cur-switch:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
 }
 
 /* the narrowing is OFF — a latch that is on says so by sitting in,
    not by taking the accent. The accent on this screen is spent. */
 .cur-switch[aria-pressed='true'] {
-  background: var(--paper-sunken);
+  background: var(--surface-3);
   border-color: var(--hairline-strong);
   color: var(--ink);
-  box-shadow: var(--e1);
+  box-shadow: inset 0 1px 2px var(--edge-dark);
 }
 
 .cur-switch[aria-disabled='true'] {
@@ -175,7 +202,7 @@
 }
 
 .cur-switch[aria-disabled='true']:hover {
-  border-color: var(--hairline);
+  border-color: var(--line);
   color: var(--ink-faint);
 }
 
@@ -190,7 +217,7 @@
 .cur-chip {
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
   line-height: 1.45;
@@ -201,14 +228,14 @@
 .cur-note,
 .cur-why {
   margin: 0;
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 2px solid var(--hairline-strong);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: 2px solid var(--line-strong);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
   background: var(--paper-sunken);
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--t-small-size);
   font-weight: 450;
-  letter-spacing: 0;
+  letter-spacing: var(--t-small-track);
   line-height: 1.55;
   /* over a tint, so `--ink-soft` and never `--ink-faint` */
   color: var(--ink-soft);
@@ -234,8 +261,8 @@
   border-bottom: 0;
   cursor: pointer;
   transition:
-    background-color var(--t-fast) var(--ease-draft),
-    border-left-color var(--t-fast) var(--ease-draft);
+    background-color var(--d-fast) var(--ease),
+    border-left-color var(--d-fast) var(--ease);
 }
 
 .cur-reach-btn:hover {
@@ -243,17 +270,19 @@
   background: var(--blue-wash);
 }
 
+/* A BLOCK DARKENS, IT DOES NOT SCALE. */
 .cur-reach-btn:active {
-  background: var(--paper-sunken);
+  background: var(--blue-wash-strong);
+  transition-duration: var(--d-press);
 }
 
 .cur-reach-btn:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 .cur-why {
-  border-left-color: var(--hairline-strong);
+  border-left-color: var(--line-strong);
 }
 
 /* the page form gives the sentences the index's own column */
@@ -261,4 +290,13 @@
 .cur--page .cur-note,
 .cur--page .cur-why {
   max-width: none;
+}
+
+/* MOVEMENT GOES, FEEDBACK STAYS. The darken on every `:active` above
+   is what survives the setting; only the scale is removed. */
+@media (prefers-reduced-motion: reduce) {
+  .cur-clear:active,
+  .cur-switch:active {
+    transform: none;
+  }
 }

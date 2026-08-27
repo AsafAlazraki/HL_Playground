@@ -427,12 +427,21 @@ const PEEK_WAIT = 320
 const PEEK_W = 268
 const PEEK_H = 244
 
-interface Peek {
+/** What a thumb asks for. The thumb itself travels rather than its
+ *  rectangle: the plate is armed on a delay, and a sheet scrolled
+ *  during that delay would leave a rectangle measured a third of a
+ *  second ago pointing at empty paper. It is measured when the plate
+ *  is actually drawn. */
+interface PeekReq {
   at: string
   alt: string
   /** the picture's own words, and where it sits in the strip */
   label: string
   say: string
+  el: HTMLElement
+}
+
+interface Peek extends PeekReq {
   /** the thumb it belongs to, so the plate can stand beside it */
   box: DOMRect
 }
@@ -504,11 +513,11 @@ function ThumbButton({
   onOpen: (index: number) => void
   /** arm or disarm the hover plate — `null` disarms. Only ever called
    *  with a picture this cell is already allowed to draw. */
-  onPeek: (p: Peek | null) => void
+  onPeek: (p: PeekReq | null) => void
 }): JSX.Element {
   const { paint, probe, at } = useImageDisplay(img.src)
   const first = index === 0
-  const peekOf = (el: HTMLElement): Peek | null =>
+  const peekOf = (el: HTMLElement): PeekReq | null =>
     paint && at
       ? {
           at,
@@ -518,7 +527,7 @@ function ThumbButton({
             count === 1
               ? fieldName
               : `${fieldName} — ${index + 1} of ${count}${first ? ', the one that shows' : ''}`,
-          box: el.getBoundingClientRect(),
+          el,
         }
       : null
   return (
@@ -664,14 +673,19 @@ export function ImageStrip({
      pointer must not put a plate up a third of a second later. */
   const [peek, setPeek] = useState<Peek | null>(null)
   const peekTimer = useRef<number | null>(null)
-  const arm = useCallback((p: Peek | null): void => {
+  const arm = useCallback((p: PeekReq | null): void => {
     if (peekTimer.current !== null) window.clearTimeout(peekTimer.current)
     if (p === null) {
       peekTimer.current = null
       setPeek(null)
       return
     }
-    peekTimer.current = window.setTimeout(() => setPeek(p), PEEK_WAIT)
+    peekTimer.current = window.setTimeout(() => {
+      /* measured NOW, not when the pointer arrived — and refused if
+         the thumb has left the document under a scroll */
+      if (!p.el.isConnected) return
+      setPeek({ ...p, box: p.el.getBoundingClientRect() })
+    }, PEEK_WAIT)
   }, [])
   useEffect(
     () => () => {

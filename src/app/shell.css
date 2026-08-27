@@ -2763,14 +2763,9 @@
   color: var(--ink-faint);
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  .dk,
-  .dk-panel {
-    background: var(--paper-high);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
+/* THE FALLBACK MOVED WITH THE MATERIAL. `.dk` has no background of
+   its own any more — the rig carries it — so naming it here would be
+   a rule about nothing. See `.dk-rig` at the foot of this file. */
 @media (prefers-reduced-motion: reduce) {
   .dk-panel {
     animation: none;
@@ -4759,7 +4754,13 @@
 .dk-rig {
   display: flex;
   flex-direction: column;
-  max-width: calc(100vw - var(--s-6));
+  /* A FLOATING OBJECT NEEDS SIDE MARGIN TOO. The action tier can be
+     wide — a register publishes ten controls — and at `100vw - 24`
+     the rig ran to within 12px of both edges while floating 22px
+     off the floor, which reads as a docked footer that failed to
+     reach the corners rather than as a thing lying on the page.
+     20px a side is the same order as the 22px underneath it. */
+  max-width: calc(100vw - var(--s-10));
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--glass-bg);
@@ -4810,9 +4811,18 @@
 /* THE LIT PLACE. A soft brand ramp rather than a flat wash, an
    accent hairline so it has an edge on glass, and the running light
    below it widened from a 4px dot to a 14px bar — at 44px across, a
-   4px dot is a speck. The glyph stays `--accent`, which measures
-   above the floor on this ground, so the lit item is legible and
-   not merely tinted. */
+   4px dot is a speck.
+
+   MEASURED IN THE BROWSER, not estimated, and composited through
+   the whole chain the way this repo's notes insist on — page, then
+   the rig's 72% glass, then the 11%/18% wash — because a tint
+   counts and three sweeps have been wrong here before:
+
+     the lit glyph   5.12 : 1 light · 5.38 : 1 dark
+     an idle glyph   7.96 : 1 light · 9.40 : 1 dark
+
+   So the lit item is legible as a glyph and not merely tinted, and
+   both figures clear 4.5 with the wash on. */
 .dk-item.is-active,
 .dk-item.is-open {
   background: var(--grad-brand-soft);
@@ -4908,6 +4918,16 @@
      and the subject of the page you are on is exactly that. It is
      taken whole — size, weight, leading and tracking together —
      which is rule 6.
+
+   MEASURED ON THE LIVE BAR, over the glass over the page:
+
+     the name    17.14 : 1 light · 16.10 : 1 dark
+     the aside    5.40 : 1 light ·  5.83 : 1 dark
+
+   The aside is the one that had to be checked. `--fg-tertiary` is
+   this system's floor at 4.7 on plain white, and a translucent bar
+   over a register is exactly the tint that took it under during the
+   redesign. Over this material it holds.
    ============================================================ */
 
 .surface .shell-view-bar {
@@ -5029,4 +5049,60 @@
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
+}
+
+/* ============================================================
+   THE TABLES MENU — the one surface on the instrument you read
+   rather than aim at, and the one place rule 8 was still short.
+
+   AUDITED ROW BY ROW. `.dk-row` had a hover ground and a focus
+   ring and NO PRESS AT ALL, on both panels — which is fifty-odd
+   tables, the most-pressed list in the app, confirming nothing
+   between the pointer going down and a page appearing. A list row
+   darkens rather than scaling (a row that shrinks makes its
+   neighbours look like they moved), and the darkening lands on
+   pointer-down because `:active` fires on mousedown.
+
+   THE SEPARATOR SOFTENS. A hard hairline at full strength reads as
+   a seam on a translucent surface; fading it out at both ends
+   makes it a division rather than a cut, which is what it is.
+   ============================================================ */
+
+.dk-row:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+.dk-row {
+  transition: background var(--d-fast) var(--ease);
+}
+
+/* the open branch keeps its accent while pressed — pressing the row
+   you are already inside must not look like a different row */
+.dk-row--branch.is-on:active {
+  background: var(--accent-wash-strong);
+}
+
+/* the mark and the count step up on a pressed row for the same
+   reason they do on a lit one: the tint counts */
+.dk-row:active .dk-row-mark,
+.dk-row:active .dk-row-count {
+  color: var(--fg-secondary);
+}
+
+.dk-sep {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--line) 22%,
+    var(--line) 78%,
+    transparent 100%
+  );
+}
+
+/* "No tables yet." is a refusal in the place the thing is refused
+   (rule 10), so it is a sentence at reading size rather than a
+   greyed-out line */
+.dk-none {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
 }

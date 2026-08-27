@@ -56,7 +56,7 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
   if (concepts.length === 0) {
     return (
       <section className="cn-conseq">
-        <p className="cn-conseq-label">WHAT IT WOULD DO</p>
+        <p className="cn-conseq-label">What it would do</p>
         <p className="cn-conseq-stub">
           Pick a column above and this counts, from your own sheet, how many rows the rule
           would hold for and how many it would reject.
@@ -71,7 +71,7 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
   if (tables.length === 0) {
     return (
       <section className="cn-conseq">
-        <p className="cn-conseq-label">WHAT IT WOULD DO</p>
+        <p className="cn-conseq-label">What it would do</p>
         <p className="cn-conseq-say cn-conseq-say--none">
           No table carries every column this sentence names, so the rule would never apply to a
           row. A sentence talks about one kind of table at a time.
@@ -95,15 +95,51 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
     ? `Looks at ${looked} of ${rows} rows. ${kept} keep it, ${broken} break it.`
     : `The condition is true of ${looked} of ${rows} rows.`
 
+  /* THE FIGURES ARE DRAWN AS FIGURES. This block used to be three
+     stacked sentences with the counts set inline inside them, which
+     is the one shape a person cannot scan: the question here is
+     "how many, and how many of those break it", and the answer was
+     buried in prose that changed length on every keystroke.
+
+     Mono and tabular, so a figure that moves while somebody types
+     does not shuffle the words beside it — and the sentence under
+     them still says what they are OF, because a figure with no
+     denominator is not a measurement. */
   return (
     <section className="cn-conseq">
-      <p className="cn-conseq-label">WHAT IT WOULD DO</p>
+      <p className="cn-conseq-label">What it would do</p>
 
       {conditionReady && (
-        <div className="cn-bar" role="img" aria-label={label}>
-          <span className="cn-bar-keeps" style={{ width: pct(engaged) }} />
-          {ready && broken > 0 && <span className="cn-bar-breaks" style={{ width: pct(broken) }} />}
-        </div>
+        <>
+          <div className="cn-conseq-read">
+            <div className="cn-conseq-cell">
+              <b className="cn-fig">{looked.toLocaleString()}</b>
+              <span className="cn-conseq-term">
+                {looked === 1 ? 'row it looks at' : 'rows it looks at'}
+              </span>
+            </div>
+            {ready && (
+              <>
+                <div className="cn-conseq-cell is-keeps">
+                  <b className="cn-fig">{kept.toLocaleString()}</b>
+                  <span className="cn-conseq-term">keep it</span>
+                </div>
+                {/* RED ONLY WHERE IT MEANS SOMETHING. Nought rows
+                    breaking a rule is good news, and good news is
+                    not drawn in the danger ink. */}
+                <div className={broken > 0 ? 'cn-conseq-cell is-breaks' : 'cn-conseq-cell'}>
+                  <b className="cn-fig">{broken.toLocaleString()}</b>
+                  <span className="cn-conseq-term">break it today</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="cn-bar" role="img" aria-label={label}>
+            <span className="cn-bar-keeps" style={{ width: pct(engaged) }} />
+            {ready && broken > 0 && <span className="cn-bar-breaks" style={{ width: pct(broken) }} />}
+          </div>
+        </>
       )}
 
       {!conditionReady && (
@@ -115,33 +151,23 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
 
       {conditionReady && !ready && (
         <p className="cn-conseq-say">
-          The condition is true of <Fig n={looked} /> of {previewCount(rows, preview)}, {where}
-          {retired}.
+          out of {previewCount(rows, preview)} in reach, {where}
+          {retired}. Finish the sentence and this counts what keeps it.
         </p>
       )}
 
       {ready && (
-        <>
-          <p className="cn-conseq-say">
-            It looks at <Fig n={looked} /> of {previewCount(rows, preview)}, {where}
-            {retired}.
-          </p>
-          <p className="cn-conseq-split">
-            <span className="cn-conseq-keeps">
-              <Fig n={kept} /> keep it
-            </span>
-            <span className="cn-conseq-sep" aria-hidden="true">
-              ·
-            </span>
-            <span className={broken > 0 ? 'cn-conseq-breaks is-bad' : 'cn-conseq-breaks'}>
-              <Fig n={broken} /> break it today
-            </span>
-            <span className="cn-conseq-sep" aria-hidden="true">
-              ·
-            </span>
-            <span className="cn-conseq-share">{share(broken, rows)} of the rows in reach</span>
-          </p>
-        </>
+        <p className="cn-conseq-say">
+          out of {previewCount(rows, preview)} in reach, {where}
+          {retired}
+          {broken > 0 && (
+            <>
+              {' · '}
+              <span className="cn-conseq-share">{share(broken, rows)}</span> of them break it
+            </>
+          )}
+          .
+        </p>
       )}
 
       <Lesson preview={preview} />

@@ -29,6 +29,11 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { newId, nowIso } from '@/lib/id'
+/* THE APP'S ONE PLACE FOR SAYING WHAT HAS JUST HAPPENED. It is a
+   bus, not a store read: `say` touches no project data, and this
+   file is already downstream of `freeze.ts`, which is the single
+   place in this feature that may see the live sheet. */
+import { say } from '@/store/notes'
 import { localDay, localDayOf } from './day'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
 import { priceAtLevel } from './pricing'
@@ -499,15 +504,95 @@ export function addFreeLine(id: string, label: string, amount: number | null): v
   }))
 }
 
-/** Taking a line off is a real removal: unlike a pair on a view,
- *  nothing about it is worth keeping — the row it came from is still
- *  on the sheet, and picking it again is one click. */
-export const removeLine = (id: string, lineId: string): void =>
+/**
+ * Taking a line off, AND THE WAY BACK — rule 9, which asks that an
+ * undoable act get a toast with UNDO rather than a dialog.
+ *
+ * IT COULD NOT BE UNDONE AT ALL BEFORE, AND NOTHING SAID SO. The
+ * control is a 24px × on a card in the middle of a shelf of them, on
+ * the screen a salesperson uses with a customer standing there, and
+ * the only route back was to find the same row in the same list and
+ * pick it again — which on a narrowed step whose search has since
+ * been typed into is not one click. Ctrl+Z cannot help either: the
+ * project store's history knows nothing about a quote, because a
+ * quote is a photograph and lives in this registry.
+ *
+ * SO THE ACT CARRIES ITS OWN WAY BACK, and it is not a re-pick: the
+ * line is put back BY VALUE, in the section it was on and at the
+ * position it held, so the frozen number, the column it came from,
+ * the level, the join's own facts and the provenance are the ones
+ * that were there — never today's reading of them. That is the whole
+ * invariant this feature is built on, and an undo that re-minted the
+ * line would break it at the one moment a person is least able to
+ * notice.
+ *
+ * The bus drops the note when no host is mounted, which is why this
+ * is safe to call from a store-level write. See `src/store/notes.ts`.
+ */
+export function removeLine(id: string, lineId: string): void {
+  const before = registry.get(id)
+  if (!before || before.state !== 'draft') return
+
+  const at = before.lines.findIndex((l) => l.id === lineId)
+  if (at < 0) return
+  const line = before.lines[at]
+  const section = before.sections.find((s) => s.lineIds.includes(lineId))
+  const where = section ? section.lineIds.indexOf(lineId) : -1
+
   mutate(id, (q) => ({
     ...q,
     lines: q.lines.filter((l) => l.id !== lineId),
     sections: q.sections.map((s) => ({ ...s, lineIds: s.lineIds.filter((x) => x !== lineId) })),
   }))
+
+  say({
+    text: `${line.label} taken off the quote`,
+    act: {
+      label: 'Undo',
+      onPick: () => {
+        /* THE REFUSAL IS SAID WHERE IT HAPPENS. An issued quote takes
+           no edits — `mutate` is the line that makes that true — and a
+           button that silently did nothing would be worse than no
+           button. The only way to reach this is to give the quote to
+           the customer with the note still up. */
+        const now = registry.get(id)
+        if (!now) {
+          say({ text: 'That quote is no longer here.', tone: 'warn' })
+          return
+        }
+        if (now.state !== 'draft') {
+          say({
+            text: 'This quote has been given to the customer, so nothing can go back on it. Make a new version to change it.',
+            tone: 'warn',
+          })
+          return
+        }
+        if (now.lines.some((l) => l.id === lineId)) return
+
+        mutate(id, (q) => ({
+          ...q,
+          lines: put_at(q.lines, line, at),
+          sections: q.sections.map((s) =>
+            section && s.blockId === section.blockId
+              ? { ...s, lineIds: put_at(s.lineIds, lineId, where) }
+              : s,
+          ),
+        }))
+        say({ text: `${line.label} is back on the quote` })
+      },
+    },
+  })
+}
+
+/** Put one thing back where it was. The index is where it SAT, so a
+ *  line removed from the middle of a step returns to the middle of it
+ *  rather than to the end — the order of a quote is the order the
+ *  salesperson put it in, and it is printed. */
+function put_at<T>(items: readonly T[], item: T, index: number): T[] {
+  const next = [...items]
+  next.splice(index < 0 || index > next.length ? next.length : index, 0, item)
+  return next
+}
 
 /** Quantity has a workbook precedent — `MV!G23` multiplies trailer
  *  registration by `$M$54`. Zero and nonsense fall back to one: a

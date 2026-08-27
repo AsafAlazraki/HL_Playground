@@ -1055,18 +1055,43 @@
      · one accent, and it is still about four: the open stop, the
        progress it has made, the focus ring, and the price moving
 
-   ATMOSPHERE CARRIES NOTHING. `.qb-sky` is aria-hidden and
-   pointer-events none, and ds.css removes it entirely under
-   prefers-reduced-transparency and prefers-contrast: more.
+   ATMOSPHERE CARRIES NOTHING, and it is a BACKGROUND rather than an
+   element — see the note on `.qb-scroll` below for why that is not a
+   style choice. Both washes go away under
+   prefers-reduced-transparency and prefers-contrast: more, written
+   out here because a background cannot inherit ds.css's escape.
    ============================================================ */
 
+/* THE GROUND. Two radial washes on the scrollport's own background,
+   which on a scroll container is painted against the element and
+   does NOT travel with the content — so the atmosphere is the same
+   at the top of the build and at the bottom of it. Both are under 6%
+   alpha, which shifts the ground's luminance by less than one
+   contrast point: every measurement above this line still holds.
+
+   IT CARRIES NOTHING, and it goes away entirely for the two people
+   who have asked for that. ds.css does this for `.ds-aurora`; a
+   background cannot inherit that, so it is written here. */
 .qb-scroll {
   position: relative;
   isolation: isolate;
+  background:
+    radial-gradient(62vw 46vh at 6% -8%, var(--aurora-1) 0%, transparent 68%),
+    radial-gradient(54vw 42vh at 98% 0%, var(--aurora-2) 0%, transparent 70%),
+    var(--paper);
 }
-.qb-sky {
-  z-index: 0;
+
+@media (prefers-reduced-transparency: reduce) {
+  .qb-scroll {
+    background: var(--paper);
+  }
 }
+@media (prefers-contrast: more) {
+  .qb-scroll {
+    background: var(--paper);
+  }
+}
+
 .qb-page {
   position: relative;
   z-index: 1;
@@ -1108,33 +1133,43 @@
    type scale is built on. It wraps: a hull's name is the one string
    here a customer reads back to you. */
 .qb-rig-name {
+  /* THE DISPLAY FACE, and this is one of the two places in the quote
+     that may have it: the step's clamp bottoms out at 26px, which is
+     the floor the face is allowed to exist under at all. The width
+     and the tracking are `.ds-display-lg`'s own, restated rather than
+     borrowed, because this rule also has to carry the wrap and the
+     measure. Everything else on the screen — every name, every
+     sentence, every label — is still Inter, and every figure is
+     still mono. */
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 103;
   font-size: var(--t-display-lg-size);
   font-weight: var(--t-display-lg-weight);
   line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
+  letter-spacing: -0.028em;
   max-width: 22ch;
 }
 
-/* THE SPEC STRIP reads as one instrument row rather than as six
-   loose pairs: hairline dividers between, the label over the figure,
-   the figure in mono at a size that can be read across a desk.
-   Nothing is invented — these are the frozen `subjectSpecs` and
-   there are as many as the price file had. */
+/* THE SPEC STRIP reads as an instrument row rather than as six loose
+   pairs: the column's name over the figure, and the figure in mono
+   at a size that can be read across a desk. Nothing is invented —
+   these are the frozen `subjectSpecs`, and there are as many of them
+   as the price file had.
+
+   NO DIVIDERS BETWEEN THEM, deliberately. The strip wraps — the
+   number of specs is the data's business, not the layout's — and a
+   `border-left` on every item except the first puts a stray rule at
+   the head of the second row the moment it does. Air is the divider,
+   and it cannot be wrong at any count. */
 .qb-rig-specs {
-  gap: var(--sp-3) 0;
-  align-items: stretch;
+  gap: var(--sp-3) var(--sp-6);
+  align-items: flex-start;
 }
 
 .qb-rig-spec {
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: 0 var(--sp-4);
-  border-left: 1px solid var(--line-subtle);
-}
-.qb-rig-spec:first-child {
-  padding-left: 0;
-  border-left: 0;
 }
 
 .qb-rig-spec-lab {
@@ -1150,15 +1185,15 @@
   letter-spacing: -0.012em;
 }
 
-/* the reassurance is a footnote to the plate, not a line of it */
+/* The reassurance is a footnote to the plate rather than a line of
+   it — so it loses half a point of size and none of its ink. It is
+   a SENTENCE, and the faint tier is for metadata beside the thing it
+   describes; the note this rule was written under settled that and
+   it still holds. */
 .qb-rig-saved {
   margin-top: var(--sp-1);
   font-size: var(--t-caption-size);
   line-height: 1.55;
-  color: var(--ink-faint);
-}
-.qb-rig-saved.is-bad {
-  color: var(--ink);
 }
 
 /* ------------------------------------------------------------
@@ -1359,10 +1394,12 @@
   color: var(--ink-faint);
 }
 
-/* The standard fit is the one thing on a shelf of twelve that the
-   price file itself points at, so its mark reads from across the
-   grid. A kind hue as a GLYPH, which is the only way this system
-   lets a kind hue be used — never a fill behind text. */
+/* THE SAME STAR AS THE DOCUMENT'S. A recommended line is marked in
+   ochre on the printed quote (`.qt-star`), and it was ink here — so
+   the one mark that means "the price file itself points at this"
+   looked like two different marks depending on which screen you were
+   on. It is a GLYPH and never a fill behind text; the word beside it
+   keeps the soft ink, so nothing coloured has to be read. */
 .qb-card-star {
   color: var(--accent-ochre);
 }
@@ -1452,10 +1489,6 @@
   }
   .qb-well--big {
     width: 100%;
-  }
-  .qb-rig-spec {
-    padding-left: 0;
-    border-left: 0;
   }
   .qb-rig-specs {
     gap: var(--sp-3) var(--sp-5);

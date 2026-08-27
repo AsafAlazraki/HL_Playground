@@ -726,3 +726,371 @@
   flex: 1 1 100%;
   color: var(--ink-soft);
 }
+
+/* ============================================================
+   DISCOVERED RULES, RE-DRAWN — blue and white.
+
+   Everything above is kept and this appends to it; where a
+   property is superseded it is restated with the reason on it.
+
+   WHAT THIS BAND IS FOR, and what the drawing has to keep saying:
+   every card here is a pattern MEASURED in the dealer's own values
+   and not a rule the business stated. It may warn; it may never
+   remove a row from a list. So nothing below promotes a candidate
+   with colour — the accepted one is still an observation, and the
+   act that accepts it stays a bordered control rather than
+   becoming a filled green button.
+
+   THE TWO CHANGES OF SUBSTANCE.
+
+   ONE — THE TWO FIGURES ARE THE ARGUMENT, so they are now the
+   largest thing on the card. "530 of 530" beside "leaves 97.70 %
+   of the catalogue standing" is the whole lesson of FITMENT_RULES
+   §1.2, and it was set at 22px under an 11px mono label in the
+   same grey as the sentence above it.
+
+   TWO — THE PROGRESS BAR WAS DEAD. `.dx-bar-fill` transitioned on
+   `--ease-settle`, which no stylesheet defines, so the whole
+   declaration was invalid and the fill jumped a step at a time
+   through a three-second run. It is the house curve now, and it is
+   still a transform rather than a width — a transition on a layout
+   property is the one motion rule this design states twice.
+   ============================================================ */
+
+.dx-eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  color: var(--fg-tertiary);
+}
+
+/* the line that may not be crossed. It is the frame for everything
+   below it, so it takes the accent rail every quoted line on this
+   surface takes rather than a warning colour of its own. */
+.dx-line {
+  margin-top: var(--s-4);
+  padding: 2px 0 2px var(--s-3);
+  border-left: 2px solid var(--accent-line);
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+.dx-line b {
+  color: var(--fg);
+}
+
+/* -- while it is working ------------------------------------ */
+
+.dx-working {
+  margin-top: var(--s-5);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+}
+.dx-working-say {
+  font-size: var(--t-small-size);
+  font-weight: 540;
+  color: var(--fg);
+}
+.dx-bar {
+  height: 6px;
+  margin-top: var(--s-3);
+  background: var(--surface-4);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.dx-bar-fill {
+  background: var(--grad-brand);
+  /* SUPERSEDES `--ease-settle`, which is undefined — the whole
+     declaration was invalid, so this never transitioned at all */
+  transition: transform var(--d-med) var(--ease);
+}
+.dx-working-step {
+  color: var(--fg-secondary);
+}
+
+/* -- what it was pointed at --------------------------------- */
+
+.dx-scan {
+  margin-top: var(--s-5);
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.dx-scan-n {
+  font-size: 22px;
+  letter-spacing: -0.018em;
+  line-height: 1.1;
+}
+.dx-scan-what {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+.dx-stale {
+  border-top-color: var(--line-subtle);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* -- a section inside the band ------------------------------ */
+
+.dx-sec {
+  margin-top: var(--s-8);
+}
+.dx-sec-name {
+  align-items: center;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+}
+.dx-sec-count {
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  color: var(--fg-secondary);
+}
+.dx-sec-say {
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+.dx-none {
+  padding: var(--s-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* -- one candidate ------------------------------------------ */
+
+.dx-card {
+  padding: var(--s-5);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.dx-card:hover {
+  box-shadow: var(--e-card-hover), inset 0 1px 0 var(--edge-light);
+}
+.dx-meta {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+.dx-tag {
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  color: var(--fg-secondary);
+}
+.dx-says {
+  margin-top: var(--s-3);
+  font-size: var(--t-body-size);
+  line-height: 1.55;
+  color: var(--fg);
+}
+
+/* THE PAIR THAT IS THE WHOLE ARGUMENT. Held-over-tested on the
+   left, how much of the catalogue survives on the right; a rule
+   that holds every time and still leaves the whole catalogue
+   standing has chosen nothing, and a person who sees both figures
+   at once works that out unaided. */
+.dx-figs {
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top-color: var(--line-subtle);
+  gap: var(--s-4) var(--s-6);
+}
+.dx-fig-k {
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  color: var(--fg-tertiary);
+}
+.dx-fig-n {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.dx-fig-say {
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+}
+.dx-because {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* -- the acts ----------------------------------------------- */
+
+.dx-act {
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-control);
+  border-color: var(--line);
+  background: var(--surface-1);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+.dx-act:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.dx-act:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.dx-act:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+/* The one that accepts a pattern. Louder by its ink and its edge,
+   never by a fill — an accepted pattern is still an observation
+   and a filled button would say otherwise. */
+.dx-act--keep {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+.dx-act--keep:hover {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.dx-acts-note {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* -- checking it: the rows that disagree, by name ----------- */
+
+.dx-check {
+  padding: var(--s-4);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+}
+.dx-check-head {
+  font-size: var(--t-small-size);
+  font-weight: 540;
+}
+.dx-ce-row {
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  border-color: var(--line);
+}
+.dx-ce-subject {
+  font-size: var(--t-small-size);
+}
+.dx-ce-why {
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+}
+.dx-ce-rec {
+  height: 22px;
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-size: var(--t-caption-size);
+}
+.dx-check-note,
+.dx-check-rule {
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+}
+.dx-check-rule {
+  border-top-color: var(--line);
+}
+/* the same citation slab the ledger prints, one step in from the
+   card's edge because it sits inside the evidence rather than
+   under it */
+.dx-check-src {
+  padding: 6px var(--s-3);
+  border-left: 2px solid var(--accent-line);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--surface-1);
+  font-size: var(--t-mono-sm-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+
+/* -- kept, and dismissed ------------------------------------ */
+
+.dx-kept-row {
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.dx-kept-says {
+  font-size: var(--t-small-size);
+  color: var(--fg);
+}
+.dx-kept-n {
+  color: var(--fg);
+}
+.dx-kept-of {
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+}
+
+.dx-toggle {
+  border-radius: var(--r-control);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+.dx-toggle:hover {
+  color: var(--fg);
+}
+.dx-toggle:active {
+  transition-duration: var(--d-press);
+}
+.dx-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.dx-more {
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-control);
+  border-color: var(--line);
+  background: var(--surface-1);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+.dx-more:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.dx-more:active {
+  transition-duration: var(--d-press);
+}
+.dx-more:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.dx-no {
+  padding: var(--s-4);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+  border-color: var(--line);
+}
+.dx-no-says {
+  font-size: var(--t-small-size);
+  color: var(--fg);
+}
+.dx-no-why,
+.dx-no-left,
+.dx-no-rule {
+  color: var(--fg-secondary);
+}
+.dx-no-n {
+  color: var(--fg);
+}

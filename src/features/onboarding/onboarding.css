@@ -116,11 +116,19 @@
   margin-bottom: var(--s-8);
 }
 
-/* THE ONE PLACE THE BRAND RAMP IS PAINT. §1 allows the gradient as
-   a surface and never as meaning: this is a 38px tile behind a
-   drawn mark, and if it resolved to nothing the mark would still be
-   a mark. White on --accent measures 5.9:1, so the strokes are
-   legal ink and not only decoration. */
+/* NOTHING IS DRAWN ON THE BRAND GRADIENT, AND THIS IS WHERE THAT WAS
+   DECIDED. `--grad-brand` runs `--accent` (#0a5fc2) to `--accent-2`
+   (#0d94c4), and white measures 5.9:1 on the first and **3.5:1 on
+   the second** — swept in-browser on this very badge. §1 asks every
+   text/background pair to clear 4.5, and §2 already records why
+   gradient TEXT is barred: a gradient cannot be measured at every
+   stop. Ink on a gradient is the same problem the other way up.
+
+   So the ramp is allowed to be a surface with nothing on it, and
+   every tile, button and pill that carries a word or a mark takes
+   the flat accent, which is 5.9:1 the whole way across. The tile
+   still reads as lit — that is the inset highlight and the shadow
+   doing it, not a hue shift. */
 .ob-mark-badge {
   display: inline-flex;
   align-items: center;
@@ -129,7 +137,7 @@
   width: 38px;
   height: 38px;
   border-radius: var(--r-control);
-  background: var(--grad-brand);
+  background: var(--accent);
   color: var(--accent-fg);
   box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
 }
@@ -227,7 +235,9 @@
   padding: 0 var(--s-5);
   border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--grad-brand);
+  /* flat accent, not the ramp — see the note on `.ob-mark-badge`.
+     5.9:1 for the label, everywhere on the button. */
+  background: var(--accent);
   color: var(--accent-fg);
   font-family: var(--font-sans);
   font-size: var(--t-body-size);
@@ -239,7 +249,6 @@
   transition:
     transform var(--d-fast) var(--ease),
     box-shadow var(--d-med) var(--ease),
-    filter var(--d-fast) var(--ease),
     background var(--d-fast) var(--ease),
     color var(--d-fast) var(--ease);
 }
@@ -247,10 +256,15 @@
   flex: none;
   transition: transform var(--d-med) var(--ease-out-expo);
 }
-/* the glow is a STATE — it exists only under the pointer */
+/* the glow is a STATE — it exists only under the pointer.
+   `--accent-hover` is 5.2:1 for white and `--accent-press` darker
+   still, so every one of the three states clears the floor. */
 .ob-primary:not(:disabled):hover {
-  filter: brightness(1.06);
+  background: var(--accent-hover);
   box-shadow: var(--e3), var(--glow-md), inset 0 1px 0 var(--edge-light);
+}
+.ob-primary:not(:disabled):active {
+  background: var(--accent-press);
 }
 .ob-primary:not(:disabled):hover svg {
   transform: translateX(3px);
@@ -394,11 +408,24 @@
   margin-top: var(--s-8);
   text-align: center;
 }
-/* the business they just named, so the second screen says where
-   they are without spending the headline on a 60-character name */
+/* The business they just named, so the second screen says where they
+   are without spending the headline on a 60-character name.
+
+   IT IS NOT A `.mono-label`, and that is the point: this is the
+   dealer's own proper noun, and that primitive's identity is
+   uppercase. `NORTHSIDE MARINE` above a question about their
+   business is §2's exact prohibition — a name loses its word-shape,
+   and the app cannot tell a name it uppercased from one they typed
+   that way. Caption size, reading face, own case. 5.2:1 on the
+   canvas ground. */
 .ob-eyebrow {
   display: block;
   margin-bottom: var(--s-3);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
   color: var(--fg-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;

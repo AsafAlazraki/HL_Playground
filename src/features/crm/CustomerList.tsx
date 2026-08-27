@@ -24,6 +24,20 @@
    Answering both with one blank screen is how a person concludes the
    app lost something.
 
+   AND BOTH OF THEM ARE NOW A PAGE RATHER THAN A PARAGRAPH. What was
+   here was the right WORDS in the wrong shape: an eyebrow, two
+   sentences and a button, in a 560px grey card, on the screen a
+   dealer meets before they have a single customer. It now opens on
+   a line at the display step, states what is true in counted figures
+   — tables, quotes, customers — and puts the one act underneath
+   them. Nothing said here is new; it is the same facts, given the
+   room a first screen needs.
+
+   THE PRIMARY ACT IS DRAWN ONCE. "New customer" used to stand in the
+   head AND be the thing the empty state was asking for, so an empty
+   register showed two ways to do the only thing there was to do. The
+   head keeps it once there is a list to add to.
+
    NOTHING HERE KNOWS WHAT IS SOLD. Not a marine word, not a boat,
    not a hull. A customer is a customer whether the yard sells
    trailers or tractors.
@@ -56,6 +70,19 @@ interface Activity {
   quotes: number
   /** the newest quote's day, or '' when there is none */
   last: string
+}
+
+/** One counted figure with its term under it — the same drawing
+ *  Home's masthead uses, so the two pages read as one app. Every
+ *  value handed to this has been counted; nothing is estimated and
+ *  nothing is a placeholder. */
+function Fig({ n, of }: { n: number; of: string }): ReactElement {
+  return (
+    <div className="cx-fig">
+      <dt className="cx-fig-word">{of}</dt>
+      <dd className="cx-fig-n">{n.toLocaleString()}</dd>
+    </div>
+  )
 }
 
 export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElement {
@@ -106,38 +133,46 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
 
   /* ============================================================
      NO REGISTER YET — and making one is a table, so it is offered
-     by name, in a sentence, and it is undoable (DESIGN_CONTRACT §7).
+     by name, in a sentence, and it is undoable (§7).
      ============================================================ */
   if (!table) {
     return (
       <div className="cx-root">
-        <div className="cx-empty">
-          <span className="mono-label cx-empty-eyebrow">No customer register yet</span>
-          <p className="cx-empty-say">
-            A customer is a row in a table, the same as everything else here. The
-            register is where their name and contact details live, so the second quote
-            to somebody starts from what you already know instead of from a blank field.
-          </p>
-          <p className="cx-empty-count">
-            You have{' '}
-            <strong>
-              {tableCount} {tableCount === 1 ? 'table' : 'tables'}
-            </strong>{' '}
-            and no customer register.
-          </p>
-          <button
-            type="button"
-            className="btn btn-primary cx-new"
-            onClick={() => ensureCustomerRegister()}
-          >
-            <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-            Create the Customers table
-          </button>
-          <p className="cx-empty-why">
-            It arrives with <em>Name</em>, <em>Phone</em>, <em>Email</em>,{' '}
-            <em>Address</em> and <em>Notes</em>, and it is an ordinary table from then
-            on — add your own columns, rename it, or take it out again with Ctrl+Z.
-          </p>
+        <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
+        <div className="cx-scroll">
+          <div className="cx-empty ds-rise">
+            <span className="cx-empty-eyebrow">No customer register yet</span>
+            <h2 className="cx-empty-title">Everybody you sell to, in one book.</h2>
+            <p className="cx-empty-say">
+              A customer is a row in a table, the same as everything else here. The
+              register is where their name and contact details live, so the second quote
+              to somebody starts from what you already know instead of from a blank
+              field.
+            </p>
+
+            {/* WHAT IS TRUE RIGHT NOW, COUNTED. Zero is an honest
+                figure and it is printed as one; the two beside it are
+                what makes the zero mean something. */}
+            <dl className="cx-tally">
+              <Fig n={tableCount} of={tableCount === 1 ? 'table' : 'tables'} />
+              <Fig n={quotes.length} of={quotes.length === 1 ? 'quote' : 'quotes'} />
+              <Fig n={0} of="customers" />
+            </dl>
+
+            <button
+              type="button"
+              className="cx-act cx-act--primary"
+              onClick={() => ensureCustomerRegister()}
+            >
+              <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+              Create the Customers table
+            </button>
+            <p className="cx-empty-why">
+              It arrives with <em>Name</em>, <em>Phone</em>, <em>Email</em>,{' '}
+              <em>Address</em> and <em>Notes</em>, and it is an ordinary table from then
+              on — add your own columns, rename it, or take it out again with Ctrl+Z.
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -145,95 +180,129 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
 
   return (
     <div className="cx-root">
-      <header className="cx-head">
-        <div className="cx-head-id">
-          <h1 className="cx-head-name">{table.name}</h1>
-          {table.description ? (
-            <p className="cx-head-desc">{table.description}</p>
-          ) : null}
-          <p className="mono-label cx-head-facts">
-            {people.length} {people.length === 1 ? 'customer' : 'customers'}
-            {people.length > 0 ? ` · ${withQuotes} quoted` : ''}
-          </p>
-        </div>
+      <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
+      <div className="cx-scroll">
+        <header className="cx-head">
+          <div className="cx-head-id">
+            <span className="cx-head-eyebrow">Register</span>
+            <h1 className="cx-head-name">{table.name}</h1>
+            {table.description ? (
+              <p className="cx-head-desc">{table.description}</p>
+            ) : null}
+          </div>
 
-        <div className="cx-head-acts">
           {people.length > 0 ? (
-            <div className="cx-find">
-              <span className="cx-find-mark" aria-hidden="true">
-                <MagnifyingGlass size={ICON_SIZE.small} weight="light" />
-              </span>
-              <input
-                className="field-input cx-find-input"
-                value={find}
-                placeholder="Find a customer"
-                aria-label="Find a customer"
-                spellCheck={false}
-                onChange={(e) => setFind(e.target.value)}
-              />
+            <div className="cx-head-acts">
+              <dl className="cx-tally cx-tally--head">
+                <Fig
+                  n={people.length}
+                  of={people.length === 1 ? 'customer' : 'customers'}
+                />
+                <Fig n={withQuotes} of="quoted" />
+              </dl>
+              <div className="cx-find">
+                <span className="cx-find-mark" aria-hidden="true">
+                  <MagnifyingGlass size={ICON_SIZE.small} weight="light" />
+                </span>
+                <input
+                  className="cx-find-input"
+                  value={find}
+                  placeholder="Find a customer"
+                  aria-label="Find a customer"
+                  spellCheck={false}
+                  onChange={(e) => setFind(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                className="cx-act cx-act--primary"
+                onClick={() => {
+                  const row = addCustomer()
+                  if (row) onOpen(row.id)
+                }}
+              >
+                <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                New customer
+              </button>
             </div>
           ) : null}
-          <button
-            type="button"
-            className="btn btn-primary cx-new"
-            onClick={() => {
-              const row = addCustomer()
-              if (row) onOpen(row.id)
-            }}
-          >
-            <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-            New customer
-          </button>
-        </div>
-      </header>
+        </header>
 
-      {people.length === 0 ? (
-        <div className="cx-empty">
-          <span className="mono-label cx-empty-eyebrow">Nobody in it yet</span>
-          <p className="cx-empty-say">
-            The register is here and empty. Add somebody now, or address a quote to a
-            name and file them from the quote itself — either way lands in this table.
+        {people.length === 0 ? (
+          <div className="cx-empty ds-rise">
+            <span className="cx-empty-eyebrow">Nobody in it yet</span>
+            <h2 className="cx-empty-title">The register is here and waiting.</h2>
+            <p className="cx-empty-say">
+              Add somebody now, or address a quote to a name and file them from the quote
+              itself — either way lands in this table.
+            </p>
+
+            <dl className="cx-tally">
+              <Fig n={quotes.length} of={quotes.length === 1 ? 'quote' : 'quotes'} />
+              <Fig n={0} of="customers" />
+              <Fig
+                n={table.fields.length}
+                of={table.fields.length === 1 ? 'column' : 'columns'}
+              />
+            </dl>
+
+            <button
+              type="button"
+              className="cx-act cx-act--primary"
+              onClick={() => {
+                const row = addCustomer()
+                if (row) onOpen(row.id)
+              }}
+            >
+              <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+              New customer
+            </button>
+          </div>
+        ) : shown.length === 0 ? (
+          /* A DEAD END SAYS WHAT ELSE IT WOULD HAVE ANSWERED TO. The
+             register is searched by name AND by everything in the
+             contact lines and the note — see `haystack` — so saying so
+             is the difference between "no" and "try this". */
+          <p className="cx-none">
+            Nothing matches “{find.trim()}”. Their name is searched, and so is anything
+            in their contact details.
           </p>
-          <p className="cx-empty-count">
-            You have{' '}
-            <strong>
-              {quotes.length} {quotes.length === 1 ? 'quote' : 'quotes'}
-            </strong>{' '}
-            and no customers.
-          </p>
-        </div>
-      ) : shown.length === 0 ? (
-        <p className="cx-none">Nothing matches “{find.trim()}”.</p>
-      ) : (
-        <ul className="cx-rows">
-          {shown.map((c) => {
-            const act = activity.get(c.rowId)
-            return (
-              <li key={c.rowId} className={`cx-row${openId === c.rowId ? ' is-open' : ''}`}>
-                <button
-                  type="button"
-                  className="cx-row-open"
-                  onClick={() => onOpen(c.rowId)}
-                  aria-label={c.name === '' ? 'A customer with no name yet' : c.name}
+        ) : (
+          <ul className="cx-rows">
+            {shown.map((c) => {
+              const act = activity.get(c.rowId)
+              return (
+                <li
+                  key={c.rowId}
+                  className={`cx-row${openId === c.rowId ? ' is-open' : ''}`}
                 >
-                  <span className="cx-row-name">
-                    {c.name === '' ? (
-                      <span className="cx-blank">no name yet</span>
-                    ) : (
-                      c.name
-                    )}
-                  </span>
-                  <span className="cx-row-contact">{c.contact.join('  ·  ')}</span>
-                  <span className="mono-label cx-row-when">{act?.last ?? ''}</span>
-                  <span className="cx-num cx-row-count">
-                    {act ? `${act.quotes} ${act.quotes === 1 ? 'quote' : 'quotes'}` : '—'}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+                  <button
+                    type="button"
+                    className="cx-row-open"
+                    onClick={() => onOpen(c.rowId)}
+                    aria-label={c.name === '' ? 'A customer with no name yet' : c.name}
+                  >
+                    <span className="cx-row-name">
+                      {c.name === '' ? (
+                        <span className="cx-blank">no name yet</span>
+                      ) : (
+                        c.name
+                      )}
+                    </span>
+                    <span className="cx-row-contact">{c.contact.join('  ·  ')}</span>
+                    <span className="cx-row-when">{act?.last ?? ''}</span>
+                    <span className="cx-num cx-row-count">
+                      {act
+                        ? `${act.quotes} ${act.quotes === 1 ? 'quote' : 'quotes'}`
+                        : '—'}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }

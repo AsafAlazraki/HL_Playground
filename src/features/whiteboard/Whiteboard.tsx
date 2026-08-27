@@ -56,15 +56,16 @@ import {
   BackgroundVariant,
   ControlButton,
   Controls,
-  MiniMap,
   ReactFlow,
   ReactFlowProvider,
+  applyEdgeChanges,
   applyNodeChanges,
   useNodesInitialized,
   useReactFlow,
 } from '@xyflow/react'
 import type {
   Edge,
+  EdgeChange,
   FitViewOptions,
   Node,
   NodeChange,
@@ -82,8 +83,11 @@ import {
   useExpandedTableNodes,
 } from '@/features/table'
 import type { TableKind, XY } from '@/types/model'
-import { Z_EDGE, Z_EDGE_LIT, useRelationshipEdges } from './useDerivedGraph'
-import { GROUND_GAP, useSheetDistance } from './sheetZoom'
+import {
+  EDGE_MARKER,
+  EDGE_MARKER_SELECTED,
+  useRelationshipEdges,
+} from './useDerivedGraph'
 import { isTableKindDrag, readTableKindDrag } from './tableKindDrop'
 import {
   claimLayerFrame,
@@ -255,9 +259,7 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   const derivedEdges = useRelationshipEdges()
 
   const [nodes, setNodes] = useState<CanvasNode[]>(tableNodes)
-
-  /* how far the reader is standing back — see `sheetZoom.ts` */
-  const distance = useSheetDistance()
+  const [edges, setEdges] = useState<Edge[]>(derivedEdges)
 
   const rf = useReactFlow<CanvasNode, Edge>()
   const nodesInitialized = useNodesInitialized()
@@ -281,25 +283,18 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   /* a table type is being dragged over the sheet right now */
   const [dropping, setDropping] = useState(false)
 
-  /* the table under the cursor right now — see THE SPOTLIGHT below */
-  const [tracedId, setTracedId] = useState<string | null>(null)
-
   /* WHAT THE LEGEND COUNTS: the cards that are DRAWN, not the rows in
      the store. Two of the seeded 52 are retired, which Home holds back
      and the sheet still draws — a title block reading 50 over 52 visible
      cards is the disagreement every count in this app is written to
-     avoid. So the total is the node list's own length.
-
-     AND IT COUNTS THE LINES, which is new and is the point of the
-     screen. It used to say how many of the tables were relationship
-     tables — true, and about the tables. This drawing's subject is the
-     lines between them, and their number was the one figure the title
-     block did not carry. Both come from what is actually drawn. */
+     avoid. So the total is the node list's own length, and the joins are
+     counted among exactly those nodes. */
   const entities = useProjectStore((s) => s.entities)
-  const shape = useMemo(
-    () => ({ tables: tableNodes.length, links: derivedEdges.length }),
-    [tableNodes, derivedEdges],
-  )
+  const shape = useMemo(() => {
+    let joins = 0
+    for (const n of tableNodes) if (entities[n.id]?.role === 'join') joins += 1
+    return { tables: tableNodes.length, joins }
+  }, [tableNodes, entities])
 
   /* -- store -> local mirror ----------------------------------
      Identity is the whole point: a node whose data, position and
@@ -376,76 +371,39 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
        already right, so it costs a walk and no more. */
   }, [selection, tableNodes])
 
-  /* ============================================================
-     THE SPOTLIGHT — the one thing this drawing exists to answer.
-
-     "What is this table connected to?" was, until now, a question
-     you answered by tracing a 1.25px grey line with your finger on
-     the screen across a sheet holding fifty-two others. So the
-     sheet answers it in two strengths, and the difference between
-     them is deliberate:
-
-       POINT at a table and its links LIGHT. Nothing dims. Sweeping
-       the cursor over a drawing must not make the drawing flinch,
-       and a reader browsing is not committing to anything.
-
-       PICK a table and the sheet SPOTLIGHTS it: its links and the
-       tables at the far end of them stay lit, and everything else
-       on the sheet drops back. That is a decision the reader made,
-       so it is allowed to change the whole picture — and Escape or
-       a click on the paper puts it back, as it always did.
-
-     Both are computed here, once, and applied as classes. Only the
-     objects that actually change identity are re-allocated, so
-     sweeping the cursor across the sheet costs a handful of edge
-     objects and not a rebuild of the drawing.
-     ============================================================ */
-  const picked =
-    selection && selection.kind === 'entity' ? selection.id : null
-
-  const focus = useMemo(() => {
-    if (!picked && !tracedId) return null
-    const lit = new Set<string>()
-    const near = new Set<string>()
-    const walk = (id: string): void => {
-      near.add(id)
-      for (const e of derivedEdges) {
-        if (e.source === id) {
-          lit.add(e.id)
-          near.add(e.target)
-        } else if (e.target === id) {
-          lit.add(e.id)
-          near.add(e.source)
+  useEffect(() => {
+    setEdges((prev) => {
+      const prevById = new Map(prev.map((e) => [e.id, e]))
+      let changed = prev.length !== derivedEdges.length
+      const next = derivedEdges.map((e, i) => {
+        const p = prevById.get(e.id)
+        if (p && p.selected) {
+          changed = true
+          return { ...e, selected: true, markerEnd: EDGE_MARKER_SELECTED }
         }
-      }
-    }
-    if (picked) walk(picked)
-    if (tracedId) walk(tracedId)
-    /* only a PICKED table earns the right to push the rest back */
-    return { lit, near, dims: picked !== null }
-  }, [picked, tracedId, derivedEdges])
-
-  /* Edges are derived, never held: nothing about a line is the
-     reader's to change, so there is no edge state to keep in step —
-     the identity cache in `useRelationshipEdges` already hands back
-     the same object whenever a link has not moved, and only the ones
-     the spotlight touches are re-made. */
-  const edges = useMemo<Edge[]>(() => {
-    if (!focus) return derivedEdges
-    return derivedEdges.map((e) => {
-      const lit = focus.lit.has(e.id)
-      if (!lit && !focus.dims) return e
-      return {
-        ...e,
-        className: `${e.className ?? ''} ${lit ? 'wb-edge--lit' : 'wb-edge--out'}`,
-        zIndex: lit ? Z_EDGE_LIT : Z_EDGE,
-      }
+        if (p === e) {
+          if (prev[i] !== p) changed = true
+          return p
+        }
+        changed = true
+        return e
+      })
+      return changed ? next : prev
     })
-  }, [derivedEdges, focus])
+  }, [derivedEdges])
 
   /* -- React Flow interaction state --------------------------- */
   const onNodesChange = useCallback((changes: NodeChange<CanvasNode>[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds))
+  }, [])
+
+  const onEdgesChange = useCallback((changes: EdgeChange<Edge>[]) => {
+    setEdges((eds) =>
+      applyEdgeChanges(changes, eds).map((e) => ({
+        ...e,
+        markerEnd: e.selected ? EDGE_MARKER_SELECTED : EDGE_MARKER,
+      })),
+    )
   }, [])
 
   /* -- selection ---------------------------------------------- */

@@ -1,32 +1,41 @@
 /* ============================================================
-   THE ACTION BAR — the second, smaller bar above the dock.
+   THE ACTION BAR — the upper tier of the instrument at the foot
+   of every page.
 
    READ `ActionBar.tsx` FIRST; this file is only its measurements.
 
-   THE GEOMETRY, AND EVERY NUMBER IS THE CONTRACT'S:
+   THE GEOMETRY. Most of it is the contract's and unchanged; the
+   three numbers that moved are marked, and the block at the FOOT of
+   this file is where they are argued.
 
-     bar height        40px   — the dock is 60. Subordinate, and
-                               obviously a different tier at a glance
+     tier height       36px   — was 40. The navigation tier is 60, so
+                               subordinate by a wider margin than
+                               before, which is what 40-against-60
+                               was for in the first place
      control           28px, radius 7px, padding 0 10px
                                (DESIGN_CONTRACT §2, "toolbar control")
-     bar radius        18px   — the low end of the contract's 18–20px
-                               floating-panel band, because a 40px bar
-                               at 20px would be a lozenge
-     gap to the dock   10px   — `.dk-wrap`'s own `gap`, not a margin
-                               of ours. One number, one owner
-     the strip         50px   — 40 + the 10 gap, added to the dock's
+     tier radius        0     — was 18. The tier has no shape of its
+                               own any more; `.dk-rig` is the shape,
+                               and it is 22
+     gap to the dock    0     — was 10, plus a border, plus a shadow.
+                               It is a 1px hairline now, because the
+                               two tiers are one object
+     the strip         39px   — 36 of tier plus the hairline plus the
+                               rig's two borders, added to the dock's
                                78 by the ONE rule at the foot of this
                                file. Nothing pads a stage to clear it
 
-   WHY IT IS THE DOCK'S MATERIAL. `Dock.tsx` calls itself "the one
-   glass surface in the app", and this does not make a second one so
-   much as widen the first: the two are one piece of furniture in two
-   tiers, drawn in the same place, floating over the same page. A
-   different material here would read as a different app's toolbar
-   that happened to dock underneath. Nothing translucent is stacked on
-   it — the popover it opens is opaque — and the
-   `prefers-reduced-transparency` fallback is in this file, beside the
-   thing it falls back from.
+   WHY IT HAS NO MATERIAL OF ITS OWN. It used to have the dock's —
+   the same `color-mix` and the same blur, typed out a second time —
+   and the argument for that was that the two were "one piece of
+   furniture in two tiers". They are now literally that: one shell,
+   `.dk-rig`, carrying one glass, one outline, one lit edge and one
+   shadow, with these controls sitting on it. Two overlapping
+   `backdrop-filter`s over the same scrolling register were the most
+   expensive thing on the screen and the cheapest thing to lose.
+   Nothing translucent is stacked on the rig — the popover this bar
+   opens is opaque — and the `prefers-reduced-transparency` fallback
+   now lives once, beside `.dk-rig` in `shell.css`.
 
    COLOUR, MEASURED. Every label on this bar is `--ink-soft`
    (`--fg-secondary` #4b5462) at rest and `--ink` on hover.
@@ -46,28 +55,37 @@
    ============================================================ */
 
 /* ------------------------------------------------------------
-   the wrapper — no box of its own, so the refusal note can hang
-   above the bar without ever changing the bar's height
+   the tier — no box of its own, so the refusal note can hang above
+   the bar without ever changing the bar's height, and the hairline
+   that divides it from the navigation under it.
+
+   IT SPANS THE RIG AND ITS CONTROLS CENTRE IN IT. The rig is as
+   wide as its widest tier, so on a page with two verbs this tier is
+   as wide as the navigation under it and the verbs sit in the
+   middle; on a register that publishes ten, this is the wider one
+   and the navigation centres instead. Either way there is one
+   object with one outline, and the hairline runs the whole width of
+   it rather than the width of whatever happens to be on it.
    ------------------------------------------------------------ */
 .ab-shell {
   position: relative;
   display: flex;
   justify-content: center;
+  border-bottom: 1px solid var(--line-subtle);
 }
 
+/* NO PAINT. This carried a border, an 18px radius, a `color-mix`
+   ground, a blur and a shadow — a second copy of the dock's skin,
+   ten pixels above the dock. `.dk-rig` is the surface now (see the
+   foot of `shell.css`); what is left here is a row of controls and
+   the height it stands in. */
 .ab {
   display: flex;
   align-items: center;
   gap: 0;
-  height: 40px;
-  max-width: calc(100vw - 24px);
+  height: 36px;
+  max-width: 100%;
   padding: 0 6px;
-  border: 1px solid var(--hairline);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--paper-high) 78%, transparent);
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  box-shadow: var(--e2);
 }
 
 .ab-grp {
@@ -568,16 +586,10 @@
   }
 }
 
-/* ------------------------------------------------------------
-   THE FALLBACK, BESIDE THE THING IT FALLS BACK FROM.
-   ------------------------------------------------------------ */
-@media (prefers-reduced-transparency: reduce) {
-  .ab {
-    background: var(--paper-high);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
+/* THE FALLBACK MOVED WITH THE MATERIAL. This tier has no background
+   and no blur of its own — `.dk-rig` carries both — so the rule that
+   used to turn it opaque is a rule about nothing. It lives once now,
+   beside the surface it falls back from, at the foot of `shell.css`. */
 
 
 /* ============================================================
@@ -617,18 +629,14 @@
    about.
    ============================================================ */
 
-.dk-rig .ab-shell {
-  border-bottom: 1px solid var(--line-subtle);
-}
-.dk-rig .ab {
-  height: 36px;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-}
+/* NOTHING TO OVERRIDE. An earlier turn of this change wrote the
+   tier as `.dk-rig .ab { ... }`, unpainting a pill three hundred
+   lines above. That is the shared override layer this repo tells
+   you not to build — two rules fighting over one element — so the
+   pill is simply not written any more, and `.ab` above IS the tier.
+   The rig owns the width cap; `max-width: 100%` there is against the
+   rig, and a tier wider than its own shell would paint its controls
+   outside the rounded corner. */
 
 /* ============================================================
    WHAT THE INSTRUMENT COSTS THE PAGE, STILL OWNED IN ONE PLACE.
@@ -661,4 +669,37 @@
    ============================================================ */
 .shell-root.has-acts .shell-stage {
   inset: 0 0 117px 0;
+}
+
+/* ============================================================
+   THE POPOVER JOINS THE FAMILY.
+
+   It is the one panel on this bar and it was drawn before the
+   instrument existed: a 10px radius against the rig's 22 and the
+   Tables menu's 18, a flat overlay ground with no lit edge while
+   every other raised surface in the shell now has one, and a
+   header that sat straight on top of its own contents with
+   nothing to say it was a header.
+
+   Four lines, and none of them move anything: the radius joins the
+   band the rest of the floating chrome sits in, the surface gets
+   the top-edge highlight that makes a raised thing read as lit,
+   the header gets the rule under it that makes it a header, and
+   the entrance takes the curve the shell's other entrances take.
+
+   THE TYPE IS DELIBERATELY UNTOUCHED. The note above `.ab-panel-name`
+   argues for the page-title step one level down inside a popover,
+   and that argument is still right — a popover header competing
+   with the page it floats over is worse than a small one.
+   ============================================================ */
+
+.ab-panel {
+  border-radius: var(--r-panel);
+  border-color: var(--line);
+  box-shadow: var(--e3), inset 0 1px 0 var(--edge-light);
+  animation-timing-function: var(--ease-out-expo);
+}
+.ab-panel-head {
+  margin-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
 }

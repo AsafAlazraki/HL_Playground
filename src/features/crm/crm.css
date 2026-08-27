@@ -6,50 +6,93 @@
    feature's rules, and nothing outside this directory writes a
    `cx-` class.
 
-   IT IS BUILT FROM THE SAME PARTS AS THE MODULE INDEX, deliberately.
-   A dealer moving between Modules and Customers must not feel they
-   have crossed into a second application, so the page well, the
-   head, the find box, the empty card and the row measurements are
-   the ones `modules.css` already settled on — 1180px measure, the
-   `--sp` scale, the `--ui`/`--data`/`--micro` ramps, `--ec1` at rest
-   and `--ec3` on hover. Every value below is a token; there is not a
-   literal colour in this file.
+   WHAT THIS PASS CHANGED, AND WHY.
+
+   1. THE EMPTY STATE WAS A GREY PARAGRAPH, on the screen a dealer
+      meets before they have a single customer — a 560px card with an
+      eyebrow, two sentences and a button in it. The words were
+      right; the shape was a footnote. It is now a page: a line at
+      the display step, three COUNTED figures (tables, quotes,
+      customers), and the one act underneath them. Nothing new is
+      claimed — the same three facts, given room.
+
+   2. TWO FIGURES WHERE THERE WAS A MONO STAMP. "12 CUSTOMERS · 4
+      QUOTED" was 11px uppercase mono: a figure dressed as a label.
+      A figure is mono and tabular and the size of a heading; the
+      word under it is the label. That is Home's tally, and the two
+      pages now read as one application.
+
+   3. UPPERCASE LEFT THE VALUES. `mono-label` was stamped on the
+      column names of the form, on a quote's day, and on its state —
+      so "Given" and "Draft", two words a person reads, came out as
+      two more stamps. Uppercase is a label style. It survives on
+      exactly three things here: the two page eyebrows and the one
+      section caption.
+
+   4. THE ONE PRIMARY ACT IS DRAWN ONCE. "New customer" stood in the
+      head AND was what the empty state was asking for, so an empty
+      register offered two ways to do the only thing there was to do.
 
    THE ONE ACCENT, roughly four times: the primary button, the
    focused control, the open row's rail, and the money column. That
-   is the whole budget and it is not spent anywhere else.
+   is the whole budget and it is not spent anywhere else. Severity,
+   state and kind are not the accent.
 
-   NO NEW TRANSLUCENT SURFACE. The dock and the page toolbar are the
-   two this design allows and neither of them is here.
+   NO NEW TRANSLUCENT SURFACE. The dock and the masthead are the two
+   this design allows and neither of them is here. The atmosphere is
+   the shared `.ds-aurora` — two radial washes under 6% alpha behind
+   everything, removed outright under `prefers-reduced-transparency`
+   and `prefers-contrast: more`.
    ============================================================ */
 
 /* ============================================================
    THE WELL
    ============================================================ */
 
+/* THE WELL NO LONGER SCROLLS; THE PAGE INSIDE IT DOES. It has to:
+   the aurora is `position:absolute; inset:0`, and inside a scroller
+   that resolves against the scrolled CONTENT rather than the frame,
+   so a 3,000px page would have stretched it. One frame, one page. */
 .cx-root {
+  position: relative;
+  isolation: isolate;
   height: 100%;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--paper);
-  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 2);
+}
+
+.cx-sky {
+  z-index: 0;
+}
+
+.cx-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--s-5) var(--s-5) var(--s-12);
 }
 
 /* the prose form of an absent answer — 44ch, the house measure */
 .cx-void {
   max-width: 44ch;
-  margin: var(--sp-6) auto 0;
-  font-size: var(--ui-size);
+  margin: var(--s-8) auto 0;
+  font-size: var(--t-body-size);
   line-height: 1.7;
-  letter-spacing: var(--ui-track);
+  letter-spacing: var(--t-body-track);
   color: var(--ink-soft);
 }
 
 .cx-none {
   max-width: 1180px;
-  margin: var(--sp-5) auto 0;
-  font-size: var(--ui-size);
-  letter-spacing: var(--ui-track);
-  color: var(--ink-faint);
+  margin: var(--s-5) auto 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
+  color: var(--ink-soft);
 }
 
 /* A NAME NOBODY HAS TYPED IS NOT A NAME. It is set apart from real
@@ -69,168 +112,352 @@
 /* every figure on these screens: mono, tabular, aligned */
 .cx-num {
   font-family: var(--font-mono);
-  font-size: var(--data-size);
-  letter-spacing: var(--data-track);
+  font-size: var(--t-mono-size);
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
 
 /* ============================================================
-   THE HEAD OF THE REGISTER
+   THE TWO PAGE HEADS
+
+   Both take the same three parts in the same order — eyebrow,
+   name, what is true about it — so moving from the register to one
+   person is a change of subject and not a change of application.
    ============================================================ */
 
-.cx-head {
+/* THE ONE UPPERCASE STYLE ON THIS SCREEN, and it is a section
+   caption, which is what the style is for. */
+.cx-head-eyebrow {
+  display: block;
+  margin-bottom: var(--s-2);
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.cx-head,
+.cx-one-head {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--sp-5);
+  gap: var(--s-6);
+  flex-wrap: wrap;
   max-width: 1180px;
-  margin: 0 auto var(--sp-5);
-  padding-bottom: var(--sp-3);
-  border-bottom: 1px solid var(--hairline);
+  margin: 0 auto var(--s-6);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
 }
 
-.cx-head-id {
+.cx-head-id,
+.cx-one-id {
   min-width: 0;
 }
 
-.cx-head-name {
+.cx-head-name,
+.cx-one-name {
   margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--display-weight);
-  font-size: var(--display-m-size);
-  letter-spacing: var(--display-m-track);
-  line-height: var(--display-m-lead);
+  font-family: var(--font-ui);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
   color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
-.cx-head-desc {
-  margin: 4px 0 0;
+.cx-head-desc,
+.cx-one-contact {
+  margin: var(--s-2) 0 0;
   max-width: 68ch;
-  font-size: var(--ui-m-size);
-  letter-spacing: var(--ui-m-track);
-  line-height: var(--ui-m-lead);
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
   color: var(--ink-soft);
+  overflow-wrap: anywhere;
 }
 
-.cx-head-facts {
+.cx-one-facts {
   margin: 6px 0 0;
+  font-size: var(--t-small-size);
+  letter-spacing: var(--t-small-track);
   color: var(--ink-faint);
 }
 
 .cx-head-acts {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--s-3);
+  flex-wrap: wrap;
   flex: 0 0 auto;
 }
 
+.cx-one-drop {
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+   COUNTED FIGURES — the figure leads, the word sits under it.
+
+   That is the reading order somebody scanning actually uses: they
+   are looking for the number and then checking what it was. A <dl>
+   in `column-reverse`, because the MARKUP order has to stay
+   term-then-value for it to be a description list at all.
+   ============================================================ */
+
+.cx-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: var(--s-1) 0 var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+
+.cx-tally--head {
+  margin: 0;
+  padding: var(--s-2) var(--s-4);
+}
+
+.cx-fig {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 0 var(--s-5);
+  border-left: 1px solid var(--line-subtle);
+}
+.cx-fig:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.cx-fig:last-child {
+  padding-right: 0;
+}
+
+.cx-fig-n {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.cx-tally--head .cx-fig-n {
+  font-size: var(--t-mono-lg-size);
+}
+
+.cx-fig-word {
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   THE CONTROLS
+
+   `.btn` in base.css still stamps `text-transform: uppercase` on
+   its label, and a button is one of the four things uppercase is
+   never allowed on. Every feature that draws one has already opted
+   out locally; this one stops inheriting from it altogether, which
+   is one class rather than an override of an override.
+   ============================================================ */
+
+.cx-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--h-md);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  font-family: var(--font-ui);
+  font-size: var(--t-small-size);
+  font-weight: 540;
+  letter-spacing: -0.003em;
+  text-transform: none;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.cx-act:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.cx-act:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
+}
+
+/* THE ONE PRIMARY THING ON THE SCREEN. It takes the brand ramp
+   rather than a flat fill, which is the difference between a
+   button and a painted rectangle — and the ink on it is
+   `--accent-fg`, white, at better than 5.9:1 on every stop. */
+.cx-act--primary {
+  border-color: transparent;
+  background: var(--grad-brand);
+  color: var(--accent-fg);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+}
+.cx-act--primary:hover {
+  box-shadow: var(--e2), var(--glow-md);
+}
+.cx-act--primary:focus-visible {
+  border-color: transparent;
+  box-shadow: var(--focus);
+}
+
+/* the quiet one — Remove. It is destructive and it is undoable, so
+   it is neither red nor primary until it is being pressed. */
+.cx-act--quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-soft);
+}
+.cx-act--quiet:hover {
+  border-color: var(--line);
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+
+/* -- the find box -------------------------------------------- */
+
 .cx-find {
   position: relative;
-  width: 240px;
+  width: 220px;
 }
 
 .cx-find-mark {
   position: absolute;
   top: 50%;
-  left: 8px;
+  left: 9px;
   transform: translateY(-50%);
   display: inline-flex;
   color: var(--ink-faint);
   pointer-events: none;
+  transition: color var(--d-fast) var(--ease);
+}
+.cx-find:focus-within .cx-find-mark {
+  color: var(--blue);
 }
 
 .cx-find-input {
-  padding-left: 26px;
+  width: 100%;
+  height: var(--h-md);
+  padding: 0 var(--s-3) 0 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--paper-sunken);
+  font-family: var(--font-ui);
+  font-size: var(--t-small-size);
+  letter-spacing: 0;
+  color: var(--ink);
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.cx-find-input::placeholder {
+  color: var(--ink-faint);
+}
+.cx-find-input:hover {
+  border-color: var(--hairline-strong);
+}
+.cx-find-input:focus,
+.cx-find-input:focus-visible {
+  outline: none;
+  background: var(--paper-high);
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
 }
 
 /* ============================================================
-   THE EMPTY STATES — four parts, in the house order
+   THE EMPTY STATES — a page, not a footnote
    ============================================================ */
 
 .cx-empty {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-3);
-  max-width: 560px;
-  margin: 0 auto;
-  padding: var(--sp-6);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--e2);
+  gap: var(--s-4);
+  max-width: 680px;
+  margin: var(--s-6) auto 0;
+  padding: var(--s-8) var(--s-8) var(--s-6);
+  background: var(--grad-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
 }
 
 .cx-empty-eyebrow {
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
   color: var(--ink-faint);
+}
+
+/* THE LINE THE PAGE OPENS ON. It is a headline and it is the only
+   one here, so it takes the display step and the negative tracking
+   that goes with it. */
+.cx-empty-title {
+  margin: calc(var(--s-2) * -1) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  color: var(--ink);
+  text-wrap: balance;
 }
 
 .cx-empty-say {
   margin: 0;
-  font-size: var(--ui-l-size);
-  line-height: var(--ui-l-lead);
-  letter-spacing: var(--ui-l-track);
+  max-width: 58ch;
+  font-size: var(--t-body-size);
+  line-height: 1.65;
+  letter-spacing: var(--t-body-track);
   color: var(--ink-soft);
-}
-
-.cx-empty-count {
-  margin: 0;
-  font-size: var(--ui-m-size);
-  line-height: var(--ui-m-lead);
-  color: var(--ink);
-}
-.cx-empty-count strong {
-  font-family: var(--font-mono);
-  font-size: var(--data-l-size);
-  font-weight: 500;
-  letter-spacing: var(--data-l-track);
+  text-wrap: pretty;
 }
 
 /* WHAT THE ONE BUTTON WILL ACTUALLY MAKE, under the button. A
-   structural act is named before it is taken (DESIGN_CONTRACT §7),
-   and a column name is a NAME — weight and full ink, never italic,
-   which is the same treatment `.md-empty-why em` gives a control. */
+   structural act is named before it is taken (§7), and a column
+   name is a NAME — weight and full ink, never italic. */
 .cx-empty-why {
   margin: 0;
-  font-size: var(--ui-s-size);
+  max-width: 62ch;
+  font-size: var(--t-small-size);
   line-height: 1.6;
-  letter-spacing: var(--ui-s-track);
+  letter-spacing: var(--t-small-track);
   color: var(--ink-soft);
 }
 .cx-empty-why em {
   font-style: normal;
   font-weight: 560;
   color: var(--ink);
-}
-
-/* ============================================================
-   THE LAST UPPERCASE BUTTON IN THE APP.
-
-   `.btn` in `src/styles/base.css` still stamps `text-transform:
-   uppercase` on its label, and every feature that draws one has
-   already opted out locally — the register's confirm buttons
-   ("Keep it" / "Remove"), the quote's "Print" and "Make a new
-   version", Modules' "New module", Fitment's "New rule". Swept live
-   across all ten dock places, a module page, a register and an issued
-   quote, exactly two `.btn`s were left inheriting it, and both are
-   here.
-
-   One of them read "CREATE THE CUSTOMERS TABLE" — a button AND a
-   sentence, which is two of the four things DESIGN_PRINCIPLES §2 says
-   uppercase is never allowed on, on the primary action of an empty
-   state whose whole job is to be pressed.
-
-   The fix is local because that is the convention: the base primitive
-   is not this feature's file to write, and a shared override layer is
-   the thing the design notes say never to build. `--ui-s-size` is
-   13px, the size every other opted-out button in the app landed on. */
-.cx-new {
-  font-family: var(--font-ui);
-  font-size: var(--ui-s-size);
-  font-weight: 550;
-  letter-spacing: var(--ui-s-track);
-  text-transform: none;
 }
 
 /* ============================================================
@@ -243,29 +470,33 @@
   margin: 0 auto;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
   overflow: hidden;
 }
 
 .cx-row + .cx-row {
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--line-subtle);
 }
 
 .cx-row-open {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) auto auto;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--s-3);
   width: 100%;
-  padding: 10px var(--sp-4);
+  min-height: var(--h-row);
+  padding: 10px var(--s-4);
   text-align: left;
   background: transparent;
   border: 0;
   border-left: 3px solid transparent;
   cursor: pointer;
-  transition: background var(--t-fast) var(--ease-draft);
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
 }
 
 .cx-row-open:hover {
@@ -274,6 +505,7 @@
 
 .cx-row-open:active {
   background: var(--blue-wash);
+  transition-duration: var(--d-press);
 }
 
 .cx-row-open:focus-visible {
@@ -290,17 +522,18 @@
 
 .cx-row-name {
   min-width: 0;
-  font-size: var(--ui-m-size);
-  font-weight: 560;
-  letter-spacing: var(--ui-m-track);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
   color: var(--ink);
   overflow-wrap: anywhere;
 }
 
 .cx-row-contact {
   min-width: 0;
-  font-size: var(--ui-s-size);
-  letter-spacing: var(--ui-s-track);
+  font-size: var(--t-small-size);
+  letter-spacing: var(--t-small-track);
   color: var(--ink-soft);
   overflow-wrap: anywhere;
 }
@@ -308,25 +541,22 @@
 /* --ink-soft, NOT --ink-faint, AND THE REASON IS MEASURED.
 
    This text rides inside .cx-row-open, which is tinted in three of its
-   states, and DESIGN_CONTRACT is explicit that --ink-faint "is 4.72:1
-   on white but 4.26:1 over a 3.5% tint, which fails". Measured in the
-   browser, compositing the whole ancestor chain: over --paper-sunken
-   4.22:1, over --blue-wash 4.16:1 light and 3.98:1 dark. All three
-   fail. At --ink-soft the same beds give 6.84:1, 6.74:1 and 6.29:1.
+   states, and --ink-faint "is 4.72:1 on white but 4.26:1 over a 3.5%
+   tint, which fails". Measured in the browser, compositing the whole
+   ancestor chain: over --paper-sunken 4.22:1, over --blue-wash 4.16:1
+   light and 3.98:1 dark. All three fail. At --ink-soft the same beds
+   give 6.84:1, 6.74:1 and 6.29:1.
 
    THE STATE THAT MAKES THIS MORE THAN A HOVER FLICKER IS
    :focus-visible, which holds the tint for as long as the row is
    keyboard-focused — so the reader most likely to be sitting on this
-   bed is the one navigating without a mouse. (.cx-row.is-open paints
-   the same tint but is not reachable today: CustomerStage swaps in
-   CustomerPage whenever it has an id, so the list only ever renders
-   with openId null. The rule is kept because the prop is part of this
-   component's contract and a second mount would light it up.)
-
-   The cost is half a step of hierarchy against a row it is now
-   legible on. */
+   bed is the one navigating without a mouse. */
 .cx-row-when {
   justify-self: end;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
 }
 
@@ -349,61 +579,15 @@
 }
 
 /* ============================================================
-   ONE CUSTOMER
+   ONE CUSTOMER — their details, from the table's own columns
    ============================================================ */
-
-.cx-one-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--sp-5);
-  max-width: 1180px;
-  margin: 0 auto var(--sp-5);
-  padding-bottom: var(--sp-3);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.cx-one-id {
-  min-width: 0;
-}
-
-.cx-one-name {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--display-weight);
-  font-size: var(--display-m-size);
-  letter-spacing: var(--display-m-track);
-  line-height: var(--display-m-lead);
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.cx-one-contact {
-  margin: 4px 0 0;
-  font-size: var(--ui-m-size);
-  letter-spacing: var(--ui-m-track);
-  line-height: var(--ui-m-lead);
-  color: var(--ink-soft);
-  overflow-wrap: anywhere;
-}
-
-.cx-one-facts {
-  margin: 6px 0 0;
-  color: var(--ink-faint);
-}
-
-.cx-one-drop {
-  flex: 0 0 auto;
-}
-
-/* -- their details ------------------------------------------- */
 
 .cx-form {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
-  gap: var(--sp-4);
+  gap: var(--s-4) var(--s-5);
   max-width: 1180px;
-  margin: 0 auto var(--sp-6);
+  margin: 0 auto var(--s-8);
 }
 
 .cx-field {
@@ -413,7 +597,20 @@
   min-width: 0;
 }
 
-/* the label column is the widest thing a person types here */
+/* A COLUMN NAME IS A NAME. This wore `mono-label`, which set every
+   one of them in 11px uppercase mono — so a table whose owner
+   typed "ABN" and a table whose owner typed "Abn" drew identically,
+   which is two different facts about their data collapsed into one. */
+.cx-field-name {
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  font-weight: 560;
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+/* the name column is the widest thing a person types here */
 .cx-field--name {
   grid-column: 1 / -1;
   max-width: 520px;
@@ -422,40 +619,68 @@
 .cx-field--tick {
   flex-direction: row;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   align-self: end;
   padding-bottom: 7px;
 }
 
+.cx-tick {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+
 .cx-input {
   width: 100%;
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  font-family: var(--font-ui);
+  font-size: var(--t-body-size);
+  letter-spacing: 0;
+  color: var(--ink);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.cx-input:hover {
+  border-color: var(--hairline-strong);
+}
+.cx-input:focus,
+.cx-input:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
 }
 
 /* what the column is FOR, from the column's own description — the
    same sentence the sheet shows, not a second one written here */
 .cx-field-say {
-  font-size: var(--ui-s-size);
+  font-size: var(--t-caption-size);
   line-height: 1.5;
-  letter-spacing: var(--ui-s-track);
+  letter-spacing: var(--t-caption-track);
   color: var(--ink-soft);
 }
 
 /* A COLUMN THIS PAGE WILL NOT PRETEND TO EDIT. Not a disabled text
    box — an empty box with a grey border is a control that looks
-   broken. A recessed panel with the reason in it, which is what the
-   dashed stub does one screen over. */
+   broken. A recessed panel with the reason in it. */
 .cx-field--stub {
-  padding: var(--sp-2) var(--sp-3);
+  gap: var(--s-1);
+  padding: var(--s-2) var(--s-3);
   background: var(--paper-sunken);
   border: 1px dashed var(--hairline-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
 }
 
 .cx-field-stub-say {
   margin: 0;
-  font-size: var(--ui-s-size);
+  font-size: var(--t-caption-size);
   line-height: 1.5;
-  letter-spacing: var(--ui-s-track);
+  letter-spacing: var(--t-caption-track);
   color: var(--ink-soft);
 }
 .cx-field-stub-say em {
@@ -471,19 +696,27 @@
   margin: 0 auto;
 }
 
+/* the one section caption on the page, so it takes the one
+   uppercase style */
 .cx-hist-head {
-  margin: 0 0 var(--sp-2);
+  margin: 0 0 var(--s-2);
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--hairline);
-  color: var(--ink-soft);
+  border-bottom: 1px solid var(--line-subtle);
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 .cx-hist-none {
-  margin: var(--sp-3) 0 0;
+  margin: var(--s-3) 0 0;
   max-width: 60ch;
-  font-size: var(--ui-size);
+  font-size: var(--t-body-size);
   line-height: 1.7;
-  letter-spacing: var(--ui-track);
+  letter-spacing: var(--t-body-track);
   color: var(--ink-soft);
 }
 .cx-hist-none em {
@@ -499,21 +732,21 @@
 }
 
 .cx-hist-row + .cx-hist-row {
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--line-subtle);
 }
 
 .cx-hist-open {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--s-3);
   width: 100%;
   padding: 9px 6px;
   text-align: left;
   background: transparent;
   border: 0;
   cursor: pointer;
-  transition: background var(--t-fast) var(--ease-draft);
+  transition: background var(--d-fast) var(--ease);
 }
 
 .cx-hist-open:hover {
@@ -522,12 +755,13 @@
 
 .cx-hist-open:active {
   background: var(--blue-wash);
+  transition-duration: var(--d-press);
 }
 
 .cx-hist-open:focus-visible {
   outline: none;
   background: var(--blue-wash);
-  box-shadow: inset 2px 0 0 0 var(--blue);
+  box-shadow: inset 3px 0 0 0 var(--blue);
 }
 
 .cx-hist-open:disabled {
@@ -539,13 +773,17 @@
 
 /* tinted-bed rule, same measurement as .cx-row-when above */
 .cx-hist-when {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
 }
 
 .cx-hist-what {
   min-width: 0;
-  font-size: var(--ui-size);
-  letter-spacing: var(--ui-track);
+  font-size: var(--t-body-size);
+  letter-spacing: var(--t-body-track);
   color: var(--ink);
   overflow-wrap: anywhere;
 }
@@ -557,9 +795,21 @@
   color: var(--ink-soft);
 }
 
+/* GIVEN AND DRAFT ARE VALUES, so they keep their own case. Given is
+   `--success` (6.6:1 on white, measured) because a document that
+   has actually been handed over is the fact somebody scans this
+   column for; a draft is ink, because it is the resting state and
+   not an alarm. */
 .cx-hist-state {
   justify-self: end;
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
   color: var(--ink-soft);
+  white-space: nowrap;
+}
+.cx-hist-state[data-state='given'] {
+  color: var(--success);
 }
 
 .cx-hist-total {
@@ -569,7 +819,12 @@
 }
 
 .cx-hist-go {
-  color: var(--ink-soft);
+  color: var(--ink-faint);
+  transition: color var(--d-fast) var(--ease);
+}
+.cx-hist-open:hover .cx-hist-go,
+.cx-hist-open:focus-visible .cx-hist-go {
+  color: var(--blue);
 }
 
 @media (max-width: 720px) {
@@ -582,5 +837,18 @@
   }
   .cx-hist-go {
     display: none;
+  }
+}
+
+/* ============================================================
+   MOTION GOES, FEEDBACK STAYS.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .cx-head,
+  .cx-one-head {
+    animation: none;
+  }
+  .cx-act:active {
+    transform: none;
   }
 }

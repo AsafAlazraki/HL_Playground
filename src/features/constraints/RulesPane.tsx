@@ -426,7 +426,7 @@ export function RulesPane(): ReactElement {
               hidden={view !== 'file'}
             >
               <RulesLedger liveIds={liveIds} live={live} />
-              <DiscoveryPanel />
+              <DiscoveryPanel showActions={view === 'file'} />
             </div>
 
             {/* 2 · THE PERSON'S OWN RULES, and the composer that writes
@@ -472,7 +472,7 @@ export function RulesPane(): ReactElement {
                 )}
               </p>
 
-              <NewRuleSentence onAdded={setOpenId} />
+              <NewRuleSentence onAdded={setOpenId} showActions={view === 'mine'} />
 
               {list.length === 0 ? (
                 <NoRules />

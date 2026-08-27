@@ -45,7 +45,7 @@ import type { RowRef, RuleEngine } from '@/lib/rules/evaluate'
 import { useConstraints } from '@/features/constraints'
 import { CurationNote, readCuration, searchReach } from '@/features/curation'
 import type { Narrowing } from '@/features/curation'
-import { bandOf, defaultColumns, formatCell } from './columns'
+import { bandOf, defaultColumns, formatCell, isMoney } from './columns'
 import {
   countChip,
   isCuratedOnly,
@@ -763,54 +763,86 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                   if (from) moveRow(from, r.row.id)
                 }}
               >
-                <span
-                  className="vw-grip"
-                  title={configuring ? 'Drag to reorder' : undefined}
-                  aria-hidden="true"
-                >
-                  {configuring ? <DotsSixVertical size={14} weight="light" /> : null}
-                </span>
-
-                {/* The span is drawn whether or not this row has a
-                    picture: the track is the block's, so an empty one
-                    keeps the row aligned with the rest. Read-only —
-                    the strip in the table is where order is changed,
-                    and this is where the change is seen. */}
-                <span className="vw-pic">
-                  {picField ? <RowPicture row={r.row} field={picField} /> : null}
-                </span>
-
-                {r.recommended ? (
-                  <span className="vw-star" title="Recommended">
-                    <Star size={12} weight="fill" />
+                {/* THE PHOTOGRAPH FIRST, where the row holds one. A
+                    motor with a picture is recognised before it is
+                    read; one without simply starts at its name, and
+                    the grid stretches the shorter card rather than
+                    drawing a plate where a photograph is missing. */}
+                {picField ? (
+                  <span className="vw-shot">
+                    <RowPicture row={r.row} field={picField} />
                   </span>
                 ) : null}
 
-                <span className="vw-row-name" title={rowLabel(target, r.row)}>
-                  {rowLabel(target, r.row)}
-                </span>
-
-                {columns.map((c) => (
-                  <span key={c} className="vw-cell">
-                    {/* the band goes with the column: a figure filed
-                        under Supply Pricing is money even where its
-                        name is `P&A`, and `MU` is a ratio even there */}
-                    {formatCell(
-                      byId.get(c),
-                      readRelated(r, c),
-                      resolveRef,
-                      bandOf(target, byId.get(c)),
-                    )}
+                <span className="vw-row-head">
+                  <span
+                    className="vw-grip"
+                    title={configuring ? 'Drag to reorder' : undefined}
+                    aria-hidden="true"
+                  >
+                    {configuring ? <DotsSixVertical size={14} weight="light" /> : null}
                   </span>
-                ))}
-
-                <span className="vw-row-tags">
-                  {r.origin === 'added' ? (
-                    <span className="vw-tag vw-tag--added" title="Pinned in although the rule does not match it">
-                      added
-                    </span>
-                  ) : null}
+                  <span className="vw-row-name" title={rowLabel(target, r.row)}>
+                    {rowLabel(target, r.row)}
+                  </span>
                 </span>
+
+                {/* ── THE STATE, AS A CHIP AND A RAIL ─────────────────
+                    "Which one are we actually quoting?" was answered by
+                    a 12px star in the row's left padding, and "this one
+                    is here although the rule does not match it" by a
+                    tag at the far right of a 900px line. Both are
+                    facts a salesperson acts on, so both are chips at
+                    the top of the card, and the recommended one takes
+                    the card's rail as well — a state you can see from
+                    across a desk. */}
+                {r.recommended || r.origin === 'added' ? (
+                  <span className="vw-row-tags">
+                    {r.recommended ? (
+                      <span
+                        className="vw-tag vw-tag--star"
+                        title="Recommended — this is the one a quote is raised with"
+                      >
+                        <Star size={11} weight="fill" aria-hidden="true" />
+                        Recommended
+                      </span>
+                    ) : null}
+                    {r.origin === 'added' ? (
+                      <span
+                        className="vw-tag vw-tag--added"
+                        title="Pinned in although the rule does not match it"
+                      >
+                        added
+                      </span>
+                    ) : null}
+                  </span>
+                ) : null}
+
+                {/* THE COLUMN NAMES CAME DOWN ONTO THE CARD. They used
+                    to live once, in a hairline above forty rows; a
+                    card is read on its own, so each figure carries the
+                    name of the column it came out of. Money is set
+                    apart from the rest — it is the fact the card is
+                    scanned for, and `isMoney` is the same reading
+                    `formatCell` already takes to decide the format. */}
+                <dl className="vw-facts">
+                  {columns.map((c) => {
+                    const field = byId.get(c)
+                    /* the band goes with the column: a figure filed
+                       under Supply Pricing is money even where its
+                       name is `P&A`, and `MU` is a ratio even there */
+                    const band = bandOf(target, field)
+                    const text = formatCell(field, readRelated(r, c), resolveRef, band)
+                    if (text === '') return null
+                    const cash = isMoney(field?.name ?? '', band)
+                    return (
+                      <div key={c} className={`vw-fact${cash ? ' vw-fact--money' : ''}`}>
+                        <dt className="vw-fact-of">{field?.name ?? ''}</dt>
+                        <dd className="vw-cell">{text}</dd>
+                      </div>
+                    )
+                  })}
+                </dl>
 
                 <span className="vw-row-acts">
                   {configuring ? (

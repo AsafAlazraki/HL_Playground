@@ -404,6 +404,37 @@ export function NewTableDialog({
     [kind, preset, levels],
   )
 
+  /* ============================================================
+     WHAT THE TABLE ARRIVES WITH, COUNTED.
+
+     Question two drew one half of its own answer — how the rows
+     would nest — and left the other half, the COLUMNS, to be
+     discovered after the table existed. A dealer pressing Create
+     table had never been told whether they were about to get four
+     columns or twenty-eight.
+
+     COUNTED BY THE SAME ARITHMETIC `createTable` USES, not by an
+     estimate beside it: the levels as typed, plus this kind's
+     detail columns, minus the link columns whose target table is
+     not on this sheet yet — the store drops those rather than
+     leave a dangling reference, so counting them would promise a
+     column that never lands. The bands are the same filter the
+     store applies: a section with no column in it is not shipped.
+     Change the chain and both figures follow.
+     ============================================================ */
+  const entities = useProjectStore((s) => s.entities)
+  const arrives = useMemo(() => {
+    if (!meta) return null
+    const plain = meta.detailColumns.filter((c) => c.linkTo === undefined)
+    const held = new Set(Object.values(entities).map((e) => e.kind))
+    const links = meta.detailColumns.filter(
+      (c) => c.linkTo !== undefined && held.has(c.linkTo),
+    ).length
+    const used = new Set(plain.map((c) => c.section).filter(Boolean))
+    const groups = (meta.sections ?? []).filter((s) => used.has(s.id))
+    return { columns: levels.length + plain.length + links, groups }
+  }, [meta, entities, levels.length])
+
   /* read inside a setState updater, so it must not be state */
   const nameTouchedRef = useRef(false)
   nameTouchedRef.current = nameTouched
@@ -515,7 +546,11 @@ export function NewTableDialog({
 
   if (!open || typeof document === 'undefined') return null
 
-  const accent = meta ? accentVar(meta.accent) : 'var(--ink)'
+  /* THE SHEET'S OWN HUE. Before a kind is chosen the question is
+     the app's, so it takes the one accent; the moment it is
+     answered the sheet turns the kind's colour — the top rail, the
+     chain arrows and the chosen option's rail all follow it. */
+  const accent = meta ? accentVar(meta.accent) : 'var(--accent)'
   const style = { '--tk-ink': accent } as CSSProperties
 
   return createPortal(
@@ -549,9 +584,13 @@ export function NewTableDialog({
                  which letters the person actually typed */
               <span className="tk-file-tag">{csv.fileName}</span>
             ) : step === 2 && meta && kind ? (
+              /* THE MARK TAKES THE KIND'S HUE AND THE WORD DOES NOT.
+                 A kind name is a name — it was stamped BOATS in 11px
+                 letterspaced capitals — and §1 keeps a kind colour off
+                 anything that has to be read. */
               <span className="tk-kind-tag">
                 <TableKindSymbol kind={kind} size={16} />
-                {meta.label}
+                <span>{meta.label}</span>
               </span>
             ) : (
               <span className="mono-label tk-eyebrow">New table</span>
@@ -566,7 +605,12 @@ export function NewTableDialog({
               <CrossMark />
             </button>
           </div>
-          <h2 className="block-heading tk-question" id="tk-question">
+          {/* NOT `.block-heading`. That primitive's identity IS
+              uppercase, so the sheet's one display line was stamped
+              WHAT KIND OF TABLE IS THIS? and then un-stamped again by
+              a rule further down the stylesheet. It takes the title
+              step whole — size, weight, leading and tracking. */}
+          <h2 className="tk-question" id="tk-question">
             {step === 3
               ? csv?.ok
                 ? 'Do these columns look right?'
@@ -609,12 +653,19 @@ export function NewTableDialog({
                     key={k}
                     type="button"
                     ref={i === 0 ? firstCardRef : undefined}
-                    className={`tk-kind-card tk-kind-card--${k}`}
-                    style={{ '--tk-ink': accentVar(m.accent) } as CSSProperties}
+                    className={`tk-kind-card ds-sheen ds-rise tk-kind-card--${k}`}
+                    style={
+                      {
+                        '--tk-ink': accentVar(m.accent),
+                        /* the wave crosses the grid once, capped in
+                           CSS at 14 steps */
+                        '--i': i,
+                      } as CSSProperties
+                    }
                     onClick={() => chooseKind(k)}
                   >
                     <span className="tk-kind-sym">
-                      <TableKindSymbol kind={k} size={30} />
+                      <TableKindSymbol kind={k} size={28} />
                     </span>
                     <span className="tk-kind-label">{m.label}</span>
                     <span className="tk-kind-blurb">{m.blurb}</span>
@@ -769,6 +820,32 @@ export function NewTableDialog({
                   )}
                 </ul>
                 <p className="tk-preview-note">{previewNote(levels)}</p>
+
+                {/* AND THE OTHER HALF OF THE ANSWER. Both figures are
+                    counted above from the model, by the arithmetic the
+                    store itself uses; the band names are the kind's
+                    own, read rather than written, so the day a section
+                    is added or renamed this line follows it. */}
+                {arrives ? (
+                  <div className="tk-cols">
+                    <p className="tk-cols-say">
+                      Starts with <b>{arrives.columns}</b>{' '}
+                      {arrives.columns === 1 ? 'column' : 'columns'}
+                      {arrives.groups.length > 0 ? (
+                        <>
+                          {' '}
+                          in <b>{arrives.groups.length}</b> groups
+                        </>
+                      ) : null}
+                      .
+                    </p>
+                    <p className="tk-cols-groups">
+                      {arrives.groups.length > 0
+                        ? arrives.groups.map((g) => g.name).join(' · ')
+                        : 'Add, rename or remove any of them once the table is here.'}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
 

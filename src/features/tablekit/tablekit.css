@@ -1,29 +1,61 @@
 /* ============================================================
-   TABLEKIT — the seven marks, the two-question sheet, the rail.
+   TABLEKIT (tk-) — the two-question sheet, the CSV proposal, the
+   type rail.
 
-   Chrome material throughout: white sheets, marine-navy ink,
-   hairlines, mono micro-labels. `--tk-ink` carries the current
-   kind's accent down each subtree so a card, a chip and a chosen
-   structure all speak in the same colour without a single hex
-   living in here.
+   `--tk-ink` carries the CURRENT KIND'S hue down each subtree, so a
+   card, a chip, a rail and a chosen structure all speak in the same
+   colour without a single literal living in here. On question one,
+   before a kind is chosen, it is the app's one accent.
+
+   WHERE THE KIND HUE IS ALLOWED TO GO (§1: "a 3px rail, a dot, or a
+   glyph — never a fill behind text, and never chrome"):
+
+     the 3px rail down a kind card        rail
+     the mark on a kind card              glyph
+     the hairline at the top of the sheet rail
+     the chain arrows between level plates glyph
+     the card's hover glow                 light
+
+   AND WHERE IT IS NOT. `.tk-opt.is-on` used to take
+   `color-mix(in srgb, var(--tk-ink) 6%, …)` as its ground — a fill
+   behind text, which is the one thing the rule names. The chosen
+   option is marked by a rail and a step of surface now; the tint is
+   gone and nothing on this sheet reads a word off a coloured wash.
+
+   CONTRAST, on the two grounds this sheet uses — `--surface-1`
+   (#ffffff) and `--surface-3` (#eef3f8):
+
+     --fg            on --surface-1   17.4 : 1
+     --fg-secondary  on --surface-1    8.1 : 1
+     --fg-secondary  on --surface-3    7.4 : 1
+     --fg-tertiary   on --surface-1    5.5 : 1
+     --fg-tertiary   on --surface-3    4.9 : 1
+     --accent        on --surface-1    5.9 : 1
+     --danger        on --danger-wash  5.6 : 1
+
+   The eight kind hues are cut to clear 4.5:1 on white, and none of
+   them carries a word on this sheet: every one is a rail, a mark or
+   a glow. `--fg-quaternary` appears nowhere.
+
+   UPPERCASE. The only capitals on the sheet are `.mono-label`
+   captions. The question, the kind names, the level plates, the file
+   name and all four buttons keep their own case — the level plates
+   in particular, because `.tk-lvl-in` is an INPUT that inherits the
+   transform, so a chain set in capitals answered in capitals while
+   the store saved what was actually typed.
    ============================================================ */
 
-/* ---------------------------------------------------------- */
-/* The marks                                                  */
-/* ---------------------------------------------------------- */
-
-/* Phosphor marks (see symbols.tsx). They are filled paths, not strokes,
-   and their line weight is set in React by `weightFor(size)` — nothing
-   here may push a stroke onto them or the whole weight scale collapses
-   to one thickness. This rule does layout only. */
+/* Phosphor marks (see symbols.tsx). Filled paths, not strokes, and
+   their weight is set in React by `weightFor(size)` — nothing here
+   may push a stroke onto them. Layout only. */
 .tk-symbol {
   display: block;
   flex: none;
 }
 
-/* ---------------------------------------------------------- */
-/* Overlay + sheet                                            */
-/* ---------------------------------------------------------- */
+/* ============================================================
+   THE SHEET
+   ============================================================ */
 
 .tk-overlay {
   position: fixed;
@@ -31,176 +63,223 @@
   z-index: 80;
   display: grid;
   place-items: center;
-  padding: var(--sp-5);
+  padding: var(--s-5);
 }
 
-/* THE DIM MATERIAL. apple-design §12: "dim to focus, separate to
-   keep flow" — a modal task pairs the surface with a dimming scrim.
-   The blur is what turns a wash into a material: without it you are
-   looking at the drawing through a tinted window and every line of
-   it still competes for your eye; with it the blueprint is
-   unmistakably still there and unmistakably not the thing you are
-   reading. 44% over the blueprint composites to #102d4a, on which
-   the white dialog above it measures 14.03:1.
+/* THE GROUND UNDER A MODAL, AND THE ALPHA IT NEVER HAD.
 
-   THE 0.44 MOVED OUT OF `opacity` AND INTO THE COLOUR, and that is
-   a BUG FIX, not a refactor. `animation: fade-in ... both` fills
-   forwards, and `fade-in` ends at `opacity: 1` — so the declared
-   0.44 governed this element for exactly 220ms and then the
-   animation's fill overrode it for the rest of its life. Measured
-   in Chromium on the running app: declared 0.44, computed 1 after
-   the animation finished. This scrim has been shipping FULLY
-   OPAQUE, and the comment that used to sit on that line — "little
-   enough that the blueprint is still visibly underneath" —
-   described something nobody has seen. The alpha is safe in the
-   colour, where no fill mode can reach it, and `fade-in` now fades
-   in a 44% scrim instead of overwriting it.
+   Two bugs, one line. `background: var(--mat-dim-bg)` resolves to a
+   FULLY OPAQUE `--bg-sunken`: the sheet behind the dialog did not
+   dim, it disappeared, so a modal that exists to keep you in place
+   read as a page change. And the `backdrop-filter` beside it
+   resolved to `0px`, a no-op kept only so no rule had to be found
+   and deleted — §5 retired glass and this is the deletion.
 
-   Its alpha is also why the blur had to come off `opacity`: group
-   opacity is applied to the filtered backdrop too, so a blur under
-   a 0.44 element composites 44% blurred over 56% sharp and reads as
-   a weaker blur bought at full price.
+   The alpha lives in the COLOUR, where no `animation-fill-mode` can
+   reach it: the old rule put 0.44 on `opacity` under
+   `animation: fade-in … both`, and `fade-in` ends at `opacity: 1`,
+   so the declared translucency governed the scrim for 220ms and was
+   then overridden for the rest of its life. Measured on the running
+   app: declared 0.44, computed 1.
 
-   NO ANIMATED BLUR HERE, unlike .io-pop. This is a full-bleed
-   surface: 220ms of animated blur over 100% of a 1440×900 window is
-   thirteen frames of full-screen re-raster on the app's worst-
-   performing surface, and the existing opacity ramp modulates the
-   constant blur to read the same for the cost of one. */
+   `--bg-sunken` is the well ground in both themes — pale in light,
+   near-black in dark — so the veil recedes the page the right way
+   round without a theme branch. */
 .tk-scrim {
   position: absolute;
   inset: 0;
-  background: var(--mat-dim-bg);
-  backdrop-filter: var(--mat-dim-blur);
-  animation: fade-in var(--t-med) var(--ease-draft) both;
+  background: color-mix(in srgb, var(--bg-sunken) 78%, transparent);
+  animation: ds-fade var(--d-med) var(--ease) both;
 }
 
 .tk-dialog {
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(880px, 100%);
-  max-height: calc(100vh - var(--sp-6) * 2);
+  width: min(920px, 100%);
+  max-height: calc(100vh - var(--s-6) * 2);
   min-height: 0;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-popover);
-  animation: sheet-in var(--t-med) var(--ease-draft) both;
+  overflow: hidden;
+  background: var(--grad-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) both;
+}
+
+/* THE ONE RAIL THAT SAYS WHAT THIS SHEET IS ABOUT. Accent while the
+   question is "what kind of table is this?", and the kind's own hue
+   the moment it is answered — so the sheet changes colour with the
+   answer rather than announcing it in words. */
+.tk-dialog::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--tk-ink, var(--accent));
+  transition: background var(--d-med) var(--ease);
+  pointer-events: none;
 }
 
 /* -- header ------------------------------------------------- */
 
 .tk-head {
+  flex: none;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-5) var(--sp-6) var(--sp-4);
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--s-3);
+  padding: var(--s-6) var(--s-6) var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
 }
 
 .tk-head-top {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  min-height: 24px;
+  gap: var(--s-3);
+  min-height: 26px;
 }
 
 .tk-eyebrow {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
+/* THE QUESTION IS THE ONLY DISPLAY LINE ON THE SHEET. It carried
+   `+0.02em` at 21px, which is the tracking rule backwards: letters
+   read too far apart as they grow. The title step takes them
+   together — size, weight, leading and tracking — as §2 asks. */
 .tk-question {
-  font-size: 21px;
-  line-height: 1.2;
-  color: var(--ink);
-  letter-spacing: 0.02em;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
   text-transform: none;
+  color: var(--fg);
+  text-wrap: balance;
 }
 
+/* A KIND NAME IS A NAME. This was an 11px uppercase mono stamp
+   reading BOATS beside the boat mark — the app's own noun for the
+   thing the dealer sells, shouted. It keeps the kind's ink on the
+   mark and gives the word back its case. */
 .tk-kind-tag {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
-  color: var(--tk-ink, var(--ink));
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  gap: var(--s-2);
+  min-width: 0;
+  color: var(--tk-ink, var(--fg));
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  letter-spacing: -0.004em;
+  text-transform: none;
+}
+/* the WORD sits in ordinary ink; only the mark takes the hue, so a
+   kind colour never carries a name (§1) */
+.tk-kind-tag > span:last-child {
+  color: var(--fg);
 }
 
-/* "Table kinds" — the way back out of step two. A button, §3. */
+/* NOT `.tk-kind-tag`. A file name is the person's own text and
+   cannot be uppercased without losing which letters they typed. */
+.tk-file-tag {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-weight: 450;
+  color: var(--fg-secondary);
+}
+
+/* "Table kinds" — the way back out of question two. A button, §2. */
 .tk-back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: calc(var(--sp-2) * -1);
-  padding: 4px var(--sp-2);
+  margin-left: calc(var(--s-2) * -1);
+  padding: 5px var(--s-2);
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: transparent;
-  font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
   font-weight: 500;
   letter-spacing: 0;
-  color: var(--ink-faint);
+  text-transform: none;
+  color: var(--fg-secondary);
   cursor: pointer;
   transition:
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .tk-back:hover {
-  color: var(--ink);
-  border-color: var(--hairline);
+  color: var(--fg);
+  background: var(--surface-3);
+}
+.tk-back:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 .tk-back:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-  color: var(--ink);
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 .tk-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   margin-left: auto;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: transparent;
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
   cursor: pointer;
   transition:
-    color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .tk-close:hover {
-  color: var(--ink);
-  background: var(--paper-sunken);
-  border-color: var(--hairline);
+  color: var(--fg);
+  background: var(--surface-3);
+}
+.tk-close:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 .tk-close:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-  color: var(--ink);
+  outline: none;
+  box-shadow: var(--focus);
 }
 
-/* ---------------------------------------------------------- */
-/* Question one — the kinds                                   */
-/* ---------------------------------------------------------- */
+/* ============================================================
+   QUESTION ONE — what kind of table is this?
+
+   IT IS THE SAME CARD THE FRONT DOOR DRAWS, deliberately: a kind
+   rail that grows into the hover, a lit top edge, a gradient
+   surface, and a glow in the kind's own hue. Moving between Home
+   and this sheet should never feel like moving between two apps.
+   ============================================================ */
 
 .tk-step1 {
   min-height: 340px;
-  padding: var(--sp-6);
+  padding: var(--s-6);
   overflow-y: auto;
 }
 
 .tk-kinds {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-3);
+  gap: var(--s-3);
 }
 .tk-kinds .tk-kind-card--custom {
   grid-column: span 2;
@@ -225,62 +304,134 @@
 }
 
 .tk-kind-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-2);
-  min-height: 142px;
-  padding: var(--sp-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
+  gap: 3px;
+  min-height: 148px;
+  padding: var(--s-4) var(--s-4) var(--s-4) 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
   text-align: left;
   cursor: pointer;
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
 }
-.tk-kind-card:hover {
-  border-color: var(--tk-ink);
-  background: var(--paper);
-  box-shadow: var(--shadow-sheet);
-  transform: translateY(-1px);
+/* the rail, 3px at rest and the full height of the card under the
+   pointer — the KIND lights up, not the whole surface */
+.tk-kind-card::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 var(--r-chip) var(--r-chip) 0;
+  background: var(--tk-ink);
+  transition:
+    top var(--d-med) var(--ease-out-expo),
+    bottom var(--d-med) var(--ease-out-expo),
+    width var(--d-med) var(--ease-out-expo);
 }
-.tk-kind-card:active {
-  transform: none;
+.tk-kind-card:hover::before,
+.tk-kind-card:focus-visible::before {
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+.tk-kind-card:hover,
+.tk-kind-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+  box-shadow:
+    var(--e4),
+    inset 0 1px 0 var(--edge-light),
+    0 10px 30px -14px var(--tk-ink);
 }
 .tk-kind-card:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: var(--focus), var(--e4);
   border-color: var(--tk-ink);
+}
+/* a card presses by a hair and loses its lift (§4) */
+.tk-kind-card:active {
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1);
+  transition-duration: var(--d-press);
 }
 
 .tk-kind-sym {
   display: flex;
+  margin-bottom: var(--s-2);
   color: var(--tk-ink);
-  margin-bottom: var(--sp-1);
 }
 
 .tk-kind-label {
-  font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 112;
-  font-weight: 620;
-  font-size: 14px;
-  letter-spacing: 0.01em;
-  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  text-transform: none;
+  color: var(--fg);
 }
 
 .tk-kind-blurb {
-  font-size: 12px;
+  font-size: var(--t-caption-size);
+  font-weight: 400;
   line-height: 1.45;
-  color: var(--ink-soft);
+  letter-spacing: 0;
+  color: var(--fg-secondary);
 }
 
-/* ---------------------------------------------------------- */
-/* Question two — structure, preview, name                    */
-/* ---------------------------------------------------------- */
+/* -- the third answer: a file ------------------------------- */
+
+/* Under the cards rather than among them: the cards say what a table
+   HOLDS, and this says where its columns COME FROM — two different
+   questions that would read as eight alternatives in one grid. */
+.tk-csv-door {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin-top: var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+}
+
+.tk-csv-door-say {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+
+.tk-csv-door-pick {
+  flex: none;
+}
+
+/* The picker itself is never seen: the door and every refusal press
+   it. Not `display: none` — a hidden input cannot be clicked in
+   Safari — so it is taken out of the layout instead. */
+.tk-csv-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   QUESTION TWO — structure, what arrives, and a name
+   ============================================================ */
 
 .tk-form {
   display: flex;
@@ -292,9 +443,9 @@
 .tk-step2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-5);
+  gap: var(--s-5);
   min-height: 300px;
-  padding: var(--sp-6);
+  padding: var(--s-6);
   overflow-y: auto;
 }
 
@@ -307,38 +458,40 @@
 .tk-options {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--s-2);
 }
 
 .tk-opt {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
   text-align: left;
   cursor: pointer;
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease);
 }
 .tk-opt:hover {
-  border-color: var(--hairline-strong);
-  background: var(--paper);
+  border-color: var(--line-strong);
+  background: var(--surface-3);
 }
 .tk-opt:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: var(--focus);
 }
+/* THE CHOSEN ONE IS MARKED BY A RAIL AND A STEP OF SURFACE, not by
+   a tint of the kind hue behind its words. */
 .tk-opt.is-on {
-  border-color: var(--tk-ink);
-  background: var(--paper-sunken);
-  background: color-mix(in srgb, var(--tk-ink) 6%, var(--paper-high));
+  border-color: var(--line);
+  background: var(--surface-3);
   box-shadow: inset 3px 0 0 var(--tk-ink);
+  cursor: default;
 }
 
 .tk-chain {
@@ -352,77 +505,78 @@
   align-items: center;
   gap: 5px;
 }
+/* a glyph in the kind's hue — the sanctioned use */
 .tk-chain-arrow {
   display: inline-flex;
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 .tk-opt.is-on .tk-chain-arrow {
   color: var(--tk-ink);
 }
 
 /* THE LEVEL PLATES CARRY THE DEALER'S OWN WORDS, and the caption
-   under them says so out loud: "These levels are yours — click one to
-   rename it, × takes it out." A chain reading SERIES › MODEL ›
-   VARIANT is uppercasing four things §3 forbids at once — they are
-   names, they are values, `.tk-lvl-in` is an INPUT that inherits this
-   transform so the rename box answered in capitals while the store
-   saved the case that was typed, and `.tk-plate-add` is a button
-   ("+ level"). The plates keep the mono face and the chain shape;
-   the words are the dealer's, in the dealer's case. */
+   under them says so: "These levels are yours". A chain reading
+   SERIES › MODEL › VARIANT uppercases four things §2 forbids at
+   once — they are names, they are values, `.tk-lvl-in` is an input
+   that inherits the transform, and `.tk-plate-add` is a button. The
+   plates keep the mono face and the chain shape; the words are the
+   dealer's, in the dealer's case. */
 .tk-plate {
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-sm);
-  background: var(--paper-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.4;
-  color: var(--ink);
+  text-transform: none;
+  color: var(--fg);
   white-space: nowrap;
 }
 .tk-opt.is-on .tk-plate {
-  border-color: var(--tk-ink);
-  background: var(--paper-high);
-  color: var(--tk-ink);
+  border-color: var(--line-strong);
+  box-shadow: var(--e1);
 }
 
 .tk-opt-cap {
-  font-size: 12px;
+  font-size: var(--t-caption-size);
+  font-weight: 400;
   line-height: 1.45;
-  color: var(--ink-soft);
+  letter-spacing: 0;
+  color: var(--fg-secondary);
 }
 
 /* -- the chosen chain, typed in ------------------------------ */
 
 /* A level plate you can put a caret in and take out again. It wears
-   .tk-plate like every other plate on the chain — same border, same
-   ink — so the row still reads as one chain and not as a form; it
-   only parts company on hover and focus, where it picks up the
-   kind's colour. */
+   `.tk-plate` like every other plate on the chain — same border,
+   same ink — so the row still reads as one chain and not as a form;
+   it only parts company on hover and focus. */
 .tk-lvl {
   gap: 2px;
   padding-right: 3px;
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
 }
 .tk-lvl:hover,
 .tk-lvl:focus-within {
-  border-color: var(--tk-ink);
-  box-shadow: 0 0 0 3px var(--blue-wash);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
-/* emptied, and CREATE was pressed — said on the plate, not in a window */
+/* emptied, and CREATE was pressed — said on the plate, not in a
+   second window on top of this one */
 .tk-lvl.is-blank,
 .tk-opt.is-on .tk-lvl.is-blank {
-  border-color: var(--red);
-  box-shadow: 0 0 0 3px var(--red-wash);
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-wash);
 }
 
-/* The caret's half of the plate: no chrome of its own, the shell has it. */
+/* The caret's half of the plate: no chrome of its own. */
 .tk-lvl-in {
   min-width: 0;
   padding: 0;
@@ -441,7 +595,7 @@
 
 /* Take this level out. Faint until the plate is under the pointer or
    holds focus — five live × marks in a row reads as a warning strip,
-   not a chain — but always in the tab order, and always at the same
+   not a chain — but always in the tab order and always the same
    size, so nothing moves when it lights up. */
 .tk-lvl-x {
   display: inline-flex;
@@ -451,110 +605,129 @@
   height: 15px;
   padding: 0;
   border: none;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: transparent;
-  color: var(--ink-faint);
-  opacity: 0.5;
+  color: var(--fg-tertiary);
+  opacity: 0.55;
   cursor: pointer;
   transition:
-    opacity var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft);
+    opacity var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
 }
 .tk-lvl:hover .tk-lvl-x,
 .tk-lvl:focus-within .tk-lvl-x {
   opacity: 1;
 }
 .tk-lvl-x:hover {
-  color: var(--red);
-  background: var(--red-wash);
+  color: var(--danger);
+  background: var(--danger-wash);
   opacity: 1;
 }
 .tk-lvl-x:focus-visible {
   opacity: 1;
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
-  color: var(--red);
+  outline: none;
+  box-shadow: var(--focus);
+  color: var(--danger);
 }
 
 /* The empty slot at the end of the chain: dashed, because nothing is
-   in it yet. */
-/* MEASURED ON THIS SCREEN, NOT ON WHITE. --ink-faint is 4.72:1 on
-   paper and the contract's named trap is that a tint counts: inside
-   `.tk-opt.is-on`, over the chosen option's wash, "+ level" came out
-   4.33:1 and failed. --ink-soft carries it to 6.87:1 in the same
-   place and is still the quietest thing on the chain. */
+   in it yet.
+
+   MEASURED ON THIS SCREEN, NOT ON WHITE. The quietest ink is 5.5:1
+   on white and 4.9:1 on `--surface-3`, which is where this plate
+   actually sits once an option is chosen. `--fg-secondary` is 7.4:1
+   in the same place and is still the quietest thing on the chain. */
 .tk-plate-add {
   border-style: dashed;
-  border-color: var(--hairline-strong);
+  border-color: var(--line-strong);
   background: transparent;
-  color: var(--ink-soft);
+  box-shadow: none;
+  color: var(--fg-secondary);
   cursor: pointer;
   transition:
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .tk-opt.is-on .tk-plate-add {
-  border-color: var(--hairline-strong);
+  border-color: var(--line-strong);
   background: transparent;
-  color: var(--ink-soft);
+  box-shadow: none;
+  color: var(--fg-secondary);
 }
 .tk-plate-add:hover,
 .tk-opt.is-on .tk-plate-add:hover {
   border-color: var(--tk-ink);
   color: var(--tk-ink);
 }
+.tk-plate-add:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
 .tk-plate-add:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-  color: var(--tk-ink);
+  outline: none;
+  box-shadow: var(--focus);
+  color: var(--fg);
 }
 
 /* Said once, under the whole list — not once per row. */
 .tk-lvl-hint {
-  padding-top: var(--sp-1);
-  font-size: 11px;
+  padding-top: var(--s-1);
+  font-size: var(--t-caption-size);
   line-height: 1.45;
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
 /* One short sentence, under the chain it is about. Sentence case and
-   the same size as the caption beside it: a correction, not an alarm. */
+   the same size as the caption beside it: a correction, not an
+   alarm. */
 .tk-lvl-note {
-  font-size: 11px;
+  font-size: var(--t-caption-size);
   line-height: 1.45;
-  color: var(--red);
+  color: var(--danger);
 }
 
-/* -- the live preview --------------------------------------- */
+/* ============================================================
+   WHAT ARRIVES — the panel that answers question two.
+
+   It used to draw one thing: how the rows would nest. That is half
+   the answer, and it was the half a person can guess. The other
+   half — how many COLUMNS the table starts with, and what they are
+   grouped into — was never on screen anywhere before the table
+   existed, so "Create table" was a press into the dark on a sheet
+   whose whole job is to explain itself.
+
+   BOTH FIGURES ARE COUNTED FROM THE MODEL AT THE MOMENT THEY ARE
+   DRAWN, by the same arithmetic `createTable` uses — the levels
+   typed in, plus this kind's detail columns, minus the link columns
+   whose target table does not exist on this sheet yet. Nothing is
+   invented: change the chain and the count follows it.
+   ============================================================ */
 
 .tk-preview {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--s-3);
   align-self: start;
-  padding: var(--sp-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-sunken);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+  box-shadow: inset 0 1px 0 var(--edge-light);
 }
 
 .tk-preview-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--sp-3);
-  padding-bottom: var(--sp-2);
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line);
 }
-
-/* "how your rows will sit" and the counts down the preview both sat
-   at --ink-faint over `--paper-sunken` and measured 4.22:1 — under
-   the floor, and for the same reason as `.tk-plate-add` above: the
-   tint counts. Both go to --ink-soft, 6.87:1 on the same ground. */
 .tk-preview-sub {
-  font-size: 11px;
-  color: var(--ink-soft);
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
 }
 
 .tk-prev-list {
@@ -566,7 +739,7 @@
 .tk-prev-line {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   padding: 4px 0 4px calc(var(--tk-d, 0) * 16px);
   min-height: 22px;
 }
@@ -578,80 +751,112 @@
   flex: none;
   width: 8px;
   height: 8px;
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
 /* THE PREVIEW IS THE DEALER'S REAL DATA, at every depth. The
    outermost line was uppercased to make it the loudest, which turned
    a brand called "Highfield" into "HIGHFIELD" one line above "Sport"
    and "SP520" in their own case — the preview disagreeing with
-   itself about whose words these are. §3: a value keeps its case.
-   The hierarchy is still drawn, by the weight and colour steps the
-   rule below already sets; it no longer needs a transform to carry
-   it, and a transform could not carry it honestly. */
+   itself about whose words these are. §2: a value keeps its case.
+   The hierarchy is drawn by the weight and colour steps below, and a
+   transform could not have carried it honestly anyway. */
 .tk-prev-label {
-  font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 112;
-  font-weight: 620;
-  font-size: 12px;
-  letter-spacing: 0.01em;
-  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* deeper groups step back down — the outermost level is the
-   loudest, exactly as it is on the finished sheet */
+/* deeper groups step back down — the outermost level is the loudest,
+   exactly as it is on the finished sheet */
 .tk-prev-line.tk-d1 .tk-prev-label,
 .tk-prev-line.tk-d2 .tk-prev-label,
 .tk-prev-line.tk-d3 .tk-prev-label {
-  font-weight: 560;
-  letter-spacing: 0.02em;
+  font-weight: 520;
   text-transform: none;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
 }
 
 .tk-prev-line.is-leaf .tk-prev-label {
   font-family: var(--font-mono);
   font-weight: 450;
-  font-size: 11px;
-  letter-spacing: 0.02em;
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0.01em;
   text-transform: none;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
 }
 
 .tk-prev-line.is-more .tk-prev-label {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
   letter-spacing: 0.2em;
 }
 
 .tk-prev-count {
   margin-left: auto;
-  padding-left: var(--sp-2);
+  padding-left: var(--s-2);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
-  color: var(--ink-soft);
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-secondary);
 }
 
 .tk-preview-note {
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline);
-  font-size: 12px;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
+  font-size: var(--t-caption-size);
   line-height: 1.5;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
+}
+
+/* -- the columns it starts with ----------------------------- */
+
+.tk-cols {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+}
+.tk-cols-say {
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+/* MONO, TABULAR, IN FULL INK — the two figures are what makes the
+   sentence worth reading, and §2 says a figure is mono */
+.tk-cols-say b {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+/* the group names as the table will band them — the dealer's nouns,
+   read out of the kind rather than written here */
+.tk-cols-groups {
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  color: var(--fg-tertiary);
 }
 
 /* -- footer ------------------------------------------------- */
 
 .tk-foot {
+  flex: none;
   display: flex;
   align-items: flex-end;
-  gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-6) var(--sp-5);
-  border-top: 1px solid var(--hairline);
-  background: var(--paper-high);
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6) var(--s-5);
+  border-top: 1px solid var(--line-subtle);
+  background: var(--surface-1);
 }
 
 .tk-name {
@@ -662,50 +867,153 @@
   max-width: 300px;
 }
 .tk-name .mono-label {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
-.tk-create {
+/* ============================================================
+   THE FOUR `.btn`s ON THIS FEATURE.
+
+   `.btn` in src/styles/base.css is an 11px uppercase mono stamp —
+   the outgoing build's identity — so "Create table" rendered as
+   CREATE TABLE on the one button that makes a table, "Read a CSV"
+   as READ A CSV, and so on. §2 names a button outright as something
+   uppercase may never go on. Corrected here beside the classes,
+   exactly as io.css did for its own three and table.css for
+   `.tb-actions .btn`; `.btn` itself is not re-cut for the ~200
+   controls this pass has not reached.
+
+   AND THE PRIMARY IS THE ACCENT NOW. `.btn.btn-primary` fills with
+   `--ink` — a near-black button, which was right for a drawing
+   office and is wrong on a blue-and-white sheet where the accent is
+   the one thing that says "press this".
+   ============================================================ */
+
+.tk-create,
+.tk-rail-create,
+.tk-csv-door-pick,
+.tk-csv-again {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 540;
+  letter-spacing: -0.004em;
+  text-transform: none;
+}
+
+/* THE FLAT ACCENT, NOT THE BRAND RAMP. `--grad-brand` runs
+   `--accent` to `--accent-2`, and white measures 5.9:1 on the first
+   and 3.5:1 on the second — swept in-browser. A gradient cannot be
+   measured at every stop, which is the reason §2 already bars
+   gradient TEXT; ink on a gradient is the same fault the other way
+   up. Every state here is flat and every one clears the floor:
+   5.9:1 at rest, 5.2:1 on `--accent-hover`, more on
+   `--accent-press`. */
+/* `.btn.tk-create`, NOT `.tk-create`. `.btn.btn-primary` in base.css
+   is specificity (0,2,0) and a bare class is (0,1,0), so the accent
+   fill below lost to the near-black one and the button that makes a
+   table stayed the outgoing design's colour. Measured in-browser:
+   declared `--accent`, computed rgb(8, 27, 46). Matching the
+   specificity and landing later in the cascade is what makes it
+   take. White on `--accent` is 6.1:1, on `--accent-hover` 5.2:1 and
+   on `--accent-press` 8.1:1 — all three states clear the floor. */
+.btn.tk-create,
+.btn.tk-rail-create {
+  justify-content: center;
+  height: var(--h-lg);
+  padding: 0 var(--s-5);
+  border-color: transparent;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
+  transition:
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.btn.tk-create {
   margin-left: auto;
-  padding: 9px 20px;
-  font-size: 11px;
+}
+.btn.tk-create:hover,
+.btn.tk-rail-create:hover {
+  background: var(--accent-hover);
+  border-color: transparent;
+  box-shadow: var(--e3), var(--glow-md), inset 0 1px 0 var(--edge-light);
+}
+.btn.tk-create:active,
+.btn.tk-rail-create:active {
+  background: var(--accent-press);
+}
+.tk-create:active,
+.tk-rail-create:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.btn.tk-create:focus-visible,
+.btn.tk-rail-create:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
 }
 
-/* ---------------------------------------------------------- */
-/* The rail                                                   */
-/* ---------------------------------------------------------- */
+/* the two quiet ones keep the ordinary control step */
+.btn.tk-csv-door-pick,
+.btn.tk-csv-again {
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-control);
+  border-color: var(--line);
+  background: var(--surface-1);
+  color: var(--fg);
+}
+.btn.tk-csv-door-pick:hover,
+.btn.tk-csv-again:hover {
+  background: var(--surface-1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tk-csv-door-pick:active,
+.tk-csv-again:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.tk-csv-door-pick:focus-visible,
+.tk-csv-again:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
 
-/* Ruled off at the bottom: the tray of types and the list of tables the
-   user actually has are two different registers sharing one column. */
+/* ============================================================
+   THE RAIL — the quiet half of the left panel.
+   ============================================================ */
+
+/* Ruled off at the bottom: the tray of types and the list of tables
+   the user actually has are two registers sharing one column. */
 .tk-rail {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
-  padding: var(--sp-4) var(--sp-4) var(--sp-4);
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--s-5);
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
 }
 
 .tk-rail-create {
   width: 100%;
-  justify-content: center;
-  padding: 9px var(--sp-3);
 }
 
 .tk-rail-body {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  gap: var(--s-1);
 }
 
 .tk-rail-head {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
 .tk-rail-hint {
-  margin-bottom: var(--sp-2);
-  font-size: 11px;
+  margin-bottom: var(--s-2);
+  font-size: var(--t-caption-size);
   line-height: 1.45;
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
 .tk-chips {
@@ -720,36 +1028,39 @@
 /* On an empty sheet the hint line is not drawn (the invitation card
    carries it), so the tray keeps its own breathing room. */
 .tk-rail-head + .tk-chips {
-  margin-top: var(--sp-2);
+  margin-top: var(--s-2);
 }
 
 .tk-chip {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--s-3);
   width: 100%;
-  padding: 7px var(--sp-2);
+  padding: 7px var(--s-2);
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: transparent;
   text-align: left;
   cursor: grab;
   transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
 }
 .tk-chip:hover {
-  background: var(--paper-high);
-  border-color: var(--hairline);
+  background: var(--surface-1);
+  border-color: var(--line);
 }
 .tk-chip:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-  background: var(--paper-high);
+  outline: none;
+  box-shadow: var(--focus);
+  background: var(--surface-1);
 }
+/* A LIST ROW DARKENS INSTEAD OF SCALING — its neighbours must not
+   look like they moved (§4). */
 .tk-chip:active {
   cursor: grabbing;
-  background: var(--blue-wash);
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
 }
 
 .tk-chip-sym {
@@ -759,9 +1070,9 @@
 }
 
 .tk-chip-label {
-  font-size: 13px;
+  font-size: var(--t-small-size);
   line-height: 1.3;
-  color: var(--ink);
+  color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -771,88 +1082,30 @@
    NEW TABLE FROM A CSV — question one's third answer, and the
    proposal it opens.
 
-   TWO SURFACES, ONE SHEET. The DOOR sits under the kind cards on
-   question one; the PROPOSAL replaces question two when a file has
-   been read. Both are drawn with the parts already in this file —
-   the same 880px sheet, the same header, the same footer geometry,
-   the same CREATE TABLE in the same corner — because a person who
-   has answered question one twice should not have to learn a third
-   screen to answer it a third way.
+   TWO SURFACES, ONE SHEET. The DOOR sits under the kind cards; the
+   PROPOSAL replaces question two when a file has been read. Both
+   are drawn with the parts already in this file — same sheet, same
+   header, same footer geometry, same Create table in the same
+   corner — because a person who has answered question one twice
+   should not have to learn a third screen to answer it a third way.
 
-   CONTRAST, MEASURED ON WHITE (--paper-high, #ffffff):
-     .tk-csv-why        --ink-soft   7.7:1
-     .tk-csv-fact       --ink-faint  4.7:1   (on white; never on a tint)
-     .tk-csv-note       --ink-soft   7.7:1
-     .tk-csv-blurb      --ink-soft   7.7:1
-   and on the one tinted surface here, --paper-sunken #f1f2f5:
-     .tk-csv-ex-item    --ink-soft   6.9:1
-   --ink-faint is 4.26:1 over a tint and therefore appears on white
-   only. The exception chips take --ink-soft for exactly that reason.
+   CONTRAST, on the two grounds used here — `--surface-1` (#ffffff)
+   and `--surface-3` (#eef3f8):
+     .tk-csv-why      --fg-secondary  8.1 : 1
+     .tk-csv-fact     --fg-tertiary   5.5 : 1  (on white)
+     .tk-csv-note     --fg-secondary  8.1 : 1
+     .tk-csv-blurb    --fg-secondary  8.1 : 1
+     .tk-csv-ex-item  --fg-secondary  7.4 : 1  (on the tint)
+   The quietest ink measures 4.9:1 on the tint, so it is kept to
+   white and the quoted chips take the tier above it.
    ============================================================ */
-
-/* The picker itself is never seen: the door and every refusal press
-   it. Not `display: none` — a hidden input cannot be clicked in
-   Safari — so it is taken out of the layout instead. */
-.tk-csv-file {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* -- the door, under the kind cards ------------------------- */
-
-.tk-csv-door {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  margin-top: var(--sp-4);
-  padding: var(--sp-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-sunken);
-}
-
-.tk-csv-door-say {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
-.tk-csv-door-pick {
-  flex: none;
-}
-
-/* -- the file's own name in the header ---------------------- */
-
-/* NOT `.tk-kind-tag`. That one uppercases, which is right for a kind
-   — a fixed word this app chose — and wrong for a file name, which is
-   the person's own text and cannot be uppercased without losing which
-   letters they typed. */
-.tk-file-tag {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ink-soft);
-}
-
-/* -- the proposal ------------------------------------------- */
 
 .tk-csv {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--s-4);
   min-height: 300px;
-  padding: var(--sp-6) var(--sp-6) var(--sp-5);
+  padding: var(--s-6) var(--s-6) var(--s-5);
   overflow-y: auto;
 }
 
@@ -860,36 +1113,39 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--sp-3);
+  gap: var(--s-3);
   min-width: 0;
 }
 
 .tk-csv-filename {
   min-width: 0;
-  font-size: 13px;
-  font-weight: 560;
-  letter-spacing: -0.004em;
-  color: var(--ink);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
   overflow-wrap: anywhere;
 }
 
 .tk-csv-fact {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
-  color: var(--ink-faint);
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
 }
 
 .tk-csv-notes {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .tk-csv-note {
-  font-size: 12px;
+  font-size: var(--t-caption-size);
   line-height: 1.5;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
 }
 
 /* The four captions and the four tracks are one grid, declared once
@@ -900,54 +1156,57 @@
   display: grid;
   grid-template-columns: 18px minmax(110px, 1.1fr) 148px minmax(0, 2fr);
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--s-3);
 }
 
 .tk-csv-legend {
-  padding: 0 var(--sp-2) var(--sp-1);
-  border-bottom: 1px solid var(--hairline);
+  padding: 0 var(--s-2) var(--s-1);
+  border-bottom: 1px solid var(--line);
 }
 .tk-csv-legend .mono-label {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
 .tk-csv-cols {
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .tk-csv-col {
   align-items: start;
-  padding: var(--sp-3) var(--sp-2);
-  border-bottom: 1px solid var(--hairline);
+  padding: var(--s-3) var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
 }
-/* A LIST ROW DARKENS INSTEAD OF SCALING — its neighbours must not
-   look like they moved. */
+/* A LIST ROW DARKENS INSTEAD OF SCALING. */
 .tk-csv-col:hover {
-  background: var(--paper-sunken);
+  background: var(--surface-3);
 }
 /* The column that names a row carries a rail, the way a card does —
    the radio says WHICH, the rail says which at a glance down the
    list. Two pixels of accent, once. */
 .tk-csv-col.is-name {
-  box-shadow: inset 2px 0 0 0 var(--blue);
+  box-shadow: inset 2px 0 0 0 var(--accent);
 }
 
 .tk-csv-radio {
   width: 14px;
   height: 14px;
   margin: 7px 0 0;
-  accent-color: var(--blue);
+  accent-color: var(--accent);
   cursor: pointer;
 }
 .tk-csv-radio:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus);
+  border-radius: var(--r-full);
 }
 
 .tk-csv-name.is-blank {
-  border-color: var(--red);
-  box-shadow: 0 0 0 3px var(--red-wash);
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-wash);
 }
 
 .tk-csv-holds {
@@ -971,9 +1230,9 @@
 }
 
 .tk-csv-why {
-  font-size: 12px;
+  font-size: var(--t-caption-size);
   line-height: 1.45;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
 }
 
 /* The values a type cannot carry, named rather than counted. Mono
@@ -982,41 +1241,44 @@
 .tk-csv-ex {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-1);
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .tk-csv-ex-item,
 .tk-csv-ex-more {
   padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--paper-sunken);
+  border-radius: var(--r-full);
+  background: var(--surface-3);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
-  color: var(--ink-soft);
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-secondary);
 }
 .tk-csv-ex-item b {
   margin-left: 3px;
   font-weight: 500;
-  /* the COUNT is the meaning-carrying half of the chip and the chip
-     sits on a tint, where --ink-faint measures 4.26:1 and fails */
-  color: var(--ink);
+  /* the COUNT is the meaning-carrying half of the chip, and the chip
+     sits on a tint where the quietest ink is 4.9:1 */
+  color: var(--fg);
 }
 .tk-csv-ex-more {
   background: transparent;
 }
 
 .tk-csv-col-note {
-  font-size: 11px;
+  font-size: var(--t-caption-size);
   line-height: 1.45;
-  color: var(--red);
+  color: var(--danger);
 }
 
 .tk-csv-aside {
   max-width: 62ch;
-  font-size: 12px;
+  font-size: var(--t-caption-size);
   line-height: 1.5;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
 }
 
 /* -- a file that cannot be read ----------------------------- */
@@ -1025,44 +1287,45 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-4);
+  gap: var(--s-4);
   min-height: 200px;
-  padding: var(--sp-6);
+  padding: var(--s-6);
 }
 
 .tk-csv-refuse-list {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--s-3);
   max-width: 62ch;
+  margin: 0;
+  padding: 0 0 0 var(--s-4);
+  list-style: none;
+  border-left: 2px solid var(--danger);
 }
 
 .tk-csv-refuse-item {
-  font-size: 13px;
+  font-size: var(--t-body-size);
   line-height: 1.6;
-  color: var(--ink);
+  color: var(--fg);
 }
 
-.tk-csv-again {
-  flex: none;
-}
-
-/* -- the footer --------------------------------------------- */
+/* -- the CSV footer ----------------------------------------- */
 
 .tk-csv-foot {
+  flex: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-6) var(--sp-5);
-  border-top: 1px solid var(--hairline);
-  background: var(--paper-high);
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6) var(--s-5);
+  border-top: 1px solid var(--line-subtle);
+  background: var(--surface-1);
 }
 
 .tk-csv-foot-fields {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 6px var(--sp-4);
+  gap: 6px var(--s-4);
   min-width: 0;
 }
 
@@ -1073,30 +1336,30 @@
   min-width: 0;
 }
 .tk-csv-kind .mono-label {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
 .tk-csv-kind-row {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   min-width: 0;
-  color: var(--tk-ink, var(--ink));
+  color: var(--tk-ink, var(--fg));
 }
 
 /* the kind's own sentence, from the model — never written here */
 .tk-csv-blurb {
   grid-column: 1 / -1;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--t-caption-size);
   line-height: 1.45;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
 }
 
 .tk-csv-go {
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
+  gap: var(--s-4);
   justify-self: end;
   min-width: 0;
 }
@@ -1105,9 +1368,9 @@
   min-width: 0;
   max-width: 34ch;
   text-align: right;
-  font-size: 12px;
+  font-size: var(--t-caption-size);
   line-height: 1.4;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
 }
 
 @media (max-width: 780px) {
@@ -1127,5 +1390,27 @@
   .tk-csv-go {
     justify-self: stretch;
     justify-content: space-between;
+  }
+}
+
+/* ============================================================
+   MOVEMENT GOES; LIGHT AND COLOUR STAY.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .tk-dialog,
+  .tk-scrim {
+    animation: none;
+  }
+  .tk-kind-card:hover,
+  .tk-kind-card:focus-visible,
+  .tk-kind-card:active,
+  .tk-create:active,
+  .tk-rail-create:active,
+  .tk-csv-door-pick:active,
+  .tk-csv-again:active,
+  .tk-plate-add:active,
+  .tk-back:active,
+  .tk-close:active {
+    transform: none;
   }
 }

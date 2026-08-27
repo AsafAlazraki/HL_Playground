@@ -243,9 +243,13 @@ function IndustryStep({
         </button>
 
         <header className="ob-head">
-          {/* the name they just typed, so the second screen says where
-              they are without spending the headline on it */}
-          <span className="mono-label ob-eyebrow">{org}</span>
+          {/* THE NAME THEY JUST TYPED, AND IT IS NOT A LABEL. The second
+              screen says whose sheet this is without spending the
+              headline on a 60-character business name — but it is the
+              dealer's own proper noun, so it does NOT take
+              `.mono-label`, whose identity is uppercase. §2: a name
+              keeps its case, and uppercasing one is lossy. */}
+          <span className="ob-eyebrow">{org}</span>
           <h1 className="ob-title">What do you sell?</h1>
           {/* THE SUB-LINE SAYS WHAT PICKING EACH ONE GETS YOU. It does
               not claim Marine "arrives ready" — both answers land on the

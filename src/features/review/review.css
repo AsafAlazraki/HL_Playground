@@ -1,37 +1,49 @@
 /* ============================================================
-   Red-pencil review — all surfaces   (prefix: rv-)
+   REVIEW — the rail, the badge and the field mark.   (rv-)
 
-   CHART ROOM chrome only: white instrument panels, marine-navy
-   ink, hairlines, mono micro-stamps, corner registration ticks.
-   The reviewer's ink is --red / --red-wash; a cleared mark is
-   confirmed in --accent-viridian. No --canvas-* tokens live here
-   — even FindingBadge sits on a WHITE card, never on the navy
-   sheet itself. Rhythm on the --sp scale throughout.
+   WHAT THIS FILE USED TO BE, since the diff is large enough to
+   want a reason. It was written for "The Chart Room": a rubber
+   stamp with a double rule and 17px letterspaced capitals, a
+   hand-drawn pencil circle built from four irregular border
+   radii, corner registration ticks on every plate, and EVERY
+   piece of text on the surface — the rule's name, the severity,
+   the button, the address, the cleared note — set in 11px
+   uppercase mono at up to 0.2em of tracking.
+
+   That is four rules broken at once, and they are the four this
+   system cares most about:
+
+     · uppercase is a LABEL style, never a name, a value or a
+       button. 'REPEATING COLUMNS' is the name of a rule and
+       'APPLY FIX' is a button, and both were shouting.
+     · one accent. There was one hue here — red — carrying
+       blockers, advisories, counts, buttons and hover states
+       alike, so severity could not be read from colour at all.
+     · a type step is a SET. Nine different combinations of
+       11px + a tracking value stood in for a hierarchy.
+     · a figure is mono; a sentence is not. Both were mono.
+
+   WHAT IT IS NOW. Two hues, both measured. A blocker is
+   `--danger`, an advisory is `--warning`, and the split is
+   carried by SHAPE as well as colour — a solid margin rule
+   against a dashed one — so it survives colour blindness and it
+   survives `prefers-contrast: more`, where the washes go.
+
+   MEASURED CONTRAST, on the beds these actually sit on:
+     --warning  #8a5a00 on white          5.97 : 1
+     --warning  #e3b341 on --surface-1     8.3 : 1  (dark)
+     --danger   #b3261e on white           6.4 : 1
+     --danger   #ff7b72 on --surface-1     7.3 : 1  (dark)
+   A wash counts as a bed: text over `--danger-wash` /
+   `--warning-wash` is `--ink` or the hue itself, never
+   `--ink-faint`, which measures under 4.5 once a tint is
+   composited under it.
+
+   THE ACCENT APPEARS THREE TIMES on this rail and no more: the
+   focus ring, the hovered address (which is a door), and the
+   hovered Apply button. Severity hues are not the accent and
+   never stand in for it.
    ============================================================ */
-
-/* ---------------------------------------------------------- */
-/* Shared motifs                                              */
-/* ---------------------------------------------------------- */
-
-/* corner registration ticks — inherit the plate's own ink */
-.rv-tick {
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  pointer-events: none;
-}
-.rv-tick-tl {
-  top: -4px;
-  left: -4px;
-  border-top: 1px solid currentColor;
-  border-left: 1px solid currentColor;
-}
-.rv-tick-br {
-  bottom: -4px;
-  right: -4px;
-  border-bottom: 1px solid currentColor;
-  border-right: 1px solid currentColor;
-}
 
 .rv-sr-live {
   position: absolute;
@@ -66,7 +78,7 @@
 @keyframes rv-flash {
   0%,
   72% {
-    border-color: var(--accent-viridian);
+    border-color: var(--success);
   }
   100% {
     border-color: var(--hairline);
@@ -74,7 +86,7 @@
 }
 
 /* ============================================================
-   The rail — same 340px geometry as the inspector
+   THE RAIL — same 340px geometry as the inspector
    ============================================================ */
 
 .rv-rail {
@@ -85,128 +97,158 @@
   min-height: 0;
   background: var(--paper-high);
   border-left: 1px solid var(--hairline);
-  box-shadow: var(--shadow-sheet);
-  animation: sheet-in var(--t-med) var(--ease-draft) both;
+  box-shadow: var(--e2);
+  animation: sheet-in var(--d-med) var(--ease-out-expo) both;
   z-index: 20;
 }
 
-/* -- head + sheet-health stamp ------------------------------ */
+/* -- the head ------------------------------------------------ */
 
 .rv-head {
   position: relative;
   flex: 0 0 auto;
-  padding: var(--sp-3) var(--sp-4) var(--sp-4);
-  border-bottom: 1px solid var(--hairline);
-  background: var(--paper-high);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--grad-surface);
 }
 
 .rv-head-row {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
 }
 
+/* THE ONE UPPERCASE STYLE ON THIS SURFACE. It is a section
+   caption, which is the whole list of what uppercase is for. It
+   was 11px at 0.24em — nearly four times the system's tracking. */
 .rv-eyebrow {
   flex: 0 0 auto;
-  font-size: 11px;
-  letter-spacing: 0.24em;
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
   color: var(--ink-faint);
 }
 
 .rv-head-rule {
   flex: 1 1 auto;
   height: 1px;
-  background: var(--hairline);
+  background: linear-gradient(90deg, var(--line) 0%, transparent 100%);
 }
 
 .rv-close {
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: none;
-  color: var(--ink-soft);
+  color: var(--ink-faint);
   cursor: pointer;
   transition:
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft);
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .rv-close:hover {
-  color: var(--red);
-  border-color: var(--red);
-  background: var(--red-wash);
+  color: var(--ink);
+  border-color: var(--hairline);
+  background: var(--surface-3);
+}
+/* press lands on pointer-down */
+.rv-close:active {
+  transform: scale(0.97);
+  background: var(--surface-4);
 }
 .rv-close:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
 }
 
-.rv-stamp {
-  position: relative;
+/* -- the summary --------------------------------------------- */
+
+/* the rule down the left says which way the sheet is leaning, and
+   it is the only chrome the summary takes */
+.rv-sum {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid currentColor;
-  border-radius: var(--radius);
-  background: var(--paper-high);
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
 }
-/* rubber-stamp double rule */
-.rv-stamp::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: 1px solid currentColor;
-  border-radius: 1px;
-  opacity: 0.24;
-  pointer-events: none;
+.rv-sum[data-tone='blocker'] {
+  border-left-color: var(--danger);
 }
-.rv-stamp.is-marked {
-  color: var(--red);
-  background: var(--red-wash);
+.rv-sum[data-tone='advisory'] {
+  border-left-color: var(--warning);
 }
-.rv-stamp.is-clean {
-  color: var(--accent-viridian);
+.rv-sum[data-tone='clean'] {
+  border-left-color: var(--success);
 }
 
-.rv-stamp-mark {
-  position: relative;
+.rv-sum-line {
+  margin: 0;
   font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 700;
-  font-size: 17px;
-  line-height: 1.1;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: currentColor;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
+  color: var(--ink);
 }
 
-.rv-stamp-split {
-  position: relative;
+.rv-sum-say {
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  color: var(--ink-soft);
+}
+
+.rv-sum-tally {
   display: flex;
-  align-items: center;
-  gap: var(--sp-2);
+  align-items: baseline;
+  gap: var(--s-5);
+}
+.rv-sum-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+/* MONO, TABULAR, AND THE SIZE OF A HEADING — a figure is the
+   fact this panel exists to state. The hue is the severity's. */
+.rv-sum-fig {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--t-mono-lg-size);
   font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
-.rv-seg {
-  color: var(--ink-faint);
+.rv-sum-cell[data-kind='blocker'] .rv-sum-fig {
+  color: var(--danger);
 }
-.rv-seg.is-live {
-  color: currentColor;
+.rv-sum-cell[data-kind='advisory'] .rv-sum-fig {
+  color: var(--warning);
 }
-.rv-seg-sep {
-  color: var(--ink-faint);
+.rv-sum-word {
+  font-size: var(--t-caption-size);
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-soft);
 }
 
 /* -- body ---------------------------------------------------- */
@@ -217,40 +259,48 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
-  padding: var(--sp-4) var(--sp-4) var(--sp-6);
+  gap: var(--s-6);
+  padding: var(--s-4) var(--s-4) var(--s-8);
 }
 
-/* -- entity group -------------------------------------------- */
+/* -- one table's marks --------------------------------------- */
 
 .rv-group {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--s-3);
 }
 
 .rv-group-head {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  padding-bottom: var(--sp-2);
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--s-2);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
 }
 
 .rv-dot {
   flex: 0 0 auto;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
   background: var(--rv-accent, var(--ink));
 }
 
+/* A TABLE'S NAME IS A NAME. This was 11.5px at 0.09em of tracking
+   with `.block-heading`'s uppercase over the top, so every table
+   on the rail was shouted and 'OBSOLETE Trailers' lost its own
+   emphasis on the way. */
 .rv-group-name {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 11.5px;
-  line-height: 1.2;
-  letter-spacing: 0.09em;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
+  text-transform: none;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -259,66 +309,77 @@
 
 .rv-group-count {
   flex: 0 0 auto;
-  min-width: 14px;
-  text-align: right;
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  text-align: center;
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--red);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  background: var(--chip-bg);
+  color: var(--ink-soft);
+}
+.rv-group-count[data-kind='blocker'] {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+.rv-group-count[data-kind='advisory'] {
+  background: var(--warning-wash);
+  color: var(--warning);
 }
 
 .rv-cards {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--s-2);
 }
 
-/* -- review card --------------------------------------------- */
+/* -- one mark ------------------------------------------------- */
 
 .rv-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-4);
   border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  animation: fade-in var(--t-med) var(--ease-draft) both;
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  animation: fade-in var(--d-med) var(--ease) both;
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease);
 }
-/* the pencil rule down the margin: solid for blockers, dashed for advisories */
+/* THE MARGIN RULE, and it carries severity twice: in its hue and
+   in whether it is solid. Two channels, so the split survives a
+   reader who cannot separate the hues. */
 .rv-card::before {
   content: '';
   position: absolute;
   top: -1px;
   bottom: -1px;
   left: -1px;
-  width: 2px;
-  border-radius: var(--radius) 0 0 var(--radius);
-  background: var(--red);
+  width: 3px;
+  border-radius: var(--r-card) 0 0 var(--r-card);
+  background: var(--danger);
 }
 .rv-card[data-severity='advisory']::before {
-  background: repeating-linear-gradient(var(--red) 0 5px, transparent 5px 9px);
-  opacity: 0.6;
-}
-.rv-card[data-severity='blocker'] {
-  background: var(--red-wash);
+  background: repeating-linear-gradient(var(--warning) 0 5px, transparent 5px 9px);
 }
 .rv-card:hover {
   border-color: var(--hairline-strong);
-  box-shadow: var(--shadow-sheet);
+  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
 }
 .rv-card:focus-within {
   border-color: var(--blue);
 }
 .rv-card.is-flashing {
   animation:
-    fade-in var(--t-med) var(--ease-draft) both,
-    rv-flash 1500ms var(--ease-draft) both;
+    fade-in var(--d-med) var(--ease) both,
+    rv-flash 1500ms var(--ease) both;
 }
 
 .rv-card-head {
@@ -330,61 +391,68 @@
   margin: 0;
   padding: 0;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: none;
   text-align: left;
   cursor: pointer;
 }
 .rv-card-head:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 3px;
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 .rv-card-titlerow {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   min-width: 0;
 }
 
 .rv-card-mark {
   flex: 0 0 auto;
   display: inline-flex;
-  color: var(--red);
+  color: var(--danger);
+}
+.rv-card[data-severity='advisory'] .rv-card-mark {
+  color: var(--warning);
 }
 
+/* THE RULE'S NAME, SET AS A NAME. 11px uppercase mono at 0.13em
+   became the reading step in the sans — see `ruleTitle` in
+   describe.ts for why casing it in the feature is safe. */
 .rv-card-title {
   flex: 1 1 auto;
   min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: var(--t-body-size);
+  font-weight: 560;
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-body-track);
   color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rv-card[data-severity='blocker'] .rv-card-title {
-  color: var(--red);
-}
 
+/* THE ONE THING ON THE CARD THAT IS A LABEL, so it is the one
+   thing on the card in capitals. 11px is the floor and it sits on
+   it, at the system's own label tracking rather than at 0.2em. */
 .rv-card-sev {
   flex: 0 0 auto;
-  padding: 1px 5px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
+  padding: 1px 6px;
+  border-radius: var(--r-full);
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: 1.5;
+  letter-spacing: var(--t-label-track);
   text-transform: uppercase;
-  color: var(--ink-faint);
+  background: var(--danger-wash);
+  color: var(--danger);
 }
-.rv-card[data-severity='blocker'] .rv-card-sev {
-  color: var(--red);
-  border-color: var(--red);
+.rv-card[data-severity='advisory'] .rv-card-sev {
+  background: var(--warning-wash);
+  color: var(--warning);
 }
 
 .rv-card-target {
@@ -397,19 +465,22 @@
   flex: 0 0 auto;
   display: inline-flex;
   color: var(--ink-faint);
-  transition: color var(--t-fast) var(--ease-draft);
+  transition: color var(--d-fast) var(--ease);
 }
+/* the address is mono because it is an ADDRESS — a table and its
+   columns, which a person reads character by character */
 .rv-card-address {
   flex: 1 1 auto;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.03em;
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0.01em;
+  line-height: var(--t-mono-lead);
   color: var(--ink-soft);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: color var(--t-fast) var(--ease-draft);
+  transition: color var(--d-fast) var(--ease);
 }
 .rv-card-head:hover .rv-card-address,
 .rv-card-head:hover .rv-card-arrow,
@@ -422,9 +493,9 @@
 .rv-why {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--t-small-size);
   line-height: 1.62;
-  letter-spacing: 0.004em;
+  letter-spacing: var(--t-small-track);
   color: var(--ink-soft);
   text-wrap: pretty;
 }
@@ -432,189 +503,207 @@
 .rv-fix {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-1);
-  padding-top: var(--sp-2);
-  border-top: 1px dashed var(--hairline);
+  gap: var(--s-2);
+  margin-top: var(--s-1);
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--line-subtle);
 }
 .rv-fix-label {
   flex: 1 1 auto;
   min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.03em;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  letter-spacing: var(--t-caption-track);
   color: var(--ink-faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* WHAT CANNOT BE DONE SAYS WHY, WHERE IT IS. A finding with no
+   derived correction used to end in nothing at all. */
+.rv-nofix {
+  margin: var(--s-1) 0 0;
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--line-subtle);
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-faint);
+}
+
+/* A BUTTON IS NOT A LABEL, so it is not in capitals. At rest it is
+   an ordinary control in ink; the accent arrives on hover and on
+   focus, which is where an accent belongs. */
 .rv-apply {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 9px;
-  border: 1px solid var(--red);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--red);
+  justify-content: center;
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  font-family: var(--font-ui);
+  font-size: var(--t-small-size);
+  font-weight: 540;
+  letter-spacing: -0.003em;
+  text-transform: none;
+  color: var(--ink);
   cursor: pointer;
+  white-space: nowrap;
   transition:
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .rv-apply:hover {
-  background: var(--red);
-  color: var(--paper-high);
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
 }
 .rv-apply:active {
-  transform: translateY(1px);
+  transform: scale(0.97);
+  background: var(--blue-wash-strong);
 }
 .rv-apply:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
 }
 
-/* -- cleared mark (the brief confirmation) ------------------- */
+/* -- a mark that has just been cleared ------------------------ */
 
 /* doubled class keeps this ahead of the [data-severity] card rules */
 .rv-card.rv-ghost {
-  gap: var(--sp-1);
+  gap: var(--s-1);
   border-style: dashed;
-  border-color: var(--accent-viridian);
-  background: var(--paper-high);
+  border-color: var(--success);
+  background: var(--surface-1);
   box-shadow: none;
-  animation: rv-cleared 1500ms var(--ease-draft) both;
+  animation: rv-cleared 1500ms var(--ease) both;
 }
 .rv-card.rv-ghost::before {
-  background: var(--accent-viridian);
-  opacity: 0.7;
+  background: var(--success);
 }
 .rv-ghost-row {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   min-width: 0;
 }
 .rv-ghost-mark {
   flex: 0 0 auto;
   display: inline-flex;
-  color: var(--accent-viridian);
+  color: var(--success);
 }
 .rv-ghost-title {
   flex: 1 1 auto;
   min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--accent-viridian);
+  font-family: var(--font-ui);
+  font-size: var(--t-body-size);
+  font-weight: 560;
+  letter-spacing: var(--t-body-track);
+  color: var(--success);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .rv-ghost-note {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  letter-spacing: var(--t-caption-track);
   color: var(--ink-faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* -- clean-sheet plate --------------------------------------- */
+/* -- the clean sheet ----------------------------------------- */
 
 .rv-clean {
   display: flex;
-  padding: var(--sp-4) var(--sp-1) var(--sp-2);
+  padding: var(--s-2) 0;
 }
 .rv-clean-plate {
   position: relative;
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-5) var(--sp-4);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  box-shadow: var(--shadow-sheet);
-  color: var(--accent-viridian);
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-6) var(--s-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
 }
+.rv-clean-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-full);
+  background: var(--success-wash);
+  color: var(--success);
+}
+/* A SENTENCE, NOT A STAMP. This was 15px of letterspaced capitals
+   with a synthetic 'wdth' 118 axis on a face that has no such
+   axis loaded, which renders as a smeared outline. */
 .rv-clean-stamp {
+  margin: 0;
   font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1.1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent-viridian);
-}
-.rv-clean-rule {
-  display: block;
-  height: 1px;
-  background: var(--hairline);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  text-transform: none;
+  color: var(--ink);
 }
 .rv-clean-prose {
+  margin: 0;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--t-small-size);
   line-height: 1.62;
+  letter-spacing: var(--t-small-track);
   color: var(--ink-soft);
   text-wrap: pretty;
 }
 
 /* ============================================================
-   FindingBadge — the margin mark on a white entity card
+   FindingBadge — the count on a table's card on the sheet
    ============================================================ */
 
 .rv-badge {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
+  min-width: 20px;
   height: 18px;
-  padding: 0 4px;
-  /* hand-drawn pencil circle: deliberately irregular */
-  border: 1px solid var(--red);
-  border-radius: 52% 48% 47% 53% / 48% 52% 48% 52%;
-  background: var(--red-wash);
-  color: var(--red);
+  padding: 0 6px;
+  border: 1px solid var(--warning);
+  border-radius: var(--r-full);
+  background: var(--warning-wash);
+  color: var(--warning);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
   user-select: none;
   cursor: default;
 }
-/* the second, looser pencil stroke around the first */
-.rv-badge-tick {
-  position: absolute;
-  inset: -3px;
-  border: 1px solid var(--red);
-  border-radius: 47% 53% 52% 48% / 53% 47% 52% 48%;
-  opacity: 0.34;
-  pointer-events: none;
-}
 .rv-badge[data-severity='blocker'] {
-  background: var(--red);
-  color: var(--paper-high);
-}
-.rv-badge[data-severity='blocker'] .rv-badge-tick {
-  opacity: 0.5;
+  border-color: var(--danger);
+  background: var(--danger-solid);
+  color: var(--fg-on-accent);
 }
 .rv-badge-count {
   position: relative;
@@ -627,7 +716,7 @@
 .rv-fm {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  gap: var(--s-1);
   min-width: 0;
 }
 
@@ -639,36 +728,42 @@
   max-width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 2px 5px 2px 4px;
+  padding: 2px 7px 2px 5px;
   border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-full);
   background: none;
   text-align: left;
   cursor: pointer;
   transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.rv-fm-trigger:active {
+  transform: scale(0.97);
 }
 .rv-fm-trigger:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
 }
 
 .rv-fm-glyph {
   flex: 0 0 auto;
   display: inline-flex;
-  color: var(--red);
+  color: var(--warning);
 }
 
+/* the rule's name, and a name is not a label */
 .rv-fm-title {
   flex: 0 1 auto;
   min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  font-weight: 550;
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -677,8 +772,9 @@
 .rv-fm-more {
   flex: 0 0 auto;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
 }
 
@@ -689,71 +785,81 @@
 }
 
 /* blockers carry the wash; advisories are quieter but still marks */
+.rv-fm[data-severity='blocker'] .rv-fm-glyph {
+  color: var(--danger);
+}
 .rv-fm[data-severity='blocker'] .rv-fm-trigger {
-  border-color: var(--red);
-  background: var(--red-wash);
-  color: var(--red);
+  border-color: var(--danger);
+  background: var(--danger-wash);
+  color: var(--danger);
 }
 .rv-fm[data-severity='advisory'] .rv-fm-trigger {
   color: var(--ink-soft);
 }
-.rv-fm-trigger:hover {
-  border-color: var(--red);
-  background: var(--red-wash);
-  color: var(--red);
+.rv-fm[data-severity='advisory'] .rv-fm-trigger:hover {
+  border-color: var(--warning);
+  background: var(--warning-wash);
+  color: var(--warning);
+}
+.rv-fm[data-severity='blocker'] .rv-fm-trigger:hover {
+  border-color: var(--danger);
+  background: var(--danger-wash);
 }
 .rv-fm-trigger:hover .rv-fm-caret,
 .rv-fm.is-open .rv-fm-caret {
-  color: var(--red);
+  color: inherit;
 }
 
 .rv-fm-body {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 2px solid var(--red);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-left: 2px solid var(--warning);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
   background: var(--paper-sunken);
-  animation: fade-in var(--t-fast) var(--ease-draft) both;
+  animation: fade-in var(--d-fast) var(--ease) both;
+}
+.rv-fm[data-severity='blocker'] .rv-fm-body {
+  border-left-color: var(--danger);
 }
 .rv-fm-item {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   align-items: flex-start;
 }
 .rv-fm-item-title {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--red);
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  font-weight: 560;
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
+  color: var(--ink);
 }
 .rv-fm-why {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--t-caption-size);
   line-height: 1.58;
   color: var(--ink-soft);
   text-wrap: pretty;
 }
 .rv-apply-sm {
-  padding: 3px 7px;
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  height: 24px;
+  padding: 0 var(--s-2);
+  font-size: var(--t-caption-size);
 }
 
 .rv-fm-flash {
   align-self: flex-start;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent-viridian);
-  animation: rv-cleared 1500ms var(--ease-draft) both;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  font-weight: 560;
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
+  color: var(--success);
+  animation: rv-cleared 1500ms var(--ease) both;
 }
 .rv-fm-cleared {
   flex-direction: row;
@@ -761,5 +867,46 @@
   gap: 6px;
 }
 .rv-fm-cleared .rv-fm-glyph {
-  color: var(--accent-viridian);
+  color: var(--success);
+}
+
+/* ============================================================
+   THE THREE SIGNALS, HONOURED.
+   ============================================================ */
+
+/* Movement goes; colour and the arrival stay. A mark that snaps
+   into existence under a pointer is its own kind of startle, so
+   the fades are kept and only the travel is removed. */
+@media (prefers-reduced-motion: reduce) {
+  .rv-rail,
+  .rv-group {
+    animation: none;
+  }
+  .rv-card.rv-ghost,
+  .rv-fm-flash {
+    animation: fade-in 1500ms steps(1, end) both;
+  }
+  .rv-close:active,
+  .rv-apply:active,
+  .rv-fm-trigger:active {
+    transform: none;
+  }
+}
+
+/* AT HIGHER CONTRAST A WASH IS NOT A SIGNAL. Every severity tint
+   becomes an edge, and the two hues keep their ink — which is why
+   the margin rule carries the split in SHAPE as well: solid for a
+   blocker, dashed for an advisory, in every setting. */
+@media (prefers-contrast: more) {
+  .rv-card-sev,
+  .rv-group-count,
+  .rv-fm-trigger {
+    border: 1px solid currentColor;
+  }
+  .rv-card[data-severity='blocker'] {
+    border-color: var(--danger);
+  }
+  .rv-badge {
+    border-width: 2px;
+  }
 }

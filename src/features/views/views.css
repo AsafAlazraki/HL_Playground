@@ -14,11 +14,20 @@
    token. There is not a raw hex in this file.
    ============================================================ */
 
+/* THE FIELD THE SHEET STANDS ON. It was flat --paper, which is the
+   same ground as everything else in the app and gave a 1080px white
+   document nothing to sit against. `--canvas-bg` is the sheet ground —
+   a degree bluer — and the wash over it is `--aurora-1`, ds.css's own
+   atmosphere token at 6% alpha. Under 6% shifts luminance by less than
+   one contrast point, so nothing measured below moves; and it is a
+   TOKEN gradient, not a colour written here. */
 .vw-root {
   position: relative;
   height: 100%;
   overflow: auto;
-  background: var(--paper);
+  background:
+    radial-gradient(120% 55% at 50% -8%, var(--aurora-1) 0%, transparent 62%),
+    var(--canvas-bg);
   padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) * 2);
 }
 
@@ -47,35 +56,30 @@
   color: var(--ink-faint);
 }
 
+/* THE SHEET. 940px was the width of a header made of a thumbnail and
+   five specs. The page now opens on a photograph beside a hero name
+   and closes on a grid of cards, and both want the room — at 940 the
+   card grid fitted three across and the hero's two columns fought.
+
+   `--e-hero` is ds.css's own hero rung, and this is the surface it was
+   added for: the one document in the app a salesperson turns a screen
+   around to show somebody. The lit top edge is what makes it read as
+   a sheet with a light on it rather than a bordered rectangle.
+
+   THE CORNER REGISTRATION TICKS ARE GONE. Two 9px drafting-board
+   L-marks were the last of The Chart Room on this page — ornament
+   that carried no fact, on the screen the brief asks to be the
+   calmest in the app. */
 .vw-sheet {
   position: relative;
-  max-width: 940px;
+  z-index: 1;
+  max-width: 1080px;
   margin: 0 auto;
   padding: calc(var(--sp-6) + var(--sp-2)) var(--sp-6) var(--sp-6);
   background: var(--paper-high);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sheet);
-}
-
-/* -- corner registration ticks ------------------------------ */
-.vw-tick {
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  pointer-events: none;
-}
-.vw-tick--tl {
-  top: -1px;
-  left: -1px;
-  border-top: 1.25px solid var(--hairline-strong);
-  border-left: 1.25px solid var(--hairline-strong);
-}
-.vw-tick--tr {
-  top: -1px;
-  right: -1px;
-  border-top: 1.25px solid var(--hairline-strong);
-  border-right: 1.25px solid var(--hairline-strong);
+  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
 }
 
 .vw-void {
@@ -85,20 +89,92 @@
 }
 
 /* ============================================================
-   THE HEAD — what this page is for
+   THE HERO — what this page is for, at the size it is worth.
+
+   WHAT WAS HERE. `.vw-head` was a flex row: a 120×90 plate, an
+   identity block, a button. Its own note explains why the plate was
+   120×90 — so a picture could never drive the header's height. That
+   was the right rule for a header and the wrong ambition for this
+   screen. This is the page a salesperson turns the monitor round on,
+   and the largest thing on it was a paragraph of grey.
+
+   SO THE PHOTOGRAPH DRIVES IT NOW, and the words take the column
+   beside it: the name at `--t-hero-*` (the step above display), the
+   specs as a strip under it, and what the rig comes to under that.
+
+   THE SECOND COLUMN IS CONDITIONAL, and that is the whole of the
+   honesty here. `.vw-hero--shot` is set by the PAGE, from
+   `hasPicture`, before anything is laid out — so a hull nobody has
+   photographed gets one wide column of words rather than a reserved
+   box with nothing in it. `:has()` covers the second case: a picture
+   whose host will not serve it, where `HeroPicture` renders nothing
+   and the figure would otherwise be an empty grey rectangle. Neither
+   state ever invents a photograph.
    ============================================================ */
 
-.vw-head {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-5);
-  padding-bottom: var(--sp-5);
+.vw-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5) var(--sp-6);
+  padding-bottom: var(--sp-6);
   border-bottom: 1px solid var(--hairline);
 }
 
-.vw-head-id {
-  flex: 1 1 auto;
+/* TWO COLUMNS, FOUR CHILDREN, NO WRAPPERS. The figure and the spec
+   strip take the left; the name and what it comes to take the right.
+   That pairing is the argument: a photograph over the measurements it
+   is a photograph of, and the name over the money. It also balances
+   the two columns, which a name-over-money stack beside a lone
+   photograph did not — measured at 1037px the picture ended 300px
+   above the foot of the words beside it. */
+@media (min-width: 880px) {
+  .vw-hero--shot:has(.vw-hero-img) {
+    grid-template-columns: minmax(280px, 1.02fr) minmax(340px, 1fr);
+    align-items: start;
+  }
+}
+
+.vw-hero-shot {
+  display: none;
+  margin: 0;
+}
+.vw-hero-shot:has(.vw-hero-img) {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  /* the sheet's own sunken paper while the bytes are in flight — a
+     white hole would read as a missing picture rather than a late one */
+  background: var(--paper-sunken);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+/* THE BOX IS RESERVED AT THE RATIO THE CROP USES, so a photograph
+   landing late never moves the name beside it. The `width`/`height`
+   attributes on the element say 800×500, which is the same 16:10. */
+.vw-hero-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: center;
+  /* the 220 photographs are a mixed set — yard shots, studio cut-outs,
+     turquoise lifestyle. A whisper of desaturation pulls them into one
+     page without touching a single measured ratio. */
+  filter: saturate(0.95);
+}
+
+.vw-hero-say {
   min-width: 0;
+}
+
+/* the trail and the one control share a line, so SET UP keeps the
+   top-right corner it has always had without standing over the name */
+.vw-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
 }
 
 .vw-trail {
@@ -106,6 +182,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   color: var(--ink-faint);
 }
 .vw-trail-step {
@@ -129,52 +206,50 @@
   color: var(--ink-faint);
 }
 
-/* the one display moment on the page — the scale's top step.
-   The tracking is the change: +0.005em at 38px was +0.19px of air
-   per letter, added in the direction a 38px serif least needs it.
-   apple-design §15, "large display text wants negative tracking". */
+/* THE ONE HERO MOMENT IN THIS FEATURE, and the tokens are set here
+   rather than left to `.ds-hero` alone: feature CSS and ds.css are
+   both single-class rules, so which one won would be a question about
+   bundling order, and a name this size is not a thing to leave to
+   that. Same step, stated where it is drawn. Tracking stays negative
+   as the size grows — rule 7, and `--t-hero-track` is -0.033em. */
 .vw-name {
-  margin-top: var(--sp-2);
-  font-family: var(--font-display);
-  font-size: var(--display-xl-size);
-  font-weight: var(--display-weight);
-  line-height: var(--display-xl-lead);
-  letter-spacing: var(--display-xl-track);
+  margin: var(--sp-3) 0 0;
+  max-width: 20ch;
+  font-family: var(--font-ui);
+  font-size: var(--t-hero-size);
+  font-weight: var(--t-hero-weight);
+  line-height: var(--t-hero-lead);
+  letter-spacing: var(--t-hero-track);
   color: var(--ink);
 }
 
-/* THE SUBJECT'S PHOTOGRAPH — the first picture in its picture column.
-   `flex: none` at a fixed 120×90: the identity block beside it runs
-   100–110px (trail, 38px display name, spec strip), so at 90px the
-   header's height is still set by the WORDS and adding a picture never
-   moves the name down. Horizontally it takes 120px + one --sp-5 from a
-   940px sheet that also carries the ~80px gear, which leaves ~700px for
-   a name that wraps rather than truncates.
-   There is no rule for "no picture": the element is simply absent, so
-   the header is byte-for-byte the one it was before. */
-.vw-portrait {
-  flex: none;
-  width: 120px;
-  height: 90px;
-  object-fit: cover;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  /* the sheet's own sunken paper while the bytes are in flight — a
-     white hole would read as a missing picture rather than a late one */
-  background: var(--paper-sunken);
-}
+/* ── THE SPEC STRIP ──────────────────────────────────────────────
+   Five facts read off the row's own columns, and it used to be five
+   13px mono values in a flex row with a --sp-5 gap — legible, and
+   indistinguishable from a caption. A strip is a strip: a rule above
+   it, the column's own name over each figure, and the figure at the
+   mono step a person is meant to read from a metre away.
 
+   NO SEPARATOR RULES BETWEEN THE CELLS. They wrap, and a border-left
+   on every cell but the first draws a rule at the start of the second
+   line where there is nothing to its left. Air does the same job and
+   cannot be wrong. */
 .vw-specs {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-5);
-  margin: var(--sp-4) 0 0;
+  align-content: flex-start;
+  gap: var(--sp-4) var(--sp-6);
+  margin: 0;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
 }
 .vw-spec {
   min-width: 0;
 }
 .vw-spec dt {
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  color: var(--ink-faint);
 }
 .vw-spec-val {
   margin: 0;
@@ -183,7 +258,8 @@
      here and tabular was not, so `$8,227.50` and `$9,359.40` still
      drifted against each other by the width of a `1`. */
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: var(--t-mono-lg-size);
+  line-height: 1.2;
   color: var(--ink);
   white-space: nowrap;
 }
@@ -208,12 +284,22 @@
   transition:
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-draft),
     color var(--t-fast) var(--ease-draft);
 }
 .vw-gear:hover {
   border-color: var(--blue);
   background: var(--blue-wash);
   color: var(--blue-deep);
+}
+/* RULE 8 — hover, PRESS and focus, and press lands on pointer-down.
+   The control that switches this whole page between its two states
+   had two of the three; `:active` fires on pointer-down, which is
+   what the rule asks for, and 0.97 is the scale the system names for
+   a control-sized surface. */
+.vw-gear:active {
+  transform: scale(0.97);
+  transition-duration: var(--t-press);
 }
 .vw-gear.is-on {
   background: var(--ink);
@@ -284,16 +370,30 @@
   margin-top: var(--sp-5);
 }
 
+/* THREE GROUNDS, AND EACH ONE MEANS SOMETHING.
+
+     the sheet    --paper-high   the document
+     a block      --paper        a panel recessed into it
+     a card       --grad-surface the object you are choosing
+
+   It used to be white on white on white with a hairline between: a
+   block was a rectangle you had to look for. Recessing the panel is
+   what lets the cards inside it read as objects with a light on
+   them, which is the whole point of drawing them as cards.
+
+   MEASURED ON `--paper` (#f6f9fc), compositing the full chain —
+   these are the three inks that sit directly on a block:
+     --ink-faint  #5a6b7c   5.17 : 1
+     --ink-soft   #3d5266   7.65 : 1
+     --warning    #8a5a00   5.61 : 1   (the mark on `.vw-warn`)
+   All three clear 4.5, and every one is better than it was on
+   `--paper-high` for a NESTED block, which is the ground the warning
+   note was already measured against at 4.71. */
 .vw-block {
-  --vw-cols: 3;
-  --vw-grip: 0px;
-  --vw-acts: 0px;
-  --vw-tags: 0px;
-  --vw-pic: 0px;
   position: relative;
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
-  background: var(--paper-high);
+  background: var(--paper);
 }
 .vw-block.is-drop {
   border-color: var(--blue);
@@ -331,17 +431,31 @@
   color: var(--vw-accent, var(--ink-soft));
 }
 
+/* THE TABLE'S NAME IS THE HEADING OF THIS PANEL and it was 12px —
+   one pixel over the caption step, under a page whose subject is now
+   set at 34–52px. `--t-heading-size` is the step the system names for
+   "card names, row heads — the thing you scan for", which is exactly
+   what this is. */
 .vw-block-name {
-  font-size: 12px;
+  font-size: var(--t-heading-size);
   color: var(--ink);
 }
 
+/* THE COUNT, AS A CHIP RATHER THAN AS GREY TEXT. It carries the two
+   states the whole block turns on — how many fit, how many a person
+   picked — so it is drawn as an object.
+   `--ink-soft` on `--surface-3`, measured compositing the chain:
+   7.25 : 1. `--ink-faint` would have been 4.90, which clears but is
+   too near the floor for a figure this page is scanned for. */
 .vw-chip {
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .vw-forwhom {
@@ -435,118 +549,201 @@
 }
 
 /* ============================================================
-   THE TABLE OF RELATED ROWS
-   One track declaration, shared by the header hairline and every
-   row, so a column can never drift out of line.
+   THE CARDS — what goes with this one, drawn as things.
+
+   WHAT WAS HERE. One `grid-template-columns` declaration shared by a
+   header hairline and every row under it: grip, 24px picture, name,
+   three value tracks at minmax(44px, 104px), tags, actions. It was a
+   good table. It was also the answer to "what can I sell with this
+   boat?" given as a spreadsheet — 220 real photographs reduced to a
+   24px stamp, and a $23,400 motor and a $980 cover set in the same
+   12px grey four columns apart.
+
+   A CARD PER ROW, IN A GRID THAT FILLS THE BLOCK. The photograph
+   leads, the name is a heading, the state is a chip, and each figure
+   carries the name of the column it came out of — because a card is
+   read on its own and cannot borrow a heading from forty rows up.
+
+   IT IS NOT MORE ON SCREEN, IT IS MORE PER SCREEN. A 34px row showed
+   one thing per line; a 216px card shows four per line.
+
+   NOTHING MOVES BETWEEN THE TWO MODES, which is the promise this
+   feature has always made: configure mode adds the grip, the star and
+   the drop handle to the card that is already there, and takes them
+   away again. No box changes position.
    ============================================================ */
-
-.vw-cols,
-.vw-row-line {
-  display: grid;
-  /* THE NAME IS THE COLUMN THAT MATTERS, so it is the last thing to
-     give way, not the first. It used to be the only flexible track
-     against fixed value tracks and a fixed 132px tag track: entering
-     configure mode added the grip and the actions on top of those and
-     squeezed the name to a single pixel, so every row lost its name at
-     laptop width. Now the name has a floor, the value tracks give way
-     ahead of it, and the tag track costs nothing when no row carries a
-     tag (--vw-tags, set on the block).
-
-     --vw-pic is the same bargain for the picture mark: 24px when the
-     related table HAS a picture column, 0px when it does not. It is
-     safe against the name for the reason above — the 24px and its gap
-     come out of the value tracks, which give way at minmax(44px, …),
-     long before the name reaches its 96px floor. */
-  grid-template-columns:
-    var(--vw-grip)
-    var(--vw-pic)
-    minmax(clamp(96px, 22%, 190px), 1fr)
-    repeat(var(--vw-cols), minmax(44px, 104px))
-    var(--vw-tags)
-    var(--vw-acts);
-  align-items: center;
-  gap: var(--sp-3);
-  padding: 0 var(--sp-4);
-}
-
-.vw-cols {
-  padding-top: var(--sp-1);
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--hairline);
-  color: var(--ink-faint);
-}
-/* A HEADER SAYS ITS WHOLE NAME — the same ruling the register took in
-   b4ed961, applied to the block tables it was never applied to.
-
-   These headers were `nowrap` + ellipsis inside a minmax(44px, 104px)
-   track, so "Dealer List Price" read as "Dealer List P…" and "Shaft
-   Length in" as "Shaft Length …" on every module page, at 1280 AND at
-   1920 — extra width goes to the name track, never to these. That is
-   the one place in a table where truncation costs the most: the header
-   is the only thing telling you what the values underneath it MEAN.
-
-   So the label wraps instead of being cut. The header row gets taller
-   once, at the top of each block, and every value below it is
-   untouched — `.vw-row-line` keeps its own nowrap, so rows do not
-   grow. `align-items: end` keeps a one-line header sitting on the same
-   baseline as a two-line one beside it. */
-.vw-col,
-.vw-col-name {
-  overflow-wrap: break-word;
-}
-.vw-cols {
-  align-items: end;
-}
-.vw-col {
-  text-align: right;
-}
 
 .vw-rows {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: var(--sp-2) var(--sp-4) var(--sp-4);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
+  gap: var(--sp-3);
+  align-items: stretch;
 }
 
+/* the grid item, not the card — `motion` animates this element's
+   height on the way out, and a card that carried the border would
+   have to collapse its own chrome as it went */
 .vw-row {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   overflow: hidden;
-  border-bottom: 1px solid var(--hairline);
 }
-.vw-row:last-child {
-  border-bottom: none;
+
+/* A NESTED BLOCK IS NOT A CARD. Three levels is as deep as a page
+   goes and the third level is a whole block card of its own, so the
+   row carrying one takes the full width of the grid rather than
+   being squeezed into a 216px column. */
+.vw-row:has(.vw-nest) {
+  grid-column: 1 / -1;
 }
+
 .vw-row-line {
   position: relative;
-  min-height: 34px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-  transition: background var(--t-fast) var(--ease-draft);
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft);
+}
+
+/* THE KIND RAIL, AND WHY IT IS NOT THERE AT REST. Every card in one
+   block holds the same kind, so forty permanent rails would be forty
+   printings of a fact the block's own header already states. It
+   arrives on hover — the card saying which table it belongs to as
+   the pointer reaches it — and it stays for the one card that is
+   RECOMMENDED, where it is the accent and carries a state instead. */
+.vw-row-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--vw-accent);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--t-med) var(--ease-draft),
+    width var(--t-med) var(--ease-draft);
 }
 .vw-row-line:hover {
-  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+  box-shadow: var(--e-card-hover), inset 0 1px 0 var(--edge-light);
 }
-.vw-row.is-droptarget .vw-row-line {
-  box-shadow: inset 0 2px 0 var(--blue);
+.vw-row-line:hover::before {
+  opacity: 1;
 }
+
+/* ── THE ONE THAT GOES ON THE QUOTE ──────────────────────────────
+   `recommended` was a 12px star in the row's left padding. It is the
+   single most consequential fact on this page — `freeze.ts` mints a
+   quote from the STARRED row — and it was the smallest mark on the
+   screen. It is now the accent: a 3px rail down the card, the border
+   in the accent's own line colour, and a chip that says the word.
+
+   THE ACCENT AND NOT A KIND HUE, deliberately. §1 allows the accent
+   about four times a screen and names "the primary action" as one of
+   them; there is at most ONE recommended card per block, and what it
+   marks is the row the primary action will act on. A kind hue here
+   would say which table the card is in, which is not the fact. */
 .vw-row.is-star .vw-row-line {
-  background: var(--blue-wash);
+  border-color: var(--accent-line);
+}
+.vw-row.is-star .vw-row-line::before {
+  background: var(--blue);
+  opacity: 1;
+  width: 3px;
 }
 
-/* the star lives in the gutter so it never shifts a column */
-/* the star sits in the row's own left padding — inside the block in
-   both modes, and never in a column, so no cell ever shifts for it */
-.vw-star {
-  position: absolute;
-  left: 3px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  color: var(--accent-ochre);
+.vw-row.is-droptarget .vw-row-line {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-wash);
 }
 
+/* ── THE PHOTOGRAPH ──────────────────────────────────────────────
+   A 16:10 band across the head of the card, cropped to the centre.
+   `:has()` is doing the honest work here: the span is only ever
+   drawn for a block whose table HAS a picture column, and
+   `RowPicture` returns nothing for a row without one, or for a host
+   that will not serve the address — so without this guard those
+   cards would carry a grey rectangle, which is exactly the plate
+   pictures.tsx exists to refuse. */
+.vw-shot {
+  display: none;
+}
+.vw-shot:has(.vw-pic-img) {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
+}
+.vw-pic-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.95);
+  transition:
+    transform var(--t-med) var(--ease-draft),
+    filter var(--t-med) var(--ease-draft);
+}
+.vw-row-line:hover .vw-pic-img {
+  transform: scale(1.03);
+  filter: saturate(1.02);
+}
+
+/* ── THE NAME ────────────────────────────────────────────────────
+   A NAME WRAPS RATHER THAN BEING CUT — DESIGN_CONTRACT §3, and this
+   is where the rule pays. "Mech Rigging Kit - 6X3 Concealed Mount w
+   CL5 Gauge Kit, 5m Harness" is a real row, and two kits differing
+   only in their gauge kit must not read as one row twice. Two lines,
+   clamped, with the whole string on the `title`. */
+.vw-row-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-3) 0;
+}
+.vw-row-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  font-size: var(--t-heading-size);
+  font-weight: 570;
+  line-height: 1.28;
+  letter-spacing: -0.006em;
+  color: var(--ink);
+}
+
+/* the grip costs nothing in read mode: an empty span still takes a
+   flex gap, so it is removed rather than merely emptied */
 .vw-grip {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
+  margin-top: 1px;
   color: var(--ink-faint);
+}
+.vw-grip:empty {
+  display: none;
 }
 .vw-block.is-config .vw-grip {
   cursor: grab;
@@ -555,68 +752,79 @@
   cursor: grabbing;
 }
 
-/* THE ROW'S MARK. `.vw-row-line` is min-height 34px with 5px of padding
-   top and bottom, and box-sizing is border-box everywhere, so the
-   content box is EXACTLY 24px — the same 24px as the thumbnail slot in
-   the table. The mark fits with nothing to spare, and the row height
-   does not move. The wrapper is always drawn so a row with no picture
-   still holds the track and the names stay in one line. */
-.vw-pic {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-.vw-pic-img {
-  width: 24px;
-  height: 24px;
-  object-fit: cover;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-sunken);
-}
+/* ── THE FACTS ───────────────────────────────────────────────────
+   The column names came DOWN onto the card. They used to live once,
+   in a hairline above forty rows, in a 44–104px track that cut
+   "Dealer List Price" to "Dealer List P…"; here each figure carries
+   its own column's whole name, wrapped, at the 11px floor.
 
-/* A NAME WRAPS RATHER THAN BEING CUT — DESIGN_CONTRACT §3, and this row
-   is where the rule pays. Measured at 1280: "Mech Rigging Kit - 6X3
-   Concealed Mount w CL5 Gauge Kit, 5m Harness" wants 579px and had 444,
-   so two kits differing only in their gauge kit read as one row twice.
-   The line's `min-height: 34px` grows for the second line, the value
-   tracks beside it are unaffected, and the `title` on the span keeps the
-   whole string reachable for the third line nobody gets. */
-.vw-row-name {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-  font-size: 13.5px;
+   MONEY IS SET APART. It is the fact a card is scanned for, and
+   `isMoney` is the same reading `formatCell` already takes to decide
+   the format — one judgement, so the size and the dollar sign can
+   never disagree about whether a column is an amount. */
+.vw-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: var(--sp-2) var(--sp-3);
+  margin: auto 0 0;
+  padding: var(--sp-3);
+}
+.vw-fact {
+  min-width: 0;
+}
+.vw-fact-of {
+  font-size: 11px;
+  font-weight: 500;
   line-height: 1.3;
-  color: var(--ink);
+  letter-spacing: 0.01em;
+  color: var(--ink-faint);
+  overflow-wrap: break-word;
 }
-
 .vw-cell {
-  overflow: hidden;
+  margin: 2px 0 0;
   font-family: var(--font-mono);
-  /* a column of prices only reads as a column when the digits are one
-     width — DESIGN_CONTRACT §3 */
+  /* a figure is mono AND tabular — DESIGN_CONTRACT §3 */
   font-variant-numeric: tabular-nums;
   font-size: 12px;
-  color: var(--ink-soft);
-  text-align: right;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.3;
+  color: var(--ink);
+  overflow-wrap: break-word;
+}
+.vw-fact--money {
+  grid-column: 1 / -1;
+}
+.vw-fact--money .vw-cell {
+  font-size: var(--t-mono-lg-size);
+  letter-spacing: -0.01em;
 }
 
+/* ── THE STATE CHIPS ─────────────────────────────────────────── */
 .vw-row-tags {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: var(--sp-1);
-  overflow: hidden;
+  padding: var(--sp-2) var(--sp-3) 0;
 }
 
+/* ── THE HANDLES, IN CONFIGURE MODE ──────────────────────────────
+   Top right of the card, on their own paper, so they are legible
+   over a photograph as well as over the surface. They are absent in
+   read mode — `:empty` — so nothing reserves the corner. */
 .vw-row-acts {
   display: flex;
   justify-content: flex-end;
   gap: 2px;
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  z-index: 1;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  box-shadow: var(--e1);
+}
+.vw-row-acts:empty {
+  display: none;
 }
 
 /* -- tags ---------------------------------------------------- */
@@ -636,6 +844,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* RECOMMENDED, SAID IN A WORD. The star alone asked a person to know
+   what a star means here; the word says it, and the icon rides with
+   it. Measured: `--blue` #0a5fc2 over `--blue-wash` over the card's
+   `--grad-surface` composites to 5.36 : 1. */
+.vw-tag--star {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue);
+  border-color: var(--accent-line);
+  background: var(--blue-wash);
+}
+/* 4.92 : 1 on the card, and it is the ochre this tag has always
+   worn — a hand-pinned row is a different fact from a recommended
+   one and must not read as the same chip in a different word. */
 .vw-tag--added {
   color: var(--accent-ochre);
 }
@@ -685,13 +908,15 @@
    ============================================================ */
 
 .vw-nest {
-  margin: 0 var(--sp-4) var(--sp-3) calc(var(--sp-6) + var(--sp-2));
+  margin: var(--sp-3) 0 var(--sp-1);
   border-left: 1px solid var(--hairline);
   padding-left: var(--sp-4);
 }
+/* the block itself is `--paper` now, so a nested one has to step
+   again or the two would read as one panel */
 .vw-nest .vw-block {
   border-color: var(--hairline);
-  background: var(--paper);
+  background: var(--paper-sunken);
 }
 .vw-nest--offer {
   margin-top: var(--sp-3);
@@ -1104,6 +1329,172 @@
 }
 
 /* ============================================================
+   WHAT IT COMES TO — the rig, added up.
+
+   The hull, the recommended motor and the recommended trailer were
+   all on this page and the one figure a customer asks for first was
+   the one thing a person had to work out in their head. This is that
+   figure, and every part of it is counted off the dealer's own price
+   columns through `@/features/quote/pricing` — the same resolver the
+   quote uses, choosing the same rows, so the total read off this
+   header is the total QUOTE THIS ONE produces.
+
+   IT IS PAINT, NOT TINT. The panel sits on the sheet's own white and
+   takes `--grad-surface`, so nothing on it is text over a wash and
+   every ink here is measured on white: `--ink` 17.4:1, `--ink-soft`
+   8.1:1, `--ink-faint` 5.5:1. That is deliberate — this is the one
+   panel on the page a customer reads over somebody's shoulder.
+   ============================================================ */
+
+.vw-rig {
+  padding: var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+
+.vw-rig-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+.vw-rig-lead {
+  color: var(--ink-faint);
+}
+/* THE LARGEST FIGURE ON THE PAGE, because it is the one fact the
+   panel exists to state. Mono and tabular, like every other figure
+   in this app, and the tracking runs negative as the size grows. */
+.vw-rig-total {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.vw-rig-lines {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Two rows and two columns: the name over the rung it was read at,
+   and the amount centred against both. The name WRAPS rather than
+   truncating — §3, and a rig line naming the wrong trailer because
+   the right one was cut is the failure that rule is about. */
+.vw-rig-line {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--sp-3);
+  align-items: baseline;
+  padding: 4px 0;
+}
+.vw-rig-what {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink);
+  overflow-wrap: break-word;
+}
+/* the business's own word for the column the figure came out of —
+   `Sell inc Rego`, `Cash`. A name, so it keeps its own case. */
+.vw-rig-rung {
+  grid-column: 1;
+  grid-row: 2;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ink-faint);
+  overflow-wrap: break-word;
+}
+.vw-rig-amt {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* THE LINE SOMEBODY CHOSE, as against the line that was the only
+   one there was. Two facts, and the ledger would be lying by
+   omission if it drew them identically. */
+.vw-rig-line.is-star {
+  padding-left: var(--sp-3);
+}
+.vw-rig-line.is-star::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--blue);
+}
+
+/* WHAT IS NOT IN THE FIGURE, said where the figure is — rule 10. A
+   total that quietly left a motor out because nobody had recommended
+   one would be the worst number on this screen. */
+.vw-rig-note {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   SAID ONCE — the curated clause, de-duplicated.
+
+   Every block a page seeds is curated-only, so `ruleReason` handed
+   the identical sentence to five curation notes down one page. The
+   page says it here instead, and each block keeps its own count.
+
+   NO WASH. `--ink-soft` on the sheet's own white is 8.1:1; over a
+   3.5% tint the same ink is fine but `--ink-faint` beside it would
+   not be, and that is the trap the principles name outright. A rule
+   down the left says "this is an aside" without a ground.
+   ============================================================ */
+
+.vw-once {
+  margin: var(--sp-5) 0 0;
+  padding: 2px 0 2px var(--sp-4);
+  border-left: 2px solid var(--hairline-strong);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   THE CURATION MECHANISM, INSIDE A BLOCK.
+
+   `@/features/curation` owns the note and this feature does not
+   restyle it — what is set here is only where it sits now that the
+   block is a panel with a grid of cards in it rather than a table.
+   Scoped under `.vw-block`, so nothing about the mechanism changes
+   on any other surface that mounts it.
+   ============================================================ */
+
+.vw-block .cur--block {
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
+/* ============================================================
    REDUCED MOTION — base.css already cuts CSS transitions; the
    `motion` springs are cut in stillness.tsx. This is belt and
    braces for anything that arrives later.
@@ -1130,12 +1521,11 @@
                       "OCEAN RANGER SDF (HARD TOPS)" for a row the
                       dealer wrote as "Ocean Ranger SDF (Hard Tops)".
      .vw-block-name   the joined table's name, via `.block-heading`.
-     .vw-col-name     THE COLUMN HEADINGS, via `.mono-label`. The
-     .vw-col          register already settled this one: `.tb-th-name`
-                      in table.css is `12px / 580 / letter-spacing 0 /
-                      text-transform: none` with the note "COLUMN
-                      HEADINGS read as words, not stamps". Two views of
-                      the same columns disagreed about it.
+                      (The column-heading clause that stood here went
+                      with the table it was about: a block is a grid of
+                      cards now and each figure carries its own
+                      column's name on `.vw-fact-of`, which is set as
+                      words to begin with.)
      .vw-chip         "4 picked" — a count, which is a value.
      .vw-tag          "no longer sold", "already here", "outside the
                       rule" — SENTENCES, which rule 3 covers and
@@ -1164,16 +1554,6 @@
   font-weight: 570;
   letter-spacing: -0.006em;
   text-transform: none;
-}
-/* matched to `.tb-th-name`, so a column reads the same on both pages */
-.vw-col-name,
-.vw-col {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 580;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink);
 }
 .vw-chip {
   letter-spacing: 0.01em;
@@ -1241,9 +1621,16 @@
    sentence, and uppercase is a label style.
    ============================================================ */
 
+/* UNDER THE CARD, AND STILL OUTSIDE IT. The measurement above is the
+   reason: the card paints its own surface and its own states on
+   `.vw-row-line`, and `--warning` would read 4.35:1 over the tint the
+   recommended card once carried. On the block's own `--paper` ground
+   the mark measures 5.61:1 and the sentence 7.65:1 — both better than
+   they were. It is indented to the card's own text edge so it reads
+   as belonging to it. */
 .vw-warns {
   list-style: none;
-  margin: 0 var(--sp-4) 6px calc(var(--sp-6) + var(--sp-2));
+  margin: 6px 0 0 var(--sp-3);
   padding: 0;
   display: flex;
   flex-direction: column;

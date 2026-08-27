@@ -33,25 +33,12 @@
   box-shadow: var(--shadow-sheet);
 }
 
-/* -- corner registration ticks ------------------------------ */
-.cn-tick {
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  pointer-events: none;
-}
-.cn-tick--tl {
-  top: -1px;
-  left: -1px;
-  border-top: 1.25px solid var(--hairline-strong);
-  border-left: 1.25px solid var(--hairline-strong);
-}
-.cn-tick--tr {
-  top: -1px;
-  right: -1px;
-  border-top: 1.25px solid var(--hairline-strong);
-  border-right: 1.25px solid var(--hairline-strong);
-}
+/* THE CORNER REGISTRATION TICKS ARE GONE. Two 9px right-angles
+   pinned to the top corners of the sheet, drawn from the Chart
+   Room's blueprint costume — the design that was replaced. They
+   said nothing about the page, and on a rounded panel with a lit
+   top edge they read as a rendering fault. The rules are removed
+   with the markup rather than left behind as dead weight. */
 
 /* ============================================================
    THE HEAD
@@ -1754,34 +1741,18 @@
   color: var(--ink);
 }
 
-.cn-conseq-split {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 6px;
-  margin: 6px 0 0;
-  font-size: 12.5px;
-  color: var(--ink-soft);
-}
-.cn-conseq-keeps,
-.cn-conseq-breaks,
+/* THE SPLIT LINE IS GONE, and with it `.cn-conseq-split`,
+   `-keeps`, `-breaks` and `-sep`. It set three counted facts inline
+   inside a sentence that changed length on every keystroke; they
+   are drawn as figures now (`.cn-conseq-read` at the foot of this
+   file) and the sentence says what they are OF. */
 .cn-conseq-share {
   white-space: nowrap;
-}
-.cn-conseq-breaks.is-bad,
-.cn-conseq-breaks.is-bad .cn-fig {
-  color: var(--red);
-}
-.cn-conseq-share {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: var(--ink-faint);
 }
-.cn-conseq-sep {
-  color: var(--ink-faint);
-}
-
 /* THE ONE SENTENCE A PERSON COULD NOT HAVE COUNTED THEMSELVES —
    FITMENT_RULES F9's lesson, said at the moment it is being made. */
 .cn-conseq-note {
@@ -2860,6 +2831,14 @@
   outline-offset: 2px;
 }
 
+/* the segment's own words. It carries no size of its own — the
+   button sets the step — and only the clamp that keeps a long
+   label from pushing the count off the end of the control. */
+.cn-seg-name {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
 .cn-seg-n {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -2868,7 +2847,10 @@
   padding: 1px 7px;
   border-radius: var(--r-full);
   background: var(--chip-bg);
-  color: var(--fg-tertiary);
+  /* MEASURED, NOT ASSUMED. --fg-tertiary is 5.5:1 on white and
+     4.79:1 over the 6 % chip tint — it passes, but a count is a
+     figure a person reads, and one tier up costs nothing. */
+  color: var(--fg-secondary);
   transition:
     background var(--d-fast) var(--ease),
     color var(--d-fast) var(--ease);
@@ -2905,4 +2887,960 @@
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
+}
+
+/* ============================================================
+   THE SENTENCE — the best idea in this application, set like it.
+
+   WHAT MOVED, AND WHY EACH ONE.
+
+   THE SIZE. 14px collapsed and 15.5px in the composer. A sentence
+   whose every underlined word is a live control is not body copy;
+   it is the instrument. The composer's sentence is now a clamp
+   between 19 and 23px — the largest running text anywhere in the
+   app — and the card's is the heading step, so a rule reads as
+   prose you could put on a wall and the two never look like two
+   different objects.
+
+   THE LEADING CAME DOWN AS THE SIZE WENT UP. 2.45 at 15.5px was
+   the right call for tokens with boxes round them at reading size;
+   at 23px it is a gap you could park in. 1.95 at 23px is a larger
+   line box in pixels than 2.45 at 15.5px was, so the tokens have
+   MORE room than before while the sentence reads as one paragraph.
+
+   TRACKING RUNS NEGATIVE AS THE SIZE GROWS (§7). -0.014em at the
+   top of the clamp, -0.006em on the card.
+
+   THE THREE ROLES, TOLD APART QUIETLY. Ink and weight carry the
+   grammar; the underline carries the affordance. That is the whole
+   scheme and it is why the sentence never turns into a form:
+
+     field   the column — full ink, 560, a firm hairline
+     op      how they are compared — secondary ink, 400, a fainter
+             hairline. It is the least interesting word and it is
+             the least interesting to look at
+     value   the accent, 560, an accent hairline. A value is the
+             thing a person came here to change
+
+   AN UNANSWERED SLOT'S HAIRLINE IS DASHED. That is the one new
+   signal in the whole scheme, and it is worth a rule of its own:
+   "a column" is a question, and a dashed rule under it says so at
+   a glance, from across the sentence, without a colour or a badge.
+   ============================================================ */
+
+.cn-sentence {
+  font-family: var(--font-sans);
+  /* SUPERSEDES 14px/2.3 */
+  font-size: var(--t-heading-size);
+  font-weight: 400;
+  line-height: 2.05;
+  letter-spacing: -0.006em;
+  color: var(--fg);
+}
+.cn-sentence.is-big {
+  /* SUPERSEDES 15.5px/2.45 */
+  font-size: clamp(19px, 1.7vw, 23px);
+  line-height: 1.95;
+  letter-spacing: -0.014em;
+}
+
+/* the connective tissue — "When", "and", the comma. It is the only
+   part of the sentence nobody can change, so it is the only part
+   that recedes. --fg-tertiary measures 5.5:1 on this card. */
+.cn-word {
+  color: var(--fg-tertiary);
+  margin: 0 3px;
+}
+
+.cn-tok {
+  /* the token hugs its own word; the paragraph keeps the leading */
+  line-height: 1.5;
+  border-radius: var(--r-control);
+}
+.cn-tok--field {
+  color: var(--fg);
+  font-weight: 560;
+}
+.cn-tok--op {
+  color: var(--fg-secondary);
+  font-weight: 400;
+}
+.cn-tok--value {
+  /* SUPERSEDES --blue-deep. The accent itself, which measures
+     6.1:1 on white — the deep variant was a hair darker for no
+     reason once the ground stopped being navy. */
+  color: var(--accent);
+  font-weight: 560;
+}
+
+/* THE AFFORDANCE. Drawn as a background rule rather than a border
+   or an inset shadow — a border changes the line's metrics and an
+   inset shadow paints a hairline all the way round the token in
+   Chrome. The colour is a custom property so each role can set its
+   own without repeating the four background properties. */
+.cn-tok.is-live {
+  --cn-tok-line: var(--line-strong);
+  padding: 2px 6px;
+  cursor: pointer;
+  background-color: transparent;
+  background-image: linear-gradient(var(--cn-tok-line), var(--cn-tok-line));
+  background-repeat: no-repeat;
+  background-size: 100% 2px;
+  background-position: left bottom;
+  transition:
+    background-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.cn-tok--op.is-live {
+  --cn-tok-line: var(--line);
+}
+.cn-tok--value.is-live {
+  --cn-tok-line: var(--accent-line);
+}
+
+/* A SLOT, NOT A NAME — and now it says so in the rule under it.
+   The ink stays at --fg-secondary (8.1:1): "what do I do here" is
+   the most load-bearing text on the panel, not decoration. */
+.cn-tok--field.is-unset {
+  color: var(--fg-secondary);
+  font-weight: 450;
+}
+.cn-tok--field.is-unset.is-live {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--cn-tok-line) 0 4px,
+    transparent 4px 7px
+  );
+}
+
+/* HOVER, PRESS AND FOCUS, on every one of them (§8). The press is
+   colour and not scale: a word that shrinks inside a sentence
+   moves the words either side of it. */
+.cn-tok.is-live:hover {
+  --cn-tok-line: var(--accent);
+  background-color: var(--accent-wash);
+  color: var(--accent);
+}
+.cn-tok--field.is-live:hover {
+  color: var(--fg);
+}
+.cn-tok.is-live:active {
+  background-color: var(--accent-wash-strong);
+  transition-duration: var(--d-press);
+}
+.cn-tok.is-live:has(.cn-tok-input:focus-visible),
+.cn-tok.is-live:has(.cn-tok-typed:focus-visible) {
+  --cn-tok-line: var(--accent);
+  background-color: var(--accent-wash);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A DROPDOWN SAYS IT IS ONE, ON APPROACH. The caret is in the flow
+   at rest and only fades in, so nothing reflows on hover — the
+   sentence must not re-wrap because a pointer crossed it. This is
+   also what `.cn-tok--sel` is for: it was written in the markup
+   and declared by no stylesheet, which is one of the 35 orphans
+   the style guard has been carrying. */
+.cn-tok--sel .cn-tok-face::after {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin: 0 1px 0 6px;
+  vertical-align: 0.16em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-1px, -1px);
+  opacity: 0;
+  transition: opacity var(--d-fast) var(--ease);
+}
+.cn-tok--sel:hover .cn-tok-face::after,
+.cn-tok--sel:focus-within .cn-tok-face::after {
+  opacity: 0.55;
+}
+
+/* A TYPED VALUE IS A FIGURE, so a number takes the figure face and
+   tabular numerals — otherwise "5.6" in a sentence about hull
+   length is set in the same proportional digits as the prose, and
+   every keystroke shuffles the words after it sideways. The text
+   case keeps the reading face, because a name is not a figure.
+   (`.cn-tok--input` was the second orphan on this surface.) */
+.cn-tok--input .cn-tok-typed[type='number'],
+.cn-tok--input .cn-tok-typed[type='date'] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.92em;
+  letter-spacing: 0;
+}
+.cn-tok-typed::placeholder {
+  color: var(--fg-tertiary);
+}
+
+/* -- the "is one of" set ------------------------------------ */
+
+.cn-chip {
+  padding: 2px 8px;
+  border-color: var(--accent-line);
+  border-radius: var(--r-full);
+  background: var(--accent-wash);
+}
+/* A CHIP IS ALREADY A BOX, so it does not take the underline too.
+   This is restated here rather than left where it was written: the
+   token rules above are appended after it, and a background-image
+   set later at equal specificity would have quietly drawn a rule
+   under every value in a set. */
+.cn-chip.is-live,
+.cn-chip--add.is-live {
+  background-image: none;
+}
+/* the removable one gives its cross the room the underline used to
+   take; the "add" chip keeps its own padding, because its face is a
+   single "+" and a caret sits after it */
+.cn-chip.is-live:not(.cn-chip--add) {
+  padding-right: 4px;
+}
+.cn-chip--add {
+  border-color: var(--line-strong);
+  background: transparent;
+  color: var(--fg-secondary);
+}
+.cn-chip--add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.cn-chip-x {
+  border-radius: var(--r-full);
+  padding: 2px;
+  color: var(--accent);
+  opacity: 0.7;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    opacity var(--d-fast) var(--ease);
+}
+.cn-chip-x:hover {
+  opacity: 1;
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+.cn-chip-x:active {
+  transform: scale(0.94);
+  transition-duration: var(--d-press);
+}
+.cn-chip-x:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   THE COMPOSER — one card, and it is the instrument.
+   ============================================================ */
+
+.cn-new {
+  margin-top: var(--s-6);
+  padding: var(--s-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
+  /* so the brand hairline below clips to the corner radius */
+  overflow: hidden;
+}
+/* SUPERSEDES the 34px black tick. The one gradient on this
+   surface, two pixels tall, along the top edge of the one card
+   that MAKES something. It is paint and it carries nothing: remove
+   it and the card still says everything it says. */
+.cn-new::before {
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 2px;
+  background: var(--grad-brand-wide);
+}
+
+.cn-new-head {
+  gap: 0 var(--s-3);
+  margin-bottom: var(--s-4);
+}
+.cn-new-mark {
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-full);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.cn-new-title {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+.cn-new-cap {
+  font-size: var(--t-small-size);
+  color: var(--fg-tertiary);
+}
+
+.cn-new-foot {
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+}
+
+/* THE PRIMARY ACTION, AND IT IS THE ONE PLACE ON THE VIEW THE
+   ACCENT IS A FILL. SUPERSEDES the black button: --ink on white is
+   a print button, and this app has an action colour. */
+.cn-add {
+  height: var(--h-lg);
+  padding: 0 var(--s-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: var(--t-body-size);
+  font-weight: 540;
+  letter-spacing: -0.004em;
+  box-shadow: var(--e1);
+  transition:
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.cn-add:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: transparent;
+  box-shadow: var(--e2), var(--glow-md);
+}
+.cn-add:active:not(:disabled) {
+  background: var(--accent-press);
+  box-shadow: var(--e1);
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+/* THE RESTING STATE OF THIS BUTTON IS DISABLED — an unwritten rule
+   cannot be added — so its label has to be READ, not merely seen.
+   --fg-secondary measures 7.6:1 over --surface-3. */
+.cn-add:disabled {
+  background: var(--surface-3);
+  border-color: var(--line);
+  color: var(--fg-secondary);
+  box-shadow: none;
+}
+.cn-new-why {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* the reason line, and the field a person types it into */
+.cn-because {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+.cn-because-kw {
+  color: var(--fg-tertiary);
+}
+.cn-because-input {
+  padding: 5px 2px;
+  border-bottom-color: var(--line-strong);
+  font-size: var(--t-small-size);
+  color: var(--fg);
+  transition: border-color var(--d-fast) var(--ease);
+}
+.cn-because-input:hover {
+  border-bottom-color: var(--accent-line);
+}
+.cn-because-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+/* where the sentence was started from, and what its columns are */
+.cn-from {
+  border-radius: var(--r-card);
+  border-left: 3px solid var(--accent-line);
+  background: var(--surface-3);
+}
+.cn-from-label {
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  color: var(--fg-secondary);
+}
+.cn-from-says {
+  font-size: var(--t-body-size);
+  color: var(--fg);
+}
+.cn-from-note,
+.cn-from-plainly {
+  color: var(--fg-secondary);
+}
+.cn-from-blank:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent-line);
+}
+
+.cn-col-name {
+  font-size: var(--t-small-size);
+  color: var(--fg);
+}
+.cn-col-where {
+  color: var(--fg-tertiary);
+}
+
+/* ============================================================
+   WHAT IT WOULD DO — the consequence, read before the commit.
+
+   SUPERSEDES three stacked sentences and a split line. The three
+   figures a person is actually asking for are drawn as figures,
+   mono and tabular so they do not shuffle while somebody types,
+   and the sentence under them says what they are of. The bar is
+   the same measurement seen at a glance.
+
+   RED APPEARS ONLY WHEN IT MEANS SOMETHING. Nought rows breaking a
+   rule is good news, and good news is not red — the breaks cell
+   takes --danger only when the figure is above zero.
+   ============================================================ */
+
+.cn-conseq {
+  margin: var(--s-5) 0 0;
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+}
+.cn-conseq-label {
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+}
+
+.cn-conseq-read {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4) var(--s-8);
+  margin: var(--s-4) 0 0;
+}
+.cn-conseq-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.cn-conseq-cell .cn-fig {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.cn-conseq-cell.is-keeps .cn-fig {
+  color: var(--accent);
+}
+.cn-conseq-cell.is-breaks .cn-fig {
+  color: var(--danger);
+}
+.cn-conseq-term {
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-caption-track);
+  color: var(--fg-secondary);
+}
+
+/* THE BAR. The track is every row the sentence can reach; the
+   accent is what it engages; the red is what disagrees with it as
+   the sheet stands today.
+   THE TRANSITION WAS DEAD: it named `--ease-settle`, which no
+   stylesheet defines, so the whole declaration was invalid and the
+   width jumped. It is the house curve now, and it is a state
+   change rather than a layout animation — the element's own box
+   never reflows anything. */
+.cn-bar {
+  height: 10px;
+  margin: var(--s-4) 0 0;
+  border-radius: var(--r-full);
+  background: var(--surface-4);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.cn-bar-keeps,
+.cn-bar-breaks {
+  transition: width var(--d-med) var(--ease);
+}
+.cn-bar-keeps {
+  background: var(--accent);
+}
+.cn-bar-breaks {
+  background: var(--danger);
+}
+
+.cn-conseq-say {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+.cn-conseq-say--none {
+  color: var(--fg);
+}
+.cn-conseq-share {
+  color: var(--fg-secondary);
+}
+.cn-conseq-stub {
+  border-color: var(--line-strong);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* THE ONE SENTENCE A PERSON COULD NOT HAVE COUNTED THEMSELVES. It
+   is a finding rather than a caption, so it is set apart by a rail
+   the way a quoted line is. */
+.cn-conseq-note {
+  margin: var(--s-4) 0 0;
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--accent-line);
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+
+.cn-fig {
+  color: var(--fg);
+}
+
+/* ============================================================
+   ONE RULE — the card, the switch, the reason.
+   ============================================================ */
+
+.cn-card {
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--r-card);
+  border: 1px solid var(--line);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease);
+}
+/* The card lifts because the sentence inside it is being pointed
+   at. It does not MOVE: a row that slides makes its neighbours
+   look like they slid too (§4). */
+.cn-card:has(.cn-card-open:hover) {
+  border-color: var(--line-strong);
+  box-shadow: var(--e-card-hover), inset 0 1px 0 var(--edge-light);
+}
+.cn-card.is-open {
+  border-color: var(--accent-line);
+  box-shadow: var(--e3), inset 0 1px 0 var(--edge-light);
+}
+.cn-card.is-conflict {
+  border-color: var(--danger);
+  box-shadow: inset 3px 0 0 var(--danger), var(--e-card);
+}
+
+.cn-card-top {
+  gap: var(--s-3);
+  min-height: 26px;
+}
+
+/* A STATE STAMP, at the label step. SUPERSEDES 11px mono at
+   +0.14em: 0.14em is twice the one sanctioned label tracking, and
+   these are four words the app owns for a state — CONFLICT, ACTIVE
+   NOW, OFF, EDITED — which is exactly what that step is for. */
+.cn-badge {
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: var(--r-full);
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+}
+.cn-badge--active {
+  color: var(--success);
+  border-color: var(--success-wash);
+  background: var(--success-wash);
+}
+.cn-badge--conflict {
+  color: var(--danger);
+  border-color: var(--danger-wash);
+  background: var(--danger-wash);
+}
+.cn-badge--off {
+  color: var(--fg-secondary);
+  border-color: var(--line);
+  background: var(--surface-3);
+}
+.cn-badge--edited {
+  color: var(--kind-violet);
+  border-color: var(--line);
+  background: var(--surface-3);
+}
+
+/* -- the switch, never a delete ----------------------------- */
+
+.cn-switch-track {
+  width: 34px;
+  height: 20px;
+  border-radius: var(--r-full);
+  border-color: var(--line);
+  background: var(--surface-4);
+}
+.cn-switch-knob {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--r-full);
+  background: var(--fg-tertiary);
+  box-shadow: var(--e1);
+  transition:
+    transform var(--d-med) var(--ease-out-expo),
+    background var(--d-fast) var(--ease);
+}
+.cn-switch.is-on .cn-switch-track {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.cn-switch.is-on .cn-switch-knob {
+  background: var(--surface-1);
+  transform: translateX(14px);
+}
+.cn-switch:hover .cn-switch-track {
+  border-color: var(--accent);
+}
+.cn-switch:active .cn-switch-knob {
+  /* the press is felt on the knob, not on the whole control */
+  transform: scale(0.9);
+  transition-duration: var(--d-press);
+}
+.cn-switch.is-on:active .cn-switch-knob {
+  transform: translateX(14px) scale(0.9);
+}
+.cn-switch:focus-visible {
+  outline-color: var(--accent);
+  border-radius: var(--r-full);
+}
+.cn-switch-word {
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  color: var(--fg-tertiary);
+}
+.cn-switch.is-on .cn-switch-word {
+  color: var(--accent);
+}
+
+/* -- the sentence, collapsed ------------------------------- */
+
+.cn-card-open {
+  padding: var(--s-2) var(--s-2) var(--s-2) 0;
+  border-radius: var(--r-control);
+  transition: background var(--d-fast) var(--ease);
+}
+.cn-card-open:hover {
+  background: var(--accent-wash);
+}
+/* a row presses by DARKENING, never by scaling */
+.cn-card-open:active {
+  background: var(--accent-wash-strong);
+  transition-duration: var(--d-press);
+}
+.cn-card-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cn-card-foot {
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+}
+.cn-meta {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+.cn-meta--dim {
+  color: var(--fg-tertiary);
+}
+
+.cn-done {
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-control);
+  border-color: var(--line);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-size: var(--t-small-size);
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.cn-done:hover {
+  background: var(--surface-4);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.cn-done:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+
+.cn-list {
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+
+/* ============================================================
+   THE LEDGER — the measurement first, and the citation last.
+   ============================================================ */
+
+.cn-ledger {
+  gap: var(--s-8);
+}
+
+/* the group heading gets the rule that makes it a band rather than
+   a gap — same move as the section heads on Home, and it costs no
+   markup because it is drawn by the head itself */
+.cn-grp-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  min-width: var(--s-4);
+  background: linear-gradient(90deg, var(--line) 0%, transparent 100%);
+}
+.cn-grp-name {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+}
+.cn-grp-count {
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  font-size: var(--t-mono-sm-size);
+  /* the same measurement as `.cn-seg-n`: 4.79:1 over the chip tint
+     passes and is the tightest ratio on the surface, so the count
+     takes the tier above it */
+  color: var(--fg-secondary);
+}
+.cn-grp-say {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+.cn-grp-list {
+  gap: var(--s-4);
+  margin-top: var(--s-4);
+}
+
+.cn-rl {
+  padding: var(--s-5);
+  border-radius: var(--r-card);
+  border-left-width: 3px;
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+
+/* THE RATE IS THE FIRST THING ON THE CARD AND IT STAYS THE FIRST
+   THING. It is also the largest figure in the view now, because
+   "581 of 581" is the fact the card exists to state. */
+.cn-rl-rate-n {
+  font-size: 30px;
+  letter-spacing: -0.022em;
+}
+.cn-rl-rate-of {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* THE SAME MEASUREMENT, SEEN. Held over tested, as a 4px rule in
+   the kind's own hue — the colour is already on this card's left
+   edge, so the meter reads as that rail turned on its side rather
+   than as a new colour. It is `aria-hidden`: the figure above it
+   says the same thing in words, and it is the accessible one. */
+.cn-rl-meter {
+  height: 4px;
+  margin: var(--s-3) 0 0;
+  border-radius: var(--r-full);
+  background: var(--surface-4);
+  overflow: hidden;
+}
+.cn-rl-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--cn-rl-accent, var(--accent));
+}
+
+.cn-rl-pill {
+  height: 22px;
+  padding: 0 10px;
+  font-size: var(--t-caption-size);
+  border-color: var(--line);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+.cn-rl-pill.is-here,
+.cn-rl-pill.is-elsewhere {
+  color: var(--success);
+  border-color: var(--success-wash);
+  background: var(--success-wash);
+}
+
+.cn-rl-says {
+  font-size: var(--t-body-size);
+  line-height: 1.55;
+}
+.cn-rl-because,
+.cn-rl-caveat,
+.cn-rl-why {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* WHAT THIS APP MEASURED ON THIS SHEET, ON THIS RENDER. It is the
+   argument the whole application is making, so it stops being a
+   recessed grey strip and takes the accent wash. --fg-secondary
+   over that wash measures 7.4:1; the label takes the accent
+   itself, 5.7:1 over the same ground. */
+.cn-rl-live {
+  padding: var(--s-3);
+  border-radius: var(--r-control);
+  background: var(--accent-wash);
+}
+.cn-rl-live-k {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  color: var(--accent);
+}
+.cn-rl-live-n {
+  color: var(--fg);
+}
+.cn-rl-live-what {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* ------------------------------------------------------------
+   THE CITATION — and it is the point of the whole page.
+
+   Anyone can write a rule and claim the business asked for it;
+   this line is how you check. It was 11px grey mono running loose
+   under a card, which is where a reader's eye goes last. It is a
+   quoted slab now: the cell address on its own ground, behind an
+   accent rail, wrapping rather than truncating — a half-printed
+   cell address cannot be looked up, and looking it up is the only
+   reason it is printed.
+
+   SHARED BY ALL FOUR SURFACES that print provenance — the ledger,
+   both theme bands and the composer's "started from" block — which
+   is why it is one rule and not four.
+   ------------------------------------------------------------ */
+.cn-wb-src {
+  margin: var(--s-4) 0 0;
+  padding: 7px var(--s-3);
+  border-left: 2px solid var(--accent-line);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--surface-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   THE BANDS, AND THE EMPTY STATES
+   ============================================================ */
+
+.cn-band {
+  margin-top: var(--s-10);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--line-subtle);
+}
+.cn-band-eyebrow,
+.cn-wb-eyebrow {
+  color: var(--fg-tertiary);
+}
+/* SUPERSEDES the 22px display step on both: 20px is the title step
+   and these are panel headings, not page titles. One size for a
+   band heading everywhere on the surface. */
+.cn-band-title,
+.cn-wb-title {
+  margin: var(--s-2) 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  color: var(--fg);
+}
+.cn-band-lede,
+.cn-wb-lede {
+  margin-top: var(--s-3);
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+
+.cn-void {
+  padding: var(--s-10) var(--s-4);
+}
+.cn-void-mark {
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-full);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.cn-void--small .cn-void-mark {
+  width: 40px;
+  height: 40px;
+}
+.cn-void-title {
+  margin-top: var(--s-4);
+  font-family: var(--font-sans);
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  line-height: var(--t-display-lead);
+  letter-spacing: var(--t-display-track);
+  color: var(--fg);
+}
+.cn-void-note {
+  font-size: var(--t-body-size);
+  color: var(--fg-secondary);
+}
+
+/* ------------------------------------------------------------
+   NARROW. The sheet is capped at 940px and the app's own panels
+   can put it in a much smaller box than that, so the two grids
+   that can crowd say what they do at a width rather than being
+   discovered doing it.
+   ------------------------------------------------------------ */
+@media (max-width: 720px) {
+  .cn-root {
+    padding: var(--s-5) var(--s-3) var(--s-12);
+  }
+  .cn-sheet {
+    padding: var(--s-5) var(--s-5) var(--s-8);
+  }
+  .cn-tally-item {
+    padding: 0 var(--s-4);
+  }
+  .cn-seg-btn {
+    /* the label wraps rather than the control scrolling off */
+    white-space: normal;
+  }
 }

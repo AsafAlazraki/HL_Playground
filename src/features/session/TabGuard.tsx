@@ -67,7 +67,7 @@ export function TabGuard(): ReactElement | null {
   if (role === 'following') {
     return (
       <div className="ts-note" style={lift} role="status" aria-live="polite">
-        <span className="mono-label ts-eyebrow">Another tab</span>
+        <span className="ts-eyebrow">Another tab</span>
         <p className="ts-say">
           This sheet is already open in another tab, and only one tab at a time
           can save it. That one has it. This one shows you the sheet and changes
@@ -93,7 +93,7 @@ export function TabGuard(): ReactElement | null {
 
   return (
     <div className="ts-note" style={lift} role="status" aria-live="polite">
-      <span className="mono-label ts-eyebrow">This tab</span>
+      <span className="ts-eyebrow">This tab</span>
       <p className="ts-say">
         The other tab let the sheet go, so this one has it now and is saving
         again. It read the saved sheet back in first, so what is on screen is

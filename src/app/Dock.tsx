@@ -23,9 +23,18 @@
    never moves, because the question it answers ("where is the
    thing called X") is the one people arrive with most often.
 
-   THIS IS THE ONE GLASS SURFACE in the app: it floats over
-   content that scrolls beneath it, and a solid bar would punch a
-   hole in the page.
+   IT IS TWO TIERS OF ONE OBJECT. What you DO on this page sits on
+   top of where you can GO, joined by a hairline inside a single
+   floating shell (`.dk-rig`). They used to be two separate bars ten
+   pixels apart, each with its own border, blur and shadow, and they
+   cost a register three of its rows to say the same thing twice.
+
+   THIS AND THE MASTHEAD ARE THE ONLY GLASS in the app: both float
+   over content that scrolls beneath them, and a solid bar would
+   punch a hole in the page. They take the same `--glass-*` tokens,
+   so the top and the bottom of every screen are the same material
+   by construction. `prefers-reduced-transparency` turns both
+   opaque.
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'

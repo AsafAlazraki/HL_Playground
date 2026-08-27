@@ -146,7 +146,14 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
 
   const updateModule = useProjectStore((s) => s.updateModule)
 
-  const name = org?.name || projectName
+  /* THE BUSINESS'S NAME WHERE WE HAVE IT, AND THE SHEET'S OTHERWISE —
+     and the eyebrow says which. `meta.org` is written at onboarding
+     and is absent on a sheet that arrived some other way, where the
+     only name we hold is the document's. Calling a document "your
+     business" at the hero step is a small lie told in the largest
+     type on the page, so the caption changes with the fact. */
+  const business = org?.name?.trim() ?? ''
+  const name = business === '' ? projectName : business
   const tableCount = Object.keys(entities).length
 
   /* ARE WE ARRANGING? A position on this page and nothing else — which
@@ -247,18 +254,27 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
     for (const at of reorderPlan(cards, id, dir)) updateModule(at.id, { order: at.order })
   }
 
-  /* THE SENTENCE APPEARS WHEN IT HAS SOMETHING TO SAY. It used to be
-     on screen permanently, under a bordered band, explaining a control
-     nobody had pressed. Now: while you are arranging, and where the
-     control has to refuse. */
-  const hint =
-    cards.length === 0
-      ? ''
-      : cards.length < 2
-        ? 'There is one module, so there is no order to put it in yet.'
-        : ordering
-          ? 'Move a card earlier or later. The order is part of this sheet, so everybody who opens it sees the same one.'
-          : ''
+  /* ONE SENTENCE SLOT, DIRECTLY UNDER THE TWO CONTROLS, AND IT IS
+     EMPTY UNLESS THERE IS SOMETHING TO SAY.
+
+     There were two of these and both were in the wrong place. The
+     arranging line was on screen permanently, in a bordered band at
+     the foot of the page, explaining a control nobody had pressed. The
+     refusal — why "New module" is off — was inside the empty card,
+     which is where the button used to be and is not where it is now; a
+     reason that has drifted away from the control it is about is a
+     reason nobody reads. Both live here, under the controls, and only
+     while they are true. */
+  const hint = !canMakeModule ? (
+    <>
+      A module is about a table, and there are none yet. Start one from <em>New table</em>{' '}
+      on the bar, or load your price file from <em>Home</em>.
+    </>
+  ) : cards.length === 1 ? (
+    'There is one module, so there is no order to put it in yet.'
+  ) : ordering ? (
+    'Move a card earlier or later. The order is part of this sheet, so everybody who opens it sees the same one.'
+  ) : null
 
   return (
     <div className="md-dash">
@@ -273,7 +289,9 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
         <div className="md-dash-page">
           <header className="md-dash-mast">
             <div className="md-dash-say">
-              <span className="mono-label md-dash-eyebrow">Your business</span>
+              <span className="mono-label md-dash-eyebrow">
+                {business === '' ? 'This sheet' : 'Your business'}
+              </span>
               <h1 className="ds-hero md-dash-org">{name}</h1>
               <p className="md-dash-note">
                 Every place you have set up — what it holds, and what may be done in
@@ -325,7 +343,7 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                   /* the sentence beneath carries the reason for
                      everyone; this carries it for a reader who lands on
                      the control itself */
-                  aria-describedby={canMakeModule ? undefined : 'md-empty-why'}
+                  aria-describedby={canMakeModule ? undefined : 'md-dash-why'}
                 >
                   <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
                   New module
@@ -334,7 +352,11 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
             </div>
           </header>
 
-          {hint === '' ? null : <p className="md-dash-hint">{hint}</p>}
+          {hint === null ? null : (
+            <p className="md-dash-hint" id="md-dash-why">
+              {hint}
+            </p>
+          )}
 
           {cards.length === 0 ? (
             <div className="md-empty">
@@ -354,17 +376,6 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                 </strong>{' '}
                 and no modules.
               </p>
-              {/* THE REFUSAL, WHERE THE THING IS REFUSED, and it names
-                  the step that does work from here. Zero tables is the
-                  only state in which this page cannot be got out of on
-                  its own. */}
-              {canMakeModule ? null : (
-                <p className="md-empty-why" id="md-empty-why">
-                  A module is about a table, and there are none yet. Start one from{' '}
-                  <em>New table</em> on the bar, or load your price file from{' '}
-                  <em>Home</em>.
-                </p>
-              )}
             </div>
           ) : (
             <ul className="md-cards">
@@ -515,7 +526,12 @@ function Card({
               alt=""
               width={cover.w}
               height={cover.h}
-              loading="lazy"
+              /* THE FIRST ROW IS NOT LAZY. This is a landing surface
+                 and four plates are above the fold at every width the
+                 grid resolves to; deferring those is a page that
+                 assembles itself while somebody watches. The rest wait
+                 until they are scrolled to. */
+              loading={index < 4 ? 'eager' : 'lazy'}
               decoding="async"
               draggable={false}
             />

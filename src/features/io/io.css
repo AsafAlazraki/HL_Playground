@@ -1,7 +1,61 @@
 /* ============================================================
-   io — import/export popover, chart-room chrome styled.
-   All classes are io- prefixed; colors come from tokens.css.
-   Sections share the --sp-4 left edge; internals on --sp-2/-3.
+   IO (io-) — taking a copy of the sheet out, and bringing one back.
+
+   THREE SURFACES: the panel behind "Import / export" at the top left
+   of Home, the older-copy notice, and the preflight this feature
+   puts inside the house confirm sheet.
+
+   WHAT THIS PASS CHANGED, and why.
+
+   THE PANEL WAS GLASS, AND THE GLASS WAS SPENT. It carried
+   `--mat-light-bg` + `--mat-light-blur` and a `material-in`
+   keyframe that animated a backdrop blur, plus a
+   `.shell-root:has(.shell-sheet-layer[inert])` rule that swapped it
+   back to paint over a stage. Every one of those blurs resolves to
+   `0px` now (§5 retired glass), so all that machinery was drawing an
+   opaque panel by an expensive route and a second rule was
+   overriding it for a difference nobody could see. It is one paint
+   surface, lifted by `--e-float`.
+
+   FOUR CORNER REGISTRATION TICKS. Drafting-office costume from the
+   art direction that was replaced, drawn on a control panel. Gone,
+   with the eight elements and eight rules that carried them.
+
+   THE SIGNATURE SLOT. "HELMLOGIC · DOC CTRL", in the footer of a
+   panel a dealer opens to move a file. It said nothing, and it was
+   the last thing standing between the CLEAR SHEET button and the
+   reason that button is sometimes refused. Gone; the reason has the
+   slot to itself.
+
+   THE RUBBER STAMP. The confirmation toast was drawn rotated -2°
+   with a double inset border, scaling in from 1.3. Nothing else in
+   this design shouts, and the loudest object in the app was the one
+   that said "saved". It is a quiet accent pill that rises once.
+
+   CONTRAST, measured on the grounds actually used — `--surface-1`
+   (#ffffff), `--surface-3` (#eef3f8) and `--accent-wash`:
+
+     --fg           on --surface-1   17.4 : 1
+     --fg-secondary on --surface-1    8.1 : 1
+     --fg-secondary on --surface-3    7.4 : 1
+     --fg-tertiary  on --surface-1    5.5 : 1
+     --fg-tertiary  on --surface-3    4.9 : 1
+     --accent       on --surface-1    5.9 : 1
+     --accent       on --accent-wash  5.2 : 1
+     --danger       on --danger-wash  5.6 : 1
+
+   The old file needed a `--ink-faint` remap per surface because the
+   panel floated over a navy canvas at one moment and over paint the
+   next. There is one ground now, so there is one ramp, and
+   `--fg-quaternary` is used nowhere.
+
+   UPPERCASE. Captions and the two mono revision stamps. Everything
+   else — both card titles, every sentence, the file's own name, the
+   counts, and all six buttons — keeps its case.
+   ============================================================ */
+
+/* ============================================================
+   THE TRIGGER
    ============================================================ */
 
 .io-root {
@@ -9,10 +63,48 @@
   display: inline-flex;
 }
 
+.io-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--h-sm);
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.io-trigger:hover {
+  background: var(--surface-1);
+  border-color: var(--line-strong);
+  color: var(--fg);
+  box-shadow: var(--e2);
+}
+.io-trigger:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.io-trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
 .io-trigger[aria-expanded='true'] {
-  background: var(--blue-wash);
-  border-color: var(--blue);
-  color: var(--blue-deep);
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+  color: var(--accent);
 }
 
 .io-glyph {
@@ -20,87 +112,42 @@
   display: block;
 }
 
-/* -- the popover sheet --------------------------------------
-   THE LIGHT MATERIAL. apple-design §12: "lighter materials draw
-   attention to interactive elements." This one is summoned by a
-   press and dismissed by one, its backdrop is the blueprint, and
-   that backdrop is STATIC the whole time it is open — so the blur
-   is rasterised once and never invalidated.
+/* ============================================================
+   THE PANEL
 
-   IT IS LEGAL PRECISELY BECAUSE THE MASTHEAD IS NOT GLASS. Were
-   the masthead a material too, this popover would be glass-on-glass
-   along its top edge and glass-on-navy along the rest — one surface
-   wearing two materials, and the light-on-light half would separate
-   from its ground at 1.07:1. §12's "never stack a light translucent
-   surface on another" is not a style rule here, it is the reason
-   the roster is four surfaces and not six.
+   It opens FROM the control that asked for it (§4's origin rule):
+   top-right when the trigger sits at the right of a title block,
+   top-left when it stands in a toolbar's left-hand track, which is
+   where Home puts it.
+   ============================================================ */
 
-   MEASURED on the material over --canvas-bg-deep (#d3d8dd, the
-   worst ground it can land on): --ink 10.45:1, --ink-soft 5.94:1,
-   --blue 4.65:1, --blue-deep darker still. --ink-faint would be
-   3.74:1 and --red 3.60:1, so both are remapped below and land at
-   5.94:1 and 4.65:1; those two carry 10 of this popover's 28
-   colour declarations.
-
-   --ec2, NOT --shadow-popover: this surface stands on the navy,
-   where every --shadow-* token built from --ink is shadow-coloured
-   light on shadow-coloured ground (1.046:1). See base.css. */
 .io-pop {
   position: absolute;
-  top: calc(100% + var(--sp-3));
+  top: calc(100% + var(--s-2));
   right: 0;
-  width: 348px;
+  z-index: 60;
+  width: 384px;
+  max-width: calc(100vw - var(--s-6));
   display: flex;
   flex-direction: column;
-  /* the title block and CLEAR SHEET stay put on a short screen; only the
+  /* the head and CLEAR SHEET stay put on a short screen; only the
      sections between them scroll */
   max-height: calc(100vh - 96px);
-  /* see [data-material] in base.css */
-  --ink-faint: var(--ink-faint-material);
-  --red: var(--red-material);
-  background: var(--mat-light-bg);
-  backdrop-filter: var(--mat-light-blur);
-  border: 1px solid var(--mat-light-edge);
-  border-radius: var(--radius);
-  box-shadow: var(--ec2);
-  z-index: 60;
-  /* MATERIALIZE, DON'T JUST FADE — §12's last bullet. The blur
-     radius animates alongside the existing scale-and-lift, so the
-     surface reads as a material ARRIVING rather than as pixels
-     appearing. Two animations rather than one because `sheet-in` is
-     shared by 25 surfaces in base.css and only one of them is
-     glass. backdrop-filter interpolates on the compositor and this
-     is a 348px-wide box, so it is thirteen frames of a 7.98%-of-
-     screen blur — which is why the three full-bleed scrims below
-     do NOT get the same treatment. */
-  animation:
-    sheet-in var(--t-med) var(--ease-draft),
-    material-in var(--t-med) var(--ease-draft);
+  background: var(--grad-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
+  transform-origin: top right;
+  animation: ds-scale-in var(--d-med) var(--ease-out-expo);
   outline: none;
 }
-@keyframes material-in {
-  from {
-    backdrop-filter: blur(0px) saturate(100%);
-  }
-}
-
-/* GLASS IS PERMITTED ONLY OVER THE CANVAS. Every stage — view,
-   design, rules, flow, quote — covers the sheet with a --paper
-   surface, and this popover hangs off the masthead so it opens over
-   whichever of those is up. The same material over --paper
-   separates from its ground at 1.07:1: not a weaker surface, no
-   surface. So the material is spent when there is something to see
-   through and paint when there is not.
-   `.shell-sheet-layer[inert]` is the stage state that already
-   exists — Shell.tsx sets `inert` on the sheet the moment a stage
-   covers it — rather than a second flag that can disagree with it. */
-.shell-root:has(.shell-sheet-layer[inert]) .io-pop {
-  background: var(--paper-high);
-  backdrop-filter: none;
-  border-color: var(--hairline-strong);
-  box-shadow: var(--e3);
-  --ink-faint: var(--ink-faint-base);
-  --red: var(--red-base);
+/* The panel hangs from the LEFT when the trigger stands in a
+   toolbar's left-hand track — a 384px sheet right-aligned to a
+   control at the window's left edge lands off the side of it. */
+.io-root--left .io-pop {
+  right: auto;
+  left: 0;
+  transform-origin: top left;
 }
 
 .io-body {
@@ -109,216 +156,246 @@
   overflow-y: auto;
 }
 
-/* corner registration ticks */
-.io-tick {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border: 0 solid var(--blue);
-  opacity: 0.5;
-  pointer-events: none;
-}
-.io-tick-tl { top: 4px; left: 4px; border-top-width: 1px; border-left-width: 1px; }
-.io-tick-tr { top: 4px; right: 4px; border-top-width: 1px; border-right-width: 1px; }
-.io-tick-bl { bottom: 4px; left: 4px; border-bottom-width: 1px; border-left-width: 1px; }
-.io-tick-br { bottom: 4px; right: 4px; border-bottom-width: 1px; border-right-width: 1px; }
-
 /* -- head --------------------------------------------------- */
+
 .io-head {
   flex: none;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: var(--sp-3) var(--sp-4);
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
 }
 .io-head-title {
-  color: var(--ink);
+  color: var(--fg);
 }
+/* a mono revision stamp — one of the three sanctioned uppercase
+   uses, and the only figure in the head */
 .io-head-rev {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   font-weight: 600;
-  letter-spacing: 0.14em;
-  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
 }
 
 /* -- sections ----------------------------------------------- */
+
 .io-section {
-  padding: var(--sp-4);
+  padding: var(--s-4);
 }
 .io-section-t {
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--line-subtle);
 }
 
-/* caption with a trailing dimension line */
+/* A caption and the rule that runs off it to the edge. It used to
+   end in a right-angle tick — a dimension line, drawn on a menu. */
 .io-caption {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--s-2);
 }
 .io-caption::after {
   content: '';
   flex: 1;
-  height: 5px;
-  border-bottom: 1px solid var(--hairline);
-  border-right: 1px solid var(--hairline-strong);
+  height: 1px;
+  background: linear-gradient(90deg, var(--line) 0%, transparent 100%);
 }
 
-/* -- export choice cards ------------------------------------ */
+/* -- the two copies you can take ---------------------------- */
+
 .io-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
+  gap: var(--s-2);
+  margin-top: var(--s-3);
 }
 .io-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-1);
-  padding: var(--sp-3);
+  gap: var(--s-1);
+  padding: var(--s-3);
   text-align: left;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e1);
+  color: var(--fg);
   cursor: pointer;
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
 }
 .io-card .io-glyph {
-  color: var(--blue);
+  color: var(--accent);
   margin-bottom: 2px;
 }
 .io-card:hover {
-  border-color: var(--blue);
-  background: var(--blue-wash);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  border-color: var(--accent-line);
+  box-shadow: var(--e-card-hover);
 }
 .io-card:active {
-  transform: none;
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1);
+  transition-duration: var(--d-press);
 }
+.io-card:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+/* A COPY HAS A NAME AND A NAME IS NOT A STAMP: these read
+   EVERYTHING and STRUCTURE ONLY, on the two buttons a person
+   presses to take their business's price file out of the app. */
+.io-card-title {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 570;
+  letter-spacing: -0.004em;
+  text-transform: none;
+  color: var(--fg);
+}
+/* A SENTENCE IS SET IN THE READING FACE. This listed what travels —
+   "Tables, rows, modules, pages, rules and quotes" — in 11px
+   letterspaced mono capitals, which is a stamp's recipe worn by the
+   only line on the card that explains it. */
+.io-card-sub {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-secondary);
+}
+/* the figures the card's promise is worth: mono, tabular, and on a
+   rule of their own so both cards agree on the line even when one
+   sub-label wraps */
+.io-card-meta {
+  margin-top: auto;
+  padding-top: var(--s-2);
+  align-self: stretch;
+  border-top: 1px dashed var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+/* AND THE TWO CARDS, WHEN THERE IS NOTHING TO EXPORT. `opacity:
+   0.45` on a card whose whole content is words put it at about
+   3.0:1 — and a person reading a blank sheet's panel is exactly the
+   person who needs to know what the two copies WOULD carry. The
+   card sinks to a flat well and steps its ink down one tier;
+   `.io-blank-note` beneath already says why there is nothing to
+   take. */
 .io-card:disabled {
-  opacity: 0.45;
+  opacity: 1;
+  background: var(--surface-3);
+  border-color: var(--line-subtle);
+  box-shadow: none;
+  color: var(--fg-secondary);
   pointer-events: none;
 }
-.io-card-title {
-  font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 640;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.io-card-sub {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-.io-card-meta {
-  /* auto, so the dashed rule sits on the same line in both cards even when
-     one sub-label wraps to two lines */
-  margin-top: auto;
-  padding-top: var(--sp-2);
-  align-self: stretch;
-  border-top: 1px dashed var(--hairline);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--ink-faint);
+.io-card:disabled .io-glyph,
+.io-card:disabled .io-card-title,
+.io-card:disabled .io-card-sub,
+.io-card:disabled .io-card-meta {
+  color: var(--fg-secondary);
 }
 
-.io-blank-note {
-  margin-top: var(--sp-2);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--ink-faint);
-}
-
-/* WHY THIS PANEL COUNTS MORE TABLES THAN THE FRONT DOOR DOES. The same
-   recipe as `.io-blank-note` directly above — same face, same 11px,
-   same tracking, same token — because it stands in the same place under
-   the same two cards and a second look for one more sentence is a
-   second thing to learn. `--ink-faint` is remapped to
-   `--ink-faint-material` by `.io-pop` over the canvas and back to
-   `--ink-faint-base` over a stage, so this pair is the one the panel's
-   own measurement already covers; nothing new is introduced. Leading is
-   the only addition, because this sentence wraps and the blank note
-   never does. */
+.io-blank-note,
 .io-kept-note {
-  margin-top: var(--sp-2);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  line-height: 1.65;
-  color: var(--ink-faint);
+  margin-top: var(--s-2);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
 }
 
-/* -- import dropzone ---------------------------------------- */
+/* -- the door a file comes in by ---------------------------- */
+
+/* THE SAME PLATE AS ONBOARDING'S. There are two import doors in the
+   app — this one and the one on the first-run screen — and they
+   read a file with the same code and refuse it with the same
+   sentence. They should not have looked like two different
+   features, and they did. */
 .io-drop {
-  margin-top: var(--sp-3);
+  margin-top: var(--s-3);
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-1);
-  padding: var(--sp-4) var(--sp-3);
-  border: 1px dashed var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-sunken);
-  color: var(--ink-soft);
+  gap: 2px;
+  padding: var(--s-5) var(--s-3);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
   cursor: pointer;
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .io-drop:hover {
-  border-color: var(--blue);
-  background: var(--blue-wash);
-  color: var(--blue-deep);
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.io-drop:active {
+  transform: scale(0.994);
+  transition-duration: var(--d-press);
+}
+.io-drop:focus-visible {
+  outline: none;
+  border-style: solid;
+  border-color: var(--accent);
+  box-shadow: var(--focus);
 }
 .io-drop.is-over {
   border-style: solid;
-  border-color: var(--blue);
-  background: var(--blue-wash-strong);
-  color: var(--blue-deep);
+  border-color: var(--accent);
+  background: var(--accent-wash-strong);
+  box-shadow: var(--glow-sm);
+  color: var(--accent);
 }
 .io-drop .io-glyph {
   margin-bottom: 2px;
 }
 .io-drop-main {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 550;
+  letter-spacing: -0.004em;
+  color: var(--fg);
 }
 .io-drop.is-over .io-drop-main,
 .io-drop:hover .io-drop-main {
-  color: var(--blue-deep);
+  color: var(--accent);
 }
-/* AN ALPHA IS NOT A TIER. `opacity: 0.75` on `--ink-soft` over the
-   drop-zone's `--paper-sunken` composites to a 75% ink and measured
-   **3.79:1** on the live panel — below `--ink-faint`'s floor and below
-   `--fg-quaternary`'s 2.8:1 line, which the contract says may never
-   carry meaning. This line is the second half of the instruction: it is
-   the only thing on the plate that says a click will also do.
-   It keeps `currentColor` so it still turns `--blue-deep` with its
-   parent on hover and drag-over; the second-line reading comes from
-   400 weight against the main line's 600, which is where a hierarchy
-   inside one 11px mono block belongs. 6.9:1 at rest. */
+/* AN ALPHA IS NOT A TIER. This line carried `opacity: 0.75` on the
+   soft ink, which composited to 3.79:1 — below the floor, on the
+   only thing that says a click will also do. It keeps
+   `currentColor`, so it turns with its parent on hover and
+   drag-over; the second-line reading comes from the weight step
+   against the main line, which is where a hierarchy inside one
+   block belongs. */
 .io-drop-sub {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  letter-spacing: 0;
   color: currentColor;
 }
 
@@ -326,50 +403,62 @@
   display: none;
 }
 
-/* -- red-pencil rejection note ------------------------------ */
+/* -- a file that was refused -------------------------------- */
+
+/* THE REFUSAL SAYS WHY, WHERE IT WAS REFUSED. It read
+   `REJECTED — <reason>` in red letterspaced mono: a sentence set as
+   a stamp. The verdict is a caption, the reason is a sentence in
+   full ink (15.6:1 on the wash), and the red is spent on the rail. */
 .io-error {
-  margin-top: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 2px solid var(--red);
-  border-radius: var(--radius-sm);
-  background: var(--red-wash);
-  color: var(--red);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  line-height: 1.6;
-  animation: fade-in var(--t-fast) var(--ease-draft);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: var(--s-3);
+  padding: var(--s-3);
+  border-left: 2px solid var(--danger);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--danger-wash);
+  animation: ds-fade var(--d-fast) var(--ease);
 }
-.io-error strong {
-  font-weight: 700;
+.io-error-tag {
+  color: var(--danger);
+}
+.io-error-say {
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  color: var(--fg);
 }
 
-/* -- import preview plate ----------------------------------- */
+/* -- what the file holds ------------------------------------ */
+
 .io-plate {
-  margin-top: var(--sp-3);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-high);
+  margin-top: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
   overflow: hidden;
-  animation: sheet-in var(--t-med) var(--ease-draft);
+  animation: ds-rise var(--d-slow) var(--ease-out-expo) backwards;
 }
 .io-plate-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  background: var(--paper-sunken);
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--s-2);
+  padding: var(--s-3);
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--line-subtle);
 }
+/* the imported FILE's name, read off the file a person picked — the
+   one string on the plate that is not ours at all */
 .io-plate-name {
-  font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 640;
-  font-size: 12px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 570;
+  letter-spacing: -0.004em;
+  text-transform: none;
+  color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -377,10 +466,11 @@
 .io-plate-rev {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   font-weight: 600;
-  letter-spacing: 0.12em;
-  color: var(--blue-deep);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
 }
 .io-plate-grid {
   display: grid;
@@ -390,53 +480,49 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px; /* number to its label — optical, below the scale */
-  padding: var(--sp-3) var(--sp-2);
-  border-right: 1px solid var(--hairline);
+  gap: 3px;
+  padding: var(--s-3) var(--s-2);
+  border-left: 1px solid var(--line-subtle);
 }
-.io-stat:last-child {
-  border-right: none;
+.io-stat:first-child {
+  border-left: 0;
 }
 .io-stat-num {
   font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--ink);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
 }
 .io-stat-lbl {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
   font-weight: 500;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
+  color: var(--fg-tertiary);
 }
-/* WHAT ELSE IS IN THE FILE — the modules, pages and rules a person
-   made, which the three-stat grid above has no column for. Without
-   this line the preview cannot tell you whether the file you are
-   about to REPLACE your sheet with carries your dashboard, and
-   "Tables 21 · Rows 651" looks identical either way. Same plate
-   idiom as the source line below it; drawn only when there is
-   something to say. */
-.io-plate-also {
-  padding: var(--sp-2) var(--sp-3);
-  border-top: 1px solid var(--hairline);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
+/* WHAT ELSE IS IN THE FILE — the modules, pages, rules and customer
+   quotes the three-stat grid above has no column for. Without this
+   line the preview cannot tell you whether the file you are about to
+   REPLACE your sheet with carries your dashboard, and
+   "Tables 21 · Rows 651" looks identical either way. */
+.io-plate-also,
 .io-plate-src {
-  padding: var(--sp-2) var(--sp-3);
-  border-top: 1px solid var(--hairline);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  padding: var(--s-2) var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+.io-plate-src {
+  color: var(--fg-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -445,185 +531,241 @@
 .io-plate-actions {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
+  gap: var(--s-2);
+  margin-top: var(--s-3);
 }
 .io-grow {
   flex: 1;
 }
+
+/* ============================================================
+   THE THREE BUTTONS ON THE IMPORT PREVIEW.
+
+   They carry no appearance of their own: they are `.btn` from
+   src/styles/base.css, whose identity IS an 11px uppercase mono
+   stamp. So the panel that decides what happens to a dealer's whole
+   sheet read
+
+     DISCARD                        REPLACE   ADD TO SHEET
+
+   which is uppercase on three buttons — the one thing §2 names
+   outright and forbids twice. It is also the only surface in the app
+   where the irreversible answer was shouting; nothing in this design
+   shouts, and a control that shouts on the one screen that can lose
+   a dealer's work reads as a warning label rather than a choice.
+
+   Corrected here beside the classes, exactly as table.css did for
+   `.tb-actions .btn`; `.btn` itself is not re-cut for the ~200
+   controls this pass has not reached. `.io-plate-actions .btn`
+   catches "Add to sheet", which carries `.btn-primary` and no class
+   of its own.
+   ============================================================ */
+.io-discard,
+.io-replace,
+.io-plate-actions .btn {
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-control);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.io-plate-actions .btn:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.io-plate-actions .btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+/* the additive answer is the primary one, and it is the accent —
+   `.btn-primary` fills with `--ink`, which was right for a drawing
+   office and is wrong on a blue-and-white panel */
+/* THE FLAT ACCENT, NOT THE BRAND RAMP. White measures 5.9:1 on
+   `--accent` and 3.5:1 on `--accent-2`, the ramp's far stop — swept
+   in-browser. A gradient cannot be measured at every stop, which is
+   why §2 bars gradient text; ink ON a gradient is the same fault
+   inverted. Rest 5.9:1, hover 5.2:1, press darker still. */
+.io-plate-actions .btn-primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+}
+.io-plate-actions .btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: transparent;
+  box-shadow: var(--e2), var(--glow-md), inset 0 1px 0 var(--edge-light);
+}
+.io-plate-actions .btn-primary:active {
+  background: var(--accent-press);
+}
+/* of the three, one destroys and one adds; the destructive answer is
+   allowed a step of weight so the pair are never read as equals */
+.io-replace {
+  font-weight: 560;
+}
 .io-replace:hover {
-  background: var(--red-wash);
-  border-color: var(--red);
-  color: var(--red);
+  background: var(--danger-wash);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* -- footer ------------------------------------------------- */
+
 .io-foot {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--sp-2) var(--sp-4);
-  border-top: 1px solid var(--hairline);
-  background: var(--paper-sunken);
-  border-radius: 0 0 var(--radius) var(--radius);
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+  background: var(--surface-3);
+  border-radius: 0 0 var(--r-panel) var(--r-panel);
 }
 .io-clear {
-  padding: var(--sp-1) var(--sp-2);
-  margin-left: calc(-1 * var(--sp-2)); /* keeps its label on the x=16 line */
-  border: none;
-  border-radius: var(--radius-sm);
+  padding: var(--s-1) var(--s-2);
+  margin-left: calc(-1 * var(--s-2));
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
   background: transparent;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-secondary);
   cursor: pointer;
   transition:
-    color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft);
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .io-clear:hover:not(:disabled) {
-  color: var(--red);
-  background: var(--red-wash);
+  color: var(--danger);
+  background: var(--danger-wash);
+}
+.io-clear:not(:disabled):active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.io-clear:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
 }
 /* AN EMPTY SHEET CANNOT BE CLEARED, and an enabled control that does
-   nothing is a lie told to whoever is looking. The reason is printed
-   one line away, in the footer's own signature slot, rather than in a
-   tooltip. */
-/* and the refusal has to be READ. `--ink-faint` is 4.22:1 on this
-   footer's `--paper-sunken` — the same arithmetic as `.io-foot-sig`
-   above — so the label naming what is unavailable was the least legible
-   thing in the panel. It steps to `--ink-soft` (6.9:1). What says the
-   button is refused is the printed reason in `.io-foot-why` beside it
-   and the loss of the red hover, not an ink under the floor. */
+   nothing is a lie told to whoever is looking. What says the button
+   is refused is the printed reason beside it and the loss of the red
+   hover — never an ink under the floor. */
 .io-clear:disabled {
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
   cursor: default;
 }
-/* THE NOTE BELOW WAS RIGHT AND THIS RULE DID NOT LISTEN. `.io-foot-why`
-   steps up because it carries a reason; `.io-foot-sig` was left at
-   `--ink-faint` on the same `--paper-sunken` footer and measured
-   **4.22:1** on the live panel. The floor is 4.5:1 for anything a
-   person reads, and a signature slot that reads "HELMLOGIC · DOC CTRL"
-   is words, not a rule. Both halves of the slot now clear the floor;
-   the slot stays quiet by being 11px mono at the end of a footer. */
-.io-foot-sig {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  color: var(--ink-soft);
-}
-/* The signature slot is decoration and takes the quietest ink there
-   is. When it carries the REASON the button beside it is refused it is
-   not decoration any more, and it steps up: --ink-faint measures
-   4.26:1 on this footer's --paper-sunken and fails, --ink-soft 6.9:1. */
 .io-foot-why {
-  color: var(--ink-soft);
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
 }
 
-/* -- stamp toast -------------------------------------------- */
+/* -- the confirmation ---------------------------------------- */
+
 .io-stamp {
   position: absolute;
-  top: calc(100% + var(--sp-3));
+  top: calc(100% + var(--s-2));
   right: 0;
   z-index: 70;
-  padding: var(--sp-2) var(--sp-3);
-  border: 2px solid var(--blue);
-  border-radius: var(--radius-sm);
-  background: var(--paper-overlay);
-  box-shadow: inset 0 0 0 2px var(--paper-high), inset 0 0 0 3px var(--blue);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--blue-deep);
+  padding: 7px var(--s-3);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  box-shadow: var(--e2), var(--glow-md);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  letter-spacing: -0.004em;
+  color: var(--accent);
   white-space: nowrap;
-  transform: rotate(-2deg);
-  animation: io-stamp-in 240ms var(--ease-draft);
+  animation: ds-rise var(--d-med) var(--ease-out-back);
   pointer-events: none;
 }
-
-@keyframes io-stamp-in {
-  0% {
-    opacity: 0;
-    transform: rotate(-2deg) scale(1.3);
-  }
-  60% {
-    opacity: 1;
-    transform: rotate(-2deg) scale(0.97);
-  }
-  100% {
-    opacity: 1;
-    transform: rotate(-2deg) scale(1);
-  }
+.io-root--left .io-stamp {
+  right: auto;
+  left: 0;
+}
+/* the revision it wrote, in the face figures take */
+.io-stamp b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================
-   THE FRESHNESS NOTICE — see Freshness.tsx for what it is for.
-
-   Drawn in the redesign's own vocabulary rather than this file's
-   drafting-table one, because it appears OVER a page and has to
-   belong to that page: --paper-high on a hairline, 10px radius,
-   --ec3 at rest so it reads as lifted off the surface underneath.
-   Nothing above changes.
+   THE OLDER-COPY NOTICE — see Freshness.tsx for what it is for.
 
    IT DOES NOT STAND IN FRONT OF THE PAGE. Drawn top-centre it
-   covered the very screen a person had just opened — including the
-   module dashboard's own empty state, which is the screen most
-   likely to have sent them looking. So it sits in the bottom right,
-   clear of the dock's reserved 78px strip and clear of the toast
-   stack, which is bottom-centre. It is a notification, not a gate.
+   covered the very screen a person had just opened. It sits in the
+   bottom right, clear of the dock's reserved strip and clear of the
+   toast stack, which is bottom-centre. It is a notification, not a
+   gate.
    ============================================================ */
 
 .io-fresh {
   position: fixed;
   bottom: 96px;
-  right: var(--sp-5);
+  right: var(--s-5);
   z-index: 150;
-  width: min(430px, calc(100vw - var(--sp-6)));
+  width: min(430px, calc(100vw - var(--s-6)));
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-2);
-  padding: var(--sp-4);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec3);
+  gap: var(--s-2);
+  padding: var(--s-5);
+  background: var(--grad-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
 }
 
 .io-fresh-eyebrow {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
 .io-fresh-say {
   margin: 0;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  line-height: 1.55;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
 }
 
 /* THE COUNTED DIFFERENCE — the line that turns "my data reverted"
-   into "this is an older copy". Ink, not a tint: it is the fact the
-   reader came for. */
+   into "this is an older copy". Full ink, not a tint: it is the fact
+   the reader came for. */
 .io-fresh-facts {
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.45;
+  padding: var(--s-3);
+  align-self: stretch;
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--ink);
+  color: var(--fg);
 }
 
 .io-fresh-fact {
@@ -633,277 +775,86 @@
 .io-fresh-acts {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-1);
+  gap: var(--s-2);
+  margin-top: var(--s-1);
 }
 
 .io-fresh-go {
-  height: 28px;
-  padding: 0 12px;
+  height: var(--h-md);
+  padding: 0 var(--s-4);
   border: 1px solid transparent;
-  border-radius: 7px;
-  background: var(--blue);
-  color: var(--paper-high);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
   font-weight: 550;
-  letter-spacing: 0;
+  letter-spacing: -0.004em;
   text-transform: none;
   cursor: pointer;
   transition:
-    filter var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .io-fresh-go:hover {
-  filter: brightness(1.08);
+  background: var(--accent-hover);
+  box-shadow: var(--e2), var(--glow-md), inset 0 1px 0 var(--edge-light);
+}
+.io-fresh-go:active {
+  background: var(--accent-press);
 }
 .io-fresh-go:active {
   transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 .io-fresh-go:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--blue-wash);
+  box-shadow: var(--focus);
 }
 
 .io-fresh-keep {
-  height: 28px;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
   cursor: pointer;
   transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .io-fresh-keep:hover {
-  background: var(--paper-sunken);
-  border-color: var(--hairline-strong);
-  color: var(--ink);
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--fg);
 }
 .io-fresh-keep:active {
   transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 .io-fresh-keep:focus-visible {
   outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
+  box-shadow: var(--focus);
 }
 
 .io-fresh-foot {
   margin: 0;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.45;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--ink-faint);
-}
-
-/* ============================================================
-   THE I/O TRIGGER, on a redesigned toolbar.
-
-   It is the one part of this feature that now stands on a page the
-   redesign drew, so it takes that page's control step — 28px tall,
-   7px radius, 12.5px Inter, sentence case — rather than `.btn`'s
-   uppercase mono stamp. The popover it opens is unchanged.
-   ============================================================ */
-
-.io-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
-}
-.io-trigger:hover {
-  background: var(--paper-sunken);
-  border-color: var(--hairline-strong);
-  color: var(--ink);
-}
-.io-trigger:active {
-  transform: scale(0.97);
-}
-.io-trigger:focus-visible {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
-/* The popover hangs from the LEFT when the trigger stands in a
-   toolbar's left-hand track — a 348px sheet right-aligned to a
-   control at the window's left edge lands off the side of it. */
-.io-root--left .io-pop {
-  right: auto;
-  left: 0;
-}
-
-/* ============================================================
-   A NAME IS A NAME — the uppercase pass, Import / export.
-
-   This panel predates the redesign and had more of the fault in it than
-   any other surface: it was set almost entirely in capitals, the
-   drafting-office "document control" idiom taken past the one thing
-   DESIGN_PRINCIPLES §2 allows it on. Enumerated live at 1280 and 1920,
-   with the verdict for each:
-
-     .io-card-title    FIX — "EVERYTHING", "STRUCTURE ONLY". The NAME of
-                       the copy you are about to take, on the button you
-                       press to take it. A button label, twice over.
-     .io-card-sub      FIX — "TABLES, ROWS, MODULES, PAGES AND QUOTES".
-                       A sentence listing what travels.
-     .io-card-meta     FIX — "52 TABLES · 3,566 ROWS · 5 MODULES".
-                       Values, and the figures the card's promise is
-                       worth. The nouns were capitals in the markup too
-                       and are now the dealer's own words in their own
-                       case (`plural(n, 'table', 'tables')`).
-     .io-plate-name    FIX — the imported FILE's name, read off the file
-                       a person picked. The one string on the plate that
-                       is not ours at all.
-     .io-plate-also    FIX — "ALSO — 5 MODULES · 25 PAGES": values.
-     .io-plate-src     FIX — "SOURCE — <filename>": a value.
-     .io-clear         FIX — "CLEAR SHEET", a button, and the most
-                       destructive one in the app.
-     .io-blank-note    FIX — a sentence.
-     .io-kept-note     FIX — a sentence explaining the count.
-     .io-drop-main
-     .io-drop-sub      FIX — "DROP .JSON HERE" / "OR CLICK TO BROWSE"
-                       were literal capitals in the markup rather than a
-                       transform; they are two halves of one instruction
-                       and are now sentence case in the TSX.
-
-   KEPT UPPERCASE, all of them captions or mono stamps, which are the
-   three sanctioned uses: `.io-head-title` ("DOCUMENT CONTROL"),
-   `.io-rev` and `.io-plate-rev` ("REV 00"), the section `.mono-label`s
-   ("SAVE A COPY", "OPEN A SAVED COPY"), `.io-stat-lbl` ("TABLES",
-   "ROWS" — the captions under the plate's three figures),
-   `.io-stamp` ("SAVED", the rubber stamp), `.io-foot-sig`.
-
-   TRACKING COMES DOWN WITH THE CASE, §3 — +0.12em to +0.14em is the
-   11px label's tracking, and none of these is a label any more. The
-   plate's stamps keep a hair of it because they are still stamps.
-   ============================================================ */
-.io-card-title {
-  font-size: 13px;
-  letter-spacing: -0.004em;
-  text-transform: none;
-}
-.io-card-sub,
-.io-blank-note,
-.io-kept-note {
-  letter-spacing: 0;
-  text-transform: none;
-}
-.io-card-meta,
-.io-plate-also,
-.io-plate-src {
-  letter-spacing: 0.01em;
-  text-transform: none;
-  font-variant-numeric: tabular-nums;
-}
-.io-plate-name {
-  letter-spacing: -0.004em;
-  text-transform: none;
-}
-.io-clear {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-/* AND THE TWO EXPORT CARDS, when there is nothing to export. Same
-   fault, same instrument: `opacity: 0.45` on a card whose whole content
-   is words puts "Everything · Tables, rows, modules, pages and quotes ·
-   no tables" at about 3.0:1, and a person reading a blank sheet's panel
-   is exactly the person who needs to know what the two copies WOULD
-   carry. The card sinks to a flat well and steps its ink down a tier;
-   `.io-blank-note` directly beneath already says why there is nothing
-   to take a copy of. */
-.io-card:disabled {
-  opacity: 1;
-  background: var(--paper-sunken);
-  border-color: var(--hairline);
-  color: var(--ink-soft);
-}
-.io-card:disabled .io-glyph {
-  color: var(--ink-soft);
-}
-.io-card:disabled .io-card-sub,
-.io-card:disabled .io-card-meta {
-  color: var(--ink-soft);
-}
-
-/* ============================================================
-   THE THREE BUTTONS ON THE IMPORT PREVIEW — the last uppercase
-   labels in the app, and the worst three to have left.
-
-   The pass at :770 above enumerated this panel class by class and
-   corrected eleven of them. It missed these three because they carry
-   no appearance of their own: they are `.btn` from src/styles/base.css,
-   the shared foundation, whose identity IS an 11px uppercase mono
-   stamp. So the panel that decides what happens to a dealer's whole
-   sheet still read
-
-     DISCARD                        REPLACE   ADD TO SHEET
-
-   which is uppercase on three buttons — the one thing
-   DESIGN_CONTRACT §3 names outright and forbids twice ("never a
-   table name, a row label, a column value, a BUTTON, or a
-   sentence"). It is also the only surface in the app where the
-   irreversible answer was shouting; nothing in this design shouts,
-   and a control that shouts on the one screen that can lose a
-   dealer's work reads as a warning label rather than a choice.
-
-   Corrected here, beside the classes, exactly as table.css:3354 did
-   for `.tb-actions .btn` and designer.css:1596 for `.ds-add-btn` —
-   `.btn` itself is not re-cut for the ~200 controls the redesign has
-   not reached. `.io-plate-actions .btn` catches "Add to sheet", which
-   carries `.btn-primary` and no class of its own.
-
-   THE STEP IS THE CONTRACT'S TOOLBAR CONTROL: --font-ui 12.5px / 500,
-   tracking 0. `.io-replace` keeps the extra weight it needs to read as
-   the destructive one of the three; the red pencil it is drawn in
-   (:454) is untouched, and so is every colour here — case does not
-   move a contrast ratio.
-   ============================================================ */
-.io-discard,
-.io-replace,
-.io-plate-actions .btn {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-/* of the three, one destroys and one adds; the destructive answer is
-   allowed a step of weight so the pair are never read as equals */
-.io-replace {
-  font-weight: 560;
+  color: var(--fg-tertiary);
 }
 
 /* ============================================================
@@ -911,32 +862,25 @@
 
    Drawn INSIDE `ConfirmSheet`, which owns the sheet, the scrim, the
    eyebrow, the question and the choices. What is added here is only
-   the evidence that question needs and no confirm before it did: the
+   the evidence that question needs and no confirm before it had: the
    cells that would change, printed with the value that is on the
    sheet beside the value in the file, and the list of things the
    upload will NOT do.
 
    WHY THE OLD VALUE IS DRAWN AT ALL. "12 rows overwritten" is a
    number a person has to trust. `Cash 68,990 → 71,990 on Sport 560`
-   is a fact they can check against the email that sent them the file,
-   and checking it is the entire reason ACTION_BAR §4.3 exists.
+   is a fact they can check against the email that sent them the
+   file, and checking it is the entire reason this surface exists.
 
-   MEASURED, through the full ancestor chain, on `--paper-high` (the
-   confirm sheet's own ground, opaque):
-     .io-diff-where  --ink        on --paper-high    14.55 : 1
-     .io-diff-col    --ink-soft   on --paper-high     8.03 : 1
-     .io-diff-from   --ink-soft   on --paper-high     8.03 : 1
-     .io-diff-to     --ink        on --paper-high    14.55 : 1
-     .io-diff-arrow  --ink-soft   on --paper-high     8.03 : 1
-     .io-rt-note     --ink-soft   on --paper-high     8.03 : 1
-   Nothing here sits on a tint, which is deliberate: DESIGN_CONTRACT
-   records that `--ink-faint` clears 4.72:1 on white and FAILS at
-   4.26:1 over a 3.5% wash, and the cheapest way never to make that
-   mistake again is to give the quietest text no wash to sit on.
-   `--ink-faint` is not used on this surface at all.
+   MEASURED through the full ancestor chain, on the confirm sheet's
+   own opaque `--surface-1`: --fg 17.4:1, --fg-secondary 8.1:1.
+   Nothing here sits on a tint, which is deliberate — the cheapest
+   way never to make the mistake §1 names is to give the quietest
+   text no wash to sit on.
    ============================================================ */
+
 .io-diff {
-  margin: var(--sp-2) 0 0;
+  margin: var(--s-2) 0 0;
   padding: 0;
   list-style: none;
   display: flex;
@@ -947,46 +891,34 @@
 }
 
 /* THE OLD VALUE AND THE NEW ONE ARE THE SAME WIDTH, so the eye reads
-   down the pair rather than across a ragged line. Nothing on this line
-   truncates, and that is a correction: a clipped price is worse than a
-   wrapped one, and a clipped NAME is worse than either.
-
-   MEASURED, on the real thing. A re-upload of Highfield Inflatables
-   after two prices were changed in Excel drew its two lines as
-   `Highfield - RU230KA…` and `Highfield - RU230KA…` — the same eleven
-   words twice, over two different prices. The rows are
-   `RU230KAM (PVC) WH` and `RU230KAM (HYP) WH`, so EVERYTHING that
-   tells them apart was in the part the ellipsis ate. This surface
-   exists so a dealer can check a change against the email that sent
-   them the file; two identical labels over two different figures is
-   the one thing it must never print.
-
-   So the name wraps. The list scrolls at 220px and a wrapped name
-   costs one more line of a thing a person reads a few of; the share of
-   the row it gets went up with it, so most names still take one. */
+   down the pair rather than across a ragged line. Nothing on this
+   line truncates, and that is a correction: a re-upload of Highfield
+   Inflatables after two prices changed drew its two rows as
+   `Highfield - RU230KA…` twice, over two different prices —
+   everything that told them apart was in the part the ellipsis ate.
+   The name wraps instead. */
 .io-diff-line {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) 12px minmax(0, 1fr);
   align-items: baseline;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   padding: 3px 0;
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--line-subtle);
 }
 .io-diff-line:last-child {
   border-bottom: 0;
 }
 
 .io-diff-where {
-  font-family: var(--font-ui);
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
   line-height: 1.35;
-  color: var(--ink);
-  /* whole, or it does not say which row — see the note above */
+  color: var(--fg);
   overflow-wrap: anywhere;
 }
 
 .io-diff-col {
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
   line-height: 1.35;
   /* whole, for the same reason the name is: `LANDED HULL COST` and
      `LANDED HULL FREIGHT` clip to the same three words */
@@ -997,51 +929,74 @@
 .io-diff-from,
 .io-diff-to {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--t-mono-sm-size);
   line-height: 1.5;
+  font-variant-numeric: tabular-nums;
   word-break: break-word;
 }
 .io-diff-from {
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
 .io-diff-to {
-  color: var(--ink);
+  color: var(--fg);
   font-weight: 500;
 }
 
 .io-diff-arrow {
-  color: var(--ink-soft);
-  font-size: 11px;
+  color: var(--fg-secondary);
+  font-size: var(--t-mono-sm-size);
   text-align: center;
 }
 
 .io-diff-more {
-  padding-top: var(--sp-1);
-  color: var(--ink-soft);
+  padding-top: var(--s-1);
+  color: var(--fg-secondary);
 }
 
 /* -- what it will NOT do, one sentence each ------------------
    A LIST AND NOT A WARNING BLOCK. Most of these are not warnings:
    "576 rows have no line in that file, nothing is deleted" is the
    app being careful, and drawing it in the red pencil would teach a
-   person to fear the safest thing on the screen. They are facts about
-   the merge, so they read as facts, marked with a rule down the left
-   in the same hairline the diff uses. */
+   person to fear the safest thing on the screen. They are facts, so
+   they read as facts, marked with a rule down the left. */
 .io-rt-notes {
-  margin: var(--sp-3) 0 0;
-  padding: 0 0 0 var(--sp-3);
+  margin: var(--s-3) 0 0;
+  padding: 0 0 0 var(--s-3);
   list-style: none;
-  border-left: 1px solid var(--hairline-strong);
+  border-left: 1px solid var(--line-strong);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--s-2);
 }
 
 .io-rt-note {
-  font-family: var(--font-ui);
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
   line-height: 1.55;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   MOVEMENT GOES; LIGHT AND COLOUR STAY.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .io-pop,
+  .io-plate,
+  .io-stamp,
+  .io-fresh,
+  .io-error {
+    animation: none;
+  }
+  .io-card:hover,
+  .io-card:active,
+  .io-trigger:active,
+  .io-drop:active,
+  .io-clear:not(:disabled):active,
+  .io-fresh-go:active,
+  .io-fresh-keep:active,
+  .io-plate-actions .btn:active {
+    transform: none;
+  }
 }

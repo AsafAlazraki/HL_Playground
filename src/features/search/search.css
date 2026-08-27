@@ -131,7 +131,7 @@
     display: none;
   }
   .hs-input {
-    padding-right: var(--sp-2);
+    padding-right: var(--s-2);
   }
 }
 
@@ -141,9 +141,9 @@
    and the two become one surface — see the FINDER section below. */
 .hs-pop {
   position: absolute;
-  top: calc(100% + var(--sp-2));
+  top: calc(100% + var(--s-2));
   right: 0;
-  width: min(420px, calc(100vw - var(--sp-6)));
+  width: min(420px, calc(100vw - var(--s-6)));
   display: flex;
   flex-direction: column;
   max-height: min(560px, calc(100vh - 96px));
@@ -261,6 +261,8 @@
 .hs-head-count {
   flex: none;
   margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
   letter-spacing: 0;
   text-transform: none;
   font-variant-numeric: tabular-nums;
@@ -356,10 +358,16 @@
   font-weight: var(--t-heading-weight);
   letter-spacing: var(--t-heading-track);
 }
+/* "91 rows", "Relationship", "History, not stock" — a figure as
+   often as a phrase, so it is the sans caption with tabular figures
+   rather than mono. It inherited the 14px body step when its
+   `mono-label` was dropped, which put the metadata at the same size
+   as the name it describes. */
 .hs-opt-where {
   flex: none;
   max-width: 42%;
-  letter-spacing: 0;
+  font-size: var(--t-caption-size);
+  letter-spacing: var(--t-caption-track);
   text-transform: none;
   font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
@@ -441,13 +449,19 @@
   border-top: 1px solid var(--line-subtle);
   background: var(--surface-3);
 }
+/* MEASURED, AND IT WAS WRONG. `--ink-faint` on `--surface-3` is
+   4.91:1 on light and 4.24:1 on dark — so this line and the key
+   words beside it failed on one of the two themes while passing on
+   the other, which is exactly the failure a light-only eyeball
+   check misses. The whole foot is `--ink-soft`: 7.5:1 dark,
+   8.1:1 light. */
 .hs-foot-say {
   min-width: 0;
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -479,7 +493,7 @@
   margin-right: var(--s-2);
   font-size: var(--t-label-size);
   letter-spacing: var(--t-caption-track);
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 .hs-key-say:last-child {
   margin-right: 0;

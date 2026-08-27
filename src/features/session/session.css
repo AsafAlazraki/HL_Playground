@@ -2,11 +2,17 @@
    THE TWO-TAB NOTICE.
 
    ONE OBJECT, drawn the way every other floating notice in this app
-   is drawn — `--paper-high` on a hairline, 10px radius, `--ec3` at
-   rest so it reads as lifted off the page rather than part of it.
-   `io.css`'s freshness card is the calibration and this matches it
-   deliberately: two notifications that look like two different kinds
-   of thing teach a person to read them twice.
+   is drawn — a card on a hairline at the card radius, lifted far
+   enough off the page to read as floating over it rather than as
+   part of it. `io.css`'s freshness card is the calibration and this
+   matches it deliberately: two notifications that look like two
+   different kinds of thing teach a person to read them twice.
+
+   IT NOW TAKES THE FLOATING RUNG. `--ec3` is a card's hover shadow
+   and this is not a card on a page — it is an object over one, and
+   the system has a rung for exactly that (`--e-float`, a tight
+   contact shadow under a wide soft one, which is what makes an edge
+   look lit rather than drawn). The lit top hairline comes with it.
 
    BOTTOM LEFT, 96px UP. The 78px the dock reserves plus a gap, so it
    never sits under the bar. Bottom right is the freshness notice,
@@ -26,22 +32,29 @@
   /* `bottom` is set inline from the MEASURED floor (src/lib/noteFloor.ts).
      It used to be a hardcoded 96px, which cleared the dock and was then
      covered by the action bar when that landed between them. */
-  left: var(--sp-5);
+  left: var(--s-5);
   z-index: 150;
-  width: min(400px, calc(100vw - var(--sp-6)));
+  width: min(400px, calc(100vw - var(--s-6)));
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-2);
-  padding: var(--sp-4);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec3);
-  animation: ts-arrive var(--t-med) var(--ease-settle) both;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  background: var(--grad-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
+  animation: ts-arrive var(--d-med) var(--ease-out-expo) both;
 }
 
+/* the one uppercase style, on the one thing here that is a caption */
 .ts-eyebrow {
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
   color: var(--ink-faint);
 }
 
@@ -50,9 +63,9 @@
 .ts-say {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.5;
-  letter-spacing: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  letter-spacing: var(--t-small-track);
   text-transform: none;
   color: var(--ink-soft);
 }
@@ -62,9 +75,10 @@
 .ts-do {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.45;
-  letter-spacing: 0;
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: var(--t-small-track);
   text-transform: none;
   color: var(--ink);
 }
@@ -74,20 +88,20 @@
    a report. */
 .ts-refused {
   margin: 0;
-  padding-top: var(--sp-2);
+  padding-top: var(--s-2);
   width: 100%;
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--line-subtle);
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.45;
-  letter-spacing: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  letter-spacing: var(--t-small-track);
   text-transform: none;
   color: var(--ink);
 }
 
 .ts-count {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--t-mono-lg-size);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -97,36 +111,39 @@
 .ts-acts {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-1);
+  gap: var(--s-2);
+  margin-top: var(--s-1);
 }
 
 /* A TOOLBAR CONTROL, NOT `.btn`. `.btn` stamps its label in 11px
-   uppercase mono, and uppercase on a button is one of the three
-   things the design contract forbids outright. 28px / 7px radius /
-   12.5px is the geometry every other control in the chrome uses. */
+   uppercase mono, and uppercase on a button is one of the four
+   things the principles forbid outright. Every measurement below
+   is a token — `--h-sm`, `--r-control`, the small type step — so
+   this control is the same object as the review rail's Apply and
+   the register's New customer, not a hand-cut lookalike. */
 .ts-act {
-  height: 28px;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
+  font-size: var(--t-small-size);
+  font-weight: 540;
+  letter-spacing: -0.003em;
   text-transform: none;
   color: var(--ink-soft);
   cursor: pointer;
   transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 
 .ts-act:hover {
-  background: var(--paper-sunken);
+  background: var(--surface-3);
   border-color: var(--hairline-strong);
   color: var(--ink);
 }
@@ -135,19 +152,20 @@
    darken is what survives when the scale is taken away below. */
 .ts-act:active {
   transform: scale(0.97);
-  background: var(--paper-sunken);
+  background: var(--surface-4);
   border-color: var(--hairline-strong);
   color: var(--ink);
+  transition-duration: var(--d-press);
 }
 
 .ts-act:focus-visible {
   outline: none;
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
+  box-shadow: var(--glow-sm);
 }
 
-/* ARRIVES, RATHER THAN APPEARING — `--ease-settle`, the critically
-   damped curve everything that arrives in this app uses. */
+/* ARRIVES, RATHER THAN APPEARING — on `--ease-out-expo`, the curve
+   every summoned surface in the new system settles on. */
 @keyframes ts-arrive {
   from {
     opacity: 0;
@@ -173,7 +191,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ts-note {
-    animation: ts-arrive-still var(--t-med) linear both;
+    animation: ts-arrive-still var(--d-med) linear both;
   }
   .ts-act {
     transition: none;
