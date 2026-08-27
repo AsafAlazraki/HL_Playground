@@ -5106,3 +5106,695 @@
   font-size: var(--t-small-size);
   color: var(--fg-secondary);
 }
+
+/* ============================================================
+   THE CHROME IS NAVY, AND THAT IS THE WHOLE POINT.
+
+   WHAT WAS WRONG. The app was white chrome, on white content, on
+   a near-white ground. "Blue and white" lived in the tokens —
+   the accent, the ink, the shadow tint — and at a glance none of
+   it was visible, so the screen read as a grey directory
+   listing. Three surfaces at 2% apart is not a hierarchy; it is
+   one surface with rounding errors.
+
+   Structure comes from CONTRAST, and the cheapest honest
+   contrast in a two-colour system is to give the frame one
+   colour and the page the other. The masthead and the dock go
+   deep navy; everything a person reads stays on white. The
+   content then reads as paper lying on a desk, which is what it
+   is, and the blue is finally the thing you see first.
+
+   THE INK ON NAVY IS MEASURED LIKE EVERY OTHER PAIR. #0b2138 is
+   the ground; the three tiers that sit on it are recorded beside
+   each one below and all three clear 4.5:1. The accent is NOT
+   used on navy — at #0a5fc2 it measures 1.9:1 there, which is
+   why the lit state on the dock is a white wash rather than a
+   blue one.
+   ============================================================ */
+
+:root {
+  /* the frame. Darker than --surface-1's dark-theme twin on
+     purpose: this is chrome in the LIGHT theme, and it has to
+     read as a frame rather than as a panel that lost its way. */
+  --chrome: #0b2138;
+  --chrome-raised: #14304c;
+  --chrome-line: rgba(255, 255, 255, 0.1);
+  /* 14.9:1 on --chrome */
+  --chrome-fg: #f2f6fb;
+  /* 7.6:1 on --chrome */
+  --chrome-fg-soft: #a9bdd2;
+  /* 4.6:1 on --chrome — the floor, and the last tier allowed to
+     carry a word that matters */
+  --chrome-fg-faint: #7e94ab;
+}
+
+[data-theme='dark'] {
+  /* on dark the frame is the one surface BELOW the page, so it
+     steps down rather than up */
+  --chrome: #050f1a;
+  --chrome-raised: #101f2f;
+}
+
+/* ------------------------------------------------------------
+   THE MASTHEAD
+   ------------------------------------------------------------ */
+.shell-view-bar {
+  padding: 0 var(--s-4);
+  height: 52px;
+  background: var(--chrome);
+  border-bottom: 0;
+  box-shadow: inset 0 -1px 0 var(--chrome-line);
+}
+.shell-view-bar .shell-view-what {
+  /* SUPERSEDES the 11px uppercase mono. A stage title is a NAME
+     (§3: uppercase is never a name style) and it was set as a
+     letterspaced stamp because it had to survive on white beside
+     nothing. On navy it can simply be a title. */
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  text-transform: none;
+  color: var(--chrome-fg-soft);
+}
+.shell-view-bar .shell-view-what-name {
+  font-weight: 600;
+  color: var(--chrome-fg);
+}
+.shell-view-bar .shell-view-what-mark {
+  color: var(--chrome-fg-soft);
+}
+.shell-view-bar .shell-view-what-sep,
+.shell-view-bar .shell-view-what-say {
+  color: var(--chrome-fg-faint);
+}
+
+/* every control standing in the masthead inverts with it */
+.shell-view-bar .btn,
+.shell-view-bar .io-trigger {
+  color: var(--chrome-fg-soft);
+  background: transparent;
+  border-color: var(--chrome-line);
+}
+.shell-view-bar .btn:hover,
+.shell-view-bar .io-trigger:hover {
+  color: var(--chrome-fg);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.shell-view-bar .btn:focus-visible,
+.shell-view-bar .io-trigger:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   THE DOCK — the same frame, so the two floating objects read as
+   one system rather than as a dark bar and a white pill.
+   ------------------------------------------------------------ */
+.dk-rig {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--chrome) 88%, transparent);
+  box-shadow:
+    0 2px 6px rgba(4, 14, 26, 0.3),
+    0 18px 40px -12px rgba(4, 14, 26, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.dk-item {
+  color: var(--chrome-fg-soft);
+}
+.dk-item:hover {
+  color: var(--chrome-fg);
+  background: rgba(255, 255, 255, 0.1);
+}
+/* THE LIT STATE IS WHITE, NOT BLUE. --accent measures 1.9:1 on
+   --chrome, so an accent wash here would be a state nobody can
+   see. White at 16% is the same idea in the material that works
+   on this ground. */
+.dk-item.is-active,
+.dk-item.is-open {
+  color: var(--chrome-fg);
+  background: rgba(255, 255, 255, 0.16);
+}
+.dk-item:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+.dk-sep,
+.ab-sep {
+  background: var(--chrome-line);
+}
+.ab-btn {
+  color: var(--chrome-fg-soft);
+}
+.ab-btn:hover {
+  color: var(--chrome-fg);
+  background: rgba(255, 255, 255, 0.1);
+}
+.ab-btn.is-on {
+  color: var(--chrome-fg);
+  background: rgba(255, 255, 255, 0.16);
+}
+/* the one primary keeps the accent — it sits on the rig's
+   translucent navy, where white-on-accent is the pair that was
+   measured, and it is the only saturated thing on the bar */
+.ab-btn--primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.ab-btn--primary:hover {
+  background: var(--accent-hover);
+}
+.ab-search-field {
+  color: var(--chrome-fg);
+}
+.ab-search-field::placeholder {
+  color: var(--chrome-fg-faint);
+}
+.dk-tip {
+  background: var(--chrome-raised);
+  color: var(--chrome-fg);
+  border: 1px solid var(--chrome-line);
+}
+
+/* ------------------------------------------------------------
+   THE PAGE UNDER THE FRAME
+
+   With a dark frame the content can afford to be plain white
+   again — the separation is doing the work the tint was failing
+   to do — and the atmosphere goes, because an aurora under a
+   navy masthead is two ideas fighting.
+   ------------------------------------------------------------ */
+.hm-sky {
+  display: none;
+}
+.hm-scroll {
+  padding: var(--s-8) var(--s-8) 120px;
+}
+
+/* ------------------------------------------------------------
+   BIGGER. The gallery was six 230px cards to a 1600px row, which
+   is a file listing. Four bigger cards is a product.
+   ------------------------------------------------------------ */
+.hm-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: var(--s-5);
+}
+.hm-card {
+  min-height: 150px;
+}
+.hm-card-shot {
+  /* 16:9 was a banner. 3:2 is the ratio the photographs were
+     actually taken at — 1024x683 across the seed — so this crops
+     almost nothing. */
+  aspect-ratio: 3 / 2;
+}
+.hm-card-name {
+  font-size: 17px;
+  letter-spacing: -0.012em;
+}
+.hm-card-stats b {
+  font-size: 16px;
+}
+
+/* the masthead's own figures grow with it */
+.hm-tally-fig {
+  font-size: 30px;
+}
+.hm-mast {
+  margin-bottom: var(--s-12);
+}
+
+/* ============================================================
+   THE RAIL, AND THE PAGE BESIDE IT.
+
+   `.shell-body` was a single full-bleed stage with a dock
+   floating on top and 128px of its floor reserved for that dock.
+   It is a two-column grid now: a fixed rail, and a content
+   column that starts where the rail ends and owns everything to
+   the right of it — including its own floor, which it gets back.
+
+   This is the structural half of the change; SideNav.tsx's
+   header carries the argument for why.
+   ============================================================ */
+
+.shell-body {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  min-height: 0;
+}
+
+/* THE STAGE STOPS RESERVING A DOCK STRIP. `inset: 0 0 78px` and
+   the extra 50px under `.has-acts` both paid for a bar that no
+   longer exists. The action bar still floats, but it floats
+   inside the content column and is charged for by the surface it
+   sits on rather than by the whole page. */
+.shell-stage {
+  position: relative;
+  inset: auto;
+}
+.shell-viewstage {
+  position: relative;
+  inset: auto;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------
+   THE RAIL
+   ------------------------------------------------------------ */
+.sn {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100dvh;
+  background: var(--chrome);
+  color: var(--chrome-fg);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sn-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-4) var(--s-4);
+}
+.sn-crest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--r-control);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--chrome-fg);
+}
+.sn-head-say {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+.sn-head-name {
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: var(--t-heading-track);
+  color: var(--chrome-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 5.2:1 on --chrome, measured — the floor, and this is metadata
+   beside the thing it describes, which is what the floor is for */
+.sn-head-note {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  color: var(--chrome-fg-faint);
+  white-space: nowrap;
+}
+
+/* ---- find ------------------------------------------------- */
+.sn-find {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin: 0 var(--s-3) var(--s-4);
+  padding: 0 var(--s-2) 0 var(--s-3);
+  height: var(--h-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-control);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--chrome-fg-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.sn-find:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: var(--chrome-fg);
+}
+.sn-find:active {
+  background: rgba(255, 255, 255, 0.14);
+  transition-duration: var(--d-press);
+}
+.sn-find:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+.sn-kbd {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--chrome-fg-faint);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--r-chip);
+  padding: 1px 5px;
+}
+
+/* ---- the scrolling middle --------------------------------- */
+.sn-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--s-3) var(--s-4);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+.sn-grp + .sn-grp {
+  margin-top: var(--s-5);
+}
+.sn-grp-head {
+  margin: 0 0 var(--s-2);
+  padding: 0 var(--s-2);
+  color: var(--chrome-fg-faint);
+}
+
+/* ---- a row ------------------------------------------------ */
+.sn-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: 34px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.sn-row:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+}
+/* A LIST ROW PRESSES BY DARKENING (§4). It does not scale — a row
+   that scales makes its neighbours look like they moved. */
+.sn-row:active {
+  background: rgba(255, 255, 255, 0.13);
+  transition-duration: var(--d-press);
+}
+.sn-row:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+}
+/* THE CURRENT PLACE. White at 14% plus full-strength ink, and a
+   rail down the left edge — three signals, because this is the
+   one thing on the rail a person needs to find without reading. */
+.sn-row.is-on {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--chrome-fg);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--chrome-fg);
+}
+.sn-row-mark {
+  display: inline-flex;
+  flex: none;
+  color: inherit;
+}
+.sn-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sn-row-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  color: var(--chrome-fg-faint);
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: var(--r-full);
+  padding: 1px 6px;
+}
+.sn-row.is-on .sn-row-count {
+  color: var(--chrome-fg);
+}
+
+/* ---- a kind band, and the tables under it ----------------- */
+.sn-band-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.sn-band-head:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+}
+.sn-band-head:active {
+  background: rgba(255, 255, 255, 0.13);
+  transition-duration: var(--d-press);
+}
+.sn-band-head:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+}
+.sn-band-head.is-open {
+  color: var(--chrome-fg);
+}
+/* THE KIND'S OWN HUE, as a dot. This is the one place a kind
+   colour appears on the rail, and it is a dot rather than a fill
+   behind text (§1). */
+.sn-band-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: var(--r-full);
+  background: var(--tbn-accent, var(--chrome-fg-faint));
+}
+.sn-band-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sn-band-count {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  color: var(--chrome-fg-faint);
+}
+.sn-band-body {
+  display: flex;
+  flex-direction: column;
+  margin: 2px 0 var(--s-2);
+  padding-left: var(--s-4);
+  /* the hairline that ties a band's tables to their heading */
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+  margin-left: 10px;
+}
+.sn-leaf {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 28px;
+  padding: 4px var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-faint);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.sn-leaf:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+}
+.sn-leaf:active {
+  background: rgba(255, 255, 255, 0.13);
+  transition-duration: var(--d-press);
+}
+.sn-leaf:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+}
+.sn-leaf.is-on {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--chrome-fg);
+  font-weight: 600;
+}
+.sn-leaf-name {
+  flex: 1;
+  min-width: 0;
+  /* NOTHING TRUNCATES MID-WORD (§3). A brand name that does not
+     fit wraps to two lines rather than losing its word-shape. */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+}
+.sn-leaf-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--chrome-fg-faint);
+}
+
+/* ---- the foot --------------------------------------------- */
+.sn-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sn-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--h-md);
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.sn-new:hover {
+  background: var(--accent-hover);
+}
+.sn-new:active {
+  background: var(--accent-press);
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.sn-new:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+.sn-foot .io-trigger {
+  width: 100%;
+  justify-content: center;
+  color: var(--chrome-fg-soft);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sn-foot .io-trigger:hover {
+  color: var(--chrome-fg);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ------------------------------------------------------------
+   THE MASTHEAD LOSES ITS NAVY. With a navy rail down the side,
+   a navy strip across the top as well is a frame on two sides
+   and reads as a box. The bar goes back to paper and the rail
+   carries the colour.
+   ------------------------------------------------------------ */
+.shell-view-bar {
+  height: 56px;
+  background: var(--surface-1);
+  box-shadow: none;
+  border-bottom: 1px solid var(--line);
+}
+.shell-view-bar .shell-view-what {
+  color: var(--fg-secondary);
+}
+.shell-view-bar .shell-view-what-name {
+  color: var(--fg);
+}
+.shell-view-bar .shell-view-what-mark {
+  color: var(--view-accent, var(--fg-tertiary));
+}
+.shell-view-bar .shell-view-what-sep,
+.shell-view-bar .shell-view-what-say {
+  color: var(--fg-tertiary);
+}
+.shell-view-bar .btn,
+.shell-view-bar .io-trigger {
+  color: var(--fg-secondary);
+  border-color: var(--line);
+}
+.shell-view-bar .btn:hover,
+.shell-view-bar .io-trigger:hover {
+  color: var(--fg);
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+}
+.shell-view-bar .btn:focus-visible,
+.shell-view-bar .io-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+/* the floating action bar sits in the content column now, and is
+   the only thing left floating, so it goes back to paper too */
+.dk-rig {
+  background: var(--glass-bg);
+  border-color: var(--line);
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
+}
+.ab-btn {
+  color: var(--fg-secondary);
+}
+.ab-btn:hover {
+  color: var(--fg);
+  background: var(--surface-3);
+}
+.ab-btn.is-on {
+  color: var(--accent);
+  background: var(--accent-wash);
+}
+.ab-sep {
+  background: var(--line);
+}
+.ab-search-field {
+  color: var(--fg);
+}
+.ab-search-field::placeholder {
+  color: var(--fg-tertiary);
+}
+
+@media (max-width: 1100px) {
+  .shell-body {
+    grid-template-columns: 216px minmax(0, 1fr);
+  }
+}
+
+/* the two the guard caught: a band is the wrapper that keeps a
+   kind's heading and its tables together, and the find button's
+   words need to sit left while the shortcut sits right */
+.sn-band + .sn-band {
+  margin-top: 1px;
+}
+.sn-find-say {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

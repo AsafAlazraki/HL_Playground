@@ -331,11 +331,15 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
 
         {/* ---- the fans ---- */}
         <ul className="fo-fans">
-          {reading.fans.map((fan) => (
+          {reading.fans.map((fan, i) => (
             <FanCard
               key={fan.subjectTableId}
               fan={fan}
               entity={entities[fan.subjectTableId]}
+              /* the arrival, as a wave rather than all at once — `--i`
+                 is the card's place in the sort, and ds.css caps the
+                 stagger at 14 steps so a long sheet never waits */
+              index={i}
               onOpenTable={onOpenTable}
             />
           ))}
@@ -592,17 +596,21 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
 function FanCard({
   fan,
   entity,
+  index,
   onOpenTable,
 }: {
   fan: Fan
   entity: EntityDef | undefined
+  index: number
   onOpenTable?: (entityId: string) => void
 }): ReactElement {
   const noun = leafNoun(entity)
   return (
     <li
-      className="fo-fan"
-      style={{ '--fo-accent': accentVar(fan.subjectAccent) } as CSSProperties}
+      className="fo-fan ds-rise"
+      style={
+        { '--fo-accent': accentVar(fan.subjectAccent), '--i': index } as CSSProperties
+      }
     >
       <p className="fo-fan-head">
         <span className="fo-fan-mark">

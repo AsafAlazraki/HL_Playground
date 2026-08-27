@@ -32,12 +32,14 @@
         reason.
 
    THE PERSON'S OWN RULES MOVED DOWN, NOT AWAY. Writing a sentence is
-   still here, with the same component and the same behaviour, in its
-   own band under the workbook's rules — because on a sheet with
-   eleven thousand rows the interesting rules are the ones already in
-   the file, and a blank form is a poor thing to open a page with. The
-   act is published to the ACTION BAR as well, which is where a page's
-   own verbs live.
+   still here, with the same component and the same behaviour, below
+   the workbook's rules — because on a sheet with eleven thousand rows
+   the interesting rules are the ones already in the file, and a blank
+   form is a poor thing to open a page with. (What "below" means is
+   now a VIEW rather than a band; see the note at the foot of this
+   header. The page still opens on the file's own rules.) The act is
+   published to the ACTION BAR as well, which is where a page's own
+   verbs live.
 
    EVERY FIGURE ON THIS PAGE IS EITHER COMPUTED FROM THE LOADED SHEET
    ON RENDER OR CHECKED AGAINST THE ADJUDICATION THAT MEASURED IT

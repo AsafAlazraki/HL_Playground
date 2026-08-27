@@ -1,14 +1,17 @@
 /* ============================================================
    MODULES (md-) — the dashboard, the create panel, the index.
 
-   THE CHART ROOM, chrome side: white sheets on the paper field,
-   marine-navy ink, hairlines, mono micro-labels, one accent per
-   surface. Industry-neutral — nothing in this file knows a boat
-   from a bandsaw.
+   Industry-neutral — nothing in this file knows a boat from a
+   bandsaw. There is not a raw hex in it, and there never may be.
 
-   Every measurement is on the --sp scale, every type step is a SET
-   from the --display / --micro / --data ramps in tokens.css, and
-   there is not a raw hex here.
+   TWO VOCABULARIES, AND BOTH RESOLVE TO THE SAME SYSTEM. The older
+   rules are written in the app's original token names (--sp-*,
+   --ink*, --paper*, --hairline, --radius) which `bridge.css` maps
+   onto Quiet Precision; the DASHBOARD section below is written in
+   the system's own names (--s-*, --fg*, --surface-*, --line*,
+   --r-*, --e*) because it also reaches for the expressive layer,
+   which has no bridged aliases. Either is legal. Do not mix them
+   inside one rule.
 
    ONE ACCENT VARIABLE, --md-accent, set inline by whichever
    component owns the surface (the module's own accent, or the
@@ -272,13 +275,23 @@
   font-variant-numeric: tabular-nums;
 }
 
-
 /* -- the grid -------------------------------------------------
-   MEASURED IN COLUMNS, NOT IN TASTE. At 1180px of content a 280px
-   minimum resolves to four columns; a 240px minimum resolves to
-   four wherever three fitted before. The switch is the TENTH card,
-   because at nine and under the wider card reads better and there
-   is no scrolling to save. */
+   MEASURED IN COLUMNS, NOT IN TASTE — in the browser, on the real
+   project. The measure is 1180px, so the 280px minimum resolves to
+   four columns of 283 at a 1270 window, two of 377 at 820, and one
+   at 400. Nine cards is therefore three rows, two rows, nine rows.
+
+   THE SWITCH IS THE TENTH CARD, and what it buys is the narrow
+   window: at 820 the 240px minimum gives THREE columns where 280
+   gave two, which is a row and a half of scrolling saved on the
+   width a real dealership's fifteen modules would hurt most. At
+   1180 both resolve to four and only the gap tightens. Below ten
+   nothing here applies and the card is exactly what it was.
+
+   THE DESCRIPTION NEEDS NO SECOND RULE ANY MORE. It used to clamp
+   to four lines and drop to two only past ten cards; two is the
+   right answer at any count (see the clamp), so the count-specific
+   half of that pair is gone. */
 
 .md-cards {
   display: grid;

@@ -2635,12 +2635,18 @@
    THE MASTHEAD
    ------------------------------------------------------------ */
 
-/* SUPERSEDES 11px/+0.18em mono. 0.18em is nearly three times the
-   one sanctioned label tracking, and the element now carries
+/* SUPERSEDES 11px/+0.18em. 0.18em is nearly three times the one
+   sanctioned label tracking, and the element now carries
    `.mono-label` in the markup as well — two rules disagreeing about
-   one caption is how a page drifts. This is the label step. */
+   one caption is how a page drifts.
+
+   IT STAYS MONO, and that is the app's convention rather than mine:
+   every eyebrow in the worked example on Home is `.mono-label`, and
+   a caption that changed face between two screens would be the
+   drift this pass exists to remove. Only the tracking and the ink
+   move. */
 .cn-eyebrow {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   line-height: var(--t-label-lead);
@@ -3095,10 +3101,14 @@
   background-image: none;
 }
 /* the removable one gives its cross the room the underline used to
-   take; the "add" chip keeps its own padding, because its face is a
-   single "+" and a caret sits after it */
+   take, and restates its own ground: `.cn-tok.is-live` above sets
+   `background-color: transparent` at a specificity a single class
+   cannot beat, so a chip written only in `.cn-chip` would come out
+   unfilled. The "add" chip keeps its own padding and stays
+   unfilled on purpose — it is an outline until it holds a value. */
 .cn-chip.is-live:not(.cn-chip--add) {
   padding-right: 4px;
+  background-color: var(--accent-wash);
 }
 .cn-chip--add {
   border-color: var(--line-strong);
@@ -3262,7 +3272,7 @@
   background: var(--surface-3);
 }
 .cn-from-label {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   letter-spacing: var(--t-label-track);
@@ -3312,7 +3322,7 @@
   background: var(--surface-3);
 }
 .cn-conseq-label {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   line-height: var(--t-label-lead);
@@ -3457,7 +3467,7 @@
   gap: 5px;
   padding: 2px 9px;
   border-radius: var(--r-full);
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   line-height: var(--t-label-lead);
@@ -3527,7 +3537,7 @@
   border-radius: var(--r-full);
 }
 .cn-switch-word {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   letter-spacing: var(--t-label-track);
@@ -3718,6 +3728,7 @@
   background: var(--accent-wash);
 }
 .cn-rl-live-k {
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   letter-spacing: var(--t-label-track);

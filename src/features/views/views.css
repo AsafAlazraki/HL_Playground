@@ -23,6 +23,13 @@
    TOKEN gradient, not a colour written here. */
 .vw-root {
   position: relative;
+  /* THE HERO ASKS THE COLUMN, NOT THE WINDOW. This page is drawn
+     inside a split — a rail of variants and then the sheet — so at a
+     900px window the sheet has 668px and a `@media (min-width: 880px)`
+     rule would still be laying the hero out in two columns inside it.
+     Measured before this line existed: a 280px-wide photograph
+     cropped to 520px tall, and 41px of horizontal overflow. */
+  container-type: inline-size;
   height: 100%;
   overflow: auto;
   background:
@@ -139,7 +146,7 @@
    the emotional centre of the product. The photograph spanning both
    rows removes it, and the strip across the foot is what a spec strip
    should have been all along. */
-@media (min-width: 880px) {
+@container (min-width: 820px) {
   .vw-hero--shot:has(.vw-hero-img) {
     grid-template-columns: minmax(280px, 1.02fr) minmax(340px, 1fr);
     align-items: start;
@@ -167,10 +174,13 @@
   display: block;
   position: relative;
   overflow: hidden;
-  /* the floor when the words beside it are short — a page whose
-     subject is not priced has no money panel, and the photograph must
-     not collapse to the height of a single line of name */
+  /* THE FLOOR AND THE CEILING, both for the same reason: the column
+     beside it decides this box's height, and neither extreme is a
+     photograph. A page whose subject is not priced has no money panel
+     and would collapse the picture to one line of name; a long name
+     over five rig lines would crop a 16:10 boat into a portrait. */
   min-height: 260px;
+  max-height: 520px;
   border-radius: var(--radius);
   /* the sheet's own sunken paper while the bytes are in flight — a
      white hole would read as a missing picture rather than a late one */
@@ -931,6 +941,16 @@
 .vw-icon-btn.is-on {
   color: var(--accent-ochre);
 }
+/* ONE STATE, ONE COLOUR. The chip on the card says RECOMMENDED in the
+   accent and the handle that sets it was ochre, so the same fact was
+   drawn in two hues a centimetre apart. Scoped to the card's own
+   handles, because `.vw-icon-btn.is-on` is a shared control in this
+   feature and this is a ruling about one state. */
+.vw-row-acts .vw-icon-btn.is-on {
+  color: var(--blue);
+  border-color: var(--accent-line);
+  background: var(--blue-wash);
+}
 .vw-icon-btn--drop:hover {
   border-color: var(--red);
   background: var(--red-wash);
@@ -1068,6 +1088,19 @@
 
 .vw-block-foot {
   padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
+/* A BUTTON IS NOT A LABEL — rule 3, and `.btn` in base.css carries
+   an 11px uppercase mono stamp, so this read "ADD AN NSM CUSTOM
+   TRAILER" with the dealer's own table name shouted back at them.
+   Corrected beside the class in this feature's stylesheet, which is
+   the move `.vw-gear` and `.vw-block-name` already made rather than
+   editing a shared primitive. */
+.vw-add-btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 .vw-add-btn {
   color: var(--ink-soft);

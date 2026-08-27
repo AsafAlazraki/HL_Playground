@@ -830,3 +830,121 @@
   line-height: 1.5;
   color: var(--ink-soft);
 }
+
+/* ============================================================
+   THE SURFACE PASS — the same light this app's front door got.
+
+   Nothing about what this page COUNTS moves here, and nothing about
+   what it says. What moves is that it was drawn as flat #ffffff
+   rectangles with a hairline on a flat ground, which is the finish
+   the whole redesign is replacing: a page carrying 8,649 counted
+   pairings off a real business's price file should look like it is
+   worth what it states.
+
+   Every value is a token and every ink below is unchanged, so no
+   measured ratio on this page moves. Appended rather than edited in
+   place because the rules above are the argument for the DRAWING —
+   which rail, which bar, which proportion — and this is only the
+   material it is drawn on.
+   ============================================================ */
+
+/* THE FIELD. `--canvas-bg` is the sheet ground, a degree bluer than
+   `--paper`, and the wash over it is ds.css's own atmosphere token at
+   6% alpha — under one contrast point, so nothing measured moves. The
+   same ground the fitment page for ONE rig now stands on, so moving
+   between the two does not feel like moving between two apps. */
+.fo-root {
+  background:
+    radial-gradient(120% 50% at 50% -6%, var(--aurora-1) 0%, transparent 62%),
+    var(--canvas-bg);
+}
+
+/* THE TITLE IS THE PAGE. 22px was a panel header on a stage whose
+   whole content is one argument; `--t-display-lg-*` is the step the
+   system names for "a stage title with a page behind it", and its
+   tracking runs negative as it grows, which is rule 7. */
+.fo-title {
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  max-width: 22ch;
+}
+
+.fo-lede {
+  font-size: var(--t-body-size);
+  line-height: 1.6;
+}
+
+/* THE LEDGER, AS A PANEL. Four figures counted off the sheet on this
+   render were four numbers floating under a hairline. They are the
+   evidence the whole page rests on, so they get a surface — the same
+   one Home gives its tally, for the same reason. */
+.fo-ledger {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--hairline);
+  border-top: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  gap: var(--sp-5);
+}
+.fo-stat + .fo-stat {
+  padding-left: var(--sp-5);
+  border-left: 1px solid var(--hairline);
+}
+/* the largest figures on the page, because they are what it is about */
+.fo-stat-n {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+
+/* THE FAN CARDS. Elevation and a lit top edge, so a card reads as an
+   object with a light on it rather than as a bordered rectangle. No
+   lift on hover: the card is not pressable — the doors INSIDE it are —
+   and a surface that rises under the pointer promises a press. What
+   answers the pointer is the kind rail, which is the card saying which
+   catalogue it is without changing colour anywhere else. */
+.fo-fan {
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft);
+}
+.fo-fan:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--e-card-hover), inset 0 1px 0 var(--edge-light);
+}
+.fo-fan::before {
+  transition:
+    top var(--t-med) var(--ease-draft),
+    bottom var(--t-med) var(--ease-draft),
+    width var(--t-med) var(--ease-draft);
+}
+.fo-fan:hover::before {
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+/* the two bands under the fans take the same material, so the page
+   reads as one set of surfaces rather than cards and then prose */
+.fo-band {
+  padding: var(--sp-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.fo-band-title {
+  font-size: var(--t-title-size);
+  letter-spacing: -0.014em;
+}
+
+@media (max-width: 720px) {
+  .fo-stat + .fo-stat {
+    padding-left: 0;
+    border-left: 0;
+  }
+}

@@ -1,9 +1,20 @@
 /* ============================================================
    Whiteboard — THE BLUEPRINT CANVAS (wb-)
-   Deep Prussian-navy sheet, fine light gridlines, white tables
-   pinned to it. Everything that floats over the sheet is either
-   canvas-material (navy, --canvas-*) or chrome-material (white
-   instrument panels). Nothing here assumes a light canvas.
+
+   A pale blue sheet with a dot field on it, white tables pinned to
+   it, and a coloured line wherever one table points at another.
+   Everything that floats over the sheet is either canvas-material
+   (--canvas-*) or chrome-material (paper instrument panels), and
+   both resolve through the tokens, so neither assumes a ground.
+
+   THE NAVY IS GONE. This file was written for a deep Prussian
+   blueprint field, and several of the notes below still describe
+   "white, instant read on navy" — accurate about the intent, and
+   about a ground `bridge.css` retired when it re-pointed
+   `--canvas-bg`. The rules themselves are all token-based and
+   therefore right in both; only the prose is dated, and it is left
+   rather than half-corrected so nothing reads as if it were checked
+   against a screen it was not.
 
    OFF THE DEFAULT PATH: the rules further down still style the
    schema card (.wb-entity*), the zone frame (.wb-zone*), the
@@ -127,7 +138,12 @@
    block is at full height exactly when the framing arithmetic
    measures it. The two never race.
    ============================================================ */
-.wb-root--shape .wb-legend-say {
+.wb-root--shape .wb-legend-say,
+/* and the line about the OPENING frame, which at this distance is
+   either about a frame the reader has already left, or advice to press
+   the control they have just pressed. Measured: folding both takes the
+   block from 134px to 98px in the corner FIT puts the drawing in. */
+.wb-root--shape .wb-legend-more {
   display: none;
 }
 
@@ -855,7 +871,12 @@
    that has to be kept in step with a colour.
    ============================================================ */
 .wb-canvas .react-flow__edge .react-flow__edge-path {
-  stroke: color-mix(in srgb, var(--wb-line, var(--canvas-edge)) 58%, transparent);
+  /* 68%, and that is measured rather than picked. --kind-indigo at 58%
+     composites to #7694e7 over the sheet — 2.7:1, under the 3:1 a
+     graphical object that carries meaning is meant to clear. At 68% it
+     is #5d82e3 and 3.3:1, and still reads as an annotation on the
+     drawing rather than as part of it. */
+  stroke: color-mix(in srgb, var(--wb-line, var(--canvas-edge)) 68%, transparent);
   stroke-width: 1.8;
   stroke-linecap: round;
   transition:

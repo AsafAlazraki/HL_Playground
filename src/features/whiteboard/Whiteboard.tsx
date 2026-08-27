@@ -1,11 +1,23 @@
 /* ============================================================
    THE BLUEPRINT SHEET
 
-   One drawing: the tables you sell things from, pinned to a navy
-   sheet, edited in place. One instrument on it: a zoom cluster with
-   FIT. Nothing else — no layer switcher, no card-detail toggle, no
-   palette, no minimap, no rule readout. The sheet is the hero; the
+   One drawing: the tables you sell things from, pinned to the sheet,
+   edited in place, with a line wherever one table points at another.
+   TWO instruments on it, one per bottom corner: what the camera does
+   (zoom, and FIT) on the left, and where the camera IS (the key plan)
+   on the right. Nothing else — no layer switcher, no card-detail
+   toggle, no palette, no rule readout. The sheet is the hero; the
    chrome exists to keep out of its way.
+
+   THE MAP IS THE ONE SURFACE THIS PASS ADDED, and it is paid for
+   several times over: the two Background layers became one (the first
+   of them was drawing `transparent`), the ~64 link labels stopped
+   being drawn at zooms where they were 4px of mush, and selecting a
+   line — a click that only ever changed a colour — came out along
+   with the edge state and the second arrowhead definition it needed.
+   The drawing is 2,920 x 5,600 units and the opening frame holds a
+   third of it; until the map there was nothing on the screen that
+   said where the other two thirds were.
 
    ------------------------------------------------------------
    OFF THE DEFAULT PATH — kept working, simply not drawn
@@ -306,14 +318,6 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
     [tableNodes, derivedEdges],
   )
 
-  /* TEMP-CANVAS-PROBE-START */
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      ;(window as unknown as Record<string, unknown>).__wb = { rf, nodesInitialized }
-    }
-  })
-  /* TEMP-CANVAS-PROBE-END */
-
   /* -- store -> local mirror ----------------------------------
      Identity is the whole point: a node whose data, position and
      geometry are unchanged is handed BACK, not rebuilt, and when
@@ -551,6 +555,14 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
     (event) => {
       /* null = the app moved the camera; an event = the reader did */
       if (event) interactedRef.current = true
+      /* THE TRACE IS RELEASED BY THE CAMERA, not only by the pointer.
+         A card can stop being drawn while the cursor is still over it
+         — culled off screen, or swapped for its plate — and no
+         `mouseleave` is fired for an element that was removed. The
+         lit lines would then stay lit for a table nobody is pointing
+         at. Moving the camera is the moment that can happen, and it
+         is also the moment nobody is pointing at anything. */
+      setTracedId(null)
       panning(true)
     },
     [panning],

@@ -298,10 +298,22 @@
 }
 
 /* THE CURSOR. One of the two appearances the accent gets in this
-   surface: this row is the one Enter opens. */
+   surface: this row is the one Enter opens. Hover is the same
+   state — `onPointerEnter` moves the cursor rather than drawing a
+   second highlight beside it, so the pointer and the arrow keys are
+   never both lit on different rows. */
 .hs-opt.is-active {
   background: var(--blue-wash);
   box-shadow: inset 3px 0 0 var(--blue);
+}
+
+/* PRESS LANDS ON POINTER-DOWN, and a row DARKENS rather than
+   scaling — a list row that scales makes its neighbours look like
+   they moved. It was the one pressable thing on this surface with
+   no press at all. */
+.hs-opt:active {
+  background: var(--blue-wash-strong);
+  transition-duration: var(--d-press);
 }
 
 .hs-opt-mark {

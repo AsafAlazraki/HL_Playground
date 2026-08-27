@@ -386,6 +386,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  transition: background var(--d-fast) var(--ease);
   width: 100%;
   min-width: 0;
   margin: 0;
@@ -399,6 +400,13 @@
 .rv-card-head:focus-visible {
   outline: none;
   box-shadow: var(--focus);
+}
+/* PRESS ON POINTER-DOWN. This is a two-line block, not a 28px
+   control, so it takes a plate rather than a scale — 0.97 on a
+   full-width block slides both its edges and reads as a glitch. */
+.rv-card-head:active {
+  background: var(--surface-3);
+  transition-duration: var(--d-press);
 }
 
 .rv-card-titlerow {

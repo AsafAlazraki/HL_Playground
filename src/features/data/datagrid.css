@@ -606,3 +606,28 @@
 .dg-row.dg-row-armed:hover .dg-cell {
   background: color-mix(in srgb, var(--red) 7%, var(--paper-high));
 }
+
+
+/* ============================================================
+   FIGURES ARE TABULAR HERE TOO.
+
+   The register next door had the same defect and the same
+   argument applies (see the note at the foot of
+   `src/features/table/table.css`): DESIGN_PRINCIPLES §2 says mono
+   "is what makes a column of money line up on the decimal", and
+   the faces were right while `font-variant-numeric` was never set
+   — so IBM Plex Mono's proportional default was in force on every
+   figure the inspector shows.
+
+   This surface is a stack of live inputs rather than a grid, so
+   there is no run of prices to line up; what tabular fixes here is
+   the CARET. Typing 1,111 into a proportional mono field walks the
+   cursor at a different rate per digit, which on a right-aligned
+   number box reads as the value sliding under your hand.
+   ============================================================ */
+.dg-input-num,
+.dg-input-date,
+.dg-fx,
+.dg-fx-num {
+  font-variant-numeric: tabular-nums;
+}

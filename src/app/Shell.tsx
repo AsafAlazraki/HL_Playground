@@ -78,7 +78,7 @@ import {
   useFocusedTableEntity,
 } from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
-import { Dock } from './Dock'
+import { SideNav } from './SideNav'
 import { useHasPageActions } from '@/lib/actions'
 import { Win } from './Win'
 import { useWindowKeys } from './useWindowKeys'
@@ -419,6 +419,28 @@ export function Shell() {
       {/* THE DESKTOP. The drawing stays live underneath and is the
           desktop picture; windows stand on it. */}
       <div className="shell-body">
+        {/* THE RAIL IS PART OF THE PAGE, NOT OVER IT. It is a grid
+            column beside the stage rather than a floating object on
+            top of it, which is the whole difference between a
+            desktop and a web application: the content column starts
+            where the rail ends and owns everything to the right of
+            it, including its own floor. */}
+        <SideNav
+          current={wins.length ? wins[wins.length - 1].stage.kind : null}
+          currentEntityId={
+            focused && 'entityId' in focused.stage ? focused.stage.entityId : null
+          }
+          onOpenSheet={() => setStage(null)}
+          onOpenHome={() => setStage({ kind: 'home' })}
+          onOpenTable={(id) => setStage({ kind: 'table', entityId: id })}
+          onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
+          onOpenRules={() => setStage({ kind: 'rules' })}
+          onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
+          onOpenCustomers={() => setStage({ kind: 'customer', customerId: null })}
+          onAddTable={() => setPicking(true)}
+          onSearch={() => setFinding(true)}
+          quoteCount={quoteCount}
+        />
         <main className="shell-stage" aria-label="Desktop">
           {/* THE SHEET IS A SECTION, NOT A BACKDROP — and it is MOUNTED
               only while it is the section you are in.
@@ -502,24 +524,12 @@ export function Shell() {
         </div>
       ) : null}
 
-      {/* THE DOCK — floating over the sheet, not attached to an
-          edge and not a column beside it. */}
-      <Dock
-        /* the dock lights whichever window is focused */
-        current={wins.length ? wins[wins.length - 1].stage.kind : null}
-        onBackToSheet={() => setStage(null)}
-        onOpenHome={() => setStage({ kind: 'home' })}
-        onOpenTable={(id) => setStage({ kind: 'table', entityId: id })}
-        onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
-        onOpenRules={() => setStage({ kind: 'rules' })}
-        onOpenFlow={() => setStage({ kind: 'flow' })}
-        onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
-        onOpenCustomers={() => setStage({ kind: 'customer', customerId: null })}
-        onAddTable={() => setPicking(true)}
-        onSearch={() => setFinding(true)}
-        quoteCount={quoteCount}
-        customerCount={customerCount}
-      />
+      {/* THE DOCK STOOD HERE AND IS GONE. Its ten handlers moved to
+          `SideNav` above, unchanged — see the header of SideNav.tsx
+          for why a floating icon bar was the wrong object for this
+          app. `customerCount` went with it: the rail counts quotes,
+          which is the badge somebody actually watches, and does not
+          count customers, which nobody does. */}
 
       {/* FIND ANYTHING. The state was declared and the dock button was
           wired to it; nothing rendered it, so the one control on the

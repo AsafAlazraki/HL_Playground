@@ -1938,10 +1938,14 @@
   color: var(--fg-secondary);
 }
 
+/* "And" / "Or" is one of the app's own words for a state, so it
+   keeps the mono stamp voice every other stamp on this surface
+   uses; only the tracking comes down from +0.16em, which is more
+   than twice the one sanctioned label value. */
 .rl-joiner {
   border-color: var(--line-strong);
   background: var(--surface-1);
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   letter-spacing: var(--t-label-track);

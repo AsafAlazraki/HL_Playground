@@ -758,7 +758,7 @@
    ============================================================ */
 
 .dx-eyebrow {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   line-height: var(--t-label-lead);
@@ -905,7 +905,7 @@
   gap: var(--s-4) var(--s-6);
 }
 .dx-fig-k {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   letter-spacing: var(--t-label-track);

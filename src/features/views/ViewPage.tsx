@@ -554,7 +554,7 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
             <p className="vw-nothing-sub">
               {configuring
                 ? `Add a table below — or drag one in from the left — and we will work out how it relates to this ${singular(root.name)}.`
-                : 'Press SET UP, then add a table.'}
+                : 'Press “Set up”, then add a table.'}
             </p>
           </section>
         ) : null}
