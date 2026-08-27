@@ -19,6 +19,12 @@ import {
   type FieldDef,
 } from '@/types/model'
 import { money } from '@/lib/money'
+/* DEEP IMPORT, DELIBERATELY, and the direction is the safe one:
+   `quote/pricing` reads `@/types/model`, `@/lib/money` and its own
+   `./types` and nothing else — no store, no React, and nothing of
+   ours — so this closes no cycle with `quote/freeze.ts`, which
+   imports this file. Reaching for the quote BARREL would. */
+import { isCostColumn, priceLevelsFor } from '@/features/quote/pricing'
 
 /* ---------------------------------------------------------- */
 /* Names                                                      */
@@ -123,6 +129,77 @@ function weight(entity: EntityDef, f: FieldDef): number {
     default:
       return 6
   }
+}
+
+
+/* ============================================================
+   THE COLUMNS A CARD SHOWS — and the one it must never lead with.
+
+   `defaultColumns` ranks by TYPE: numbers first, then formulas, then
+   lists. On a motor table that is `Dealer List Price`, `Landed CTD`,
+   `Nett CTD` — in that order, at the top — and every one of them is
+   the dealer's BUY price. It did not matter much while a block was a
+   table of 12px grey cells four columns wide. It matters now: a card
+   sets its money at the mono-lg step, so the redesign's first draft
+   made a dealer's cost the largest figure on a page whose own header
+   says it is "a page you would put in front of a customer".
+
+   `@/features/quote/pricing` already settles both halves of this and
+   is cited rather than re-derived:
+
+     `isCostColumn`    a cost or a markup, decided by the BAND the
+                       business filed it under first and its own name
+                       second. `Dealer List Price` sits under Cost
+                       Ladder; `Base Cost` under Cost Build.
+     `priceLevelsFor`  the SELL column, by name, per kind — `Cash` on
+                       a boat, `Sell Price` on a motor, `Sell inc Rego`
+                       on a trailer. Never a regex, so a table it does
+                       not know is simply not priced.
+
+   So a card leads with the sell price where the table has one, and
+   fills up with columns that are not costs. A table with neither is
+   drawn with fewer facts, which is the honest outcome and also the
+   calmer one.
+
+   THIS IS NOT A FILTER ON THE REGISTER. The table still shows every
+   column it has; cost is the dealer's own business and they read it
+   where they read everything else. This is about one surface.
+   ============================================================ */
+
+/** The sell column a card leads with, or undefined where the table
+ *  declares none. The business's own order decides which rung: the
+ *  first quote-scoped one, exactly as a fresh quote opens at. */
+export function priceColumnOf(entity: EntityDef): string | undefined {
+  const levels = priceLevelsFor(entity)
+  return (levels.find((l) => l.scope === 'quote') ?? levels[0])?.fieldId
+}
+
+/** The facts on one card: the sell price first, then the highest-
+ *  ranked columns that are not costs. */
+export function cardColumns(entity: EntityDef, max = 3): string[] {
+  const byId = new Map(entity.fields.map((f) => [f.id, f]))
+  const lead = priceColumnOf(entity)
+  const out: string[] = lead !== undefined && byId.has(lead) ? [lead] : []
+  /* ask for more than we need, because the filter below removes some */
+  for (const id of defaultColumns(entity, max + 8)) {
+    if (out.length >= max) break
+    if (out.includes(id)) continue
+    const field = byId.get(id)
+    if (!field || isCostColumn(entity, field)) continue
+    out.push(id)
+  }
+  return out
+}
+
+/** The same refusal, for a list of columns somebody else chose. The
+ *  spec strip on the page header picks its own five and must not
+ *  print a cost among them either. */
+export const withoutCosts = (entity: EntityDef, fieldIds: readonly string[]): string[] => {
+  const byId = new Map(entity.fields.map((f) => [f.id, f]))
+  return fieldIds.filter((id) => {
+    const field = byId.get(id)
+    return field !== undefined && !isCostColumn(entity, field)
+  })
 }
 
 /**

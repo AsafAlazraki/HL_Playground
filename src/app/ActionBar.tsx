@@ -113,6 +113,14 @@ export function ActionBar(): JSX.Element | null {
 
   if (groups.length === 0) return null
 
+  /* the fold window, in ActionGroup.rank's own scale — see the note
+     at the call site below */
+  const FOLD_FROM = 30
+  const FOLD_TO = 49
+  const FOLD_ID = 'ab-fold'
+  const shown = groups.filter((g) => g.rank < FOLD_FROM || g.rank > FOLD_TO)
+  const folded = groups.filter((g) => g.rank >= FOLD_FROM && g.rank <= FOLD_TO)
+
   const renderItem = (item: ActionItem): JSX.Element => {
     switch (item.kind) {
       case 'search':
@@ -148,7 +156,7 @@ export function ActionBar(): JSX.Element | null {
   return (
     <div className="ab-shell">
       <div className="ab" role="toolbar" aria-label="What you can do here" ref={rootRef}>
-        {groups.map((g, i) => (
+        {shown.map((g, i) => (
           <Fragment key={g.id}>
             {i > 0 ? <span className="ab-sep" aria-hidden="true" /> : null}
             {/* THE ONE GROUP ALLOWED TO SCROLL. Chips carry the
@@ -168,6 +176,55 @@ export function ActionBar(): JSX.Element | null {
             </div>
           </Fragment>
         ))}
+
+        {/* ============================================================
+            WHAT DOES NOT FIT ON A BAR, FOLDED BY RANK.
+
+            The register published nine controls and a search field,
+            and the bar it stood on measured 1188 x 99 at 1600 wide —
+            74% of the window and a tenth of its height, floating over
+            the rows somebody came to read.
+
+            The fold is not a width calculation and not a per-page
+            list. `ActionGroup.rank` already carries the scale, in its
+            own words: 10 narrow it · 20 what is narrowing it · 30 see
+            all of it · 40 the round trip · 50 go somewhere · 90 change
+            it. Ranks 30 and 40 are, by that definition, the ones a
+            person reaches for occasionally and looks past the rest of
+            the time. They fold; the search, the chips, the doors and
+            the acts stay out.
+
+            So the rule is the SCALE's, not this component's, and a new
+            page that ranks its groups honestly gets the same bar for
+            free. FOLD_FROM/FOLD_TO are the whole policy.
+            ============================================================ */}
+        {folded.length > 0 ? (
+          <>
+            <span className="ab-sep" aria-hidden="true" />
+            <div className="ab-grp">
+              <span className="ab-hold">
+                <button
+                  type="button"
+                  className={'ab-btn' + (openPanel === FOLD_ID ? ' is-on' : '')}
+                  aria-haspopup="menu"
+                  aria-expanded={openPanel === FOLD_ID}
+                  onClick={() => setOpenPanel((c) => (c === FOLD_ID ? null : FOLD_ID))}
+                >
+                  <span>View</span>
+                </button>
+                {openPanel === FOLD_ID ? (
+                  <div className="ab-panel ab-panel--fold" role="menu" aria-label="View">
+                    {folded.map((g) => (
+                      <div className="ab-fold-grp" key={g.id}>
+                        {g.items.map(renderItem)}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </span>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   )

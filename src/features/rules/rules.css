@@ -1708,3 +1708,319 @@
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* ============================================================
+   FITMENT, RE-DRAWN — blue and white.
+
+   THIS IS A CHROME PASS AND NOTHING ELSE. Not one rule below
+   changes a size, a gap, a padding or a flex value: this panel is
+   dense — three controls on a 304px line — and every ruling above
+   about what gives way first is load-bearing. What changes is
+   colour, edge, radius and RESPONSE.
+
+   THE THREE THINGS IT FIXES.
+
+   1. THE SELECTED SEGMENT WAS A BLACK FILL. `.rl-seg-btn.is-on`
+      and `.rl-mode.is-on` painted `--ink` — near-black — behind
+      white text, which was the right answer when the app had no
+      action colour and is the wrong one now: two black chips in a
+      dense panel outweigh the primary action on the same screen.
+      They take the accent wash and the accent ink instead, which is
+      the same "on" reading at a fraction of the weight, and the
+      measurement is 5.6:1.
+
+   2. NOTHING HERE HAD A PRESS. Rule 8 asks every pressable thing
+      for hover, press AND focus, on pointer-down. A sweep of this
+      file found hover and focus on all eleven controls and `:active`
+      on none of them. Every one below now presses, and each press
+      is scaled to its surface: an icon button takes 0.94 because it
+      is 20px, a segment darkens rather than scaling because it sits
+      in a row of its siblings.
+
+   3. THE STAMP WAS A BORDERED MONO BOX. It carries a table's name —
+      the dealer's own word — so it reads as a chip in the app's
+      reading face rather than as a stencil. The uppercase was
+      already removed by the pass above; this is the rest of it.
+   ============================================================ */
+
+/* -- panel chrome ------------------------------------------- */
+
+.rl-panel-head {
+  border-bottom-color: var(--line-subtle);
+  background: var(--grad-surface);
+}
+.rl-panel-count {
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0.02em;
+  color: var(--fg-secondary);
+}
+.rl-block {
+  border-bottom-color: var(--line-subtle);
+}
+.rl-block-lab,
+.rl-group-lab {
+  color: var(--fg-tertiary);
+}
+.rl-hint {
+  color: var(--fg-tertiary);
+}
+.rl-note {
+  color: var(--fg-secondary);
+}
+
+/* -- the stamp: whose row a side reads ----------------------- */
+
+.rl-stamp {
+  padding: 1px 8px;
+  border-color: transparent;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 550;
+  letter-spacing: -0.002em;
+  color: var(--rl-stamp-ink, var(--fg-secondary));
+}
+.rl-stamp--none {
+  border-color: var(--line-strong);
+  background: transparent;
+  color: var(--fg-secondary);
+}
+
+/* -- controls ------------------------------------------------ */
+
+.rl-select {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.rl-select:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+}
+.rl-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.rl-select.is-invalid {
+  border-color: var(--danger);
+  background: var(--danger-wash);
+}
+
+/* -- segmented controls -------------------------------------- */
+
+.rl-seg {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+}
+.rl-seg-btn {
+  color: var(--fg-secondary);
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.rl-seg-btn + .rl-seg-btn {
+  border-left-color: var(--line);
+}
+.rl-seg-btn:hover {
+  background: var(--surface-4);
+  color: var(--fg);
+}
+/* a segment in a row of siblings darkens rather than scaling —
+   a scaled segment makes its neighbours look like they moved */
+.rl-seg-btn:active {
+  background: var(--accent-wash-strong);
+  transition-duration: var(--d-press);
+}
+.rl-seg-btn:focus-visible {
+  outline-color: var(--accent);
+}
+/* SUPERSEDES the near-black fill. Accent wash and accent ink:
+   5.6:1 measured, and it stops two black chips outweighing the
+   primary action on the same screen. */
+.rl-seg-btn.is-on,
+.rl-seg-btn.is-on:hover {
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.rl-modes {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+}
+.rl-mode {
+  background: var(--surface-1);
+  color: var(--fg-tertiary);
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.rl-mode + .rl-mode {
+  border-left-color: var(--line);
+}
+.rl-mode:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+.rl-mode:active {
+  background: var(--accent-wash-strong);
+  transition-duration: var(--d-press);
+}
+.rl-mode:focus-visible {
+  outline-color: var(--accent);
+}
+.rl-mode.is-on,
+.rl-mode.is-on:hover {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+/* -- icon buttons -------------------------------------------- */
+
+.rl-x,
+.rl-icon {
+  border-radius: var(--r-control);
+  color: var(--fg-secondary);
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.rl-icon:hover,
+.rl-x:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+  color: var(--fg);
+}
+.rl-x:hover,
+.rl-icon--danger:hover {
+  border-color: var(--danger);
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+/* 20px controls, so the press is felt: 0.94 on a 20px square is a
+   1px shrink and reads as a button going down */
+.rl-icon:active,
+.rl-x:active {
+  transform: scale(0.94);
+  transition-duration: var(--d-press);
+}
+.rl-icon:focus-visible,
+.rl-x:focus-visible {
+  outline-color: var(--accent);
+}
+
+/* -- the clause, and the joiner between two of them ---------- */
+
+.rl-clause {
+  border-color: var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.rl-clause-n {
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0.06em;
+  color: var(--fg-tertiary);
+}
+.rl-unary {
+  color: var(--fg-secondary);
+}
+
+.rl-joiner {
+  border-color: var(--line-strong);
+  background: var(--surface-1);
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  color: var(--fg-secondary);
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.rl-joiner:hover {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.rl-joiner:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.rl-joiner:focus-visible {
+  outline-color: var(--accent);
+}
+
+/* -- the inspector's findings -------------------------------- */
+
+.rl-issues {
+  border-bottom-color: var(--line-subtle);
+}
+.rl-issue--blocker {
+  color: var(--danger);
+}
+.rl-issue--blocker::before {
+  background: var(--danger);
+}
+.rl-issue--advisory {
+  color: var(--fg-secondary);
+}
+.rl-issue--advisory::before {
+  background: var(--warning);
+}
+
+.rl-branch {
+  border-color: var(--line);
+  border-left-color: var(--kind-amber);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+}
+.rl-branch-n,
+.rl-valuerow-name {
+  color: var(--fg-secondary);
+}
+.rl-valuerow {
+  border-color: var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+}
+
+/* -- empty states -------------------------------------------- */
+
+.rl-empty {
+  border-color: var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+}
+.rl-empty--bad {
+  border-color: var(--danger);
+  background: var(--danger-wash);
+}
+.rl-empty-title {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+.rl-empty-hint {
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  color: var(--fg-secondary);
+}
+.rl-empty-meta {
+  color: var(--fg-secondary);
+}

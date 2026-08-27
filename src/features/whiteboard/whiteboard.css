@@ -22,9 +22,22 @@
   height: 100%;
   /* THE SHEET. Two stops of light: a broad pool a little above
      centre, the way a lamp falls on a drafting table, easing into
-     the deeper navy at the edges. The vignette is in the paper —
-     never an overlay, which would put a film over the tables. */
+     the deeper ground at the edges. The vignette is in the paper —
+     never an overlay, which would put a film over the tables.
+
+     The third stop is the atmosphere: one very low-alpha wash of
+     the brand, off to the upper left where the drawing starts, so
+     a 5,600-unit sheet has somewhere to go instead of being a flat
+     field. `--aurora-1` is under 6% by construction — ds.css records
+     that as less than one contrast point over white — so every
+     measured pair on top of it is still the pair that was measured.
+     It is paint in the paper, not a layer, so it cannot dull a card. */
   background:
+    radial-gradient(
+      64% 52% at 22% 14%,
+      var(--aurora-1) 0%,
+      transparent 72%
+    ),
     radial-gradient(
       132% 104% at 50% 36%,
       var(--canvas-bg) 46%,
@@ -80,19 +93,42 @@
   width: max-content;
   max-width: min(46ch, calc(100% - var(--sp-6) * 2));
   padding: var(--sp-4);
-  background: var(--paper-high);
+  background: var(--grad-surface);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
-  box-shadow: var(--ec1);
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
   pointer-events: none;
-  animation: fade-in var(--t-med) var(--ease-draft) both;
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   /* movement goes, the surface still arrives — see DESIGN_CONTRACT §1 */
   .wb-legend {
-    animation-duration: 1ms;
+    animation-name: ds-fade;
+    animation-duration: var(--t-med);
   }
+}
+
+/* ============================================================
+   THE TITLE BLOCK FOLDS WHEN THE READER STOPS READING.
+
+   FIT frames all 53 tables at zoom 0.14 on the seeded sheet — and
+   at that zoom this block, which is roughly 110px of opaque paper
+   in the corner the drawing starts in, was covering about a dozen
+   of the very tables FIT had just gone to the trouble of framing.
+   The framing arithmetic deliberately does NOT reserve it for FIT
+   (reserving it cost a third of the frame — see the note in
+   Whiteboard.tsx), so the block gets out of the way instead: below
+   `SHAPE_ZOOM` the sentence goes and the two figures stay, because
+   at that distance the sentence is advice about reading a drawing
+   nobody is reading.
+
+   The threshold is 0.34 and the opening frame lands at 0.40, so the
+   block is at full height exactly when the framing arithmetic
+   measures it. The two never race.
+   ============================================================ */
+.wb-root--shape .wb-legend-say {
+  display: none;
 }
 
 .wb-legend-eyebrow {
@@ -106,31 +142,34 @@
   color: var(--ink-soft);
 }
 
-/* the two figures, on the block's own ruled foot — mono and tabular,
-   because every figure in this app is */
+/* THE TWO FIGURES, on the block's own ruled foot — mono and tabular,
+   because every figure in this app is. They are the drawing's whole
+   census: how many tables are pinned here, and how many lines run
+   between them. Both are counted off what is actually drawn, so
+   neither can disagree with the sheet under it. */
 .wb-legend-count {
   display: flex;
   align-items: baseline;
-  gap: 5px;
+  gap: var(--sp-1);
   width: 100%;
   margin: 0;
-  padding-top: 8px;
+  padding-top: var(--sp-2);
   border-top: 1px solid var(--hairline);
   font-size: 12px;
   color: var(--ink-faint);
 }
 .wb-legend-count b {
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.018em;
   color: var(--ink);
 }
 .wb-legend-count i {
   width: 1px;
-  height: 10px;
-  margin: 0 4px;
+  height: 12px;
+  margin: 0 var(--sp-2);
   background: var(--hairline-strong);
 }
 
@@ -776,54 +815,162 @@
 }
 
 /* ============================================================
-   LINKS — a line between two tables, and nothing more.
+   LINKS — the thing this drawing exists to show.
 
-   A Link column genuinely means one table points at another, so the
-   line stays. It is drawn quieter than it used to be: the tables are
-   the drawing now, and a link is an annotation on it. It brightens
-   under the cursor, so following one is still easy.
+   WHAT WAS WRONG, measured on the sheet. The line was
+   `--canvas-edge` at 62% — i.e. rgba(8,27,46,0.22) at 62%, an
+   effective alpha of 0.136 — drawn 1.25px wide on a #f1f6fb ground,
+   and at the opening frame's 0.4 zoom that is HALF A PIXEL of a
+   colour that is 86% ground. Fifty-three tables with sixty-four
+   relationships between them, and the relationships were the one
+   thing on the screen you could not see. A card was legible, a
+   figure was legible, the drawing was not.
+
+   THE FOUR THINGS THAT FIX IT
+
+   1. WEIGHT. 1.8px at rest, so the line survives being multiplied
+      by the camera. At 0.4 zoom that is 0.72px — thin, but drawn,
+      which half a pixel of near-ground was not.
+
+   2. INK THAT MEANS SOMETHING. `--wb-line` is set per link by
+      `useDerivedGraph`, to the kind hue of the table the link POINTS
+      AT (see the note there). Every line landing on a boat table is
+      indigo, every line into the outboards is orange — so the hubs
+      of the drawing announce themselves before a single label is
+      readable, at the exact zoom where no label is.
+
+   3. A STATE THAT LIGHTS THE WHOLE PATH. Under the cursor, and for
+      every link of a table under the cursor, the line goes to the
+      full hue, gains a third of its weight and picks up a soft halo
+      of its own colour — and because the arrowhead is drawn in
+      `context-stroke`, the head grows and brightens with it. The
+      whole path lights, both ends, in one move.
+
+   4. AND WHAT IS NOT ON THE PATH DROPS BACK, but only when the
+      reader has PICKED a table (`.wb-root--focus`), never merely
+      pointed at one.
+
+   Everything here is one custom property and four states. There is
+   no per-kind class, no second stylesheet, and nothing in the TSX
+   that has to be kept in step with a colour.
    ============================================================ */
 .wb-canvas .react-flow__edge .react-flow__edge-path {
-  stroke: color-mix(in srgb, var(--canvas-edge) 62%, transparent);
-  stroke-width: 1.25;
+  stroke: color-mix(in srgb, var(--wb-line, var(--canvas-edge)) 58%, transparent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
   transition:
     stroke var(--t-fast) var(--ease-draft),
-    stroke-width var(--t-fast) var(--ease-draft);
+    stroke-width var(--t-fast) var(--ease-draft),
+    opacity var(--t-med) var(--ease-draft);
 }
-.wb-canvas .react-flow__edge:hover .react-flow__edge-path {
-  stroke: var(--canvas-edge-selected);
-  stroke-width: 1.5;
+
+/* THE ARROWHEAD'S FLOOR. React Flow writes `context-stroke` inline,
+   which is what makes the head take its line's exact ink; a browser
+   that does not know the keyword drops that declaration and lands
+   here instead, on a quiet token, rather than on the SVG default of
+   solid black. See EDGE_MARKER in `useDerivedGraph.ts`. */
+.wb-canvas .react-flow__arrowhead .arrowclosed {
+  fill: var(--canvas-edge);
+  stroke: var(--canvas-edge);
 }
-.wb-canvas .react-flow__edge.selected .react-flow__edge-path {
-  stroke: var(--canvas-edge-selected);
-  stroke-width: 1.75;
+
+/* -- lit: pointed at, or on the path of a table pointed at -- */
+.wb-canvas .react-flow__edge:hover .react-flow__edge-path,
+.wb-canvas .wb-edge--lit .react-flow__edge-path {
+  stroke: var(--wb-line, var(--canvas-edge));
+  stroke-width: 2.4;
+  filter: drop-shadow(
+    0 0 4px color-mix(in srgb, var(--wb-line, var(--canvas-edge)) 40%, transparent)
+  );
 }
-/* label: a small white chip pinned to the sheet, naming the column
-   that draws the line */
-/* Tracking back to ~0 with the capitals: +0.1em is the uppercase
-   caption's tracking, and this chip carries a column's NAME —
-   `useDerivedGraph` was uppercasing it in TypeScript and no longer
-   does. */
+
+/* -- out: a line the picked table is not on ------------------- */
+.wb-canvas .wb-edge--out .react-flow__edge-path {
+  stroke: color-mix(in srgb, var(--wb-line, var(--canvas-edge)) 15%, transparent);
+  stroke-width: 1.4;
+}
+
+/* ============================================================
+   THE LABEL, AND WHY IT IS 16px.
+
+   It carries a COLUMN'S NAME — the dealer wrote "Series", "Rigging
+   Kit Option" — so it is a name, in its own case, in the figure
+   face this app sets every identifier in. Never uppercased: rule 3,
+   and `useDerivedGraph` used to do it in TypeScript where nothing
+   downstream could get the capitalisation back.
+
+   IT IS AUTHORED INSIDE THE CANVAS TRANSFORM, so 16px is not a seen
+   size. At the opening frame's 0.4 zoom an 11px chip drew at 4.4px
+   and sixty-four of them lay across the drawing as grey mush — the
+   single largest piece of clutter this view had, and it was sitting
+   on top of the one thing the view is for. So the size is chosen
+   against the zoom it appears at: 16 x 0.70 = 11.2px, the floor,
+   exactly. Below `READ_ZOOM` the chips are not drawn at all and the
+   sheet is lines alone, which is all that is legible down there
+   anyway. `sheetZoom.ts` holds both numbers together.
+   ============================================================ */
+.wb-canvas .react-flow__edge-textwrapper {
+  /* a name pinned to a line is never a target — the line under it is */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--t-med) var(--ease-draft);
+}
+.wb-root--read .wb-canvas .react-flow__edge-textwrapper {
+  opacity: 1;
+}
+.wb-root--read .wb-canvas .wb-edge--out .react-flow__edge-textwrapper {
+  opacity: 0.25;
+}
+
 .wb-canvas .react-flow__edge-text {
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-size: 16px;
+  font-weight: 450;
+  letter-spacing: -0.01em;
   fill: var(--ink-soft);
 }
+/* the chip is paper, always — a hue behind a name is a fill behind
+   text, and the ink on it has to clear 4.5:1 in both themes */
 .wb-canvas .react-flow__edge-textbg {
   fill: var(--paper-high);
-  stroke: var(--hairline);
+  stroke: var(--hairline-strong);
   stroke-width: 1;
 }
-.wb-canvas .react-flow__edge:hover .react-flow__edge-text {
+.wb-canvas .react-flow__edge:hover .react-flow__edge-text,
+.wb-canvas .wb-edge--lit .react-flow__edge-text {
   fill: var(--ink);
 }
-.wb-canvas .react-flow__edge.selected .react-flow__edge-text {
-  fill: var(--ink);
+.wb-canvas .react-flow__edge:hover .react-flow__edge-textbg,
+.wb-canvas .wb-edge--lit .react-flow__edge-textbg {
+  stroke: var(--wb-line, var(--canvas-edge));
+  stroke-width: 1.5;
 }
-.wb-canvas .react-flow__edge.selected .react-flow__edge-textbg {
-  stroke: var(--ink);
+
+/* ============================================================
+   THE SPOTLIGHT, ON THE CARDS.
+
+   A picked table keeps its own selected ring — `table-node.css`
+   draws that, and drawing a second one here would be two features
+   marking one card. What the sheet adds is the OTHER 51: they drop
+   back far enough to read as "not part of this", and no further,
+   because they are still where the reader is going next and a card
+   they cannot see is a card they cannot press.
+
+   Opacity, not blur or greyscale: a filter on fifty-three cards is
+   fifty-three offscreen buffers per frame, and this has to survive
+   a pan. It stays under `prefers-reduced-motion` — that signal asks
+   for less MOVEMENT, and nothing here moves.
+   ============================================================ */
+.wb-canvas .react-flow__node {
+  transition: opacity var(--t-med) var(--ease-draft);
+}
+.wb-canvas .react-flow__node.wb-node--out {
+  opacity: 0.3;
+}
+/* stated rather than implied: a card on the picked table's path is at
+   full strength, and nothing is allowed to take it below that */
+.wb-canvas .react-flow__node.wb-node--near {
+  opacity: 1;
 }
 
 /* ============================================================
@@ -1145,30 +1292,52 @@
 }
 
 /* ============================================================
-   THE ONE INSTRUMENT ON THE SHEET
+   THE GROUND
 
-   Zoom out · zoom in · FIT, in a single white cluster bottom-left.
-   Nothing else floats on the blueprint — no layer switcher, no
-   card toggle, no palette, no minimap — so this cluster can be
-   quiet and still be found instantly.
+   One dot field, at twice the snap grid, that says the plane is
+   pannable and then shuts up — which is the system's own
+   description of what a canvas ground should be. It fades below
+   `SHAPE_ZOOM`, where its dots would be four pixels apart and it
+   would stop being a surface under the drawing and start being a
+   grey wash over it.
+   ============================================================ */
+.wb-canvas .wb-ground {
+  opacity: 1;
+  transition: opacity var(--d-slow) var(--ease-draft);
+}
+.wb-root--shape .wb-canvas .wb-ground {
+  opacity: 0;
+}
+
+/* ============================================================
+   THE TWO INSTRUMENTS
+
+   What the camera does, bottom left. Where the camera is, bottom
+   right. They are drawn as one object in two halves: the same
+   paper, the same hairline, the same lit top edge and the same
+   float — so the sheet reads as a drawing with instruments on it
+   rather than a canvas with widgets over it.
    ============================================================ */
 .wb-canvas .react-flow__controls {
   margin: var(--sp-4);
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sheet);
+  /* the lit top edge is what makes a floating object look lit rather
+     than drawn — see ds.css --edge-light */
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
   overflow: hidden;
 }
 .wb-canvas .react-flow__controls-button {
-  width: 28px;
-  height: 28px;
+  width: var(--h-md);
+  height: var(--h-md);
   border: none;
   border-bottom: 1px solid var(--hairline);
-  background: var(--paper-high);
+  background: var(--grad-surface);
   color: var(--ink-soft);
   transition:
     background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-draft);
 }
 .wb-canvas .react-flow__controls-button:last-child {
   border-bottom: none;
@@ -1176,6 +1345,16 @@
 .wb-canvas .react-flow__controls-button:hover {
   background: var(--blue-wash);
   color: var(--blue);
+}
+/* PRESS, WHICH THIS CLUSTER DID NOT HAVE. Rule 8: every pressable
+   thing has hover, press AND focus, and the press lands on
+   pointer-down — which is what `:active` on a button is. 0.97 is the
+   control-sized press; a 32px button is small enough to take it
+   whole rather than only losing a lift. */
+.wb-canvas .react-flow__controls-button:active {
+  background: var(--blue-wash-strong);
+  color: var(--blue);
+  transform: scale(0.94);
 }
 /* the cluster clips overflow, so the ring has to sit inside the button */
 .wb-canvas .react-flow__controls-button:focus-visible {
@@ -1188,14 +1367,86 @@
   max-height: 11px;
 }
 /* FIT is drawn, not filled — four corner brackets at the hairline
-   weight the rest of the app is drawn in */
+   weight the rest of the app is drawn in. It is the recovery control
+   on this sheet, so it is the one that carries the accent at rest:
+   the reader who is lost should find it without reading three
+   tooltips. That is the fourth and last appearance of the accent on
+   this screen — focus ring, hover wash, press wash, this. */
+.wb-canvas .wb-ctl-fit {
+  color: var(--blue);
+}
 .wb-canvas .wb-ctl-fit svg {
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.25;
+  stroke-width: 1.4;
   stroke-linecap: square;
-  max-width: 12px;
-  max-height: 12px;
+  max-width: 13px;
+  max-height: 13px;
+}
+
+/* ============================================================
+   THE KEY PLAN — the whole drawing, and where you are on it.
+
+   Same materials as the zoom cluster, and deliberately quiet: it is
+   a map, not a picture. Every table is a rectangle in its own kind
+   hue at low alpha, so the map carries WHAT is where and not only
+   THAT something is; the part of the sheet you are looking at is a
+   window cut out of a wash of the ground.
+
+   It is draggable and zoomable, so on a drawing 5,600 units tall
+   "somewhere else" is one gesture instead of a hunt — which is the
+   whole reason it is worth the corner it takes.
+   ============================================================ */
+.wb-canvas .wb-map {
+  margin: var(--sp-4);
+  padding: var(--sp-1);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--grad-surface);
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
+  cursor: grab;
+  transition: box-shadow var(--t-med) var(--ease-draft);
+}
+.wb-canvas .wb-map:hover {
+  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
+}
+.wb-canvas .wb-map:active {
+  cursor: grabbing;
+}
+.wb-canvas .wb-map .react-flow__minimap-svg {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+}
+/* the tables. Low alpha so fifty-three of them read as a drawing
+   rather than as confetti; the hue is the same one the table's own
+   rail and its links take. */
+.wb-canvas .wb-map .react-flow__minimap-node {
+  opacity: 0.55;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.wb-canvas .wb-map .react-flow__minimap-node.selected {
+  opacity: 1;
+}
+/* Everything OUTSIDE the frame you are looking through. The FRAME's
+   own hairline is set on the component instead of here, because its
+   width has to be multiplied by the map's scale to come out as one
+   screen pixel and only React Flow knows that scale — see
+   `maskStrokeWidth` in Whiteboard.tsx. */
+.wb-canvas .wb-map .react-flow__minimap-mask {
+  fill: color-mix(in srgb, var(--fg) 9%, transparent);
+}
+
+/* THE PRESS LOSES ITS TRAVEL, NOT ITS ANSWER. base.css already takes
+   every duration to nothing under this signal; what it cannot do is
+   decide which feedback was MOVEMENT and which was colour. The scale
+   is movement and goes; the wash is the button saying it heard you,
+   and stays. (DESIGN_PRINCIPLES §4: reduced motion means gentler
+   feedback, not no feedback.) */
+@media (prefers-reduced-motion: reduce) {
+  .wb-canvas .react-flow__controls-button:active {
+    transform: none;
+  }
 }
 
 /* ============================================================

@@ -309,22 +309,51 @@
   box-shadow: var(--glow-sm);
 }
 
-/* THE ONE PRIMARY THING ON THE SCREEN. It takes the brand ramp
-   rather than a flat fill, which is the difference between a
-   button and a painted rectangle — and the ink on it is
-   `--accent-fg`, white, at better than 5.9:1 on every stop. */
+/* THE ONE PRIMARY THING ON THE SCREEN, and its ink is MEASURED
+   rather than assumed.
+
+   It was drawn on `--grad-brand` with `--accent-fg` over it, and
+   that was wrong twice. First, ds.css says outright that the ramp's
+   two neighbour hues "exist ONLY to make a gradient out of it"
+   and that neither "may be used as a flat fill behind text" — the
+   cyan end (`--accent-2`) measures 3.5:1 against white on light.
+   Second, `--accent-fg` is #ffffff in BOTH themes, and on dark
+   `--accent` is a pale #58a6ff: white on it is 2.5:1, which is not
+   a weak button, it is an unreadable one.
+
+   So: one flat accent, and the ink flips with the theme. Measured
+   in the browser, compositing the whole chain —
+     light  white     on --accent        5.9:1
+            white     on --accent-hover  5.2:1
+     dark   --bg      on --accent        7.3:1
+            --bg      on --accent-hover  8.3:1
+            --bg      on --accent-press  5.6:1
+   The gradient is still in the app; it is on grounds that carry no
+   text, which is what it was drawn for. */
 .cx-act--primary {
   border-color: transparent;
-  background: var(--grad-brand);
+  background: var(--accent);
   color: var(--accent-fg);
-  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  box-shadow: var(--e1);
 }
 .cx-act--primary:hover {
+  background: var(--accent-hover);
   box-shadow: var(--e2), var(--glow-md);
+}
+.cx-act--primary:active {
+  background: var(--accent-press);
 }
 .cx-act--primary:focus-visible {
   border-color: transparent;
   box-shadow: var(--focus);
+}
+
+/* ON DARK THE ACCENT IS A LIGHT BLUE, so the ink on it is the
+   ground, not white. Stated here because `--accent-fg` cannot say
+   it: ds.css sets that token to #ffffff in both themes, and this
+   file may not change ds.css. */
+[data-theme='dark'] .cx-act--primary {
+  color: var(--bg);
 }
 
 /* the quiet one — Remove. It is destructive and it is undoable, so

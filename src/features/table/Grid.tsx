@@ -514,9 +514,30 @@ export function Grid(props: GridProps): JSX.Element {
     if (!el || rows === 0 || cols === 0) return
     const { row, col } = sel.active
     const rowTop = topOfLeaf(row)
+    /* A ROW ARROWED TO NEVER LANDS ON THE LAST LINE OF THE WINDOW.
+       It used to: the else-branch put the row's bottom edge exactly
+       on the scroller's bottom edge, which is the one strip of this
+       page the app's own floating furniture stands over — measured
+       at 1280x720, the action bar's top edge is 13px inside the
+       register's scroller, so the row you had just arrowed to was
+       the row with a bar across it.
+
+       The row-reveal path already had to work around the same edge
+       ("row 54 of the 83-row register arrived with 6px of it under
+       the bottom rail" — see `TableSheet`, which nudges an arrival
+       into the upper third). This closes it for the keyboard too,
+       and for the same reason.
+
+       One row of clearance, capped at a fifth of the window so a
+       short register does not spend a quarter of itself on margin.
+       It is NOT a fix for the geometry itself — the reservation for
+       the bar is owned in one place, `src/app/actionbar.css`, and
+       says so; this is only the register declining to put the cursor
+       where it cannot be read. */
+    const keep = Math.min(ROW_H, Math.round(el.clientHeight / 5))
     if (rowTop < el.scrollTop) el.scrollTop = rowTop
-    else if (rowTop + ROW_H > el.scrollTop + el.clientHeight - headH) {
-      el.scrollTop = rowTop + ROW_H - el.clientHeight + headH
+    else if (rowTop + ROW_H > el.scrollTop + el.clientHeight - headH - keep) {
+      el.scrollTop = rowTop + ROW_H - el.clientHeight + headH + keep
     }
     /* the pinned column is frozen on screen — scrolling to reveal it
        would only throw the sheet back to its left edge */

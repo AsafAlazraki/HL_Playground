@@ -45,7 +45,7 @@ import type { RowRef, RuleEngine } from '@/lib/rules/evaluate'
 import { useConstraints } from '@/features/constraints'
 import { CurationNote, readCuration, searchReach } from '@/features/curation'
 import type { Narrowing } from '@/features/curation'
-import { bandOf, defaultColumns, formatCell, isMoney } from './columns'
+import { bandOf, cardColumns, formatCell, priceColumnOf } from './columns'
 import {
   countChip,
   isCuratedOnly,
@@ -200,10 +200,22 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     })
   }, [ctx, engine, sourceEntity, sourceRow, target, block.rule, join, showAll])
 
+  /* THE SELL PRICE LEADS, AND A COST NEVER APPEARS. See `cardColumns`
+     in columns.ts for the whole argument — in one line, the type-rank
+     that served a 12px table cell put `Dealer List Price`, `Landed
+     CTD` and `Nett CTD` at the head of every motor card on a page
+     this feature's own header calls "a page you would put in front of
+     a customer". An explicit `block.columns` is still honoured: a
+     person who chose the columns has chosen them. */
   const columns = useMemo(
-    () => (target ? (block.columns ?? defaultColumns(target)) : []),
+    () => (target ? (block.columns ?? cardColumns(target)) : []),
     [target, block.columns],
   )
+
+  /** Which of those columns is the one the table SELLS at — the only
+   *  figure on a card allowed the large step. `undefined` on a table
+   *  that declares no rung, and then no fact is a headline. */
+  const priceField = useMemo(() => (target ? priceColumnOf(target) : undefined), [target])
 
   /* ── WHAT DISAGREES WITH A ROW THAT IS STILL HERE ─────────────
 
@@ -821,10 +833,14 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                 {/* THE COLUMN NAMES CAME DOWN ONTO THE CARD. They used
                     to live once, in a hairline above forty rows; a
                     card is read on its own, so each figure carries the
-                    name of the column it came out of. Money is set
-                    apart from the rest — it is the fact the card is
-                    scanned for, and `isMoney` is the same reading
-                    `formatCell` already takes to decide the format. */}
+                    name of the column it came out of. The SELL price
+                    is set apart from the rest — it is the fact the
+                    card is scanned for — and it is the only figure
+                    here allowed to be, because the large step on a
+                    cost column would put a dealer's buy price in front
+                    of a customer. `priceColumnOf` is the quote's own
+                    resolver, so the two can never disagree about which
+                    column is the price. */}
                 <dl className="vw-facts">
                   {columns.map((c) => {
                     const field = byId.get(c)
@@ -834,7 +850,7 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                     const band = bandOf(target, field)
                     const text = formatCell(field, readRelated(r, c), resolveRef, band)
                     if (text === '') return null
-                    const cash = isMoney(field?.name ?? '', band)
+                    const cash = c === priceField
                     return (
                       <div key={c} className={`vw-fact${cash ? ' vw-fact--money' : ''}`}>
                         <dt className="vw-fact-of">{field?.name ?? ''}</dt>

@@ -35,7 +35,15 @@ import {
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
-import { bandOf, defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from './columns'
+import {
+  bandOf,
+  defaultColumns,
+  formatCell,
+  formatRange,
+  rangePairs,
+  splitUnit,
+  withoutCosts,
+} from './columns'
 import {
   isCuratedOnly,
   levelCaption,
@@ -774,7 +782,13 @@ function SpecStrip({
       out.push(withUnit(pair.label, text, splitUnit(pair.min.name).unit))
     }
 
-    for (const fieldId of defaultColumns(entity, 8)) {
+    /* NOT A COST, ON THIS PAGE. The strip picks the highest-ranked
+       columns after the envelopes, and `defaultColumns` ranks numbers
+       first — which on several tables is the dealer's cost build. The
+       money on this page is the rig panel's, read through the quote's
+       own resolver; a spec strip is measurements. See `cardColumns`
+       in columns.ts for the whole argument. */
+    for (const fieldId of withoutCosts(entity, defaultColumns(entity, 12))) {
       if (out.length >= 5) break
       if (used.has(fieldId)) continue
       const field = entity.fields.find((f) => f.id === fieldId)

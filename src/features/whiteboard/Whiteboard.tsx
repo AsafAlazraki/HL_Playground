@@ -56,16 +56,15 @@ import {
   BackgroundVariant,
   ControlButton,
   Controls,
+  MiniMap,
   ReactFlow,
   ReactFlowProvider,
-  applyEdgeChanges,
   applyNodeChanges,
   useNodesInitialized,
   useReactFlow,
 } from '@xyflow/react'
 import type {
   Edge,
-  EdgeChange,
   FitViewOptions,
   Node,
   NodeChange,
@@ -84,10 +83,12 @@ import {
 } from '@/features/table'
 import type { TableKind, XY } from '@/types/model'
 import {
-  EDGE_MARKER,
-  EDGE_MARKER_SELECTED,
+  Z_EDGE,
+  Z_EDGE_LIT,
+  tableInk,
   useRelationshipEdges,
 } from './useDerivedGraph'
+import { GROUND_GAP, useSheetDistance } from './sheetZoom'
 import { isTableKindDrag, readTableKindDrag } from './tableKindDrop'
 import {
   claimLayerFrame,
@@ -259,7 +260,9 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   const derivedEdges = useRelationshipEdges()
 
   const [nodes, setNodes] = useState<CanvasNode[]>(tableNodes)
-  const [edges, setEdges] = useState<Edge[]>(derivedEdges)
+
+  /* how far the reader is standing back — see `sheetZoom.ts` */
+  const distance = useSheetDistance()
 
   const rf = useReactFlow<CanvasNode, Edge>()
   const nodesInitialized = useNodesInitialized()
@@ -283,18 +286,33 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   /* a table type is being dragged over the sheet right now */
   const [dropping, setDropping] = useState(false)
 
+  /* the table under the cursor right now — see THE SPOTLIGHT below */
+  const [tracedId, setTracedId] = useState<string | null>(null)
+
   /* WHAT THE LEGEND COUNTS: the cards that are DRAWN, not the rows in
      the store. Two of the seeded 52 are retired, which Home holds back
      and the sheet still draws — a title block reading 50 over 52 visible
      cards is the disagreement every count in this app is written to
-     avoid. So the total is the node list's own length, and the joins are
-     counted among exactly those nodes. */
+     avoid. So the total is the node list's own length.
+
+     AND IT COUNTS THE LINES, which is new and is the point of the
+     screen. It used to say how many of the tables were relationship
+     tables — true, and about the tables. This drawing's subject is the
+     lines between them, and their number was the one figure the title
+     block did not carry. Both come from what is actually drawn. */
   const entities = useProjectStore((s) => s.entities)
-  const shape = useMemo(() => {
-    let joins = 0
-    for (const n of tableNodes) if (entities[n.id]?.role === 'join') joins += 1
-    return { tables: tableNodes.length, joins }
-  }, [tableNodes, entities])
+  const shape = useMemo(
+    () => ({ tables: tableNodes.length, links: derivedEdges.length }),
+    [tableNodes, derivedEdges],
+  )
+
+  /* TEMP-CANVAS-PROBE-START */
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      ;(window as unknown as Record<string, unknown>).__wb = { rf, nodesInitialized }
+    }
+  })
+  /* TEMP-CANVAS-PROBE-END */
 
   /* -- store -> local mirror ----------------------------------
      Identity is the whole point: a node whose data, position and
@@ -371,39 +389,100 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
        already right, so it costs a walk and no more. */
   }, [selection, tableNodes])
 
+  /* ============================================================
+     THE SPOTLIGHT — the one thing this drawing exists to answer.
+
+     "What is this table connected to?" was, until now, a question
+     you answered by tracing a 1.25px grey line with your finger on
+     the screen across a sheet holding fifty-two others. So the
+     sheet answers it in two strengths, and the difference between
+     them is deliberate:
+
+       POINT at a table and its links LIGHT. Nothing dims. Sweeping
+       the cursor over a drawing must not make the drawing flinch,
+       and a reader browsing is not committing to anything.
+
+       PICK a table and the sheet SPOTLIGHTS it: its links and the
+       tables at the far end of them stay lit, and everything else
+       on the sheet drops back. That is a decision the reader made,
+       so it is allowed to change the whole picture — and Escape or
+       a click on the paper puts it back, as it always did.
+
+     Both are computed here, once, and applied as classes. Only the
+     objects that actually change identity are re-allocated, so
+     sweeping the cursor across the sheet costs a handful of edge
+     objects and not a rebuild of the drawing.
+     ============================================================ */
+  const picked =
+    selection && selection.kind === 'entity' ? selection.id : null
+
+  const focus = useMemo(() => {
+    if (!picked && !tracedId) return null
+    const lit = new Set<string>()
+    const near = new Set<string>()
+    const walk = (id: string): void => {
+      near.add(id)
+      for (const e of derivedEdges) {
+        if (e.source === id) {
+          lit.add(e.id)
+          near.add(e.target)
+        } else if (e.target === id) {
+          lit.add(e.id)
+          near.add(e.source)
+        }
+      }
+    }
+    if (picked) walk(picked)
+    if (tracedId) walk(tracedId)
+    /* only a PICKED table earns the right to push the rest back */
+    return { lit, near, dims: picked !== null }
+  }, [picked, tracedId, derivedEdges])
+
+  /* Edges are derived, never held: nothing about a line is the
+     reader's to change, so there is no edge state to keep in step —
+     the identity cache in `useRelationshipEdges` already hands back
+     the same object whenever a link has not moved, and only the ones
+     the spotlight touches are re-made. */
+  const edges = useMemo<Edge[]>(() => {
+    if (!focus) return derivedEdges
+    return derivedEdges.map((e) => {
+      const lit = focus.lit.has(e.id)
+      if (!lit && !focus.dims) return e
+      return {
+        ...e,
+        className: `${e.className ?? ''} ${lit ? 'wb-edge--lit' : 'wb-edge--out'}`,
+        zIndex: lit ? Z_EDGE_LIT : Z_EDGE,
+      }
+    })
+  }, [derivedEdges, focus])
+
+  /* The other half of the spotlight: which CARDS stay lit. Same cheap
+     pass as the selection mark above — a node whose standing has not
+     changed is handed back untouched, so pointing at a table (which
+     never dims anything) allocates nothing here at all. */
   useEffect(() => {
-    setEdges((prev) => {
-      const prevById = new Map(prev.map((e) => [e.id, e]))
-      let changed = prev.length !== derivedEdges.length
-      const next = derivedEdges.map((e, i) => {
-        const p = prevById.get(e.id)
-        if (p && p.selected) {
-          changed = true
-          return { ...e, selected: true, markerEnd: EDGE_MARKER_SELECTED }
-        }
-        if (p === e) {
-          if (prev[i] !== p) changed = true
-          return p
-        }
+    setNodes((prev) => {
+      let changed = false
+      const next = prev.map((n) => {
+        const want =
+          focus && focus.dims
+            ? focus.near.has(n.id)
+              ? 'wb-node--near'
+              : 'wb-node--out'
+            : undefined
+        if (n.className === want) return n
         changed = true
-        return e
+        return { ...n, className: want }
       })
       return changed ? next : prev
     })
-  }, [derivedEdges])
+    /* `tableNodes` for the same reason the selection pass takes it: a
+       table that arrives while a spotlight is on must arrive dimmed. */
+  }, [focus, tableNodes])
 
   /* -- React Flow interaction state --------------------------- */
   const onNodesChange = useCallback((changes: NodeChange<CanvasNode>[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds))
-  }, [])
-
-  const onEdgesChange = useCallback((changes: EdgeChange<Edge>[]) => {
-    setEdges((eds) =>
-      applyEdgeChanges(changes, eds).map((e) => ({
-        ...e,
-        markerEnd: e.selected ? EDGE_MARKER_SELECTED : EDGE_MARKER,
-      })),
-    )
   }, [])
 
   /* -- selection ---------------------------------------------- */
@@ -424,6 +503,17 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   const onNodeDragStart = useCallback<OnNodeDrag<CanvasNode>>(
     (_event, node) => selectNode(node),
     [selectNode],
+  )
+
+  /* POINTING IS NOT PICKING. These only ever light lines; the dimming
+     half of the spotlight belongs to the selection. */
+  const onNodeMouseEnter = useCallback<NodeMouseHandler<CanvasNode>>(
+    (_event, node) => setTracedId(node.id),
+    [],
+  )
+  const onNodeMouseLeave = useCallback<NodeMouseHandler<CanvasNode>>(
+    () => setTracedId(null),
+    [],
   )
 
   const onPaneClick = useCallback(() => {
@@ -772,6 +862,23 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
       const containerW = rect?.width ?? 0
       const containerH = rect?.height ?? 0
       const insetL = el ? panelCover(el) : 0
+      /* AND THE KEY PLAN, ON THE RIGHT. Same argument as the panel:
+         a strip of our box a reader cannot see through. Measured off
+         the element rather than assumed, so its size lives in one
+         place (the stylesheet) and this stays right when it changes.
+
+         It is the RIGHT strip only, never the bottom one. On this
+         drawing — 2,920 wide by 5,600 tall — the fit is bound by
+         HEIGHT, so reserving a right strip costs the frame nothing at
+         all and is simply correct on a drawing that is bound by width.
+         Reserving the map's HEIGHT would cost about a quarter of the
+         pane on the axis that does bind, to protect a corner the map
+         itself is showing you. */
+      const mapEl = el?.querySelector<HTMLElement>('.wb-map') ?? null
+      const insetR =
+        mapEl && rect
+          ? Math.max(0, rect.right - mapEl.getBoundingClientRect().left)
+          : 0
       /* THE LEGEND BAND IS RESERVED ON THE OPENING FRAME AND NOT ON FIT,
          and that is a measurement rather than an oversight. Reserving it
          for FIT costs 240px of an 822px pane — measured, it took FIT from
@@ -793,10 +900,12 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
 
       /* guard the degenerate window — a container narrower than its own
          panel would divide by zero or flip the sign */
-      const visibleW = containerW - insetL
+      const visibleW = containerW - insetL - insetR
       const visibleH = containerH - insetT
-      if (containerW > insetL + 1) {
+      if (containerW > insetL + insetR + 1) {
         const scaled = width * (containerW / visibleW)
+        /* only the LEFT inset moves the box; the right one merely
+           takes width out of what can be seen */
         x -= (width * insetL) / visibleW
         width = scaled
       }
@@ -1014,11 +1123,28 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
      this pass exists to remove. What the sheet DOES answer is the
      drag: the hairline frame in `.wb-root--drop`. */
 
+  /* THE MAP'S INK IS THE DRAWING'S INK. Every rectangle on the map is
+     painted the hue its table is painted, by the same function the
+     links take theirs from — so the map is not only "where am I", it
+     is "and what is over there". */
+  const mapInk = useCallback(
+    (node: CanvasNode): string => tableInk(entities[node.id]),
+    [entities],
+  )
+
+  const rootClass = [
+    'wb-root',
+    dropping ? 'wb-root--drop' : '',
+    picked ? 'wb-root--focus' : '',
+    /* what is worth drawing at this distance — see `sheetZoom.ts` */
+    distance === 'shape' ? 'wb-root--shape' : '',
+    distance === 'near' ? 'wb-root--read' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div
-      className={`wb-root${dropping ? ' wb-root--drop' : ''}`}
-      ref={wrapRef}
-    >
+    <div className={rootClass} ref={wrapRef}>
       {/* ============================================================
           THE TITLE BLOCK — what this drawing is, on the drawing.
 
@@ -1040,16 +1166,23 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
       {tableNodes.length > 0 ? (
         <aside className="wb-legend" ref={legendRef} aria-label="What this drawing shows">
           <span className="mono-label wb-legend-eyebrow">Data model</span>
+          {/* THE SAME LENGTH AS THE SENTENCE IT REPLACES, to the
+              character — the block's height is reserved by the framing
+              arithmetic above, so a longer sentence is paid for in
+              drawing the reader can see. "Drawn where you put it" went
+              (a card that drags teaches that by dragging); what came in
+              is the one thing on this sheet nobody would find on their
+              own, and the thing it exists to do. */}
           <p className="wb-legend-say">
-            Every table you have, drawn where you put it, with a line wherever one
-            table points at another. Press a card to open its register.
+            Every table you have, with a line wherever one points at another.
+            Point at a table to trace its links; press it to open the register.
           </p>
           <p className="wb-legend-count">
-            <b>{shape.tables}</b> tables
-            {shape.joins > 0 ? (
+            <b>{shape.tables}</b> table{shape.tables === 1 ? '' : 's'}
+            {shape.links > 0 ? (
               <>
                 <i aria-hidden="true" />
-                <b>{shape.joins}</b> of them relationships
+                <b>{shape.links}</b> link{shape.links === 1 ? '' : 's'}
               </>
             ) : null}
           </p>
@@ -1073,11 +1206,17 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
         edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
         onPaneClick={onPaneClick}
+        /* THE CREDIT MOVES OFF THE BOTTOM RAIL. The map takes the
+           bottom-right corner and the zoom cluster the bottom-left;
+           the library's credit is the one thing on the sheet with no
+           claim to either, so it goes to the empty corner. */
+        attributionPosition="top-right"
         onMoveStart={onMoveStart}
         onMoveEnd={onMoveEnd}
         defaultViewport={initialCamera ?? undefined}
@@ -1121,20 +1260,34 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
         minZoom={0.04}
         maxZoom={1.75}
       >
+        {/* ============================================================
+            ONE GROUND, NOT TWO.
+
+            There were two of these: a 16px grid drawn in
+            `--canvas-grid-minor`, which the re-skin points at
+            `transparent` — an entire SVG layer, re-patterned on every
+            frame of every pan, painting nothing — and an 80px grid over
+            it. The system's own note says what the ground should be
+            ("a barely-there dot field that tells you the plane is
+            pannable and then shuts up"), so that is what is left: one
+            layer, at twice the snap grid, so a table always lands on a
+            dot or exactly between two.
+
+            It fades out below SHAPE_ZOOM, where the dots would be 4px
+            apart and the ground would be a grey wash under the drawing
+            rather than a surface under it.
+            ============================================================ */}
         <Background
-          id="wb-grid-minor"
-          variant={BackgroundVariant.Lines}
-          gap={16}
-          color="var(--canvas-grid-minor)"
-        />
-        <Background
-          id="wb-grid-major"
-          variant={BackgroundVariant.Lines}
-          gap={80}
-          color="var(--canvas-grid-major)"
+          id="wb-ground"
+          className="wb-ground"
+          variant={BackgroundVariant.Dots}
+          gap={GROUND_GAP}
+          size={1.4}
+          color="var(--canvas-dot)"
         />
 
-        {/* THE ONLY INSTRUMENT ON THE SHEET: zoom, and FIT. */}
+        {/* THE TWO INSTRUMENTS: what the camera does, bottom left;
+            where the camera IS, bottom right. */}
         <Controls
           position="bottom-left"
           showInteractive={false}
@@ -1150,6 +1303,42 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
             <FitGlyph />
           </ControlButton>
         </Controls>
+
+        {/* ============================================================
+            WHERE YOU ARE ON A DRAWING TALLER THAN THE SCREEN.
+
+            The seeded sheet spans 2,920 x 5,600 drawing units. The
+            opening frame deliberately holds about a third of that (see
+            MIN_READABLE) because the alternative is illegible — and
+            until now the only thing that admitted the other two thirds
+            existed was a sentence in the title block. A drawing office
+            answers this with a key plan, and so does this: every table
+            as a rectangle in its own hue, the frame you are looking
+            through drawn on it, and the whole thing draggable, so
+            "somewhere else on the sheet" is one gesture rather than a
+            hunt. It is the only surface added to the sheet in this
+            pass, and it replaces the two Background layers, the
+            ~64 illegible link labels and the click-to-select-a-line
+            machinery that came out with it.
+            ============================================================ */}
+        <MiniMap
+          position="bottom-right"
+          className="wb-map"
+          style={{ width: 156, height: 196 }}
+          ariaLabel="Key plan — the whole drawing, and the part of it you are looking at"
+          nodeColor={mapInk}
+          nodeStrokeWidth={0}
+          nodeBorderRadius={2}
+          offsetScale={3}
+          /* the frame you are looking through, drawn one SCREEN pixel
+             wide: React Flow multiplies this by the map's own scale,
+             which is the only place that number is known. The wash
+             outside it is a token, in whiteboard.css. */
+          maskStrokeColor="var(--accent)"
+          maskStrokeWidth={1}
+          pannable
+          zoomable
+        />
       </ReactFlow>
     </div>
   )
