@@ -198,6 +198,10 @@ Named so it is fixable rather than a feeling:
 4. **The collapsed state loses the counts**, which are the one thing worth
    keeping when the words go.
 5. **264px is too wide** for what it holds once the tree goes.
+6. **The sections do not collapse.** DATA and SELLING are headings that cannot
+   be shut, so the rail is always its full height whether or not you are using
+   that half of it. Every section collapses, the choice is remembered, and the
+   section header says how many are inside when it is shut.
 
 **And it is still too complicated even at six doors.** The minimum that is
 honest:
@@ -257,6 +261,71 @@ built the database, not for the person selling out of it.
 
 Where a total genuinely matters it is the **price** — and that has its own
 permanent home at the foot of the configurator.
+
+---
+
+## 1a · THE APP TALKS INSTEAD OF SHOWING — measured
+
+"Still too cluttered and too bland" is not a mood. It is this, counted on
+screen at 1600x1000, where "explanation" is any visible run of twelve words or
+more:
+
+| Surface | Words visible | Explanation | Largest type |
+|---|---|---|---|
+| Business rules | 282 | **79%** | 34px |
+| History | 56 | **66%** | 34px |
+| Modules | 350 | **63%** | 52px |
+| Dashboard | 250 | **56%** | 34px |
+| Quotes | 60 | **50%** | 34px |
+| Configure | 260 | 12% | 28px |
+| All tables | 100 | 15% | 52px |
+
+**On five of seven surfaces more than half the words are the app narrating
+itself.** Configure and All tables are the two nobody complained about, and
+they are the two that are mostly content.
+
+This is the house style taken too far. DESIGN_PRINCIPLES §6 says "say what a
+thing does, not what it is" and warns against ad copy — and the answer to that
+warning became a paragraph under every heading. Every screen is eyebrow, title,
+one paragraph of explanation, sometimes a second, and then the thing.
+
+### The prose budget
+
+| Where | Allowed |
+|---|---|
+| A stage | its name, and **at most one line** under it |
+| A card | a name and **one fact**. Not a name, a subtitle, a two-line description, a count, a qualifier and a row of verbs |
+| An empty state | the sentence AND the act — this is the one place prose earns its space |
+| A refusal | a sentence, always, wherever it is |
+| Everything else | nothing |
+
+The explanation does not disappear; it **moves to where it is needed** — the
+first time, on hover, behind a `?`. A dealer on their four-hundredth quote does
+not need the paragraph, and they are the person the app is for.
+
+Target: **explanation under 20% on every surface**, measured the same way.
+
+### The worked example
+
+> *"This is the dashboard everybody starts with. Press Arrange to choose what is
+> on it, what it is called and what order it goes in."*
+
+Twenty-four words, permanently, on the screen a person sees most often in the
+app. It explains a button that is eighteen pixels away and says "Arrange". It
+is read once and then read past forever.
+
+**It goes.** The button is the explanation. If Arrange is not
+self-evident the fix is a better button, not a paragraph defending it.
+
+Every surface has one of these and they all go the same way. This is the single
+highest-value edit in the phase and it is mostly deletion.
+
+### And the blandness has a number too
+
+Nothing on the dashboard is larger than 34px, across 7 sizes and 7 weights.
+Seven sizes is not a hierarchy, it is a lack of one — and a screen whose
+largest element is 34px has no focal point at all. Phase two's scale rule
+(§3) exists because of this row of the table.
 
 ---
 
@@ -326,9 +395,14 @@ hoping.
 Replaces the dashboard-of-counts. The dashboard was honest and thin; the reason
 it was thin is that counting tables is not a salesperson's day.
 
-- **The continue strip.** Drafts in progress, resumable in one press. This is
-  the single most valuable thing on the screen and it is currently four levels
-  down.
+**ONE quotes card, not three.** Today the dashboard draws "My quotes",
+"Quotes by state" and "Where I have been" as three separate boxes saying three
+versions of nothing. It is one card: the quotes, **with its filters inside it**
+(mine / drafts / issued / by customer), and a link to the full Quotes page for
+everything else. One card that works beats three that announce.
+
+- **Drafts first inside that card.** A resumable draft is the most valuable
+  thing on the screen and is currently four levels down.
 - **The catalogue, entered by kind.** Four large photographic doors — Boats,
   Motors, Trailers, Parts — each showing what is in it, counted.
 - **Recent and pinned.** What this person actually opens.
