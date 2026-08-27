@@ -11,7 +11,8 @@ import type { JSX } from 'react'
 import { applyLintFix } from '@/lib/lint'
 import type { LintFinding, LintFix } from '@/lib/lint'
 import { useEntityFindings } from './useLintFindings'
-import { Caret, PencilCross, PencilTick } from './glyphs'
+import { ruleTitle } from './describe'
+import { AdvisoryMark, Caret, PencilCross, PencilTick } from './glyphs'
 import './review.css'
 
 const FLASH_MS = 1500
@@ -28,7 +29,9 @@ function MarkItem({
   const fix = finding.fix
   return (
     <div className="rv-fm-item">
-      {showTitle ? <span className="rv-fm-item-title">{finding.title}</span> : null}
+      {showTitle ? (
+        <span className="rv-fm-item-title">{ruleTitle(finding.title)}</span>
+      ) : null}
       <p className="rv-fm-why">{finding.why}</p>
       {fix ? (
         <button
@@ -84,7 +87,7 @@ export function FieldMark({
           <PencilTick />
         </span>
         <span className="rv-fm-flash" role="status">
-          Mark cleared · {flash}
+          Cleared · {flash}
         </span>
       </div>
     )
@@ -104,9 +107,9 @@ export function FieldMark({
         onClick={() => setOpen((o) => !o)}
       >
         <span className="rv-fm-glyph" aria-hidden="true">
-          {blocker ? <PencilCross /> : <PencilTick />}
+          {blocker ? <PencilCross /> : <AdvisoryMark />}
         </span>
-        <span className="rv-fm-title">{first.title}</span>
+        <span className="rv-fm-title">{ruleTitle(first.title)}</span>
         {count > 1 ? <span className="rv-fm-more">+{count - 1}</span> : null}
         <span className="rv-fm-caret" aria-hidden="true">
           <Caret open={open} />
@@ -123,7 +126,7 @@ export function FieldMark({
 
       {flash ? (
         <span className="rv-fm-flash" role="status">
-          Mark cleared · {flash}
+          Cleared · {flash}
         </span>
       ) : null}
     </div>

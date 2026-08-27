@@ -579,33 +579,86 @@
   }
 }
 
+
 /* ============================================================
-   WHAT THE BAR COSTS THE PAGE, OWNED IN ONE PLACE.
+   THE BAR IS NOW A TIER OF THE INSTRUMENT, NOT A BAR.
 
-   `shell.css` reserves the dock's strip once — `.shell-stage { inset:
-   0 0 78px 0 }` — with the note "nothing inside the app can reach
-   into the bottom 78px" and the instruction never to pad a stage to
-   clear it. This is the same rule, once, for the second tier: 40px of
-   bar plus the 10px `.dk-wrap` gap is 50 more, and it is charged ONLY
-   while there is a bar. A page with no actions pays nothing, which is
-   the entire reason the register's three bands could be taken down
-   rather than merely rearranged.
+   READ THE HEAD OF THIS FILE FIRST, then `.dk-rig` at the foot of
+   `shell.css`. The division it describes is unchanged — the dock is
+   where you GO, this is what you DO — and every control below keeps
+   its size, its type, its states and its measured colours. What
+   goes is the SKIN: this had its own border, its own 18px radius,
+   its own backdrop blur and its own shadow, ten pixels above a bar
+   that had all four again, and the pair read as two instruments
+   stacked rather than one with two rows.
 
-   `.shell-root.has-acts` is set by the shell from the same register
-   the bar reads, so the reservation and the bar can never disagree
-   about whether there is one. Specificity (0,3,0) beats shell.css's
-   (0,1,0) outright, so it does not depend on import order.
+   The rig owns the material now. This tier owns a hairline and its
+   own height, and nothing else. Three consequences worth writing
+   down:
 
-   No transition: this is a layout property, and DESIGN_CONTRACT §1
-   says never.
+     ONE BLUR INSTEAD OF TWO. A `backdrop-filter` is the most
+     expensive thing on this screen and there were two of them
+     overlapping the same scrolling register.
+
+     THE TIER IS 36px, not 40. The 28px control (the contract's
+     toolbar control, untouched) sits in 4px of air rather than 6.
+     It is subordinate to the 60px navigation tier by a wider margin
+     than before, which is what the original 40-against-60 was for.
+
+     THE CONTROLS CENTRE. The rig is as wide as its widest tier, so
+     on a page with two verbs the tier is as wide as the navigation
+     under it and the verbs sit in the middle of it. On a page with
+     many, the tier is the wider one and the navigation centres
+     instead. Either way there is one object with one outline.
+
+   THE POPOVER AND THE REFUSAL NOTE ARE UNMOVED. Both are absolute
+   against `.ab-hold`, which is the control, so they still open
+   above the instrument and still point at the button they are
+   about.
+   ============================================================ */
+
+.dk-rig .ab-shell {
+  border-bottom: 1px solid var(--line-subtle);
+}
+.dk-rig .ab {
+  height: 36px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* ============================================================
+   WHAT THE INSTRUMENT COSTS THE PAGE, STILL OWNED IN ONE PLACE.
+
+   The rule below is the same rule it always was and only its number
+   moved. `shell.css` reserves the navigation tier's strip once —
+   `.shell-stage { inset: 0 0 78px 0 }`, which is 22px of float plus
+   60px of bar less the 4px of bottom margin the dock has always
+   been allowed to overlap. Joining the two tiers into one object
+   makes the with-actions number the same sum over the same object:
+
+     22  the instrument floats
+   + 99  the rig — 36 of action tier, 1 of hairline, 60 of
+         navigation, 2 of border
+   -  4  the same bottom-margin overlap the dock already takes
+     ---
+     117
+
+   against 132 for the two separate bars, so a register gets 15px
+   back — and, because the overlap is now argued about ONE bottom
+   edge instead of two, the bar's foot can no longer land on the
+   register's horizontal scrollbar, which is what forced the old
+   number to charge the whole 132.
+
+   `.shell-root.has-acts` is still set by the shell from the same
+   register the bar reads, so the reservation and the bar can never
+   disagree about whether there is one. Specificity (0,3,0) beats
+   shell.css's (0,1,0) outright, so it does not depend on import
+   order. Still no transition: this is a layout property.
    ============================================================ */
 .shell-root.has-acts .shell-stage {
-  /* 22 off the bottom + 60 of dock + 10 of gap + 40 of bar = 132, and
-     it is the WHOLE 132 rather than the dock's own 78-for-82. The
-     dock's 4px of overlap lands on a page's bottom margin and has
-     never cost anything; this bar's bottom edge would land on the
-     register's horizontal scrollbar, which is a control. "It must not
-     cover anything interactive" is a requirement, so the page stops
-     exactly where the bar starts. */
-  inset: 0 0 132px 0;
+  inset: 0 0 117px 0;
 }

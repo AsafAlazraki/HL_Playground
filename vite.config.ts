@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath } from 'node:url'
+import { realpathSync } from 'node:fs'
 
 export default defineConfig({
   plugins: [react()],
@@ -29,6 +30,15 @@ export default defineConfig({
        real directory fixes the fonts without widening anything
        else. Harmless in a normal clone, where the path is inside
        the root already. */
-    fs: { allow: ['..', fileURLToPath(new URL('./node_modules', import.meta.url))] },
+    /* realpathSync, because Vite resolves the junction to its
+       TARGET before checking the allow list — allowing the link
+       itself let every @fontsource woff2 404, and the whole app
+       silently rendered in Times New Roman. */
+    fs: {
+      allow: [
+        '..',
+        realpathSync(fileURLToPath(new URL('./node_modules', import.meta.url))),
+      ],
+    },
   },
 })

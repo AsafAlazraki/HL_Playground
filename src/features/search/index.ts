@@ -16,11 +16,13 @@ export { Finder } from './Finder'
 export type { FinderProps } from './Finder'
 
 export {
+  BROWSE_LIMIT,
   DEFAULT_LIMITS,
   EMPTY_INDEX,
   MIN_QUERY,
   NO_RESULT,
   RANK,
+  browse,
   buildSearchIndex,
   normalizeQuery,
   optionsOf,

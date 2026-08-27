@@ -459,6 +459,10 @@ export interface SearchResult {
   rowTotal: number
   /** rows actually listed */
   rowShown: number
+  /** SET ONLY BY `browse()` — how many places the resting list could
+   *  have offered, so the foot can say what it left out. Absent on a
+   *  real search, where `rowTotal`/`rowShown` already say it. */
+  placeTotal?: number
 }
 
 export const NO_RESULT: SearchResult = {
@@ -653,6 +657,56 @@ export function search(
     groups: capped,
     rowTotal,
     rowShown: limits.total - budget,
+  }
+}
+
+/* ------------------------------------------------------------ */
+/* The resting answer — what is offered before anything is typed */
+/* ------------------------------------------------------------ */
+
+/** How many places the resting list names before it stops and says
+ *  how many it did not. Eight is a menu; fifty-one is a wall, and a
+ *  wall is what typing two letters is for. */
+export const BROWSE_LIMIT = 8
+
+/**
+ * THE PALETTE IS NEVER EMPTY-HANDED.
+ *
+ * Opening it used to draw one paragraph of instructions and nothing a
+ * key could land on: the arrow keys did nothing, Enter did nothing,
+ * and the first useful frame was two keystrokes away. This answers the
+ * resting state with the places themselves — every destination on the
+ * sheet, biggest first — so the field is navigable from the frame it
+ * opens in.
+ *
+ * IT IS THE SAME ANSWER `search()` GIVES, not a second kind of thing:
+ * the same `TableHit`, the same destination rule (a pair list resolves
+ * to the table it is about and is folded into it), the same standing
+ * order, and history last. Nothing here is ranked, invented or
+ * guessed — `at` is -1 because no run of text matched, so nothing is
+ * highlighted.
+ */
+export function browse(index: SearchIndex, limit: number = BROWSE_LIMIT): SearchResult {
+  const seen = new Set<string>()
+  const places: TableHit[] = []
+  for (const t of index.tables) {
+    const facts = index.facts[t.destId]
+    if (!facts || seen.has(facts.id)) continue
+    seen.add(facts.id)
+    places.push({ table: facts, rank: RANK.prefix, at: -1, length: 0 })
+  }
+  places.sort(
+    (a, b) =>
+      standing(a.table) - standing(b.table) ||
+      b.table.rowCount - a.table.rowCount ||
+      (a.table.name < b.table.name ? -1 : 1),
+  )
+  return {
+    tables: places.slice(0, limit),
+    groups: [],
+    rowTotal: 0,
+    rowShown: 0,
+    placeTotal: places.length,
   }
 }
 

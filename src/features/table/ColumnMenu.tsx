@@ -52,6 +52,7 @@ export function ColumnMenu({
   filtered,
   onSort,
   onFilter,
+  onRename,
   onEditOptions,
   onRemove,
   onClose,
@@ -64,6 +65,12 @@ export function ColumnMenu({
   filtered: boolean
   onSort: (dir: SortDir | null) => void
   onFilter: () => void
+  /** OPEN THE RENAME BOX in the heading itself. The heading press is
+   *  the sort control now (see `nextSort` in Grid.tsx), so the rarer
+   *  act moved in here — where the rest of a column's rarer acts, its
+   *  choices and its removal, already were. Absent where a heading
+   *  cannot be renamed at all. */
+  onRename?: () => void
   onEditOptions: (options: string[]) => void
   onRemove: () => void
   onClose: () => void
@@ -237,6 +244,11 @@ export function ColumnMenu({
           {!system && (
             <>
               <span className="tb-act-rule" aria-hidden="true" />
+              {onRename && (
+                <button type="button" className="tb-act" onClick={act(onRename)}>
+                  Rename column…
+                </button>
+              )}
               {field.type === 'select' && (
                 <button type="button" className="tb-act" onClick={() => setEditing(true)}>
                   Edit the choices…

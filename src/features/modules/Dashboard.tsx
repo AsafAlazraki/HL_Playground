@@ -6,6 +6,38 @@
    facts a person needs before clicking — what it is called, what
    is in it, how much of it there is, and what may be DONE in there.
 
+   ── WHAT THIS PASS CHANGED, AND WHY ──────────────────────────
+
+   THE PAGE HAD NO FIGURE OF ITS OWN. Nine cards each said what
+   they held and nothing said what the business held, so the one
+   question the LIST answers — how much of this place is set up,
+   and what is not in a place yet — was not on the screen. The
+   masthead is four counted figures over the UNION of the modules'
+   tables, so two modules sharing a table are one table and one set
+   of rows, never two.
+
+   EVERY CARD NOW HAS A PLATE, and where the module's own table
+   holds a photograph, the photograph IS the plate. 220 real
+   photographs ship with this app and the largest any of them was
+   ever drawn on this screen was nothing at all. `coverPhoto`
+   refuses every address we do not hold a local copy of, so a plate
+   is a photograph or it is the module's own mark on its own kind
+   tint — never a substitute, never a broken box. Both forms are
+   the same height, so a row of mixed cards is still a row.
+
+   THE VERBS STOPPED BEING TEN BORDERED PILLS. They are the same
+   words, off the same `capabilityWords`, set as one quiet line.
+   Nine cards were carrying up to ninety outlined boxes, which is
+   the clutter the rest of this pass exists to remove.
+
+   TWO CONTROL ZONES BECAME ONE. "New module" sat in the header and
+   "Reorder cards" sat in a bordered band under the grid with a
+   sentence that was on screen whether or not anybody was
+   arranging. Both controls now stand together above the grid, and
+   the sentence is drawn only when it says something: while you are
+   arranging, or when there is only one card and the control has to
+   refuse.
+
    THE CARD WEARS THE DEALER'S OWN MARK WHERE THERE IS ONE.
    `ModuleDef.logo` is an `ImageRef` like every other picture in this
    app, so it goes through `useImageDisplay` like every other picture
@@ -17,8 +49,8 @@
 
    AND IT IS HONEST ABOUT A RESTRICTED PLACE. `ModuleDef.access`
    absent means unrestricted, so a card whose module nobody has
-   restricted says nothing at all about access: five cards stamped
-   "open to everyone" would be five decisions nobody made. Where a
+   restricted says nothing at all about access: nine cards stamped
+   "open to everyone" would be nine decisions nobody made. Where a
    dealer HAS turned access on, the fact belongs beside the verbs,
    because it is the same sentence — what may be done here, and by
    how many of the jobs you have named. It is one chip. The dashboard
@@ -30,13 +62,6 @@
    button is not a thing a browser will draw. The slot around them is
    what positions it.
 
-   CAPABILITIES ARE DRAWN AS WORDS, NOT ICONS, and read straight
-   out of MODULE_CAPABILITIES. Nobody guesses a glyph, and a verb
-   is the one thing on this card that is not obvious from the name:
-   "Boats · browse · search · open one" is a place you may look at,
-   and the day somebody switches editing on, the card says so
-   without anything here changing.
-
    THE EMPTY STATE COUNTS THE TABLES THAT ALREADY EXIST. An admin
    arriving here has drawn 21 tables and loaded 651 rows; a blank
    screen saying "nothing here" would read as though the app had
@@ -47,7 +72,14 @@ import type { CSSProperties, ReactElement } from 'react'
 import { useMemo, useState } from 'react'
 import { CaretLeft, CaretRight, Gear, Lock, Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { accentVar, type EntityDef, type ImageRef, type ModuleDef } from '@/types/model'
+import {
+  accentVar,
+  canBeModuleMaster,
+  isRetired,
+  type EntityDef,
+  type ImageRef,
+  type ModuleDef,
+} from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 /* THE ONE ANSWER ABOUT WHETHER A PICTURE MAY BE PAINTED. A module's
    logo is an address like every other picture in the app, and this is
@@ -55,10 +87,18 @@ import { TableKindSymbol, kindOf } from '@/features/tablekit'
    be requested at all. A second uploader or a second verdict here
    would be a second chance to print a broken glyph. */
 import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
+/* THE SAME PICTURE RESOLVER THE FRONT DOOR USES. It answers only for
+   addresses this repository ships a copy of, and returns null rather
+   than substituting anything — so a plate is a real photograph of the
+   dealer's own stock or it is not a photograph at all. */
+import { coverPhoto, type CoverPhoto } from '@/features/table/coverPhoto'
 import { ICON_SIZE } from '@/lib/icons'
 import {
   accessReading,
+  buildEntries,
   censusLine,
+  censusQualifier,
+  listedTables,
   moduleCensus,
   moduleTables,
   type AccessReading,
@@ -87,6 +127,16 @@ export interface DashboardProps {
   onSettings?: (moduleId: string) => void
 }
 
+const grouped = (n: number): string => n.toLocaleString('en-AU')
+
+/** One counted figure in the masthead. A cell exists only where the
+ *  figure is true of something: a zero is a slot of chrome saying
+ *  nothing, and this page has nine cards' worth of facts already. */
+interface TallyCell {
+  term: string
+  figure: number
+}
+
 export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactElement {
   const org = useProjectStore((s) => s.meta.org)
   const projectName = useProjectStore((s) => s.meta.name)
@@ -112,6 +162,63 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
       Object.values(modules).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)),
     [modules],
   )
+
+  /* ONE READ PER CARD, ONCE. The census and the photograph were both
+     resolved inline in the render, so every keystroke anywhere in the
+     shell re-counted 15,691 rows nine times over. The census reader is
+     the same one the module's own page uses, so a card and the page it
+     opens can never disagree. */
+  const deck = useMemo(
+    () =>
+      cards.map((module) => {
+        const master = moduleTables(module, entities)[0]
+        return {
+          module,
+          master,
+          census: moduleCensus(module, entities, rowsByEntity),
+          /* THE PLATE. A photograph of this place's own stock where we
+             hold one, resolved off the primary table exactly as the
+             front door resolves a table's — and null, never a
+             substitute, where we do not. */
+          cover: master ? coverPhoto(master, rowsByEntity[master.id]) : null,
+        }
+      }),
+    [cards, entities, rowsByEntity],
+  )
+
+  /* ============================================================
+     WHAT THE PLACES ADD UP TO, COUNTED OVER THE UNION.
+
+     NOT THE SUM OF THE CARDS. Two modules may list the same table —
+     a Boats module and a Factory Packages module both reach for the
+     hulls — and adding their counts would report stock this business
+     does not have. The union of the LISTED tables is built first and
+     counted once, by the same `buildEntries` the cards count through.
+
+     AND IT SAYS WHAT IS NOT IN A PLACE YET, which is the one fact on
+     this page a person cannot get by reading the cards. The
+     denominator is the tables that COULD be a module's — a join is a
+     relationship, never a place to stand (`canBeModuleMaster`), and a
+     retired table is history rather than stock — so the figure is
+     never inflated by things that were never eligible.
+     ============================================================ */
+  const tally = useMemo((): TallyCell[] => {
+    const covered = new Map<string, EntityDef>()
+    for (const m of cards) for (const e of listedTables(m, entities)) covered.set(e.id, e)
+    const items = buildEntries([...covered.values()], rowsByEntity, { facts: false }).length
+    const placeable = Object.values(entities).filter(
+      (e) => canBeModuleMaster(e) && !isRetired(e),
+    ).length
+    const spare = Math.max(0, placeable - covered.size)
+
+    const cells: TallyCell[] = [
+      { term: cards.length === 1 ? 'Place' : 'Places', figure: cards.length },
+    ]
+    if (items > 0) cells.push({ term: 'Things in them', figure: items })
+    if (covered.size > 0) cells.push({ term: 'Tables in use', figure: covered.size })
+    if (spare > 0) cells.push({ term: 'Not in a place yet', figure: spare })
+    return cells
+  }, [cards, entities, rowsByEntity])
 
   /* ============================================================
      THE ONE ACTION HAD TO BE POSSIBLE BEFORE IT WAS OFFERED.
@@ -140,133 +247,163 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
     for (const at of reorderPlan(cards, id, dir)) updateModule(at.id, { order: at.order })
   }
 
-  const newButton = (
-    <button
-      type="button"
-      className="btn btn-primary md-new"
-      onClick={onNew}
-      disabled={!canMakeModule}
-      /* the sentence beneath carries the reason for everyone; this
-         carries it for a reader who lands on the control itself */
-      aria-describedby={canMakeModule ? undefined : 'md-empty-why'}
-    >
-      <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-      New module
-    </button>
-  )
+  /* THE SENTENCE APPEARS WHEN IT HAS SOMETHING TO SAY. It used to be
+     on screen permanently, under a bordered band, explaining a control
+     nobody had pressed. Now: while you are arranging, and where the
+     control has to refuse. */
+  const hint =
+    cards.length === 0
+      ? ''
+      : cards.length < 2
+        ? 'There is one module, so there is no order to put it in yet.'
+        : ordering
+          ? 'Move a card earlier or later. The order is part of this sheet, so everybody who opens it sees the same one.'
+          : ''
 
   return (
     <div className="md-dash">
-      <header className="md-dash-head">
-        <div className="md-dash-id">
-          <span className="mono-label md-dash-eyebrow">Organisation</span>
-          <h1 className="md-dash-org">{name}</h1>
-        </div>
-        {cards.length > 0 ? newButton : null}
-      </header>
+      {/* THE ATMOSPHERE, AND IT CARRIES NOTHING. Two drifting washes
+          under 6% alpha and a grain tile, so a page of nine cards has a
+          ground rather than a void. Removed outright under
+          `prefers-reduced-transparency` and `prefers-contrast: more`,
+          and stilled under `prefers-reduced-motion` — see ds.css. */}
+      <div className="ds-aurora ds-grain md-dash-sky" aria-hidden="true" />
 
-      {cards.length === 0 ? (
-        <div className="md-empty">
-          <span className="mono-label md-empty-eyebrow">Nothing here yet</span>
-          <p className="md-empty-say">
-            A module is a place in your business — the boats you sell, the trailers, the
-            quotes you have raised. You pick the table it is about and give it a name.
-          </p>
-          {/* THE COUNT IS READ FROM THE STORE. It is the sentence that
-              tells an admin the app still has everything they loaded. */}
-          <p className="md-empty-count">
-            You have{' '}
-            <strong>
-              {tableCount} {tableCount === 1 ? 'table' : 'tables'}
-            </strong>{' '}
-            and no modules.
-          </p>
-          {newButton}
-          {/* THE REFUSAL, WHERE THE THING IS REFUSED, and it names the
-              step that does work from here. Zero tables is the only
-              state in which this page cannot be got out of on its own. */}
-          {canMakeModule ? null : (
-            <p className="md-empty-why" id="md-empty-why">
-              A module is about a table, and there are none yet. Start one from{' '}
-              <em>New table</em> on the bar, or load your price file from <em>Home</em>.
-            </p>
+      <div className="md-dash-scroll">
+        <div className="md-dash-page">
+          <header className="md-dash-mast">
+            <div className="md-dash-say">
+              <span className="mono-label md-dash-eyebrow">Your business</span>
+              <h1 className="ds-hero md-dash-org">{name}</h1>
+              <p className="md-dash-note">
+                Every place you have set up — what it holds, and what may be done in
+                there. Press one to open it.
+              </p>
+            </div>
+
+            <div className="md-dash-aside">
+              {cards.length > 0 ? (
+                <dl className="md-dash-tally">
+                  {tally.map((cell) => (
+                    <div className="md-dash-cell" key={cell.term}>
+                      <dt>{cell.term}</dt>
+                      <dd className="md-dash-fig">{grouped(cell.figure)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+
+              {/* BOTH CONTROLS, IN ONE PLACE. Arranging is a mode, so
+                  its switch stands beside the action rather than in a
+                  band of its own at the foot of the page. */}
+              <div className="md-dash-acts">
+                {cards.length > 0 ? (
+                  <button
+                    type="button"
+                    className={`btn md-order${ordering ? ' is-on' : ''}`}
+                    aria-pressed={ordering}
+                    /* ONE MODULE CANNOT BE ARRANGED, and the sentence
+                       beneath says so rather than leaving a dead
+                       control. `aria-disabled` and a live guard, not
+                       `disabled`, so it keeps its place in the tab
+                       order and its name. */
+                    aria-disabled={cards.length < 2 ? true : undefined}
+                    onClick={() => {
+                      if (cards.length < 2) return
+                      setOrdering((v) => !v)
+                    }}
+                  >
+                    {ordering ? 'Done' : 'Reorder'}
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  className="btn btn-primary md-new"
+                  onClick={onNew}
+                  disabled={!canMakeModule}
+                  /* the sentence beneath carries the reason for
+                     everyone; this carries it for a reader who lands on
+                     the control itself */
+                  aria-describedby={canMakeModule ? undefined : 'md-empty-why'}
+                >
+                  <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                  New module
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {hint === '' ? null : <p className="md-dash-hint">{hint}</p>}
+
+          {cards.length === 0 ? (
+            <div className="md-empty">
+              <span className="mono-label md-empty-eyebrow">Nothing here yet</span>
+              <p className="md-empty-say">
+                A module is a place in your business — the boats you sell, the trailers,
+                the quotes you have raised. You pick the table it is about and give it a
+                name.
+              </p>
+              {/* THE COUNT IS READ FROM THE STORE. It is the sentence
+                  that tells an admin the app still has everything they
+                  loaded. */}
+              <p className="md-empty-count">
+                You have{' '}
+                <strong>
+                  {tableCount} {tableCount === 1 ? 'table' : 'tables'}
+                </strong>{' '}
+                and no modules.
+              </p>
+              {/* THE REFUSAL, WHERE THE THING IS REFUSED, and it names
+                  the step that does work from here. Zero tables is the
+                  only state in which this page cannot be got out of on
+                  its own. */}
+              {canMakeModule ? null : (
+                <p className="md-empty-why" id="md-empty-why">
+                  A module is about a table, and there are none yet. Start one from{' '}
+                  <em>New table</em> on the bar, or load your price file from{' '}
+                  <em>Home</em>.
+                </p>
+              )}
+            </div>
+          ) : (
+            <ul className="md-cards">
+              {deck.map((seat, i) => (
+                <Card
+                  key={seat.module.id}
+                  module={seat.module}
+                  /* THE CARD COUNTS WHAT THE PAGE WILL DRAW.
+                     Discontinued rows and retired tables are held back
+                     by the index, so they are held back here too — a
+                     card reading 40 over a page drawing 39 is exactly
+                     the disagreement `read.ts` exists to prevent. */
+                  census={seat.census}
+                  master={seat.master}
+                  cover={seat.cover}
+                  tableCount={seat.module.tableIds.length}
+                  onOpen={onOpen}
+                  onSettings={onSettings}
+                  /* ARRANGING IS A MODE, NOT A THIRD CONTROL ON EVERY
+                     CARD. A gear, an earlier and a later on all nine is
+                     three controls a person has to read past to find the
+                     one they came for; the arrows are drawn only while
+                     somebody is arranging. */
+                  ordering={ordering}
+                  first={i === 0}
+                  last={i === deck.length - 1}
+                  onMove={move}
+                  index={i}
+                />
+              ))}
+            </ul>
           )}
         </div>
-      ) : (
-        <>
-          <ul className="md-cards">
-            {cards.map((m, i) => (
-              <Card
-                key={m.id}
-                module={m}
-                /* THE CARD COUNTS WHAT THE PAGE WILL DRAW. Discontinued
-                   rows and retired tables are held back by the index, so
-                   they are held back here too — a card reading 40 over a
-                   page drawing 39 is exactly the disagreement `read.ts`
-                   exists to prevent.
-
-                   AND IT COUNTS MORE THAN ROWS NOW. "2,937 products" is
-                   a fact; "2,238 products across 179 categories · 699 no
-                   longer sold" is a picture of the place, and every
-                   figure in it was already on the sheet. One reader, so
-                   a card and the page it opens cannot disagree. */
-                census={moduleCensus(m, entities, rowsByEntity)}
-                master={moduleTables(m, entities)[0]}
-                tableCount={m.tableIds.length}
-                onOpen={onOpen}
-                onSettings={onSettings}
-                /* ARRANGING IS A MODE, NOT A THIRD CONTROL ON EVERY
-                   CARD. A gear, an earlier and a later on all fifteen
-                   is three controls a person has to read past to find
-                   the one they came for; the arrows are drawn only
-                   while somebody is arranging. */
-                ordering={ordering}
-                first={i === 0}
-                last={i === cards.length - 1}
-                onMove={move}
-              />
-            ))}
-          </ul>
-
-          {/* ARRANGING THEM, AND WHY IT IS A ROW AND NOT A DASHED BOX.
-              This was a disabled stub reading "Dragging them into your
-              own order arrives with the module designer" — a promise
-              made to a surface that has since become the settings
-              page, which does not order the dashboard either. The
-              order is one integer per module and the dashboard already
-              reads it, so the honest answer was to build the two
-              arrows rather than to re-word the excuse. */}
-          <div className="md-dash-order">
-            <button
-              type="button"
-              className={`btn${ordering ? ' is-on' : ''}`}
-              aria-pressed={ordering}
-              /* ONE MODULE CANNOT BE ARRANGED, and the sentence beside
-                 this says so rather than leaving a dead control. */
-              aria-disabled={cards.length < 2 ? true : undefined}
-              onClick={() => {
-                if (cards.length < 2) return
-                setOrdering((v) => !v)
-              }}
-            >
-              {ordering ? 'Done' : 'Reorder cards'}
-            </button>
-            <p className="md-stub-say">
-              {cards.length < 2
-                ? 'There is one module, so there is no order to put it in yet.'
-                : ordering
-                  ? 'Move a card earlier or later. The order is part of this sheet, so everybody who opens it sees the same one.'
-                  : 'Cards sit in the order you put them in. This is where you change it.'}
-            </p>
-          </div>
-        </>
-      )}
+      </div>
     </div>
   )
 }
 
 /* ---------------------------------------------------------- */
-
 
 interface CardProps {
   module: ModuleDef
@@ -281,6 +418,8 @@ interface CardProps {
    *  Undefined when it has been deleted from under the module, which
    *  the card states rather than hiding. */
   master: EntityDef | undefined
+  /** a photograph of this place's own stock, or null. Never a stand-in. */
+  cover: CoverPhoto | null
   tableCount: number
   onOpen: (moduleId: string) => void
   onSettings?: (moduleId: string) => void
@@ -292,14 +431,16 @@ interface CardProps {
   first: boolean
   last: boolean
   onMove: (moduleId: string, dir: -1 | 1) => void
+  /** position in the grid, so the entrance arrives as a wave rather
+   *  than all at once. Capped in ds.css at fourteen steps. */
+  index: number
 }
-
-const grouped = (n: number): string => n.toLocaleString('en-AU')
 
 function Card({
   module,
   census,
   master,
+  cover,
   tableCount,
   onOpen,
   onSettings,
@@ -307,8 +448,10 @@ function Card({
   first,
   last,
   onMove,
+  index,
 }: CardProps): ReactElement {
   const line = censusLine(census)
+  const qualifier = censusQualifier(census)
   /* The tenth verb, which does not live on `ModuleDef` yet. Read here
      rather than passed in, so the dashboard's own list stays four
      facts about a module and does not grow a fifth prop that
@@ -318,7 +461,10 @@ function Card({
      empty strings, which is what every module in the project is
      today: the card then says nothing whatever about access. */
   const access: AccessReading = accessReading(module)
-  const style = { '--md-accent': accentVar(module.accent) } as CSSProperties
+  const style = {
+    '--md-accent': accentVar(module.accent),
+    '--i': index,
+  } as CSSProperties
 
   /* THE ACCESSIBLE NAME CARRIES THE RESTRICTION, because the chip
      that carries it visually is two words inside a row of nine other
@@ -328,6 +474,18 @@ function Card({
     ? `Open ${module.name} — ${line}. ${access.hint}`
     : `Open ${module.name} — ${line}`
 
+  /* WHERE IT COMES FROM, but only when that says something the name
+     does not. A module made from one table and left with the table's
+     own name would otherwise print that name twice, a line apart,
+     which reads as a rendering fault. */
+  const from = !master
+    ? 'its table is no longer on the sheet'
+    : tableCount > 1
+      ? `${master.name} + ${tableCount - 1} more`
+      : master.name === module.name
+        ? ''
+        : master.name
+
   return (
     /* THE SLOT, not the card. Two controls stand here — the card
        itself and the door to its settings — and a button inside a
@@ -336,110 +494,92 @@ function Card({
     <li className="md-card-slot">
       <button
         type="button"
-        className="md-card"
+        className={`md-card ds-sheen ds-rise${cover ? ' md-card--shot' : ''}`}
         style={style}
-        /* NAMED EXPLICITLY. The card is a mark, a name, a sentence, a
-           count, a provenance line, two figures and a row of verbs —
-           and a reader announcing them run together is not a name. */
+        /* NAMED EXPLICITLY. The card is a plate, a name, a sentence, a
+           figure and a line of verbs — and a reader announcing them run
+           together is not a name. */
         aria-label={label}
         onClick={() => onOpen(module.id)}
       >
-        <span className="md-card-top">
+        {/* THE PLATE — the photograph where we hold one, and the
+            module's own mark on its own kind tint where we do not.
+            Both are the same height, so a row of mixed cards is still a
+            row, and nothing is ever substituted for the picture a table
+            does not have. */}
+        <span className="md-card-plate">
+          {cover ? (
+            <img
+              className="md-card-shot"
+              src={cover.at}
+              alt=""
+              width={cover.w}
+              height={cover.h}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+          ) : null}
           <span className="md-card-mark">
-            <CardMark logo={module.logo} name={module.name} master={master} />
+            <CardMark
+              logo={module.logo}
+              name={module.name}
+              master={master}
+              big={cover === null}
+            />
           </span>
         </span>
 
-        <span className="md-card-name">{module.name}</span>
+        <span className="md-card-head">
+          <span className="md-card-name">{module.name}</span>
+          {from === '' ? null : <span className="md-card-from">{from}</span>}
+        </span>
 
         {module.description === '' ? null : (
           <span className="md-card-desc">{module.description}</span>
         )}
 
-        {/* THE COUNT SAYS WHAT IT LEFT OUT, AND WHAT IT IS MADE OF.
-            Six fewer than the sheet holds is a question a person asks
-            once and then stops trusting the number. A bare total is
-            the other half of the same problem: "2,937 products" is
-            true and tells nobody whether that is a library they could
-            ever navigate. `censusLine` says the shape — how many, in
-            the dealer's own noun, under how many of their own
-            headings, and what is held back — and every clause is
-            present exactly when it is true.
-
-            IT SITS UNDER THE NAME NOW, where the module's own page
-            puts it. It shared the top line with the mark until this
-            pass, in half a 260px card, where "2,238 products across
-            179 categories · 699 no longer sold" is four wrapped lines
-            beside a 22px glyph — and the top-right corner it was
-            crowding is where the door to this module's settings had
-            to go. */}
-        <span className="md-card-count mono-label">{line}</span>
-
-        {/* WHERE IT COMES FROM, but only when that says something the
-            name does not. A module made from one table and left with
-            the table's own name would otherwise print that name twice,
-            a line apart, which reads as a rendering fault. */}
-        {!master ? (
-          <span className="md-card-from mono-label">
-            its table is no longer on the sheet
-          </span>
-        ) : tableCount > 1 ? (
-          <span className="md-card-from mono-label">
-            {master.name} + {tableCount - 1} more
-          </span>
-        ) : master.name === module.name ? null : (
-          <span className="md-card-from mono-label">{master.name}</span>
+        {/* THE FIGURE, AND THEN WHAT THE FIGURE LEFT OUT. Six fewer
+            than the sheet holds is a question a person asks once and
+            then stops trusting the number; a bare total is the other
+            half of the same problem, because "2,860 accessories" is
+            true and tells nobody whether that is a library anyone could
+            navigate. The count leads because it is what the card is
+            scanned for, and the clauses that qualify it sit a step
+            below — each one present exactly when it is true. */}
+        <span className="md-card-count">
+          <b>{grouped(census.items)}</b>
+          <span>{census.noun}</span>
+        </span>
+        {qualifier === '' ? null : (
+          <span className="md-card-qual">{qualifier}</span>
         )}
 
-        {/* WHAT THE PLACE IS READY FOR — two figures off the same
-            census the count line came from, and neither is printed
-            unless it is true of at least one row. A catalogue where
-            723 of 810 carry a photograph is a catalogue somebody can
-            shop; the same 810 with none is a spreadsheet, and that is
-            a different day's work. Price is the same question asked
-            on behalf of a quote.
+        {/* THE VERBS, AS WORDS AND AS ONE LINE. Read through
+            `capabilityWords`, which iterates the contract's own labels —
+            so a capability added there appears here without this file
+            changing, nothing has to invent a name for one, and the card
+            says the same list the module's index says. That last part
+            is why this is not `module.capabilities.map`: one verb is
+            held outside the type until the contract carries it, and a
+            card that quietly omitted it would promise less than the
+            place it opens onto.
 
-            A module holding neither draws neither, which is the whole
-            rule: a figure that would be a zero is a row of chrome
-            saying nothing. */}
-        {census.pictured > 0 || census.priced > 0 ? (
-          <span className="md-card-stats">
-            {census.pictured > 0 ? (
-              <span className="md-card-stat">
-                <b>{grouped(census.pictured)}</b> with a photo
-              </span>
-            ) : null}
-            {census.priced > 0 ? (
-              <span className="md-card-stat">
-                <b>{grouped(census.priced)}</b> priced
-              </span>
-            ) : null}
-          </span>
-        ) : null}
-
-        {/* THE VERBS, AS WORDS. Read through `capabilityWords`, which
-            iterates the contract's own labels — so a capability added
-            there appears here without this file changing, nothing has
-            to invent a name for one, and the card says the same list
-            the module's index says. That last part is why this is not
-            `module.capabilities.map` any more: one verb is held
-            outside the type until the contract carries it, and a card
-            that quietly omitted it would promise less than the place
-            it opens onto.
+            THEY WERE TEN BORDERED PILLS. Same words, same source, one
+            line — because a row of outlined boxes across nine cards is
+            ninety boxes, and none of them was ever pressable.
 
             AND WHO MAY USE THEM, where a dealer has said. The chip is
-            last in the row because it qualifies everything before it,
-            and it is drawn only where `access` is present: absent is
-            unrestricted, and unrestricted is not a fact worth a chip
-            on every card in the list. */}
+            last because it qualifies everything before it, and it is
+            drawn only where `access` is present: absent is
+            unrestricted, and unrestricted is not a fact worth a chip on
+            every card in the list. */}
         <span className="md-card-verbs">
-          {capabilityWords(module, configures).map((word) => (
-            <span className="md-verb mono-label" key={word}>
-              {word}
-            </span>
-          ))}
+          <span className="md-card-can">
+            {capabilityWords(module, configures).join(' · ')}
+          </span>
           {access.restricted ? (
-            <span className="md-verb md-verb-shut" title={access.hint}>
+            <span className="md-verb-shut" title={access.hint}>
               <Lock size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
               {access.say}
             </span>
@@ -453,7 +593,7 @@ function Card({
           already on top of it cannot be found by somebody looking for
           it, and cannot be found at all on a touch screen. Quiet at
           rest, and it names the module rather than saying "Settings"
-          fifteen times down a list. */}
+          nine times down a list. */}
       {ordering ? (
         /* THE TWO MOVES, IN THE CORNER THE GEAR WAS IN — one control
            in one place, because a card that grew a third would be
@@ -514,6 +654,9 @@ interface CardMarkProps {
   logo: ImageRef | undefined
   name: string
   master: EntityDef | undefined
+  /** the plate is the mark's own, rather than a photograph's corner,
+   *  so it is drawn at the size an empty plate deserves */
+  big: boolean
 }
 
 /** THE DEALER'S OWN MARK, OR THE KIND'S.
@@ -531,10 +674,11 @@ interface CardMarkProps {
  *  announced as "Boats" between them is the name said three times.
  *  Where the dealer typed their own alt text and it says something
  *  else, that is theirs and it is used. */
-function CardMark({ logo, name, master }: CardMarkProps): ReactElement {
+function CardMark({ logo, name, master, big }: CardMarkProps): ReactElement {
   /* the hook runs on every render — a module with no logo asks about
      the empty address and is told, cheaply, no */
   const { paint, probe, at } = useImageDisplay(logo?.src ?? '')
+  const box = big ? ICON_SIZE.large : ICON_SIZE.medium
   if (logo && paint) {
     const alt = logo.alt?.trim() ?? ''
     return (
@@ -544,14 +688,13 @@ function CardMark({ logo, name, master }: CardMarkProps): ReactElement {
            where the pixels are fetched from */
         src={at}
         alt={alt === name ? '' : alt}
-        /* THE BOX IS THE STYLESHEET'S — `.md-card-logo` is a fixed
-           24px square with `object-fit: contain`, so a tall mark and a
-           wide one occupy the same space and a card with a logo is the
-           same height as a card without. These declare the same square
-           so the space is reserved before the bytes land: a logo
-           arriving late must never move the name under it. */
-        width={24}
-        height={24}
+        /* THE BOX IS DECLARED IN BOTH PLACES — the stylesheet sizes
+           `.md-card-logo` and these reserve the same square before the
+           bytes land, so a logo arriving late never moves the name
+           under it. `object-fit: contain`, so a tall mark and a wide
+           one occupy the same space. */
+        width={box}
+        height={box}
         loading={probe ? 'eager' : 'lazy'}
         decoding="async"
         draggable={false}
@@ -562,5 +705,5 @@ function CardMark({ logo, name, master }: CardMarkProps): ReactElement {
   }
   /* THE ONE PLACE KIND MARKS ARE DRAWN is tablekit, here as
      everywhere else — the same boat, whatever screen it is on. */
-  return <TableKindSymbol kind={kindOf(master?.kind)} size={ICON_SIZE.medium} />
+  return <TableKindSymbol kind={kindOf(master?.kind)} size={box} />
 }

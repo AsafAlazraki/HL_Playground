@@ -152,6 +152,17 @@ export interface GridProps {
    *  "Range". A grouping line prints its level's name beside its
    *  value, so two levels can never read as the same line. */
   levelNames: string[]
+  /** THE COLUMNS THE TABLE IS FILED UNDER, outermost first.
+   *
+   *  The full-window lens deliberately keeps them on screen — retyping
+   *  one boat's Series is how that boat moves to another drawer — so
+   *  every cell in them repeats the drawer heading three rows above it.
+   *  That is the one genuinely redundant thing on this sheet, and the
+   *  answer is not to delete the column (that would take the re-filing
+   *  with it) but to draw it as FILING rather than as data: same value,
+   *  same case, a quieter ground, so the eye reads past it to the
+   *  figures it came for. Absent on the card, which hides them outright. */
+  levelIds?: string[]
   /** what the rows are called, for the group counts */
   noun: LeafNoun
 
@@ -217,6 +228,35 @@ function ColumnGap({ w }: { w: number }): JSX.Element {
   return <span className="tb-colgap" style={{ width: w }} aria-hidden="true" />
 }
 
+/* ============================================================
+   PRESSING A HEADING ORDERS THE COLUMN.
+
+   It used to RENAME it. Measured against how the register is
+   actually used, that had the two acts exactly the wrong way round:
+   a dealer orders a price column by cost, by RRP, by length, dozens
+   of times a day, and it cost two presses down a menu they had to
+   know was there — while renaming a column, which happens a handful
+   of times in the life of a table, was the one thing a stray click
+   on a heading did. Every spreadsheet this person has ever opened
+   sorts on the heading.
+
+   So the heading is the sort control, the wedge beside the name says
+   which way (and is drawn at rest, dim, so the affordance exists
+   before the pointer arrives), and RENAME moves into the ⌄ menu
+   beside "Show only some…" where the rest of a column's rarer acts
+   already live. Nothing is lost and nothing new is drawn: the
+   heading gains a state mark, not a second button.
+
+   Three presses is the whole cycle, and the third is the one most
+   grids get wrong by omitting: first to last, last to first, and
+   BACK TO THE TABLE'S OWN ORDER — which on a nested register is the
+   filing the dealer built, and is not recoverable any other way. */
+function nextSort(cur: SortDir | null): SortDir | null {
+  if (cur === 'asc') return 'desc'
+  if (cur === 'desc') return null
+  return 'asc'
+}
+
 interface AnchoredMenu {
   fieldId: string
   rect: DOMRect
@@ -237,6 +277,7 @@ export function Grid(props: GridProps): JSX.Element {
     distinctFor,
     layout,
     levelNames,
+    levelIds,
     noun,
     search,
     sort,
@@ -298,6 +339,13 @@ export function Grid(props: GridProps): JSX.Element {
 
   const rows = viewRows.length
   const cols = fields.length
+
+  /* the filing columns, and only while the sheet is actually nested —
+     see `levelIds` on the props */
+  const filed = useMemo(
+    () => new Set(layout.grouped ? (levelIds ?? []) : []),
+    [layout.grouped, levelIds],
+  )
 
   /* Geometry runs on SLOTS, addressing runs on FIELDS. A folded band's
      chip holds real width here, which is what keeps the band row, the
@@ -934,12 +982,13 @@ export function Grid(props: GridProps): JSX.Element {
                     {field.name}
                     {field.required === true && <span className="tb-th-req">*</span>}
                   </span>
+                  {/* THE WEDGE IS IN THE PROBE BECAUSE IT IS IN THE
+                      HEADING. It is `flex: none` beside a name that
+                      wraps, so a probe without it measures a name with
+                      ten more pixels to wrap into and reports a row one
+                      line too short. */}
+                  <SortChevron dir={null} />
                 </span>
-                {field.type === 'formula' && (
-                  <span className="tb-th-meta">
-                    <span className="tb-th-ro">calculated</span>
-                  </span>
-                )}
               </span>
             </div>
           ))}
@@ -959,7 +1008,26 @@ export function Grid(props: GridProps): JSX.Element {
           setScrollLeft((prev) => (Math.abs(prev - l) < 1 ? prev : l))
         }}
       >
-        <div className="tb-sheet" style={{ width: sheetW }}>
+        {/* WHETHER THE SHEET HAS MOVED, SAID ON THE SHEET.
+
+            A frozen header only reads as frozen once something has
+            gone under it. At rest it is a row at the top of a page and
+            a shadow under it is ornament; the moment the first row
+            slides beneath, the shadow is the only thing telling a
+            reader that the names above are pinned rather than scrolled
+            off. The same argument, sideways, for the row-number gutter
+            and the frozen name column — forty columns of figures pass
+            under them and nothing said they were passing UNDER.
+
+            Both are read off the scroll offsets this component already
+            tracks for windowing, so neither costs a listener, a
+            measurement or a render. */}
+        <div
+          className="tb-sheet"
+          style={{ width: sheetW }}
+          data-lifted={scrollTop > 0 ? '' : undefined}
+          data-shifted={scrollLeft > 0 ? '' : undefined}
+        >
           {/* -- frozen header: bands, then headings -------------- */}
           <div className="tb-headstack">
             {banded && (
@@ -1103,6 +1171,13 @@ export function Grid(props: GridProps): JSX.Element {
                       (dir ? ' tb-th-sorted' : '') +
                       (selectedCols.has(i) ? ' tb-th-selected' : '') +
                       (f.type === 'formula' ? ' tb-th-fx' : '') +
+                      /* A NAME SITS OVER ITS OWN FIGURES. Every number
+                         in this register paints hard against the right
+                         rule of its column; a heading left-aligned over
+                         it left the two ends of the column disagreeing
+                         about where the column was. */
+                      (f.type === 'number' ? ' tb-th-num' : '') +
+                      (filed.has(f.id) ? ' tb-th-filed' : '') +
                       (system ? ' tb-th-sys' : '') +
                       (slot.section ? ' tb-th-banded' : '') +
                       (pinned ? ' tb-th-pin' : '') +
@@ -1142,14 +1217,27 @@ export function Grid(props: GridProps): JSX.Element {
                       <button
                         type="button"
                         className="tb-th-main"
+                        /* WHAT THE PRESS WILL DO, IN THE ORDER IT WILL
+                           DO IT — and the third state named, because
+                           "put it back" is the one a person cannot
+                           guess and the one that returns a nested
+                           register to the filing they built. */
                         title={
-                          system
-                            ? `${f.name} — the row’s permanent identifier. Sort, narrow and copy it; it can never be renamed or edited.`
-                            : `${f.name} — holds ${columnKindOf(f.type).label.toLowerCase()}. Click to rename. The ⌄ menu sorts, narrows and removes.`
+                          `${f.name} — ` +
+                          (system
+                            ? 'the row’s permanent identifier, never renamed or edited. '
+                            : f.type === 'formula'
+                              ? 'worked out from other columns, not typed into. '
+                              : `holds ${columnKindOf(f.type).label.toLowerCase()}. `) +
+                          (dir === 'asc'
+                            ? 'Ordered first to last — click for last to first.'
+                            : dir === 'desc'
+                              ? 'Ordered last to first — click to put the table back in its own order.'
+                              : 'Click to order it first to last. The ⌄ menu narrows, renames and removes.')
                         }
                         onClick={() => {
                           selectColumn(i)
-                          if (!system) startRename(f.id, f.name)
+                          onSort(f.id, nextSort(dir))
                         }}
                       >
                         <span className="tb-th-top">
@@ -1166,31 +1254,14 @@ export function Grid(props: GridProps): JSX.Element {
                               </span>
                             )}
                           </span>
-                          {dir && <SortChevron dir={dir} />}
+                          {/* DRAWN AT REST, NOT ONLY WHEN SORTED. An
+                              affordance that appears after you have
+                              already used it is not an affordance; the
+                              wedge sits dim in every heading so the
+                              column reads as orderable before the
+                              pointer arrives, and lights when it is. */}
+                          <SortChevron dir={dir} />
                         </span>
-                        {/* A heading says what the column is CALLED. What it
-                            HOLDS is already obvious from the cells under it
-                            and from the editor when you type — so the only
-                            thing worth stamping here is the one state a
-                            reader cannot see: a column they may not fill in
-                            themselves. */}
-                        {(system || f.type === 'formula') && (
-                          <span className="tb-th-meta">
-                            {system && (
-                              <span
-                                className="tb-th-sys-tag"
-                                title="Assigned when the row is created, never editable"
-                              >
-                                system
-                              </span>
-                            )}
-                            {f.type === 'formula' && (
-                              <span className="tb-th-ro" title="Worked out — not editable">
-                                calculated
-                              </span>
-                            )}
-                          </span>
-                        )}
                       </button>
                     )}
                     <button
@@ -1273,6 +1344,12 @@ export function Grid(props: GridProps): JSX.Element {
                   <div
                     key={`g:${node.key}`}
                     className={'tb-grpline' + (line.collapsed ? ' tb-grpline-shut' : '')}
+                    /* WHICH LEVEL THIS IS, so the outermost drawer can
+                       be drawn as a BAND and the ones nested inside it
+                       as the quieter lines they are. Two identically
+                       weighted grey lines, one inside the other, is
+                       how a nested register loses its structure. */
+                    data-level={node.level}
                     style={{ top: line.top, height: line.h, width: sheetW }}
                     role="row"
                   >
@@ -1485,6 +1562,7 @@ export function Grid(props: GridProps): JSX.Element {
                           'tb-cell' +
                           (c === 0 ? ' tb-cell-lead' : '') +
                           (f.type === 'formula' ? ' tb-cell-fx' : '') +
+                          (filed.has(f.id) ? ' tb-cell-filed' : '') +
                           (system ? ' tb-cell-sys' : '') +
                           (reqEmpty ? ' tb-cell-req' : '') +
                           (marked ? ' tb-cell-mark' : '') +
@@ -1682,6 +1760,10 @@ export function Grid(props: GridProps): JSX.Element {
             selectColumn(fields.indexOf(menuField))
           }}
           onFilter={() => setFilterFor({ fieldId: menuField.id, rect: menu.rect })}
+          /* RENAME MOVED HERE when the heading became the sort control.
+             It is still done in place, in the heading's own well — the
+             menu only opens the box. */
+          onRename={() => startRename(menuField.id, menuField.name)}
           onEditOptions={(options) => onEditOptions(menuField.id, options)}
           onRemove={() => onRemoveColumn(menuField.id)}
           onClose={() => setMenu(null)}

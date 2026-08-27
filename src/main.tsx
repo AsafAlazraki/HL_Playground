@@ -7,6 +7,20 @@ import { createRoot } from 'react-dom/client'
    21 `'wdth' 118` declarations across 10 files were no-ops because
    the Archivo package's wdth.css was never imported. */
 import '@fontsource-variable/inter/opsz.css'
+/* THE DISPLAY FACE, AND THE wdth CUT SPECIFICALLY.
+
+   Archivo has been a dependency all along and was imported by
+   nothing, which is why the sixteen `font-variation-settings:
+   'wdth'` declarations still in the app CSS were dead — they were
+   resolving against Inter, which has no width axis.
+
+   It comes back as a DISPLAY face only, at 20px and up. The last
+   display face was retired because it was being set at 9px, where
+   a serif is blur; that failure cannot recur here because the two
+   steps that take Archivo (--t-hero, --t-display-lg) have floors
+   of 26px and 34px. Everything a person READS is still Inter and
+   every figure is still Plex Mono. See DESIGN_PRINCIPLES.md §2. */
+import '@fontsource-variable/archivo/wdth.css'
 import '@fontsource/ibm-plex-mono/400.css'
 import '@fontsource/ibm-plex-mono/500.css'
 import '@fontsource/ibm-plex-mono/600.css'

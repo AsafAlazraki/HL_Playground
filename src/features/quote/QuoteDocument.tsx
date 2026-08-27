@@ -95,12 +95,19 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
 
       {/* -- 3. the subject ----------------------------------- */}
       <section className="qt-doc-subject">
+        {/* THE RIG, AS LARGE AS THE PAGE HONESTLY ALLOWS. 220px was a
+            catalogue tile on the one document a customer ever reads;
+            300 is a third of the sheet's measure and still leaves the
+            name and the spec strip a full column beside it. The print
+            block caps it at 55mm so the whole rig reaches page 1, and
+            the box is reserved before the bytes land so a picture
+            arriving late never re-paginates a document mid-print. */}
         <FrozenPhoto
           img={quote.subjectImage}
           fallbackAlt={quote.subjectLabel}
           className="qt-doc-photo"
-          w={220}
-          h={165}
+          w={300}
+          h={225}
         />
         <div className="qt-doc-subject-id">
           <h1 className="qt-doc-name">{quote.subjectLabel}</h1>

@@ -36,7 +36,7 @@ import {
   summariseEnvelope,
   type EnvelopeSummary,
 } from '@/features/io'
-import { HelmMark } from './symbols'
+import { BrandLockup } from './symbols'
 
 function BackArrow() {
   return (
@@ -71,12 +71,18 @@ const plural = (n: number, one: string, many: string): string =>
 
 /** What else the file carries, named rather than counted into the grid:
  *  a saved copy holds the dashboard and the pages somebody designed,
- *  and "Tables 21 · Rows 651" looks identical whether it does or not. */
+ *  and "Tables 21 · Rows 651" looks identical whether it does or not.
+ *
+ *  THE NOUNS ARE THE DEALER'S, IN THE DEALER'S CASE. They were written
+ *  MODULE / PAGE / RULE as literal capitals here, which no
+ *  `text-transform` pass could have caught — and the import panel one
+ *  screen away (`previewAlso`) had already been corrected to sentence
+ *  case, so one plate was drawn two ways. */
 function alsoLine(s: EnvelopeSummary): string[] {
   return [
-    s.modules > 0 ? plural(s.modules, 'MODULE', 'MODULES') : '',
-    s.pages > 0 ? plural(s.pages, 'PAGE', 'PAGES') : '',
-    s.rules > 0 ? plural(s.rules, 'RULE', 'RULES') : '',
+    s.modules > 0 ? plural(s.modules, 'module', 'modules') : '',
+    s.pages > 0 ? plural(s.pages, 'page', 'pages') : '',
+    s.rules > 0 ? plural(s.rules, 'rule', 'rules') : '',
   ].filter(Boolean)
 }
 
@@ -114,16 +120,7 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
   return (
     <section className="ob-screen">
       <div className="ob-card">
-        <span className="ob-tick ob-tick--tl" aria-hidden="true" />
-        <span className="ob-tick ob-tick--tr" aria-hidden="true" />
-        <span className="ob-tick ob-tick--bl" aria-hidden="true" />
-        <span className="ob-tick ob-tick--br" aria-hidden="true" />
-
-        <div className="ob-mark">
-          <HelmMark />
-          <span className="ob-mark-word block-heading">HelmLogic</span>
-        </div>
-        <div className="ob-rule" aria-hidden="true" />
+        <BrandLockup />
 
         <h1 className="ob-ask">Open a saved copy</h1>
         <p className="ob-note">
@@ -157,11 +154,7 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
                   `text-transform` pass could have caught — and the
                   second one names the FILE the person just chose, so
                   their `Boats-Feb.json` came back as `BOATS-FEB.JSON`.
-                  A file name is a value. The io panel's own copy of
-                  this plate (`.io-plate-also`, `.io-plate-src`) was
-                  corrected to "Also —" / "Source —" by the pass at
-                  io.css:770 and this one was missed, so the same plate
-                  was drawn two ways one screen apart. */}
+                  A file name is a value. */}
               {also.length > 0 && <div className="ob-plate-also">Also — {also.join(' · ')}</div>}
               <div className="ob-plate-also">Source — {pending.fileName}</div>
             </div>
@@ -218,11 +211,19 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
               }}
             />
             {/* THE REFUSAL SAYS WHY, WHERE IT WAS REFUSED — never a
-                toast, never a tooltip, and never silence. */}
+                toast, never a tooltip, and never silence.
+
+                IT STOPPED SHOUTING. It read `REJECTED — <reason>` in
+                11px letterspaced mono, all of it red: a sentence set as
+                a stamp, and the loudest thing on the calmest screen in
+                the app. The verdict is a caption, the reason is a
+                sentence in full ink, and the red is spent on the rail
+                that marks the block. */}
             {error && (
-              <p className="ob-refuse" role="alert">
-                <strong>REJECTED</strong> — {error}
-              </p>
+              <div className="ob-refuse" role="alert">
+                <span className="mono-label ob-refuse-tag">Not opened</span>
+                <span className="ob-refuse-say">{error}</span>
+              </div>
             )}
           </>
         )}

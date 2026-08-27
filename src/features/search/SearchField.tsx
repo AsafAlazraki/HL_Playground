@@ -66,6 +66,7 @@ import type { CSSProperties, JSX, KeyboardEvent as ReactKeyboardEvent } from 're
 import { MagnifyingGlass } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
+import { coverPhoto, type CoverPhoto } from '@/features/table/coverPhoto'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { accentVar } from '@/types/model'
 import {
@@ -73,6 +74,7 @@ import {
   EMPTY_INDEX,
   MIN_QUERY,
   NO_RESULT,
+  browse,
   buildSearchIndex,
   normalizeQuery,
   optionsOf,
@@ -183,12 +185,42 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
     [open, entities, rowsByEntity],
   )
 
+  /* NOTHING TYPED IS STILL A QUESTION, and it has an answer: the
+     places themselves. Before this the resting field drew a paragraph
+     and nothing a key could land on — the arrows did nothing, Enter
+     did nothing, and the first navigable frame was two keystrokes
+     away. `browse` answers with the same `TableHit` a search returns,
+     so the cursor, the highlight and Enter all work unchanged. */
+  const typed = normalizeQuery(query)
+  const browsing = typed.length === 0
+
   const result = useMemo(
-    () => (open ? search(index, query, DEFAULT_LIMITS) : NO_RESULT),
-    [open, index, query],
+    () =>
+      !open
+        ? NO_RESULT
+        : browsing
+          ? browse(index)
+          : search(index, query, DEFAULT_LIMITS),
+    [open, browsing, index, query],
   )
 
   const options = useMemo(() => optionsOf(result), [result])
+
+  /* THE PICTURE BESIDE A PLACE. `coverPhoto` returns a held,
+     same-origin photograph or null — never a substitute — so a table
+     with no picture keeps its kind crest and the two forms sit in one
+     list without it looking ragged. Cached against the index, so
+     walking a table's first rows happens once per opening and not once
+     per keystroke. */
+  const covers = useMemo(() => new Map<string, CoverPhoto | null>(), [index])
+  const coverOf = (id: string): CoverPhoto | null => {
+    const held = covers.get(id)
+    if (held !== undefined) return held
+    const entity = entities[id]
+    const found = entity ? coverPhoto(entity, rowsByEntity[id]) : null
+    covers.set(id, found)
+    return found
+  }
 
   /* the cursor must never point past the end of a shrinking list */
   const cursor = options.length === 0 ? -1 : Math.min(active, options.length - 1)
@@ -336,10 +368,23 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
     document.getElementById(optionId(cursor))?.scrollIntoView({ block: 'nearest' })
   }, [open, cursor, optionId])
 
-  const typed = normalizeQuery(query)
   const tooShort = typed.length > 0 && typed.length < MIN_QUERY
   const nothing = typed.length >= MIN_QUERY && options.length === 0
   const hidden = result.rowTotal - result.rowShown
+  /* places the resting list named, against places there are */
+  const placesLeft = (result.placeTotal ?? 0) - result.tables.length
+
+  /* ONE LINE ALONG THE FOOT, and it is never decoration: while
+     nothing is typed it is the count the rest of the app prints, and
+     while something is it is what the caps hid. Empty is a legal
+     state and the keys stay put, so the bar never jumps. */
+  const footSay = browsing
+    ? index.tableTotal > 0
+      ? `${index.rowTotal.toLocaleString()} named rows · ${index.tableTotal} tables`
+      : ''
+    : hidden > 0
+      ? `Showing ${result.rowShown} of ${result.rowTotal} — keep typing to narrow it`
+      : ''
 
   /* a running index across the flat option list, so the Nth painted
      row carries the Nth id the arrow keys move through */
@@ -358,48 +403,54 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
         close(false)
       }}
     >
-      <MagnifyingGlass
-        className="hs-glyph"
-        size={ICON_SIZE.small}
-        weight={weightFor(ICON_SIZE.small)}
-        aria-hidden="true"
-      />
-      <input
-        ref={inputRef}
-        type="text"
-        className="hs-input"
-        role="combobox"
-        aria-label="Find anything by name"
-        aria-expanded={open}
-        aria-controls={open ? listId : undefined}
-        aria-autocomplete="list"
-        aria-activedescendant={open && cursor >= 0 ? optionId(cursor) : undefined}
-        autoComplete="off"
-        spellCheck={false}
-        placeholder="Find anything"
-        value={query}
-        onFocus={() => {
-          rememberOrigin()
-          setOpen(true)
-        }}
-        onChange={(e) => {
-          setQuery(e.target.value)
-          setActive(0)
-          if (!open) setOpen(true)
-        }}
-        onKeyDown={onKeyDown}
-      />
-      <kbd className="hs-kbd" aria-hidden="true">
-        {SHORTCUT_HINT}
-      </kbd>
+      {/* THE FIELD IS ITS OWN ROW, so the answer can be a SIBLING of
+          it rather than a box hanging off it. In the Finder that lets
+          the two be one continuous surface — a palette — instead of a
+          collar with a second bordered card floating under it. */}
+      <div className="hs-field">
+        <MagnifyingGlass
+          className="hs-glyph"
+          size={ICON_SIZE.small}
+          weight={weightFor(ICON_SIZE.small)}
+          aria-hidden="true"
+        />
+        <input
+          ref={inputRef}
+          type="text"
+          className="hs-input"
+          role="combobox"
+          aria-label="Find anything by name"
+          aria-expanded={open}
+          aria-controls={open ? listId : undefined}
+          aria-autocomplete="list"
+          aria-activedescendant={open && cursor >= 0 ? optionId(cursor) : undefined}
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="Find anything"
+          value={query}
+          onFocus={() => {
+            rememberOrigin()
+            setOpen(true)
+          }}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setActive(0)
+            if (!open) setOpen(true)
+          }}
+          onKeyDown={onKeyDown}
+        />
+        <kbd className="hs-kbd" aria-hidden="true">
+          {SHORTCUT_HINT}
+        </kbd>
+      </div>
 
       {open ? (
         <div className="hs-pop" data-material>
           <ul className="hs-list" id={listId} role="listbox" aria-label="Search results">
             {result.tables.length > 0 ? (
               <li className="hs-section" role="presentation">
-                <p className="hs-head hs-head--plain mono-label" id={`${baseId}-h-tables`}>
-                  Tables
+                <p className="hs-head hs-head--plain" id={`${baseId}-h-tables`}>
+                  {browsing ? 'Where to go' : 'Tables'}
                 </p>
                 <ul
                   className="hs-group"
@@ -418,13 +469,22 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                        words were read, and the two are never confused
                        with one another. */
                     const via = t.via
+                    /* THE PHOTOGRAPH, WHERE THE REPOSITORY HOLDS ONE.
+                       220 real boat, motor and trailer shots ship with
+                       the seed and the largest any of them was drawn
+                       in this field was nothing at all. A place you
+                       can recognise by sight is one you do not have
+                       to read — and a table without a held picture
+                       keeps its crest in the same box, so the labels
+                       still start on one line. */
+                    const shot = coverOf(t.table.id)
                     return (
                       <li
                         key={t.table.id}
                         id={optionId(i)}
                         role="option"
                         aria-selected={i === cursor}
-                        className={`hs-opt${i === cursor ? ' is-active' : ''}`}
+                        className={`hs-opt hs-opt--place${i === cursor ? ' is-active' : ''}`}
                         style={inkStyle(t.table.accent)}
                         aria-label={
                           via
@@ -436,10 +496,22 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                         onPointerEnter={() => setActive(i)}
                       >
                         <span className="hs-opt-mark">
-                          <TableKindSymbol
-                            kind={kindOf(t.table.kind)}
-                            size={ICON_SIZE.small}
-                          />
+                          {shot ? (
+                            <img
+                              className="hs-opt-shot"
+                              src={shot.at}
+                              alt=""
+                              width={shot.w}
+                              height={shot.h}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <TableKindSymbol
+                              kind={kindOf(t.table.kind)}
+                              size={ICON_SIZE.small}
+                            />
+                          )}
                         </span>
                         <span className="hs-opt-label">
                           {marked(t.table.name, t.at, t.length)}
@@ -449,13 +521,21 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                             {viaSays(via.name, via.count)}
                           </span>
                         ) : (
-                          <span className="hs-opt-where mono-label">
+                          <span className="hs-opt-where">
                             {tableCaption(t.table)}
                           </span>
                         )}
                       </li>
                     )
                   })}
+                  {/* WHAT THE RESTING LIST LEFT OUT, said rather than
+                      silently dropped — and it says what to do about
+                      it in the same breath. */}
+                  {browsing && placesLeft > 0 ? (
+                    <li className="hs-more" role="presentation">
+                      and {placesLeft} more — type any part of a name
+                    </li>
+                  ) : null}
                 </ul>
               </li>
             ) : null}
@@ -488,7 +568,7 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                     {g.table.retired ? (
                       <span className="hs-head-was">History</span>
                     ) : null}
-                    <span className="hs-head-count mono-label">
+                    <span className="hs-head-count">
                       {g.total} match{g.total === 1 ? '' : 'es'}
                     </span>
                   </p>
@@ -545,7 +625,7 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                       )
                     })}
                     {g.more > 0 ? (
-                      <li className="hs-more mono-label" role="presentation">
+                      <li className="hs-more" role="presentation">
                         +{g.more} more in {g.table.name}
                       </li>
                     ) : null}
@@ -555,47 +635,44 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
             })}
           </ul>
 
-          {/* -- the states that have to say what to do next ------ */}
-          {typed.length === 0 ? (
+          {/* -- the states that have to say what to do next ------
+              THE RESTING STATE NO LONGER NEEDS A PARAGRAPH. The list
+              above it is the places themselves, so the instructions
+              that used to fill this box have become the one line of
+              accounting along the foot. What is left here is the three
+              states that genuinely have nothing to show. */}
+          {browsing && index.tableTotal === 0 ? (
             <p className="hs-say">
-              {index.tableTotal === 0 ? (
-                <>
-                  There are no tables on the sheet yet. Put one there and everything in
-                  it becomes findable from here.
-                </>
-              ) : (
-                <>
-                  Type any part of a name. Every table is searched and the answer is
-                  grouped by the table it lives in
-                  {index.pairRows > 0
-                    ? ' — a relationship’s pairs lead to the things they pair, never to the pair'
-                    : ''}
-                  .
-                  {/* THE SAME COUNT THE REST OF THE APP PRINTS. This
-                      said 52 while Home's header and the dock badge
-                      both said 50: it was counting the retired table
-                      and the retired relationship that those two
-                      deliberately withhold. One number, everywhere —
-                      `index.tableTotal` is now the live count, and
-                      history is still answerable and still marked. */}
-                  <span className="hs-say-count mono-label">
-                    {index.rowTotal} named rows · {index.tableTotal} tables
-                  </span>
-                </>
-              )}
+              There are no tables on the sheet yet. Put one there and everything in it
+              becomes findable from here.
             </p>
           ) : tooShort ? (
             <p className="hs-say">Keep typing — two letters or more.</p>
           ) : nothing ? (
             <p className="hs-say">
-              Nothing is called “{query.trim()}”. Only the NAME of a row is searched, not
+              Nothing is called “{query.trim()}”. Only the name of a row is searched, not
               its other columns — try part of a name, or the name of a table.
             </p>
-          ) : hidden > 0 ? (
-            <p className="hs-foot mono-label">
-              Showing {result.rowShown} of {result.rowTotal} — keep typing to narrow it
-            </p>
           ) : null}
+
+          {/* -- the foot: what this answer is, and how to drive it --
+              THE KEYS ARE ON SCREEN because this is a keyboard
+              surface first. They were discoverable only by trying
+              them, which is the same defect as a control with no
+              label. Marked aria-hidden: a screen reader is already
+              told this is a listbox and reads its own keys. */}
+          <div className="hs-foot">
+            <span className="hs-foot-say">{footSay}</span>
+            <span className="hs-keys" aria-hidden="true">
+              <kbd className="hs-key">↑</kbd>
+              <kbd className="hs-key">↓</kbd>
+              <span className="hs-key-say">move</span>
+              <kbd className="hs-key">↵</kbd>
+              <span className="hs-key-say">open</span>
+              <kbd className="hs-key">Esc</kbd>
+              <span className="hs-key-say">close</span>
+            </span>
+          </div>
         </div>
       ) : null}
     </div>

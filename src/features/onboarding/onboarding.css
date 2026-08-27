@@ -1,475 +1,351 @@
 /* ============================================================
-   Onboarding (ob-) — two calm screens on the blueprint field.
-   The navy sheet is the room; a single white instrument sits on
-   it. Chrome material (white, --ink) for anything you touch;
-   canvas material (--canvas-*) for anything printed on the navy.
+   ONBOARDING (ob-) — the first screen anybody ever sees.
+
+   WHAT THIS REPLACES. A white card on a navy blueprint field with
+   four corner registration ticks, a ruled logbook header and a
+   near-black CONTINUE button. It was competent and it was
+   anonymous: nothing on it said which product this is, and the one
+   moment a person decides whether this looks like a tool worth
+   trusting was drawn as a form.
+
+   WHAT IT IS NOW. Blue and white: the app's canvas ground with the
+   house atmosphere on it (`.ds-aurora .ds-grain` — two drifting
+   washes under 6% alpha, removed outright under
+   `prefers-reduced-transparency` and `prefers-contrast: more`), one
+   lit panel floating on it, and the product's own mark in the one
+   accent. The panel rises once, in `--d-scene`, and then holds
+   still.
+
+   FOUR THINGS CARRY THE ACCENT and no more (§1's "roughly four
+   appearances"): the mark's badge, the field's focus rule, the
+   Continue button, and whichever card is under the pointer. Nothing
+   else on either screen is blue.
+
+   CONTRAST, MEASURED against the grounds actually used here — the
+   panel's `--surface-1` (#ffffff) and the two tints it holds,
+   `--surface-3` (#eef3f8) and `--accent-wash`:
+
+     --fg           on --surface-1      17.4 : 1
+     --fg-secondary on --surface-1       8.1 : 1
+     --fg-secondary on --surface-3       7.4 : 1
+     --fg-tertiary  on --surface-1       5.5 : 1
+     --fg-tertiary  on --surface-3       4.9 : 1   <- the floor holds
+     --accent       on --surface-1       5.9 : 1
+     --accent       on --accent-wash     5.2 : 1
+     --accent       on --accent-wash-strong  4.7 : 1
+     --accent-fg    on --accent          5.9 : 1
+     --fg           on --danger-wash    15.6 : 1
+
+   `--fg-quaternary` (2.6:1) appears nowhere on these screens, which
+   is the cheapest way never to make the mistake §1 names: a tint
+   counts, and the quietest ink has no business on one.
+
+   UPPERCASE IS A LABEL STYLE (§2). The only capitals on any of the
+   three screens are `.mono-label` captions — the eyebrow over the
+   question, the "Not yet" tag, the "Not opened" tag. The wordmark,
+   the industry names, both buttons and every sentence keep their
+   own case, and the tracking comes down with the case.
    ============================================================ */
+
+/* ------------------------------------------------------------
+   THE ROOM
+   ------------------------------------------------------------ */
 
 .ob-root {
   position: fixed;
   inset: 0;
   z-index: 10;
   overflow: auto;
-  background: radial-gradient(
-    120% 90% at 50% 38%,
-    var(--canvas-bg) 55%,
-    var(--canvas-bg-deep) 100%
-  );
-  color: var(--canvas-ink);
+  isolation: isolate;
+  background: var(--bg-canvas);
+  color: var(--fg);
 }
 
-/* the blueprint ruling — 16px minor, 96px major, pinned to the
-   viewport so the sheet stays still while content scrolls */
-.ob-root::before {
-  content: '';
+/* The atmosphere is FIXED rather than absolute: on a short window
+   the card scrolls and the light behind it must not scroll with it,
+   or the page reads as a photograph being dragged. */
+.ob-sky {
   position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--canvas-grid-major) 1px, transparent 1px),
-    linear-gradient(90deg, var(--canvas-grid-major) 1px, transparent 1px),
-    linear-gradient(var(--canvas-grid-minor) 1px, transparent 1px),
-    linear-gradient(90deg, var(--canvas-grid-minor) 1px, transparent 1px);
-  background-size:
-    96px 96px,
-    96px 96px,
-    16px 16px,
-    16px 16px;
+  z-index: 0;
 }
 
 .ob-screen {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding: calc(var(--sp-6) + var(--sp-5)) var(--sp-6);
+  padding: var(--s-12) var(--s-6);
 }
 
-/* auto margins centre safely — content taller than the window
-   still starts at the top instead of being clipped */
+/* auto margins centre safely — content taller than the window still
+   starts at the top instead of being clipped */
 .ob-card,
 .ob-col {
   margin: auto;
 }
 
-/* -- corner registration ticks ------------------------------ */
-.ob-tick {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  pointer-events: none;
-}
-.ob-tick--tl {
-  top: -5px;
-  left: -5px;
-  border-top: 1.5px solid var(--canvas-ink-faint);
-  border-left: 1.5px solid var(--canvas-ink-faint);
-}
-.ob-tick--tr {
-  top: -5px;
-  right: -5px;
-  border-top: 1.5px solid var(--canvas-ink-faint);
-  border-right: 1.5px solid var(--canvas-ink-faint);
-}
-.ob-tick--bl {
-  bottom: -5px;
-  left: -5px;
-  border-bottom: 1.5px solid var(--canvas-ink-faint);
-  border-left: 1.5px solid var(--canvas-ink-faint);
-}
-.ob-tick--br {
-  bottom: -5px;
-  right: -5px;
-  border-bottom: 1.5px solid var(--canvas-ink-faint);
-  border-right: 1.5px solid var(--canvas-ink-faint);
-}
-
-/* ============================================================
-   STEP 1 — name the organisation.
-   One white card with real presence: the cover of a logbook.
-   ============================================================ */
+/* ------------------------------------------------------------
+   THE PANEL — step 1 (name) and step 3 (open a saved copy)
+   ------------------------------------------------------------ */
 
 .ob-card {
-  --ob-pad: calc(var(--sp-6) + var(--sp-2));
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 460px;
-  padding: calc(var(--sp-6) + var(--sp-3)) var(--ob-pad) var(--ob-pad);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-card-canvas-raised);
-  color: var(--ink);
-  animation: sheet-in 340ms var(--ease-draft) both;
+  max-width: 468px;
+  padding: var(--s-8);
+  background: var(--grad-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  /* the tight contact shadow under the wide soft one is what makes
+     an edge look lit rather than drawn; the inset hairline is the
+     light landing on the top edge */
+  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
+  color: var(--fg);
+  animation: ds-rise var(--d-scene) var(--ease-out-expo) backwards;
 }
+
+/* -- the mark ----------------------------------------------- */
 
 .ob-mark {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  color: var(--blue);
+  gap: var(--s-3);
+  margin-bottom: var(--s-8);
 }
+
+/* THE ONE PLACE THE BRAND RAMP IS PAINT. §1 allows the gradient as
+   a surface and never as meaning: this is a 38px tile behind a
+   drawn mark, and if it resolved to nothing the mark would still be
+   a mark. White on --accent measures 5.9:1, so the strokes are
+   legal ink and not only decoration. */
+.ob-mark-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-control);
+  background: var(--grad-brand);
+  color: var(--accent-fg);
+  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
+}
+
+/* A WORDMARK IS A NAME. It was stamped HELMLOGIC at 15px with
+   +0.2em; capitals cost a name its word-shape and gain nothing the
+   weight was not already saying. */
 .ob-mark-word {
-  font-size: 15px;
-  letter-spacing: 0.2em;
-  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  text-transform: none;
+  color: var(--fg);
 }
 
-/* full-bleed rule under the mark — the logbook's ruled header */
-.ob-rule {
-  margin: var(--sp-5) calc(-1 * var(--ob-pad)) 0;
-  border-bottom: 1px solid var(--hairline);
-}
+/* -- the question ------------------------------------------- */
 
-/* THE DISPLAY FACE, used where ART_DIRECTION.md says it earns its place:
-   one beautiful serif line against a field of precise technical type. This
-   is the first sentence anyone reads in the product, so it gets the voice. */
-.ob-ask {
-  margin-top: calc(var(--sp-6) + var(--sp-1));
-  font-family: var(--font-display);
-  /* THE TRACKING WAS BACKWARDS. "Instrument Serif is drawn tight; a
-     hair of tracking opens it up" is true of the face at TEXT size —
-     at 32px the same face is display, and display type reads too far
-     apart, not too close: apple-design §15. +0.006em was +0.19px per
-     letter added to a line that already had too much; -0.016em takes
-     0.51px out. Leading comes down with it, 1.16 → 1.06, because a
-     two-line question set on body leading reads as two sentences. */
-  font-size: var(--display-l-size);
-  font-weight: var(--display-weight);
-  line-height: var(--display-l-lead);
-  letter-spacing: var(--display-l-track);
-  color: var(--ink);
+/* BOTH QUESTIONS ONBOARDING ASKS ARE ONE VOICE AT ONE SIZE, and
+   that was decided before this pass: `.ob-ask` and `.ob-title` were
+   4px apart for no stated reason and were brought together. They
+   take `--t-display-lg`, the step above `display`, because each is
+   the only sentence on its screen — and its tracking runs negative
+   as it grows, which is the correction §2 exists for. */
+.ob-ask,
+.ob-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  color: var(--fg);
   text-wrap: balance;
 }
 
+/* WHY THE APP IS ASKING, in one sentence and only where it is true:
+   the business name is what `freeze.ts` writes onto a quote and
+   `QuoteDocument` prints at the head of it. */
+.ob-why,
+.ob-note {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  letter-spacing: var(--t-small-track);
+  color: var(--fg-secondary);
+}
+
+/* -- the field ---------------------------------------------- */
+
+/* A RULE, NOT A BOX. The name is the largest thing a person types
+   in this app and the only thing on the screen; a bordered 32px
+   input would make it look like the sixth field of a form. */
 .ob-input {
   width: 100%;
-  margin-top: var(--sp-5);
-  padding: var(--sp-3) 0;
+  margin-top: var(--s-6);
+  padding: var(--s-3) var(--s-1) var(--s-3) 0;
   border: 0;
-  border-bottom: 1.5px solid var(--hairline-strong);
+  border-bottom: 1.5px solid var(--line-strong);
   border-radius: 0;
   background: transparent;
-  font-family: var(--font-ui);
-  font-size: 19px;
-  font-weight: 450;
-  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.014em;
+  color: var(--fg);
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
 }
 .ob-input::placeholder {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
   font-weight: 400;
 }
 .ob-input:hover {
-  border-bottom-color: var(--ink-soft);
+  border-bottom-color: var(--fg-tertiary);
 }
 .ob-input:focus,
 .ob-input:focus-visible {
   outline: none;
-  border-bottom-color: var(--blue);
-  box-shadow: 0 1.5px 0 var(--blue);
+  border-bottom-color: var(--accent);
+  box-shadow: 0 1.5px 0 var(--accent);
 }
+
+/* -- the one primary ---------------------------------------- */
 
 .ob-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--s-2);
   width: 100%;
-  min-height: 46px;
-  margin-top: calc(var(--sp-6) + var(--sp-2));
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--ink);
-  border-radius: var(--radius);
-  background: var(--ink);
-  color: var(--paper-high);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  height: 46px;
+  margin-top: var(--s-6);
+  padding: 0 var(--s-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: var(--grad-brand);
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 560;
+  letter-spacing: -0.004em;
+  text-transform: none;
+  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
   cursor: pointer;
   transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    transform var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    filter var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
 }
+.ob-primary svg {
+  flex: none;
+  transition: transform var(--d-med) var(--ease-out-expo);
+}
+/* the glow is a STATE — it exists only under the pointer */
 .ob-primary:not(:disabled):hover {
-  background: var(--blue-deep);
-  border-color: var(--blue-deep);
+  filter: brightness(1.06);
+  box-shadow: var(--e3), var(--glow-md), inset 0 1px 0 var(--edge-light);
 }
+.ob-primary:not(:disabled):hover svg {
+  transform: translateX(3px);
+}
+/* PRESS LANDS ON POINTER-DOWN (§4). 0.97 is the control scale — the
+   button is 46px tall and can take it. */
 .ob-primary:not(:disabled):active {
-  transform: translateY(1px);
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 .ob-primary:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus);
 }
-/* waiting, not broken — a sunken well until a name is typed, so it
-   still reads as the button rather than a second empty field.
+/* WAITING, NOT BROKEN — a sunken well until a name is typed, so it
+   still reads as the button rather than as a second empty field.
 
-   THE WELL IS THE TRAP. `--paper-sunken` is the tint DESIGN_PRINCIPLES
-   names by name: `--ink-faint` is 4.72:1 on white and **4.22:1 here**,
-   measured on the live first screen. This is the first word anybody
-   ever reads in the product and it was under the floor. `--ink-soft` is
-   6.9:1 on the same well. The waiting is said by the well and by the
-   button having no fill of its own, not by an ink that cannot be read:
-   the same reasoning `.ob-alt` records fifteen lines down for choosing
-   `--ink-soft` over `--ink-faint`. */
+   THE WELL IS THE TRAP §1 NAMES. The quietest ink measured 4.2:1
+   here once, on the first word anybody reads in the product.
+   `--fg-secondary` is 7.4:1 on `--surface-3`. The waiting is said
+   by the well and by the button losing its own fill, never by an
+   ink that cannot be read. */
 .ob-primary:disabled {
-  background: var(--paper-sunken);
-  border-color: var(--hairline);
-  color: var(--ink-soft);
+  background: var(--surface-3);
+  border-color: var(--line);
+  color: var(--fg-secondary);
+  box-shadow: none;
   cursor: default;
 }
 
-/* ============================================================
-   THE QUIET SECOND ANSWER — "open a saved copy".
+/* -- the quiet second answer -------------------------------- */
 
-   A text button under the primary, not a second primary: naming the
-   business is what nearly everybody does on this screen, and two
-   filled buttons would make the first run a choice instead of a
-   sentence. It is still a real control and takes all three states.
-
-   It carries `--ink-soft` (7.7:1 on the card's white) rather than
-   `--ink-faint`, which is 4.72:1 on white and would be the second
-   quietest thing on a screen holding only four.
-   ============================================================ */
-
+/* A text button under the primary, not a second primary: naming the
+   business is what nearly everybody does here, and two filled
+   buttons would make the first run a choice instead of a sentence.
+   It is still a real control and takes all three states. */
 .ob-alt {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   align-self: center;
-  margin-top: var(--sp-4);
-  padding: var(--sp-2) var(--sp-3);
+  margin-top: var(--s-4);
+  padding: var(--s-2) var(--s-3);
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: transparent;
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 13px;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
   font-weight: 500;
   cursor: pointer;
   transition:
-    color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .ob-alt:hover {
-  color: var(--blue-deep);
-  background: var(--blue-wash);
+  color: var(--accent);
+  background: var(--accent-wash);
 }
 .ob-alt:active {
   transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 .ob-alt:focus-visible {
   outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
+  box-shadow: var(--focus);
 }
 /* Back sits below the two answers and reads as the way out, so it
    gets the smaller step and none of the accent on hover. */
 .ob-alt--back {
-  margin-top: var(--sp-2);
-  font-size: 12.5px;
+  margin-top: var(--s-2);
+  font-size: var(--t-caption-size);
 }
 .ob-alt--back:hover {
-  color: var(--ink);
-  background: var(--paper-sunken);
+  color: var(--fg);
+  background: var(--surface-3);
 }
 
 /* ============================================================
-   OPEN A SAVED COPY — the third screen, off the default path.
-   Same white card as step 1; everything below the rule is the
-   file, and nothing else is on screen.
-   ============================================================ */
+   STEP 2 — what do you sell?
 
-.ob-note {
-  margin-top: var(--sp-3);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
+   FOUR CARDS BECAME TWO AND A SENTENCE. Two of the four were
+   `disabled` buttons stamped COMING SOON: a control that can never
+   be pressed, drawn at the same weight as the two that can, on the
+   second screen anybody sees. §7 asks a refusal to be a sentence
+   with a reason in the place it is refused — so the answers that
+   exist are answers, and the two that do not are one quiet line
+   underneath saying why, named out of the model rather than typed
+   here.
 
-.ob-drop {
-  margin-top: var(--sp-5);
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: var(--sp-5) var(--sp-4);
-  border: 1px dashed var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-sunken);
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
-}
-.ob-drop:hover {
-  border-color: var(--blue);
-  background: var(--blue-wash);
-  color: var(--blue-deep);
-}
-.ob-drop:active {
-  transform: scale(0.994);
-}
-.ob-drop:focus-visible {
-  outline: none;
-  border-style: solid;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-.ob-drop.is-over {
-  border-style: solid;
-  border-color: var(--blue);
-  background: var(--blue-wash-strong);
-  color: var(--blue-deep);
-}
-.ob-drop-glyph {
-  display: block;
-  margin-bottom: var(--sp-2);
-}
-.ob-drop-main {
-  font-family: var(--font-ui);
-  font-size: 14px;
-  font-weight: 550;
-  color: var(--ink);
-}
-.ob-drop:hover .ob-drop-main,
-.ob-drop.is-over .ob-drop-main {
-  color: var(--blue-deep);
-}
-.ob-drop-sub {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  color: currentColor;
-}
-
-.ob-file {
-  display: none;
-}
-
-/* the red pencil, in the place the file was refused */
-.ob-refuse {
-  margin-top: var(--sp-4);
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 2px solid var(--red);
-  border-radius: var(--radius-sm);
-  background: var(--red-wash);
-  color: var(--red);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  line-height: 1.6;
-}
-.ob-refuse strong {
-  font-weight: 700;
-}
-
-/* -- what the file holds ------------------------------------ */
-.ob-plate {
-  margin-top: var(--sp-5);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  overflow: hidden;
-  animation: sheet-in var(--t-med) var(--ease-draft);
-}
-.ob-plate-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  background: var(--paper-sunken);
-  border-bottom: 1px solid var(--hairline);
-}
-/* THE FILE'S OWN NAME IS A NAME, so it is sentence case and it is
-   never a stamp — the design rule that uppercase is a label style and
-   never a name. It is also the one string on this screen that came
-   from outside, so it truncates rather than pushing REV off the edge. */
-.ob-plate-name {
-  min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 14px;
-  font-weight: 570;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ob-plate-rev {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  font-variant-numeric: tabular-nums;
-  /* --ink-faint is 4.26:1 over --paper-sunken and fails; --ink-soft is
-     6.9:1 measured on the same ground */
-  color: var(--ink-soft);
-}
-.ob-plate-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-}
-.ob-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px; /* number to its label — optical, below the scale */
-  padding: var(--sp-3) var(--sp-2);
-  border-right: 1px solid var(--hairline);
-}
-.ob-stat:last-child {
-  border-right: none;
-}
-.ob-stat-num {
-  font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.ob-stat-lbl {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  /* on the plate's white, where --ink-faint measures 4.72:1 */
-  color: var(--ink-faint);
-}
-.ob-plate-also {
-  padding: var(--sp-2) var(--sp-3);
-  border-top: 1px solid var(--hairline);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ============================================================
-   STEP 2 — pick an industry.
+   WHICH ANSWERS ARE LIVE IS STILL THE MODEL'S RULING —
+   `INDUSTRIES[k].available` plus the `STARTS_BLANK` reading in
+   Onboarding.tsx. Nothing about the split is written in CSS.
    ============================================================ */
 
 .ob-col {
@@ -479,289 +355,417 @@
   max-width: 760px;
 }
 
-.ob-nav {
-  animation: fade-in var(--t-med) var(--ease-draft) both;
-}
-
 .ob-back {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
-  margin-left: calc(-1 * var(--sp-3));
-  padding: var(--sp-2) var(--sp-3);
+  gap: var(--s-2);
+  align-self: flex-start;
+  margin-left: calc(-1 * var(--s-3));
+  padding: var(--s-2) var(--s-3);
   border: 1px solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   background: transparent;
-  color: var(--canvas-ink-soft);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
   font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
   transition:
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
 }
 .ob-back:hover {
-  color: var(--canvas-ink);
-  border-color: var(--canvas-hairline);
+  color: var(--fg);
+  background: var(--surface-3);
+}
+.ob-back:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
 }
 .ob-back:focus-visible {
-  outline: 2px solid var(--canvas-edge);
-  outline-offset: 2px;
-  color: var(--canvas-ink);
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 .ob-head {
-  margin-top: calc(var(--sp-6) + var(--sp-4));
+  margin-top: var(--s-8);
   text-align: center;
-  animation: fade-in var(--t-med) var(--ease-draft) 60ms both;
 }
-/* 36px was a ninth display size for one heading. It lands on the
-   32px step — the same step as `.ob-ask` two screens earlier, which
-   is the point: the two questions onboarding asks are the same voice
-   at the same size, and they were 4px apart for no stated reason. */
-.ob-title {
-  font-family: var(--font-display);
-  font-size: var(--display-l-size);
-  font-weight: var(--display-weight);
-  line-height: var(--display-l-lead);
-  letter-spacing: var(--display-l-track);
-  color: var(--canvas-ink);
-  text-wrap: balance;
+/* the business they just named, so the second screen says where
+   they are without spending the headline on a 60-character name */
+.ob-eyebrow {
+  display: block;
+  margin-bottom: var(--s-3);
+  color: var(--fg-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ob-sub {
-  margin-top: var(--sp-3);
-  font-size: 14px;
-  color: var(--canvas-ink-soft);
+  margin: var(--s-4) auto 0;
+  max-width: 56ch;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
 }
 
+/* auto-fit rather than three breakpoints: two live answers make two
+   columns on a desk and one on a laptop lid, and the day a third
+   industry ships it takes the row without a media query */
 .ob-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-5);
-  margin-top: calc(var(--sp-6) + var(--sp-5));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s-4);
+  margin-top: var(--s-8);
 }
 
 /* -- one choice -------------------------------------------- */
+
 .ob-kind {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-2);
-  padding: var(--sp-5) var(--sp-5) calc(var(--sp-5) + var(--sp-1));
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  box-shadow: var(--shadow-card-canvas);
-  color: var(--ink);
-  font-family: var(--font-ui);
+  gap: var(--s-2);
+  padding: var(--s-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  color: var(--fg);
+  font-family: var(--font-sans);
   text-align: left;
   cursor: pointer;
-  animation: sheet-in var(--t-med) var(--ease-draft) both;
   transition:
-    transform var(--t-med) var(--ease-draft),
-    box-shadow var(--t-med) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-/* accent ink strip along the top edge — solid on the live card,
-   a plain hairline on the ones that are not built yet */
-.ob-kind::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--accent-blue);
+    transform var(--d-med) var(--ease-out-expo),
+    box-shadow var(--d-med) var(--ease),
+    border-color var(--d-fast) var(--ease);
 }
 
+/* THE MARK IS DRAWN AT ITS OWN ASPECT. It was forced to 96x59 by a
+   `width`/`height` pair on the svg — a square Phosphor glyph
+   squashed by a third. The size now comes from the call site
+   (`ICON_SIZE.hero`) and this rule does layout only. */
 .ob-kind-sym {
-  display: block;
-  margin-bottom: var(--sp-2);
-  color: var(--ink);
-  transition: color var(--t-med) var(--ease-draft);
-}
-.ob-kind-sym svg {
-  display: block;
-  width: 96px;
-  height: 59px;
+  display: flex;
+  margin-bottom: var(--s-2);
+  color: var(--fg-secondary);
+  transition:
+    color var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
 }
 
+/* AN INDUSTRY NAME IS A NAME — "MARINE", "MOTORCYCLES & ATVS" were
+   the names on the cards a person was about to press. */
 .ob-kind-label {
-  font-size: 14px;
-  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  text-transform: none;
+  color: var(--fg);
 }
 .ob-kind-blurb {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--ink-soft);
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
 }
-
-/* live card: hover and focus both lift it off the sheet */
-.ob-kind:not(:disabled):hover,
-.ob-kind:not(:disabled):focus-visible {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-card-canvas-raised);
-  border-color: var(--accent-blue);
-}
-.ob-kind:not(:disabled):hover .ob-kind-sym,
-.ob-kind:not(:disabled):focus-visible .ob-kind-sym {
-  color: var(--accent-blue);
-}
-.ob-kind:not(:disabled):focus-visible {
-  outline: 2px solid var(--canvas-edge-selected);
-  outline-offset: 3px;
-}
-.ob-kind:not(:disabled):active {
-  transform: translateY(-1px);
-}
-
-/* -- not yet drawn ----------------------------------------- */
-.ob-kind--soon {
-  background: var(--paper);
-  border-color: var(--hairline);
-  cursor: default;
-}
-.ob-kind--soon::before {
-  background: var(--hairline);
-}
-.ob-kind--soon .ob-kind-sym {
-  color: var(--ink-faint);
-}
-.ob-kind--soon .ob-kind-label {
-  color: var(--ink-soft);
-}
-.ob-kind--soon .ob-kind-blurb {
-  color: var(--ink-faint);
-}
-
-.ob-kind-stamp {
+/* the affordance, not a decoration: it says the card is a door and
+   it travels when the door is under the pointer */
+.ob-kind-go {
   position: absolute;
-  top: var(--sp-4);
-  right: var(--sp-4);
-  padding: 2px var(--sp-2);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  top: var(--s-5);
+  right: var(--s-5);
+  display: inline-flex;
+  color: var(--fg-tertiary);
+  transition:
+    color var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
 }
 
-/* -- wide: all four in a row -------------------------------- */
-@media (min-width: 1180px) {
-  .ob-col {
-    max-width: 1120px;
-  }
-  .ob-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+.ob-kind:hover,
+.ob-kind:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--accent-line);
+  box-shadow: var(--e4), var(--glow-md), inset 0 1px 0 var(--edge-light);
+}
+.ob-kind:hover .ob-kind-sym,
+.ob-kind:focus-visible .ob-kind-sym {
+  color: var(--accent);
+}
+.ob-kind:hover .ob-kind-go,
+.ob-kind:focus-visible .ob-kind-go {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+.ob-kind:focus-visible {
+  outline: none;
+  box-shadow: var(--focus), var(--e4);
+}
+/* A CARD PRESSES BY A HAIR AND LOSES ITS LIFT (§4). 0.97 on a 360px
+   card is an 11px shrink and reads as a glitch. */
+.ob-kind:active {
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1);
+  transition-duration: var(--d-press);
 }
 
-/* base.css zeroes durations for reduced motion but not delays —
-   without this the staggered cards would sit invisible first */
-@media (prefers-reduced-motion: reduce) {
-  .ob-card,
-  .ob-kind,
-  .ob-nav,
-  .ob-head {
-    animation-delay: 0ms !important;
-  }
+/* -- the answers that are not drawn yet --------------------- */
+
+.ob-soon {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-3);
+  margin: var(--s-6) auto 0;
+  max-width: 64ch;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  color: var(--fg-secondary);
+  text-align: left;
+}
+/* 4.9:1 on --surface-3, measured — the floor holds on the tint */
+.ob-soon-tag {
+  flex: none;
+  color: var(--fg-tertiary);
+}
+.ob-soon-say {
+  flex: 1 1 20ch;
+  min-width: 0;
 }
 
 /* ============================================================
-   UPPERCASE IS A LABEL STYLE — the first two screens.
+   STEP 3 — open a saved copy.
 
-   DESIGN_PRINCIPLES §2 lists what uppercase may go on: a section
-   caption, a group caption, a mono stamp. It lists what it may never
-   go on: a table name, a row label, a column value, a BUTTON, a
-   SENTENCE. Onboarding was breaking two of the four, and it is the
-   first thing anybody sees.
-
-     .ob-mark-word   the product's own NAME, stamped "HELMLOGIC" at
-                     15px with +3px of tracking. A wordmark is a name;
-                     capitals cost it its word-shape and gain nothing
-                     a 600 weight was not already saying.
-     .ob-kind-label  "MARINE", "MOTORCYCLES & ATVS" — the NAME of the
-                     industry on the card a person is about to press.
-     .ob-primary     "CONTINUE" — a button.
-     .ob-back        "BACK" — a button, and the same word TableStage,
-                     DesignStage and every other stage now draw as
-                     "Back" in 12.5px Inter (DESIGN_CONTRACT §4).
-
-   KEPT UPPERCASE: `.ob-kind-stamp` ("COMING SOON") is a mono stamp,
-   which is one of the three sanctioned uses, and `.ob-note-label`
-   and the file-screen captions are captions.
-
-   TRACKING COMES DOWN WITH THE CASE. §3 — tracking runs negative as
-   size grows and returns to ~0 at reading size, and only the 11px
-   uppercase label takes it positive. +0.2em on a 15px wordmark and
-   +0.16em on a button label were both the label's tracking worn by
-   something that is not a label.
+   Off the default path, and the way out of a trap: CLEAR SHEET
+   wipes the organisation, the shell lands back here, and this is
+   the only import door on the near side of that gate. Same panel as
+   step 1, because it is the same room.
    ============================================================ */
-.ob-mark-word {
-  text-transform: none;
+
+.ob-drop {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: var(--s-5);
+  padding: var(--s-6) var(--s-4);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.ob-drop:hover {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.ob-drop:active {
+  transform: scale(0.994);
+  transition-duration: var(--d-press);
+}
+.ob-drop:focus-visible {
+  outline: none;
+  border-style: solid;
+  border-color: var(--accent);
+  box-shadow: var(--focus);
+}
+.ob-drop.is-over {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-wash-strong);
+  box-shadow: var(--glow-sm);
+  color: var(--accent);
+}
+.ob-drop-glyph {
+  display: block;
+  margin-bottom: var(--s-2);
+}
+.ob-drop-main {
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 550;
   letter-spacing: -0.004em;
+  color: var(--fg);
 }
-.ob-kind-label {
+.ob-drop:hover .ob-drop-main,
+.ob-drop.is-over .ob-drop-main {
+  color: var(--accent);
+}
+/* currentColor, so the second half of the instruction turns with
+   its parent on hover and drag-over */
+.ob-drop-sub {
+  font-size: var(--t-small-size);
+  color: currentColor;
+}
+
+.ob-file {
+  display: none;
+}
+
+/* -- a file that was refused -------------------------------- */
+
+/* THE REFUSAL SAYS WHY, WHERE IT WAS REFUSED — never a toast, never
+   a tooltip, never silence. It stopped shouting REJECTED in 11px
+   letterspaced mono: the reason is a sentence and is set as one, in
+   --fg on --danger-wash (15.6:1), with the red kept for the rail
+   and the caption. */
+.ob-refuse {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-left: 2px solid var(--danger);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--danger-wash);
+  animation: ds-fade var(--d-fast) var(--ease) backwards;
+}
+.ob-refuse-tag {
+  color: var(--danger);
+}
+.ob-refuse-say {
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  color: var(--fg);
+}
+
+/* -- what the file holds ------------------------------------ */
+
+.ob-plate {
+  margin-top: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  overflow: hidden;
+  animation: ds-rise var(--d-slow) var(--ease-out-expo) backwards;
+}
+.ob-plate-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--line-subtle);
+}
+/* THE FILE'S OWN NAME IS A NAME, so it is sentence case and never a
+   stamp. It is also the one string on this screen that came from
+   outside, so it truncates rather than pushing the rev off the
+   edge. */
+.ob-plate-name {
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
   text-transform: none;
-  letter-spacing: -0.006em;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-/* the two buttons keep the mono face — they are the product's own
-   chrome, not the dealer's words — and give up only the capitals and
-   the label tracking */
-.ob-primary,
-.ob-back {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
+/* a mono stamp — one of the three sanctioned uppercase uses */
+.ob-plate-rev {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+.ob-plate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.ob-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: var(--s-4) var(--s-2);
+  border-left: 1px solid var(--line-subtle);
+}
+.ob-stat:first-child {
+  border-left: 0;
+}
+/* MONO, TABULAR, AND THE BIGGEST THING ON THE PLATE: it is the fact
+   the plate exists to state. */
+.ob-stat-num {
+  font-family: var(--font-mono);
+  font-size: 22px;
   font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.ob-stat-lbl {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+/* "Also — 5 modules · 3 pages" and "Source — <the chosen file>".
+   The second is a file name, which is a value; the first is a count
+   in the app's own nouns. Neither is a caption, so neither is
+   uppercase. */
+.ob-plate-also {
+  padding: var(--s-2) var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
   letter-spacing: 0;
   text-transform: none;
-}
-.ob-primary {
-  /* it is the one primary on the screen, so it keeps a step of weight
-     over the quiet second answer beneath it */
-  font-size: 13px;
-  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ============================================================
-   THE FILE PLATE — the third screen, which the pass above stopped
-   short of.
+   MOVEMENT GOES; LIGHT AND COLOUR STAY.
 
-   The block at :707 corrected the first two onboarding screens and
-   listed the file screen's captions under KEPT. Two of them are not
-   captions:
-
-     .ob-plate-also  FIX — it draws BOTH bottom lines of the plate:
-                     "Also — 5 modules · 3 pages" and "Source —
-                     <the file the person just chose>". The second is a
-                     file name, which is a value, and the first is a
-                     count and the app's own nouns. `.io-plate-also`
-                     and `.io-plate-src` — the same plate, drawn by the
-                     import panel one screen away — were corrected at
-                     io.css:800 and this was not, so one plate had two
-                     cases. The literal capitals in the markup went
-                     with it; see OpenSavedCopy.tsx.
-
-   KEPT UPPERCASE, all captions or mono stamps: `.ob-stat-lbl`
-   ("TABLES", "COLUMNS", "ROWS" — the captions under the plate's three
-   figures), `.ob-plate-rev` ("REV 00", a stamp), `.ob-kind-stamp`
-   ("COMING SOON"), `.ob-note-label`.
-
-   TRACKING COMES DOWN WITH THE CASE (§3): +0.06em is the 11px
-   uppercase label's tracking and this line is a sentence. It keeps the
-   mono face, because what it is mostly made of is figures and a file
-   name, and it keeps `--ink-soft` — measured 7.7:1 on the plate's
-   white. Case does not move a ratio.
+   base.css cuts every duration under `prefers-reduced-motion` and
+   ds.css cuts the shared entrances, but an entrance declared here
+   by name has to be named here too — otherwise it merely runs in
+   0.01ms, which is the same picture but not the same promise.
    ============================================================ */
-.ob-plate-also {
-  letter-spacing: 0.01em;
-  text-transform: none;
-  font-variant-numeric: tabular-nums;
+@media (prefers-reduced-motion: reduce) {
+  .ob-card,
+  .ob-plate,
+  .ob-refuse {
+    animation: none;
+  }
+  .ob-kind:hover,
+  .ob-kind:focus-visible,
+  .ob-kind:active,
+  .ob-primary:not(:disabled):active,
+  .ob-drop:active,
+  .ob-alt:active,
+  .ob-back:active {
+    transform: none;
+  }
 }

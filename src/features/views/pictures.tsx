@@ -1,12 +1,18 @@
 /* ============================================================
    PICTURES ON THE PAGE — the row's mark, never a broken glyph.
 
-   IMAGE_SPEC §4. Two placements and nothing else: one plate beside
-   the subject's name, and one 24px mark at the head of a block row.
-   Both are READ-ONLY in both modes — a picture is edited in the
-   table, in one place, and this page shows the result. Configure
-   mode is for deciding WHAT GOES WITH THIS BOAT, and a photograph
-   is not a member of that argument. (§4.3)
+   IMAGE_SPEC §4. Two placements and nothing else: the SUBJECT'S own
+   photograph, which is now the hero of the page rather than a plate
+   beside its name, and the related row's photograph across the head
+   of its card. Both are READ-ONLY in both modes — a picture is
+   edited in the table, in one place, and this page shows the result.
+   Configure mode is for deciding WHAT GOES WITH THIS BOAT, and a
+   photograph is not a member of that argument. (§4.3)
+
+   THE SIZES ARE THE ONLY THING THAT MOVED. Both placements draw the
+   ROW'S OWN picture and nothing else: no stand-in, no sibling's
+   photograph, no plate where a fetch failed. Growing a picture is
+   not licence to invent one.
 
    THE RULE HERE IS THE OPPOSITE OF THE RULE IN THE CELL. In the
    table a picture we cannot fetch is drawn as a reference plate,
@@ -121,13 +127,21 @@ function Painted({ img, alt, className, w, h }: PaintedProps): ReactElement | nu
 /* The two placements                                         */
 /* ---------------------------------------------------------- */
 
-/** The subject's own photograph, 120×90, left of its name.
+/** THE SAME PHOTOGRAPH, GIVEN THE PAGE.
  *
- *  120×90 is chosen so the picture can never drive the header's
- *  height: the identity block beside it (trail, 38px display name,
- *  spec strip) measures 100–110px, so at 90px the header is still
- *  set by the words, exactly as it is today. */
-export function SubjectPicture({
+ *  120×90 was chosen so a picture could never drive the header's
+ *  height, and that was the right size for a header made of a name
+ *  and five specs. This page is now a HERO — the boat is the largest
+ *  thing on it — so the subject's own photograph takes a column of
+ *  its own and the words take the other. Everything else about it is
+ *  unchanged: it is the row's OWN picture, index 0 of its first
+ *  picture column, and a picture we cannot fetch is still drawn as
+ *  nothing at all rather than as a plate. Nothing is substituted —
+ *  a sibling row's photograph would be a lie about this hull. (§4.1)
+ *
+ *  The box is reserved at the 16:10 the CSS crops to, so the hero
+ *  never reflows when the bytes land. */
+export function HeroPicture({
   entity,
   row,
 }: {
@@ -139,20 +153,33 @@ export function SubjectPicture({
   return (
     <Painted
       img={img}
-      /* the author's own words when they wrote any; the row's label is
-         the only honest fallback. Nothing here invents a caption. */
       alt={img.alt && img.alt.trim() !== '' ? img.alt.trim() : rowLabel(entity, row)}
-      className="vw-portrait"
-      w={120}
-      h={90}
+      className="vw-hero-img"
+      w={800}
+      h={500}
     />
   )
 }
 
-/** A related row's mark, 24px, at the head of the row line. The
- *  field is resolved once for the whole block and handed down, so a
- *  block of forty rows does not scan the table's columns forty
- *  times. */
+/** True when this row has a picture of its own to draw. The hero asks
+ *  before it lays itself out: a page with a photograph is two columns
+ *  and a page without one is a single wide column, and neither may
+ *  reserve a box for the other. */
+export const hasPicture = (entity: EntityDef | undefined, row: RowData): boolean =>
+  entity !== undefined && rowPicture(row, pictureField(entity)) !== undefined
+
+/** A related row's photograph, across the head of its card.
+ *
+ *  IT WAS A 24px MARK IN A TABLE ROW. The block is a grid of cards
+ *  now, so the picture is the first thing about a motor a person
+ *  sees rather than a stamp beside its name — which is what 220 real
+ *  photographs were shipped for. The field is still resolved once for
+ *  the whole block and handed down, so a block of forty rows does not
+ *  scan the table's columns forty times.
+ *
+ *  A ROW WITH NO PICTURE STILL DRAWS NOTHING. The card is simply
+ *  shorter and the grid stretches it; there is no plate, no
+ *  silhouette and no borrowed photograph. */
 export function RowPicture({
   row,
   field,
@@ -165,14 +192,14 @@ export function RowPicture({
   return (
     <Painted
       img={img}
-      /* the row's name is the very next thing in the line, so an alt
+      /* the row's name is the very next thing in the card, so an alt
          that repeated it would make a screen reader say everything
          twice. Decorative unless the author wrote something the
          picture alone carries. */
       alt={img.alt?.trim() ?? ''}
       className="vw-pic-img"
-      w={24}
-      h={24}
+      w={320}
+      h={200}
     />
   )
 }

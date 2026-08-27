@@ -47,6 +47,51 @@ function highlight(text: string, query: string): ReactNode {
 }
 
 /* ---------------------------------------------------------- */
+/* money, aligned on the point                                */
+/* ---------------------------------------------------------- */
+
+/* `money()` prints `$41,340` for a whole amount and `$41,340.50` for
+   one with cents — which is right for a sentence and wrong for a
+   COLUMN, because a run of both puts the decimal point in two
+   different places and the eye can no longer compare two prices by
+   their shape. Measured on Highfield Inflatables' Retail Pricing
+   band, that is most of the column.
+
+   The cents therefore take a slot of their own, exactly as wide as
+   `.00` in the mono face (3ch, and `ch` is the digit advance in a
+   monospace), and a whole amount leaves that slot EMPTY rather than
+   closing it up. Every point in the column lands on the same pixel.
+
+   NOTHING ABOUT THE VALUE MOVES. This is the painted face only:
+   `copyText` is what Ctrl+C yields and what the editor seeds with, so
+   the store still holds 41340 and an export still carries it.
+
+   The test is the CURRENCY MARK, not the column's name: `money()` in
+   `@/lib/money` is the only formatter in the app that emits one, so a
+   painted string starting `$` or `−$` came from it and nothing else
+   can be mistaken for it. A measurement column — "OA Length m" — has
+   no mark and keeps its ordinary right-aligned face. */
+const MONEY_FACE = /^[−-]?\$/
+
+function moneyFace(text: string, search: string): ReactNode {
+  const dot = text.lastIndexOf('.')
+  if (dot < 0) {
+    return (
+      <>
+        {highlight(text, search)}
+        <span className="tb-cents" aria-hidden="true" />
+      </>
+    )
+  }
+  return (
+    <>
+      {highlight(text.slice(0, dot), search)}
+      <span className="tb-cents">{highlight(text.slice(dot), search)}</span>
+    </>
+  )
+}
+
+/* ---------------------------------------------------------- */
 /* painted cell                                               */
 /* ---------------------------------------------------------- */
 
@@ -84,15 +129,17 @@ export function CellFace({
         </span>
       )
     }
+    const fxMoney = typeof value === 'number' && MONEY_FACE.test(text)
     return (
       <span
         className={
           'tb-fx' +
           (typeof value === 'number' ? ' tb-num' : '') +
+          (fxMoney ? ' tb-money' : '') +
           (empty ? ' tb-fx-empty' : '')
         }
       >
-        {empty ? '—' : highlight(text, search)}
+        {empty ? '—' : fxMoney ? moneyFace(text, search) : highlight(text, search)}
       </span>
     )
   }
@@ -139,12 +186,18 @@ export function CellFace({
 
   if (text === '') return <span className="tb-empty" aria-hidden="true" />
 
+  const isMoney = field.type === 'number' && MONEY_FACE.test(text)
   const cls =
     'tb-val' +
     (field.type === 'number' ? ' tb-num' : '') +
+    (isMoney ? ' tb-money' : '') +
     (field.type === 'date' ? ' tb-date' : '') +
     (field.type === 'select' || field.type === 'reference' ? ' tb-pick' : '')
-  return <span className={cls}>{highlight(text, search)}</span>
+  return (
+    <span className={cls}>
+      {isMoney ? moneyFace(text, search) : highlight(text, search)}
+    </span>
+  )
 }
 
 /* ---------------------------------------------------------- */

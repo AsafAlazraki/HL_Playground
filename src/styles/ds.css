@@ -1276,3 +1276,81 @@
     color: var(--fg);
   }
 }
+
+/* ============================================================
+   THE DISPLAY FACE — and the exact reason §2 now says three.
+
+   "Two faces. There is no third face." was written after a
+   display serif was found being set at 9px, where a serif is
+   blur. The rule caught a real failure; it also threw away the
+   idea along with the mistake, and what was left is Inter doing
+   every job from a 52px business name to an 11px label. Inter is
+   an excellent interface face and a characterless headline — it
+   is the default every generated interface reaches for, and a
+   dealership's own name deserves better than the default.
+
+   ARCHIVO IS ALREADY IN THE REPOSITORY. It has been a dependency
+   the whole time and was imported by nothing, which is why the
+   sixteen `font-variation-settings: 'wdth'` declarations still in
+   the app CSS are dead — they resolve against Inter, which has no
+   width axis. Importing the wdth cut brings both back to life.
+
+   THE GUARD AGAINST REPEATING THE FAILURE is a floor, not a
+   promise. Archivo is reachable through exactly two type steps,
+   --t-hero and --t-display-lg, whose clamps bottom out at 34px
+   and 26px. There is no path by which this face renders below
+   26px, so it cannot be set at 9px the way its predecessor was.
+
+   WHAT STAYS. Everything a person READS is Inter — body, small,
+   caption, label, every name, every sentence. Every FIGURE is IBM
+   Plex Mono, tabular. The third face touches headlines and
+   nothing else, which is the one job Inter was worst at.
+
+   THE WIDTH. Archivo carries a wdth axis and it is set slightly
+   extended (105) at hero. A marine dealership's tooling is
+   engineering equipment; a grotesque opened a little past normal
+   reads as drawn rather than typed, and it is the difference
+   between a headline that looks specified and one that looks
+   defaulted.
+   ============================================================ */
+:root {
+  /* NOT `--font-display`. bridge.css:141 already defines that name
+     as an alias for --font-sans, and bridge.css is imported AFTER
+     ds.css, so it wins — the hero silently rendered in Inter with
+     Archivo's width axis applied to it. The new face gets a name
+     the bridge does not own. */
+  --font-hero:
+    'Archivo Variable', 'Archivo', 'Inter Variable', 'Inter',
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.ds-hero {
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 105;
+  /* Archivo runs optically larger than Inter at the same size and
+     its counters are tighter, so the hero step's tracking is
+     pulled a little further negative than the -0.033em the step
+     declares. Tracking still runs NEGATIVE as size grows (§2). */
+  letter-spacing: -0.036em;
+}
+.ds-display-lg {
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 103;
+  letter-spacing: -0.028em;
+}
+
+/* Archivo has no optical-size axis. Leaving `font-optical-sizing:
+   auto` inherited from .ds-root is harmless, but the synthesis
+   refusal matters: only the wght cut is loaded, so a UA-invented
+   bold would be a smeared outline. .ds-root already refuses it
+   globally; this is the note saying that covers Archivo too. */
+
+@media (prefers-contrast: more) {
+  /* An extended width costs a little counter at high contrast.
+     Return to normal width where the reader has asked for
+     legibility over voice. */
+  .ds-hero,
+  .ds-display-lg {
+    font-variation-settings: 'wdth' 100;
+  }
+}

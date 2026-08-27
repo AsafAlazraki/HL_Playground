@@ -132,28 +132,11 @@
   font-weight: 500;
 }
 
-.qb-rig-money {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  padding-left: var(--sp-4);
-  border-left: 1px solid var(--hairline);
-}
-
-.qb-rig-total {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.014em;
-  color: var(--ink);
-}
-
-.qb-rig-unpriced {
-  font-size: 12px;
-  color: var(--ink-faint);
-}
+/* THE PACKAGE FIGURE USED TO BE DRAWN HERE TOO — `.qb-rig-money`,
+   `.qb-rig-total`, `.qb-rig-unpriced` — and the rules are gone with
+   the markup. The total, the delta and the unpriced count are on the
+   bar under the scrollport, which is on screen at every scroll
+   position; this plate is not. See `RigPlate` in QuoteBuild.tsx. */
 
 /* THE PRICE MOVING. One of the four accents on the screen, and the
    only one that is transient — it clears itself after 2.6s, so it is
@@ -1042,16 +1025,439 @@
     width: 100%;
   }
 
-  .qb-rig-money {
-    align-items: flex-start;
-    padding-left: 0;
-    border-left: 0;
-    border-top: 1px solid var(--hairline);
-    padding-top: var(--sp-3);
-  }
-
   .qb-line {
     grid-template-columns: auto minmax(0, 1fr) auto;
     row-gap: var(--sp-2);
+  }
+}
+
+/* ============================================================
+   THE BUILD, LIT.
+
+   Appended, not rewritten — every rule above still applies and
+   these change APPEARANCE only. Nothing here moves a control,
+   renames a class or alters what a surface means.
+
+   WHAT WAS WRONG WITH IT. The screen was correct and flat: white
+   rectangles on the page ground with one hairline each, a 220px
+   thumbnail of the boat, and the package figure drawn twice. A
+   person configuring a $90,000 rig was looking at a form.
+
+   WHAT CHANGES, and each one is a rule the system already has:
+     · the photograph is the biggest thing on the page — it is the
+       one honest product picture this screen can show, and it was
+       being drawn at catalogue-tile size
+     · surfaces are paint that is not FLAT paint: --grad-surface
+       plus the lit top edge, the same pair Home's cards take
+     · the shelf of offers ARRIVES, staggered, instead of appearing
+     · walking to the next decision is a scene change, not a
+       content swap
+     · one accent, and it is still about four: the open stop, the
+       progress it has made, the focus ring, and the price moving
+
+   ATMOSPHERE CARRIES NOTHING. `.qb-sky` is aria-hidden and
+   pointer-events none, and ds.css removes it entirely under
+   prefers-reduced-transparency and prefers-contrast: more.
+   ============================================================ */
+
+.qb-scroll {
+  position: relative;
+  isolation: isolate;
+}
+.qb-sky {
+  z-index: 0;
+}
+.qb-page {
+  position: relative;
+  z-index: 1;
+  gap: var(--sp-5);
+}
+
+/* ------------------------------------------------------------
+   THE RIG PLATE — a hull, at the size a hull deserves.
+
+   Two columns now that the money has gone to the bar: the
+   photograph, and everything that is words. At 1080px of page the
+   picture takes a third of it, which is the first time in this
+   feature a boat has been drawn larger than a catalogue tile.
+   ------------------------------------------------------------ */
+.qb-rig {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-5);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
+}
+
+.qb-rig-say {
+  gap: var(--sp-3);
+}
+
+.qb-rig-ref {
+  color: var(--ink-faint);
+}
+
+/* THE NAME IS THE HEADLINE OF THE SCREEN. 21px was a card title
+   under a 220px picture; at 360px of photograph beside it, it is the
+   only thing that can hold the other half of the plate. The step is
+   taken whole — size, weight, leading and tracking — and tracking
+   runs further negative as it grows, which is the correction the
+   type scale is built on. It wraps: a hull's name is the one string
+   here a customer reads back to you. */
+.qb-rig-name {
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  max-width: 22ch;
+}
+
+/* THE SPEC STRIP reads as one instrument row rather than as six
+   loose pairs: hairline dividers between, the label over the figure,
+   the figure in mono at a size that can be read across a desk.
+   Nothing is invented — these are the frozen `subjectSpecs` and
+   there are as many as the price file had. */
+.qb-rig-specs {
+  gap: var(--sp-3) 0;
+  align-items: stretch;
+}
+
+.qb-rig-spec {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0 var(--sp-4);
+  border-left: 1px solid var(--line-subtle);
+}
+.qb-rig-spec:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.qb-rig-spec-lab {
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  white-space: nowrap;
+}
+
+.qb-rig-spec-val {
+  font-size: var(--t-mono-lg-size);
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+
+/* the reassurance is a footnote to the plate, not a line of it */
+.qb-rig-saved {
+  margin-top: var(--sp-1);
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+.qb-rig-saved.is-bad {
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------
+   THE PICTURE WELL
+   ------------------------------------------------------------ */
+.qb-well {
+  background: var(--grad-sunken);
+}
+
+.qb-well--big {
+  width: 360px;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-card);
+  box-shadow: var(--e2), inset 0 0 0 1px var(--line-subtle);
+}
+
+/* The seeded photographs are a mixed set — yard shots, studio
+   cut-outs, turquoise lifestyle. A whisper of desaturation at rest
+   pulls a shelf of them into one page; the pointer gives the colour
+   back. The same treatment Home gives its covers, so a boat looks
+   like the same boat on both screens. */
+.qb-card .qb-well-img {
+  filter: saturate(0.9);
+  transition:
+    filter var(--d-med) var(--ease),
+    transform var(--d-slow) var(--ease-out-expo);
+}
+.qb-card:hover:not(:disabled) .qb-well-img {
+  filter: saturate(1);
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qb-card:hover:not(:disabled) .qb-well-img {
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   THE STOPS — and how far along they are
+
+   The bar is the same two numbers the sentence beside it already
+   says, which is why it is aria-hidden: it is a reading of a fact,
+   not a second fact.
+   ------------------------------------------------------------ */
+.qb-stops-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.qb-stops-count {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.qb-stops-meter {
+  flex: 1 1 auto;
+  height: 3px;
+  min-width: var(--sp-6);
+  border-radius: var(--r-full);
+  background: var(--surface-4);
+  overflow: hidden;
+}
+
+.qb-stops-meter-fill {
+  display: block;
+  width: var(--done, 0%);
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--grad-brand);
+  transition: width var(--d-slow) var(--ease-out-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qb-stops-meter-fill {
+    transition: none;
+  }
+}
+
+.qb-stop {
+  background: var(--grad-surface);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+  transition:
+    transform var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+.qb-stop:hover {
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+}
+.qb-stop:active {
+  transition-duration: var(--d-press);
+}
+.qb-stop.is-on {
+  box-shadow: var(--glow-sm);
+}
+
+/* ------------------------------------------------------------
+   THE OPEN STEP — a panel that arrives
+
+   Keyed on the step in QuoteBuild.tsx, so moving between decisions
+   remounts this and it enters. Movement goes under reduced motion
+   and the fade stays: gentler feedback, not no feedback.
+   ------------------------------------------------------------ */
+.qb-step {
+  padding: var(--sp-6);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  animation: ds-rise var(--d-slow) var(--ease-out-expo) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qb-rig,
+  .qb-step {
+    animation: ds-fade var(--d-med) var(--ease) backwards;
+  }
+}
+
+.qb-step-n {
+  color: var(--ink-faint);
+}
+
+/* the step's own name is the second-largest thing on the page, and
+   16px was a card title. The title step, one rung under the hull's. */
+.qb-step-name {
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+}
+
+/* ------------------------------------------------------------
+   A LINE ALREADY ON THE QUOTE
+   ------------------------------------------------------------ */
+.qb-line {
+  padding: var(--sp-3);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+
+/* ------------------------------------------------------------
+   THE OFFERS — the shelf, and how it arrives
+   ------------------------------------------------------------ */
+.qb-cards {
+  grid-template-columns: repeat(auto-fill, minmax(min(248px, 100%), 1fr));
+  gap: var(--sp-4);
+}
+
+.qb-card {
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  transition:
+    transform var(--d-med) var(--ease-out-expo),
+    box-shadow var(--d-med) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+/* THE GLOW IS A STATE, which is the only thing ds.css allows it to
+   be. One card is under the pointer at a time, so this is a light
+   arriving on the thing being considered — never a colour the shelf
+   wears at rest. */
+.qb-card:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow:
+    var(--e4),
+    inset 0 1px 0 var(--edge-light),
+    var(--glow-md);
+}
+
+/* PRESS SCALED TO THE SURFACE — 0.994 and the hover lift given
+   back, which on a 248px card is the difference between a press and
+   a glitch. It lands on pointer-down. */
+.qb-card:active:not(:disabled) {
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  transition-duration: var(--d-press);
+}
+
+.qb-card:focus-visible {
+  box-shadow: var(--glow-sm), var(--e-card);
+}
+
+.qb-card-body {
+  gap: 6px;
+  padding: var(--sp-4);
+}
+
+.qb-card-price {
+  font-size: var(--t-mono-lg-size);
+}
+
+.qb-card-col {
+  color: var(--ink-faint);
+}
+
+/* The standard fit is the one thing on a shelf of twelve that the
+   price file itself points at, so its mark reads from across the
+   grid. A kind hue as a GLYPH, which is the only way this system
+   lets a kind hue be used — never a fill behind text. */
+.qb-card-star {
+  color: var(--accent-ochre);
+}
+
+/* ------------------------------------------------------------
+   THE ONE ACTION on an empty shelf
+   ------------------------------------------------------------ */
+.qb-act {
+  padding: 9px 15px;
+  border-radius: var(--r-control);
+  background: var(--grad-brand);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  font-size: var(--t-body-size);
+  transition:
+    transform var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease);
+}
+.qb-act:hover {
+  filter: none;
+  box-shadow: var(--e2), var(--glow-md), inset 0 1px 0 var(--edge-light);
+}
+.qb-act:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.qb-act:focus-visible {
+  box-shadow: var(--focus);
+}
+
+/* ------------------------------------------------------------
+   NOTHING TO PICK, and the tally on the handover
+   ------------------------------------------------------------ */
+.qb-none {
+  padding: var(--sp-6);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+
+.qb-tally {
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+}
+
+.qb-tally-row--sum {
+  background: var(--surface-3);
+}
+
+.qb-tally-row--sum .qb-tally-amount {
+  font-size: var(--t-mono-lg-size);
+}
+
+/* ------------------------------------------------------------
+   MOVING BETWEEN STEPS
+   ------------------------------------------------------------ */
+.qb-move-btn {
+  height: var(--h-md);
+  border-radius: var(--r-control);
+  background: var(--grad-surface);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+  transition:
+    transform var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+.qb-move-btn:hover:not(:disabled) {
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+}
+.qb-move-btn:active:not(:disabled) {
+  transition-duration: var(--d-press);
+}
+.qb-move-btn:disabled {
+  background: none;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------
+   NARROW WINDOWS — the photograph goes full width and the spec
+   strip drops its dividers rather than wrapping into a ladder of
+   them.
+   ------------------------------------------------------------ */
+@media (max-width: 900px) {
+  .qb-rig {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+  .qb-well--big {
+    width: 100%;
+  }
+  .qb-rig-spec {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .qb-rig-specs {
+    gap: var(--sp-3) var(--sp-5);
   }
 }

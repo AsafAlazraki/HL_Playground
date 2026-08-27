@@ -693,6 +693,11 @@ export function TableSheet({
           distinctFor={distinctFor}
           layout={layout}
           levelNames={levelNames}
+          /* THIS LENS KEEPS THE FILING COLUMNS ON SCREEN (see
+             `hideLevelColumns: false` above), so it is the one lens
+             where every row repeats its own drawer's name. Naming them
+             lets the grid draw them as filing rather than as data. */
+          levelIds={levelIds}
           noun={noun}
           search={viewActive ? search : ''}
           sort={sort}

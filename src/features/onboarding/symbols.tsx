@@ -17,7 +17,7 @@
 
 import type { ReactElement } from 'react'
 import type { IndustryKey } from '@/types/model'
-import { ICON_SIZE, INDUSTRY_ICON } from '@/lib/icons'
+import { ICON_SIZE, INDUSTRY_ICON, weightFor } from '@/lib/icons'
 
 const ink = {
   fill: 'none',
@@ -54,6 +54,25 @@ export function HelmMark({ size = 30 }: { size?: number }): ReactElement {
   )
 }
 
+/** The mark and the wordmark, at the head of every onboarding panel.
+ *
+ *  ONE LOCKUP, NOT TWO. Step 1 and the saved-copy screen each drew
+ *  their own copy of it and they had already drifted — the wordmark
+ *  carried `.block-heading`, whose identity is uppercase, and was then
+ *  un-uppercased again by a rule further down the stylesheet. It is one
+ *  component now, and the badge behind the mark is the single place the
+ *  brand ramp is used as paint on these screens. */
+export function BrandLockup(): ReactElement {
+  return (
+    <div className="ob-mark">
+      <span className="ob-mark-badge" aria-hidden="true">
+        <HelmMark size={22} />
+      </span>
+      <span className="ob-mark-word">HelmLogic</span>
+    </div>
+  )
+}
+
 /** Reading order of the four choices — Marine leads, because it is the
  *  one that works. */
 export const INDUSTRY_ORDER: IndustryKey[] = [
@@ -67,17 +86,22 @@ export const INDUSTRY_ORDER: IndustryKey[] = [
    single register of iconography, shared with the table-kind rail, the
    new-table dialog and the table cards, so a boat is the same boat
    everywhere. Hand-rolling them was tried and was not good enough: a
-   hull as an arc, and a motorcycle that read as a bicycle. */
-export const INDUSTRY_SYMBOLS: Record<IndustryKey, () => ReactElement> = {
-  marine: () => <IndustryIcon industry="marine" />,
-  automotive: () => <IndustryIcon industry="automotive" />,
-  motorcycle: () => <IndustryIcon industry="motorcycle" />,
-  other: () => <IndustryIcon industry="other" />,
-}
+   hull as an arc, and a motorcycle that read as a bicycle.
 
-function IndustryIcon({ industry }: { industry: IndustryKey }): ReactElement {
+   IT IS DRAWN AT ITS OWN ASPECT NOW. The four marks used to be
+   rendered at `ICON_SIZE.large` and then forced to 96x59 by a
+   `width`/`height` pair in onboarding.css — a square glyph squashed by
+   a third on the second screen anybody sees. The size is a parameter,
+   the stylesheet does layout only, and the stroke weight comes from
+   `weightFor` so it agrees with every other mark in the app at that
+   size rather than being chosen here. */
+export function IndustryMark({
+  industry,
+  size = ICON_SIZE.large,
+}: {
+  industry: IndustryKey
+  size?: number
+}): ReactElement {
   const Icon = INDUSTRY_ICON[industry]
-  /* 'thin' at this size: 1px against the card's hairlines, the same weight
-     as every rule on the sheet */
-  return <Icon size={ICON_SIZE.large} weight="thin" aria-hidden />
+  return <Icon size={size} weight={weightFor(size)} aria-hidden />
 }

@@ -103,6 +103,18 @@ export interface BlockCardProps {
   configuring: boolean
   /** stagger position for the arrival */
   index: number
+  /**
+   * Whether this block prints the reason a CURATED list is short.
+   *
+   * Every block a page seeds is curated-only, so the reason is the
+   * same clause on all of them and printing it five times buries the
+   * counts beside it — which are the half that differs. The page
+   * says it once above the blocks and passes `false`; the count, the
+   * search and the switch are untouched, so nothing about the
+   * mechanism's four properties is lost. Absent = say it, which is
+   * what a block drawn outside a page should do.
+   */
+  sayWhyCurated?: boolean
   onDropTable: (parentBlockId: string, tableId: string) => void
   onRefuse: (message: string) => void
   /** the offer is drawn WHERE THE BLOCK WILL GO, never in a modal */
@@ -123,6 +135,7 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     appliesTo,
     configuring,
     index,
+    sayWhyCurated = true,
     onDropTable,
     onRefuse,
     pending,
@@ -320,8 +333,9 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
        app has never run it over the whole sheet, so it has no rate
        to quote. `Narrowing.measured` is optional for exactly this
        case — the fitment surface, which HAS measured, supplies one. */
+    const mute = isCuratedOnly(block.rule) && !sayWhyCurated
     const narrowings: Narrowing[] =
-      showAll || reason === '' ? [] : [{ id: 'rule', what: reason }]
+      showAll || mute || reason === '' ? [] : [{ id: 'rule', what: reason }]
     return readCuration({
       name: target?.name ?? 'rows',
       counts: {
@@ -335,6 +349,7 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     })
   }, [
     block.rule,
+    sayWhyCurated,
     sourceEntity,
     target,
     showAll,
@@ -507,20 +522,13 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       className={`vw-block${dragOver ? ' is-drop' : ''}${configuring ? ' is-config' : ''}`}
       /* the column tracks are declared once, here, so the header
          hairline and every row underneath can never drift apart */
-      style={
-        {
-          '--vw-accent': accent,
-          '--vw-cols': columns.length,
-          '--vw-grip': configuring ? '20px' : '0px',
-          '--vw-acts': configuring ? '58px' : '0px',
-          /* the tag track is only worth its width when something is in
-             it — an empty one was eating the row's name */
-          '--vw-tags': result.addedCount > 0 ? 'auto' : '0px',
-          /* the same costs-nothing-when-unused deal: a table with no
-             picture column never pays for a picture column */
-          '--vw-pic': picField ? '24px' : '0px',
-        } as CSSProperties
-      }
+      /* THE COLUMN TRACKS ARE GONE WITH THE TABLE. A block is a grid
+         of cards now, so there is no shared track declaration to keep
+         a header hairline and forty rows in line — each card carries
+         its own facts, labelled, and the grid sizes itself. What is
+         still declared here is the one thing every card in this block
+         shares: the kind hue its rail is drawn in. */
+      style={{ '--vw-accent': accent } as CSSProperties}
       aria-label={`${target.name} for ${rowLabel(sourceEntity, sourceRow)}`}
       initial={still ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -691,24 +699,6 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
             onTypingEnd: endTyping,
           }}
         />
-      ) : null}
-
-      {result.rows.length > 0 ? (
-        <div className="vw-cols" aria-hidden="true">
-          <span className="vw-col-grip" />
-          {/* no word above a photograph — the track is held, not labelled */}
-          <span className="vw-col-pic" />
-          <span className="vw-col-name mono-label">
-            {displayFieldOf(target)?.name ?? target.name}
-          </span>
-          {columns.map((c) => (
-            <span key={c} className="vw-col mono-label">
-              {byId.get(c)?.name ?? ''}
-            </span>
-          ))}
-          <span className="vw-col-tail" />
-          <span className="vw-col-acts" />
-        </div>
       ) : null}
 
       {/* KEYED BY THE SUBJECT, NOT JUST BY THE ROWS INSIDE IT. Picking a

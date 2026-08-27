@@ -21,6 +21,7 @@ way good instruments are boring.
 1. **Never write a colour.** Use a token. The app is 97.6% tokenised and that is
    why a whole re-skin cost one import line.
 2. **Never write a font-size below 11px.** That is the floor, and it is enforced.
+   The display face is barred below 26px on top of that.
 3. **Uppercase is a label style, never a name style.** Names and values keep
    their own case.
 4. **Every text/background pair clears 4.5:1.** Measured, not eyeballed.
@@ -48,14 +49,30 @@ There are exactly two exceptions, and both are already written: **print rules**
 (print has no theme) and **the quote document's paper** (it is paper in both
 themes, deliberately).
 
+### The system is blue and white, and every value was measured
+
+The accent was `#4a56d2`, a tech indigo that could have belonged to any SaaS.
+It is `#0a5fc2`, a marine blue, and the whole ground moved with it: the page is
+`#f6f9fc`, the ink `#081b2e`, and **every neutral shadow stop was re-tinted from
+`rgba(9,12,18)` to `rgba(8,27,46)`** so an edge sits in a blue field instead of
+punching a grey hole in it.
+
+71 token values were swapped and each carries its measured ratio in `ds.css`
+beside it. The figures below are in-browser measurements, not estimates.
+
 ### The ink ramp, and the floor
 
-| token | use | contrast on white |
-|---|---|---|
-| `--ink` | names, values, anything read | 18.9 : 1 |
-| `--ink-soft` | descriptions, help, sentences | 7.7 : 1 |
-| `--ink-faint` | metadata beside the thing it describes | **4.7 : 1 — the floor** |
-| `--fg-quaternary` | rules, ticks, disabled marks | 2.8 : 1 — **may never carry meaning** |
+| token | use | on white | on the page ground |
+|---|---|---|---|
+| `--ink` | names, values, anything read | 17.4 : 1 | 16.5 : 1 |
+| `--ink-soft` | descriptions, help, sentences | 8.1 : 1 | 7.7 : 1 |
+| `--ink-faint` | metadata beside the thing it describes | **5.5 : 1 — the floor** | **5.2 : 1** |
+| `--fg-quaternary` | rules, ticks, disabled marks | 2.6 : 1 — **may never carry meaning** | 2.4 : 1 |
+
+**The floor now clears 4.5 over a tint as well as on white.** The outgoing
+`#6b7482` measured 4.72:1 on white and 4.26:1 over a 3.5% tint, which fails —
+that is the mistake recorded below as "made and caught during the redesign". It
+is fixed at the ramp now rather than avoided per surface.
 
 `--ink-faint` is the floor for anything a person must read. If your text sits on
 a tinted or translucent background, **the tint counts** — `--ink-faint` measures
@@ -83,11 +100,31 @@ column's name.
 
 ## 2 · TYPE
 
-### Two faces
+### Three faces, and the third one has a floor
 
 **Inter** for everything a person reads. **IBM Plex Mono** for every figure,
-code, SKU and identifier. There is no third face. The display serif was retired
-because it was being set at 9px, where a serif is blur.
+code, SKU and identifier. **Archivo** for headlines, and nothing else.
+
+This said "there is no third face", and it was written after a display serif was
+found being set at 9px, where a serif is blur. The rule caught a real failure.
+It also threw the idea away along with the mistake, and what was left was Inter
+doing every job from a 52px business name to an 11px label -- an excellent
+interface face, a characterless headline, and the default every generated
+interface reaches for.
+
+Archivo had been a dependency the whole time and was imported by nothing, which
+is why the sixteen `font-variation-settings: 'wdth'` declarations in the app CSS
+were dead: they resolved against Inter, which has no width axis.
+
+**The guard against repeating the failure is a floor, not a promise.** Archivo
+is reachable through exactly two type steps -- `--t-hero` and `--t-display-lg`
+-- whose clamps bottom out at **34px and 26px**. There is no path by which it
+renders below 26px. Everything a person *reads* is still Inter; every *figure*
+is still Plex Mono.
+
+Its token is `--font-hero`, **not** `--font-display`: `bridge.css` already owns
+that name as an alias for `--font-sans` and is imported after `ds.css`, so a
+face parked there is silently overridden. That cost an hour; do not repeat it.
 
 Mono is not decoration — it is what makes a column of money line up on the
 decimal. If it is a number in a column, it is mono and `font-variant-numeric:
@@ -183,10 +220,46 @@ not no feedback** — movement goes, colour and opacity stay.
 
 ---
 
+## 4b · THE EXPRESSIVE LAYER
+
+The last section of `ds.css` adds depth, light and entrances. It adds **no ink
+and no meaning**: a gradient is a surface, a glow is a state, grain is texture.
+If you deleted the whole section the app would still read, and that is the test
+each token had to pass.
+
+| token | what it is for |
+|---|---|
+| `--grad-surface` | a card ground that is paint, but not *flat* paint |
+| `--grad-brand`, `--grad-brand-wide` | headline treatment only, never behind a value |
+| `--edge-light` | the lit top hairline: `inset 0 1px 0 var(--edge-light)` |
+| `--e4`, `--e-float`, `--e-hero` | the elevation rungs the system lacked |
+| `--glow-sm/md/lg` | a **state**, never decoration |
+| `--aurora-1..3`, `--grain-opacity` | atmosphere, all under 6% alpha |
+| `--t-hero-*`, `--t-display-lg-*` | two steps above `display` |
+| `--ease-out-expo`, `--d-slower`, `--d-scene` | entrances |
+
+Utilities: `.ds-hero` `.ds-display-lg` `.ds-grad-text` `.ds-aurora` `.ds-grain`
+`.ds-sheen` `.ds-rise` `.ds-fade` `.ds-lit` `.ds-shimmer`. Set
+`style={{'--i': index}}` to stagger a grid.
+
+**The atmosphere is capped under 6% alpha on purpose.** Measured over white that
+moves luminance by less than one contrast point, so text sitting on it keeps the
+ratio the ramp was measured at. Raise it and you invalidate the table above.
+
+All of it is covered by `prefers-reduced-motion` (movement goes, light stays),
+`prefers-reduced-transparency` (atmosphere goes entirely) and
+`prefers-contrast: more` (aurora, grain and the gradient headline all go).
+
 ## 5 · MATERIALS
 
-**Glass is retired.** It was tried, it produced the design that got replaced, and
-Quiet Precision was chosen over Glass & Depth deliberately.
+**Glass is retired, with exactly two exceptions.** It was tried, it produced the
+design that got replaced, and Quiet Precision was chosen over Glass & Depth
+deliberately.
+
+The two surfaces that may take `--glass-bg` / `--glass-blur` are **the floating
+dock and the masthead** -- the only two things that sit *over* scrolling content
+and need to say so. `prefers-reduced-transparency` turns both opaque. Nothing
+else may take blur, and a third exception wants an argument, not a commit.
 
 Surfaces are paint. The material tokens still resolve — `--mat-*-blur` is `0px`
 — so no existing rule needs finding and deleting, but **do not add a new

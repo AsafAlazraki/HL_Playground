@@ -375,189 +375,204 @@ export function Dock({
         </div>
       ) : null}
 
-      {/* THE ACTION BAR — the second, smaller tier, and it is drawn
-          HERE rather than in the shell for one reason that matters:
-          `.dk-wrap` is the element carrying `data-note-clear`, so a
-          bar inside it is measured by the note layer along with the
-          dock, at every window width, with no second attribute for
-          anybody to forget. The whole layering question — toasts over
-          the dock, then toasts over the Fitment palette — is answered
-          by being inside the thing that already answered it.
+      {/* ONE INSTRUMENT, TWO TIERS.
 
-          It also inherits `.dk-wrap > * { pointer-events: auto }`, so
-          it takes its own presses and lets everything else through.
+          These used to be two floating bars ten pixels apart, each
+          with its own border, blur and shadow, and they read as two
+          pieces of furniture arguing about which one was the chrome.
+          They are one object now — `.dk-rig` carries the material,
+          the tiers carry only their jobs — and the page gets 15px
+          back for it. The arithmetic is at the foot of
+          `actionbar.css`; the surface is at the foot of `shell.css`.
 
-          The dock is where you GO; this is what you DO. Nothing on
-          the navigation bar below moved to build it. */}
-      <ActionBar />
+          THE DIVISION IS UNCHANGED, and it is the reason there are
+          still two tiers rather than one row: the dock is where you
+          GO, the action bar is what you DO. A control that could
+          plausibly sit in either belongs in the action tier, because
+          the navigation tier is already load-bearing.
 
-      <div
-        className="dk"
-        role="toolbar"
-        aria-label="Navigation"
-        ref={barRef}
-        onKeyDown={onBarKeys}
-      >
-        {onOpenHome ? (
+          THE ACTION BAR IS STILL DRAWN HERE rather than in the shell
+          for the reason that has not changed either: `.dk-wrap`
+          carries `data-note-clear`, so everything inside it is
+          measured by the note layer at every window width, with no
+          second attribute for anybody to forget. The whole layering
+          question — toasts over the dock, then toasts over the
+          Fitment palette — is answered by being inside the thing
+          that already answered it.
+
+          `.dk-wrap > * { pointer-events: auto }` now lands on the
+          rig, which is the one surface that takes presses. */}
+      <div className="dk-rig">
+        <ActionBar />
+
+        <div
+          className="dk"
+          role="toolbar"
+          aria-label="Navigation"
+          ref={barRef}
+          onKeyDown={onBarKeys}
+        >
+          {onOpenHome ? (
+            <DockItem
+              icon={SquaresFour}
+              label="Home"
+              stop={isStop('Home')}
+              active={current === 'home'}
+              onPress={() => {
+                close()
+                onOpenHome()
+              }}
+            />
+          ) : null}
+          {onBackToSheet ? (
+            <DockItem
+              icon={TreeStructure}
+              label="Data model"
+              stop={isStop('Data model')}
+              active={current === null}
+              onPress={() => {
+                close()
+                onBackToSheet()
+              }}
+            />
+          ) : null}
+
           <DockItem
-            icon={SquaresFour}
-            label="Home"
-            stop={isStop('Home')}
-            active={current === 'home'}
-            onPress={() => {
-              close()
-              onOpenHome()
+            icon={TableIcon}
+            label="Tables"
+            stop={isStop('Tables')}
+            count={tableCount}
+            hasPanel
+            open={open === 'tables'}
+            active={current === 'table'}
+            onPress={() => (open === 'tables' ? close() : setOpen('tables'))}
+            onHover={() => {
+              if (open && open !== 'tables') setOpen('tables')
             }}
           />
-        ) : null}
-        {onBackToSheet ? (
-          <DockItem
-            icon={TreeStructure}
-            label="Data model"
-            stop={isStop('Data model')}
-            active={current === null}
-            onPress={() => {
-              close()
-              onBackToSheet()
-            }}
-          />
-        ) : null}
 
-        <DockItem
-          icon={TableIcon}
-          label="Tables"
-          stop={isStop('Tables')}
-          count={tableCount}
-          hasPanel
-          open={open === 'tables'}
-          active={current === 'table'}
-          onPress={() => (open === 'tables' ? close() : setOpen('tables'))}
-          onHover={() => {
-            if (open && open !== 'tables') setOpen('tables')
-          }}
-        />
+          <span className="dk-sep" aria-hidden="true" />
 
-        <span className="dk-sep" aria-hidden="true" />
+          {onOpenDashboard ? (
+            <DockItem
+              icon={Stack}
+              label="Modules"
+              stop={isStop('Modules')}
+              active={current === 'module'}
+              onPress={() => {
+                close()
+                onOpenDashboard()
+              }}
+            />
+          ) : null}
+          {onOpenFlow ? (
+            <DockItem
+              icon={ArrowsLeftRight}
+              label="Fitment"
+              stop={isStop('Fitment')}
+              active={current === 'flow'}
+              onPress={() => {
+                close()
+                onOpenFlow()
+              }}
+            />
+          ) : null}
+          {onOpenRules ? (
+            <DockItem
+              icon={ListChecks}
+              label="Business rules"
+              stop={isStop('Business rules')}
+              active={current === 'rules'}
+              onPress={() => {
+                close()
+                onOpenRules()
+              }}
+            />
+          ) : null}
+          {/* QUOTES IS ALWAYS HERE, and the count is what changes.
 
-        {onOpenDashboard ? (
-          <DockItem
-            icon={Stack}
-            label="Modules"
-            stop={isStop('Modules')}
-            active={current === 'module'}
-            onPress={() => {
-              close()
-              onOpenDashboard()
-            }}
-          />
-        ) : null}
-        {onOpenFlow ? (
-          <DockItem
-            icon={ArrowsLeftRight}
-            label="Fitment"
-            stop={isStop('Fitment')}
-            active={current === 'flow'}
-            onPress={() => {
-              close()
-              onOpenFlow()
-            }}
-          />
-        ) : null}
-        {onOpenRules ? (
-          <DockItem
-            icon={ListChecks}
-            label="Business rules"
-            stop={isStop('Business rules')}
-            active={current === 'rules'}
-            onPress={() => {
-              close()
-              onOpenRules()
-            }}
-          />
-        ) : null}
-        {/* QUOTES IS ALWAYS HERE, and the count is what changes.
+              It used to be drawn only when `quoteCount > 0`, so on a
+              cleared install — a salesperson's first Monday — the one
+              thing they were hired to do had no door in the app at all.
+              A place that appears only once you have used it cannot be
+              discovered: you cannot raise your first quote from a button
+              that your first quote would have drawn.
 
-            It used to be drawn only when `quoteCount > 0`, so on a
-            cleared install — a salesperson's first Monday — the one
-            thing they were hired to do had no door in the app at all.
-            A place that appears only once you have used it cannot be
-            discovered: you cannot raise your first quote from a button
-            that your first quote would have drawn.
+              The badge still needs a number to appear (`DockItem` draws
+              it only above zero), so nothing on the bar shouts about an
+              empty diary — and the list behind it says, in the dealer's
+              own counts, how to make the first one. */}
+          {onOpenQuotes ? (
+            <DockItem
+              icon={FileText}
+              label="Quotes"
+              stop={isStop('Quotes')}
+              count={quoteCount}
+              active={current === 'quote'}
+              onPress={() => {
+                close()
+                onOpenQuotes()
+              }}
+            />
+          ) : null}
 
-            The badge still needs a number to appear (`DockItem` draws
-            it only above zero), so nothing on the bar shouts about an
-            empty diary — and the list behind it says, in the dealer's
-            own counts, how to make the first one. */}
-        {onOpenQuotes ? (
-          <DockItem
-            icon={FileText}
-            label="Quotes"
-            stop={isStop('Quotes')}
-            count={quoteCount}
-            active={current === 'quote'}
-            onPress={() => {
-              close()
-              onOpenQuotes()
-            }}
-          />
-        ) : null}
+          {/* CUSTOMERS IS THE TENTH ITEM, and it is the only addition
+              this bar has taken since the naming rule was settled.
 
-        {/* CUSTOMERS IS THE TENTH ITEM, and it is the only addition
-            this bar has taken since the naming rule was settled.
+              THE RULE IT HAD TO EARN ITS WAY PAST: "do not add a tenth
+              item without a strong reason — every addition dilutes the
+              nine that are there" (DESIGN_CONTRACT §9). The reason is
+              that the item BESIDE it is Quotes, and every quote is
+              addressed to somebody: without this the people those
+              documents were written to are reachable only through a
+              table in a submenu, and "what else have we quoted them?"
+              has no door at all. It is a NOUN naming what is on the
+              screen, it is one word, and it sits next to the place it
+              is about rather than at the end of the bar.
 
-            THE RULE IT HAD TO EARN ITS WAY PAST: "do not add a tenth
-            item without a strong reason — every addition dilutes the
-            nine that are there" (DESIGN_CONTRACT §9). The reason is
-            that the item BESIDE it is Quotes, and every quote is
-            addressed to somebody: without this the people those
-            documents were written to are reachable only through a
-            table in a submenu, and "what else have we quoted them?"
-            has no door at all. It is a NOUN naming what is on the
-            screen, it is one word, and it sits next to the place it
-            is about rather than at the end of the bar.
+              THE BADGE IS THE SAME PROMISE THE QUOTES BADGE MAKES: a
+              number only once there is one, so a cleared install shows
+              a door and never a nag. */}
+          {onOpenCustomers ? (
+            <DockItem
+              icon={UsersThree}
+              label="Customers"
+              stop={isStop('Customers')}
+              count={customerCount}
+              active={current === 'customer'}
+              onPress={() => {
+                close()
+                onOpenCustomers()
+              }}
+            />
+          ) : null}
 
-            THE BADGE IS THE SAME PROMISE THE QUOTES BADGE MAKES: a
-            number only once there is one, so a cleared install shows
-            a door and never a nag. */}
-        {onOpenCustomers ? (
-          <DockItem
-            icon={UsersThree}
-            label="Customers"
-            stop={isStop('Customers')}
-            count={customerCount}
-            active={current === 'customer'}
-            onPress={() => {
-              close()
-              onOpenCustomers()
-            }}
-          />
-        ) : null}
+          <span className="dk-sep" aria-hidden="true" />
 
-        <span className="dk-sep" aria-hidden="true" />
-
-        {/* SEARCH NEVER MOVES AND IS NEVER ABSENT — see the header. */}
-        {onSearch ? (
-          <DockItem
-            icon={MagnifyingGlass}
-            label="Find anything"
-            stop={isStop('Find anything')}
-            onPress={() => {
-              close()
-              onSearch()
-            }}
-          />
-        ) : null}
-        {onAddTable ? (
-          <DockItem
-            icon={Plus}
-            label="New table"
-            stop={isStop('New table')}
-            onPress={() => {
-              close()
-              onAddTable()
-            }}
-          />
-        ) : null}
+          {/* SEARCH NEVER MOVES AND IS NEVER ABSENT — see the header. */}
+          {onSearch ? (
+            <DockItem
+              icon={MagnifyingGlass}
+              label="Find anything"
+              stop={isStop('Find anything')}
+              onPress={() => {
+                close()
+                onSearch()
+              }}
+            />
+          ) : null}
+          {onAddTable ? (
+            <DockItem
+              icon={Plus}
+              label="New table"
+              stop={isStop('New table')}
+              onPress={() => {
+                close()
+                onAddTable()
+              }}
+            />
+          ) : null}
+        </div>
       </div>
     </div>
   )

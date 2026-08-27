@@ -737,7 +737,13 @@ export function moduleCensus(
   rowsByEntity: Record<string, RowData[]>,
 ): ModuleCensus {
   const listed = listedTables(module, entities)
-  const entries = buildEntries(listed, rowsByEntity)
+  /* WITHOUT THE FACTS, AND THAT IS NOT A DETAIL. A census counts
+     entries, pictures, prices and banners; it never reads a fact cell.
+     `buildEntries` formats up to three of them per row by default, so
+     the dashboard was formatting ~45,000 cells it then threw away —
+     once per card, nine times, on every render. `moduleFace` already
+     asks for the same discount and says why. */
+  const entries = buildEntries(listed, rowsByEntity, { facts: false })
 
   /* THE ROW NOUN. One word when the member tables agree on it, the
      kind's own word when they do not — `kindNoun` was written for
@@ -799,15 +805,33 @@ const grouped = (n: number): string => n.toLocaleString('en-AU')
  *  nothing says nothing about holding back. Each clause is present
  *  exactly when it is true, which is why this is a builder and not a
  *  template. */
+const acrossClause = (c: ModuleCensus): string =>
+  c.branches.length === 0
+    ? ''
+    : `across ${c.branches.map((b) => `${grouped(b.count)} ${b.noun}`).join(' and ')}`
+
+const heldClause = (c: ModuleCensus): string =>
+  c.held > 0 ? `${grouped(c.held)} no longer sold` : ''
+
+/** EVERYTHING THE COUNT DOES NOT SAY — the headings the items fall
+ *  under, and what is being held back.
+ *
+ *  A card sets the count as the largest thing on it and these clauses a
+ *  step below, so the sentence is needed in two halves as well as
+ *  whole. Both halves are built from the same two clauses `censusLine`
+ *  prints, so a card and the page it opens can never disagree. '' when
+ *  neither clause is true, which is the whole rule: a clause appears
+ *  exactly when there is something to say. */
+export function censusQualifier(c: ModuleCensus): string {
+  return [acrossClause(c), heldClause(c)].filter((s) => s !== '').join(' · ')
+}
+
 export function censusLine(c: ModuleCensus): string {
-  const parts: string[] = [`${grouped(c.items)} ${c.noun}`]
-  if (c.branches.length > 0) {
-    parts.push(
-      `across ${c.branches.map((b) => `${grouped(b.count)} ${b.noun}`).join(' and ')}`,
-    )
-  }
-  const head = parts.join(' ')
-  return c.held > 0 ? `${head} · ${grouped(c.held)} no longer sold` : head
+  const across = acrossClause(c)
+  const held = heldClause(c)
+  return `${grouped(c.items)} ${c.noun}${across === '' ? '' : ` ${across}`}${
+    held === '' ? '' : ` · ${held}`
+  }`
 }
 
 /* ============================================================

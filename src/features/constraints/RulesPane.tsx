@@ -45,10 +45,35 @@
 
    It fills whatever box it is given and scrolls itself, exactly like
    `views/ViewPage`, and brings its own stylesheet.
+
+   ------------------------------------------------------------
+   AND THEN ONE MORE COMPOSITION PROBLEM, WHICH IS LENGTH.
+
+   The order above is right and every block on it earns its place.
+   Stacked, they were also about twenty thousand pixels of continuous
+   scroll: sixteen ledger cards, a discovery band that can open forty
+   more, a trailer ledger of eight marques, a registration band, the
+   composer, the person's own rules and the left-out list — all on one
+   page, all at once, with no way to be in one of them.
+
+   So the same material is now THREE NAMED VIEWS on one segmented
+   control, each counted:
+
+     From your price file   what it asserts, and what it follows
+                            without ever saying so
+     Rules you write        the composer, and your own rules
+     What is checked        the two checks that walk your sheet, and
+                            the list of what is deliberately not here
+
+   NOTHING IS REMOVED AND NOTHING IS UNMOUNTED. The views that are not
+   showing are `hidden`, not destroyed, for two measured reasons: the
+   discovery engine's run over the real seed is about three seconds
+   (`useDiscovery.ts`), and a half-written sentence in the composer is
+   somebody's work. Switching views may not cost either one.
    ============================================================ */
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import type { ReactElement } from 'react'
+import type { KeyboardEvent, ReactElement } from 'react'
 import { motion } from 'motion/react'
 import { Article, NotePencil, Table } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
@@ -79,6 +104,11 @@ import './constraints.css'
 
 const n = (x: number): string => x.toLocaleString('en-AU')
 
+/** The three views, in the order a person meets them. The count on
+ *  each one is counted on this render — a segment that says how much
+ *  is behind it is the difference between a tab and a guess. */
+type ViewId = 'file' | 'mine' | 'checks'
+
 export function RulesPane(): ReactElement {
   const constraints = useConstraints()
   const ctx = useSentenceCtx()
@@ -91,6 +121,7 @@ export function RulesPane(): ReactElement {
      freezes for the same reasons every other surface does. */
   const { still } = useStillness()
   const [openId, setOpenId] = useState<string | null>(null)
+  const [view, setView] = useState<ViewId>('file')
 
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -184,15 +215,26 @@ export function RulesPane(): ReactElement {
 
   /* ---- the page's own verb, on the bar the whole app uses ---- */
 
+  /* THE PAGE'S OWN VERB NOW SWITCHES THE VIEW rather than scrolling to
+     it. It used to throw the reader ten thousand pixels down a single
+     column; the composer is a place now, so "Write a rule" goes there.
+     The view is `hidden` and not unmounted, so the node exists — but it
+     is not focusable until the attribute comes off, which is why the
+     focus waits one frame. */
   const mine = useRef<HTMLElement | null>(null)
   const writeHere = useCallback(() => {
-    const el = mine.current
-    if (!el) return
-    el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
-    /* Focus the first word of the sentence, so the keyboard lands where
-       the eye does. `preventScroll` because the scroll above is the one
-       that should be seen happening. */
-    el.querySelector<HTMLElement>('button, input, [tabindex]')?.focus({ preventScroll: true })
+    setView('mine')
+    const land = (): void => {
+      const el = mine.current
+      if (!el) return
+      el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+      /* Focus the first word of the sentence, so the keyboard lands where
+         the eye does. `preventScroll` because the scroll above is the one
+         that should be seen happening. */
+      el.querySelector<HTMLElement>('button, input, [tabindex]')?.focus({ preventScroll: true })
+    }
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(land)
+    else land()
   }, [still])
 
   const bar = useMemo<ActionGroup[] | null>(() => {
@@ -217,14 +259,56 @@ export function RulesPane(): ReactElement {
   }, [noColumns, writeHere])
   useActionBar('rules-pane', bar)
 
+  /* The segmented control's own labels and counts, in one place so the
+     control, the panel it opens and the sentence under it can never
+     disagree. Every figure is counted above, on this render. */
+  const views: { id: ViewId; name: string; count: number; say: string }[] = [
+    {
+      id: 'file',
+      name: 'From your price file',
+      count: tally.total,
+      say: `${tally.total} rules read out of your workbooks, and the patterns your values follow without anybody writing them down.`,
+    },
+    {
+      id: 'mine',
+      name: 'Rules you write',
+      count: constraints.length,
+      say: 'One sentence about your own columns. Every underlined word is a choice, and the count under it moves as you write.',
+    },
+    {
+      id: 'checks',
+      name: 'What is checked',
+      count: tally.checked,
+      say: 'The checks that walk the sheet you have loaded — and, last, what your price file holds that this does not.',
+    },
+  ]
+
+  /* Arrow keys move between segments, which is what a tablist owes
+     anybody not using a pointer. */
+  const segKeys = (e: KeyboardEvent<HTMLDivElement>): void => {
+    const i = views.findIndex((v) => v.id === view)
+    const to =
+      e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? views.length - 1 : -1
+    if (to < 0 || to > views.length - 1) return
+    e.preventDefault()
+    const next = views[to]
+    if (!next) return
+    setView(next.id)
+    e.currentTarget.querySelectorAll<HTMLElement>('.cn-seg-btn')[to]?.focus()
+  }
+
   return (
     <section className="cn-root">
-      <div className="cn-sheet">
-        <span className="cn-tick cn-tick--tl" aria-hidden />
-        <span className="cn-tick cn-tick--tr" aria-hidden />
+      {/* THE ATMOSPHERE, AND IT CARRIES NOTHING. Two drifting washes
+          under 6 % alpha behind the sheet, so a page whose subject is
+          one white column has a ground rather than a void. Both go
+          under `prefers-reduced-transparency` and `prefers-contrast`,
+          and stop drifting under `prefers-reduced-motion` — ds.css. */}
+      <div className="ds-aurora ds-grain cn-sky" aria-hidden="true" />
 
+      <div className="cn-sheet">
         <header className="cn-head">
-          <p className="cn-eyebrow">BUSINESS RULES</p>
+          <p className="cn-eyebrow mono-label">Business rules</p>
           <h2 className="cn-title">What this price file asserts</h2>
           <p className="cn-lede">
             {tally.total} rules were read out of your price file, each traced to the cell,
@@ -246,89 +330,124 @@ export function RulesPane(): ReactElement {
           {/* THE TALLY, COUNTED. Four figures, none of them typed: how
               many rules were found, what they rest on, how many are
               being checked, and what those checks have caught on the
-              sheet that is loaded right now. */}
-          <ul className="cn-tally">
-            <li className="cn-tally-item">
-              <b className="cn-tally-n">{tally.total}</b>
-              <span className="cn-tally-what">
-                rules found in your price file, each with the cell that says it
-              </span>
-            </li>
-            <li className="cn-tally-item">
-              <b className="cn-tally-n">
+              sheet that is loaded right now.
+
+              THE FIGURE LEADS AND THE TERM SITS UNDER IT, which is the
+              order somebody scanning actually uses — they find the
+              number, then check what it was. Each term is now a phrase
+              rather than a clause: the four sentences this block used
+              to carry were a paragraph pretending to be a dashboard,
+              and the two qualifications worth keeping are the line
+              underneath, where they can be read once. */}
+          <dl className="cn-tally">
+            <div className="cn-tally-item">
+              <dt className="cn-tally-what">rules read out of it</dt>
+              <dd className="cn-tally-n">{tally.total}</dd>
+            </div>
+            <div className="cn-tally-item">
+              <dt className="cn-tally-what">stated · only seen</dt>
+              <dd className="cn-tally-n">
                 {tally.asserted}
                 <span className="cn-tally-sep" aria-hidden="true">
                   /
                 </span>
                 {tally.observed}
-              </b>
-              <span className="cn-tally-what">
-                stated by a formula, a header or a divider · seen only in the values, so they
-                may warn and never filter
-              </span>
-            </li>
-            <li className="cn-tally-item">
-              <b className="cn-tally-n">{tally.checked}</b>
-              <span className="cn-tally-what">
-                are checked as you work. The other {tally.total - tally.checked} say what is
-                missing, on the rule itself
-              </span>
-            </li>
+              </dd>
+            </div>
+            <div className="cn-tally-item">
+              <dt className="cn-tally-what">checked as you work</dt>
+              <dd className="cn-tally-n">{tally.checked}</dd>
+            </div>
             {band.tested > 0 && (
-              <li className="cn-tally-item">
-                <b className="cn-tally-n">{n(band.disagreements.length)}</b>
-                <span className="cn-tally-what">
-                  of the {n(band.tested)} trailers checked{' '}
-                  {band.disagreements.length === 1 ? 'is' : 'are'} registered in a weight band
-                  their own rated mass contradicts. Shown, and never corrected
-                </span>
-              </li>
+              <div className="cn-tally-item">
+                <dt className="cn-tally-what">registered against their weight</dt>
+                <dd className="cn-tally-n">{n(band.disagreements.length)}</dd>
+              </div>
             )}
-          </ul>
+          </dl>
+
+          <p className="cn-tally-note">
+            A stated rule comes from a formula, a header or a divider; one that is only seen in
+            the values may warn and may never filter. The {tally.total - tally.checked} that are
+            not checked say what is missing, on the rule itself.
+            {band.tested > 0 && (
+              <>
+                {' '}
+                Of the {n(band.tested)} trailers checked,{' '}
+                {n(band.disagreements.length)}{' '}
+                {band.disagreements.length === 1 ? 'is' : 'are'} registered in a weight band
+                their own rated mass contradicts — shown, and never corrected.
+              </>
+            )}
+          </p>
         </header>
 
         {noColumns ? (
           <NoColumns />
         ) : (
           <>
-            {/* 1 · WHAT THE PRICE FILE ASSERTS */}
-            <RulesLedger liveIds={liveIds} live={live} />
+            {/* THE THREE VIEWS. The control is the page's heading now:
+                each segment names what is behind it and counts it, so
+                nobody has to scroll to find out whether it is worth
+                the trip. */}
+            <div className="cn-seg" role="tablist" aria-label="What to show" onKeyDown={segKeys}>
+              {views.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  role="tab"
+                  id={`cn-tab-${v.id}`}
+                  aria-controls={`cn-view-${v.id}`}
+                  aria-selected={view === v.id}
+                  tabIndex={view === v.id ? 0 : -1}
+                  className={view === v.id ? 'cn-seg-btn is-on' : 'cn-seg-btn'}
+                  onClick={() => setView(v.id)}
+                >
+                  <span className="cn-seg-name">{v.name}</span>
+                  <span className="cn-seg-n">{v.count}</span>
+                </button>
+              ))}
+            </div>
+            <p className="cn-seg-say">{views.find((v) => v.id === view)?.say}</p>
 
-            {/* 1b · AND WHAT IT FOLLOWS WITHOUT EVER SAYING SO. The
-                sixteen above are ASSERTED — a formula, a header, a
-                divider states each one. The band below measures the
-                same file for rules nobody wrote down, and everything
-                it finds is OBSERVED: it may warn, and it may never
-                remove a row from a list. It runs off the render path
-                and brings its own stylesheet. */}
-            <DiscoveryPanel />
+            {/* 1 · WHAT THE PRICE FILE ASSERTS — and what it follows
+                without ever saying so. The sixteen in the ledger are
+                ASSERTED: a formula, a header or a divider states each
+                one. The discovery band measures the same file for rules
+                nobody wrote down, and everything it finds is OBSERVED —
+                it may warn, and it may never remove a row from a list.
+                It runs off the render path and brings its own
+                stylesheet. */}
+            <div
+              className="cn-view"
+              id="cn-view-file"
+              role="tabpanel"
+              aria-labelledby="cn-tab-file"
+              hidden={view !== 'file'}
+            >
+              <RulesLedger liveIds={liveIds} live={live} />
+              <DiscoveryPanel />
+            </div>
 
-            {/* 2 · WHAT IS BEING CHECKED, AND WHAT IT CAUGHT.
+            {/* 2 · THE PERSON'S OWN RULES, and the composer that writes
+                them. It is a view of its own now rather than the third
+                band down a twenty-thousand-pixel column, which is what
+                lets the sentence be set at the size it deserves.
 
-                F8 is the one rule in either workbook that both holds at
-                100 % and actually rejects something, and this is the
-                surface that draws the measurement rather than the
-                claim. REGISTRATION is the owner's own example of a
-                common theme — one concept the boat and the trailer
-                share — drawn once, with the four things it may not do
-                and the rows that disagree with it today.
-
-                NEITHER ADDS A DOOR. Joins and views are never doors on
-                the navigation bar, and a fee register is not a place in
-                the business — these are blocks on a surface that
-                already exists. Both are exported from this feature's
-                index so a module page can draw them too. */}
-            <TrailerFitmentPanel />
-            <RegistrationTheme />
-
-            {/* 3 · THE PERSON'S OWN RULES. Below the workbook's,
-                because on a sheet of eleven thousand rows the
-                interesting rules are the ones already in the file — and
-                because a page that opens on a blank form says the
-                system knows nothing. */}
-            <section className="cn-band cn-mine" ref={mine} aria-label="Rules you have written">
-              <p className="cn-band-eyebrow mono-label">Your own rules</p>
-              <h3 className="cn-band-title">Rules you have written</h3>
+                THE BAND'S HEADING IS GONE and that is the point: the
+                segment above already says "Rules you write", and a
+                heading repeating the tab under the tab is the clutter
+                this pass exists to remove. The lede stays, because it
+                is the one place the undo promise is made. */}
+            <section
+              className="cn-band cn-mine cn-view"
+              id="cn-view-mine"
+              role="tabpanel"
+              aria-labelledby="cn-tab-mine"
+              hidden={view !== 'mine'}
+              ref={mine}
+              aria-label="Rules you have written"
+            >
               <p className="cn-band-lede">
                 A rule you write here is one sentence about your own columns. Change a word
                 and the rule changes; switch one off and everything it ruled out comes
@@ -390,11 +509,37 @@ export function RulesPane(): ReactElement {
               )}
             </section>
 
-            {/* WHAT IS NOT IN HERE. A person who knows the price file
-                will look for the service schedule; without this they
-                cannot tell a decision from a gap, and both guesses cost
-                us. */}
-            <LeftOutList />
+            {/* 3 · WHAT IS BEING CHECKED, AND WHAT IT CAUGHT.
+
+                F8 is the one rule in either workbook that both holds at
+                100 % and actually rejects something, and this is the
+                surface that draws the measurement rather than the
+                claim. REGISTRATION is the owner's own example of a
+                common theme — one concept the boat and the trailer
+                share — drawn once, with the four things it may not do
+                and the rows that disagree with it today.
+
+                NEITHER ADDS A DOOR. Joins and views are never doors on
+                the navigation bar, and a fee register is not a place in
+                the business — these are blocks on a surface that
+                already exists. Both are exported from this feature's
+                index so a module page can draw them too.
+
+                AND LAST, WHAT IS NOT IN HERE. A person who knows the
+                price file will look for the service schedule; without
+                this they cannot tell a decision from a gap, and both
+                guesses cost us. */}
+            <div
+              className="cn-view"
+              id="cn-view-checks"
+              role="tabpanel"
+              aria-labelledby="cn-tab-checks"
+              hidden={view !== 'checks'}
+            >
+              <TrailerFitmentPanel />
+              <RegistrationTheme />
+              <LeftOutList />
+            </div>
           </>
         )}
       </div>

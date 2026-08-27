@@ -2580,3 +2580,329 @@
   font-weight: 500;
   color: var(--ink);
 }
+
+/* ============================================================
+   BUSINESS RULES, RE-DRAWN — blue and white, and one thing at a
+   time.
+
+   WHAT THIS APPENDS TO. Everything above is kept. Where a property
+   here supersedes one above it is restated in full with the reason
+   on it, which is the convention the rest of the app already
+   follows (see the HOME block at the end of shell.css).
+
+   THE TWO ARGUMENTS THIS PASS MAKES.
+
+   ONE — THE SENTENCE IS THE PRODUCT. A rule that reads "When Hull
+   Length (mtr) is at least 5.6, Trailer must be …" with every
+   underlined word a real control is the best idea in this
+   application, and it was being set at 15.5px in a bordered box
+   below four other bordered boxes. It is now the largest running
+   text in the app, on a lit card of its own, with the three token
+   roles told apart by ink and weight rather than by four kinds of
+   grey pill.
+
+   TWO — LENGTH IS A DESIGN DEFECT. The pane stacked seven full
+   surfaces in one column. The material is right and none of it is
+   removed; it is behind a three-way segmented control now, so a
+   person is IN one of them instead of scrolling past all of them.
+
+   COLOUR BUDGET, counted per view rather than per page, because a
+   view is what a person actually sees:
+     · the accent is the VALUE in a sentence, the primary action,
+       the focus ring, and the engaged half of the consequence bar
+     · --danger is the one saturated ink that means a row of this
+       dealership's own data disagrees with what is written
+     · the kind hues stay where they were — a dot beside a group
+       name, a 3px rail down a ledger card. Never a fill, never
+       chrome.
+
+   CONTRAST, MEASURED IN PLACE rather than assumed. Every small
+   text tier on a TINTED ground here is --fg-secondary (8.1:1 on
+   white, 7.6:1 over --surface-3). --fg-tertiary is used only on
+   white and on --grad-surface, where it measures 5.5:1;
+   --fg-quaternary carries nothing anywhere on this surface.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   THE STAGE, AND THE ATMOSPHERE BEHIND IT
+
+   The pane is its own scroller, so the aurora is drawn against the
+   top of the page and scrolls away with it — it is a ground for
+   the masthead, not a fixed backdrop. It carries nothing: both
+   washes are under 6 % alpha and both are removed outright under
+   `prefers-reduced-transparency` and `prefers-contrast: more`.
+   ------------------------------------------------------------ */
+.cn-root {
+  position: relative;
+  isolation: isolate;
+  /* SUPERSEDES `--paper`: the sheet is white, so the ground under
+     it steps down one to --bg-canvas or the sheet has no edge. */
+  background: var(--bg-canvas);
+  padding: var(--s-8) var(--s-5) var(--s-16);
+}
+.cn-sky {
+  z-index: 0;
+}
+
+.cn-sheet {
+  z-index: 1;
+  /* SUPERSEDES 840px. The sentence is set at up to 23px now and
+     needs the measure; 940 keeps the lede inside 68ch and the
+     tally at four cells across. */
+  max-width: 940px;
+  padding: var(--s-8) var(--s-8) var(--s-10);
+  border-radius: var(--r-panel);
+  border: 1px solid var(--line);
+  /* paint, but not flat paint — plus the lit top edge that makes a
+     card read as an object with a light on it */
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
+}
+
+/* ------------------------------------------------------------
+   THE MASTHEAD
+   ------------------------------------------------------------ */
+
+/* SUPERSEDES 11px/+0.18em mono. 0.18em is nearly three times the
+   one sanctioned label tracking, and the element now carries
+   `.mono-label` in the markup as well — two rules disagreeing about
+   one caption is how a page drifts. This is the label step. */
+.cn-eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+
+/* SUPERSEDES the 32px display step. `--t-display-lg-*` is the step
+   above it, and it is a clamp: at 1280 this lands at 27px and at
+   1920 at 34px, so the title is the same weight of voice on a
+   laptop and on the desk screen the dealership actually uses.
+   NO GRADIENT. §2 allows one display treatment and Home spent it
+   on the business's own name; a page title is not a headline. */
+.cn-title {
+  margin: var(--s-3) 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  color: var(--fg);
+}
+
+.cn-lede {
+  margin: var(--s-4) 0 0;
+  max-width: 68ch;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+/* The signpost at the OTHER rule surface. It is not part of the
+   explanation, so it is set apart by a rule rather than by being
+   made small enough to miss. */
+.cn-lede--other {
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+  font-size: var(--t-small-size);
+  color: var(--fg-tertiary);
+}
+.cn-lede--other b {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* ------------------------------------------------------------
+   THE TALLY — counted figures, in the shape Home uses.
+
+   SUPERSEDES the four-across list of clauses. The figure leads and
+   the term sits under it, because that is the order somebody
+   scanning uses: find the number, then check what it was. The two
+   qualifications those clauses carried are one line underneath,
+   where they can be read once instead of four times.
+   ------------------------------------------------------------ */
+.cn-tally {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: var(--s-4) 0;
+  margin: var(--s-6) 0 0;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+
+.cn-tally-item {
+  display: flex;
+  /* the markup is <dt> then <dd>, which is what a definition list
+     owes a reader; the figure is drawn first */
+  flex-direction: column-reverse;
+  gap: 3px;
+  min-width: 0;
+  /* SUPERSEDES the top rule: the cells are divided from each other
+     now, not from what is above them */
+  padding: 0 var(--s-5);
+  border-top: 0;
+  border-left: 1px solid var(--line-subtle);
+}
+.cn-tally-item:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.cn-tally-item:last-child {
+  padding-right: 0;
+}
+
+.cn-tally-n {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.cn-tally-sep {
+  padding: 0 2px;
+  color: var(--fg-tertiary);
+}
+.cn-tally-what {
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-caption-track);
+  line-height: 1.3;
+  color: var(--fg-tertiary);
+}
+
+.cn-tally-note {
+  margin: var(--s-4) 0 0;
+  max-width: 72ch;
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+
+/* ------------------------------------------------------------
+   THE SEGMENTED CONTROL — the page's heading, and its navigation.
+
+   Three views, each named for what is behind it and counted, so
+   nobody has to travel to find out whether the trip is worth it.
+   The selected segment is a raised white surface on a sunken
+   track: the same "lifted out of the groove" reading a physical
+   switch has, and it survives `prefers-contrast: more` because the
+   border firms up with every other line in the app.
+   ------------------------------------------------------------ */
+.cn-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: var(--s-8) 0 0;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+}
+
+.cn-seg-btn {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 34px;
+  padding: 0 var(--s-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 540;
+  letter-spacing: -0.004em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.cn-seg-btn:hover {
+  color: var(--fg);
+  background: var(--surface-4);
+}
+.cn-seg-btn.is-on {
+  background: var(--surface-1);
+  border-color: var(--line);
+  color: var(--fg);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+}
+.cn-seg-btn.is-on:hover {
+  background: var(--surface-1);
+}
+/* PRESS ON POINTER-DOWN, scaled to the surface. These are wide
+   controls — 0.97 on a 280px segment is an 8px shrink and reads as
+   a glitch — so the press is a hair and the ground does the rest. */
+.cn-seg-btn:active {
+  transform: scale(0.988);
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+.cn-seg-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cn-seg-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  color: var(--fg-tertiary);
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.cn-seg-btn.is-on .cn-seg-n {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+.cn-seg-say {
+  margin: var(--s-3) 0 var(--s-6);
+  max-width: 72ch;
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  color: var(--fg-tertiary);
+}
+
+/* ------------------------------------------------------------
+   A VIEW. Hidden, never unmounted — the discovery engine's run is
+   about three seconds and a half-written sentence is somebody's
+   work; switching views may cost neither.
+   ------------------------------------------------------------ */
+.cn-view {
+  animation: ds-fade var(--d-slow) var(--ease) backwards;
+}
+.cn-view[hidden] {
+  display: none;
+}
+/* The first block in a view does not need a rule above it — the
+   segmented control is already the divider. */
+.cn-view > .cn-band:first-child,
+.cn-view > .cn-ledger:first-child,
+.cn-band.cn-view {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}

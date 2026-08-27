@@ -1,6 +1,13 @@
 /* ============================================================
-   Review glyphs — hand-drawn-feeling red-pencil marks, all
-   `currentColor` so severity is set by CSS alone.
+   Review marks — every one `currentColor`, so severity is set by
+   CSS alone and no glyph carries a colour of its own.
+
+   A TICK NO LONGER MEANS "THERE IS A PROBLEM". It used to: an
+   advisory drew `PencilTick`, a checkmark, which is the universal
+   sign for a thing that is FINISHED — so the quieter half of every
+   finding was marked with the symbol for its own absence. The tick
+   now appears in exactly one place, on a mark that has just been
+   cleared, and an advisory takes `AdvisoryMark`.
    ============================================================ */
 
 import type { JSX } from 'react'
@@ -17,6 +24,22 @@ export function PencilTick(): JSX.Element {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+/** Advisory — worth looking at, and nothing is stopped by it. */
+export function AdvisoryMark(): JSX.Element {
+  return (
+    <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" focusable="false">
+      <path
+        d="M6 1.9v4.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <circle cx="6" cy="9.4" r="0.95" fill="currentColor" />
     </svg>
   )
 }
@@ -88,15 +111,5 @@ export function Caret({ open }: { open: boolean }): JSX.Element {
         strokeLinejoin="round"
       />
     </svg>
-  )
-}
-
-/** Corner registration ticks — the recurring drafting motif. */
-export function PlateTicks(): JSX.Element {
-  return (
-    <>
-      <span className="rv-tick rv-tick-tl" aria-hidden="true" />
-      <span className="rv-tick rv-tick-br" aria-hidden="true" />
-    </>
   )
 }

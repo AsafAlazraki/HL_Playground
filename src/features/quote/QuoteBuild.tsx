@@ -288,12 +288,17 @@ export function QuoteBuild({
   return (
     <>
       <div className="qb-scroll">
+        {/* THE GROUND, AND IT CARRIES NOTHING. Two radial washes under
+            6% alpha and a grain tile, so a page that is mostly one
+            photograph and three cards has a surface rather than a
+            void. Removed outright under `prefers-reduced-transparency`
+            and `prefers-contrast: more`, and stops drifting under
+            `prefers-reduced-motion` — all three in ds.css. */}
+        <div className="ds-aurora ds-grain qb-sky" aria-hidden="true" />
+
         <div className="qb-page">
           <RigPlate
             quote={quote}
-            totals={totals.total}
-            unpriced={totals.unpricedCount}
-            delta={delta}
             saved={savedNote(saveProblem)}
             saveFailed={saveProblem !== null}
           />
@@ -306,9 +311,25 @@ export function QuoteBuild({
           ) : null}
 
           <nav className="qb-stops" aria-label="The steps of this build">
-            <p className="qb-stops-count mono-label">
-              {doneCount} of {stopCount} decided
-            </p>
+            {/* HOW FAR ALONG, AS A LENGTH AS WELL AS A FIGURE. The
+                count was the only reading of progress on the page and
+                it is the one a person has to stop and parse. The bar
+                is the same two numbers drawn — no third fact, nothing
+                counted twice — and it is `aria-hidden` because the
+                sentence beside it already says it in words. */}
+            <div className="qb-stops-head">
+              <p className="qb-stops-count mono-label">
+                {doneCount} of {stopCount} decided
+              </p>
+              <span className="qb-stops-meter" aria-hidden="true">
+                <span
+                  className="qb-stops-meter-fill"
+                  style={{
+                    ['--done' as string]: `${Math.round((doneCount / stopCount) * 100)}%`,
+                  }}
+                />
+              </span>
+            </div>
             <ul className="qb-stops-list">
               {steps.map((s) => (
                 <li key={s.id}>
@@ -375,7 +396,14 @@ export function QuoteBuild({
               backTitle={steps[steps.length - 1]?.title ?? 'The start'}
             />
           ) : step ? (
-            <section className="qb-step" aria-label={step.title}>
+            /* KEYED ON THE STEP, so walking to the next decision
+               REMOUNTS this panel and it arrives rather than
+               swapping its own contents in place. Nothing is lost by
+               the remount — every line the step produced is on the
+               document already, and the search and the switch are
+               held by the page above. `.qb-step`'s entrance has a
+               reduced-motion escape in build.css. */
+            <section key={step.id} className="qb-step" aria-label={step.title}>
               <header className="qb-step-head">
                 <p className="qb-step-n mono-label">
                   Step {step.index} of {stopCount}
@@ -426,10 +454,11 @@ export function QuoteBuild({
 
                   {offer.candidates.length > 0 ? (
                     <ul className="qb-cards">
-                      {offer.candidates.map((c) => (
+                      {offer.candidates.map((c, i) => (
                         <li key={c.line.id}>
                           <OfferCard
                             candidate={c}
+                            index={i}
                             onPick={() => addLine(quote.id, step.section.blockId, c.line)}
                           />
                         </li>
@@ -564,18 +593,21 @@ function useTotalDelta(total: number): number | null {
    THE RIG — what is being configured, at the top of every step
    ============================================================ */
 
+/* THE PACKAGE FIGURE IS NOT HERE ANY MORE, AND THAT IS THE POINT.
+   It was drawn twice on one screen — once in this plate and once in
+   the bar under the scrollport — with its own copy of the delta and
+   its own copy of the unpriced count. Two readings of one number is
+   how two numbers for one deal start to exist, and the bar is the
+   honest home for it: it is a SIBLING of the scrollport, so it is on
+   screen at every scroll position, while this plate scrolls away the
+   moment a person starts picking. One total, always visible, and the
+   rig gets the room back for the thing it is actually about. */
 function RigPlate({
   quote,
-  totals,
-  unpriced,
-  delta,
   saved,
   saveFailed,
 }: {
   quote: QuoteDef
-  totals: number
-  unpriced: number
-  delta: number | null
   saved: string
   saveFailed: boolean
 }): ReactElement {
@@ -596,16 +628,6 @@ function RigPlate({
           </ul>
         ) : null}
         <p className={`qb-rig-saved${saveFailed ? ' is-bad' : ''}`}>{saved}</p>
-      </div>
-      <div className="qb-rig-money">
-        <span className="mono-label">Package</span>
-        <span className="qb-rig-total">{money(totals)}</span>
-        {delta !== null ? (
-          <span className={`qb-delta${delta < 0 ? ' is-down' : ''}`}>
-            {delta > 0 ? `+${money(delta)}` : money(delta)}
-          </span>
-        ) : null}
-        {unpriced > 0 ? <span className="qb-rig-unpriced">{unpriced} not priced</span> : null}
       </div>
     </header>
   )
@@ -848,9 +870,13 @@ function NothingOffered({
 
 function OfferCard({
   candidate,
+  index,
   onPick,
 }: {
   candidate: Candidate
+  /** where it sits in the shelf — the entrance stagger, capped in
+   *  ds.css at 14 steps so a long shelf never waits a second */
+  index: number
   onPick: () => void
 }): ReactElement {
   const line = candidate.line
@@ -860,7 +886,10 @@ function OfferCard({
   return (
     <button
       type="button"
-      className={`qb-card${on ? ' is-on' : ''}${candidate.outside ? ' is-outside' : ''}`}
+      className={`qb-card ds-sheen ds-rise${on ? ' is-on' : ''}${
+        candidate.outside ? ' is-outside' : ''
+      }`}
+      style={{ ['--i' as string]: index }}
       disabled={on}
       aria-label={
         on
@@ -936,7 +965,12 @@ function PictureWell({
   big: boolean
 }): ReactElement {
   const { paint } = useImageDisplay(img?.src ?? '')
-  const size = big ? 220 : 132
+  /* THE PHOTOGRAPH IS THE BIGGEST THING ON THE PAGE NOW. The rig
+     plate's picture was 220px wide beside a 21px name — a thumbnail
+     of the one object the whole document is about. The box is
+     reserved at this size before the bytes land, so a picture
+     arriving late never moves the plate under it. */
+  const size = big ? 360 : 132
   return (
     <span className={`qb-well${big ? ' qb-well--big' : ''}`}>
       {img && paint ? (

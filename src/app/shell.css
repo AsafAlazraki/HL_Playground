@@ -429,10 +429,6 @@
   line-height: 1.2;
   color: var(--ink);
 }
-.shell-panel-rules-say {
-  color: var(--ink-soft);
-}
-
 /* THE FRONT DOOR — the same door, standing first.
 
    It is the panel's first child, so it has nothing above it to take
@@ -1631,15 +1627,6 @@
   color: var(--ink-faint);
   white-space: nowrap;
 }
-.shell-cell-value {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
 /* -- VIEW switch — SHEET / TABLE instrument toggle ----------- */
 .shell-viewswitch {
   display: inline-flex;
@@ -2255,15 +2242,6 @@
   letter-spacing: -0.003em;
   color: var(--ink);
 }
-.shell-panel-rules-say {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink-faint);
-}
-
 /* names get their case back - see the note in table.css */
 .shell-tbl-name {
   text-transform: none;
@@ -2547,9 +2525,7 @@
   backdrop-filter: blur(20px) saturate(1.6);
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   border: 1px solid var(--hairline);
-  box-shadow:
-    0 1px 2px rgba(9, 12, 18, 0.06),
-    0 12px 32px -8px rgba(9, 12, 18, 0.22);
+  box-shadow: var(--e-float);
 }
 
 .dk-sep {
@@ -2705,9 +2681,7 @@
   backdrop-filter: blur(24px) saturate(1.6);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
   border: 1px solid var(--hairline);
-  box-shadow:
-    0 2px 6px rgba(9, 12, 18, 0.08),
-    0 24px 56px -12px rgba(9, 12, 18, 0.28);
+  box-shadow: var(--e3);
   transform-origin: bottom center;
   animation: dk-in 160ms var(--ease-draft);
 }
@@ -2720,35 +2694,6 @@
     opacity: 1;
     transform: none;
   }
-}
-
-/* the table list runs in columns, so fifty tables are one glance
-   rather than one long scroll */
-.dk-tables {
-  columns: 2;
-  column-gap: var(--sp-4);
-}
-.dk-group {
-  break-inside: avoid;
-  margin-bottom: var(--sp-3);
-}
-.dk-group-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 0 var(--sp-2) 4px;
-}
-.dk-group-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-.dk-group-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-faint);
 }
 
 .dk-row {
@@ -2818,14 +2763,6 @@
   color: var(--ink-faint);
 }
 
-/* the sheet's own zoom controls sit bottom-left; the dock is
-   centred, so they never meet — but on a narrow window, give way */
-@media (max-width: 720px) {
-  .dk-tables {
-    columns: 1;
-  }
-}
-
 @media (prefers-reduced-transparency: reduce) {
   .dk,
   .dk-panel {
@@ -2878,10 +2815,7 @@
   border: 1px solid var(--hairline);
   /* the Mac window shadow: tight contact edge, then a wide soft
      ambient. One shadow cannot do both. */
-  box-shadow:
-    0 0 0 0.5px rgba(9, 12, 18, 0.08),
-    0 2px 6px rgba(9, 12, 18, 0.09),
-    0 24px 64px -12px rgba(9, 12, 18, 0.28);
+  box-shadow: var(--e3);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -3013,7 +2947,7 @@
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
+  box-shadow: var(--e1);
   transition:
     background var(--t-fast) var(--ease-draft),
     color var(--t-fast) var(--ease-draft);
@@ -3070,9 +3004,7 @@
   background: var(--paper-high);
   border-color: color-mix(in srgb, var(--hairline) 80%, transparent);
   color: var(--ink);
-  box-shadow:
-    0 0.5px 1px rgba(9, 12, 18, 0.06),
-    0 1px 3px rgba(9, 12, 18, 0.08);
+  box-shadow: var(--e1);
 }
 .tb-strip-name {
   font-family: var(--font-ui);
@@ -3284,7 +3216,7 @@
   background: var(--paper-high);
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.04), 0 2px 6px -2px rgba(9, 12, 18, 0.07);
+  box-shadow: var(--e-card);
   transition:
     border-color var(--t-fast) var(--ease-draft),
     box-shadow var(--t-med) var(--ease-draft),
@@ -3302,12 +3234,12 @@
 }
 .hm-card:hover {
   border-color: var(--hairline-strong);
-  box-shadow: 0 1px 2px rgba(9, 12, 18, 0.06), 0 10px 24px -8px rgba(9, 12, 18, 0.16);
+  box-shadow: var(--e-card-hover);
   transform: translateY(-2px);
 }
 .hm-card:active {
   transform: translateY(0) scale(0.995);
-  box-shadow: 0 0.5px 1px rgba(9, 12, 18, 0.05);
+  box-shadow: var(--e1);
 }
 /* FOCUS HAS TO BE FINDABLE, and this was the one card in the app you
    could not find. The ring was a 1px border colour change plus a 3px
@@ -3707,16 +3639,11 @@
   border: 1px solid var(--hairline);
   /* an UNFOCUSED window sits back: shallower shadow, no ring. The
      focused one is unmistakably the one you are working in. */
-  box-shadow:
-    0 0 0 0.5px rgba(9, 12, 18, 0.06),
-    0 4px 12px -4px rgba(9, 12, 18, 0.14);
+  box-shadow: var(--e2);
   transition: box-shadow var(--t-med) var(--ease-draft);
 }
 .win.is-focused {
-  box-shadow:
-    0 0 0 0.5px rgba(9, 12, 18, 0.1),
-    0 8px 20px -6px rgba(9, 12, 18, 0.18),
-    0 32px 72px -16px rgba(9, 12, 18, 0.34);
+  box-shadow: var(--e4);
 }
 .win.is-zoomed {
   border-radius: 11px;
@@ -3827,21 +3754,6 @@
   height: 44px;
 }
 
-/* ---------- the desktop ------------------------------------- */
-
-/* the drawing is the desktop picture: it stays live underneath,
-   and windows sit on it */
-.shell-desktop {
-  position: absolute;
-  inset: 0;
-}
-
-/* minimised windows live on the dock */
-.dk-mini {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 
 
 /* ---------- the app switcher (Cmd/Ctrl + Tab) --------------- */
@@ -3852,7 +3764,7 @@
   z-index: 200;
   display: grid;
   place-items: center;
-  background: rgba(9, 12, 18, 0.28);
+  background: color-mix(in srgb, var(--fg) 28%, transparent);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   pointer-events: none;
@@ -3866,7 +3778,7 @@
   backdrop-filter: blur(28px) saturate(1.8);
   -webkit-backdrop-filter: blur(28px) saturate(1.8);
   border: 1px solid var(--hairline);
-  box-shadow: 0 32px 80px -16px rgba(9, 12, 18, 0.45);
+  box-shadow: var(--e-hero);
   max-width: calc(100vw - 64px);
   overflow: hidden;
 }
@@ -4018,7 +3930,7 @@
   width: 100%;
   height: 100%;
   border-radius: 999px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 18%, transparent);
 }
 
 /* ---------- §14 · and none of it against the user's wishes --- */
@@ -4223,48 +4135,6 @@
   inset: 0;
 }
 
-
-/* ---------- the bar, when it is a page's toolbar ------------- */
-
-.dk-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 40px;
-  padding: 0 12px 0 8px;
-  border: 0;
-  border-radius: 13px;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 550;
-  cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    transform var(--t-med) var(--ease-draft);
-}
-.dk-back:hover {
-  background: var(--paper-sunken);
-}
-.dk-back:active {
-  transform: scale(0.97);
-}
-
-/* the page's name, so the bar says WHERE these verbs apply — a
-   toolbar with no subject is a row of guesses */
-.dk-ctx-title {
-  max-width: 260px;
-  padding: 0 4px;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.006em;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* ---------- a table page fills the surface ------------------- */
 
@@ -4836,4 +4706,327 @@
 }
 .hm-card--shot .hm-card-stats {
   padding-bottom: var(--s-3);
+}
+
+/* ============================================================
+   THE INSTRUMENT — one object at the bottom of the screen.
+
+   WHAT WAS THERE. Two floating bars, stacked, each with its own
+   border, its own shadow and its own backdrop blur, separated by a
+   10px gap: the action bar at 40px and the dock at 60. Measured on
+   a table page they cost the register 132px — three of its 40px
+   rows — and, worse than the arithmetic, they read as two pieces of
+   furniture arguing about which one was the chrome.
+
+   WHAT IS THERE NOW. ONE object, `.dk-rig`, carrying one material,
+   one outline, one lit edge and one shadow. Inside it the two tiers
+   keep their jobs exactly — the top tier is what you DO on this
+   page, the bottom tier is where you GO — and a hairline is all
+   that separates them, because they are two rows of one instrument
+   rather than two instruments.
+
+   THE ARITHMETIC, and it is why the page gets rows back:
+     action tier   36px  (was 40)
+     hairline       1px  (was a 10px gap and a second border)
+     dock tier     60px  (unchanged — 44px items are the target
+                          size, and the dock is the best thing on
+                          this screen)
+     rig border     2px
+     ------------------
+     rig           99px, floating 22px off the floor
+
+   121px to the top of the object, against 132 for the pair, and the
+   page is charged 117 — the object's own height less the 4px of
+   bottom margin the dock has always been allowed to overlap. See
+   the foot of `actionbar.css`, which owns that number.
+
+   THE MATERIAL IS THE ONE THE PRINCIPLES ALLOW. Glass is retired
+   everywhere except the two surfaces that sit OVER scrolling
+   content and have to say so: this and the masthead. Both now take
+   `--glass-bg` / `--glass-blur` / `--glass-sat` rather than
+   hand-mixed `color-mix` and hand-typed blur radii, so the two ends
+   of the app's chrome are the same material by construction and not
+   by coincidence. `prefers-reduced-transparency` turns both opaque,
+   below.
+   ============================================================ */
+
+/* the gap is now only ever between the Tables menu and the rig —
+   the two tiers inside the rig are joined, not spaced */
+.dk-wrap {
+  gap: var(--s-3);
+}
+
+.dk-rig {
+  display: flex;
+  flex-direction: column;
+  max-width: calc(100vw - var(--s-6));
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  /* THE FLOAT RUNG, plus the lit top hairline. `--e-float` stacks a
+     contact shadow under a wide soft one, which is what makes an
+     edge look lit rather than drawn; `--glass-edge` is the highlight
+     that says the light is coming from above. */
+  box-shadow: var(--e-float), inset 0 1px 0 var(--glass-edge);
+}
+
+/* the navigation tier keeps its geometry and gives up its skin —
+   the rig is the surface now, so a second border, a second blur and
+   a second shadow here would be the same object drawn twice */
+.dk {
+  justify-content: center;
+  padding: var(--s-2);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------
+   A DOCK ITEM — hover, press, focus, and one lit state.
+
+   The gesture is kept: the icon grows toward the pointer, which is
+   the one piece of personality this bar has and the reason people
+   like it. What is added is the ACTIVE state, which was a 9% wash
+   and a 4px dot and read, on glass, as "very slightly bluer".
+   ------------------------------------------------------------ */
+.dk-item {
+  color: var(--fg-secondary);
+  border-radius: 14px;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
+}
+.dk-item:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+/* THE LIT PLACE. A soft brand ramp rather than a flat wash, an
+   accent hairline so it has an edge on glass, and the running light
+   below it widened from a 4px dot to a 14px bar — at 44px across, a
+   4px dot is a speck. The glyph stays `--accent`, which measures
+   above the floor on this ground, so the lit item is legible and
+   not merely tinted. */
+.dk-item.is-active,
+.dk-item.is-open {
+  background: var(--grad-brand-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+.dk-item.is-active::after {
+  bottom: 3px;
+  width: 14px;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  box-shadow: var(--glow-md);
+}
+/* THE RING HAS TO CLEAR ITS NEIGHBOURS. Every item lifts on hover,
+   so a focused item drawn earlier in source order can have the next
+   one's raised corner painted over its ring. */
+.dk-item:focus-visible {
+  outline: none;
+  z-index: 1;
+  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
+}
+.dk-item.is-active:focus-visible {
+  box-shadow:
+    inset 0 0 0 1px var(--accent-line),
+    0 0 0 2px var(--surface-1),
+    0 0 0 4px var(--accent);
+}
+
+/* THE LABEL IS INSTANT, AND IT ARRIVES FOR THE KEYBOARD TOO.
+
+   It was 120ms of opacity with a 4px travel. It is the same 4px
+   travel on `--ease-out-expo` at `--d-press`, which is the duration
+   this system reserves for things that must feel like they were
+   already there — a name that fades in over an eighth of a second
+   is a name you have already stopped waiting for.
+
+   `:focus-visible` draws it exactly as `:hover` does, and the whole
+   bar is one tab stop with arrow keys inside it (see `Dock.tsx`),
+   so ten icons are ten names at one press and nine arrows. The
+   button keeps its `aria-label`, so nothing here is the only copy
+   of the name. */
+.dk-tip {
+  border-radius: var(--r-control);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-caption-track);
+  box-shadow: var(--e2);
+  transition:
+    opacity var(--d-press) var(--ease-out-expo),
+    transform var(--d-press) var(--ease-out-expo);
+}
+
+/* the two menu panels take the same material as the rig they open
+   from, rather than a second recipe for the same idea */
+.dk-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border-color: var(--line);
+  box-shadow: var(--e3), inset 0 1px 0 var(--glass-edge);
+  animation: ds-scale-in var(--d-med) var(--ease-out-expo);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dk-rig,
+  .dk-panel {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-panel {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   THE MASTHEAD — the other end of the same object.
+
+   It was a 52px strip mixing its own `color-mix` recipe and its own
+   blur radius, with the page's name set at 13px — one step under
+   the app's own "the thing you scan for". Two changes, and neither
+   is ornament:
+
+     THE MATERIAL IS THE DOCK'S, by token rather than by eye. The
+     top and the bottom of every screen are now demonstrably the
+     same piece of glass, and a change to `--glass-*` moves both.
+
+     THE NAME IS A HEADING. `--t-heading-*` is the step this system
+     records for "card names, row heads — the thing you scan for",
+     and the subject of the page you are on is exactly that. It is
+     taken whole — size, weight, leading and tracking together —
+     which is rule 6.
+   ============================================================ */
+
+.surface .shell-view-bar {
+  height: 56px;
+  padding: 0 var(--s-4);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border-bottom: 1px solid var(--line-subtle);
+}
+.surface .shell-view-what-name {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
+}
+/* the separator is a tick between two facts and nothing to read, so
+   it goes to the decoration tier while the aside stays at the floor */
+.surface .shell-view-what-sep {
+  color: var(--fg-quaternary);
+}
+.surface .shell-view-what-say {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* THE WAY BACK gets the three states rule 8 asks for and the shape
+   language of a dock item, so leaving a page looks like the rest of
+   the chrome rather than like a web page's button. */
+.surface .shell-view-back {
+  height: var(--h-sm);
+  border-radius: var(--r-control);
+  border-color: var(--line);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  box-shadow: var(--e1);
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.surface .shell-view-back:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.surface .shell-view-back:active {
+  transform: scale(0.97);
+}
+.surface .shell-view-back:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .surface .shell-view-bar {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ============================================================
+   ARRIVING SOMEWHERE.
+
+   Every stage replaced the last one on the same frame for most of
+   this app's life; the cross-fade added later is 180ms of opacity
+   and a 6px lift, which is a fade rather than an entrance.
+
+   IT IS STILL ONE ELEMENT THAT MOVES, deliberately. A stage is a
+   register of 588 rows or a canvas of 51 nodes, and animating its
+   children means handing the compositor a layer per child on the
+   frame a virtualiser is measuring. `.surface` rises as one object
+   — `--rise` is 10px, `--d-slow` is 260ms — and then the chrome
+   settles on top of it with a 90ms delay, which is what makes it
+   read as a page ARRIVING rather than a page appearing.
+
+   FAST IS PART OF THE BRIEF. 260ms is under the 420ms this system
+   reserves for a considered entrance, because a stage swap is a
+   thing people do fifty times an hour and an entrance you can
+   outrun is an entrance that is in the way.
+   ============================================================ */
+
+.surface {
+  --rise: 10px;
+  animation: ds-rise var(--d-slow) var(--ease-out-expo);
+}
+.surface > * > .shell-view-bar {
+  animation: ds-fade var(--d-slow) var(--ease) backwards;
+  animation-delay: 90ms;
+}
+
+/* MOVEMENT GOES; THE PAGE STILL ARRIVES. Restated after the rules
+   above rather than relying on the earlier block, which is now
+   earlier in source at the same specificity and would lose. */
+@media (prefers-reduced-motion: reduce) {
+  .surface,
+  .surface > * > .shell-view-bar {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   THE SWITCHER — same family, one material.
+   ============================================================ */
+
+.sw-row {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border-color: var(--line);
+  box-shadow: var(--e-hero), inset 0 1px 0 var(--glass-edge);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .sw-row {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }

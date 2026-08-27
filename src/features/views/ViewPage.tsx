@@ -34,15 +34,25 @@ import {
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
+import { money } from '@/lib/money'
 import { bandOf, defaultColumns, formatCell, formatRange, rangePairs, splitUnit } from './columns'
-import { levelCaption, levelOptions, levelValues, oneOf, rowsInScope, singular } from './describe'
+import {
+  isCuratedOnly,
+  levelCaption,
+  levelOptions,
+  levelValues,
+  oneOf,
+  rowsInScope,
+  singular,
+} from './describe'
 import { findJoinTable, makeEngine, type Ctx } from './pairs'
 import { retiredTablesSentence, withheldNotes } from './sellable'
 import { addBlock, setBlockRule, useViewDef, walkBlocks } from './viewDefs'
 import { BlockCard, type PendingDrop } from './BlockCard'
 import { RuleOffer } from './RuleOffer'
 import { KindMark } from './marks'
-import { SubjectPicture } from './pictures'
+import { HeroPicture, hasPicture } from './pictures'
+import { readRig, type RigPrice } from './rollup'
 import { SPRING, transitionFor, useStillness } from './stillness'
 import { isTableDrag, readTableDrag } from './dnd'
 import './views.css'
@@ -165,6 +175,25 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
     )
   }, [entities, view, root])
 
+  /* ── WHAT THIS RIG COMES TO, AND WHY IT IS ON THIS PAGE ───────
+
+     The three numbers a salesperson is asked for in the first minute
+     — the hull, the motor, the trailer — were all on this screen and
+     none of them was added up. `readRig` does the arithmetic in one
+     place and, crucially, chooses the rows THE QUOTE WOULD CHOOSE:
+     the star where there is one, a single pick where there is not,
+     and nothing at all where a person still has a choice to make.
+     So the figure in the header is the figure QUOTE THIS ONE will
+     produce, and a block still waiting on a decision says so instead
+     of being quietly left out of a total.
+
+     Memoised apart from the blocks because it walks only the tables
+     that carry a price column at all — see `rollup.ts`. */
+  const rig = useMemo(
+    () => readRig({ ctx, engine, view, root, row }),
+    [ctx, engine, view, root, row],
+  )
+
   /* the safe answer is the narrow one, so the default is always
      "this row only" — and it resets when the page changes row */
   useEffect(() => {
@@ -251,6 +280,27 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
   const pendingHere = pending && pending.parentBlockId === null ? pending : null
   const pendingTable = pendingHere ? entities[pendingHere.tableId] : undefined
 
+  /* Layout asks before it draws: a page with a photograph is two
+     columns and a page without one is a single wide column. */
+  const shot = hasPicture(root, row)
+
+  /* ── ONE SENTENCE, NOT FIVE ───────────────────────────────────
+
+     Every block seeded by `defaultBlocksFor` is curated-only, so on a
+     real page `ruleReason` handed the identical clause — "only what
+     somebody picked for this one shows here" — to five curation
+     notes, one under the other. Five printings of one fact is not
+     five explanations; it is furniture, and it buries the counts
+     beside it, which are the part that differs per block.
+
+     So the page says it ONCE, above the blocks, and each block keeps
+     its own count without repeating the reason. A page with a single
+     curated block says nothing here and leaves the clause where it
+     was — there is nothing to de-duplicate, and a sentence about
+     "every list below" would be a lie about one. */
+  const curatedBlocks = view.blocks.filter((b) => isCuratedOnly(b.rule)).length
+  const sayCuratedOnce = curatedBlocks > 1
+
   return (
     <div
       className={`vw-root${configuring ? ' is-config' : ''}${dragOver ? ' is-drop' : ''}`}
@@ -271,54 +321,81 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
         <span className="vw-tick vw-tick--tl" aria-hidden="true" />
         <span className="vw-tick vw-tick--tr" aria-hidden="true" />
 
-        <header className="vw-head">
-          {/* THE PHOTOGRAPH THE CELL ELECTED. It is a flex item of its
-              own, ahead of the identity block, so when there is no
-              picture — or the host will not serve it — the header
-              renders exactly as it did before pictures existed.
-              Nothing collapses, because nothing was reserved. */}
-          <SubjectPicture entity={root} row={row} />
+        {/* ============================================================
+            THE HERO — the boat, at the size a boat is worth.
 
-          <div className="vw-head-id">
-            {trail.length > 0 ? (
-              <p className="vw-trail mono-label">
-                {trail.map((t, i) => (
-                  <span key={`${t}-${i}`} className="vw-trail-step">
-                    {i > 0 ? (
-                      <span className="vw-trail-sep" aria-hidden="true">
-                        ▸
+            WHAT WAS HERE. A 120×90 thumbnail, a name, and five mono
+            specs in a row, inside a header whose height was set by the
+            words. It was a correct header and the wrong drawing: this
+            page is the one place in the app where a salesperson and a
+            customer look at the same screen together, and the largest
+            thing on it was a paragraph of grey.
+
+            The photograph is the row's OWN — `HeroPicture`, which
+            draws nothing at all rather than a stand-in, so a hull
+            nobody has photographed gets a single wide column of words
+            instead of a hole where a picture should be. That is what
+            `shot` decides, before layout, and why the modifier class
+            is on the hero rather than a rule about an empty box.
+            ============================================================ */}
+        <header className={`vw-hero${shot ? ' vw-hero--shot' : ''}`}>
+          <figure className="vw-hero-shot">
+            <HeroPicture entity={root} row={row} />
+          </figure>
+
+          <div className="vw-hero-body">
+            <div className="vw-hero-say">
+              <div className="vw-hero-top">
+                {trail.length > 0 ? (
+                  <p className="vw-trail mono-label">
+                    {trail.map((t, i) => (
+                      <span key={`${t}-${i}`} className="vw-trail-step">
+                        {i > 0 ? (
+                          <span className="vw-trail-sep" aria-hidden="true">
+                            ▸
+                          </span>
+                        ) : null}
+                        {t}
                       </span>
-                    ) : null}
-                    {t}
-                  </span>
-                ))}
-              </p>
-            ) : (
-              <p className="vw-trail mono-label">
-                <KindMark entity={root} size={ICON_SIZE.tiny} />
-                {root.name}
-              </p>
-            )}
+                    ))}
+                  </p>
+                ) : (
+                  <p className="vw-trail mono-label">
+                    <KindMark entity={root} size={ICON_SIZE.tiny} />
+                    {root.name}
+                  </p>
+                )}
 
-            <h1 className="vw-name">{rowLabel(root, row)}</h1>
-            <SpecStrip entity={root} row={row} engine={engine} />
+                <button
+                  type="button"
+                  className={`vw-gear${configuring ? ' is-on' : ''}`}
+                  aria-pressed={configuring}
+                  title={configuring ? 'Done — back to the clean page' : 'Set up this page'}
+                  onClick={() => {
+                    setConfiguring((v) => !v)
+                    setPicking(false)
+                    setPending(null)
+                    setRefusal(null)
+                  }}
+                >
+                  {configuring ? (
+                    <Check size={16} weight="bold" />
+                  ) : (
+                    <Gear size={16} weight="light" />
+                  )}
+                  <span className="vw-gear-word">{configuring ? 'Done' : 'Set up'}</span>
+                </button>
+              </div>
+
+              {/* THE ONE HERO STEP IN THIS FEATURE. `--t-hero-*` is the
+                  step above display, and a rig's name in front of a
+                  customer is what it is for. */}
+              <h1 className="ds-hero vw-name">{rowLabel(root, row)}</h1>
+              <SpecStrip entity={root} row={row} engine={engine} />
+            </div>
+
+            <RigPanel rig={rig} root={root} />
           </div>
-
-          <button
-            type="button"
-            className={`vw-gear${configuring ? ' is-on' : ''}`}
-            aria-pressed={configuring}
-            title={configuring ? 'Done — back to the clean page' : 'Set up this page'}
-            onClick={() => {
-              setConfiguring((v) => !v)
-              setPicking(false)
-              setPending(null)
-              setRefusal(null)
-            }}
-          >
-            {configuring ? <Check size={16} weight="bold" /> : <Gear size={16} weight="light" />}
-            <span className="vw-gear-word">{configuring ? 'Done' : 'Set up'}</span>
-          </button>
         </header>
 
         {/* THE SUBJECT ITSELF IS HISTORY. Nothing sends a person here —
@@ -403,6 +480,13 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
           ) : null}
         </AnimatePresence>
 
+        {sayCuratedOnce ? (
+          <p className="vw-once" role="note">
+            Every list below shows only what somebody picked for this{' '}
+            {singular(root.name)}. Press “Show everything” on one to see its whole table.
+          </p>
+        ) : null}
+
         <div className="vw-blocks">
           {view.blocks.map((block, i) => (
             <BlockCard
@@ -417,6 +501,9 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
               appliesTo={appliesTo}
               configuring={configuring}
               index={i}
+              /* the page has said it once already; the block keeps its
+                 own count and drops the repeated clause */
+              sayWhyCurated={!sayCuratedOnce}
               onDropTable={offerDrop}
               onRefuse={refuse}
               pending={pending}
@@ -563,6 +650,89 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
       </div>
     </div>
   )
+}
+
+/* ============================================================
+   WHAT IT COMES TO — the rig, added up.
+
+   THE FIGURE IS COUNTED, NEVER TYPED, and it is counted out of the
+   dealer's own price columns through the one resolver this app has
+   (`@/features/quote/pricing`). A table with no named price column
+   contributes nothing and SAYS so; a block still holding a choice
+   contributes nothing and says so too. The whole panel is absent
+   when there is not a single figure to state — a `$0` here would
+   be a claim about a business's stock that nobody made.
+
+   IT AGREES WITH THE BUTTON. `readRig` picks the rows the quote
+   picks, so the total a customer is read off this header is the
+   total QUOTE THIS ONE produces. Two summations of one deal that
+   disagree is the failure `@/lib/money` exists to end, and this is
+   the same discipline one layer up.
+   ============================================================ */
+
+function RigPanel({ rig, root }: { rig: RigPrice; root: EntityDef }): ReactElement | null {
+  if (rig.counted === 0) return null
+
+  const lines = rig.subject ? [rig.subject, ...rig.added] : rig.added
+
+  /* WHAT IS NOT IN THE FIGURE, in one paragraph rather than three.
+     Rule 10 — a thing that cannot be done says why, where it is —
+     and the thing that cannot be done here is a complete total. */
+  const notes: string[] = []
+  if (rig.open.length === 1) {
+    const one = rig.open[0]
+    notes.push(
+      `${one.picked} ${one.tableName} ${one.picked === 1 ? 'is' : 'are'} picked and none is recommended yet, so nothing from that list is in this figure.`,
+    )
+  } else if (rig.open.length > 1) {
+    notes.push(
+      `${rig.open.length} lists are still holding a choice — ${joinNames(rig.open.map((o) => o.tableName))} — so nothing from them is in this figure.`,
+    )
+  }
+  if (rig.unpriced.length > 0) {
+    notes.push(
+      rig.unpriced.length <= 2
+        ? `${joinNames(rig.unpriced)} ${rig.unpriced.length === 1 ? 'carries' : 'carry'} no price column on this sheet.`
+        : `${rig.unpriced.length} other tables on this page carry no price column on this sheet.`,
+    )
+  }
+
+  return (
+    <section className="vw-rig" aria-label={`What this ${singular(root.name)} comes to`}>
+      <div className="vw-rig-head">
+        <span className="mono-label vw-rig-lead">Added up</span>
+        <b className="vw-rig-total">{money(rig.total)}</b>
+      </div>
+
+      <ul className="vw-rig-lines">
+        {lines.map((l) => (
+          <li
+            key={`${l.blockId}-${l.tableId}-${l.label}`}
+            className={`vw-rig-line${l.recommended ? ' is-star' : ''}`}
+          >
+            <span className="vw-rig-what">
+              {l.blockId === '' ? singular(l.tableName) : l.label}
+            </span>
+            {/* the business's own word for the rung it was read at —
+                `Sell inc Rego`, `Cash`. A name, so its case is its own. */}
+            <span className="vw-rig-rung">{l.rung}</span>
+            <span className="vw-rig-amt">{money(l.amount)}</span>
+          </li>
+        ))}
+      </ul>
+
+      {notes.length > 0 ? <p className="vw-rig-note">{notes.join(' ')}</p> : null}
+    </section>
+  )
+}
+
+/** "a, b and c" — the same shape `@/features/curation` joins clauses
+ *  with, so two surfaces reading one page do not punctuate lists two
+ *  different ways. */
+function joinNames(parts: readonly string[]): string {
+  if (parts.length === 0) return ''
+  if (parts.length === 1) return parts[0]
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
 }
 
 /* ---------------------------------------------------------- */

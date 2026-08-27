@@ -391,6 +391,84 @@ function AddPictures({
 }
 
 /* ---------------------------------------------------------- */
+/* the hover preview                                          */
+/* ---------------------------------------------------------- */
+
+/* ============================================================
+   A THUMBNAIL YOU CAN ACTUALLY SEE, WITHOUT LEAVING THE ROW.
+
+   220 real photographs ship with this app and the register drew the
+   largest of them at 32 pixels. Opening one meant selecting the cell,
+   then pressing the picture, then closing a full-screen plate — three
+   acts and a scene change to answer "which boat is this row".
+
+   Resting the pointer on a thumb now answers it in place. The plate
+   is 268px, it names the picture and says where it sits in the strip,
+   and it goes the moment the pointer does. It is NOT a second way to
+   open the lightbox: the lightbox is still where a picture is worked
+   on — promoted, walked through, removed — and this is only looking.
+
+   THREE THINGS IT REFUSES TO DO.
+
+   · It never draws a picture the cell itself could not draw. A closed
+     host is a REFERENCE in the strip (see the note at the top of this
+     file) and there is nothing to enlarge, so no plate appears and no
+     request is made.
+   · It waits. A pointer crossing a column of forty photographs on its
+     way somewhere else must not throw forty plates up, so the plate
+     is armed on a delay and disarmed by leaving.
+   · It never covers the thumb it belongs to, and never leaves the
+     window. It stands beside the picture, flipping to the other side
+     when that side is where the window ends.
+   ============================================================ */
+
+/** how long the pointer has to stay before the plate is drawn */
+const PEEK_WAIT = 320
+const PEEK_W = 268
+const PEEK_H = 244
+
+interface Peek {
+  at: string
+  alt: string
+  /** the picture's own words, and where it sits in the strip */
+  label: string
+  say: string
+  /** the thumb it belongs to, so the plate can stand beside it */
+  box: DOMRect
+}
+
+function ImagePeek({ peek }: { peek: Peek }): JSX.Element {
+  const gap = 12
+  const room = typeof window === 'undefined' ? 1280 : window.innerWidth
+  const tall = typeof window === 'undefined' ? 800 : window.innerHeight
+
+  let left = peek.box.right + gap
+  if (left + PEEK_W > room - 8) left = peek.box.left - gap - PEEK_W
+  if (left < 8) left = Math.max(8, room - PEEK_W - 8)
+
+  const wanted = peek.box.top + peek.box.height / 2 - PEEK_H / 2
+  const top = Math.max(8, Math.min(wanted, tall - PEEK_H - 8))
+
+  return createPortal(
+    <div
+      className="tb-imgpeek"
+      style={{ left, top, width: PEEK_W }}
+      role="presentation"
+      aria-hidden="true"
+    >
+      <span className="tb-imgpeek-frame">
+        <img className="tb-imgpeek-pic" src={peek.at} alt={peek.alt} decoding="async" />
+      </span>
+      <span className="tb-imgpeek-say">
+        <b className="tb-imgpeek-name">{peek.label}</b>
+        <i className="tb-imgpeek-of">{peek.say}</i>
+      </span>
+    </div>,
+    document.body,
+  )
+}
+
+/* ---------------------------------------------------------- */
 /* one thumbnail                                              */
 /* ---------------------------------------------------------- */
 
@@ -415,6 +493,7 @@ function ThumbButton({
   fieldName,
   isActive,
   onOpen,
+  onPeek,
 }: {
   img: ImageRef
   kind?: TableKind
@@ -423,14 +502,36 @@ function ThumbButton({
   fieldName: string
   isActive: boolean
   onOpen: (index: number) => void
+  /** arm or disarm the hover plate — `null` disarms. Only ever called
+   *  with a picture this cell is already allowed to draw. */
+  onPeek: (p: Peek | null) => void
 }): JSX.Element {
   const { paint, probe, at } = useImageDisplay(img.src)
   const first = index === 0
+  const peekOf = (el: HTMLElement): Peek | null =>
+    paint && at
+      ? {
+          at,
+          alt: img.alt ?? '',
+          label: imageLabel(img),
+          say:
+            count === 1
+              ? fieldName
+              : `${fieldName} — ${index + 1} of ${count}${first ? ', the one that shows' : ''}`,
+          box: el.getBoundingClientRect(),
+        }
+      : null
   return (
     <button
       type="button"
       tabIndex={-1}
       className={'tb-imgthumb' + (paint ? '' : ' tb-imgthumb-ref')}
+      onMouseEnter={(e) => onPeek(peekOf(e.currentTarget))}
+      onMouseLeave={() => onPeek(null)}
+      /* the plate goes the instant the picture is being acted on —
+         opened, dragged, removed — so it can never stand between the
+         pointer and the thing it is pointing at */
+      onMouseDown={() => onPeek(null)}
       /* ONE WORDING FOR THIS IDEA, EVERYWHERE. These two strings used
          to invent their own — "held as a link, not shown here" for the
          reader, "held as a link to <host>, so it is not shown here"
@@ -555,6 +656,29 @@ export function ImageStrip({
     null,
   )
   const cellRef = useRef<HTMLDivElement | null>(null)
+
+  /* -- the hover plate, armed on a delay -------------------------
+     See the note above `ImagePeek`. The timer is a ref so arming and
+     disarming are the same synchronous act from any handler, and the
+     unmount clears it — a cell scrolled out from under a resting
+     pointer must not put a plate up a third of a second later. */
+  const [peek, setPeek] = useState<Peek | null>(null)
+  const peekTimer = useRef<number | null>(null)
+  const arm = useCallback((p: Peek | null): void => {
+    if (peekTimer.current !== null) window.clearTimeout(peekTimer.current)
+    if (p === null) {
+      peekTimer.current = null
+      setPeek(null)
+      return
+    }
+    peekTimer.current = window.setTimeout(() => setPeek(p), PEEK_WAIT)
+  }, [])
+  useEffect(
+    () => () => {
+      if (peekTimer.current !== null) window.clearTimeout(peekTimer.current)
+    },
+    [],
+  )
 
   const count = images.length
   const primary = primaryImage(images)
@@ -698,6 +822,11 @@ export function ImageStrip({
         setOver(false)
         setDropAt(null)
       }}
+      /* the plate belongs to a thumb, so it goes when the pointer
+         leaves the CELL as well as when it leaves the thumb — a
+         pointer that jumps straight out of the register never fires
+         the thumb's own leave */
+      onMouseLeave={() => arm(null)}
       onDrop={onCellDrop}
       onDoubleClick={(e) => {
         /* double-clicking a THUMBNAIL opens that picture; the grid's
@@ -753,6 +882,7 @@ export function ImageStrip({
               fieldName={field.name}
               isActive={isActive}
               onOpen={onOpen}
+              onPeek={arm}
             />
             <button
               type="button"
@@ -792,6 +922,10 @@ export function ImageStrip({
           </span>
         )}
       </div>
+
+      {/* the hover plate — never while a sheet of its own is up, and
+          never while a picture is being dragged */}
+      {peek && add === null && !dragging && <ImagePeek peek={peek} />}
 
       {add && (
         <AddPictures

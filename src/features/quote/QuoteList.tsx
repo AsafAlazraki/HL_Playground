@@ -13,10 +13,13 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
+import { HELD_AS_LINK, useImageDisplay } from '@/lib/imageSources'
 import { localDay } from './day'
 import { money } from './pricing'
 import { quoteTotals } from './totals'
 import { discardDraft, useQuotes } from './quotes'
+import { FrozenPhoto } from './photo'
+import type { QuoteDef } from './types'
 import './quote.css'
 
 export interface QuoteListProps {
@@ -78,14 +81,26 @@ export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): React
 
     return (
       <div className="qt-root qt-root--doc qt-root--none">
+        {/* the ground, carrying nothing — ds.css removes it under
+            reduced transparency and higher contrast */}
+        <div className="ds-aurora ds-grain qt-sky" aria-hidden="true" />
+
         <div className="qt-none">
           <span className="mono-label qt-none-eyebrow">
             {nowhereToStart ? 'Nothing to quote from yet' : 'No quotes yet'}
           </span>
 
+          {/* WHAT THE PLACE IS, AS A TITLE. The four parts were all
+              here and all set as paragraphs, so the card read as a
+              notice rather than as a screen — and this is the page a
+              salesperson lands on before they have made anything.
+              The sentence under it is unchanged; only its first
+              clause is promoted to the heading it always was. */}
+          <h2 className="qt-none-title">A quote is one rig, one customer, one moment.</h2>
+
           <p className="qt-none-say">
-            A quote is one rig, one customer and one moment — the row you are
-            selling, frozen with its prices on the day you hand it over.
+            The row you are selling, frozen with its prices on the day you hand it
+            over — so a quote given on Monday still says the same number on Friday.
           </p>
 
           {/* WHAT YOU ALREADY HAVE, counted, and only when the stage
@@ -127,26 +142,43 @@ export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): React
        air on the scrollport — see `.qt-root--doc` in quote.css */
     <div className="qt-root qt-root--doc">
       <ul className="qt-list">
-        {quotes.map((q) => {
+        {quotes.map((q, i) => {
           const totals = quoteTotals(q)
           return (
-            <li key={q.id} className={`qt-list-row${openId === q.id ? ' is-open' : ''}`}>
+            <li
+              key={q.id}
+              className={`qt-list-row ds-rise${openId === q.id ? ' is-open' : ''}`}
+              style={{ ['--i' as string]: i }}
+            >
               <button type="button" className="qt-list-open" onClick={() => onOpen(q.id)}>
+                {/* THE RIG, WHERE WE HOLD A PICTURE OF IT. The photograph is
+                    the quote's own frozen `subjectImage` — the same address
+                    the document prints — so a row of the diary shows the boat
+                    that was quoted and never a stand-in for it. */}
+                <RowShot quote={q} />
+
+                <span className="qt-list-say">
+                  <span className="qt-list-who">
+                    {q.customer.name.trim() === '' ? (
+                      <span className="qt-doc-blank">no customer yet</span>
+                    ) : (
+                      q.customer.name
+                    )}
+                  </span>
+                  <span className="qt-list-what">{q.subjectLabel}</span>
+                </span>
+
                 {/* THE DEALER'S OWN CALENDAR DAY, not UTC's. `.slice(0, 10)` on
                     the stored instant named the UTC day, so in any zone ahead of
                     UTC this column disagreed with the reference on the document
                     it opens — measured at UTC+10, a quote raised at 02:28 on the
                     18th listed as the 17th. See `localDay`. */}
                 <span className="mono-label qt-list-when">{localDay(q.createdAt)}</span>
-                <span className="qt-list-who">
-                  {q.customer.name.trim() === '' ? (
-                    <span className="qt-doc-blank">no customer yet</span>
-                  ) : (
-                    q.customer.name
-                  )}
-                </span>
-                <span className="qt-list-what">{q.subjectLabel}</span>
-                <span className="mono-label qt-list-state">
+                <span
+                  className={`mono-label qt-list-state${
+                    q.state === 'issued' ? ' is-given' : ''
+                  }`}
+                >
                   {q.state === 'issued' ? 'Given' : 'Draft'}
                   {q.supersedesId ? ' · new version' : ''}
                 </span>
@@ -170,5 +202,40 @@ export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): React
         })}
       </ul>
     </div>
+  )
+}
+
+/* ============================================================
+   THE PICTURE ON A ROW — or the honest absence of one.
+
+   The quote froze an `ImageRef` at the moment it was raised and it
+   points at a third-party host; `imageSources` decides once per HOST
+   whether an address may be painted at all, and shares that verdict
+   with the table cell, the view page, the build and the document.
+   When it says no, this draws the one wording the app settled on
+   rather than a broken glyph or a hatched rectangle — so a diary of
+   twelve quotes reads as a convention somebody chose instead of as
+   twelve separate faults.
+
+   `aria-hidden`, because the row's own button already announces the
+   customer and the rig: a picture of the boat beside its name is not
+   a second fact.
+   ============================================================ */
+function RowShot({ quote }: { quote: QuoteDef }): ReactElement {
+  const { paint } = useImageDisplay(quote.subjectImage?.src ?? '')
+  return (
+    <span className="qt-list-shot" aria-hidden="true">
+      {quote.subjectImage && paint ? (
+        <FrozenPhoto
+          img={quote.subjectImage}
+          fallbackAlt={quote.subjectLabel}
+          className="qt-list-img"
+          w={128}
+          h={96}
+        />
+      ) : (
+        <span className="mono-label qt-list-held">{HELD_AS_LINK}</span>
+      )}
+    </span>
   )
 }

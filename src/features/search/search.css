@@ -1,43 +1,72 @@
 /* ============================================================
-   search — the masthead field and the answer that hangs off it.
+   FIND ANYTHING — the command palette.   (prefix: hs- / fx-)
 
-   All classes are hs- prefixed. Every colour, size, tracking and
-   step comes from tokens.css; nothing here invents one. The visual
-   language is borrowed wholesale from the two surfaces this sits
-   between — the masthead's compartments and io.css's popover — so
-   the field reads as part of the title block rather than as a
-   guest in it.
+   WHAT CHANGED, AND WHY IT IS NOT A RE-SKIN.
+
+   The field was written for a masthead that no longer exists, and
+   when the Finder gave it somewhere to stand it kept its old shape:
+   a small bordered well inside a 5px collar, with a SECOND bordered
+   card hanging 13px underneath it holding the answer. Two surfaces,
+   two edges, two shadows, one question. A palette is ONE object —
+   you type at its top and the answer grows out of the same sheet of
+   paper — so `.hs-pop` is now a sibling of the field rather than a
+   popover hung off it, and inside `.fx-panel` the two are one card.
+
+   The masthead form is kept whole: `.hs-pop` is still absolutely
+   positioned by default, so a field standing in a bar still hangs
+   its answer beneath itself.
+
+   THE ACCENT IS SPENT ON EXACTLY TWO THINGS HERE, which is the
+   budget: the cursor (the row Enter would open) and the focused
+   field. The matched run of text takes a WASH of it and not its ink
+   — a highlight is not an action, and forty accent-inked fragments
+   in one list is a theme rather than an eighth-note.
+
+   CONTRAST, MEASURED RATHER THAN ASSUMED. Everything that sits on
+   the lit row is stepped up a tier: `--ink-faint` is the 4.7:1 floor
+   on white and 4.16:1 once `--blue-wash` is under it. The keyboard
+   legend is `--ink-soft` for the same reason — `--ink-faint` on
+   `--surface-3` measures 4.91:1 on light but 4.24:1 on dark, which
+   fails, and a hint nobody can read is furniture.
    ============================================================ */
 
 .hs-root {
   position: relative;
   flex: 0 1 auto;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   min-width: 0;
 }
 
 /* -- the field ----------------------------------------------
-   A WELL, NOT A BOX. --paper-sunken is the token for "you may
-   type into this"; the masthead is --paper-high, so the field
-   reads as recessed into the title block without a second border
-   weight being invented for it. */
+   A WELL, NOT A BOX. `--paper-sunken` is the token for "you may
+   type into this", so the field reads as recessed into whatever
+   surface holds it without a second border weight being invented. */
+.hs-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .hs-input {
   width: clamp(132px, 20vw, 244px);
   min-width: 0;
-  height: 30px;
+  height: var(--h-md);
   /* the glyph occupies the left inset and the hint the right */
-  padding: 0 46px 0 30px;
+  padding: 0 46px 0 32px;
   border: 1px solid var(--hairline);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   background: var(--paper-sunken);
-  font-size: var(--ui-size);
-  letter-spacing: var(--ui-track);
-  line-height: var(--ui-lead);
+  font-family: var(--font-ui);
+  font-size: var(--t-body-size);
+  letter-spacing: var(--t-body-track);
+  line-height: var(--t-body-lead);
   color: var(--ink);
   transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
 }
 .hs-input::placeholder {
   color: var(--ink-faint);
@@ -46,46 +75,50 @@
   border-color: var(--hairline-strong);
 }
 .hs-input:focus {
+  outline: none;
   background: var(--paper-high);
   border-color: var(--blue);
+  box-shadow: var(--glow-sm);
 }
 
 /* A REAL FOCUS RING. The audit counted 29 of 88 tab stops with no
-   focus indicator at all; the one control added to the masthead is
-   not joining them. Stated here rather than left to base.css's
-   global rule so the offset clears the recessed well instead of
-   cutting into it. */
+   focus indicator at all; the one control that opens every other
+   surface is not joining them. */
 .hs-input:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
 }
 
 .hs-glyph {
   position: absolute;
-  left: var(--sp-2);
+  left: 10px;
   color: var(--ink-faint);
   pointer-events: none;
+  transition: color var(--d-fast) var(--ease);
 }
 .hs-root:focus-within .hs-glyph {
   color: var(--blue);
 }
 
-/* the shortcut, stamped like every other micro-label in the app */
+/* the shortcut, stamped — a mono stamp is one of the three places
+   uppercase is allowed, and this is one */
 .hs-kbd {
   position: absolute;
-  right: 7px;
-  padding: 1px 4px;
+  right: 8px;
+  padding: 2px 6px;
   border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-chip);
   font-family: var(--font-mono);
-  font-size: var(--micro-s-size);
-  font-weight: var(--micro-weight);
-  letter-spacing: var(--micro-s-track);
-  line-height: var(--micro-lead);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
   color: var(--ink-faint);
   background: var(--paper-high);
   pointer-events: none;
   user-select: none;
+  transition: opacity var(--d-fast) var(--ease);
 }
 .hs-root:focus-within .hs-kbd {
   opacity: 0;
@@ -103,16 +136,9 @@
 }
 
 /* -- the answer ----------------------------------------------
-   THE SAME MATERIAL AS io.css, FOR THE SAME REASON. It is summoned
-   by a press, its backdrop is the blueprint, and that backdrop is
-   static the whole time it is open — so the blur is rasterised once
-   and never invalidated. It is legal only because the masthead
-   itself is paint: glass on glass would separate from its ground at
-   1.07:1, which is not a weaker surface but no surface.
-
-   --ec2 rather than --shadow-popover, because this stands on the
-   navy where every --ink-built shadow is shadow-coloured light on
-   shadow-coloured ground. */
+   THE MASTHEAD FORM. Absolutely positioned beneath the field, on
+   its own card. Inside `.fx-panel` every one of these is overridden
+   and the two become one surface — see the FINDER section below. */
 .hs-pop {
   position: absolute;
   top: calc(100% + var(--sp-2));
@@ -121,43 +147,17 @@
   display: flex;
   flex-direction: column;
   max-height: min(560px, calc(100vh - 96px));
-  background: var(--mat-light-bg);
-  backdrop-filter: var(--mat-light-blur);
-  -webkit-backdrop-filter: var(--mat-light-blur);
-  border: 1px solid var(--mat-light-edge);
-  border-radius: var(--radius);
-  box-shadow: var(--ec2);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  box-shadow: var(--e-float);
   z-index: 60;
-  animation: sheet-in var(--t-med) var(--ease-draft);
+  animation: sheet-in var(--d-med) var(--ease-out-expo);
   overflow: hidden;
 }
 
-/* GLASS IS PERMITTED ONLY OVER THE CANVAS. Every stage covers the
-   sheet with a --paper surface, and this field hangs off the
-   masthead so it opens over whichever of those is up. Same state
-   io.css keys on — the `inert` the shell already sets on the sheet
-   the moment a stage covers it — rather than a second flag that can
-   disagree with it. */
-.shell-root:has(.shell-sheet-layer[inert]) .hs-pop {
-  background: var(--paper-high);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-color: var(--hairline-strong);
-  box-shadow: var(--e3);
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .hs-pop {
-    background: var(--paper-high);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
 @media (prefers-contrast: more) {
   .hs-pop {
-    background: var(--paper-high);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
     border-color: var(--ink);
   }
 }
@@ -168,8 +168,13 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   margin: 0;
-  padding: 0;
+  padding: var(--s-1) 0;
   list-style: none;
+  /* PAINTED, so the sticky group headings below match the ground
+     they scroll over exactly. A sticky shelf on a transparent list
+     shows whatever the panel is painted with at that scroll offset,
+     which is how a heading ends up a shade off its own list. */
+  background: var(--paper-high);
 }
 .hs-list:empty {
   display: none;
@@ -182,45 +187,36 @@
 }
 
 .hs-section + .hs-section {
-  border-top: 1px solid var(--hairline);
+  margin-top: var(--s-1);
+  border-top: 1px solid var(--line-subtle);
 }
 
 /* -- the group heading: the lesson ---------------------------
    Name, kind mark, count. This is the line that answers "which of
-   21 tables does this live in", so it is inked with the table's own
-   accent rather than left as another grey subhead. */
+   fifty tables does this live in", so it is sticky: a row scrolled
+   away from its heading has stopped saying which table it is in,
+   which is the exact failure this field exists to fix. */
 .hs-head {
-  /* STICKY, BECAUSE THE NAME IS THE ANSWER. A row scrolled away from
-     its heading is a row that has stopped saying which table it is
-     in — the exact failure this whole field exists to fix.
-
-     AND OPAQUE, NOT A SECOND SHEET OF GLASS. Painted at the
-     popover's own --mat-light-bg the rows scrolling underneath
-     ghosted through it at 18% — measured on screen, "B-B-B" legible
-     through the word HIGHFIELD. Stacking a second translucent layer
-     to close that gap is the one thing apple-design §12 rules out,
-     so the shelf is paint: it is 11px of stamp on a 30px band, and
-     the material is spent on the 560px of list below it where there
-     is actually something to see through. */
   position: sticky;
   top: 0;
   z-index: 1;
   background: var(--paper-high);
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3) 4px;
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-2) var(--s-3) 5px;
   font-family: var(--font-ui);
-  line-height: var(--stamp-lead);
+  line-height: var(--t-caption-lead);
   color: var(--hs-ink, var(--ink-soft));
 }
 .hs-head--plain {
-  /* the TABLES group names no single table, so it takes no accent —
-     and it names no table at all, so it IS a group caption and takes
-     the one uppercase style the contract allows for one */
-  font-size: var(--stamp-s-size);
-  font-weight: var(--stamp-weight);
-  letter-spacing: var(--stamp-s-track);
+  /* names no single table, so it takes no accent — and it names no
+     table at all, so it IS a group caption and takes the one
+     uppercase style the system allows for one */
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
   text-transform: uppercase;
   color: var(--ink-soft);
 }
@@ -231,17 +227,14 @@
   color: var(--hs-ink, var(--ink-soft));
 }
 /* A NAME IS DRAWN AS A NAME. This heading was 11px uppercase in the
-   table's own accent, which broke two settled rules at once:
-   uppercase is lossy on content ("OBSOLETE Trailers — No Longer
-   Available" is a name with its own emphasis in it), and six
-   accent-inked headings in one popover spend an accent budget of
-   about four a screen. The accent stays on the mark; the name takes
-   --ink, where it reads at 18.9:1 instead of leaning on a hue that
-   was drawn to be a rail. */
+   table's own accent, which broke two rules at once: uppercase is
+   lossy on content, and six accent-inked headings in one popover
+   spend a budget of about four a screen. The accent stays on the
+   mark; the name takes --ink, where it reads at 17.4:1. */
 .hs-head-name {
   min-width: 0;
-  font-size: 12px;
-  font-weight: 560;
+  font-size: var(--t-caption-size);
+  font-weight: 580;
   letter-spacing: -0.002em;
   color: var(--ink);
   overflow: hidden;
@@ -249,48 +242,64 @@
   white-space: nowrap;
 }
 /* HISTORY, STAMPED ON THE HEADING THAT IS ALWAYS ON SCREEN. A label
-   and not a name, so uppercase is the right style for it; 11px is the
-   floor and this sits on it rather than under it. */
+   and not a name, so uppercase is the right style for it; 11px is
+   the floor and this sits on it rather than under it. */
 .hs-head-was {
   flex: none;
   margin-left: -2px;
-  padding: 1px 5px;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
   font-family: var(--font-mono);
-  font-size: var(--micro-l-size);
-  font-weight: var(--micro-weight);
-  letter-spacing: var(--micro-l-track);
-  line-height: var(--micro-lead);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
 .hs-head-count {
   flex: none;
   margin-left: auto;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
 }
 
 /* -- one answer ---------------------------------------------- */
 .hs-opt {
   display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  padding: 5px var(--sp-3) 5px var(--sp-4);
+  align-items: center;
+  gap: var(--s-2);
+  padding: 5px var(--s-3) 5px var(--s-4);
   cursor: pointer;
-  /* the active bar rides in the left inset, so nothing moves when
-     the cursor walks the list */
-  box-shadow: inset 2px 0 0 transparent;
+  /* the cursor bar rides in the left inset, so nothing moves when
+     the arrows walk the list */
+  box-shadow: inset 3px 0 0 transparent;
+  transition:
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
 }
 /* a row sits one step in from its heading, and carries the kind mark
    in that step — so the line itself still says WHAT it is, not only
    what it is called */
 .hs-opt--row {
-  padding-left: var(--sp-3);
+  padding-left: var(--s-3);
 }
+/* a PLACE is a bigger target than a row, because it may be carrying
+   a photograph and because it is the answer to the harder question */
+.hs-opt--place {
+  padding-top: var(--s-1);
+  padding-bottom: var(--s-1);
+  padding-left: var(--s-3);
+}
+
+/* THE CURSOR. One of the two appearances the accent gets in this
+   surface: this row is the one Enter opens. */
 .hs-opt.is-active {
   background: var(--blue-wash);
-  box-shadow: inset 2px 0 0 var(--blue);
+  box-shadow: inset 3px 0 0 var(--blue);
 }
 
 .hs-opt-mark {
@@ -298,26 +307,61 @@
   align-self: center;
   /* a fixed gutter, so every label in a group starts on one line
      however wide the mark it is given happens to be */
-  width: var(--sp-4);
+  width: var(--s-4);
   display: inline-flex;
+  align-items: center;
   justify-content: center;
   color: var(--hs-ink, var(--ink-soft));
-  opacity: 0.75;
+  opacity: 0.85;
 }
+/* THE PHOTOGRAPH'S BOX. Fixed, so a list of places where some carry
+   a picture and some carry a crest still starts every name on one
+   line. `coverPhoto` returns a held same-origin file or null, so
+   there is no broken-image state to design for. */
+.hs-opt--place .hs-opt-mark {
+  width: 34px;
+  height: 26px;
+  border-radius: var(--r-chip);
+  overflow: hidden;
+  opacity: 1;
+}
+.hs-opt-shot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  /* the seed is a mixed set — yard shots, studio cut-outs, turquoise
+     lifestyle. A whisper of desaturation pulls them into one list. */
+  filter: saturate(0.92);
+  transition: filter var(--d-fast) var(--ease);
+}
+.hs-opt.is-active .hs-opt-shot {
+  filter: saturate(1.04);
+}
+
 .hs-opt-label {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: var(--ui-m-size);
-  line-height: var(--ui-m-lead);
-  letter-spacing: var(--ui-m-track);
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
   color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.hs-opt--place .hs-opt-label {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+}
 .hs-opt-where {
   flex: none;
   max-width: 42%;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -326,81 +370,126 @@
 /* WHERE THE WORDS WERE READ, when they were not read in the name on
    the line. A pair list answers for the table it lies within, so the
    line draws the place it opens and this says what matched — normal
-   case, because a pair list's name is a name and uppercasing it would
-   lose the × and the case the dealer typed. --ink-soft rather than
-   --ink-faint: this sits on the lit row as often as not, and
-   --ink-faint measures 4.16:1 once --blue-wash is under it. */
+   case, because a pair list's name is a name. */
 .hs-opt-note {
   flex: 0 1 auto;
   min-width: 0;
   max-width: 52%;
   font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: var(--ui-m-lead);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-body-lead);
   color: var(--ink-soft);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* A TINT COUNTS. --ink-faint is the 4.7:1 floor on white and 4.16:1
-   measured on this row once --blue-wash is under it, so the lit row
-   — which is also every hovered row, because hover moves the cursor
-   — was failing while the same words one line below passed. Stepped
-   to --ink-soft only where the ground moves: 6.8:1 measured, and the
-   resting rows keep the lighter metadata they were drawn with. */
+/* A TINT COUNTS. `--ink-faint` measures 4.16:1 once `--blue-wash` is
+   under it, so the lit row — which is also every hovered row, because
+   hover moves the cursor — was failing while the same words one line
+   below passed. Stepped only where the ground moves. */
 .hs-opt.is-active .hs-opt-where {
   color: var(--ink-soft);
 }
 
 /* THE MATCHED RUN. <mark>'s user-agent style is a yellow highlight
-   from a different century; this ink is the app's own pen, and the
-   weight does the work the background used to. */
+   from a different century. This is a WASH of the accent behind full
+   ink: the fragment is found instantly, the ink stays at 17.4:1, and
+   the accent's own colour is left for the two things on this surface
+   that are actually actions. */
 .hs-mark {
-  background: none;
-  color: var(--blue-deep);
-  font-weight: 600;
+  border-radius: 3px;
+  background: var(--blue-wash-strong);
+  color: var(--ink);
+  font-weight: 620;
 }
 
+/* what a cap left out, said rather than silently dropped */
 .hs-more {
-  padding: 3px var(--sp-3) var(--sp-2) calc(var(--sp-3) + var(--sp-4));
+  padding: 3px var(--s-3) var(--s-2) calc(var(--s-3) + var(--s-4));
+  font-size: var(--t-caption-size);
+  letter-spacing: var(--t-caption-track);
   color: var(--ink-faint);
 }
 
 /* -- what to do next ------------------------------------------
-   Both the empty state and the no-results state end in an
-   instruction. A dead-end panel that only says "no results" is the
-   same dead end the audit measured, moved one screen later. */
+   A dead-end panel that only says "no results" is the same dead end
+   the audit measured, moved one screen later. Every one of these
+   ends in an instruction. */
 .hs-say {
   flex: none;
-  padding: var(--sp-3) var(--sp-3) var(--sp-4);
-  font-size: var(--ui-size);
-  line-height: var(--ui-lead);
-  letter-spacing: var(--ui-track);
+  margin: 0;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  letter-spacing: var(--t-small-track);
   color: var(--ink-soft);
 }
-/* A COUNT IS A VALUE, NOT A CAPTION. It wears `.mono-label` for the
-   mono face and tabular figures and inherited the capitals with them,
-   so "1,303 named rows · 50 tables" — the line DESIGN_CONTRACT §6 calls
-   the load-bearing one, the one that tells an arriving person the app
-   has not lost their data — came out shouting. The mono face is what
-   makes it a figure; the capitals were only making it a label it is
-   not. Same conclusion `.md-idx-facts` and `.md-card-count` reach in
-   modules.css. */
-.hs-say-count {
-  display: block;
-  margin-top: var(--sp-2);
-  letter-spacing: 0;
-  text-transform: none;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-}
 
+/* -- the foot: the accounting, and the keys -------------------
+   THE KEYS ARE ON SCREEN. This is a keyboard surface first, and up
+   to now the only way to learn that the arrows walked it was to try
+   them — which is the same defect as an unlabelled control. */
 .hs-foot {
   flex: none;
-  padding: var(--sp-2) var(--sp-3);
-  border-top: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 34px;
+  padding: 0 var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+  background: var(--surface-3);
+}
+.hs-foot-say {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
   color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hs-keys {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.hs-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  line-height: 1;
+  /* --ink-faint measures 4.24:1 on --surface-3 in dark and fails */
+  color: var(--ink-soft);
+}
+.hs-key-say {
+  margin-right: var(--s-2);
+  font-size: var(--t-label-size);
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-faint);
+}
+.hs-key-say:last-child {
+  margin-right: 0;
+}
+
+/* the keys are the first thing to go when there is no room for them */
+@media (max-width: 560px) {
+  .hs-keys {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -410,15 +499,12 @@
 }
 
 /* ============================================================
-   THE FINDER — the panel this field stands in now the masthead
-   is gone. `Finder.tsx` explains what it is and why it closes
-   three ways; everything below is geometry and ground.
+   THE FINDER — the palette itself.
 
-   Nothing above changes. Every override is scoped under `.fx-panel`
-   and does one thing: give the field the whole width of the panel it
-   was handed, and let the answer hang the same width underneath
-   instead of 420px right-aligned to a masthead compartment that no
-   longer exists.
+   `Finder.tsx` explains what it is and why it closes four ways.
+   Everything below is ground and geometry, and every rule that
+   overrides the masthead form above does ONE thing: make the field
+   and its answer a single object.
    ============================================================ */
 
 .fx-scrim {
@@ -428,63 +514,123 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 14vh var(--sp-4) var(--sp-4);
-  /* A WASH, NOT A BLUR. The dock and the page toolbar are the two
-     translucent surfaces in this app; a third was not argued for.
-     Built from --ink at a fraction, which is exactly how table.css
-     builds `.tb-scrim` — the one other scrim in the app that dims a
-     --paper page rather than the blueprint. */
-  background: color-mix(in srgb, var(--ink) 38%, transparent);
-  /* the same arrival as every other summoned surface here:
-     `.md-scrim`, `.tk-scrim` and `.ds-cs-scrim` all fade their
-     ground and settle their box, on the app's own out-curve */
-  animation: fade-in var(--t-med) var(--ease-draft) both;
+  padding: 12vh var(--s-4) var(--s-4);
+  /* A WASH, NOT A BLUR. The dock and the masthead are the two
+     translucent surfaces this design allows; a third was not argued
+     for. Built from --ink at a fraction, exactly as `.tb-scrim` is. */
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  animation: fade-in var(--d-med) var(--ease) both;
 }
 
-/* A TIGHT COLLAR ROUND THE FIELD, and nothing under it. The answer
-   list is positioned against the field and hangs directly beneath,
-   so this box holds one control and stops — anything else in it is
-   behind the popover the moment somebody types. */
+/* ONE CARD. The field is its head, the answer is its body, the
+   accounting is its foot — and there is one edge round all three.
+   `--e-hero` rather than `--e3`: this is the only object on screen
+   while it is open and it should read as being a long way above the
+   page it covers. */
 .fx-panel {
-  width: min(520px, 100%);
-  padding: 5px;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  /* CONCENTRIC, NOT ARBITRARY. The field inside is --radius (10px)
-     and the collar is 5px, so 15px is the only outer radius whose
-     curve stays parallel to the one it wraps. */
-  border-radius: 15px;
-  box-shadow: var(--e3);
-  animation: sheet-in var(--t-med) var(--ease-draft) both;
+  display: flex;
+  flex-direction: column;
+  width: min(600px, 100%);
+  max-height: min(620px, calc(100vh - 20vh));
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
+  overflow: hidden;
+  animation: ds-scale-in var(--d-med) var(--ease-out-expo) both;
 }
 
 .fx-panel .hs-root {
   display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
+}
+
+/* THE HEAD OF THE CARD, not a control sitting inside one. The well,
+   the border and the radius all go: the panel's own edge is the
+   edge, and a hairline underneath separates asking from answering. */
+.fx-panel .hs-field {
+  flex: none;
+  border-bottom: 1px solid var(--line-subtle);
 }
 .fx-panel .hs-input {
   width: 100%;
-  height: 36px;
+  height: 56px;
+  padding: 0 var(--s-4) 0 46px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: var(--t-title-size);
+  font-weight: 500;
+  letter-spacing: var(--t-title-track);
 }
-.fx-panel .hs-pop {
-  left: 0;
-  right: 0;
-  width: auto;
-  /* MEASURED FROM THE PANEL, NOT FROM THE FIELD. `.hs-pop` hangs
-     --sp-2 below `.hs-root`, which in the masthead WAS the outer
-     edge; here the collar adds 5px underneath it, so the same rule
-     left a 2.33px sliver between two bordered white boxes — near
-     enough to touch that it read as a rendering fault rather than
-     as two surfaces. 5px of collar plus the --sp-2 the popover has
-     always used puts the gap back where the eye expects it. */
-  top: calc(100% + var(--sp-2) + 5px);
+.fx-panel .hs-input:hover,
+.fx-panel .hs-input:focus,
+.fx-panel .hs-input:focus-visible {
+  background: transparent;
+  box-shadow: none;
+}
+.fx-panel .hs-glyph {
+  left: var(--s-4);
+}
+/* the shortcut hint is what OPENS this; inside it, it is noise */
+.fx-panel .hs-kbd {
+  display: none;
 }
 
-/* MOVEMENT GOES, OPACITY STAYS. `sheet-in` lifts and scales; under
-   the setting the panel still arrives, it just no longer travels to
-   get here. The scrim's fade is opacity only and is left alone. */
+/* THE ANSWER IS IN THE FLOW. Not a popover — the same sheet of
+   paper, growing downward. This is the whole difference between a
+   search box and a palette. */
+.fx-panel .hs-pop {
+  position: static;
+  width: auto;
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  animation: none;
+}
+.fx-panel .hs-list {
+  padding: var(--s-2) 0;
+}
+.fx-panel .hs-opt {
+  padding-left: var(--s-4);
+  padding-right: var(--s-4);
+}
+.fx-panel .hs-opt--row,
+.fx-panel .hs-opt--place {
+  padding-left: var(--s-4);
+}
+.fx-panel .hs-head {
+  padding-left: var(--s-4);
+  padding-right: var(--s-4);
+}
+.fx-panel .hs-more {
+  padding-left: calc(var(--s-4) + var(--s-4));
+}
+.fx-panel .hs-foot {
+  padding: 0 var(--s-4);
+}
+
+@media (max-width: 560px) {
+  .fx-scrim {
+    padding-top: 8vh;
+  }
+  .fx-panel .hs-input {
+    height: 48px;
+    font-size: var(--t-heading-size);
+  }
+}
+
+/* MOVEMENT GOES, OPACITY STAYS. Under the setting the panel still
+   arrives, it just no longer travels to get here. The scrim's fade is
+   opacity only and is left alone. */
 @media (prefers-reduced-motion: reduce) {
   .fx-panel {
-    animation-name: fade-in;
+    animation-name: ds-fade;
   }
 }
