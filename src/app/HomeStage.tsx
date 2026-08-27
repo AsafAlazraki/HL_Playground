@@ -117,6 +117,36 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
 
   const total = groups.reduce((n, g) => n + g.items.length, 0)
 
+  /* ============================================================
+     WHAT THE FRONT DOOR SAYS ABOUT THE BUSINESS, COUNTED.
+
+     Home knew how many TABLES it was drawing and nothing else,
+     which is the one figure a person can already get by counting
+     the cards. The four below are the ones they cannot: how much
+     stock is actually on the sheet, how many of the tables are
+     things they SELL rather than relationships between them, and
+     how many relationships that leaves.
+
+     Every one is derived from what is already in the store on
+     this render — no new read, no new pass over the rows, and
+     `rowsByEntity` is the same map the cards below index into.
+     Nothing here is invented (§6): if a figure cannot be counted
+     it is not shown.
+     ============================================================ */
+  const tally = useMemo(() => {
+    let rows = 0
+    let sellable = 0
+    let joins = 0
+    for (const g of groups) {
+      for (const e of g.items) {
+        rows += rowsByEntity[e.id]?.length ?? 0
+        if (e.role === 'join') joins += 1
+        else sellable += 1
+      }
+    }
+    return { rows, sellable, joins }
+  }, [groups, rowsByEntity])
+
   /* A CARD NAME THAT WAS CUT SAYS SO, AND SAYS ALL OF ITSELF.
      `.hm-card-name` clamps to two lines, which is right for a 230px
      card and leaves one of the fifty — "Haines Signature ×
@@ -155,6 +185,14 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
 
   return (
     <div className="shell-viewstage hm" role="region" aria-label="Home">
+      {/* THE ATMOSPHERE, AND IT CARRIES NOTHING. Two drifting radial
+          washes under 6% alpha and a grain tile, so a 1600px page with
+          51 cards on it has a ground instead of a void. Both are
+          removed outright under `prefers-reduced-transparency` and
+          `prefers-contrast: more`, and stop drifting under
+          `prefers-reduced-motion` — see ds.css. */}
+      <div className="ds-aurora ds-grain hm-sky" aria-hidden="true" />
+
       <div className="shell-view-bar">
         {/* TRACK 1, WHICH WAS AN EMPTY SPACER. Taking a copy of the
             project out and bringing one back had no home anywhere in
@@ -340,23 +378,80 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
             </div>
           </div>
         ) : (
-          groups.map((g) => (
+          <>
+            {/* ============================================================
+                THE MASTHEAD, WHICH HOME DID NOT HAVE.
+
+                A gallery of fifty cards opened straight onto its first
+                card, four pixels under a 32px bar. There was nothing on
+                the page that said whose sheet this is or how much is on
+                it, so the screen read as a file listing rather than as
+                the front of a business.
+
+                It is four counted figures and a name. The name takes the
+                hero step (`ds-hero`) because at 1600px a 13px bar title
+                is the only thing above 51 cards and it loses. Nothing
+                here is decorative: each figure is the answer to a
+                question somebody actually asks — how much stock do I
+                have, how much of it do I sell, how much of it is
+                bookkeeping about the rest.
+                ============================================================ */}
+            <header className="hm-mast">
+              <div className="hm-mast-say">
+                <span className="mono-label hm-mast-eyebrow">Your sheet</span>
+                <h1 className="ds-hero hm-mast-name">{org?.name ?? 'Your tables'}</h1>
+                <p className="hm-mast-note">
+                  Every table you have, grouped by what it holds. Press one to open its
+                  register.
+                </p>
+              </div>
+
+              <dl className="hm-tally">
+                <div className="hm-tally-cell">
+                  <dt>Rows of stock</dt>
+                  <dd className="hm-tally-fig">{tally.rows.toLocaleString()}</dd>
+                </div>
+                <div className="hm-tally-cell">
+                  <dt>Tables</dt>
+                  <dd className="hm-tally-fig">{total}</dd>
+                </div>
+                <div className="hm-tally-cell">
+                  <dt>Things you sell</dt>
+                  <dd className="hm-tally-fig">{tally.sellable}</dd>
+                </div>
+                <div className="hm-tally-cell">
+                  <dt>Relationships</dt>
+                  <dd className="hm-tally-fig">{tally.joins}</dd>
+                </div>
+              </dl>
+            </header>
+
+            {groups.map((g, gi) => (
             <section className="hm-sec" key={g.key}>
               <header className="hm-sec-head">
+                <span className="hm-sec-dot" aria-hidden="true" data-kind={g.key} />
                 <h2 className="hm-sec-name">{g.label}</h2>
                 <span className="hm-sec-count">{g.items.length}</span>
+                <span className="hm-sec-rule" aria-hidden="true" />
               </header>
 
               <div className="hm-grid">
-                {g.items.map((e) => {
+                {g.items.map((e, i) => {
                   const rows = rowsByEntity[e.id]?.length ?? 0
                   const noun = leafNoun(e)
                   return (
                     <button
                       type="button"
                       key={e.id}
-                      className="hm-card"
-                      style={{ ['--tbn-accent' as string]: accentVar(e.accent) }}
+                      className="hm-card ds-sheen ds-rise"
+                      style={{
+                        ['--tbn-accent' as string]: accentVar(e.accent),
+                        /* the stagger index, capped in CSS at 14 steps.
+                           It runs across the whole page rather than per
+                           section, so the wave crosses the gallery once
+                           instead of restarting at every heading. */
+                        ['--i' as string]: gi * 3 + i,
+                      }}
                       /* NAMED EXPLICITLY, exactly as the module card next
                          door is and for the same two reasons. One:
                          DESIGN_CONTRACT §5 — the card is four spans and a
@@ -395,7 +490,7 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                       </span>
                       <span className="hm-card-name">{e.name}</span>
                       <span className="hm-card-stats">
-                        <b>{rows}</b>
+                        <b>{rows.toLocaleString()}</b>
                         <span>{countLabel(rows, noun).replace(`${rows} `, '')}</span>
                         <i aria-hidden="true" />
                         <b>{e.fields.length}</b>
@@ -406,7 +501,8 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                 })}
               </div>
             </section>
-          ))
+            ))}
+          </>
         )}
       </div>
     </div>

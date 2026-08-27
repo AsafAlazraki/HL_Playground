@@ -4468,3 +4468,295 @@
   line-height: 1.55;
   text-transform: none;
 }
+
+/* ============================================================
+   HOME, RE-DRESSED — the masthead, the tally, and a card that
+   looks like it is worth what it holds.
+
+   Everything below is appended rather than replacing the rules
+   above, so the structural decisions Home already made — the
+   `auto-fill minmax(230px)` grid, the three-line name clamp, the
+   house focus ring — are kept exactly and only its SURFACE
+   changes. Where a property is genuinely superseded it is
+   restated in full here and the reason is written on it.
+   ============================================================ */
+
+/* The stage has to establish a stacking context for the aurora,
+   which is `position:absolute; inset:0` behind everything. */
+.hm {
+  position: relative;
+  isolation: isolate;
+}
+.hm-sky {
+  z-index: 0;
+}
+.hm > .shell-view-bar,
+.hm > .hm-scroll {
+  position: relative;
+  z-index: 1;
+}
+
+/* ------------------------------------------------------------
+   THE MASTHEAD
+   ------------------------------------------------------------ */
+.hm-mast {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-8);
+  flex-wrap: wrap;
+  margin: var(--s-4) 0 var(--s-10);
+  padding-bottom: var(--s-6);
+  border-bottom: 1px solid var(--line-subtle);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
+}
+.hm-mast-say {
+  min-width: 0;
+}
+.hm-mast-eyebrow {
+  display: block;
+  margin-bottom: var(--s-3);
+  color: var(--fg-tertiary);
+}
+/* THE NAME TAKES THE GRADIENT AND NOTHING ELSE ON THE PAGE DOES.
+   §2 of the principles allows one display treatment; a business
+   name at the top of its own sheet is the one place in the app
+   where the ink is a headline rather than a value, so it is the
+   one place the brand ramp is legal. Every NAME below it — every
+   table, every row, every figure — stays in solid --fg. */
+.hm-mast-name {
+  margin: 0;
+  max-width: 22ch;
+}
+.hm-mast-note {
+  margin: var(--s-3) 0 0;
+  max-width: 54ch;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+/* ------------------------------------------------------------
+   THE TALLY — four counted figures.
+
+   A <dl>, because that is what it is: four terms and their
+   values. The figure leads and the term sits under it, which is
+   the reading order somebody scanning actually uses — they are
+   looking for the number and then checking what it was.
+   ------------------------------------------------------------ */
+.hm-tally {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, auto));
+  gap: 0;
+  margin: 0;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.hm-tally-cell {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  padding: 0 var(--s-5);
+  border-left: 1px solid var(--line-subtle);
+}
+.hm-tally-cell:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.hm-tally-cell:last-child {
+  padding-right: 0;
+}
+.hm-tally-cell dt {
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+/* MONO, TABULAR, AND BIG. §2: a figure is mono, and this is the
+   largest figure on the screen because it is the one fact the
+   page exists to state. */
+.hm-tally-fig {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+@media (max-width: 900px) {
+  .hm-mast {
+    align-items: flex-start;
+  }
+  .hm-tally {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-4) 0;
+  }
+  .hm-tally-cell:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* ------------------------------------------------------------
+   SECTION HEADINGS — a dot in the kind's own colour, the name,
+   the count, and a rule that runs to the edge.
+
+   The heading was 13px of ink and a mono count, and at 1600px
+   across a page of six-card rows it did not read as a divider at
+   all. The rule is what makes the group a band rather than a
+   gap; the dot is the same hue as the rails on the cards under
+   it, so the eye can find the boats without reading the word.
+   ------------------------------------------------------------ */
+.hm-sec + .hm-sec {
+  margin-top: var(--s-10);
+}
+.hm-sec-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+.hm-sec-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: var(--r-full);
+  background: var(--kind-slate);
+}
+.hm-sec-dot[data-kind='boat'] { background: var(--kind-boat); }
+.hm-sec-dot[data-kind='motor'] { background: var(--kind-motor); }
+.hm-sec-dot[data-kind='trailer'] { background: var(--kind-trailer); }
+.hm-sec-dot[data-kind='accessory'] { background: var(--kind-accessory); }
+.hm-sec-dot[data-kind='package'] { background: var(--kind-package); }
+.hm-sec-dot[data-kind='dealer'] { background: var(--kind-dealer); }
+.hm-sec-dot[data-kind='custom'] { background: var(--kind-custom); }
+.hm-sec-dot[data-kind='join'] { background: var(--kind-join); }
+
+/* SUPERSEDES the 13px above: at this width the group name is the
+   only landmark on a 1600px page and 13px is a caption. */
+.hm-sec-name {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+}
+.hm-sec-count {
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+}
+.hm-sec-rule {
+  flex: 1;
+  height: 1px;
+  min-width: var(--s-4);
+  background: linear-gradient(90deg, var(--line) 0%, transparent 100%);
+}
+
+/* ------------------------------------------------------------
+   THE CARD
+
+   The bones are unchanged — same rail, same three-line clamp,
+   same focus ring. What changes is that it now reads as an
+   object with a light on it rather than a bordered rectangle:
+   a gradient surface, a lit top edge, a kind-tinted glow that
+   arrives only on hover, and the sheen from ds.css.
+   ------------------------------------------------------------ */
+.hm-grid {
+  gap: var(--s-3);
+}
+.hm-card {
+  min-height: 116px;
+  padding: var(--s-4) var(--s-4) var(--s-3) 18px;
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
+}
+/* THE RAIL GROWS INTO THE HOVER. It is 3px at rest exactly as it
+   was; on hover it takes the full height of the card and widens
+   by a pixel, so the kind is what lights up rather than the
+   whole surface changing colour. */
+.hm-card::before {
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  transition:
+    top var(--d-med) var(--ease-out-expo),
+    bottom var(--d-med) var(--ease-out-expo),
+    width var(--d-med) var(--ease-out-expo);
+}
+.hm-card:hover::before,
+.hm-card:focus-visible::before {
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+/* The glow is the KIND's hue, not the accent's — this is the one
+   place a kind colour lifts off a 3px rail, and it does it as
+   light rather than as a fill behind text (§1). */
+.hm-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+  box-shadow:
+    var(--e4),
+    inset 0 1px 0 var(--edge-light),
+    0 10px 30px -14px var(--tbn-accent, transparent);
+}
+.hm-card:active {
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1);
+  transition-duration: var(--d-press);
+}
+
+.hm-card-kind {
+  font-size: var(--t-label-size);
+  letter-spacing: var(--t-label-track);
+}
+.hm-card-name {
+  font-size: var(--t-heading-size);
+  margin-top: 1px;
+}
+.hm-card-stats {
+  padding-top: var(--s-3);
+  gap: var(--s-1);
+}
+/* SUPERSEDES 14px: the row count is the fact the card is scanned
+   for, and at 230px it can afford to be the size of a heading. */
+.hm-card-stats b {
+  font-size: var(--t-mono-lg-size);
+  color: var(--fg);
+}
+
+/* ------------------------------------------------------------
+   THE FIRST SCREEN — same words, given a page to stand on.
+   ------------------------------------------------------------ */
+.hm-first-title {
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+}
+.hm-first-door {
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
+}
+.hm-first-door:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
+}

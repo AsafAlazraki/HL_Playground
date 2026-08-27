@@ -811,3 +811,468 @@
     border: 1px solid var(--line);
   }
 }
+
+/* ============================================================
+   EXPRESSIVE LAYER
+
+   WHY THIS EXISTS, since §10 of DESIGN_PRINCIPLES asks a change
+   to the system to carry a reason.
+
+   Quiet Precision solved legibility, contrast and restraint, and
+   those are kept whole below — every ink, every step and every
+   4.5:1 measurement above this line is untouched. What it never
+   had was ATMOSPHERE: a screen made of #ffffff rectangles on
+   #f7f8fa with one flat shadow reads as unfinished rather than
+   as calm, and 51 cards of a real business's stock deserve to
+   look like they are worth what they cost.
+
+   The tokens below add depth, light and motion WITHOUT touching
+   the ink ramp. Nothing here is ever allowed to carry meaning on
+   its own: a gradient is a surface, a glow is a state, grain is
+   texture. If you removed every token in this section the app
+   would still be readable, and that is the test each one passed.
+
+   THE ONE RULE THAT BENDS. "Glass is retired" (§5) is relaxed to
+   exactly two surfaces — the floating dock and the masthead, the
+   two things that sit OVER scrolling content and need to say so.
+   `prefers-reduced-transparency` already turns both opaque, and
+   that path is extended below. No other surface may take blur.
+   ============================================================ */
+
+:root,
+[data-theme='light'] {
+  /* -- the brand ramp -----------------------------------------
+     --accent stays the single ACTION colour. These two are its
+     neighbours on the wheel and exist ONLY to make a gradient
+     out of it. Neither may be used as a flat fill behind text. */
+  --accent-2: #7b46d9;
+  --accent-3: #2f86cf;
+
+  --grad-brand: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  --grad-brand-soft: linear-gradient(
+    135deg,
+    rgba(74, 86, 210, 0.11) 0%,
+    rgba(123, 70, 217, 0.09) 100%
+  );
+  --grad-brand-wide: linear-gradient(
+    120deg,
+    var(--accent-3) 0%,
+    var(--accent) 46%,
+    var(--accent-2) 100%
+  );
+
+  /* the sheen that crosses a card on hover */
+  --sheen: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 80%
+  );
+  /* the hairline highlight along a raised surface's top edge */
+  --edge-light: rgba(255, 255, 255, 0.9);
+  --edge-dark: rgba(9, 12, 18, 0.05);
+
+  /* a surface that is paint, but not FLAT paint */
+  --grad-surface: linear-gradient(180deg, #ffffff 0%, #fcfcfd 100%);
+  --grad-sunken: linear-gradient(180deg, #f4f5f8 0%, #eef0f4 100%);
+
+  /* -- glow -- a state, never a decoration --------------------- */
+  --glow-sm: 0 0 0 3px var(--accent-glow);
+  --glow-md: 0 0 16px -2px var(--accent-glow);
+  --glow-lg: 0 0 44px -6px var(--accent-glow);
+
+  /* -- elevation, extended -------------------------------------
+     --e1..--e3 above are kept exactly. These are the two rungs
+     the system was missing: a genuinely floating object, and a
+     hero surface. Both stack a tight contact shadow under a wide
+     soft one, which is what makes an edge look lit rather than
+     drawn. */
+  --e4:
+    0 1px 1px rgba(9, 12, 18, 0.04),
+    0 4px 8px -2px rgba(9, 12, 18, 0.06),
+    0 16px 32px -8px rgba(9, 12, 18, 0.12),
+    0 32px 64px -16px rgba(9, 12, 18, 0.14);
+  --e-float:
+    0 0 0 1px rgba(9, 12, 18, 0.04),
+    0 2px 4px rgba(9, 12, 18, 0.05),
+    0 12px 24px -6px rgba(9, 12, 18, 0.12),
+    0 28px 56px -12px rgba(9, 12, 18, 0.16);
+  --e-hero:
+    0 2px 4px rgba(9, 12, 18, 0.03),
+    0 12px 28px -8px rgba(9, 12, 18, 0.1),
+    0 48px 96px -24px rgba(9, 12, 18, 0.18);
+
+  /* -- material, for the two surfaces that float over content -- */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-blur: 20px;
+  --glass-sat: 180%;
+  --glass-edge: rgba(255, 255, 255, 0.7);
+
+  /* -- atmosphere ----------------------------------------------
+     Three very low-alpha radial washes that give a large empty
+     page somewhere to go. Alpha is deliberately under 6% — over
+     white this shifts luminance by less than one contrast point,
+     so text sitting on it keeps the ratio measured above. */
+  --aurora-1: rgba(74, 86, 210, 0.055);
+  --aurora-2: rgba(123, 70, 217, 0.04);
+  --aurora-3: rgba(47, 134, 207, 0.045);
+  --grain-opacity: 0.035;
+}
+
+[data-theme='dark'] {
+  --accent-2: #a07bff;
+  --accent-3: #56aeea;
+
+  --grad-brand: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  --grad-brand-soft: linear-gradient(
+    135deg,
+    rgba(110, 123, 250, 0.18) 0%,
+    rgba(160, 123, 255, 0.13) 100%
+  );
+  --grad-brand-wide: linear-gradient(
+    120deg,
+    var(--accent-3) 0%,
+    var(--accent) 46%,
+    var(--accent-2) 100%
+  );
+
+  --sheen: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.09) 50%,
+    transparent 80%
+  );
+  --edge-light: rgba(255, 255, 255, 0.07);
+  --edge-dark: rgba(0, 0, 0, 0.4);
+
+  --grad-surface: linear-gradient(180deg, #171a1f 0%, #131519 100%);
+  --grad-sunken: linear-gradient(180deg, #0c0e11 0%, #090a0c 100%);
+
+  --glow-sm: 0 0 0 3px var(--accent-glow);
+  --glow-md: 0 0 18px -2px var(--accent-glow);
+  --glow-lg: 0 0 52px -6px var(--accent-glow);
+
+  --e4:
+    0 1px 1px rgba(0, 0, 0, 0.5),
+    0 4px 8px -2px rgba(0, 0, 0, 0.4),
+    0 16px 32px -8px rgba(0, 0, 0, 0.55),
+    0 32px 64px -16px rgba(0, 0, 0, 0.6);
+  --e-float:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 12px 24px -6px rgba(0, 0, 0, 0.55),
+    0 28px 56px -12px rgba(0, 0, 0, 0.65);
+  --e-hero:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 12px 28px -8px rgba(0, 0, 0, 0.5),
+    0 48px 96px -24px rgba(0, 0, 0, 0.7);
+
+  --glass-bg: rgba(19, 21, 25, 0.72);
+  --glass-blur: 20px;
+  --glass-sat: 160%;
+  --glass-edge: rgba(255, 255, 255, 0.08);
+
+  --aurora-1: rgba(110, 123, 250, 0.09);
+  --aurora-2: rgba(160, 123, 255, 0.07);
+  --aurora-3: rgba(86, 174, 234, 0.06);
+  --grain-opacity: 0.05;
+}
+
+/* ============================================================
+   TYPE — two steps ABOVE display.
+
+   28px was the ceiling, and it is a good ceiling for a panel
+   header. It is not a headline. A page that opens on a business
+   name and 15,691 rows needs a size that reads as a title from
+   across a desk, and the tracking has to keep running negative
+   as it grows (§2, and the reason the old system was wrong).
+   ============================================================ */
+:root {
+  /* hero · the first line of a stage that IS the page */
+  --t-hero-size: clamp(34px, 3.4vw, 52px);
+  --t-hero-weight: 680;
+  --t-hero-lead: 1.03;
+  --t-hero-track: -0.033em;
+
+  /* display-lg · a stage title with a page behind it */
+  --t-display-lg-size: clamp(26px, 2.1vw, 34px);
+  --t-display-lg-weight: 650;
+  --t-display-lg-lead: 1.1;
+  --t-display-lg-track: -0.026em;
+
+  /* -- motion, extended ---------------------------------------
+     The four above stay. These are for ENTRANCES, which the old
+     system had none of because nothing entered — every stage
+     simply replaced the last one on the same frame. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+  --d-slower: 420ms;
+  --d-scene: 620ms;
+
+  /* how far a thing travels when it arrives */
+  --rise: 12px;
+}
+
+/* ============================================================
+   KEYFRAMES — the whole library, in one place so a feature
+   never invents a second name for the same movement.
+   ============================================================ */
+@keyframes ds-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--rise), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes ds-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ds-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes ds-sheen-sweep {
+  from {
+    transform: translateX(-120%) skewX(-14deg);
+  }
+  to {
+    transform: translateX(220%) skewX(-14deg);
+  }
+}
+@keyframes ds-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -2%, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+@keyframes ds-shimmer {
+  from {
+    background-position: -180% 0;
+  }
+  to {
+    background-position: 280% 0;
+  }
+}
+@keyframes ds-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* ============================================================
+   EXPRESSIVE UTILITIES
+   ============================================================ */
+
+.ds-hero {
+  font-family: var(--font-sans);
+  font-size: var(--t-hero-size);
+  font-weight: var(--t-hero-weight);
+  line-height: var(--t-hero-lead);
+  letter-spacing: var(--t-hero-track);
+  color: var(--fg);
+}
+.ds-display-lg {
+  font-family: var(--font-sans);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  color: var(--fg);
+}
+
+/* GRADIENT TEXT IS A HEADLINE TREATMENT AND NOTHING ELSE.
+   It is never applied to a name, a value or a sentence, because
+   a gradient cannot be measured for contrast at every stop. The
+   fallback colour is set first, so a browser without
+   background-clip still gets --fg. */
+.ds-grad-text {
+  color: var(--fg);
+  background: var(--grad-brand-wide);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* THE ATMOSPHERE. One element, behind the whole stage.
+   Pointer-events none, aria-hidden at the call site. */
+.ds-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.ds-aurora::before,
+.ds-aurora::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+}
+.ds-aurora::before {
+  width: 46vw;
+  height: 46vw;
+  top: -16vw;
+  left: -8vw;
+  background: radial-gradient(circle, var(--aurora-1) 0%, transparent 68%);
+  animation: ds-drift 28s var(--ease-in-out) infinite;
+}
+.ds-aurora::after {
+  width: 40vw;
+  height: 40vw;
+  top: -6vw;
+  right: -10vw;
+  background: radial-gradient(circle, var(--aurora-2) 0%, transparent 68%);
+  animation: ds-drift 34s var(--ease-in-out) infinite reverse;
+}
+
+/* GRAIN. A single tiled turbulence, at 3.5% on light. It exists
+   so a large flat field has a surface instead of being a void,
+   and it is the cheapest way to stop banding on the aurora. */
+.ds-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" stitchTiles="stitch"/></filter><rect width="140" height="140" filter="url(%23n)" opacity="0.55"/></svg>');
+  mix-blend-mode: overlay;
+}
+
+/* THE SHEEN. A light crossing a raised surface as the pointer
+   arrives. Requires the host to be position:relative and to
+   clip. It is opacity-only until hover, so it costs nothing at
+   rest. */
+.ds-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ds-sheen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  background: var(--sheen);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.ds-sheen:hover::after {
+  opacity: 1;
+  animation: ds-sheen-sweep var(--d-scene) var(--ease-out-expo);
+}
+
+/* ENTRANCES. `--i` is the child's index, set inline by the
+   caller, so a grid arrives as a wave rather than all at once.
+   Capped at 14 steps so a 51-card grid never waits a second. */
+.ds-rise {
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 26ms);
+}
+.ds-fade {
+  animation: ds-fade var(--d-slow) var(--ease) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 26ms);
+}
+
+/* THE TOP-EDGE HIGHLIGHT that makes a card read as lit. */
+.ds-lit {
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+
+/* A LOADING FIELD, for a figure that is still being counted. */
+.ds-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-3) 0%,
+    var(--surface-4) 50%,
+    var(--surface-3) 100%
+  );
+  background-size: 220% 100%;
+  animation: ds-shimmer 1.4s linear infinite;
+  border-radius: var(--r-chip);
+  color: transparent;
+}
+
+/* ============================================================
+   ACCESSIBILITY, EXTENDED TO EVERYTHING ABOVE.
+
+   The three signals §4 already honours now cover the expressive
+   layer too, and this block is the reason the layer is allowed
+   to exist at all.
+   ============================================================ */
+
+/* Movement goes; light and colour stay. An aurora that does not
+   drift is still an aurora. */
+@media (prefers-reduced-motion: reduce) {
+  .ds-aurora::before,
+  .ds-aurora::after {
+    animation: none;
+  }
+  .ds-sheen:hover::after {
+    animation: none;
+    opacity: 0;
+  }
+  .ds-rise,
+  .ds-fade,
+  .ds-shimmer {
+    animation: none;
+  }
+}
+
+/* §5's exception, honoured: the two floating surfaces go opaque
+   and the atmosphere goes away entirely. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: var(--surface-1);
+    --glass-blur: 0px;
+    --glass-sat: 100%;
+    --grain-opacity: 0;
+  }
+  .ds-aurora {
+    display: none;
+  }
+}
+
+/* At higher contrast an atmosphere is noise. It goes, the grain
+   goes, and gradient text falls back to solid ink. */
+@media (prefers-contrast: more) {
+  .ds-aurora,
+  .ds-grain::after {
+    display: none;
+  }
+  .ds-grad-text {
+    background: none;
+    -webkit-text-fill-color: var(--fg);
+    color: var(--fg);
+  }
+}

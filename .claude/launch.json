@@ -2,119 +2,17 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "demo",
+      "name": "stunning",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
         "dev",
         "--",
         "--port",
-        "5200",
+        "5411",
         "--strictPort"
       ],
-      "port": 5200
-    },
-    {
-      "name": "og",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "--prefix",
-        "C:/Users/AsafA/HelmLogic",
-        "run",
-        "dev"
-      ],
-      "port": 9002
-    },
-    {
-      "name": "steps",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5417",
-        "--strictPort"
-      ],
-      "port": 5417
-    },
-    {
-      "name": "cards",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5388",
-        "--strictPort"
-      ],
-      "port": 5388
-    },
-    {
-      "name": "places",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5342",
-        "--strictPort"
-      ],
-      "port": 5342
-    },
-    {
-      "name": "verify",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5733",
-        "--strictPort"
-      ],
-      "port": 5733
-    },
-    {
-      "name": "bags",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5629",
-        "--strictPort"
-      ],
-      "port": 5629
-    },
-    {
-      "name": "faces",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5871",
-        "--strictPort"
-      ],
-      "port": 5871
-    },
-    {
-      "name": "curating",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--",
-        "--port",
-        "5904",
-        "--strictPort"
-      ],
-      "port": 5904
+      "port": 5411
     }
   ]
 }
