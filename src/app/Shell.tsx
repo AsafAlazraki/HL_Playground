@@ -100,6 +100,13 @@ import { FlowStage } from './FlowStage'
 import { QuoteStage } from './QuoteStage'
 import { ModuleStage } from './ModuleStage'
 import { useQuotes } from '@/features/quote'
+/* THE PICKER "New quote" OPENS, by its own path rather than through
+   the feature's barrel. `modules/read.ts` imports the quote barrel —
+   it asks that feature which columns are costs — so the picker, which
+   reads a module's catalogue, would close a cycle through
+   `quote/index.ts` if it were re-exported there. The note at the foot
+   of `quote/index.ts` says the same thing from the other side. */
+import { QuoteStart } from '@/features/quote/QuoteStart'
 import { CUSTOMER_TABLE_ID } from '@/features/crm'
 import { Finder } from '@/features/search'
 import { Freshness } from '@/features/io'
@@ -239,15 +246,35 @@ export function Shell() {
   /* A WINDOW OUTLIVES ITS OWN REMOVAL by the length of its exit.
      Dropping it from the array immediately is what made closing
      and minimising instantaneous - there was nothing left on
-     screen to animate. It is marked, it plays, and then it goes. */
+     screen to animate. It is marked, it plays, and then it goes.
+
+     AND THE MARK WAS NOT BEING READ. That paragraph describes the
+     floating-window build: the mark was applied to `.win`, and the
+     windows went. What was left was the WAIT — every stage's Back
+     and every stage's Escape set a flag nothing rendered, held the
+     page for 180ms with not one pixel changing, and then dropped
+     it. Measured on the register: press Back, 180ms of nothing, hard
+     cut to the drawing. That is the worst possible reading of a
+     transition budget — the whole cost and none of the feedback.
+
+     So the mark lands on `.surface`, which is what actually draws a
+     stage now, and it plays the entrance backwards: opacity, 120ms,
+     the same `--d-fast` the arrival takes. Leaving and arriving are
+     one gesture at one speed, and the wait is now paying for
+     something. See ARRIVING SOMEWHERE in shell.css. */
   const [leaving, setLeaving] = useState<Record<string, 'closing' | 'minimising'>>({})
+
+  /* the exit, in ms, and it is `--d-fast`. Written here because a
+     setTimeout cannot read a custom property; if the token moves,
+     this moves with it. */
+  const EXIT_MS = 120
 
   const closeWin = useCallback((id: string) => {
     setLeaving((l) => ({ ...l, [id]: 'closing' }))
     window.setTimeout(() => {
       setWins((prev) => prev.filter((w) => w.id !== id))
       setLeaving(({ [id]: _gone, ...rest }) => rest)
-    }, 180)
+    }, EXIT_MS)
   }, [])
 
   const minimiseWin = useCallback((id: string) => {
@@ -360,6 +387,12 @@ export function Shell() {
   const [picking, setPicking] = useState(false)
   /* the finder — ⌘K, and the search item on the dock */
   const [finding, setFinding] = useState(false)
+  /* "What are you quoting?" — the rail's one primary act. It is its
+     own state and not a third meaning of `finding`: the finder ranks
+     15,691 rows of fifty-one tables by name, which is the right answer
+     to "find me a row" and the wrong first thing to put in front of
+     somebody who has just said they are making a sale. */
+  const [starting, setStarting] = useState(false)
 
   /* THE ONE KEY THE SHELL BINDS, AND IT IS MODIFIED. The header above
      says this shell binds nothing globally, and the reason it gives
@@ -443,10 +476,19 @@ export function Shell() {
           /* A QUOTE IS MINTED FROM THE ROW BEING SOLD —
              `createQuoteFromView(viewId, rowId)` — so there is no
              such thing as an empty quote: "one rig, one customer,
-             one moment". New quote therefore opens the finder to
-             pick the subject rather than inventing a blank
-             document. Structure is never a side effect (§7). */
-          onNewQuote={() => setFinding(true)}
+             one moment". New quote therefore asks WHAT rather than
+             inventing a blank document. Structure is never a side
+             effect (§7).
+
+             IT ASKED THROUGH THE FINDER AND NOW ASKS PROPERLY. The
+             finder is a name search over every row on the sheet, so
+             the first thing a salesperson met after pressing the
+             app's one primary act was a registration fee band beside
+             the hull they meant. `QuoteStart` asks the question the
+             business already answers for itself: which place, then
+             which one — and it draws the walk that choice opens
+             before it is committed. */
+          onNewQuote={() => setStarting(true)}
           quoteCount={quoteCount}
         />
         <main className="shell-stage" aria-label="Desktop">
@@ -496,7 +538,12 @@ export function Shell() {
               walks them — but only the top one is drawn, and it
               takes the whole surface. */}
           {focused ? (
-            <div className="surface" key={focused.id}>
+            <div
+              className={
+                'surface' + (leaving[focused.id] === 'closing' ? ' is-going' : '')
+              }
+              key={focused.id}
+            >
               {renderStage(focused.stage, {
                 openWin,
                 close: () => closeWin(focused.id),
@@ -587,6 +634,31 @@ export function Shell() {
             setStage({ kind: 'table', entityId })
           }}
           onClose={() => setFinding(false)}
+        />
+      ) : null}
+
+      {/* WHAT ARE YOU QUOTING — the two layers, and the only way a
+          quote is made. The sheet is handed over rather than read by
+          the feature: `@/features/quote` keeps its one-grep claim
+          that `useProjectStore` appears in `freeze.ts` alone, and
+          this shell is already reading all three of these for the
+          rail beside it. */}
+      {starting ? (
+        <QuoteStart
+          modules={modules}
+          entities={entities}
+          rowsByEntity={rowsByEntity}
+          onStarted={(quoteId) => setStage({ kind: 'quote', quoteId })}
+          /* THE DOOR UNDER A REFUSAL. A place that cannot raise a
+             price says why and names the switch; only the shell knows
+             that the switch lives on that module's own page, so the
+             route comes from here — the same arrangement every other
+             cross-feature door on this screen uses. */
+          onOpenPlace={(moduleId) => {
+            setStarting(false)
+            setStage({ kind: 'module', moduleId })
+          }}
+          onClose={() => setStarting(false)}
         />
       ) : null}
 

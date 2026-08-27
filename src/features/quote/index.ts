@@ -229,12 +229,41 @@ export {
   buildSteps,
   decidedCount,
   firstOpenStep,
+  reachOf,
   savedNote,
   stepAfter,
   stepBefore,
+  /* the two stops that are not a view block, declared once so a
+     remembered place and a previewed walk name the same strings */
   SUBJECT_STEP,
+  HANDOVER_STEP,
 } from './steps'
-export type { BuildStep, StepState } from './steps'
+export type { BuildStep, StepReach, StepState } from './steps'
+
+/* ============================================================
+   AND ONE SURFACE THIS BARREL DELIBERATELY DOES NOT CARRY.
+
+   `QuoteStart` — the picker "New quote" opens — is imported by its
+   own path:
+
+     import { QuoteStart } from '@/features/quote/QuoteStart'
+
+   It is not an oversight and it is not a private component. It reads
+   a MODULE's catalogue, and `@/features/modules/read.ts` imports
+   THIS barrel — it asks this feature which columns are costs and
+   which day a stamp falls on. Re-exporting the picker here would
+   close a cycle (`quote/index` → `QuoteStart` → `start.ts` →
+   `modules/read` → `quote/index`) whose only symptom is a
+   half-initialised module at first paint, months from now, in
+   whichever of the two features happens to load first.
+
+   So the picker and its two readers — `start.ts`, which computes the
+   places and the flow preview, and `subjectRules.ts`, which is the
+   first caller `src/lib/configure` has ever had — reach `modules` and
+   `constraints` by their direct, store-free paths, and nothing in
+   this file reaches `modules` at all. `Shell.tsx` carries the same
+   note from the other side.
+   ============================================================ */
 
 /* -- the price ladder ---------------------------------------- */
 export {

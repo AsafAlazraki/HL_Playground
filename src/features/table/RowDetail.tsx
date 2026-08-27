@@ -77,7 +77,6 @@ import {
   type LightboxState,
 } from './ImageCell'
 import { CaretGlyph, CrossGlyph, StepGlyph, TickGlyph } from './glyphs'
-import { columnKindOf } from './columnKinds'
 import {
   FORMULA_ERROR_TITLES,
   cellPrintText,
@@ -388,8 +387,18 @@ export function RowDetail({
     onStep(back ? -1 : 1)
   }
 
-  const canBack = index > 0
-  const canOn = index < shown - 1
+  /* A ROW CAN BE OPEN AND NOT BE ON THE SHEET. Narrow the register
+     while a row is open — type into the search, filter a column, fold
+     the drawer it is in — and it is still a row of this table, still
+     readable and still editable here; there is simply nowhere to step
+     to. Both controls say that, in a sentence, where they are; and
+     the position line says it too rather than printing "00 of 588". */
+  const inView = index >= 0
+  const canBack = inView && index > 0
+  const canOn = inView && index < shown - 1
+  const noStep = inView
+    ? undefined
+    : 'This row is not in what the search and the filters have left on screen.'
 
   return (
     <motion.aside
@@ -430,9 +439,10 @@ export function RowDetail({
               className="tb-detail-nav"
               aria-label={`Previous ${noun.one}`}
               title={
-                canBack
+                noStep ??
+                (canBack
                   ? `Previous ${noun.one} — ↑ or K`
-                  : `This is the first ${noun.one} on screen`
+                  : `This is the first ${noun.one} on screen`)
               }
               disabled={!canBack}
               onClick={() => onStep(-1)}
@@ -444,7 +454,10 @@ export function RowDetail({
               className="tb-detail-nav"
               aria-label={`Next ${noun.one}`}
               title={
-                canOn ? `Next ${noun.one} — ↓ or J` : `This is the last ${noun.one} on screen`
+                noStep ??
+                (canOn
+                  ? `Next ${noun.one} — ↓ or J`
+                  : `This is the last ${noun.one} on screen`)
               }
               disabled={!canOn}
               onClick={() => onStep(1)}
@@ -469,16 +482,27 @@ export function RowDetail({
             on screen, how many the table holds when those two differ,
             and how many of its columns actually carry a value. */}
         <p className="tb-detail-say">
-          <span className="tb-detail-pos">
-            {pad2(index + 1)}
-            <span className="tb-detail-of"> of </span>
-            {shown}
-          </span>
+          {inView ? (
+            <span className="tb-detail-pos">
+              {pad2(index + 1)}
+              <span className="tb-detail-of"> of </span>
+              {shown}
+            </span>
+          ) : (
+            <span className="tb-detail-out">
+              not among the {shown} on screen
+            </span>
+          )}
           {shown !== held && (
             <span className="tb-detail-held">{countLabel(held, noun)} in the table</span>
           )}
+          {/* WHAT IS ACTUALLY FILLED IN, counted. A record whose every
+              column carries a value says so in one phrase rather than
+              making a reader compare two identical figures. */}
           <span className="tb-detail-cols">
-            {filled} of {columns} columns filled in
+            {filled === columns
+              ? `every one of ${columns} columns filled in`
+              : `${filled} of ${columns} columns filled in`}
           </span>
         </p>
       </header>
@@ -509,7 +533,6 @@ export function RowDetail({
               {block.fields.map((f) => {
                 const v = values[f.id] ?? null
                 const empty = isEmptyCell(v)
-                const kind = columnKindOf(f.type)
                 return (
                   <div
                     key={f.id}
@@ -617,9 +640,6 @@ export function RowDetail({
                       ) : (
                         <TypedValue field={f} value={v} onSetText={onSetText} />
                       )}
-                      <span className="tb-detail-kind" aria-hidden="true">
-                        {kind.label}
-                      </span>
                     </dd>
                   </div>
                 )

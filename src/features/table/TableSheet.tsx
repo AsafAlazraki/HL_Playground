@@ -967,7 +967,16 @@ export function TableSheet({
         <AnimatePresence initial={false}>
           {openRow && openRowId !== null && (
             <RowDetail
-              key={openRowId}
+              /* A CONSTANT KEY, AND THAT IS THE MOTION BUDGET.
+                 Keyed by the row id, stepping J / K down fifteen
+                 variants remounted the panel fifteen times and played
+                 the 300ms arrival on every one of them — a spring on a
+                 keyboard-initiated act somebody performs a hundred
+                 times a day, which is exactly the animation the budget
+                 forbids. One instance, whose PROPS change as you step:
+                 the open and the close animate, moving between rows
+                 does not. */
+              key="row-detail"
               entity={entity}
               row={openRow}
               values={openValues}

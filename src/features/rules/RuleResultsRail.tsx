@@ -300,8 +300,11 @@ export function RuleResultsRail({
           </ul>
           {applied ? (
             <p className="rl-applied">
-              {appliedCount.toLocaleString()} write{appliedCount === 1 ? '' : 's'} committed to the
-              sheet.
+              {/* the figure is a figure and the sentence is a sentence:
+                  the whole line was set in the reference face for the
+                  sake of one number in it */}
+              <b className="rl-applied-n">{appliedCount.toLocaleString()}</b> write
+              {appliedCount === 1 ? '' : 's'} committed to the sheet.
             </p>
           ) : (
             <div className="rl-effect-acts">

@@ -3115,11 +3115,30 @@ body.tb-resizing {
    the action bar is 11px and not the 10.5px this one had to be
    corrected up from. See `src/app/actionbar.css`. */
 
-/* ROWS GET AIR. The grid was tighter than a spreadsheet while
-   claiming to be easier than one. */
-.tb-row {
-  min-height: 40px;
-}
+/* ROWS GET AIR — AND NOW THE GEOMETRY AGREES WITH THE PAINT.
+
+   This rule was `.tb-row { min-height: 40px }`, and it was right about
+   what it wanted and wrong about how to get it. DESIGN_PRINCIPLES §3
+   says a row is 40px; the register's LAYOUT says 34 (`ROW_H`), and the
+   layout is what positions every line — `top` and `height` are written
+   inline on each row from numbers `layoutGroups` worked out.
+
+   So a 40px minimum on a box the layout had placed 34px below its
+   neighbour made every row in every register overlap the one under it
+   by 6px. Measured in the running app: `style="height: 34px"`,
+   `getComputedStyle().height` 40px. The rows are absolutely positioned
+   and painted in order, so each one covered the last 6px of the row
+   above — which is exactly where that row's `border-bottom` is. The
+   horizontal rules of the sheet were being painted and then hidden,
+   the hover band was 6px taller than the row it belonged to, and the
+   last row of a table overhung the body.
+
+   THE HEIGHT IS A NUMBER, SO IT IS SET AS A NUMBER. `tableReadState`
+   owns it, the register defaults to the 40px this rule was asking for,
+   and a reader who wants more of the file on one screen presses
+   Compact for 34. Both are real geometry: `topOfLeaf`, `bodyH`, the
+   windowing and the selection rectangles are all computed from the
+   same figure the row paints at. */
 .tb-cell {
   font-size: 13px;
 }
@@ -4224,4 +4243,893 @@ body.tb-resizing {
   max-width: 34ch;
   font-size: 13px;
   line-height: 1.6;
+}
+
+/* ============================================================
+   THE REGISTER, MADE READABLE — the row detail, the status rail
+   and the two reading lenses.
+
+   THE COMPLAINT: "the tables — still too complicated and hard to
+   use visually." Nothing above this line was removed to answer it.
+   Every column, every sort, every filter, every band and every
+   drawer is exactly as capable as it was; what is added is a second
+   way IN to one row, a line at the foot that says where you are,
+   and two lenses that change how much of the sheet is drawn.
+
+   THREE THINGS THIS SECTION WILL NOT DO, and they are the rules
+   the rest of this file already keeps:
+
+     - it writes no literal colour, and no shadow of its own. The
+       panel separates from the sheet by GROUND and a hairline, the
+       way `--paper` and `--paper-high` were cut to.
+     - it moves nothing but transform and opacity, and every press
+       lands on pointer-down.
+     - it never uppercases a name or a value. A section caption and
+       a level caption are label style; a column's name, a boat's
+       name and every figure keep the case they were typed in.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   THE LENS — the sheet, and the row that is open beside it.
+
+   A flex row, and the sheet keeps `flex: 1` so it simply measures
+   narrower when the panel is there. NO LAYOUT PROPERTY IS
+   ANIMATED: the width change lands in one frame, the panel arrives
+   on transform and opacity, and `Grid`'s own ResizeObserver
+   re-settles the column window from the new measurement.
+   ------------------------------------------------------------ */
+.tb-lens {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------
+   THE OPEN MARK IN THE GUTTER
+
+   At rest it is not drawn. The gutter is a column of ordinals and
+   has to keep reading as one: a chevron on all 588 rows is 588
+   marks competing with the numbers they sit beside. It arrives
+   with the pointer on the row — the moment the offer is worth
+   making — and stays while that row is open.
+   ------------------------------------------------------------ */
+.tb-gut-n {
+  display: block;
+}
+
+.tb-open {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.tb-row:hover .tb-open,
+.tb-gut-on .tb-open,
+.tb-gut-open .tb-open {
+  opacity: 1;
+}
+.tb-open:hover {
+  color: var(--blue);
+  background: var(--blue-wash);
+}
+/* PRESS ON POINTER-DOWN, and scaled to the surface: 0.88 on an 18px
+   mark is the same visible step 0.97 is on a 200px control. */
+.tb-open:active {
+  transform: translateY(-50%) scale(0.88);
+  background: var(--blue-wash-strong);
+}
+.tb-open:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.tb-openglyph {
+  width: 11px;
+  height: 11px;
+}
+
+/* the gutter of the open row, lit the same way the reveal mark lights
+   it — see `.tb-row-found .tb-gut` above, which this deliberately
+   matches rather than inventing a second vocabulary for "this one" */
+.tb-gut-open {
+  background: color-mix(in srgb, var(--blue) 14%, var(--paper-sunken));
+  color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+.tb-gut-open .tb-open {
+  color: var(--blue-deep);
+}
+
+/* THE ROW ITSELF. One class, exactly as `.tb-row-found` is one class,
+   and for the same reason: the hover band deliberately still beats it,
+   because the sheet must not lose its pointer feedback while a row is
+   open. A list row darkens; it never scales. */
+.tb-row-open {
+  background: var(--blue-wash);
+}
+.tb-row-open .tb-cell-pin {
+  background: color-mix(in srgb, var(--blue) 9%, var(--paper-high));
+}
+
+/* ------------------------------------------------------------
+   COMFORTABLE ROWS
+
+   The HEIGHTS are computed upstream (`tableReadState` → `grouping`),
+   so nothing here sets one. What a taller row buys that a shorter
+   one cannot is room for the picture strip: 24px thumbnails were cut
+   to fit a 34px row, and at 40px they can be read.
+
+   The cell's horizontal inset is deliberately NOT changed. It is a
+   number in two places — `cellInsetW` measures a value against it to
+   decide whether the value is clipped — and a padding that moved with
+   the density would put a tooltip on values that fit and take one off
+   values that do not.
+   ------------------------------------------------------------ */
+.tb-grid-roomy .tb-imgslot {
+  width: 30px;
+  height: 30px;
+}
+.tb-grid-roomy .tb-gut {
+  font-size: var(--t-mono-size);
+}
+
+/* ------------------------------------------------------------
+   THE STATUS RAIL
+
+   30px at the foot, outside the scroller, so nothing it says is ever
+   drawn over a row. `.tb-grid` becomes a column only when it has one,
+   which is why the on-canvas card is untouched by any of this.
+   ------------------------------------------------------------ */
+.tb-grid-railed {
+  display: flex;
+  flex-direction: column;
+}
+.tb-grid-railed .tb-scroll {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+.tb-rail {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 30px;
+  padding: 0 var(--sp-3);
+  border-top: 1px solid var(--hairline-strong);
+  background: var(--paper-sunken);
+  font-size: var(--t-caption-size);
+  line-height: 1.3;
+  /* MEASURED, on the ground it actually sits on. `--ink-faint` is the
+     ramp's floor at 5.5:1 on white and 4.74:1 over `--paper-sunken` —
+     which passes, and passes by 0.24. The rail's job is to be read at
+     a glance from across a desk, so its sentences take `--ink-soft`
+     (6.99:1 there) and only the level captions and the separators,
+     which are metadata beside the thing they describe, take the
+     floor. */
+  color: var(--ink-soft);
+  user-select: none;
+}
+
+/* -- which drawer you are inside ----------------------------- */
+.tb-rail-where {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.tb-rail-step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.tb-rail-sep {
+  margin-right: var(--sp-1);
+  color: var(--fg-quaternary);
+}
+/* A LEVEL CAPTION IS A LABEL, and label style is the one place
+   uppercase is allowed. The VALUE beside it never is: "Sport 460" is
+   the dealer's own word for a boat. */
+.tb-rail-lab {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.tb-rail-val {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* -- where the window is ------------------------------------- */
+.tb-rail-pos {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+.tb-rail-range {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.tb-rail-dash {
+  padding: 0 1px;
+  color: var(--ink-faint);
+}
+.tb-rail-of {
+  color: var(--ink-soft);
+}
+/* WHAT IS PUT AWAY, and by which act. Two sentences because they are
+   two different controls: a narrowing is the search and the column
+   filters, a fold is a drawer somebody shut. */
+.tb-rail-away {
+  padding-left: var(--sp-2);
+  border-left: 1px solid var(--hairline);
+  color: var(--ink-soft);
+  cursor: help;
+}
+
+/* -- the two reading lenses ---------------------------------- */
+.tb-rail-lenses {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.tb-rail-seg {
+  display: inline-flex;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--paper-high);
+}
+.tb-rail-segbtn {
+  height: 20px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-rail-segbtn + .tb-rail-segbtn {
+  border-left: 1px solid var(--hairline);
+}
+.tb-rail-segbtn:hover {
+  background: var(--blue-wash);
+  color: var(--ink);
+}
+/* THE PRESS IS A GROUND, NOT A SCALE, and only here: one segment of a
+   bordered pair shrinking away from its own frame reads as a break in
+   the control, not as feedback. Every other pressable thing in this
+   section takes the system's 0.97. */
+.tb-rail-segbtn:active {
+  background: var(--blue-wash-strong);
+}
+.tb-rail-segbtn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.tb-rail-segbtn-on {
+  background: var(--blue-wash-strong);
+  color: var(--blue-deep);
+  font-weight: 600;
+}
+
+.tb-rail-lens {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 20px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: 500;
+  text-transform: none;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-press);
+}
+.tb-rail-lens:hover {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--ink);
+}
+.tb-rail-lens:active {
+  transform: scale(0.97);
+  background: var(--blue-wash-strong);
+}
+.tb-rail-lens:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.tb-rail-lens-on {
+  border-color: var(--blue);
+  background: var(--blue-wash-strong);
+  color: var(--blue-deep);
+}
+.tb-rail-lenstext {
+  white-space: nowrap;
+}
+/* the figure is a figure: mono, tabular, so the control does not
+   change width as the count does */
+.tb-rail-lenscount {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+.tb-rail-lens-on .tb-rail-lenscount,
+.tb-rail-lens:hover .tb-rail-lenscount {
+  color: inherit;
+}
+
+/* A NARROW WINDOW LOSES THE CRUMB BEFORE IT LOSES THE POSITION. The
+   drawer you are inside is the most compressible thing on the rail —
+   it is also drawn on the grouping line itself — while "41-60 of 588"
+   and the two lenses have nowhere else to be said. */
+@media (max-width: 900px) {
+  .tb-rail-where {
+    display: none;
+  }
+}
+
+/* ============================================================
+   THE ROW DETAIL
+
+   A column of every field, beside the sheet. Its ground is the PAGE
+   ground and its header and footer are the card ground, so it reads
+   as a plate standing on the register rather than as a second sheet —
+   without a single shadow of its own.
+   ============================================================ */
+.tb-detail {
+  flex: none;
+  width: clamp(340px, 34%, 480px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--hairline-strong);
+  background: var(--paper);
+  outline: none;
+}
+.tb-detail:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+/* UNDER 900px THERE IS NO ROOM FOR BOTH, and a 340px panel beside a
+   200px sheet serves neither. Only then does it cover the register —
+   and it covers it completely rather than leaving a stripe of
+   unreadable columns down the side. */
+@media (max-width: 900px) {
+  .tb-lens-open .tb-detail {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    z-index: 8;
+  }
+}
+
+/* -- the head ------------------------------------------------- */
+.tb-detail-head {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-3);
+  border-bottom: 1px solid var(--hairline-strong);
+  background: var(--paper-high);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+.tb-detail-headtop {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-height: 22px;
+}
+
+/* which drawers this row is filed in — the level caption in label
+   style, the dealer's own value in the case they typed it */
+.tb-detail-filed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  min-width: 0;
+  margin-right: auto;
+}
+.tb-detail-filedstep {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.tb-detail-filedsep {
+  margin-right: var(--sp-1);
+  color: var(--fg-quaternary);
+}
+.tb-detail-filedlab {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.tb-detail-filedval {
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.tb-detail-step {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-left: auto;
+}
+.tb-detail-nav,
+.tb-detail-x {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-press);
+}
+.tb-detail-nav:hover,
+.tb-detail-x:hover {
+  border-color: var(--hairline-strong);
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+.tb-detail-nav:active,
+.tb-detail-x:active {
+  transform: scale(0.9);
+  background: var(--blue-wash-strong);
+}
+.tb-detail-nav:focus-visible,
+.tb-detail-x:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+/* A REFUSAL THAT SAYS WHY. The first row on screen has nothing above
+   it, and the control says so in its own title rather than going grey
+   and silent — the mark stays visible, at the quaternary weight the
+   ramp reserves for a thing that carries no meaning. */
+.tb-detail-nav:disabled {
+  color: var(--fg-quaternary);
+  cursor: default;
+}
+.tb-detail-nav:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+  color: var(--fg-quaternary);
+}
+
+/* THE NAME OF THE ROW, in the case the dealer typed it. Title step,
+   taken whole. */
+.tb-detail-name {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.tb-detail-say {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  font-size: var(--t-caption-size);
+  color: var(--ink-faint);
+}
+.tb-detail-pos {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.tb-detail-of {
+  color: var(--ink-faint);
+}
+.tb-detail-held,
+.tb-detail-cols {
+  color: var(--ink-faint);
+}
+/* the row is open and the narrowing has taken it off the sheet — a
+   sentence rather than a position, because there is no position */
+.tb-detail-out {
+  font-size: var(--t-caption-size);
+  color: var(--ink-faint);
+}
+
+/* -- the fields ----------------------------------------------- */
+.tb-detail-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--sp-3) var(--sp-4) var(--sp-5);
+}
+
+.tb-detail-sec + .tb-detail-sec {
+  margin-top: var(--sp-4);
+}
+/* A SECTION CAPTION IS THE OTHER PLACE UPPERCASE IS ALLOWED, and the
+   band's own ink is the rule beside it — the same hue the spanning
+   header over the same columns is drawn in, so a reader who has met
+   PRICING on the sheet recognises it here. */
+.tb-detail-secname {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.tb-detail-secrule {
+  flex: none;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--tb-sec-ink, var(--fg-quaternary));
+}
+/* the run of columns in no section takes no heading at all — the same
+   answer the band row gives an unbanded run */
+.tb-detail-sec-plain {
+  margin-top: 0;
+}
+
+.tb-detail-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tb-detail-f {
+  display: grid;
+  grid-template-columns: minmax(96px, 38%) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 32px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.tb-detail-f:last-child {
+  border-bottom: 0;
+}
+
+.tb-detail-lab {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-1);
+  min-width: 0;
+}
+/* A COLUMN'S NAME IS A NAME. Sentence case, whatever the dealer typed,
+   and never a stamp. */
+.tb-detail-labname {
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.tb-detail-req {
+  color: var(--red);
+  font-size: var(--t-small-size);
+  cursor: help;
+}
+.tb-detail-note {
+  flex-basis: 100%;
+  font-size: var(--t-label-size);
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+/* A FIELD NOBODY HAS FILLED IN is quieter, not hidden: this is the
+   surface where you fill it in. */
+.tb-detail-f-empty .tb-detail-labname {
+  color: var(--ink-faint);
+}
+
+.tb-detail-val {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+}
+/* WHAT THE COLUMN HOLDS IS NOT WRITTEN DOWN, and that is the
+   decision. A type stamp beside all 33 values was drawn and taken out
+   again: every control on this panel already says what it is — a
+   picker carries a wedge, a yes/no is a tick and a word, a calculated
+   value sits on the computed column's own teal, pictures are
+   pictures, and a figure is mono where a name is not. A label
+   repeating that is the noise this surface exists to remove, and the
+   column heading's tooltip on the sheet still says it in full. */
+
+/* -- one value ------------------------------------------------
+   THE BOX IS INVISIBLE UNTIL IT IS TOUCHED. Every control here is
+   live from the first frame — there is no "press to edit" — but at
+   rest it is text on the panel's ground, which is what keeps a
+   33-field record from reading as a form to fill in.
+   ------------------------------------------------------------ */
+.tb-dv-in {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-body-size);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tb-dv-in:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper-high);
+}
+.tb-dv-in:focus {
+  outline: none;
+  border-color: var(--blue);
+  background: var(--paper-high);
+  box-shadow: var(--focus-inset);
+}
+/* EVERY FIGURE IS MONO AND TABULAR — the same face the cell paints it
+   in, so a price read on the sheet and the same price read here are
+   the same shape. */
+.tb-dv-in-num {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-dv-pickwrap {
+  position: relative;
+  display: block;
+  min-width: 0;
+  flex: 1;
+}
+.tb-dv-pick {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 0 26px 0 var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-body-size);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.tb-dv-pick:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper-high);
+}
+.tb-dv-pick:active {
+  background: var(--blue-wash);
+}
+.tb-dv-pick:focus {
+  outline: none;
+  border-color: var(--blue);
+  background: var(--paper-high);
+  box-shadow: var(--focus-inset);
+}
+/* the native arrow is gone with `appearance: none`, so the wedge is
+   drawn — a list column has to say it is a list */
+.tb-dv-caret {
+  position: absolute;
+  right: var(--sp-2);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: var(--ink-faint);
+}
+.tb-dv-caret .tb-glyph {
+  width: 10px;
+  height: 10px;
+}
+
+.tb-dv-tick {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 28px;
+  padding: 0 var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-body-size);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-press);
+}
+.tb-dv-tick:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper-high);
+}
+.tb-dv-tick:active {
+  transform: scale(0.97);
+}
+.tb-dv-tick:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.tb-dv-box {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 4px;
+  background: var(--paper-high);
+  color: transparent;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.tb-dv-box .tb-tickglyph {
+  width: 10px;
+  height: 10px;
+}
+.tb-dv-tick-on .tb-dv-box {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: var(--paper-high);
+}
+/* NO AND YES ARE BOTH ANSWERS. An unticked box with nothing beside it
+   reads as "nobody said", which on a boolean column is a different
+   fact from "no". */
+.tb-dv-word {
+  color: var(--ink);
+}
+
+/* A CALCULATED VALUE IS NOT TYPED INTO, and says which. The same teal
+   the computed column carries on the sheet, at the same 6-8% the
+   atmosphere is capped at, so the ink over it keeps its measured
+   ratio. */
+.tb-dv-fx {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-teal) 8%, transparent);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+  overflow-wrap: anywhere;
+}
+.tb-dv-fx-empty {
+  color: var(--ink-faint);
+}
+.tb-dv-fx-err {
+  background: var(--red-wash);
+  color: var(--red);
+}
+
+.tb-dv-imgs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: var(--sp-1) 0;
+}
+/* THE PANEL HAS ROOM THE CELL NEVER HAD. 24px thumbnails exist because
+   a 34px row cannot hold anything bigger; here a photograph can
+   actually be looked at before the plate is opened. */
+.tb-dv-imgs .tb-imgslot {
+  width: 48px;
+  height: 48px;
+}
+
+/* -- the foot -------------------------------------------------
+   The row's permanent identifier, in the one place a person who needs
+   it can select it and copy it. It is not a column any more and it is
+   not shouted at anybody who does not need it.
+   ------------------------------------------------------------ */
+.tb-detail-foot {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-top: 1px solid var(--hairline);
+  background: var(--paper-high);
+}
+.tb-detail-footlab {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.tb-detail-footid {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  color: var(--ink-soft);
+  user-select: text;
 }

@@ -189,6 +189,189 @@
   background: var(--hairline-strong);
 }
 
+/* ============================================================
+   WHAT THE SPOTLIGHT FOUND — the title block, with a table picked.
+
+   THE BLOCK IS THE ONLY HONEST PLACE FOR THIS. The sheet already
+   lights the lines and drops the other fifty-two cards back, and
+   that answer is unreadable for the commonest case: the drawing is
+   2,920 x 5,600 units, the frame holds about a third of it, and a
+   lit table three thousand units away is lit and invisible. This
+   block is where the drawing already says what it is, so it is
+   where it says what is picked and names the tables at the far end.
+
+   THREE RULES IT KEEPS. Names are the dealer's own, in their own
+   case, never uppercased — a table name is a name (§3). The list
+   SCROLLS rather than truncating, because nothing here truncates
+   mid-word (§3), and eight neighbours is a real case on the seeded
+   set. And the one control on this block claims back the
+   pointer-events the block gives away, so the pan, the drag and the
+   drop over every other pixel of it behave as though it were not
+   there — which is the promise the block was written with.
+
+   IT REPLACES THE ADVICE, NOT THE CENSUS. "Point at a table to
+   trace its links" is instruction for somebody who has not done it
+   yet, and the reader has just done it; the two figures underneath
+   are the drawing's census and stay true whatever is picked.
+   ============================================================ */
+.wb-legend--lit .wb-legend-say,
+.wb-legend--lit .wb-legend-more {
+  display: none;
+}
+
+.wb-lit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  animation: ds-fade var(--t-med) var(--ease-draft) backwards;
+}
+
+/* the picked table, and how many lines run from it */
+.wb-lit-say {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px var(--sp-2);
+  margin: 0;
+  min-width: 0;
+}
+/* A NAME, SO IT IS SET AS A NAME. Not the mono figure face, not
+   uppercase, and it wraps to two lines rather than clipping. */
+.wb-lit-name {
+  font-size: 15px;
+  font-weight: 570;
+  line-height: 1.3;
+  letter-spacing: -0.009em;
+  color: var(--ink);
+}
+.wb-lit-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* THE NEIGHBOURS. A capped, scrolling strip.
+
+   THE CAP IS ABOUT THE BLOCK, NOT ABOUT A COUNT. The framing
+   arithmetic in Whiteboard.tsx measures this block's height and
+   reserves it so no card opens underneath — and it measures on the
+   way IN, before anything is picked. An uncapped list would let a
+   pick grow the block past the space that was reserved for it and
+   put paper over the drawing. 132px is about seven rows: enough
+   that the ordinary case never scrolls, bounded so the unusual one
+   cannot push the block into the sheet. Beyond that it scrolls,
+   because nothing here truncates a name (§3). */
+.wb-lit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  max-height: 132px;
+  margin: 0;
+  padding: 0 0 0 1px;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  /* the strip is the one part of the block a reader may need to
+     move, so it takes its presses back from the block */
+  pointer-events: auto;
+}
+.wb-lit-one {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+/* the table's own hue, as a DOT — the same eighth-note the rail and
+   the key plan take, never a fill behind the name */
+.wb-lit-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--wb-lit-ink, var(--ink-faint));
+}
+
+/* ============================================================
+   THE WAY OUT, DRAWN.
+
+   Escape clears the pick and a click on the paper clears the pick,
+   and both always did. Neither is discoverable, and the state they
+   undo is a reader's whole drawing gone quiet — the one state in
+   this app somebody can enter by accident and not know the name of.
+   So it gets a control, in the block that explains the state.
+
+   Hover, press and focus, and the press lands on pointer-down (§4).
+   ============================================================ */
+.wb-lit-clear {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  margin-top: 1px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--ink-soft);
+  cursor: pointer;
+  /* the block is pointer-events: none; this is the exception */
+  pointer-events: auto;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.wb-lit-clear:hover {
+  background: var(--paper-sunken);
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+.wb-lit-clear:active {
+  background: var(--paper-sunken);
+  transform: scale(0.97);
+  transition-duration: var(--t-fast);
+}
+.wb-lit-clear:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   THE KEY PLAN CARRIES THE SPOTLIGHT TOO.
+
+   `mapInk` in Whiteboard.tsx paints an off-path table in the ramp's
+   decoration tier and an on-path table in its own hue; what this
+   rule adds is the CONTRAST between them. At rest every rectangle
+   is at 0.55 so fifty-three of them read as a drawing rather than
+   as confetti — but with a table picked the map's whole job is to
+   separate six rectangles from forty-seven, and 0.55 is a veil over
+   exactly the distinction being drawn. So with a pick standing the
+   map goes to full strength and the ink does the separating.
+   ============================================================ */
+.wb-root--focus .wb-canvas .wb-map .react-flow__minimap-node {
+  opacity: 0.92;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-lit {
+    animation: none;
+  }
+  /* the press loses its travel, not its answer */
+  .wb-lit-clear:active {
+    transform: none;
+  }
+}
+
 /* WHAT THE OPENING FRAME LEFT OUT. Drawn only while it is true — FIT
    clears it, because after FIT every table is in the frame. */
 .wb-legend-more {

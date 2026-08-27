@@ -197,6 +197,7 @@ import {
   type IndexEntry,
   type IndexSection,
 } from './read'
+import { accessRows, capabilityLabel, isUnrestricted } from './access'
 import { capabilityStates, NOT_YET_SAYS } from './designer'
 import { RULE_CAPABILITY, useModuleConfiguresRules } from './ruleCapability'
 import './modules.css'
@@ -232,6 +233,13 @@ export function ModuleIndex({
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const updateModule = useProjectStore((s) => s.updateModule)
+  /* THE JOBS AT THIS DEALERSHIP. Read here rather than counted from
+     `ModuleDef.access` alone, because a grant is a role ID and a strip
+     that could not name the job would be a permission read as an
+     identifier. `accessRows` intersects with what this place still
+     offers, so a verb switched off an hour ago stops being listed the
+     same instant. */
+  const roleMap = useProjectStore((s) => s.roles)
   /* Quotes live in their own registry rather than the project store —
      a document is frozen and must not move when the sheet does. */
   const quotes = useQuotes()
@@ -628,6 +636,25 @@ export function ModuleIndex({
      scroll. */
   const openRules = (): void => onSettings('rules')
 
+  /* WHO MAY WORK HERE — and nothing at all when nobody has closed the
+     door. `able` are the jobs holding something this place still does;
+     `silent` are the jobs named here holding nothing that is in force,
+     which is a different fact and is stated as one rather than
+     subtracted in silence. */
+  const access = useMemo(() => {
+    if (isUnrestricted(module)) return { restricted: false, able: [], silent: 0 }
+    const roles = Object.values(roleMap).sort(
+      (a, b) => a.createdAt.localeCompare(b.createdAt) || a.name.localeCompare(b.name),
+    )
+    const rows = accessRows(module, roles)
+    const named = new Set((module.access ?? []).map((a) => a.roleId))
+    return {
+      restricted: true,
+      able: rows.filter((r) => r.granted.length > 0),
+      silent: rows.filter((r) => r.granted.length === 0 && named.has(r.role.id)).length,
+    }
+  }, [module, roleMap])
+
   const style = { '--md-accent': accentVar(module.accent) } as CSSProperties
 
   return (
@@ -808,6 +835,60 @@ export function ModuleIndex({
                   )
                 })}
               </ul>
+            </div>
+          ) : null}
+
+          {/* WHO MAY WORK HERE — drawn only where somebody has closed
+              the door.
+
+              ABSENT MEANS UNRESTRICTED, and unrestricted is not a
+              decision anybody made, so a place nobody has closed says
+              NOTHING about access. That is the same rule the dashboard
+              card keeps, and for the same reason: a strip stamped on
+              every module would turn a catalogue into an admin console
+              and would report nine decisions that were never taken.
+
+              WHERE IT IS CLOSED, THE PERSON STANDING HERE IS ENTITLED
+              TO KNOW. The row of verbs directly above says what may be
+              done in this place; without this strip it says so without
+              the qualification on it, and a salesperson reading "Quote
+              · Export" has no way to learn that neither is theirs. It
+              names the jobs and what each holds, and it says plainly
+              when the answer is nobody — which is a real state, and
+              the one worth catching. */}
+          {access.restricted ? (
+            <div className="md-over-strip">
+              <p className="md-over-cap mono-label">Who may work here</p>
+              {access.able.length > 0 ? (
+                <ul className="md-who">
+                  {access.able.map((row) => (
+                    <li className="md-who-one" key={row.role.id}>
+                      <span className="md-who-name">{row.role.name}</span>
+                      <span className="md-who-can">
+                        {row.granted.map((c) => capabilityLabel(c)).join(' · ')}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <p className="md-who-say">
+                {access.able.length === 0 ? (
+                  <>
+                    <strong>{module.name} is closed and no job may act in it.</strong>{' '}
+                    Every verb above is switched on for this place and granted to nobody.
+                    Tick one in <em>Settings</em>, or clear the last tick to open it to
+                    everyone again.
+                  </>
+                ) : access.silent > 0 ? (
+                  <>
+                    Everybody else may do nothing here — including {access.silent} named{' '}
+                    {access.silent === 1 ? 'job' : 'jobs'} holding nothing this place still
+                    does. Change it in <em>Settings</em>.
+                  </>
+                ) : (
+                  <>Everybody else may do nothing here. Change it in <em>Settings</em>.</>
+                )}
+              </p>
             </div>
           ) : null}
 

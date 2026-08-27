@@ -95,12 +95,24 @@
   min-width: 0;
 }
 
+/* ------------------------------------------------------------
+   THE BAR'S OWN COLOUR IS DECLARED HERE, AND ONLY HERE.
+
+   `shell.css` carried a second set of `.ab-*` rules — the separator,
+   the control, its hover, its latch and the primary — written when
+   the bar stood on navy chrome and rewritten again when it came back
+   to paper. `shell.css` is imported after this file, so those rules
+   won, and reading this one told you the wrong colours for every
+   control on the bar. A component's appearance belongs to the
+   component's stylesheet; the values below are the ones that were
+   rendering, moved to where they are declared.
+   ------------------------------------------------------------ */
 .ab-sep {
   flex: none;
   width: 1px;
   height: 20px;
   margin: 0 6px;
-  background: var(--hairline-strong);
+  background: var(--line);
 }
 
 /* ------------------------------------------------------------
@@ -116,7 +128,7 @@
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
   font-family: var(--font-ui);
   font-size: 12.5px;
   font-weight: 500;
@@ -131,8 +143,8 @@
     color var(--t-fast) var(--ease-draft);
 }
 .ab-btn:hover {
-  background: var(--paper-sunken);
-  color: var(--ink);
+  background: var(--surface-3);
+  color: var(--fg);
 }
 /* Rule 8 asks for hover, press AND focus on everything pressable.
    The press is the app's own shared `:active` scale (base.css); the
@@ -143,30 +155,38 @@
   outline-offset: 1px;
 }
 
-/* a latch, and an open panel. `--blue-wash` over the bar composites to
-   #f0f1fb; `--blue` on it measures 5.3:1. */
+/* a latch, and an open panel. The 5.3:1 recorded here was measured
+   on the outgoing `--blue-wash` / `--blue` pair; the pair that
+   renders is `--accent-wash` / `--accent`, moved from `shell.css`
+   unchanged. NOT RE-MEASURED — this pass moved a value, it did not
+   choose one, and a ratio nobody measured is worse than none. */
 .ab-btn.is-on {
-  background: var(--blue-wash);
+  background: var(--accent-wash);
   border-color: color-mix(in srgb, var(--blue) 24%, transparent);
-  color: var(--blue);
+  color: var(--accent);
 }
 .ab-btn.is-on:hover {
   background: var(--blue-wash-strong);
   color: var(--blue);
 }
 
-/* THE PRIMARY IS INK, NOT ACCENT, because that is what this app's
-   primary button already is (`base.css .btn.btn-primary`) and the
-   register's `+ Row` has been drawn that way all along. Relocating a
-   control must not restyle it. `--paper-high` on `--ink` is 18.9:1. */
+/* THE PRIMARY TOOK THE ACCENT, and this rule is the record of both
+   readings. It was ink, because that is what this app's primary
+   button already was (`base.css .btn.btn-primary`) and the
+   register's `+ Row` had been drawn that way all along; the navy
+   pass then gave it `--accent` on the ground that it is the only
+   saturated thing on the bar, and that is what renders. The border
+   was never restated and so is still `--ink` — a fact this rule now
+   states out loud instead of leaving it to two files and source
+   order to settle. */
 .ab-btn--primary {
   border-color: var(--ink);
-  background: var(--ink);
-  color: var(--paper-high);
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 .ab-btn--primary:hover {
   border-color: var(--blue-deep);
-  background: var(--blue-deep);
+  background: var(--accent-hover);
   color: var(--paper-high);
 }
 
@@ -392,6 +412,15 @@
   display: inline-flex;
 }
 
+/* ONE DECLARATION. The radius, the border colour, the lit top edge
+   and the entrance curve arrived in a later block at the foot of
+   this file — four properties re-opening a rule that was already
+   written — and they are folded in here, at the values that render:
+   the radius joins the band the rest of the floating chrome sits in,
+   the surface gets the top-edge highlight that makes a raised thing
+   read as lit, and the entrance takes the curve the shell's other
+   entrances take. The type is deliberately untouched; see
+   `.ab-panel-name` below for why a popover header stays small. */
 .ab-panel {
   position: absolute;
   bottom: calc(100% + 10px);
@@ -402,12 +431,12 @@
   max-height: min(52vh, 440px);
   overflow-y: auto;
   padding: var(--sp-3);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
   background: var(--paper-overlay);
-  box-shadow: var(--e3);
+  box-shadow: var(--e3), inset 0 1px 0 var(--edge-light);
   transform: translateX(-50%);
-  animation: ab-panel-in var(--t-med) var(--ease-settle);
+  animation: ab-panel-in var(--t-med) var(--ease-out-expo);
 }
 @keyframes ab-panel-in {
   from {
@@ -419,10 +448,14 @@
     transform: translateX(-50%) translateY(0);
   }
 }
-/* movement goes, opacity stays — never silence */
+/* movement goes, opacity stays — never silence. The curve is the
+   base rule's, restated because `animation` is a shorthand and would
+   otherwise reset the timing function to its initial value: that is
+   what the foot-of-file `animation-timing-function` used to be
+   quietly correcting from below. */
 @media (prefers-reduced-motion: reduce) {
   .ab-panel {
-    animation: ab-fade var(--t-fast) var(--ease-draft);
+    animation: ab-fade var(--t-fast) var(--ease-out-expo);
   }
   @keyframes ab-fade {
     from {
@@ -434,11 +467,15 @@
   }
 }
 
+/* the rule under it is what makes it a header — folded in from the
+   later block rather than left as a second declaration */
 .ab-panel-head {
   display: flex;
   flex-direction: column;
   gap: 3px;
   padding: 0 var(--sp-1) var(--sp-2);
+  margin-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
 }
 /* the contract's page-title step, one level down for a popover */
 .ab-panel-name {
@@ -691,18 +728,15 @@
    argues for the page-title step one level down inside a popover,
    and that argument is still right — a popover header competing
    with the page it floats over is worse than a small one.
-   ============================================================ */
 
-.ab-panel {
-  border-radius: var(--r-panel);
-  border-color: var(--line);
-  box-shadow: var(--e3), inset 0 1px 0 var(--edge-light);
-  animation-timing-function: var(--ease-out-expo);
-}
-.ab-panel-head {
-  margin-bottom: var(--s-2);
-  border-bottom: 1px solid var(--line-subtle);
-}
+   THE FOUR LINES ARE NOW IN THE RULE THEY BELONG TO. They were
+   written here, six hundred rows below `.ab-panel`, so the panel had
+   two declarations and neither of them was the whole answer — and
+   the `animation-timing-function` among them was silently correcting
+   a shorthand in a `prefers-reduced-motion` block in between, which
+   is the kind of thing nobody finds twice. The values are unchanged
+   and both rules are declared once, up there.
+   ============================================================ */
 
 /* ============================================================
    THE FOLD — what a bar does with the controls nobody reaches
@@ -822,4 +856,32 @@
     animation: none;
   }
 }
+
+/* ============================================================
+   AN INERT PRIMARY LOSES ITS FILL.
+
+   MEASURED ON SCREEN: 1.32:1. `.ab-btn.is-inert` sets the label
+   to --ink-soft, which is 8.1:1 on paper — and it was written for
+   a button whose ground IS paper. `.ab-btn--primary` keeps
+   `background: var(--accent)`, so the two rules combined put a
+   mid grey on saturated blue and the words disappeared.
+
+   It failed in the worst possible place. A refusal is the moment
+   the label matters MOST — "Give it to the customer" is what the
+   person is trying to do, and the bar's `refusal` sentence
+   explains why they cannot yet. Rule 10 asks the refusal to say
+   why; it is no use saying why on a control nobody can read.
+
+   So an inert primary stops pretending to be primary: the fill
+   goes, the words come back, and it no longer LOOKS pressable
+   while being inert — which is the honest reading of a control
+   that cannot act.
+   ============================================================ */
+.ab-btn--primary.is-inert,
+.ab-btn--primary.is-inert:hover {
+  background: var(--surface-3);
+  border-color: var(--line);
+  /* 7.6:1 on --surface-3, measured */
+  color: var(--fg-secondary);
+  box-shadow: none;
 }

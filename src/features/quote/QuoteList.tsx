@@ -234,7 +234,7 @@ function RowShot({ quote }: { quote: QuoteDef }): ReactElement {
           h={96}
         />
       ) : (
-        <span className="mono-label qt-list-held">{HELD_AS_LINK}</span>
+        <span className="qt-list-held">{HELD_AS_LINK}</span>
       )}
     </span>
   )

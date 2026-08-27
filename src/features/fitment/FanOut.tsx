@@ -48,6 +48,14 @@
          @/features/constraints/trailerFitment, which is the only
          implementation of it in the app and stays that way.
      5 · WHAT IS HELD BACK, said out loud rather than dropped.
+     6 · ONE RIG, SOLVED — `Rig`, directly under the ledger, because
+         it is the answer to the question the reader is actually
+         standing here with. Everything else on this page COUNTS the
+         pairings the file already holds; the rig takes one hull and
+         runs every business rule against it through
+         `@/lib/configure`, which is an arc-consistency solver that
+         records the reason at the moment an option is removed.
+         Nothing in this app had ever called it. See Rig.tsx.
 
    ── EVERY FIGURE IS COMPUTED ON RENDER ────────────────────────
 
@@ -97,6 +105,7 @@ import { heldBackSentence, retiredTableSentence } from '@/features/views/sellabl
    without letting anybody check it. */
 import { CurationNote, measuredRate, readCuration, searchReach } from '@/features/curation'
 import { readFanOut, readRoles, type Fan, type FanReading, type StrandGroup } from './reading'
+import { Rig } from './Rig'
 import './fitment.css'
 
 const n = (v: number): string => v.toLocaleString()
@@ -328,6 +337,9 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
             />
           </ul>
         </header>
+
+        {/* ---- one rig, solved ---- */}
+        <Rig reading={reading} />
 
         {/* ---- the fans ---- */}
         <ul className="fo-fans">

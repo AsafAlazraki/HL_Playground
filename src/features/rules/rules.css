@@ -2160,3 +2160,172 @@
 .rl-empty--bad {
   border-style: solid;
 }
+
+/* ============================================================
+   WHAT THE RUN FOUND — the results rail, brought up.
+
+   This is the payoff of the whole flow builder: press RUN and the
+   rail says which rows came through, what the rule wants to write,
+   and what it refused to. The re-skin above never reached it, and
+   three of its lines were carrying meaning in an ink that was
+   never measured to be read.
+
+   1. A SENTENCE IN THE DANGER INK, THREE TIMES. `.rl-warn`,
+      `.rl-effect-why` and — the worst of them — `.rl-applied`,
+      which put "12 writes committed to the sheet." in
+      `--accent-viridian`. The kind hues are cut to roughly equal
+      luminance so a sheet of mixed tables reads as one drawing;
+      that is a fine property for a 3px rail and a poor one for a
+      line of text, and §1 says so in as many words: a rail, a dot
+      or a glyph, never a fill behind text and never the text.
+
+      Every one of them keeps its colour AS A MARK — the warning
+      keeps its red slash, the refusal keeps a red rail, the
+      committed count keeps a success dot — and the WORDS move to
+      ink that was measured to be read.
+
+   2. THE SKIPPED EFFECT IS STILL AN EFFECT. Struck through AND at
+      the faint tier is two signals for one fact, and the fact —
+      "this write will not run" — is one a person has to read
+      before they press Apply. The strike stays; the ink comes up.
+
+   3. NOTHING IN THE RAIL PRESSED. Same omission as the panel: the
+      tabs, the close and the head all had hover and focus and no
+      answer to a pointer-down.
+   ============================================================ */
+
+.rl-results-head {
+  background: var(--grad-surface);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+.rl-results-rule {
+  font-size: var(--t-small-size);
+  color: var(--fg);
+}
+
+/* -- the tabs over the result sets --------------------------- */
+
+.rl-tab {
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+/* a tab sits in a row of its siblings, so it darkens (§4) */
+.rl-tab:active {
+  background: var(--accent-wash-strong);
+  transition-duration: var(--d-press);
+}
+.rl-tab.is-active {
+  border-color: var(--line);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-weight: 600;
+}
+.rl-tab-n {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+
+.rl-close {
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.rl-close:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+  color: var(--fg);
+}
+.rl-close:active {
+  transform: scale(0.94);
+  transition-duration: var(--d-press);
+}
+
+/* -- the answer itself --------------------------------------- */
+
+.rl-th {
+  background: var(--surface-1);
+  border-bottom-color: var(--line-strong);
+}
+.rl-th-label {
+  font-size: var(--t-caption-size);
+  letter-spacing: -0.002em;
+  color: var(--fg);
+}
+.rl-td {
+  border-bottom-color: var(--line-subtle);
+  color: var(--fg);
+}
+/* a row darkens; it does not lift and it does not scale */
+.rl-table tbody tr:hover .rl-td {
+  background: var(--accent-wash);
+}
+.rl-th--gutter,
+.rl-td--gutter {
+  color: var(--fg-tertiary);
+}
+
+/* -- what it wants to write ---------------------------------- */
+
+.rl-effect-kind {
+  letter-spacing: var(--t-label-track);
+  border-color: var(--line);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+/* SUPERSEDES a sentence in --danger. The refusal keeps the danger
+   as a RAIL and gives the words readable ink — this is the one
+   line on the list a person has to act on. */
+.rl-effect-why {
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--danger);
+  color: var(--fg);
+}
+/* the strike says "will not run"; the ink no longer says it twice */
+.rl-effect.is-skipped .rl-effect-text {
+  color: var(--fg-secondary);
+}
+
+/* SUPERSEDES `--accent-viridian` on a sentence — a kind hue, cut
+   for equal luminance and never measured to carry text. The count
+   is a figure and takes the figure face; the good news is carried
+   by the dot. */
+.rl-applied {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-size: var(--t-small-size);
+  letter-spacing: 0;
+  color: var(--fg);
+}
+.rl-applied::before {
+  content: '';
+  align-self: center;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--success);
+}
+
+/* -- the red-pencil notes ------------------------------------ */
+
+/* the slash stays red; the note becomes readable */
+.rl-warn {
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  color: var(--fg);
+}
+/* the sentence takes the reading face; only the count is a figure */
+.rl-applied {
+  font-family: var(--font-sans);
+}
+.rl-applied-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--fg);
+}

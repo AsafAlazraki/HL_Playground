@@ -948,3 +948,827 @@
     border-left: 0;
   }
 }
+
+/* ============================================================
+   THE RIG — one hull, solved. Prefix `rg-`, and it overrides
+   nothing: no rule below reaches outside `.rg`.
+
+   THREE STATES, AND THE HUE IS AN EIGHTH-NOTE IN ALL THREE.
+   DESIGN_PRINCIPLES §1 allows a kind or status hue as a rail, a
+   dot or a glyph and never as a fill behind text, so a refused
+   option is a 2px `--red` rail and a `--red` glyph, and every word
+   of its reason is `--ink-soft` (8.1 : 1) on the ordinary surface.
+   Nothing here needed a tint measuring, because nothing here reads
+   over one.
+
+   WHAT IS STRUCK, AND WHAT IS NOT. The price of a refused row is
+   struck through and drops to `--ink-faint` — the floor, 5.5 : 1,
+   still readable, which is the point: a dealer has to be able to
+   read the price of the thing they cannot have. The NAME is never
+   struck. A struck proper noun is unreadable at 13px and the
+   refusal is already said twice beside it.
+
+   MOTION IS CSS FOR STATE AND SPRINGS FOR ARRIVAL, the split §4
+   draws: hover, press and focus are transitions on colour and
+   transform here; anything that moves because the SOLVE moved is
+   `motion/react` in Rig.tsx, on `transitionFor(still, SPRING)`.
+
+   A LIST ROW DARKENS RATHER THAN SCALING, and a press lands on
+   pointer-down — `:active` fires on the down stroke, which is why
+   every press below is written there and not on a click handler.
+   ============================================================ */
+
+.rg {
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card-hover), inset 0 1px 0 var(--edge-light);
+}
+
+.rg-head {
+  min-width: 0;
+}
+
+.rg-eyebrow {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.rg-title {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-title-size);
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1.22;
+  color: var(--ink);
+}
+
+.rg-lede {
+  margin: var(--sp-3) 0 0;
+  max-width: 70ch;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------- */
+/* The hull picker                                             */
+/* ---------------------------------------------------------- */
+
+.rg-pick {
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.rg-pick-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.rg-pick-search,
+.rg-cat-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3);
+  height: 34px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  color: var(--ink-faint);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft);
+}
+
+.rg-pick-search:focus-within,
+.rg-cat-search:focus-within {
+  border-color: var(--blue);
+  box-shadow: var(--glow-sm);
+}
+
+.rg-pick-input,
+.rg-cat-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.rg-pick-input::placeholder,
+.rg-cat-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.rg-pick-cancel,
+.rg-quiet-door {
+  flex: none;
+  padding: 0 var(--sp-3);
+  height: 34px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-draft);
+}
+
+.rg-quiet-door {
+  height: auto;
+  padding: 2px var(--sp-2);
+}
+
+.rg-pick-cancel:hover,
+.rg-quiet-door:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.rg-pick-cancel:active,
+.rg-quiet-door:active {
+  transform: scale(0.97);
+}
+
+.rg-pick-list {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  border-top: 1px solid var(--hairline);
+}
+
+.rg-pick-item {
+  min-width: 0;
+}
+
+.rg-pick-row {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 3px 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-2) 0 0;
+  height: 40px;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-press) var(--ease-draft);
+}
+
+.rg-pick-row:hover {
+  background: var(--paper-sunken);
+}
+
+.rg-pick-row:active {
+  background: var(--surface-4);
+}
+
+.rg-pick-rail {
+  align-self: stretch;
+  width: 3px;
+  background: var(--rg-accent, var(--accent-graphite));
+  opacity: 0.75;
+}
+
+.rg-pick-name {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rg-pick-table {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.rg-pick-price,
+.rg-hull-price,
+.rg-row-price {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.rg-pick-none,
+.rg-cat-none,
+.rg-cat-quiet {
+  margin: var(--sp-3) 0 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.rg-pick-more,
+.rg-band-more {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------- */
+/* The hull, once it is chosen                                 */
+/* ---------------------------------------------------------- */
+
+.rg-hull {
+  position: relative;
+  margin: var(--sp-4) 0 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  overflow: hidden;
+}
+
+.rg-hull::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--rg-accent, var(--accent-graphite));
+}
+
+.rg-hull-mark {
+  flex: none;
+  display: inline-flex;
+  color: var(--rg-accent, var(--ink-faint));
+}
+
+.rg-hull-said {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rg-hull-name {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.008em;
+  color: var(--ink);
+}
+
+.rg-hull-table {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.rg-hull-price {
+  font-size: 15px;
+}
+
+.rg-hull-change {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-3);
+  height: 30px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-draft);
+}
+
+.rg-hull-change:hover {
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.rg-hull-change:active {
+  transform: scale(0.97);
+}
+
+/* ---------------------------------------------------------- */
+/* What the rules read off it                                  */
+/* ---------------------------------------------------------- */
+
+.rg-body {
+  min-width: 0;
+}
+
+.rg-facts {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.rg-fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 3px var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--paper);
+}
+
+.rg-fact-name {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.rg-fact-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.rg-rules {
+  margin: var(--sp-4) 0 0;
+  max-width: 74ch;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* THE ENGINE'S OWN SENTENCE AFTER A CHOICE. `describeChange` is
+   the thing that makes a propagating solver feel helpful rather
+   than spooky, and it is the one part of the library that was
+   written for a surface that did not exist until now. */
+.rg-note {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--blue);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--blue-wash);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.rg-problems {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.rg-problem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--red);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--paper-sunken);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.rg-problem > svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--red);
+}
+
+/* ---------------------------------------------------------- */
+/* The choices                                                 */
+/* ---------------------------------------------------------- */
+
+.rg-slots {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.rg-slot {
+  min-width: 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.rg-slot.is-narrowed {
+  border-top-color: var(--accent-line);
+}
+
+.rg-slot-head {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+
+.rg-slot-name {
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+}
+
+.rg-slot-where {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rg-slot-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.rg-slot-count b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rg-opts {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: var(--sp-2);
+  align-items: start;
+}
+
+.rg-opt {
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  overflow: hidden;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+
+.rg-opt-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink-soft);
+  transition:
+    background var(--t-press) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+
+.rg-opt-btn:hover {
+  background: var(--paper-sunken);
+}
+
+.rg-opt-btn:active {
+  background: var(--surface-4);
+}
+
+.rg-opt-said {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.rg-opt-label {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.rg-opt-why {
+  display: block;
+  padding: 0 var(--sp-3) var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* -- chosen -------------------------------------------------- */
+
+.rg-opt.is-chosen {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+
+.rg-opt.is-chosen .rg-opt-btn {
+  color: var(--blue);
+}
+
+.rg-opt.is-chosen .rg-opt-label {
+  font-weight: 600;
+}
+
+/* -- flagged: it is still offered, and something disagrees --- */
+
+.rg-opt.is-flagged {
+  border-left: 2px solid var(--warning);
+}
+
+.rg-opt.is-flagged .rg-opt-btn > svg {
+  color: var(--warning);
+}
+
+/* -- refused: it stays, and it says why ---------------------- */
+
+.rg-opt.is-refused {
+  border-left: 2px solid var(--red);
+  background: var(--paper);
+}
+
+.rg-opt.is-refused .rg-opt-said > svg {
+  flex: none;
+  color: var(--red);
+}
+
+.rg-opt.is-refused .rg-opt-label {
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------- */
+/* What is not drawn                                           */
+/* ---------------------------------------------------------- */
+
+.rg-quiet {
+  margin: var(--sp-4) 0 0;
+  max-width: 74ch;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------- */
+/* The catalogues                                              */
+/* ---------------------------------------------------------- */
+
+.rg-cats {
+  list-style: none;
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.rg-cat {
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  overflow: hidden;
+  transition: border-color var(--t-fast) var(--ease-draft);
+}
+
+.rg-cat.is-open {
+  border-color: var(--hairline-strong);
+}
+
+.rg-cat-door {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-press) var(--ease-draft);
+}
+
+.rg-cat-door:hover {
+  background: var(--paper-sunken);
+}
+
+.rg-cat-door:active {
+  background: var(--surface-4);
+}
+
+.rg-cat-mark {
+  display: inline-flex;
+  color: var(--rg-accent, var(--ink-faint));
+}
+
+.rg-cat-name {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rg-cat-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.rg-cat-n b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rg-cat-body {
+  padding: 0 var(--sp-4) var(--sp-4);
+}
+
+
+.rg-rows {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rg-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  min-width: 0;
+  padding: var(--sp-2) 0 var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  border-left: 2px solid transparent;
+}
+
+.rg-row-said {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.rg-row-said > svg {
+  flex: none;
+}
+
+.rg-row-name {
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.rg-row-noprice {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.rg-row-why {
+  grid-column: 1 / -1;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* THE CELL THE RULE READ, in the figure face, so a reader can find
+   it in their own sheet rather than take the verdict. */
+.rg-row-cell {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink);
+}
+
+.rg-row.is-flagged {
+  border-left-color: var(--warning);
+}
+
+.rg-row.is-flagged .rg-row-said > svg {
+  color: var(--warning);
+}
+
+.rg-row.is-refused {
+  border-left-color: var(--red);
+}
+
+.rg-row.is-refused .rg-row-said > svg {
+  color: var(--red);
+}
+
+/* THE PRICE IS STRUCK, THE NAME IS NOT — see the header of this
+   section. The struck figure stays at the readable floor, because
+   the whole argument of this surface is that a dealer can see the
+   thing they cannot have. */
+.rg-row.is-refused .rg-row-price {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+@media (max-width: 720px) {
+  .rg {
+    padding: var(--sp-4);
+  }
+  .rg-pick-row {
+    grid-template-columns: 3px 1fr auto;
+  }
+  .rg-pick-table {
+    display: none;
+  }
+}

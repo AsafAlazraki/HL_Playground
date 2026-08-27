@@ -330,7 +330,17 @@ export function SideNav({
           aria-expanded={!collapsed}
           onClick={() => setCollapsed((c) => !c)}
         >
-          <span aria-hidden="true">{collapsed ? '»' : '«'}</span>
+          {/* « and » were two guillemets standing in for a control.
+              They are punctuation, they sit on the text baseline
+              rather than on the button's optical centre, and at the
+              size a 24px button wants them they are three hairlines
+              of ink. A drawn caret is the same hand as every other
+              mark on the rail. */}
+          {collapsed ? (
+            <CaretDoubleRight size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+          ) : (
+            <CaretDoubleLeft size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+          )}
         </button>
       </div>
 
@@ -342,7 +352,7 @@ export function SideNav({
         title={collapsed ? 'Find anything' : undefined}
       >
         <span className="sn-find-mark" aria-hidden="true">
-          ⌕
+          <MagnifyingGlass size={MARK} weight={MARK_WEIGHT} />
         </span>
         <span className="sn-find-say">Find anything</span>
         <kbd className="sn-kbd">Ctrl K</kbd>
@@ -440,7 +450,10 @@ export function SideNav({
                     )
                   })}
                   <button type="button" className="sn-add" onClick={onAddTable}>
-                    <span aria-hidden="true">+</span> New table
+                    <span className="sn-add-mark" aria-hidden="true">
+                      <Plus size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                    </span>
+                    New table
                   </button>
                 </div>
               ) : null}
@@ -498,6 +511,7 @@ export function SideNav({
             label="Access & roles"
             on={false}
             collapsed={collapsed}
+            glyph={mark(ShieldCheck)}
             onPick={onOpenDashboard}
           />
         </div>
@@ -514,7 +528,10 @@ export function SideNav({
           title={collapsed ? 'New quote' : undefined}
         >
           <span className="sn-new-mark" aria-hidden="true">
-            +
+            {/* `light`, like every other mark here — `lib/icons` bars
+                bold and fill by name, and a primary button earns its
+                weight from the accent behind it, not from its glyph. */}
+            <Plus size={MARK} weight={MARK_WEIGHT} />
           </span>
           <span className="sn-new-say">New quote</span>
         </button>

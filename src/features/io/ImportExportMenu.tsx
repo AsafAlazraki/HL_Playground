@@ -423,7 +423,13 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
       {open && (
         <div
           className={`io-pop${drop.up ? ' is-up' : ''}`}
-          style={{ ['--io-room' as string]: `${drop.room}px` } as CSSProperties}
+          /* only once it has actually been measured — `min()` against
+             a zero would collapse the panel outright */
+          style={
+            drop.room > 0
+              ? ({ ['--io-room' as string]: `${drop.room}px` } as CSSProperties)
+              : undefined
+          }
           role="dialog"
           aria-label="Import / export"
           ref={popRef}

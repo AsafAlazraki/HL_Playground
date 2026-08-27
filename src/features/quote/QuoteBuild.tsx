@@ -181,7 +181,15 @@ import { money, quoteLevelChoices } from './pricing'
 import { issueBlockers, lineAmount, looseLines, quoteTotals } from './totals'
 import { addLine, issueQuote, persistNote, removeLine, setLevel, setQty } from './quotes'
 import { recallPlace, rememberPlace } from './place'
-import { buildSteps, decidedCount, firstOpenStep, savedNote, stepAfter, stepBefore } from './steps'
+import {
+  buildSteps,
+  decidedCount,
+  firstOpenStep,
+  savedNote,
+  stepAfter,
+  stepBefore,
+  HANDOVER_STEP,
+} from './steps'
 import type { BuildStep } from './steps'
 import { CustomerField } from './QuoteEditor'
 import { FrozenPhoto } from './photo'
@@ -218,8 +226,14 @@ const NO_OFFER: StepOffer = {
  * Q3/Q4). Here it is the visible end of the walk, it uses the register
  * the app already has, and `issueBlockers` refuses in the same words
  * whichever reading a person is in.
+ *
+ * THE ID ITSELF LIVES IN `steps.ts`, beside `SUBJECT_STEP`. It was
+ * declared here as a literal while `place.ts` compared against its own
+ * copy and the picker's flow preview named a third — one declaration
+ * per fact, so a remembered place can never point at a stop nothing
+ * matches.
  */
-const HANDOVER = '__handover'
+const HANDOVER = HANDOVER_STEP
 
 export interface QuoteBuildProps {
   quote: QuoteDef
@@ -401,15 +415,24 @@ export function QuoteBuild({
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
       if (e.metaKey || e.ctrlKey || e.altKey) return
+      /* SOMEBODY ELSE GOT THERE FIRST. A window listener is the last
+         handler to have an opinion, so anything that has already
+         claimed the key — a picker's own list, a sheet's Escape —
+         keeps it. */
+      if (e.defaultPrevented) return
       /* A CARET OUTRANKS EVERY SHORTCUT ON THIS SCREEN. The step's own
          search is a text field three inches from the shelf, and an
          arrow key that walked off the step mid-word would make the one
-         control §4 asks for unusable. */
+         control §4 asks for unusable. The same goes for anything
+         standing OVER this screen: the customer picker on the last
+         step is a `role="listbox"` whose own arrows move its
+         highlight, and a dialog owns every key inside it. */
       const t = e.target
       if (t instanceof HTMLElement) {
         if (t.isContentEditable) return
         const tag = t.tagName
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        if (t.closest('[role="listbox"], [role="dialog"], [role="menu"]')) return
       }
       switch (e.key) {
         case 'ArrowLeft':
@@ -824,7 +847,13 @@ function Stop({
       type="button"
       className={`qb-stop${on ? ' is-on' : ''}${done ? ' is-done' : ''}`}
       aria-current={on ? 'step' : undefined}
-      aria-label={`Step ${index}, ${title}, ${done ? `chosen: ${chose}` : 'not chosen yet'}`}
+      /* A READER WHO CANNOT SEE THE CHIP GETS THE SAME FACT. It used to
+         say "not chosen yet" over every open stop, including the ones
+         where nothing is on offer — so the one state that is not work
+         waiting to be done was the one state the label hid. */
+      aria-label={`Step ${index}, ${title}, ${
+        done ? `chosen: ${chose}` : chose === '' ? 'not chosen yet' : chose
+      }`}
       onClick={onPick}
     >
       <span className="qb-stop-mark" aria-hidden="true">
@@ -847,11 +876,29 @@ function Stop({
  *  rather than truncated: one line is named, more than one is named
  *  and counted. Nothing is invented — a step with lines that carry no
  *  price still says what was chosen, because the choice is the fact
- *  the rail is about and the money is the ledger's business. */
+ *  the rail is about and the money is the ledger's business.
+ *
+ *  AND WHEN NOTHING WAS CHOSEN IT SAYS WHY, WHICH IS FOUR DIFFERENT
+ *  FACTS. "Not chosen" was printed over all of them: a stop with four
+ *  curated motors waiting, a stop whose whole offer is no longer sold,
+ *  and a stop the relationship is simply empty at all read the same,
+ *  and only one of them is work a person can do. `step.reach` tells
+ *  them apart off the frozen section — see `StepReach` in steps.ts. */
 function choseSay(s: BuildStep): string {
-  if (s.lines.length === 0) return ''
   if (s.lines.length === 1) return s.lines[0].label
-  return `${s.lines[0].label}  +${s.lines.length - 1} more`
+  if (s.lines.length > 1) return `${s.lines[0].label}  +${s.lines.length - 1} more`
+  switch (s.reach) {
+    case 'waiting': {
+      const n = s.section.pickedCount ?? 0
+      return n === 1 ? 'one waiting' : `${n} waiting`
+    }
+    case 'held':
+      return `${s.section.heldCount ?? 0} no longer sold`
+    case 'bare':
+      return 'nothing curated yet'
+    default:
+      return 'not chosen'
+  }
 }
 
 /* ============================================================
@@ -1633,7 +1680,7 @@ function PictureWell({
         <FrozenPhoto img={img} fallbackAlt={name} className="qb-well-img" w={size} h={size} />
       ) : (
         <span className="qb-well-held">
-          <span className="qb-well-held-word mono-label">{HELD_AS_LINK}</span>
+          <span className="qb-well-held-word">{HELD_AS_LINK}</span>
           {big && img ? <span className="qb-well-held-why">{heldAsLinkNote(img.src)}</span> : null}
         </span>
       )}

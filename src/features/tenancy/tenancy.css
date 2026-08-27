@@ -1,0 +1,387 @@
+/* ============================================================
+   SAVED CONFIGURATIONS — the panel's own appearance.
+
+   Co-located with the feature, per the repo convention: no shared
+   override layer, nothing appended to ds.css, every value a token.
+
+   THE SHAPE IS A LIST OF ROWS, NOT A GRID OF CARDS. A configuration
+   is chosen by comparing dates and counts down a column — "is this
+   the one from before the winter prices?" — and a grid makes that
+   comparison a scan across two axes. So: full-width rows, the name
+   in reading case on the left, the counted figures in mono
+   underneath, the two acts on the right.
+
+   A ROW DARKENS RATHER THAN SCALING (§4). Its neighbours must not
+   look like they moved. The BUTTONS scale, because a button is a
+   control and 0.97 on a control is the system's own press.
+
+   CONTRAST. Every pair here is from the ramp: names on --fg
+   (17.4:1), sentences on --fg-secondary (8.1), metadata beside the
+   thing it describes on --fg-tertiary (5.5, the floor), refusals on
+   --danger. The only tinted grounds are --surface-3 and the two
+   washes, and the floor was re-cut to clear 4.5 over a tint —
+   nothing here sits on anything darker than that.
+   ============================================================ */
+
+.tn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  overflow-y: auto;
+  height: 100%;
+  padding: var(--s-8);
+  background: var(--bg);
+}
+
+/* ---- what this screen is --------------------------------- */
+.tn-head {
+  max-width: 62ch;
+}
+.tn-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  color: var(--fg);
+}
+.tn-lede {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+}
+
+/* ---- saving the sheet as it stands ------------------------ */
+.tn-save {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 62ch;
+  padding: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface, var(--surface-1));
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+}
+.tn-label {
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  color: var(--fg-secondary);
+}
+.tn-save-row {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+}
+.tn-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--h-lg);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.tn-input::placeholder {
+  /* A SUGGESTION IS NOT A VALUE, and the ramp says a mark that
+     carries no meaning may sit below the floor. This one DOES carry
+     meaning — it is the name the save will use — so it stays on the
+     floor rather than dropping to --fg-quaternary. */
+  color: var(--fg-tertiary);
+}
+.tn-input:hover {
+  border-color: var(--line-strong);
+}
+.tn-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.tn-go {
+  flex: 0 0 auto;
+  height: var(--h-lg);
+  padding: 0 var(--s-5);
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.tn-go:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+/* press lands on pointer-down, which is what :active is */
+.tn-go:active:not(:disabled) {
+  background: var(--accent-press);
+  transform: scale(0.97);
+}
+.tn-go:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.tn-go:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.tn-hint {
+  margin: 2px 0 0;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  color: var(--fg-tertiary);
+}
+
+/* ---- a refusal, where the act was attempted --------------- */
+.tn-why {
+  max-width: 62ch;
+  margin: 0;
+  padding: var(--s-3) var(--s-4);
+  border-left: 3px solid var(--danger);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--danger-wash);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--danger);
+}
+
+.tn-quiet {
+  max-width: 62ch;
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-tertiary);
+}
+
+/* ---- the list --------------------------------------------- */
+.tn-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tn-item {
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  transition: background var(--d-fast) var(--ease);
+}
+/* A ROW DARKENS. It does not lift and it does not scale — see the
+   header, and §4 of the design principles. */
+.tn-item:hover {
+  background: var(--surface-3);
+}
+
+.tn-item-top {
+  display: flex;
+  gap: var(--s-4);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.tn-item-said {
+  min-width: 0;
+}
+.tn-name {
+  margin: 0;
+  /* a name keeps its own case, always */
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.tn-stamp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  align-items: center;
+  margin: 4px 0 0;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+/* THE ONE UPPERCASE STYLE, on the one thing that is a stamp */
+.tn-rev {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-weight: var(--t-mono-weight);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--t-label-track);
+  color: var(--fg-secondary);
+}
+.tn-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: var(--fg-quaternary);
+}
+.tn-when,
+.tn-who {
+  color: var(--fg-tertiary);
+}
+
+/* ---- what it holds, counted -------------------------------- */
+.tn-holds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+}
+.tn-fact {
+  display: inline-flex;
+  gap: 5px;
+  align-items: baseline;
+}
+/* every figure is mono, and lines up on the decimal */
+.tn-fig {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-weight: var(--t-mono-weight);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+/* ---- the acts ---------------------------------------------- */
+.tn-acts {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--s-2);
+}
+.tn-act {
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.tn-act:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+}
+.tn-act:active:not(:disabled) {
+  background: var(--accent-wash-strong);
+  transform: scale(0.97);
+}
+.tn-act:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.tn-act:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* the second act on a row is never as loud as the first */
+.tn-act.is-quiet {
+  border-color: transparent;
+  color: var(--fg-secondary);
+}
+.tn-act.is-quiet:hover:not(:disabled) {
+  border-color: var(--line);
+  background: var(--surface-3);
+}
+
+/* the irreversible one wears it */
+.tn-act.is-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.tn-act.is-danger:hover:not(:disabled) {
+  background: var(--danger-wash);
+  border-color: var(--danger);
+}
+.tn-act.is-danger:active:not(:disabled) {
+  background: var(--danger-wash);
+}
+
+/* ---- the confirm, inline, in the row it belongs to ---------- */
+.tn-ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 0;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+}
+.tn-ask-say {
+  max-width: 68ch;
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+}
+/* the sentence that says what cannot be taken back */
+.tn-ask-say.is-hard {
+  font-weight: 560;
+  color: var(--fg);
+}
+.tn-ask-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-1) 0 0;
+}
+/* the acts sit on --surface-3 here, so the quiet one takes the plane
+   above it rather than disappearing into the ground */
+.tn-ask .tn-act {
+  background: var(--surface-1);
+}
+.tn-ask .tn-act.is-quiet {
+  background: transparent;
+}
+
+/* ---- narrow ------------------------------------------------ */
+@media (max-width: 640px) {
+  .tn {
+    padding: var(--s-5);
+  }
+  .tn-item-top {
+    flex-direction: column;
+    gap: var(--s-3);
+  }
+  .tn-save-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ---- movement goes, colour and opacity stay ---------------- */
+@media (prefers-reduced-motion: reduce) {
+  .tn-go:active:not(:disabled),
+  .tn-act:active:not(:disabled) {
+    transform: none;
+  }
+}

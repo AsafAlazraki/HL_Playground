@@ -74,6 +74,13 @@ export interface RegisterRailProps {
 
 const DENSITIES: RowDensity[] = ['compact', 'comfortable']
 
+/* NOT A LIVE REGION, and that is deliberate. This began as
+   `role="status"`, which is implicitly polite — and the line changes
+   on every scroll tick, so a screen reader would have read a new row
+   range aloud all the way down a 588-row register. The facts a reader
+   NEEDS are already spoken by the grid itself: `aria-rowcount`,
+   `aria-rowindex` on every row, `aria-colindex` on every cell. This is
+   the same answer, drawn for the eye. */
 export function RegisterRail({
   noun,
   crumbs,
@@ -95,7 +102,7 @@ export function RegisterRail({
   const foldedColumns = columns - shownColumns
 
   return (
-    <div className="tb-rail" role="status" aria-live="off">
+    <div className="tb-rail">
       {/* WHICH DRAWER, still on screen after its heading has gone. Not
           a control: it sits over nothing and takes no press, so it can
           never come between a pointer and a cell. */}
@@ -182,9 +189,16 @@ export function RegisterRail({
           type="button"
           className={'tb-rail-lens' + (onlyFilled ? ' tb-rail-lens-on' : '')}
           aria-pressed={onlyFilled}
+          /* FOUR SENTENCES, because the control is in one of four
+             states and a title that fits three of them is a title that
+             lies about the fourth. The one nobody writes is the last:
+             the lens is ON and it is holding nothing, which happens the
+             moment a narrowing changes under it. */
           title={
             onlyFilled
-              ? `${foldedColumns} of ${columns} columns are put away because no ${noun.one} on screen has a value in them. Press to bring them back.`
+              ? foldedColumns === 0
+                ? `The lens is on and it is holding nothing back: every one of the ${columns} columns carries a value for some ${noun.one} on screen. Press to switch it off.`
+                : `${foldedColumns} of ${columns} columns are put away because no ${noun.one} on screen has a value in them. Press to bring them back.`
               : emptyColumns === 0
                 ? `Every one of the ${columns} columns carries a value for some ${noun.one} on screen — there is nothing to put away.`
                 : `Put away the ${emptyColumns} columns no ${noun.one} on screen has a value in. Nothing is deleted and nothing leaves an export.`
@@ -192,9 +206,16 @@ export function RegisterRail({
           onClick={() => onOnlyFilled(!onlyFilled)}
         >
           <span className="tb-rail-lenstext">Only filled columns</span>
-          <span className="tb-rail-lenscount">
-            {onlyFilled ? `${shownColumns} of ${columns}` : emptyColumns}
-          </span>
+          {/* A COUNT OF NOTHING IS NOT A COUNT. On a table where every
+              column carries a value the badge would read "0", which
+              looks like a figure rather than like the absence of one —
+              so it is not drawn, and the control's own title says why
+              pressing it will do nothing. */}
+          {(onlyFilled || emptyColumns > 0) && (
+            <span className="tb-rail-lenscount">
+              {onlyFilled ? `${shownColumns} of ${columns}` : emptyColumns}
+            </span>
+          )}
         </button>
       </div>
     </div>

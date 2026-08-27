@@ -1,0 +1,856 @@
+/* ============================================================
+   CONFIGURE AT EVERY LEVEL — the appearance.
+
+   Co-located with its feature, per the convention in CLAUDE.md.
+   No shared override layer, no literal colour, nothing under 11px,
+   and uppercase only on the three things the type section allows:
+   section captions, group captions and mono stamps.
+
+   THE ACCENT APPEARS THREE TIMES and they are named, because the
+   colour section allows about four a screen and a screen with
+   accent everywhere has no primary: the CURRENT LEVEL in the tree,
+   the CURRENT COLUMN in the list, and the PRIMARY ACTION. The
+   focus ring is the contract's own fourth case. Everything else on
+   this screen is ink and hairline.
+
+   A LIST ROW DARKENS, IT DOES NOT SCALE. There are four lists here
+   — levels, columns, values, rows — and scaling a row on press
+   makes its neighbours look like they moved. Every one of them
+   steps `--surface-1 -> --surface-3 -> --surface-4` on
+   hover -> press instead, and the press lands on pointer-down
+   because `:active` is what a browser does natively.
+
+   THE CONTRAST FIGURES, measured on the tokens rather than
+   eyeballed, because §8 says this is not automated:
+     --fg-tertiary on --surface-1      5.5 : 1
+     --fg-tertiary on --surface-3      4.91: 1   (the tightest here)
+     --warning on --warning-wash       5.15: 1
+     --fg on --accent-wash            ~16   : 1
+   Nothing on this screen sits below 4.9, and `--fg-quaternary`
+   carries no meaning anywhere in the file — it draws two hairlines
+   and a placeholder twist, both of which are decoration.
+   ============================================================ */
+
+.lv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  min-height: 0;
+  height: 100%;
+  padding: var(--s-6);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* ---------------------------------------------------------- */
+/* the head                                                   */
+/* ---------------------------------------------------------- */
+
+.lv-head {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-width: 74ch;
+}
+
+.lv-eyebrow {
+  color: var(--fg-tertiary);
+}
+
+.lv-title {
+  margin: 0;
+  color: var(--fg);
+}
+
+.lv-sub {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+.lv-back {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+/* ---------------------------------------------------------- */
+/* the picker                                                 */
+/* ---------------------------------------------------------- */
+
+.lv-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.lv-pick-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  text-align: left;
+  background: var(--grad-surface);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-card);
+  box-shadow: var(--e1);
+  cursor: pointer;
+  transition:
+    background-color var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+
+.lv-pick-row:hover {
+  border-color: var(--line);
+  box-shadow: var(--e2);
+}
+
+.lv-pick-row:active {
+  background: var(--surface-3);
+  box-shadow: var(--e1);
+}
+
+.lv-pick-row:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.lv-pick-name {
+  color: var(--fg);
+}
+
+.lv-pick-meta {
+  color: var(--fg-tertiary);
+}
+
+/* ---------------------------------------------------------- */
+/* the three panes                                            */
+/* ---------------------------------------------------------- */
+
+.lv-body {
+  display: grid;
+  grid-template-columns: 260px 300px minmax(0, 1fr);
+  gap: var(--s-3);
+  flex: 1;
+  min-height: 0;
+}
+
+.lv-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s-3);
+  background: var(--surface-1);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+}
+
+.lv-pane-head {
+  margin: 0;
+  padding: 0 var(--s-2);
+  color: var(--fg-tertiary);
+}
+
+.lv-pane-tree,
+.lv-pane-cols,
+.lv-pane-work {
+  overflow-y: auto;
+}
+
+/* ---------------------------------------------------------- */
+/* the level tree                                             */
+/* ---------------------------------------------------------- */
+
+.lv-tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lv-tree-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: var(--h-md);
+  padding-right: var(--s-2);
+  border-radius: var(--r-control);
+  border-left: 2px solid transparent;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.lv-tree-row:hover {
+  background: var(--surface-3);
+}
+
+.lv-tree-row--on {
+  background: var(--accent-wash);
+  border-left-color: var(--accent);
+}
+
+.lv-tree-twist {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: var(--fg-tertiary);
+  background: none;
+  border: 0;
+  border-radius: var(--r-chip);
+  cursor: pointer;
+}
+
+.lv-tree-twist:hover {
+  color: var(--fg);
+  background: var(--surface-4);
+}
+
+.lv-tree-twist:active {
+  background: var(--surface-4);
+}
+
+.lv-tree-twist:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-inset);
+}
+
+.lv-tree-twist--none {
+  cursor: default;
+}
+
+.lv-tree-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--s-1) var(--s-1);
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: var(--r-control);
+  cursor: pointer;
+}
+
+.lv-tree-name:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-inset);
+}
+
+.lv-tree-label {
+  /* NOTHING TRUNCATES MID-WORD (§3). A Series name that does not
+     fit clamps to two lines with the whole string still in the
+     DOM, so a screen reader and a copy both get all of it. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg);
+}
+
+.lv-tree-kind {
+  color: var(--fg-tertiary);
+}
+
+.lv-tree-count {
+  flex: 0 0 auto;
+  color: var(--fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------- */
+/* the columns, and what the level says about each            */
+/* ---------------------------------------------------------- */
+
+.lv-cols {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.lv-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name value'
+    'says value';
+  align-items: center;
+  gap: 0 var(--s-2);
+  width: 100%;
+  padding: var(--s-2);
+  text-align: left;
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: var(--r-control);
+  cursor: pointer;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.lv-col:hover {
+  background: var(--surface-3);
+}
+
+.lv-col:active {
+  background: var(--surface-4);
+}
+
+.lv-col:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-inset);
+}
+
+.lv-col--on {
+  background: var(--accent-wash);
+  border-left-color: var(--accent);
+}
+
+.lv-col--off {
+  cursor: default;
+  grid-template-areas:
+    'name name'
+    'says says';
+}
+
+.lv-col--off .lv-col-name {
+  color: var(--fg-tertiary);
+}
+
+.lv-col-name {
+  grid-area: name;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.lv-col-says {
+  grid-area: says;
+  color: var(--fg-tertiary);
+}
+
+.lv-col-value {
+  grid-area: value;
+  justify-self: end;
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------- */
+/* the work pane                                              */
+/* ---------------------------------------------------------- */
+
+.lv-crumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  padding: 0 var(--s-2) var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.lv-crumb-step {
+  padding: var(--s-1) 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+  background: none;
+  border: 0;
+  border-radius: var(--r-chip);
+  cursor: pointer;
+}
+
+.lv-crumb-step:hover {
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+.lv-crumb-step:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-inset);
+}
+
+.lv-crumb-sep {
+  color: var(--fg-quaternary);
+  font-size: var(--t-small-size);
+}
+
+.lv-crumb-one {
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg);
+}
+
+.lv-empty {
+  margin: 0;
+  padding: var(--s-4) var(--s-2);
+  max-width: 56ch;
+  color: var(--fg-secondary);
+}
+
+/* ---------------------------------------------------------- */
+/* the act                                                    */
+/* ---------------------------------------------------------- */
+
+.lv-set {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-2);
+}
+
+.lv-set-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.lv-set-title {
+  margin: 0;
+  color: var(--fg);
+}
+
+.lv-set-where {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.lv-now {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.lv-now-head {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.lv-now-none {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+.lv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.lv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 28ch;
+  padding: var(--s-1) var(--s-2);
+  background: var(--surface-3);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.lv-chip:hover {
+  background: var(--surface-4);
+}
+
+.lv-chip:active {
+  background: var(--surface-4);
+}
+
+.lv-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.lv-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--t-small-size);
+  color: var(--fg);
+}
+
+.lv-chip-n {
+  color: var(--fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lv-chip-more {
+  color: var(--fg-tertiary);
+}
+
+/* ---------------------------------------------------------- */
+/* the value control                                          */
+/* ---------------------------------------------------------- */
+
+.lv-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-width: 40ch;
+}
+
+.lv-field-label {
+  color: var(--fg-tertiary);
+}
+
+.lv-input,
+.lv-select {
+  width: 100%;
+}
+
+.lv-yesno {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.lv-yesno-btn {
+  flex: 1;
+  min-height: var(--h-md);
+  padding: 0 var(--s-4);
+  font-size: var(--t-body-size);
+  color: var(--fg);
+  background: var(--surface-3);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-control);
+  cursor: pointer;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.lv-yesno-btn:hover {
+  background: var(--surface-4);
+}
+
+.lv-yesno-btn:active {
+  background: var(--surface-4);
+}
+
+.lv-yesno-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.lv-yesno-btn--on {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+}
+
+/* ---------------------------------------------------------- */
+/* the switch                                                 */
+/* ---------------------------------------------------------- */
+
+.lv-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-2);
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: var(--r-control);
+  cursor: pointer;
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.lv-toggle:hover {
+  background: var(--surface-3);
+}
+
+.lv-toggle:active {
+  background: var(--surface-4);
+}
+
+.lv-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.lv-toggle-box {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  background: var(--surface-1);
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+}
+
+.lv-toggle--on .lv-toggle-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.lv-toggle-text {
+  color: var(--fg-secondary);
+}
+
+/* ---------------------------------------------------------- */
+/* the blast radius                                           */
+/* ---------------------------------------------------------- */
+
+.lv-radius {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: var(--s-3);
+  list-style: none;
+  background: var(--surface-3);
+  border-radius: var(--r-card);
+}
+
+.lv-radius-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding-left: var(--s-2);
+  border-left: 3px solid transparent;
+}
+
+.lv-radius-row--write {
+  border-left-color: var(--accent-line);
+}
+
+.lv-radius-row--skip {
+  border-left-color: var(--warning);
+}
+
+.lv-radius-row--same {
+  border-left-color: var(--line);
+}
+
+.lv-radius-n {
+  flex: 0 0 auto;
+  min-width: 5ch;
+  text-align: right;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.lv-radius-text {
+  color: var(--fg-secondary);
+}
+
+/* ---------------------------------------------------------- */
+/* the button, and the sentence beside it when it cannot run  */
+/* ---------------------------------------------------------- */
+
+.lv-act {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.lv-go:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lv-clear {
+  flex: 0 0 auto;
+}
+
+.lv-why {
+  flex: 1 1 24ch;
+  margin: 0;
+  min-width: 0;
+  color: var(--fg-secondary);
+}
+
+/* ---------------------------------------------------------- */
+/* who differs                                                */
+/* ---------------------------------------------------------- */
+
+.lv-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+}
+
+.lv-rows-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.lv-rows-title {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.lv-rows-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.lv-putall {
+  flex: 0 0 auto;
+}
+
+.lv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lv-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--h-row);
+  padding: 0 var(--s-2);
+  border-left: 2px solid transparent;
+  border-radius: var(--r-control);
+  transition: background-color var(--d-fast) var(--ease);
+}
+
+.lv-row:hover {
+  background: var(--surface-3);
+}
+
+.lv-row--on {
+  background: var(--accent-wash);
+  border-left-color: var(--accent);
+}
+
+.lv-row-name {
+  min-width: 0;
+  padding: var(--s-1) 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: var(--t-body-size);
+  color: var(--fg);
+  background: none;
+  border: 0;
+  border-radius: var(--r-chip);
+  cursor: pointer;
+}
+
+.lv-row-name:hover {
+  text-decoration: underline;
+}
+
+.lv-row-name:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-inset);
+}
+
+.lv-row-val {
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lv-mark {
+  white-space: nowrap;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-chip);
+}
+
+.lv-mark--over {
+  color: var(--warning);
+  background: var(--warning-wash);
+}
+
+.lv-mark--unset {
+  color: var(--fg-tertiary);
+  background: var(--surface-3);
+}
+
+.lv-mark--alone {
+  color: var(--fg-tertiary);
+  background: var(--surface-3);
+}
+
+.lv-mark--in {
+  color: var(--fg-tertiary);
+  background: transparent;
+}
+
+.lv-put {
+  flex: 0 0 auto;
+}
+
+/* Keeps the four columns aligned when a row has no put-back —
+   an empty cell rather than a collapsed grid. */
+.lv-put-none {
+  display: block;
+  width: 1px;
+}
+
+.lv-more {
+  margin: 0;
+  padding: var(--s-2);
+  color: var(--fg-tertiary);
+}
+
+/* ---------------------------------------------------------- */
+/* narrower windows                                           */
+/* ---------------------------------------------------------- */
+
+@media (max-width: 1180px) {
+  .lv-body {
+    grid-template-columns: 220px 250px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 940px) {
+  .lv {
+    padding: var(--s-4);
+  }
+
+  /* THREE PANES BECOME THREE SECTIONS, and the page scrolls
+     rather than each pane scrolling inside a squeezed column. */
+  .lv-body {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+
+  .lv-pane-tree,
+  .lv-pane-cols {
+    max-height: 40vh;
+  }
+
+  .lv-back {
+    position: static;
+    align-self: flex-start;
+  }
+}

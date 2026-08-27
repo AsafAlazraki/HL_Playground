@@ -16,6 +16,33 @@
 
 export { FanOut } from './FanOut'
 export type { FanOutProps } from './FanOut'
+
+/* THE RIG — one hull, every rule the business has written run
+   against it, and the reason beside everything that no longer fits.
+   The reading is pure and is measured against the whole price file
+   in `rig.test.ts`; `Rig` is the surface, mounted by `FanOut`. */
+export { Rig } from './Rig'
+export type { RigProps } from './Rig'
+export {
+  readRig,
+  readStarters,
+  CHOICE_CAP,
+  DRAW_CAP,
+  CATALOGUE_CAP,
+  type OptionState,
+  type RigCandidate,
+  type RigCatalogue,
+  type RigFact,
+  type RigHull,
+  type RigInput,
+  type RigNote,
+  type RigOption,
+  type RigProject,
+  type RigReading,
+  type RigReason,
+  type RigSlot,
+  type RigStarter,
+} from './rigReading'
 export {
   readFanOut,
   readRoles,

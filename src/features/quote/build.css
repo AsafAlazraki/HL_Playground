@@ -69,11 +69,16 @@
    already makes on the dock).
    ============================================================ */
 
+/* NO FLEX GAP, AND THAT IS A MEASUREMENT. The meter is the band's
+   own bottom EDGE and a column gap would float it 12px above the
+   hairline, which reads as a stray rule rather than as the frame
+   ending. The one gap that is wanted — head to stops — is a margin
+   on the stops. Measured at 1280×720: the band is 118px and the
+   scrollport under it 420px; at 1920×1080 the scrollport is 780. */
 .qb-rail {
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
   padding: var(--s-4) var(--s-5) 0;
   background: var(--chrome);
   /* the hairline the frame ends on, not a border: a border would
@@ -204,6 +209,7 @@
    ------------------------------------------------------------ */
 
 .qb-rail-track {
+  margin-top: var(--s-3);
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
@@ -648,10 +654,14 @@
   min-width: 20px;
   height: 18px;
   padding: 0 5px;
+  /* A KEYCAP'S DEPTH IS A THICKER BOTTOM EDGE, not a shadow. §3 says
+     never hand-roll a `box-shadow`, and this is not elevation — the
+     cap is not floating, it has a front face. A border says that in
+     the vocabulary the file already uses. */
   border: 1px solid var(--line);
+  border-bottom-width: 2px;
   border-radius: var(--r-chip);
   background: var(--surface-1);
-  box-shadow: 0 1px 0 var(--line);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
@@ -1124,12 +1134,18 @@
   box-shadow: var(--e-card);
 }
 
-/* WHERE THE KEYBOARD IS POINTING. A ring rather than a fill, so it
+/* WHERE THE KEYBOARD IS POINTING. A HALO rather than a fill, so it
    can sit on a card that is already lit by `is-on` without the two
-   states fighting for the same surface. */
+   states fighting for the same surface — and `--glow-sm` rather than
+   a hand-rolled ring, because the system already owns "a state, drawn
+   as accent light" and a second spelling of it would drift.
+
+   IT IS DELIBERATELY SOFTER THAN `--focus`. Being CONSIDERED and
+   being FOCUSED are different facts and a person tabbing through the
+   shelf has to be able to tell them apart. */
 .qb-card.is-lit {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent), var(--e-card);
+  box-shadow: var(--glow-sm), var(--e-card);
 }
 
 /* REACHED BY SEARCHING PAST THE NARROWING, or by switching it off.
@@ -1347,6 +1363,19 @@
 
 /* THE ONE ACTION. Sentence case: a button is one of the four things
    §2 says uppercase may never be. */
+/* FLAT --accent, NOT --grad-brand, AND IT WAS MEASURED IN THE
+   BROWSER. The gradient runs from --accent (#0a5fc2) to --accent-2
+   (#0d94c4); white on the first measures 6.1:1 and white on the
+   second measures **3.47:1**, so a label crossing this button ended
+   its life below the floor. ds.css says so in as many words —
+   --accent-2 and --accent-3 "exist ONLY to make a gradient out of
+   it. Neither may be used as a flat fill behind text", and
+   --grad-brand is listed as "headline treatment only, never behind a
+   value". A button's label is a value.
+
+   So the ground is the one blue that was measured with white on it,
+   which is also what `.ab-btn--primary` does on the action bar. The
+   EXPRESSION stays: the glow is a state and carries no ink. */
 .qb-act {
   display: inline-flex;
   align-items: center;
@@ -1354,7 +1383,7 @@
   padding: 9px 15px;
   border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--grad-brand);
+  background: var(--accent);
   box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
   font-family: var(--font-sans);
   font-size: var(--t-body-size);
@@ -1363,9 +1392,11 @@
   cursor: pointer;
   transition:
     transform var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
     box-shadow var(--d-med) var(--ease);
 }
 .qb-act:hover {
+  background: var(--accent-hover);
   box-shadow: var(--e2), var(--glow-md), inset 0 1px 0 var(--edge-light);
 }
 .qb-act:active {
@@ -1403,18 +1434,28 @@
   padding: 0 var(--s-5);
   border: 1px solid transparent;
   border-radius: var(--r-card);
-  background: var(--grad-brand);
+  /* MEASURED, AND NOT THE GRADIENT — see the note on `.qb-act`.
+     White on --accent is 6.1:1; white on --accent-2, where the
+     gradient ends, is 3.47:1, and this bar is 546px wide so the
+     label sat in the failing half of it. */
+  background: var(--accent);
   box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
   color: var(--accent-fg);
   cursor: pointer;
   transition:
     transform var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
     box-shadow var(--d-med) var(--ease);
 }
 .qb-onward-btn:hover {
+  background: var(--accent-hover);
   box-shadow: var(--e3), var(--glow-lg), inset 0 1px 0 var(--edge-light);
 }
+/* PRESS SCALED TO THE SURFACE. This bar is 546px wide; 0.97 would be
+   a 16px shrink and would read as a glitch. --accent-press measures
+   8.1:1 with white, --accent-hover 5.15:1 — both clear the floor. */
 .qb-onward-btn:active {
+  background: var(--accent-press);
   transform: scale(0.994);
   transition-duration: var(--d-press);
 }
@@ -2025,6 +2066,24 @@
   }
 }
 
+/* A SHORT WINDOW IS A WIDTH PROBLEM'S OPPOSITE and no media query in
+   this file was answering it. Measured at 1280×720: the rail is 118px
+   and the ledger 126px, which leaves the scrollport 420px — enough,
+   but only just, and a laptop with a browser toolbar has less. The
+   band gives back 12px of its own air rather than any of the stops,
+   because the stops are the thing it exists to draw. */
+@media (max-height: 780px) {
+  .qb-rail {
+    padding-top: var(--s-3);
+  }
+  .qb-rail-track {
+    margin-top: var(--s-2);
+  }
+  .qb-split {
+    padding-top: var(--s-5);
+  }
+}
+
 @media (max-width: 720px) {
   .qb-rail {
     padding: var(--s-3) var(--s-4) 0;
@@ -2046,4 +2105,49 @@
   .qb-ledger-where {
     margin-left: 0;
   }
+}
+
+/* ============================================================
+   THREE THINGS MEASURED ON SCREEN AND FIXED.
+
+   1. THE LEDGER RAN UNDER THE FLOATING BAR. `.pagebar` is fixed
+      at the foot of the content column; the build draws its own
+      `.qb-ledger` there too, so "Give it to the customer" sat on
+      top of the sentence explaining who the quote is addressed
+      to. The ledger is not deleted and the bar is not moved —
+      the ledger RESERVES the bar's height, because the ledger's
+      own copy points at that bar ("is on the bar below") and the
+      two are meant to be read together.
+
+   2. "HELD AS A LINK" WAS SHOUTING. It carried `.mono-label`,
+      which uppercases — and §3 is explicit that uppercase is a
+      label style and NEVER a sentence. `imageSources.ts` exports
+      it as "Held as a link", sentence case, and it is now drawn
+      that way.
+
+   3. THE EMPTY PLATE DOMINATED THE CARD. A picture we do not
+      hold was a full-width grey block with a centred stamp — the
+      largest, loudest element on an option card whose actual
+      subject is a name and a price. It is quiet now: the plate
+      keeps its box so the grid does not go ragged, and says what
+      it is at caption size in the metadata tier.
+   ============================================================ */
+
+.qb-ledger {
+  /* the floating bar is 38px plus its 20px offset; 72 clears both
+     with a hair of air. `--pagebar-lift` lets a page raise it
+     further without a second literal. */
+  padding-bottom: calc(72px + var(--pagebar-lift, 0px));
+}
+
+.qb-well-held-word,
+.qt-list-held {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  /* NOT uppercase. It is a sentence about the row, in the
+     metadata tier beside the thing it describes. */
+  text-transform: none;
+  color: var(--fg-tertiary);
 }

@@ -16,10 +16,20 @@
 
    1. DENSITY. A 588-row register is read by scanning, and scanning
       wants either more rows on screen or more air between them
-      depending on whose eyes are doing it. Compact (34px) is what
-      the grid has always drawn and stays the default, so nobody's
-      register changes under them; comfortable is the design
-      system's own `--h-row`, 40px, and is one press away.
+      depending on whose eyes are doing it.
+
+      COMFORTABLE IS 40px AND IT IS THE DEFAULT, because it is what
+      the register was already trying to draw: `table.css` carried
+      `.tb-row { min-height: 40px }` — DESIGN_PRINCIPLES §3's "rows
+      are 40px" — over a layout that placed every row 34px below the
+      last, so every row in the app overlapped its neighbour by 6px
+      and covered that neighbour's bottom rule. Making 40 the
+      geometry rather than a paint-time floor is what fixes it. See
+      the note where that rule used to be.
+
+      COMPACT IS 34px, the figure the layout has always used, and it
+      is one press away for anyone who would rather have six more
+      rows on screen than the air.
 
    2. ONLY THE COLUMNS THAT CARRY A VALUE. Northside's real file has
       tables where a third of the columns are empty for every row
@@ -63,7 +73,9 @@ interface ReadState {
   onlyFilled: boolean
 }
 
-const DEFAULT: ReadState = { density: 'compact', onlyFilled: false }
+/* Comfortable, for the reason set out at the top of this file: it is
+   the height the stylesheet was already painting. */
+const DEFAULT: ReadState = { density: 'comfortable', onlyFilled: false }
 
 let state: Record<string, ReadState> = {}
 

@@ -1026,6 +1026,17 @@ export function Grid(props: GridProps): JSX.Element {
     }
     const bare = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
 
+    /* ---- WHY J AND K ARE NOT HERE ----
+       They step rows on the ROW DETAIL, and only there. On this sheet
+       a printable character opens the editor and types itself into the
+       cell — that is how every value in this file gets entered — so a
+       register where J moved the cursor would be a register where the
+       first letter of "Jeanneau" jumped the cursor down a row instead
+       of starting the word. The reading surface has no such contract:
+       nothing is typed at the panel itself, only into its boxes, and
+       each box stops its own keys. So J / K / ↑ / ↓ step rows there
+       and the arrows keep doing it here, unchanged. */
+
     /* ---- '/' PUTS THE CARET IN THE ROW SEARCH ----
        It is a printable character, so on this sheet it would otherwise
        begin typing a value — and that is the trade, stated: a price
@@ -1097,9 +1108,10 @@ export function Grid(props: GridProps): JSX.Element {
       className={
         'tb-grid' +
         (layout.grouped ? ' tb-grid-grouped' : '') +
-        /* the reader asked for air. A class, not a measurement: the
-           HEIGHTS are already in `layout`, and this is only the
-           padding and the leading that go with them. */
+        /* THE HEIGHTS ARE NOT SET HERE and cannot be: `layout` has
+           already placed every line from the same metrics. This class
+           carries only what a taller row makes ROOM for — a thumbnail
+           that can be looked at, a gutter figure at the reading step. */
         (metrics && metrics.rowH > ROW_H ? ' tb-grid-roomy' : '') +
         /* the status rail is a FLOOR, not an overlay: the scroller
            gives up 30px to it rather than having a strip drawn over

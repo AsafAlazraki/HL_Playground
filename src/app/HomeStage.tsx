@@ -542,8 +542,15 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
               </div>
 
               <dl className="hm-tally">
+                {/* NOT "Rows of stock", AND THE STRIP BELOW IS WHY.
+                    The figure has always been every row on the sheet,
+                    and on this sheet 8,649 of the 15,651 are pairings
+                    — bookkeeping about the stock rather than stock. It
+                    read as an overclaim the moment the strip drew the
+                    split, so the term is corrected to what is counted.
+                    Nothing about the arithmetic moved. */}
                 <div className="hm-tally-cell">
-                  <dt>Rows of stock</dt>
+                  <dt>Rows on the sheet</dt>
                   <dd className="hm-tally-fig">{tally.rows.toLocaleString()}</dd>
                 </div>
                 <div className="hm-tally-cell">
@@ -624,7 +631,17 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
 
             <div className="hm-secs" ref={secsRef}>
             {groups.map((g, gi) => (
-            <section className="hm-sec" key={g.key} id={`hm-sec-${g.key}`} data-sec={g.key}>
+            <section
+              className="hm-sec"
+              key={g.key}
+              id={`hm-sec-${g.key}`}
+              data-sec={g.key}
+              /* the heading joins the wave the cards under it are
+                 already on — one arrival across the page, not a
+                 gallery of cards over a set of headings that were
+                 simply there */
+              style={{ ['--i' as string]: gi }}
+            >
               <header className="hm-sec-head">
                 <span className="hm-sec-dot" aria-hidden="true" data-kind={g.key} />
                 <h2 className="hm-sec-name">{g.label}</h2>

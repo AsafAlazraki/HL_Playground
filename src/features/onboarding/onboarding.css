@@ -491,10 +491,14 @@
    ever mentioned a limit; this appears at 45 and counts. A figure,
    so it is mono and tabular — it must not shuffle as it climbs.
    5.5:1 on white. */
+/* UNDER THE RULE, NOT ON TOP OF THE NAME. Sat inside the field it
+   would land on the 46th character of the very name it is counting
+   — and reserving a gutter for it permanently would put a hole in
+   the one line this screen is built around. */
 .ob-count {
   position: absolute;
   right: 0;
-  bottom: var(--s-3);
+  top: calc(100% + 3px);
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;

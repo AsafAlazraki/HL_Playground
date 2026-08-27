@@ -27,6 +27,7 @@
    come out of the same file.
    ============================================================ */
 
+import { heldBackSentence } from '@/features/views/sellable'
 import { lineAmount } from './totals'
 import type { QuoteDef, QuoteLine, QuoteSection } from './types'
 
@@ -37,6 +38,15 @@ import type { QuoteDef, QuoteLine, QuoteSection } from './types'
  *  boat on a quote for one boat. */
 export const SUBJECT_STEP = '__subject'
 
+/** THE LAST STOP, AND IT IS NOT A SECTION — the question no table can
+ *  carry: who is it for. It is declared here beside the first stop
+ *  rather than inside the screen that draws it, because three places
+ *  now name it: `QuoteBuild` walks to it, `place.ts` remembers it
+ *  across a reload, and `start.ts` previews it as the end of the walk
+ *  before a document exists. Three copies of a magic string is three
+ *  chances for a remembered place to point at a stop nothing matches. */
+export const HANDOVER_STEP = '__handover'
+
 /** Where a step stands. Two states and not three: a step with a line
  *  on it has been decided, and every other step is still open. There
  *  is deliberately no 'blocked' — nothing in this sequence gates
@@ -44,6 +54,52 @@ export const SUBJECT_STEP = '__subject'
  *  wrong (its stepper is a row of `<div>`s with no click handler, so
  *  changing the hull colour from the summary is six presses of Back). */
 export type StepState = 'decided' | 'open'
+
+/* ============================================================
+   WHY A STOP IS OPEN — the flow adapting, read off the document.
+
+   THE PROBLEM. `state` has two values and that is right for the tick
+   on the rail: a stop either has something on it or it does not. It
+   is wrong for the WORDS beside the tick, because "not chosen" is
+   four different facts wearing one label:
+
+     the view curated four motors and a person has to pick one
+     the view curated nothing here at all
+     everything it would have offered is no longer sold
+     this quote predates the counts and cannot say
+
+   Reading them as one is how a salesperson ends up staring at a
+   heading, waiting for a shelf that is never going to arrive.
+
+   WHY IT IS FROZEN AND NOT LIVE. `pickedCount` and `heldCount` were
+   written onto the section by `mintQuoteFromView` at the moment the
+   quote was minted, so this reading is still true about the document
+   if the sheet is re-curated on Tuesday — which is the same promise
+   every price on the page keeps. A live count would make the rail
+   disagree with the lines under it.
+
+   AND IT IS WHAT MAKES THE FLOW ADAPTIVE RATHER THAN MERELY SHORT.
+   A quote's stops are its view's blocks (see `buildSteps`), so a
+   motor already gets a motor's walk and a boat gets the whole rig —
+   the flow adapts by construction, with no `motorOnly` flag and no
+   hard-coded step list. What it could not do until now was SAY so:
+   a stop that exists because the tables are related, and is empty
+   because nothing was ever put in the relationship, now reads as
+   that instead of as work somebody has not done.
+   ============================================================ */
+export type StepReach =
+  /** the hull the document is about. It offers nothing, by design. */
+  | 'subject'
+  /** something is on it */
+  | 'chosen'
+  /** the view curated candidates and none of them is on the quote */
+  | 'waiting'
+  /** nothing was offered, and rows were held back as no longer sold */
+  | 'held'
+  /** the view curated nothing here — the relationship is empty */
+  | 'bare'
+  /** minted before the counts existed: the honest "cannot tell" */
+  | 'open'
 
 export interface BuildStep {
   /** the section's own block id — stable, and the step's identity */
@@ -63,6 +119,39 @@ export interface BuildStep {
   amount: number | null
   /** lines on this step with no price, counted so a step can say so */
   unpriced: number
+  /** why this stop is where it is — see `StepReach` */
+  reach: StepReach
+  /** the sentence for a stop that has nothing to decide, in the app's
+   *  own wording for held-back stock. '' whenever there is nothing
+   *  true to say, which is every stop a person can act on. */
+  why: string
+}
+
+/** How a stop stands, from the frozen section alone. */
+export function reachOf(section: QuoteSection, lines: readonly QuoteLine[]): StepReach {
+  if (section.blockId === SUBJECT_STEP) return 'subject'
+  if (lines.length > 0) return 'chosen'
+  const picked = section.pickedCount
+  if (picked === undefined) return 'open'
+  if (picked > 0) return 'waiting'
+  return (section.heldCount ?? 0) > 0 ? 'held' : 'bare'
+}
+
+/** The sentence a stop with nothing to decide says about itself.
+ *
+ *  THE HELD-BACK WORDING IS NOT WRITTEN HERE. `heldBackSentence` is
+ *  the one set of words this app uses for stock it is holding back,
+ *  and `@/features/curation` prints the same clause three inches
+ *  away — a second phrasing would leave a person reading "no longer
+ *  sold" twice with no way to tell whether the two counts overlap. */
+function whyOf(section: QuoteSection, reach: StepReach): string {
+  if (reach === 'held') {
+    return heldBackSentence(section.heldCount ?? 0, section.title)
+  }
+  if (reach === 'bare') {
+    return `Nothing from ${section.title} was put in the list of what goes with this one, so this stop has nothing to offer yet. Everything in ${section.title} is still one press away here — say what goes with it on the subject's own page and it arrives curated.`
+  }
+  return ''
 }
 
 /** The steps of a quote, in the view's own order, subject first.
@@ -91,6 +180,8 @@ export function buildSteps(quote: QuoteDef): BuildStep[] {
       amount = (amount ?? 0) + a
     }
 
+    const reach = reachOf(section, lines)
+
     return {
       id: section.blockId,
       title: section.title,
@@ -101,6 +192,8 @@ export function buildSteps(quote: QuoteDef): BuildStep[] {
       subject: section.blockId === SUBJECT_STEP,
       amount,
       unpriced,
+      reach,
+      why: whyOf(section, reach),
     }
   })
 }

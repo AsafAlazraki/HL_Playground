@@ -825,7 +825,12 @@ function RigPanel({
   return (
     <section className="vw-rig" aria-label={`What this ${singular(root.name)} comes to`}>
       <div className="vw-rig-head">
-        <span className="mono-label vw-rig-lead">Added up</span>
+        {/* THE CAPTION TELLS THE TRUTH WHEN THERE IS NO TOTAL. A panel
+            headed "Added up" with nothing beside it has claimed an
+            arithmetic it did not do. */}
+        <span className="mono-label vw-rig-lead">
+          {rig.counted > 0 ? 'Added up' : 'Not added up yet'}
+        </span>
         {/* NO `$0`. A page where nothing carries a price says so in
             the lines below rather than stating a total nobody made. */}
         {rig.counted > 0 ? <b className="vw-rig-total">{money(rig.total)}</b> : null}

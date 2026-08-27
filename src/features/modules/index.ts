@@ -60,6 +60,17 @@ export type { ModuleIndexProps } from './ModuleIndex'
 export { ModuleSettings } from './ModuleSettings'
 export type { ModuleSettingsProps } from './ModuleSettings'
 
+/* WHO MAY DO WHAT, ACROSS THE WHOLE DEALERSHIP — the screen the rail's
+   SETTINGS door promises. The Dashboard mounts it in place of the list
+   of places; it is exported because a host that ever gives the access
+   screen a stage of its own needs it, and because `AccessGrid` is the
+   ONE editor for `ModuleDef.access` and nothing may grow a second. */
+export { AccessScreen } from './AccessScreen'
+export type { AccessScreenProps } from './AccessScreen'
+
+export { AccessGrid } from './AccessGrid'
+export type { AccessGridProps } from './AccessGrid'
+
 /* The designer — exported for completeness, not because a host needs
    it. `ModuleSettings` mounts it as its middle; a second surface
    mounting it would be a second way into the same handles. */
@@ -207,18 +218,23 @@ export type { ModuleRulesPanelProps } from './ModuleRulesPanel'
    locally: the store carries a `roles` slice and Dexie a v4 table.
    ============================================================ */
 export {
+  accessCensus,
   accessRows,
   capabilityLabel,
+  capabilitySays,
   grantNote,
   grantedTo,
   isUnrestricted,
   mayDo,
   offeredCapabilities,
+  orphanGrants,
   orphanRoleIds,
+  roleReach,
   withGrant,
+  withoutOrphans,
   withoutRole,
 } from './access'
-export type { AccessRow } from './access'
+export type { AccessCensus, AccessRow, OrphanGrants } from './access'
 
 /* THE MODULE'S OWN MARK, and the ceiling on it. Exported so an export,
    a review or a second surface that ever draws a logo reaches the same

@@ -643,7 +643,7 @@ export function NewTableDialog({
             onAnotherFile={pickCsv}
             onCreated={() => closeRef.current()}
           />
-        ) : step === 1 || !meta || !preset || !preview ? (
+        ) : step === 1 || !kind || !meta || !preset || !preview ? (
           <div className="tk-step1">
             <div className="tk-kinds">
               {KIND_ORDER.map((k, i) => {
@@ -790,9 +790,20 @@ export function NewTableDialog({
               </div>
 
               <div className="tk-preview">
+                {/* THE HEAD IS THE TABLE, NOT THE WORD "PREVIEW".
+                    It read `Preview · how your rows will sit`, which
+                    describes the panel; what a person wants to see
+                    before pressing Create table is the THING — its
+                    mark in its own hue, and the name they have typed
+                    in the footer, both following every keystroke. The
+                    word Preview is still there, demoted to the
+                    caption it always was. */}
                 <div className="tk-preview-head">
-                  <span className="mono-label">Preview</span>
-                  <span className="tk-preview-sub">how your rows will sit</span>
+                  <span className="tk-preview-mark" aria-hidden="true">
+                    <TableKindSymbol kind={kind} size={16} />
+                  </span>
+                  <span className="tk-preview-name">{name.trim() || meta.label}</span>
+                  <span className="mono-label tk-preview-tag">Preview</span>
                 </div>
                 <ul className="tk-prev-list">
                   {preview.lines.map((line) => (
@@ -826,19 +837,35 @@ export function NewTableDialog({
                     store itself uses; the band names are the kind's
                     own, read rather than written, so the day a section
                     is added or renamed this line follows it. */}
+                {/* AND THE OTHER HALF OF THE ANSWER, AS FIGURES. It
+                    was a sentence — "Starts with 12 columns in 3
+                    groups." — which reads perfectly well and cannot
+                    be scanned: the two numbers a person is checking
+                    were set in running prose between four words
+                    each. They are figures, so they take the mono
+                    face at the figure step, tabular, with the noun
+                    under them (§2). Both are still counted from the
+                    model by the same arithmetic `createTable` uses,
+                    and both still follow the chain as it is typed. */}
                 {arrives ? (
                   <div className="tk-cols">
-                    <p className="tk-cols-say">
-                      Starts with <b>{arrives.columns}</b>{' '}
-                      {arrives.columns === 1 ? 'column' : 'columns'}
+                    <span className="mono-label tk-cols-cap">Arrives with</span>
+                    <div className="tk-cols-figs">
+                      <span className="tk-fig">
+                        <b className="tk-fig-n">{arrives.columns}</b>
+                        <span className="tk-fig-l">
+                          {arrives.columns === 1 ? 'column' : 'columns'}
+                        </span>
+                      </span>
                       {arrives.groups.length > 0 ? (
-                        <>
-                          {' '}
-                          in <b>{arrives.groups.length}</b> groups
-                        </>
+                        <span className="tk-fig">
+                          <b className="tk-fig-n">{arrives.groups.length}</b>
+                          <span className="tk-fig-l">
+                            {arrives.groups.length === 1 ? 'group' : 'groups'}
+                          </span>
+                        </span>
                       ) : null}
-                      .
-                    </p>
+                    </div>
                     <p className="tk-cols-groups">
                       {arrives.groups.length > 0
                         ? arrives.groups.map((g) => g.name).join(' · ')

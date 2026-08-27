@@ -190,12 +190,22 @@
 }
 
 /* BUTTONS ARE NOT LABELS — DESIGN_PRINCIPLES rule 3. `.btn` in the
-   shared foundation stamps its text uppercase and both of these are
-   actions, so they are corrected here beside the class rather than by
-   re-cutting `.btn`, which ~200 controls this pass has not reached
-   still depend on. */
+   shared foundation stamps its text uppercase and every one of these
+   is an action, so they are corrected here beside the class rather
+   than by re-cutting `.btn`, which ~200 controls this pass has not
+   reached still depend on.
+
+   ONE DECLARATION, NOT ONE PER PASS. `.md-access` and `.md-acc-leave`
+   are this feature's other two `.btn`s — the door to the access screen
+   and the way back off it — and `.md-role-new .btn` is ADD ROLE, which
+   has been stamped `ADD ROLE` since roles shipped. A second block at
+   the foot of the file correcting each as it arrived is exactly the
+   layering this pass exists to undo. */
 .md-new,
-.md-order {
+.md-order,
+.md-access,
+.md-acc-leave,
+.md-role-new .btn {
   font-family: var(--font-sans);
   font-size: var(--t-small-size);
   font-weight: 520;
@@ -1091,8 +1101,15 @@
   color: var(--ink-soft);
 }
 
+/* THE CENSUS SENTENCE. `.mono-label` gives it the mono stamp; these
+   two declarations take the uppercase back off it, because it is a
+   sentence about somebody's stock ("40 boats in 3 series") and not a
+   caption. */
 .md-idx-facts {
   margin: 6px 0 0;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
 }
 
@@ -1159,17 +1176,27 @@
   display: inline-flex;
 }
 
+/* THE TABLE'S OWN NAME, IN ITS OWN CASE. It was a `--stamp-*`
+   uppercase stamp, and a table name is one of the four things
+   uppercase is never for: `PVC` uppercased cannot be told from a value
+   the dealer typed as `Pvc`. */
 .md-sec-name {
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
-  font-size: var(--stamp-size);
-  letter-spacing: var(--stamp-track);
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -0.003em;
   line-height: var(--stamp-lead);
+  text-transform: none;
   color: var(--ink);
 }
 
+/* A bare figure beside the name — the sanctioned mono stamp, where
+   the transform has no visible effect. */
 .md-sec-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--ink-faint);
 }
 
@@ -1179,6 +1206,8 @@
 
 .md-grp-trail {
   margin: 0 0 var(--sp-2);
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink-faint);
 }
 
@@ -1193,6 +1222,17 @@
   list-style: none;
 }
 
+/* A CATALOGUE WITHOUT PICTURES IS A SPREADSHEET — and a tile with NO
+   picture says nothing about a picture. It shows the row label and
+   stops, because a broken-image glyph in front of a customer is worse
+   than a plain name.
+
+   ONE DECLARATION. This rule, its hover and its press were declared
+   twice — here, and again 700 lines down in a re-skin block that
+   re-typed them without deleting the originals. Reading what a tile
+   looked like meant holding both in your head. The surviving values
+   are the later ones; the reasons are written on the rule they belong
+   to rather than on the pass that happened to change them. */
 .md-tile {
   display: flex;
   flex-direction: column;
@@ -1201,19 +1241,27 @@
   width: 100%;
   height: 100%;
   padding: var(--sp-2);
+  overflow: hidden;
   text-align: left;
   background: var(--paper-high);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
+  box-shadow: var(--ec1);
   cursor: pointer;
   transition:
-    var(--press-fx),
     border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft);
+    box-shadow var(--t-med) var(--ease-draft),
+    transform var(--t-med) var(--ease-draft);
 }
 .md-tile:hover {
-  border-color: var(--md-accent, var(--hairline-strong));
-  box-shadow: var(--e1);
+  border-color: var(--hairline-strong);
+  box-shadow: var(--ec3);
+  transform: translateY(-2px);
+}
+/* A CARD PRESSES BY 0.994 AND LOSES ITS LIFT — 0.97 on a 200px tile
+   is a 6px shrink and reads as a glitch. */
+.md-tile:active {
+  transform: translateY(0) scale(0.994);
 }
 .md-tile:focus-visible {
   outline: 2px solid var(--blue);
@@ -1236,6 +1284,7 @@
   overflow: hidden;
   border-radius: var(--radius-sm);
   background: var(--paper-sunken);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .md-tile-img {
@@ -1245,18 +1294,24 @@
   display: block;
 }
 
+/* A ROW LABEL IS A NAME AND KEEPS ITS OWN CASE — rule 3. */
 .md-tile-name {
-  font-size: var(--ui-size);
-  letter-spacing: var(--ui-track);
+  font-size: 13px;
+  font-weight: 540;
   line-height: 1.35;
+  letter-spacing: -0.003em;
+  text-transform: none;
   color: var(--ink);
 }
 
+/* MONO, TABULAR, FULL INK. A price is what the customer reads over a
+   shoulder; it is not metadata. */
 .md-tile-price {
   font-family: var(--font-mono);
-  font-size: var(--data-s-size);
+  font-size: 13px;
   letter-spacing: var(--data-s-track);
-  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 /* -- rows ---------------------------------------------------- */
@@ -1359,6 +1414,11 @@
 
 /* -- the one control ----------------------------------------- */
 
+/* BUTTONS ARE NOT LABELS — rule 3. This is "Settings", the one control
+   on a module's index, and it was stamped in 11px uppercase mono: the
+   caption ramp, on a button. Corrected here, on the rule itself,
+   rather than by re-cutting `.btn` in the shared foundation, which
+   ~200 controls this pass has not reached still depend on. */
 .md-gear {
   display: inline-flex;
   align-items: center;
@@ -1368,11 +1428,11 @@
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius);
   background: var(--paper-high);
-  font-family: var(--font-mono);
-  font-size: var(--micro-size);
-  font-weight: var(--micro-weight);
-  letter-spacing: var(--micro-track);
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink-soft);
   cursor: pointer;
   transition:
@@ -1424,9 +1484,14 @@
   border-radius: var(--radius);
 }
 
+/* WAS `--ink-faint`, WHICH FAILS ON `--paper-sunken`: 4.22:1, drawn
+   since the designer shipped, and behind the gear where the redesign's
+   nine-surface sweep never reached it. `.mono-label` already carries
+   `--ink-soft` (7.7:1 on white, 6.9:1 here); this declaration existed
+   only to step it down, and it stepped it below the floor. */
 .md-panel-name {
   margin: 0;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .md-panel-say {
@@ -1586,29 +1651,43 @@
   min-width: 0;
 }
 
+/* THE VERB'S OWN NAME. A capability is a name, not a label. */
 .md-cap-label {
-  font-size: var(--ui-size);
-  letter-spacing: var(--ui-track);
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: -0.003em;
+  text-transform: none;
   color: var(--ink);
 }
 
 .md-cap-says {
-  font-size: var(--ui-xs-size);
-  letter-spacing: var(--ui-xs-track);
-  line-height: var(--ui-xs-lead);
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink-faint);
 }
 
+/* A CAPABILITY THAT CANNOT BE TURNED ON SAYS WHAT IS MISSING —
+   `ConstraintDef.because`, applied to a switch. The reason belongs
+   where the switch is, in a sentence. */
 .md-cap-why,
 .md-cap-note {
   display: flex;
   align-items: flex-start;
   gap: 5px;
   margin: 0;
-  font-size: var(--ui-xs-size);
-  letter-spacing: var(--ui-xs-track);
-  line-height: var(--ui-xs-lead);
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
 }
+/* FULL INK, AND THIS IS THE DECLARATION THAT RESTORES IT. A refusal
+   is the one sentence on a switch that HAS to be read, and it was
+   written `--ink` here and then quietly stepped down to `--ink-faint`
+   by a later block that grouped it with the two notes beside it —
+   4.22:1 over `--paper-sunken`, which is under the floor. That is
+   what a second declaration of one selector costs. */
 .md-cap-why {
   color: var(--ink);
 }
@@ -1741,7 +1820,10 @@
   font-style: italic;
 }
 
+/* WHAT A BLOCK IS BOUND TO — an identifier, so it is mono. */
 .md-bound-word {
+  font-family: var(--font-mono);
+  font-size: 12px;
   color: var(--ink-faint);
 }
 
@@ -1751,8 +1833,8 @@
   flex-wrap: wrap;
   gap: 5px;
   margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--ui-s-size);
+  font-family: var(--font-mono);
+  font-size: 12px;
   letter-spacing: var(--ui-s-track);
   line-height: var(--ui-s-lead);
   text-transform: none;
@@ -1931,88 +2013,6 @@
    meaning, a layout mode, or a behaviour - which is why it could
    be done without reading the interaction code.
    ============================================================ */
-
-/* THE INDEX TILE. A catalogue without pictures is a spreadsheet -
-   and a tile with NO picture says nothing about a picture. It
-   shows the row label and stops, because a broken-image glyph in
-   front of a customer is worse than a plain name. */
-.md-tile {
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec1);
-  overflow: hidden;
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-med) var(--ease-draft),
-    transform var(--t-med) var(--ease-draft);
-}
-.md-tile:hover {
-  border-color: var(--hairline-strong);
-  box-shadow: var(--ec3);
-  transform: translateY(-2px);
-}
-.md-tile:active {
-  transform: translateY(0) scale(0.994);
-}
-.md-tile-name {
-  font-size: 13px;
-  font-weight: 540;
-  line-height: 1.35;
-  letter-spacing: -0.003em;
-  text-transform: none;
-  color: var(--ink);
-}
-.md-tile-price {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.md-tile-pic {
-  background: var(--paper-sunken);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.md-sec-name {
-  font-size: 13px;
-  font-weight: 560;
-  letter-spacing: -0.003em;
-  text-transform: none;
-  color: var(--ink);
-}
-.md-sec-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-faint);
-}
-
-/* A CAPABILITY THAT CANNOT BE TURNED ON SAYS WHAT IS MISSING -
-   ConstraintDef.because, applied to a switch. The reason belongs
-   where the switch is, in a sentence. */
-.md-cap-label {
-  font-size: 13px;
-  font-weight: 550;
-  letter-spacing: -0.003em;
-  text-transform: none;
-  color: var(--ink);
-}
-.md-cap-note,
-.md-cap-says,
-.md-cap-why {
-  font-size: 12px;
-  line-height: 1.45;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink-faint);
-}
-
-/* bound / unmapped, said where the block stands */
-.md-bind-unmapped,
-.md-bound-word {
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
 
 /* ============================================================
    THE OVERVIEW BAND — what this place IS, above what is in it.
@@ -2347,28 +2347,6 @@
 }
 
 /* ============================================================
-   BUTTONS ARE NOT LABELS — the uppercase pass, index side.
-
-   DESIGN_PRINCIPLES rule 3: uppercase is a label style, and a button
-   is named among the things it may never be. `.md-gear` is "Set up" /
-   "Done", the one control on a module's index, and `.btn` stamped it
-   in `--micro-*`, which is the caption ramp.
-
-   The fix is a rule beside the class in the feature's own stylesheet,
-   not a re-cut of `.btn` in src/styles — that file is the shared
-   foundation and `.btn`'s stamp is used by ~200 controls this pass has
-   not reached. The dashboard's own two buttons take the same
-   correction; it is written with them, at the top of this file.
-   ============================================================ */
-.md-gear {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-/* ============================================================
    A PICTURE HELD AS A LINK SAYS SO — the third outcome in a tile's
    picture well.
 
@@ -2468,8 +2446,9 @@
    Enumerated live, with the verdict for each (the dashboard card's own
    count is set with the rest of that card, at the top of this file):
 
-     .md-idx-facts   FIX — "174 ITEMS · 7 TABLES" under a module's name.
-     .md-grp-trail   FIX — ×43 on one module page. This is the worst of
+     .md-idx-facts   FIXED, on the rule itself — "174 ITEMS · 7 TABLES"
+                     under a module's name.
+     .md-grp-trail   FIXED, on the rule itself — ×43 on one module page. This is the worst of
                      them: it is the dealer's OWN grouping values,
                      "Sport ▸ SP560", "Roll-Up ▸ RU230KAM", flattened
                      into "SPORT ▸ SP560". shell.css:918 already fixed
@@ -2477,7 +2456,15 @@
                      wrote the reason down: "THE TRAIL IS THE DEALER'S
                      OWN WORDS, NOT A CAPTION." Their `PVC` and their
                      `Pvc` are different facts about their data.
-     .md-stub .btn   FIX — a button, wherever a stub draws one.
+     .md-stub .btn   FIXED here, because this is the rule's one and
+                     only declaration — a button, wherever a stub
+                     draws one.
+
+   THE FIRST TWO ARE NOT DECLARED HERE ANY MORE. They were, and each
+   was a second declaration of a selector three hundred lines above
+   it; the values are now on the rules themselves, where somebody
+   reading `.md-idx-facts` can see what it does without finding this
+   block first.
 
    KEPT UPPERCASE: `.md-dash-eyebrow` ("YOUR BUSINESS") and
    `.md-over-cap` ("INSIDE", "WHAT GOES WITH THESE") are section
@@ -2485,14 +2472,6 @@
    the transform has no visible effect and the mono stamp is the
    sanctioned use.
    ============================================================ */
-.md-idx-facts,
-.md-grp-trail {
-  letter-spacing: 0;
-  text-transform: none;
-}
-.md-idx-facts {
-  font-variant-numeric: tabular-nums;
-}
 .md-stub .btn {
   font-family: var(--font-ui);
   font-size: 13px;
@@ -2519,16 +2498,10 @@
    THE SAME PASS FIXED `.md-panel-name`, which had `--ink-faint`
    on the sunken panel across all four panels — 4.22:1, drawn
    since the designer shipped, and behind the gear where the
-   redesign's nine-surface sweep never reached it.
+   redesign's nine-surface sweep never reached it. That correction
+   now lives ON `.md-panel-name` rather than in a second declaration
+   down here, which is why this paragraph is a note and not a rule.
    ------------------------------------------------------------- */
-
-/* WAS --ink-faint, WHICH FAILS ON --paper-sunken. `.mono-label`
-   already carries `--ink-soft` (7.7:1 on white, 6.9:1 here); this
-   declaration existed only to step it down, and it stepped it below
-   the floor. */
-.md-panel-name {
-  color: var(--ink-soft);
-}
 
 .md-rules-well {
   padding: var(--sp-4);
@@ -3750,3 +3723,758 @@
    padding. The point is not the half-pixel; it is that this file
    stops carrying values that are not on the scale.
    ============================================================ */
+
+/* ============================================================
+   ACCESS & ROLES — the whole dealership's permissions, on one page.
+
+   WRITTEN IN THE SYSTEM'S OWN NAMES (--s-*, --fg*, --surface-*,
+   --line*, --r-*, --e*, --t-*), like the dashboard block at the top of
+   this file and for the same reason: it is a page rather than a panel,
+   it reaches for the expressive layer, and the expressive layer has no
+   bridged aliases. The two surfaces sit behind one door on the rail
+   and must read as one place.
+
+   THE ACCENT IS SPENT ONCE PER PLACE. A module's own hue marks its
+   column head, its picker chip, its ticks and the fill in its cells —
+   a rail, a dot and a bar, never a fill behind a word. Blue stays for
+   the focused control and the one primary button, which is the whole
+   budget a screen of eighty-one cells can afford before it reads as an
+   alarm rather than a summary.
+
+   EVERY TEXT PAIR ON THIS PAGE IS INK ON A SURFACE, NOT INK ON A TINT.
+   The panels are drawn on --grad-surface over --surface-1, so --fg,
+   --fg-secondary and --fg-tertiary all keep the ratios the ramp was
+   measured at. The only tinted ground is the orphan well, which takes
+   --fg and --fg-secondary rather than the tertiary floor.
+   ============================================================ */
+
+/* -- the page ------------------------------------------------- */
+
+.md-acc {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+.md-acc-sky {
+  z-index: 0;
+}
+.md-acc-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--s-6) var(--s-5) var(--s-16);
+}
+.md-acc-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* -- the masthead, the dashboard's own shape ------------------ */
+
+.md-acc-mast {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+  margin: 0;
+  padding-bottom: var(--s-6);
+  border-bottom: 1px solid var(--line-subtle);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
+}
+.md-acc-say {
+  min-width: 0;
+}
+.md-acc-eyebrow {
+  display: block;
+  margin-bottom: var(--s-3);
+  color: var(--fg-tertiary);
+}
+/* `.ds-hero` carries the whole step — size, weight, leading and
+   tracking together. Nothing here reaches in for one of them. */
+.md-acc-title {
+  margin: 0;
+  max-width: 16ch;
+}
+.md-acc-note {
+  margin: var(--s-3) 0 0;
+  max-width: 54ch;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+.md-acc-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-4);
+}
+.md-acc-tally {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, auto);
+  margin: 0;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.md-acc-cell {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  padding: 0 var(--s-5);
+  border-left: 1px solid var(--line-subtle);
+}
+.md-acc-cell:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.md-acc-cell:last-child {
+  padding-right: 0;
+}
+.md-acc-cell dt {
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+.md-acc-fig {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.md-acc-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* WHAT IS NOT TRUE YET, AT THE TOP. A rule, not a box: a warning
+   colour here would say something has gone wrong, and nothing has —
+   this is the honest boundary of the build. */
+.md-acc-real {
+  margin: 0;
+  padding-left: var(--s-4);
+  border-left: 2px solid var(--line-strong);
+  max-width: 78ch;
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+
+/* -- the panels ----------------------------------------------- */
+
+.md-acc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  background: var(--grad-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.md-acc-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+.md-acc-panel-id {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.md-acc-panel-name {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+.md-acc-panel-say {
+  margin: 0;
+  max-width: 74ch;
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+/* A NAME INSIDE A SENTENCE IS A NAME: weight and full ink, never
+   italic. The same reading the dashboard's own hint makes. */
+.md-acc-panel-say em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--fg);
+}
+
+/* The door to one place's own set-up. Quiet at rest — it is the
+   second control in its panel, not the first. */
+.md-acc-door {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  letter-spacing: -0.003em;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.md-acc-door:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.md-acc-door:active {
+  transform: scale(0.97);
+}
+.md-acc-door:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+/* -- the void states ------------------------------------------ */
+
+.md-acc-void {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  max-width: 620px;
+  padding: var(--s-5);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+.md-acc-void-eyebrow {
+  color: var(--fg-tertiary);
+}
+.md-acc-void-say {
+  margin: 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+.md-acc-void-say em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--fg);
+}
+.md-acc-void-count {
+  margin: 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg);
+}
+.md-acc-void-count strong {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-lg-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- grants naming nobody ------------------------------------- */
+
+.md-acc-orphans {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border: 1px solid var(--warning);
+  border-left-width: 3px;
+  border-radius: var(--r-card);
+  background: var(--warning-wash);
+}
+.md-acc-orphans-say {
+  margin: 0;
+  max-width: 82ch;
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+.md-acc-orphans-say strong {
+  font-weight: 600;
+  color: var(--fg);
+}
+.md-acc-orphans-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ============================================================
+   THE MAP — every job, every place.
+
+   IT SCROLLS SIDEWAYS RATHER THAN SQUEEZING, the same discipline the
+   grant grid keeps: fifteen places on a laptop is wider than the
+   panel, and a cell that overlapped its neighbour would be a
+   permission read against the wrong place.
+
+   THE ROW HEADER STICKS. A job's name leaving the screen while its
+   own row is still being read is how somebody grants the wrong
+   person something.
+   ============================================================ */
+
+.md-acc-map-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+}
+.md-acc-map {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.md-acc-map-corner {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding: var(--s-3);
+  text-align: left;
+  vertical-align: bottom;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--line);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+.md-acc-map-head {
+  padding: var(--s-2) var(--s-2) var(--s-3);
+  text-align: center;
+  vertical-align: bottom;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+}
+
+/* THE HEAD IS THE ONE CONTROL IN THE TABLE. It picks the place the
+   editable grid below is about, so it takes the full three states —
+   and the picked one keeps its own hue as a rail under the name. */
+.md-acc-map-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 92px;
+  max-width: 148px;
+  padding: var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-acc-map-place:hover {
+  background: var(--surface-3);
+}
+.md-acc-map-place:active {
+  transform: scale(0.97);
+}
+.md-acc-map-place:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+.md-acc-map-place.is-on {
+  background: var(--surface-3);
+  border-color: var(--line);
+  box-shadow: inset 0 -2px 0 var(--md-accent, var(--fg));
+}
+.md-acc-map-name {
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  letter-spacing: -0.003em;
+  line-height: 1.3;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.md-acc-map-state {
+  font-size: var(--t-caption-size);
+  line-height: 1.3;
+  color: var(--fg-tertiary);
+}
+
+.md-acc-map-role {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding: var(--s-3);
+  text-align: left;
+  font-weight: 400;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--line-subtle);
+  border-right: 1px solid var(--line-subtle);
+  min-width: 180px;
+}
+.md-acc-map tbody tr:last-child .md-acc-map-role,
+.md-acc-map tbody tr:last-child .md-acc-map-cell {
+  border-bottom: 0;
+}
+.md-acc-map-job {
+  display: block;
+  font-size: var(--t-body-size);
+  font-weight: 550;
+  letter-spacing: -0.003em;
+  color: var(--fg);
+}
+.md-acc-map-who {
+  display: block;
+  margin-top: 2px;
+  max-width: 34ch;
+  font-size: var(--t-caption-size);
+  line-height: 1.4;
+  color: var(--fg-secondary);
+}
+
+.md-acc-map-cell {
+  padding: var(--s-3) var(--s-2);
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+/* THREE ANSWERS, DRAWN THREE WAYS. Open to everyone, holds nothing,
+   and holds some of it are not the same fact and must not look like
+   one. */
+.md-acc-map-all {
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+}
+.md-acc-map-none {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  color: var(--fg-tertiary);
+}
+.md-acc-map-hold {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+}
+.md-acc-map-n {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-lg-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--fg);
+}
+.md-acc-map-of {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--fg-tertiary);
+}
+/* THE BAR IS THE ONLY PLACE THE HUE IS SPENT IN A CELL, and it is a
+   rule under a figure rather than a fill behind one. `--fill` is the
+   share the job holds, handed in as a number by the component. */
+.md-acc-map-bar {
+  display: block;
+  width: 40px;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: linear-gradient(
+    to right,
+    var(--md-accent, var(--fg)) calc(var(--fill, 0) * 100%),
+    var(--line) calc(var(--fill, 0) * 100%)
+  );
+}
+/* The reading, for somebody who cannot see the bar. A cell announcing
+   "2 / 7" and nothing else is a fraction with no subject. */
+.md-acc-map-read {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* -- the place picker ----------------------------------------- */
+
+.md-acc-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.md-acc-pick-one {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.md-acc-pick-one:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.md-acc-pick-one:active {
+  transform: scale(0.97);
+}
+.md-acc-pick-one:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+.md-acc-pick-one.is-on {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.md-acc-pick-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--md-accent, var(--fg));
+}
+.md-acc-pick-name {
+  font-weight: 550;
+  letter-spacing: -0.003em;
+}
+.md-acc-pick-state {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* -- where each job reaches ----------------------------------- */
+
+.md-acc-jobs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.md-acc-job {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+.md-acc-job-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin: 0;
+}
+.md-acc-job-name {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+.md-acc-job-reach {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-secondary);
+}
+.md-acc-job-who {
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+.md-acc-job-say {
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+.md-acc-job-in {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.md-acc-job-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.md-acc-job-place:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.md-acc-job-place:active {
+  transform: scale(0.97);
+}
+.md-acc-job-place:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+.md-acc-job-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--md-accent, var(--fg));
+}
+
+/* ============================================================
+   THE GRANT GRID'S OWN FURNITURE — what `AccessGrid` draws around
+   the table it took with it out of the settings page.
+   ============================================================ */
+
+.md-grid-hold {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* WHAT A TICK IN THIS COLUMN ACTUALLY HANDS OVER, under the verb's
+   own name. It wraps to a measure rather than widening the column:
+   nine columns each as wide as its sentence is a table nobody can
+   read across. */
+.md-grid-says {
+  display: block;
+  max-width: 13ch;
+  margin: 3px auto 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+  color: var(--ink-soft);
+}
+
+/* The orphan note carries a repair, so it is a well with a control in
+   it rather than a sentence. It inherits `.md-panel-warn`'s ground and
+   adds only the layout the button needs. */
+.md-orphan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.md-orphan-say {
+  margin: 0;
+}
+
+/* ============================================================
+   WHO MAY WORK HERE — the module index's fifth strip.
+
+   Drawn only where somebody has closed the door. It sits in the
+   overview band with the other four strips and takes their geometry;
+   what it adds is a name and a list of verbs per job, which is the
+   qualification the row of verbs above it is missing.
+   ============================================================ */
+
+.md-who {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.md-who-one {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px var(--sp-3);
+}
+.md-who-name {
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -0.003em;
+  color: var(--ink);
+}
+.md-who-can {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.md-who-say {
+  margin: 6px 0 0;
+  max-width: 74ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.md-who-say strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+.md-who-say em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--ink);
+}

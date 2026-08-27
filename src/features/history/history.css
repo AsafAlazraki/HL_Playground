@@ -1,0 +1,1030 @@
+/* ============================================================
+   HISTORY (hy-) — the diary of quotes, and one customer in it.
+
+   Co-located with its feature, as every stylesheet in this tree is.
+   Nothing here reaches into another feature's rules and nothing
+   outside this directory writes a `hy-` class.
+
+   WHAT THIS SCREEN IS FOR, AND HOW THE SHAPE FOLLOWS.
+
+   A quote list is BROWSED — twelve cards, a picture of each boat,
+   one of them is the one you just made. A history is SCANNED: which
+   drafts are open, what went to this customer, what was quoted in
+   March. So this is a ledger rather than a shelf of cards. Rows are
+   flat, separated by a hairline, and they DARKEN on press — a row
+   that scales makes its neighbours look like they moved
+   (DESIGN_PRINCIPLES §4).
+
+   The one place cards are right is the drafts shelf, because a draft
+   is not a record, it is unfinished work you are about to pick up.
+   It gets the raised surface, the lit edge and the one primary
+   button on the page.
+
+   THE ACCENT BUDGET, spent four times and no more:
+     1  the chosen filter chip
+     2  the Resume button on the draft you touched last
+     3  the focus ring (the system's, on everything)
+     4  the rail on the row that is already open
+   Standing is NOT the accent. "Given", "Draft" and "Replaced" are
+   drawn with a 3px kind rail and the ink ramp, which is what §1 says
+   kind colour is for — a rail, a dot or a glyph, never a fill behind
+   text.
+
+   CONTRAST. Every value is a token off the measured ramp: `--fg`
+   17.4:1, `--fg-secondary` 8.1, `--fg-tertiary` 5.5 — the floor, and
+   the only thing metadata may use. `--fg-quaternary` appears exactly
+   twice, both times on a hairline, and never carries a word.
+
+   NO NEW TRANSLUCENT SURFACE. The atmosphere is the shared
+   `.ds-aurora` / `.ds-grain`, which ds.css removes under
+   `prefers-reduced-transparency` and `prefers-contrast: more`.
+   ============================================================ */
+
+/* ============================================================
+   THE WELL
+   ============================================================ */
+
+/* The frame does not scroll; the page inside it does — the aurora is
+   `position:absolute; inset:0` and inside a scroller that resolves
+   against the scrolled CONTENT, so a 3,000px diary would stretch it.
+   The same arrangement `cx-root` uses next door. */
+.hy-root {
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.hy-sky {
+  z-index: 0;
+}
+
+.hy-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--s-6) var(--s-6) var(--s-16);
+}
+
+.hy-page {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   THE HEAD
+   ============================================================ */
+
+.hy-head {
+  margin-bottom: var(--s-6);
+}
+
+/* the ONE uppercase style, and one of the three places this feature
+   uses it: two page eyebrows and a section caption */
+.hy-eyebrow {
+  display: block;
+  color: var(--fg-tertiary);
+  margin-bottom: var(--s-2);
+}
+
+.hy-title {
+  margin: 0;
+  font-family: var(--font-hero);
+  font-size: var(--t-display-lg-size);
+  line-height: var(--t-display-lg-lead);
+  font-weight: var(--t-display-lg-weight);
+  letter-spacing: var(--t-display-lg-track);
+  color: var(--fg);
+}
+
+.hy-say {
+  margin: var(--s-2) 0 0;
+  max-width: 60ch;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+/* -- the counted facts ---------------------------------------
+   A FIGURE IS MONO AND TABULAR AND THE SIZE OF A HEADING; the word
+   under it is the label. The outgoing habit — "12 QUOTES · 4 DRAFTS"
+   at 11px uppercase — is a figure dressed as a label, and it is the
+   same tally Home and the register draw, so all three read as one
+   application. */
+.hy-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+  margin-top: var(--s-5);
+}
+
+.hy-fig {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hy-fig-n {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-lg-size);
+  font-weight: var(--t-mono-weight);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--fg);
+}
+
+.hy-fig-of {
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  color: var(--fg-tertiary);
+}
+
+/* ============================================================
+   THE SHELF OF UNFINISHED WORK
+
+   The one raised surface on the page, because a draft is the one
+   thing here you are meant to pick back up.
+   ============================================================ */
+
+.hy-shelf {
+  margin-bottom: var(--s-8);
+}
+
+.hy-shelf-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.hy-shelf-title {
+  margin: 0;
+  font-size: var(--t-heading-size);
+  line-height: var(--t-heading-lead);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+
+.hy-shelf-say {
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-tertiary);
+}
+
+/* IT SCROLLS RATHER THAN TRUNCATES. Nothing in this app truncates
+   mid-word (§3); a shelf that does not fit is a shelf you push. */
+.hy-shelf-rail {
+  display: flex;
+  gap: var(--s-3);
+  overflow-x: auto;
+  padding: 2px 2px var(--s-3);
+  margin: -2px -2px calc(var(--s-3) * -1);
+  scroll-snap-type: x proximity;
+}
+
+.hy-card {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+  width: 268px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  transition:
+    transform var(--d-med) var(--ease-out-expo),
+    box-shadow var(--d-med) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.hy-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
+}
+
+/* a 268px surface cannot take 0.97 — at that width it is an 8px
+   shrink and reads as a glitch. The lift drops and it settles. */
+.hy-card:has(.hy-card-open:active) {
+  transform: translateY(0) scale(0.994);
+  box-shadow: var(--e1);
+  transition-duration: var(--d-press);
+}
+
+.hy-card-open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.hy-card-what {
+  font-size: var(--t-heading-size);
+  line-height: var(--t-heading-lead);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+  /* two lines and then a clamp, with the whole name still in the DOM */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hy-card-who {
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+}
+
+.hy-card-when {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+.hy-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: auto;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+}
+
+.hy-card-total {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-weight: var(--t-mono-weight);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.hy-card-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+/* ============================================================
+   THE FILTERS
+   ============================================================ */
+
+.hy-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  margin-bottom: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+
+.hy-chips {
+  display: flex;
+  gap: var(--s-1);
+}
+
+.hy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  letter-spacing: -0.003em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.hy-chip:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.hy-chip:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+
+/* ACCENT 1 OF 4 — the filter the list is showing */
+.hy-chip[aria-pressed='true'] {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.hy-chip-n {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+.hy-chip[aria-pressed='true'] .hy-chip-n {
+  color: var(--accent);
+}
+
+.hy-pickers {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-left: auto;
+}
+
+.hy-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hy-picker-label {
+  color: var(--fg-tertiary);
+}
+
+.hy-select {
+  height: var(--h-sm);
+  max-width: 220px;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
+}
+
+.hy-select:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+}
+
+.hy-find {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.hy-find-input {
+  height: var(--h-sm);
+  width: 100%;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.hy-find-input::placeholder {
+  color: var(--fg-tertiary);
+}
+
+.hy-find-input:hover {
+  border-color: var(--line-strong);
+}
+
+/* ============================================================
+   THE LEDGER
+   ============================================================ */
+
+.hy-group {
+  margin-bottom: var(--s-6);
+}
+
+.hy-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding-bottom: var(--s-2);
+  margin-bottom: var(--s-1);
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.hy-group-title {
+  margin: 0;
+  font-size: var(--t-heading-size);
+  line-height: var(--t-heading-lead);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+
+.hy-group-stamp {
+  color: var(--fg-tertiary);
+}
+
+.hy-group-n {
+  margin-left: auto;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* THE LEDGER IS ONE SURFACE, not forty floating cards. A card per
+   row is right when a row is a thing you browse; here a row is an
+   entry, and forty entries on one sheet of paper is what a diary
+   looks like. */
+.hy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  overflow: hidden;
+}
+
+.hy-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-2);
+  padding-right: var(--s-3);
+  border-bottom: 1px solid var(--line-subtle);
+  transition: background var(--d-fast) var(--ease);
+}
+
+.hy-row:last-child {
+  border-bottom: 0;
+}
+
+.hy-row:hover {
+  background: var(--surface-3);
+}
+
+/* A ROW DARKENS RATHER THAN SCALING (§4) — its neighbours must not
+   look like they moved. */
+.hy-row:has(.hy-open:active) {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+
+/* ACCENT 4 OF 4 — the row whose quote is already open on the stage */
+.hy-row.is-open {
+  background: var(--accent-wash);
+}
+
+.hy-row.is-open::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--accent);
+}
+
+.hy-open {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 118px 96px 110px minmax(96px, auto);
+  align-items: center;
+  gap: var(--s-3);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* -- the photograph, or an empty slot -------------------------
+   The address is the quote's own frozen `subjectImage`, and whether
+   a host may be painted at all is decided once in
+   `@/lib/imageSources` and shared with every other surface.
+
+   WHEN THERE IS NOTHING TO PAINT THE SLOT STAYS AND IS EMPTY. Not a
+   broken glyph, not a hatched rectangle, and not the words "held as
+   a link" — 64px is not enough room for a sentence, and a sentence
+   that wraps to three lines inside a 44px box is the truncation §3
+   forbids. An empty tinted slot says the one true thing ("no picture
+   here") in the one place it belongs, identically on every row, so a
+   diary of twelve reads as a convention somebody chose. */
+.hy-shot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: var(--r-chip);
+  background: var(--surface-3);
+}
+
+.hy-shot.is-bare {
+  border: 1px solid var(--line-subtle);
+  background: var(--bg-sunken);
+}
+
+.hy-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hy-said {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hy-who {
+  font-size: var(--t-heading-size);
+  line-height: var(--t-heading-lead);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.hy-what {
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* an absence, said rather than left blank */
+.hy-blank {
+  color: var(--fg-tertiary);
+  font-style: italic;
+}
+
+.hy-ref {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+.hy-when {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+/* -- standing, as a rail and a word ---------------------------
+   Kind colour is a 3px rail, never a fill behind text (§1). The word
+   itself is on the ink ramp, in the case a person reads it. */
+.hy-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+.hy-state::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--fg-quaternary);
+}
+
+.hy-state.is-given::before {
+  background: var(--accent-viridian);
+}
+
+.hy-state.is-draft::before {
+  background: var(--accent-ochre);
+}
+
+.hy-state.is-replaced::before {
+  background: var(--accent-graphite);
+}
+
+.hy-total {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-weight: var(--t-mono-weight);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  text-align: right;
+}
+
+/* -- versions --------------------------------------------------
+   A quote that has been reissued says so, and the mark opens the
+   others. It is a control on a row that is itself a control, so it
+   sits OUTSIDE the row button rather than inside it. */
+.hy-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  flex: 0 0 auto;
+}
+
+.hy-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  height: var(--h-sm);
+  padding: 0 var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.hy-mark:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+.hy-mark:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+
+.hy-mark[aria-expanded='true'] {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+.hy-linkbtn {
+  height: var(--h-sm);
+  padding: 0 var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.hy-linkbtn:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.hy-linkbtn:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+
+.hy-vers {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--s-3) var(--s-3) 84px;
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--bg-sunken);
+}
+
+.hy-vers-say {
+  margin: 0 0 var(--s-2);
+  padding-top: var(--s-2);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+}
+
+.hy-vers-row {
+  display: flex;
+}
+
+.hy-vers-open {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 96px 110px minmax(96px, auto);
+  align-items: center;
+  gap: var(--s-3);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--s-1) var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: background var(--d-fast) var(--ease);
+}
+
+.hy-vers-open:hover {
+  background: var(--surface-1);
+}
+
+.hy-vers-open:active {
+  background: var(--surface-3);
+  transition-duration: var(--d-press);
+}
+
+.hy-vers-n {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+
+.hy-vers-what {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+.hy-vers-open.is-here .hy-vers-n {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* ============================================================
+   NOTHING TO SHOW — and why
+   ============================================================ */
+
+.hy-none {
+  max-width: 56ch;
+  padding: var(--s-12) 0;
+}
+
+.hy-none-title {
+  margin: var(--s-2) 0 0;
+  font-family: var(--font-hero);
+  font-size: var(--t-display-lg-size);
+  line-height: var(--t-display-lg-lead);
+  font-weight: var(--t-display-lg-weight);
+  letter-spacing: var(--t-display-lg-track);
+  color: var(--fg);
+}
+
+.hy-none-say {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+.hy-none-count {
+  margin: var(--s-4) 0 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+.hy-none-do {
+  margin: var(--s-4) 0 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg);
+}
+
+/* the narrower one: the diary is not empty, the filter is */
+.hy-nomatch {
+  max-width: 60ch;
+  padding: var(--s-8) 0;
+}
+
+.hy-nomatch-say {
+  margin: 0 0 var(--s-3);
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   ONE CUSTOMER
+   ============================================================ */
+
+.hy-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-sm);
+  padding: 0 var(--s-2) 0 var(--s-1);
+  margin-bottom: var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.hy-back:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.hy-back:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+
+.hy-cust-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-6);
+}
+
+.hy-cust-id {
+  min-width: 0;
+}
+
+.hy-cust-contact {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+.hy-cust-also {
+  margin: var(--s-3) 0 0;
+  max-width: 60ch;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-tertiary);
+}
+
+.hy-cust-acts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  max-width: 40ch;
+}
+
+/* a refusal is a sentence with a reason, in the place it is refused */
+.hy-cust-why {
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+}
+
+.hy-band {
+  margin-bottom: var(--s-8);
+}
+
+.hy-band-head {
+  margin-bottom: var(--s-3);
+}
+
+.hy-band-title {
+  margin: 0;
+  font-size: var(--t-title-size);
+  line-height: var(--t-title-lead);
+  font-weight: var(--t-title-weight);
+  letter-spacing: var(--t-title-track);
+  color: var(--fg);
+}
+
+.hy-band-say {
+  margin: var(--s-1) 0 0;
+  max-width: 68ch;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+}
+
+.hy-band-none {
+  margin: 0;
+  max-width: 68ch;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-tertiary);
+}
+
+/* -- what was offered and is on nothing current --------------- */
+.hy-passed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+
+.hy-passed-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) 110px;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.hy-passed-row:last-child {
+  border-bottom: 0;
+}
+
+.hy-passed-label {
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.hy-passed-from {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+.hy-passed-amt {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+  text-align: right;
+}
+
+/* ============================================================
+   ENTRANCES
+
+   `.ds-rise` carries the movement and ds.css already removes it
+   under `prefers-reduced-motion` — movement goes, colour and opacity
+   stay. Nothing here animates on its own.
+
+   AND NOTHING ANIMATES A FILTER. Pressing a chip is a 100-a-day,
+   keyboard-reachable act; re-staggering forty rows on every keystroke
+   of a search box is the exact thing the motion budget forbids. The
+   stagger is set once, from the row's index, and the list simply
+   redraws.
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .hy-open {
+    grid-template-columns: 64px minmax(0, 1fr) 110px minmax(96px, auto);
+  }
+
+  /* the two columns that drop are metadata; both facts survive —
+     the customer moves under the subject and the standing is on the
+     row's accessible name */
+  .hy-open .hy-when,
+  .hy-open .hy-ref {
+    display: none;
+  }
+
+  .hy-pickers {
+    margin-left: 0;
+  }
+}

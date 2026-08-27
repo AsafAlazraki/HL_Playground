@@ -446,18 +446,43 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
 
      IT IS ONLY EVER DRAWN WITH THE NARROWING OFF. With the rule in
      force every row here satisfies it, so there is nothing to mark
-     and the clean page is untouched. */
+     and the clean page is untouched.
+
+     THE STORED ORIGIN IS THE TRUTH AND THE DRAWN ONE IS NOT, which
+     is the trap here and the reason these are three functions rather
+     than a boolean. `relatedRows` reports `origin: 'added'` only for
+     a row the rule DOES NOT match — a pinned row the rule happens to
+     agree with today is reported as a rule match, deliberately, and
+     `keepOrigin` already relies on that distinction. With the
+     narrowing switched off it is handed no rule to be outside of, so
+     every row comes back a rule match and both facts are gone. Both
+     are recomputed from `block.rule` itself, which is untouched by
+     the switch. */
   const rulePinned = (r: RelatedRow): boolean => r.pair?.origin === 'added'
 
-  const offeredByRule = (r: RelatedRow): boolean => {
-    if (!showAll) return true
-    if (curated) return r.pair !== undefined
-    if (rulePinned(r)) return true
-    return evalPairRule(engine, block.rule, { entityId: target.id, row: r.row }, {
-      entityId: sourceEntity.id,
-      row: sourceRow,
-    })
-  }
+  /** Would this block's own rule have matched this row, pins aside?
+   *  On a curated block there is no rule to match — the pair IS the
+   *  answer, which is the same reading `relatedRows` takes. */
+  const ruleMatches = (r: RelatedRow): boolean =>
+    curated
+      ? r.pair !== undefined
+      : evalPairRule(engine, block.rule, { entityId: target.id, row: r.row }, {
+          entityId: sourceEntity.id,
+          row: sourceRow,
+        })
+
+  /** Pinned in by hand AGAINST the rule — which is what the `added`
+   *  chip has always claimed, and is false of a pinned row the rule
+   *  also matches. Evaluated only for the handful of rows that carry
+   *  a pin. */
+  const pinnedAgainstRule = (r: RelatedRow): boolean =>
+    !curated && rulePinned(r) && !ruleMatches(r)
+
+  /** On the list before SHOW EVERYTHING was pressed. Short-circuits
+   *  to true while the narrowing is in force, so the clean page pays
+   *  for none of this. */
+  const offeredByRule = (r: RelatedRow): boolean =>
+    !showAll || rulePinned(r) || ruleMatches(r)
 
   /** Why this one was not on the list, in the rule's own words. */
   const whyNotOffered = (): string => {
@@ -571,10 +596,34 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
   /* -- drawing ------------------------------------------------ */
 
   const filtering = search.trim() !== '' || filters.length > 0
+
+  /* ── THE CHIP COUNTS THE RULE, NOT THE SWITCH ─────────────────
+
+     Measured on Stabicraft - 1850 Fisher: two NSM Custom Trailers
+     are picked for it, and pressing SHOW EVERYTHING made this chip
+     read "73 picked" — three centimetres under a curation note
+     correctly saying "1 of 73 · showing everything". The switch is a
+     pair of spectacles, not a decision about the business, and the
+     header's job is to state the decision.
+
+     The cause is that `relatedRows` is handed no rule while the
+     switch is on, so its `fitCount` and `addedCount` are counts of
+     the whole table. Both are recomputed here from `block.rule`
+     itself — the same two helpers the row chips use, so the head and
+     the rows can never disagree — and while the switch is OFF the
+     block's own counts are taken untouched, so nothing is walked
+     twice on the page a salesperson actually reads. */
+  const offeredCount = showAll
+    ? result.rows.filter((r) => offeredByRule(r) && !pinnedAgainstRule(r)).length
+    : result.fitCount
+  const pinnedCount = showAll
+    ? result.rows.filter((r) => pinnedAgainstRule(r)).length
+    : result.addedCount
+
   const chip = countChip(
-    result.fitCount,
+    offeredCount,
     result.removedCount,
-    result.addedCount,
+    pinnedCount,
     curated ? 'picked' : 'fit',
   )
 
@@ -652,6 +701,33 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
           {result.heldCount > 0 ? ` · ${result.heldCount} not sold` : ''}
           {filtering ? ` · ${shown.length} shown` : ''}
         </span>
+        {/* ── HOW MANY ON THIS LIST ARE WORTH A LOOK ──────────────
+            The warning notes are drawn where the value is — under the
+            card they are about — which is right and is also invisible
+            from the top of a block four hundred cards long. The count
+            is already computed for the notes (`warnings`, above), so
+            saying it costs nothing and answers "is there anything on
+            this list I should know about" without scrolling it.
+
+            THE HUE CARRIES THE GLYPH AND NOTHING ELSE. `--warning`
+            over `--warning-wash` fails 4.5:1 — the measurement is
+            recorded above `.vw-warn` in views.css — so the words are
+            `--ink-soft` on the chip's own `--surface-3` ground (7.25:1
+            measured) and the mark is 5.31:1 there. */}
+        {warnings.size > 0 ? (
+          <span
+            className="vw-chip vw-chip--warn"
+            title="A rule set to warn disagrees with these. Nothing is removed — each one says what, on the card itself."
+          >
+            <WarningCircle
+              size={12}
+              weight="regular"
+              aria-hidden="true"
+              className="vw-chip-mark"
+            />
+            {warnings.size} worth a look
+          </span>
+        ) : null}
         {depth > 2 && configuring ? (
           <span className="vw-forwhom mono-label">for this {singular(sourceEntity.name)}</span>
         ) : null}
@@ -878,7 +954,7 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                     the top of the card, and the recommended one takes
                     the card's rail as well — a state you can see from
                     across a desk. */}
-                {r.recommended || r.origin === 'added' || rulePinned(r) || !offeredByRule(r) ? (
+                {r.recommended || pinnedAgainstRule(r) || !offeredByRule(r) ? (
                   <span className="vw-row-tags">
                     {r.recommended ? (
                       <span
@@ -891,12 +967,15 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                     ) : null}
                     {/* THE PIN SURVIVES SHOW EVERYTHING. With the rule
                         switched off `relatedRows` is given no rule to be
-                        outside of, so every row comes back as a rule
-                        match and the pinned ones lost their chip exactly
-                        when the list they stood out from got longer. The
-                        STORED origin is the truth — the same reading
-                        `keepOrigin` already relies on. */}
-                    {r.origin === 'added' || rulePinned(r) ? (
+                        outside of, so every row came back a rule match
+                        and the pinned ones lost their chip exactly when
+                        the list they stood out from got longer.
+                        `pinnedAgainstRule` recomputes it off `block.rule`,
+                        which the switch does not touch — and it keeps the
+                        chip's claim exactly true, which `rulePinned`
+                        alone would not: a row pinned in that the rule now
+                        also matches is not an exception to it. */}
+                    {pinnedAgainstRule(r) ? (
                       <span
                         className="vw-tag vw-tag--added"
                         title="Pinned in although the rule does not match it"

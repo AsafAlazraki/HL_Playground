@@ -62,6 +62,15 @@
    button is not a thing a browser will draw. The slot around them is
    what positions it.
 
+   AND IT IS THE DOOR TO THE ACCESS SCREEN. The rail's SETTINGS
+   section has exactly one entry and it lands here, because access is
+   a fact about a place and this is the list of places. "Access &
+   roles" stands with the other two controls and REPLACES this list
+   with `AccessScreen` — the whole dealership's permissions on one
+   page, where before they could only be read nine times, once per
+   module, five panels down a set-up page. Which surface is on screen
+   is a position on this page and is not stored.
+
    THE EMPTY STATE COUNTS THE TABLES THAT ALREADY EXIST. An admin
    arriving here has drawn 21 tables and loaded 651 rows; a blank
    screen saying "nothing here" would read as though the app had
@@ -70,7 +79,7 @@
 
 import type { CSSProperties, ReactElement } from 'react'
 import { useMemo, useState } from 'react'
-import { CaretLeft, CaretRight, Gear, Lock, Plus } from '@phosphor-icons/react'
+import { CaretLeft, CaretRight, Gear, Lock, Plus, ShieldCheck } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   accentVar,
@@ -104,6 +113,7 @@ import {
   type AccessReading,
   type ModuleCensus,
 } from './read'
+import { AccessScreen } from './AccessScreen'
 import { capabilityWords, reorderPlan } from './designer'
 import { useModuleConfiguresRules } from './ruleCapability'
 import './modules.css'
@@ -160,6 +170,24 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
      card sits where IS a fact about the business and is stored, but
      whether somebody is currently moving them is not. */
   const [ordering, setOrdering] = useState(false)
+
+  /* ============================================================
+     THE SECOND SURFACE BEHIND THIS DOOR — access, and the jobs it is
+     granted to.
+
+     WHY IT IS STATE HERE RATHER THAN A STAGE OF ITS OWN. The rail's
+     SETTINGS section has one entry, "Access & roles", and it lands on
+     this dashboard because this is where the places are and access is
+     a fact about a place. A person who came through that door is one
+     press from the screen that answers it, and pressing it does not
+     leave the list of places behind — it replaces it, and the control
+     that opened it is the control that closes it.
+
+     IT IS NOT PERSISTED AND MUST NOT BE. Which surface somebody is
+     reading is a position on a page, exactly like `ordering` above;
+     nothing about the business changes when they look at it.
+     ============================================================ */
+  const [surface, setSurface] = useState<'places' | 'access'>('places')
 
   /* `order` is the field, ascending; two modules made in the same
      millisecond fall back to their name so the list never shuffles
@@ -276,6 +304,14 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
     'Move a card earlier or later. The order is part of this sheet, so everybody who opens it sees the same one.'
   ) : null
 
+  /* ONE SURFACE AT A TIME. The access screen REPLACES the list of
+     places rather than growing under it: it is a page with a masthead
+     and three panels of its own, and a list of nine cards above it
+     would be a page nobody could read the top of. */
+  if (surface === 'access') {
+    return <AccessScreen onPlaces={() => setSurface('places')} onSettings={onSettings} />
+  }
+
   return (
     <div className="md-dash">
       {/* THE ATMOSPHERE, AND IT CARRIES NOTHING. Two drifting washes
@@ -315,6 +351,22 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                   its switch stands beside the action rather than in a
                   band of its own at the foot of the page. */}
               <div className="md-dash-acts">
+                {/* THE DOOR THE RAIL PROMISES. It carries the rail's own
+                    glyph, because a person who pressed "Access & roles"
+                    there and arrived here has to be able to see what
+                    they pressed. Drawn whether or not there are places:
+                    it is the rail's destination, and the screen behind
+                    it says honestly that access is granted in a place
+                    when there are none yet. */}
+                <button
+                  type="button"
+                  className="btn md-access"
+                  onClick={() => setSurface('access')}
+                >
+                  <ShieldCheck size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+                  Access &amp; roles
+                </button>
+
                 {cards.length > 0 ? (
                   <button
                     type="button"

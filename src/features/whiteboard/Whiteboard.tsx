@@ -442,6 +442,56 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
     return { lit, near, dims: picked !== null }
   }, [picked, tracedId, derivedEdges])
 
+  /* ============================================================
+     WHAT THE SPOTLIGHT FOUND, IN WORDS.
+
+     THE GAP THIS FILLS. Picking a table lights its lines and drops
+     the other fifty-two back, and that is the right behaviour — but
+     it is an answer you have to READ OFF THE DRAWING, and most of
+     the drawing is not on screen. The sheet is 2,920 x 5,600 units
+     and the opening frame holds about a third of it, so a table
+     three thousand units away is lit and invisible: the reader is
+     told "some of the sheet is relevant" and cannot find out which
+     without panning around looking for the cards that did not fade.
+     On the seeded set the worst case is a table with links to six
+     others and one of them on screen.
+
+     So the title block, which is already the place this drawing says
+     what it is, says what is picked and names every table at the far
+     end of a line from it. Names, not counts — a count would only
+     tell the reader how much panning is ahead of them. They are the
+     dealer's own names in the dealer's own case, and the strip
+     scrolls rather than truncating, because nothing here truncates
+     mid-word.
+
+     IT IS COMPUTED FROM `picked` ALONE, never from `tracedId`. The
+     hover half of the spotlight is a glance and must not rewrite the
+     block under the reader's cursor as it sweeps across the sheet —
+     that would be the sheet flinching, which is the thing the
+     two-strength design exists to avoid.
+     ============================================================ */
+  const spotlight = useMemo(() => {
+    if (!picked) return null
+    const self = entities[picked]
+    if (!self) return null
+    const ids = new Set<string>()
+    let lines = 0
+    for (const e of derivedEdges) {
+      if (e.source === picked) {
+        lines += 1
+        if (e.target !== picked) ids.add(e.target)
+      } else if (e.target === picked) {
+        lines += 1
+        if (e.source !== picked) ids.add(e.source)
+      }
+    }
+    const others = [...ids]
+      .map((id) => entities[id])
+      .filter((e): e is NonNullable<typeof e> => Boolean(e))
+      .sort((a, b) => a.name.localeCompare(b.name))
+    return { name: self.name, lines, others }
+  }, [picked, entities, derivedEdges])
+
   /* Edges are derived, never held: nothing about a line is the
      reader's to change, so there is no edge state to keep in step —
      the identity cache in `useRelationshipEdges` already hands back
@@ -1138,10 +1188,33 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
   /* THE MAP'S INK IS THE DRAWING'S INK. Every rectangle on the map is
      painted the hue its table is painted, by the same function the
      links take theirs from — so the map is not only "where am I", it
-     is "and what is over there". */
+     is "and what is over there".
+
+     AND THE MAP NOW CARRIES THE SPOTLIGHT, which is the half of it
+     the sheet cannot do. Dimming a card the reader cannot see says
+     nothing; the key plan is the one surface that holds the WHOLE
+     drawing at once, so it is the only place "and they are over
+     there, and there" can actually be answered. With a table picked,
+     the tables on its path keep their hue and every other rectangle
+     goes to the sheet's quietest ink — so the map turns into a
+     six-dot constellation of exactly where the reader has to go
+     next, at every zoom, including the ones where the cards
+     themselves are two pixels wide.
+
+     THE QUIET INK IS A COLOUR, NOT A DISAPPEARANCE. A rectangle that
+     vanishes takes the SHAPE of the drawing with it, and losing the
+     shape is losing the reason the map is there. `--fg-quaternary`
+     is the ramp's bottom tier — the one the system bars from
+     carrying meaning — and that is exactly the right tier here,
+     because in this state the rectangle means nothing beyond "a
+     table is here too". The ones that DO carry meaning keep their
+     full hue. */
   const mapInk = useCallback(
-    (node: CanvasNode): string => tableInk(entities[node.id]),
-    [entities],
+    (node: CanvasNode): string =>
+      focus && focus.dims && !focus.near.has(node.id)
+        ? 'var(--fg-quaternary)'
+        : tableInk(entities[node.id]),
+    [entities, focus],
   )
 
   const rootClass = [
@@ -1176,8 +1249,73 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
           arithmetic above, so no card ever opens underneath it.
           ============================================================ */}
       {tableNodes.length > 0 ? (
-        <aside className="wb-legend" ref={legendRef} aria-label="What this drawing shows">
+        <aside
+          className={`wb-legend${spotlight ? ' wb-legend--lit' : ''}`}
+          ref={legendRef}
+          aria-label="What this drawing shows"
+        >
           <span className="mono-label wb-legend-eyebrow">Data model</span>
+
+          {/* ============================================================
+              WHAT IS PICKED, AND WHAT IT REACHES.
+
+              See THE SPOTLIGHT IN WORDS above for why this exists: the
+              sheet lights the answer and most of the answer is off
+              screen. This is `role="status"` and polite, so a reader on
+              a screen reader is told what picking a table did — which
+              until now was a change of opacity on fifty-three elements
+              and nothing else, i.e. nothing at all.
+
+              THE WAY OUT IS DRAWN. Escape and a click on the paper both
+              clear the pick and both always did; neither is discoverable,
+              and a reader who has dimmed their own drawing and does not
+              know why needs a control, not a keystroke. It is the ONE
+              pressable thing on this block, so it takes back the
+              pointer-events the block gives away.
+              ============================================================ */}
+          {spotlight ? (
+            <div className="wb-lit" role="status" aria-live="polite">
+              <p className="wb-lit-say">
+                <b className="wb-lit-name">{spotlight.name}</b>
+                <span className="wb-lit-count">
+                  {spotlight.lines === 0
+                    ? 'points at nothing, and nothing points at it'
+                    : `${spotlight.lines} link${spotlight.lines === 1 ? '' : 's'}`}
+                </span>
+              </p>
+
+              {/* NAMES, IN THEIR OWN CASE, AND THE STRIP SCROLLS. A
+                  count would only tell the reader how much panning is
+                  ahead of them; the names tell them where to go, and
+                  the key plan beside it tells them which way. */}
+              {spotlight.others.length > 0 ? (
+                <ul className="wb-lit-list">
+                  {spotlight.others.map((e) => (
+                    <li className="wb-lit-one" key={e.id}>
+                      <i
+                        className="wb-lit-dot"
+                        aria-hidden="true"
+                        style={{ ['--wb-lit-ink' as string]: tableInk(e) }}
+                      />
+                      {e.name}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              <button
+                type="button"
+                className="wb-lit-clear"
+                onClick={() => {
+                  interactedRef.current = true
+                  selectFromCanvasRef.current = true
+                  select(null)
+                }}
+              >
+                Show the whole sheet
+              </button>
+            </div>
+          ) : null}
           {/* THE SAME LENGTH AS THE SENTENCE IT REPLACES, to the
               character — the block's height is reserved by the framing
               arithmetic above, so a longer sentence is paid for in

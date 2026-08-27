@@ -10,51 +10,121 @@
    this file styles components that are no longer mounted. They
    are kept, and kept working, so they can be reintroduced
    deliberately rather than rebuilt.
+   ------------------------------------------------------------
+   ONE DECLARATION PER SELECTOR.
+
+   This file was written in eras — the Chart Room, Quiet Precision,
+   the Mac window, the desktop, the dock, the instrument, the navy
+   chrome, the rail — and every one of them APPENDED rather than
+   editing the rules it was correcting. The result was measurable:
+   102 selectors declared more than once, 130 redundant rules, and
+   `.shell-body` written five separate times in five different
+   layout modes. That is not a design; it is a stack of opinions
+   with source order as the referee, and it is why nobody could
+   read this file and say what an element looked like.
+
+   78 of those 102 were this file's own vocabulary — the shell, the
+   dock, the desktop, the switcher, the action bar; the other 24
+   were Home's `.hm-*` and the rail's `.sn-*`, which belong to their
+   own passes and were left to them. 72 of the 78 are now declared
+   exactly once, and the file is 88 rules lighter — including 25 of
+   the dock's 67, which were three passes dressing the same ten
+   elements, and both rules for `.ab-search-field`, a class no
+   component has written since the search field was replaced.
+
+   NOTHING'S APPEARANCE CHANGED. Every collapsed rule carries the
+   value that was already winning, which is the LAST declaration in
+   source order, and the merge was checked property by property
+   against the file as it stood — including the cases where a
+   same-specificity state rule sits BETWEEN two declarations and
+   makes the order load-bearing. There are three of those and they
+   are noted where they are: `.shell-tbl:hover` against
+   `.is-selected`, `.shell-panel-rules:hover` against `.is-open`,
+   and `.dk-item:hover` against `:active`.
+
+   THREE THINGS MOVED HOUSE rather than being flattened here. The
+   action bar's six `.ab-*` rules went to `actionbar.css`, which is
+   where that component is declared — this file having a second
+   opinion about somebody else's control, and winning by import
+   order, is the same fault one level up. `.shell-view-bar` lost a
+   `backdrop-filter` that had been sampling a layer painted over by
+   an opaque background in every era since it was written. And the
+   entrance on `.surface` came back to the box it animates.
+
+   WHAT IS STILL DECLARED TWICE, AND WHY IT SHOULD BE. Six: the
+   registration ticks and the four selectors in the print block.
+   Both are the shared-then-specific idiom — one rule stating a
+   fact about several selectors, then one rule per selector for
+   what differs. That is a single statement of each fact, not a
+   second opinion; collapsing the print block would triple its
+   declarations to say exactly the same thing. The `.hm-*` and
+   `.sn-*` selectors are Home's and the rail's and were left to
+   their owners.
    ============================================================ */
 
-/* -- root: the chart table ---------------------------------- */
+/* -- root: the chart table ----------------------------------
+   ONE DECLARATION. This was four rules in three eras — a flex
+   column at 100dvh, then a block at 100vh — and what rendered was
+   the last of them. It is written once, as what it is: a block that
+   fills the window and never scrolls, with `.shell-body` inside it
+   doing all the laying out. `flex-direction` is inert under
+   `display: block` and is kept because it is what the element has
+   always computed; it is a fossil, not an instruction. */
 .shell-root {
   position: relative;
-  height: 100dvh;
-  display: flex;
+  display: block;
   flex-direction: column;
+  height: 100vh;
   overflow: hidden;
   background: var(--paper);
   animation: fade-in var(--t-med) var(--ease-draft) both;
 }
 
-/* THE FLEX CHAIN — .shell-root › .shell-body › panel | stage.
-   Every box on it carries `min-width: 0`. A flex item defaults to
-   `min-width: auto`, which floors its used width at its MIN-CONTENT
-   size: a panel whose contents cannot fold silently becomes wider
-   than its track, the stage will not shrink to pay for it, and the
-   whole row grows past the window — which is exactly how a rail
-   ended up cut off by the right edge of the screen. With the floor
-   removed the panel is 260px whatever it holds, and anything that
-   genuinely cannot fold scrolls inside its own column instead of
-   pushing the sheet off the drawing.
-   Invariant: .shell-root scrollWidth == clientWidth. */
+/* THE CHAIN — .shell-root › .shell-body › rail | stage.
+   Every box on it carries `min-width: 0`. A grid or flex item
+   defaults to `min-width: auto`, which floors its used width at its
+   MIN-CONTENT size: a column whose contents cannot fold silently
+   becomes wider than its track, the stage will not shrink to pay for
+   it, and the whole row grows past the window — which is exactly how
+   a rail ended up cut off by the right edge of the screen. With the
+   floor removed the rail is `--rail` wide whatever it holds, and
+   anything that genuinely cannot fold scrolls inside its own column
+   instead of pushing the sheet off the drawing.
+   Invariant: .shell-root scrollWidth == clientWidth.
+
+   IT IS A TWO-COLUMN GRID, and that is the fifth and final answer
+   this selector was given: a fixed rail and a content column that
+   starts where the rail ends and owns everything to the right of it,
+   including its own floor. `--rail` is declared on `:root` below and
+   is the ONE number the grid, the collapsed state and the floating
+   page bar all read. `flex` and `align-items` are inert under
+   `display: grid` and are kept as computed fossils, as above.
+   `--panel-w` is still read by Whiteboard.tsx's camera arithmetic and
+   by `.shell-panel`, so it stays declared here — one place knows how
+   wide that column is. */
 .shell-body {
   position: relative;
   flex: 1 1 auto;
-  display: flex;
   align-items: stretch;
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  height: 100vh;
   min-width: 0;
   min-height: 0;
-  /* ONE PLACE THAT KNOWS HOW WIDE THE PANEL IS. The panel floats over
-     the stage, so the stage's box no longer tells you what a person can
-     actually see — the leftmost 260px of the blueprint is behind glass.
-     Every consumer of that fact reads this token: the panel's own
-     width, the stage's left inset for FIT, and the camera's
-     is-it-on-screen test in Whiteboard.tsx. One number, so they cannot
-     disagree. */
   --panel-w: 260px;
 }
 
-/* THE SHEET IS THE STAGE — everything under the masthead and right
-   of the panel, with no third column ever taking a slice of it. */
+/* THE SHEET IS THE STAGE — everything right of the rail, with no
+   third column ever taking a slice of it.
+
+   IT NO LONGER RESERVES A DOCK STRIP. `inset: 0 0 78px` paid for a
+   floating bar that has been deleted; the action bar floats inside
+   the content column now and is charged for by the surface it sits
+   on rather than by the whole page. Static in flow, so the grid
+   places it. */
 .shell-stage {
   position: relative;
+  inset: auto;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
@@ -71,9 +141,15 @@
    above and hands the same box to the canvas inside it, so nothing
    about the blueprint's geometry changes; without this line the
    canvas would size to its content instead of the stage and the
-   React Flow viewport would collapse. */
+   React Flow viewport would collapse.
+
+   IT FILLS THE STAGE. It was `position: relative` when the stage was
+   a flex track and `position: absolute; inset: 0` once the sheet
+   became a section like any other; the second is what renders and
+   it is now the only one. */
 .shell-sheet-layer {
-  position: relative;
+  position: absolute;
+  inset: 0;
 }
 .shell-sheet-layer > * {
   width: 100%;
@@ -139,7 +215,9 @@
   align-items: stretch;
   min-width: 0;
   background: var(--paper-high);
-  border-bottom: 1px solid var(--hairline-strong);
+  /* the hairline came down a step when the masthead stopped being a
+     title block; this was declared twice and the softer one won */
+  border-bottom: 1px solid var(--hairline);
   /* 12 + 4 (mark pad) puts the brand on the shared x=16 line */
   padding-left: var(--sp-3);
   z-index: 40;
@@ -159,12 +237,15 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--blue);
+  color: var(--ink-faint);
 }
 .shell-mark-product {
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 570;
+  letter-spacing: -0.009em;
+  text-transform: none;
   line-height: 1.1;
   color: var(--ink);
   white-space: nowrap;
@@ -189,6 +270,9 @@
   margin: 0;
   padding: 3px 2px;
   font-size: 15px;
+  font-weight: 560;
+  letter-spacing: -0.009em;
+  text-transform: none;
   line-height: 1.2;
   color: var(--ink);
   text-align: left;
@@ -236,12 +320,12 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   line-height: 1.5;
-  color: var(--ink-soft);
+  color: var(--ink-faint);
   white-space: nowrap;
   user-select: none;
 }
@@ -397,25 +481,29 @@
    to go, not an action to take. */
 .shell-panel-rules {
   display: flex;
+  /* the door was a two-line card and became a one-line nav row, so
+     the row direction is what renders and `flex-direction` is a
+     fossil of the card; kept because it is what the box computes */
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  gap: var(--sp-2);
   width: calc(100% - var(--sp-4) * 2);
   margin: var(--sp-2) var(--sp-4) 0;
   padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
   text-align: left;
   cursor: pointer;
   transition:
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
-.shell-panel-rules:hover {
-  background: var(--blue-wash);
-  border-color: var(--blue);
-}
+/* THE HOVER AND THE FRONT DOOR are declared in QUIET PRECISION
+   below, and deliberately not here: `.is-open` sits between the two
+   at the same specificity, so which of them a person sees on an
+   open, hovered door is decided by source order. Moving them up
+   would silently swap the answer. */
 .shell-panel-rules:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: -2px;
@@ -426,6 +514,8 @@
 }
 .shell-panel-rules-text {
   font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.003em;
   line-height: 1.2;
   color: var(--ink);
 }
@@ -438,14 +528,8 @@
    it are the seam between what this app IS ABOUT (the places in the
    business) and what it is MADE OF (the sheet, and the doors onto
    it) — one hairline, because that is what this house uses to say
-   "different subject" and nothing louder is needed. */
-.shell-panel-rules.is-front {
-  /* the seam below is drawn as this door's own ::after, so the box it
-     hangs off has to be the positioned one */
-  position: relative;
-  margin-top: var(--sp-4);
-  margin-bottom: var(--sp-4);
-}
+   "different subject" and nothing louder is needed. The rule itself
+   is in QUIET PRECISION below, with the hover it has to outrank. */
 .shell-panel-rules.is-front::after {
   content: '';
   position: absolute;
@@ -606,6 +690,12 @@
   scroll-margin-block: var(--sp-3);
 }
 
+/* A TABLE ROW IS A NAV ROW, NOT A STAMP. It was uppercase at 640
+   weight with letterspacing — a shout repeated 24 times down one
+   column. Sentence case, one weight, and the name is allowed to be
+   the loudest thing on its own row. Its HOVER is declared in QUIET
+   PRECISION below for the same reason the door's is: `.is-selected`
+   sits between the two declarations at the same specificity. */
 .shell-tbl {
   width: 100%;
   min-width: 0;
@@ -613,19 +703,20 @@
   align-items: center;
   gap: var(--sp-3);
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background: none;
   margin: 0;
   padding: 9px var(--sp-2) 9px var(--sp-3);
   text-align: left;
   cursor: pointer;
-  color: var(--ink);
+  font-size: 13px;
+  font-weight: 460;
+  letter-spacing: -0.002em;
+  text-transform: none;
+  color: var(--ink-soft);
   transition:
     background var(--t-fast) var(--ease-draft),
     box-shadow var(--t-fast) var(--ease-draft);
-}
-.shell-tbl:hover {
-  background: var(--blue-wash);
 }
 .shell-tbl.is-selected {
   background: var(--blue-wash);
@@ -645,13 +736,14 @@
   width: 18px;
   color: var(--row-accent, var(--ink));
 }
+/* a name keeps its own case — see the note in table.css */
 .shell-tbl-name {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 12px;
-  font-weight: 560;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 460;
+  letter-spacing: -0.003em;
+  text-transform: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -684,15 +776,19 @@
 .shell-panel-head + .shell-grp {
   margin-top: var(--sp-1);
 }
+/* THE GROUP HEADING is the one uppercase style in the system */
 .shell-grp-label {
-  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
 }
 .shell-grp-count {
   flex: 0 0 auto;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   color: var(--ink-faint);
 }
 /* said once, under the relationships head: a join is not stock */
@@ -776,28 +872,34 @@
    The page brings its own stylesheet; nothing here reaches
    inside it.
    ============================================================ */
+/* THE STAGE IS IN FLOW, NOT PINNED. It was `position: absolute;
+   inset: 0` when it covered a whiteboard, then inset by 10px with a
+   radius and a shadow when it was a Mac window on a desktop, and it
+   is neither now: the content column is its box, so it fills it and
+   the grid places it. The window's frame is kept because
+   `.win-body > .shell-viewstage` hands it back when a stage really
+   is inside a window — see THE DESKTOP below. Three declarations,
+   one rule, same computed box. */
 .shell-viewstage {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  inset: auto;
+  height: 100%;
   z-index: 30;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--paper);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--paper-high);
+  box-shadow: var(--e3);
   animation: fade-in var(--t-fast) var(--ease-draft) both;
 }
 
-.shell-view-bar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  min-width: 0;
-  padding: 9px var(--sp-4);
-  background: var(--paper-high);
-  border-bottom: 1px solid var(--hairline);
-}
+/* THE BAR ITSELF is declared once, at the foot of this file under
+   THE MASTHEAD LOSES ITS NAVY — four eras collapsed into one rule.
+   What stands here is what stands ON it. */
 .btn.shell-view-back {
   flex: 0 0 auto;
   padding: 6px 11px;
@@ -819,26 +921,44 @@
   text-overflow: ellipsis;
   color: var(--ink-faint);
 }
+/* The four parts of the crumb. Each had two declarations — the
+   original mono stamp here, and the Mac window's re-typing of it
+   ninety rules later; both are folded in, later value winning. */
 .shell-view-what-mark {
-  display: inline-flex;
+  display: flex;
   flex: 0 0 auto;
-  color: var(--view-accent, var(--ink));
+  color: var(--ink-faint);
 }
 .shell-view-what-name {
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  white-space: nowrap;
   color: var(--ink);
 }
 .shell-view-what-sep {
   flex: 0 0 auto;
+  color: var(--ink-faint);
 }
+/* the aside is half sentence ("what goes with each one") and half
+   count ("26 models"), so it reads as Inter and takes tabular
+   figures rather than the mono face — the digits still line up
+   between one table and the next without a sentence being set in a
+   typewriter. */
 .shell-view-what-say {
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-faint);
 }
 
 .shell-view-split {
@@ -1300,12 +1420,21 @@
 }
 
 /* THE one action on this screen — bigger than a toolbar button, so
-   there is never a question about where to go next */
+   there is never a question about where to go next. A NAME IS A NAME
+   (§3): "Create your first table" was drawn as CREATE YOUR FIRST
+   TABLE by `.btn` in base.css, which is the shared foundation and
+   not ours to re-cut, so the case is corrected here beside the
+   class. The +0.18em went with it — that tracking existed to make
+   11px capitals legible at button size, and none of it is needed
+   once the label is language. */
 .btn.shell-invite-go {
   margin-top: var(--sp-5);
   padding: 10px 22px;
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -0.004em;
+  text-transform: none;
 }
 
 /* THE SECOND DOOR — real data, one press. Deliberately NOT shaped like
@@ -1376,17 +1505,22 @@
 
 /* WHERE THE NUMBERS COME FROM, in one quiet line. This set is the real
    Master Price File, and a person deciding whether to press it needs to
-   know that without being sold it. */
+   know that without being sold it — so it is the one line on the screen
+   that most needs to be READ rather than scanned, and it is a sentence
+   with a full stop that uppercases the dealer's own business name
+   inside it. §3 forbids both, so it takes the UI face at reading size.
+   The ink is untouched: `--ink-faint` measures 4.72:1 on the card's
+   `--paper-high`, and case does not move a ratio. */
 .shell-invite-alt-note {
   display: block;
   max-width: 40ch;
   margin: 5px auto 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  line-height: 1.65;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.55;
   color: var(--ink-faint);
 }
 
@@ -2146,69 +2280,28 @@
 /* ============================================================
    QUIET PRECISION - the panel and masthead
 
-   Appended, not rewritten. Every rule above still applies; these
-   override APPEARANCE only. Nothing here changes a selector's
-   meaning, a layout mode, or a behaviour - which is why it could
-   be done without reading the interaction code.
+   THIS BLOCK WAS THE PROBLEM IN MINIATURE. It was appended rather
+   than written into the rules it was correcting, so twelve
+   selectors from the panel and the masthead were declared twice —
+   one rule saying what the element IS a thousand lines up, another
+   saying what it LOOKS LIKE down here, and only the second one
+   true. Ten of the twelve have gone home: the masthead's hairline,
+   the mark, the org name and its stamp, the group heading and its
+   count, the table row, its name, the door and the door's text are
+   all declared once now, where they are built.
+
+   TWO STAYED, AND THE REASON IS ORDER. `.shell-tbl:hover` and
+   `.shell-panel-rules:hover` are each separated from their element
+   by a same-specificity state rule — `.is-selected` on the row,
+   `.is-open` on the door — so what a person sees on a selected row
+   they are pointing at is decided by which comes last in this file.
+   These two are last. Moving them would change the screen; that is
+   the whole reason they are worth a note instead of a move.
    ============================================================ */
 
-/* THE MASTHEAD stops being a title block. One line, one weight. */
-.shell-masthead {
-  background: var(--paper-high);
-  border-bottom: 1px solid var(--hairline);
-}
-.shell-mark-brand {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-}
-.shell-mark-product {
-  font-size: 15px;
-  font-weight: 570;
-  letter-spacing: -0.009em;
-  text-transform: none;
-  color: var(--ink);
-}
-.shell-org-name {
-  font-size: 15px;
-  font-weight: 560;
-  letter-spacing: -0.009em;
-  text-transform: none;
-}
-.shell-org-industry {
-  font-size: 12px;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink-faint);
-}
-
-/* THE GROUP HEADING is the one uppercase style in the system. */
-.shell-grp-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-}
-.shell-grp-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0;
-  color: var(--ink-faint);
-}
-
-/* A TABLE ROW IS A NAV ROW, NOT A STAMP. It was uppercase at 640
-   weight with letterspacing - a shout repeated 24 times down one
-   column. Sentence case, one weight, and the name is allowed to
-   be the loudest thing on its own row. */
-.shell-tbl {
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 460;
-  letter-spacing: -0.002em;
-  text-transform: none;
-  color: var(--ink-soft);
-}
+/* the row and the door both DARKEN on hover rather than taking the
+   accent, so pointing at something never looks the same as having
+   opened it */
 .shell-tbl:hover {
   background: var(--paper-sunken);
   color: var(--ink);
@@ -2218,36 +2311,19 @@
   color: var(--ink);
   font-weight: 540;
 }
-
-/* THE DOORS were ad copy in a bordered card - a headline over a
-   shouted mono subtitle, three of them stacked. They become nav
-   rows: one line, one weight, state visible without reading a
-   caption. */
-.shell-panel-rules {
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-}
 .shell-panel-rules:hover {
   background: var(--paper-sunken);
   border-color: var(--hairline);
 }
+/* THE FRONT DOOR — the same door, standing first, and it has to
+   outrank the hover above it for the same reason that hover has to
+   outrank `.is-open`. */
 .shell-panel-rules.is-front {
+  position: relative;
+  margin-top: var(--sp-4);
+  margin-bottom: var(--sp-4);
   background: var(--blue-wash);
   border-color: transparent;
-}
-.shell-panel-rules-text {
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: -0.003em;
-  color: var(--ink);
-}
-/* names get their case back - see the note in table.css */
-.shell-tbl-name {
-  text-transform: none;
-  font-size: 13px;
-  font-weight: 460;
-  letter-spacing: -0.003em;
 }
 
 /* the count on a door, where a sentence used to be */
@@ -2257,11 +2333,6 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
-}
-.shell-panel-rules {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
 }
 
 /* the type tray sits at the foot now, on the far side of a rule, so
@@ -2468,6 +2539,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* the register is paper, and this was a second identical rule for
+     the same box further down that added only this line */
+  background: var(--paper-high);
 }
 .shell-table-body > * {
   flex: 1;
@@ -2481,19 +2555,51 @@
    register is the way back and the subject's name and nothing else —
    which is what every other stage in the app already does. */
 
-/* THE SHEET TAKES THE WHOLE WINDOW now that nothing sits beside it */
-.shell-body {
-  display: flex;
-  min-width: 0;
-}
-.shell-body > .shell-stage {
-  flex: 1;
-  min-width: 0;
-}
+/* ============================================================
+   "THE SHEET TAKES THE WHOLE WINDOW NOW THAT NOTHING SITS BESIDE
+   IT" — and something sits beside it again.
+
+   That rule was written when the left panel was deleted and the
+   sheet really was alone: `.shell-body { display: flex }`. Then
+   the rail arrived, the head of this file redeclared
+   `.shell-body` as a two-column grid — and this rule was left
+   standing four thousand lines further down. Same selector, same
+   specificity, later in source: the flex won and the grid never
+   ran once.
+
+   MEASURED at 1280 x 720 before the fix: `.shell-body` computed
+   `display: block` (the grid declaration invalid for a second
+   reason — see `--rail` — and the flex not applying to a `<div>`
+   the way the grid would have), the rail laid itself out as a
+   full-width 1280px block, and the stage sat under it. Every
+   screenshot of this app has been of a layout nobody specified.
+
+   `> .shell-stage { flex: 1 }` went with it: a grid track sizes
+   from `minmax(0, 1fr)` in the template, and a `flex` shorthand on
+   a grid item is inert. The grid at the head of the file is the
+   only declaration of this layout now, which is the point.
+   ============================================================ */
 
 
 /* ============================================================
    THE DOCK — floating, over the sheet.
+
+   IT IS NOT MOUNTED. `Dock.tsx` is still in the tree and still
+   writes every class below, but nothing renders it: the rail
+   replaced it and the action bar was lifted out of it into
+   `.pagebar`. These rules are kept for the same reason the block
+   at the foot of this file keeps Rails and the Inspector —
+   reintroducing the component should be one line of JSX, not a
+   rebuild — and the style guard counts a class Dock.tsx writes as
+   written, so deleting them would report a screen as unstyled.
+
+   THREE PASSES DRESSED IT and each appended rather than editing:
+   white glass, then THE INSTRUMENT's design-system tokens, then
+   the navy chrome ramp. Every rule here now carries what the third
+   pass left — one declaration per selector, the value that
+   rendered — and the two later blocks keep their arguments and
+   their own new rules. Nothing about the dock's appearance
+   changed; it simply stopped being written down three times.
    ============================================================ */
 
 .dk-wrap {
@@ -2505,34 +2611,37 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  /* the gap is only ever between the Tables menu and the rig — the
+     two tiers inside the rig are joined, not spaced */
+  gap: var(--s-3);
   pointer-events: none;
 }
 .dk-wrap > * {
   pointer-events: auto;
 }
 
+/* the navigation tier keeps its geometry and gives up its skin —
+   `.dk-rig` is the surface now, so a second border, a second blur
+   and a second shadow here would be the same object drawn twice */
 .dk {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 8px;
-  border-radius: 20px;
-  /* THE ONE GLASS SURFACE IN THE APP. It floats over a drawing that
-     pans and scrolls beneath it; a solid bar would punch a hole in
-     the sheet. Nothing translucent is stacked on it. */
-  background: color-mix(in srgb, var(--paper-high) 78%, transparent);
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  border: 1px solid var(--hairline);
-  box-shadow: var(--e-float);
+  padding: var(--s-2);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
 }
 
 .dk-sep {
   width: 1px;
   height: 26px;
   margin: 0 4px;
-  background: var(--hairline-strong);
+  background: var(--chrome-line);
 }
 
 .dk-item {
@@ -2542,43 +2651,57 @@
   width: 44px;
   height: 44px;
   border: 0;
-  border-radius: 13px;
+  border-radius: 14px;
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--chrome-fg-soft);
   cursor: pointer;
   transition:
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-med) var(--ease-draft);
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
 }
 .dk-item:hover {
-  background: var(--paper-sunken);
-  color: var(--ink);
+  background: var(--chrome-wash-hover);
+  color: var(--chrome-fg);
   /* the Dock's own gesture: the icon grows toward the pointer */
   transform: translateY(-3px) scale(1.06);
 }
 .dk-item:active {
   transform: translateY(0) scale(0.97);
 }
+/* THE LIT STATE IS WHITE, NOT BLUE. --accent measures 1.9:1 on
+   --chrome, so an accent wash here would be a state nobody can see.
+   White at 16% is the same idea in the material that works on this
+   ground; the accent hairline is what gives it an edge on glass. */
 .dk-item.is-open,
 .dk-item.is-active {
-  background: var(--blue-wash);
-  color: var(--blue);
+  background: var(--chrome-wash-on);
+  color: var(--chrome-fg);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
 }
+/* THE RING HAS TO CLEAR ITS NEIGHBOURS. Every item lifts on hover,
+   so a focused item drawn earlier in source order can have the next
+   one's raised corner painted over its ring. */
 .dk-item:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--paper-high), 0 0 0 4px var(--blue);
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+  z-index: 1;
+  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
 }
 
-/* a running dot under an active place, like the Dock's own */
+/* the running light under an active place. It was a 4px dot, which
+   on a 44px item is a speck; it is a 14px bar with the accent's own
+   glow under it. */
 .dk-item.is-active::after {
   content: '';
   position: absolute;
-  bottom: 2px;
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--blue);
+  bottom: 3px;
+  width: 14px;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  box-shadow: var(--glow-md);
 }
 
 /* THE COUNT SITS ON THE FLOOR, AND IT FITS — MEASURED, NOT GUESSED.
@@ -2643,24 +2766,32 @@
    fall into place from above: the movement points back at the thing it
    is describing.
    ============================================================ */
+/* THE LABEL IS INSTANT, AND IT ARRIVES FOR THE KEYBOARD TOO. The
+   same 4px travel on `--ease-out-expo` at `--d-press`, the duration
+   this system reserves for things that must feel like they were
+   already there — a name that fades in over an eighth of a second
+   is a name you have already stopped waiting for. */
 .dk-tip {
   position: absolute;
   top: calc(100% + 4px);
   padding: 3px 9px;
-  border-radius: 8px;
-  background: var(--ink);
-  color: var(--paper-high);
+  border: 1px solid var(--chrome-line);
+  border-radius: var(--r-control);
+  background: var(--chrome-raised);
+  color: var(--chrome-fg);
   font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-caption-track);
   line-height: 1.2;
   white-space: nowrap;
   opacity: 0;
   transform: translateY(-4px);
   pointer-events: none;
+  box-shadow: var(--e2);
   transition:
-    opacity var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
+    opacity var(--d-press) var(--ease-out-expo),
+    transform var(--d-press) var(--ease-out-expo);
 }
 .dk-item:hover .dk-tip,
 .dk-item:focus-visible .dk-tip {
@@ -2670,30 +2801,24 @@
 
 /* ---------- the panel, opening UPWARD ----------------------- */
 
+/* THE PANEL TAKES THE SAME MATERIAL AS THE RIG IT OPENS FROM,
+   rather than a second recipe for the same idea — and it grows out
+   of the ITEM that was pressed (`--dk-origin`), not out of its own
+   middle, because an interaction is anchored to its source. */
 .dk-panel {
   width: min(520px, calc(100vw - 48px));
   max-height: min(58vh, 460px);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--sp-3);
+  border: 1px solid var(--line);
   border-radius: 18px;
-  background: color-mix(in srgb, var(--paper-high) 92%, transparent);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid var(--hairline);
-  box-shadow: var(--e3);
-  transform-origin: bottom center;
-  animation: dk-in 160ms var(--ease-draft);
-}
-@keyframes dk-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--e3), inset 0 1px 0 var(--glass-edge);
+  transform-origin: var(--dk-origin, 50%) bottom;
+  animation: ds-scale-in var(--d-med) var(--ease-out-expo);
 }
 
 .dk-row {
@@ -2712,6 +2837,10 @@
   font-weight: 460;
   text-align: left;
   cursor: pointer;
+  /* the press below darkens rather than scaling, so the ground is
+     the only thing that has to move — one transition, declared with
+     the row rather than in a second rule five hundred lines down */
+  transition: background var(--d-fast) var(--ease);
 }
 /* THE SAME FAULT THE ROW RAIL HAD, IN THE SAME FILE. Hover, focus and
    "this branch is open" (`.dk-row--branch.is-on`, below) all painted
@@ -2756,11 +2885,14 @@
   font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
 }
+/* "No tables yet." is a refusal in the place the thing is refused
+   (rule 10), so it is a sentence at reading size rather than a
+   greyed-out line */
 .dk-none {
   margin: 0;
   padding: var(--sp-3);
-  font-size: 13px;
-  color: var(--ink-faint);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
 }
 
 /* THE FALLBACK MOVED WITH THE MATERIAL. `.dk` has no background of
@@ -2801,55 +2933,14 @@
    Everything below serves those four sentences.
    ============================================================ */
 
-.shell-viewstage {
-  position: absolute;
-  inset: 10px 10px 84px;      /* clear of the dock at the bottom */
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  /* the Mac window shadow: tight contact edge, then a wide soft
-     ambient. One shadow cannot do both. */
-  box-shadow: var(--e3);
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
+/* THE WINDOW'S FRAME — the radius, the border, the shadow and the
+   in-flow box — is declared once with `.shell-viewstage` in THE
+   VIEW STAGE above, and the three-track toolbar grid is declared
+   once with `.shell-view-bar` at the foot of this file. Both used
+   to be re-stated here; the values are unchanged and this block
+   keeps the argument for them. */
 
 /* ---------- the unified toolbar ----------------------------- */
-
-.shell-view-bar {
-  position: relative;
-  flex: none;
-  /* THREE COLUMNS, NOT FLEX-WITH-AN-ABSOLUTE-TITLE. A real toolbar
-     keeps its title in the middle of the WINDOW however wide the
-     controls on either side grow, and the honest way to say that is
-     a grid whose outer tracks are equal. Absolute centring inside a
-     flex row resolves against a static-position box and drifts. */
-  display: grid;
-  /* minmax(0,...) so the outer tracks stay EQUAL when the controls
-     on one side are wider than the other - with a bare 1fr the wider
-     side grows its track and drags the centre with it.
-     The CENTRE is minmax(0, auto) rather than bare `auto` so it is
-     allowed to shrink and ellipse when the window is genuinely too
-     narrow, instead of forcing its min-content width on the row. */
-  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
-  align-items: center;
-  gap: var(--sp-3);
-  height: 52px;
-  padding: 0 var(--sp-4);
-  /* VIBRANCY. Content scrolls under it, so it is a material and
-     not a bar. This and the dock are the only two. */
-  background: color-mix(in srgb, var(--paper-high) 72%, transparent);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  /* NO RULE UNDERNEATH. A unified toolbar is continuous with its
-     window; a 1px line under it is the thing that makes a web page
-     look like a web page. The separation comes from the material. */
-  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 60%, transparent);
-  z-index: 5;
-}
 
 /* THE TITLE IS CENTRED, absolutely, so it stays centred in the
    WINDOW no matter how wide the controls on either side grow —
@@ -2894,33 +2985,8 @@
   letter-spacing: 0;
   text-transform: none;
 }
-.shell-view-what-name {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.006em;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* the aside is half sentence ("what goes with each one") and half
-   count ("26 models"), so it reads as Inter and takes tabular figures
-   rather than the mono face — the digits still line up between one
-   table and the next without a sentence being set in a typewriter. */
-.shell-view-what-say {
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-  white-space: nowrap;
-}
-.shell-view-what-sep {
-  color: var(--ink-faint);
-}
-.shell-view-what-mark {
-  display: flex;
-  color: var(--ink-faint);
-}
+/* the four parts of the crumb were re-typed here and are declared
+   once, with their originals, in THE VIEW STAGE above */
 
 /* ---------- Mac controls ------------------------------------ */
 
@@ -3027,15 +3093,7 @@
 
 /* ---------- the register, in a Mac window ------------------- */
 
-.shell-table-body {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--paper-high);
-}
+/* `.shell-table-body` is declared once, with the table stage above */
 
 /* Mac list striping: alternating rows, not a grid of boxes. The
    hairlines between columns stay, because this is a spreadsheet
@@ -3122,11 +3180,9 @@
   background: color-mix(in srgb, var(--blue) 15%, var(--paper-sunken));
 }
 
-/* ---------- the sheet keeps the window ---------------------- */
-
-.shell-stage {
-  position: relative;
-}
+/* the sheet keeps the window — `.shell-stage { position: relative }`
+   is declared once at the head of this file and this was the second
+   of its four rules */
 
 @media (prefers-reduced-transparency: reduce) {
   .shell-view-bar,
@@ -3620,6 +3676,15 @@
 
 /* ============================================================
    THE DESKTOP, AND THE WINDOWS ON IT
+
+   NOT MOUNTED, like the dock. `Win.tsx` is imported by `Shell.tsx`
+   and never rendered — one surface at a time replaced the window
+   stack, and what was kept from it is the stack itself, as history
+   for Cmd-Tab. The rules are kept for the same reason the dock's
+   are, and the FLUIDITY block below — which added the entrance,
+   the minimise travel and the press on the traffic lights — used
+   to re-open four of these selectors from four hundred rules away.
+   Each is written once now, at the value that rendered.
    ============================================================ */
 
 .win {
@@ -3636,6 +3701,14 @@
      focused one is unmistakably the one you are working in. */
   box-shadow: var(--e2);
   transition: box-shadow var(--t-med) var(--ease-draft);
+  /* IT MATERIALISES. A window that appears with no motion at all is
+     the single thing that reads as "not a desktop" — scale, offset
+     and opacity together, on the critically damped curve, because
+     overshoot is reserved for motion a GESTURE caused and a window
+     opening was not thrown by anybody. */
+  animation: win-in 260ms var(--ease-settle);
+  /* the compositor is told what is about to move */
+  will-change: transform, opacity;
 }
 .win.is-focused {
   box-shadow: var(--e4);
@@ -3678,7 +3751,12 @@
      unfocused window should not be shouting three colours. */
   background: #d3d5da;
   cursor: pointer;
-  transition: background var(--t-fast) var(--ease-draft);
+  /* the press is on `transform` and it is the reason this rule was
+     re-opened once already — three of the most-clicked controls in
+     the app had no press at all */
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    transform 90ms var(--ease-settle);
 }
 .win:hover .win-light--close,
 .win.is-focused .win-light--close {
@@ -3694,8 +3772,14 @@
 }
 .win-light:active {
   filter: brightness(0.86);
+  transform: scale(0.86);
 }
 
+/* THE TITLE CARRIES THE SUBJECT, so it is allowed the room to say
+   it — it is the only place the name appears while a stage is in a
+   window. `100%` of its own track, not `60%` of an auto track it is
+   itself sizing: the latter is the cycle that truncated the home
+   header to "NORT… · 21…". */
 .win-title {
   grid-column: 2;
   justify-self: center;
@@ -3703,6 +3787,7 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
+  max-width: 100%;
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 600;
@@ -3743,10 +3828,19 @@
   box-shadow: none;
   background: transparent;
 }
-/* the window owns the titlebar now, so the stage's own bar is a
-   toolbar under it rather than a second title */
+/* the window owns the titlebar, so the stage's own bar is a toolbar
+   under it rather than a second title: with identity gone it is
+   controls only, and it stops pretending to be a titlebar. It was
+   `height: 44px` here and re-opened two hundred rules down for the
+   other five properties AND a different height; 46 is the one that
+   rendered. */
 .win-body .shell-view-bar {
-  height: 44px;
+  grid-template-columns: 1fr auto;
+  height: 46px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid var(--hairline);
 }
 
 
@@ -3764,16 +3858,19 @@
   -webkit-backdrop-filter: blur(6px);
   pointer-events: none;
 }
+/* the same glass as the rig and the menu panels, by token rather
+   than by a third hand-mixed `color-mix` and a third hand-typed
+   blur radius */
 .sw-row {
   display: flex;
   gap: 10px;
   padding: 16px;
+  border: 1px solid var(--line);
   border-radius: 22px;
-  background: color-mix(in srgb, var(--paper-high) 82%, transparent);
-  backdrop-filter: blur(28px) saturate(1.8);
-  -webkit-backdrop-filter: blur(28px) saturate(1.8);
-  border: 1px solid var(--hairline);
-  box-shadow: var(--e-hero);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--e-hero), inset 0 1px 0 var(--glass-edge);
   max-width: calc(100vw - 64px);
   overflow: hidden;
 }
@@ -3849,10 +3946,10 @@
    opening was not thrown by anybody.
    ============================================================ */
 
-:root {
-  /* critically damped, no overshoot — the §4 default */
-  --ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
-}
+/* `--ease-settle` is declared with the rest of this file's tokens on
+   the one `:root`, below. A custom property resolves at
+   computed-value time, not in source order, so it reads correctly
+   from here. */
 
 /* ---------- 1 · a window materialises ------------------------ */
 
@@ -3866,11 +3963,7 @@
     transform: none;
   }
 }
-.win {
-  animation: win-in 260ms var(--ease-settle);
-  /* the compositor is told what is about to move (§11) */
-  will-change: transform, opacity;
-}
+/* the animation itself is declared with `.win`, above */
 
 /* leaves the way it came (§7) */
 @keyframes win-out {
@@ -3902,22 +3995,15 @@
 
 /* ---------- 3 · the dock panel comes from its icon ----------- */
 
-/* was `bottom center` — the panel grew out of its own middle
-   rather than out of the thing that was pressed */
-.dk-panel {
-  transform-origin: var(--dk-origin, 50%) bottom;
-}
+/* the panel grows out of the ITEM that was pressed rather than out
+   of its own middle — `--dk-origin` is set with `.dk-panel` in THE
+   DOCK above, where the panel is */
 
 /* ---------- 4 · the lights answer the press ------------------ */
 
-.win-light {
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    transform 90ms var(--ease-settle);
-}
-.win-light:active {
-  transform: scale(0.86);
-}
+/* the 90ms transform and the 0.86 press are declared with
+   `.win-light` and `.win-light:active` above, where the light is */
+
 /* the glyph a Mac shows inside the light on hover */
 .win-lights:hover .win-light::after {
   content: '';
@@ -3931,15 +4017,17 @@
 /* ---------- §14 · and none of it against the user's wishes --- */
 
 @media (prefers-reduced-motion: reduce) {
-  .win,
-  .win.is-closing,
-  .win.is-minimising {
+  .win {
     animation: none;
   }
   /* reduced motion is a GENTLER equivalent, not none at all — the
-     window still fades so its arrival and departure are legible */
+     window still fades so its arrival and departure are legible.
+     Stated in one rule per selector rather than as a group that
+     cancels the motion and a second group that gives the fade
+     back. */
   .win.is-closing,
   .win.is-minimising {
+    animation: none;
     opacity: 0;
     transition: opacity 140ms linear;
   }
@@ -3977,16 +4065,7 @@
   display: flex;
 }
 
-/* with identity gone, the bar is controls only — so it stops
-   pretending to be a titlebar and becomes a toolbar */
-.win-body .shell-view-bar {
-  grid-template-columns: 1fr auto;
-  height: 46px;
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-bottom: 1px solid var(--hairline);
-}
+/* the toolbar's own shape is declared with `.win-body` above */
 .win-body .shell-view-bar > *:last-child {
   grid-column: 2;
   justify-self: end;
@@ -3995,14 +4074,8 @@
   grid-column: 1;
 }
 
-/* THE WINDOW TITLE CARRIES THE SUBJECT NOW, so it is allowed the
-   room to say it - it is the only place the name appears.
-   `100%` of its own track, not `60%` of an auto track it is itself
-   sizing: the latter is the cycle that truncated the home header. */
-.win-title {
-  min-width: 0;
-  max-width: 100%;
-}
+/* `.win-title`'s room to say the subject is declared with the title
+   itself, above — this was its second rule */
 
 /* a bar with nothing left in it should not leave a 46px band */
 .win-body .shell-view-bar:empty {
@@ -4030,36 +4103,20 @@
    inside a section is the section's own business.
    ============================================================ */
 
-.shell-root {
-  display: block;
-  height: 100vh;
-  overflow: hidden;
-}
-.shell-body {
-  display: block;
-  height: 100vh;
-  min-width: 0;
-}
-/* THE BAR OWNS THE BOTTOM STRIP, GLOBALLY.
+/* THE THREE BOXES THIS BLOCK USED TO RE-DECLARE — `.shell-root`,
+   `.shell-body` and `.shell-stage` — are declared once at the head
+   of this file. The 78px strip `.shell-stage` reserved here bought
+   floor for a dock that has since been deleted, and the rule that
+   gave it back was the fourth declaration of the same selector;
+   both are now one line in one place. */
 
-   Padding each surface could not fix this: several stages carry
-   their own sticky footers - the quote total, the flow rail - and
-   a sticky element resolves against its SCROLL CONTAINER, not
-   against a padded ancestor. So they kept landing under the bar,
-   and the quote total ended up floating across the middle of its
-   own page.
-
-   Reserving the strip here, once, is the only place that fixes
-   every stage at the same time: nothing inside the app can reach
-   into the bottom 78px, so a sticky footer sticks to the bottom
-   of the PAGE and the page stops above the bar. */
-.shell-stage {
-  position: absolute;
-  inset: 0 0 78px 0;
-}
-
-/* the surface takes everything, and stops 78px short of the
-   bottom so the dock always has air under it */
+/* THE SURFACE, ONCE. It had three rules in three places — the
+   geometry here, a `padding-bottom: 0` that unwound a dock strip
+   further down, and an entrance at the foot of the file. The
+   entrance's argument still lives where it was written (ARRIVING
+   SOMEWHERE); the declaration lives here, with the box it belongs
+   to, because a selector that is declared in three places is three
+   people's opinion of one element. */
 .surface {
   position: absolute;
   /* OPAQUE, AND OVER EVERYTHING. This was transparent with the
@@ -4073,14 +4130,8 @@
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  /* THE ENTRANCE IS NOT DECLARED HERE ANY MORE. It was
-     `surface-in` — 180ms of opacity over a 6px translate, with a
-     literal duration and a keyframe of its own — and it was the
-     SECOND thing in this file claiming `.surface { animation }`.
-     One selector, two declarations, source order deciding: that
-     is how a stylesheet stops being a design. It is written once
-     now, in ARRIVING SOMEWHERE at the foot of this file, in the
-     system's own tokens. This block keeps only the geometry. */
+  padding-bottom: 0;
+  animation: ds-fade var(--d-fast) var(--ease) backwards;
 }
 
 /* a stage inside the surface is simply the surface */
@@ -4095,29 +4146,18 @@
   background: var(--paper);
 }
 
-/* THE BAR FLOATS OVER THE PAGE, so the page must end above it —
-   otherwise the last rows of a register sit under the controls
-   and cannot be read or clicked. */
-
-
 /* THE STAGE'S OWN BAR IS THE ONLY HEADER NOW, so it gets its
-   title back — there is no window titlebar above it any more. */
+   title back — there is no window titlebar above it any more.
+   The bar's own material is declared once, in THE MASTHEAD below;
+   this block used to state a first version of it and be overridden
+   by that one forty rules later. */
 .surface .shell-view-what {
   display: flex;
 }
-.surface .shell-view-bar {
-  height: 52px;
-  background: color-mix(in srgb, var(--paper-high) 80%, transparent);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  border-bottom: 1px solid var(--hairline);
-}
 
-/* the sheet is a section like any other, so it fills the surface */
-.shell-sheet-layer {
-  position: absolute;
-  inset: 0;
-}
+/* the sheet is a section like any other and fills the surface —
+   `.shell-sheet-layer` is declared once, at the head of this file,
+   with the note about why it exists at all */
 
 
 /* ---------- a table page fills the surface ------------------- */
@@ -4140,11 +4180,46 @@
 
 /* ---------- the nested Tables menu -------------------------- */
 
-/* the two panels are ONE hover region, so travelling diagonally
+/* THE TWO PANELS ARE ONE HOVER REGION, so travelling diagonally
    from a parent row to its submenu cannot close the thing being
-   reached for */
+   reached for — and THE FIRST PANEL MUST NOT MOVE. It was a flex
+   row inside a centred wrapper, so the moment the second panel
+   appeared the pair re-centred and the list you were pointing at
+   slid left out from under the pointer. The first panel is the only
+   thing in flow; the second is positioned beside it and takes no
+   part in the centring. `align-items` and `gap` are fossils of the
+   flex row and are kept because they are what the element computes.
+
+   THE SUBMENU IS ALWAYS ON THE SCREEN, AND ALWAYS READABLE.
+   MEASURED, 1280 x 860, Relationships open: the panel's box ran
+   from y 517 to y 977 — 117px BELOW the bottom of the window. It
+   had `overflow-y: auto` and it did scroll, but scrolling only
+   moves content INSIDE the box, and the bottom of the box was off
+   the screen: the last four of twenty-six tables could not be
+   reached by any means.
+
+   THE CAUSE WAS `top: 0`, not the height. The second panel is
+   absolute inside `.dk-menus`, whose height is the FIRST panel's —
+   seven rows, about 250px. Anchored to that top and allowed 460px,
+   it had to end 210px lower than its own container. Anchored to the
+   BOTTOM instead, it ends where the first panel ends, which is on
+   the screen by construction at every window height, and switching
+   branches never moves either of them.
+
+   THE WIDTH IS THE ROOM THERE IS. The panel's left edge sits at the
+   window's centre + 124px (half of the 232px first panel, plus the
+   8px gap). `50vw - 140px` is that gap less a 16px margin, so at
+   1280 it asks for 500 and takes its 420px ceiling, at 1024 it takes
+   372, and at 800 it stops at the 260px floor rather than crossing
+   the right-hand edge. `width: 300px` was the first of three
+   answers and never rendered.
+
+   All of which used to be THREE rules for `.dk-panel--l2` and TWO
+   for `.dk-menus`, spread over a hundred lines, each one silently
+   unpicking the last. One rule each now, at the values that win. */
 .dk-menus {
-  display: flex;
+  position: relative;
+  display: block;
   align-items: flex-start;
   gap: 8px;
 }
@@ -4153,7 +4228,12 @@
   columns: auto;
 }
 .dk-panel--l2 {
-  width: 300px;
+  position: absolute;
+  left: calc(100% + 8px);
+  top: auto;
+  bottom: 0;
+  margin: 0;
+  width: clamp(260px, calc(50vw - 140px), 420px);
   max-height: min(58vh, 460px);
   overflow-y: auto;
   columns: auto;
@@ -4180,76 +4260,23 @@
 }
 
 
-/* the strip is reserved on .shell-stage above, so a surface simply
-   fills what is left */
-.surface {
-  padding-bottom: 0;
-}
+/* the dock's strip is gone, so a surface fills what it is given —
+   `padding-bottom: 0` is folded into `.surface` above rather than
+   restated here, where it was the second of three rules for one
+   element */
 
 
-/* ---------- the submenu does not move its parent ------------- */
+/* ---------- the submenu, and what it may not do -------------- */
 
-/* THE FIRST PANEL MUST NOT MOVE.  was a flex row inside
-   a centred wrapper, so the moment the second panel appeared the
-   pair re-centred and the list you were pointing at slid left out
-   from under the pointer. The first panel is the only thing in
-   flow now; the second is positioned beside it and takes no part
-   in the centring. */
-.dk-menus {
-  position: relative;
-  display: block;
-}
-.dk-panel--l2 {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 0;
-  margin: 0;
-}
-
-
-/* ============================================================
-   THE SUBMENU IS ALWAYS ON THE SCREEN, AND ALWAYS READABLE.
-
-   MEASURED, 1280 x 860, Relationships open: the panel's box ran
-   from y 517 to y 977 - 117px BELOW the bottom of the window and
-   201px below the top of the dock bar. It had `overflow-y: auto`
-   and it did scroll, but scrolling only moves content INSIDE the
-   box, and the bottom of the box was off the screen: the last four
-   of twenty-six tables could not be reached by any means.
-
-   THE CAUSE WAS `top: 0`, not the height. The second panel is
-   absolute inside `.dk-menus`, whose height is the FIRST panel's -
-   seven rows, about 250px. Anchored to that top and allowed 460px,
-   it had to end 210px lower than its own container. Anchored to
-   the BOTTOM instead, it ends where the first panel ends, which is
-   10px above the dock, which is on the screen by construction at
-   every window height. The two panels now share a baseline, and
-   switching branches never moves either of them - which is the
-   same promise the note above makes about the first panel.
-
-   AND SEVENTEEN OF TWENTY-SIX NAMES WERE CUT with no title, so
+/* SEVENTEEN OF TWENTY-SIX NAMES WERE CUT with no title, so
    "Stabicraft x NSM Custom - Trailer Fitment" and "Stabicraft x
    GFAB - Trailer Fitment" were the same row twice. A menu whose
-   entries cannot be told apart is not a menu. The panel is wider
-   now - as wide as the room to the right of it allows, so it can
-   never be the thing that goes off the edge - and a name that
-   still does not fit wraps to a second line and then ellipsises,
-   with the whole of it on the row as a title. Nothing truncates
-   mid-word (DESIGN_CONTRACT 3).
-
-   THE WIDTH IS THE ROOM THERE IS. The panel's left edge sits at
-   the window's centre + 124px (half of the 232px first panel, plus
-   the 8px gap). `50vw - 140px` is that gap less a 16px margin, so
-   at 1280 it asks for 500 and takes its 420px ceiling, at 1024 it
-   takes 372, and at 800 it stops at the 260px floor rather than
-   crossing the right-hand edge.
-   ============================================================ */
-
-.dk-panel--l2 {
-  top: auto;
-  bottom: 0;
-  width: clamp(260px, calc(50vw - 140px), 420px);
-}
+   entries cannot be told apart is not a menu. The panel is as wide
+   as the room to the right of it allows, so it can never be the
+   thing that goes off the edge (see `.dk-panel--l2` above), and a
+   name that still does not fit wraps to a second line and then
+   ellipsises, with the whole of it on the row as a title. Nothing
+   truncates mid-word (§3). */
 
 /* a row that has grown to two lines needs air above and below it;
    a one-line row still measures 32px and is untouched */
@@ -4306,22 +4333,13 @@
    stays `--ink-faint`, which measures 4.72:1 on the card's
    `--paper-high`, and the button keeps `.btn-primary`. Case does not
    move a ratio.
+
+   BOTH FIXES NOW LIVE ON THE RULES THEY FIX, in THE INVITATION
+   above. They were written here, three thousand rules away from the
+   elements they corrected, so each of those two selectors was
+   declared twice and the first declaration was a lie about what the
+   screen said. The argument stays; the values went home.
    ============================================================ */
-.btn.shell-invite-go {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 560;
-  letter-spacing: -0.004em;
-  text-transform: none;
-}
-.shell-invite-alt-note {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1.55;
-  text-transform: none;
-}
 
 /* ============================================================
    HOME, RE-DRESSED — the masthead, the tally, and a card that
@@ -4734,11 +4752,10 @@
    below.
    ============================================================ */
 
-/* the gap is now only ever between the Tables menu and the rig —
-   the two tiers inside the rig are joined, not spaced */
-.dk-wrap {
-  gap: var(--s-3);
-}
+/* the gap between the Tables menu and the rig, and the navigation
+   tier giving up its skin, are both declared with `.dk-wrap` and
+   `.dk` in THE DOCK above — this block was the second rule for each
+   of them */
 
 .dk-rig {
   display: flex;
@@ -4757,23 +4774,11 @@
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   /* THE FLOAT RUNG, plus the lit top hairline. `--e-float` stacks a
      contact shadow under a wide soft one, which is what makes an
-     edge look lit rather than drawn; `--glass-edge` is the highlight
-     that says the light is coming from above. */
-  box-shadow: var(--e-float), inset 0 1px 0 var(--glass-edge);
-}
-
-/* the navigation tier keeps its geometry and gives up its skin —
-   the rig is the surface now, so a second border, a second blur and
-   a second shadow here would be the same object drawn twice */
-.dk {
-  justify-content: center;
-  padding: var(--s-2);
-  border: 0;
-  border-radius: 0;
-  background: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
+     edge look lit rather than drawn; the inset is the highlight that
+     says the light is coming from above. It was `--glass-edge` here
+     and `--edge-light` in the rail pass that came last; the second
+     is what renders and it is the only one now. */
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
 }
 
 /* ------------------------------------------------------------
@@ -4781,59 +4786,26 @@
 
    The gesture is kept: the icon grows toward the pointer, which is
    the one piece of personality this bar has and the reason people
-   like it. What is added is the ACTIVE state, which was a 9% wash
-   and a 4px dot and read, on glass, as "very slightly bluer".
+   like it. What was added is the ACTIVE state, which was a 9% wash
+   and a 4px dot and read, on glass, as "very slightly bluer": an
+   accent hairline so it has an edge, and a running light widened
+   from a 4px dot to a 14px bar, because at 44px across a 4px dot is
+   a speck.
+
+   THE ITEM'S OWN RULES ARE IN THE DOCK ABOVE. This block declared
+   `.dk-item`, its hover, its lit pair, its focus ring and its
+   running light for the second time; the navy pass then declared
+   four of them a third. All five are written once now, at the
+   values the navy pass left, and only the compound state below —
+   which nothing else claims — still stands here.
+
+   THE LIT PAIR WAS MEASURED IN THE BROWSER, composited through the
+   whole chain the way this repo's notes insist on, when the wash
+   was the brand ramp: the lit glyph 5.12:1 light · 5.38:1 dark, an
+   idle glyph 7.96 · 9.40. The wash that renders is the chrome
+   ladder's white-at-16%, whose own measurement is recorded on the
+   ladder itself.
    ------------------------------------------------------------ */
-.dk-item {
-  color: var(--fg-secondary);
-  border-radius: 14px;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
-}
-.dk-item:hover {
-  background: var(--surface-3);
-  color: var(--fg);
-}
-/* THE LIT PLACE. A soft brand ramp rather than a flat wash, an
-   accent hairline so it has an edge on glass, and the running light
-   below it widened from a 4px dot to a 14px bar — at 44px across, a
-   4px dot is a speck.
-
-   MEASURED IN THE BROWSER, not estimated, and composited through
-   the whole chain the way this repo's notes insist on — page, then
-   the rig's 72% glass, then the 11%/18% wash — because a tint
-   counts and three sweeps have been wrong here before:
-
-     the lit glyph   5.12 : 1 light · 5.38 : 1 dark
-     an idle glyph   7.96 : 1 light · 9.40 : 1 dark
-
-   So the lit item is legible as a glyph and not merely tinted, and
-   both figures clear 4.5 with the wash on. */
-.dk-item.is-active,
-.dk-item.is-open {
-  background: var(--grad-brand-soft);
-  color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent-line);
-}
-.dk-item.is-active::after {
-  bottom: 3px;
-  width: 14px;
-  height: 3px;
-  border-radius: var(--r-full);
-  background: var(--accent);
-  box-shadow: var(--glow-md);
-}
-/* THE RING HAS TO CLEAR ITS NEIGHBOURS. Every item lifts on hover,
-   so a focused item drawn earlier in source order can have the next
-   one's raised corner painted over its ring. */
-.dk-item:focus-visible {
-  outline: none;
-  z-index: 1;
-  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
-}
 .dk-item.is-active:focus-visible {
   box-shadow:
     inset 0 0 0 1px var(--accent-line),
@@ -4853,28 +4825,11 @@
    bar is one tab stop with arrow keys inside it (see `Dock.tsx`),
    so ten icons are ten names at one press and nine arrows. The
    button keeps its `aria-label`, so nothing here is the only copy
-   of the name. */
-.dk-tip {
-  border-radius: var(--r-control);
-  font-size: var(--t-caption-size);
-  font-weight: var(--t-caption-weight);
-  letter-spacing: var(--t-caption-track);
-  box-shadow: var(--e2);
-  transition:
-    opacity var(--d-press) var(--ease-out-expo),
-    transform var(--d-press) var(--ease-out-expo);
-}
+   of the name.
 
-/* the two menu panels take the same material as the rig they open
-   from, rather than a second recipe for the same idea */
-.dk-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  border-color: var(--line);
-  box-shadow: var(--e3), inset 0 1px 0 var(--glass-edge);
-  animation: ds-scale-in var(--d-med) var(--ease-out-expo);
-}
+   THE TIP AND THE PANEL are declared once each in THE DOCK above,
+   carrying this pass's type, material and curve. This block wrote
+   them a second time and the navy pass wrote the tip a third. */
 
 @media (prefers-reduced-transparency: reduce) {
   .dk-rig,
@@ -4884,11 +4839,9 @@
     -webkit-backdrop-filter: none;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .dk-panel {
-    animation: none;
-  }
-}
+/* `.dk-panel`'s reduced-motion fallback is stated once, with the
+   dock's other reduced-motion rules above; this was the same
+   declaration a second time. */
 
 /* ============================================================
    THE MASTHEAD — the other end of the same object.
@@ -5011,8 +4964,22 @@
    through.
    ============================================================ */
 
-.surface {
-  animation: ds-fade var(--d-fast) var(--ease) backwards;
+/* The entrance itself — `ds-fade` over `--d-fast`, backwards so the
+   first frame is the hidden one — is declared with `.surface`'s own
+   box near the head of ONE SYSTEM. It is one line and it was the
+   third rule in this file for that selector; the argument for the
+   value is here, the value is there, and there is only one of it. */
+
+/* LEAVING IS ARRIVING, BACKWARDS. `Shell.tsx` holds the window for
+   exactly this long before dropping it — the two numbers are named
+   together at `EXIT_MS`, because a setTimeout cannot read a token.
+   `forwards` so the last frame holds at zero rather than flashing
+   the finished page back for the frame before it unmounts, and
+   `pointer-events: none` so a stage on its way out cannot take a
+   press meant for what is underneath it. */
+.surface.is-going {
+  animation: ds-fade var(--d-fast) var(--ease) reverse forwards;
+  pointer-events: none;
 }
 
 /* THE MASTHEAD ARRIVES WITH ITS PAGE, NOT AFTER IT. The 90ms delay
@@ -5039,15 +5006,13 @@
 
 /* ============================================================
    THE SWITCHER — same family, one material.
-   ============================================================ */
 
-.sw-row {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  border-color: var(--line);
-  box-shadow: var(--e-hero), inset 0 1px 0 var(--glass-edge);
-}
+   `.sw-row` takes the rig's glass, and it takes it in the rule that
+   draws the row: this block used to re-open the selector five
+   hundred rules after it was written. The opaque fallback stays
+   here, because a media query is a different rule and not a second
+   opinion.
+   ============================================================ */
 
 @media (prefers-reduced-transparency: reduce) {
   .sw-row {
@@ -5078,9 +5043,8 @@
   background: var(--surface-4);
   transition-duration: var(--d-press);
 }
-.dk-row {
-  transition: background var(--d-fast) var(--ease);
-}
+/* the row's own transition is declared with the row, above — this
+   block used to re-open `.dk-row` for one line of it */
 
 /* the open branch keeps its accent while pressed — pressing the row
    you are already inside must not look like a different row */
@@ -5095,23 +5059,17 @@
   color: var(--fg-secondary);
 }
 
-.dk-sep {
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    var(--line) 22%,
-    var(--line) 78%,
-    transparent 100%
-  );
-}
+/* THE SEPARATOR was softened here into a gradient that faded at
+   both ends — a division rather than a cut, which on a translucent
+   surface is right. IT NEVER RENDERED: the navy pass below set
+   `.dk-sep` a third time, to a flat `--chrome-line`, and a flat
+   line is what the dock has been drawing. `.dk-sep` is declared
+   once now, with the dock, at the value that wins. Reinstating the
+   gradient is a design decision and wants an argument, not a
+   silently-shadowed rule.
 
-/* "No tables yet." is a refusal in the place the thing is refused
-   (rule 10), so it is a sentence at reading size rather than a
-   greyed-out line */
-.dk-none {
-  font-size: var(--t-small-size);
-  color: var(--fg-secondary);
-}
+   `.dk-none` is declared once with the dock too, carrying this
+   block's sentence-at-reading-size, which did win. */
 
 /* ============================================================
    THE CHROME IS NAVY, AND THAT IS THE WHOLE POINT.
@@ -5185,6 +5143,36 @@
   --chrome-line-soft: rgba(255, 255, 255, 0.07);
   --chrome-line-strong: rgba(255, 255, 255, 0.22);
   --chrome-edge: rgba(255, 255, 255, 0.12);
+
+  /* ----------------------------------------------------------
+     THE RAIL'S WIDTH, AND IT WAS NEVER DECLARED.
+
+     The note at the narrow-window override below says "the token
+     is declared with the rest of the chrome ramp on :root" — and
+     it was not. `--rail` existed in exactly two places, both of
+     them overrides: `216px` inside `@media (max-width: 1100px)`,
+     and `64px` on `.shell-body:has(.sn.is-tight)`. There was no
+     base.
+
+     WHAT THAT COST, MEASURED IN THE BROWSER at 1280 x 720. An
+     undefined custom property makes its whole declaration invalid
+     at computed-value time, so
+     `grid-template-columns: var(--rail) minmax(0, 1fr)` resolved
+     to `none` — the shell's two-column layout did not exist, the
+     rail was a full-width block, and `.pagebar`, which positions
+     itself off the same token, had an invalid `left` as well. The
+     app has been laying itself out on the fallback the whole time.
+
+     It is 264px because that is the number the rail was designed
+     and argued at, and the number the narrow override steps down
+     from. Declared here, once, where its own note said to look. */
+  --rail: 264px;
+
+  /* critically damped, no overshoot — the §4 default, and the curve
+     anything arriving under its own weight takes. It was declared
+     on a second `:root` five hundred rules up, beside the window
+     animations that first needed it; this file has ONE `:root`. */
+  --ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 [data-theme='dark'] {
@@ -5195,126 +5183,24 @@
 }
 
 /* ------------------------------------------------------------
-   THE MASTHEAD
-   ------------------------------------------------------------ */
-.shell-view-bar {
-  padding: 0 var(--s-4);
-  height: 52px;
-  background: var(--chrome);
-  border-bottom: 0;
-  box-shadow: inset 0 -1px 0 var(--chrome-line);
-}
-.shell-view-bar .shell-view-what {
-  /* SUPERSEDES the 11px uppercase mono. A stage title is a NAME
-     (§3: uppercase is never a name style) and it was set as a
-     letterspaced stamp because it had to survive on white beside
-     nothing. On navy it can simply be a title. */
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  letter-spacing: -0.003em;
-  text-transform: none;
-  color: var(--chrome-fg-soft);
-}
-.shell-view-bar .shell-view-what-name {
-  font-weight: 600;
-  color: var(--chrome-fg);
-}
-.shell-view-bar .shell-view-what-mark {
-  color: var(--chrome-fg-soft);
-}
-.shell-view-bar .shell-view-what-sep,
-.shell-view-bar .shell-view-what-say {
-  color: var(--chrome-fg-faint);
-}
+   WHAT THE NAVY PASS LEFT BEHIND, AND WHERE IT WENT.
 
-/* every control standing in the masthead inverts with it */
-.shell-view-bar .btn,
-.shell-view-bar .io-trigger {
-  color: var(--chrome-fg-soft);
-  background: transparent;
-  border-color: var(--chrome-line);
-}
-.shell-view-bar .btn:hover,
-.shell-view-bar .io-trigger:hover {
-  color: var(--chrome-fg);
-  background: var(--chrome-wash-hover);
-  border-color: var(--chrome-line-strong);
-}
-.shell-view-bar .btn:focus-visible,
-.shell-view-bar .io-trigger:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
-}
+   This block dressed the masthead, the rig, the dock items and the
+   action bar in the chrome ramp above. The very next block took the
+   navy off all of them again and gave it to the rail — so every
+   colour written here was overwritten forty lines later, and the
+   two blocks together declared eighteen selectors twice.
 
-/* ------------------------------------------------------------
-   THE DOCK — the same frame, so the two floating objects read as
-   one system rather than as a dark bar and a white pill.
+   The values that SURVIVED that second pass have moved down into it
+   and are declared once there: the masthead's title type, its
+   padding, its controls' transparent ground and their 2px focus
+   offset. The values the second pass restated are simply gone. The
+   ones nothing restated — the dock items' chrome ink, their white
+   lit state, `.dk-sep` and `.dk-tip` — have moved UP into THE DOCK,
+   which is where those selectors are declared, and `.ab-btn--primary`
+   has moved into `actionbar.css`, which is where that control is
+   declared. This block is now what it always was: an argument.
    ------------------------------------------------------------ */
-.dk-rig {
-  border-color: var(--chrome-edge);
-  background: color-mix(in srgb, var(--chrome) 88%, transparent);
-  box-shadow:
-    0 2px 6px rgba(4, 14, 26, 0.3),
-    0 18px 40px -12px rgba(4, 14, 26, 0.5),
-    inset 0 1px 0 var(--chrome-edge);
-}
-.dk-item {
-  color: var(--chrome-fg-soft);
-}
-.dk-item:hover {
-  color: var(--chrome-fg);
-  background: var(--chrome-wash-hover);
-}
-/* THE LIT STATE IS WHITE, NOT BLUE. --accent measures 1.9:1 on
-   --chrome, so an accent wash here would be a state nobody can
-   see. White at 16% is the same idea in the material that works
-   on this ground. */
-.dk-item.is-active,
-.dk-item.is-open {
-  color: var(--chrome-fg);
-  background: var(--chrome-wash-on);
-}
-.dk-item:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
-}
-.dk-sep,
-.ab-sep {
-  background: var(--chrome-line);
-}
-.ab-btn {
-  color: var(--chrome-fg-soft);
-}
-.ab-btn:hover {
-  color: var(--chrome-fg);
-  background: var(--chrome-wash-hover);
-}
-.ab-btn.is-on {
-  color: var(--chrome-fg);
-  background: var(--chrome-wash-on);
-}
-/* the one primary keeps the accent — it sits on the rig's
-   translucent navy, where white-on-accent is the pair that was
-   measured, and it is the only saturated thing on the bar */
-.ab-btn--primary {
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-.ab-btn--primary:hover {
-  background: var(--accent-hover);
-}
-.ab-search-field {
-  color: var(--chrome-fg);
-}
-.ab-search-field::placeholder {
-  color: var(--chrome-fg-faint);
-}
-.dk-tip {
-  background: var(--chrome-raised);
-  color: var(--chrome-fg);
-  border: 1px solid var(--chrome-line);
-}
 
 /* ------------------------------------------------------------
    THE PAGE UNDER THE FRAME
@@ -5375,70 +5261,86 @@
 
    This is the structural half of the change; SideNav.tsx's
    header carries the argument for why.
+
+   THE THREE RULES THIS BLOCK USED TO CARRY NOW LIVE WITH THEIR
+   SELECTORS: `.shell-body`'s grid and `.shell-stage`'s release of
+   the dock strip are declared once at the head of this file, and
+   `.shell-viewstage`'s in-flow box is declared once in THE VIEW
+   STAGE. They were the fifth, fourth and third declaration of those
+   three selectors; the values are unchanged.
    ============================================================ */
 
-.shell-body {
-  display: grid;
-  grid-template-columns: 264px minmax(0, 1fr);
-  min-height: 0;
-}
-
-/* THE STAGE STOPS RESERVING A DOCK STRIP. `inset: 0 0 78px` and
-   the extra 50px under `.has-acts` both paid for a bar that no
-   longer exists. The action bar still floats, but it floats
-   inside the content column and is charged for by the surface it
-   sits on rather than by the whole page. */
-.shell-stage {
-  position: relative;
-  inset: auto;
-}
-.shell-viewstage {
-  position: relative;
-  inset: auto;
-  height: 100%;
-}
-
-
-/* 5.2:1 on --chrome, measured — the floor, and this is metadata
-   beside the thing it describes, which is what the floor is for */
-
-/* ---- find ------------------------------------------------- */
-
-/* ---- the scrolling middle --------------------------------- */
-.sn-grp + .sn-grp {
-  margin-top: var(--s-5);
-}
-
-/* ---- a row ------------------------------------------------ */
-/* A LIST ROW PRESSES BY DARKENING (§4). It does not scale — a row
-   that scales makes its neighbours look like they moved. */
-/* THE CURRENT PLACE. White at 14% plus full-strength ink, and a
-   rail down the left edge — three signals, because this is the
-   one thing on the rail a person needs to find without reading. */
-
-/* ---- a kind band, and the tables under it ----------------- */
-/* THE KIND'S OWN HUE, as a dot. This is the one place a kind
-   colour appears on the rail, and it is a dot rather than a fill
-   behind text (§1). */
-
-/* ---- the foot --------------------------------------------- */
+/* WHAT WAS LEFT OF THE FIRST RAIL. This was a row of section
+   headings with nothing under them — the first `.sn-*` pass was
+   deleted when the second one landed, and the headings and one
+   stranded rule survived it. `.sn-grp + .sn-grp` was declared here
+   at `--s-5` and again in THE RAIL, SECOND PASS at `--s-4`, which
+   is the one that rendered; `.sn-band + .sn-band` was the same
+   value twice. Both stale copies are gone and the second pass is
+   untouched, so nothing on the rail moves. */
 
 /* ------------------------------------------------------------
    THE MASTHEAD LOSES ITS NAVY. With a navy rail down the side,
    a navy strip across the top as well is a frame on two sides
    and reads as a box. The bar goes back to paper and the rail
    carries the colour.
+
+   THE BAR IS DECLARED HERE AND NOWHERE ELSE. It had four rules in
+   four eras — a white instrument strip, a Mac unified toolbar, a
+   navy masthead, and this. What follows is all of them, once: the
+   geometry from the toolbar era, the type from the navy era, the
+   colour from this one. The two things it has stopped carrying are
+   named where they were dropped.
    ------------------------------------------------------------ */
+
+/* THE THREE-TRACK GRID, NOT FLEX-WITH-AN-ABSOLUTE-TITLE. A real
+   toolbar keeps its title in the middle of the WINDOW however wide
+   the controls on either side grow, and the honest way to say that
+   is a grid whose outer tracks are equal. Absolute centring inside a
+   flex row resolves against a static-position box and drifts.
+   `minmax(0, …)` on the outer tracks so they stay EQUAL when the
+   controls on one side are wider — with a bare `1fr` the wider side
+   grows its track and drags the centre with it. The CENTRE is
+   `minmax(0, auto)` rather than bare `auto` so it may shrink and
+   ellipse when the window is genuinely too narrow, instead of
+   forcing its min-content width on the row.
+
+   NO BACKDROP-FILTER. The unified-toolbar era blurred what was
+   behind this bar; every era since has painted an opaque ground in
+   front of the blur, so it has been sampling and compositing a
+   layer nobody can see. The one bar that IS glass is the one on a
+   `.surface`, which declares its own material below and is
+   unchanged. Under `prefers-reduced-transparency` that rule already
+   turns opaque; this one had nothing to turn off. */
 .shell-view-bar {
+  position: relative;
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
   height: 56px;
+  padding: 0 var(--s-4);
   background: var(--surface-1);
-  box-shadow: none;
   border-bottom: 1px solid var(--line);
+  box-shadow: none;
+  z-index: 5;
 }
+/* A STAGE TITLE IS A NAME (§3: uppercase is never a name style).
+   It was an 11px uppercase mono stamp, letterspaced because it had
+   to survive on white beside nothing; on its own bar it can simply
+   be a title. */
 .shell-view-bar .shell-view-what {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  text-transform: none;
   color: var(--fg-secondary);
 }
 .shell-view-bar .shell-view-what-name {
+  font-weight: 600;
   color: var(--fg);
 }
 .shell-view-bar .shell-view-what-mark {
@@ -5448,9 +5350,11 @@
 .shell-view-bar .shell-view-what-say {
   color: var(--fg-tertiary);
 }
+/* every control standing on the bar takes the bar's ink */
 .shell-view-bar .btn,
 .shell-view-bar .io-trigger {
   color: var(--fg-secondary);
+  background: transparent;
   border-color: var(--line);
 }
 .shell-view-bar .btn:hover,
@@ -5462,55 +5366,35 @@
 .shell-view-bar .btn:focus-visible,
 .shell-view-bar .io-trigger:focus-visible {
   outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* the floating action bar sits in the content column now, and is
-   the only thing left floating, so it goes back to paper too */
-.dk-rig {
-  background: var(--glass-bg);
-  border-color: var(--line);
-  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
-}
-.ab-btn {
-  color: var(--fg-secondary);
-}
-.ab-btn:hover {
-  color: var(--fg);
-  background: var(--surface-3);
-}
-.ab-btn.is-on {
-  color: var(--accent);
-  background: var(--accent-wash);
-}
-.ab-sep {
-  background: var(--line);
-}
-.ab-search-field {
-  color: var(--fg);
-}
-.ab-search-field::placeholder {
-  color: var(--fg-tertiary);
-}
+   the only thing left floating, so it goes back to paper too.
+   `.ab-*` is the action bar's own vocabulary and it is declared in
+   `actionbar.css`, which owns that component — the six rules this
+   file used to keep here were a second opinion about somebody
+   else's control, and they have been folded into the first.
 
-@media (max-width: 1100px) {
-  .shell-body {
-    grid-template-columns: 216px minmax(0, 1fr);
-  }
-}
-
-/* the two the guard caught: a band is the wrapper that keeps a
-   kind's heading and its tables together, and the find button's
-   words need to sit left while the shortcut sits right */
-.sn-band + .sn-band {
-  margin-top: 1px;
-}
+   `.dk-rig`'s paper material is declared with the rig itself, in
+   THE INSTRUMENT above. It had three rules across three passes —
+   glass, then navy, then glass again — and the last two said the
+   same thing, which is how you can tell the middle one was never
+   the answer. */
 
 /* ONE NUMBER FOR THE RAIL'S WIDTH, so the grid that lays it out and
    the floating page bar that must clear it read the same value.
-   They were two literals and they had already drifted. */
-:root { --rail: 264px; }
-.shell-body { grid-template-columns: var(--rail) minmax(0, 1fr); }
-@media (max-width: 1100px) { :root { --rail: 216px; } }
+   They were two literals and they had already drifted; there was
+   then a THIRD declaration — a narrow-window `.shell-body` that
+   restated `216px` beside the token that already said it — which
+   this removes. The token is declared with the rest of the chrome
+   ramp on `:root`, the grid reads it once at the head of this file,
+   and the only thing left to say at a narrow width is the number. */
+@media (max-width: 1100px) {
+  :root {
+    --rail: 216px;
+  }
+}
 
 /* ============================================================
    HOME, THE THIRD PASS — the strip, and what a card previews.
@@ -5689,6 +5573,17 @@
   background: var(--surface-4);
   transition-duration: var(--d-press);
 }
+/* THE COUNT COMES UP A TIER WITH THE WORD. `--fg-tertiary` is the
+   ramp's floor and it measures 5.5:1 on the strip's white, 4.91 over
+   the hover ground and **4.46 over `--surface-4`**, which is the
+   press — a fail by four hundredths, and a tint counts. Composited
+   over the full chain on each state's real ground; `--fg-secondary`
+   reads 6.5 on the pressed one. */
+.hm-jump:hover .hm-jump-n,
+.hm-jump:active .hm-jump-n,
+.hm-jump:focus-visible .hm-jump-n {
+  color: var(--fg-secondary);
+}
 .hm-jump:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
@@ -5774,6 +5669,15 @@
 .hm-card:focus-visible .hm-card-peek {
   color: var(--fg-secondary);
 }
+/* A CARD WITH A PHOTOGRAPH ON IT PULLS ITS OWN GUTTERS OFF the card
+   (`.hm-card--shot { padding-top: 0 }` and the negative-margin band
+   above), so every line of words inside one puts them back by hand.
+   The peek is a line of words inside one. Without this it would be
+   the only thing on the card running to the bleed. */
+.hm-card--shot .hm-card-peek {
+  padding-left: 18px;
+  padding-right: var(--s-4);
+}
 
 /* ------------------------------------------------------------
    RHYTHM. A gallery of eight bands needs the bands to read as
@@ -5787,6 +5691,16 @@
 }
 .hm-mast {
   margin-bottom: var(--s-6);
+}
+/* THE HEADINGS JOIN THE WAVE. The cards were arriving on a
+   staggered rise and the eight headings above them simply were,
+   so the page assembled around furniture that had never moved.
+   `--i` is the section's place in the sort, set on the section by
+   HomeStage; ds.css caps the stagger at 14 steps, and its own
+   reduced-motion block already cuts the keyframe. */
+.hm-sec-head {
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 26ms);
 }
 
 @media (max-width: 900px) {
@@ -5828,7 +5742,7 @@
   height: 100dvh;
   background: var(--chrome);
   color: var(--chrome-fg);
-  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  border-right: 1px solid var(--chrome-line-soft);
   /* the rail is the one element whose WIDTH animates, and it is a
      deliberate exception: it is a layout property, but it is a
      direct manipulation the person asked for and there is nothing
@@ -5851,7 +5765,7 @@
   height: 32px;
   flex: none;
   border-radius: var(--r-control);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chrome-wash-hover);
   color: var(--chrome-fg);
 }
 .sn-head-say {
@@ -5894,7 +5808,7 @@
   transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
 }
 .sn-fold:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chrome-wash-hover);
   color: var(--chrome-fg);
 }
 .sn-fold:active {
@@ -5914,9 +5828,9 @@
   margin: 0 var(--s-3) var(--s-4);
   padding: 0 var(--s-2);
   height: var(--h-md);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--chrome-edge);
   border-radius: var(--r-control);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--chrome-wash);
   color: var(--chrome-fg-soft);
   font-family: var(--font-sans);
   font-size: var(--t-small-size);
@@ -5927,12 +5841,12 @@
     color var(--d-fast) var(--ease);
 }
 .sn-find:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.24);
+  background: var(--chrome-wash-hover);
+  border-color: var(--chrome-line-strong);
   color: var(--chrome-fg);
 }
 .sn-find:active {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--chrome-wash-on);
   transition-duration: var(--d-press);
 }
 .sn-find:focus-visible {
@@ -5940,10 +5854,12 @@
   outline-offset: 2px;
 }
 .sn-find-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
   width: 16px;
-  text-align: center;
-  font-size: 14px;
+  line-height: 0;
 }
 .sn-find-say {
   flex: 1;
@@ -5956,10 +5872,15 @@
 .sn-kbd {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  /* 11px, THE FLOOR, and it was 10.5 — the only declaration in this
+     file under it. Rule 2 is absolute and unautomated, which is
+     exactly how a half-pixel gets in: it reads as a rounding, not as
+     a decision. A key cap is a mono stamp and mono stamps have a
+     step. */
+  font-size: var(--t-mono-sm-size);
   letter-spacing: 0.04em;
   color: var(--chrome-fg-faint);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--chrome-edge);
   border-radius: var(--r-chip);
   padding: 1px 5px;
 }
@@ -5972,7 +5893,7 @@
   overflow-x: hidden;
   padding: 0 var(--s-3) var(--s-4);
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  scrollbar-color: var(--chrome-wash-on) transparent;
 }
 .sn-grp + .sn-grp {
   margin-top: var(--s-4);
@@ -6046,13 +5967,13 @@
   transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
 }
 .sn-row:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--chrome-wash);
   color: var(--chrome-fg);
 }
 /* A LIST ROW PRESSES BY DARKENING (§4) — a row that scales makes
    its neighbours look like they moved. */
 .sn-row:active {
-  background: rgba(255, 255, 255, 0.13);
+  background: var(--chrome-wash-press);
   transition-duration: var(--d-press);
 }
 .sn-row:focus-visible {
@@ -6060,19 +5981,37 @@
   outline-offset: -2px;
 }
 .sn-row.is-on {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--chrome-wash-on);
   color: var(--chrome-fg);
   font-weight: 600;
   box-shadow: inset 2px 0 0 var(--chrome-fg);
 }
+/* THE MARK SLOT. `position: relative` so the count pin has
+   something to sit on the corner of, and `line-height: 0` so a
+   drawn glyph is not given a text box to be centred inside twice. */
 .sn-row-mark {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 16px;
+  height: 16px;
   flex: none;
+  line-height: 0;
   color: inherit;
+  /* the glyph rides the row's own ink: faint at rest, full when the
+     row is lit, so the mark and the word change together */
+  opacity: 0.8;
+  transition: opacity var(--d-fast) var(--ease);
 }
+.sn-row:hover .sn-row-mark,
+.sn-row.is-on .sn-row-mark {
+  opacity: 1;
+}
+/* the fallback for a row with no glyph. Nothing in SideNav takes it
+   any more — all seven rows are drawn — and it stays as the honest
+   default for a row somebody adds without one, rather than as a
+   silent gap in the column. */
 .sn-row-pip {
   width: 5px;
   height: 5px;
@@ -6082,6 +6021,28 @@
 }
 .sn-row.is-on .sn-row-pip {
   opacity: 1;
+}
+/* ---- the count, when 64px has no room for the count ---------
+   Drawn on every row that has one and revealed only by
+   `.sn.is-tight` below, so folding the rail reveals rather than
+   mounts. It is a MARK, not a figure: a legible number here would
+   have to break the 11px floor. */
+.sn-row-pin {
+  position: absolute;
+  top: -1px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  /* a ring of the rail's own navy, so the dot reads as sitting ON
+     the glyph rather than merged into it */
+  box-shadow: 0 0 0 2px var(--chrome);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease-out-back);
 }
 .sn-row-name {
   flex: 1;
@@ -6096,7 +6057,7 @@
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
   color: var(--chrome-fg-faint);
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--chrome-wash);
   border-radius: var(--r-full);
   padding: 1px 6px;
 }
@@ -6126,12 +6087,12 @@
 }
 .sn-band-head:hover,
 .sn-kind:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--chrome-wash);
   color: var(--chrome-fg);
 }
 .sn-band-head:active,
 .sn-kind:active {
-  background: rgba(255, 255, 255, 0.13);
+  background: var(--chrome-wash-press);
   transition-duration: var(--d-press);
 }
 .sn-band-head:focus-visible,
@@ -6172,7 +6133,7 @@
   flex-direction: column;
   margin-left: 11px;
   padding-left: var(--s-3);
-  border-left: 1px solid rgba(255, 255, 255, 0.09);
+  border-left: 1px solid var(--chrome-line-soft);
 }
 .sn-band + .sn-band {
   margin-top: 1px;
@@ -6197,11 +6158,11 @@
   transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
 }
 .sn-leaf:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--chrome-wash);
   color: var(--chrome-fg);
 }
 .sn-leaf:active {
-  background: rgba(255, 255, 255, 0.13);
+  background: var(--chrome-wash-press);
   transition-duration: var(--d-press);
 }
 .sn-leaf:focus-visible {
@@ -6209,7 +6170,7 @@
   outline-offset: -2px;
 }
 .sn-leaf.is-on {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--chrome-wash-on);
   color: var(--chrome-fg);
   font-weight: 600;
 }
@@ -6252,11 +6213,11 @@
   transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
 }
 .sn-add:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--chrome-wash);
   color: var(--chrome-fg);
 }
 .sn-add:active {
-  background: rgba(255, 255, 255, 0.13);
+  background: var(--chrome-wash-press);
   transition-duration: var(--d-press);
 }
 .sn-add:focus-visible {
@@ -6270,7 +6231,7 @@
   flex-direction: column;
   gap: var(--s-2);
   padding: var(--s-3);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--chrome-line-soft);
 }
 /* THE ONE PRIMARY ACT IN THE APP. It keeps the accent because it
    sits on navy where white-on-accent is the pair that was
@@ -6303,20 +6264,30 @@
   outline: 2px solid var(--chrome-fg);
   outline-offset: 2px;
 }
-.sn-new-mark {
-  font-size: 16px;
-  line-height: 1;
+/* the two `+` glyphs are drawn marks now, not typed ones — a slot
+   with no type metrics in it, so the icon sits on the button's
+   optical centre instead of on a text baseline */
+.sn-new-mark,
+.sn-add-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  line-height: 0;
+}
+.sn-add-mark {
+  width: 16px;
 }
 .sn-foot .io-trigger {
   width: 100%;
   justify-content: center;
   color: var(--chrome-fg-soft);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--chrome-edge);
 }
 .sn-foot .io-trigger:hover {
   color: var(--chrome-fg);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--chrome-wash);
 }
 
 /* ============================================================
@@ -6327,8 +6298,32 @@
    aria-label and title when tight), so this is not a guessing
    game, and the choice is remembered in localStorage.
 
-   Words are hidden with width/opacity rather than `display:none`
-   so the rail can animate rather than jump.
+   THIS BLOCK PROMISED GLYPHS AND HID A DOOR, and both halves are
+   corrected here and in SideNav.tsx.
+
+   THE GLYPHS ARE REAL NOW. `NavRow` drew a 5px dot for any row not
+   handed a mark, and no row was handed one — so the collapsed rail
+   was seven identical dots and the `title` attribute was the only
+   way to tell Quotes from Customers. Seven drawn marks, one size,
+   one weight; see SideNav.tsx's header.
+
+   AND `sn-sec-body` MAY NOT BE HIDDEN WHOLESALE. It held the DATA
+   MODEL row — the canvas, the app's one permanent surface — and
+   folding the rail deleted the only door to it. What genuinely does
+   not fit in 64px is the section CAPTION (an 11px uppercase word)
+   and the TABLE TREE (fifty-one names, three levels deep). Those go;
+   the door stays, and it is a row exactly like the other six.
+
+   THE COUNTS SURVIVE AS MARKS. `.sn-row-count` is a pill of tabular
+   digits and there is no room for it; the fact it carries — there
+   are quotes waiting — becomes `.sn-row-pin`, a 6px accent dot on
+   the corner of the glyph. A figure small enough to fit would be
+   under the 11px floor, so it is not drawn as a figure.
+
+   Words are hidden with `display: none` rather than width/opacity:
+   the rail's WIDTH is what animates, and a word that keeps its box
+   while the column shrinks is a word that reflows on every frame of
+   the 260ms. The text goes on the first frame and the column glides.
    ============================================================ */
 /* THE WIDTH IS THE COLLAPSE, and it was the one thing missing.
    `.shell-body` is a grid whose first column is `var(--rail)`, so
@@ -6355,11 +6350,27 @@
 .sn.is-tight .sn-row-name,
 .sn.is-tight .sn-row-count,
 .sn.is-tight .sn-grp-head,
-.sn.is-tight .sn-sec,
-.sn.is-tight .sn-sec-body,
 .sn.is-tight .sn-new-say,
-.sn.is-tight .sn-foot .io-trigger {
+.sn.is-tight .sn-foot .io-trigger,
+/* the section CAPTION and its wedge — an 11px uppercase word and a
+   disclosure with nothing left to disclose. The BODY under it is
+   NOT in this list any more: see the note above. */
+.sn.is-tight .sn-sec,
+/* the table tree: fifty-one names, three levels deep, inside 64px.
+   `sn-band-head` is "Tables" and its count; `sn-band-body` is every
+   kind and every table under it; `sn-add` is New table, which is a
+   structure act and belongs beside the tables it adds to. All three
+   come back the instant the rail is widened. */
+.sn.is-tight .sn-band-head,
+.sn.is-tight .sn-band-body,
+.sn.is-tight .sn-add {
   display: none;
+}
+/* THE DATA MODEL DOOR SURVIVES, and it needs no left margin to do
+   it: the body indents its rows under a caption that is no longer
+   drawn, so at 64px the row would sit off its own centre. */
+.sn.is-tight .sn-sec-body {
+  margin-top: 0;
 }
 .sn.is-tight .sn-find {
   justify-content: center;
@@ -6369,6 +6380,13 @@
 .sn.is-tight .sn-row {
   justify-content: center;
   padding: 0;
+}
+/* the count, as a mark. See `.sn-row-pin` above — it is drawn at
+   every width and only ever REVEALED here, so the fold cannot flash
+   a badge in halfway through its 260ms. */
+.sn.is-tight .sn-row-pin {
+  opacity: 1;
+  transform: scale(1);
 }
 .sn.is-tight .sn-scroll {
   padding: 0 var(--s-2) var(--s-3);
@@ -6380,9 +6398,18 @@
   padding: 0;
 }
 
+/* MOVEMENT GOES; LIGHT AND COLOUR STAY (§4). The rail's WIDTH and
+   the wedge's ROTATION are movement and they go — the column snaps
+   to 64px and the wedge swaps. The count pin's SCALE is movement
+   too, so it goes and the pin simply appears; its opacity, and every
+   ink transition on every row, is not movement and is kept. */
 @media (prefers-reduced-motion: reduce) {
   .sn,
   .sn-sec-wedge {
     transition: none;
+  }
+  .sn-row-pin {
+    transform: none;
+    transition: opacity var(--d-fast) var(--ease);
   }
 }

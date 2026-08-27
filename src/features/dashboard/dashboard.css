@@ -1,0 +1,1100 @@
+/* ============================================================
+   THE DASHBOARD (dsh-) — the front door.
+
+   WRITTEN IN THE SYSTEM'S OWN TOKEN NAMES — --s-*, --fg*,
+   --surface-*, --line*, --r-*, --e* — and never in the app's
+   original bridged names, because this file also reaches for the
+   expressive layer (--grad-surface, --edge-light, --e-card,
+   --e-float, --glow-sm) which has no bridged aliases. Either
+   vocabulary is legal in this repo; mixing them inside one rule
+   is not. There is not a literal colour in this file and there
+   never may be.
+
+   ------------------------------------------------------------
+   THE CONTRAST DECISION THIS FILE IS BUILT AROUND, because it is
+   the one thing the guards cannot check and the one thing a
+   dashboard of tinted rows gets wrong.
+
+   --fg-tertiary is the FLOOR, and it was measured against the
+   ground it sits on: 5.5:1 on white and 4.7:1 on --surface-1 in
+   dark. It has almost no headroom in dark — so the moment a row
+   under it lightens, it fails. Measured here, in dark:
+
+       --fg-tertiary on --surface-3   4.23 : 1   FAILS
+       --fg-secondary on --surface-3  6.81 : 1   clears
+
+   And in light, --fg-tertiary on --surface-4 measures 4.45:1,
+   which also fails. So the rule this file keeps is one sentence:
+
+     INSIDE A CARD, SECONDARY TEXT IS --fg-secondary. --fg-tertiary
+     is used only where the ground is the page or the resting card
+     surface and can never lighten under it.
+
+   That is why every row's second line, every figure's caption and
+   every note below is --fg-secondary, and why a hovered row is
+   --surface-3 rather than --surface-4.
+   ------------------------------------------------------------
+
+   ONE ACCENT, AND WHERE IT IS SPENT. The primary fast action,
+   the focus ring, the Arrange control while it is on, and hover.
+   Nothing else on this page is accent — the large figures lead by
+   SIZE. A page of five cards each carrying an accent number has
+   no primary at all.
+
+   MOTION. Everything here is a CSS transition on colour, opacity
+   and a small transform, at --d-press / --d-fast. The one spring
+   in this feature is the reorder, and it is owned by
+   motion/react in reorder.ts — nothing in this file animates
+   layout, and nothing here animates a card's transform, because
+   the layout spring is already writing that property.
+   ============================================================ */
+
+/* ============================================================
+   THE PAGE
+   ============================================================ */
+
+.dsh {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* The atmosphere is a sibling of the SCROLLER, not a child of the
+   content, so it holds still while the cards move past it. Every
+   stop in it is under 6% alpha, so no ratio measured above
+   changes because it is there. */
+.dsh-sky {
+  z-index: 0;
+}
+
+.dsh-in {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--s-10) var(--s-8) var(--s-16);
+}
+
+.dsh-head,
+.dsh-hint,
+.dsh-fast,
+.dsh-tray,
+.dsh-grid,
+.dsh-bare {
+  max-width: 1180px;
+  margin-inline: auto;
+}
+
+/* ============================================================
+   WHO IS HERE, AND WHAT DAY IT IS
+   ============================================================ */
+
+.dsh-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-6);
+}
+
+.dsh-head-say {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+/* The date, off the clock the person is sitting in front of.
+   Uppercase is legal here and only here on this screen: §2 allows
+   it on a section caption, a group caption and a stamp. */
+.dsh-stamp {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+/* Archivo, through the one step that reaches it above 26px. */
+.dsh-hail {
+  margin: 0;
+  color: var(--fg);
+}
+
+.dsh-who {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+.dsh-head-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.dsh-arrange,
+.dsh-restart {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.dsh-arrange:hover,
+.dsh-restart:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+/* PRESS LANDS ON POINTER-DOWN, and 0.97 is the control scale. */
+.dsh-arrange:active,
+.dsh-restart:active {
+  transform: scale(0.97);
+  background: var(--surface-4);
+}
+
+.dsh-arrange.is-on {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.dsh-arrange-mark {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Said once, until the person changes something. */
+.dsh-hint {
+  margin: 0 auto var(--s-5);
+  color: var(--fg-secondary);
+  max-width: 62ch;
+}
+
+/* ============================================================
+   THE FAST ACTIONS
+   ============================================================ */
+
+.dsh-fast {
+  margin-bottom: var(--s-6);
+}
+
+.dsh-fast-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--s-3);
+}
+
+.dsh-fast-item {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* WHILE ARRANGING it is a grip, a mark, a name field and a
+   remove — a strip rather than a button, so there is nothing on
+   it that looks pressable and is not (rule 10). */
+.dsh-fast-item.is-arranging {
+  align-items: center;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-1);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+}
+
+.dsh-fast-item.is-held {
+  border-style: solid;
+  border-color: var(--accent-line);
+  box-shadow: var(--e-float), var(--glow-sm);
+}
+
+.dsh-fast-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--h-lg);
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: inset 0 1px 0 var(--edge-light), var(--e1);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.dsh-fast-btn:hover {
+  border-color: var(--accent-line);
+  box-shadow: inset 0 1px 0 var(--edge-light), var(--e-card-hover);
+}
+
+.dsh-fast-btn:active {
+  transform: scale(0.97);
+}
+
+/* THE ONE PRIMARY ACT. --accent-fg is #ffffff in both themes and
+   measures 6.1:1 on the light accent and 4.9:1 on the dark one. */
+.dsh-fast-btn.is-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--e1);
+}
+
+.dsh-fast-btn.is-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  box-shadow: var(--e2), var(--glow-md);
+}
+
+.dsh-fast-btn.is-primary:active {
+  background: var(--accent-press);
+  border-color: var(--accent-press);
+}
+
+.dsh-fast-mark {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg-secondary);
+  flex: none;
+}
+
+.dsh-fast-btn.is-primary .dsh-fast-mark {
+  color: var(--accent-fg);
+}
+
+.dsh-fast-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.dsh-fast-name {
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  /* NOTHING TRUNCATES MID-WORD (§3): a long name wraps to two
+     lines and the whole of it stays in the DOM. */
+  overflow-wrap: anywhere;
+}
+
+.dsh-fast-note {
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+.dsh-fast-btn.is-primary .dsh-fast-note {
+  /* on the accent ground the only legal ink is the one measured
+     against it */
+  color: var(--accent-fg);
+  opacity: 0.86;
+}
+
+.dsh-fast-edit {
+  width: 15ch;
+  max-width: 100%;
+  padding: 2px var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  line-height: var(--t-small-lead);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+
+.dsh-fast-edit:hover {
+  border-color: var(--line-strong);
+}
+
+.dsh-fast-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--h-lg);
+  padding: 0 var(--s-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.dsh-fast-add:hover {
+  border-color: var(--accent-line);
+  color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.dsh-fast-add:active {
+  transform: scale(0.97);
+}
+
+/* The refusal, as a sentence, in the place the control would be. */
+.dsh-fast-full {
+  margin: 0;
+  align-self: center;
+  max-width: 46ch;
+  color: var(--fg-secondary);
+}
+
+.dsh-fast-empty {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+.dsh-stranded {
+  margin: var(--s-3) 0 0;
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   THE GRID OF CARDS
+   ============================================================ */
+
+.dsh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--s-5);
+  align-items: start;
+}
+
+.dsh-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  /* the lit top edge and the elevation in ONE declaration — see
+     the note in Dashboard.tsx about not stacking `.ds-lit` here */
+  box-shadow: inset 0 1px 0 var(--edge-light), var(--e-card);
+  overflow: hidden;
+}
+
+.dsh-card.is-arranging {
+  border-style: dashed;
+  border-color: var(--line-strong);
+}
+
+.dsh-card.is-held {
+  border-style: solid;
+  border-color: var(--accent-line);
+  box-shadow: inset 0 1px 0 var(--edge-light), var(--e-float), var(--glow-sm);
+}
+
+.dsh-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-4) var(--s-2);
+}
+
+.dsh-card-mark {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg-secondary);
+  flex: none;
+}
+
+.dsh-card-name {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.dsh-card-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--s-2) var(--s-2);
+}
+
+/* ============================================================
+   THE PIECES A CARD IS MADE OF
+   ============================================================ */
+
+/* -- a large counted figure ----------------------------------
+   A WHOLE TYPE STEP, not a size bolted onto another one (§2
+   rule 6). The system has no mono step above 15px and every
+   figure on this page is mono, so the step is declared here:
+   size, weight, leading and tracking together, with the tracking
+   negative because the size is large (rule 7). */
+
+.dsh-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-5);
+  padding: var(--s-2) var(--s-3) var(--s-3);
+}
+
+.dsh-fig {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+}
+
+.dsh-fig-n {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 450;
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  color: var(--fg-secondary);
+  transition: color var(--d-fast) var(--ease);
+}
+
+/* THE ONE A PERSON READS FIRST. It leads by SIZE and by INK, and
+   never by the accent — see the header. */
+.dsh-fig-n.is-lead {
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.dsh-fig-say {
+  color: var(--fg-secondary);
+}
+
+.dsh-fig-btn {
+  cursor: pointer;
+  border-radius: var(--r-control);
+  padding: var(--s-1) var(--s-2);
+  margin: calc(var(--s-1) * -1) calc(var(--s-2) * -1);
+  transition:
+    background var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.dsh-fig-btn:hover {
+  background: var(--surface-3);
+}
+
+.dsh-fig-btn:hover .dsh-fig-n {
+  color: var(--accent);
+}
+
+.dsh-fig-btn:active {
+  transform: scale(0.97);
+}
+
+/* -- a list of rows ------------------------------------------
+   A ROW DARKENS RATHER THAN SCALING (§4) so its neighbours never
+   look like they moved. */
+
+.dsh-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dsh-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: var(--h-row);
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+
+.dsh-row:hover {
+  background: var(--surface-3);
+}
+
+/* PRESS ON POINTER-DOWN. --accent-wash is a 9% tint; every ink
+   used inside a row clears 4.5:1 over it in both themes. */
+.dsh-row:active {
+  background: var(--accent-wash);
+}
+
+.dsh-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dsh-row-title {
+  color: var(--fg);
+  font-weight: 500;
+  /* two lines, and the whole name stays in the DOM (§3) */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.dsh-row-under {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  color: var(--fg-secondary);
+  min-width: 0;
+}
+
+.dsh-row-tail {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+.dsh-ref {
+  color: var(--fg-secondary);
+}
+
+.dsh-when {
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* A state, as a dotted word. NOT uppercase: 'Draft' and 'Issued'
+   are values on the document, and §2 keeps values in their own
+   case. The kind is carried by a 5px dot, which is what §1 allows
+   a second hue to be — never a fill behind the word. */
+.dsh-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+.dsh-state::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-full);
+  background: currentColor;
+}
+
+.dsh-state.is-draft::before {
+  background: var(--fg-quaternary);
+}
+
+.dsh-state.is-issued::before {
+  background: var(--success);
+}
+
+.dsh-sum {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+/* A QUOTE WITH AN UNPRICED LINE DOES NOT PRINT A CONFIDENT
+   TOTAL. The number is drawn quieter and the reason sits under
+   it, because a silent figure that is missing a line is the
+   fault the document itself refuses to commit. */
+.dsh-sum.is-partial {
+  color: var(--fg-secondary);
+}
+
+.dsh-sum-note {
+  color: var(--fg-secondary);
+}
+
+.dsh-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  flex: none;
+  background: var(--fg-quaternary);
+}
+
+.dsh-dot.is-blocker {
+  background: var(--danger);
+}
+
+.dsh-dot.is-advisory {
+  background: var(--warning);
+}
+
+.dsh-note {
+  margin: 0;
+  padding: 0 var(--s-3) var(--s-2);
+  color: var(--fg-secondary);
+}
+
+/* -- the way out of a card ----------------------------------- */
+
+.dsh-more {
+  align-self: flex-start;
+  margin: var(--s-1) 0 var(--s-1);
+  padding: var(--s-1) var(--s-3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
+}
+
+.dsh-more:hover {
+  color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.dsh-more:active {
+  background: var(--accent-wash-strong);
+}
+
+/* -- a card with nothing in it ------------------------------- */
+
+.dsh-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3) var(--s-4);
+}
+
+.dsh-empty-say {
+  margin: 0;
+  color: var(--fg-secondary);
+  max-width: 44ch;
+}
+
+.dsh-act {
+  display: inline-flex;
+  align-items: center;
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.dsh-act:hover {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+}
+
+.dsh-act:active {
+  transform: scale(0.97);
+  background: var(--accent-wash-strong);
+}
+
+/* ============================================================
+   THE TWO SMALL CONTROLS THAT ONLY EXIST WHILE ARRANGING
+   ============================================================ */
+
+.dsh-grip,
+.dsh-drop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--fg-tertiary);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.dsh-grip {
+  cursor: grab;
+  /* THE POINTER MUST NOT SCROLL THE PAGE WHILE IT IS DRAGGING A
+     CARD. Without this a touch drag is a scroll and the reorder
+     never gets a pointermove at all. */
+  touch-action: none;
+}
+
+.dsh-grip:active {
+  cursor: grabbing;
+}
+
+.dsh-grip:hover,
+.dsh-drop:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.dsh-drop:hover {
+  color: var(--danger);
+  background: var(--danger-wash);
+}
+
+/* ============================================================
+   THE ADD-A-CARD PLATE — a card-shaped hole in the grid
+   ============================================================ */
+
+.dsh-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 148px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: none;
+  box-shadow: none;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.dsh-add:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+/* 0.994 ON A CARD, NOT 0.97. §4: 0.97 on a 236px card is a 7px
+   shrink and reads as a glitch. */
+.dsh-add:active {
+  transform: scale(0.994);
+  background: var(--accent-wash-strong);
+}
+
+.dsh-add-mark {
+  display: inline-flex;
+}
+
+.dsh-add-say {
+  text-align: center;
+  padding: 0 var(--s-4);
+}
+
+/* ============================================================
+   THE TRAY
+   ============================================================ */
+
+.dsh-tray {
+  margin-bottom: var(--s-6);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-1);
+  box-shadow: inset 0 1px 0 var(--edge-light), var(--e2);
+}
+
+.dsh-tray-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.dsh-tray-name {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--fg);
+}
+
+.dsh-tray-find {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.dsh-tray-find:focus-within {
+  border-color: var(--accent-line);
+}
+
+.dsh-tray-input {
+  width: 18ch;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+}
+
+.dsh-tray-input:focus {
+  outline: none;
+}
+
+.dsh-tray-input::placeholder {
+  color: var(--fg-secondary);
+}
+
+.dsh-tray-bands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.dsh-tray-band {
+  min-width: 0;
+}
+
+.dsh-tray-band-name {
+  margin: 0 0 var(--s-2);
+}
+
+.dsh-tray-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--s-2);
+}
+
+.dsh-tray-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--h-lg);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+.dsh-tray-item:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+}
+
+.dsh-tray-item:active {
+  transform: scale(0.97);
+  background: var(--accent-wash-strong);
+}
+
+.dsh-tray-mark {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg-secondary);
+  flex: none;
+}
+
+.dsh-tray-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dsh-tray-item-name {
+  color: var(--fg);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.dsh-tray-item-note {
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+.dsh-tray-plus {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg-tertiary);
+  flex: none;
+}
+
+.dsh-tray-item:hover .dsh-tray-plus {
+  color: var(--accent);
+}
+
+.dsh-tray-empty {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   A DASHBOARD WITH NOTHING ON IT — a choice, kept
+   ============================================================ */
+
+.dsh-bare {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-4);
+  padding: var(--s-10) 0;
+  max-width: 56ch;
+}
+
+.dsh-bare-say {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   FOCUS — every pressable thing on this page, one ring
+   ============================================================ */
+
+.dsh :is(button, input):focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+  border-radius: var(--r-control);
+}
+
+/* ============================================================
+   ACCESSIBILITY
+
+   MOVEMENT GOES; COLOUR AND OPACITY STAY (§4). Every transform
+   above is a press or a hover lift; each one becomes a colour
+   change on its own, which is already declared beside it, so the
+   feedback survives the transform being removed.
+
+   The reorder's spring is handled where it is written —
+   `transitionFor(still)` in reorder.ts collapses it to a
+   duration of zero — and `.ds-fade` / `.ds-aurora` are covered
+   by ds.css's own block.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .dsh-arrange,
+  .dsh-restart,
+  .dsh-fast-btn,
+  .dsh-fast-add,
+  .dsh-fig-btn,
+  .dsh-act,
+  .dsh-add,
+  .dsh-tray-item {
+    transition-property: background, border-color, color, box-shadow;
+  }
+
+  .dsh-arrange:active,
+  .dsh-restart:active,
+  .dsh-fast-btn:active,
+  .dsh-fast-add:active,
+  .dsh-fig-btn:active,
+  .dsh-act:active,
+  .dsh-add:active,
+  .dsh-tray-item:active {
+    transform: none;
+  }
+}
+
+/* prefers-contrast: more — the two dashed borders become solid,
+   because a dashed hairline at high contrast is a dotted line
+   rather than an edge. */
+@media (prefers-contrast: more) {
+  .dsh-fast-item.is-arranging,
+  .dsh-card.is-arranging,
+  .dsh-fast-add,
+  .dsh-add {
+    border-style: solid;
+    border-color: var(--line-strong);
+  }
+}
+
+/* ============================================================
+   NARROW — a laptop at 1280 is two columns; a tablet is one
+   ============================================================ */
+
+@media (max-width: 760px) {
+  .dsh-in {
+    padding: var(--s-6) var(--s-4) var(--s-12);
+  }
+
+  .dsh-head {
+    align-items: flex-start;
+  }
+
+  .dsh-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dsh-tray-items {
+    grid-template-columns: 1fr;
+  }
+}

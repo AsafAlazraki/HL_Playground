@@ -1821,16 +1821,19 @@
    a heading with a rule under it is a heading either way and
    there is no way to ask CSS which state it is in. */
 .vw-block-head {
+  border-bottom: 1px solid var(--hairline);
+}
+/* TOP-LEVEL HEADS ONLY. A nested block sits inside a card inside
+   its parent's list, so a nested head pinned to the same `top: 0`
+   would stack under the parent's and two headings would share one
+   line. Three levels is as deep as a page goes and only the outer
+   one is a landmark. */
+.vw-blocks > .vw-block > .vw-block-head {
   position: sticky;
   top: 0;
   z-index: 2;
-  border-bottom: 1px solid var(--hairline);
   border-radius: var(--radius) var(--radius) 0 0;
   background: var(--paper);
-}
-/* the nested block steps its ground, so its head steps with it */
-.vw-nest .vw-block > .vw-block-head {
-  background: var(--paper-sunken);
 }
 
 /* JUST ARRIVED AT, from a press in the ledger above. A moment,
@@ -1922,6 +1925,21 @@
 .vw-rig-door:active {
   background: var(--blue-wash-strong);
   transition-duration: var(--t-press);
+}
+/* THE RUNG COMES UP A TIER AS THE POINTER ARRIVES, and it is a
+   measurement rather than a flourish. `--ink-faint` is the ramp's
+   floor: 5.48:1 on the panel's white, 4.81 over the hover wash, and
+   **4.37 over `--blue-wash-strong`**, which fails — the exact trap
+   DESIGN_PRINCIPLES names ("if your text sits on a tinted
+   background, the tint counts"). Every figure measured by
+   compositing the whole chain, on the ground each state actually
+   paints. `--ink-soft` reads 6.37 over the pressed wash and 7.4 over
+   the hover one, so the line gets clearer as it is reached instead
+   of dimmer. */
+.vw-rig-door:hover .vw-rig-rung,
+.vw-rig-door:active .vw-rig-rung,
+.vw-rig-door:focus-visible .vw-rig-rung {
+  color: var(--ink-soft);
 }
 .vw-rig-door:focus-visible {
   outline: 2px solid var(--blue);
@@ -2086,4 +2104,27 @@
   .vw-nothing-line {
     font-variation-settings: 'wdth' 100;
   }
+}
+
+/* ------------------------------------------------------------
+   THE WARNING COUNT ON A BLOCK'S HEAD.
+
+   It is the same chip the count wears — same ground, same mono,
+   same size — with one glyph in the warning hue in front of it.
+   A second chip SHAPE would read as a second kind of fact, and it
+   is the same kind of fact: how many, of what.
+
+   MEASURED ON `--surface-3`, compositing the chain: the words in
+   `--ink-soft` are 7.25:1 and the mark in `--warning` is 5.31:1.
+   There is no wash — `--warning` over `--warning-wash` composites
+   to 4.28 and fails, which is the trap recorded above `.vw-warn`.
+   ------------------------------------------------------------ */
+.vw-chip--warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.vw-chip-mark {
+  flex: 0 0 auto;
+  color: var(--warning);
 }

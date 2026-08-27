@@ -49,6 +49,16 @@
          them against THIS MODULE'S OWN VERBS. Nothing is seeded, the
          open state says it is open, and closing it says so too.
 
+         THE GRID ITSELF IS `AccessGrid` AND IS NO LONGER WRITTEN HERE.
+         It moved out whole when the access screen needed the same
+         table for whichever place is picked there — one editor for
+         `ModuleDef.access`, so a tick means the same thing, prints the
+         same sentence and offers the same UNDO on both surfaces. This
+         panel keeps what is TRUE OF THIS PAGE — the state of the place
+         in a sentence, what is not enforced yet, the empty state and
+         the control that names a new job — and the facts that belong
+         to the table travel with the table.
+
      4 · THE DESIGNER — what may be done here, what this place lists,
          what one item shows, and the rules it goes by.
 
