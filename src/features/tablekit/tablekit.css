@@ -766,3 +766,366 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ============================================================
+   NEW TABLE FROM A CSV — question one's third answer, and the
+   proposal it opens.
+
+   TWO SURFACES, ONE SHEET. The DOOR sits under the kind cards on
+   question one; the PROPOSAL replaces question two when a file has
+   been read. Both are drawn with the parts already in this file —
+   the same 880px sheet, the same header, the same footer geometry,
+   the same CREATE TABLE in the same corner — because a person who
+   has answered question one twice should not have to learn a third
+   screen to answer it a third way.
+
+   CONTRAST, MEASURED ON WHITE (--paper-high, #ffffff):
+     .tk-csv-why        --ink-soft   7.7:1
+     .tk-csv-fact       --ink-faint  4.7:1   (on white; never on a tint)
+     .tk-csv-note       --ink-soft   7.7:1
+     .tk-csv-blurb      --ink-soft   7.7:1
+   and on the one tinted surface here, --paper-sunken #f1f2f5:
+     .tk-csv-ex-item    --ink-soft   6.9:1
+   --ink-faint is 4.26:1 over a tint and therefore appears on white
+   only. The exception chips take --ink-soft for exactly that reason.
+   ============================================================ */
+
+/* The picker itself is never seen: the door and every refusal press
+   it. Not `display: none` — a hidden input cannot be clicked in
+   Safari — so it is taken out of the layout instead. */
+.tk-csv-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* -- the door, under the kind cards ------------------------- */
+
+.tk-csv-door {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-sunken);
+}
+
+.tk-csv-door-say {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.tk-csv-door-pick {
+  flex: none;
+}
+
+/* -- the file's own name in the header ---------------------- */
+
+/* NOT `.tk-kind-tag`. That one uppercases, which is right for a kind
+   — a fixed word this app chose — and wrong for a file name, which is
+   the person's own text and cannot be uppercased without losing which
+   letters they typed. */
+.tk-file-tag {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+/* -- the proposal ------------------------------------------- */
+
+.tk-csv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 300px;
+  padding: var(--sp-6) var(--sp-6) var(--sp-5);
+  overflow-y: auto;
+}
+
+.tk-csv-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.tk-csv-filename {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.tk-csv-fact {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.tk-csv-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.tk-csv-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* The four captions and the four tracks are one grid, declared once
+   here and inherited by every row, so a caption can never drift off
+   the column it names. */
+.tk-csv-legend,
+.tk-csv-col {
+  display: grid;
+  grid-template-columns: 18px minmax(110px, 1.1fr) 148px minmax(0, 2fr);
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.tk-csv-legend {
+  padding: 0 var(--sp-2) var(--sp-1);
+  border-bottom: 1px solid var(--hairline);
+}
+.tk-csv-legend .mono-label {
+  color: var(--ink-faint);
+}
+
+.tk-csv-cols {
+  display: flex;
+  flex-direction: column;
+}
+
+.tk-csv-col {
+  align-items: start;
+  padding: var(--sp-3) var(--sp-2);
+  border-bottom: 1px solid var(--hairline);
+}
+/* A LIST ROW DARKENS INSTEAD OF SCALING — its neighbours must not
+   look like they moved. */
+.tk-csv-col:hover {
+  background: var(--paper-sunken);
+}
+/* The column that names a row carries a rail, the way a card does —
+   the radio says WHICH, the rail says which at a glance down the
+   list. Two pixels of accent, once. */
+.tk-csv-col.is-name {
+  box-shadow: inset 2px 0 0 0 var(--blue);
+}
+
+.tk-csv-radio {
+  width: 14px;
+  height: 14px;
+  margin: 7px 0 0;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+.tk-csv-radio:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.tk-csv-name.is-blank {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-wash);
+}
+
+.tk-csv-holds {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tk-csv-type {
+  min-width: 0;
+  cursor: pointer;
+}
+
+.tk-csv-read {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.tk-csv-why {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* The values a type cannot carry, named rather than counted. Mono
+   because they are data, on the sunken tint because they are quoted
+   out of the file rather than written by this app. */
+.tk-csv-ex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.tk-csv-ex-item,
+.tk-csv-ex-more {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--paper-sunken);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.tk-csv-ex-item b {
+  margin-left: 3px;
+  font-weight: 500;
+  /* the COUNT is the meaning-carrying half of the chip and the chip
+     sits on a tint, where --ink-faint measures 4.26:1 and fails */
+  color: var(--ink);
+}
+.tk-csv-ex-more {
+  background: transparent;
+}
+
+.tk-csv-col-note {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--red);
+}
+
+.tk-csv-aside {
+  max-width: 62ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* -- a file that cannot be read ----------------------------- */
+
+.tk-csv-refuse {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  min-height: 200px;
+  padding: var(--sp-6);
+}
+
+.tk-csv-refuse-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 62ch;
+}
+
+.tk-csv-refuse-item {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.tk-csv-again {
+  flex: none;
+}
+
+/* -- the footer --------------------------------------------- */
+
+.tk-csv-foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-6) var(--sp-5);
+  border-top: 1px solid var(--hairline);
+  background: var(--paper-high);
+}
+
+.tk-csv-foot-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px var(--sp-4);
+  min-width: 0;
+}
+
+.tk-csv-kind {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.tk-csv-kind .mono-label {
+  color: var(--ink-faint);
+}
+
+.tk-csv-kind-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  color: var(--tk-ink, var(--ink));
+}
+
+/* the kind's own sentence, from the model — never written here */
+.tk-csv-blurb {
+  grid-column: 1 / -1;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.tk-csv-go {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  justify-self: end;
+  min-width: 0;
+}
+
+.tk-csv-make {
+  min-width: 0;
+  max-width: 34ch;
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 780px) {
+  .tk-csv-legend {
+    display: none;
+  }
+  .tk-csv-col {
+    grid-template-columns: 18px minmax(0, 1fr);
+  }
+  .tk-csv-holds,
+  .tk-csv-read {
+    grid-column: 2;
+  }
+  .tk-csv-foot {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tk-csv-go {
+    justify-self: stretch;
+    justify-content: space-between;
+  }
+}

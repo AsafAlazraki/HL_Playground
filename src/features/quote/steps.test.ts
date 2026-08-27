@@ -304,3 +304,74 @@ describe('the three counts satisfy the arithmetic the curation note prints', () 
     }
   })
 })
+
+/* ---------------------------------------------------------- */
+/* 5 · the build is still USABLE after the page was closed     */
+/* ---------------------------------------------------------- */
+
+/* THE HALF OF THE PROMISE THAT ALMOST GOT AWAY.
+ *
+ * `savedNote` tells a person "close this and come back to it", and
+ * the document does come back — `quotes.ts` writes every pick and
+ * `survivesClose.test.ts` proves the round trip. What did NOT come
+ * back was the SCREEN. A quote stores `viewId`, and a ViewDef is
+ * session state (`features/views/index.ts` §1: "not persisted …
+ * lost on reload"), so a quote reopened in a new tab pointed at a
+ * view that no longer existed and every reader in freeze.ts took its
+ * `if (!view) return` branch. Measured in the browser: a build with
+ * six frozen lines came back with every figure intact and every step
+ * reading "nothing in it that is still sold" — no reason, no search,
+ * no switch — over a sheet holding 434 trailers.
+ *
+ * A RELOAD IS SIMULATED BY BREAKING BOTH IDS, because both really do
+ * break: the view id is minted per session, and so is every block id
+ * inside it (`defaultBlocksFor`). What survives a reload is the pair
+ * a reader can therefore rely on — `rootTableId` and the section's
+ * own `tableId` — and that is exactly what the fallback matches on.
+ */
+describe('a quote reopened after a reload can still be built', () => {
+  it('offers and explains a step whose view id and block id are both gone', () => {
+    if (!trailerCase) return
+    const live = stepOffer(trailerCase.quote, trailerCase.section)
+    const liveWhy = stepReason(trailerCase.quote, trailerCase.section)
+
+    const reopened: QuoteDef = { ...trailerCase.quote, viewId: 'view-that-no-longer-exists' }
+    const section: QuoteSection = {
+      ...trailerCase.section,
+      blockId: 'block-that-no-longer-exists',
+    }
+
+    const after = stepOffer(reopened, section)
+    const afterWhy = stepReason(reopened, section)
+
+    /* the same list, the same denominators, the same sentence */
+    expect(after.narrowed).toBe(live.narrowed)
+    expect(after.catalogue).toBe(live.catalogue)
+    expect(after.pool).toBe(live.pool)
+    expect(after.candidates.map((c) => c.line.label)).toEqual(
+      live.candidates.map((c) => c.line.label),
+    )
+    expect(afterWhy?.what).toBe(liveWhy?.what)
+    expect(afterWhy?.tableName).toBe(liveWhy?.tableName)
+
+    /* and the two halves the mechanism needs still work: the whole
+       catalogue is still reachable, and the search still reaches
+       past the narrowing */
+    const everything = stepOffer(reopened, section, { all: true })
+    expect(everything.matched).toBeGreaterThan(after.matched)
+  })
+
+  it('still refuses when the root table itself has gone off the sheet', () => {
+    if (!trailerCase) return
+    const orphan: QuoteDef = {
+      ...trailerCase.quote,
+      viewId: 'view-that-no-longer-exists',
+      rootTableId: 'table-that-no-longer-exists',
+    }
+    /* NOT a fallback for everything: with no root table there is no
+       page to rebuild, and inventing one would offer rows against a
+       hull the sheet no longer has. */
+    expect(stepOffer(orphan, trailerCase.section).candidates).toEqual([])
+    expect(stepReason(orphan, trailerCase.section)).toBeNull()
+  })
+})

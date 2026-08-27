@@ -121,30 +121,25 @@
    one — press "Quote this one" on any boat and it is drawn on the
    way back.
 
-   ONE CONTROL: THE GEAR, top right. It does not navigate and it
-   does not open a form that represents this module. It grows
-   handles on the drawing already in front of you — the name and
-   the description become the fields they came from, every table's
-   heading grows a move and a take-out, and the designer strip
-   appears under the header. Pressing it again subtracts them.
-   Nothing that was on the clean page MOVES between the two modes:
-   the heads, the groups and the faces are drawn from the same
-   sections either way. That is the promise `ViewPage.tsx:252-266`
-   and `BlockCard.tsx:1-14` already make, inherited rather than
-   reinvented.
+   ONE CONTROL: SETTINGS, top right. THIS PAGE IS THE CATALOGUE AND
+   NOTHING ELSE. It used to grow the designer strip over itself, and
+   grow handles on its own headings, so that a module could be edited
+   where it was read. That is the right instrument for two panels and
+   the wrong one for seven: with roles, a mark and the attachment list
+   to say as well, the catalogue would have started four screens down
+   its own page. So the gear became a door — `ModuleSettings` is one
+   surface where every change to a module is made, and this page is
+   what that surface is about. See ModuleSettings.tsx for the whole
+   argument, including what moved and where it went.
    ============================================================ */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import {
-  ArrowDown,
-  ArrowUp,
   CaretRight,
-  Check,
   Gear,
   LinkSimple,
   MagnifyingGlass,
-  X,
 } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
@@ -193,9 +188,7 @@ import {
   type IndexEntry,
   type IndexSection,
 } from './read'
-import { capabilityStates, moveId, NOT_YET_SAYS } from './designer'
-import { ModuleDesigner } from './ModuleDesigner'
-import { rulesPanelId } from './ModuleRulesPanel'
+import { capabilityStates, NOT_YET_SAYS } from './designer'
 import { RULE_CAPABILITY, useModuleConfiguresRules } from './ruleCapability'
 import './modules.css'
 
@@ -214,12 +207,18 @@ export interface ModuleIndexProps {
    *  the same shape `canOpen` gives an item, and the reason this
    *  feature still imports nothing from the app. */
   onOpenQuote?: (quoteId: string) => void
+  /** THE ONE DOOR OUT OF THE CATALOGUE AND INTO THE SET-UP OF THIS
+   *  PLACE. `focus` names the panel to land on: the rules verb on this
+   *  page promises a rules panel, and a door that opened the top of a
+   *  five-panel page would not be keeping that promise. */
+  onSettings: (focus?: 'rules') => void
 }
 
 export function ModuleIndex({
   module,
   onOpen,
   onOpenQuote,
+  onSettings,
 }: ModuleIndexProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -228,19 +227,10 @@ export function ModuleIndex({
      a document is frozen and must not move when the sheet does. */
   const quotes = useQuotes()
   const [query, setQuery] = useState('')
-  const [designing, setDesigning] = useState(false)
   /* WHICH DRAWER IS OPEN, or none. A position inside this page and
      nowhere else: it is not stored on the module, because which
      heading somebody is reading is not a fact about the place. */
   const [openKey, setOpenKey] = useState<string | null>(null)
-
-  /* THE LAST NAME THAT WAS ACTUALLY A NAME. The name field is a live
-     control on a stored value, so clearing it to retype it writes an
-     empty string — and a module with no name is a card on the
-     dashboard nobody can point at. Blur restores this rather than
-     inventing a replacement. */
-  const lastNamed = useRef(module.name)
-  if (module.name.trim() !== '') lastNamed.current = module.name
 
   /* EVERY table the module points at — what the designer strip
      reorders and takes out. It has to include a retired one, or an
@@ -510,38 +500,14 @@ export function ModuleIndex({
     el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
   }, [goingTo, module.id])
 
-  /* THE RULE VERB'S DOOR. It grows the designer — the same handles the
-     gear grows, never a second surface — and then takes you to the
-     panel it promised. Two steps, because the panel does not exist
-     until the render that mounted the strip, which is exactly the
-     reason the chip above goes through state too. */
-  const [goingToRules, setGoingToRules] = useState(false)
-  const openRules = (): void => {
-    setDesigning(true)
-    setGoingToRules(true)
-  }
-  useEffect(() => {
-    if (!goingToRules || !designing) return
-    setGoingToRules(false)
-    const el = document.getElementById(rulesPanelId(module.id))
-    if (!el) return
-    const still =
-      typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
-  }, [goingToRules, designing, module.id])
+  /* THE RULE VERB'S DOOR. It opens the one set-up surface and names
+     the panel it promised, so pressing "Set rules" lands on the rules
+     rather than at the top of five panels. The scroll belongs to the
+     page that mounts, which is why this hands over a name and not a
+     scroll. */
+  const openRules = (): void => onSettings('rules')
 
   const style = { '--md-accent': accentVar(module.accent) } as CSSProperties
-
-  /** One table's heading, moved or taken out. The order written is
-   *  `module.tableIds` and NOT the drawn sections: a search that
-   *  matches nothing in one brand leaves that brand without a heading,
-   *  and reordering by what happens to be on screen would silently
-   *  drop it out of the module. */
-  const moveTable = (tableId: string, dir: -1 | 1): void => {
-    const next = moveId(module.tableIds, tableId, dir)
-    if (next !== module.tableIds) updateModule(module.id, { tableIds: next })
-  }
 
   return (
     <section className="md-index" style={style} aria-label={module.name}>
@@ -555,38 +521,9 @@ export function ModuleIndex({
               derives its equivalent by substring-matching the name and
               therefore tells every trailer and service user they are
               configuring boat packages. */}
-          {designing ? (
-            <>
-              <input
-                className="field-input md-idx-name-edit"
-                type="text"
-                value={module.name}
-                spellCheck={false}
-                placeholder="Name this place"
-                aria-label="What this module is called"
-                onChange={(e) => updateModule(module.id, { name: e.target.value })}
-                onBlur={() => {
-                  if (module.name.trim() === '') {
-                    updateModule(module.id, { name: lastNamed.current })
-                  }
-                }}
-              />
-              <textarea
-                className="field-input md-idx-desc-edit"
-                value={module.description}
-                rows={2}
-                placeholder="One line about this place, in your own words"
-                aria-label={`What ${module.name} is, in one line`}
-                onChange={(e) => updateModule(module.id, { description: e.target.value })}
-              />
-            </>
-          ) : (
-            <>
-              <h2 className="md-idx-name">{module.name}</h2>
-              {module.description === '' ? null : (
-                <p className="md-idx-desc">{module.description}</p>
-              )}
-            </>
+          <h2 className="md-idx-name">{module.name}</h2>
+          {module.description === '' ? null : (
+            <p className="md-idx-desc">{module.description}</p>
           )}
           {/* WHAT IS IN HERE, NOT JUST HOW MUCH. This read "2,937
               items · 3 tables · 699 not sold", which is three true
@@ -625,21 +562,14 @@ export function ModuleIndex({
             whether or not the module has a search box. */}
         <button
           type="button"
-          className={`md-gear${designing ? ' is-on' : ''}`}
-          aria-pressed={designing}
-          title={designing ? 'Done — back to the clean page' : 'Set up this module'}
-          onClick={() => setDesigning((v) => !v)}
+          className="md-gear"
+          title={`Set up ${module.name} — what may be done here, who may do it, and what it is attached to`}
+          onClick={() => onSettings()}
         >
-          {designing ? (
-            <Check size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
-          ) : (
-            <Gear size={ICON_SIZE.small} weight="light" aria-hidden="true" />
-          )}
-          <span className="md-gear-word">{designing ? 'Done' : 'Set up'}</span>
+          <Gear size={ICON_SIZE.small} weight="light" aria-hidden="true" />
+          <span className="md-gear-word">Settings</span>
         </button>
       </header>
-
-      {designing ? <ModuleDesigner module={module} /> : null}
 
       {/* THE OVERVIEW BAND — see the header. Three strips, all
           derived, drawn above the catalogue rather than instead of
@@ -956,8 +886,8 @@ export function ModuleIndex({
           switches it back on. */}
       {!browsing ? (
         <p className="md-none">
-          Browsing is switched off for {module.name}, so this list is not drawn.
-          {designing ? '' : ' Press SET UP to switch it back on.'}
+          Browsing is switched off for {module.name}, so this list is not drawn. Press
+          Settings to switch it back on.
         </p>
       ) : entries.length === 0 ? (
         <p className="md-none">
@@ -990,18 +920,6 @@ export function ModuleIndex({
                   name={section.name}
                   kind={section.kind && section.kind in TABLE_KINDS ? section.kind : 'custom'}
                   count={memberCounts.get(section.id) ?? 0}
-                  tableId={section.id}
-                  designing={designing}
-                  first={module.tableIds[0] === section.id}
-                  last={module.tableIds[module.tableIds.length - 1] === section.id}
-                  only={module.tableIds.length === 1}
-                  moduleName={module.name}
-                  onMove={moveTable}
-                  onDrop={(tableId) =>
-                    updateModule(module.id, {
-                      tableIds: module.tableIds.filter((id) => id !== tableId),
-                    })
-                  }
                 />
               ) : null}
               <ul className="md-drawers">
@@ -1025,18 +943,6 @@ export function ModuleIndex({
             mode={module.index}
             canOpen={canOpen}
             onOpen={onOpen}
-            designing={designing}
-            /* the position in the MODULE, not in what is on screen */
-            first={module.tableIds[0] === section.tableId}
-            last={module.tableIds[module.tableIds.length - 1] === section.tableId}
-            only={module.tableIds.length === 1}
-            moduleName={module.name}
-            onMove={moveTable}
-            onDrop={(tableId) =>
-              updateModule(module.id, {
-                tableIds: module.tableIds.filter((id) => id !== tableId),
-              })
-            }
           />
         ))
       )}
@@ -1072,14 +978,6 @@ interface SectionProps {
   mode: ModuleDef['index']
   canOpen: boolean
   onOpen: (tableId: string, rowId: string) => void
-  /** design mode grows the handles inside the head that is already there */
-  designing: boolean
-  first: boolean
-  last: boolean
-  only: boolean
-  moduleName: string
-  onMove: (tableId: string, dir: -1 | 1) => void
-  onDrop: (tableId: string) => void
 }
 
 function Section({
@@ -1089,30 +987,11 @@ function Section({
   mode,
   canOpen,
   onOpen,
-  designing,
-  first,
-  last,
-  only,
-  moduleName,
-  onMove,
-  onDrop,
 }: SectionProps): ReactElement {
   return (
     <section className="md-sec" id={domId} aria-label={section.name}>
       {showHead ? (
-        <SectionHead
-          name={section.name}
-          kind={section.kind}
-          count={section.count}
-          tableId={section.tableId}
-          designing={designing}
-          first={first}
-          last={last}
-          only={only}
-          moduleName={moduleName}
-          onMove={onMove}
-          onDrop={onDrop}
-        />
+        <SectionHead name={section.name} kind={section.kind} count={section.count} />
       ) : null}
 
       {section.groups.map((group) => (
@@ -1140,38 +1019,26 @@ function Section({
 }
 
 /* ---------------------------------------------------------- */
-/* One table's head — and its designer handles                */
+/* One table's head                                            */
 /* ---------------------------------------------------------- */
 
 /** THE SAME HEAD OVER BOTH DRAWINGS. A register that files itself
- *  into drawers still belongs to a table, still keeps that table's
- *  anchor so a member chip reaches it, and still grows the same move
- *  and take-out handles under the gear. Extracted rather than copied
- *  because two heads that could drift apart is two heads. */
+ *  into drawers still belongs to a table and still keeps that table's
+ *  anchor so a member chip reaches it. Extracted rather than copied
+ *  because two heads that could drift apart is two heads.
+ *
+ *  IT CARRIES NO HANDLES ANY MORE. Moving a table up the module's
+ *  list and taking one out are the designer's "What this place lists",
+ *  on the settings page — one owner for `tableIds` rather than two
+ *  surfaces writing it. See ModuleSettings.tsx. */
 function SectionHead({
   name,
   kind,
   count,
-  tableId,
-  designing,
-  first,
-  last,
-  only,
-  moduleName,
-  onMove,
-  onDrop,
 }: {
   name: string
   kind: TableKind
   count: number
-  tableId: string
-  designing: boolean
-  first: boolean
-  last: boolean
-  only: boolean
-  moduleName: string
-  onMove: (tableId: string, dir: -1 | 1) => void
-  onDrop: (tableId: string) => void
 }): ReactElement {
   return (
     <div className="md-sec-head">
@@ -1180,44 +1047,6 @@ function SectionHead({
       </span>
       <h3 className="md-sec-name block-heading">{name}</h3>
       <span className="md-sec-count mono-label">{count}</span>
-      {designing ? (
-        <span className="md-sec-acts">
-          <button
-            type="button"
-            className="md-icon-btn"
-            title="Move this table up the list"
-            aria-label={`Move ${name} up`}
-            disabled={first}
-            onClick={() => onMove(tableId, -1)}
-          >
-            <ArrowUp size={ICON_SIZE.tiny} weight="bold" />
-          </button>
-          <button
-            type="button"
-            className="md-icon-btn"
-            title="Move this table down the list"
-            aria-label={`Move ${name} down`}
-            disabled={last}
-            onClick={() => onMove(tableId, 1)}
-          >
-            <ArrowDown size={ICON_SIZE.tiny} weight="bold" />
-          </button>
-          <button
-            type="button"
-            className="md-icon-btn md-icon-btn--drop"
-            /* NOTHING IS DELETED. The table, its rows and every join on
-               it stay exactly where they are; this module stops listing
-               them, and putting the table back brings all of it with
-               it. */
-            title={`Take ${name} out of this module — the table and its rows stay on the sheet`}
-            aria-label={`Take ${name} out of ${moduleName}`}
-            disabled={only}
-            onClick={() => onDrop(tableId)}
-          >
-            <X size={ICON_SIZE.tiny} weight="bold" />
-          </button>
-        </span>
-      ) : null}
     </div>
   )
 }

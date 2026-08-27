@@ -29,6 +29,7 @@ import curationSource from '@/features/curation/curation.ts?raw'
 import noteSource from '@/features/curation/CurationNote.tsx?raw'
 import blockSource from '@/features/views/BlockCard.tsx?raw'
 import quoteSource from '@/features/quote/QuoteEditor.tsx?raw'
+import buildSource from '@/features/quote/QuoteBuild.tsx?raw'
 import fitmentSource from '@/features/constraints/TrailerFitmentPanel.tsx?raw'
 
 /** Every surface that narrows a list by a rule and offers what is
@@ -44,6 +45,14 @@ import fitmentSource from '@/features/constraints/TrailerFitmentPanel.tsx?raw'
 const SURFACES: Array<{ source: string; curates: string }> = [
   { source: blockSource, curates: 'a view page’s related block' },
   { source: quoteSource, curates: 'the picker inside a quote section' },
+  /* THE SURFACE THIS LIST WAS WRITTEN FOR. `QuoteBuild` narrows a
+     whole table down to one step's shortlist, and it is the newest
+     screen a person actually stands on — its own header says it
+     deliberately draws none of the four parts itself so that mounting
+     the mechanism is all-or-nothing. That is a claim about how the
+     file is written, so it is checked the way the rest of this list
+     is checked. */
+  { source: buildSource, curates: 'one step of a quote being built' },
   { source: fitmentSource, curates: 'the measured trailer selector' },
 ]
 

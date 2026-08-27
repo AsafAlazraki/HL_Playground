@@ -79,6 +79,28 @@ const getList = (): QuoteDef[] => list
 
 let writeTimer: ReturnType<typeof setTimeout> | undefined
 
+/** The write itself, and the only place it happens. Split out of
+ *  `persistSoon` so the tab going away can do it NOW — see
+ *  `flushQuotes`. Re-checks `localStorage` at FIRE time rather than
+ *  trusting the check made when the write was requested: 400 ms is
+ *  long enough for a teardown to take the global away, which is the
+ *  latent shape a sibling guard was already bitten by. */
+function writeNow(): void {
+  if (typeof localStorage === 'undefined') return
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(list))
+    persistProblem = null
+  } catch {
+    /* A frozen ImageRef can be a data: URL carrying a whole
+       photograph, and a few of those pass a quota. We do NOT drop
+       the picture to make room: a quote that silently loses its
+       subject's photograph prints differently from the one that
+       was shown. We say so instead, and a person can act on it. */
+    persistProblem =
+      'This browser would not save these quotes. Print anything you need before closing the tab.'
+  }
+}
+
 /** Write-behind at 400 ms — the same interval the project store
  *  uses, so typing a customer's name does not write the whole
  *  document once per keystroke. */
@@ -86,20 +108,56 @@ function persistSoon(): void {
   if (typeof localStorage === 'undefined') return
   if (writeTimer !== undefined) clearTimeout(writeTimer)
   writeTimer = setTimeout(() => {
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(list))
-      persistProblem = null
-    } catch {
-      /* A frozen ImageRef can be a data: URL carrying a whole
-         photograph, and a few of those pass a quota. We do NOT drop
-         the picture to make room: a quote that silently loses its
-         subject's photograph prints differently from the one that
-         was shown. We say so instead, and a person can act on it. */
-      persistProblem =
-        'This browser would not save these quotes. Print anything you need before closing the tab.'
-    }
+    writeTimer = undefined
+    writeNow()
     republish()
   }, 400)
+}
+
+/**
+ * THE 400 ms A PERSON COULD STILL LOSE, CLOSED.
+ *
+ * `steps.ts` prints a promise on the build screen — "close this and
+ * come back to it" — and it is the whole reason that screen exists,
+ * because the app it replaces held seven wizard steps in React state
+ * and lost the lot on a refresh (hl-journeys.md §3.4). Write-behind
+ * made the promise ALMOST true: the pick reached the registry
+ * synchronously, and reached storage 400 ms later. Close the tab
+ * inside that window — which is exactly what a person does when they
+ * have just made the last pick and are done — and the last pick was
+ * gone. A promise that holds except at the moment people actually
+ * leave is not a promise, it is an average.
+ *
+ * So the pending write is forced out when the page goes away. It is
+ * cheap (one `setItem` of data already in memory) and it is idempotent
+ * — with nothing owed it does nothing at all.
+ */
+export function flushQuotes(): void {
+  if (writeTimer === undefined) return
+  clearTimeout(writeTimer)
+  writeTimer = undefined
+  writeNow()
+  republish()
+}
+
+/** Hooked once, from `loadQuotes`, so this file still does nothing in
+ *  a module side effect and a test starts from empty.
+ *
+ *  `pagehide` AND NOT `beforeunload` — the same measurement
+ *  `features/session/useTabSession.ts` records next door: pagehide is
+ *  the one that fires on mobile Safari, and beforeunload additionally
+ *  suppresses the back/forward cache. `visibilitychange` is the second
+ *  half of the pair, because a hidden tab can be killed by the OS
+ *  without pagehide ever running. */
+let hookedTabClose = false
+function hookTabClose(): void {
+  if (hookedTabClose) return
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+  hookedTabClose = true
+  window.addEventListener('pagehide', flushQuotes)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushQuotes()
+  })
 }
 
 let loaded = false
@@ -112,6 +170,7 @@ let loaded = false
 export function loadQuotes(): void {
   if (loaded) return
   loaded = true
+  hookTabClose()
   if (typeof localStorage === 'undefined') return
   try {
     const raw = localStorage.getItem(STORE_KEY)

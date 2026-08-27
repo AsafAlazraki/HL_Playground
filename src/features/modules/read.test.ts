@@ -30,6 +30,7 @@ import {
   moduleActivity,
   moduleHeldCount,
   moduleRowCount,
+  accessReading,
   type IndexEntry,
 } from './read'
 
@@ -326,5 +327,92 @@ describe('what has happened lately', () => {
     const order = qs.map((q) => q.id)
     moduleActivity(module_, entities, rowsByEntity, qs)
     expect(qs.map((q) => q.id)).toEqual(order)
+  })
+})
+
+/* ============================================================
+   WHAT A CARD MAY SAY ABOUT WHO MAY WORK IN A PLACE.
+
+   Two failures are guarded, and both of them are the same fault the
+   owner has caught before: saying a thing nobody decided.
+
+     1. A module NOBODY has restricted must say NOTHING. Every module
+        in this project is that module — `access` is absent — and a
+        dashboard stamping "open to everyone" on five cards would be
+        five decisions invented on somebody's behalf.
+
+     2. A role holding only verbs the module no longer offers may do
+        nothing here, so the card must not count it as somebody who
+        may work here. `access.ts` intersects on read for exactly this
+        reason; this asserts the card obeys the same verdict, because
+        a card and the grid behind it disagreeing about who has access
+        is worse than either answer alone.
+   ============================================================ */
+describe('what a card says about who may work here', () => {
+  const restricted = (access: ModuleDef['access']): ModuleDef => ({ ...module_, access })
+
+  it('says nothing at all about a module nobody has restricted', () => {
+    const r = accessReading(module_)
+    expect(module_.access).toBeUndefined()
+    expect(r.restricted).toBe(false)
+    expect(r.say).toBe('')
+    expect(r.hint).toBe('')
+  })
+
+  it('treats an empty list as unrestricted, exactly as access.ts does', () => {
+    /* taking the last role off a module must not leave a wall with no
+       door in it — `isUnrestricted` is the one verdict and this
+       follows it rather than keeping a second opinion */
+    expect(accessReading(restricted([])).restricted).toBe(false)
+  })
+
+  it('counts the roles that hold a verb this module still offers', () => {
+    const r = accessReading(
+      restricted([
+        { roleId: 'r1', capabilities: ['browse'] },
+        { roleId: 'r2', capabilities: ['search', 'open'] },
+      ]),
+    )
+    expect(r.restricted).toBe(true)
+    expect(r.roles).toBe(2)
+    expect(r.silent).toBe(0)
+    expect(r.say).toBe('Open to 2 roles')
+    expect(r.hint).toContain('Trailers is restricted')
+  })
+
+  it('says role, not roles, for one of them', () => {
+    expect(accessReading(restricted([{ roleId: 'r1', capabilities: ['browse'] }])).say).toBe(
+      'Open to 1 role',
+    )
+  })
+
+  it('does not count a role left holding a verb the module has switched off', () => {
+    /* `module_` offers browse, search and open. A grant of `edit` made
+       before somebody switched editing off is not in force, and a card
+       claiming that role may work here would promise more than the
+       page it opens onto. */
+    const r = accessReading(restricted([{ roleId: 'r1', capabilities: ['edit'] }]))
+    expect(r.roles).toBe(0)
+    expect(r.silent).toBe(1)
+    expect(r.say).toBe('No role yet')
+    expect(r.hint).toContain('no role may do anything here')
+  })
+
+  it('says no role yet when every row on the list holds nothing', () => {
+    const r = accessReading(
+      restricted([
+        { roleId: 'r1', capabilities: [] },
+        { roleId: 'r2', capabilities: [] },
+      ]),
+    )
+    expect(r.restricted).toBe(true)
+    expect(r.roles).toBe(0)
+    expect(r.silent).toBe(2)
+    expect(r.say).toBe('No role yet')
+  })
+
+  it('names the module in the sentence a reader hears', () => {
+    const r = accessReading(restricted([{ roleId: 'r1', capabilities: ['browse'] }]))
+    expect(r.hint.startsWith('Trailers')).toBe(true)
   })
 })

@@ -73,13 +73,18 @@
    and the dashboard is where the rest of them still are.
    ============================================================ */
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
-import { Dashboard, ModuleIndex, NewModuleDialog } from '@/features/modules'
+import {
+  Dashboard,
+  ModuleIndex,
+  ModuleSettings,
+  NewModuleDialog,
+} from '@/features/modules'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { ViewStage } from './ViewStage'
@@ -89,6 +94,17 @@ interface DetailAt {
   moduleId: string
   tableId: string
   rowId: string
+}
+
+/** Whose set-up is on screen, and which panel it was asked to land
+ *  on. Held here rather than in the shell's `Stage` union for the same
+ *  reason the open ITEM is: it is a position inside a module, and
+ *  putting it in the union would close and reopen the stage — a fade,
+ *  a remount, and a lost scroll position — every time somebody pressed
+ *  Settings and pressed Catalogue again. */
+interface SettingsAt {
+  moduleId: string
+  focus?: 'rules'
 }
 
 export interface ModuleStageProps {
@@ -114,6 +130,7 @@ export function ModuleStage({
   const entities = useProjectStore((s) => s.entities)
 
   const [detail, setDetail] = useState<DetailAt | null>(null)
+  const [settings, setSettings] = useState<SettingsAt | null>(null)
   const [creating, setCreating] = useState(false)
 
   /* The id counts as open only when the module is really there — a
@@ -125,12 +142,49 @@ export function ModuleStage({
   const item =
     detail && open && detail.moduleId === open.id && entities[detail.tableId] ? detail : null
 
+  /* AND THE SAME RULE FOR THE SET-UP PAGE. A settings page must never
+     outlive the module it is about, and must never be showing one
+     module's panels while the bar names another.
+
+     IT IS RESOLVED BY ID, NOT FROM `open`, AND THAT IS THE WHOLE
+     REASON THE CARD'S DOOR WORKS. A dashboard card's gear is pressed
+     while NO module is open: this stage is the dashboard's window
+     (`moduleId` null), and a module's window is a DIFFERENT window —
+     `winKey` is `module:dash` against `module:<id>`, and the shell
+     draws the focused window under `key={focused.id}`. So opening the
+     module first and then asking for its settings unmounts this
+     component between the two, and the settings state goes with it:
+     measured, on the seeded project, as a gear that landed on the
+     catalogue. The set-up page is therefore drawn where it was asked
+     for — over the dashboard — and closing it puts the person back on
+     the list of cards they pressed, rather than inside a module they
+     never asked to open.
+
+     WHILE A MODULE IS OPEN THE OLD RULE STILL STANDS: only that
+     module's set-up may be on screen, or the bar would name one place
+     and the panels another. */
+  const setupModule = settings ? modules[settings.moduleId] : undefined
+  const setup =
+    settings && setupModule && (!open || open.id === settings.moduleId) ? settings : null
+
   /* ESCAPE IS OURS ONLY WHILE THE BOX IS OURS. When an item is open this
      stage hands its whole box to a `ViewStage`, whose own back goes to
      the module's list — so that stage owns the keystroke, and ours must
      stand down or one press would close the module as well as the item.
      `null` is how that is said; see stageKeys.ts. */
-  useStageEscape(item ? null : onClose)
+  /* AND WHEN THE SET-UP PAGE IS UP, ESCAPE CLOSES THAT — one level at
+     a time, the same discipline as the item above. A single press
+     that closed the whole stage from four levels down is how somebody
+     loses their place. `useCallback` because the hook re-binds the
+     listener on identity. */
+  const escape = useCallback(() => {
+    if (setup) {
+      setSettings(null)
+      return
+    }
+    onClose()
+  }, [setup, onClose])
+  useStageEscape(item ? null : escape)
 
   /* THE DETAIL, AND NOTHING OF OURS AROUND IT. Keyed on the row so a
      different item is a different page rather than the same page
@@ -155,20 +209,27 @@ export function ModuleStage({
     )
   }
 
+  /* WHAT THE BAR IS ABOUT. The module that is open, or — when a
+     dashboard card's gear opened a set-up page over the list — the
+     module that page is about. The crumb names the place whose panels
+     are on screen; a bar reading "Modules · how this place is set up"
+     names no place at all. */
+  const subject = setup && setupModule ? setupModule : open
+
   /* The primary table's kind mark, so the bar says what sort of place
      this is at a glance. Guarded: a module whose primary table has
      been struck from the sheet still draws, without a mark. */
-  const primary = open ? entities[open.tableIds[0] ?? ''] : undefined
+  const primary = subject ? entities[subject.tableIds[0] ?? ''] : undefined
 
-  const style = open
-    ? ({ '--view-accent': accentVar(open.accent) } as CSSProperties)
+  const style = subject
+    ? ({ '--view-accent': accentVar(subject.accent) } as CSSProperties)
     : undefined
 
   return (
     <div
       className="shell-viewstage"
       role="region"
-      aria-label={open ? open.name : 'Modules'}
+      aria-label={subject ? subject.name : 'Modules'}
       style={style}
       /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line every
          other stage carries: the sheet's window-level handler offers to
@@ -198,7 +259,7 @@ export function ModuleStage({
               <TableKindSymbol kind={kindOf(primary.kind)} size={ICON_SIZE.small} />
             </span>
           ) : null}
-          <span className="shell-view-what-name">{open ? open.name : 'Modules'}</span>
+          <span className="shell-view-what-name">{subject ? subject.name : 'Modules'}</span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>
@@ -218,7 +279,11 @@ export function ModuleStage({
               stages' asides already have: a phrase about the SORT of
               screen you are on, not a summary of its contents. */}
           <span className="shell-view-what-say">
-            {open ? 'a place in your business' : 'the places in your business'}
+            {setup
+              ? 'how this place is set up'
+              : open
+                ? 'a place in your business'
+                : 'the places in your business'}
           </span>
         </p>
 
@@ -248,16 +313,43 @@ export function ModuleStage({
           nest a scrollbar inside a scrollbar and strand the sticky
           section heads of a seven-brand index. */}
       <div className="shell-module-well">
-        {open ? (
+        {setup && setupModule ? (
+          /* ONE SURFACE AT A TIME. The set-up page REPLACES whatever
+             it was asked for from — the catalogue when the gear inside
+             a module opened it, the list of cards when a card's own
+             gear did. It is five panels, and a catalogue that started
+             below them would be a catalogue nobody could reach.
+
+             KEYED ON THE MODULE, so pressing one card's gear and then
+             another's is a new page rather than the same page
+             re-pointed at a different place. */
+          <ModuleSettings
+            key={`${setupModule.id}:settings`}
+            module={setupModule}
+            focus={setup.focus}
+            /* THE BUTTON THAT CLOSES THIS PAGE SAYS "Catalogue", so it
+               has to arrive at one. Pressed inside a module it drops
+               back to the list that was already underneath; pressed
+               from a dashboard card — where there is no catalogue
+               under it — it opens the module the page was about. A
+               caption naming a destination it cannot promise is the
+               fault this stage's own header is written against, and
+               Escape still goes the other way, back to the cards. */
+            onDone={() => {
+              setSettings(null)
+              if (!open) onOpen(setupModule.id)
+            }}
+          />
+        ) : open ? (
           /* KEYED ON THE MODULE, because everything the index holds is
              a position INSIDE one: what has been typed in the find box,
-             and whether the gear is on. Switching modules through the
+             and which drawer is open. Switching modules through the
              panel's door without this arrives at a different place
-             already filtered by the last module's search, or already in
-             design mode over somebody else's page. */
+             already filtered by the last module's search. */
           <ModuleIndex
             key={open.id}
             module={open}
+            onSettings={(focus) => setSettings({ moduleId: open.id, focus })}
             onOpen={(tableId, rowId) => setDetail({ moduleId: open.id, tableId, rowId })}
             /* THE QUOTES RAISED HERE ARE DOORS, not a readout. The
                index names them as a fact about this place; only the
@@ -270,7 +362,19 @@ export function ModuleStage({
             onOpenQuote={onQuote}
           />
         ) : (
-          <Dashboard onOpen={(id) => onOpen(id)} onNew={() => setCreating(true)} />
+          <Dashboard
+            onOpen={(id) => onOpen(id)}
+            /* THE CARD'S OWN DOOR INTO SET-UP — and it does NOT open
+               the module on the way. Opening it first would swap this
+               stage for the module's own window, unmount this
+               component and take the request with it (see `setup`
+               above, where the whole measurement is written down), and
+               it would also leave somebody who came to set a logo
+               standing in a catalogue they did not ask for. The page
+               is drawn here; closing it is the list of cards again. */
+            onSettings={(id) => setSettings({ moduleId: id })}
+            onNew={() => setCreating(true)}
+          />
         )}
       </div>
 

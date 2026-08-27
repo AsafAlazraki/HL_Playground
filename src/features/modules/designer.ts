@@ -319,3 +319,49 @@ export function moveViewBlock(view: ViewDef, blockId: string, dir: -1 | 1): void
   if (blocks === view.blocks) return
   registerViewDef({ ...view, blocks, updatedAt: nowIso() })
 }
+
+/* ============================================================
+   WHERE A CARD SITS ON THE DASHBOARD.
+
+   `ModuleDef.order` is the field and the dashboard reads it
+   ascending, so putting a place where its owner wants it is one
+   number per module and nothing else. This works out which of those
+   numbers actually have to change.
+
+   IT RENUMBERS TO 0…n-1 AND ONLY WHERE THE VALUE DIFFERS. The stored
+   orders are whatever they were when each module was made — five
+   modules seeded 0,1,2,3,4, a sixth added by hand landing on 5, and
+   a project imported from somewhere else carrying any integers at
+   all. Writing the drawn INDEX makes the field canonical, so the
+   second move on the same dashboard rewrites exactly the two cards
+   that swapped. Every write costs an `updatedAt` and a save, which is
+   the whole reason the list is filtered rather than rewritten whole.
+
+   NOTHING IS INVENTED AND NOTHING IS LOST. A move that would fall off
+   either end returns an empty plan — `moveId` hands back the same
+   array and this compares it by identity — so the first card's "move
+   earlier" is refused rather than silently wrapping to the end.
+   ============================================================ */
+
+/** One card moved one place, as the writes that puts it there.
+ *
+ *  `cards` must be in the order they are DRAWN, which is the order
+ *  the dashboard sorts them into; the plan is empty when the move
+ *  cannot be made or would change nothing. */
+export function reorderPlan(
+  cards: readonly ModuleDef[],
+  id: string,
+  dir: -1 | 1,
+): { id: string; order: number }[] {
+  const ids = cards.map((m) => m.id)
+  const next = moveId(ids, id, dir)
+  /* identity, not equality: `moveId` returns the list it was given
+     when the move falls off an end, and `ids` is fresh on every call */
+  if (next === ids) return []
+  const stored = new Map(cards.map((m) => [m.id, m.order]))
+  const out: { id: string; order: number }[] = []
+  next.forEach((mid, i) => {
+    if (stored.get(mid) !== i) out.push({ id: mid, order: i })
+  })
+  return out
+}

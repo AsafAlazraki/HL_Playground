@@ -7,6 +7,7 @@ import type {
   RuleDef,
   ViewDef,
   ModuleDef,
+  RoleDef,
 } from '@/types/model'
 
 /** Local IndexedDB store. The repository (repository.ts) is the only
@@ -19,6 +20,7 @@ export const db = new Dexie('helmlogic-dynamic-config') as Dexie & {
   rows: EntityTable<RowData, 'id'>
   views: EntityTable<ViewDef, 'id'>
   modules: EntityTable<ModuleDef, 'id'>
+  roles: EntityTable<RoleDef, 'id'>
 }
 
 db.version(1).stores({
@@ -59,4 +61,22 @@ db.version(3).stores({
   rows: 'id, entityId',
   views: 'id',
   modules: 'id',
+})
+
+/* v4 adds the roles table — the named jobs at the dealership an admin
+   writes in their own words. Same shape as v3 and for the same reason:
+   `ModuleDef.access` points at a role by id, so a role that did not
+   survive a refresh would leave every grant on every module pointing
+   at nothing. Dexie carries the earlier stores forward untouched, so a
+   sheet made before roles existed opens with none — which is exactly
+   the state the contract calls unrestricted. */
+db.version(4).stores({
+  meta: 'id',
+  entities: 'id',
+  groups: 'id',
+  rules: 'id',
+  rows: 'id, entityId',
+  views: 'id',
+  modules: 'id',
+  roles: 'id',
 })

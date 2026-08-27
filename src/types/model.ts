@@ -891,6 +891,19 @@ export interface ModuleDef {
   accent: AccentKey
   /** position on the dashboard, ascending */
   order: number
+
+  /** THE DEALER'S OWN MARK FOR THIS PLACE. A module is a place in a
+   *  business and a business has a mark for it — the brand it sells,
+   *  the workshop's badge. Optional, and the kind symbol plus the
+   *  accent stay the fallback, because a module nobody has given a
+   *  logo must still read as itself. */
+  logo?: ImageRef
+
+  /** WHO MAY DO WHAT HERE. Absent = unrestricted, which is how every
+   *  module written before this behaved and still behaves. See
+   *  `ModuleAccess` for why it shares the capability vocabulary. */
+  access?: ModuleAccess[]
+
   createdAt: string
   updatedAt: string
 }
@@ -898,6 +911,49 @@ export interface ModuleDef {
 /** Can this table be the master of a module? A join records pairs and
  *  has no independent existence, so it appears INSIDE a module as a
  *  related block and never as a module of its own. */
+/* ---------------------------------------------------------- */
+/* WHO MAY DO WHAT, IN A MODULE                                */
+/* ---------------------------------------------------------- */
+
+/** A named job at the dealership — "Salesperson", "Service manager",
+ *  "Owner". Roles are DATA, not code: this app's argument is that a
+ *  dealer configures their own business without a developer, and a
+ *  permission list compiled into the app is the exact thing production
+ *  got wrong — docs/plan/hl-admin.md §2.3, "the permission list is
+ *  code, not data".
+ *
+ *  A role says nothing on its own. It becomes real only where a module
+ *  grants it capabilities: see `ModuleDef.access`. */
+export interface RoleDef {
+  id: string
+  /** the dealership's own word for the job */
+  name: string
+  /** one line: who this is, in the owner's words. Never generated. */
+  description?: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** What one role may do in one module.
+ *
+ *  DELIBERATELY THE SAME VOCABULARY AS THE MODULE ITSELF. A module
+ *  already declares what CAN be done in it (`ModuleDef.capabilities`);
+ *  this says which of those a role actually gets. Access can therefore
+ *  never exceed the module — granting `quote` to a role in a module
+ *  that cannot quote is not a smaller permission, it is a
+ *  contradiction, and sharing one vocabulary is what makes that
+ *  checkable rather than a convention.
+ *
+ *  ABSENT MEANS UNRESTRICTED. A module with no `access` behaves
+ *  exactly as it did before this existed. Access is something a dealer
+ *  turns on when more than one kind of person uses the system — not a
+ *  wall every new module starts behind. */
+export interface ModuleAccess {
+  roleId: string
+  /** a subset of the module's own capabilities */
+  capabilities: ModuleCapability[]
+}
+
 export const canBeModuleMaster = (e: EntityDef): boolean => e.role !== 'join'
 
 /** How a single related row was decided, so the page can always answer

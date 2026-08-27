@@ -11,6 +11,14 @@
    button on the sheet is CREATE TABLE. The preview does the
    explaining, so nothing has to be read twice.
 
+   AND THERE IS A THIRD ANSWER TO QUESTION ONE: I already have it in
+   a spreadsheet. `Read a CSV` under the kind cards reads the file's
+   own columns and proposes a table shaped like it — see
+   ./CsvTableStep and @/features/io/csvSchema. It is on THIS sheet
+   rather than behind a door of its own because it answers the same
+   question the cards do; a second way to make a table is one too
+   many.
+
    A PRESET IS A STARTING POINT, NEVER A CAGE. The chosen chain is
    typed in, not read off: every level plate on it is a text field,
    each plate carries an × that removes that level, and + LEVEL adds
@@ -31,6 +39,8 @@ import {
   type XY,
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
+import { readCsvSchema, type CsvSchemaPlan } from '@/features/io/csvSchema'
+import { CsvTableStep } from './CsvTableStep'
 import { TableKindSymbol } from './symbols'
 import { buildPreview, previewNote } from './preview'
 import { applyStructure } from './structure'
@@ -199,6 +209,7 @@ export function NewTableDialog({
   const levelRefs = useRef<(HTMLInputElement | null)[]>([])
   const addRef = useRef<HTMLButtonElement | null>(null)
   const nameRef = useRef<HTMLInputElement | null>(null)
+  const csvRef = useRef<HTMLInputElement | null>(null)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
 
@@ -217,6 +228,20 @@ export function NewTableDialog({
   /* the emptied plate that stopped the last CREATE — index, or null.
      Not a modal, not a disabled button: the sheet just says which one. */
   const [blankAt, setBlankAt] = useState<number | null>(null)
+  /* the file's own reading, once one has been picked. Holding the PLAN
+     rather than the file is what keeps this sheet honest: a plan is a
+     reading and never a write, so a person can look at it, change
+     their mind and close, and nothing has happened. */
+  const [csv, setCsv] = useState<CsvSchemaPlan | null>(null)
+  /* WHICH READING THIS IS, and it is the `key` on the step below.
+     `CsvTableStep` holds one piece of state per COLUMN — the name, the
+     type, the options — seeded from the plan it opened with. A second
+     file read into the same mounted step keeps that state and lines it
+     up against a different set of columns: measured, picking a
+     semicolon file and then a good one crashed the step on
+     `names[i].trim()` of a column the first file did not have. A new
+     reading is a new step, so it gets a new key and mounts clean. */
+  const [csvSeq, setCsvSeq] = useState(0)
 
   /* every opening starts clean — a dialog that remembers the last
      answer is a dialog you have to check before you trust it */
@@ -228,6 +253,7 @@ export function NewTableDialog({
     setName(startKind ? TABLE_KINDS[startKind].label : '')
     setNameTouched(false)
     setBlankAt(null)
+    setCsv(null)
   }, [open, startKind])
 
   /* focus goes into the sheet and comes back out to whatever opened it */
@@ -241,11 +267,56 @@ export function NewTableDialog({
     }
   }, [open])
 
-  const step: 1 | 2 = kind ? 2 : 1
+  /* three answers to question one: a kind (2), a file (3), or none
+     chosen yet (1). A file wins over a kind because picking one is a
+     later act than the card that was clicked before it. */
+  const step: 1 | 2 | 3 = csv ? 3 : kind ? 2 : 1
+
+  /* -- the third answer: a file ------------------------------- */
+
+  const pickCsv = useCallback(() => {
+    const input = csvRef.current
+    if (!input) return
+    /* cleared first, so picking the SAME file twice still fires a
+       change — somebody who fixes their spreadsheet and re-picks it
+       must not be met with silence */
+    input.value = ''
+    input.click()
+  }, [])
+
+  const readCsv = useCallback(async (file: File) => {
+    let text: string
+    try {
+      text = await file.text()
+    } catch {
+      /* the browser would not hand the bytes over. Said here, on the
+         sheet, as a plan with one refusal — the same shape every
+         other refusal on this screen takes. */
+      setCsvSeq((n) => n + 1)
+      setCsv({
+        ok: false,
+        fileName: file.name,
+        refusals: [{ id: 'unreadable', say: `${file.name} could not be opened.` }],
+        columns: [],
+        rows: [],
+        nameColumn: 0,
+        blankRowsDropped: 0,
+        shortRows: [],
+      })
+      return
+    }
+    setCsvSeq((n) => n + 1)
+    setCsv(readCsvSchema(text, file.name))
+  }, [])
 
   useEffect(() => {
     if (!open) return
     if (step === 1) firstCardRef.current?.focus()
+    /* the file's own sheet arrives with the caret nowhere in
+       particular ON PURPOSE: the first thing to do there is READ what
+       it found, and a caret sitting in the first column's name says
+       "start typing" over a screen whose whole job is to be checked */
+    else if (step === 3) rootRef.current?.focus()
     /* question two opens with the caret in the first level: the fastest
        way to say "these words are yours" is to be already in one. Enter
        still creates the table, so a dragged chip is two keystrokes. */
@@ -354,7 +425,11 @@ export function NewTableDialog({
     setName((prev) => (nameTouchedRef.current ? prev : TABLE_KINDS[next].label))
   }, [])
 
-  const back = useCallback(() => setKind(null), [])
+  /* one way out of both second screens, back to the cards */
+  const back = useCallback(() => {
+    setCsv(null)
+    setKind(null)
+  }, [])
 
   const choosePreset = useCallback((p: StructurePreset) => {
     setStructureId(p.id)
@@ -462,13 +537,18 @@ export function NewTableDialog({
       >
         <header className="tk-head">
           <div className="tk-head-top">
-            {step === 2 && (
+            {step !== 1 && (
               <button type="button" className="tk-back" onClick={back}>
                 <BackMark />
                 Table kinds
               </button>
             )}
-            {step === 2 && meta && kind ? (
+            {step === 3 && csv ? (
+              /* the file's own name, in mono and NOT uppercased — a
+                 file name is a name, and uppercasing a name loses
+                 which letters the person actually typed */
+              <span className="tk-file-tag">{csv.fileName}</span>
+            ) : step === 2 && meta && kind ? (
               <span className="tk-kind-tag">
                 <TableKindSymbol kind={kind} size={16} />
                 {meta.label}
@@ -487,11 +567,39 @@ export function NewTableDialog({
             </button>
           </div>
           <h2 className="block-heading tk-question" id="tk-question">
-            {step === 1 ? 'What kind of table is this?' : 'How is it structured?'}
+            {step === 3
+              ? csv?.ok
+                ? 'Do these columns look right?'
+                : 'That file cannot be read as a table'
+              : step === 1
+                ? 'What kind of table is this?'
+                : 'How is it structured?'}
           </h2>
         </header>
 
-        {step === 1 || !meta || !preset || !preview ? (
+        {/* one picker, kept out of the layout, shared by the door on
+            question one and the "choose another file" every refusal
+            offers */}
+        <input
+          ref={csvRef}
+          type="file"
+          className="tk-csv-file"
+          accept=".csv,text/csv,text/plain"
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file) void readCsv(file)
+          }}
+        />
+
+        {step === 3 && csv ? (
+          <CsvTableStep
+            key={csvSeq}
+            plan={csv}
+            position={position}
+            onAnotherFile={pickCsv}
+            onCreated={() => closeRef.current()}
+          />
+        ) : step === 1 || !meta || !preset || !preview ? (
           <div className="tk-step1">
             <div className="tk-kinds">
               {KIND_ORDER.map((k, i) => {
@@ -513,6 +621,22 @@ export function NewTableDialog({
                   </button>
                 )
               })}
+            </div>
+
+            {/* THE THIRD ANSWER. Under the cards rather than among
+                them: the cards say what a table HOLDS, and this says
+                where its columns COME FROM — two different questions
+                that would read as seven alternatives if they shared a
+                grid. */}
+            <div className="tk-csv-door">
+              <p className="tk-csv-door-say">
+                Already have it in a spreadsheet? Choose a CSV and this reads its own
+                columns — one column here for each column there, typed from the values in
+                it. You check every one before anything is made.
+              </p>
+              <button type="button" className="btn tk-csv-door-pick" onClick={pickCsv}>
+                Read a CSV
+              </button>
             </div>
           </div>
         ) : (

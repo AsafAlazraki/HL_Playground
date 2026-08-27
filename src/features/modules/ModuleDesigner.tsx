@@ -180,8 +180,10 @@ function Capabilities({
     <section className="md-panel">
       <h3 className="md-panel-name mono-label">What may be done here</h3>
       <p className="md-panel-say">
-        These are the verbs, not the people. Everyone using this browser sees the same
-        module — when roles arrive, a role is given a subset of what is switched on here.
+        These are the verbs, not the people. What is switched on here is the whole of
+        what this module can do — and it is the column list of{' '}
+        <em>Who may do what</em> above, because a role can only ever be given a subset of
+        it. Switch one off and every role holding it stops holding it.
       </p>
 
       <ul className="md-caps">

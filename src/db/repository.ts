@@ -8,6 +8,7 @@ import type {
   RuleDef,
   ViewDef,
   ModuleDef,
+  RoleDef,
 } from '@/types/model'
 
 /** Everything the UI layer needs from persistence. A future backend
@@ -20,6 +21,9 @@ export interface ProjectSnapshot {
   rows: RowData[]
   views: ViewDef[]
   modules: ModuleDef[]
+  /** the named jobs at the dealership. A project made before roles
+   *  existed loads with none, which is the unrestricted state. */
+  roles: RoleDef[]
 }
 
 export interface ProjectRepository {
@@ -105,6 +109,7 @@ interface Ledger {
   rows: Map<string, RowData>
   views: Map<string, ViewDef>
   modules: Map<string, ModuleDef>
+  roles: Map<string, RoleDef>
 }
 
 const emptyLedger = (): Ledger => ({
@@ -115,6 +120,7 @@ const emptyLedger = (): Ledger => ({
   rows: new Map(),
   views: new Map(),
   modules: new Map(),
+  roles: new Map(),
 })
 
 /** What one store's write comes to: the records to put, the keys to
@@ -161,15 +167,16 @@ class DexieProjectRepository implements ProjectRepository {
       this.ledger = emptyLedger()
       return null
     }
-    const [entities, groups, rules, rows, views, modules] = await Promise.all([
+    const [entities, groups, rules, rows, views, modules, roles] = await Promise.all([
       db.entities.toArray(),
       db.groups.toArray(),
       db.rules.toArray(),
       db.rows.toArray(),
       db.views.toArray(),
       db.modules.toArray(),
+      db.roles.toArray(),
     ])
-    const snapshot = { meta, entities, groups, rules, rows, views, modules }
+    const snapshot = { meta, entities, groups, rules, rows, views, modules, roles }
     /* THE OBJECTS WE HAND UP ARE THE OBJECTS ON DISK. The store keeps
        these very objects until something edits them, so the first save
        after a load writes only what the session has actually changed
@@ -182,6 +189,7 @@ class DexieProjectRepository implements ProjectRepository {
       rows: new Map(rows.map((x) => [x.id, x])),
       views: new Map(views.map((x) => [x.id, x])),
       modules: new Map(modules.map((x) => [x.id, x])),
+      roles: new Map(roles.map((x) => [x.id, x])),
     }
     return snapshot
   }
@@ -229,6 +237,7 @@ class DexieProjectRepository implements ProjectRepository {
     const rows = diffStore(s.rows, known.rows)
     const views = diffStore(s.views, known.views)
     const modules = diffStore(s.modules, known.modules)
+    const roles = diffStore(s.roles, known.roles)
     const metaChanged = known.meta !== s.meta
 
     if (
@@ -239,7 +248,8 @@ class DexieProjectRepository implements ProjectRepository {
       rules.quiet &&
       rows.quiet &&
       views.quiet &&
-      modules.quiet
+      modules.quiet &&
+      roles.quiet
     ) {
       /* NOTHING MOVED. A pan, a selection or a re-render that stamped
          `updatedAt` on nothing else has no business opening a
@@ -280,7 +290,16 @@ class DexieProjectRepository implements ProjectRepository {
 
     await db.transaction(
       'rw',
-      [db.meta, db.entities, db.groups, db.rules, db.rows, db.views, db.modules],
+      [
+        db.meta,
+        db.entities,
+        db.groups,
+        db.rules,
+        db.rows,
+        db.views,
+        db.modules,
+        db.roles,
+      ],
       async () => {
         /* the stores are independent; the transaction is what makes
            them land together */
@@ -292,6 +311,7 @@ class DexieProjectRepository implements ProjectRepository {
           apply(db.rows, rows),
           apply(db.views, views),
           apply(db.modules, modules),
+          apply(db.roles, roles),
         ])
       },
     )
@@ -305,6 +325,7 @@ class DexieProjectRepository implements ProjectRepository {
       rows: rows.next,
       views: views.next,
       modules: modules.next,
+      roles: roles.next,
     }
   }
 
@@ -325,7 +346,16 @@ class DexieProjectRepository implements ProjectRepository {
     this.ledger = null
     await db.transaction(
       'rw',
-      [db.meta, db.entities, db.groups, db.rules, db.rows, db.views, db.modules],
+      [
+        db.meta,
+        db.entities,
+        db.groups,
+        db.rules,
+        db.rows,
+        db.views,
+        db.modules,
+        db.roles,
+      ],
       async () => {
         await Promise.all([
           db.meta.clear(),
@@ -335,6 +365,7 @@ class DexieProjectRepository implements ProjectRepository {
           db.rows.clear(),
           db.views.clear(),
           db.modules.clear(),
+          db.roles.clear(),
         ])
       },
     )

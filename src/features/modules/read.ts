@@ -58,6 +58,11 @@ import { isCostColumn, localDay, priceLevelsFor, type QuoteDef } from '@/feature
    by direct path for the same reason `columns` is above: nothing here
    needs the views feature's React surface */
 import { existingRelations } from '@/features/views/relations'
+/* THE ONE VERDICT ABOUT WHO MAY DO WHAT. `accessReading` at the foot
+   of this file is a SENTENCE about a module; whether that module is
+   restricted at all, and what a role is really holding, is decided
+   next door and is decided once. */
+import { grantedTo, isUnrestricted } from './access'
 
 /* ---------------------------------------------------------- */
 /* The module's tables and its size                           */
@@ -759,6 +764,85 @@ export function censusLine(c: ModuleCensus): string {
   }
   const head = parts.join(' ')
   return c.held > 0 ? `${head} · ${grouped(c.held)} no longer sold` : head
+}
+
+/* ============================================================
+   WHO MAY DO WHAT HERE — read for a CARD, not for an editor.
+
+   THE VERDICT IS NOT TAKEN HERE. `access.ts` is where "is this module
+   restricted" and "what is a role actually holding" are decided, for
+   the settings grid that writes them and for anything that has to
+   obey them; this is the one sentence a dashboard card prints, built
+   on those answers rather than beside them. A card that called a
+   module restricted while the grid called it open would be the same
+   disagreement `moduleCensus` exists to prevent, one floor up.
+
+   ABSENT — AND EMPTY — MEAN UNRESTRICTED, which is `isUnrestricted`'s
+   rule and is how every module in this project behaves today. So for
+   an unrestricted module there is nothing true to say at all: a
+   dashboard that stamped "open to everyone" on five cards would be
+   inventing five decisions nobody made, and would turn the list of
+   places in a business into an admin console.
+
+   A ROLE COUNTS WHEN IT HOLDS SOMETHING THE MODULE STILL OFFERS.
+   `grantedTo` intersects with `module.capabilities`, so a role left
+   holding only verbs that were switched off an hour later may do
+   nothing here and is not counted as a role that may work here — a
+   card that said otherwise would promise more than the place it
+   opens onto.
+
+   IT NAMES NO ROLE. A role's NAME lives on `RoleDef`, in the store;
+   this file is store-free by construction. Counting is the whole of
+   what can be said honestly from a `ModuleDef` alone, and the names
+   are one press away on the settings surface.
+   ============================================================ */
+
+export interface AccessReading {
+  /** `access` is present. Absent = unrestricted, and nothing is said. */
+  restricted: boolean
+  /** roles granted at least one verb THIS module still declares */
+  roles: number
+  /** roles named here holding nothing this module can still do —
+   *  granted an empty list, or only verbs since switched off */
+  silent: number
+  /** the chip on a card. '' when there is nothing true to say. */
+  say: string
+  /** the same fact as a sentence, for a reader who cannot see the
+   *  chip and for the card's own accessible name. '' when unrestricted. */
+  hint: string
+}
+
+const NO_ACCESS: AccessReading = {
+  restricted: false,
+  roles: 0,
+  silent: 0,
+  say: '',
+  hint: '',
+}
+
+/** What a card may honestly say about who may work in this module. */
+export function accessReading(module: ModuleDef): AccessReading {
+  if (isUnrestricted(module)) return NO_ACCESS
+
+  let roles = 0
+  let silent = 0
+  for (const grant of module.access ?? []) {
+    if (grantedTo(module, grant.roleId).length > 0) roles += 1
+    else silent += 1
+  }
+
+  return {
+    restricted: true,
+    roles,
+    silent,
+    say: roles === 0 ? 'No role yet' : `Open to ${roles} ${roles === 1 ? 'role' : 'roles'}`,
+    hint:
+      roles === 0
+        ? `${module.name} is restricted, and no role may do anything here yet.`
+        : `${module.name} is restricted: ${roles} ${
+            roles === 1 ? 'role may' : 'roles may'
+          } work here.`,
+  }
 }
 
 /* ============================================================

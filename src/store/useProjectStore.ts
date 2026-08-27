@@ -24,6 +24,7 @@ import {
   type ViewDef,
   type ViewBlock,
   type ModuleDef,
+  type RoleDef,
   canBeModuleMaster,
   DEFAULT_CAPABILITIES,
   type XY,
@@ -155,7 +156,7 @@ export type InspectorTab = 'schema' | 'data'
  *  `meta`, `selection` and `inspectorTab` are deliberately not in it. */
 type DataSlice = Pick<
   ProjectStore,
-  'entities' | 'groups' | 'rules' | 'rowsByEntity' | 'views' | 'modules'
+  'entities' | 'groups' | 'rules' | 'rowsByEntity' | 'views' | 'modules' | 'roles'
 >
 
 export interface HistoryEntry {
@@ -242,6 +243,35 @@ interface ProjectStore {
     name?: string
     position?: XY
   }) => EntityDef
+
+  /** ONE TABLE, COLUMNS AND ROWS TOGETHER, IN ONE STEP.
+   *
+   *  `createTable` builds a table from a KIND — the preset knows the
+   *  columns before the data does. This is the other direction: the
+   *  FILE knows the columns, and the columns and the rows arrive at
+   *  the same instant because they were read from the same read.
+   *
+   *  Written as one action rather than a createTable + n addField +
+   *  m addRow for two reasons, and both are behaviour, not tidiness.
+   *  A half-made table cannot exist — 2,913 rows landing one at a
+   *  time is 2,913 renders and 2,913 chances to be interrupted with
+   *  a table on the sheet that has columns and no data. And ONE
+   *  Ctrl+Z takes the whole import back, which is what rule 9 asks
+   *  of an act this large: it is undoable, so it gets a toast, not a
+   *  dialog.
+   *
+   *  `rows` is aligned to `columns`, positionally. `null` is an empty
+   *  cell and is not stored. */
+  importTable: (spec: {
+    name: string
+    kind: TableKind
+    columns: Array<{ name: string; type: FieldType; options?: string[] }>
+    /** one entry per row, each aligned to `columns` */
+    rows: CellValue[][]
+    /** index into `columns` of the column that names a row */
+    nameColumn?: number
+    position?: XY
+  }) => EntityDef | null
 
   /* entities */
   /** `keepId` IS FOR WELL-KNOWN TABLES, AND FOR NOTHING ELSE — the
@@ -344,6 +374,33 @@ interface ProjectStore {
   updateModule: (id: string, patch: Partial<Omit<ModuleDef, 'id' | 'createdAt'>>) => void
   deleteModule: (id: string) => void
 
+  /* ============================================================
+     ROLES — the named jobs at the dealership.
+
+     THEY ARE DATA, AND NOTHING SEEDS THEM. There are no roles until
+     somebody writes one down, because the app cannot know whether a
+     yard runs on one person or on nine, and a plausible-sounding
+     "Salesperson" nobody asked for is a fact about their business
+     this app invented. A module with no `access` is unrestricted;
+     that is the state every project is in until an admin decides
+     otherwise.
+
+     A ROLE SAYS NOTHING ON ITS OWN. It becomes real only where a
+     module grants it capabilities — see `ModuleDef.access` and
+     `@/features/modules/access`.
+     ============================================================ */
+  roles: Record<string, RoleDef>
+  /** `keepId` is for restoring one, and follows `createView`'s rule:
+   *  ignored when the id is already taken. Returns null for an empty
+   *  name — a role nobody can point at is not a role. */
+  createRole: (name: string, description?: string, keepId?: string) => RoleDef | null
+  updateRole: (id: string, patch: Partial<Omit<RoleDef, 'id' | 'createdAt'>>) => void
+  /** Takes the role off every module's access list in the same step,
+   *  so one Ctrl+Z puts the job AND its grants back together. A
+   *  dangling roleId would otherwise read on screen as a grant to
+   *  nobody. */
+  deleteRole: (id: string) => void
+
   /** which rule the canvas is currently drawing (UI state — not persisted) */
   activeRuleId: string | null
   setActiveRule: (id: string | null) => void
@@ -442,6 +499,7 @@ const sliceOf = (s: ProjectStore): DataSlice => ({
   rowsByEntity: s.rowsByEntity,
   views: s.views,
   modules: s.modules,
+  roles: s.roles,
 })
 
 /** "Row deleted · Trailers" · "40 cell edits · Boats" · "12 changes" */
@@ -608,6 +666,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     rowsByEntity: {},
     views: {},
     modules: {},
+    roles: {},
     selection: null,
     inspectorTab: 'schema',
 
@@ -636,6 +695,9 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
              loads with none, which is the correct empty state */
           views: Object.fromEntries((snap.views ?? []).map((v) => [v.id, v])),
           modules: Object.fromEntries((snap.modules ?? []).map((m) => [m.id, m])),
+          /* `roles` is a v4 store — a project saved before it existed
+             loads with none, which is the unrestricted state */
+          roles: Object.fromEntries((snap.roles ?? []).map((r) => [r.id, r])),
           past: [],
           future: [],
         })
@@ -687,6 +749,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         rowsByEntity: {},
         views: {},
         modules: {},
+        roles: {},
         selection: null,
       })
     },
@@ -721,6 +784,12 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
            that cannot draw. */
         views: {},
         modules: {},
+        /* AND THE JOBS GO WITH THEM. A role is a job at THIS
+           dealership and every grant it holds names a module in this
+           project; carrying either into an incoming file would leave
+           somebody else's org chart sitting over somebody else's
+           modules. */
+        roles: {},
         selection: null,
       }))
     },
@@ -735,6 +804,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         rows: Object.values(s.rowsByEntity).flat(),
         views: Object.values(s.views),
         modules: Object.values(s.modules),
+        roles: Object.values(s.roles),
       }
     },
 
@@ -829,6 +899,68 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
       record({ one: 'Table added', where: entity.name })
       mutate((s) => ({
         entities: { ...s.entities, [entity.id]: entity },
+        selection: { kind: 'entity', id: entity.id },
+      }))
+      return entity
+    },
+
+    importTable: ({ name, kind, columns, rows, nameColumn, position }) => {
+      /* A table with no columns is not a table, and nothing above
+         this should ever ask for one — refused rather than created
+         empty, so a caller's mistake cannot become a sheet full of
+         blank tables. */
+      if (columns.length === 0) return null
+
+      const s0 = get()
+      const meta = TABLE_KINDS[kind]
+      const fields: FieldDef[] = columns.map((c) => ({
+        id: newId(),
+        name: c.name.trim() || 'Column',
+        type: c.type,
+        ...(c.options && c.options.length > 0 ? { options: [...c.options] } : {}),
+      }))
+
+      const at = nameColumn !== undefined ? fields[nameColumn] : undefined
+      const stamp = nowIso()
+      const count = Object.keys(s0.entities).length
+
+      const entity: EntityDef = {
+        id: newId(),
+        name: name.trim() || meta.label,
+        kind,
+        role: 'base',
+        accent: meta.accent,
+        fields,
+        displayFieldId: (at ?? fields[0]).id,
+        position:
+          position ?? { x: 120 + (count % 3) * 560, y: 120 + Math.floor(count / 3) * 420 },
+        createdAt: stamp,
+        updatedAt: stamp,
+      }
+
+      const made: RowData[] = rows.map((line) => {
+        const values: Record<string, CellValue> = {}
+        for (let i = 0; i < fields.length; i += 1) {
+          const v = line[i]
+          /* an empty cell is stored as an absence, the same as every
+             other row this app makes — writing nulls would double the
+             size of a 2,913-row import for no reading anywhere */
+          if (v === null || v === undefined || v === '') continue
+          values[fields[i].id] = v
+        }
+        return {
+          id: newId(),
+          entityId: entity.id,
+          values,
+          createdAt: stamp,
+          updatedAt: stamp,
+        }
+      })
+
+      record({ one: 'Table imported', where: entity.name })
+      mutate((s) => ({
+        entities: { ...s.entities, [entity.id]: entity },
+        rowsByEntity: { ...s.rowsByEntity, [entity.id]: made },
         selection: { kind: 'entity', id: entity.id },
       }))
       return entity
@@ -1362,6 +1494,68 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         const modules = { ...s.modules }
         delete modules[id]
         return { modules }
+      })
+    },
+
+    /* -- roles -------------------------------------------------- */
+
+    createRole: (name, description, keepId) => {
+      const clean = name.trim()
+      if (clean === '') return null
+      const role: RoleDef = {
+        id: keepId && !get().roles[keepId] ? keepId : newId(),
+        name: clean,
+        ...(description && description.trim() !== ''
+          ? { description: description.trim() }
+          : {}),
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      }
+      record({ one: 'Role added', where: role.name })
+      mutate((s) => ({ roles: { ...s.roles, [role.id]: role } }))
+      return role
+    },
+
+    updateRole: (id, patch) => {
+      const before = get().roles[id]
+      if (!before) return
+      record({
+        one: 'Role renamed',
+        where: before.name,
+        /* per-keystroke, so retyping a name is one step back and not
+           eleven — the same window `updateCell` uses */
+        key: `role:${id}`,
+      })
+      mutate((s) => {
+        const r = s.roles[id]
+        if (!r) return {}
+        return { roles: { ...s.roles, [id]: touch({ ...r, ...patch }) } }
+      })
+    },
+
+    deleteRole: (id) => {
+      const gone = get().roles[id]
+      if (!gone) return
+      record({ one: 'Role deleted', where: gone.name })
+      mutate((s) => {
+        const roles = { ...s.roles }
+        delete roles[id]
+        /* EVERY GRANT THIS ROLE HELD GOES WITH IT, in the same step.
+           A module left naming a deleted role would draw a row for
+           nobody, and — worse — a module whose only role was this one
+           would still be RESTRICTED, with nothing able to act in it. */
+        const modules = { ...s.modules }
+        for (const m of Object.values(s.modules)) {
+          if (!m.access?.some((a) => a.roleId === id)) continue
+          const rest = m.access.filter((a) => a.roleId !== id)
+          modules[m.id] = touch({
+            ...m,
+            /* back to unrestricted rather than to an empty list: an
+               empty `access` is a wall nobody is on the right side of */
+            access: rest.length > 0 ? rest : undefined,
+          })
+        }
+        return { roles, modules }
       })
     },
 

@@ -39,6 +39,19 @@
       "port": 5417
     },
     {
+      "name": "cards",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5388",
+        "--strictPort"
+      ],
+      "port": 5388
+    },
+    {
       "name": "places",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
@@ -50,6 +63,19 @@
         "--strictPort"
       ],
       "port": 5342
+    },
+    {
+      "name": "verify",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5733",
+        "--strictPort"
+      ],
+      "port": 5733
     }
   ]
 }

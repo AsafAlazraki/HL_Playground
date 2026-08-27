@@ -46,15 +46,18 @@ The catalogue's pictures used to be 184 live hotlinks to eleven manufacturers'
 web servers. They are fetched once, here, and committed:
 
 ```bash
-python tools/seed/fetch_images.py      # needs the network. Writes the pictures
-python tools/seed/emit_images.py       # needs nothing. Writes the map
+python tools/seed/fetch_images.py           # needs the network. Writes the pictures
+python tools/seed/fetch_images.py --mirror  # asks ONLY the dealership's mirror,
+                                            # and only about what we do not hold.
+                                            # Makes no request to any third party.
+python tools/seed/emit_images.py            # needs nothing. Writes the map
 ```
 
 | what | where | committed |
 |---|---|---|
-| the pictures, downscaled | `public/seed-images/*.webp` | yes — 108 files, 3,525,146 bytes |
+| the pictures, downscaled | `public/seed-images/*.webp` | yes — 220 files, 9,141,262 bytes |
 | the measurement | `tools/seed/extracts/images.json` | yes |
-| what the app reads | `src/demos/northsideImages.ts` | yes — generated, 24 KB |
+| what the app reads | `src/demos/northsideImages.ts` | yes — generated, 48 KB |
 | the originals as fetched | `tools/seed/.imgcache/` | **no** — 17 MB, gitignored |
 
 `emit_images.py` is the only writer in this repository that is *not* affected
@@ -68,22 +71,63 @@ local copy at PAINT time and never in the data. That is what keeps
 IMAGE_SPEC.md §5.2 — no bytes on a row, no bytes in IndexedDB, no bytes in an
 export — while still ending the hotlink.
 
-**108 of the 184 addresses MEASURED were obtained; 76 were refused. The
-catalogue then went to full scale and now carries 453 addresses, so 234 of them
-have no answer of any kind** — `NORTHSIDE_PICTURES.unmeasured`, printed by
-`emit.py` on every run and guarded by `northsideImages.test.ts`. An unmeasured
-address behaves exactly like a refused one: the row keeps its address, the app
-says "Held as a link", and nothing is substituted. Clearing it means a few
-hundred requests to nine third-party servers, which is a decision somebody
-makes rather than something a regeneration does on its own — run
-`python tools/seed/fetch_images.py`, which fetches only what is missing.
+**220 of the 226 addresses MEASURED are held; 6 are refused. The catalogue
+carries 453 addresses, so 227 of them have no answer of any kind** —
+`NORTHSIDE_PICTURES.unmeasured`, printed by `emit.py` on every run and guarded
+by `northsideImages.test.ts`. An unmeasured address behaves exactly like a
+refused one: the row keeps its address, the app says "Held as a link", and
+nothing is substituted. Clearing it means a few hundred requests to nine
+third-party servers, which is a decision somebody makes rather than something a
+regeneration does on its own — run `python tools/seed/fetch_images.py`, which
+fetches only what is missing.
 
-**Why the 76 were refused, recorded rather than papered over:** 71 on `www.northsidemarine.com.au`, which answers 403 from
-Cloudflare with `Cf-Mitigated: challenge` to a plain client exactly as it does
-to a browser; 4 on `northsidemarine1.sharepoint.com`, which redirects to a
-Microsoft sign-in; and one `www.stacer.com.au` file that 404s on a host serving
-seventeen others. Nothing is substituted for any of them — they keep their
-address and the app says "Held as a link" with the measured reason.
+### Where 112 of them came from, and why it is not a guess
+
+`www.northsidemarine.com.au` answers 403 from Cloudflare with
+`Cf-Mitigated: challenge` to a plain client exactly as it does to a browser, so
+71 addresses could not be taken from it at all. The dealership had already hit
+that wall and already solved it. Its own remediation run copied every picture
+it recovered into the app's Storage bucket under a name computed from **the
+original address**:
+
+    mpf-mirror/{folder}/{sha1(url).hexdigest()[:16]}.{ext}
+
+    HelmLogic/scripts/mpf/remediate-images.py:170   the hash
+    HelmLogic/scripts/mpf/remediate-images.py:180   the object name
+    HelmLogic/scripts/mpf/remediate-images.py:67    the bucket
+    folder is "dfo" for site-hosted pictures, "motors" for the Yamaha CDN.
+
+**The object's name is a function of the address the workbook typed.** So a
+row's photograph is asked for BY NAME, arithmetically, from that row's own
+address. The bucket is never searched for "a picture that looks like this
+boat" — that is the substitution IMAGE_SPEC.md §6.6 exists to forbid, and it is
+the one outcome worse than a missing picture. A wrong photograph cannot arrive
+this way without a SHA-1 preimage collision.
+
+A **second, independent** check is applied to mirrored bytes and to nothing
+else: a WordPress derivative address states its own pixel size in its filename
+(`620F-1024x683.jpg`), and the bytes have to match or they do not land. On the
+run that took these, 51 of the 70 addresses made that claim and **51 of 51
+agreed, 0 disagreed**. It is applied only here because a picture fetched from
+its own address is self-identifying; one fetched from anywhere else has to
+prove it.
+
+No credential is used — `HelmLogic/storage.rules` grants `allow read` with no
+condition and this is one plain unauthenticated GET per object. Nothing is
+written to that bucket and no Firestore document is read: the mirror is
+addressed arithmetically, so the database that maps rows to pictures is never
+touched. Business data still comes from the workbooks and only from the
+workbooks. Which addresses arrived this way is recorded per entry in
+`extracts/images.json` as `via: mpf-mirror`, with `mirror` (the object) and
+`mirrorKey` (the sha1) beside it, so the chain is re-checkable by anyone.
+
+**The 6 that are still refused, recorded rather than papered over:** 4 on
+`northsidemarine1.sharepoint.com`, which redirects to a Microsoft sign-in and
+which the dealership's own remediation also could not export; 1
+`www.stacer.com.au` file that 404s on a host serving seventeen others; and 1
+`www.northsidemarine.com.au` address the mirror never held either. Nothing is
+substituted for any of them — they keep their address and the app says "Held as
+a link" with the measured reason.
 
 Re-run `fetch_images.py` when the workbook's addresses change. It keeps what it
 already has (`--refetch` to ignore the cache, `--probe` to report without

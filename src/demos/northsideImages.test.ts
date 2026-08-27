@@ -117,8 +117,23 @@ describe('what the map says against what was measured', () => {
     /* the ceiling is a decision, not an accident: a few hundred
        photographs may not become a repository nobody wants to clone.
        If a re-fetch crosses it, downscale further or drop something —
-       do not raise it without saying what was measured. */
-    expect(NORTHSIDE_PICTURES.bytes).toBeLessThan(6_000_000)
+       do not raise it without saying what was measured.
+
+       RAISED ONCE, 6 MB -> 12 MB, AND HERE IS THE MEASUREMENT.
+       The count went 108 -> 220 when 112 addresses the manufacturers
+       refuse us were recovered from the dealership's own mirror of
+       those same addresses, and the bytes went 3,525,146 -> 9,141,262.
+       That is 41.6 KB per photograph at the unchanged 1100 px / q74 —
+       the new ones are larger than the old average because they are
+       hull photography rather than logos, not because anything about
+       the encode moved.
+
+       12 MB is about 288 pictures at that weight, so it is NOT a
+       ceiling the remaining 227 unmeasured addresses can all fit
+       under. That is deliberate. Whoever takes that measurement has
+       to decide about size first, which is the entire job of this
+       line. */
+    expect(NORTHSIDE_PICTURES.bytes).toBeLessThan(12_000_000)
   })
 })
 
@@ -241,7 +256,24 @@ describe('the map against the seed', () => {
        a surprise: it is exported, it is in the generated file's own
        header, and `python tools/seed/emit.py` prints it with the
        command that clears it. */
-    expect(NORTHSIDE_PICTURES.unmeasured).toBe(234)
+    /* 234 -> 227, and the seven is a net of two much larger moves in
+       opposite directions, so it is written out rather than left to
+       look like a rounding.
+
+       DOWN BY 42: that many addresses nobody had asked about became
+       copies, because the dealership's mirror held them under the key
+       its own remediation computes from the address (sha1[:16]).
+
+       UP BY 35: this figure used to EXCLUDE every unmeasured address
+       on www.northsidemarine.com.au, because that host was recorded
+       as answering nothing at all and the one sentence about the site
+       already covered them. It is not a dead host any more — 103 of
+       its 106 addresses are now held — so the exclusion is gone. 33
+       of those 35 turned out to be among the 42 recovered; the other
+       2 nobody has asked about, and they now say so out loud instead
+       of sheltering behind a verdict about the site that stopped
+       being true. */
+    expect(NORTHSIDE_PICTURES.unmeasured).toBe(227)
     expect(NORTHSIDE_PICTURES.held + NORTHSIDE_PICTURES.absent).toBe(manifest.images.length)
   })
 })

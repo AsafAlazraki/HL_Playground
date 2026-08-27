@@ -37,10 +37,13 @@ import {
   type EntityDef,
   type ImageRef,
   type RowData,
+  type ViewBlock,
+  type ViewDef,
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { newId, nowIso } from '@/lib/id'
 import {
+  createViewFor,
   getViewDef,
   isCuratedOnly,
   joinRefFor,
@@ -564,6 +567,59 @@ export interface Offer {
  *  it on the sheet. */
 export const OFFER_CAP = 40
 
+/* ============================================================
+   THE PAGE A QUOTE WAS RAISED FROM, ACROSS A RELOAD.
+
+   MEASURED, NOT SUPPOSED. A quote stores `viewId`, and a ViewDef does
+   not survive a refresh — `features/views/index.ts` §1 states it
+   plainly ("ViewDefs are not persisted. They live in module state
+   here and are lost on reload") and names the store slice that will
+   fix it properly. So a quote reopened in a new tab pointed at a view
+   that no longer existed, and all three readers below took their
+   `if (!view) return` branch. Run in the browser: a build with six
+   frozen lines came back with every figure intact and every step
+   reading "GFAB Trailers has nothing in it that is still sold", with
+   no reason, no search and no switch — over a sheet holding 434
+   trailers. The document survived and the SCREEN was dead, which is
+   the empty-shelf failure this feature exists to answer arriving by
+   the back door.
+
+   WHY THE FALLBACK IS SOUND RATHER THAN A GUESS: a default view is
+   DERIVED, not authored. `createViewFor` is idempotent per table and
+   its blocks come from `defaultBlocksFor` — the same derivation
+   `createModule` seeds a module's tables with — so asking for the
+   root table's view hands back the page this quote was raised from,
+   or rebuilds exactly it. It invents no rule and names no table the
+   sheet does not already relate.
+
+   NOTHING FROZEN IS TOUCHED. This decides what may be OFFERED next.
+   Every figure on a line was frozen at pick time and is read off the
+   document; `quote.viewId` is not rewritten either, so the day the
+   store persists views the stored id starts resolving again and this
+   falls silent on its own.
+   ============================================================ */
+
+function viewForQuote(quote: QuoteDef): ViewDef | undefined {
+  const stored = getViewDef(quote.viewId)
+  if (stored) return stored
+  /* callers have already established the root table is on the sheet;
+     without it there is no page to rebuild and nothing to offer */
+  if (!useProjectStore.getState().entities[quote.rootTableId]) return undefined
+  return createViewFor(quote.rootTableId)
+}
+
+/** The block a section came from. BY ID FIRST, and by table when the
+ *  id misses: block ids are minted per session, so a rebuilt view
+ *  carries new ones, while a section names its table by an id that
+ *  does persist. `defaultBlocksFor` produces one block per related
+ *  table, so the match is unambiguous. */
+function blockForSection(view: ViewDef, section: QuoteSection): ViewBlock | undefined {
+  return (
+    view.blocks.find((b) => b.id === section.blockId) ??
+    view.blocks.find((b) => b.tableId === section.tableId)
+  )
+}
+
 /**
  * The rows a section could still take, exactly as the view page
  * ordered them, each already priced and frozen.
@@ -583,13 +639,14 @@ export function candidateOffer(quote: QuoteDef, section: QuoteSection): Offer {
   /* there is exactly one boat on a quote for one boat */
   if (section.blockId === SUBJECT_BLOCK) return none
   const { ctx, engine } = live()
-  const view = getViewDef(quote.viewId)
   const root = ctx.entities[quote.rootTableId]
   const row = root ? rowOf(ctx, root.id, quote.rootRowId) : undefined
   const target = ctx.entities[section.tableId]
-  if (!view || !root || !row || !target) return none
+  if (!root || !row || !target) return none
+  const view = viewForQuote(quote)
+  if (!view) return none
 
-  const block = view.blocks.find((b) => b.id === section.blockId)
+  const block = blockForSection(view, section)
   const join = joinRefFor(ctx.entities, block?.joinTableId, root.id, target.id)
   const result = relatedRows({
     ctx,
@@ -799,13 +856,14 @@ export function stepOffer(
 ): StepOffer {
   if (section.blockId === SUBJECT_BLOCK) return EMPTY_STEP_OFFER
   const { ctx, engine } = live()
-  const view = getViewDef(quote.viewId)
   const root = ctx.entities[quote.rootTableId]
   const row = root ? rowOf(ctx, root.id, quote.rootRowId) : undefined
   const target = ctx.entities[section.tableId]
-  if (!view || !root || !row || !target) return EMPTY_STEP_OFFER
+  if (!root || !row || !target) return EMPTY_STEP_OFFER
+  const view = viewForQuote(quote)
+  if (!view) return EMPTY_STEP_OFFER
 
-  const block = view.blocks.find((b) => b.id === section.blockId)
+  const block = blockForSection(view, section)
   const join = joinRefFor(ctx.entities, block?.joinTableId, root.id, target.id)
   const result = relatedRows({
     ctx,
@@ -980,12 +1038,13 @@ function measureFor(root: EntityDef, target: EntityDef): StepMeasure | null {
 export function stepReason(quote: QuoteDef, section: QuoteSection): StepReason | null {
   if (section.blockId === SUBJECT_BLOCK) return null
   const { entities } = useProjectStore.getState()
-  const view = getViewDef(quote.viewId)
   const root = entities[quote.rootTableId]
   const target = entities[section.tableId]
-  if (!view || !root || !target) return null
+  if (!root || !target) return null
+  const view = viewForQuote(quote)
+  if (!view) return null
 
-  const block = view.blocks.find((b) => b.id === section.blockId)
+  const block = blockForSection(view, section)
   const join = joinRefFor(entities, block?.joinTableId, root.id, target.id)
   const joinName = join ? entities[join.entityId]?.name : undefined
   const measured = measureFor(root, target)

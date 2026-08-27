@@ -25,7 +25,7 @@ HEADER = '''/* ============================================================
 
    WHAT PROBLEM THIS SOLVES. The catalogue's photographs are addresses
    on eleven manufacturers' web servers, and until now the app fetched
-   every one of them, live, from whatever wifi it was standing on. Two
+   every one of them, live, from whatever wifi it was standing on. Some
    of those hosts can never answer a browser at all. The rest can be
    slow, can be down, and are not ours: the module page's whole visual
    argument was rented from somebody else's uptime.
@@ -34,6 +34,22 @@ HEADER = '''/* ============================================================
    actually draw, and committed under `public/seed-images`. The app now
    paints from its own origin. No network, no cross-origin refusal, no
    waiting.
+
+   WHERE THE HARD ONES CAME FROM, AND WHY IT IS NOT A GUESS.
+   `www.northsidemarine.com.au` answers Cloudflare's challenge to us and
+   to a browser alike, so 71 addresses could not be taken from it at all.
+   The dealership had already hit that same wall and already solved it:
+   its own remediation run copied every picture it recovered into its
+   Storage bucket under a name computed from THE ORIGINAL ADDRESS —
+   `mpf-mirror/{folder}/{sha1(url)[:16]}.{ext}`
+   (`HelmLogic/scripts/mpf/remediate-images.py:170,180`). So the copy of
+   a given row's photograph can be ASKED FOR BY NAME, arithmetically,
+   from the address the workbook typed for that row. Nothing is searched
+   for, nothing is matched by resemblance, and a wrong photograph cannot
+   arrive by that path. Each one also had to agree with the pixel size
+   its own address declares before it was allowed to land. Which
+   addresses came that way is in `tools/seed/extracts/images.json` under
+   `via: mpf-mirror`, with the object name and the key beside it.
 
    WHAT IS NOT CHANGED, AND THIS IS THE POINT.
 
@@ -50,7 +66,10 @@ HEADER = '''/* ============================================================
    listed in `ABSENT` with the measured reason and NOTHING ELSE — no
    stand-in, no other boat's picture, no filename dressed up as a
    caption. Those rows keep saying "Held as a link", which is true.
-   IMAGE_SPEC.md §6.6, §6.10.
+   IMAGE_SPEC.md §6.6, §6.10. That is still what six of these addresses
+   do, and it is the right answer for them: four are behind an M365
+   sign-in, one is a dead file on a healthy site, and one is the single
+   Northside address the dealership's own recovery never reached either.
 
    THERE IS A THIRD STATE, AND IT IS NAMED RATHER THAN ROUNDED AWAY.
    `NORTHSIDE_PICTURES.unmeasured` is how many of the seed's addresses
@@ -141,7 +160,7 @@ def main(tables=None):
     # and truer: "northsidemarine.com.au serves its pictures to its own site
     # only" is a sentence about a site, not about a file. An address on a host
     # that DOES serve is the opposite case and keeps its own entry, because
-    # there the host is not the reason. Today that is exactly one address.
+    # there the host is not the reason, and it keeps its own sentence.
     all_hosts = {}
     for r in m["images"]:
         all_hosts.setdefault(r["host"], []).append(r)
@@ -164,21 +183,34 @@ def main(tables=None):
 
     unmeasured = [u for u in no_entry if urlsplit(u).netloc not in dead_hosts]
 
+    # COUNTED, NEVER TYPED. This sentence used to say "71 of the 76" and was
+    # true when it was written; the numbers moved the day the mirror gave 70
+    # of those 71 back, and a hand-typed count is exactly the kind of prose
+    # that goes quietly false. It is computed now.
+    shared = len(absent) - len(stray)
     out.append(
         "/** A HOST THAT ANSWERED NOTHING AT ALL, and why. Written once for the\n"
-        " *  host rather than once per address: 71 of the 76 addresses below share\n"
-        " *  one sentence, and that sentence is about the site. */\n"
+        f" *  host rather than once per address: {shared} of the {len(absent)} addresses\n"
+        " *  below share one sentence, and that sentence is about the site. */\n"
         "export const ABSENT_HOSTS: ReadonlyArray<readonly [string, string]> = [\n"
     )
     for h, why in dead_hosts.items():
         out.append(f"  [{ts_str(h)}, {ts_str(why)}],\n")
     out.append("]\n\n")
 
+    count = "One address" if len(stray) == 1 else f"{len(stray)} addresses"
     out.append(
-        "/** One address that could not be taken on a host that otherwise serves —\n"
-        " *  so the host is not the reason and cannot carry the sentence. A dead\n"
-        " *  file on a healthy site: the fix is a corrected address in the\n"
-        " *  workbook, which is the business's and not ours (IMAGE_SPEC.md §1.7). */\n"
+        f"/** {count} that could not be taken on a host that otherwise\n"
+        " *  serves — so the host is not the reason and cannot carry the\n"
+        " *  sentence. A dead file on a healthy site: the fix is a corrected\n"
+        " *  address in the workbook, which is the business's and not ours\n"
+        " *  (IMAGE_SPEC.md §1.7).\n"
+        " *\n"
+        " *  northsidemarine.com.au is on THIS list rather than in ABSENT_HOSTS\n"
+        " *  because it is no longer a host that answers nothing: every other\n"
+        " *  address on it is held, each one recovered from the dealership's own\n"
+        " *  mirror of that same address rather than from the site. This one the\n"
+        " *  mirror never had either. */\n"
         "export const ABSENT: ReadonlyArray<readonly [string, string]> = [\n"
     )
     for r in stray:

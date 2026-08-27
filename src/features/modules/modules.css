@@ -251,10 +251,10 @@
   background: var(--paper-sunken);
 }
 
-.md-dash-stub {
-  max-width: 1080px;
-  margin: var(--sp-5) auto 0;
-}
+/* `.md-dash-stub` stood here — the dashed box under the grid saying
+   that reordering the cards "arrives with the module designer". The
+   control it wrapped is built; see ARRANGING THE CARDS at the foot of
+   this file for what replaced it and why it is not dashed. */
 
 .md-stub-say {
   margin: 0;
@@ -898,32 +898,12 @@
   color: var(--paper-high);
 }
 
-/* -- the name and the sentence, as the fields they came from -- */
+/* -- the panel column ---------------------------------------- */
 
-/* SAME PLACE, SAME SIZE as the heading it replaces, so pressing the
-   gear does not move the page under the reader's eye. */
-.md-idx-name-edit {
-  width: 100%;
-  font-family: var(--font-display);
-  font-weight: var(--display-weight);
-  font-size: var(--display-m-size);
-  letter-spacing: var(--display-m-track);
-  line-height: var(--display-m-lead);
-  color: var(--ink);
-}
-
-.md-idx-desc-edit {
-  width: 100%;
-  margin-top: 4px;
-  resize: vertical;
-  font-family: var(--font-ui);
-  font-size: var(--ui-m-size);
-  letter-spacing: var(--ui-m-track);
-  line-height: var(--ui-m-lead);
-  color: var(--ink-soft);
-}
-
-/* -- the strip ----------------------------------------------- */
+/* The name and the description used to be drawn over the catalogue,
+   as the fields they came from, while the gear was on. They are the
+   settings page's first panel now — `.md-set-desc` at the foot of
+   this file — so a module has one place its words are written. */
 
 .md-design {
   display: flex;
@@ -956,6 +936,14 @@
   letter-spacing: var(--ui-s-track);
   line-height: var(--ui-s-lead);
   color: var(--ink-soft);
+}
+/* NAMING ANOTHER PANEL IS EMPHASIS, NOT ITALIC. A panel heading is
+   uppercase on screen and quoting it in a sentence would be a second
+   uppercase run mid-prose; the name is set in the full ink instead,
+   which is what tells it from the sentence around it. */
+.md-panel-say em {
+  font-style: normal;
+  color: var(--ink);
 }
 
 .md-panel-warn {
@@ -1410,14 +1398,6 @@
 
 .md-add-btn {
   align-self: flex-start;
-}
-
-/* -- handles on the heading that is already there ------------ */
-
-.md-sec-acts {
-  display: inline-flex;
-  gap: 2px;
-  flex: 0 0 auto;
 }
 
 /* ============================================================
@@ -2626,4 +2606,864 @@
   line-height: 1.45;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   THE CARD IS THE MODULE AT A GLANCE — and it has a door.
+
+   Appended, not rewritten. Four things arrive here and nothing
+   above changes meaning:
+
+     the slot        a card is a button, and the door to a module's
+                     settings is a second button. One cannot be
+                     inside the other, so both stand in the list
+                     item and the item positions them.
+     the mark        the dealer's own logo where they have set one,
+                     at the same 22px box the kind symbol occupies,
+                     so a card with a logo and a card without are
+                     the same card.
+     the figures     what the place is READY for — how many carry a
+                     photograph, how many carry a price. Mono, the
+                     way every figure in this app is set.
+     the lock        one chip at the end of the verbs, drawn only
+                     where a dealer has restricted the module.
+
+   AND IT HAS TO SURVIVE FIFTEEN OF THEM. Five modules is a row and
+   a half at 1440; a real dealership runs the boat brands, the motor
+   brands, trailers, parts, rates, service, rego and used stock, and
+   the page still has to be readable in one look. The last block
+   here is what changes at ten: narrower columns, so four fit where
+   three did, and a two-line description clamp, because at that
+   count the descriptions are the whole height of the page and the
+   full sentence is the first thing on the module's own page.
+   ============================================================ */
+
+/* -- the slot ------------------------------------------------ */
+
+.md-card-slot {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+/* -- the door to this module's settings ---------------------- */
+
+/* QUIET, AND ALWAYS THERE. It is not revealed on hover: a control
+   that appears only once the pointer is on top of it cannot be found
+   by somebody looking for it, and does not exist at all on a touch
+   screen. --ink-faint is 4.7:1 on the card's white and this is a
+   glyph, not a sentence; it goes to --ink the moment it is aimed at. */
+.md-card-door {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--ink-faint);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.md-card-door:hover {
+  color: var(--ink);
+  background: var(--paper-sunken);
+  border-color: var(--hairline);
+}
+.md-card-door:active {
+  transform: scale(0.97);
+}
+.md-card-door:focus-visible {
+  outline: none;
+  color: var(--ink);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* The card keeps its own hover while the pointer is over the door —
+   they are siblings now, and without this the card visibly drops back
+   to rest when you reach for its gear. */
+.md-card-slot:hover .md-card {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--ec3);
+}
+
+/* -- the mark ------------------------------------------------ */
+
+/* The top line carries the mark alone. The count moved under the
+   name, where the module's own page already puts it, and the corner
+   it used to crowd is where the door goes. */
+.md-card-top {
+  justify-content: flex-start;
+  min-height: 28px;
+  padding-right: 32px;
+}
+
+/* THE DEALER'S OWN LOGO, in the box the kind symbol was drawn in, so
+   a list of cards does not change shape as logos are added one at a
+   time. `contain` rather than `cover`: a mark is a drawing and
+   cropping one is defacing it. */
+.md-card-logo {
+  display: block;
+  width: var(--sp-5);
+  height: var(--sp-5);
+  object-fit: contain;
+  object-position: left center;
+  border-radius: var(--radius-sm);
+}
+
+/* -- what the place is ready for ----------------------------- */
+
+.md-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-4);
+  margin-top: auto;
+  padding-top: var(--sp-1);
+}
+
+/* The verbs already claimed the bottom of the card with `margin-top:
+   auto`. Two auto margins would split the free space between them and
+   strand the figures halfway up the card, so where both are drawn the
+   figures take it and the verbs sit directly beneath. */
+.md-card:has(.md-card-stats) .md-card-verbs {
+  margin-top: 0;
+}
+
+.md-card-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 12px;
+  letter-spacing: 0;
+  line-height: 1.35;
+  color: var(--ink-faint);
+}
+.md-card-stat b {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* -- the restriction ----------------------------------------- */
+
+/* ONE CHIP, AT THE END OF THE VERBS, and only where a dealer has
+   turned access on. It is the same shape as a verb because it is
+   about the same thing — what may be done here — and it is set a
+   shade firmer, not a colour: the accent is spent on the primary
+   action, and kind hue is a rail and never a fill behind text. */
+.md-verb-shut {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  height: 20px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  background: var(--paper-sunken);
+}
+
+/* -- fifteen modules ----------------------------------------- */
+
+/* MEASURED IN COLUMNS, NOT IN TASTE — in the browser, on the real
+   project, at 1280x720.
+
+   At 1080px of content the 260px minimum resolves to three columns of
+   349px; the 240px minimum resolves to four of 261px. A card is 293px
+   tall at 349 wide, so fifteen modules are five rows and 1,465px of
+   page. At 261 wide the verb chips wrap to a second line and the
+   padding comes down to compensate — 289px tall, four rows, 1,156px.
+   That is a fifth of the page's height and one whole row of scrolling,
+   for a column of the same card.
+
+   THE CLAMP IS THE OTHER HALF, and it is the one thing here that
+   costs something. The seeded descriptions are the workbook's own
+   provenance notes and run to forty words; four lines apiece is a
+   wall of prose at fifteen cards, and two lines still says what the
+   place is. The full sentence is the first thing on the module's own
+   page, one press away.
+
+   THE SWITCH IS THE TENTH CARD, because at nine and under three
+   columns already fit in three rows and the wider card reads better.
+   Below ten nothing here applies and the card is exactly what it
+   was. */
+.md-cards:has(> li:nth-child(10)) {
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: var(--sp-3);
+}
+.md-cards:has(> li:nth-child(10)) .md-card {
+  padding: var(--sp-3);
+}
+.md-cards:has(> li:nth-child(10)) .md-card-desc {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* ============================================================
+   THE SETTINGS SURFACE — one page per module, where an admin says
+   what that place is. See ModuleSettings.tsx for why it absorbed the
+   designer strip rather than sitting beside it.
+
+   IT IS THE INDEX'S TWIN, DELIBERATELY. Same well, same header, same
+   panel column, same 1180px measure — pressing SETTINGS and pressing
+   CATALOGUE must not feel like moving between two applications, and
+   the header is the one thing on screen that does not move between
+   them.
+   ============================================================ */
+
+.md-set {
+  height: 100%;
+  overflow: auto;
+  background: var(--paper);
+  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 2);
+  animation: fade-in var(--t-fast) var(--ease-draft) both;
+}
+
+.md-set-eyebrow {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink-faint);
+}
+
+/* THE WAY BACK, IN SENTENCE CASE. `.md-gear` beside it stamps its
+   word in uppercase mono, which is a label style; this is a button
+   and takes the toolbar control's own type instead — the calibration
+   is `.shell-view-back`. */
+.md-set-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.md-set-back:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+.md-set-back:active {
+  transform: scale(0.97);
+}
+.md-set-back:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* The panel column. `.md-design` is one of its children — the
+   designer keeps its own file and its own four panels, and gives up
+   only its margin and its measure to the page that now holds it. */
+.md-set-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.md-set-body > .md-design {
+  max-width: none;
+  margin: 0;
+  animation: none;
+}
+
+.md-set-desc {
+  resize: vertical;
+  font-family: var(--font-ui);
+  line-height: var(--ui-lead);
+}
+
+/* A plain sentence under a panel's controls — the facts that belong
+   with what is in it rather than in its heading. `--ink-soft` and not
+   `--ink-faint`: the panel ground is a tint, where faint measures
+   4.26:1 and fails. */
+.md-set-note {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.md-set-note em {
+  font-style: normal;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------- */
+/* 2 - ITS MARK                                                */
+/* ---------------------------------------------------------- */
+
+.md-mark {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+/* A WELL, NOT A FRAME AROUND NOTHING. The plate is the same recessed
+   ground the register's picture cell uses, so an empty one reads as
+   "no picture yet" rather than as a picture that failed. */
+.md-mark-plate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 96px;
+  height: 96px;
+  padding: var(--sp-2);
+  background: var(--paper-sunken);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.md-mark-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.md-mark-fall {
+  display: inline-flex;
+  color: var(--md-accent, var(--ink));
+}
+
+.md-mark-held {
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.md-mark-doors {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+/* THE FILE DOOR IS A LABEL WRAPPING ITS INPUT, so the whole control
+   is the picker and no script has to click a hidden element. */
+.md-mark-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-size: var(--ui-s-size);
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.md-mark-file:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+.md-mark-file:active {
+  transform: scale(0.97);
+}
+.md-mark-file input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.md-mark-file:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+.md-mark-addr {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-width: 0;
+}
+.md-mark-addr .field-input {
+  min-width: 0;
+}
+
+.md-mark-say {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------- */
+/* 3 - WHO MAY DO WHAT                                         */
+/* ---------------------------------------------------------- */
+
+/* THE STATE OF THE PLACE, BEFORE ANY CONTROL. It is a sentence and
+   not a badge, because the thing it has to prevent is a person
+   wondering whether they have locked everybody out. */
+.md-set-state {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-size: var(--ui-size);
+  letter-spacing: var(--ui-track);
+  line-height: var(--ui-lead);
+  color: var(--ink-soft);
+}
+.md-set-state strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+/* Open is the resting state and takes the quieter rail. Restricted
+   keeps the ink rail, which is the louder of the two without
+   spending the one accent on it. */
+.md-set-state.is-open {
+  border-left-color: var(--hairline-strong);
+}
+
+/* The empty state, in the panel. Four parts, in the dashboard's own
+   order: eyebrow, what it IS, what you already have, one action. */
+.md-set-void {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+.md-set-void-eyebrow {
+  color: var(--ink-faint);
+}
+
+.md-set-void-say {
+  margin: 0;
+  max-width: 52ch;
+  font-size: var(--ui-l-size);
+  letter-spacing: var(--ui-l-track);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.md-set-void-count {
+  margin: 0;
+  font-size: var(--ui-size);
+  color: var(--ink-soft);
+}
+.md-set-void-count strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* THE GRID SCROLLS SIDEWAYS RATHER THAN SQUEEZING. Nine verbs on a
+   narrow window is wider than the panel, and a column of ticks that
+   overlapped its neighbour would be a permission read wrong. */
+.md-grid-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+}
+
+.md-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.md-grid-corner,
+.md-grid-head {
+  padding: var(--sp-2) var(--sp-2);
+  text-align: center;
+  vertical-align: bottom;
+  border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
+}
+.md-grid-corner {
+  text-align: left;
+  color: var(--ink-faint);
+}
+
+.md-grid-verb {
+  font-size: var(--ui-s-size);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.md-grid-role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px var(--sp-2);
+  text-align: left;
+  font-weight: 400;
+  border-bottom: 1px solid var(--hairline);
+  min-width: 220px;
+}
+
+.md-grid tbody tr:last-child .md-grid-role,
+.md-grid tbody tr:last-child .md-grid-cell {
+  border-bottom: 0;
+}
+
+.md-role-id {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.md-role-name {
+  min-width: 0;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.md-role-desc {
+  min-width: 0;
+  font-size: var(--ui-s-size);
+  color: var(--ink-soft);
+}
+
+.md-grid-cell {
+  padding: 6px var(--sp-2);
+  text-align: center;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* ONE TICK, AND IT IS A CHECKBOX.
+
+   THE LIT STATE IS THE MODULE'S OWN HUE, NOT THE BLUE, and it is the
+   same declaration `.md-switch[aria-checked='true'] .md-switch-track`
+   makes eight rules up. Two reasons and the second is the rule: the
+   grid sits directly under that strip of switches and two "on" states
+   a hand's width apart must not be two different colours — and a
+   dealer with nine roles and five verbs would light forty-five blue
+   squares on a page whose primary action is one button, which is
+   precisely "accent everywhere, so nothing is primary". Blue stays on
+   this page for the focused control and the primary button, which is
+   where the budget belongs.
+
+   The hue is a fill behind a TICK, never behind text. */
+.md-grant {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  cursor: pointer;
+  transition:
+    var(--press-fx),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.md-grant:hover {
+  border-color: var(--ink);
+}
+.md-grant:active {
+  transform: scale(0.97);
+}
+.md-grant:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.md-grant.is-on {
+  background: var(--md-accent, var(--ink));
+  border-color: var(--md-accent, var(--ink));
+}
+
+.md-grant-tick {
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid var(--paper-high);
+  border-bottom: 2px solid var(--paper-high);
+  transform: translateY(-1px) rotate(-45deg);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-draft);
+}
+.md-grant.is-on .md-grant-tick {
+  opacity: 1;
+}
+
+.md-role-new {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  max-width: 420px;
+}
+.md-role-new .field-input {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------- */
+/* 5 - WHAT IS ATTACHED                                        */
+/* ---------------------------------------------------------- */
+
+.md-atts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-att {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--sp-3);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+
+.md-att-top {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 0;
+}
+
+.md-att-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.md-att-name {
+  font-size: var(--ui-size);
+  font-weight: 560;
+  letter-spacing: -0.003em;
+  color: var(--ink);
+}
+
+.md-att-says {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.md-att-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-att-one {
+  padding: 2px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  font-size: var(--ui-s-size);
+  color: var(--ink-soft);
+}
+
+.md-att-more {
+  align-self: center;
+  color: var(--ink-faint);
+}
+
+.md-att-where {
+  margin: 0;
+  padding-top: 4px;
+  border-top: 1px solid var(--hairline);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: 1.6;
+  color: var(--ink);
+}
+/* CHANGED SOMEWHERE ELSE, OR NOWHERE YET. Set in the soft ink rather
+   than the full one — still 7.7:1 on this card, still a sentence
+   anybody can read, and no longer an instruction for this page. */
+.md-att-where.is-away {
+  color: var(--ink-soft);
+}
+
+/* MOVEMENT GOES, OPACITY STAYS. The page still arrives rather than
+   appearing without explanation. */
+@media (prefers-reduced-motion: reduce) {
+  .md-set {
+    animation-duration: 1ms;
+  }
+  .md-grant,
+  .md-set-back,
+  .md-mark-file {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   ARRANGING THE CARDS.
+
+   `.md-dash-stub` drew a dashed box under the grid saying that
+   dragging cards into your own order "arrives with the module
+   designer". The designer has since become the settings page, which
+   does not order the dashboard either — so the promise had outlived
+   the surface it named. `ModuleDef.order` is one integer per module
+   and the dashboard already sorts on it, so this is the control that
+   writes it rather than a better-worded excuse.
+
+   IT IS A ROW, NOT A DASHED BOX. The dash is this feature's mark for
+   a thing that is drawn and not built; a built control wearing it
+   would be telling the same lie in the other direction.
+   ============================================================ */
+
+.md-dash-order {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 1080px;
+  margin: var(--sp-5) auto 0;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+/* The same sentence step the stub's own line uses, kept because the
+   line beside the control is doing the same job it always did. */
+.md-dash-order .btn {
+  flex: 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.md-dash-order .btn.is-on {
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+}
+/* THE REFUSAL IS DRAWN, AND THE CONTROL KEEPS ITS NAME. One module
+   cannot be put in an order; `aria-disabled` rather than `disabled`
+   leaves it in the tab order carrying the sentence that says why. */
+.md-dash-order .btn[aria-disabled='true'] {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+/* -- the two moves, in the card's own corner ----------------- */
+
+.md-card-order {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  z-index: 1;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.md-card-move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  color: var(--ink-soft);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.md-card-move:hover {
+  color: var(--ink);
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+}
+/* PRESS IS SCOPED AWAY FROM THE REFUSAL rather than cancelled on it.
+   `:active { transform: none }` is the pattern the redesign removed —
+   three controls that cancelled their own feedback — so the end of
+   the list simply never claims the press in the first place. */
+.md-card-move:not([aria-disabled='true']):active {
+  transform: scale(0.97);
+}
+.md-card-move:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+/* THE END OF THE LIST. It says no by going quiet, by answering
+   neither hover nor press, and by carrying the sentence that explains
+   it — never by leaving the tab order.
+
+   IT STEPS DOWN TO `--ink-faint`, NOT TO `--fg-quaternary`. The
+   quaternary tier is 2.8:1 and the contract's own line on it is that
+   it may never carry meaning; a refused arrow carries WHICH WAY is
+   refused, which is meaning. Measured in the browser: --ink-soft
+   7.65:1 for the live one, --ink-faint 4.72:1 for this — a visible
+   step down that still clears the floor for a glyph. */
+.md-card-move[aria-disabled='true'] {
+  color: var(--ink-faint);
+  background: var(--paper-high);
+  border-color: var(--hairline);
+  cursor: default;
+}
+.md-card-move[aria-disabled='true']:hover {
+  color: var(--ink-faint);
+  background: var(--paper-high);
+  border-color: var(--hairline);
 }

@@ -7,7 +7,7 @@
 
    WHAT PROBLEM THIS SOLVES. The catalogue's photographs are addresses
    on eleven manufacturers' web servers, and until now the app fetched
-   every one of them, live, from whatever wifi it was standing on. Two
+   every one of them, live, from whatever wifi it was standing on. Some
    of those hosts can never answer a browser at all. The rest can be
    slow, can be down, and are not ours: the module page's whole visual
    argument was rented from somebody else's uptime.
@@ -16,6 +16,22 @@
    actually draw, and committed under `public/seed-images`. The app now
    paints from its own origin. No network, no cross-origin refusal, no
    waiting.
+
+   WHERE THE HARD ONES CAME FROM, AND WHY IT IS NOT A GUESS.
+   `www.northsidemarine.com.au` answers Cloudflare's challenge to us and
+   to a browser alike, so 71 addresses could not be taken from it at all.
+   The dealership had already hit that same wall and already solved it:
+   its own remediation run copied every picture it recovered into its
+   Storage bucket under a name computed from THE ORIGINAL ADDRESS —
+   `mpf-mirror/{folder}/{sha1(url)[:16]}.{ext}`
+   (`HelmLogic/scripts/mpf/remediate-images.py:170,180`). So the copy of
+   a given row's photograph can be ASKED FOR BY NAME, arithmetically,
+   from the address the workbook typed for that row. Nothing is searched
+   for, nothing is matched by resemblance, and a wrong photograph cannot
+   arrive by that path. Each one also had to agree with the pixel size
+   its own address declares before it was allowed to land. Which
+   addresses came that way is in `tools/seed/extracts/images.json` under
+   `via: mpf-mirror`, with the object name and the key beside it.
 
    WHAT IS NOT CHANGED, AND THIS IS THE POINT.
 
@@ -32,7 +48,10 @@
    listed in `ABSENT` with the measured reason and NOTHING ELSE — no
    stand-in, no other boat's picture, no filename dressed up as a
    caption. Those rows keep saying "Held as a link", which is true.
-   IMAGE_SPEC.md §6.6, §6.10.
+   IMAGE_SPEC.md §6.6, §6.10. That is still what six of these addresses
+   do, and it is the right answer for them: four are behind an M365
+   sign-in, one is a dead file on a healthy site, and one is the single
+   Northside address the dealership's own recovery never reached either.
 
    THERE IS A THIRD STATE, AND IT IS NAMED RATHER THAN ROUNDED AWAY.
    `NORTHSIDE_PICTURES.unmeasured` is how many of the seed's addresses
@@ -118,6 +137,109 @@ export const HELD: ReadonlyArray<readonly [string, string, number, number]> = [
   ["https://www.highfieldboats.com/wp-content/uploads/2024/08/PA540CS-B-B-DB-2-2560x1440.jpg", "pa540cs-b-b-db-2-2560x1440-8ea349f4.webp", 2560, 1440],
   ["https://www.highfieldboats.com/wp-content/uploads/2024/08/PA540CS-DG-G-DB2-2560x1440.jpg", "pa540cs-dg-g-db2-2560x1440-8e16e39d.webp", 2560, 1440],
   ["https://www.highfieldboats.com/wp-content/uploads/2024/08/PA540CS-LG-W-DG-2-1024x576.jpg", "pa540cs-lg-w-dg-2-1024x576-1fe75356.webp", 1024, 576],
+  ["https://www.northsidemarine.com.au/haines-signature-boats/wp-content/uploads/sites/11/2023/05/620F-1024x683.jpg", "620f-1024x683-4dd22900.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/haines-signature-boats/wp-content/uploads/sites/11/2023/05/680F-edit-01-1024x683.jpg", "680f-edit-01-1024x683-ef33534d.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/haines-signature-boats/wp-content/uploads/sites/11/2023/05/IMG_4356-copy-1024x683.jpg", "img-4356-copy-1024x683-c512d459.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/haines-signature-boats/wp-content/uploads/sites/11/2023/05/IMG_4520-1024x683.jpg", "img-4520-1024x683-cf2f2b2b.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/haines-signature-boats/wp-content/uploads/sites/11/2023/05/June-17th-640F-edt-11-1024x683.jpg", "june-17th-640f-edt-11-1024x683-9fefb8f6.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/haines-signature-boats/wp-content/uploads/sites/11/2023/06/535BR_EILDON_15-6-of-9-1024x683.jpg", "535br-eildon-15-6-of-9-1024x683-3fbb1688.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/haines-signature-boats/wp-content/uploads/sites/11/2023/09/Fisher_620BRX_N012257-7-1024x681.jpg", "fisher-620brx-n012257-7-1024x681-da4f3ef0.webp", 1024, 681],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2020/01/Merry-Fisher-795-Sport-Series-2-1024x495.jpg", "merry-fisher-795-sport-series-2-1024x495-009cf385.webp", 1024, 495],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2020/01/c451753b9221a472f849164efab496e2-1024x683.jpg", "c451753b9221a472f849164efab496e2-1024x683-1beb507e.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2020/02/511724270f0cbb55154c46299a062f74-1024x683.jpg", "511724270f0cbb55154c46299a062f74-1024x683-a2ca9934.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2020/02/8c871013715b6fa5de9aa2a0745a1267-1024x683.jpg", "8c871013715b6fa5de9aa2a0745a1267-1024x683-473e7aad.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2020/02/a235a869559bfc3b828f217631eaceea-1024x683.jpg", "a235a869559bfc3b828f217631eaceea-1024x683-5a024ea0.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2020/02/abd1bc7b8afb1eb9a2474ebae75dd48a-1024x683.jpg", "abd1bc7b8afb1eb9a2474ebae75dd48a-1024x683-a37cc5de.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2020/02/e09d08648e524bda54baff30add8db63-1024x683.jpg", "e09d08648e524bda54baff30add8db63-1024x683-0c567775.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2022/03/631225f4d5884717378137-1024x683.jpeg", "631225f4d5884717378137-1024x683-1a26092a.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2022/09/Cap-Camarat-5.5-CC-4-1024x683.jpeg", "cap-camarat-5-5-cc-4-1024x683-cfa1dc8a.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2022/09/MF-1095-S2-1024x683.jpg", "mf-1095-s2-1024x683-e78cee63.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2022/09/Merry_Fisher_1295_Fly-Julien_Gazeau-1420-800px.jpg", "merry-fisher-1295-fly-julien-gazeau-1420-800px-19dd40e6.webp", 800, 532],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2022/09/Merry_Fisher_605-Jerome_KELAGOPIAN-5944-1024x683.jpg", "merry-fisher-605-jerome-kelagopian-5944-1024x683-f52273e9.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2022/10/d4af432bc7aef94319759bab129c3e1d-1024x576.jpg", "d4af432bc7aef94319759bab129c3e1d-1024x576-7ef30691.webp", 1024, 576],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2023/11/98e92e368cfd53dc31273a95237cc8ac.jpeg", "98e92e368cfd53dc31273a95237cc8ac-57f0a7bf.webp", 800, 533],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2023/12/Cap-Camarat-7.5-wa-serie3-23.jpeg", "cap-camarat-7-5-wa-serie3-23-36747139.webp", 800, 533],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2023/12/Cap-Camarat-7.5cc-serie3-5-1024x683.jpeg", "cap-camarat-7-5cc-serie3-5-1024x683-6edf4885.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2023/12/Cap-Camarat-9.0-WA-Serie2-7-1024x683.jpeg", "cap-camarat-9-0-wa-serie2-7-1024x683-1b2f11f6.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2024/08/Merry_Fisher_895_Sport_Serie2-37-1024x683.jpg", "merry-fisher-895-sport-serie2-37-1024x683-909e9780.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2024/09/MerryFisher1295coupe-22-1024x682.jpg", "merryfisher1295coupe-22-1024x682-5bc59ecf.webp", 1024, 682],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2025/01/N013475-Jeanneau-Merry-Fisher-795-S2-1-1024x683.jpeg", "n013475-jeanneau-merry-fisher-795-s2-1-1024x683-909104ea.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2025/07/Jeanneau-Merry-Fisher-1095-Coupe-Serie2-2-1024x683.png", "jeanneau-merry-fisher-1095-coupe-serie2-2-1024x6-9a4a2156.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/jeanneau-boats/wp-content/uploads/sites/5/2025/11/C002617_MerryFisher695_-1-1024x683.jpg", "c002617-merryfisher695-1-1024x683-77fd9918.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2022/12/1-12.png", "1-12-dabc9bb1.webp", 894, 597],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2023/01/1450FR-19.jpg", "1450fr-19-25bd4ebd.webp", 1200, 800],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2023/01/IMG_7808.jpg", "img-7808-646834b4.webp", 1200, 800],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2023/01/STABI1550F_Great_Barrier_035.jpg", "stabi1550f-great-barrier-035-a3c03f2c.webp", 1200, 800],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2023/01/Stabicraft-2050-Supercab-10-1024x686.png", "stabicraft-2050-supercab-10-1024x686-4e1e83c7.webp", 1024, 686],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2024/01/2050Treker-Brochure__FillWzExMjAsNzUwXQ-1-1024x686.jpg", "2050treker-brochure-fillwzexmjasnzuwxq-1-1024x68-0b1d640f.webp", 1024, 686],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2024/06/Stabicraft-2350-Supercab-15-1024x686.png", "stabicraft-2350-supercab-15-1024x686-27fd6077.webp", 1024, 686],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2024/12/Stabicraft_1450_Explorer_N012881-1-1024x683.jpg", "stabicraft-1450-explorer-n012881-1-1024x683-54d2a71a.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/01/Stabicraft-2750-Ultra-Centercab-25-1024x686.png", "stabicraft-2750-ultra-centercab-25-1024x686-bea24358.webp", 1024, 686],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/05/Stabicraft-2050-Frontier-1.jpeg", "stabicraft-2050-frontier-1-429b5994.webp", 1120, 750],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/05/Stabicraft-2350-Ultracab-WT-1024x575.png", "stabicraft-2350-ultracab-wt-1024x575-2da9d242.webp", 1024, 575],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/05/Stabicraft-Ultra-Centrecab-3-1024x686.jpeg", "stabicraft-ultra-centrecab-3-1024x686-9e25863d.webp", 1024, 686],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/07/N013458-Stabicraft-2350-Supercab-1-1024x683.jpg", "n013458-stabicraft-2350-supercab-1-1024x683-908f313f.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/07/N013460-Stabicraft-1450-Frontier-1-1024x683.jpeg", "n013460-stabicraft-1450-frontier-1-1024x683-978a906f.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/07/N013694-Stabicraft-2350-Ultra-Centrecab-1-1024x683.jpeg", "n013694-stabicraft-2350-ultra-centrecab-1-1024x6-3df755df.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/09/N013741-Stabicraft-1850-Supercab-1-1024x683.jpeg", "n013741-stabicraft-1850-supercab-1-1024x683-f970ae95.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stabicraft-boats/wp-content/uploads/sites/7/2025/11/N013781_2050_Frontier_-1-1024x683.jpg", "n013781-2050-frontier-1-1024x683-35bda5d5.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2020/04/359-proline.jpg", "359-proline-7988c97c.webp", 1365, 767],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2021/05/589-Sea-Runners.jpg", "589-sea-runners-9b1b6281.webp", 1920, 1280],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2022/03/DSC04142Jun-01-2022.jpg", "dsc04142jun-01-2022-639d28bf.webp", 2505, 1673],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/359-Proline-Banner-1.jpg", "359-proline-banner-1-72cb7f4e.webp", 1140, 550],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/379-Proline-1-1.jpg", "379-proline-1-1-915ab82d.webp", 994, 663],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/409-Proline-Angler-798x466-1.jpg", "409-proline-angler-798x466-1-bee482f4.webp", 798, 466],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/429-Proline-Angler-11-scaled.jpg", "429-proline-angler-11-scaled-8e60a221.webp", 2560, 1700],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/449ProlineAngler_PKG_2023-scaled.jpg", "449prolineangler-pkg-2023-scaled-e254819d.webp", 2560, 1701],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/469-Assault-Pro-Tiff-1-1-1024x674.jpg", "469-assault-pro-tiff-1-1-1024x674-a66c3809.webp", 1024, 674],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/519-Assault-Tiff-5.jpg", "519-assault-tiff-5-4e87cdce.webp", 1920, 1287],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/529-Assault-Lifestyle-Tiffs-7-1024x676.jpg", "529-assault-lifestyle-tiffs-7-1024x676-fbf66995.webp", 1024, 676],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/02/409-Assault-Pro-Tiff-3-1024x683.jpg", "409-assault-pro-tiff-3-1024x683-2c8a3943.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/02/429-Assault-Pro-Banner.jpg", "429-assault-pro-banner-eeb73e32.webp", 1140, 550],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/02/449AssaultPro_Internal_2024-3-1024x680.jpg", "449assaultpro-internal-2024-3-1024x680-a678e795.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/02/489-Assault-Pro-Banner-1024x494.jpg", "489-assault-pro-banner-1024x494-0f646b70.webp", 1024, 494],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/02/589SeaMaster_PKG_2022.jpg", "589seamaster-pkg-2022-bc834d37.webp", 1776, 1180],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/03/449SeaMaster_PKG_2022-1024x680.jpg", "449seamaster-pkg-2022-1024x680-72e498fc.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/03/481-SeaMaster-PKG-2023-1024x680.jpg", "481-seamaster-pkg-2023-1024x680-bb6c40bd.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/03/499-Sea-Master-scaled-1-1024x576.jpg", "499-sea-master-scaled-1-1024x576-24ae0f50.webp", 1024, 576],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/03/519SeaMaster_PKG_2022-1024x680.jpg", "519seamaster-pkg-2022-1024x680-c6916e5c.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/04/37.jpg", "37-26bbd596.webp", 1024, 592],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/04/539-Wild-Rider-798x466-1.jpg", "539-wild-rider-798x466-1-95918923.webp", 798, 466],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/04/619-Wild-Rider-798x466-2.jpg", "619-wild-rider-798x466-2-a09e2fdd.webp", 798, 466],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/05/429OutlawTS_PKG_2024-1024x680.jpg", "429outlawts-pkg-2024-1024x680-68730c6b.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/05/469-Outlaw-SC-1024x683.jpg", "469-outlaw-sc-1024x683-05deedb4.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/05/481-crossfire-sc-1.jpg", "481-crossfire-sc-1-7568ee6a.webp", 1771, 1183],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/05/489OutlawSC_PKG_2024-1024x680.jpg", "489outlawsc-pkg-2024-1024x680-33e22cc2.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/05/529-Outlaw-SC-3-1024x683.jpg", "529-outlaw-sc-3-1024x683-bc34dfb7.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/05/DSC03291.jpg", "dsc03291-e81b6be0.webp", 1771, 1183],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/03/429-Outlaw-Side-Console-11.jpg", "429-outlaw-side-console-11-0799407f.webp", 800, 600],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/429SeaMasterSE-2-1024x684.jpg", "429seamasterse-2-1024x684-b2ce9dba.webp", 1024, 684],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/449OutlawCC_PKG_2024-1024x680.jpg", "449outlawcc-pkg-2024-1024x680-91647405.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/459AssaultPro_PKG_2021-1-scaled.jpg", "459assaultpro-pkg-2021-1-scaled-fcae4c03.webp", 2560, 1310],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/469OutlawCC_PKG_2024-1024x680.jpg", "469outlawcc-pkg-2024-1024x680-d7750030.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/499-wild-rider-se-1024x684.jpg", "499-wild-rider-se-1024x684-3cf00d76.webp", 1024, 684],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/519WildRider_PKG_2022-1024x680.jpg", "519wildrider-pkg-2022-1024x680-6768814a.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/539-crossfire-rcc-2.jpg", "539-crossfire-rcc-2-4806588c.webp", 1771, 1183],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/539SeaMasterSE_PKG_2022-1024x680.jpg", "539seamasterse-pkg-2022-1024x680-8deba207.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/04/539SeaRunner_PKG_2022-1.jpg", "539searunner-pkg-2022-1-3eebe0dd.webp", 1776, 1180],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/07/449OutlawSC_PKG_2024-scaled.jpg", "449outlawsc-pkg-2024-scaled-44a26cee.webp", 2560, 1700],
+  ["https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2024/07/529OutlawCC_PKG_2024-1024x680.jpg", "529outlawcc-pkg-2024-1024x680-190f1daa.webp", 1024, 680],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2020/01/20180919-120314-1024x512.jpg", "20180919-120314-1024x512-b7d03b18.webp", 1024, 512],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2020/01/Surtees-610-WMGT-26-1024x699.jpg", "surtees-610-wmgt-26-1024x699-00ef59b8.webp", 1024, 699],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2020/01/Surtees-Boats-650-Workmate-Australia-New-Zealand-Best-Trailer-Fishing-Boat3-1024x512.jpg", "surtees-boats-650-workmate-australia-new-zealand-973c2ecb.webp", 1024, 512],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2020/02/Surtees-610-Pro-Fisher-11-1024x683.jpg", "surtees-610-pro-fisher-11-1024x683-d4a165ea.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2022/08/S495-7-1024x512.jpg", "s495-7-1024x512-9be42ffe.webp", 1024, 512],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2022/12/1Surtees-Boats-700-Workmate-Hardtop-Australia-New-Zealand-Best-Trailer-Fishing-Boat--1024x473.jpg", "1surtees-boats-700-workmate-hardtop-australia-ne-794aabc0.webp", 1024, 473],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2022/12/Surtees-540-pro-fisher-4-1024x512.jpg", "surtees-540-pro-fisher-4-1024x512-4c72bfb6.webp", 1024, 512],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2022/12/Surtees-800-10-LR-1024x512.jpg", "surtees-800-10-lr-1024x512-70090378.webp", 1024, 512],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2022/12/Surtees-Boats-4.85-Centre-Console-1.jpg", "surtees-boats-4-85-centre-console-1-e7d1ccfb.webp", 720, 480],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2022/12/Surtees-Boats-650-Pro-Fisher-Australia-New-Zealand-Best-Trailer-Fishing-Boat-4.jpg", "surtees-boats-650-pro-fisher-australia-new-zeala-743e4253.webp", 720, 480],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2022/12/surtees-boats-575-pro-fisher-centre-console-GL1.jpg", "surtees-boats-575-pro-fisher-centre-console-gl1-8f438bf1.webp", 720, 480],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2023/10/WMHT-575-V2-m-15-1024x694.jpg", "wmht-575-v2-m-15-1024x694-2f0633c8.webp", 1024, 694],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2025/04/Surtees-620-Gamefisher-3-1024x768.jpeg", "surtees-620-gamefisher-3-1024x768-febd0cc8.webp", 1024, 768],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2025/04/Surtees-670-Game-Fisher-30-1024x781.jpeg", "surtees-670-game-fisher-30-1024x781-eb042104.webp", 1024, 781],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2025/06/N013442-Surtees-720-Game-Fisher-1-1024x683.jpeg", "n013442-surtees-720-game-fisher-1-1024x683-f1924516.webp", 1024, 683],
+  ["https://www.northsidemarine.com.au/surtees-boats/wp-content/uploads/sites/6/2025/06/N013443-Surtees-770-Game-Fisher-1-1024x683.jpeg", "n013443-surtees-770-game-fisher-1-1024x683-c309af92.webp", 1024, 683],
   ["https://www.stacer.com.au/site/stacer.com.au/filesystem/images/Boat%20Images/2011/Open%20Boats/319%20Seasprite/319%20Seasprite%20(4)%20copy.jpg", "319-seasprite-4-copy-656bd47a.webp", 534, 282],
   ["https://www.stacer.com.au/site/stacer.com.au/filesystem/images/Boat%20Images/2020/Stacer/499%20Sea%20Ranger%20Lifestyle%20(1).jpg", "499-sea-ranger-lifestyle-1-7d44842e.webp", 3000, 2000],
   ["https://www.stacer.com.au/site/stacer.com.au/filesystem/images/Boat%20Images/2020/Stacer/589%20Ocean%20Ranger%20CC%20Lifestyle%20(2).jpg", "589-ocean-ranger-cc-lifestyle-2-5a7d0a94.webp", 3000, 2000],
@@ -136,6 +258,13 @@ export const HELD: ReadonlyArray<readonly [string, string, number, number]> = [
   ["https://www.stacer.com.au/site/stacer.com.au/filesystem/images/Boat%20Images/2023/Open%20Boats/Territory%20Striker/359/359%20Territory%20Striker%20Lifestyle%20(1).jpg", "359-territory-striker-lifestyle-1-d2e8a3bd.webp", 1200, 800],
   ["https://www.stacer.com.au/site/stacer.com.au/filesystem/images/Boat%20Images/2023/Open%20Boats/Territory%20Striker/359/359%20Territory%20Striker%20Lifestyle%20(2).jpg", "359-territory-striker-lifestyle-2-fa15c6fa.webp", 1200, 796],
   ["https://www.surteesboats.com/_next/image?url=https%3A%2F%2Fwww.cms.surteesboats.com%2Fwp-content%2Fuploads%2F2024%2F12%2F770-GFBF-GM.png&w=1080&q=75", "image-a74e6bdf.webp", 1080, 588],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/high-performance-vmax-sho/2017/vf115la/overview-panel/yamaha-vmax-sho-overview-specifications-thumbnail-800-x-600-vf115.ashx", "yamaha-vmax-sho-overview-specifications-thumbnai-5a22fb7f.webp", 800, 600],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/high-performance-vmax-sho/2017/vf150la/overview-panel/yamaha-vmax-sho-overview-specifications-thumbnail-800-x-600-vf150.ashx", "yamaha-vmax-sho-overview-specifications-thumbnai-6a053381.webp", 800, 600],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/high-performance-vmax-sho/2017/vf175la/overview-panel/yamaha-vmax-sho-overview-specifications-thumbnail-800-x-600-vf175.ashx", "yamaha-vmax-sho-overview-specifications-thumbnai-aa8342f4.webp", 800, 600],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/high-performance-vmax-sho/2017/vf200la/overview-panel/vf200-technical-specification-image-800-x-600.ashx", "vf200-technical-specification-image-800-x-600-d3d5e34a.webp", 800, 600],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/high-performance-vmax-sho/2017/vf225la/overview-panel/vf225-technical-specification-image-800-x-600.ashx", "vf225-technical-specification-image-800-x-600-b948d1a2.webp", 800, 600],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/high-performance-vmax-sho/2017/vf250la/overview-panel/vf250-technical-specification-image-800-x-600.ashx", "vf250-technical-specification-image-800-x-600-a4b638b4.webp", 800, 600],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/high-performance-vmax-sho/2018/vf90la/overview-panel/yamaha-vmax-sho-overview-specifications-thumbnail-800-x-600-vf90.ashx", "yamaha-vmax-sho-overview-specifications-thumbnai-a43cfd6e.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/inline-4-cylinder/2017/f115/overview-panel/f115-grey--white-800-x-600.ashx", "f115-grey-white-800-x-600-15788967.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/inline-4-cylinder/2017/f130/overview-panel/overview-f130-angle-800-x-600.ashx", "overview-f130-angle-800-x-600-4470fb7a.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/inline-4-cylinder/2023/f150xsa/profile/yamaha-f150-profile-800-x-600px-grey.ashx", "yamaha-f150-profile-800-x-600px-grey-9d6ec17d.webp", 800, 600],
@@ -150,10 +279,12 @@ export const HELD: ReadonlyArray<readonly [string, string, number, number]> = [
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/v6-and-v8/2021/f300-des/profile/f300xsb-right-product-profile-800x600.ashx", "f300xsb-right-product-profile-800x600-b5dae06b.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/v6-and-v8/2021/f300-des/profile/f300xsb2-f300xsb-product-profile-800x600.ashx", "f300xsb2-f300xsb-product-profile-800x600-b153a141.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/v6-and-v8/2021/f300/profile/f300xcb-product-profile-800x600.ashx", "f300xcb-product-profile-800x600-9536a896.webp", 800, 600],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/v6-and-v8/2023/xf450a/profile/yamaha-f450-profile-800-x-600px-grey.ashx", "yamaha-f450-profile-800-x-600px-grey-d4a53d40.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/v6-and-v8/2023/xf450a/profile/yamaha-f450-profile-800-x-600px-white.ashx", "yamaha-f450-profile-800-x-600px-white-e471541c.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/v6-and-v8/2024/f350/profile-pics/f300xsa-product-profile-800x600.ashx", "f300xsa-product-profile-800x600-11463aec.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-horsepower-four-stroke-115---425hp/v6-and-v8/2024/f350/profile-pics/f300xsa2-f300xsa-product-profile-800x600.ashx", "f300xsa2-f300xsa-product-profile-800x600-ac71a12b.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-thrust-four-stroke/ft25/overview-panel/ft25_p.ashx", "ft25-p-61d6ef2a.webp", 800, 600],
+  ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-thrust-four-stroke/ft99/overview-panel/ft99_800x600_3qtr_tech.ashx", "ft99-800x600-3qtr-tech-a4318a9b.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/high-thrust-four-stroke/t60/overview-panel/2025/yamaha-ft60h-product-colour-800-x-600.ashx", "yamaha-ft60h-product-colour-800-x-600-16373c32.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/mid-range-four-stroke-30---90hp/2017/f30/overview-panel/f30_800x600.ashx", "f30-800x600-a7175786.webp", 800, 600],
   ["https://www.yamaha-motor.com.au/-/media/products/marine/outboard/mid-range-four-stroke-30---90hp/2017/f40la/overview-panel/f40_800x600.ashx", "f40-800x600-19336d92.webp", 800, 600],
@@ -175,18 +306,25 @@ export const HELD: ReadonlyArray<readonly [string, string, number, number]> = [
 ]
 
 /** A HOST THAT ANSWERED NOTHING AT ALL, and why. Written once for the
- *  host rather than once per address: 71 of the 76 addresses below share
- *  one sentence, and that sentence is about the site. */
+ *  host rather than once per address: 4 of the 6 addresses
+ *  below share one sentence, and that sentence is about the site. */
 export const ABSENT_HOSTS: ReadonlyArray<readonly [string, string]> = [
   ["northsidemarine1.sharepoint.com", "northsidemarine1.sharepoint.com needs a sign-in to read"],
-  ["www.northsidemarine.com.au", "northsidemarine.com.au serves its pictures to its own site only"],
 ]
 
-/** One address that could not be taken on a host that otherwise serves —
- *  so the host is not the reason and cannot carry the sentence. A dead
- *  file on a healthy site: the fix is a corrected address in the
- *  workbook, which is the business's and not ours (IMAGE_SPEC.md §1.7). */
+/** 2 addresses that could not be taken on a host that otherwise
+ *  serves — so the host is not the reason and cannot carry the
+ *  sentence. A dead file on a healthy site: the fix is a corrected
+ *  address in the workbook, which is the business's and not ours
+ *  (IMAGE_SPEC.md §1.7).
+ *
+ *  northsidemarine.com.au is on THIS list rather than in ABSENT_HOSTS
+ *  because it is no longer a host that answers nothing: every other
+ *  address on it is held, each one recovered from the dealership's own
+ *  mirror of that same address rather than from the site. This one the
+ *  mirror never had either. */
 export const ABSENT: ReadonlyArray<readonly [string, string]> = [
+  ["https://www.northsidemarine.com.au/highfield-boats/wp-content/uploads/sites/10/2025/03/Highfield-Ultralite-240-19.jpg", "northsidemarine.com.au serves its pictures to its own site only"],
   ["https://www.stacer.com.au/site/stacer.com.au/filesystem/images/Boat%20Images/2024/609%20Ocean%20Ranger/609OceanRanger_PKG_2024.jpg", "stacer.com.au no longer has that picture"],
 ]
 
@@ -195,15 +333,15 @@ export const ABSENT: ReadonlyArray<readonly [string, string]> = [
  *  re-fetch cannot leave a stale number behind. */
 export const NORTHSIDE_PICTURES = {
   held: HELD.length,
-  absent: 76,
+  absent: 6,
   /** Addresses in the seed with NO answer of any kind — no copy, no
    *  measured refusal, and not on a host already recorded as serving
    *  nothing. They draw as "Held as a link", exactly like a refused
    *  one; the difference is that nobody has asked yet. Clear it with
    *  `python tools/seed/fetch_images.py`. */
-  unmeasured: 234,
-  bytes: 3525146,
-  measured: "2026-08-18",
+  unmeasured: 227,
+  bytes: 9141262,
+  measured: "2026-08-27",
 } as const
 
 /** Hand the engine what shipped. Called once, from `@/demos`, which the
