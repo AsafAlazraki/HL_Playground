@@ -26,10 +26,36 @@ export default function App() {
   const loaded = useProjectStore((s) => s.loaded)
   const init = useProjectStore((s) => s.init)
   const entities = useProjectStore((s) => s.entities)
+  const org = useProjectStore((s) => s.meta.org)
+  const setOrganisation = useProjectStore((s) => s.setOrganisation)
 
   useEffect(() => {
     void init()
   }, [init])
+
+  /* ============================================================
+     THE SIGNED-IN USER'S ORGANISATION IS ADOPTED, NOT ASKED FOR.
+
+     Signing in as somebody at Northside Marine and then being
+     asked "What's the name of your business?" is the app failing
+     to use what it already knows. `AppUser` carries orgName and
+     orgSlug; onboarding's own gate is `!org && tableCount === 0`,
+     so writing the organisation here satisfies it and the person
+     lands on their sheet instead of on a wizard.
+
+     It runs ONCE the store is loaded and ONLY when there is no
+     organisation yet — it never overwrites one, so a project
+     opened from a file keeps whose it is (features/io/apply.ts
+     takes the organisation OFF THE FILE, deliberately).
+
+     The industry is the app's only built one. When a second
+     ships this reads it off the user rather than assuming.
+     ============================================================ */
+  useEffect(() => {
+    if (!loaded || !user) return
+    if (org) return
+    setOrganisation(user.orgName, 'marine')
+  }, [loaded, user, org, setOrganisation])
 
   /* The rules the Master Price File itself asserts, offered to this
      organisation ONCE — see `features/constraints/workbookRules.ts`.
