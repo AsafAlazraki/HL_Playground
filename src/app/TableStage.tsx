@@ -186,7 +186,20 @@ export function TableStage({
     >
       <div className="shell-view-bar">
         {back}
-        <p className="shell-view-what">
+        {/* THE ONE HEADING ON THIS PAGE. The register is the screen a
+            dealer spends the day on and it had NO heading of any level
+            — `document.querySelectorAll('h1,h2,h3,h4,h5,h6')` returned
+            zero on it — so a screen reader arriving here got a landmark
+            and 588 rows with no way to know what the page was, and no
+            heading to jump to.
+
+            `role="heading"` rather than swapping the tag, because this
+            `<p>` is styled by `.shell-view-what` and the point is to
+            name the page, not to redraw the bar. It reads "Formosa ·
+            39 models" — the table and what it holds, which is what the
+            eye is being given here too. The `·` is already
+            `aria-hidden`. */}
+        <p className="shell-view-what" role="heading" aria-level={1}>
           <span className="shell-view-what-mark">
             <TableKindSymbol kind={kindOf(entity.kind)} size={ICON_SIZE.small} />
           </span>

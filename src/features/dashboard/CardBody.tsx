@@ -33,9 +33,25 @@
    accent figure on it is five before anything else is counted.
    So the cards are ink and surface only: the large figure leads
    by SIZE, not by colour. The accent on this screen is the one
-   primary fast action, the focus ring, and hover. The kind hues
-   do not appear at all — a dashboard of seven differently-tinted
-   cards is the theme §1 forbids.
+   primary fast action, the focus ring, and hover.
+
+   THE KIND HUES ARE A SEPARATE VOCABULARY AND THEY DO APPEAR —
+   in one form, on the three cards that list things which HAVE a
+   kind. `Row` takes an optional `kind` and draws the kind's own
+   mark in the kind's own hue: a glyph, which is exactly what §1
+   allows a second hue to be, beside a rail and a dot. It is
+   never a tint behind a name, and never on a card's chrome — a
+   dashboard of seven differently-tinted cards is still the theme
+   §1 forbids, and that is not what this is. What it is, is the
+   same fact the rail and the sheet already draw, drawn the same
+   way: `EntityDef.kind` is what the dealer said the table holds.
+
+   AND THE HUE IS NEVER THE ONLY CARRIER. Each kind's mark is a
+   different SHAPE as well as a different colour, so the row reads
+   the same to somebody who cannot separate indigo from amber.
+   Measured on the real set, the marks clear 4.09:1 at worst
+   against every ground a row wears — rest, hover and press, in
+   both themes — against a 3:1 floor for a graphical object.
    ============================================================ */
 
 import { useMemo } from 'react'
@@ -60,6 +76,12 @@ import { useLintFindings } from '@/features/review'
    `constraintDefs.ts` imports react, the model, the store and
    one lib helper, and nothing else. */
 import { useConstraints } from '@/features/constraints/constraintDefs'
+/* THE SAME BOAT EVERYWHERE. `tablekit` is the app's one source
+   of a kind's mark — the rail, the dialog, the table card and the
+   sheet all ask it for the same glyph, so a dashboard that drew
+   its own would be the eighth drawing of a boat in this build. */
+import { TableKindSymbol, kindOf } from '@/features/tablekit'
+import type { TableKind } from '@/types/model'
 import { money } from '@/lib/money'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import type { CardId } from './arrangement'
@@ -161,17 +183,31 @@ function Row({
   title,
   under,
   tail,
+  kind,
   label,
   onPick,
 }: {
   title: string
   under?: ReactNode
   tail?: ReactNode
+  /** WHAT THIS ROW IS, WHEN THE ROW IS A TABLE OR A PLACE MADE OF
+   *  ONE. Drawn as the kind's own mark in the kind's own hue —
+   *  which is the whole of what §1 allows a second hue to be: a
+   *  rail, a dot or a glyph, never a fill behind text. It is not
+   *  decoration either: `EntityDef.kind` is a fact the dealer set,
+   *  and it is why "Rigging Kits" and "Highfield Inflatables" stop
+   *  reading as two lines of the same thing. */
+  kind?: TableKind
   label: string
   onPick: () => void
 }): JSX.Element {
   return (
     <button type="button" className="dsh-row" onClick={onPick} aria-label={label}>
+      {kind ? (
+        <span className="dsh-row-mark" data-kind={kind} aria-hidden="true">
+          <TableKindSymbol kind={kind} size={ICON_SIZE.small} />
+        </span>
+      ) : null}
       <span className="dsh-row-main">
         <span className="dsh-row-title ds-small">{title}</span>
         {under ? <span className="dsh-row-under ds-caption">{under}</span> : null}
@@ -339,6 +375,11 @@ function RecentlyOpened({ acts }: { acts: DashboardActs }): JSX.Element {
         <Row
           key={r.key}
           title={r.title}
+          /* THE TABLE'S OWN KIND, resolved here rather than
+             remembered: `resolveRecent` already dropped any pick
+             whose subject is gone, so an entity that survives that
+             is present and its kind is a fact. */
+          kind={entities[r.entityId] ? kindOf(entities[r.entityId].kind) : undefined}
           under={r.under ? <span className="dsh-when">{r.under}</span> : undefined}
           label={`Open ${r.under || r.title}`}
           onPick={() => acts.onOpenTable(r.entityId)}
@@ -374,6 +415,19 @@ function MyModules({ acts }: { acts: DashboardActs }): JSX.Element {
           <Row
             key={r.module.id}
             title={r.module.name}
+            /* A MODULE'S HUE IS ITS PRIMARY TABLE'S, NOT ITS OWN.
+               `ModuleDef.accent` exists, but it is the module
+               page's chrome and is chosen by whoever made the
+               module; the kind is what the place SELLS, and the
+               same fact colours the same brand in the rail, on
+               the sheet and here. A module whose primary table
+               has been struck gets no mark rather than a grey
+               one — an absent fact is drawn as absent. */
+            kind={
+              r.module.tableIds[0] !== undefined && entities[r.module.tableIds[0]]
+                ? kindOf(entities[r.module.tableIds[0]].kind)
+                : undefined
+            }
             under={
               r.module.description.trim() ? (
                 <span className="dsh-when">{r.module.description.trim()}</span>
@@ -430,6 +484,7 @@ function ThePriceFile({ acts }: { acts: DashboardActs }): JSX.Element {
           <Row
             key={t.entity.id}
             title={t.entity.name}
+            kind={kindOf(t.entity.kind)}
             tail={<span className="dsh-sum ds-mono">{t.rows.toLocaleString()}</span>}
             label={`Open ${t.entity.name}`}
             onPick={() => acts.onOpenTable(t.entity.id)}

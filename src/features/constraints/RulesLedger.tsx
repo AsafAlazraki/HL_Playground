@@ -146,7 +146,7 @@ export function RulesLedger({ liveIds, live }: RulesLedgerProps): ReactElement |
               aria-hidden="true"
               style={{ '--cn-grp-accent': accents.get(group.id) ?? 'var(--hairline-strong)' } as CSSProperties}
             />
-            <h4 className="cn-grp-name">{group.name}</h4>
+            <h3 className="cn-grp-name">{group.name}</h3>
             <span className="cn-grp-count">
               {seeds.length} {seeds.length === 1 ? 'rule' : 'rules'}
             </span>
@@ -172,7 +172,7 @@ export function RulesLedger({ liveIds, live }: RulesLedgerProps): ReactElement |
         <section className="cn-grp" aria-label="Not yet filed">
           <header className="cn-grp-head">
             <span className="cn-grp-dot" aria-hidden="true" />
-            <h4 className="cn-grp-name">Not yet filed</h4>
+            <h3 className="cn-grp-name">Not yet filed</h3>
             <span className="cn-grp-count">{grouped.unfiled.length}</span>
           </header>
           <p className="cn-grp-say">

@@ -41,7 +41,7 @@ import {
   rollQuotes,
   rollRules,
 } from './cards'
-import { CARD_IDS } from './arrangement'
+import { CARD_IDS, DEFAULT_CARDS } from './arrangement'
 
 /* ---------------------------------------------------------- */
 /* Fixtures — small, and shaped exactly like the contract      */
@@ -134,7 +134,30 @@ describe('the catalogue', () => {
       expect(meta.empty.length).toBeGreaterThan(0)
       /* §2 rule 3: a name is a name, never a label style */
       expect(meta.name).not.toBe(meta.name.toUpperCase())
+      /* the grid reads this to decide a span; an undefined here
+         would silently make a card narrow rather than loudly
+         fail, which is the class of bug this guard is for */
+      expect(typeof meta.wide).toBe('boolean')
     }
+  })
+
+  /* THE DEFAULT SET PACKS THE GRID EXACTLY, AND THAT IS
+     ARITHMETIC RATHER THAN AN OPINION.
+
+     dashboard.css lays four tracks at 1300px of column and gives
+     a wide card two of them. The set a person starts with spends
+
+       3 wide x 2  +  2 compact x 1  =  8 cells
+
+     which is two full rows and no hole. Any later change to
+     `DEFAULT_CARDS` or to a `wide` flag that breaks the multiple
+     puts a card-shaped gap back on the front door, and the gap
+     is the thing this pass was written to remove. It is checked
+     over the DEFAULT set only: a person who puts all seven on has
+     arranged their own dashboard and that is their business. */
+  it('the cards a person starts with fill whole rows of the four-track grid', () => {
+    const cells = DEFAULT_CARDS.reduce((n, id) => n + (CARDS[id].wide ? 2 : 1), 0)
+    expect(cells % 4).toBe(0)
   })
 })
 

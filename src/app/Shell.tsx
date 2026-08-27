@@ -534,7 +534,15 @@ export function Shell({ user, onSignOut }: ShellProps) {
           onNewQuote={() => setStarting(true)}
           quoteCount={quoteCount}
         />
-        <main className="shell-stage" aria-label="Desktop">
+        {/* NO `aria-label` HERE. It said "Desktop" — a word from the
+            windowing shell this app stopped being, and it never
+            changed: a screen reader announced "Desktop, main" over the
+            Formosa register, over Quotes, over Business rules. Every
+            stage inside already declares its own `role="region"` with
+            the name of the thing on it ("Formosa", "Quotes we have
+            made"), so the honest reading is "main landmark" and then
+            the region that says which. §6: no jargon in chrome. */}
+        <main className="shell-stage">
           {/* THE SHEET IS A SECTION, NOT A BACKDROP — and it is MOUNTED
               only while it is the section you are in.
 

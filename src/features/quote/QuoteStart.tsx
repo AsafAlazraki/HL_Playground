@@ -271,13 +271,29 @@ export function QuoteStart({
     findRef.current?.focus()
   }, [placeId])
 
-  /* focus goes into the panel and comes back out to whatever opened it */
+  /* FOCUS GOES INTO THE PANEL AND COMES BACK OUT TO WHATEVER OPENED
+     IT — and for a while it did not, because this read
+     `document.activeElement` from inside an effect. Effects run in
+     declaration order, so the autofocus above had ALREADY put the
+     caret in the search field by the time this one looked: what it
+     captured as "whatever opened it" was `.qs-find-in`, a control
+     inside the panel it was about to unmount. Closing therefore
+     focused a detached node and the keyboard landed on `document.body`
+     — measured: press New quote, press Escape, activeElement is BODY,
+     and the next Tab starts again at the top of the rail.
+
+     A ref initialised during RENDER is read before any effect of this
+     component or its children has run, which is the only moment the
+     trigger is still the active element. */
+  const cameFrom = useRef<HTMLElement | null>(
+    typeof document === 'undefined' || !(document.activeElement instanceof HTMLElement)
+      ? null
+      : document.activeElement,
+  )
   useEffect(() => {
-    const returnTo = document.activeElement as HTMLElement | null
+    const returnTo = cameFrom.current
     return () => {
-      if (returnTo && typeof returnTo.focus === 'function' && document.contains(returnTo)) {
-        returnTo.focus()
-      }
+      if (returnTo && returnTo.isConnected) returnTo.focus()
     }
   }, [])
 

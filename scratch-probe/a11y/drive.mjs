@@ -16,6 +16,8 @@ export async function open(opts = {}) {
   page.on('console', m => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)) })
   page.on('pageerror', e => errs.push('PAGEERROR ' + e.message.slice(0, 200)))
   await page.goto(URL, { waitUntil: 'networkidle' })
+  await page.waitForFunction(() => document.querySelectorAll('button').length > 0, null, { timeout: 20000 }).catch(() => {})
+  await page.waitForTimeout(600)
   return { ctx, page, errs }
 }
 

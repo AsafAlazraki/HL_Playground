@@ -1229,7 +1229,15 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
     .join(' ')
 
   return (
-    <div className={rootClass} ref={wrapRef}>
+    /* THE ONE STAGE THAT DID NOT SAY WHAT IT WAS. Every other screen
+       in the shell declares `role="region"` with the name of the thing
+       on it — "Formosa", "Quotes we have made", "Business rules" — and
+       this one declared nothing, so a screen reader arriving here was
+       given the main landmark, a complementary aside, and fifteen
+       buttons named after tables, with no statement anywhere of what
+       the page is. The title block below says it on screen; this says
+       it to the reader who cannot see the title block. */
+    <div className={rootClass} ref={wrapRef} role="region" aria-label="Data model">
       {/* ============================================================
           THE TITLE BLOCK — what this drawing is, on the drawing.
 
@@ -1405,6 +1413,25 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
            working in has to come to the top */
         elevateNodesOnSelect
         disableKeyboardA11y
+        /* EVERY TABLE ON THIS SHEET WAS TWO TAB STOPS, AND THE FIRST
+           ONE WAS INVISIBLE. React Flow puts `tabIndex={0}` on its own
+           node wrapper by default, so the walk went: the 208x128
+           `.react-flow__node` div — `role="group"`, no focus rule
+           anywhere in this stylesheet, so NO RING — and then the
+           `.tb-lod` button inside it, which has one. Fifteen tables,
+           thirty stops, the ring blinking off and on every other press
+           and each card's whole contents announced twice. This is the
+           defect docs/audit/access-and-responsive.md recorded as A2;
+           the edges it also listed have since stopped being focusable.
+
+           The wrapper stop bought nothing to keep. `disableKeyboardA11y`
+           above already turns off React Flow's arrow-key node moving —
+           measured: five ArrowRights on a focused wrapper move a node
+           zero pixels — so the stop had no action of its own, and the
+           button it wraps is the real control. Zone nodes carry no
+           control at all; they are four registration ticks and a
+           frame. */
+        nodesFocusable={false}
         snapToGrid
         snapGrid={SNAP_GRID}
         minZoom={0.04}

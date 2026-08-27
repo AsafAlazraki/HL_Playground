@@ -114,6 +114,34 @@ export function Finder({ onReveal, onClose }: FinderProps): JSX.Element {
         restore.current = false
         onClose()
       }}
+      /* AND THE ONE TAB `onBlur` COULD NEVER SEE. This panel is the
+         last thing in the document, so a forward Tab out of the last
+         control in it has nowhere in the page to go: the browser takes
+         the keystroke, `relatedTarget` is null, and the guard above —
+         written for the alt-tab case, correctly — swallows it. The
+         result was the exact opposite of what this file promises three
+         paragraphs up: the panel stayed up, the keyboard was on
+         `document.body`, and the NEXT Tab walked the rail underneath a
+         scrim the reader could not dismiss because they were no longer
+         standing in it. Measured: open with Ctrl+K, press Tab once,
+         scrim still present, activeElement BODY.
+
+         So the forward edge is handled here rather than left to a
+         `focusout` that cannot fire. Tab still means LEAVE — it closes
+         the panel — and the keyboard goes back to whatever opened it,
+         which is where the next Tab should carry on from. Shift+Tab is
+         untouched: backwards there IS a real element behind this, so
+         `onBlur` sees it and does its job. */
+      onKeyDown={(e) => {
+        if (e.key !== 'Tab' || e.shiftKey || e.defaultPrevented) return
+        const within = e.currentTarget.querySelectorAll<HTMLElement>(
+          'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+        )
+        const last = within[within.length - 1]
+        if (!last || document.activeElement !== last) return
+        e.preventDefault()
+        onClose()
+      }}
     >
       {/* NOTHING UNDER THE FIELD. A sentence here was drawn and then
           covered: the answer list is positioned against the field and

@@ -2066,6 +2066,59 @@
   }
 }
 
+/* ============================================================
+   A 1024 LAPTOP IS NOT A PHONE, AND THE BLOCK ABOVE WAS TREATING
+   IT AS ONE.
+
+   `max-width: 1080px` is where the split collapses, and the
+   reason written there is sound — a sticky hull taller than the
+   viewport traps a person above the decision. But the SAME query
+   also catches every 1024-wide window, which is the floor this
+   repo's own access audit shoots at, and there the stack is not a
+   kindness. Measured at 1024 x 768, on step 2 of 8:
+
+       .qb-body   (the one scrollport)     377px tall
+       .qb-well   (the photograph)     766 x 431px
+       .qb-panel  (the step, and the shortlist)  starts 529px
+                  BELOW the fold
+
+   So the whole screen is a boat. The step's name, its search, its
+   refusal sentence and every row a person came here to choose
+   from are two and a half scrollports down, behind a picture of
+   something they have already picked. A deck that hides the
+   decision is not a deck.
+
+   THE COLUMN IS THERE. At 1024 the rail is 216, which leaves 808
+   — 300 for the hull, 20 of gap, and 438 for the panel. 438px is
+   narrow and it is a working width: the panel's own contents are
+   a search field, a sentence and a list of rows.
+
+   WHAT THE STACK KEEPS. `.qb-hull-stick` stays `position: static`
+   — that is the measurement the block above made and it still
+   holds, because the hull column is 607px against a 377px
+   scrollport and sticking it would trap exactly as described.
+   The hull scrolls away; the panel is simply beside it rather
+   than under it. `.qb-well--big` takes its 4/3 back, because 16/9
+   was the shape for a hull running the full width of the screen.
+
+   Measured after: `.qb-panel` starts at the top of the
+   scrollport, and the split is 982px rather than 1514.
+
+   THE FLOOR IS 920, NOT 1024, so a window nudged in from the
+   audit width degrades one step at a time instead of falling off
+   a cliff. Below it the stack is right and is left alone.
+   ============================================================ */
+@media (min-width: 920px) and (max-width: 1080px) {
+  .qb-split {
+    grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+    gap: var(--s-5);
+    padding: var(--s-5) var(--s-5) var(--s-6);
+  }
+  .qb-well--big {
+    aspect-ratio: 4 / 3;
+  }
+}
+
 /* A SHORT WINDOW IS A WIDTH PROBLEM'S OPPOSITE and no media query in
    this file was answering it. Measured at 1280×720: the rail is 118px
    and the ledger 126px, which leaves the scrollport 420px — enough,

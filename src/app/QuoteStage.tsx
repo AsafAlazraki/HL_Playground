@@ -122,7 +122,13 @@ export function QuoteStage({
           <span>Back</span>
         </button>
 
-        <p className="shell-view-what">
+        {/* THE HEADING THIS PAGE DID NOT HAVE. Quotes returned zero
+            elements for `h1..h6` — the list of every quote the business
+            has written, with no statement of what the page is. Marked
+            up in place rather than retagged, for the reason in
+            TableStage: `.shell-view-what` already draws this line, and
+            what was missing was the level, not the words. */}
+        <p className="shell-view-what" role="heading" aria-level={1}>
           <span className="shell-view-what-name">
             {quote ? quote.reference : 'Quotes we have made'}
           </span>

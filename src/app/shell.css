@@ -1,84 +1,3 @@
-/* ============================================================
-   shell — the configurator frame: masthead, panel, sheet.
-   THE CHART ROOM: white nautical chrome (bright instrument
-   panels, marine-navy ink, hairline separations) wrapped around
-   the dark blueprint canvas. All rhythm on the --sp scale.
-   Panel left edge: every label / value sits on x=16 (--sp-4)
-   unless it is an optical lockup.
-
-   Everything below the OFF THE DEFAULT PATH rule at the foot of
-   this file styles components that are no longer mounted. They
-   are kept, and kept working, so they can be reintroduced
-   deliberately rather than rebuilt.
-   ------------------------------------------------------------
-   ONE DECLARATION PER SELECTOR.
-
-   This file was written in eras — the Chart Room, Quiet Precision,
-   the Mac window, the desktop, the dock, the instrument, the navy
-   chrome, the rail — and every one of them APPENDED rather than
-   editing the rules it was correcting. The result was measurable:
-   102 selectors declared more than once, 130 redundant rules, and
-   `.shell-body` written five separate times in five different
-   layout modes. That is not a design; it is a stack of opinions
-   with source order as the referee, and it is why nobody could
-   read this file and say what an element looked like.
-
-   78 of those 102 were this file's own vocabulary — the shell, the
-   dock, the desktop, the switcher, the action bar; the other 24
-   were Home's `.hm-*` and the rail's `.sn-*`, which belong to their
-   own passes and were left to them. 72 of the 78 are now declared
-   exactly once, and the file is 88 rules lighter — including 25 of
-   the dock's 67, which were three passes dressing the same ten
-   elements, and both rules for `.ab-search-field`, a class no
-   component has written since the search field was replaced.
-
-   NOTHING'S APPEARANCE CHANGED. Every collapsed rule carries the
-   value that was already winning, which is the LAST declaration in
-   source order, and the merge was checked property by property
-   against the file as it stood — including the cases where a
-   same-specificity state rule sits BETWEEN two declarations and
-   makes the order load-bearing. There are three of those and they
-   are noted where they are: `.shell-tbl:hover` against
-   `.is-selected`, `.shell-panel-rules:hover` against `.is-open`,
-   and `.dk-item:hover` against `:active`.
-
-   THREE THINGS MOVED HOUSE rather than being flattened here. The
-   action bar's six `.ab-*` rules went to `actionbar.css`, which is
-   where that component is declared — this file having a second
-   opinion about somebody else's control, and winning by import
-   order, is the same fault one level up. `.shell-view-bar` lost a
-   `backdrop-filter` that had been sampling a layer painted over by
-   an opaque background in every era since it was written. And the
-   entrance on `.surface` came back to the box it animates.
-
-   WHAT IS STILL DECLARED TWICE, AND WHY IT SHOULD BE. Six: the
-   registration ticks and the four selectors in the print block.
-   Both are the shared-then-specific idiom — one rule stating a
-   fact about several selectors, then one rule per selector for
-   what differs. That is a single statement of each fact, not a
-   second opinion; collapsing the print block would triple its
-   declarations to say exactly the same thing. The `.hm-*` and
-   `.sn-*` selectors are Home's and the rail's and were left to
-   their owners.
-   ============================================================ */
-
-/* -- root: the chart table ----------------------------------
-   ONE DECLARATION. This was four rules in three eras — a flex
-   column at 100dvh, then a block at 100vh — and what rendered was
-   the last of them. It is written once, as what it is: a block that
-   fills the window and never scrolls, with `.shell-body` inside it
-   doing all the laying out. `flex-direction` is inert under
-   `display: block` and is kept because it is what the element has
-   always computed; it is a fossil, not an instruction. */
-.shell-root {
-  position: relative;
-  display: block;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  background: var(--paper);
-  animation: fade-in var(--t-med) var(--ease-draft) both;
-}
 
 /* THE CHAIN — .shell-root › .shell-body › rail | stage.
    Every box on it carries `min-width: 0`. A grid or flex item
@@ -102,13 +21,50 @@
    `--panel-w` is still read by Whiteboard.tsx's camera arithmetic and
    by `.shell-panel`, so it stays declared here — one place knows how
    wide that column is. */
+/* ============================================================
+   THE RAIL'S WIDTH, DECLARED ONCE.
+
+   `--rail` is read by the grid that lays the rail out (below) and
+   by the floating `.pagebar` in actionbar.css, which must clear
+   it. Those were two literals once and had already drifted.
+
+   IT WENT MISSING AND THE FAILURE WAS SILENT. A duplicate-
+   collapsing pass removed this declaration while leaving the
+   `64px` override inside `:has(.sn.is-tight)` — so on every screen
+   that was not collapsed, `var(--rail)` resolved to nothing,
+   `left: calc(var(--rail) + (100vw - var(--rail)) / 2)` became
+   invalid at computed-value time, and the page bar fell back to
+   `left: 0` and sat half off the screen at x = -333. Measured.
+
+   An undefined custom property does not warn; it just makes every
+   calc() that touches it disappear. Declare it here, once. */
+:root {
+  --rail: 264px;
+}
+
 .shell-body {
   position: relative;
   flex: 1 1 auto;
   align-items: stretch;
   display: grid;
   grid-template-columns: var(--rail) minmax(0, 1fr);
-  height: 100vh;
+  /* ONE ROW, AND IT IS DEFINITE. Without this the implicit row is
+     `auto`, so `height: 100%` on the stage resolves against an
+     indefinite track and computes to 0 — which is exactly what
+     happened: the stage collapsed, `.surface` inside it (absolute,
+     inset:0) collapsed with it, and the first screen's scroller
+     came out 152px tall with the load doors at y=1427 in a 1000px
+     window. A definite track makes both the stretch and the
+     percentage resolve. */
+  grid-template-rows: minmax(0, 1fr);
+  height: 100dvh;
+  /* AND NOTHING AUTO-PLACES. The body gained a third child when the
+     action bar moved out of the stage, and although `.pagebar` is
+     `position: fixed` and out of flow, auto-placement still opened a
+     second implicit row — measured as `grid-template-rows:
+     1000px 0px`, with the stage sitting in the 0px one. Both real
+     children name their cell below, so a fourth child can never
+     push the page into a row of its own again. */
   min-width: 0;
   min-height: 0;
   --panel-w: 260px;
@@ -122,10 +78,23 @@
    the content column now and is charged for by the surface it sits
    on rather than by the whole page. Static in flow, so the grid
    places it. */
+/* THE STAGE IS A GRID ITEM NOW, AND IT HAD KEPT ITS FLEX RULES.
+
+   `.shell-body` was a flex row and is a two-column GRID since the
+   rail arrived, so `flex: 1 1 auto` here stopped meaning anything.
+   Every child of this element is `position: absolute` (`.surface`,
+   `.shell-sheet-layer`), so with nothing in flow and no height of
+   its own it collapsed to ZERO — and the first screen's scroller,
+   which is `flex: 1` inside it, collapsed to 152px with the load
+   doors at y=1427 in a 1000px window. Measured, not guessed.
+
+   `height: 100%` fills the grid area explicitly rather than
+   relying on a stretch that something upstream can quietly cancel.
+   The dead `inset: auto` goes with the dead `flex`. */
 .shell-stage {
   position: relative;
-  inset: auto;
-  flex: 1 1 auto;
+  grid-area: 1 / 2;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -2575,342 +2544,15 @@
    screenshot of this app has been of a layout nobody specified.
 
    `> .shell-stage { flex: 1 }` went with it: a grid track sizes
-   from `minmax(0, 1fr)` in the template, and a `flex` shorthand on
-   a grid item is inert. The grid at the head of the file is the
-   only declaration of this layout now, which is the point.
-   ============================================================ */
 
 
-/* ============================================================
-   THE DOCK — floating, over the sheet.
 
-   IT IS NOT MOUNTED. `Dock.tsx` is still in the tree and still
-   writes every class below, but nothing renders it: the rail
-   replaced it and the action bar was lifted out of it into
-   `.pagebar`. These rules are kept for the same reason the block
-   at the foot of this file keeps Rails and the Inspector —
-   reintroducing the component should be one line of JSX, not a
-   rebuild — and the style guard counts a class Dock.tsx writes as
-   written, so deleting them would report a screen as unstyled.
 
-   THREE PASSES DRESSED IT and each appended rather than editing:
-   white glass, then THE INSTRUMENT's design-system tokens, then
-   the navy chrome ramp. Every rule here now carries what the third
-   pass left — one declaration per selector, the value that
-   rendered — and the two later blocks keep their arguments and
-   their own new rules. Nothing about the dock's appearance
-   changed; it simply stopped being written down three times.
-   ============================================================ */
 
-.dk-wrap {
-  position: fixed;
-  left: 50%;
-  bottom: 22px;
-  transform: translateX(-50%);
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  /* the gap is only ever between the Tables menu and the rig — the
-     two tiers inside the rig are joined, not spaced */
-  gap: var(--s-3);
-  pointer-events: none;
-}
-.dk-wrap > * {
-  pointer-events: auto;
-}
 
-/* the navigation tier keeps its geometry and gives up its skin —
-   `.dk-rig` is the surface now, so a second border, a second blur
-   and a second shadow here would be the same object drawn twice */
-.dk {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: var(--s-2);
-  border: 0;
-  border-radius: 0;
-  background: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-}
 
-.dk-sep {
-  width: 1px;
-  height: 26px;
-  margin: 0 4px;
-  background: var(--chrome-line);
-}
 
-.dk-item {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 14px;
-  background: transparent;
-  color: var(--chrome-fg-soft);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
-}
-.dk-item:hover {
-  background: var(--chrome-wash-hover);
-  color: var(--chrome-fg);
-  /* the Dock's own gesture: the icon grows toward the pointer */
-  transform: translateY(-3px) scale(1.06);
-}
-.dk-item:active {
-  transform: translateY(0) scale(0.97);
-}
-/* THE LIT STATE IS WHITE, NOT BLUE. --accent measures 1.9:1 on
-   --chrome, so an accent wash here would be a state nobody can see.
-   White at 16% is the same idea in the material that works on this
-   ground; the accent hairline is what gives it an edge on glass. */
-.dk-item.is-open,
-.dk-item.is-active {
-  background: var(--chrome-wash-on);
-  color: var(--chrome-fg);
-  box-shadow: inset 0 0 0 1px var(--accent-line);
-}
-/* THE RING HAS TO CLEAR ITS NEIGHBOURS. Every item lifts on hover,
-   so a focused item drawn earlier in source order can have the next
-   one's raised corner painted over its ring. */
-.dk-item:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
-  z-index: 1;
-  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
-}
 
-/* the running light under an active place. It was a 4px dot, which
-   on a 44px item is a speck; it is a 14px bar with the accent's own
-   glow under it. */
-.dk-item.is-active::after {
-  content: '';
-  position: absolute;
-  bottom: 3px;
-  width: 14px;
-  height: 3px;
-  border-radius: var(--r-full);
-  background: var(--accent);
-  box-shadow: var(--glow-md);
-}
-
-/* THE COUNT SITS ON THE FLOOR, AND IT FITS — MEASURED, NOT GUESSED.
-   This was 10px, which is under the 11px floor DESIGN_PRINCIPLES
-   calls absolute, on the redesign's own dock. Before shrinking the
-   badge's job to fit the type, the type was measured against the
-   badge: IBM Plex Mono tabular advances 5.98px per digit at 10px and
-   6.58px at 11px, so "50" goes 11.95px -> 13.15px. With `padding:
-   0 4px` the pill goes 20px -> 21.2px wide inside a 44px item, and
-   the 16px height already had 3px of air above an 11px line box.
-   1.2px. The badge did not have to say anything less to clear the
-   floor, so it still says the number — a count relocated into a
-   tooltip is a count the resting bar no longer has.
-   The `#fff` beside it was a literal colour, which is rule 1. It is
-   `--paper-high` now, the same inversion `.dk-tip` below uses:
-   #ffffff on --blue #4a56d2 measures 5.87:1, and in dark #131519 on
-   #6e7bfa measures 5.16:1. Both clear 4.5:1.
-   GEOMETRY UNTOUCHED: 44x44 item, 13px radius, 4px gap. */
-.dk-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--blue);
-  color: var(--paper-high);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-/* ============================================================
-   THE NAME, BELOW THE BAR — because below the bar is the only band
-   on this screen that is guaranteed to be empty.
-
-   It was ABOVE, at `bottom: calc(100% + 10px)`, and the claim in this
-   note used to be "it is never covering the thing it names". Measured
-   at 1440 x 900 with the Tables menu open: the item is 44px tall inside
-   a bar padded 8px, so the tip's box landed at y 792–819 while the
-   menu's panel ended at y 806 and the page's own content runs to y 822.
-   The "Tables" label was painting over the lower-left corner of the
-   very panel that press had just opened, and over a page heading behind
-   it. A tooltip that covers its own subject is worse than no tooltip.
-
-   THE ARITHMETIC FOR THE OTHER DIRECTION. `.dk-wrap` sits 22px off the
-   bottom and `.dk` pads 8px, so a tip hung under the item starts at
-   30px from the floor and has 30px to live in. At 12px/1.2 with 3px of
-   padding the box is 20.4px tall and, offset 4px, occupies roughly
-   y 873–893 of a 900px window — inside the 78px strip `.shell-stage`
-   already reserves for the dock, where by construction no page content
-   and no menu panel is ever drawn. Nothing was made smaller than the
-   11px floor to fit: the type step DESIGN_CONTRACT §3 records for this
-   element (12px / 500) is untouched and only the leading and the
-   padding came in.
-
-   It rises INTO place from below now, for the same reason it used to
-   fall into place from above: the movement points back at the thing it
-   is describing.
-   ============================================================ */
-/* THE LABEL IS INSTANT, AND IT ARRIVES FOR THE KEYBOARD TOO. The
-   same 4px travel on `--ease-out-expo` at `--d-press`, the duration
-   this system reserves for things that must feel like they were
-   already there — a name that fades in over an eighth of a second
-   is a name you have already stopped waiting for. */
-.dk-tip {
-  position: absolute;
-  top: calc(100% + 4px);
-  padding: 3px 9px;
-  border: 1px solid var(--chrome-line);
-  border-radius: var(--r-control);
-  background: var(--chrome-raised);
-  color: var(--chrome-fg);
-  font-family: var(--font-ui);
-  font-size: var(--t-caption-size);
-  font-weight: var(--t-caption-weight);
-  letter-spacing: var(--t-caption-track);
-  line-height: 1.2;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translateY(-4px);
-  pointer-events: none;
-  box-shadow: var(--e2);
-  transition:
-    opacity var(--d-press) var(--ease-out-expo),
-    transform var(--d-press) var(--ease-out-expo);
-}
-.dk-item:hover .dk-tip,
-.dk-item:focus-visible .dk-tip {
-  opacity: 1;
-  transform: none;
-}
-
-/* ---------- the panel, opening UPWARD ----------------------- */
-
-/* THE PANEL TAKES THE SAME MATERIAL AS THE RIG IT OPENS FROM,
-   rather than a second recipe for the same idea — and it grows out
-   of the ITEM that was pressed (`--dk-origin`), not out of its own
-   middle, because an interaction is anchored to its source. */
-.dk-panel {
-  width: min(520px, calc(100vw - 48px));
-  max-height: min(58vh, 460px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--sp-3);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  box-shadow: var(--e3), inset 0 1px 0 var(--glass-edge);
-  transform-origin: var(--dk-origin, 50%) bottom;
-  animation: ds-scale-in var(--d-med) var(--ease-out-expo);
-}
-
-.dk-row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  min-height: 32px;
-  padding: 0 var(--sp-2);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 460;
-  text-align: left;
-  cursor: pointer;
-  /* the press below darkens rather than scaling, so the ground is
-     the only thing that has to move — one transition, declared with
-     the row rather than in a second rule five hundred lines down */
-  transition: background var(--d-fast) var(--ease);
-}
-/* THE SAME FAULT THE ROW RAIL HAD, IN THE SAME FILE. Hover, focus and
-   "this branch is open" (`.dk-row--branch.is-on`, below) all painted
-   rgba(74, 86, 210, 0.09), so pointing at Motors while Boats was open
-   showed two open branches and only one list. Hover is the neutral
-   darken now; the accent wash is reserved for the branch whose panel is
-   actually beside it, and focus draws a ring rather than borrowing a
-   state's colour. */
-.dk-row:hover {
-  background: var(--paper-sunken);
-}
-.dk-row:focus-visible {
-  background: var(--paper-sunken);
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-/* --ink-faint is 4.72:1 on white and 4.22:1 on --paper-sunken, so the
-   mark and the count step up on a lit row — DESIGN_CONTRACT §1's tint
-   trap, answered where the tint is drawn. */
-.dk-row:hover .dk-row-mark,
-.dk-row:focus-visible .dk-row-mark,
-.dk-row:hover .dk-row-count,
-.dk-row:focus-visible .dk-row-count {
-  color: var(--ink-soft);
-}
-.dk-row-mark {
-  flex: none;
-  display: flex;
-  color: var(--ink-faint);
-}
-.dk-row-name {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dk-row-count {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-}
-/* "No tables yet." is a refusal in the place the thing is refused
-   (rule 10), so it is a sentence at reading size rather than a
-   greyed-out line */
-.dk-none {
-  margin: 0;
-  padding: var(--sp-3);
-  font-size: var(--t-small-size);
-  color: var(--fg-secondary);
-}
-
-/* THE FALLBACK MOVED WITH THE MATERIAL. `.dk` has no background of
-   its own any more — the rig carries it — so naming it here would be
-   a rule about nothing. See `.dk-rig` at the foot of this file. */
-@media (prefers-reduced-motion: reduce) {
-  .dk-panel {
-    animation: none;
-  }
-  .dk-item:hover {
-    transform: none;
-  }
-  /* the label still arrives, it just stops travelling to get here —
-     reduced motion means movement goes and opacity stays */
-  .dk-tip {
-    transform: none;
-  }
-}
 
 
 /* ============================================================
@@ -3199,13 +2841,10 @@
    HOME — the Finder window in gallery view.
    ============================================================ */
 
-.hm-bar-left {
-  grid-column: 1;
-  /* a grid child defaults to min-width: auto and will not shrink
-     below its content, which is how a wide control on one side
-     squeezes the centre track and truncates the title */
-  min-width: 0;
-}
+/* `.hm-bar-left` STOOD HERE AND IS GONE, for the same reason `.hm-find`
+   below it is gone: it was track 1 of a three-track bar the masthead
+   replaced, no component writes the class, and a rule matching nothing
+   is weight the next person has to read before discarding. */
 
 /* `.hm-find` STOOD IN TRACK 3 AND IS GONE. It was a second search a
    metre above the first: "i don't want search in top bar I want it
@@ -3218,79 +2857,107 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+  /* 120px of floor is what the page bar costs a scrolling page */
+  padding: var(--s-8) var(--s-8) 120px;
 }
 
 .hm-sec + .hm-sec {
-  margin-top: var(--sp-6);
+  margin-top: var(--s-12);
 }
 .hm-sec-head {
   display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  margin-bottom: var(--sp-3);
+  /* centre, not baseline: the kind dot beside the name is a circle and
+     has no baseline to sit on */
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 26ms);
 }
+/* the heading step, not 13px: at 1600px the group name is the only
+   landmark on the page and 13px is a caption */
 .hm-sec-name {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.004em;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
   color: var(--ink);
 }
 .hm-sec-count {
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
 
+/* BIGGER. The gallery was six 230px cards to a 1600px row, which is a
+   file listing. Four bigger cards is a product. */
 .hm-grid {
   display: grid;
-  gap: var(--sp-3);
-  grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
+  gap: var(--s-5);
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
 }
 
-/* THE SAME CARD THE SHEET DRAWS - kind rail, kind name, table
-   name, what is in it - so moving between the two never feels
-   like moving between two apps. */
+/* THE SAME CARD THE SHEET DRAWS — kind rail, kind name, table name,
+   what is in it — so moving between the two never feels like moving
+   between two apps.
+
+   IT IS DECLARED BEFORE `.hm-card--shot`, AND HAS TO BE. That variant
+   is the same specificity and takes `padding-top` off a card with a
+   photograph on it; this rule moved BELOW it would put the padding
+   back and push every picture down its own card. */
 .hm-card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
-  min-height: 104px;
-  padding: 13px 14px 12px 17px;
+  min-height: 150px;
+  padding: var(--s-4) var(--s-4) var(--s-3) 18px;
   border: 1px solid var(--hairline);
-  border-radius: 10px;
-  background: var(--paper-high);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
   text-align: left;
   cursor: pointer;
-  box-shadow: var(--e-card);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-med) var(--ease-draft),
-    transform var(--t-med) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
 }
 .hm-card::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 11px;
-  bottom: 11px;
+  top: 10px;
+  bottom: 10px;
   width: 3px;
   border-radius: 0 3px 3px 0;
   background: var(--tbn-accent, var(--ink-faint));
+  transition:
+    top var(--d-med) var(--ease-out-expo),
+    bottom var(--d-med) var(--ease-out-expo),
+    width var(--d-med) var(--ease-out-expo);
 }
+/* the glow is the KIND's hue, not the accent's — the one place in the
+   app a kind colour lifts off its 3px rail, and it does it as light
+   rather than as a fill behind text (§1) */
 .hm-card:hover {
-  border-color: var(--hairline-strong);
-  box-shadow: var(--e-card-hover);
-  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow:
+    var(--e4),
+    inset 0 1px 0 var(--edge-light),
+    0 10px 30px -14px var(--tbn-accent, transparent);
+  transform: translateY(-3px);
 }
 .hm-card:active {
-  transform: translateY(0) scale(0.995);
+  transform: translateY(0) scale(0.994);
   box-shadow: var(--e1);
+  transition-duration: var(--d-press);
 }
 /* FOCUS HAS TO BE FINDABLE, and this was the one card in the app you
    could not find. The ring was a 1px border colour change plus a 3px
@@ -3316,26 +2983,28 @@
   align-items: center;
   gap: 5px;
   color: var(--tbn-accent, var(--ink-faint));
-  font-size: 11px;
+  font-size: var(--t-label-size);
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--t-label-track);
   text-transform: uppercase;
 }
 /* THREE LINES, BECAUSE ONE TABLE IN FIFTY-ONE NEEDS THREE. The clamp
    is a wall against a pathological name, not a cut on the longest true
    one the sheet holds. Measured across every card on Home at 1280,
-   1440 and 1920 — the grid is `minmax(230px, 1fr)` so the name box is
-   221px at all three — exactly one name overflows two lines:
+   1440 and 1920 when the grid was `minmax(230px, 1fr)` and the name
+   box was 221px at all three — it is `minmax(320px, 1fr)` now, which
+   only makes the box wider — exactly one name overflowed two lines:
    "Haines Signature × Dunbier/Haines BMT — Trailer Fitment", which
    wants 56px of a 38px box. Every other name on the sheet fits in two,
    so raising the clamp costs no card a row of height it was not
    already going to take. */
 .hm-card-name {
+  margin-top: 1px;
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 570;
   line-height: 1.25;
-  letter-spacing: -0.009em;
+  letter-spacing: -0.012em;
   color: var(--ink);
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -3345,20 +3014,22 @@
 .hm-card-stats {
   display: flex;
   align-items: baseline;
-  gap: 5px;
+  gap: var(--s-1);
   margin-top: auto;
-  padding-top: 9px;
+  padding-top: var(--s-3);
   border-top: 1px solid var(--hairline);
   font-size: 12px;
   color: var(--ink-faint);
 }
 .hm-card-stats b {
   font-family: var(--font-mono);
-  font-size: 14px;
+  /* the row count is the fact the card is scanned for, so at 320px it
+     is the size of a heading rather than of the words beside it */
+  font-size: 16px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--fg);
 }
 .hm-card-stats i {
   width: 1px;
@@ -3418,10 +3089,10 @@
 .hm-first-title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 22px;
-  font-weight: 580;
-  line-height: 1.25;
-  letter-spacing: -0.014em;
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
   color: var(--ink);
   text-wrap: balance;
 }
@@ -3476,14 +3147,14 @@
   padding: var(--sp-5) var(--sp-5) var(--sp-4) calc(var(--sp-5) + 5px);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
-  background: var(--paper-high);
+  background: var(--grad-surface);
   text-align: left;
   cursor: pointer;
-  box-shadow: var(--ec1);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
   transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-med) var(--ease-draft),
-    transform var(--t-med) var(--ease-draft);
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease-out-expo);
 }
 .hm-first-door::before {
   content: '';
@@ -3517,8 +3188,8 @@
 
 .hm-first-door:hover {
   border-color: var(--hairline-strong);
-  box-shadow: var(--ec3);
-  transform: translateY(-1px);
+  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
+  transform: translateY(-3px);
 }
 .hm-first-door:active {
   transform: translateY(0) scale(0.994);
@@ -3993,26 +3664,6 @@
   pointer-events: none;
 }
 
-/* ---------- 3 · the dock panel comes from its icon ----------- */
-
-/* the panel grows out of the ITEM that was pressed rather than out
-   of its own middle — `--dk-origin` is set with `.dk-panel` in THE
-   DOCK above, where the panel is */
-
-/* ---------- 4 · the lights answer the press ------------------ */
-
-/* the 90ms transform and the 0.86 press are declared with
-   `.win-light` and `.win-light:active` above, where the light is */
-
-/* the glyph a Mac shows inside the light on hover */
-.win-lights:hover .win-light::after {
-  content: '';
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 18%, transparent);
-}
 
 /* ---------- §14 · and none of it against the user's wishes --- */
 
@@ -4070,9 +3721,10 @@
   grid-column: 2;
   justify-self: end;
 }
-.win-body .hm-bar-left {
-  grid-column: 1;
-}
+/* `.win-body .hm-bar-left` STOOD HERE AND IS GONE with the class it
+   qualified — the second of Home's two rules for a track of a bar the
+   masthead replaced. It could not match anything even if the window
+   came back, because no component writes the class any more. */
 
 /* `.win-title`'s room to say the subject is declared with the title
    itself, above — this was its second rule */
@@ -4178,119 +3830,8 @@
 }
 
 
-/* ---------- the nested Tables menu -------------------------- */
-
-/* THE TWO PANELS ARE ONE HOVER REGION, so travelling diagonally
-   from a parent row to its submenu cannot close the thing being
-   reached for — and THE FIRST PANEL MUST NOT MOVE. It was a flex
-   row inside a centred wrapper, so the moment the second panel
-   appeared the pair re-centred and the list you were pointing at
-   slid left out from under the pointer. The first panel is the only
-   thing in flow; the second is positioned beside it and takes no
-   part in the centring. `align-items` and `gap` are fossils of the
-   flex row and are kept because they are what the element computes.
-
-   THE SUBMENU IS ALWAYS ON THE SCREEN, AND ALWAYS READABLE.
-   MEASURED, 1280 x 860, Relationships open: the panel's box ran
-   from y 517 to y 977 — 117px BELOW the bottom of the window. It
-   had `overflow-y: auto` and it did scroll, but scrolling only
-   moves content INSIDE the box, and the bottom of the box was off
-   the screen: the last four of twenty-six tables could not be
-   reached by any means.
-
-   THE CAUSE WAS `top: 0`, not the height. The second panel is
-   absolute inside `.dk-menus`, whose height is the FIRST panel's —
-   seven rows, about 250px. Anchored to that top and allowed 460px,
-   it had to end 210px lower than its own container. Anchored to the
-   BOTTOM instead, it ends where the first panel ends, which is on
-   the screen by construction at every window height, and switching
-   branches never moves either of them.
-
-   THE WIDTH IS THE ROOM THERE IS. The panel's left edge sits at the
-   window's centre + 124px (half of the 232px first panel, plus the
-   8px gap). `50vw - 140px` is that gap less a 16px margin, so at
-   1280 it asks for 500 and takes its 420px ceiling, at 1024 it takes
-   372, and at 800 it stops at the 260px floor rather than crossing
-   the right-hand edge. `width: 300px` was the first of three
-   answers and never rendered.
-
-   All of which used to be THREE rules for `.dk-panel--l2` and TWO
-   for `.dk-menus`, spread over a hundred lines, each one silently
-   unpicking the last. One rule each now, at the values that win. */
-.dk-menus {
-  position: relative;
-  display: block;
-  align-items: flex-start;
-  gap: 8px;
-}
-.dk-panel--l1 {
-  width: 232px;
-  columns: auto;
-}
-.dk-panel--l2 {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: auto;
-  bottom: 0;
-  margin: 0;
-  width: clamp(260px, calc(50vw - 140px), 420px);
-  max-height: min(58vh, 460px);
-  overflow-y: auto;
-  columns: auto;
-}
-.dk-row--branch {
-  gap: 8px;
-}
-.dk-row--branch svg {
-  color: var(--ink-faint);
-}
-.dk-row--branch.is-on {
-  background: var(--blue-wash);
-}
-.dk-row--branch.is-on svg {
-  color: var(--blue);
-}
-/* the accent wash takes --ink-faint to 4.12:1, so the count on the open
-   branch steps up the same way it does on hover */
-.dk-row--branch.is-on .dk-row-count {
-  color: var(--ink-soft);
-}
-.dk-row--branch .dk-row-name {
-  font-weight: 550;
-}
 
 
-/* the dock's strip is gone, so a surface fills what it is given —
-   `padding-bottom: 0` is folded into `.surface` above rather than
-   restated here, where it was the second of three rules for one
-   element */
-
-
-/* ---------- the submenu, and what it may not do -------------- */
-
-/* SEVENTEEN OF TWENTY-SIX NAMES WERE CUT with no title, so
-   "Stabicraft x NSM Custom - Trailer Fitment" and "Stabicraft x
-   GFAB - Trailer Fitment" were the same row twice. A menu whose
-   entries cannot be told apart is not a menu. The panel is as wide
-   as the room to the right of it allows, so it can never be the
-   thing that goes off the edge (see `.dk-panel--l2` above), and a
-   name that still does not fit wraps to a second line and then
-   ellipsises, with the whole of it on the row as a title. Nothing
-   truncates mid-word (§3). */
-
-/* a row that has grown to two lines needs air above and below it;
-   a one-line row still measures 32px and is untouched */
-.dk-panel--l2 .dk-row {
-  padding: 5px var(--sp-2);
-}
-.dk-panel--l2 .dk-row-name {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  white-space: normal;
-  overflow-wrap: break-word;
-  line-height: 1.35;
-}
 
 /* ============================================================
    A NAME IS A NAME — the first screen, which no pass reached.
@@ -4359,8 +3900,12 @@
   position: relative;
   isolation: isolate;
 }
+/* the aurora is off under the navy frame — one under a navy masthead
+   is two ideas fighting — and the stacking order is kept beside it so
+   putting it back is one word. */
 .hm-sky {
   z-index: 0;
+  display: none;
 }
 .hm > .shell-view-bar,
 .hm > .hm-scroll {
@@ -4377,7 +3922,11 @@
   justify-content: space-between;
   gap: var(--s-8);
   flex-wrap: wrap;
-  margin: var(--s-4) 0 var(--s-10);
+  /* the foot was --s-10, then --s-12, then --s-6 once the scale strip
+     stood between the masthead and the first card; --s-6 is what
+     renders. `.hm-scroll:has(.hm-scale) .hm-mast` below outranks the
+     top on the pages that have a strip. */
+  margin: var(--s-4) 0 var(--s-6);
   padding-bottom: var(--s-6);
   border-bottom: 1px solid var(--line-subtle);
   animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
@@ -4454,7 +4003,7 @@
 .hm-tally-fig {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -4486,16 +4035,11 @@
    all. The rule is what makes the group a band rather than a
    gap; the dot is the same hue as the rails on the cards under
    it, so the eye can find the boats without reading the word.
+
+   `.hm-sec-name` and `.hm-sec-count` took the heading step and the
+   count chip in that same pass and are declared once, in HOME above.
+   The dot and the rule are new here, so they are declared here.
    ------------------------------------------------------------ */
-.hm-sec + .hm-sec {
-  margin-top: var(--s-10);
-}
-.hm-sec-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  margin-bottom: var(--s-4);
-}
 .hm-sec-dot {
   width: 7px;
   height: 7px;
@@ -4512,20 +4056,6 @@
 .hm-sec-dot[data-kind='custom'] { background: var(--kind-custom); }
 .hm-sec-dot[data-kind='join'] { background: var(--kind-join); }
 
-/* SUPERSEDES the 13px above: at this width the group name is the
-   only landmark on a 1600px page and 13px is a caption. */
-.hm-sec-name {
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  letter-spacing: var(--t-heading-track);
-}
-.hm-sec-count {
-  padding: 1px 7px;
-  border-radius: var(--r-full);
-  background: var(--chip-bg);
-  font-size: var(--t-mono-sm-size);
-  color: var(--fg-tertiary);
-}
 .hm-sec-rule {
   flex: 1;
   height: 1px;
@@ -4534,104 +4064,38 @@
 }
 
 /* ------------------------------------------------------------
-   THE CARD
+   THE CARD — the argument; the values went home.
 
-   The bones are unchanged — same rail, same three-line clamp,
-   same focus ring. What changes is that it now reads as an
-   object with a light on it rather than a bordered rectangle:
-   a gradient surface, a lit top edge, a kind-tinted glow that
-   arrives only on hover, and the sheen from ds.css.
+   The bones never changed — same rail, same three-line clamp, same
+   focus ring. What changed is that it reads as an object with a light
+   on it rather than a bordered rectangle: a gradient surface, a lit
+   top edge, a kind-tinted glow that arrives only on hover, and the
+   sheen from ds.css. The glow is the KIND's hue, not the accent's —
+   the one place a kind colour lifts off a 3px rail, and it does it as
+   light rather than as a fill behind text (§1).
+
+   `.hm-grid`, `.hm-card`, `.hm-card::before`, `.hm-card:hover`,
+   `.hm-card:active`, `.hm-card-kind`, `.hm-card-name`,
+   `.hm-card-stats` and `.hm-card-stats b` carry all of it, once each,
+   in HOME above.
+
+   THE RAIL GROWS INTO THE HOVER, and that rule is still here because
+   it is the only declaration of it. It is 3px at rest exactly as it
+   was; on hover it takes the full height of the card and widens by a
+   pixel, so the kind is what lights up rather than the whole surface
+   changing colour.
    ------------------------------------------------------------ */
-.hm-grid {
-  gap: var(--s-3);
-}
-.hm-card {
-  min-height: 116px;
-  padding: var(--s-4) var(--s-4) var(--s-3) 18px;
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
-}
-/* THE RAIL GROWS INTO THE HOVER. It is 3px at rest exactly as it
-   was; on hover it takes the full height of the card and widens
-   by a pixel, so the kind is what lights up rather than the
-   whole surface changing colour. */
-.hm-card::before {
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
-  transition:
-    top var(--d-med) var(--ease-out-expo),
-    bottom var(--d-med) var(--ease-out-expo),
-    width var(--d-med) var(--ease-out-expo);
-}
 .hm-card:hover::before,
 .hm-card:focus-visible::before {
   top: 0;
   bottom: 0;
   width: 4px;
 }
-/* The glow is the KIND's hue, not the accent's — this is the one
-   place a kind colour lifts off a 3px rail, and it does it as
-   light rather than as a fill behind text (§1). */
-.hm-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--line-strong);
-  box-shadow:
-    var(--e4),
-    inset 0 1px 0 var(--edge-light),
-    0 10px 30px -14px var(--tbn-accent, transparent);
-}
-.hm-card:active {
-  transform: translateY(0) scale(0.994);
-  box-shadow: var(--e1);
-  transition-duration: var(--d-press);
-}
 
-.hm-card-kind {
-  font-size: var(--t-label-size);
-  letter-spacing: var(--t-label-track);
-}
-.hm-card-name {
-  font-size: var(--t-heading-size);
-  margin-top: 1px;
-}
-.hm-card-stats {
-  padding-top: var(--s-3);
-  gap: var(--s-1);
-}
-/* SUPERSEDES 14px: the row count is the fact the card is scanned
-   for, and at 230px it can afford to be the size of a heading. */
-.hm-card-stats b {
-  font-size: var(--t-mono-lg-size);
-  color: var(--fg);
-}
-
-/* ------------------------------------------------------------
-   THE FIRST SCREEN — same words, given a page to stand on.
-   ------------------------------------------------------------ */
-.hm-first-title {
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
-}
-.hm-first-door {
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
-}
-.hm-first-door:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
-}
+/* THE FIRST SCREEN took the same page treatment — the display step on
+   its title, the card's gradient surface and lit edge on its two
+   doors, the same -3px lift on hover. `.hm-first-title`,
+   `.hm-first-door` and `.hm-first-door:hover` carry it in HOME above. */
 
 /* ------------------------------------------------------------
    THE PICTURE ON A CARD.
@@ -4657,7 +4121,10 @@
   position: relative;
   display: block;
   margin: 0 calc(var(--s-4) * -1) var(--s-3) -18px;
-  aspect-ratio: 16 / 9;
+  /* 16:9 was a banner. 3:2 is the ratio the photographs were actually
+     taken at — 1024x683 across the seed — so this crops almost
+     nothing. */
+  aspect-ratio: 3 / 2;
   overflow: hidden;
   background: var(--surface-3);
 }
@@ -4710,108 +4177,7 @@
   padding-bottom: var(--s-3);
 }
 
-/* ============================================================
-   THE INSTRUMENT — one object at the bottom of the screen.
 
-   WHAT WAS THERE. Two floating bars, stacked, each with its own
-   border, its own shadow and its own backdrop blur, separated by a
-   10px gap: the action bar at 40px and the dock at 60. Measured on
-   a table page they cost the register 132px — three of its 40px
-   rows — and, worse than the arithmetic, they read as two pieces of
-   furniture arguing about which one was the chrome.
-
-   WHAT IS THERE NOW. ONE object, `.dk-rig`, carrying one material,
-   one outline, one lit edge and one shadow. Inside it the two tiers
-   keep their jobs exactly — the top tier is what you DO on this
-   page, the bottom tier is where you GO — and a hairline is all
-   that separates them, because they are two rows of one instrument
-   rather than two instruments.
-
-   THE ARITHMETIC, and it is why the page gets rows back:
-     action tier   36px  (was 40)
-     hairline       1px  (was a 10px gap and a second border)
-     dock tier     60px  (unchanged — 44px items are the target
-                          size, and the dock is the best thing on
-                          this screen)
-     rig border     2px
-     ------------------
-     rig           99px, floating 22px off the floor
-
-   121px to the top of the object, against 132 for the pair, and the
-   page is charged 117 — the object's own height less the 4px of
-   bottom margin the dock has always been allowed to overlap. See
-   the foot of `actionbar.css`, which owns that number.
-
-   THE MATERIAL IS THE ONE THE PRINCIPLES ALLOW. Glass is retired
-   everywhere except the two surfaces that sit OVER scrolling
-   content and have to say so: this and the masthead. Both now take
-   `--glass-bg` / `--glass-blur` / `--glass-sat` rather than
-   hand-mixed `color-mix` and hand-typed blur radii, so the two ends
-   of the app's chrome are the same material by construction and not
-   by coincidence. `prefers-reduced-transparency` turns both opaque,
-   below.
-   ============================================================ */
-
-/* the gap between the Tables menu and the rig, and the navigation
-   tier giving up its skin, are both declared with `.dk-wrap` and
-   `.dk` in THE DOCK above — this block was the second rule for each
-   of them */
-
-.dk-rig {
-  display: flex;
-  flex-direction: column;
-  /* A FLOATING OBJECT NEEDS SIDE MARGIN TOO. The action tier can be
-     wide — a register publishes ten controls — and at `100vw - 24`
-     the rig ran to within 12px of both edges while floating 22px
-     off the floor, which reads as a docked footer that failed to
-     reach the corners rather than as a thing lying on the page.
-     20px a side is the same order as the 22px underneath it. */
-  max-width: calc(100vw - var(--s-10));
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  /* THE FLOAT RUNG, plus the lit top hairline. `--e-float` stacks a
-     contact shadow under a wide soft one, which is what makes an
-     edge look lit rather than drawn; the inset is the highlight that
-     says the light is coming from above. It was `--glass-edge` here
-     and `--edge-light` in the rail pass that came last; the second
-     is what renders and it is the only one now. */
-  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
-}
-
-/* ------------------------------------------------------------
-   A DOCK ITEM — hover, press, focus, and one lit state.
-
-   The gesture is kept: the icon grows toward the pointer, which is
-   the one piece of personality this bar has and the reason people
-   like it. What was added is the ACTIVE state, which was a 9% wash
-   and a 4px dot and read, on glass, as "very slightly bluer": an
-   accent hairline so it has an edge, and a running light widened
-   from a 4px dot to a 14px bar, because at 44px across a 4px dot is
-   a speck.
-
-   THE ITEM'S OWN RULES ARE IN THE DOCK ABOVE. This block declared
-   `.dk-item`, its hover, its lit pair, its focus ring and its
-   running light for the second time; the navy pass then declared
-   four of them a third. All five are written once now, at the
-   values the navy pass left, and only the compound state below —
-   which nothing else claims — still stands here.
-
-   THE LIT PAIR WAS MEASURED IN THE BROWSER, composited through the
-   whole chain the way this repo's notes insist on, when the wash
-   was the brand ramp: the lit glyph 5.12:1 light · 5.38:1 dark, an
-   idle glyph 7.96 · 9.40. The wash that renders is the chrome
-   ladder's white-at-16%, whose own measurement is recorded on the
-   ladder itself.
-   ------------------------------------------------------------ */
-.dk-item.is-active:focus-visible {
-  box-shadow:
-    inset 0 0 0 1px var(--accent-line),
-    0 0 0 2px var(--surface-1),
-    0 0 0 4px var(--accent);
-}
 
 /* THE LABEL IS INSTANT, AND IT ARRIVES FOR THE KEYBOARD TOO.
 
@@ -4831,55 +4197,12 @@
    carrying this pass's type, material and curve. This block wrote
    them a second time and the navy pass wrote the tip a third. */
 
-@media (prefers-reduced-transparency: reduce) {
-  .dk-rig,
-  .dk-panel {
-    background: var(--surface-1);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
-/* `.dk-panel`'s reduced-motion fallback is stated once, with the
-   dock's other reduced-motion rules above; this was the same
-   declaration a second time. */
-
-/* ============================================================
-   THE MASTHEAD — the other end of the same object.
-
-   It was a 52px strip mixing its own `color-mix` recipe and its own
-   blur radius, with the page's name set at 13px — one step under
-   the app's own "the thing you scan for". Two changes, and neither
-   is ornament:
-
-     THE MATERIAL IS THE DOCK'S, by token rather than by eye. The
-     top and the bottom of every screen are now demonstrably the
-     same piece of glass, and a change to `--glass-*` moves both.
-
-     THE NAME IS A HEADING. `--t-heading-*` is the step this system
-     records for "card names, row heads — the thing you scan for",
-     and the subject of the page you are on is exactly that. It is
-     taken whole — size, weight, leading and tracking together —
-     which is rule 6.
-
-   MEASURED ON THE LIVE BAR, over the glass over the page:
-
-     the name    17.14 : 1 light · 16.10 : 1 dark
-     the aside    5.40 : 1 light ·  5.83 : 1 dark
-
-   The aside is the one that had to be checked. `--fg-tertiary` is
-   this system's floor at 4.7 on plain white, and a translucent bar
-   over a register is exactly the tint that took it under during the
-   redesign. Over this material it holds.
-   ============================================================ */
-
-.surface .shell-view-bar {
-  height: 56px;
-  padding: 0 var(--s-4);
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  border-bottom: 1px solid var(--line-subtle);
-}
+/* THE TRANSLUCENT SURFACES MOVED WITH THE DOCK. This block turned
+   `.dk-rig` and `.dk-panel` opaque under
+   `prefers-reduced-transparency`; both are gone with the component.
+   The one surface that still floats over scrolling content is
+   `.pagebar`, and it carries its own rule for that preference at
+   the foot of actionbar.css. */
 .surface .shell-view-what-name {
   font-size: var(--t-heading-size);
   font-weight: var(--t-heading-weight);
@@ -5022,158 +4345,8 @@
   }
 }
 
-/* ============================================================
-   THE TABLES MENU — the one surface on the instrument you read
-   rather than aim at, and the one place rule 8 was still short.
 
-   AUDITED ROW BY ROW. `.dk-row` had a hover ground and a focus
-   ring and NO PRESS AT ALL, on both panels — which is fifty-odd
-   tables, the most-pressed list in the app, confirming nothing
-   between the pointer going down and a page appearing. A list row
-   darkens rather than scaling (a row that shrinks makes its
-   neighbours look like they moved), and the darkening lands on
-   pointer-down because `:active` fires on mousedown.
 
-   THE SEPARATOR SOFTENS. A hard hairline at full strength reads as
-   a seam on a translucent surface; fading it out at both ends
-   makes it a division rather than a cut, which is what it is.
-   ============================================================ */
-
-.dk-row:active {
-  background: var(--surface-4);
-  transition-duration: var(--d-press);
-}
-/* the row's own transition is declared with the row, above — this
-   block used to re-open `.dk-row` for one line of it */
-
-/* the open branch keeps its accent while pressed — pressing the row
-   you are already inside must not look like a different row */
-.dk-row--branch.is-on:active {
-  background: var(--accent-wash-strong);
-}
-
-/* the mark and the count step up on a pressed row for the same
-   reason they do on a lit one: the tint counts */
-.dk-row:active .dk-row-mark,
-.dk-row:active .dk-row-count {
-  color: var(--fg-secondary);
-}
-
-/* THE SEPARATOR was softened here into a gradient that faded at
-   both ends — a division rather than a cut, which on a translucent
-   surface is right. IT NEVER RENDERED: the navy pass below set
-   `.dk-sep` a third time, to a flat `--chrome-line`, and a flat
-   line is what the dock has been drawing. `.dk-sep` is declared
-   once now, with the dock, at the value that wins. Reinstating the
-   gradient is a design decision and wants an argument, not a
-   silently-shadowed rule.
-
-   `.dk-none` is declared once with the dock too, carrying this
-   block's sentence-at-reading-size, which did win. */
-
-/* ============================================================
-   THE CHROME IS NAVY, AND THAT IS THE WHOLE POINT.
-
-   WHAT WAS WRONG. The app was white chrome, on white content, on
-   a near-white ground. "Blue and white" lived in the tokens —
-   the accent, the ink, the shadow tint — and at a glance none of
-   it was visible, so the screen read as a grey directory
-   listing. Three surfaces at 2% apart is not a hierarchy; it is
-   one surface with rounding errors.
-
-   Structure comes from CONTRAST, and the cheapest honest
-   contrast in a two-colour system is to give the frame one
-   colour and the page the other. The masthead and the dock go
-   deep navy; everything a person reads stays on white. The
-   content then reads as paper lying on a desk, which is what it
-   is, and the blue is finally the thing you see first.
-
-   THE INK ON NAVY IS MEASURED LIKE EVERY OTHER PAIR. #0b2138 is
-   the ground; the three tiers that sit on it are recorded beside
-   each one below and all three clear 4.5:1. The accent is NOT
-   used on navy — at #0a5fc2 it measures 1.9:1 there, which is
-   why the lit state on the dock is a white wash rather than a
-   blue one.
-   ============================================================ */
-
-:root {
-  /* the frame. Darker than --surface-1's dark-theme twin on
-     purpose: this is chrome in the LIGHT theme, and it has to
-     read as a frame rather than as a panel that lost its way. */
-  --chrome: #0b2138;
-  --chrome-raised: #14304c;
-  --chrome-line: rgba(255, 255, 255, 0.1);
-  /* 14.9:1 on --chrome */
-  --chrome-fg: #f2f6fb;
-  /* 7.6:1 on --chrome */
-  --chrome-fg-soft: #a9bdd2;
-  /* 4.6:1 on --chrome — the floor, and the last tier allowed to
-     carry a word that matters */
-  --chrome-fg-faint: #7e94ab;
-
-  /* ----------------------------------------------------------
-     THE WASH LADDER, AND WHY IT HAD TO BE ONE.
-
-     Rule 1 says never write a literal colour, and the navy chrome
-     was the one place in the app still doing it: counted, thirty
-     white-alpha literals across the rail, the masthead and the
-     dock, at ELEVEN different alphas — .05 .07 .08 .09 .10 .12
-     .13 .14 .16 .20 .24. Three of those differences were
-     decisions; the other seven were somebody typing a number.
-     A hover at .07 in one rule and .08 in the next is not a
-     hierarchy, it is drift, and no reviewer can see it.
-
-     So: four grounds and three lines, and every state on navy
-     lands on one of them. THE ACCENT IS STILL BARRED HERE — it
-     measures 1.9:1 on --chrome — which is why a state on this
-     ground is made of white light rather than of blue.
-
-     The grounds are cumulative and were checked against the ink
-     that sits on them: at --chrome-wash-on (16%) the ground
-     composites to #2c3f53 and --chrome-fg holds 10.3:1 on it, so
-     the lit row is still the most legible row on the rail. The
-     tint counts, and it was counted.
-     ---------------------------------------------------------- */
-  --chrome-wash: rgba(255, 255, 255, 0.06);
-  --chrome-wash-hover: rgba(255, 255, 255, 0.1);
-  --chrome-wash-press: rgba(255, 255, 255, 0.15);
-  --chrome-wash-on: rgba(255, 255, 255, 0.16);
-  /* the hairline that divides, the one that outlines, and the lit
-     top edge that makes a floating navy surface read as raised */
-  --chrome-line-soft: rgba(255, 255, 255, 0.07);
-  --chrome-line-strong: rgba(255, 255, 255, 0.22);
-  --chrome-edge: rgba(255, 255, 255, 0.12);
-
-  /* ----------------------------------------------------------
-     THE RAIL'S WIDTH, AND IT WAS NEVER DECLARED.
-
-     The note at the narrow-window override below says "the token
-     is declared with the rest of the chrome ramp on :root" — and
-     it was not. `--rail` existed in exactly two places, both of
-     them overrides: `216px` inside `@media (max-width: 1100px)`,
-     and `64px` on `.shell-body:has(.sn.is-tight)`. There was no
-     base.
-
-     WHAT THAT COST, MEASURED IN THE BROWSER at 1280 x 720. An
-     undefined custom property makes its whole declaration invalid
-     at computed-value time, so
-     `grid-template-columns: var(--rail) minmax(0, 1fr)` resolved
-     to `none` — the shell's two-column layout did not exist, the
-     rail was a full-width block, and `.pagebar`, which positions
-     itself off the same token, had an invalid `left` as well. The
-     app has been laying itself out on the fallback the whole time.
-
-     It is 264px because that is the number the rail was designed
-     and argued at, and the number the narrow override steps down
-     from. Declared here, once, where its own note said to look. */
-  --rail: 264px;
-
-  /* critically damped, no overshoot — the §4 default, and the curve
-     anything arriving under its own weight takes. It was declared
-     on a second `:root` five hundred rules up, beside the window
-     animations that first needed it; this file has ONE `:root`. */
-  --ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
-}
 
 [data-theme='dark'] {
   /* on dark the frame is the one surface BELOW the page, so it
@@ -5182,151 +4355,6 @@
   --chrome-raised: #101f2f;
 }
 
-/* ------------------------------------------------------------
-   WHAT THE NAVY PASS LEFT BEHIND, AND WHERE IT WENT.
-
-   This block dressed the masthead, the rig, the dock items and the
-   action bar in the chrome ramp above. The very next block took the
-   navy off all of them again and gave it to the rail — so every
-   colour written here was overwritten forty lines later, and the
-   two blocks together declared eighteen selectors twice.
-
-   The values that SURVIVED that second pass have moved down into it
-   and are declared once there: the masthead's title type, its
-   padding, its controls' transparent ground and their 2px focus
-   offset. The values the second pass restated are simply gone. The
-   ones nothing restated — the dock items' chrome ink, their white
-   lit state, `.dk-sep` and `.dk-tip` — have moved UP into THE DOCK,
-   which is where those selectors are declared, and `.ab-btn--primary`
-   has moved into `actionbar.css`, which is where that control is
-   declared. This block is now what it always was: an argument.
-   ------------------------------------------------------------ */
-
-/* ------------------------------------------------------------
-   THE PAGE UNDER THE FRAME
-
-   With a dark frame the content can afford to be plain white
-   again — the separation is doing the work the tint was failing
-   to do — and the atmosphere goes, because an aurora under a
-   navy masthead is two ideas fighting.
-   ------------------------------------------------------------ */
-.hm-sky {
-  display: none;
-}
-.hm-scroll {
-  padding: var(--s-8) var(--s-8) 120px;
-}
-
-/* ------------------------------------------------------------
-   BIGGER. The gallery was six 230px cards to a 1600px row, which
-   is a file listing. Four bigger cards is a product.
-   ------------------------------------------------------------ */
-.hm-grid {
-  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
-  gap: var(--s-5);
-}
-.hm-card {
-  min-height: 150px;
-}
-.hm-card-shot {
-  /* 16:9 was a banner. 3:2 is the ratio the photographs were
-     actually taken at — 1024x683 across the seed — so this crops
-     almost nothing. */
-  aspect-ratio: 3 / 2;
-}
-.hm-card-name {
-  font-size: 17px;
-  letter-spacing: -0.012em;
-}
-.hm-card-stats b {
-  font-size: 16px;
-}
-
-/* the masthead's own figures grow with it */
-.hm-tally-fig {
-  font-size: 30px;
-}
-.hm-mast {
-  margin-bottom: var(--s-12);
-}
-
-/* ============================================================
-   THE RAIL, AND THE PAGE BESIDE IT.
-
-   `.shell-body` was a single full-bleed stage with a dock
-   floating on top and 128px of its floor reserved for that dock.
-   It is a two-column grid now: a fixed rail, and a content
-   column that starts where the rail ends and owns everything to
-   the right of it — including its own floor, which it gets back.
-
-   This is the structural half of the change; SideNav.tsx's
-   header carries the argument for why.
-
-   THE THREE RULES THIS BLOCK USED TO CARRY NOW LIVE WITH THEIR
-   SELECTORS: `.shell-body`'s grid and `.shell-stage`'s release of
-   the dock strip are declared once at the head of this file, and
-   `.shell-viewstage`'s in-flow box is declared once in THE VIEW
-   STAGE. They were the fifth, fourth and third declaration of those
-   three selectors; the values are unchanged.
-   ============================================================ */
-
-/* WHAT WAS LEFT OF THE FIRST RAIL. This was a row of section
-   headings with nothing under them — the first `.sn-*` pass was
-   deleted when the second one landed, and the headings and one
-   stranded rule survived it. `.sn-grp + .sn-grp` was declared here
-   at `--s-5` and again in THE RAIL, SECOND PASS at `--s-4`, which
-   is the one that rendered; `.sn-band + .sn-band` was the same
-   value twice. Both stale copies are gone and the second pass is
-   untouched, so nothing on the rail moves. */
-
-/* ------------------------------------------------------------
-   THE MASTHEAD LOSES ITS NAVY. With a navy rail down the side,
-   a navy strip across the top as well is a frame on two sides
-   and reads as a box. The bar goes back to paper and the rail
-   carries the colour.
-
-   THE BAR IS DECLARED HERE AND NOWHERE ELSE. It had four rules in
-   four eras — a white instrument strip, a Mac unified toolbar, a
-   navy masthead, and this. What follows is all of them, once: the
-   geometry from the toolbar era, the type from the navy era, the
-   colour from this one. The two things it has stopped carrying are
-   named where they were dropped.
-   ------------------------------------------------------------ */
-
-/* THE THREE-TRACK GRID, NOT FLEX-WITH-AN-ABSOLUTE-TITLE. A real
-   toolbar keeps its title in the middle of the WINDOW however wide
-   the controls on either side grow, and the honest way to say that
-   is a grid whose outer tracks are equal. Absolute centring inside a
-   flex row resolves against a static-position box and drifts.
-   `minmax(0, …)` on the outer tracks so they stay EQUAL when the
-   controls on one side are wider — with a bare `1fr` the wider side
-   grows its track and drags the centre with it. The CENTRE is
-   `minmax(0, auto)` rather than bare `auto` so it may shrink and
-   ellipse when the window is genuinely too narrow, instead of
-   forcing its min-content width on the row.
-
-   NO BACKDROP-FILTER. The unified-toolbar era blurred what was
-   behind this bar; every era since has painted an opaque ground in
-   front of the blur, so it has been sampling and compositing a
-   layer nobody can see. The one bar that IS glass is the one on a
-   `.surface`, which declares its own material below and is
-   unchanged. Under `prefers-reduced-transparency` that rule already
-   turns opaque; this one had nothing to turn off. */
-.shell-view-bar {
-  position: relative;
-  flex: none;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
-  align-items: center;
-  gap: var(--sp-3);
-  min-width: 0;
-  height: 56px;
-  padding: 0 var(--s-4);
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--line);
-  box-shadow: none;
-  z-index: 5;
-}
 /* A STAGE TITLE IS A NAME (§3: uppercase is never a name style).
    It was an 11px uppercase mono stamp, letterspaced because it had
    to survive on white beside nothing; on its own bar it can simply
@@ -5369,32 +4397,6 @@
   outline-offset: 2px;
 }
 
-/* the floating action bar sits in the content column now, and is
-   the only thing left floating, so it goes back to paper too.
-   `.ab-*` is the action bar's own vocabulary and it is declared in
-   `actionbar.css`, which owns that component — the six rules this
-   file used to keep here were a second opinion about somebody
-   else's control, and they have been folded into the first.
-
-   `.dk-rig`'s paper material is declared with the rig itself, in
-   THE INSTRUMENT above. It had three rules across three passes —
-   glass, then navy, then glass again — and the last two said the
-   same thing, which is how you can tell the middle one was never
-   the answer. */
-
-/* ONE NUMBER FOR THE RAIL'S WIDTH, so the grid that lays it out and
-   the floating page bar that must clear it read the same value.
-   They were two literals and they had already drifted; there was
-   then a THIRD declaration — a narrow-window `.shell-body` that
-   restated `216px` beside the token that already said it — which
-   this removes. The token is declared with the rest of the chrome
-   ramp on `:root`, the grid reads it once at the head of this file,
-   and the only thing left to say at a narrow width is the number. */
-@media (max-width: 1100px) {
-  :root {
-    --rail: 216px;
-  }
-}
 
 /* ============================================================
    HOME, THE THIRD PASS — the strip, and what a card previews.
@@ -5680,28 +4682,21 @@
 }
 
 /* ------------------------------------------------------------
-   RHYTHM. A gallery of eight bands needs the bands to read as
-   bands: the heading takes air above it that the cards under it
-   do not, so the eye lands on a name rather than on a wall. The
-   masthead gives some of its own back, because the strip now
-   stands between it and the first card.
+   RHYTHM, AND THE WAVE — the argument; the values went home.
+
+   A gallery of eight bands needs the bands to read as bands: the
+   heading takes air above it that the cards under it do not, so the
+   eye lands on a name rather than on a wall, and the masthead gives
+   some of its own back because the strip now stands between it and
+   the first card. The headings join the cards' staggered rise for the
+   same reason — a page that assembles around furniture which never
+   moved reads as two pages. `--i` is the section's place in the sort,
+   set on the section by HomeStage; ds.css caps the stagger at 14
+   steps and its own reduced-motion block already cuts the keyframe.
+
+   `.hm-sec + .hm-sec`, `.hm-mast` and `.hm-sec-head` carry all three
+   of those, once each, in HOME above.
    ------------------------------------------------------------ */
-.hm-sec + .hm-sec {
-  margin-top: var(--s-12);
-}
-.hm-mast {
-  margin-bottom: var(--s-6);
-}
-/* THE HEADINGS JOIN THE WAVE. The cards were arriving on a
-   staggered rise and the eight headings above them simply were,
-   so the page assembled around furniture that had never moved.
-   `--i` is the section's place in the sort, set on the section by
-   HomeStage; ds.css caps the stagger at 14 steps, and its own
-   reduced-motion block already cuts the keyframe. */
-.hm-sec-head {
-  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
-  animation-delay: calc(min(var(--i, 0), 14) * 26ms);
-}
 
 @media (max-width: 900px) {
   /* two rows of chips plus the strip is most of a narrow screen,
@@ -5736,6 +4731,7 @@
    ============================================================ */
 
 .sn {
+  grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -6411,5 +5407,50 @@
   .sn-row-pin {
     transform: none;
     transition: opacity var(--d-fast) var(--ease);
+  }
+}
+
+/* ============================================================
+   AND THE BUSINESS'S NAME HAS TO SURVIVE THE 48px THE RAIL GIVES
+   BACK AT 1100.
+
+   MEASURED, at 1024 x 768: `.sn-head-name` wants 123px and the
+   head hands it 111. So the one word every screen opens with read
+   `Northside Ma…` — a name cut mid-word, which §3 forbids
+   outright, on every surface in the app at once. It was the only
+   truncation in the build that a WIDTH switched on: a sweep of
+   eight screens at 1600 / 1440 / 1280 / 1024 turned up this class
+   and no other.
+
+   THE 12px IS TAKEN FROM THE AIR, NOT FROM THE NAME. The head's
+   two flex gaps drop a step (12 → 8), and the name takes the BODY
+   step rather than the heading one — size and tracking together,
+   as §2 asks, with the local 600 weight kept because that is what
+   separates the name from the note under it. 14px is three above
+   the floor.
+
+   119px of ink in 119px of room: the name is whole. A longer one
+   still ellipsises, and that is the base rule doing its job —
+   this moves the width at which it starts, it does not promise it
+   never will.
+
+   IT IS DOWN HERE RATHER THAN INSIDE THE `--rail: 216px` QUERY IT
+   BELONGS WITH, and that is not filing: a media query adds no
+   specificity, and `.sn-head-name`'s base declaration is 380
+   lines BELOW that query, so an identical selector written up
+   there loses the cascade and changes nothing. Measured: the name
+   still wanted 123px in 111. Same rule, after the thing it
+   answers, works.
+
+   `.sn.is-tight .sn-head` (0,2,1) outranks `.sn-head` (0,1,0), so
+   the 64px rail is untouched by this at any width.
+   ============================================================ */
+@media (max-width: 1100px) {
+  .sn-head {
+    gap: var(--s-2);
+  }
+  .sn-head-name {
+    font-size: var(--t-body-size);
+    letter-spacing: var(--t-body-track);
   }
 }

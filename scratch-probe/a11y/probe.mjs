@@ -37,28 +37,38 @@ export function PROBE() {
 }
 
 export async function RINGS() {
+  const kill = document.createElement('style')
+  kill.textContent = '*,*::before,*::after{transition:none !important;animation:none !important}'
+  document.head.appendChild(kill)
   const vis = (e) => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e)
     return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' }
   const sel = 'a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"]),[contenteditable="true"]'
   const els = [...document.querySelectorAll(sel)].filter((e) => !e.disabled).filter(vis)
-  const snap = (e) => { const s = getComputedStyle(e); return [s.outlineStyle, s.outlineWidth, s.outlineColor, s.boxShadow, s.backgroundColor, s.borderColor, s.borderWidth, s.color].join('|') }
+  const snap = (e) => { const s = getComputedStyle(e); return [s.outlineStyle, s.outlineWidth, s.outlineColor, s.boxShadow, s.backgroundColor, s.borderColor, s.borderWidth, s.color, s.opacity].join('|') }
   const bad = []
   for (const e of els) {
+    const wrap = e.parentElement
+    const wrap2 = wrap && wrap.parentElement
+    const idb = (() => { let p = e.tagName.toLowerCase(); const c = (e.className || '').toString()
+      if (c) p += '.' + c.trim().split(' ').filter(Boolean).slice(0, 3).join('.'); return p })()
+    const nb = (e.getAttribute('aria-label') || e.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40)
+    const b = e.getBoundingClientRect()
+    const szb = Math.round(b.width) + 'x' + Math.round(b.height)
     const before = snap(e)
+    const wBefore = wrap ? snap(wrap) : ''
+    const w2Before = wrap2 ? snap(wrap2) : ''
     e.focus()
     await new Promise((r) => setTimeout(r, 0))
-    const after = snap(e)
+    if (!e.isConnected) continue
     const st = getComputedStyle(e)
     const hasOutline = st.outlineStyle !== 'none' && parseFloat(st.outlineWidth) > 0
-    if (before === after && !hasOutline) {
-      let p = e.tagName.toLowerCase()
-      const c = (e.className || '').toString()
-      if (c) p += '.' + c.trim().split(' ').filter(Boolean).slice(0, 3).join('.')
-      const b = e.getBoundingClientRect()
-      bad.push({ p, n: (e.getAttribute('aria-label') || e.innerText || '').trim().split('\n').join(' ').slice(0, 40), sz: Math.round(b.width) + 'x' + Math.round(b.height) })
-    }
+    const changed = snap(e) !== before
+      || (wrap && wrap.isConnected && snap(wrap) !== wBefore)
+      || (wrap2 && wrap2.isConnected && snap(wrap2) !== w2Before)
+    if (!changed && !hasOutline) bad.push({ p: idb, n: nb, sz: szb })
   }
   if (document.activeElement) document.activeElement.blur()
+  kill.remove()
   return { total: els.length, noRing: bad.length, bad }
 }
 

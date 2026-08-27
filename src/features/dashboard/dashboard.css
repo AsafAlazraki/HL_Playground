@@ -41,6 +41,15 @@
    SIZE. A page of five cards each carrying an accent number has
    no primary at all.
 
+   THE KIND HUES ARE NOT THE ACCENT AND DO NOT COMPETE WITH IT.
+   They appear in exactly one form here — `.dsh-row-mark`, the
+   kind's own glyph in the kind's own hue, on the three cards that
+   list things which have a kind. §1: a rail, a dot or a glyph,
+   never a fill behind text and never on chrome. Measured against
+   every ground a row wears (rest, hover, press, both themes) the
+   worst of them is 4.09:1, against a 3:1 floor for a graphical
+   object; most clear 4.5.
+
    MOTION. Everything here is a CSS transition on colour, opacity
    and a small transform, at --d-press / --d-fast. The one spring
    in this feature is the reorder, and it is owned by
@@ -60,6 +69,15 @@
   overflow: hidden;
   background: var(--bg);
   color: var(--fg);
+  /* THE QUERY IS ON THE COLUMN, NOT ON THE WINDOW, and that is
+     the whole reason it is a container query. The rail collapses
+     (`.sn.is-tight`), so one viewport width is two different
+     dashboard widths — a 1280px window with the rail folded away
+     has more room for cards than a 1440px window without. Asking
+     the element how wide IT is, is the only question with one
+     answer. */
+  container-type: inline-size;
+  container-name: dsh;
 }
 
 /* The atmosphere is a sibling of the SCROLLER, not a child of the
@@ -79,13 +97,27 @@
   padding: var(--s-10) var(--s-8) var(--s-16);
 }
 
+/* THE COLUMN, AND WHY IT IS WIDER THAN IT WAS.
+
+   It was 1180px. Measured on the real shell at a 1600px window:
+   the rail takes 264, the page padding 64, leaving 1336 — so
+   156px of the column the dashboard had been given was drawn as
+   nothing, three 380px cards floated left of a permanent gutter,
+   and the module descriptions clamped at two lines while the
+   space they wanted sat empty beside them.
+
+   1440 is the first stop that FILLS 1600 (1336 < 1440, so the
+   cap does not bind and the grid takes the lot) and still holds
+   a reading limit at 1920 and beyond, where an uncapped grid
+   would run a row of nine cards across a monitor. The paragraph
+   under the greeting keeps its own 62ch and is unaffected. */
 .dsh-head,
 .dsh-hint,
 .dsh-fast,
 .dsh-tray,
 .dsh-grid,
 .dsh-bare {
-  max-width: 1180px;
+  max-width: 1440px;
   margin-inline: auto;
 }
 
@@ -428,11 +460,89 @@
    THE GRID OF CARDS
    ============================================================ */
 
+/* 340, NOT 320. The two numbers pick different column counts on
+   every width this app is used at, and 340 is the one that keeps
+   a card wide enough to hold a boat's name on one line:
+
+     column        340                320
+     1280 window   2 cols  x 466px    2 cols x 466px
+     1440 window   3 cols  x 357px    3 cols x 357px
+     1600 window   3 cols  x 432px    4 cols x 314px
+     1920 window   4 cols  x 345px    4 cols x 345px
+
+   At 1600 the 320 track buys a fourth column by making every card
+   narrower than the 380 they already were, which is the opposite
+   of the complaint. `auto-fill` rather than `auto-fit` on purpose:
+   with two cards on the page, auto-fit would stretch them across
+   the whole 1440 and a dashboard of two cards would draw as two
+   billboards.
+
+   ALIGN-ITEMS: START IS DELIBERATE AND WAS RE-DECIDED. `stretch`
+   makes every card in a row the height of the tallest, which
+   aligns their feet and looks tidy — and on this page puts a
+   one-sentence empty card in a 434px box beside the modules card,
+   which is 300px of nothing inside a border. A card is as tall as
+   what is in it. */
 .dsh-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: var(--s-5);
   align-items: start;
+}
+
+/* ------------------------------------------------------------
+   A CARD THAT ASKS FOR TWO COLUMNS, AND THE TWO CONDITIONS ON IT.
+
+   `data-wide` is set from `CardMeta.wide` (cards.ts) by the three
+   cards that draw a list of named things with a figure on the
+   right. The grid grants it only when:
+
+     1. there are at least three columns to spend. At two, a
+        span-2 card is a full-width band, and a dashboard of
+        full-width bands is a list with borders on it. 1120px of
+        column is the first width that fits three 340px tracks
+        plus their gaps inside the page's own padding.
+
+     2. the card is not currently empty. `:has()` lets the GRID
+        react to a state its child owns, so the width follows the
+        content rather than the id — a "My quotes" with nothing in
+        it takes one column, and takes the second the day it has
+        five quotes to line up. This is the whole of "cards should
+        size to their content".
+   ------------------------------------------------------------ */
+@container dsh (min-width: 1300px) {
+  /* FOUR EXPLICIT TRACKS, and this is the arithmetic that decided
+     it. The default set is three compact cards and two wide ones,
+     and the grid has to swallow 3x1 + 2x2 = 7 cells:
+
+       3 tracks  |  c c c | W W . | P P . |   two holes, stacked
+                    into one empty column down the right — which
+                    is the "does not fill 1600" complaint restated
+                    one layer down.
+       4 tracks  |  c c c W | W P P . |  ... no: the wide card
+                    cannot break across a row, so it wraps whole:
+                 |  c c c . | W W P P |   one hole, 300px wide.
+
+     And once the person has quoted anything, "My quotes" stops
+     being empty and takes its second column:
+
+                 |  Q Q c c | W W P P |   no holes at all.
+
+     `minmax(0, 1fr)` rather than `1fr`: a 1fr track floors at its
+     content's min width, and a module name that will not break
+     would push the track — and every track beside it — wider than
+     its share.
+
+     Below 1300 the grid falls back to the auto-fill rule above:
+     at three tracks a span-2 card is two-thirds of a row and
+     strands the third, so no card is wide there. */
+  .dsh-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dsh-card[data-wide]:not(:has(.dsh-empty)) {
+    grid-column: span 2;
+  }
 }
 
 .dsh-card {
@@ -448,8 +558,76 @@
   overflow: hidden;
 }
 
+/* ------------------------------------------------------------
+   A CARD WITH NOTHING IN IT YET IS PAPER THAT HAS NOT BEEN
+   WRITTEN ON.
+
+   THE FIRST RUN IS THE COMMON CASE. A person who has just loaded
+   their price file has no quotes, has opened nothing, and lands
+   on five cards of which three say "nothing yet" — and every one
+   of those three was drawn as a lifted white card with a gradient
+   and a shadow, identical in weight to the two that were full.
+   Five equally loud boxes, three of them empty, reads as a screen
+   that failed to load.
+
+   So an empty card LOSES the paper: no gradient, no elevation, no
+   lit top edge, and a hairline instead of an edge. What is left
+   is an outline waiting to be filled, which is what it is. The
+   two cards that DO have something in them are then the only lit
+   surfaces on the page and lead it without being told to.
+
+   NOTHING IS INVENTED TO ACHIEVE THIS. No figure is faked, no
+   skeleton is drawn and no illustration is added; the card keeps
+   the sentence and the one act it already had, and the act is
+   what turns it into paper.
+
+   `:has()` is used rather than a class from React because the
+   emptiness is decided inside `CardBody` (each card counts its
+   own subject) and lifting a boolean back up through the grid
+   would be a second copy of that decision, free to disagree.
+   ------------------------------------------------------------ */
+.dsh-card:has(.dsh-empty) {
+  background: none;
+  box-shadow: none;
+  border-color: var(--line);
+  /* AND IT IS THE ONE CARD THAT TAKES ITS ROW'S HEIGHT.
+
+     `align-items: start` on the grid is right for a card with
+     something in it — a filled card is as tall as its contents,
+     and stretching one leaves paper with nothing on it. An empty
+     card is not paper. It is an outline, and an outline that
+     matches the row it is in reads as a slot waiting rather than
+     as a short box that fell out of the row: measured on the
+     first-run set at 1600, the notch between a 137px empty card
+     and the 254px card beside it was the loudest hole on the
+     page, and it was a hole made entirely of nothing.
+
+     This is why the flat treatment above had to come first. The
+     same stretch applied to a lifted white card would be 120px
+     of blank paper inside a border, which is the reason the grid
+     is not simply `align-items: stretch`. */
+  align-self: stretch;
+}
+
+/* the mark on an unwritten card steps back with the ground it
+   sits on. --fg-tertiary is legal HERE and only here: the ground
+   under it is the page itself, which is the pair it was measured
+   at (5.2:1), and it can never lighten because this card has no
+   hover state of its own. */
+.dsh-card:has(.dsh-empty) .dsh-card-mark {
+  color: var(--fg-tertiary);
+}
+
 .dsh-card.is-arranging {
   border-style: dashed;
+  border-color: var(--line-strong);
+}
+
+/* ARRANGING SUPERSEDES IT. While the person is moving cards
+   about, an empty card is a thing they are moving and has to look
+   like one — the dashed edge is the affordance, and a card that
+   faded out of the set would be the one they could not find. */
+.dsh-card.is-arranging:has(.dsh-empty) {
   border-color: var(--line-strong);
 }
 
@@ -598,6 +776,33 @@
 .dsh-row:active {
   background: var(--accent-wash);
 }
+
+/* THE KIND'S OWN MARK, IN THE KIND'S OWN HUE — the one place a
+   second colour appears on this page, and the sanctioned form of
+   it (§1: a rail, a dot or a glyph, never a fill behind text).
+   It carries a fact rather than a decoration: `EntityDef.kind` is
+   what the dealer said this table holds, and the same hue marks
+   the same brand in the rail and on the sheet.
+
+   THE HUE IS NEVER THE ONLY CARRIER. The glyph is a different
+   SHAPE per kind as well as a different colour, so the row reads
+   the same to somebody who cannot tell indigo from amber — which
+   is why this is a symbol and not the 5px dot it started as. */
+.dsh-row-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--kind-custom);
+}
+
+.dsh-row-mark[data-kind='boat'] { color: var(--kind-boat); }
+.dsh-row-mark[data-kind='motor'] { color: var(--kind-motor); }
+.dsh-row-mark[data-kind='trailer'] { color: var(--kind-trailer); }
+.dsh-row-mark[data-kind='accessory'] { color: var(--kind-accessory); }
+.dsh-row-mark[data-kind='package'] { color: var(--kind-package); }
+.dsh-row-mark[data-kind='dealer'] { color: var(--kind-dealer); }
+.dsh-row-mark[data-kind='custom'] { color: var(--kind-custom); }
 
 .dsh-row-main {
   display: flex;

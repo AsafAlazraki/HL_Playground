@@ -817,11 +817,16 @@
   /* FIXED, AND POSITIONED OFF THE RAIL'S OWN WIDTH.
 
      The first attempt was `position: absolute` against
-     `.shell-stage` — and `.shell-stage` is declared FOUR times in
-     shell.css, so the `position: relative` it needed lost to a
-     later duplicate. With no positioned ancestor the bar resolved
-     against the viewport, stretched to the full stage and blurred
-     the entire page behind it.
+     `.shell-stage` — and `.shell-stage` was declared FOUR times in
+     shell.css at the time, so the `position: relative` it needed
+     lost to a later duplicate. With no positioned ancestor the bar
+     resolved against the viewport, stretched to the full stage and
+     blurred the entire page behind it. (`.shell-stage` is declared
+     once now — that file has no duplicate selectors left outside the
+     shared-then-specific idiom — but this bar keeps `position: fixed`
+     and the `--rail` arithmetic, because reading the one number both
+     the grid and the bar read is a better contract than depending on
+     somebody else's positioning context.)
 
      `--rail` is the one number both the grid and this bar read, so
      they cannot disagree, and `width: max-content` is what stops a

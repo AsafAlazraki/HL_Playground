@@ -66,22 +66,6 @@ function moveTo(ctx: KeyContext, target: CellRef, extend: boolean): GridCommand 
   return { kind: 'move', active: next, range: { anchor, focus: next } }
 }
 
-/** Tab: right one cell, wrapping to column 0 of the next row. The very
- *  last cell of the grid stays put (no wrap back to the top). */
-function nextTabCell(active: CellRef, rows: number, cols: number): CellRef {
-  if (active.col < cols - 1) return { row: active.row, col: active.col + 1 }
-  if (active.row < rows - 1) return { row: active.row + 1, col: 0 }
-  return active
-}
-
-/** Shift+Tab: the mirror — left one cell, wrapping to the last column of
- *  the previous row; cell {0,0} stays put. */
-function prevTabCell(active: CellRef, cols: number): CellRef {
-  if (active.col > 0) return { row: active.row, col: active.col - 1 }
-  if (active.row > 0) return { row: active.row - 1, col: cols - 1 }
-  return active
-}
-
 export function resolveKey(ctx: KeyContext): GridCommand {
   const { key, ctrl, shift, alt, meta, editing, active } = ctx
   // Cmd on macOS stands in for Ctrl everywhere.
@@ -142,17 +126,30 @@ export function resolveKey(ctx: KeyContext): GridCommand {
       return moveTo(ctx, { row: active.row, col: mod ? ctx.cols - 1 : active.col + 1 }, shift)
 
     /* ---------- tab ----------
-       Collapses any multi-cell selection to the single landing cell.
-       Shift is the direction modifier here, never range-extend. */
-    case 'Tab': {
-      if (mod) return NONE
-      const target = clampCell(
-        shift ? prevTabCell(active, ctx.cols) : nextTabCell(active, ctx.rows, ctx.cols),
-        ctx.rows,
-        ctx.cols,
-      )
-      return { kind: 'move', active: target, range: singleCell(target) }
-    }
+       TAB LEAVES. This used to walk cell-to-cell like Excel, and
+       because the walk `preventDefault`s every press — including the
+       one at the last cell, where `nextTabCell` returns the cell it
+       was already on — the register was a KEYBOARD TRAP. Measured in
+       Chromium on the Formosa table: Tab and Shift+Tab both consumed,
+       indefinitely, in both directions. There was no keyboard way out
+       of the app's main working screen at all.
+
+       THE ROLE ALREADY SAID WHAT SHOULD HAPPEN. `.tb-grid` is
+       `role="grid"` with one `tabIndex={0}`, which promises assistive
+       technology exactly one thing: arrows move between cells, Tab
+       moves out of the widget. Arrows, Home/End, PageUp/PageDown and
+       Ctrl+Arrow all already do the moving here — nothing a person
+       could do with Tab is lost, it is spelled with a different key.
+
+       EXCEL'S TAB IS KEPT WHERE IT IS ACTUALLY USED. The `editing`
+       branch above still reads Tab as commit-and-move-right, so
+       type-Tab-type-Tab data entry across a row is untouched; it is
+       only bare Tab on a selection that now hands the keystroke back
+       to the browser. The two cell-wrapping helpers this case used to
+       call went with it: `edit-commit` carries a direction and
+       `moveActive` takes the step, so nothing else read them. */
+    case 'Tab':
+      return NONE
 
     /* ---------- enter ----------
        Not editing: Excel moves the cursor down (up with Shift) rather

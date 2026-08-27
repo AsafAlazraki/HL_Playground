@@ -45,6 +45,23 @@ export interface CardMeta {
   /** the sentence it draws when it has nothing to show. A
    *  statement of fact, never an apology and never a lecture. */
   empty: string
+  /** DOES THIS CARD HAVE SOMETHING TO DO WITH A SECOND COLUMN?
+   *
+   *  Three of the seven draw a LIST of named things with a figure
+   *  on the right and, on two of them, the admin's own sentence
+   *  underneath — that content wants width, and at 380px it was
+   *  clamping a module's description to two lines and hyphenating
+   *  a boat's name. Four of them draw two figures and at most
+   *  three short rows, and a wide box around those is a wide box
+   *  around nothing.
+   *
+   *  It is a REQUEST, not a guarantee: the grid lays four tracks
+   *  once the column is wide enough for them and gives a wide
+   *  card two of those (dashboard.css), and it gives none to a
+   *  card that is currently empty — a 626px rectangle saying
+   *  "you have not prepared a quote yet" is the opposite of what
+   *  the extra width was for. */
+  wide: boolean
 }
 
 export const CARDS: Record<CardId, CardMeta> = {
@@ -52,36 +69,43 @@ export const CARDS: Record<CardId, CardMeta> = {
     name: 'My quotes',
     says: 'The quotes you prepared, newest first, with what they came to.',
     empty: 'You have not prepared a quote yet.',
+    wide: true,
   },
   'quotes-by-state': {
     name: 'Quotes by state',
     says: 'How many are still drafts, and how many have been issued.',
     empty: 'No quotes have been raised here yet.',
+    wide: false,
   },
   'recently-opened': {
     name: 'Where I have been',
     says: 'The tables and rows you opened last, so you can get back.',
     empty: 'Nothing opened yet. What you open shows up here.',
+    wide: false,
   },
   'my-modules': {
     name: 'My modules',
     says: 'The places in the business, and how much is in each.',
     empty: 'No modules yet. A module is a place in the business — a brand, a workshop, a counter.',
+    wide: true,
   },
   'the-price-file': {
     name: 'The price file',
     says: 'What you sell, counted: the tables, their rows, and the biggest of them.',
     empty: 'No tables yet. The price file is what everything else is built on.',
+    wide: true,
   },
   'data-quality': {
     name: 'Worth fixing',
     says: 'What the reviewer found in your tables that is still outstanding.',
     empty: 'Nothing outstanding. Every table reads the way it should.',
+    wide: false,
   },
   'rules-warning': {
     name: 'Rules that warn',
     says: 'Rules that annotate rather than remove — the ones worth reading.',
     empty: 'No rule is set to warn. Every rule here removes what it disagrees with.',
+    wide: false,
   },
 }
 

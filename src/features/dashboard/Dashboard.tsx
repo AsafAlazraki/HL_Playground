@@ -157,10 +157,28 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
     [apply, arrangement.cards, done],
   )
 
+  /* THE KEYBOARD HAS TO LAND SOMEWHERE. Taking a card off unmounts
+     the button that was just pressed, and React puts nothing in its
+     place — measured: press "Take My quotes off the dashboard" with
+     the keyboard and `document.activeElement` is `document.body`, so
+     the next Tab starts again at the top of the rail. In a mode whose
+     whole purpose is to take several cards off in a row, that is the
+     work being thrown away between each one.
+
+     ADD A CARD is where it goes. It is the inverse act, it is the last
+     thing in the grid, it is the one control arrange mode always draws
+     however many cards are left — including none, which is the case a
+     "focus the next card" rule cannot answer — and it leaves the
+     remaining cards one Shift+Tab behind the caret. The frame's wait is
+     for React to commit the removal first; the toast that says what
+     happened is already `aria-live` and is not disturbed by this. */
   const dropCard = useCallback(
     (id: CardId) => {
       const before = apply((a) => withCardRemoved(a, id))
       done(`${CARDS[id].name} taken off the dashboard`, before)
+      requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>('.dsh-add')?.focus()
+      })
     },
     [apply, done],
   )
@@ -190,10 +208,17 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
     [apply, arrangement.links, resolved.live, done],
   )
 
+  /* SAME LANDING AS `dropCard` ABOVE, for the same measured reason:
+     the pressed button is unmounted and the keyboard falls to
+     `document.body`. "Add a fast action" is the row's own inverse and
+     is always drawn while arranging. */
   const dropLink = useCallback(
     (id: string, label: string) => {
       const before = apply((a) => withLinkRemoved(a, id))
       done(`${label} taken off the fast actions`, before)
+      requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>('.dsh-fast-add')?.focus()
+      })
     },
     [apply, done],
   )
@@ -325,6 +350,13 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
                 transition={spring}
                 key={id}
                 data-dsh-card=""
+                /* THE GRID READS THIS, and grants it only when
+                   the column is wide enough for four tracks and
+                   the card is not currently drawing its empty
+                   sentence — both conditions live in
+                   dashboard.css, where the width that decides
+                   them is known. See `CardMeta.wide`. */
+                data-wide={CARDS[id].wide ? '' : undefined}
                 /* NOT `.ds-lit`. That utility sets `box-shadow`
                    outright, and this card's own rule sets
                    `box-shadow` too — one of them would silently
