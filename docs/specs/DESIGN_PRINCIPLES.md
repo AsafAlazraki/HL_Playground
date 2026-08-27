@@ -25,7 +25,8 @@ way good instruments are boring.
 3. **Uppercase is a label style, never a name style.** Names and values keep
    their own case.
 4. **Every text/background pair clears 4.5:1.** Measured, not eyeballed.
-5. **One accent.** Kind colour is an eighth-note, not a theme.
+5. **One accent** for action. **Kind colour is identity** and may carry a
+   surface — see §1. Never behind reading text, never chrome.
 6. **Type steps are sets.** Take size, weight, leading and tracking together.
 7. **Tracking is negative as size grows, ~0 at reading size.** Never positive on
    display text.
@@ -85,10 +86,30 @@ and caught during the redesign; do not repeat it.
 — the primary action, the current nav row, the focused control, the computed
 column. If a screen has accent everywhere, nothing on it is primary.
 
-The eight kind hues (`--accent-blue`, `--accent-ochre`, …) are for **what a table
-holds**. They are cut to roughly equal luminance so a sheet of mixed tables reads
-as one drawing. Use them for a 3px rail, a dot, or a glyph — never for a fill
-behind text, and never for chrome.
+The eight kind hues are for **what a thing IS**, and that is a change from how
+this file first read them.
+
+They were "an eighth-note": a 3px rail, a dot, a glyph, never a fill. That was
+right for a calm data tool where a kind is metadata about a table. This is a
+selling tool, and boat, outboard, trailer and rigging kit are the four nouns the
+whole business is made of — a person should know which is in front of them from
+across the room without reading a word.
+
+**A kind hue may carry a SURFACE**: a tinted band head, a card rail at full
+height, a filter chip, a selected row. It still may **not** sit behind reading
+text, it is still **never** chrome, and the 4.5:1 floor is untouched.
+
+The discipline that replaces the old rule, and it is what stops this becoming
+colouring-in:
+
+> A hue only ever appears on something that HAS that kind. Two things of one
+> kind are one colour everywhere in the app. **A figure is never a hue** — a
+> price is not decorative.
+
+The mechanism is one custom property. A host sets `--kind` (or `data-kind`) and
+takes `.k-rail`, `.k-wash`, `.k-band`, `.k-chip`, `.k-filter`, `.k-dot`,
+`.k-lift`. Eight hues times five surfaces would be forty tokens that can drift;
+this is one token and a `color-mix`.
 
 ### Field types have three roles, not eight
 

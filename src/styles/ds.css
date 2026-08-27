@@ -1369,3 +1369,197 @@
     font-variation-settings: 'wdth' 100;
   }
 }
+
+/* ============================================================
+   KIND AS IDENTITY — the amendment, and the reason for it.
+
+   §1 said: "One accent. Kind colour is an eighth-note, not a
+   theme. Use them for a 3px rail, a dot, or a glyph — never for a
+   fill behind text, and never for chrome."
+
+   That was written for a calm data tool, where a kind is metadata
+   ABOUT A TABLE. This application is a selling tool, and the kind
+   is not metadata — it is what the thing IS. Boat, outboard,
+   trailer and rigging kit are the four nouns the whole business is
+   made of, and a person should know which one is in front of them
+   from across the room without reading a word.
+
+   THE AMENDMENT IS NARROW. A kind hue may now carry a SURFACE: a
+   tinted band head, a card rail at full height, a filter chip, a
+   selected row. It still may NOT sit behind reading text, it is
+   still never chrome, and the 4.5:1 floor is untouched — the eight
+   hues were already cut to roughly equal luminance and measured on
+   both grounds, and nothing below changes an ink.
+
+   THE DISCIPLINE THAT REPLACES THE OLD ONE, and it is what keeps
+   this from becoming colouring-in:
+
+     A hue only ever appears on something that HAS that kind.
+     Two things of one kind are one colour everywhere in the app.
+     A figure is never a hue. A price is not decorative.
+
+   HOW IT WORKS. A host sets ONE property — `--kind` — and the
+   surfaces below derive from it. Eight hues times five surfaces
+   would be forty tokens that can drift; this is one token and a
+   `color-mix`, so a kind added tomorrow costs nothing.
+
+       <article class="k-card" style="--kind: var(--kind-boat)">
+   ============================================================ */
+
+:root {
+  /* the default, so a host that forgets to set --kind gets the
+     neutral rather than an invalid colour */
+  --kind: var(--kind-slate);
+}
+
+/* -- the surfaces a kind may carry --------------------------- */
+.k-rail {
+  /* the full-height rail. THIS is what phase one demoted to a 7px
+     dot when the navy chrome arrived, and the reason the content
+     area went colourless. */
+  border-left: 3px solid var(--kind);
+}
+.k-rail-thick {
+  border-left: 4px solid var(--kind);
+}
+
+/* A TINT, NOT A FILL. 8% on light and 14% on dark, which is under
+   the threshold at which any ink on it moves by a contrast point —
+   the same argument the aurora is capped by, and the reason text
+   on these is still measured against the ground beneath. */
+.k-wash {
+  background: color-mix(in srgb, var(--kind) 8%, var(--surface-1));
+}
+[data-theme='dark'] .k-wash {
+  background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
+}
+
+/* the band head of a section that holds one kind of thing */
+.k-band {
+  background: color-mix(in srgb, var(--kind) 10%, var(--surface-1));
+  border-bottom: 1px solid color-mix(in srgb, var(--kind) 28%, transparent);
+}
+[data-theme='dark'] .k-band {
+  background: color-mix(in srgb, var(--kind) 16%, var(--surface-1));
+}
+
+/* the dot, kept — it is still right in a dense list */
+.k-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: var(--r-full);
+  background: var(--kind);
+}
+
+/* a chip that says which kind, in the kind's own ink on its own
+   tint. The INK is the hue at full strength, which is measured
+   above 4.5:1 on both grounds; the tint is under it. */
+.k-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
+  color: var(--kind);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 550;
+  white-space: nowrap;
+}
+[data-theme='dark'] .k-chip {
+  background: color-mix(in srgb, var(--kind) 20%, var(--surface-1));
+}
+
+/* a filter chip: quiet until it is on, then the kind carries it */
+.k-filter {
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.k-filter:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.k-filter[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
+  border-color: color-mix(in srgb, var(--kind) 45%, transparent);
+  color: var(--kind);
+}
+
+/* the glow a kind-carrying card takes on hover. Light, not fill —
+   the same argument the home card already made and won. */
+.k-lift:hover {
+  box-shadow:
+    var(--e4),
+    inset 0 1px 0 var(--edge-light),
+    0 10px 30px -14px var(--kind);
+}
+
+/* ============================================================
+   THE HUES, ADDRESSABLE BY NAME.
+
+   `accentVar()` in types/model.ts already maps a table's accent to
+   one of these; this is the same set as a data attribute so a
+   component can set the kind without computing a style prop.
+   ============================================================ */
+[data-kind='boat'] { --kind: var(--kind-boat); }
+[data-kind='motor'] { --kind: var(--kind-motor); }
+[data-kind='trailer'] { --kind: var(--kind-trailer); }
+[data-kind='accessory'] { --kind: var(--kind-accessory); }
+[data-kind='package'] { --kind: var(--kind-package); }
+[data-kind='dealer'] { --kind: var(--kind-dealer); }
+[data-kind='custom'] { --kind: var(--kind-custom); }
+[data-kind='join'] { --kind: var(--kind-join); }
+
+/* ============================================================
+   THE STATES THAT WERE ALL GREY.
+
+   Refused, discontinued, over-rating and unchecked are four
+   different facts about a row and the app drew all four the same
+   way. The solver knows which is which; these make it visible.
+   Each is a RAIL and an ink, never a fill behind the sentence.
+   ============================================================ */
+.s-refused {
+  border-left: 3px solid var(--danger);
+}
+.s-refused .s-say {
+  color: var(--fg-secondary);
+}
+/* a price that no longer applies is struck, not hidden — a dealer
+   needs to see that the option exists and what it would have cost */
+.s-refused .s-figure {
+  text-decoration: line-through;
+  text-decoration-color: var(--danger);
+  color: var(--fg-tertiary);
+}
+.s-warned {
+  border-left: 3px solid var(--warning);
+}
+.s-held {
+  border-left: 3px solid var(--fg-quaternary);
+}
+.s-unchecked {
+  border-left: 3px dashed var(--line-strong);
+}
+.s-say {
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+}
+
+@media (prefers-contrast: more) {
+  /* at higher contrast a tint is noise; the rail carries it alone */
+  .k-wash,
+  .k-band,
+  .k-chip,
+  .k-filter[aria-pressed='true'] {
+    background: var(--surface-1);
+  }
+}
