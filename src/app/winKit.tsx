@@ -12,6 +12,11 @@ import type { EntityDef } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import { HomeStage } from './HomeStage'
+import { useProjectStore } from '@/store/useProjectStore'
+import { Dashboard } from '@/features/dashboard'
+import { HistoryStage } from '@/features/history'
+import { LevelEditor } from '@/features/levels'
+import type { AppUser } from '@/features/auth'
 import { TableStage } from './TableStage'
 import { ViewStage } from './ViewStage'
 import { DesignStage } from './DesignStage'
@@ -23,7 +28,20 @@ import { CustomerStage } from './CustomerStage'
 
 /** Everything that can be a window. */
 export type Stage =
+  /* HOME IS THE DASHBOARD — the person's day. The gallery of table
+     cards that used to be here is `gallery`, reached from DATA in
+     the rail, because "what am I selling today" and "every table I
+     have" are two different questions and only one of them is what
+     somebody signs in to do. */
   | { kind: 'home' }
+  | { kind: 'gallery' }
+  /* HISTORY — every quote raised here and every customer given one.
+     A diary, not a list: it is the surface a dealer arrives at
+     after lunch to resume somebody else's draft. */
+  | { kind: 'history'; customerId: string | null }
+  /* LEVELS — set a value once at a brand, range or model and it
+     writes to every row beneath that does not override. */
+  | { kind: 'levels'; entityId: string | null }
   | { kind: 'table'; entityId: string }
   | { kind: 'view'; entityId: string }
   | { kind: 'design'; entityId: string }
@@ -103,6 +121,11 @@ export function bestFrame(n: number): WinFrame {
  *  cannot disagree about where a person is. */
 export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNode {
   if (s.kind === 'home') return 'Home'
+  /* named for what it shows, not for the stage that used to be
+     called home — the gallery IS every table you have */
+  if (s.kind === 'gallery') return 'All tables'
+  if (s.kind === 'history') return s.customerId ? 'Customer history' : 'History'
+  if (s.kind === 'levels') return 'Configure'
   if (s.kind === 'rules') return 'Business rules'
   if (s.kind === 'flow') return 'Fitment'
   if (s.kind === 'quote') return s.quoteId ? 'Quote' : 'Quotes'
@@ -144,6 +167,16 @@ export interface StageHandlers {
    *  because two NewTableDialogs is two answers to "what structure?"
    *  (`EmptyState` records the same reasoning for the invitation). */
   newTable: () => void
+  /* THE DASHBOARD'S TEN DOORS. Eight are `openWin` with a stage the
+     shell already knows; two — the picker and the finder — are
+     dialogs the shell hosts, exactly as `newTable` is, and for the
+     same reason: one host, one answer. */
+  newQuote: () => void
+  find: () => void
+  /** who is signed in. The dashboard is 'my day' and there is no
+   *  'my' without a person; null before sign-in, which cannot
+   *  happen because App gates the shell on it. */
+  user?: AppUser | null
 }
 
 /** What a window draws. Every stage is mounted exactly as it was —
@@ -151,6 +184,53 @@ export interface StageHandlers {
 export function renderStage(s: Stage, h: StageHandlers): ReactNode {
   switch (s.kind) {
     case 'home':
+      /* WHAT A PERSON LANDS ON, and it depends on whether there is
+         anything to land on. The dashboard counts my quotes, my
+         modules and what I opened — all zero on an empty sheet, and
+         none of them offers a way to get a price file. `HomeOrDay`
+         (foot of this file) hands back the first screen until a
+         table exists, so a new person meets the two honest starting
+         points instead of a greeting over five empty cards. */
+      return (
+        <HomeOrDay
+          user={h.user ?? null}
+          empty={
+            <HomeStage
+              onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
+              onNewTable={h.newTable}
+            />
+          }
+        >
+          <Dashboard
+            user={h.user as AppUser}
+            onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
+            onOpenModule={(id) => h.openWin({ kind: 'module', moduleId: id })}
+            onOpenModules={() => h.openWin({ kind: 'module', moduleId: null })}
+            onOpenQuote={(id) => h.openWin({ kind: 'quote', quoteId: id })}
+            onOpenQuotes={() => h.openWin({ kind: 'quote', quoteId: null })}
+            onOpenCustomers={() => h.openWin({ kind: 'customer', customerId: null })}
+            onOpenRules={() => h.openWin({ kind: 'rules' })}
+            onOpenDataModel={() => h.openWin({ kind: 'gallery' })}
+            onNewQuote={h.newQuote}
+            onFind={h.find}
+          />
+        </HomeOrDay>
+      )
+    case 'history':
+      return (
+        <HistoryStage
+          customerId={s.customerId}
+          onOpenQuote={(id) => h.openWin({ kind: 'quote', quoteId: id })}
+        />
+      )
+    case 'levels':
+      return (
+        <LevelEditor
+          entityId={s.entityId}
+          onPickTable={(id) => h.openWin({ kind: 'levels', entityId: id })}
+        />
+      )
+    case 'gallery':
       return (
         <HomeStage
           onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
@@ -227,4 +307,35 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
         />
       )
   }
+}
+
+/* ============================================================
+   HOME IS THE DAY, UNTIL THERE IS NO DAY TO SHOW.
+
+   The dashboard counts my quotes, my modules and what I opened.
+   On a sheet with nothing on it every one of those is zero, and
+   not one of them offers a way to get a price file — so a new
+   person would land on a greeting over five empty cards with no
+   door out. That is the "dead end with a greeting on it" this
+   component exists to prevent.
+
+   It is a chooser and nothing else: no layout, no state, no
+   opinion beyond the one fact that decides it. The moment a
+   table exists, home is the dashboard and stays that way.
+   ============================================================ */
+function HomeOrDay({
+  user,
+  empty,
+  children,
+}: {
+  user: AppUser | null
+  empty: ReactNode
+  children: ReactNode
+}): ReactNode {
+  const entities = useProjectStore((s) => s.entities)
+  /* `isRetired` is not consulted: a retired table is still a table
+     somebody put here, so a sheet that holds only retired ones has
+     been used and does not want the first screen back. */
+  if (Object.keys(entities).length === 0) return empty
+  return user ? children : empty
 }

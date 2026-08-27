@@ -25,21 +25,31 @@
    ------------------------------------------------------------
    SO WHAT IS A LEVEL'S VALUE, IF IT IS NOT STORED?
    ------------------------------------------------------------
-   It is COUNTED. A level's value for a column is what its rows
-   agree on:
+   It is COUNTED. A level's value for a column is what MOST of its
+   rows agree on — and "most" means a real majority, more than half
+   of the rows that hold anything:
 
      · every row holds the same thing  -> the level SAYS that thing
-     · most rows hold one thing        -> that is the level's
-                                         answer, and the rest are
+     · over half hold one thing        -> that is the level's
+                                         ANSWER, and the rest are
                                          EXCEPTIONS
-     · the top two are tied            -> the level is SPLIT and
-                                         says nothing at all
+     · no value has over half          -> the level has NO answer,
+                                         however common its
+                                         commonest value is
+
+   THE MAJORITY RULE IS NOT FUSSINESS, AND IT WAS PUT IN AFTER
+   WATCHING THE SCREEN LIE. Highfield's `Warranty` column holds a
+   PRICE: 199 Sport variants across 27 different figures, the
+   commonest on 9 of them. A plurality rule made 9-in-199 "the
+   level's answer", marked the other 190 as DIFFERING from it, and
+   offered a button reading *Put all back to "48177"* — one press
+   from flattening 190 real prices onto a 4.5% outlier. §7: a
+   suggestion that is confidently wrong is worse than no
+   suggestion. Over half, or the level says nothing.
 
    Nothing is estimated. `tallyAt` walks the rows and counts them,
    and every sentence this feature prints is built out of those
-   counts. A tie produces no answer rather than a guess, because
-   DESIGN_PRINCIPLES §7 is explicit that a confidently wrong
-   suggestion is worse than none.
+   counts.
 
    That definition also makes OVERRIDE derivable, which is the
    part that would otherwise need storing: a row overrides its
@@ -92,6 +102,8 @@
 import {
   imageCellText,
   isImageValue,
+  isPairFieldId,
+  isSystemFieldId,
   type CellValue,
   type EntityDef,
   type FieldDef,
@@ -372,6 +384,9 @@ export function columnRefusal(model: LevelModel, field: FieldDef): string | null
   if (nameFieldId(model.entity) === field.id) {
     return `${field.name} is what each ${model.noun.one} is called, and a name belongs to one of them.`
   }
+  if (isPairFieldId(field.id) || isSystemFieldId(field.id)) {
+    return `${field.name} is machinery — every ${model.noun.one} carries it and the register locks it, so it is not a value to give a whole level.`
+  }
   return null
 }
 
@@ -411,12 +426,26 @@ export interface Tally {
   /** distinct non-blank values, commonest first, ties in first-
    *  appearance order */
   entries: TallyEntry[]
-  /** the level's answer, or null when the level does not have one */
-  dominant: TallyEntry | null
+  /** the value the most rows hold. INFORMATIVE ONLY — it is not
+   *  the level's answer unless it also holds a majority, and
+   *  nothing that writes may key off it. */
+  commonest: TallyEntry | null
+  /**
+   * THE LEVEL'S ANSWER, or null when the level has none.
+   *
+   * This is the one field inherit / override / reset are allowed
+   * to read. It is `commonest` only when that value is held by
+   * MORE THAN HALF of the rows holding anything — see the majority
+   * argument in this file's header.
+   */
+  answer: TallyEntry | null
   /** every row agrees and none is blank */
   unanimous: boolean
-  /** the top two are tied, so there IS no answer — not a guess */
+  /** the top two are tied */
   split: boolean
+  /** a commonest exists but does not reach half — the level is
+   *  informative and silent at the same time */
+  noMajority: boolean
 }
 
 export function tallyAt(
@@ -458,16 +487,25 @@ export function tallyAt(
      stable, so this needs no tiebreak key. */
   const entries = [...seen.values()].sort((a, b) => b.count - a.count)
   const split = entries.length >= 2 && entries[0].count === entries[1].count
-  const dominant = entries.length === 0 || split ? null : entries[0]
+  const commonest = entries.length === 0 ? null : entries[0]
+  /* MORE THAN HALF OF THE ROWS THAT HOLD ANYTHING. Blanks are not
+     counted against it: a Series where 8 boats say XL and 191 say
+     nothing does have an answer, and filling the 191 is exactly
+     what this door is for. */
+  const held = rows.length - blankRowIds.length
+  const majority = commonest !== null && commonest.count * 2 > held
+  const answer = majority ? commonest : null
 
   return {
     total: rows.length,
     blank: blankRowIds.length,
     blankRowIds,
     entries,
-    dominant,
+    commonest,
+    answer,
     unanimous: entries.length === 1 && blankRowIds.length === 0,
     split,
+    noMajority: commonest !== null && !majority,
   }
 }
 
@@ -501,7 +539,7 @@ export function standingsAt(
 ): { tally: Tally; rows: RowStanding[] } {
   const tally = tallyAt(model, levelKey, field, opts)
   const node = model.byKey.get(levelKey)
-  const answer = tally.dominant?.text
+  const answer = tally.answer?.text
   const readAs = readerOf(model, opts)
   const read = (row: RowData): string => readAs(row, field)
 
@@ -605,7 +643,13 @@ export function planSet(input: PlanInput): SetPlan {
   if (isBlankText(text)) {
     return {
       ...plan,
-      refusal: `Type a ${field.name} first. Emptying a column across a level is not what this does — clear a cell on the sheet.`,
+      /* NO INDEFINITE ARTICLE IN FRONT OF A COLUMN NAME. "Type a
+         Eng Configuration" is what a template produces; the
+         dealer's own headings start with every letter of the
+         alphabet and a/an cannot be guessed from a token. Every
+         sentence in this file is written so the name stands on its
+         own. */
+      refusal: `Nothing typed yet — this sets ${field.name} across a level, it does not clear it.`,
     }
   }
 
@@ -675,7 +719,7 @@ export function planReset(
   const node = model.byKey.get(levelKey)
   const label = node?.label ?? model.entity.name
 
-  if (tally.dominant === null) {
+  if (tally.answer === null) {
     const base: SetPlan = {
       entityId: model.entity.id,
       fieldId: field.id,
@@ -690,9 +734,7 @@ export function planReset(
       differing: [],
       replace: true,
       writes: [],
-      refusal: tally.split
-        ? `${label} is split — ${count(tally.entries[0].count, model.noun)} ${tally.entries[0].count === 1 ? 'says' : 'say'} “${tally.entries[0].text}” and ${tally.entries[1].count} ${tally.entries[1].count === 1 ? 'says' : 'say'} “${tally.entries[1].text}”. There is nothing to inherit until one of them is the answer.`
-        : `No ${model.noun.one} under ${label} holds a ${field.name}, so there is nothing to inherit.`,
+      refusal: noAnswerWhy(tally, label, field, model.noun),
     }
     return base
   }
@@ -701,11 +743,35 @@ export function planReset(
     model,
     levelKey,
     field,
-    value: tally.dominant.value,
+    value: tally.answer.value,
     replace: true,
     onlyRowIds,
     opts,
   })
+}
+
+/**
+ * Why a level has no answer — one sentence per reason, each built
+ * out of the counts, and each naming the way forward. "Nothing to
+ * inherit" on its own is the silent refusal rule 10 exists to
+ * prevent.
+ */
+function noAnswerWhy(
+  tally: Tally,
+  label: string,
+  field: FieldDef,
+  noun: LeafNoun,
+): string {
+  if (tally.entries.length === 0) {
+    return `${field.name} is not set on any ${noun.one} under ${label}, so there is nothing to inherit.`
+  }
+  if (tally.split) {
+    const [a, b] = tally.entries
+    return `${label} is split — ${count(a.count, noun)} ${a.count === 1 ? 'says' : 'say'} “${a.text}” and ${b.count} ${b.count === 1 ? 'says' : 'say'} “${b.text}”. There is nothing to inherit until one of them is the answer.`
+  }
+  const top = tally.entries[0]
+  const held = tally.total - tally.blank
+  return `${label} has no ${field.name} to inherit: its ${held} ${held === 1 ? noun.one : noun.many} hold ${tally.entries.length} different values and the commonest, “${top.text}”, is on only ${top.count}. Set one here first.`
 }
 
 /* ---------------------------------------------------------- */
@@ -755,10 +821,14 @@ export function planLines(plan: SetPlan, noun: LeafNoun): PlanLine[] {
       tone: 'skip',
     })
   }
-  if (d > 0 && plan.replace) {
+  /* WITH REPLACE ON, THE WRITE LINE ALREADY COUNTS THE EXCEPTIONS.
+     Printing "106 take XL" above "106 are overwritten" made the
+     same 106 look like 212 — the sub-clause is only true, and only
+     printed, when the write is a MIXTURE of fills and overwrites. */
+  if (d > 0 && plan.replace && plan.blank.length > 0) {
     lines.push({
       n: d,
-      text: `held something else and ${d === 1 ? 'is' : 'are'} overwritten`,
+      text: `of those held something else`,
       tone: 'write',
     })
   }

@@ -287,7 +287,19 @@ function QuotesByState({ acts }: { acts: DashboardActs }): JSX.Element {
   return (
     <>
       <div className="dsh-figures">
-        <Figure n={roll.drafts} say="still drafts" onPick={acts.onOpenQuotes} lead />
+        {/* "1 still drafts" is the kind of line that makes a tool
+            feel unfinished — every count on this page picks its
+            own words. "issued" is a past participle and reads
+            correctly at any number; "draft" is a noun and does
+            not. The sentence under the pair is what carries the
+            meaning of the two states, so the captions stay nouns
+            rather than becoming a clause. */}
+        <Figure
+          n={roll.drafts}
+          say={roll.drafts === 1 ? 'draft' : 'drafts'}
+          onPick={acts.onOpenQuotes}
+          lead
+        />
         <Figure n={roll.issued} say="issued" onPick={acts.onOpenQuotes} />
       </div>
       {/* TWO STATES AND NO THIRD. `QuoteState` is exactly
@@ -456,18 +468,28 @@ function WorthFixing({ acts }: { acts: DashboardActs }): JSX.Element {
           lead={roll.blockers === 0}
         />
       </div>
+      {/* THE TABLE IS THE TITLE AND THE FINDING IS THE LABEL, in
+          that order, for two reasons. It is the order a person
+          acts in — you go to a table and fix a thing in it, not
+          the other way round. And `LintFinding.title` arrives from
+          the engine already upper-case ('DUPLICATE FIELD NAME');
+          §2 rule 3 allows uppercase as a LABEL and never as a
+          name, so it belongs on the metadata line beside what it
+          describes, not standing in for the row's name. Neither
+          string is re-cased here — re-casing somebody's data is
+          the lossy act the rule is about. */}
       <div className="dsh-list">
         {roll.head.map((f) => (
           <Row
             key={f.id}
-            title={f.title}
+            title={entities[f.entityId]?.name ?? 'A table since removed'}
             under={
               <>
                 <span
                   className={`dsh-dot${f.severity === 'blocker' ? ' is-blocker' : ' is-advisory'}`}
                   aria-hidden="true"
                 />
-                <span className="dsh-when">{entities[f.entityId]?.name ?? 'a table since removed'}</span>
+                <span className="dsh-when">{f.title}</span>
               </>
             }
             label={`Open ${entities[f.entityId]?.name ?? 'the table'} — ${f.title}`}

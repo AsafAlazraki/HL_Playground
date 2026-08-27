@@ -92,7 +92,11 @@ export function SetPanel(props: SetPanelProps): JSX.Element {
 
   const overrides = standings.filter((s) => s.standing === 'overrides')
   const unset = standings.filter((s) => s.standing === 'unset')
-  const listed = showAll ? standings : [...overrides, ...unset]
+  /* WITH NO ANSWER THERE ARE NO EXCEPTIONS TO FILTER TO, so the
+     list shows everybody rather than showing nothing — this is the
+     level where picking one out and setting it by hand is the only
+     move available, and hiding the rows would hide the move. */
+  const listed = showAll || tally.answer === null ? standings : [...overrides, ...unset]
   const shown = listed.slice(0, CAP)
 
   const run = (p: SetPlan): void => {
@@ -110,9 +114,21 @@ export function SetPanel(props: SetPanelProps): JSX.Element {
     <div className="lv-set">
       <header className="lv-set-head">
         <h2 className="lv-set-title ds-title">{field.name}</h2>
+        {/* THE SUBHEAD FOLLOWS THE RUNG. With one row picked the
+            act reaches one row, and a head still reading "across
+            588 variants" is the screen contradicting its own
+            button two lines below it. */}
         <p className="lv-set-where ds-caption">
-          across <span className="ds-mono-sm">{level.rows.length.toLocaleString()}</span>{' '}
-          {level.rows.length === 1 ? model.noun.one : model.noun.many} in {level.label}
+          {rowId !== null ? (
+            <>
+              one {model.noun.one}, inside {level.label}
+            </>
+          ) : (
+            <>
+              across <span className="ds-mono-sm">{level.rows.length.toLocaleString()}</span>{' '}
+              {level.rows.length === 1 ? model.noun.one : model.noun.many} in {level.label}
+            </>
+          )}
         </p>
       </header>
 
@@ -146,7 +162,9 @@ export function SetPanel(props: SetPanelProps): JSX.Element {
         </div>
       ) : (
         <p className="lv-now-none ds-body">
-          No {model.noun.one} in {level.label} holds a {field.name} yet.
+          {field.name} is not set on any of the{' '}
+          <span className="ds-mono">{level.rows.length.toLocaleString()}</span>{' '}
+          {level.rows.length === 1 ? model.noun.one : model.noun.many} in {level.label}.
         </p>
       )}
 
@@ -208,13 +226,13 @@ export function SetPanel(props: SetPanelProps): JSX.Element {
           disabled={plan === null || plan.refusal !== null}
           onClick={() => plan && run(plan)}
         >
-          {rowId === null
-            ? `Set on ${(plan?.writes.length ?? 0).toLocaleString()} ${
-                (plan?.writes.length ?? 0) === 1 ? model.noun.one : model.noun.many
-              }`
-            : `Set this ${model.noun.one}`}
+          {buttonWord(plan, model.noun, field, rowId)}
         </button>
-        {plan !== null && plan.refusal !== null && draft.trim() !== '' ? (
+        {/* THE REASON IS ALWAYS BESIDE THE DISABLED BUTTON (rule 10).
+            It used to appear only once something had been typed, so
+            the very first thing a person met was a dead control
+            reading "Set on 0 variants" and saying nothing. */}
+        {plan !== null && plan.refusal !== null ? (
           <p className="lv-why ds-small">{plan.refusal}</p>
         ) : null}
         {rowId !== null ? (
@@ -232,9 +250,11 @@ export function SetPanel(props: SetPanelProps): JSX.Element {
       <div className="lv-rows">
         <header className="lv-rows-head">
           <p className="lv-rows-title ds-label">
-            {overrides.length === 0 && unset.length === 0
-              ? 'Every one agrees'
-              : `${overrides.length + unset.length} not on the level`}
+            {tally.answer === null
+              ? `Every ${model.noun.one} here`
+              : overrides.length === 0 && unset.length === 0
+                ? 'Every one agrees'
+                : `${overrides.length + unset.length} not on the level`}
           </p>
           <div className="lv-rows-acts">
             {overrides.length > 0 && resetAll.refusal === null ? (
@@ -246,15 +266,22 @@ export function SetPanel(props: SetPanelProps): JSX.Element {
                 Put all back to “{resetAll.text}”
               </button>
             ) : null}
-            <button
-              className={showAll ? 'lv-toggle lv-toggle--on' : 'lv-toggle'}
-              type="button"
-              aria-pressed={showAll}
-              onClick={() => setShowAll((v) => !v)}
-            >
-              <span className="lv-toggle-box" />
-              <span className="lv-toggle-text ds-small">Show every {model.noun.one}</span>
-            </button>
+            {/* THE SWITCH ONLY EXISTS WHEN IT WOULD DO SOMETHING.
+                With no answer at this level every row is already
+                listed, and a switch that is already on and cannot
+                be turned off is a control that lies about being
+                one. */}
+            {tally.answer !== null ? (
+              <button
+                className={showAll ? 'lv-toggle lv-toggle--on' : 'lv-toggle'}
+                type="button"
+                aria-pressed={showAll}
+                onClick={() => setShowAll((v) => !v)}
+              >
+                <span className="lv-toggle-box" />
+                <span className="lv-toggle-text ds-small">Show every {model.noun.one}</span>
+              </button>
+            ) : null}
           </div>
         </header>
 
@@ -264,9 +291,9 @@ export function SetPanel(props: SetPanelProps): JSX.Element {
 
         {shown.length === 0 ? (
           <p className="lv-empty ds-body">
-            {tally.dominant
-              ? `All ${level.rows.length.toLocaleString()} hold “${tally.dominant.text}”.`
-              : `Nothing here differs from its level, because ${level.label} has no answer for ${field.name} yet.`}
+            {tally.answer
+              ? `All ${level.rows.length.toLocaleString()} hold “${tally.answer.text}”.`
+              : `There is nothing here to compare against — ${level.label} has no ${field.name} of its own yet.`}
           </p>
         ) : (
           <ul className="lv-list">
@@ -276,8 +303,8 @@ export function SetPanel(props: SetPanelProps): JSX.Element {
                 standing={s}
                 model={model}
                 on={s.rowId === rowId}
-                canPutBack={tally.dominant !== null && s.standing !== 'inherits'}
-                answer={tally.dominant?.text ?? ''}
+                canPutBack={tally.answer !== null && s.standing !== 'inherits'}
+                answer={tally.answer?.text ?? ''}
                 onPick={() => onPickRow(s.rowId === rowId ? null : s.rowId)}
                 onPutBack={() => putBack([s.rowId])}
               />
@@ -330,7 +357,12 @@ function StandingRow({
       ) : standing.standing === 'unset' ? (
         <span className="lv-mark lv-mark--unset ds-label">not set</span>
       ) : standing.standing === 'alone' ? (
-        <span className="lv-mark lv-mark--alone ds-label">no level answer</span>
+        /* SAID ONCE, ABOVE THE LIST, NOT 150 TIMES INSIDE IT. Every
+           row on a level with no answer is "alone"; stamping the
+           same three words down the whole column is noise that
+           makes the values harder to read, which is the one thing
+           this list is for. */
+        <span className="lv-mark lv-mark--alone" />
       ) : (
         <span className="lv-mark lv-mark--in ds-label">inherits</span>
       )}
@@ -348,6 +380,27 @@ function StandingRow({
       )}
     </li>
   )
+}
+
+/**
+ * What the button says.
+ *
+ * NOT "Set on 0 variants". Before anything is typed there is no
+ * count to promise, and a control that counts to zero reads as
+ * broken rather than as waiting. It names the act; the count
+ * arrives with the value, and the blast radius above it is where
+ * the figures live anyway.
+ */
+function buttonWord(
+  plan: SetPlan | null,
+  noun: { one: string; many: string },
+  field: FieldDef,
+  rowId: string | null,
+): string {
+  if (rowId !== null) return `Set this ${noun.one}`
+  const n = plan?.writes.length ?? 0
+  if (n === 0) return `Set ${field.name}`
+  return `Set on ${n.toLocaleString()} ${n === 1 ? noun.one : noun.many}`
 }
 
 /* ---------------------------------------------------------- */

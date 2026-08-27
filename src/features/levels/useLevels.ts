@@ -28,6 +28,7 @@ import {
   type RowData,
 } from '@/types/model'
 import type { FieldDef } from '@/types/model'
+import { leafNoun, type LeafNoun } from '@/features/table/grouping'
 import { buildLevelModel, type LevelModel, type RefLabel } from './levels'
 
 /** A table this door can work on, with the two figures the picker
@@ -35,6 +36,10 @@ import { buildLevelModel, type LevelModel, type RefLabel } from './levels'
 export interface LevelTable {
   entity: EntityDef
   rows: number
+  /** what the table calls ONE of its rows — "variant", "product",
+   *  "trailer". §6: the app talks to a boat dealer, so the picker
+   *  says "2,937 products", never "2,937 rows". */
+  noun: LeafNoun
   /** how many drawer levels it is filed under — 0 is a flat table,
    *  which still has ONE level: the table itself */
   depth: number
@@ -64,6 +69,7 @@ export function useLevelTables(): LevelTable[] {
         .map((entity) => ({
           entity,
           rows: rowsByEntity[entity.id]?.length ?? 0,
+          noun: leafNoun(entity),
           depth: Math.max((entity.hierarchy?.length ?? 0) - 1, 0),
         }))
         .filter((t) => t.rows > 0)

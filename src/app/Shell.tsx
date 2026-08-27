@@ -78,6 +78,7 @@ import {
   useFocusedTableEntity,
 } from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
+import type { AppUser } from '@/features/auth'
 import { SideNav } from './SideNav'
 import { ActionBar } from './ActionBar'
 import { useHasPageActions } from '@/lib/actions'
@@ -139,7 +140,14 @@ import './shell.css'
  *  the other five open — over the sheet, which keeps its zoom and its
  *  nodes underneath and is one press away. */
 
-export function Shell() {
+export interface ShellProps {
+  /** who is signed in. The dashboard is "my day" and a quote is
+   *  prepared BY somebody; the shell is where that person reaches
+   *  the stages that need to know. */
+  user: AppUser
+}
+
+export function Shell({ user }: ShellProps) {
   const org = useProjectStore((s) => s.meta.org)
   const entities = useProjectStore((s) => s.entities)
   const tableCount = Object.keys(entities).length
@@ -371,9 +379,16 @@ export function Shell() {
      this drops the window so the dock and the desktop agree. */
   useEffect(() => {
     setWins((prev) =>
-      prev.filter((w) =>
-        'entityId' in w.stage ? Boolean(entities[w.stage.entityId]) : true,
-      ),
+      prev.filter((w) => {
+        /* A NULL entityId IS A LEGITIMATE STAGE, not a dangling one.
+           `levels` opens on its own picker when no table has been
+           chosen yet, so "names a table that has gone" and "names
+           no table at all" are different facts and only the first
+           should drop the window. */
+        if (!('entityId' in w.stage)) return true
+        if (w.stage.entityId === null) return true
+        return Boolean(entities[w.stage.entityId])
+      }),
     )
   }, [entities])
 
@@ -466,6 +481,9 @@ export function Shell() {
           }
           onOpenSheet={() => setStage(null)}
           onOpenHome={() => setStage({ kind: 'home' })}
+          onOpenGallery={() => setStage({ kind: 'gallery' })}
+          onOpenHistory={() => setStage({ kind: 'history', customerId: null })}
+          onOpenLevels={() => setStage({ kind: 'levels', entityId: null })}
           onOpenTable={(id) => setStage({ kind: 'table', entityId: id })}
           onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
           onOpenRules={() => setStage({ kind: 'rules' })}
@@ -551,6 +569,11 @@ export function Shell() {
                    dropped on the sheet both open — one host, one
                    structure question */
                 newTable: () => setPicking(true),
+                /* the picker and the finder are the shell's dialogs,
+                   exactly as the new-table dialog is */
+                newQuote: () => setStarting(true),
+                find: () => setFinding(true),
+                user,
               })}
             </div>
           ) : null}

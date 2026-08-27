@@ -262,24 +262,54 @@
   transform: scale(0.97);
 }
 
-/* THE ONE PRIMARY ACT. --accent-fg is #ffffff in both themes and
-   measures 6.1:1 on the light accent and 4.9:1 on the dark one. */
+/* ============================================================
+   THE ONE PRIMARY ACT — AND WHY IT IS NOT A BLUE SLAB.
+
+   The obvious primary is the system's own `.ds-btn--primary`:
+   `background: var(--accent); color: var(--accent-fg)`. That is
+   what this rule was, and it was measured on this page in both
+   themes:
+
+     white on --accent, light  (#0a5fc2)   6.10 : 1   clears
+     white on --accent, dark   (#58a6ff)   2.52 : 1   FAILS
+
+   --accent-fg is #ffffff in BOTH themes, and the dark accent is a
+   light blue — so a white label on it is the one pair on this
+   screen that could not clear rule 4. (It is a property of the
+   system rather than of this screen: every `.ds-btn--primary` in
+   the app measures the same in dark. That is reported rather than
+   patched here — a token in ds.css changes every screen at once
+   and wants an argument, not a commit from one feature.)
+
+   So the primary is drawn the way Quiet Precision draws a primary
+   anyway: the one control on the page carrying the accent, as ink
+   and a rail on a tint, rather than a slab of it. Measured, over
+   the page ground:
+
+     --accent on --accent-wash          light 5.16 : 1 · dark 5.81 : 1
+     --accent on --accent-wash-strong   light 4.71 : 1 · dark 4.96 : 1
+     --fg-secondary on --accent-wash    light 6.72 : 1 · dark 7.52 : 1
+
+   ds.css states the same thing from the other end: the dark accent
+   was chosen at 5.9:1 on --surface-1 specifically so it is legal
+   AS TEXT and not only as a fill.
+   ============================================================ */
 .dsh-fast-btn.is-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-fg);
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+  color: var(--accent);
   box-shadow: var(--e1);
 }
 
 .dsh-fast-btn.is-primary:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: var(--accent-wash-strong);
+  border-color: var(--accent);
   box-shadow: var(--e2), var(--glow-md);
 }
 
 .dsh-fast-btn.is-primary:active {
-  background: var(--accent-press);
-  border-color: var(--accent-press);
+  background: var(--accent-wash-strong);
+  border-color: var(--accent);
 }
 
 .dsh-fast-mark {
@@ -290,7 +320,7 @@
 }
 
 .dsh-fast-btn.is-primary .dsh-fast-mark {
-  color: var(--accent-fg);
+  color: var(--accent);
 }
 
 .dsh-fast-say {
@@ -315,11 +345,13 @@
   overflow-wrap: anywhere;
 }
 
+/* NO OPACITY ON IT. This was `--accent-fg` at 0.86, which is a
+   second way of writing a colour nobody measured: composited, it
+   came out at 2.24:1 in dark. The note keeps the same ink every
+   other note on the page has, and that ink was measured over this
+   tint — see the block above. */
 .dsh-fast-btn.is-primary .dsh-fast-note {
-  /* on the accent ground the only legal ink is the one measured
-     against it */
-  color: var(--accent-fg);
-  opacity: 0.86;
+  color: var(--fg-secondary);
 }
 
 .dsh-fast-edit {

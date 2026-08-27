@@ -142,7 +142,8 @@ function TablePicker({ onPick }: { onPick: (id: string) => void }): JSX.Element 
             <button className="lv-pick-row" type="button" onClick={() => onPick(t.entity.id)}>
               <span className="lv-pick-name ds-heading">{t.entity.name}</span>
               <span className="lv-pick-meta ds-caption">
-                <span className="ds-mono-sm">{t.rows.toLocaleString()}</span> rows
+                <span className="ds-mono-sm">{t.rows.toLocaleString()}</span>{' '}
+                {t.rows === 1 ? t.noun.one : t.noun.many}
                 {t.depth > 0 ? (
                   <>
                     {' · '}
@@ -385,22 +386,34 @@ function ColumnRow({ field, refusal, tally, on, onPick }: ColumnRowProps): JSX.E
     >
       <span className="lv-col-name">{field.name}</span>
       <span className="lv-col-says ds-caption">{saysOf(tally)}</span>
-      {tally?.dominant ? (
-        <span className="lv-col-value ds-mono-sm">{tally.dominant.text}</span>
+      {tally?.commonest ? (
+        <span className="lv-col-value ds-mono-sm">{tally.commonest.text}</span>
       ) : null}
     </button>
   )
 }
 
-/** The one-line verdict beside a column name. Every branch is a
- *  count, and the tied case says "split" rather than choosing. */
+/**
+ * The one-line verdict beside a column name. Every branch is a
+ * count.
+ *
+ * THE WORD "COMMONEST" IS LOAD-BEARING. `93 of 199` beside a
+ * column reads as "the level says this"; where 93 is a plurality
+ * rather than a majority the level says nothing, and the sentence
+ * has to be the one that cannot be misread as an answer.
+ */
 function saysOf(tally: Tally | undefined): string {
   if (!tally || tally.total === 0) return 'nothing here'
   if (tally.entries.length === 0) return 'none set'
-  if (tally.split) return `split ${tally.entries.length} ways`
+  /* EVERY ROW DIFFERENT IS NOT "SPLIT 588 WAYS". A naming or code
+     column is distinct by design, and reporting it as a 588-way
+     tie is a true sentence that tells a dealer nothing. */
+  if (tally.entries.length === tally.total - tally.blank) return 'all different'
   if (tally.unanimous) return `all ${tally.total.toLocaleString()} agree`
-  const d = tally.dominant?.count ?? 0
-  return `${d.toLocaleString()} of ${tally.total.toLocaleString()}`
+  if (tally.split) return `split ${tally.entries.length} ways`
+  const n = tally.commonest?.count ?? 0
+  const of = `${n.toLocaleString()} of ${tally.total.toLocaleString()}`
+  return tally.answer ? of : `commonest ${of}`
 }
 
 /* ---------------------------------------------------------- */

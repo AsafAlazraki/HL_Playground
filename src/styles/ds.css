@@ -157,7 +157,22 @@
   --accent: #58a6ff;
   --accent-hover: #6cb2ff;
   --accent-press: #3d8ef5;
-  --accent-fg: #ffffff;
+  /* DARK INK ON A BRIGHT ACCENT, and this was a real defect.
+
+     --accent-fg was #ffffff in BOTH themes. On light that is
+     6.12:1 on --accent and correct. On dark the accent is a
+     BRIGHT blue chosen so it could carry text on a dark ground
+     (6.60:1 on --surface-1) — and white ON it measures 2.53:1,
+     which fails rule 4 outright. Every accent-filled control in
+     the dark theme had an unreadable label.
+
+     A bright accent takes dark ink. #071522 is --bg-sunken, so
+     the pair is already in the ramp: 7.30:1 at rest, 8.29:1 on
+     hover (#6cb2ff), 5.60:1 on press (#3d8ef5). All three clear.
+
+     Found by the dashboard agent measuring its own primary
+     rather than trusting the token name. */
+  --accent-fg: #071522;
   --accent-wash: rgba(88, 166, 255, 0.14);
   --accent-wash-strong: rgba(88, 166, 255, 0.22);
   --accent-line: rgba(88, 166, 255, 0.38);

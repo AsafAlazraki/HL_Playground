@@ -149,6 +149,13 @@ export interface SideNavProps {
   current: string | null
   currentEntityId?: string | null
   onOpenSheet: () => void
+  /** the gallery of table cards — every table you have, on one
+   *  page. It used to BE home; home is the dashboard now. */
+  onOpenGallery: () => void
+  /** the diary — every quote raised here, every customer given one */
+  onOpenHistory: () => void
+  /** set a value once at a brand, range or model */
+  onOpenLevels: () => void
   onOpenHome: () => void
   onOpenTable: (entityId: string) => void
   onOpenDashboard: () => void
@@ -217,6 +224,9 @@ export function SideNav({
   current,
   currentEntityId,
   onOpenSheet,
+  onOpenGallery,
+  onOpenHistory,
+  onOpenLevels,
   onOpenHome,
   onOpenTable,
   onOpenDashboard,
@@ -383,6 +393,25 @@ export function SideNav({
 
           {dataOpen ? (
             <div className="sn-sec-body">
+              {/* THE GALLERY, WHICH USED TO BE HOME. Home is the
+                  dashboard now — "what am I selling today" — and
+                  "every table I have" is a different question that
+                  still needs a door. It sits at the head of DATA
+                  because it is the widest view of exactly that. */}
+              <NavRow
+                label="Configure"
+                on={current === 'levels'}
+                collapsed={collapsed}
+                glyph={mark(Graph)}
+                onPick={onOpenLevels}
+              />
+              <NavRow
+                label="All tables"
+                on={current === 'gallery'}
+                collapsed={collapsed}
+                glyph={mark(Graph)}
+                onPick={onOpenGallery}
+              />
               <NavRow
                 label="Data model"
                 on={current === null}
@@ -482,6 +511,12 @@ export function SideNav({
             collapsed={collapsed}
             glyph={mark(FileText)}
             onPick={onOpenQuotes}
+          />
+          <NavRow
+            label="History"
+            on={current === 'history'}
+            collapsed={collapsed}
+            onPick={onOpenHistory}
           />
           <NavRow
             label="Customers"

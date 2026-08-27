@@ -108,7 +108,7 @@ export default function App() {
           when this was a bare `if (!loaded) return null`. */}
       {loaded ? (
         <>
-          <Shell />
+          <Shell user={user} />
           {/* UNDO IS BOUND HERE, NOT IN THE SHELL, for two reasons. It
               belongs to the store rather than to any one screen — the
               onboarding wizard is the only surface with nothing to

@@ -18,7 +18,7 @@
    ============================================================ */
 
 import { describe, expect, it } from 'vitest'
-import type { EntityDef, FieldDef, RowData } from '@/types/model'
+import { isPairFieldId, isSystemFieldId, type EntityDef, type FieldDef, type RowData } from '@/types/model'
 import { buildNorthsideProject } from '@/demos/northside'
 import {
   TABLE_LEVEL_KEY,
@@ -160,8 +160,8 @@ describe('a level’s value is counted, and a tie is not an answer', () => {
   it('reads Ocean Master as “3 years”, with one exception', () => {
     const t = tallyAt(model, keyOf('Ocean Master'), warranty)
     expect(t.total).toBe(3)
-    expect(t.dominant?.text).toBe('3 years')
-    expect(t.dominant?.count).toBe(2)
+    expect(t.answer?.text).toBe('3 years')
+    expect(t.answer?.count).toBe(2)
     expect(t.unanimous).toBe(false)
     expect(t.split).toBe(false)
     expect(t.entries.map((e) => [e.text, e.count])).toEqual([
@@ -173,13 +173,15 @@ describe('a level’s value is counted, and a tie is not an answer', () => {
   it('calls a 1–1 tie SPLIT and refuses to pick a side', () => {
     const t = tallyAt(model, keyOf('Classic'), warranty)
     expect(t.split).toBe(true)
-    expect(t.dominant).toBeNull()
+    expect(t.answer).toBeNull()
   })
 
   it('counts a blank as blank, never as a value', () => {
     const t = tallyAt(model, keyOf('Sport'), warranty)
     expect(t.blank).toBe(1)
-    expect(t.dominant?.text).toBe('3 years')
+    /* one blank, one "3 years" — the blank does not count against
+       the majority, so the level DOES have an answer */
+    expect(t.answer?.text).toBe('3 years')
     expect(t.unanimous).toBe(false)
   })
 
@@ -193,7 +195,75 @@ describe('a level’s value is counted, and a tie is not an answer', () => {
   it('calls a drawer where every row agrees UNANIMOUS', () => {
     const t = tallyAt(model, keyOf('Ocean Master', 'OM 540'), warranty)
     expect(t.unanimous).toBe(true)
-    expect(t.dominant?.count).toBe(2)
+    expect(t.answer?.count).toBe(2)
+  })
+})
+
+describe('a plurality is not an answer — the majority rule', () => {
+  /* 5 boats: 2 say A, 1 each says B, C, D. A is the commonest and
+     is nowhere near half, so the level says nothing. */
+  const spread = buildLevelModel(entity, [
+    row({ series: 'Wide', model: 'W1', variant: 'a', warranty: 'A' }),
+    row({ series: 'Wide', model: 'W1', variant: 'b', warranty: 'A' }),
+    row({ series: 'Wide', model: 'W2', variant: 'c', warranty: 'B' }),
+    row({ series: 'Wide', model: 'W2', variant: 'd', warranty: 'C' }),
+    row({ series: 'Wide', model: 'W3', variant: 'e', warranty: 'D' }),
+  ])
+  const wide = [...spread.byKey.values()].find((n) => n.value === 'Wide')?.key ?? ''
+
+  it('reports the commonest but refuses to call it the answer', () => {
+    const t = tallyAt(spread, wide, warranty)
+    expect(t.commonest?.text).toBe('A')
+    expect(t.commonest?.count).toBe(2)
+    expect(t.answer).toBeNull()
+    expect(t.noMajority).toBe(true)
+    expect(t.split).toBe(false)
+  })
+
+  it('calls every row ALONE rather than marking three of five as deviant', () => {
+    const { rows: standing } = standingsAt(spread, wide, warranty)
+    expect(standing.every((x) => x.standing === 'alone')).toBe(true)
+  })
+
+  it('refuses reset, and the reason carries the arithmetic', () => {
+    const plan = planReset(spread, wide, warranty)
+    expect(plan.writes).toHaveLength(0)
+    expect(plan.refusal).toBe(
+      'Wide has no Warranty to inherit: its 5 variants hold 4 different values and the commonest, “A”, is on only 2. Set one here first.',
+    )
+  })
+
+  it('lets a deliberate set run anyway — the level is silent, not locked', () => {
+    const plan = planSet({ model: spread, levelKey: wide, field: warranty, value: 'A', replace: true })
+    expect(plan.refusal).toBeNull()
+    expect(plan.writes).toHaveLength(3)
+  })
+
+  it('a bare majority IS an answer — 3 of 5', () => {
+    const near = buildLevelModel(entity, [
+      row({ series: 'Close', model: 'C1', variant: 'a', warranty: 'A' }),
+      row({ series: 'Close', model: 'C1', variant: 'b', warranty: 'A' }),
+      row({ series: 'Close', model: 'C2', variant: 'c', warranty: 'A' }),
+      row({ series: 'Close', model: 'C2', variant: 'd', warranty: 'B' }),
+      row({ series: 'Close', model: 'C3', variant: 'e', warranty: 'C' }),
+    ])
+    const key = [...near.byKey.values()].find((n) => n.value === 'Close')?.key ?? ''
+    expect(tallyAt(near, key, warranty).answer?.count).toBe(3)
+  })
+
+  it('blanks do not count against the majority — filling them is the point', () => {
+    const mostlyBlank = buildLevelModel(entity, [
+      row({ series: 'Thin', model: 'T1', variant: 'a', warranty: '3 years' }),
+      row({ series: 'Thin', model: 'T1', variant: 'b', warranty: null }),
+      row({ series: 'Thin', model: 'T2', variant: 'c', warranty: null }),
+      row({ series: 'Thin', model: 'T2', variant: 'd', warranty: null }),
+    ])
+    const key = [...mostlyBlank.byKey.values()].find((n) => n.value === 'Thin')?.key ?? ''
+    const t = tallyAt(mostlyBlank, key, warranty)
+    expect(t.answer?.text).toBe('3 years')
+    expect(t.blank).toBe(3)
+    /* and a reset therefore fills all three */
+    expect(planReset(mostlyBlank, key, warranty).writes).toHaveLength(3)
   })
 })
 
@@ -292,7 +362,9 @@ describe('the blast radius is counted before the act, not estimated', () => {
   it('refuses an empty value with a reason rather than clearing a column', () => {
     const plan = planSet({ model, levelKey: keyOf('Sport'), field: warranty, value: '   ' })
     expect(plan.writes).toHaveLength(0)
-    expect(plan.refusal).toContain('Emptying a column across a level is not what this does')
+    expect(plan.refusal).toBe(
+      'Nothing typed yet — this sets Warranty across a level, it does not clear it.',
+    )
   })
 })
 
@@ -306,15 +378,37 @@ describe('the sentence the surface prints keeps its figures separate', () => {
     ])
   })
 
-  it('says overwritten, not left alone, when Replace is on', () => {
-    const plan = planSet({
+  it('never counts the same row twice when Replace is on', () => {
+    /* the bug this guards: "106 take XL" printed above "106 are
+       overwritten" reads as 212 rows on a level that holds 199 */
+    const table = planSet({
       model,
       levelKey: TABLE_LEVEL_KEY,
       field: warranty,
       value: '3 years',
       replace: true,
     })
-    expect(planLines(plan, model.noun).some((l) => l.text.includes('overwritten'))).toBe(true)
+    /* 1 blank + 3 differing = 4 written, and the sub-clause says
+       how many of the 4 were overwrites rather than fills */
+    expect(planLines(table, model.noun)).toEqual([
+      { n: 4, text: 'variants take “3 years”', tone: 'write' },
+      { n: 4, text: 'already hold it — nothing changes', tone: 'same' },
+      { n: 3, text: 'of those held something else', tone: 'write' },
+    ])
+
+    /* and with nothing blank, the write line IS the exceptions, so
+       there is no second line at all */
+    const series = planSet({
+      model,
+      levelKey: keyOf('Ocean Master'),
+      field: warranty,
+      value: '3 years',
+      replace: true,
+    })
+    expect(planLines(series, model.noun)).toEqual([
+      { n: 1, text: 'variant takes “3 years”', tone: 'write' },
+      { n: 2, text: 'already hold it — nothing changes', tone: 'same' },
+    ])
   })
 
   it('reports the finished act in the past tense with its level named', () => {
@@ -356,7 +450,7 @@ describe('reset to inherit puts a row back on its level', () => {
     const key = [...empty.byKey.values()].find((n) => n.value === 'Ghost')?.key ?? ''
     const plan = planReset(empty, key, warranty)
     expect(plan.refusal).toBe(
-      'No variant under Ghost holds a Warranty, so there is nothing to inherit.',
+      'Warranty is not set on any variant under Ghost, so there is nothing to inherit.',
     )
   })
 })
@@ -525,13 +619,41 @@ describe('the real Highfield table — 588 variants, Series ▸ Model ▸ Varian
         /* A reset is refused for exactly two reasons, and they are
            the only two: the level has no answer, or every row is
            already on it. Never silently. */
-        const noAnswer = tallyAt(hf, series.key, shaftLgth).dominant === null
+        const noAnswer = tallyAt(hf, series.key, shaftLgth).answer === null
         expect(noAnswer || overriding.length + blanks.length === 0).toBe(true)
         continue
       }
       /* a reset fills blanks as well — both are "not on the level" */
       expect([...plan.writes].sort()).toEqual([...overriding, ...blanks].sort())
     }
+  })
+})
+
+describe('the column that made the majority rule necessary', () => {
+  /* Highfield's `Warranty` column holds a PRICE. Sport runs 199
+     variants across dozens of figures with the commonest on a
+     handful — the exact shape a plurality rule turned into "the
+     level's answer" and offered to flatten in one press. */
+  it('gives Sport no Warranty answer, and says why with its own figures', () => {
+    const sport = hf.root.children.find((c) => c.label === 'Sport')
+    expect(sport).toBeDefined()
+    const w = fieldNamed(highfield.entity, 'Warranty')
+    const t = tallyAt(hf, sport?.key ?? '', w)
+    expect(t.commonest).not.toBeNull()
+    expect((t.commonest?.count ?? 0) * 2).toBeLessThanOrEqual(t.total - t.blank)
+    expect(t.answer).toBeNull()
+
+    const plan = planReset(hf, sport?.key ?? '', w)
+    expect(plan.writes).toHaveLength(0)
+    expect(plan.refusal).toContain('has no Warranty to inherit')
+    expect(plan.refusal).toContain('is on only')
+  })
+
+  it('and marks none of its 199 as differing, because there is nothing to differ from', () => {
+    const sport = hf.root.children.find((c) => c.label === 'Sport')
+    const { rows: standing } = standingsAt(hf, sport?.key ?? '', fieldNamed(highfield.entity, 'Warranty'))
+    expect(standing).toHaveLength(199)
+    expect(standing.some((s) => s.standing === 'overrides')).toBe(false)
   })
 })
 
@@ -585,16 +707,37 @@ describe('every table in the price file that has levels behaves', () => {
     }
   })
 
-  it('refuses every formula, picture, drawer and naming column, and nothing else', () => {
+  it('refuses every formula, picture, drawer, naming and machinery column, and nothing else', () => {
     for (const t of withLevels) {
       for (const col of levelColumns(t.model)) {
-        const isSystem =
+        const locked =
           col.field.type === 'formula' ||
           col.field.type === 'image' ||
           t.model.levelIds.includes(col.field.id) ||
-          (t.entity.hierarchy ?? []).slice(-1)[0] === col.field.id
-        expect(col.refusal === null).toBe(!isSystem)
+          (t.entity.hierarchy ?? []).slice(-1)[0] === col.field.id ||
+          isPairFieldId(col.field.id) ||
+          isSystemFieldId(col.field.id)
+        expect(col.refusal === null).toBe(!locked)
       }
     }
+  })
+
+  it('never offers the three columns a curated join carries', () => {
+    /* model.ts: they are "locked in the grid like the UID column",
+       and `__origin` is the fitment engine's own record of whether
+       a rule made a pairing or a person pinned it. A door that set
+       it across 2,519 pairings would be a way round that lock. */
+    const joins = project.entities.filter((e) => e.role === 'join')
+    expect(joins.length).toBeGreaterThan(0)
+    let seen = 0
+    for (const entity of joins) {
+      const m = buildLevelModel(entity, project.rowsByEntity[entity.id] ?? [])
+      for (const col of levelColumns(m)) {
+        if (!isPairFieldId(col.field.id)) continue
+        seen += 1
+        expect(col.refusal).toContain('machinery')
+      }
+    }
+    expect(seen).toBeGreaterThan(0)
   })
 })
