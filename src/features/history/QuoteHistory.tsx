@@ -167,8 +167,9 @@ export function QuoteHistory({
                   </>
                 ) : (
                   <>
-                    Open a table from <em>Tables</em> on the rail, press <em>Fitment</em>,
-                    pick the row you are selling and press <em>Quote this one</em>.
+                    Press <em>New quote</em> at the foot of the rail and pick what you
+                    are selling — the row you choose becomes the quote. Or open a table,
+                    press <em>Fitment</em> and quote the rig you are looking at.
                   </>
                 )}
               </p>

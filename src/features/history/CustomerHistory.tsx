@@ -186,10 +186,9 @@ export function CustomerHistory({
             <div className="hy-none">
               <h2 className="hy-none-title">Nothing has been quoted to them yet.</h2>
               <p className="hy-none-say">
-                A quote is written from the row you are selling. Open a table from{' '}
-                <em>Tables</em> on the rail, press <em>Fitment</em>, pick the one you are
-                selling and press <em>Quote this one</em> — then choose this customer at
-                the top of the quote.
+                A quote is written from the row you are selling. Press{' '}
+                <em>New quote</em> at the foot of the rail, pick what you are selling,
+                and name this customer at the top of the quote.
               </p>
             </div>
           ) : (

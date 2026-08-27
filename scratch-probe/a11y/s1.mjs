@@ -1,0 +1,10 @@
+import { open, signIn, dump } from './drive.mjs'
+const { ctx, page, errs } = await open()
+await page.waitForTimeout(1200)
+console.log('URL', page.url())
+console.log('--- BODY TEXT (first 1200) ---')
+console.log((await page.locator('body').innerText()).slice(0,1200))
+console.log('--- BUTTONS ---')
+dump(await page.evaluate(() => [...document.querySelectorAll('button,a[href],input,select,textarea')].slice(0,40).map(e => ({t:e.tagName, txt:(e.innerText||e.value||'').slice(0,40), al:e.getAttribute('aria-label')}))))
+console.log('ERRS', errs)
+await ctx.close()
