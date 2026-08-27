@@ -1,5 +1,5 @@
 /* ============================================================
-   WHERE YOU WERE IN THE WALK.
+   WHERE YOU WERE IN THE DOCUMENT.
 
    WHAT THIS IS NOT. It is not the build. Every decision a person
    makes on the sequence is minted by `freeze.ts` and written by
@@ -8,8 +8,8 @@
    reading of a document already on disk. Nothing in this file is
    ever consulted for what is ON a quote.
 
-   WHAT IT IS. The one thing the sequence holds that the document
-   genuinely does not: WHICH STEP WAS OPEN. `survivesClose.test.ts`
+   WHAT IT IS. The one thing the configurator holds that the
+   document genuinely does not: WHICH BANDS WERE OPEN. `survivesClose.test.ts`
    asserts the quote survives a close; the step did not. A
    salesperson four decisions into an eight-step rig who reloaded —
    or came back after lunch to a tab the browser had discarded —
@@ -98,4 +98,41 @@ export function rememberPlace(quoteId: string, stepId: string): void {
   } catch {
     /* quota, private mode, storage off — all the same answer */
   }
+}
+
+/* ============================================================
+   THE BANDS, AND WHY THE CURSOR BECAME A LIST.
+
+   The sequence had one stop open at a time, so one id was the whole
+   of the cursor. PHASE_TWO §2.3 replaced the six-stop deck with one
+   scrolling page whose bands are accordions and SEVERAL ARE OPEN AT
+   ONCE — so the thing to remember is a set rather than a position.
+
+   It is stored in the same map, as one string, for the reason the
+   header gives: the blast radius of losing it is a scroll position.
+   A tab is the separator because a block id is a nanoid and cannot
+   contain one, and because a corrupt value splits into ids that
+   match no band and are dropped by the caller's own check.
+   ============================================================ */
+
+const JOIN = '\t'
+
+/** The bands this quote was last left open. Never trusted: the
+ *  caller checks every id against the bands the document has. */
+export function recallOpen(quoteId: string): string[] {
+  const raw = recallPlace(quoteId)
+  if (raw === null) return []
+  return raw.split(JOIN).filter((id) => id !== '')
+}
+
+/** Remember them.
+ *
+ *  A PERSON WHO SHUT EVERY BAND GETS THE DEFAULT BACK, and that is a
+ *  limit of the store rather than a decision: `read()` drops an empty
+ *  value, so an empty list cannot be told from never having been
+ *  written. The cost is one accordion open on a reload, which is the
+ *  same blast radius the header already accepts, and it is written
+ *  down here rather than left to be discovered. */
+export function rememberOpen(quoteId: string, ids: readonly string[]): void {
+  rememberPlace(quoteId, ids.join(JOIN))
 }

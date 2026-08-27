@@ -83,11 +83,11 @@ export function RegistrationTheme(): ReactElement | null {
     <section className="cn-band" aria-label="Registration">
       <p className="cn-band-eyebrow mono-label">One concept, two subjects</p>
       <h3 className="cn-band-title">Registration is one fee table</h3>
+      {/* The eyebrow above already says "One concept, two subjects".
+          What differs between the two — length for a boat, weight for a
+          trailer — is drawn on the two rows beneath, labelled. */}
       <p className="cn-band-lede">
-        A boat's registration and a trailer's are the same thing: a charge collected for
-        someone else, looked up by band from one table, never marked up. What differs is
-        which band — length for a boat, weight for a trailer — and that belongs to the
-        join, not to the concept.
+        One charge, collected for someone else and never marked up.
       </p>
 
       {/* ---- where it lives, counted from the live project ---- */}
@@ -204,10 +204,11 @@ function BandCheckBlock({
 
       {n > 0 && (
         <p className="cn-rg-note">
-          <b>Shown, not corrected.</b> Every one of these is a row the price-file audit
-          already named — nine across the full sheet, seven of them undercharging by $117
-          each. Changing one changes a price the business is charging today, so this app
-          points at them and touches nothing.
+          {/* THE BLAST RADIUS, WHICH THE BUDGET KEEPS: this names what
+              would happen if the app corrected one, which is why it
+              does not. The audit's own tally moved to the rows. */}
+          <b>Shown, not corrected.</b> Changing one changes a price the business is charging
+          today.
         </p>
       )}
 
@@ -215,9 +216,9 @@ function BandCheckBlock({
           quietly covers one of two subjects reads as a check that
           covers both. */}
       <p className="cn-rg-note cn-rg-note--quiet">
-        The boat half is not checked. A boat's band is a hull length and nothing has
-        measured a boat's band against its length, so deriving one here would be a guess
-        wearing this app's authority.
+        {/* A REFUSAL, KEPT. A check that quietly covers one of two
+            subjects reads as a check that covers both. */}
+        The boat half is not checked — nothing has measured a band against a hull length.
         {check.untestableTables.length > 0 && (
           <>
             {' '}

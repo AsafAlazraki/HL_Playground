@@ -146,11 +146,10 @@ export function QuoteHistory({
               <h2 className="hy-none-title">
                 Every quote you write stays here, exactly as it was written.
               </h2>
-              <p className="hy-none-say">
-                The day, the customer, the rig and the numbers, frozen the moment you
-                handed it over — so a quote given on Monday still says the same number in
-                March, whatever the price file has done since.
-              </p>
+              {/* AN EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT — the one
+                  place the prose budget says prose earns its space. It
+                  had three: the title, a 36-word gloss on the title,
+                  and the act. The gloss goes. */}
               <p className="hy-none-count">
                 You have{' '}
                 <strong>
@@ -158,18 +157,18 @@ export function QuoteHistory({
                 </strong>{' '}
                 and no quotes.
               </p>
+              {/* THE ACT, AND ONLY THE ACT. Both branches named the
+                  control, then explained the control, then named a
+                  second route to the same place. The control is
+                  eighteen pixels away and says what it does. */}
               <p className="hy-none-do">
                 {tables === 0 ? (
                   <>
-                    A quote is written from a row, so a table comes first. Start one from{' '}
-                    <em>New table</em> on the rail, or load your price file from{' '}
-                    <em>Home</em> — the row you pick becomes the quote.
+                    A quote is written from a row — start with <em>New table</em>.
                   </>
                 ) : (
                   <>
-                    Press <em>New quote</em> at the foot of the rail and pick what you
-                    are selling — the row you choose becomes the quote. Or open a table,
-                    press <em>Fitment</em> and quote the rig you are looking at.
+                    Start one with <em>New quote</em>.
                   </>
                 )}
               </p>
@@ -196,12 +195,11 @@ export function QuoteHistory({
           <header className="hy-head">
             <span className="mono-label hy-eyebrow">History</span>
             <h1 className="hy-title">Every quote you have written.</h1>
-            <p className="hy-say">
-              What was offered, to whom, on what day, and what happened to it afterwards.
-              Each one is a photograph: the numbers on it are the numbers it was given,
-              not today&rsquo;s.
-            </p>
-
+            {/* THE 33-WORD LEDE IS GONE. "Every quote you have written."
+                is the heading; what was offered, to whom and on what day
+                are the columns of every row beneath it, and that the
+                numbers are frozen is what a version stamp on a quote
+                says at the moment it matters. */}
             {/* THE COUNTED FACTS. Every one of them is a length —
                 nothing here is a projection, a forecast or a
                 conversion rate, because this app records what was

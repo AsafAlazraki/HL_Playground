@@ -45,7 +45,7 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
-import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
+import { ArrowLeft, CaretLeft, ClockCounterClockwise } from '@phosphor-icons/react'
 import { QuoteList, QuotePage, useQuote } from '@/features/quote'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
@@ -64,6 +64,21 @@ export interface QuoteStageProps {
    *  = the link is still SAID on the document's own screen and not
    *  offered as a door, so this stage still works on its own. */
   onOpenCustomer?: (customerId: string) => void
+  /* ============================================================
+     THE DIARY, WHICH LOST ITS DOOR WHEN THE RAIL WENT TO FOUR.
+
+     History — every quote raised here and every customer given one
+     — was a row in the rail's SELLING section. The rail is four
+     doors now and History is not one of them, which left a
+     finished stage reachable from nothing.
+
+     It did not belong in Admin: it is a SELLING surface, and the
+     list it is the long form of is right here. So it is a lateral
+     link on this bar, drawn only on the list — on a document it
+     would point past the thing you are reading. Absent = the link
+     is not drawn, so this stage still works on its own.
+     ============================================================ */
+  onOpenHistory?: () => void
   onClose: () => void
 }
 
@@ -71,6 +86,7 @@ export function QuoteStage({
   quoteId,
   onOpen,
   onOpenCustomer,
+  onOpenHistory,
   onClose,
 }: QuoteStageProps): ReactElement {
   const quote = useQuote(quoteId)
@@ -159,6 +175,20 @@ export function QuoteStage({
             >
               <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
               All quotes
+            </button>
+          </div>
+        ) : onOpenHistory ? (
+          <div className="shell-quote-acts">
+            <button
+              type="button"
+              className="btn shell-quote-act"
+              onClick={onOpenHistory}
+            >
+              <ClockCounterClockwise
+                size={ICON_SIZE.tiny}
+                aria-hidden="true"
+              />
+              History
             </button>
           </div>
         ) : null}

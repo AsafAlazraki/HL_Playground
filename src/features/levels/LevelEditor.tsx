@@ -131,10 +131,10 @@ function TablePicker({ onPick }: { onPick: (id: string) => void }): JSX.Element 
       <header className="lv-head">
         <p className="lv-eyebrow ds-label">Configure at every level</p>
         <h1 className="lv-title ds-display">Which table?</h1>
-        <p className="lv-sub ds-body">
-          Set a value once at a level and every row beneath it takes it — unless that row
-          says something different, in which case it is left alone and told to you.
-        </p>
+        {/* ONE LINE. What happens to a row that disagrees is said on
+            that row, by the editor, at the moment it is left alone —
+            which is where a person can do something about it. */}
+        <p className="lv-sub ds-body">Set it once; every row beneath takes it.</p>
       </header>
       <ul className="lv-pick">
         {tables.map((t) => (

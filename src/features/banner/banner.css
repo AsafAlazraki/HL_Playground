@@ -1,0 +1,272 @@
+/* ============================================================
+   THE BANNER — three drawn layers and a title.
+
+   Mesh, motif, grain. No photograph: a product shot on every
+   header is wallpaper, and the pictures stop meaning anything the
+   moment they are everywhere. Photography belongs where it is the
+   SUBJECT — the catalogue, the configurator's hull, one boat's
+   card. A banner is chrome, and chrome is drawn.
+   ============================================================ */
+
+.bn {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: 220px;
+  margin: 0 0 var(--s-8);
+  overflow: hidden;
+  /* SQUARE. A 1600px band with 10px corners reads as a very large
+     card; the marine references have effectively no radius on
+     anything this size. */
+  border-radius: 0;
+  background: var(--chrome);
+}
+.bn--tight {
+  min-height: 152px;
+  margin-bottom: var(--s-6);
+}
+
+/* ------------------------------------------------------------
+   1 · THE MESH — where the colour finally lives.
+
+   Two soft radial fields in the kind's own hue, offset from each
+   other so the band has a light SOURCE rather than a direction.
+   A single linear gradient reads as a bar; two offset radials
+   read as light falling on something.
+   ------------------------------------------------------------ */
+.bn-mesh {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      88% 128% at 6% 6%,
+      color-mix(in srgb, var(--kind) 62%, transparent) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      70% 110% at 82% 118%,
+      color-mix(in srgb, var(--kind) 40%, transparent) 0%,
+      transparent 62%
+    ),
+    linear-gradient(180deg, var(--chrome-raised) 0%, var(--chrome) 100%);
+}
+
+/* ------------------------------------------------------------
+   2 · THE MOTIF — a geometric line field.
+
+   Marine without being literal. No wheels, no rope, no
+   portholes — those are the clichés that make a working tool look
+   like a themed restaurant. What is left is what a CHART of water
+   actually looks like: contours, plating, survey lines.
+
+   All three are hairlines at 4-7% and read as texture rather than
+   as drawing. Each is one repeating-gradient, so there is no
+   asset to load and no SVG to maintain.
+   ------------------------------------------------------------ */
+.bn-motif {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* SOUNDINGS — the depth contours on a hydrographic chart. Two
+   repeating fields at different angles and periods so they never
+   resolve into a plaid. */
+.bn-motif--sound {
+  background-image:
+    repeating-linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0.06) 0 1px,
+      transparent 1px 46px
+    ),
+    repeating-linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0.04) 0 1px,
+      transparent 1px 13px
+    );
+  /* the field fades out before the words start, so nothing is
+     ever read against a line */
+  -webkit-mask-image: linear-gradient(96deg, #000 0%, transparent 72%);
+  mask-image: linear-gradient(96deg, #000 0%, transparent 72%);
+}
+
+/* PLATING — the diagonal seams of a welded aluminium hull. */
+.bn-motif--plate {
+  background-image: repeating-linear-gradient(
+    118deg,
+    rgba(255, 255, 255, 0.07) 0 1px,
+    transparent 1px 34px
+  );
+  -webkit-mask-image: linear-gradient(96deg, #000 0%, transparent 78%);
+  mask-image: linear-gradient(96deg, #000 0%, transparent 78%);
+}
+
+/* SURVEY — a plain field, for a place that is neither a hull nor
+   water: rules, admin, settings. */
+.bn-motif--grid {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px);
+  -webkit-mask-image: linear-gradient(96deg, #000 0%, transparent 70%);
+  mask-image: linear-gradient(96deg, #000 0%, transparent 70%);
+}
+
+/* ------------------------------------------------------------
+   3 · GRAIN — because a 1600px gradient bands without it.
+   ------------------------------------------------------------ */
+.bn-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   THE WORDS
+   ------------------------------------------------------------ */
+.bn-say {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-5);
+  width: 100%;
+  padding: var(--s-6) var(--s-8);
+}
+.bn-words {
+  min-width: 0;
+  flex: 1;
+}
+.bn-eyebrow {
+  display: block;
+  margin-bottom: var(--s-2);
+  /* the soft tier, 8.5:1 on --chrome. The faint tier is not safe
+     over a hue-tinted mesh and is barred here. */
+  color: var(--chrome-fg-soft);
+}
+.bn-title {
+  margin: 0;
+  max-width: 22ch;
+  color: var(--chrome-fg);
+  text-wrap: balance;
+}
+.bn-line {
+  margin: var(--s-3) 0 0;
+  max-width: 56ch;
+  font-size: var(--t-body-size);
+  line-height: 1.5;
+  color: var(--chrome-fg-soft);
+}
+
+/* THE BRAND'S MARK, on a plate. A logo is usually dark on
+   transparent and would vanish into the mesh. This is the one
+   image a banner carries, and it is identity rather than
+   scenery. */
+.bn-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 80px;
+  height: 80px;
+  padding: var(--s-3);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e3);
+}
+.bn-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* ---- counted facts ---------------------------------------- */
+.bn-facts {
+  display: flex;
+  gap: var(--s-6);
+  margin: 0;
+  flex: none;
+}
+.bn-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+/* mono, tabular, and NEVER a hue — a figure is not decorative */
+.bn-fact-fig {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--chrome-fg);
+}
+.bn-fact-lab {
+  font-size: var(--t-caption-size);
+  color: var(--chrome-fg-soft);
+  white-space: nowrap;
+}
+
+.bn-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+}
+
+/* ============================================================
+   RESPONSIVE. The banner is the widest thing on any page and so
+   the first to break. It never scrolls sideways and its title
+   never drops below the display face's 26px floor.
+   ============================================================ */
+@media (max-width: 1100px) {
+  .bn {
+    min-height: 190px;
+  }
+  .bn-say {
+    padding: var(--s-5) var(--s-6);
+    gap: var(--s-4);
+  }
+  .bn-logo {
+    width: 60px;
+    height: 60px;
+  }
+  .bn-facts {
+    gap: var(--s-4);
+  }
+}
+
+@media (max-width: 860px) {
+  /* the facts and acts stop competing with the title for one line
+     and go beneath it. Nothing is deleted. */
+  .bn {
+    min-height: 0;
+  }
+  .bn-say {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-4);
+    padding: var(--s-7) var(--s-5) var(--s-5);
+  }
+  .bn-title {
+    max-width: 100%;
+  }
+  .bn-facts {
+    flex-wrap: wrap;
+    gap: var(--s-4);
+  }
+}
+
+/* At higher contrast, texture is noise. The mesh keeps its hue
+   because that is identity; the line fields and the grain go. */
+@media (prefers-contrast: more) {
+  .bn-motif,
+  .bn-grain {
+    display: none;
+  }
+}

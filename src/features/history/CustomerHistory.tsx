@@ -185,10 +185,11 @@ export function CustomerHistory({
           {read.all.length === 0 ? (
             <div className="hy-none">
               <h2 className="hy-none-title">Nothing has been quoted to them yet.</h2>
+              {/* the sentence AND the act, which is what an empty state
+                  gets — not the sentence, the act, and a description of
+                  the act's own button */}
               <p className="hy-none-say">
-                A quote is written from the row you are selling. Press{' '}
-                <em>New quote</em> at the foot of the rail, pick what you are selling,
-                and name this customer at the top of the quote.
+                Start one with <em>New quote</em>.
               </p>
             </div>
           ) : (
@@ -209,7 +210,7 @@ export function CustomerHistory({
 
               <Band
                 title="Still being written"
-                say="Drafts. Nothing here has been handed over, and every one of them can still be changed."
+                say="Not handed over. Still editable."
                 quotes={read.open}
                 index={index}
                 onOpenQuote={onOpenQuote}
@@ -217,7 +218,7 @@ export function CustomerHistory({
 
               <Band
                 title="Given to them"
-                say="Handed over, and still the current word. A given quote is read-only — the only act left on one is making a new version."
+                say="Handed over. Read-only — reissue to change one."
                 quotes={read.given}
                 index={index}
                 onOpenQuote={onOpenQuote}
@@ -225,7 +226,7 @@ export function CustomerHistory({
 
               <Band
                 title="Replaced by a later version"
-                say="Handed over, and then reissued. Both documents still exist and neither was edited to make the other."
+                say="Reissued. Both documents still exist."
                 quotes={read.replaced}
                 index={index}
                 onOpenQuote={onOpenQuote}

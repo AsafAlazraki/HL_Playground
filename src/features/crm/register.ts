@@ -46,9 +46,13 @@ import {
 
 /** The table's own description. It is shown on the sheet, in the
  *  Tables menu and at the head of the register, so it says what the
- *  table is FOR rather than restating its name. */
-const REGISTER_DESCRIPTION =
-  'The people and businesses you sell to. A quote addressed to one of them freezes their name and contact details onto the document, and keeps a link back here so their history is in one place.'
+ *  table is FOR rather than restating its name.
+ *
+ *  ONE FACT, WHICH IS ALL A CARD GETS. It was 36 words, and it was
+ *  drawn at the head of the register under the register's own name —
+ *  three sentences explaining a screen a person is standing on. What
+ *  a quote freezes is said by the quote, at the moment it freezes. */
+const REGISTER_DESCRIPTION = 'The people and businesses you sell to.'
 
 /** Where a new table lands: clear to the right of everything already
  *  drawn, rather than on top of it. `createEntity`'s own default

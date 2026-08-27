@@ -226,10 +226,13 @@ function CleanPlate({ hasEntities }: { hasEntities: boolean }): JSX.Element {
         <p className="rv-clean-stamp">
           {hasEntities ? 'Nothing to correct' : 'Nothing drawn yet'}
         </p>
+        {/* an empty state keeps its sentence — one of them. The list of
+            what a mark can be about is what the marks themselves say,
+            when there are any. */}
         <p className="rv-clean-prose">
           {hasEntities
-            ? 'Marks appear the moment the model drifts — naming, links, repeated columns, stored calculations — and clear themselves the moment you fix them.'
-            : 'Draw a table and the review starts. Every mark comes with the reason behind it, so the sheet teaches while you work.'}
+            ? 'Marks appear as the model drifts, and clear as you fix it.'
+            : 'Draw a table and the review starts.'}
         </p>
       </div>
     </div>

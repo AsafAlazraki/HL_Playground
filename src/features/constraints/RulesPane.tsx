@@ -264,25 +264,10 @@ export function RulesPane(): ReactElement {
   /* The segmented control's own labels and counts, in one place so the
      control, the panel it opens and the sentence under it can never
      disagree. Every figure is counted above, on this render. */
-  const views: { id: ViewId; name: string; count: number; say: string }[] = [
-    {
-      id: 'file',
-      name: 'From your price file',
-      count: tally.total,
-      say: `${tally.total} rules read out of your workbooks, and the patterns your values follow without anybody writing them down.`,
-    },
-    {
-      id: 'mine',
-      name: 'Rules you write',
-      count: constraints.length,
-      say: 'One sentence about your own columns. Every underlined word is a choice, and the count under it moves as you write.',
-    },
-    {
-      id: 'checks',
-      name: 'What is checked',
-      count: tally.checked,
-      say: 'The checks that walk the sheet you have loaded — and, last, what your price file holds that this does not.',
-    },
+  const views: { id: ViewId; name: string; count: number }[] = [
+    { id: 'file', name: 'From your price file', count: tally.total },
+    { id: 'mine', name: 'Rules you write', count: constraints.length },
+    { id: 'checks', name: 'What is checked', count: tally.checked },
   ]
 
   /* Arrow keys move between segments, which is what a tablist owes
@@ -312,21 +297,17 @@ export function RulesPane(): ReactElement {
         <header className="cn-head">
           <p className="cn-eyebrow mono-label">Business rules</p>
           <h2 className="cn-title">What this price file asserts</h2>
+          {/* THE ONE LINE THIS STAGE IS ALLOWED, and it is spent on the
+              distinction a person actually gets wrong rather than on
+              describing the page they are looking at. Two surfaces hold
+              rules: this one states a LIMIT, Fitment DERIVES a list, and
+              somebody who opens the wrong one concludes the thing they
+              wanted cannot be done. The two paragraphs that used to sit
+              here — 73 words describing what a rule is and where the
+              measurement is drawn — are what the cards say for
+              themselves, in the place they say it. */}
           <p className="cn-lede">
-            {tally.total} rules were read out of your price file, each traced to the cell,
-            formula, header or divider that states it, and measured against every row that
-            could test it. The measurement is the first thing on every card, because a rule
-            that holds on every pairing in a business is a fact about that business.
-          </p>
-          {/* NAME THE OTHER SURFACE. There are two places a rule can
-              live and they do different jobs — this one states a LIMIT,
-              the other DERIVES a list. A person who opens the wrong one
-              does not discover their mistake; they conclude the thing
-              they wanted cannot be done. The door it points at is on
-              the bar, and it is called Fitment. */}
-          <p className="cn-lede cn-lede--other">
-            These are limits — things every row must keep. To work out what goes
-            <em> with</em> something, use <b>Fitment</b> on the bar.
+            Limits every row must keep. What goes <em>with</em> something is <b>Fitment</b>.
           </p>
 
           {/* THE TALLY, COUNTED. Four figures, none of them typed: how
@@ -368,20 +349,12 @@ export function RulesPane(): ReactElement {
             )}
           </dl>
 
-          <p className="cn-tally-note">
-            A stated rule comes from a formula, a header or a divider; one that is only seen in
-            the values may warn and may never filter. The {tally.total - tally.checked} that are
-            not checked say what is missing, on the rule itself.
-            {band.tested > 0 && (
-              <>
-                {' '}
-                Of the {n(band.tested)} trailers checked,{' '}
-                {n(band.disagreements.length)}{' '}
-                {band.disagreements.length === 1 ? 'is' : 'are'} registered in a weight band
-                their own rated mass contradicts — shown, and never corrected.
-              </>
-            )}
-          </p>
+          {/* THE 58-WORD NOTE UNDER THE TALLY IS GONE. Every claim in it
+              was already drawn somewhere a person can act on it: which
+              rules are stated and which only observed is a chip on each
+              card, what a rule is missing is on that rule, and the
+              band disagreements are the fourth figure above. A tally
+              that needs a paragraph explaining it is not a tally. */}
         </header>
 
         {noColumns ? (
@@ -410,8 +383,6 @@ export function RulesPane(): ReactElement {
                 </button>
               ))}
             </div>
-            <p className="cn-seg-say">{views.find((v) => v.id === view)?.say}</p>
-
             {/* 1 · WHAT THE PRICE FILE ASSERTS — and what it follows
                 without ever saying so. The sixteen in the ledger are
                 ASSERTED: a formula, a header or a divider states each
@@ -450,26 +421,18 @@ export function RulesPane(): ReactElement {
               ref={mine}
               aria-label="Rules you have written"
             >
+              {/* THE UNDO PROMISE, KEPT — it is the one claim on this
+                  view a person cannot read off the composer, and it is
+                  the reason they are willing to try one. The rest of
+                  the paragraph (what a rule is made of, how many you
+                  have written) is the sentence below and the count in
+                  the segment above. */}
               <p className="cn-band-lede">
-                A rule you write here is one sentence about your own columns. Change a word
-                and the rule changes; switch one off and everything it ruled out comes
-                straight back.
-                {constraints.length > 0 && (
+                Switch one off and everything it ruled out comes back.
+                {conflicts > 0 && (
                   <>
                     {' '}
-                    You have written{' '}
-                    <b>
-                      {constraints.length} rule{constraints.length === 1 ? '' : 's'}
-                    </b>
-                    {conflicts > 0 && (
-                      <>
-                        {', '}
-                        <span className="cn-count-bad">
-                          {conflicts} in conflict
-                        </span>
-                      </>
-                    )}
-                    .
+                    <span className="cn-count-bad">{conflicts} in conflict</span>.
                   </>
                 )}
               </p>

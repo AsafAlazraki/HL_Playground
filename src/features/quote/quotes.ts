@@ -36,7 +36,7 @@ import { newId, nowIso } from '@/lib/id'
 import { say } from '@/store/notes'
 import { localDay, localDayOf } from './day'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
-import { priceAtLevel } from './pricing'
+import { priceAtLevel, repricedAt } from './pricing'
 import { issueBlockers } from './totals'
 import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from './types'
 
@@ -438,27 +438,15 @@ export function useCustomerQuotes(rowId: string): QuoteDef[] {
 
 /* -- the level ----------------------------------------------- */
 
-/**
- * Re-price one line at a whole-quote rung, FROM ITS OWN FROZEN
- * RUNGS. No store read: every rung this row carries was captured at
- * pick time, so a level change is arithmetic on a photograph and
- * cannot pick up Tuesday's reimport on Friday.
- *
- * A line whose current rung is LINE-SCOPED is left alone. `fitted`
- * on a part and `warranty` on a hull are deliberate per-line
- * decisions; sweeping them away when the quote moves from cash to
- * trade would silently un-fit a fitted part and move the total with
- * no visible cause.
- */
-function repriced(line: QuoteLine, levelKey: string): QuoteLine {
-  const current = line.levels.find((l) => l.key === line.levelKey)
-  if (current && current.scope === 'line') return line
-  if (line.levels.length === 0) return { ...line, levelKey, levelResolved: levelKey }
-  return { ...line, ...priceAtLevel(line.levels, levelKey) }
-}
+/* RE-PRICING ONE LINE IS `repricedAt` IN `pricing.ts` and is not
+   written here. `conflict.ts` shows a person what a level change
+   WOULD do to every line before they accept it, and a preview
+   computed by a second copy of that arithmetic is a preview that can
+   disagree with the act it is previewing. One function, called by
+   both. */
 
 export const setLevel = (id: string, levelKey: string): void =>
-  mutate(id, (q) => ({ ...q, levelKey, lines: q.lines.map((l) => repriced(l, levelKey)) }))
+  mutate(id, (q) => ({ ...q, levelKey, lines: q.lines.map((l) => repricedAt(l, levelKey)) }))
 
 /** One line's own rung — `Sell inc Install (if appl.)` on a part,
  *  `Warranty` on a hull. It SWITCHES which frozen number the line

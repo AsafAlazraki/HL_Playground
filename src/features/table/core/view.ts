@@ -19,6 +19,24 @@ export interface SortState {
 export type ColumnFilter =
   | { kind: 'values'; fieldId: string; selected: string[] } // select/boolean/reference
   | { kind: 'contains'; fieldId: string; text: string } // text/number/date
+  /* A NUMERIC BAND ON ONE COLUMN — "between $20,000 and $40,000",
+     "4.5 m and up". Either bound may be absent, which makes it
+     open-ended on that side; both absent is a filter that narrows
+     nothing and is dropped rather than applied.
+
+     WHY THIS EXISTS AND `contains` DOES NOT ALREADY DO IT. A price
+     column's display text is `$20,900`, so a text match on it is a
+     match on the digits of a formatted string — `2` matches 2,770
+     and 20,900 and 12,000 and means nothing. A band has to be read
+     off the VALUE.
+
+     AND IT READS A LEADING NUMBER OUT OF TEXT, because the business
+     writes `4 HP` and `40 ltr` into columns it also fills with bare
+     numbers — Highfield's Min HP is text and Stacer's is a number,
+     and they are the same fact about the same kind of thing. Reading
+     the number the author wrote is reading; substituting one is not,
+     and nothing here does the second. */
+  | { kind: 'between'; fieldId: string; min?: number; max?: number }
 
 export interface ViewRow {
   rowId: string
@@ -67,6 +85,35 @@ function toNumber(v: CellValue): number | null {
     return Number.isFinite(n) ? n : null
   }
   return null
+}
+
+/** The number a cell carries, however its author wrote it: `2770`,
+ *  `'2770'`, or `'4 HP'`. A LEADING number only — `'Up to 4.5m'` is a
+ *  sentence, not a measurement, and reading `4.5` out of it would be
+ *  the invention this app refuses. */
+export function leadingNumber(v: CellValue): number | null {
+  const direct = toNumber(v)
+  if (direct !== null) return direct
+  if (typeof v !== 'string') return null
+  /* a comma between a digit and three more is a thousands separator —
+     the only comma the app's own `formatNumber` ever writes */
+  const s = v.trim().replace(/,(?=\d{3}(?:\D|$))/g, '')
+  const m = /^[\s$]*(-?\d+(?:\.\d+)?)/.exec(s)
+  if (!m) return null
+  const n = Number(m[1])
+  return Number.isFinite(n) ? n : null
+}
+
+/** A row's number for one column — the stored value first, its display
+ *  text second, so a computed column filters on what it shows. */
+function numberIn(row: ViewRow, fieldId: string): number | null {
+  const raw = row.values[fieldId]
+  if (raw !== undefined) {
+    const n = leadingNumber(raw)
+    if (n !== null) return n
+  }
+  const t = row.text[fieldId]
+  return t === undefined ? null : leadingNumber(t)
 }
 
 function toBoolRank(v: CellValue): number {
@@ -157,7 +204,17 @@ export function applyView(
     // silently emptying the grid.
     if (!byId.has(filter.fieldId)) continue
 
-    if (filter.kind === 'values') {
+    if (filter.kind === 'between') {
+      const { min, max } = filter
+      if (min === undefined && max === undefined) continue
+      out = out.filter((r) => {
+        const n = numberIn(r, filter.fieldId)
+        if (n === null) return false
+        if (min !== undefined && n < min) return false
+        if (max !== undefined && n > max) return false
+        return true
+      })
+    } else if (filter.kind === 'values') {
       // Empty `selected` means "no value is allowed through" (Excel's
       // uncheck-everything). To CLEAR a filter, drop the object entirely.
       const allowed = new Set(filter.selected)

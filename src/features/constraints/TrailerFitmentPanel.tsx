@@ -45,8 +45,7 @@
 import { useMemo } from 'react'
 import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { curationNote, measuredRate } from '@/features/curation'
-import { ledgerFor } from './ruleLedger'
+import { curationNote } from '@/features/curation'
 import {
   TRAILER_ATM_FLOOR,
   TRAILER_FITMENT,
@@ -58,17 +57,10 @@ import {
 
 const pct = (share: number): string => `${(share * 100).toFixed(1)}%`
 
-/* ── F8'S RATE, READ FROM THE ADJUDICATION AND NEVER TYPED ────────
-   `RULE_LEDGER`'s F8 entry restates the seed's own `source` line, and
-   `ruleLedger.test.ts` asserts that it does. So this clause changes
-   when the measurement changes and cannot be left behind by it — the
-   one thing a hand-written "581 of 581" in this file could not
-   promise. `''` where the project measured nothing, which is what
-   `Narrowing.measured` being optional is for. */
-const F8 = ledgerFor('F8')
-const F8_RATE = F8?.measure
-  ? measuredRate(F8.measure.held, F8.measure.tested, 'testable pairings in the price file')
-  : ''
+/* F8'S RATE USED TO BE RESTATED HERE, in the sixth clause of a 62-word
+   lede. It is drawn once, on F8's own card in the ledger above, where
+   it is the largest thing on that card — and reading it off the
+   adjudication in two places was the duplication, not the safeguard. */
 
 /* WHAT THIS PANEL CALLS THE THINGS IT IS NARROWING. The prose around
    it has said "trailers" since it was written, and the mechanism's
@@ -112,13 +104,12 @@ export function TrailerFitmentPanel(): ReactElement | null {
           LABEL — DESIGN_PRINCIPLES rule 3. */}
       <p className="cn-band-eyebrow mono-label">The trailer selector</p>
       <h3 className="cn-band-title">A trailer's series says which boat it is built for</h3>
+      {/* ONE LINE, AND IT IS THE MEASUREMENT. The 62 words that stood
+          here restated the heading, then explained the floor block that
+          is 40px below and says the same thing about itself. The figure
+          is the part a person cannot read off anything else. */}
       <p className="cn-band-lede">
-        Every trailer sits under a series heading, and {catalogue.named} of {catalogue.live} of
-        them name a boat brand in it. That heading is what chooses: a hull is offered the
-        series built for its own brand and nothing else. It is the one test that both holds
-        on every pairing in the price file and actually narrows the list — the weight floor
-        below holds too, and leaves almost the whole catalogue standing.
-        {F8_RATE !== '' ? ` It ${F8_RATE}.` : ''}
+        {catalogue.named} of {catalogue.live} name a boat brand in their series heading.
       </p>
 
       {/* ---- one line per brand ---- */}
@@ -133,10 +124,12 @@ export function TrailerFitmentPanel(): ReactElement | null {
         <p className="cn-tf-floor-head">
           The weight floor warns. It never takes a trailer off the list.
         </p>
+        {/* WHY IT IS A FLOOR AND NOT A SELECTOR, in one clause rather
+            than three. FITMENT_RULES.md's A2 failure is promoting this
+            to the thing that picks the trailer, so the reason it cannot
+            pick stays — shortened, not moved. */}
         <p className="cn-tf-floor-note">
-          A trailer's rated ATM is never below the boat's weight anywhere in the price file,
-          and that is exactly why it cannot choose: nearly every trailer clears nearly every
-          hull.{' '}
+          Nearly every trailer clears nearly every hull.{' '}
           {warned > 0 ? (
             <>
               {warned} {warned === 1 ? 'hull is' : 'hulls are'} offered a trailer in their own
@@ -149,10 +142,10 @@ export function TrailerFitmentPanel(): ReactElement | null {
         </p>
         {unchecked.length > 0 && (
           <p className="cn-tf-floor-note cn-tf-floor-note--quiet">
-            It does not run at all for{' '}
-            <b>{unchecked.map((r) => r.marque.name).join(', ')}</b>. Those bands carry no
-            weight column, so there is nothing to compare — which is a check that has not run,
-            not a check that passed.
+            {/* A REFUSAL KEEPS ITS SENTENCE. A check that has not run
+                must never be mistaken for a check that passed. */}
+            Not run for <b>{unchecked.map((r) => r.marque.name).join(', ')}</b> — no weight
+            column to compare.
           </p>
         )}
       </div>

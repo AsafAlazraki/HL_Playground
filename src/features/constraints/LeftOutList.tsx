@@ -56,12 +56,17 @@ export function LeftOutList(): ReactElement | null {
     <section className="cn-band" aria-label="What is not in here">
       <p className="cn-band-eyebrow mono-label">Not in here</p>
       <h3 className="cn-band-title">What your price file has that this does not</h3>
-      <p className="cn-band-lede">
-        Every one of these was read, measured and decided — not missed. Some were decided
-        against; some are decided and waiting on somewhere to keep them. The number that
-        settled each one is on its card, so you can disagree with the decision rather than
-        wonder whether one was made.
-      </p>
+      {/* THE 43-WORD LEDE IS GONE. Every card below already opens with
+          its own verdict word — "Deliberately left out" / "Not yet — and
+          here is what it is waiting for" — and carries the figure that
+          settled it. A paragraph saying that the cards say that is the
+          exact shape PHASE_TWO §1a measured at 79 % on this stage.
+
+          WHAT IS NOT CUT ON THIS SURFACE, and it is deliberate: every
+          `why` and every `measured` line on the cards stays in full.
+          Each one is a REFUSAL with its evidence, and the prose budget
+          keeps both — "a refusal sentence, always, wherever it is" and
+          "a provenance citation, it is evidence, not prose". */}
 
       {/* WHAT DID COME IN, first, because the ratio is the finding.
           The service module is 30 MB and 45 rows of it are here — the
@@ -110,10 +115,7 @@ export function LeftOutList(): ReactElement | null {
 
       {artefacts.length > 0 ? (
         <p className="cn-lo-foot">
-          And {artefacts.length} sheets that hold no data of their own — two hidden mirrors
-          Excel keeps to feed a dropdown, an emptied copy of a brand sheet, and a costing
-          form over a table that is already here. Each one is recorded with its measurement
-          in the same place as the rest.
+          And {artefacts.length} sheets holding no data of their own.
         </p>
       ) : null}
     </section>

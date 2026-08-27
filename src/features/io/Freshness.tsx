@@ -168,10 +168,12 @@ export function Freshness({
             Keep this one
           </button>
         </div>
-        <p className="io-fresh-foot">
-          Loading it replaces this sheet, and can save a copy of it to a file
-          first. Keeping this one is not asked again.
-        </p>
+        {/* THE BLAST RADIUS STAYS — it is the one thing a person cannot
+            read off the two buttons, and §7 requires it before a
+            destructive act. The reassurance about the copy is on the
+            confirm sheet's own choice, where the copy is actually
+            offered, so it is not said twice. */}
+        <p className="io-fresh-foot">Loading replaces this sheet.</p>
       </div>
 
       {asking ? (

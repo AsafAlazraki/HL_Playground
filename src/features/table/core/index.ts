@@ -32,4 +32,4 @@ export { coerceCellText, cellToText, formatNumber } from './coerce'
 
 /* ---------- sort / filter / search ---------- */
 export type { SortDir, SortState, ColumnFilter, ViewRow } from './view'
-export { applyView, distinctValues } from './view'
+export { applyView, distinctValues, leadingNumber } from './view'

@@ -201,15 +201,19 @@
    otherwise be fighting a utility class over the same three
    properties, which is the override layer this repo forbids.
    ============================================================ */
+/* SOMETHING ON THIS STAGE IS BIG. The register's own name is the
+   subject of the screen and it was set at 34px, the same size as
+   every other stage title in the app; the hero step clamps 34→52px,
+   so nothing moves at 1024 and there is a focal point at 1600. */
 .cx-head-name,
 .cx-one-name,
 .cx-empty-title {
   font-family: var(--font-hero);
   font-variation-settings: 'wdth' 103;
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: -0.028em;
+  font-size: var(--t-hero-size);
+  font-weight: var(--t-hero-weight);
+  line-height: var(--t-hero-lead);
+  letter-spacing: var(--t-hero-track);
   color: var(--ink);
 }
 @media (prefers-contrast: more) {

@@ -115,6 +115,7 @@ import { Freshness } from '@/features/io'
 import { keepSeedVersion, northsideFreshness, type SeedFreshness } from '@/demos'
 import { applyDemoSet, realDemoSet } from './demoLoad'
 import { useViewPersistence } from './viewPersistence'
+import { rememberModule } from './moduleRecent'
 import './shell.css'
 
 /** Everything that can cover the sheet. Two of them name a table, two
@@ -240,6 +241,11 @@ export function Shell({ user, onSignOut }: ShellProps) {
      already open, which is what every OS does and what anybody
      expects. */
   const openWin = useCallback((stage: Stage) => {
+    /* WHERE THIS PERSON WAS. The rail draws at most four modules and
+       they are the ones actually opened — recorded here, at the one
+       place every route into a module passes through, rather than by
+       each of the six callers remembering to. See moduleRecent.ts. */
+    if (stage.kind === 'module' && stage.moduleId) rememberModule(stage.moduleId)
     setWins((prev) => {
       const key = winKey(stage)
       const found = prev.find((w) => winKey(w.stage) === key)
@@ -498,23 +504,24 @@ export function Shell({ user, onSignOut }: ShellProps) {
             it, including its own floor. */}
         <SideNav
           current={wins.length ? wins[wins.length - 1].stage.kind : null}
-          currentEntityId={
-            focused && 'entityId' in focused.stage ? focused.stage.entityId : null
+          /* which module is open, so a remembered row in the rail can
+             be lit rather than only the Modules door above it */
+          currentModuleId={
+            focused && focused.stage.kind === 'module' ? focused.stage.moduleId : null
           }
-          onOpenSheet={() => setStage(null)}
-          onOpenHome={() => setStage({ kind: 'home' })}
-          onOpenGallery={() => setStage({ kind: 'gallery' })}
-          onOpenHistory={() => setStage({ kind: 'history', customerId: null })}
-          onOpenLevels={() => setStage({ kind: 'levels', entityId: null })}
+          onOpenToday={() => setStage({ kind: 'home' })}
+          onOpenModules={() => setStage({ kind: 'module', moduleId: null })}
+          onOpenModule={(moduleId) => setStage({ kind: 'module', moduleId })}
+          onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
+          onOpenCustomers={() => setStage({ kind: 'customer', customerId: null })}
+          /* THE FOUR DOORS ARE FOUR. Data model, All tables, Configure,
+             Business rules, What fits what, Access & roles, Import /
+             export and Saved configurations are all behind this one —
+             see AdminStage.tsx, which is why that is not a graveyard. */
+          onOpenAdmin={() => setStage({ kind: 'admin' })}
           user={user}
           onSignOut={onSignOut}
           onOpenConfigurations={() => setConfiguring(true)}
-          onOpenTable={(id) => setStage({ kind: 'table', entityId: id })}
-          onOpenDashboard={() => setStage({ kind: 'module', moduleId: null })}
-          onOpenRules={() => setStage({ kind: 'rules' })}
-          onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}
-          onOpenCustomers={() => setStage({ kind: 'customer', customerId: null })}
-          onAddTable={() => setPicking(true)}
           onSearch={() => setFinding(true)}
           /* A QUOTE IS MINTED FROM THE ROW BEING SOLD —
              `createQuoteFromView(viewId, rowId)` — so there is no
@@ -533,6 +540,7 @@ export function Shell({ user, onSignOut }: ShellProps) {
              before it is committed. */
           onNewQuote={() => setStarting(true)}
           quoteCount={quoteCount}
+          customerCount={customerCount}
         />
         {/* NO `aria-label` HERE. It said "Desktop" — a word from the
             windowing shell this app stopped being, and it never
@@ -606,6 +614,11 @@ export function Shell({ user, onSignOut }: ShellProps) {
                    exactly as the new-table dialog is */
                 newQuote: () => setStarting(true),
                 find: () => setFinding(true),
+                /* THE DRAWING. Not a stage — the surface under every
+                   stage — so reaching it empties the window stack, and
+                   only the shell can do that. Admin's first door. */
+                openSheet: () => setStage(null),
+                openConfigurations: () => setConfiguring(true),
                 user,
               })}
             </div>

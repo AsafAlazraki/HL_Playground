@@ -59,10 +59,8 @@ export function SignIn({ onSignedIn }: SignInProps): JSX.Element {
         <div className="si-say-in">
           <span className="mono-label si-eyebrow">HelmLogic</span>
           <h1 className="ds-hero si-head">Sell complicated things simply.</h1>
-          <p className="si-lede">
-            Every boat, motor, trailer and part you sell, the rules that decide what goes
-            with what, and the quote at the end of it — in one place, on one screen.
-          </p>
+          {/* one line under the hero, which is what a stage gets */}
+          <p className="si-lede">Everything you sell, and the quote at the end of it.</p>
         </div>
       </aside>
 

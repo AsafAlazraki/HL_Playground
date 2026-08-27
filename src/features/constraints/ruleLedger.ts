@@ -116,8 +116,10 @@ export interface RuleGroup {
    *  colour is worse than a hairline. Matched on name, case-folded,
    *  and it falls back to `kind` when the table is not there. */
   table?: string
-  /** One sentence saying what this part of the price file decides.
-   *  Restates the rules underneath it and asserts nothing they do not. */
+  /** A PHRASE, not a sentence. PHASE_TWO's prose budget gives a card
+   *  a name and one fact; these were 13–21 words each and stacked to a
+   *  paragraph above every group. What each group decides is stated by
+   *  the rules inside it, which is where a person reads it. */
   say: string
 }
 
@@ -132,32 +134,32 @@ export const RULE_GROUPS: readonly RuleGroup[] = [
     id: 'trailers',
     name: 'Trailers',
     kind: 'trailer',
-    say: 'Which trailer may go under a hull, and whether it is rated to carry it.',
+    say: 'What may go under a hull, and what it is rated to carry.',
   },
   {
     id: 'motors',
     name: 'Motors',
     kind: 'motor',
-    say: 'Which outboard may hang off a transom — and which ones the dealer offers below the plate on purpose.',
+    say: 'What may hang off a transom.',
   },
   {
     id: 'rigging',
     name: 'Rigging and propellers',
     kind: 'accessory',
-    say: 'The kit and the propeller that travel with the motor, and the hours the two of them take to fit.',
+    say: 'The kit, the propeller, and the hours to fit them.',
   },
   {
     id: 'boat-row',
     name: 'The boat row',
     kind: 'boat',
-    say: 'What the sheet settles about a boat before anything is bolted to it — deposits, pre-delivery, and whether it is still sold.',
+    say: 'What the sheet settles before anything is bolted on.',
   },
   {
     id: 'registration',
     name: 'Registration',
     kind: 'custom',
     table: REGISTRATION_TABLE_NAME,
-    say: 'A charge collected for someone else, looked up by band from one table and never marked up.',
+    say: 'Collected for someone else, by band, never marked up.',
   },
 ] as const
 

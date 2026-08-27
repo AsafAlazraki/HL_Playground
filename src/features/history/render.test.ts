@@ -177,7 +177,12 @@ describe('an empty diary is honest about being empty', () => {
        route has to start one surface earlier — it must NOT tell
        somebody to open a table that is not there */
     expect(html).toContain('<strong>0 tables</strong>')
-    expect(html).toContain('A quote is written from a row, so a table comes first.')
+    /* THE SENTENCE IS SHORTER AND THE CLAIM IS THE SAME. The prose
+       cull took the empty state down to its sentence and its act; what
+       this test guards is that the act still starts one surface
+       earlier when there is nothing to quote from. */
+    expect(html).toContain('A quote is written from a row')
+    expect(html).toContain('New table')
     expect(html).not.toContain('press <em>Fitment</em>')
   })
 

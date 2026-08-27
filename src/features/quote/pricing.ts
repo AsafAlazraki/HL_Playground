@@ -561,6 +561,35 @@ export function quoteLevelChoices(
   return out
 }
 
+/**
+ * ONE LINE, RE-PRICED AT A WHOLE-QUOTE RUNG, FROM ITS OWN FROZEN
+ * RUNGS. No store read: every rung this row carries was captured at
+ * pick time, so a level change is arithmetic on a photograph and
+ * cannot pick up Tuesday's reimport on Friday.
+ *
+ * A line whose current rung is LINE-SCOPED is left alone. `fitted` on
+ * a part and `warranty` on a hull are deliberate per-line decisions;
+ * sweeping them away when the quote moves from cash to trade would
+ * silently un-fit a fitted part and move the total with no visible
+ * cause.
+ *
+ * IT LIVES HERE RATHER THAN BESIDE THE MUTATION IT SERVES, and that
+ * is the whole point: `conflict.ts` shows a person what a level
+ * change WOULD do before they accept it, and a preview computed by a
+ * second copy of this arithmetic is a preview that can disagree with
+ * the act. One function, called by the preview and by the write.
+ */
+export function repricedAt<T extends {
+  levels: FrozenLevel[]
+  levelKey: string
+  levelResolved: string
+}>(line: T, levelKey: string): T {
+  const current = line.levels.find((l) => l.key === line.levelKey)
+  if (current && current.scope === 'line') return line
+  if (line.levels.length === 0) return { ...line, levelKey, levelResolved: levelKey }
+  return { ...line, ...priceAtLevel(line.levels, levelKey) }
+}
+
 /** The rung a fresh quote opens at: the subject's first quote-scoped
  *  rung. The business's own column order decides it, not us. */
 export function defaultLevelKey(root: EntityDef | undefined): string {

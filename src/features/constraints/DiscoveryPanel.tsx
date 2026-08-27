@@ -211,15 +211,14 @@ export function DiscoveryPanel({ showActions = true }: DiscoveryPanelProps = {})
     <section className="cn-band dx" aria-label="Rules your price file already follows">
       <p className="dx-eyebrow">Discovered rules</p>
       <h3 className="cn-band-title">The rules your price file already follows</h3>
-      <p className="cn-band-lede">
-        Nobody wrote these down. They were measured in your own values — how often each one
-        holds, how much of your catalogue it still leaves standing, and which rows disagree,
-        named, so you can check one rather than take it on trust.
-      </p>
-      {/* THE LINE, FIRST AND IN PROSE. Everything below is OBSERVED. */}
+      {/* THE LEDE IS GONE AND THE LINE STAYS, which is the whole of the
+          judgement here. What was measured, how often it holds and
+          which rows disagree are on every card, in figures. What a
+          person CANNOT read off a card is the ceiling on all of it:
+          nothing discovered may remove a row from a list. That is a
+          refusal, and a refusal keeps its sentence. */}
       <p className="dx-line">
-        A pattern is not a rule your business has stated. Everything here may <b>warn</b> you
-        about a row, and none of it may remove one from a list.
+        Measured, not stated. These may <b>warn</b>; none may remove a row from a list.
       </p>
 
       {phase === 'working' && (
@@ -248,10 +247,7 @@ export function DiscoveryPanel({ showActions = true }: DiscoveryPanelProps = {})
                 Kept as warnings
                 <span className="dx-sec-count">{n(kept.length)}</span>
               </h4>
-              <p className="dx-sec-say">
-                Each one flags a pairing that disagrees with it. None of them removes a row
-                from a list, because none of them was stated by your business.
-              </p>
+              {/* said once, above, for every section on this panel */}
               <ul className="dx-kept">
                 {kept.map((k) => (
                   <li key={k.id} className="dx-kept-row">
@@ -299,11 +295,7 @@ export function DiscoveryPanel({ showActions = true }: DiscoveryPanelProps = {})
                 Found in your values
                 <span className="dx-sec-count">{n(proposals.length)}</span>
               </h4>
-              <p className="dx-sec-say">
-                Strongest first — and strongest means the one that narrows your catalogue
-                most, not the one with the highest rate. A rule that holds every time and
-                still leaves the whole catalogue standing has not chosen anything.
-              </p>
+              <p className="dx-sec-say">Strongest first — by how much it narrows.</p>
               <ul className="dx-list">
                 {shownProposals.map((c) => (
                   <CandidateCard

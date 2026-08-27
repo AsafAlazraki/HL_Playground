@@ -80,11 +80,24 @@ export interface RangePair {
   max: FieldDef
 }
 
-/** Every complete numeric envelope on a table, in column order. */
-export function rangePairs(entity: EntityDef): RangePair[] {
+/** Every complete numeric envelope on a table, in column order.
+ *
+ *  `alsoText` widens it to columns the business typed the unit into.
+ *  Highfield's Min HP holds `4 HP` and Stacer's holds `4`; they are
+ *  the same fact about the same kind of thing, and a facet that
+ *  offered an HP envelope on one brand and not on the next would be
+ *  reporting our parser rather than their file. The DEFAULT is
+ *  unchanged, because the spec strip prints these and a strip that
+ *  starts printing `4 HP–6 HP` where it printed nothing is a change
+ *  nobody asked this function for. */
+export function rangePairs(
+  entity: EntityDef,
+  { alsoText = false }: { alsoText?: boolean } = {},
+): RangePair[] {
   const halves = new Map<string, { label: string; min?: FieldDef; max?: FieldDef }>()
   for (const f of entity.fields) {
-    if (f.type !== 'number' && f.type !== 'formula') continue
+    const numeric = f.type === 'number' || f.type === 'formula'
+    if (!numeric && !(alsoText && f.type === 'text')) continue
     const lead = BOUNDS.exec(f.name.trim())
     const tail = lead ? null : BOUNDS_TAIL.exec(f.name.trim())
     const bound = lead ? boundOf(lead[1]) : tail ? boundOf(tail[2]) : null

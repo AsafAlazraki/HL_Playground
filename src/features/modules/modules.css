@@ -51,11 +51,11 @@
    from the module's own accent. Everything tinted reads it, so a
    module never half-changes colour.
    ============================================================ */
-
 /* -- the page -------------------------------------------------
-   The stage does not scroll, the page inside it does, and the
-   atmosphere is a sibling of the scroller rather than a child, so
-   it holds still while nine cards move past it. */
+   THE PAGE DOES NOT SCROLL. An overview you have to scroll is a
+   list. The masthead and the filter row are fixed at the top of
+   the stage, the GRID takes the rest of the height and scrolls
+   inside its own box, and the document never moves. */
 
 .md-dash {
   position: relative;
@@ -69,34 +69,24 @@
 .md-dash-sky {
   z-index: 0;
 }
-.md-dash-scroll {
-  position: relative;
-  z-index: 1;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  padding: var(--s-6) var(--s-5) var(--s-16);
-}
-.md-dash-page {
-  max-width: 1180px;
-  margin: 0 auto;
-}
 
 /* -- the masthead --------------------------------------------
-   The business's name at the hero step, and the four figures the
-   cards cannot state on their own. It is the same shape the front
-   door takes, deliberately: pressing Dashboard and pressing Home
-   must not feel like moving between two applications. */
+   The business's name at the hero step, and two quiet controls.
+   THE COUNTED STRIP THAT USED TO STAND HERE IS GONE — "9 Places ·
+   6,074 Things in them · 24 Tables in use", in the largest figures
+   on the page, in its strongest position. A count belongs on the
+   thing it counts. */
 
 .md-dash-mast {
+  position: relative;
+  z-index: 1;
+  flex: none;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--s-8);
-  margin: 0 0 var(--s-8);
-  padding-bottom: var(--s-6);
-  border-bottom: 1px solid var(--line-subtle);
+  gap: var(--s-4) var(--s-8);
+  padding: var(--s-6) var(--s-6) var(--s-4);
   animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
 }
 .md-dash-say {
@@ -104,7 +94,7 @@
 }
 .md-dash-eyebrow {
   display: block;
-  margin-bottom: var(--s-3);
+  margin-bottom: var(--s-2);
   color: var(--fg-tertiary);
 }
 /* `.ds-hero` carries the whole step — size, weight, leading and
@@ -113,75 +103,6 @@
   margin: 0;
   max-width: 20ch;
 }
-.md-dash-note {
-  margin: var(--s-3) 0 0;
-  max-width: 50ch;
-  font-size: var(--t-body-size);
-  line-height: var(--t-body-lead);
-  color: var(--fg-secondary);
-}
-
-.md-dash-aside {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--s-4);
-}
-
-/* THE TALLY. A <dl>, because that is what it is: terms and their
-   values. The figure leads and the term sits under it, which is the
-   order somebody scanning actually reads — they look for the number
-   and then check what it was. */
-.md-dash-tally {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, auto);
-  margin: 0;
-  padding: var(--s-4) var(--s-5);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-}
-.md-dash-cell {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 3px;
-  padding: 0 var(--s-5);
-  border-left: 1px solid var(--line-subtle);
-}
-.md-dash-cell:first-child {
-  padding-left: 0;
-  border-left: 0;
-}
-.md-dash-cell:last-child {
-  padding-right: 0;
-}
-.md-dash-cell dt {
-  font-size: var(--t-caption-size);
-  font-weight: 500;
-  letter-spacing: var(--t-caption-track);
-  color: var(--fg-tertiary);
-  white-space: nowrap;
-}
-/* MONO, TABULAR, AND THE LARGEST FIGURE ON THE SCREEN, because it
-   is the one fact this page exists to state. */
-.md-dash-fig {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-}
-
-/* -- the two controls, in one place --------------------------
-   "New module" stood in the header and "Reorder cards" in a
-   bordered band under the grid, with a sentence on screen whether
-   or not anybody was arranging. Both are here; the sentence is
-   drawn only when it has something to say. */
 
 .md-dash-acts {
   display: flex;
@@ -193,18 +114,11 @@
    shared foundation stamps its text uppercase and every one of these
    is an action, so they are corrected here beside the class rather
    than by re-cutting `.btn`, which ~200 controls this pass has not
-   reached still depend on.
-
-   ONE DECLARATION, NOT ONE PER PASS. `.md-access` and `.md-acc-leave`
-   are this feature's other two `.btn`s — the door to the access screen
-   and the way back off it — and `.md-role-new .btn` is ADD ROLE, which
-   has been stamped `ADD ROLE` since roles shipped. A second block at
-   the foot of the file correcting each as it arrived is exactly the
-   layering this pass exists to undo. */
-.md-new,
+   reached still depend on. */
 .md-order,
 .md-access,
 .md-acc-leave,
+.md-empty-do,
 .md-role-new .btn {
   font-family: var(--font-sans);
   font-size: var(--t-small-size);
@@ -217,46 +131,75 @@
   border-color: var(--line-strong);
   background: var(--surface-3);
 }
-/* THE REFUSAL IS DRAWN AND THE CONTROL KEEPS ITS NAME. One module
-   cannot be put in an order; `aria-disabled` rather than `disabled`
-   leaves it in the tab order carrying the sentence that says why. */
-.md-order[aria-disabled='true'] {
-  color: var(--fg-tertiary);
-  cursor: default;
-}
 
-/* ONE SENTENCE SLOT, UNDER THE TWO CONTROLS. It carries whichever of
-   three things is true — why "New module" is refused, why one card
-   cannot be put in an order, or how to move a card while arranging —
-   and it is not drawn at all when none of them is. A control's name
-   inside it is a NAME, so it takes weight and full ink, never italic:
-   the same reading `.qt-none-do em` already made. */
-.md-dash-hint {
-  margin: 0 0 var(--s-5);
-  max-width: 68ch;
-  font-size: var(--t-small-size);
-  line-height: 1.6;
-  color: var(--fg-secondary);
+/* -- filter by type -------------------------------------------
+   One chip per kind that is really present, in TABLE_KINDS' own
+   order, each carrying its own count. `.k-filter` is the system's,
+   so this control and a filter anywhere else in the app are one
+   control — quiet until it is on, then the kind carries it.
+
+   IT WRAPS RATHER THAN BEING CUT. Eight chips at 768 is two rows,
+   and a row of controls that ran off the edge would hide the last
+   two kinds behind an edge with no affordance. */
+
+.md-filters {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  padding: 0 var(--s-6) var(--s-4);
 }
-.md-dash-hint em {
-  font-style: normal;
-  font-weight: 560;
-  color: var(--fg);
+.md-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.md-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 30px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-full);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  letter-spacing: -0.003em;
+  cursor: pointer;
+}
+.md-filter:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+/* THE COUNT IS A FIGURE, SO IT IS MONO — and it is never the hue,
+   whatever the chip is doing. A figure is not decorative. */
+.md-filter-n {
+  font-family: var(--font-mono);
+  font-size: var(--t-caption-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+.md-filter[aria-pressed='true'] .md-filter-n {
+  color: var(--fg-secondary);
 }
 
 /* -- the empty state -----------------------------------------
-   It counts the tables that already exist, because a blank screen
-   saying "nothing here" would read as though the app had lost the
-   21 tables an admin just loaded. The one action lives in the
-   masthead with the other one, so there is a single place on this
-   page where a module is made. */
+   THE ONE PLACE ON THIS SCREEN WHERE PROSE EARNS ITS SPACE. An
+   empty state keeps its sentence AND its act; a blank screen saying
+   "nothing here" would read as though the app had lost the 21
+   tables an admin just loaded, so it counts them. */
 
 .md-empty {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--s-3);
   max-width: 620px;
+  margin: 0 var(--s-6);
   padding: var(--s-6);
   background: var(--grad-surface);
   border: 1px solid var(--line);
@@ -284,60 +227,83 @@
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
+.md-empty-do {
+  margin-top: var(--s-2);
+}
+/* A THING THAT CANNOT BE DONE SAYS WHY, WHERE IT IS — rule 10. */
+.md-empty-why {
+  margin: 0;
+  max-width: 60ch;
+  font-size: var(--t-small-size);
+  line-height: 1.6;
+  color: var(--fg-secondary);
+}
+.md-empty-why em {
+  font-style: normal;
+  font-weight: 560;
+  color: var(--fg);
+}
 
 /* -- the grid -------------------------------------------------
-   MEASURED IN COLUMNS, NOT IN TASTE — in the browser, on the real
-   project. The measure is 1180px, so the 280px minimum resolves to
-   four columns of 283 at a 1270 window, two of 377 at 820, and one
-   at 400. Nine cards is therefore three rows, two rows, nine rows.
+   IT SNAPS. `1fr` rows inside a box with a definite height means
+   the cards divide the height they are given: fewer places and the
+   cards grow, more places and they hold their floor and the BOX
+   scrolls. The document never does.
 
-   THE SWITCH IS THE TENTH CARD, and what it buys is the narrow
-   window: at 820 the 240px minimum gives THREE columns where 280
-   gave two, which is a row and a half of scrolling saved on the
-   width a real dealership's fifteen modules would hurt most. At
-   1180 both resolve to four and only the gap tightens. Below ten
-   nothing here applies and the card is exactly what it was.
+   MEASURED IN COLUMNS, in the browser, on the real project. The
+   seed splits nine modules into twenty-six places plus the New
+   module card; at a 1600 window the stage is ~1290 wide, the 190px
+   minimum resolves to six columns and twenty-seven cards is five
+   rows — which fits the height without scrolling. At 1280 it is
+   five columns and six rows and the grid scrolls inside itself. */
 
-   THE DESCRIPTION NEEDS NO SECOND RULE ANY MORE. It used to clamp
-   to four lines and drop to two only past ten cards; two is the
-   right answer at any count (see the clamp), so the count-specific
-   half of that pair is gone. */
-
-.md-cards {
+.md-grid {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
-  gap: var(--s-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.md-cards:has(> li:nth-child(10)) {
-  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
+  grid-auto-rows: minmax(132px, 1fr);
   gap: var(--s-3);
+  margin: 0;
+  padding: 0 var(--s-6) var(--s-6);
+  list-style: none;
 }
 
 /* THE SLOT, not the card. Two controls stand here — the card itself
-   and the door to its settings — and a button inside a button is
-   invalid HTML a browser resolves by dropping one of them. */
-.md-card-slot {
+   and the arrows that move its module — and a button inside a button
+   is invalid HTML a browser resolves by dropping one of them. */
+.md-grid-slot {
   position: relative;
   display: flex;
   min-width: 0;
+  min-height: 0;
 }
 
-.md-card {
+/* -- one place ------------------------------------------------
+   THE KIND HUE CARRIES A FULL-HEIGHT RAIL, which is the amendment
+   DESIGN_PRINCIPLES §1 now carries and the thing phase one demoted
+   to a 7px dot when the navy chrome arrived. `.k-rail-thick` owns
+   the leading edge, so the three neutral edges are declared one at
+   a time rather than with the `border` shorthand — a shorthand here
+   would reset the rail depending on which stylesheet loaded last. */
+
+.md-place {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--s-2);
+  display: grid;
+  grid-template-rows: minmax(38px, 1fr) auto auto;
   width: 100%;
-  padding: 0 var(--s-4) var(--s-4) var(--s-5);
+  min-width: 0;
   text-align: left;
   background: var(--grad-surface);
-  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   border-radius: var(--r-card);
   box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
   cursor: pointer;
@@ -346,101 +312,75 @@
     box-shadow var(--d-med) var(--ease),
     transform var(--d-med) var(--ease-out-expo);
 }
-
-/* THE KIND'S RAIL, AND IT GROWS INTO THE HOVER. It sits above the
-   sheen so the light crossing the card never washes the one mark
-   that says what this place holds. */
-.md-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  width: 3px;
-  background: var(--md-accent, var(--fg-tertiary));
-  transition: width var(--d-med) var(--ease-out-expo);
+.md-place:hover,
+.md-grid-slot:hover .md-place {
+  border-top-color: var(--line-strong);
+  border-right-color: var(--line-strong);
+  border-bottom-color: var(--line-strong);
 }
-.md-card:hover::before,
-.md-card:focus-visible::before {
-  width: 5px;
+.md-place:hover {
+  transform: translateY(-2px);
 }
-
-/* The glow is the KIND's hue, not the accent's — the one place a
-   kind colour lifts off its rail, and it does it as light rather
-   than as a fill behind text.
-
-   THE SLOT ANSWERS TOO. The door and the arrows are siblings of the
-   card, so without the second selector the card visibly drops back to
-   rest as you reach for its gear. Only the card itself lifts. */
-.md-card:hover,
-.md-card-slot:hover .md-card {
-  border-color: var(--line-strong);
-  box-shadow:
-    var(--e4),
-    inset 0 1px 0 var(--edge-light),
-    0 12px 34px -16px var(--md-accent, transparent);
-}
-.md-card:hover {
-  transform: translateY(-3px);
-}
-.md-card:active {
+/* A CARD PRESSES AT 0.994 AND LOSES ITS LIFT — 0.97 on a 200px card
+   is a 6px shrink and reads as a glitch. Press lands on
+   pointer-down, which is what `:active` is. */
+.md-place:active {
   transform: translateY(0) scale(0.994);
   box-shadow: var(--e1);
   transition-duration: var(--d-press);
 }
 /* AN OUTLINE, NOT THE FOUNDATION'S RING. `.ds-root :focus-visible`
-   re-radiuses what it rings to `--r-control`, which squares a card's
-   corners the moment it is tabbed to. Same accent, same 2px, the
-   card's own geometry kept. */
-.md-card:focus-visible {
+   re-radiuses what it rings to `--r-control`, which squares a
+   card's corners the moment it is tabbed to. */
+.md-place:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-card);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
 }
 
-/* -- the plate ------------------------------------------------
-   A photograph of this place's own stock where we hold one, and the
-   module's own mark on its own kind tint where we do not. Nothing is
-   ever substituted: `coverPhoto` refuses every address the repository
-   does not ship a copy of, so there is no broken-image state to
-   design for and no stock photograph standing in for a boat nobody
-   photographed. Both forms are 16:9, so a register beside a catalogue
-   does not make the row ragged. */
+/* -- the face -------------------------------------------------
+   THE LOGO IS THE FACE OF A MODULE. `ModuleDef.logo` and `logo.ts`
+   have shipped since the module system landed and nothing had ever
+   drawn one. Where the place's own table holds a photograph, the
+   photograph is behind it; where it holds neither, the kind's own
+   mark stands on the kind's own wash.
 
-.md-card-plate {
+   NOTHING IS EVER SUBSTITUTED. `coverPhoto` refuses every address
+   the repository does not ship a copy of, so there is no broken
+   image state to design for and no stock photograph standing in
+   for a boat nobody photographed. */
+
+.md-place-face {
   position: relative;
   display: flex;
-  align-items: flex-end;
-  aspect-ratio: 16 / 9;
-  margin: 0 calc(var(--s-4) * -1) var(--s-3) calc(var(--s-5) * -1);
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
   overflow: hidden;
   background: var(--surface-3);
   border-bottom: 1px solid var(--line-subtle);
 }
-/* THE KIND, AS LIGHT. A wash of the module's own hue under its mark,
-   lit from the top left so an empty plate is a field rather than a
-   flat swatch. There is no text on this plate, which is what makes a
+/* THE KIND, AS LIGHT. A wash of the place's own hue under its mark,
+   lit from the top left so an empty face is a field rather than a
+   flat swatch. There is no text on this face, which is what makes a
    tint legal here at all — and the photograph, being positioned,
-   covers it, so a card with a picture never wears the hue over it.
+   covers it.
 
-   MEASURED, at 10%: the 40px mark against its own wash runs 4.0:1 on
-   the weakest hue (amber) and 5.7:1 on the strongest (slate) in light,
-   5.6:1 in dark. That is a GLYPH and not a word — 4.5:1 governs text,
-   and this plate carries none — but the figure is written down rather
-   than assumed, because the temptation to push a tint until it is
-   pretty is exactly how a legibility floor gets lost. */
-.md-card-plate::before {
+   MEASURED at 10%: a 40px mark against its own wash runs 4.0:1 on
+   the weakest hue and 5.7:1 on the strongest in light, 5.6:1 in
+   dark. That is a GLYPH and not a word — 4.5:1 governs text and
+   this face carries none — but the figure is written down rather
+   than assumed. */
+.md-place-face::before {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(120% 100% at 22% 14%, var(--md-accent, transparent) 0%, transparent 64%),
-    var(--md-accent, var(--fg-tertiary));
+    radial-gradient(120% 100% at 22% 14%, var(--kind, transparent) 0%, transparent 64%),
+    var(--kind, var(--fg-tertiary));
   opacity: 0.1;
 }
-.md-card-shot {
+.md-place-shot {
   position: absolute;
   inset: 0;
   display: block;
@@ -449,310 +389,304 @@
   object-fit: cover;
   object-position: center;
   /* the photographs are a mixed set — yard shots, studio cut-outs,
-     turquoise lifestyle. A whisper of desaturation at rest pulls them
-     into one page; hover gives the colour back. */
+     turquoise lifestyle. A whisper of desaturation at rest pulls
+     them into one page; hover gives the colour back. */
   filter: saturate(0.94);
   transform: scale(1.02);
   transition:
     transform var(--d-scene) var(--ease-out-expo),
     filter var(--d-med) var(--ease);
 }
-.md-card:hover .md-card-shot,
-.md-card:focus-visible .md-card-shot {
+.md-place:hover .md-place-shot,
+.md-place:focus-visible .md-place-shot {
   transform: scale(1.06);
   filter: saturate(1.04);
 }
-
-/* THE MARK. On an empty plate it is the plate's subject — centred and
-   large, in the module's own hue. Over a photograph it steps down into
-   a chip in the corner on the app's own surface, because a glyph drawn
-   straight onto a yard shot is a glyph nobody can read. */
-.md-card-mark {
+/* THE MARK. On an empty face it is the face's subject, in the
+   place's own hue. Over a photograph it steps into a chip on the
+   app's own surface, because a glyph drawn straight onto a yard
+   shot is a glyph nobody can read. */
+.md-place-mark {
   position: relative;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: auto;
-  color: var(--md-accent, var(--fg-secondary));
+  color: var(--kind, var(--fg-secondary));
 }
-.md-card--shot .md-card-mark {
-  width: 38px;
-  height: 38px;
-  margin: var(--s-3);
+.md-place-mark.is-over {
+  position: absolute;
+  left: var(--s-2);
+  bottom: var(--s-2);
+  width: 34px;
+  height: 34px;
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--r-control);
   box-shadow: var(--e1);
 }
-/* THE DEALER'S OWN LOGO, in the box the kind symbol is drawn in, so a
-   list of cards does not change shape as logos are added one at a
-   time. `contain` rather than `cover`: a mark is a drawing and
-   cropping one is defacing it. The two sizes match the width and
-   height the component declares, so a logo arriving late can never
-   move the name under it. */
-.md-card-logo {
+/* `contain` rather than `cover`: a mark is a drawing and cropping
+   one is defacing it. The two sizes match the width and height the
+   component declares, so a logo arriving late never moves the name
+   under it. */
+.md-place-logo {
   display: block;
   width: 40px;
   height: 40px;
   object-fit: contain;
   border-radius: var(--r-chip);
 }
-.md-card--shot .md-card-logo {
+.md-place-mark.is-over .md-place-logo {
   width: 22px;
   height: 22px;
 }
 
-/* -- what it is called, and what it is made of ---------------- */
+/* -- its name, and its one fact ------------------------------- */
 
-.md-card-head {
+.md-place-body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding-top: var(--s-1);
+  gap: 1px;
+  padding: var(--s-3) var(--s-3) var(--s-1) var(--s-3);
+  min-width: 0;
 }
-.md-card-name {
+/* NOTHING TRUNCATES MID-WORD. Two lines, then a clamp, with the
+   full name still in the DOM and on the card's accessible name. */
+.md-place-name {
   font-size: var(--t-heading-size);
   font-weight: var(--t-heading-weight);
-  line-height: var(--t-heading-lead);
+  line-height: 1.25;
   letter-spacing: var(--t-heading-track);
   text-transform: none;
   color: var(--fg);
-}
-/* Only drawn where it says something the name does not — a module
-   made from one table and left with that table's name would otherwise
-   print the name twice, a line apart, which reads as a fault. */
-.md-card-from {
-  font-size: var(--t-caption-size);
-  font-weight: 450;
-  line-height: var(--t-caption-lead);
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--fg-tertiary);
-}
-
-/* TWO LINES. The seeded descriptions are the workbook's own
-   provenance notes and run to forty words; nine of those at four
-   lines apiece is a wall of prose, and two lines still say what the
-   place is. The full sentence is the first thing on the module's own
-   page, one press away, and all of it is in the DOM here. */
-.md-card-desc {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
-  letter-spacing: var(--t-small-track);
-  text-transform: none;
-  color: var(--fg-secondary);
+  overflow-wrap: break-word;
 }
-
-/* -- how much of it there is ---------------------------------- */
-
-/* THE FIGURE LEADS, because it is what the card is scanned for, and
-   the clauses that qualify it sit a step below. `margin-top: auto`
-   pins the pair to the foot of the card, so a row of cards lines its
-   figures up whatever length the descriptions ran to. */
-.md-card-count {
+.md-place-fact {
   display: flex;
   align-items: baseline;
   gap: var(--s-2);
-  margin-top: auto;
-  padding-top: var(--s-3);
-  letter-spacing: 0;
-  text-transform: none;
+  min-width: 0;
 }
-.md-card-count b {
+/* A FIGURE IS NEVER A HUE. Mono, tabular, and in ink. */
+.md-place-n {
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: var(--t-mono-lg-size);
   font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.018em;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
   color: var(--fg);
 }
-.md-card-count > span {
+.md-place-noun {
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* HISTORY RATHER THAN STOCK. The retired table keeps its card so an
+   old quote's subject can still be found; the fact it carries is
+   that it is history, and `.s-held` carries the rail. */
+.md-place-held {
   font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
+  font-weight: 520;
   color: var(--fg-secondary);
 }
-/* WHAT THE FIGURE LEFT OUT — the headings it falls under and what is
-   held back, each present exactly when it is true. Six fewer than the
-   sheet holds is a question a person asks once and then stops
-   trusting the number. */
-.md-card-qual {
-  font-size: var(--t-caption-size);
-  line-height: var(--t-caption-lead);
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
-}
 
-/* -- what may be done here ------------------------------------ */
+/* -- the type, and the restriction ---------------------------- */
 
-.md-card-verbs {
+.md-place-foot {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
-  margin-top: var(--s-3);
-  padding-top: var(--s-3);
-  border-top: 1px solid var(--line-subtle);
-}
-/* THE VERBS AS ONE LINE OF WORDS. They were ten outlined pills, which
-   across nine cards is ninety boxes, none of them pressable and none
-   of them a control. Same words, same source, one quiet line. */
-.md-card-can {
-  flex: 1 1 auto;
+  padding: 0 var(--s-3) var(--s-3);
   min-width: 0;
-  font-size: var(--t-caption-size);
-  line-height: var(--t-caption-lead);
-  letter-spacing: 0;
-  color: var(--fg-tertiary);
 }
-/* ONE CHIP, AT THE END, and only where a dealer has turned access on.
-   It keeps a border where the verbs lost theirs because it is the one
-   thing in this row that is an exception rather than a list — and it
-   is set a shade firmer, not a colour: the accent is spent on the
-   primary action, and a kind hue is a rail and never a fill. */
-.md-verb-shut {
+.md-place-type {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* WHO MAY WORK HERE, and only where a dealer has closed the door.
+   Absent access is unrestricted, and unrestricted is not a decision
+   anybody made. */
+.md-place-shut {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 20px;
-  padding: 0 7px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-full);
-  background: var(--surface-3);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
   white-space: nowrap;
+}
+
+/* -- new module, as a card in the grid ------------------------ */
+
+.md-place--new {
+  background: none;
+  border: 1px dashed var(--line-strong);
+  box-shadow: none;
+  align-content: center;
+  justify-items: center;
+  grid-template-rows: auto auto auto;
+  padding: var(--s-4);
+  text-align: center;
   color: var(--fg-secondary);
 }
+.md-place--new:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+  background: var(--surface-2);
+}
+.md-place-face--new {
+  background: none;
+  border-bottom: 0;
+  min-height: 0;
+}
+.md-place-face--new::before {
+  content: none;
+}
+.md-place--new .md-place-name {
+  padding: var(--s-2) 0 0;
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  color: inherit;
+}
+.md-place-refused {
+  max-width: 24ch;
+  font-size: var(--t-caption-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+}
+.md-place--new[aria-disabled='true'] {
+  cursor: default;
+}
+.md-place--new[aria-disabled='true']:hover {
+  border-color: var(--line-strong);
+  background: none;
+}
 
-/* -- the two controls in the card's corner --------------------
-   The gear at rest, and the two moves that replace it while somebody
-   is arranging: one control in one place, because a card that grew a
-   third would be three things to read past to reach the one you came
-   for. Neither is revealed on hover — a control that appears only
-   once the pointer is on top of it cannot be found by somebody
-   looking for it, and does not exist at all on a touch screen. Both
-   take a solid ground, because they now stand over the plate and the
-   plate may be a photograph.
+/* -- reordering ------------------------------------------------
+   Reordering is a fact about MODULES, not about the brands inside
+   them: the seven Highfield-to-Haines cards are one module's run
+   and move together. So the arrows are drawn once per run, on the
+   card that leads it, and they name the module they move. */
 
-   "Earlier" and "later" rather than left and right: the grid reflows
-   from three columns to four with the window, so a left arrow that
-   moved a card UP a row would be naming the wrong thing. */
-
-.md-card-order {
+.md-place-order {
   position: absolute;
   top: var(--s-2);
   right: var(--s-2);
   z-index: 3;
-  display: inline-flex;
+  display: flex;
   gap: 2px;
-}
-.md-card-door {
-  position: absolute;
-  top: var(--s-2);
-  right: var(--s-2);
-  z-index: 3;
-  width: 28px;
-  height: 28px;
-}
-.md-card-move {
-  width: 24px;
-  height: 28px;
-}
-.md-card-door,
-.md-card-move {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  color: var(--fg-tertiary);
+  padding: 2px;
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--r-control);
+  box-shadow: var(--e1);
+}
+.md-place-move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--fg-secondary);
   cursor: pointer;
   transition:
-    color var(--d-fast) var(--ease),
     background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
+    color var(--d-fast) var(--ease);
 }
-.md-card-door:hover,
-.md-card-move:not([aria-disabled='true']):hover {
-  color: var(--fg);
+.md-place-move:hover {
   background: var(--surface-3);
-  border-color: var(--line-strong);
-}
-/* PRESS IS SCOPED AWAY FROM THE REFUSAL rather than cancelled on it.
-   `:active { transform: none }` is the pattern the redesign removed —
-   three controls that cancelled their own feedback — so the end of the
-   list simply never claims the press in the first place. */
-.md-card-door:active,
-.md-card-move:not([aria-disabled='true']):active {
-  transform: scale(0.97);
-}
-.md-card-door:focus-visible,
-.md-card-move:focus-visible {
-  outline: none;
   color: var(--fg);
-  border-color: var(--accent);
-  box-shadow: var(--glow-sm);
 }
-/* THE END OF THE LIST says no by going quiet, by answering neither
-   hover nor press, and by carrying the sentence that explains it —
-   never by leaving the tab order. It steps down to `--fg-tertiary`
-   and not to `--fg-quaternary`: the quaternary tier is 2.8:1 and may
-   never carry meaning, and a refused arrow carries WHICH WAY is
-   refused, which is meaning. */
-.md-card-move[aria-disabled='true'] {
+.md-place-move:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.md-place-move[aria-disabled='true'] {
+  color: var(--fg-quaternary);
   cursor: default;
 }
+.md-place-move[aria-disabled='true']:hover {
+  background: none;
+  color: var(--fg-quaternary);
+}
 
-/* -- narrow windows ------------------------------------------- */
+/* -- the one figure the cards cannot carry -------------------- */
 
-@media (max-width: 900px) {
+.md-dash-spare {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  margin: 0;
+  padding: 0 var(--s-6) var(--s-4);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* -- every width ----------------------------------------------
+   Driven, not guessed: 1600, 1440, 1280, 1024 and 768. Nothing
+   under 11px, nothing truncates mid-word, and no horizontal
+   scroll on the document at any of them. */
+
+@media (min-width: 1500px) {
+  .md-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(206px, 100%), 1fr));
+  }
+}
+@media (max-width: 1100px) {
+  .md-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(174px, 100%), 1fr));
+    padding-left: var(--s-5);
+    padding-right: var(--s-5);
+  }
+  .md-dash-mast,
+  .md-filters,
+  .md-dash-spare {
+    padding-left: var(--s-5);
+    padding-right: var(--s-5);
+  }
+}
+@media (max-width: 860px) {
   .md-dash-mast {
     align-items: flex-start;
-  }
-  .md-dash-aside {
-    width: 100%;
-    align-items: stretch;
-  }
-  .md-dash-tally {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s-4) 0;
-  }
-  .md-dash-cell:nth-child(3) {
-    padding-left: 0;
-    border-left: 0;
+    padding-top: var(--s-5);
   }
   .md-dash-acts {
-    justify-content: flex-end;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .md-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
+    grid-auto-rows: minmax(126px, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .md-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
   }
 }
 
-/* MOVEMENT GOES; LIGHT AND COLOUR STAY. ds.css cancels the lift on
-   the three card classes the foundation knows about and this one is
-   not among them, so it is cancelled here. The card still answers a
-   press — the shadow drops — because reduced motion means gentler
-   feedback, not no feedback. */
+/* MOVEMENT GOES; LIGHT AND COLOUR STAY. Reduced motion means
+   gentler feedback, not no feedback — the card still answers a
+   press, the shadow drops. */
 @media (prefers-reduced-motion: reduce) {
-  .md-card:hover,
-  .md-card:active {
+  .md-place:hover,
+  .md-place:active,
+  .md-filter:active,
+  .md-place-move:active {
     transform: none;
   }
-  .md-card:hover .md-card-shot,
-  .md-card:focus-visible .md-card-shot {
+  .md-place:hover .md-place-shot,
+  .md-place:focus-visible .md-place-shot {
     transform: scale(1.02);
   }
 }

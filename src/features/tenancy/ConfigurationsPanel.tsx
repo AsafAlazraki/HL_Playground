@@ -168,10 +168,12 @@ export function ConfigurationsPanel({ user }: ConfigurationsPanelProps): JSX.Ele
     <section className="tn" aria-label="Saved configurations">
       <header className="tn-head">
         <h2 className="tn-title">Saved configurations</h2>
+        {/* ONE LINE, AND IT IS THE BLAST RADIUS. What a configuration
+            HOLDS is the half a person cannot guess, and it is the half
+            that matters before they open one over their own sheet. That
+            saving saves and opening opens is the two buttons. */}
         <p className="tn-lede">
-          The whole working set — tables, rows, business rules, pages, modules and quotes —
-          filed under {user.orgName}. Saving one gives you something to come back to; opening
-          one puts it on the sheet.
+          Tables, rows, rules, pages, modules and quotes, filed under {user.orgName}.
         </p>
       </header>
 

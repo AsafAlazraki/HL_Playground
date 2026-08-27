@@ -25,6 +25,20 @@ import { FlowStage } from './FlowStage'
 import { QuoteStage } from './QuoteStage'
 import { ModuleStage } from './ModuleStage'
 import { CustomerStage } from './CustomerStage'
+import { AdminStage } from './AdminStage'
+
+/** THE TABS INSIDE A MODULE. Named here, in the shell's own union,
+ *  because the shell is what routes to one — the feature that draws
+ *  them owns everything else about them.
+ *
+ *  AGREED WITH THE MODULE WORKSPACE AGENT: add a member here and
+ *  `ModuleStage` will pass it straight through. */
+export type ModuleTab =
+  | 'dashboard'
+  | 'stock'
+  | 'quotes'
+  | 'pricing'
+  | 'settings'
 
 /** Everything that can be a window. */
 export type Stage =
@@ -48,8 +62,39 @@ export type Stage =
   | { kind: 'rules' }
   | { kind: 'flow' }
   | { kind: 'quote'; quoteId: string | null }
-  | { kind: 'module'; moduleId: string | null }
+  /* ============================================================
+     THE MODULE WORKSPACE — agreed with the MODULE WORKSPACE agent
+     (territory key: `module`), who owns `src/features/modules/**`.
+
+     A module is a typed workspace with tabs — Dashboard, Stock,
+     Quotes, Pricing, Settings (PHASE_TWO §1, "the correction:
+     what a MODULE actually is") — and the shell has to be able to
+     say WHICH tab, because a door elsewhere in the app lands on a
+     specific one: Admin's access grid lands on Settings, and the
+     catalogue's "edit these rows" lands on Stock.
+
+     `tab` is OPTIONAL and absent means "the module's own default",
+     which is exactly what this stage did before the field existed.
+     So nothing that opens a module today has to change, and
+     `winKey` deliberately ignores it: two tabs of one module are
+     ONE window, the way the open row and the open settings panel
+     already are. Which tab you are on is a position inside a
+     module, not a different place to be.
+     ============================================================ */
+  | { kind: 'module'; moduleId: string | null; tab?: ModuleTab }
   | { kind: 'customer'; customerId: string | null }
+  /* ============================================================
+     ADMIN — the drawing, the tables, the rules, what fits what,
+     who may do what, and the two doors a file comes in and goes
+     out by. Eight doors came off the rail into one stage; see
+     AdminStage.tsx for why it is built like a selling screen.
+
+     IT CARRIES NO SECTION. Which panel is on screen is Admin's own
+     state, the same way the open ITEM is ModuleStage's — a union
+     field would make "back to Admin" close a stage and open
+     another, which unmounts the box and re-runs the fade.
+     ============================================================ */
+  | { kind: 'admin' }
 
 export interface WinFrame {
   x: number
@@ -131,6 +176,7 @@ export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNo
   if (s.kind === 'quote') return s.quoteId ? 'Quote' : 'Quotes'
   if (s.kind === 'module') return s.moduleId ? 'Module' : 'Modules'
   if (s.kind === 'customer') return s.customerId ? 'Customer' : 'Customers'
+  if (s.kind === 'admin') return 'Admin'
   const e = entities[s.entityId]
   if (!e) return 'Table'
   const mark = <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.tiny} />
@@ -173,6 +219,13 @@ export interface StageHandlers {
      same reason: one host, one answer. */
   newQuote: () => void
   find: () => void
+  /** THE DRAWING. It is not a stage — it is the surface UNDER every
+   *  stage, so reaching it means emptying the window stack, and only
+   *  the shell can do that. Admin's first door calls this. */
+  openSheet: () => void
+  /** the organisation's saved configurations — a sheet the shell
+   *  hosts, exactly as `newTable` and `find` are */
+  openConfigurations: () => void
   /** who is signed in. The dashboard is 'my day' and there is no
    *  'my' without a person; null before sign-in, which cannot
    *  happen because App gates the shell on it. */
@@ -277,6 +330,9 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
              to them under it. The id travelled by value on the quote
              and nothing about the document was resolved to draw it. */
           onOpenCustomer={(customerId) => h.openWin({ kind: 'customer', customerId })}
+          /* THE DIARY. It was a rail row and the rail is four doors
+             now; it belongs beside the list it is the long form of. */
+          onOpenHistory={() => h.openWin({ kind: 'history', customerId: null })}
           onClose={h.close}
         />
       )
@@ -291,10 +347,32 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           onClose={h.close}
         />
       )
+    case 'admin':
+      return (
+        <AdminStage
+          onOpenDrawing={h.openSheet}
+          onOpenTables={() => h.openWin({ kind: 'gallery' })}
+          onOpenLevels={() => h.openWin({ kind: 'levels', entityId: null })}
+          onOpenRules={() => h.openWin({ kind: 'rules' })}
+          /* THE FITMENT BUILDER HAD NO DOOR ANYWHERE. `{ kind: 'flow' }`
+             was in this union and nothing in the application opened it —
+             a finished feature reachable from nothing, which is the exact
+             failure `check-reachability` was written for and the exact
+             one it cannot see, because the stage IS imported. Admin is
+             where it belongs: it is the shape of what you sell. */
+          onOpenFitment={() => h.openWin({ kind: 'flow' })}
+          onOpenConfigurations={h.openConfigurations}
+          onOpenModule={(moduleId) =>
+            h.openWin({ kind: 'module', moduleId, tab: 'settings' })
+          }
+          onClose={h.close}
+        />
+      )
     case 'module':
       return (
         <ModuleStage
           moduleId={s.moduleId}
+          tab={s.tab}
           onOpen={(moduleId) => h.openWin({ kind: 'module', moduleId })}
           /* THE QUOTE ROUTE WAS DANGLING. ModuleStage takes `onQuote`
              and hands it to the ViewStage it opens an item on, and

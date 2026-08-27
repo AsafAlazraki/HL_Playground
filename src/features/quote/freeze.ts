@@ -33,6 +33,7 @@ import {
   PAIR_ORDER_FIELD,
   PAIR_ORIGIN_FIELD,
   PAIR_RECOMMENDED_FIELD,
+  TABLE_KINDS,
   type CellValue,
   type Clause,
   type ClauseGroup,
@@ -40,6 +41,7 @@ import {
   type EntityDef,
   type ImageRef,
   type RowData,
+  type TableKind,
   type ViewBlock,
   type ViewDef,
 } from '@/types/model'
@@ -1297,6 +1299,38 @@ export function unsellableSubject(rootTableId: string, rootRowId: string): strin
  *  it — and the picker says so in the sentence the view stage uses. */
 export const sectionTableIsGone = (section: QuoteSection): boolean =>
   !useProjectStore.getState().entities[section.tableId]
+
+/**
+ * WHAT KIND OF THING EACH BAND HOLDS — one store read, for the whole
+ * document.
+ *
+ * PHASE_TWO §1b amends DESIGN_PRINCIPLES §1: a kind hue may carry a
+ * SURFACE, and the configurator's band heads are the first place it
+ * does. A hue may only ever appear on something that HAS that kind,
+ * so the hue has to be read off the table rather than chosen by the
+ * screen — which is what this is: `EntityDef.kind`, by section, and
+ * nothing invented.
+ *
+ * It is ONE read for every band rather than one per band, for the
+ * reason `columnIndex` in `subjectRules.ts` is built once: seven
+ * lookups into the same map on every redraw of a scrolling page is
+ * work whose answer never changed.
+ *
+ * A section whose table has been struck from the sheet is simply
+ * absent from the map. The caller falls back to the neutral kind, so
+ * a struck table loses its colour and never its band.
+ */
+export function sectionKinds(quote: QuoteDef): Record<string, TableKind> {
+  const { entities } = useProjectStore.getState()
+  const out: Record<string, TableKind> = {}
+  for (const section of quote.sections) {
+    const entity = entities[section.tableId]
+    if (!entity) continue
+    const kind = entity.kind
+    if (kind && kind in TABLE_KINDS) out[section.blockId] = kind
+  }
+  return out
+}
 
 /* ---------------------------------------------------------- */
 /* "Re-read today's prices" — shown as a diff, never applied    */

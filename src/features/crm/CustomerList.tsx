@@ -143,11 +143,12 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
           <div className="cx-empty ds-rise">
             <span className="cx-empty-eyebrow">No customer register yet</span>
             <h2 className="cx-empty-title">Everybody you sell to, in one book.</h2>
+            {/* AN EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT — one
+                sentence. This was three: what a customer is, where the
+                register lives, and what it saves you. The first two are
+                what the heading and the button say. */}
             <p className="cx-empty-say">
-              A customer is a row in a table, the same as everything else here. The
-              register is where their name and contact details live, so the second quote
-              to somebody starts from what you already know instead of from a blank
-              field.
+              So the second quote to somebody starts from what you know.
             </p>
 
             {/* WHAT IS TRUE RIGHT NOW, COUNTED. Zero is an honest
@@ -167,10 +168,14 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
               <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
               Create the Customers table
             </button>
+            {/* THIS SENTENCE IS NOT PROSE AND IT STAYS. DESIGN_PRINCIPLES
+                §7: structure is never a side effect — a table this button
+                creates is named before it is made, and it is undoable.
+                What was cut is the middle clause telling you a table is
+                a table. */}
             <p className="cx-empty-why">
-              It arrives with <em>Name</em>, <em>Phone</em>, <em>Email</em>,{' '}
-              <em>Address</em> and <em>Notes</em>, and it is an ordinary table from then
-              on — add your own columns, rename it, or take it out again with Ctrl+Z.
+              <em>Name</em>, <em>Phone</em>, <em>Email</em>, <em>Address</em>,{' '}
+              <em>Notes</em> — undo with Ctrl+Z.
             </p>
           </div>
         </div>
@@ -232,10 +237,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
           <div className="cx-empty ds-rise">
             <span className="cx-empty-eyebrow">Nobody in it yet</span>
             <h2 className="cx-empty-title">The register is here and waiting.</h2>
-            <p className="cx-empty-say">
-              Add somebody now, or address a quote to a name and file them from the quote
-              itself — either way lands in this table.
-            </p>
+            <p className="cx-empty-say">Add somebody, or file them from a quote.</p>
 
             <dl className="cx-tally">
               <Fig n={quotes.length} of={quotes.length === 1 ? 'quote' : 'quotes'} />

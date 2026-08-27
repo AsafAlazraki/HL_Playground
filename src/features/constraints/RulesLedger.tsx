@@ -175,10 +175,7 @@ export function RulesLedger({ liveIds, live }: RulesLedgerProps): ReactElement |
             <h3 className="cn-grp-name">Not yet filed</h3>
             <span className="cn-grp-count">{grouped.unfiled.length}</span>
           </header>
-          <p className="cn-grp-say">
-            These rules are read out of your price file but nobody has said yet which part of
-            the business they belong to. They are drawn here rather than left out.
-          </p>
+          <p className="cn-grp-say">Read out of your price file, not yet filed.</p>
           <ul className="cn-grp-list">
             {grouped.unfiled.map((seed) => (
               <RuleRow
@@ -259,15 +256,26 @@ function RuleRow({
       ) : null}
 
       <p className="cn-rl-says">{seed.statement}</p>
-      <p className="cn-rl-because">Because {seed.because}.</p>
 
-      {/* THE QUALIFICATION TRAVELS WITH THE FIGURE. F9 holds on 530 of
-          530 pairings and leaves 97.7 % of the catalogue standing;
-          printing the first without the second is exactly how the ATM
-          floor gets mistaken for the thing that picks the trailer, and
-          FITMENT_RULES.md calls promoting it "the A2 failure … it does
-          not get made twice". */}
-      {entry ? <p className="cn-rl-caveat">{entry.caveat}</p> : null}
+      {/* THE REASONING MOVED BEHIND A DISCLOSURE, WHICH IS WHERE
+          PHASE_TWO SENDS IT: "the explanation does not disappear; it
+          moves to where it is needed — the first time, on hover,
+          behind a ?". Sixteen cards each carrying a `because` and a
+          `caveat` is what made this the worst-measured surface in the
+          app at 69 % explanation. Both are still here, in full, one
+          press away, and neither is paraphrased.
+
+          THE QUALIFICATION STILL TRAVELS WITH THE FIGURE — it is in
+          the same disclosure as the reason, so a person who opens one
+          gets both. F9 holds on 530 of 530 pairings AND leaves 97.7 %
+          of the catalogue standing; FITMENT_RULES.md calls quoting the
+          first without the second "the A2 failure … it does not get
+          made twice", and a closed detail quotes neither. */}
+      <details className="cn-rl-why-more">
+        <summary className="cn-rl-why-sum">Why</summary>
+        <p className="cn-rl-because">Because {seed.because}.</p>
+        {entry ? <p className="cn-rl-caveat">{entry.caveat}</p> : null}
+      </details>
 
       {/* WHAT IT FOUND ON THIS SHEET, walked on render. A figure that
           moves with the data cannot go stale, and it is the argument

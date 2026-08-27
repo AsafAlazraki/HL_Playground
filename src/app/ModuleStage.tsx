@@ -73,7 +73,7 @@
    and the dashboard is where the rest of them still are.
    ============================================================ */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -88,6 +88,7 @@ import {
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { ViewStage } from './ViewStage'
+import type { ModuleTab } from './winKit'
 
 /** Which item is open, and which module it was opened from. */
 interface DetailAt {
@@ -117,6 +118,24 @@ export interface ModuleStageProps {
   /** Mint a quote from the item on screen and open it. Absent = the
    *  control is not drawn, so this stage still works on its own. */
   onQuote?: (quoteId: string) => void
+  /* ============================================================
+     WHICH TAB THIS MODULE OPENS ON — the seam agreed with the
+     MODULE WORKSPACE agent (`src/features/modules/**`).
+
+     A module is a typed workspace with tabs, and a door elsewhere
+     in the app lands on a specific one: Admin's access grid opens
+     a module's SETTINGS, and the catalogue's "edit these rows"
+     opens its STOCK. The shell carries the fact because only the
+     shell knows where the person pressed.
+
+     ABSENT MEANS "THE MODULE'S OWN DEFAULT", which is what this
+     stage did before the field existed — so no existing caller
+     changes, and this is a widening rather than a rewrite. Only
+     `settings` is honoured today, because Settings is the only
+     tab that is BUILT; the rest resolve to the catalogue, which is
+     what a person gets now, rather than to a blank panel that
+     pretends. The workspace agent takes the switch below. */
+  tab?: ModuleTab
   onClose: () => void
 }
 
@@ -124,6 +143,7 @@ export function ModuleStage({
   moduleId,
   onOpen,
   onQuote,
+  tab,
   onClose,
 }: ModuleStageProps): ReactElement {
   const modules = useProjectStore((s) => s.modules)
@@ -132,6 +152,18 @@ export function ModuleStage({
   const [detail, setDetail] = useState<DetailAt | null>(null)
   const [settings, setSettings] = useState<SettingsAt | null>(null)
   const [creating, setCreating] = useState(false)
+
+  /* THE ASKED-FOR TAB, HONOURED ONCE AND THEN LET GO. A door that
+     says "open this module's set-up" is an instruction about the
+     ARRIVAL, not a lock: pressing Catalogue afterwards must work, and
+     it would not if this were derived state re-asserting itself on
+     every render. It re-fires only when the module or the asked-for
+     tab actually changes, which is the same shape the finder's
+     row-reveal request uses and for the same reason. */
+  useEffect(() => {
+    if (!moduleId) return
+    if (tab === 'settings') setSettings({ moduleId })
+  }, [moduleId, tab])
 
   /* The id counts as open only when the module is really there — a
      module deleted from under this stage lands on the dashboard. */

@@ -40,6 +40,33 @@
    calc() that touches it disappear. Declare it here, once. */
 :root {
   --rail: 264px;
+
+  /* ============================================================
+     THE CHROME PALETTE, DECLARED ONCE AND FOR LIGHT.
+
+     THIS WENT MISSING THE SAME WAY `--rail` DID. A duplicate-
+     collapsing pass removed the light declarations and left only
+     the dark override at the foot of this file — so in the theme
+     that ships by default, `--chrome` and its three ink tiers
+     resolved to NOTHING, and 132 rules across six stylesheets
+     silently lost their ground: the rail, the sign-in panel, the
+     onboarding, the quote deck's step band and the banner.
+
+     An undefined custom property does not warn. It voids the
+     declaration that reads it. That is twice now, so both are
+     declared at the head of the file where they can be seen.
+
+     Measured on --chrome (#0b2138): --chrome-fg 15.0:1,
+     --chrome-fg-soft 8.5:1, --chrome-fg-faint 5.2:1. The accent
+     is BARRED here — #0a5fc2 on this ground is 2.7:1 — which is
+     why a lit state on the rail is white at 14-16%.
+     ============================================================ */
+  --chrome: #0b2138;
+  --chrome-raised: #14304c;
+  --chrome-line: rgba(255, 255, 255, 0.1);
+  --chrome-fg: #f2f6fb;
+  --chrome-fg-soft: #a9bdd2;
+  --chrome-fg-faint: #7e94ab;
 }
 
 .shell-body {
