@@ -347,6 +347,20 @@ function IndexPanel({
           : ''}
       </p>
 
+      {/* AND WHAT ELSE WAS COUNTED, AND DID NOT GET A VOTE.
+          DESIGN_CONTRACT §7: a surface that decides something for a
+          person owes them the basis. Four signals were measured over
+          this sheet before any of them was written into a rule —
+          pictures, a price, the row count and how long the names run —
+          and only the pictures separate a catalogue from a register.
+          Parts & Accessories is 99% priced and is emphatically a
+          register, so a price gets counted and then gets no vote. The
+          whole reading is in `face.ts`; this is the half an admin
+          standing in front of the control needs. */}
+      {face.alsoCounted === '' ? null : (
+        <p className="md-panel-say">{face.alsoCounted}</p>
+      )}
+
       {module.index !== face.mode && face.live > 0 ? (
         <p className="md-panel-warn">
           <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />

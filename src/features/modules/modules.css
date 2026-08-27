@@ -3467,3 +3467,172 @@
   background: var(--paper-high);
   border-color: var(--hairline);
 }
+
+/* ------------------------------------------------------------- */
+/* WHY THIS TABLE OFFERS NO SIBLINGS — the refusal, in place.
+   DESIGN_CONTRACT §10. It takes `.md-sibs`' own box because it stands
+   exactly where that box would have stood, and it is a SENTENCE
+   rather than a control, so it takes the recessed ground and the
+   hairline rail this app already gives an explanation that is not an
+   offer. Measured on the dialog's own paper: `--ink-soft` is 7.7:1 on
+   `--paper`, and `--ink-faint` is not used here at all because this
+   ground is a tint of the panel behind it. */
+.md-sibs-why {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: var(--ui-s-size);
+  letter-spacing: var(--ui-s-track);
+  line-height: var(--ui-s-lead);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   A TILE THAT EARNS ITS SPACE — the figures that decide a sale.
+
+   THE FAULT. A face was a photograph, a name and a price. That is
+   enough to recognise a boat and not enough to choose between two of
+   them, so comparing three hulls meant three round trips into their
+   pages and back. `tileFacts.ts` measures which columns actually
+   separate the rows and nominates two or three; this draws them.
+
+   A PAIR PER LINE, NOT A TABLE. Label then figure, wrapped, hairline
+   above the run so it reads as a second register under the price
+   rather than as three more sentences. The label is Inter because it
+   is a word; the figure is IBM Plex Mono and tabular because it is a
+   number a person is comparing down a column of tiles, and two tiles
+   whose digits do not line up cannot be compared at a glance.
+
+   TYPE. 11px is the floor and the label sits exactly on it; the
+   figure is 11.5px so the eye lands on the number first. Sentence
+   case throughout — the label is the column's own name and a name is
+   never uppercased (DESIGN_CONTRACT §3).
+
+   CONTRAST. The tile's ground is `--paper-high`, the card paper. The
+   label takes `--ink-soft` and the figure `--ink`; `--ink-faint` is
+   not used on this face at all, because a figure a customer reads
+   over a shoulder is the last place to spend the faint tier.
+   ============================================================ */
+.md-tile-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 2px;
+  padding-top: 5px;
+  border-top: 1px solid var(--hairline);
+}
+
+/* ONE PAIR PER LINE, THE FIGURE ON THE RIGHT EDGE. A wrapped row of
+   pairs put the same figure in a different place on every tile, and a
+   figure you have to hunt for is a figure you do not compare. Stacked,
+   every tile in a run carries its facts in the same three positions
+   with the numbers on one edge — which is what makes reading down a
+   column of tiles as fast as reading down a grid column, and is the
+   whole of "data showing better" at tile scale. */
+.md-tile-fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.md-tile-fact-of {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.35;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-tile-fact-n {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 1.35;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   A MISSING PHOTOGRAPH THAT LOOKS LIKE A DECISION.
+
+   76 of 184 pictures on this sheet are addresses a browser is not
+   allowed to fetch, and 87 rows carry no picture at all. Drawn as
+   empty wells, two tiles in five are grey and the page reads as
+   broken before anybody has read a word on it.
+
+   SO ALL THREE OUTCOMES TAKE ONE SHAPE — a mark and a line of words,
+   centred in the well the photograph would have filled — and only
+   the words differ. Repeated down a grid, a shape somebody chose
+   reads as a convention; that is the whole difference between a
+   decision and a defect. `.md-tile-held` above already established
+   the shape and this joins it rather than inventing a second one.
+
+   THE MARK IS THE TABLE'S OWN SYMBOL, at 30% — present enough to say
+   what sort of thing this is, quiet enough that a run of them is a
+   texture rather than a row of icons demanding to be read. The WORD
+   under it is the row's own heading, which is the part that says what
+   the tile is a tile of.
+
+   CONTRAST. `--ink-soft` on `--paper-sunken` is 6.8:1, both opaque —
+   the measurement `.md-tile-held` records beside it. The mark is
+   decoration and carries `aria-hidden`, so its 30% is not text
+   contrast; the word beside it is at full strength.
+   ============================================================ */
+.md-tile-plain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-2);
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.md-tile-plain svg {
+  opacity: 0.3;
+}
+
+/* 11px, sentence case, no tracking: it is the sheet's own word for
+   what this is, not a group caption. */
+.md-tile-plain-say {
+  max-width: 100%;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* THE LINK PLATE GAINS THE SAME MARK, so a brand with 93 reference
+   plates in it still says what its tiles are tiles of. The link glyph
+   rides the kind symbol rather than replacing it: the reason there is
+   no photograph and what the thing is are two facts, and the plate
+   was only carrying one of them. */
+.md-tile-held-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink-soft);
+}
+
+.md-tile-held-mark svg:first-child {
+  opacity: 0.3;
+}

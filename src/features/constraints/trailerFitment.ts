@@ -864,6 +864,81 @@ export function readCatalogue(
   return out
 }
 
+/* ============================================================
+   THE CATALOGUE, ROW BY ROW — the same two calls, one more time,
+   for a surface that has to SHOW what the rule left standing.
+
+   `readCatalogue` counts and `readMarques` scores. Neither hands
+   back a row, so a screen wanting to draw the twelve trailers a
+   banner admits had two choices: re-fold the banner itself, or do
+   without. The first is a SECOND implementation of F8 — the exact
+   thing this file's header refuses — and the second is why the
+   fan-out could state a rate it could not let anybody check.
+
+   So the walk lives here, beside the rule, and every verdict on it
+   is `bannerOf` + `marqueOfBanner`: literally the two calls
+   `selectPartners` makes, in the same order, against the same
+   vocabulary. `bannerMarque === marque.name` IS `built-for-this`.
+
+   THE DISCONTINUED ROWS COME BACK, FLAGGED RATHER THAN DROPPED.
+   `selectPartners` counts them on `heldBack` and never lets them
+   into a bucket, which is right for a selection; a surface that
+   has to say "and 3 more the banner names are no longer sold"
+   needs to know WHICH rule would have admitted them, and that is a
+   fact only this walk holds. Nothing here offers one: the flag is
+   how a caller keeps them out.
+
+   RETIRED TABLES ARE ABSENT ENTIRELY, exactly as they are absent
+   from `readCatalogue.live` — history is not stock, and their count
+   is on `CatalogueReading.retiredRows` where a surface can say so.
+   ============================================================ */
+export interface PartnerRowReading {
+  rowId: string
+  tableId: string
+  tableName: string
+  /** the row's own name, as the table titles it */
+  label: string
+  /** the series heading the banner column carries, verbatim */
+  banner: string
+  /** the marque that banner names, or null where it names none —
+   *  the third state, which is set aside and never rejected */
+  bannerMarque: string | null
+  /** held back by the discontinued contract before any rule ran */
+  discontinued: boolean
+  /** every word a person might type at this row, folded once */
+  hay: string
+}
+
+export function readPartnerRows(
+  project: FitmentProject,
+  scope: FitmentScope,
+  marques?: readonly Marque[],
+): PartnerRowReading[] {
+  const vocabulary = marques ?? marqueVocabulary(project, scope)
+  const out: PartnerRowReading[] = []
+
+  for (const partner of Object.values(project.entities)) {
+    if (partner.kind !== scope.partnerKind) continue
+    if (isRetired(partner)) continue
+    for (const row of project.rowsByEntity[partner.id] ?? []) {
+      const banner = bannerOf(partner, row)
+      const label = rowLabel(partner, row)
+      out.push({
+        rowId: row.id,
+        tableId: partner.id,
+        tableName: partner.name,
+        label,
+        banner,
+        bannerMarque: marqueOfBanner(banner, vocabulary)?.name ?? null,
+        discontinued: isDiscontinued(row),
+        hay: `${label} ${banner}`.toLowerCase(),
+      })
+    }
+  }
+
+  return out
+}
+
 export function readMarques(
   project: FitmentProject,
   scope: FitmentScope,

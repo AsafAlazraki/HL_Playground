@@ -66,7 +66,7 @@ const { loadNorthsideProject, northsideDrift, isStaleNorthside } = await import(
 const { buildEntries, groupEntries, listedTables, moduleTables, relatedTables } =
   await import('@/features/modules/read')
 const { capabilityStates } = await import('@/features/modules/designer')
-const { splitReading } = await import('@/features/modules/split')
+const { siblingOffer, splitReading } = await import('@/features/modules/split')
 const { categoryDrawers, censusLine, DRAWER_FLOOR, moduleCensus, moduleFace } = await import(
   '@/features/modules/read'
 )
@@ -146,6 +146,39 @@ describe('the Northside demo seeds its own modules', () => {
        and never an agreement between two tables that carry it */
     expect(rates.parts).toHaveLength(3)
     expect(rates.say).toContain('declares no kind at all')
+  })
+
+  it('will not OFFER the bag it just finished undoing', () => {
+    /* THE OTHER HALF OF RULING 6, and the half that keeps it true
+       tomorrow. Undoing the two bags in the seed is worth nothing if
+       the panel that makes the tenth module offers to rebuild one, and
+       it did: `e.kind === picked.kind` is true of two tables that both
+       declared nothing, so picking Labour Rates put a tick box beside
+       Oils & Consumables and Registration Costs. `siblingOffer` is the
+       same predicate `splitReading` uses, asked one moment earlier. */
+    loadNorthsideProject()
+    const { entities } = useProjectStore.getState()
+    const all = Object.values(entities).filter((e) => e.role === undefined || e.role === 'base')
+    const byName = (n: string) => all.find((e) => e.name === n)!
+
+    const rates = siblingOffer(byName('Labour Rates'), all)
+    expect(rates.siblings).toEqual([])
+    expect(rates.why).toContain('Labour Rates declares no kind')
+    /* the count is READ off this sheet, never typed here: however
+       many unclassified tables the workbook grows, the sentence and
+       this assertion move together */
+    const unclassified = all.filter(
+      (e) => e.kind === undefined || e.kind === 'custom',
+    ).length
+    expect(rates.why).toContain(`${unclassified - 1} other tables declare none either`)
+
+    /* AND IT STILL OFFERS WHAT REALLY DOES AGREE. The seven brand
+       price files are what makes Boats one module rather than seven,
+       and that offer must survive the fix. */
+    const boats = siblingOffer(byName('Highfield Inflatables'), all)
+    expect(boats.why).toBe('')
+    expect(boats.siblings.length).toBeGreaterThan(0)
+    for (const e of boats.siblings) expect(e.kind).toBe('boat')
   })
 
   it('gives every module its own words, never the table’s provenance note', () => {

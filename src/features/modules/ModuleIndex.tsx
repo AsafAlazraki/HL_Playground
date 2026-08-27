@@ -163,6 +163,15 @@ import {
   useImageDisplay,
 } from '@/lib/imageSources'
 import { heldBackRowCount } from '@/features/views/sellable'
+/* THE MECHANISM, NOT A SECOND COPY OF IT. This page narrowed by a
+   drawer, searched past the drawer and withheld what is no longer
+   sold, and it said all three in prose it wrote itself — three
+   sentences, three sets of arithmetic, and nothing anywhere checking
+   that they agreed with each other or with the contract next door.
+   `applied.test.ts` names this file as the surface it was waiting
+   for. See the note above `curation` in the body for what each of the
+   four properties now maps onto here. */
+import { CurationNote, readCuration, searchReach } from '@/features/curation'
 /* THE SUBMODULES, NOT THE BARREL. `@/features/views` re-exports
    `ViewPage` and everything under it; this file wants one rule and one
    registry, and naming them directly keeps the whole item page out of
@@ -231,6 +240,12 @@ export function ModuleIndex({
      nowhere else: it is not stored on the module, because which
      heading somebody is reading is not a fact about the place. */
   const [openKey, setOpenKey] = useState<string | null>(null)
+  /* PROPERTY 3 — THE NARROWING SWITCHED OFF, WITHOUT LOSING IT.
+     `openKey = null` would also show everything, and it is not the
+     same act: it forgets which drawer was open, so the switch could
+     only ever go one way and "Show what fits" would have nothing to
+     go back to. The drawer is remembered and the rule is suspended. */
+  const [showAll, setShowAll] = useState(false)
 
   /* EVERY table the module points at — what the designer strip
      reorders and takes out. It has to include a retired one, or an
@@ -250,8 +265,21 @@ export function ModuleIndex({
   /* NOTHING VANISHES SILENTLY. The rows this page is not drawing,
      counted, so the header can say the number in words instead of
      leaving a person to work out why 651 became 645. */
-  const held = useMemo(() => heldBackRowCount(tables, rowsByEntity), [tables, rowsByEntity])
+  /* THE DISCONTINUED HALF ONLY. `listed` is the module's tables minus
+     the retired ones, so this is `countDiscontinued` over live tables
+     and nothing else — the bucket `@/features/curation` calls
+     `withheld` and prints in the contract's own words. */
+  const heldSold = useMemo(() => heldBackRowCount(listed, rowsByEntity), [listed, rowsByEntity])
   const retiredTables = useMemo(() => tables.filter(isRetired), [tables])
+  /* AND THE RETIRED HALF, WHICH IS A FACT ABOUT TABLES. Its rows were
+     never candidates for this catalogue, so they are not in the pool
+     the curation note does arithmetic over; folding them in would
+     print "no longer sold" over stock that is nothing of the kind. It
+     gets its own sentence, once, naming the tables. */
+  const retiredRows = useMemo(
+    () => retiredTables.reduce((n, t) => n + (rowsByEntity[t.id]?.length ?? 0), 0),
+    [retiredTables, rowsByEntity],
+  )
 
   /* WHAT THIS PLACE IS MADE OF, in the dealer's own nouns. The same
      reader the dashboard card prints, so the card and the page it
@@ -295,19 +323,6 @@ export function ModuleIndex({
   const canSearch = module.capabilities.includes('search')
   const canOpen = module.capabilities.includes('open')
 
-  /* WORD BY WORD, NOT ONE LONG STRING — the lesson the view stage's
-     rail already learned. "SP460 PVC" must find a row named
-     "Highfield - SP460 (PVC)", and a whole-string test answers
-     "nothing matches" for a row two screens down.
-     Split inside the memo, so the dependency is the typed STRING and
-     not an array rebuilt on every render. */
-  const matches = useMemo(() => {
-    if (!canSearch) return entries
-    const needles = query.trim().toLowerCase().split(/\s+/).filter((w) => w !== '')
-    if (needles.length === 0) return entries
-    return entries.filter((e) => needles.every((n) => e.hay.includes(n)))
-  }, [entries, canSearch, query])
-
   /* THE DRAWERS — the headings this register is banner'd under, built
      off the entries this page already made rather than off the rows a
      second time. Empty for a table that banners nothing. */
@@ -319,23 +334,69 @@ export function ModuleIndex({
   const filing = module.index === 'rows' && drawers.length >= DRAWER_FLOOR
   const searching = canSearch && query.trim() !== ''
 
-  /* SEARCH LOOKS PAST THE NARROWING. That is the rule taken from the
-     one interaction hl-journeys.md calls unambiguously right, and it
-     is the half HelmLogic's own parts grid does not have at all. */
-  const drawer = filing && !searching ? drawers.find((d) => d.key === openKey) : undefined
+  const drawer = filing ? drawers.find((d) => d.key === openKey) : undefined
+  /* the rule is in force: a drawer is open and nobody has switched
+     it off */
+  const narrowed = drawer !== undefined && !showAll
 
   /* A DRAWER FROM ANOTHER MODULE IS NOT A DRAWER HERE. Switching
      modules without unmounting would otherwise leave a key pointing
-     at a heading on a table this place does not list. */
-  useEffect(() => setOpenKey(null), [module.id])
+     at a heading on a table this place does not list — and leave the
+     switch reading "Show what fits" with nothing to fit. */
+  useEffect(() => {
+    setOpenKey(null)
+    setShowAll(false)
+  }, [module.id])
 
-  const scope = useMemo(
+  /* ── WHAT THE RULE ADMITS, COUNTED BEFORE ANYBODY TYPES ──────────
+     `@/features/curation` is explicit that a search box is a pair of
+     spectacles and not a curation: its three counts are counts of
+     ROWS the rule decided about, and a figure that moved while
+     somebody typed would be a second, quieter search result sitting
+     next to the first. So the admitted set is a function of the
+     drawer and the switch, and of nothing else. */
+  const admitted = useMemo(
     () =>
-      drawer === undefined
-        ? matches
-        : matches.filter((e) => drawerKey(e.tableId, e.branch) === drawer.key),
-    [matches, drawer],
+      drawer === undefined || showAll
+        ? entries
+        : entries.filter((e) => drawerKey(e.tableId, e.branch) === drawer.key),
+    [entries, drawer, showAll],
   )
+
+  const admittedIds = useMemo(
+    () => new Set(admitted.map((e) => `${e.tableId}:${e.rowId}`)),
+    [admitted],
+  )
+
+  /* ── PROPERTY 2, AND THE BEHAVIOUR THAT CHANGED ──────────────────
+     This page used to drop the drawer the moment three letters were
+     typed, and say so in a sentence. It was honest and it was still
+     the wrong shape: the narrowing a person chose vanished under
+     them, the count of what the search had reached was never stated,
+     and there was nothing to press to get it back — the drawer
+     re-appeared when the box was cleared, which reads as the app
+     changing its mind twice.
+
+     `searchReach` searches the POOL and splits the answer: `within`
+     is what the drawer already holds, `beyond` is what it is standing
+     in front of. The drawer stays where it was put, the count on the
+     far side is printed, and the sentence itself is the door. Word by
+     word, not one long string — the lesson the view stage's rail
+     learned and this file learned again, now written down once in
+     `reach.ts` instead of a third time here. */
+  const reach = useMemo(
+    () =>
+      searchReach({
+        pool: entries,
+        offered: admittedIds,
+        idOf: (e: IndexEntry) => `${e.tableId}:${e.rowId}`,
+        hayOf: (e: IndexEntry) => e.hay,
+        term: canSearch ? query : '',
+      }),
+    [entries, admittedIds, canSearch, query],
+  )
+
+  const scope = reach.active ? reach.within : admitted
 
   /* THE CAP IS SHARED OUT, NOT SPENT IN ORDER. A flat slice gave the
      whole budget to the first tables and left the last one undrawn —
@@ -344,6 +405,66 @@ export function ModuleIndex({
   const shown = useMemo(() => capEntries(scope, INDEX_CAP), [scope])
   const hidden = scope.length - shown.length
   const sections = useMemo(() => groupEntries(shown, listed), [shown, listed])
+
+  /* ============================================================
+     THE FOUR PROPERTIES, THROUGH THE ONE MECHANISM.
+
+     What this page used to draw itself, and what now maps onto what:
+
+       1 · IT EXPLAINS ITSELF   `md-narrow-say` named the drawer and
+           its column word. The same words, now the `what` clause of a
+           `Narrowing`, so the chip and the paragraph are built from
+           one string instead of two near-identical ones.
+       2 · IT CAN BE SEARCHED PAST   it was, and it said so — but it
+           dropped the drawer to do it and never counted what it
+           reached. See the `reach` memo.
+       3 · IT CAN BE SWITCHED OFF   `md-narrow-off` said "Show all",
+           which is a state and not an act, and only went one way.
+       4 · THE COUNT IS STATED   it was, twice, in two paragraphs with
+           two denominators — the drawer's arithmetic here and the
+           discontinued contract's over in `md-held`. A reader had no
+           way to tell whether the two numbers overlapped. They are
+           disjoint, they add up, and now they are ONE sentence,
+           because the mechanism owns the arithmetic and delegates the
+           words for the withheld half to `sellable.ts` itself.
+
+     NO RATE IS CLAIMED. `Narrowing.measured` is optional exactly for
+     this: nobody has measured how often a category heading is the
+     right way to cut this register, so this narrowing says nothing
+     about a rate rather than reaching for a plausible one.
+
+     THE CAP IS NOT IN HERE. `INDEX_CAP` is a drawing budget, not a
+     rule about the data — the mechanism's own note calls a cosmetic
+     filter a pair of spectacles — so `md-more` keeps its own
+     sentence below, in its own words, about its own number. */
+  const curation = useMemo(
+    () =>
+      readCuration({
+        /* the dealer's own word for the things in here, which is what
+           `censusLine` already prints in the header */
+        name: census.noun,
+        counts: {
+          pool: entries.length + heldSold,
+          matched: admitted.length + heldSold,
+          offered: admitted.length,
+        },
+        narrowings:
+          narrowed && drawer
+            ? [
+                {
+                  id: drawer.key,
+                  what:
+                    drawer.name === ''
+                      ? `these sit under no ${drawer.of} on ${drawer.tableName}`
+                      : `${drawer.name} is one ${drawer.of} on ${drawer.tableName}`,
+                },
+              ]
+            : [],
+        showingAll: showAll && drawer !== undefined,
+        search: { term: query, beyond: reach.beyond.length },
+      }),
+    [census.noun, entries.length, heldSold, admitted.length, narrowed, drawer, showAll, query, reach.beyond.length],
+  )
 
   /* The drawers cut by table, so each run keeps the head — and the
      anchor — a member chip already scrolls to. */
@@ -596,6 +717,7 @@ export function ModuleIndex({
                            would scroll to a head that is not drawn. */
                         onClick={() => {
                           setOpenKey(null)
+                          setShowAll(false)
                           setGoingTo(t.id)
                         }}
                       >
@@ -797,35 +919,25 @@ export function ModuleIndex({
         </section>
       ) : null}
 
-      {/* THE NARROWING, NAMED — hl-journeys.md §4's own five parts,
-          and every figure measured rather than asserted: what the rule
-          IS in the dealer's own column word, how many are drawn, how
-          many were put away, that search looks past it, and one
-          control that switches it off entirely. */}
-      {drawer ? (
-        <div className="md-narrow" role="note">
-          <p className="md-narrow-say">
-            <span className="md-narrow-name">
-              {drawer.name === '' ? `Under no ${drawer.of}` : drawer.name}
-            </span>
-            {` — one ${drawer.of} on ${drawer.tableName}. `}
-            {scope.length.toLocaleString('en-AU')} of{' '}
-            {entries.length.toLocaleString('en-AU')} drawn,{' '}
-            {(entries.length - scope.length).toLocaleString('en-AU')} put away in the other{' '}
-            {(drawers.length - 1).toLocaleString('en-AU')} drawers. Typing in Find looks past
-            this.
-          </p>
-          <button type="button" className="md-narrow-off" onClick={() => setOpenKey(null)}>
-            Show all
-          </button>
-        </div>
-      ) : filing && searching ? (
-        <p className="md-narrow-note" role="note">
-          Find is looking across all {entries.length.toLocaleString('en-AU')} {census.noun}{' '}
-          here, past the {drawers.length.toLocaleString('en-AU')} drawers. Clear it to go back
-          to them.
-        </p>
-      ) : null}
+      {/* THE NARROWING, NAMED — through `@/features/curation` and not
+          in this file's own words. See the `curation` memo above for
+          which part of this page each of the four properties replaced,
+          and why the cap below is deliberately not in it.
+
+          THE SEARCH BOX IS NOT HANDED OVER. The mechanism carries one,
+          for surfaces that had none; this page has had a find box in
+          its header since it was written, it is where a person looks
+          for it, and two boxes on one screen searching the same rows
+          is worse than either of the faults being fixed. So the READING
+          takes the search — the term and the count on the far side of
+          the narrowing — and the component draws the reach line and the
+          switch. Property 2 is the count and the door, not the box. */}
+      <CurationNote
+        reading={curation}
+        showingAll={showAll && drawer !== undefined}
+        onShowAll={drawer === undefined ? undefined : setShowAll}
+        tone="page"
+      />
 
       {!canOpen ? (
         <p className="md-idx-note">
@@ -834,25 +946,33 @@ export function ModuleIndex({
         </p>
       ) : null}
 
-      {/* WHAT THIS CATALOGUE IS NOT SHOWING, AND WHY. A count that
-          quietly dropped six rows is the defect; this sentence is the
-          fix. It names the reason and the reassurance together,
-          because the person reading it is asking where a trailer
-          went — and because the answer is that nothing was deleted. */}
-      {held > 0 ? (
+      {/* WHAT THIS CATALOGUE IS NOT SHOWING, AND WHY — THE HALF THAT
+          IS ABOUT TABLES. The rows a module holds that are no longer
+          sold are now said once, by the curation note above, in the
+          discontinued contract's own clause; saying them again here
+          with a second denominator is exactly the two-sentences fault
+          that made a reader work out which count covered what.
+
+          A RETIRED TABLE IS A DIFFERENT FACT and it kept its sentence.
+          Its rows are not discontinued stock — the whole price file is
+          history — so they were never candidates for this catalogue and
+          are not in the pool the note does arithmetic over. It names
+          the tables, because a person looking for a trailer wants the
+          name of the file it went to, not a tally. */}
+      {retiredTables.length > 0 && retiredRows > 0 ? (
         <p className="md-held" role="note">
-          {retiredTables.length > 0
-            ? `${retiredTables.map((t) => t.name).join(', ')} ${
-                retiredTables.length === 1 ? 'is' : 'are'
-              } history rather than stock, so ${
-                retiredTables.length === 1 ? 'it is' : 'they are'
-              } not listed here. `
-            : ''}
-          {held} {held === 1 ? 'item' : 'items'} in this module{' '}
-          {held === 1 ? 'is' : 'are'} no longer sold and{' '}
-          {held === 1 ? 'is' : 'are'} not offered here. Everything stays on the sheet,
-          where it can be seen, sorted and brought back by clearing its Discontinued box —
-          and a quote already naming one still opens, still totals and still prints.
+          {retiredTables.map((t) => t.name).join(', ')}{' '}
+          {retiredTables.length === 1 ? 'is' : 'are'} history rather than stock, so the{' '}
+          {retiredRows.toLocaleString()} {retiredRows === 1 ? 'row' : 'rows'} on{' '}
+          {/* THE PRONOUN FOLLOWS THE TABLE, NOT THE ROWS. One table of
+              ten rows is "the 10 rows on IT"; two tables of one row
+              each is "the 1 row on THEM". Reading both off the same
+              count put "OBSOLETE Trailers … the 10 rows on them" on
+              screen, which is the sentence a reader stops at. */}
+          {retiredTables.length === 1 ? 'it' : 'them'}{' '}
+          {retiredRows === 1 ? 'is' : 'are'} not listed here.{' '}
+          {retiredTables.length === 1 ? 'The table stays' : 'The tables stay'} on the sheet,
+          and a quote that already names one still opens, still totals and still prints.
         </p>
       ) : null}
 
@@ -895,13 +1015,17 @@ export function ModuleIndex({
             ? 'The tables this module was made from are no longer on the sheet.'
             : listed.length === 0
               ? 'Every table in this module is history rather than stock, so there is nothing here to sell. The tables and their rows stay on the sheet.'
-              : held > 0
+              : heldSold > 0
                 ? 'Nothing in this module is still being sold. The rows stay on the sheet and a quote already naming one still opens.'
                 : 'These tables have no rows yet. Add rows on the sheet and they appear here.'}
         </p>
       ) : scope.length === 0 ? (
+        /* NOTHING IN THE OFFER. Whether anything exists on the OTHER
+           side of the narrowing is the reach line's sentence, above,
+           and it is a door — so this one says only what is true here
+           and never implies the row is gone. */
         <p className="md-none">Nothing here matches “{query.trim()}”.</p>
-      ) : filing && drawer === undefined && !searching ? (
+      ) : filing && openKey === null && !searching ? (
         /* THE REGISTER, FILED. Its things are its headings, and each
            one carries what the sheet says about it: how many lines,
            and the cheapest and dearest of them. */
@@ -924,7 +1048,18 @@ export function ModuleIndex({
               ) : null}
               <ul className="md-drawers">
                 {run.list.map((d) => (
-                  <DrawerFace key={d.key} drawer={d} onOpen={() => setOpenKey(d.key)} />
+                  <DrawerFace
+                    key={d.key}
+                    drawer={d}
+                    /* opening a drawer puts the rule back IN force —
+                       otherwise a person who pressed "Show everything"
+                       once would open the next drawer onto the whole
+                       register and read the switch as broken */
+                    onOpen={() => {
+                      setOpenKey(d.key)
+                      setShowAll(false)
+                    }}
+                  />
                 ))}
               </ul>
             </section>
@@ -1002,7 +1137,18 @@ function Section({
           {mode === 'tiles' ? (
             <ul className="md-tiles">
               {group.entries.map((e) => (
-                <Tile key={e.rowId} entry={e} canOpen={canOpen} onOpen={onOpen} />
+                <Tile
+                  key={e.rowId}
+                  entry={e}
+                  /* WHAT THE THING IS WHEN THERE IS NO PHOTOGRAPH OF IT.
+                     Its table's symbol and its own heading — both facts
+                     this page already holds, handed down rather than
+                     looked up again per tile. See `NoPicture`. */
+                  kind={section.kind}
+                  tableName={section.name}
+                  canOpen={canOpen}
+                  onOpen={onOpen}
+                />
               ))}
             </ul>
           ) : (
@@ -1108,29 +1254,79 @@ interface FaceProps {
   onOpen: (tableId: string, rowId: string) => void
 }
 
-function Tile({ entry, canOpen, onOpen }: FaceProps): ReactElement {
+/* ============================================================
+   A TILE EARNS ITS SPACE.
+
+   A photograph, a name and a price is enough to recognise a boat and
+   not enough to choose between two of them — so the salesperson
+   pressed a tile, read one number, came back, pressed the next. The
+   face now carries the two or three FIGURES THAT DECIDE A SALE
+   underneath the price.
+
+   WHICH FIGURES IS NOT A DECISION THIS FILE MAKES. `tileFacts.ts`
+   measures every column a person could sort or filter by — how much
+   of the table it is filled on, and how far it splits the rows — and
+   nominates the best two or three. Money is refused outright, because
+   the tile already carries the one price the ladder adjudicated and a
+   second money figure beside it is the "which number do I quote"
+   failure. On the real sheet that produces OA Length, Int Length and
+   Boat Weight on Highfield, ATM and Tare on NSM Custom Trailers, and
+   nothing at all on Parts & Accessories. Nobody typed any of them.
+
+   THE LABEL IS THE COLUMN'S OWN NAME, sentence case, because a name
+   is a name (DESIGN_CONTRACT §3). The column's `description` — which
+   on this sheet cites the workbook cell the figure was read out of —
+   is on the title, so a figure on a customer-facing tile can always
+   be traced back to the cell it came from.
+   ============================================================ */
+function Tile({
+  entry,
+  kind,
+  tableName,
+  canOpen,
+  onOpen,
+}: FaceProps & { kind: TableKind; tableName: string }): ReactElement {
+  const facts = entry.facts ?? []
   const body = (
     <>
       <span className="md-tile-pic">
-        <TilePicture img={entry.img} alt={entry.label} />
+        <TilePicture
+          img={entry.img}
+          alt={entry.label}
+          kind={kind}
+          says={entry.branch === '' ? tableName : entry.branch}
+        />
       </span>
       <span className="md-tile-name">{entry.label}</span>
       {/* NO EMPTY PRICE SLOT. A table that prices nothing draws no
           line at all, rather than a dash a salesperson could read as
           "free" or "ask". */}
       {entry.price === '' ? null : <span className="md-tile-price">{entry.price}</span>}
+      {facts.length === 0 ? null : (
+        <span className="md-tile-facts">
+          {facts.map((f) => (
+            <span className="md-tile-fact" key={f.label} title={f.say === '' ? undefined : f.say}>
+              <span className="md-tile-fact-of">{f.label}</span>
+              <span className="md-tile-fact-n">{f.value}</span>
+            </span>
+          ))}
+        </span>
+      )}
     </>
   )
+  /* ONE SENTENCE FOR A READER, in the order the tile draws it. The
+     face is now up to six spans and a picture; announced run together
+     they are not a name. */
+  const said = [entry.label, entry.price, ...facts.map((f) => `${f.label} ${f.value}`)]
+    .filter((w) => w !== '')
+    .join(', ')
   return (
     <li>
       {canOpen ? (
         <button
           type="button"
           className="md-tile"
-          /* NAMED EXPLICITLY. The face is three spans, one of them a
-             picture and one a mono figure, and a reader announcing
-             them run together is not a name. */
-          aria-label={entry.price === '' ? entry.label : `${entry.label}, ${entry.price}`}
+          aria-label={said}
           onClick={() => onOpen(entry.tableId, entry.rowId)}
         >
           {body}
@@ -1215,12 +1411,62 @@ function Row({ entry, canOpen, onOpen }: FaceProps): ReactElement {
 function TilePicture({
   img,
   alt,
+  kind,
+  says,
 }: {
   img: ImageRef | undefined
   alt: string
+  kind: TableKind
+  says: string
 }): ReactElement | null {
-  if (!img) return null
-  return <Painted img={img} alt={alt} />
+  if (!img) return <NoPicture kind={kind} says={says} />
+  return <Painted img={img} alt={alt} kind={kind} says={says} />
+}
+
+/* ============================================================
+   A MISSING PHOTOGRAPH READS AS A DECISION, NOT AS A HOLE.
+
+   THE MEASUREMENT. 108 of the 184 pictures on this sheet are local
+   and paint; 76 are addresses on a host that will not serve them, and
+   87 rows across the catalogue modules carry no picture column value
+   at all. A grid where two tiles in five are empty grey wells does not
+   read as "these rows have no photograph" — it reads as broken
+   software, and a stakeholder stops trusting the page before they have
+   read a word on it.
+
+   A WELL CANNOT ANSWER THAT AND A PLATE CAN. So all three outcomes now
+   draw the SAME SHAPE — a mark and one line of words, centred, on the
+   sunken well — and only the words differ:
+
+     the picture         the photograph
+     an address we       a link mark and “Held as a link”, with the
+       cannot paint        host's own reason on the title
+     no picture at all   the TABLE'S OWN SYMBOL and the row's own
+                           heading — “Sport”, “Open Boats”, “Anodes” —
+                           so the tile still says what the thing IS
+
+   Repeated down a grid, a shape somebody chose reads as a convention.
+   That is the whole difference between a decision and a defect, and it
+   costs nothing but consistency.
+
+   NOTHING IS INVENTED AND NOTHING IS SUBSTITUTED. The word on the
+   plate is the row's own first hierarchy value, or its table's name
+   when the table banners nothing — both already resolved by
+   `buildEntries`. Never another row's photograph, never a filename,
+   never a hatched rectangle standing in for a picture that does not
+   exist.
+
+   CONTRAST. `--ink-soft` (#4b5462) on `--paper-sunken` (#f1f2f5) is
+   6.8:1, both opaque — the same pair `.md-tile-held` measured beside
+   it. `--ink-faint` would be 4.26:1 over this well and fails.
+   ============================================================ */
+function NoPicture({ kind, says }: { kind: TableKind; says: string }): ReactElement {
+  return (
+    <span className="md-tile-plain" aria-hidden="true">
+      <TableKindSymbol kind={kind} size={ICON_SIZE.small} />
+      {says === '' ? null : <span className="md-tile-plain-say">{says}</span>}
+    </span>
+  )
 }
 
 /** THE PICTURE IS HELD AS A LINK, AND THAT IS WHAT IT SAYS. Two words
@@ -1241,19 +1487,45 @@ function TilePicture({
  *  address: for the two hosts we have measured it says what the host
  *  does, so a stakeholder reads a permission somebody else set rather
  *  than a fault in the dealership's own catalogue. */
-function HeldAsLink({ img }: { img: ImageRef }): ReactElement {
+function HeldAsLink({
+  img,
+  kind,
+  says,
+}: {
+  img: ImageRef
+  kind: TableKind
+  says: string
+}): ReactElement {
   const why = heldAsLinkNote(img.src)
   return (
     <span className="md-tile-held" role="img" aria-label={`${imageLabel(img)} — ${why}`} title={why}>
-      <LinkSimple size={ICON_SIZE.small} aria-hidden="true" />
+      <span className="md-tile-held-mark">
+        <TableKindSymbol kind={kind} size={ICON_SIZE.small} />
+        <LinkSimple size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+      </span>
       <span className="md-tile-held-say">{HELD_AS_LINK}</span>
+      {says === '' ? null : <span className="md-tile-plain-say">{says}</span>}
     </span>
   )
 }
 
-function Painted({ img, alt }: { img: ImageRef; alt: string }): ReactElement | null {
+function Painted({
+  img,
+  alt,
+  kind,
+  says,
+}: {
+  img: ImageRef
+  alt: string
+  kind: TableKind
+  says: string
+}): ReactElement | null {
   const { paint, probe, at } = useImageDisplay(img.src)
-  if (!paint) return <HeldAsLink img={img} />
+  /* AND THE PLATE CARRIES WHAT THE THING IS TOO. "Held as a link" says
+     why there is no photograph; the row's own heading says what the
+     tile is a tile OF. A person scanning a brand with 93 reference
+     plates in it needs the second one as much as the first. */
+  if (!paint) return <HeldAsLink img={img} kind={kind} says={says} />
   return (
     <img
       className="md-tile-img"

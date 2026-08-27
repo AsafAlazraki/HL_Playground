@@ -44,6 +44,16 @@ import {
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import { hasPictures, hasPrices, kindPlural } from './read'
+/* THE OFFER IS THE SPLIT RULE, ASKED ONE MOMENT EARLIER. This panel
+   used to build its own sibling list off `e.kind === picked.kind`,
+   which reads as the same question and is not: `custom` is the app's
+   fallback for a table that declared nothing, so that test made every
+   unclassified table a sibling of every other one and put a tick box
+   beside it. On this sheet it offered Oils & Consumables and
+   Registration Costs the moment somebody picked Labour Rates — the
+   exact bag `split.ts` exists to complain about, offered back with a
+   tick. One predicate now serves both surfaces. */
+import { siblingOffer } from './split'
 import './modules.css'
 
 /* The panel groups tables exactly as the left panel does — products
@@ -209,14 +219,17 @@ export function NewModuleDialog({
 
   const picked = pickedId ? entities[pickedId] : undefined
 
-  /* The other tables of the picked table's kind. A table without a
-     kind has no siblings by definition, and offers none. */
-  const siblings = useMemo<EntityDef[]>(() => {
-    if (!picked?.kind) return []
-    return offered
-      .filter((e) => e.id !== picked.id && e.kind === picked.kind)
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [picked, offered])
+  /* The other tables that hold the SAME SORT OF THING — and, when
+     there are none because the picked table declares no kind, the
+     sentence that says so. A table with no kind has no siblings by
+     definition: two tables the app cannot classify have not agreed
+     about anything, and bundling them is how a register of hourly
+     rates ends up filed beside a schedule of government fees. */
+  const offer = useMemo(
+    () => (picked ? siblingOffer(picked, offered) : { siblings: [], why: '' }),
+    [picked, offered],
+  )
+  const siblings = offer.siblings
 
   /* CLICK 2. Picking fills the name and the description FROM THE
      TABLE — there is exactly one place a module's description comes
@@ -420,6 +433,20 @@ export function NewModuleDialog({
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </label>
+
+                {/* WHY NOTHING IS OFFERED, WHERE IT WOULD HAVE BEEN.
+                    DESIGN_CONTRACT §10: a thing that cannot be done
+                    says why, in place. An empty space under the
+                    description tells a person nothing at all, and the
+                    thing they cannot do here — bundle this with the
+                    other tables that declare no kind — is a thing the
+                    panel was doing for them a commit ago. The count in
+                    it is counted off their own sheet. */}
+                {offer.why !== '' ? (
+                  <p className="md-sibs-why" role="note">
+                    {offer.why}
+                  </p>
+                ) : null}
 
                 {siblings.length > 0 && picked.kind ? (
                   <div className="md-sibs" role="group" aria-label="Tables of the same kind">

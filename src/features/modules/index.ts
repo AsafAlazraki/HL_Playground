@@ -120,8 +120,8 @@ export type {
    on what sort of thing it holds, and `custom` is the absence of a
    kind rather than one two tables can share. Exported so an export, a
    review or a role screen reaches the same verdict the designer draws. */
-export { splitReading } from './split'
-export type { SplitPart, SplitReading } from './split'
+export { declaredKind, siblingOffer, splitReading } from './split'
+export type { SiblingOffer, SplitPart, SplitReading } from './split'
 
 /* Reading a module as the DESIGNER reads it — which verbs are on, off
    or refused, and what every block is bound to. Exported so a future

@@ -81,8 +81,12 @@ function kindWord(kind: TableKind): string {
 
 /** A table's kind, or undefined when it has not declared one. `custom`
  *  is the app's fallback and is treated as undeclared here, which is
- *  the whole distinction this file turns on. */
-function declared(entity: EntityDef): TableKind | undefined {
+ *  the whole distinction this file turns on.
+ *
+ *  EXPORTED so the panel that MAKES a module and the reading that
+ *  judges one ask the same question. See `siblingOffer` at the foot
+ *  of this file for what happened while they asked it separately. */
+export function declaredKind(entity: EntityDef): TableKind | undefined {
   const k = entity.kind
   if (!k || !(k in TABLE_KINDS) || k === 'custom') return undefined
   return k
@@ -102,7 +106,7 @@ export function splitReading(
 
   const byKind = new Map<string, SplitPart>()
   for (const entity of tables) {
-    const kind = declared(entity)
+    const kind = declaredKind(entity)
     /* AN UNCLASSIFIED TABLE IS ITS OWN PART, keyed on its own id so two
        of them never collapse into one. That is the Rates & Charges
        case exactly: three tables, three parts, no shared kind to put
@@ -144,4 +148,87 @@ export function splitReading(
     parts,
     say: `${module.name} holds ${list}. A place in the business is one sort of thing; these are ${parts.length}.`,
   }
+}
+
+/* ============================================================
+   AND THE SAME RULE, ASKED ONE MOMENT EARLIER.
+
+   `splitReading` above is a POST-MORTEM. It is asked about a module
+   that already exists and it tells an admin what they built. That is
+   the right instrument for the nine modules on this dashboard and the
+   wrong one for the tenth, because the tenth is made in a panel that
+   was, until this, actively offering to make it a bag:
+
+     "These are also custom tables. Tick any that belong in the same
+      module and people will browse them together."
+
+   On this sheet that sentence appears the moment somebody picks
+   Labour Rates, and the two boxes under it are Oils & Consumables and
+   Registration Costs — the exact three-table bag this whole change
+   was asked to undo, offered back with a tick beside it. A rule that
+   only ever complains after the fact is a rule the app is arguing
+   with itself about.
+
+   SO THE OFFER IS BUILT FROM THE SAME PREDICATE THE READING USES.
+   `declaredKind` is now exported and both call it, which means the
+   panel cannot offer a bundle the designer would then call a bag.
+   Two answers to one question was the defect; there is now one
+   answer and two surfaces asking it.
+
+   AND WHEN THERE IS NOTHING TO OFFER, IT SAYS WHY, WHERE IT IS
+   (DESIGN_CONTRACT §10). A person who picks a table with no kind and
+   sees no tick boxes has been told nothing; a person who reads that
+   their table declares no kind, that four others declare none either,
+   and that four tables the app cannot classify are not four of one
+   thing, has been told the whole truth and where to change it.
+   ============================================================ */
+
+/** What this module's tables offer to a person who is about to add
+ *  one — and, when they offer nothing, why. */
+export interface SiblingOffer {
+  /** the tables that AGREE with the picked one, so bundling them
+   *  keeps the module one place. Empty when the picked table declares
+   *  no kind, whatever else is on the sheet. */
+  siblings: EntityDef[]
+  /** the refusal, in place — '' when nothing is being refused. It is
+   *  non-empty only where the offer is empty BECAUSE of the rule
+   *  rather than because the sheet simply holds nothing else. */
+  why: string
+}
+
+/** The tables a new module may safely be built from alongside
+ *  `picked`, and the sentence for the case where there are none.
+ *
+ *  `offered` is whatever list the panel was already willing to show —
+ *  this narrows it, it does not widen it, so a retired or join table
+ *  the caller had already excluded stays excluded. */
+export function siblingOffer(picked: EntityDef, offered: readonly EntityDef[]): SiblingOffer {
+  const kind = declaredKind(picked)
+  const rest = offered.filter((e) => e.id !== picked.id)
+
+  if (kind !== undefined) {
+    return {
+      siblings: rest
+        .filter((e) => declaredKind(e) === kind)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      why: '',
+    }
+  }
+
+  /* THE COUNT IS COUNTED, never asserted: how many other tables on
+     this sheet are in the same position. It is the figure that turns
+     the refusal from a rule into an observation about their data. */
+  const alsoUnclassified = rest.filter((e) => declaredKind(e) === undefined).length
+  const why =
+    alsoUnclassified === 0
+      ? `${picked.name} declares no kind, so nothing else here is known to hold the same sort of thing. It can be a module on its own, and tables can be added to it later from its settings.`
+      : `${picked.name} declares no kind, and ${alsoUnclassified} other ${
+          alsoUnclassified === 1 ? 'table declares' : 'tables declare'
+        } none either. That is not agreement — it is ${
+          alsoUnclassified === 1 ? 'a table' : 'tables'
+        } this app cannot classify, which is no reason to file ${
+          alsoUnclassified === 1 ? 'it' : 'them'
+        } in one place. Give them a kind on the sheet and they will offer each other here.`
+
+  return { siblings: [], why }
 }

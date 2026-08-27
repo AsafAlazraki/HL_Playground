@@ -1,5 +1,5 @@
 /* ============================================================
-   SIX module declarations, for six specifiers, for one guard.
+   EIGHT module declarations, for eight specifiers, for one guard.
 
    `applied.test.ts` reads the SOURCE TEXT of every surface that
    curates, to prove each one goes through this feature rather than
@@ -44,6 +44,16 @@ declare module '@/features/quote/QuoteBuild.tsx?raw' {
 }
 
 declare module '@/features/constraints/TrailerFitmentPanel.tsx?raw' {
+  const source: string
+  export default source
+}
+
+declare module '@/features/modules/ModuleIndex.tsx?raw' {
+  const source: string
+  export default source
+}
+
+declare module '@/features/fitment/FanOut.tsx?raw' {
   const source: string
   export default source
 }

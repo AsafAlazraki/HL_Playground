@@ -337,6 +337,7 @@ export {
   marqueVocabulary,
   readCatalogue,
   readMarques,
+  readPartnerRows,
   selectPartners,
 } from './trailerFitment'
 export type {
@@ -349,6 +350,7 @@ export type {
   HeldBack,
   Marque,
   MarqueReading,
+  PartnerRowReading,
   PartnerVerdict,
   RegimeReading,
   SelectOptions,

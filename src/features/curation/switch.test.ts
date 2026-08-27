@@ -151,7 +151,17 @@ describe('the note over that list', () => {
 
   it('keeps the discontinued sentence when the narrowing is switched off', () => {
     const r = reading(true)
-    expect(r.chip).toBe('all 4 NSM Custom Trailers')
+    /* NOT "all 4", AND THAT EXPECTATION WAS THE BUG. The switch turns
+       the RULE off; it does not turn the discontinued contract off,
+       and it must not. So with the narrowing suspended this list draws
+       THREE rows, and a chip reading "all 4" above them contradicted
+       the note two lines below it saying one is no longer sold — the
+       chip and the paragraph disagreeing, which is exactly what
+       `readCuration` computing both from one set of counts is for.
+       The word "all" is now earned only when the offer is the pool.
+       Caught by mounting the mechanism on the module catalogue, which
+       is the first surface with a non-empty withheld bucket. */
+    expect(r.chip).toBe('3 of 4 NSM Custom Trailers')
     expect(r.narrowedOut).toBe(0)
     expect(r.withheld).toBe(1)
     expect(r.note).toContain('1 NSM Custom Trailer is no longer sold')

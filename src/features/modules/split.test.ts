@@ -18,7 +18,7 @@
    ============================================================ */
 import { describe, expect, it } from 'vitest'
 import type { EntityDef, ModuleDef, TableKind } from '@/types/model'
-import { splitReading } from './split'
+import { siblingOffer, splitReading } from './split'
 
 const table = (id: string, name: string, kind: TableKind | undefined): EntityDef =>
   ({
@@ -121,5 +121,88 @@ describe('is this module one place, or a bag?', () => {
     )
     expect(splitReading(moduleOf('Factory Packages', ['a']), entities).coherent).toBe(true)
     expect(splitReading(moduleOf('Dealer Fit Packages', ['b']), entities).coherent).toBe(true)
+  })
+})
+
+/* ============================================================
+   AND THE SAME RULE, ONE MOMENT EARLIER.
+
+   The reading above is a post-mortem. `siblingOffer` is the panel
+   that MAKES a module asking the same question before there is
+   anything to complain about — and the case it exists for is the one
+   the panel used to get wrong: `e.kind === picked.kind` is true for
+   two tables that both declared nothing, so an unclassified register
+   was offered every other unclassified register with a tick box
+   beside it.
+   ============================================================ */
+describe('what a new module is offered to be built from', () => {
+  it('offers the tables that agree, by name', () => {
+    const picked = table('a', 'Zebra Hire', 'trailer')
+    const offer = siblingOffer(picked, [
+      picked,
+      table('b', 'Mowers', 'trailer'),
+      table('c', 'Apron Hire', 'trailer'),
+      table('d', 'Service Kits', 'package'),
+    ])
+    expect(offer.siblings.map((e) => e.name)).toEqual(['Apron Hire', 'Mowers'])
+    expect(offer.why).toBe('')
+  })
+
+  it('offers NOTHING to a table that declares no kind, and says why', () => {
+    const picked = table('a', 'Labour Rates', 'custom')
+    const offer = siblingOffer(picked, [
+      picked,
+      table('b', 'Oils & Consumables', 'custom'),
+      table('c', 'Registration Costs', undefined),
+      table('d', 'Fittings', 'accessory'),
+    ])
+    expect(offer.siblings).toEqual([])
+    /* the count is the other UNCLASSIFIED tables, not every other
+       table — the accessory is somebody's classified data and has
+       nothing to do with this refusal */
+    expect(offer.why).toContain('Labour Rates declares no kind')
+    expect(offer.why).toContain('2 other tables declare none either')
+    expect(offer.why).toContain('not agreement')
+  })
+
+  it('says the singular when exactly one other table is in the same position', () => {
+    const picked = table('a', 'Callout Rates', 'custom')
+    const offer = siblingOffer(picked, [picked, table('b', 'Delivery Fees', 'custom')])
+    expect(offer.why).toContain('1 other table declares none either')
+    expect(offer.why).not.toContain('tables declare none')
+  })
+
+  it('refuses gently when it is the only unclassified table on the sheet', () => {
+    const picked = table('a', 'Rounds', undefined)
+    const offer = siblingOffer(picked, [picked, table('b', 'Hulls', 'boat')])
+    expect(offer.siblings).toEqual([])
+    expect(offer.why).toContain('It can be a module on its own')
+    expect(offer.why).not.toContain('other')
+  })
+
+  it('never offers what the caller had already withheld', () => {
+    /* `offered` is the panel's own list. This narrows it and may not
+       widen it, so a retired or join table the caller left out stays
+       left out however well its kind agrees. */
+    const picked = table('a', 'Stock Bikes', 'boat')
+    const offer = siblingOffer(picked, [picked, table('b', 'Demo Bikes', 'boat')])
+    expect(offer.siblings.map((e) => e.id)).toEqual(['b'])
+  })
+
+  it('agrees with the reading — anything it offers builds a coherent module', () => {
+    /* THE POINT OF SHARING THE PREDICATE. Whatever the panel offers,
+       ticking every box must leave a module `splitReading` calls one
+       place. Two answers to one question was the defect. */
+    const picked = table('a', 'Scripts', 'accessory')
+    const all = [
+      picked,
+      table('b', 'Dressings', 'accessory'),
+      table('c', 'Fridge Lines', 'accessory'),
+      table('d', 'Dispensing Fees', 'custom'),
+    ]
+    const offer = siblingOffer(picked, all)
+    const ids = [picked.id, ...offer.siblings.map((e) => e.id)]
+    const entities = world(...all)
+    expect(splitReading(moduleOf('Dispensary', ids), entities).coherent).toBe(true)
   })
 })

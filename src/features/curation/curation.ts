@@ -200,7 +200,25 @@ export function curationChip(input: CurationInput): string {
   const { counts, name, narrowings, showingAll } = input
   const pool = atLeast0(counts.pool)
   const offered = atLeast0(counts.offered)
-  if (showingAll) return `all ${fig(pool)} ${nounFor(name, pool)}`
+  /* ── "ALL" MEANS ALL, AND THE CONTRACT STILL HOLDS SOME BACK ─────
+     This read `all ${pool}` unconditionally, and it was true only for
+     a surface with nothing discontinued in it — every one of them,
+     until the module catalogue arrived with 727 of its 3,587 lines no
+     longer sold. There it printed "all 3,587 accessories" over a list
+     of 2,860, three lines above its own note saying 727 are withheld:
+     the chip and the paragraph disagreeing, which is the single fault
+     this whole file exists to make impossible.
+
+     The switch turns the RULE off. It does not, and must not, turn
+     the discontinued contract off — that is not a narrowing a
+     salesperson may suspend. So the word "all" is earned only when
+     the offer really is the pool, and otherwise the count is stated
+     the same way it is stated everywhere else. */
+  if (showingAll) {
+    return offered >= pool
+      ? `all ${fig(pool)} ${nounFor(name, pool)}`
+      : `${fig(offered)} of ${fig(pool)} ${nounFor(name, pool)}`
+  }
   const parts = [`${fig(offered)} of ${fig(pool)} ${nounFor(name, pool)}`]
   for (const w of narrowings) {
     parts.push(w.what)

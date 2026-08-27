@@ -161,11 +161,33 @@ describe('the switch', () => {
 
   it('stops explaining a narrowing that is switched off', () => {
     const r = readCuration(trailers({ showingAll: true }))
-    expect(r.chip).toBe('all 434 Trailers')
+    /* NOT "all 434", BECAUSE 434 IS NOT WHAT IS ON OFFER. This fixture
+       still holds back 2 rows the discontinued contract withheld, and
+       the note below says so — so a chip claiming "all 434" would be
+       the chip and the paragraph disagreeing, which is the one fault
+       computing both from one set of counts exists to prevent. The
+       word "all" is earned only where the offer IS the pool. See
+       `curationChip`; found by mounting the mechanism on the module
+       catalogue, whose 727 withheld lines made it visible. */
+    expect(r.chip).toBe('10 of 434 Trailers')
+    /* THE NARROWING IS OFF: its 422 are no longer accounted for */
     expect(r.note).not.toContain('422')
     /* the discontinued contract is NOT a narrowing and does not switch
        off — nobody may be offered stock the business stopped selling */
     expect(r.note).toContain('no longer sold')
+  })
+
+  it('still says “all” where the offer really is the pool', () => {
+    /* The other half of the same rule, so nobody reads the change
+       above as "the word all was removed". A table with nothing
+       discontinued in it switches its narrowing off and gets the
+       shortest true sentence there is. */
+    const r = readCuration(
+      trailers({ showingAll: true, counts: { pool: 434, matched: 434, offered: 434 } }),
+    )
+    expect(r.chip).toBe('all 434 Trailers')
+    expect(r.withheld).toBe(0)
+    expect(r.note).toBe('')
   })
 })
 

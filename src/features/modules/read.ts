@@ -63,6 +63,20 @@ import { existingRelations } from '@/features/views/relations'
    restricted at all, and what a role is really holding, is decided
    next door and is decided once. */
 import { grantedTo, isUnrestricted } from './access'
+/* THE FACE, AND THE RECORD OF WHAT ELSE WAS COUNTED. Its own file
+   because the interesting half is the EVIDENCE — four signals
+   measured over nine modules, three of which do not separate a
+   catalogue from a register and are therefore not allowed a vote. */
+import { readFace, type ModuleFace } from './face'
+/* WHAT A TILE SAYS BESIDE ITS NAME, chosen by measuring the table.
+   Resolved once per table here and reused down its rows, exactly as
+   the price column and the picture column already are. */
+import { factColumns, factsFor, type EntryFact } from './tileFacts'
+
+/* `moduleFace` moved its rule into `face.ts`; these keep working for
+   every caller that already reaches for them through this file. */
+export { PICTURE_FLOOR, type ModuleFace } from './face'
+export { FACTS_PER_TILE, FACT_FILL_FLOOR, type EntryFact, type FactColumn } from './tileFacts'
 
 /* ---------------------------------------------------------- */
 /* The module's tables and its size                           */
@@ -421,8 +435,24 @@ export interface IndexEntry {
   /** formatted and ready to print; '' when this table prices nothing */
   price: string
   img?: ImageRef
+  /** THE TWO OR THREE FIGURES THAT DECIDE A SALE, already formatted —
+   *  chosen by measuring the table's own columns, never by a list of
+   *  column names somebody typed. See `tileFacts.ts`. Empty on a table
+   *  whose columns nominate nothing, which is most registers, and
+   *  absent when the caller asked for the entries without them. */
+  facts?: EntryFact[]
   /** lower-cased label, for the search box */
   hay: string
+}
+
+/** THE FACTS ARE OPTIONAL BECAUSE ONE CALLER DOES NOT WANT THEM.
+ *  `moduleFace` builds the same list purely to count pictures and
+ *  prices, and paying for three formatted cells on 2,860 rows to
+ *  answer a question about none of them is the sort of cost that
+ *  gets a good idea taken back out. Everything a person actually
+ *  reads asks for them. */
+export interface BuildOptions {
+  facts?: boolean
 }
 
 /** The FIRST grouping level's value for one row — the banner it sits
@@ -463,7 +493,9 @@ export function trailOf(entity: EntityDef, row: RowData): string {
 export function buildEntries(
   tables: EntityDef[],
   rowsByEntity: Record<string, RowData[]>,
+  options: BuildOptions = {},
 ): IndexEntry[] {
+  const wantFacts = options.facts !== false
   const out: IndexEntry[] = []
   for (const entity of tables) {
     /* A RETIRED TABLE LISTS NOTHING. It is history rather than stock,
@@ -472,6 +504,17 @@ export function buildEntries(
     const rows = rowsByEntity[entity.id] ?? []
     const price = priceReadOf(entity)
     const imgField = imageFieldOf(entity)
+    /* ONCE PER TABLE, over the rows the catalogue will draw — the same
+       discipline the price and picture columns above already keep. The
+       price column is handed over as the one thing the tile is already
+       printing, so a face never carries the same figure twice. */
+    const facts = wantFacts
+      ? factColumns(
+          entity,
+          rows.filter((r) => !isDiscontinued(r)),
+          new Set(price ? [price.field.id] : []),
+        )
+      : []
     for (const row of rows) {
       /* DISCONTINUED NEVER REACHES A SALESPERSON. The row stays on the
          sheet — an old quote was written against it — and the index,
@@ -494,6 +537,7 @@ export function buildEntries(
         amount: typeof raw === 'number' && Number.isFinite(raw) ? raw : undefined,
         price: price ? formatCell(price.field, raw, undefined, bandOf(entity, price.field)) : '',
         img: imgField ? primaryImage(row.values[imgField.id] ?? null) : undefined,
+        facts: facts.length === 0 ? undefined : factsFor(entity, row, facts),
         hay: label.toLowerCase(),
       })
     }
@@ -849,62 +893,25 @@ export function accessReading(module: ModuleDef): AccessReading {
    WHICH FACE — a catalogue somebody shops, or a register somebody
    keeps.
 
-   THE DEFECT THIS ENDS. The face used to be decided once, at the
-   moment a module was made, from ONE question about ONE table: does
-   `tableIds[0]` declare a picture column? That is the right question
-   asked of the wrong thing. A module spans its tables — Motors runs
-   Yamaha, which pictures 203 of its 209, beside ePropulsion, which
-   has no picture column at all — and a column existing is not the
-   same fact as the rows carrying anything in it.
-
-   SO IT IS COUNTED OVER THE ROWS, and the answer on the real set is
-   not close to the line anywhere: Boats 723 of 810, Trailers 420 of
-   434, Motors 203 of 241, Factory Packages 61 of 89 — and Parts,
-   Dealer Fit, Labour Rates, Oils and Registration are all exactly
-   ZERO of theirs. Half is the floor, and half is nowhere near any of
-   those eight numbers, which is the only reason a floor may be
-   written down at all.
+   THE RULE, THE MEASUREMENT AND THE THREE SIGNALS THAT WERE TESTED
+   AND REJECTED ARE ALL IN `face.ts`. This is the door a module comes
+   through: it hands its own live rows over and gets a verdict plus
+   the sentence the designer shows an admin.
 
    IT IS A DEFAULT, NOT A LOCK. `ModuleDef.index` is still the stored
    field and the designer still writes it; this is what a module is
-   BORN with, and the sentence it comes with is what the designer
-   shows an admin who wants to know why.
+   BORN with.
    ============================================================ */
-
-/** Below this share of pictured rows, a grid of tiles is a grid of
- *  empty wells. See above for why half is safe on this data. */
-export const PICTURE_FLOOR = 0.5
-
-export interface ModuleFace {
-  mode: ModuleIndexMode
-  /** live rows carrying a picture, and live rows altogether */
-  pictured: number
-  live: number
-  /** the measurement, in a sentence, for the designer to show */
-  why: string
-}
 
 /** The face these tables' own rows ask for. */
 export function moduleFace(
   tables: EntityDef[],
   rowsByEntity: Record<string, RowData[]>,
 ): ModuleFace {
-  const entries = buildEntries(sellableTables(tables), rowsByEntity)
-  const live = entries.length
-  let pictured = 0
-  for (const e of entries) if (e.img) pictured += 1
-  const mode: ModuleIndexMode = live > 0 && pictured >= live * PICTURE_FLOOR ? 'tiles' : 'rows'
-
-  const why =
-    live === 0
-      ? 'There are no rows here yet, so there is nothing to draw a face from.'
-      : pictured === 0
-        ? `Nothing here carries a picture — ${grouped(live)} of ${grouped(live)} — so this is a register to keep rather than a catalogue to shop.`
-        : mode === 'tiles'
-          ? `${grouped(pictured)} of ${grouped(live)} carry a picture, so this is a catalogue.`
-          : `Only ${grouped(pictured)} of ${grouped(live)} carry a picture, so tiles would draw mostly empty wells.`
-
-  return { mode, pictured, live, why }
+  /* WITHOUT THE FACTS. The face is decided by pictures, prices and
+     names — none of which is a tile fact — so a module being weighed
+     up must not pay for three columns it is not going to draw. */
+  return readFace(buildEntries(sellableTables(tables), rowsByEntity, { facts: false }))
 }
 
 /* ============================================================

@@ -687,3 +687,146 @@
   line-height: 1.6;
   color: var(--ink-soft);
 }
+
+/* ============================================================
+   THE RULE THAT PICKS, MADE PRESSABLE.
+
+   Appended, and nothing above changes meaning. Every bar in
+   `.fo-picks` already carried a measured count — "4 of 434 · 0.92%
+   of the catalogue" — and there was no way to see the four. The bar
+   is now the face of a door, and behind it are the rows, the
+   mechanism's own note, a search that reaches past the rule and a
+   switch that suspends it. See `FanOut.tsx`'s `pick` memo for the
+   argument.
+
+   NO NEW ACCENT IS SPENT. The whole panel is ink, hairline and the
+   page's own paper; the one accent inside it is the focus ring,
+   which is DESIGN_CONTRACT §1's own third permitted case, and the
+   `.cur-*` note brings its own sunken ground with it.
+
+   THE PANEL SITS ON PLAIN PAPER, DELIBERATELY. `--ink-faint` is
+   4.72:1 on paper and 4.26:1 over a tint, where it FAILS, and the
+   table name on each row is the faint tier. Tinting this panel
+   would have taken that line under the floor.
+   ============================================================ */
+
+/* an open shortlist takes the whole row of the grid: 260px is a bar
+   and a caption, and it is not a list of rows with a search box */
+.fo-pick.is-open {
+  grid-column: 1 / -1;
+}
+
+.fo-pick-door {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+
+.fo-pick-door:hover {
+  border-color: var(--hairline);
+  background: var(--paper-sunken);
+}
+
+/* press on POINTER-DOWN, which is what `:active` is */
+.fo-pick-door:active {
+  background: var(--paper-sunken);
+  border-color: var(--hairline-strong);
+}
+
+.fo-pick-door:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* the door is open — it sits in rather than taking a colour */
+.fo-pick-door[aria-expanded='true'] {
+  border-color: var(--hairline-strong);
+  background: var(--paper-sunken);
+}
+
+/* `.fo-pick-head` is already a flex row; `.fo-pick-say` was a
+   paragraph and is now a span inside the door, so it has to be told
+   to hold its own line and its own top margin again */
+.fo-pick-say {
+  display: block;
+}
+
+.fo-pick-open {
+  margin: var(--sp-2) 0 0;
+  padding: 0 0 0 var(--sp-3);
+  border-left: 2px solid var(--hairline-strong);
+}
+
+.fo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fo-list-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.fo-list-row:last-child {
+  border-bottom: 0;
+}
+
+.fo-list-name {
+  flex: 1 1 16ch;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* THE EVIDENCE, VERBATIM. The heading is the cell the rule read, so
+   it is a VALUE and never a label — sentence case as the file wrote
+   it, mono because a reader is checking it character by character
+   against their own sheet. */
+.fo-list-banner {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.fo-list-table {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: var(--ink-faint);
+}
+
+.fo-list-more,
+.fo-pick-none {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}

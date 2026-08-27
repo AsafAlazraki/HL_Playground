@@ -68,7 +68,7 @@
    is `--paper-sunken`, which the contract names for exactly this.
    ============================================================ */
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import { ArrowSquareOut } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -85,12 +85,41 @@ import {
   marqueVocabulary,
   readCatalogue,
   readMarques,
+  readPartnerRows,
+  type PartnerRowReading,
 } from '@/features/constraints/trailerFitment'
+import { ledgerFor } from '@/features/constraints/ruleLedger'
+import { heldBackSentence, retiredTableSentence } from '@/features/views/sellable'
+/* THE MECHANISM. See `THE RULE THAT PICKS, MADE PRESSABLE` below for
+   what each of its four properties is doing on this page and why this
+   band — the one place in the app that states a measured selection
+   rate — was the worst possible surface to have been stating it
+   without letting anybody check it. */
+import { CurationNote, measuredRate, readCuration, searchReach } from '@/features/curation'
 import { readFanOut, readRoles, type Fan, type FanReading, type StrandGroup } from './reading'
 import './fitment.css'
 
 const n = (v: number): string => v.toLocaleString()
 const pct = (share: number): string => `${(share * 100).toFixed(share < 0.1 ? 2 : 1)}%`
+
+/* ── F8'S RATE, READ FROM THE ADJUDICATION AND NEVER TYPED ────────
+   The identical two lines `TrailerFitmentPanel` carries, for the
+   identical reason: `RULE_LEDGER`'s F8 entry restates the seed's own
+   `source` line and `ruleLedger.test.ts` asserts that it does, so this
+   clause moves when the measurement moves and a hand-written
+   "581 of 581" could not. `''` where the project measured nothing —
+   `Narrowing.measured` is optional exactly so a rule nobody measured
+   says nothing about a rate instead of reaching for one. */
+const F8 = ledgerFor('F8')
+const F8_RATE = F8?.measure
+  ? measuredRate(F8.measure.held, F8.measure.tested, 'testable pairings in the price file')
+  : ''
+
+/** How many admitted rows are drawn before the list asks you to
+ *  narrow. The rule's whole point is that it leaves a shortlist — the
+ *  widest band on this seed leaves 34 — so this is only ever met with
+ *  the narrowing switched OFF, which is when it should be met. */
+const LIST_CAP = 60
 
 export interface FanOutProps {
   /** open the relationship table behind a figure. A count nobody can
@@ -107,6 +136,13 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
     [entities, rowsByEntity],
   )
   const roles = useMemo(() => readRoles(reading), [reading])
+
+  /* WHICH BRAND'S SHORTLIST IS OPEN, and the two controls the
+     mechanism needs to do its work on it. A position inside this page
+     and nowhere else — nothing here is a fact about the data. */
+  const [picked, setPicked] = useState<string | null>(null)
+  const [pickQuery, setPickQuery] = useState('')
+  const [pickAll, setPickAll] = useState(false)
 
   /* F8, through the one implementation of it there is. It is memoised
      apart from the fan-out because it is the expensive half — it runs
@@ -125,6 +161,7 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
       marques,
       floor: TRAILER_ATM_FLOOR,
     })
+    const catalogue = readCatalogue(project, TRAILER_FITMENT, marques)
     return {
       accent: partner?.accent ?? 'graphite',
       /* the floor's own reading, summed — it warns, it never filters */
@@ -136,10 +173,118 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
          nothing about what the business sells */
       noun: leafNoun(partner),
       heading: (partner ? bannerField(partner)?.name : undefined) ?? 'heading',
-      catalogue: readCatalogue(project, TRAILER_FITMENT, marques),
+      catalogue,
+      /* THE CATALOGUE ROW BY ROW, so the rate above can be CHECKED
+         rather than believed. Read through the selector's own file —
+         see `readPartnerRows` for why the walk lives beside the rule
+         and not here. */
+      rows: readPartnerRows(project, TRAILER_FITMENT, marques),
       readings,
+      /* ── WHAT WAS SET ASIDE BEFORE THE RULE EVER RAN ────────────
+         Said ONCE, at the foot of the band, and in the discontinued
+         contract's own sentences rather than in words this file made
+         up. The shortlists above count against the LIVE catalogue —
+         which is what F8 was measured on — so a person reading "12 of
+         434" needs to be told, somewhere, what the 434 already
+         excludes. Anywhere else and there would be two paragraphs
+         about one set of rows with two different denominators, which
+         is the fault `@/features/curation` exists to end. */
+      setAside: [
+        ...catalogue.retiredTables.map((name) => retiredTableSentence(name)),
+        heldBackSentence(catalogue.discontinued, leafNoun(partner).many),
+      ]
+        .filter((line) => line !== '')
+        .join(' '),
     }
   }, [entities, rowsByEntity])
+
+  /* ============================================================
+     THE RULE THAT PICKS, MADE PRESSABLE — the four properties on the
+     one band that most needed them.
+
+     WHAT WAS WRONG WITH THIS BAND. It is the only surface in the app
+     that prints a MEASURED selection rate, and it printed eleven of
+     them — "4 of 434 · 0.92% of the catalogue" — with no way on earth
+     to see the four. A rate nobody can check is the same claim
+     HelmLogic's tooltip makes ("wrong HP band, wrong length") with a
+     number bolted on, and a number bolted onto an unverifiable claim
+     is worse than none: it is confidently wrong, which
+     DESIGN_CONTRACT §7 names outright.
+
+     THE FOUR PROPERTIES, AND WHAT EACH ONE IS HERE.
+
+       1 · IT EXPLAINS ITSELF   the narrowing is F8, in the price
+           file's own word for the column — `selector.heading`, read
+           off the partner table — and it carries the rate the
+           adjudication measured. This is the exemplar sentence
+           `curation.ts`'s header is written around, and this is the
+           surface it was written about.
+       2 · IT CAN BE SEARCHED PAST   the box searches the WHOLE live
+           catalogue, not the shortlist. Somebody who can see a
+           trailer on the sheet and types its name is told how many
+           match on the far side of the rule and handed one press that
+           fetches them. That is the exact failure `reach.ts` was
+           written for, and the reason it is not "search the list you
+           are looking at".
+       3 · IT CAN BE SWITCHED OFF   the whole catalogue, F8 suspended.
+           A person who does not believe the rule can see what it set
+           aside and decide for themselves.
+       4 · THE COUNT IS STATED   "422 trailers are not offered here,
+           because …" — never left as 434 minus 12.
+
+     THE DENOMINATOR IS THE LIVE CATALOGUE, which is the same choice
+     `TrailerFitmentPanel` made and for its reason: `MarqueReading`
+     already counts against live rows, so folding the withheld ones
+     into this pool would count them twice and put two different
+     totals for one catalogue on one screen. The discontinued and
+     retired rows are said ONCE, at the foot of the band, in
+     `sellable.ts`'s own sentences. */
+  const pick = useMemo(() => {
+    if (!selector || picked === null) return null
+    const marque = selector.readings.find((r) => r.marque.name === picked)
+    if (!marque) return null
+
+    /* NEVER OFFERED, so never in the pool a search reaches into. The
+       contract holds these back before any rule runs. */
+    const live = selector.rows.filter((r) => !r.discontinued)
+    const admitted = pickAll ? live : live.filter((r) => r.bannerMarque === picked)
+    const admittedIds = new Set(admitted.map((r) => r.rowId))
+
+    const found = searchReach({
+      pool: live,
+      offered: admittedIds,
+      idOf: (r: PartnerRowReading) => r.rowId,
+      hayOf: (r: PartnerRowReading) => r.hay,
+      term: pickQuery,
+    })
+
+    return {
+      marque,
+      admitted,
+      shown: (found.active ? found.within : admitted).slice(0, LIST_CAP),
+      drawn: found.active ? found.within.length : admitted.length,
+      searching: found.active,
+      reading: readCuration({
+        name: selector.noun.many,
+        counts: { pool: live.length, matched: admitted.length, offered: admitted.length },
+        narrowings: pickAll
+          ? []
+          : [
+              {
+                id: 'f8',
+                what: `the ${selector.heading} names ${picked}`,
+                /* THE ONE CLAUSE THAT IS THE WHOLE OF OUR ADVANTAGE
+                   HERE — and it rides with the reason it belongs to
+                   rather than floating free, which is what
+                   `curationChip` refuses to let a caller do. */
+                measured: F8_RATE,
+              },
+            ],
+        showingAll: pickAll,
+        search: { term: pickQuery, beyond: found.beyond.length },
+      }),
+    }
+  }, [selector, picked, pickAll, pickQuery])
 
   if (reading.fans.length === 0) return <NothingYet />
 
@@ -282,20 +427,92 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
               one that leaves ninety-eight has not.
             </p>
             <ul className="fo-picks">
-              {selector.readings.map((r) => (
-                <li className="fo-pick" key={r.marque.name}>
-                  <p className="fo-pick-head">
-                    <span className="fo-pick-name">{r.marque.name}</span>
-                    <span className="fo-pick-n">
-                      <b>{r.selected}</b> of {r.catalogue}
-                    </span>
-                  </p>
-                  <Bar share={r.share} accent={selector.accent} />
-                  <p className="fo-pick-say">
-                    {pct(r.share)} of the catalogue · {r.marque.banners.join(' · ')}
-                  </p>
-                </li>
-              ))}
+              {selector.readings.map((r) => {
+                const open = picked === r.marque.name
+                return (
+                  /* WRITTEN OUT, NOT INTERPOLATED — `check-styles`
+                     only trusts a string literal inside a className,
+                     and a class it cannot read is a class nobody
+                     notices going unstyled. */
+                  <li className={open ? 'fo-pick is-open' : 'fo-pick'} key={r.marque.name}>
+                    {/* THE BAR IS NOW A DOOR. Everything inside it is
+                        what it always was — the count, the proportion,
+                        the price file's own series headings — and the
+                        one thing that changed is that pressing it
+                        shows you the rows the figure is about. A
+                        measured claim with nothing behind it was the
+                        defect; see the `pick` memo. */}
+                    <button
+                      type="button"
+                      className="fo-pick-door"
+                      aria-expanded={open}
+                      onClick={() => {
+                        setPicked(open ? null : r.marque.name)
+                        /* a new brand starts with the rule IN force
+                           and nothing typed — otherwise a shortlist
+                           opens pre-filtered by somebody else's search */
+                        setPickAll(false)
+                        setPickQuery('')
+                      }}
+                    >
+                      <span className="fo-pick-head">
+                        <span className="fo-pick-name">{r.marque.name}</span>
+                        <span className="fo-pick-n">
+                          <b>{r.selected}</b> of {r.catalogue}
+                        </span>
+                      </span>
+                      <Bar share={r.share} accent={selector.accent} />
+                      <span className="fo-pick-say">
+                        {pct(r.share)} of the catalogue · {r.marque.banners.join(' · ')}
+                      </span>
+                    </button>
+
+                    {open && pick ? (
+                      <div className="fo-pick-open">
+                        <CurationNote
+                          reading={pick.reading}
+                          showingAll={pickAll}
+                          onShowAll={setPickAll}
+                          search={{
+                            value: pickQuery,
+                            onChange: setPickQuery,
+                            label: `Find a ${selector.noun.one} by name, across the whole catalogue`,
+                            placeholder: `Find a ${selector.noun.one}…`,
+                          }}
+                        />
+                        {pick.shown.length === 0 ? (
+                          <p className="fo-pick-none">
+                            {pick.searching
+                              ? `Nothing on this shortlist matches “${pickQuery.trim()}”.`
+                              : `No ${selector.noun.one} on the sheet carries a ${selector.heading} naming ${r.marque.name}.`}
+                          </p>
+                        ) : (
+                          <ul className="fo-list">
+                            {pick.shown.map((row) => (
+                              <li className="fo-list-row" key={row.rowId}>
+                                <span className="fo-list-name">{row.label}</span>
+                                {/* THE EVIDENCE, NOT A TICK. The
+                                    heading is the cell the rule read,
+                                    verbatim, so a reader can check the
+                                    verdict against their own file
+                                    rather than take it. */}
+                                <span className="fo-list-banner">{row.banner}</span>
+                                <span className="fo-list-table">{row.tableName}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {pick.drawn > pick.shown.length ? (
+                          <p className="fo-list-more">
+                            {n(pick.drawn - pick.shown.length)} more are on the list and not
+                            drawn — type above to narrow.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </li>
+                )
+              })}
             </ul>
             {/* THE FLOOR, SAID TO BE A FLOOR, AND MEASURED RATHER THAN
                 CLAIMED. This paragraph read "no trailer in this price
@@ -336,6 +553,11 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
               The whole account of both — where each runs, where it cannot, and what it sets
               aside — is on <b>Business rules</b>.
             </p>
+            {/* see `setAside` in the selector memo for why this is one
+                line, here, and in the contract's own words */}
+            {selector.setAside === '' ? null : (
+              <p className="fo-band-note">{selector.setAside}</p>
+            )}
             <p className="fo-src">
               Computed by the selector in src/features/constraints/trailerFitment.ts, which
               is the only implementation of this rule in the app · Trailer Module!A, eleven
