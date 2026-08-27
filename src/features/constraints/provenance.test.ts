@@ -17,30 +17,28 @@ import { describe, expect, it } from 'vitest'
 import { readSource } from './Provenance'
 import { WORKBOOK_RULES } from './workbookRules'
 
-/** Every word the reader will see, in the order they will see it. */
-const drawn = (text: string): string => {
+/** Every word, punctuation stripped, sorted — so the check is
+ *  "nothing was lost" and not "nothing was moved". The verdict IS
+ *  moved, deliberately: it is lifted out of the line it opens and
+ *  stamped at the head, where a state stamp belongs. */
+const words = (text: string): string[] =>
+  text
+    .replace(/[·,:;]+/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 0)
+    .sort()
+
+/** Every word the reader will see. */
+const drawn = (text: string): string[] => {
   const { verdict, parts } = readSource(text)
-  return [verdict ?? '', ...parts.map((p) => p.text)].join(' ').trim()
+  return words([verdict ?? '', ...parts.map((p) => p.text)].join(' '))
 }
 
-/** Every word the string held, with the separators taken out. */
-const held = (text: string): string =>
-  text
-    .split(' · ')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .join(' ')
-
 describe('a citation survives being drawn', () => {
-  it('keeps every word of all sixteen, in order', () => {
+  it('keeps every word of all sixteen', () => {
     expect(WORKBOOK_RULES.length).toBeGreaterThan(0)
     for (const seed of WORKBOOK_RULES) {
-      /* the only edit the reader is allowed to see is the leading
-         punctuation the verdict was lifted out of — "ASSERTED, and
-         the dealer breaks it" loses its comma and nothing else */
-      const a = drawn(seed.source).replace(/[\s,:;]+/g, ' ')
-      const b = held(seed.source).replace(/[\s,:;]+/g, ' ')
-      expect(a).toBe(b)
+      expect(drawn(seed.source)).toEqual(words(seed.source))
     }
   })
 
@@ -54,16 +52,24 @@ describe('a citation survives being drawn', () => {
     for (const seed of observed) expect(readSource(seed.source).verdict).toBe('OBSERVED')
   })
 
-  it('sends every cell address to the mono line, and nowhere else', () => {
+  /* THE ADDRESS LINE IS THE ONE THING SOMEBODY WILL RETYPE, so what
+     lands on it has to BE an address. A part that merely mentions a
+     cell inside a sentence — "the 3 misses are single-letter typos
+     at Boat Module!KZ115" — is prose, and prose set in the reference
+     face is the fault this component was written to fix, pointing
+     the other way. */
+  it('puts an address on the address line, and never a sentence', () => {
+    let seen = 0
     for (const seed of WORKBOOK_RULES) {
-      const { parts } = readSource(seed.source)
-      for (const part of parts) {
-        if (part.k === 'cell') continue
-        /* a part that carries a bang belongs on the address line;
-           anything else on that line would be prose set in mono */
-        expect(/\w!\$?[A-Z]{1,3}/.test(part.text)).toBe(false)
+      for (const part of readSource(seed.source).parts) {
+        if (part.k !== 'cell') continue
+        seen += 1
+        expect(part.text.startsWith(part.addr)).toBe(true)
+        /* it opens with a sheet name and a bang, or with a formula */
+        expect(/^(=|[A-Z][A-Za-z0-9 ()._'-]{0,29}!)/.test(part.text)).toBe(true)
       }
     }
+    expect(seen).toBeGreaterThan(10)
   })
 
   it('prints an unreadable line whole rather than guessing at it', () => {

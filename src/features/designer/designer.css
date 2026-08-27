@@ -113,16 +113,23 @@
 }
 
 /* SAID SAVED IN GREEN, IN A GREEN BOX, ROTATED TWO DEGREES.
-   Three faults in eleven characters. A rubber stamp on a slant is the
-   drawing office; the kind hues are "a rail, a dot or a glyph, never a
-   fill behind text" (§1); and `--kind-green` as TEXT measures well
-   under the 4.5 floor on white, so the one word that confirms the
-   dealer's work landed was the least legible thing on the panel.
 
-   It is now the thing itself: a green DOT — the kind hue doing the one
-   job the kind hues have — and the word in the ordinary quiet ink,
-   which clears 5.5:1. It still appears on the same beat and fades on
-   the same curve. */
+   The rotation is the drawing office and goes with the rest of it.
+   The tracking was +0.2em, which the bridge's own note calls the worst
+   thing in the outgoing type. And the colour was `--accent-viridian`,
+   which the bridge points at `--kind-green` — a KIND hue, which §1
+   reserves for "what a table holds" and bars from chrome. A green box
+   around a status word is chrome wearing a kind hue.
+
+   MEASURED RATHER THAN ASSUMED, because an earlier draft of this
+   comment asserted the old colour failed the floor and it does not:
+   `--kind-green` #15803d is 5.02:1 on white — legal, and the wrong
+   token anyway. `--success` #146c2e is the token for a thing that
+   went well and measures 6.53:1.
+
+   What is drawn now is a dot in `--success` and the word in the quiet
+   ink at 5.48:1. It appears on the same beat and fades on the same
+   curve; only the shape and the token changed. */
 .ds-saved {
   display: inline-flex;
   align-items: center;
@@ -139,7 +146,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--kind-green);
+  background: var(--success);
 }
 .ds-saved-show {
   opacity: 1;
@@ -862,10 +869,10 @@
   align-items: flex-start;
   gap: var(--sp-2);
 }
-/* THE SECOND ROTATED STAMP, and it fails the same three ways as the
-   first — see `.ds-saved`. It is the mark that says an expression
-   parses, which is the single most reassuring thing on the formula
-   workbench, and it was set in a hue that does not clear the floor. */
+/* THE SECOND ROTATED STAMP, and it is wrong the same three ways as
+   the first — see `.ds-saved` for the measurements. It is the mark
+   that says an expression parses, which is the most reassuring thing
+   on the formula workbench, and it was a slanted box in a kind hue. */
 .ds-fx-stamp {
   display: inline-flex;
   align-items: center;
@@ -882,7 +889,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--kind-green);
+  background: var(--success);
 }
 .ds-fx-chips {
   display: flex;
@@ -1775,16 +1782,24 @@
 
    THE HIT AREA IS THE OTHER HALF. 16px is under any pointer target
    anybody recommends, and these sit 8px apart on a strip of eight.
-   The box grows to 24px through a transparent border and
-   `background-clip: content-box`, so the DOT stays 16px and the
-   target is 24 — the swatch's own colour is set inline as a
-   `background`, and clipping it to the content box is what keeps the
-   border invisible without a second colour being written here. */
+   The target grows to 24px through a pseudo-element inset -4px, and
+   it has to be done that way rather than with padding or a
+   transparent border: the swatch's own colour arrives as an INLINE
+   `background` shorthand (`accentVar(k)` in EntityDesigner.tsx), and
+   a shorthand resets every `background-*` longhand under it — so a
+   `background-clip: content-box` written here would be silently
+   thrown away by the very declaration that puts the colour on. The
+   pseudo-element touches no background property at all, and because
+   it is absolutely positioned it adds nothing to the strip's layout:
+   the gap between two swatches absorbs the overlap. */
 .ds-swatch {
-  width: 24px;
-  height: 24px;
-  border: 4px solid transparent;
-  background-clip: content-box;
+  position: relative;
+}
+.ds-swatch::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
 }
 .ds-swatch:active {
   transform: scale(0.92);
@@ -2009,12 +2024,16 @@
    THE ADD-COLUMN TRAY is a dropdown, and the band is 150–250ms.
    `--t-fast` is 120ms, which is a press. It is also the one control
    on this page a person opens dozens of times a day, so it gets the
-   bottom of the band rather than the top, and it grows from the top
-   edge it came out of rather than from its own middle (ds.css,
-   ORIGIN).
+   BOTTOM of the band rather than the top — 160ms — and it arrives on
+   the entrance curve rather than the state curve.
+
+   `ds-rise` translates 12px and fades; it does not scale, so there is
+   no `transform-origin` to set. The tray sits directly under the
+   button that opened it, so 12px of upward travel is the tray coming
+   out from behind it, which is the spatial relationship ds.css's
+   ORIGIN section asks for.
    ============================================================ */
 .ds-add-menu {
-  transform-origin: 50% 0%;
   animation: ds-rise 160ms var(--ease-out-expo) both;
   border-color: var(--line);
   box-shadow:
@@ -2025,4 +2044,76 @@
   .ds-add-menu {
     animation: fade-in var(--t-fast) var(--ease-draft) both;
   }
+}
+
+/* ============================================================
+   A REFUSAL KEEPS ITS NAME — rule 10, and the reason `disabled`
+   had to go from four controls on this page.
+
+   `disabled` does three things at once, and only one of them was
+   wanted. It stops the click — wanted. It drops the control out of
+   the tab order — so a keyboard reader sweeping the column list
+   never meets the first row's UP arrow at all, and is never told
+   there is a control there or why it will not act. And it strips the
+   accessible name from most screen readers, so even landing on it by
+   accident says nothing.
+
+   `aria-disabled` plus a live guard in the handler stops the act,
+   keeps the name, keeps the tab stop, and lets a `title` carry the
+   sentence. It is the shape the dashboard's own move arrows already
+   use (`.md-card-move`, modules.css) — one refusal pattern in the
+   product, not two.
+
+   THE APPEARANCE IS THE SAME as `:disabled` was: the mark goes quiet
+   and the pointer stops being a hand. What changes is that hover,
+   press and the accent no longer fire on something that will not act.
+   ============================================================ */
+.ds-arrow-btn[aria-disabled='true'],
+.ds-mini-btn[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: default;
+}
+.ds-arrow-btn[aria-disabled='true']:hover,
+.ds-mini-btn[aria-disabled='true']:hover {
+  color: var(--ink-faint);
+  border-color: var(--hairline);
+  background: none;
+}
+.ds-mini-btn[aria-disabled='true']:hover {
+  background: var(--paper-high);
+}
+.ds-arrow-btn[aria-disabled='true']:active,
+.ds-mini-btn[aria-disabled='true']:active {
+  transform: none;
+}
+
+/* ============================================================
+   WHAT THE TABLE HOLDS — the figure this panel never carried.
+
+   See EntityDesigner.tsx for why it is here at all. Typographically
+   it is the app's standing arrangement for a counted line: the
+   FIGURES in IBM Plex Mono, tabular, at the ordinary ink so they are
+   the thing the eye lands on; the NOUNS in Inter at the quiet ink,
+   because they are language and they qualify the figure rather than
+   competing with it. The separators are `--fg-quaternary`, which may
+   never carry meaning and here carries none — they are aria-hidden
+   in the markup so a reader hears "19 variants, 30 columns" rather
+   than the middle dots.
+   ============================================================ */
+.ds-sheet-count {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.ds-sheet-fig {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.ds-sheet-sep {
+  color: var(--fg-quaternary);
 }

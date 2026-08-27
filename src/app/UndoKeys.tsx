@@ -101,6 +101,12 @@ import { Toasts, useToasts } from '@/features/table/Toasts'
    ============================================================ */
 const FURNITURE = '[data-note-clear]'
 
+/** The one frame before the measurement runs. The action bar is 40px
+ *  tall and sits `--s-5` (20px) off the bottom, so 60 is where the
+ *  measured floor lands on every page that has a bar — and a page
+ *  with none simply measures 0 on the next frame and drops. */
+const FIRST_FRAME_FLOOR = 60
+
 /** How far up from the bottom of the window a note must start, to
  *  clear everything that has declared itself. `--sp-5` inside
  *  `.tb-toasts` is the air above it. */
@@ -181,15 +187,22 @@ export function UndoKeys(): JSX.Element {
      exact band the Fitment palette occupies (1440 × 900: note 755–792,
      palette 754–806).
      The floor was a constant for the first of those and is measured for
-     both, from `[data-note-clear]`. `floor` is 0 before the first
-     measurement, so the fallback is the dock's old clearance and a note
-     is never worse off than it was. Still geometry only — no colour, no
+     both, from `[data-note-clear]`.
+
+     THE FALLBACK IS NO LONGER THE DOCK'S 84px. `floor` is 0 for the one
+     frame before the layout effect runs, and 84 was the height of a
+     component that has since been deleted — a number nothing on screen
+     could explain any more. `FIRST_FRAME_FLOOR` is the action bar's
+     own reserved band (40px of bar plus `--s-5` of air, the same 58 the
+     bar itself is positioned by in actionbar.css — 60), so the one
+     unmeasured frame lands where the measured ones do instead of
+     jumping 24px on the second. Still geometry only — no colour, no
      type, no token; the look of a toast is not this file's. */
   return (
     <div
       style={{
         position: 'fixed',
-        inset: `0 0 ${floor > 0 ? floor : 84}px 0`,
+        inset: `0 0 ${floor > 0 ? floor : FIRST_FRAME_FLOOR}px 0`,
         zIndex: 200,
         pointerEvents: 'none',
       }}

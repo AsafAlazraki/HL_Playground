@@ -214,14 +214,60 @@
    the reason on a different baseline rhythm from the count it
    explains. Sentence case throughout — a reason is a sentence, and
    DESIGN_CONTRACT §3 names uppercase sentences outright. */
+/* ============================================================
+   THE CHIP — a figure and then some sentences, and they are set
+   as what they are.
+
+   WHAT THIS WAS. One span, the whole line in `--font-mono` at
+   `--t-mono-sm-size` in `--ink-faint`: the count, the reason, and
+   the measured rate all in the face reserved for figures, at the
+   floor, in the lightest ink the ramp allows anyone to read. The
+   component drawing it has claimed the opposite in its own header
+   since the day it was written.
+
+   WHAT IT IS NOW. The count keeps mono, tabular figures and the
+   faint tier, because it is metadata beside the thing it counts
+   and that is exactly what the tier is for. The reasons take Inter
+   at the caption step and step UP to `--ink-soft` — 8.1:1 on white
+   — because they are sentences a person is meant to read rather
+   than glance at, and the two together are what makes the line
+   legible as "a number, and why".
+   ============================================================ */
 .cur-chip {
   min-width: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0;
+  line-height: 1.45;
+}
+
+/* the figure: mono, tabular, and the metadata tier */
+.cur-chip-n {
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
-  line-height: 1.45;
   color: var(--ink-faint);
+}
+
+/* the reason: a sentence, so it is Inter and it is readable */
+.cur-chip-why {
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-soft);
+}
+
+/* PUNCTUATION IS NOT IN THE INK RAMP. The middot separates two
+   things and says nothing itself, so it takes `--fg-quaternary`,
+   which is the tier for rules and ticks — the one tier barred from
+   carrying meaning, which is precisely why a separator may use it.
+   The spacing around it is the gap; the character does not carry
+   its own. */
+.cur-chip-dot {
+  padding: 0 6px;
+  color: var(--fg-quaternary);
 }
 
 .cur-reach,

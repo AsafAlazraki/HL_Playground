@@ -12,6 +12,17 @@
    THE REFUSAL IS THE FEATURE. Every branch here returns a reason a
    person can act on, in the vocabulary the io surfaces are written in.
    Nothing throws, nothing is logged and dropped.
+
+   AND IT IS A SENTENCE NOW, NOT A STAMP. These three read
+   `EXPECTED A .JSON FILE`, `FILE COULD NOT BE READ` and `FILE IS NOT
+   VALID JSON` — literal capitals, which no `text-transform` pass
+   could have caught — while both stylesheets that print them carry a
+   paragraph each saying the reason "stopped shouting" and is "set as
+   a sentence in full ink". Only the CSS had stopped. The first of
+   the three also said what was expected without saying what to DO
+   about it, which §6 asks of a refusal: it names the file the person
+   actually picked and points at the door that reads THAT kind of
+   file, which exists — New table reads a CSV.
    ============================================================ */
 
 import { validateEnvelope, type ProjectFile } from './envelope'
@@ -21,20 +32,38 @@ export type EnvelopeRead =
   | { ok: false; error: string }
 
 export async function readEnvelopeFile(file: File): Promise<EnvelopeRead> {
-  if (!/\.json$/i.test(file.name)) return { ok: false, error: 'EXPECTED A .JSON FILE' }
+  if (!/\.json$/i.test(file.name)) {
+    /* A CSV IS THE LIKELY WRONG ANSWER, and it is a wrong answer with
+       a right door: `New table ▸ Read a CSV` reads a spreadsheet's own
+       columns. Saying so here is the difference between a refusal and
+       a dead end. */
+    const csv = /\.(csv|tsv|txt|xlsx?)$/i.test(file.name)
+    return {
+      ok: false,
+      error: csv
+        ? `${file.name} is a spreadsheet, and this door takes a saved copy of a whole sheet (.json). To bring a spreadsheet in as one table, use New table and choose Read a CSV.`
+        : `${file.name} is not a .json file. A saved copy is the .json this app writes when you save one.`,
+    }
+  }
 
   let text: string
   try {
     text = await file.text()
   } catch {
-    return { ok: false, error: 'FILE COULD NOT BE READ' }
+    return {
+      ok: false,
+      error: `The browser would not hand over ${file.name}. Try choosing it again, or copy it somewhere local first.`,
+    }
   }
 
   let raw: unknown
   try {
     raw = JSON.parse(text)
   } catch {
-    return { ok: false, error: 'FILE IS NOT VALID JSON' }
+    return {
+      ok: false,
+      error: `${file.name} is not readable as JSON, so something has changed it since it was saved. Try the copy it was made from.`,
+    }
   }
 
   const res = validateEnvelope(raw)

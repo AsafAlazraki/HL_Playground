@@ -209,7 +209,11 @@ describe('the pair columns every curated join carries', () => {
     const r = validateEnvelope(file({ entities: [motors(), twin] }))
     expect(r.ok).toBe(false)
     if (r.ok) return
-    expect(r.error).toContain('DUPLICATE ID')
+    /* the refusal is a sentence now, not a stamp — envelope.ts's
+       `dupSay`. What is pinned is that it still NAMES the id, which
+       is the diagnostic that found the `__origin` bug. */
+    expect(r.error).toContain('shares an id')
+    expect(r.error).toContain('fHp')
   })
 })
 
@@ -488,7 +492,8 @@ describe('an imported design is untrusted input', () => {
     const r = validateEnvelope(full({ views: [view({ id: 'tBoats' })] }))
     expect(r.ok).toBe(false)
     if (r.ok) return
-    expect(r.error).toContain('DUPLICATE ID')
+    expect(r.error).toContain('shares an id')
+    expect(r.error).toContain('tBoats')
   })
 
   it('rejects two modules sharing one id, which would share one store record', () => {
@@ -533,7 +538,7 @@ describe('an imported design is untrusted input', () => {
     for (const key of ['views', 'modules', 'constraints']) {
       const r = validateEnvelope(full({ [key]: 'not a list' }))
       expect(r.ok).toBe(false)
-      if (!r.ok) expect(r.error).toContain('DAMAGED')
+      if (!r.ok) expect(r.error).toContain('damaged')
     }
   })
 

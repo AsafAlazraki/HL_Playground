@@ -1720,3 +1720,370 @@
   margin-top: 1px;
   color: var(--warning);
 }
+
+/* ============================================================
+   FITMENT, THE THIRD PASS — the page becomes navigable, and the
+   ledger becomes the way through it.
+
+   Appended rather than rewritten, for the reason the whole
+   redesign was appended: every structural decision above is
+   right — the conditional second column, the three grounds, the
+   card grid, the measured warning contrast — and what was
+   missing is not appearance, it is REACH and a next move.
+
+   WHAT CHANGES, AND WHY EACH ONE:
+
+     1 · THE NAME IS FINALLY IN THE DISPLAY FACE. `.vw-name` set
+         `font-family: var(--font-ui)` explicitly and beat
+         `.ds-hero` on load order, so the one hero moment in this
+         feature — the rig's name, in front of a customer — was
+         rendering in Inter with Archivo's width axis applied to
+         nothing. §2's whole argument for a third face is this
+         line. See the rule for the full note.
+     2 · A BLOCK HAS A RAIL AND A HEAD THAT STAYS. A 34px, 2px
+         tick in the corner was the only thing saying which
+         catalogue a panel of four hundred cards belonged to, and
+         it left the screen with the first row.
+     3 · THE LEDGER IS A TABLE OF CONTENTS. Every line is a door
+         to the block its figure came out of.
+     4 · THE PRIMARY LANDS UNDER THE TOTAL.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   THE HERO NAME, IN THE FACE IT WAS SPECIFIED IN.
+
+   The rule above sets `font-family: var(--font-ui)`, and its own
+   note explains why — feature CSS and ds.css are both
+   single-class rules, so the step was restated here rather than
+   left to bundling order. That reasoning is still right and the
+   VALUE went stale: `--font-ui` is the bridge's alias for the
+   sans, and §2 has since given headlines a third face with a
+   26px floor under it. Restated again, at the same specificity,
+   with the family the step actually carries.
+
+   THE TRACKING AND THE WIDTH TRAVEL WITH IT — a step is a set
+   (§2, rule 6). Archivo runs optically larger than Inter at the
+   same size and its counters are tighter, which is why `.ds-hero`
+   pulls -0.036em rather than the step's declared -0.033em, and
+   why the width axis opens to 105. Taking the family without them
+   would be taking half a step.
+   ------------------------------------------------------------ */
+.vw-name {
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 105;
+  letter-spacing: -0.036em;
+}
+
+/* the arrival. One movement, on mount, transform and opacity
+   only — and `ds-rise` is already cut under reduced motion. */
+.vw-hero {
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
+}
+
+/* ------------------------------------------------------------
+   THE BLOCK — one catalogue, and it says which one all the way
+   down.
+
+   THE RAIL. `.vw-block-head::before` drew a 34px × 2px tick in
+   the panel's top-left corner in the partner table's own hue. It
+   is the same idea as the card rail on Home and a tenth of the
+   evidence: a block on this page is four hundred cards long, so
+   the one mark saying "this is the trailers" was off screen for
+   all but the first two rows of it. The rail runs the panel, at
+   the same 3px and the same inset the gallery card uses, so the
+   two surfaces read as one system.
+   ------------------------------------------------------------ */
+.vw-block-head::before {
+  display: none;
+}
+.vw-block::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  /* over the sticky head's own ground, so the rail is unbroken */
+  z-index: 3;
+  border-radius: 0 3px 3px 0;
+  background: var(--vw-accent, var(--ink-soft));
+  pointer-events: none;
+}
+
+/* THE HEAD STAYS. A block is a panel of cards that can run four
+   screens; its name, its count and how many were held back are
+   the three facts a person scrolling through it needs, and all
+   three left the window with the first row.
+
+   IT COSTS NOTHING WHERE IT IS NOT NEEDED — a two-card block
+   never scrolls past its own head, so nothing sticks. The
+   hairline is drawn always rather than only when pinned, because
+   a heading with a rule under it is a heading either way and
+   there is no way to ask CSS which state it is in. */
+.vw-block-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--paper);
+}
+/* the nested block steps its ground, so its head steps with it */
+.vw-nest .vw-block > .vw-block-head {
+  background: var(--paper-sunken);
+}
+
+/* JUST ARRIVED AT, from a press in the ledger above. A moment,
+   not a selection: it is set by the press and cleared by a timer
+   (ViewPage), it changes nothing the block acts on, and under
+   reduced motion the ring simply appears and goes rather than
+   fading — colour and opacity stay, movement goes. */
+.vw-block {
+  scroll-margin-top: var(--sp-4);
+  transition:
+    border-color var(--d-slower) var(--ease),
+    box-shadow var(--d-slower) var(--ease);
+}
+.vw-block.is-found {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ------------------------------------------------------------
+   OUTSIDE THE RULE — the chip SHOW EVERYTHING never drew.
+
+   `.vw-tag--out` is red and belongs to AddPanel, where it marks
+   a row that is no longer sold: red is refusal in this app.
+   Nothing is refused here. These rows are on the list, pickable,
+   and a person asked to see them — the fact is that the rule had
+   been holding them back, which is quieter than a warning and
+   still has to be readable.
+
+   `--ink-faint` is the ramp's metadata tier and the floor for
+   anything a person must read: 5.5:1 on white, and the card's
+   `--grad-surface` bottoms out at #fcfcfd, which moves that by
+   under a tenth of a point. The border is dashed because that is
+   what the app already means by "here, but not by right" —
+   `.vw-removed-chip` and `.vw-dropzone` both draw it.
+   ------------------------------------------------------------ */
+.vw-tag--past {
+  color: var(--ink-faint);
+  border-style: dashed;
+  border-color: var(--hairline-strong);
+}
+
+/* ============================================================
+   THE LEDGER, AS THE PAGE'S TABLE OF CONTENTS.
+
+   Every line names a block that is somewhere under it on a page
+   four screens long, and "somewhere under it" was the whole
+   answer to "which trailer is that, then?". A line is a door
+   now. The grid that was declared on `.vw-rig-line` moves onto
+   the door itself, because the door is what has to be pressable
+   across its whole width — a hit target that stops at the text
+   is a hit target a person misses.
+
+   A ROW DARKENS RATHER THAN SCALING (§4). Five lines a
+   centimetre apart, and one of them shrinking makes the other
+   four look like they moved.
+   ============================================================ */
+
+.vw-rig-line {
+  display: block;
+  padding: 0;
+}
+
+.vw-rig-door,
+.vw-rig-still {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: var(--sp-3);
+  align-items: baseline;
+  width: 100%;
+  padding: 5px var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+.vw-rig-door {
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft);
+}
+.vw-rig-door:hover {
+  border-color: var(--accent-line);
+  background: var(--blue-wash);
+}
+/* press on pointer-down — rule 8 */
+.vw-rig-door:active {
+  background: var(--blue-wash-strong);
+  transition-duration: var(--t-press);
+}
+.vw-rig-door:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* WHICH CATALOGUE THE LINE CAME OUT OF, in that catalogue's own
+   hue — a dot, which is one of the three things §1 allows a kind
+   colour to be. It is never the only carrier of anything: the
+   table's name is on the line beside it. */
+.vw-rig-dot {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--vw-line-accent, var(--ink-faint));
+}
+.vw-rig-what {
+  grid-column: 2;
+  grid-row: 1;
+}
+.vw-rig-rung {
+  grid-column: 2;
+  grid-row: 2;
+}
+.vw-rig-amt {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+/* ── A LIST STILL HOLDING A CHOICE ───────────────────────────
+   It was the first sentence of a paragraph at the foot of the
+   panel, about the one thing on this page somebody has to go and
+   DO. It is a line now, in its place in the reading, and it is a
+   door to the list that is waiting.
+
+   THE MARK IS THE HUE AND THE SENTENCE IS NOT. `--warning` over
+   `--warning-wash` composites to 4.28:1 and fails — the same trap
+   the row warnings above are measured against — so the hue
+   carries the dot only and the words stay in `--ink-soft`, which
+   is 8.1:1 on the panel's own white. */
+.vw-rig-line.is-open .vw-rig-dot {
+  background: var(--warning);
+}
+.vw-rig-line.is-open .vw-rig-rung {
+  color: var(--ink-soft);
+}
+/* NOT A FIGURE, so not mono. "Choose" is a word and it is the
+   affordance, so it takes the accent the door is drawn in. */
+.vw-rig-amt--none {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 550;
+  letter-spacing: 0;
+  color: var(--blue);
+}
+
+/* ============================================================
+   THE NEXT MOVE, UNDER THE FIGURE IT PRODUCES.
+
+   The same `ActionButton` record the bar draws — see
+   `usePrimaryDoor` in ViewPage.tsx — so this is one action with
+   two places it can be reached and never two actions. §1's "one
+   accent, about four times a screen" is kept: the accent on this
+   page is the recommended card's rail, the focused control, and
+   this.
+
+   IT IS FULL WIDTH BECAUSE THE PANEL IS. A 96px pill floating in
+   a 340px column reads as an afterthought beside a $32,423 total;
+   a button the width of the ledger reads as its conclusion.
+   ============================================================ */
+.vw-rig-go {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+.vw-rig-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: var(--h-lg);
+  padding: 0 var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-family: var(--font-ui);
+  font-size: var(--t-body-size);
+  font-weight: 560;
+  letter-spacing: -0.004em;
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft),
+    transform var(--t-press) var(--ease-draft);
+}
+/* the glow is a STATE and not decoration — it exists only while
+   the pointer is on the one control this page is pointing at */
+.vw-rig-btn:hover {
+  background: var(--accent-hover);
+  box-shadow: var(--e2), var(--glow-md);
+}
+.vw-rig-btn:active {
+  background: var(--accent-press);
+  transform: scale(0.99);
+  transition-duration: var(--t-press);
+}
+.vw-rig-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* NOT `disabled`. A disabled control drops out of the tab order
+   and takes its own explanation with it, and rule 10 is that the
+   explanation is the point. It goes inert and says why, below. */
+.vw-rig-btn[aria-disabled='true'] {
+  background: var(--surface-3);
+  border-color: var(--hairline);
+  color: var(--ink-faint);
+  box-shadow: none;
+  cursor: default;
+}
+.vw-rig-btn[aria-disabled='true']:hover {
+  background: var(--surface-3);
+  box-shadow: none;
+}
+.vw-rig-why {
+  margin: var(--sp-2) 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------
+   THE EMPTY STATE, IN THE DISPLAY FACE.
+
+   It was `--font-display`, which bridge.css owns as an alias for
+   the sans — the exact name §2 warns about, and the second place
+   in this file where a headline was silently set in Inter. The
+   step above it is `--t-display-lg`, whose clamp bottoms out at
+   26px, so this cannot render the display face below its floor.
+   ------------------------------------------------------------ */
+.vw-nothing-line {
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 103;
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: -0.028em;
+  color: var(--ink);
+}
+
+/* An extended width costs a little counter at high contrast:
+   return to normal where the reader has asked for legibility
+   over voice, exactly as ds.css does for its own two steps. */
+@media (prefers-contrast: more) {
+  .vw-name,
+  .vw-nothing-line {
+    font-variation-settings: 'wdth' 100;
+  }
+}

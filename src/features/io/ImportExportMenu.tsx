@@ -35,7 +35,7 @@
    ============================================================ */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DragEvent } from 'react'
+import type { CSSProperties, DragEvent } from 'react'
 import { isRetired } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { forgetSeedStamp } from '@/demos/seedStamp'
@@ -143,6 +143,32 @@ export interface ImportExportMenuProps {
 
 export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}) {
   const [open, setOpen] = useState(false)
+  /* ============================================================
+     WHICH WAY THE PANEL OPENS, AND WHY THIS IS NOT A PREFERENCE.
+
+     THE BUG IT FIXES. This panel hung from `top: 100%` — always
+     downward — because for its whole life the trigger stood in a
+     title block at the TOP of the window. It moved to the foot of
+     the navy rail, which is pinned to the bottom of a 100dvh
+     column, and a 384px sheet hanging DOWN from a control 48px
+     off the floor of the window is a sheet nobody can see. The
+     one door out of this app for a dealer's whole price file
+     opened off the bottom of the screen.
+
+     A PROP WOULD HAVE BEEN A SECOND THING TO KEEP RIGHT. `align`
+     already exists because the same control stands in two places;
+     a `drop` prop would be a third fact about the host that the
+     host has to remember, and the fourth host would get it wrong.
+     The room is measurable at the moment of the press, so it is
+     measured: below if it fits below, above if it fits better
+     above, and the panel is never taller than the room it landed
+     in — `--io-room` caps it either way, so a short window
+     scrolls the sections rather than clipping the footer.
+     ============================================================ */
+  const [drop, setDrop] = useState<{ up: boolean; room: number }>({
+    up: false,
+    room: 0,
+  })
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -212,6 +238,25 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
     setPending(null)
     setDragOver(false)
     setAsking(null)
+  }, [])
+
+  /** The gap the panel needs before it will hang downward. Below
+   *  this it opens upward instead — 320px is the export section
+   *  plus the head and the footer, which is the least of this
+   *  panel worth drawing at all. */
+  const ROOM_ENOUGH = 320
+  /** air left between the panel and the edge of the window */
+  const MARGIN = 16
+
+  const openMenu = useCallback(() => {
+    const box = triggerRef.current?.getBoundingClientRect()
+    if (box) {
+      const below = window.innerHeight - box.bottom - MARGIN
+      const above = box.top - MARGIN
+      const up = below < ROOM_ENOUGH && above > below
+      setDrop({ up, room: Math.max(200, up ? above : below) })
+    }
+    setOpen(true)
   }, [])
 
   /* escape + outside click.
@@ -369,7 +414,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
         className="io-trigger"
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={() => (open ? closeMenu() : setOpen(true))}
+        onClick={() => (open ? closeMenu() : openMenu())}
       >
         <GlyphArrows />
         Import / export
@@ -377,7 +422,8 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
 
       {open && (
         <div
-          className="io-pop"
+          className={`io-pop${drop.up ? ' is-up' : ''}`}
+          style={{ ['--io-room' as string]: `${drop.room}px` } as CSSProperties}
           role="dialog"
           aria-label="Import / export"
           ref={popRef}
@@ -403,7 +449,13 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
               /* ---------------- import preview ---------------- */
               <section className="io-section">
                 <div className="io-caption">
-                  <span className="mono-label">This File Holds</span>
+                  {/* SENTENCE CASE IN THE MARKUP, uppercase in the
+                      primitive. `.mono-label` is the one uppercase
+                      style and it applies the transform itself, so
+                      typing the capitals here as well is how a
+                      caption survives a pass that retires the
+                      transform and is never noticed. */}
+                  <span className="mono-label">This file holds</span>
                 </div>
                 <div className="io-plate">
                   <div className="io-plate-head">
@@ -708,7 +760,11 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
       ) : null}
 
       {stamp && (
-        <div className="io-stamp" role="status" aria-live="polite">
+        <div
+          className={`io-stamp${drop.up ? ' is-up' : ''}`}
+          role="status"
+          aria-live="polite"
+        >
           {stamp.say}
           {stamp.fig ? <> &middot; <b>{stamp.fig}</b></> : null}
         </div>

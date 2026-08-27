@@ -282,3 +282,150 @@ export function grantNote(
     ? `${roleName} can now ${verb} in ${moduleName}.`
     : `${roleName} can no longer ${verb} in ${moduleName}.`
 }
+
+/** WHAT THE VERB ACTUALLY PERMITS, in the contract's own words —
+ *  `MODULE_CAPABILITIES[k].says`, never a gloss written twice.
+ *
+ *  A column head reading `Relate` tells an admin the name of a
+ *  permission and nothing about what ticking it lets somebody do; the
+ *  contract already carries the sentence ("say what goes with what")
+ *  and the designer's own switch already prints it. The access grid
+ *  prints the same one, so a verb is explained identically wherever it
+ *  is granted, described or switched off. */
+export const capabilitySays = (k: ModuleCapability): string =>
+  MODULE_CAPABILITIES[k].says
+
+/* ---------------------------------------------------------- */
+/* Reading the WHOLE project — the access screen's own figures  */
+/* ---------------------------------------------------------- */
+
+/**
+ * Access across every place at once.
+ *
+ * WHY IT IS HERE AND NOT ON THE SCREEN THAT DRAWS IT. Every figure
+ * below is `isUnrestricted`, `grantedTo` or `orphanRoleIds` applied
+ * once per module, and each of those already answers a question this
+ * file has an opinion about. A screen adding up `module.access.length`
+ * itself would count a grant the module can no longer honour as though
+ * it were in force — which is the one thing the header of this file
+ * says a reader must never do.
+ */
+export interface AccessCensus {
+  /** jobs written down at this dealership */
+  roles: number
+  modules: number
+  /** modules somebody has closed */
+  restricted: number
+  /** modules open to everyone — absent OR empty access */
+  open: number
+  /** grants IN FORCE: one role, one verb, one place. */
+  grants: number
+  /** stored, and the module does not offer that verb any more */
+  lapsed: number
+  /** stored against a role id this project does not have */
+  orphans: number
+}
+
+export function accessCensus(
+  modules: readonly ModuleDef[],
+  roles: readonly RoleDef[],
+): AccessCensus {
+  let restricted = 0
+  let grants = 0
+  let lapsed = 0
+  let orphans = 0
+
+  for (const module of modules) {
+    if (isUnrestricted(module)) continue
+    restricted += 1
+    for (const row of accessRows(module, roles)) {
+      grants += row.granted.length
+      lapsed += row.lapsed.length
+    }
+    orphans += orphanRoleIds(module, roles).length
+  }
+
+  return {
+    roles: roles.length,
+    modules: modules.length,
+    restricted,
+    open: modules.length - restricted,
+    grants,
+    lapsed,
+    orphans,
+  }
+}
+
+/**
+ * IN HOW MANY PLACES THIS JOB MAY ACTUALLY ACT.
+ *
+ * In force, so a role holding only lapsed verbs in a module does not
+ * count that module — and an UNRESTRICTED module counts for every
+ * role, because a place open to everyone is a place this job may work
+ * in. That second clause is the one a screen gets wrong by reading
+ * `access` alone: it would report a brand-new dealership, where every
+ * module is open and nothing is restricted, as nine jobs that may go
+ * nowhere.
+ */
+export function roleReach(modules: readonly ModuleDef[], roleId: string): number {
+  return modules.filter(
+    (m) => isUnrestricted(m) || grantedTo(m, roleId).length > 0,
+  ).length
+}
+
+/**
+ * A PLACE HOLDING GRANTS FOR A ROLE THAT IS NOT THERE.
+ *
+ * Named rather than assumed away — see `orphanRoleIds`. What makes it
+ * worth its own reader is the second field: clearing the last such row
+ * hands the module back to UNRESTRICTED, which is a change to who may
+ * work there and must be said in the sentence that offers the act, not
+ * discovered afterwards.
+ */
+export interface OrphanGrants {
+  module: ModuleDef
+  /** the ids, in the order the module stored them */
+  roleIds: string[]
+  /** stored capabilities across those rows — what would go */
+  capabilities: number
+  /** clearing them leaves no access row at all, so the module goes
+   *  back to open-to-everyone */
+  opensUp: boolean
+}
+
+export function orphanGrants(
+  modules: readonly ModuleDef[],
+  roles: readonly RoleDef[],
+): OrphanGrants[] {
+  const out: OrphanGrants[] = []
+  for (const module of modules) {
+    const ids = orphanRoleIds(module, roles)
+    if (ids.length === 0) continue
+    const rows = listOf(module)
+    out.push({
+      module,
+      roleIds: ids,
+      capabilities: rows
+        .filter((a) => ids.includes(a.roleId))
+        .reduce((n, a) => n + a.capabilities.length, 0),
+      opensUp: rows.length === ids.length,
+    })
+  }
+  return out
+}
+
+/**
+ * Every orphan row off one module at once.
+ *
+ * Written here rather than as a loop over `withoutRole` on the screen
+ * for the reason the whole file exists: `settle` is what turns "no rows
+ * left" into `undefined` rather than into a wall nobody is on the right
+ * side of, and a caller filtering the array itself would not know that.
+ */
+export function withoutOrphans(
+  module: ModuleDef,
+  roles: readonly RoleDef[],
+): ModuleAccess[] | undefined {
+  const known = new Set(roles.map((r) => r.id))
+  return settle(listOf(module).filter((a) => known.has(a.roleId)))
+}

@@ -4073,25 +4073,14 @@
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  /* ARRIVING IS A CROSS-FADE, not a slide. Sections are siblings,
-     not a stack — nothing is "further in" than anything else — so
-     there is no direction for a slide to honour. */
-  animation: surface-in 180ms var(--ease-settle);
-}
-@keyframes surface-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .surface {
-    animation: none;
-  }
+  /* THE ENTRANCE IS NOT DECLARED HERE ANY MORE. It was
+     `surface-in` — 180ms of opacity over a 6px translate, with a
+     literal duration and a keyframe of its own — and it was the
+     SECOND thing in this file claiming `.surface { animation }`.
+     One selector, two declarations, source order deciding: that
+     is how a stylesheet stops being a design. It is written once
+     now, in ARRIVING SOMEWHERE at the foot of this file, in the
+     system's own tokens. This block keeps only the geometry. */
 }
 
 /* a stage inside the surface is simply the surface */
@@ -4992,44 +4981,61 @@
 }
 
 /* ============================================================
-   ARRIVING SOMEWHERE.
+   ARRIVING SOMEWHERE — AND THE ARRIVAL IS NOW 120ms OF OPACITY.
 
-   Every stage replaced the last one on the same frame for most of
-   this app's life; the cross-fade added later is 180ms of opacity
-   and a 6px lift, which is a fade rather than an entrance.
+   WHAT THIS REPLACES, AND WHY. The stage entrance was `ds-rise` at
+   `--d-slow`: 260ms, a 10px lift, and the masthead fading in on top
+   of it 90ms later — so the last thing a person saw finish was at
+   350ms. That is a considered entrance, and a stage swap is not a
+   considered act. It is the most-repeated navigation in the app:
+   the rail has nine doors, six of them switch the stage, and a
+   dealer walks between the register, a quote and the drawing tens
+   of times a day. An entrance you can outrun is an entrance that is
+   in the way, and one you can outrun with a SECOND press — pressing
+   Quotes and then Customers inside 350ms — plays the lift twice
+   over two different pages and reads as a stutter.
 
-   IT IS STILL ONE ELEMENT THAT MOVES, deliberately. A stage is a
-   register of 588 rows or a canvas of 51 nodes, and animating its
-   children means handing the compositor a layer per child on the
-   frame a virtualiser is measuring. `.surface` rises as one object
-   — `--rise` is 10px, `--d-slow` is 260ms — and then the chrome
-   settles on top of it with a 90ms delay, which is what makes it
-   read as a page ARRIVING rather than a page appearing.
+   SO THE BUDGET IS THE SMALL ONE. Opacity only, at `--d-fast`
+   (120ms), which is the press band rather than the drawer band. No
+   transform: a 10px lift on a register of 588 rows is a composited
+   layer over the frame a virtualiser is measuring in, and it buys
+   nothing at this duration — under about 150ms a translate is not
+   perceived as travel, only as blur. Nothing else on the page is
+   staggered behind it, so the whole stage is settled in one eighth
+   of a second and the masthead is legible in the same frame as the
+   body under it.
 
-   FAST IS PART OF THE BRIEF. 260ms is under the 420ms this system
-   reserves for a considered entrance, because a stage swap is a
-   thing people do fifty times an hour and an entrance you can
-   outrun is an entrance that is in the way.
+   THE CONSIDERED ENTRANCES ARE STILL THERE and are still correct —
+   `.ds-rise` on a card grid, `--d-scene` on a sheet. Those are
+   things a person arrives at once. This is a thing they walk
+   through.
    ============================================================ */
 
 .surface {
-  --rise: 10px;
-  animation: ds-rise var(--d-slow) var(--ease-out-expo);
-}
-.surface > * > .shell-view-bar {
-  animation: ds-fade var(--d-slow) var(--ease) backwards;
-  animation-delay: 90ms;
+  animation: ds-fade var(--d-fast) var(--ease) backwards;
 }
 
-/* MOVEMENT GOES; THE PAGE STILL ARRIVES. Restated after the rules
-   above rather than relying on the earlier block, which is now
-   earlier in source at the same specificity and would lose. */
-@media (prefers-reduced-motion: reduce) {
-  .surface,
-  .surface > * > .shell-view-bar {
-    animation: none;
-  }
+/* THE MASTHEAD ARRIVES WITH ITS PAGE, NOT AFTER IT. The 90ms delay
+   existed to make the lift read in two beats; with no lift there is
+   no second beat to make, and a bar that arrives late over a body
+   that is already there is just a bar that flickers. Stated rather
+   than deleted, because the selector is what cancels the rule the
+   earlier block set on it. */
+.surface > * > .shell-view-bar {
+  animation: none;
 }
+
+/* AND THERE IS NO `prefers-reduced-motion` BLOCK HERE, WHICH IS A
+   DECISION AND NOT AN OMISSION. The system's rule is "movement
+   goes, colour and opacity stay" (§4). There is no movement left in
+   a stage swap to take away — the transform went with the lift
+   above — and 120ms of opacity is the gentler feedback that signal
+   asks FOR, not the thing it asks to be spared. Cutting it as well
+   would leave an instant hard swap between two full-page surfaces,
+   which is the harshest transition in the app and the opposite of
+   what the reader requested. The two rules this replaced both
+   carried `animation: none` under that query and both were wrong
+   for the same reason. */
 
 /* ============================================================
    THE SWITCHER — same family, one material.
@@ -5534,19 +5540,45 @@
 /* ------------------------------------------------------------
    THE PINNED STRIP.
 
-   FULL BLEED, and it has to be: `.hm-scroll` carries --sp-6 of
+   FULL BLEED, and it has to be: `.hm-scroll` carries --s-8 of
    side padding, so a strip inset by that padding would let cards
    slide past in the 32px gutters either side of it while it sat
    over them. Negative margins take it out to the scrollport's own
    edges and the padding is put back inside.
 
-   THE MATERIAL IS §5's MASTHEAD EXCEPTION AND NOT A NEW ONE. The
-   two surfaces allowed to be translucent are the ones that sit
-   OVER scrolling content and need to say so; the dock is gone, and
-   this is the masthead's own strip. `--glass-*` already collapses
-   to opaque paint under `prefers-reduced-transparency` in ds.css,
-   so this needs no second rule of its own.
+   AND THE SCROLLER GIVES UP ITS TOP PADDING TO IT. A sticky child
+   cannot leave its containing block, and the containing block is
+   the scroller's CONTENT box — so with 32px of padding-top the
+   band pinned 32px down and cards scrolled through the strip
+   above it. Measured: bandTop 32 at every scroll position past
+   the masthead. The padding moves onto the masthead instead, so
+   the page opens exactly as it did and the band pins flush.
+   `:has()` keeps it to the gallery: the first screen has no band
+   and keeps the padding it was laid out with.
+
+   IT IS PAINT AND NOT GLASS, AND THAT IS A MEASUREMENT RATHER
+   THAN A PREFERENCE. §5 does allow the masthead to be one of the
+   two translucent surfaces, and this is the masthead's own strip,
+   so it was drawn on `--glass-bg` first. Then rule 4 was applied
+   to it: `--glass-bg` is white at 72%, and what passes underneath
+   this band is a gallery of photographs. Over a dark hull that
+   composites to roughly 0.49 relative luminance, where
+   `--fg-secondary` — the chips' own ink — measures about 3.9:1
+   and FAILS. A tint counts, and so does a tint over somebody
+   else's boat.
+
+   So the strip is `--surface-1`, which is the ground every ink on
+   it was measured against: `--fg-secondary` 8.1:1, `--fg-tertiary`
+   5.5:1, and neither of them moves when a photograph goes past.
+   The shadow is what says it is over the page rather than in it,
+   which is the job the blur was doing.
    ------------------------------------------------------------ */
+.hm-scroll:has(.hm-scale) {
+  padding-top: 0;
+}
+.hm-scroll:has(.hm-scale) .hm-mast {
+  margin-top: var(--s-8);
+}
 .hm-scale {
   position: sticky;
   top: 0;
@@ -5554,12 +5586,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
-  margin: 0 calc(var(--sp-6) * -1) var(--s-8);
-  padding: var(--s-3) var(--sp-6);
-  border-bottom: 1px solid var(--line-subtle);
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  margin: 0 calc(var(--s-8) * -1) var(--s-8);
+  padding: var(--s-3) var(--s-8);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-1);
+  box-shadow: var(--e2);
 }
 
 /* The strip itself: a track on the sunken ground with the segments
@@ -6299,8 +6330,19 @@
    Words are hidden with width/opacity rather than `display:none`
    so the rail can animate rather than jump.
    ============================================================ */
+/* THE WIDTH IS THE COLLAPSE, and it was the one thing missing.
+   `.shell-body` is a grid whose first column is `var(--rail)`, so
+   hiding the rail's text without changing that token left a 264px
+   column of hidden words — the toggle appeared to do nothing.
+   `:has()` lets the GRID react to a state held on its child, which
+   is the honest place for it: the rail knows it is tight, the
+   layout asks. */
+.shell-body:has(.sn.is-tight) {
+  --rail: 64px;
+}
 .sn.is-tight {
   align-items: stretch;
+  overflow: hidden;
 }
 .sn.is-tight .sn-head {
   flex-direction: column;

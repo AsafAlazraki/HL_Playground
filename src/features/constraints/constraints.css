@@ -4245,3 +4245,98 @@
   border: 1px dashed var(--line-strong);
   line-height: 1.6;
 }
+
+/* THE ADDRESS AND THE NOTE BESIDE IT. `Boat Module!KV:KW` is the
+   half a person retypes; "Min HP / Max HP column pair, 'Max HP' in
+   all nine band header rows" is the half they read. Setting both in
+   mono was the original fault pointing the other way — prose in the
+   reference face — so the line carries two faces and the address is
+   the one that is full ink. */
+.cn-src-cell {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+.cn-src-addr {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.cn-src-note {
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   WHICH "MAX HP" IS THIS — the columns the sentence names.
+
+   A dealer's column names are shorthand for cells in a spreadsheet
+   they know: "Max HP" is `Boat Module!KW` and "Min HP" is the cell
+   beside it, and picking the wrong one is silent. This block is the
+   only thing on the screen that can tell them apart, and it was a
+   bare list with no heading, its citation set in --fg-tertiary at
+   the mono floor — debris under a sentence rather than the answer
+   to the question somebody is asking.
+
+   THE CITATION COMES UP A TIER, exactly as it does on the ledger
+   card, and for the same reason: on this surface the reference is
+   the content. --fg-secondary measures 7.4:1 over --surface-3.
+
+   THE REACH IS A CHIP, because it is the one fact the sentence
+   itself can never say — a rule about "Hull Length (mtr)" bites on
+   every table that has one, and "on 3 boat tables" is how a person
+   learns that before they press Add rule rather than after.
+   ============================================================ */
+
+.cn-cols-block {
+  margin: var(--s-4) 0 0;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
+}
+.cn-cols-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+}
+.cn-cols {
+  gap: var(--s-3);
+  margin: var(--s-3) 0 0;
+}
+.cn-col {
+  gap: var(--s-2) var(--s-3);
+}
+.cn-col-name {
+  font-size: var(--t-body-size);
+  font-weight: 560;
+  color: var(--fg);
+}
+/* the reach: a chip, and it counts */
+.cn-col-where {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-secondary);
+}
+/* the cell it was read out of — the same job as `.cn-src-addr`, so
+   the same face and the same ink */
+.cn-col-desc {
+  flex: 1 1 100%;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  line-height: 1.55;
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}

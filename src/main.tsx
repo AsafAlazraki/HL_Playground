@@ -33,6 +33,7 @@ import './styles/base.css'
    The app is 97.6% tokenised, which is what makes that possible.
    Delete this one line to put the old design back. */
 import './styles/bridge.css'
+import './features/auth/auth.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

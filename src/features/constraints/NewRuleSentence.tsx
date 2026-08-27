@@ -576,16 +576,28 @@ function MeasuredFrom({
 function ColumnNotes({ concepts }: { concepts: ColumnConcept[] }): ReactElement | null {
   if (concepts.length === 0) return null
   return (
-    <ul className="cn-cols">
-      {concepts.map((c) => (
-        <li key={c.key} className="cn-col">
-          <span className="cn-col-name">{c.name}</span>
-          <span className="cn-col-where">
-            on {c.tableIds.length} {c.kind} {plural(c.tableIds.length, 'table', 'tables')}
-          </span>
-          {c.desc !== undefined && <span className="cn-col-desc">{c.desc}</span>}
-        </li>
-      ))}
-    </ul>
+    <section className="cn-cols-block">
+      {/* THE LIST HAD NO HEADING, and without one a stack of cell
+          addresses under a sentence reads as debris the composer
+          left behind rather than as the answer to the question
+          somebody is actually asking: which "Max HP" is this. It
+          also names the REACH, because one column is one column
+          wherever it appears and the rule will bite on every table
+          of that kind — which the sentence itself never says. */}
+      <p className="cn-cols-label">
+        {concepts.length === 1 ? 'The column it names' : 'The columns it names'}
+      </p>
+      <ul className="cn-cols">
+        {concepts.map((c) => (
+          <li key={c.key} className="cn-col">
+            <span className="cn-col-name">{c.name}</span>
+            <span className="cn-col-where">
+              on {c.tableIds.length} {c.kind} {plural(c.tableIds.length, 'table', 'tables')}
+            </span>
+            {c.desc !== undefined && <span className="cn-col-desc">{c.desc}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

@@ -44,8 +44,9 @@
    starting set gets the same sentence with its own nouns in it.
    ============================================================ */
 
-import { useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import type { JSX } from 'react'
+import { FALLBACK_FLOOR, floorAbove } from '@/lib/noteFloor'
 import { ConfirmFacts, ConfirmSheet } from '@/features/designer/ConfirmSheet'
 import { nextCopyName, saveCopyOfSheet } from './saveCopy'
 import { sheetFacts, sheetNow } from './sheetNow'
@@ -83,6 +84,35 @@ export function Freshness({
 }: FreshnessProps): JSX.Element {
   const [asking, setAsking] = useState(false)
 
+  /* ============================================================
+     THE FLOOR IS MEASURED, NOT CHOSEN — src/lib/noteFloor.ts.
+
+     This card sat at a hardcoded `bottom: 96px`, a number that
+     cleared the floating dock. The dock is gone: navigation is a
+     persistent rail down the left now (app/SideNav.tsx), so 96px
+     is 96px of air on most screens and still not enough on the
+     one stage that parks an action bar over its floor. It is the
+     mistake `noteFloor.ts` was extracted to stop repeating, and
+     the two-tab notice in the opposite corner had already been
+     moved onto the measurement while this one was left behind —
+     two notices, same job, two different arithmetics.
+
+     Everything that must not be covered declares
+     `[data-note-clear]`; this floors itself above all of it, and
+     the next instrument to park over a page costs one attribute
+     and no arithmetic here.
+     ============================================================ */
+  const [floor, setFloor] = useState(0)
+  const remeasure = useCallback(() => setFloor(floorAbove()), [])
+  useLayoutEffect(() => {
+    remeasure()
+  }, [remeasure])
+  useEffect(() => {
+    window.addEventListener('resize', remeasure)
+    return () => window.removeEventListener('resize', remeasure)
+  }, [remeasure])
+  const lift = { bottom: `${floor > 0 ? floor + 16 : FALLBACK_FLOOR + 16}px` }
+
   /* WHAT DIFFERS, COUNTED, AT MOST THREE THINGS. A list of every
      table that moved would be the diff and not the answer; the
      question a person is asking is "is this the same file", and two
@@ -113,7 +143,7 @@ export function Freshness({
 
   return (
     <>
-      <div className="io-fresh" role="status" aria-live="polite">
+      <div className="io-fresh" style={lift} role="status" aria-live="polite">
         <span className="mono-label io-fresh-eyebrow">An older copy</span>
         <p className="io-fresh-say">
           This browser is showing a copy of “{setName}” that was loaded before the

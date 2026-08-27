@@ -29,6 +29,12 @@ import { useNameGuard } from './useNameGuard'
 import { ConfirmRadius, ConfirmSheet } from './ConfirmSheet'
 import { draftColumnName } from './columnFacts'
 import { entityDependents, nameList } from './dependents'
+/* THE APP'S ONE GROUPING VOCABULARY. `leafNoun` reads a table's own
+   naming column and hands back the dealer's word for one of its rows;
+   the register and the module census already ask it, so this panel
+   asking it too is what stops three screens counting the same rows in
+   three different nouns. */
+import { leafNoun } from '@/features/table/grouping'
 /* Phosphor only, through the house icon module — this folder used to
    hand-draw its own SVGs and drifted off the app's hairline weight. */
 import { CaretRight, PencilSimple, Plus } from '@phosphor-icons/react'
@@ -198,6 +204,22 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
     return out
   }, [entity.fields, entity.hierarchy, entity.sections])
 
+  /* THE DEALER'S OWN WORD FOR ONE ROW OF THIS TABLE — "variant",
+     "model", "accessory" — read off the table's own naming column by
+     the helper the register and the module census both use. One
+     grouping vocabulary in the app, so no two screens can call the
+     same nineteen things by two different nouns. */
+  const rowNoun = leafNoun(entity)
+  /* A BAND is a named run of consecutive columns; the count is of the
+     bands that actually have a column in them, because a section left
+     behind by a deleted column is not a band the person can see. */
+  const bandCount = useMemo(
+    () =>
+      (entity.sections ?? []).filter((s) => entity.fields.some((f) => f.sectionId === s.id))
+        .length,
+    [entity.sections, entity.fields],
+  )
+
   const eligibleDisplay = entity.fields.filter((f) => f.type !== 'formula')
   const displayValue =
     entity.displayFieldId && eligibleDisplay.some((f) => f.id === entity.displayFieldId)
@@ -268,6 +290,41 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
               </GuardNote>
             </div>
           ) : null}
+
+          {/* WHAT THE TABLE HOLDS, IN THE DEALER'S OWN WORD.
+
+              This surface changes the SHAPE of a table and never said
+              how big the thing was. A person about to reorder columns,
+              retype one or delete the table could read its name, its
+              accent and thirty-one column rows, and nowhere on the
+              panel was the one figure that decides whether any of that
+              matters: how many rows are underneath. It appeared for the
+              first time inside the confirm sheet, four seconds before
+              the press — which is late.
+
+              THE NOUN IS `leafNoun`'s, not "rows". The same helper the
+              register and the module census use, so Highfield reads
+              "19 variants" here and "19 variants" there rather than one
+              screen saying variants and the next saying rows (§6). The
+              figures are mono and tabular because they are figures.
+
+              EACH CLAUSE IS DRAWN ONLY WHERE IT IS TRUE OF SOMETHING —
+              a table with no bands does not carry "0 bands", which is a
+              slot of chrome saying nothing. */}
+          <p className="ds-sheet-count">
+            <span className="ds-sheet-fig">{rowCount.toLocaleString()}</span>{' '}
+            {rowCount === 1 ? rowNoun.one : rowNoun.many}
+            <span className="ds-sheet-sep" aria-hidden="true"> · </span>
+            <span className="ds-sheet-fig">{entity.fields.length}</span>{' '}
+            {entity.fields.length === 1 ? 'column' : 'columns'}
+            {bandCount > 0 ? (
+              <>
+                <span className="ds-sheet-sep" aria-hidden="true"> · </span>
+                <span className="ds-sheet-fig">{bandCount}</span>{' '}
+                {bandCount === 1 ? 'band' : 'bands'}
+              </>
+            ) : null}
+          </p>
         </div>
 
         {/* THE DOOR SAYS "WHAT IS EACH COLUMN ALLOWED TO HOLD?" AND

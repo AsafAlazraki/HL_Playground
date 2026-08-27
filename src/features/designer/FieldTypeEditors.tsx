@@ -121,11 +121,25 @@ export function SelectOptionsEditor({
               <span className="ds-opt-idx mono-label">{String(i + 1).padStart(2, '0')}</span>
               <span className="ds-opt-name">{opt}</span>
               <span className="ds-opt-btns">
+                {/* the two ends of the list refuse their own move, and
+                    now say which end they are at — the same sentence
+                    the column arrows give, because it is the same
+                    refusal about a different list */}
                 <button
                   type="button"
                   className="ds-mini-btn"
-                  disabled={i === 0}
-                  onClick={() => move(i, -1)}
+                  aria-disabled={i === 0 || undefined}
+                  title={
+                    options.length < 2
+                      ? 'There is one choice on the list, so there is nothing to move it past'
+                      : i === 0
+                        ? `“${opt}” is already first`
+                        : `Move “${opt}” up`
+                  }
+                  onClick={() => {
+                    if (i === 0) return
+                    move(i, -1)
+                  }}
                   aria-label={`Move ${opt} up`}
                 >
                   <CaretUp size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
@@ -133,8 +147,18 @@ export function SelectOptionsEditor({
                 <button
                   type="button"
                   className="ds-mini-btn"
-                  disabled={i === options.length - 1}
-                  onClick={() => move(i, 1)}
+                  aria-disabled={i === options.length - 1 || undefined}
+                  title={
+                    options.length < 2
+                      ? 'There is one choice on the list, so there is nothing to move it past'
+                      : i === options.length - 1
+                        ? `“${opt}” is already last`
+                        : `Move “${opt}” down`
+                  }
+                  onClick={() => {
+                    if (i === options.length - 1) return
+                    move(i, 1)
+                  }}
                   aria-label={`Move ${opt} down`}
                 >
                   <CaretDown size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />

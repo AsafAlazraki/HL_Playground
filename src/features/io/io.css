@@ -107,6 +107,41 @@
   color: var(--accent);
 }
 
+/* ============================================================
+   THE SAME CONTROL, STANDING ON NAVY.
+
+   This trigger moved into the foot of the rail, and the rail is
+   `--chrome` (#0b2138). `shell.css` inverts the control's RESTING
+   look there — soft chrome ink, transparent ground, a white
+   hairline — but the OPEN state above is this file's, and it was
+   never re-measured for that ground:
+
+     --accent      on --chrome    1.9 : 1
+     --accent-wash on --chrome    a 9% blue veil over navy, which
+                                  is not a visible state at all
+
+   So the panel's own trigger announced "I am open" in a colour
+   nobody can see, on the one screen where the control is a
+   permanent fixture rather than a passing toolbar button.
+
+   WHITE AT 16% IS THE SAME IDEA IN THE MATERIAL THAT WORKS HERE —
+   it is the value the rail's lit row and the dock's active item
+   both settled on, for the same measured reason (shell.css). The
+   selector is scoped to the rail's foot because that is the one
+   navy ground this control ever stands on; nothing else in this
+   file reaches outside the feature.
+   ============================================================ */
+.sn-foot .io-trigger[aria-expanded='true'] {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: var(--chrome-fg);
+}
+.sn-foot .io-trigger:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
 .io-glyph {
   flex: none;
   display: block;
@@ -130,9 +165,14 @@
   max-width: calc(100vw - var(--s-6));
   display: flex;
   flex-direction: column;
-  /* the head and CLEAR SHEET stay put on a short screen; only the
-     sections between them scroll */
-  max-height: calc(100vh - 96px);
+  /* THE ROOM IT ACTUALLY LANDED IN, measured at the press and
+     handed down as `--io-room` (ImportExportMenu.tsx). The old
+     `calc(100vh - 96px)` was true of a panel hanging off a
+     masthead and false of one hanging off anything else; the
+     fallback keeps that behaviour for a host that never measured.
+     The head and CLEAR SHEET stay put either way — only the
+     sections between them scroll. */
+  max-height: min(var(--io-room, calc(100vh - 96px)), calc(100vh - 96px));
   background: var(--grad-surface);
   border: 1px solid var(--line);
   border-radius: var(--r-panel);
@@ -148,6 +188,23 @@
   right: auto;
   left: 0;
   transform-origin: top left;
+}
+
+/* AND IT HANGS UPWARD WHEN THE ROOM IS UPWARD. The trigger now
+   lives at the foot of a full-height rail, 48px off the bottom of
+   the window; a panel that only ever opened downward opened off
+   the screen. Which way is decided by measuring at the press, not
+   by a prop the host has to remember — see ImportExportMenu.tsx.
+
+   §4's origin rule still holds: it grows FROM the control, so the
+   transform-origin turns over with it. */
+.io-pop.is-up {
+  top: auto;
+  bottom: calc(100% + var(--s-2));
+  transform-origin: bottom right;
+}
+.io-root--left .io-pop.is-up {
+  transform-origin: bottom left;
 }
 
 .io-body {
@@ -699,6 +756,14 @@
   right: auto;
   left: 0;
 }
+/* "Copy saved · REV 03" follows the panel. It was pinned under the
+   trigger like the panel was, so from the rail's foot the one
+   confirmation this feature gives — the thing that says the file
+   was written at all — appeared below the bottom of the window. */
+.io-stamp.is-up {
+  top: auto;
+  bottom: calc(100% + var(--s-2));
+}
 /* the revision it wrote, in the face figures take */
 .io-stamp b {
   font-family: var(--font-mono);
@@ -718,7 +783,9 @@
 
 .io-fresh {
   position: fixed;
-  bottom: 96px;
+  /* `bottom` is set inline from the MEASURED floor
+     (src/lib/noteFloor.ts). It used to be a hardcoded 96px, which
+     cleared a dock that no longer exists — see Freshness.tsx. */
   right: var(--s-5);
   z-index: 150;
   width: min(430px, calc(100vw - var(--s-6)));
@@ -917,11 +984,26 @@
   overflow-wrap: anywhere;
 }
 
+/* THE COLUMN'S OWN NAME, IN THE COLUMN'S OWN CASE. It carried
+   `.mono-label` — 11px uppercase mono, whose identity IS the
+   transform — so `Landed hull cost` was printed back at the dealer
+   as LANDED HULL COST, on the one screen whose entire job is to be
+   checked against the email that sent the file. §2: a name is never
+   a stamp, and uppercasing one is lossy in both directions.
+
+   It keeps the caption step and the reading face, which is also
+   what makes it read as the quieter half of the pair beside the
+   row's own name. 8.1:1 on the confirm sheet's `--surface-1`. */
 .io-diff-col {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
   color: var(--fg-secondary);
   line-height: 1.35;
-  /* whole, for the same reason the name is: `LANDED HULL COST` and
-     `LANDED HULL FREIGHT` clip to the same three words */
+  /* whole, for the same reason the name is: `Landed hull cost` and
+     `Landed hull freight` clip to the same three words */
   overflow-wrap: anywhere;
 }
 
@@ -950,8 +1032,16 @@
   text-align: center;
 }
 
+/* "+12 more cells" is a sentence about a list, and it read
+   +12 MORE CELLS. The figure keeps the mono face because it is a
+   figure; the words around it do not. */
 .io-diff-more {
-  padding-top: var(--s-1);
+  padding-top: var(--s-2);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
   color: var(--fg-secondary);
 }
 

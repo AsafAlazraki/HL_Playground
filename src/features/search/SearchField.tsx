@@ -69,6 +69,24 @@
      3. THE ROW TRAVELS. Choosing a row hands its id to the shell,
         which hands it to the sheet — the register opens ON the row,
         marked, instead of at the top of eighty-three of them.
+     4. WHERE YOU WERE COMES FIRST. A palette answers two questions
+        and this surface only ever answered one of them. "Which of
+        fifty-one tables holds a Stacer 449" is a search. "Take me
+        back to the boat I was costing four minutes ago" is a
+        RECALL, and the only way to serve it here was to retype a
+        thirty-eight-character name to get somewhere you had
+        already been. The last six destinations are drawn above the
+        places, so the shortest path in the app is Ctrl+K then
+        Enter. `recent.ts` argues what is remembered, what is not,
+        and why nothing stored is ever drawn without being resolved
+        against the sheet as it is now.
+
+   AND IT DOES NOT ANIMATE ON OPEN. That is a ruling and it is
+   argued at length in `search.css` beside `.fx-panel`: the motion
+   budget's one hard line is that a keyboard-initiated action opens
+   on the frame of the keypress, and a person who presses Ctrl+K a
+   hundred times a day types the first three characters DURING any
+   entrance you give it.
    ============================================================ */
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'

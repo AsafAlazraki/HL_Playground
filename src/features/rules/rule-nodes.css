@@ -508,3 +508,44 @@
   letter-spacing: 0.02em;
   text-transform: none;
 }
+
+/* ============================================================
+   THE PLATE'S LABELS, AT THE ONE SANCTIONED TRACKING.
+
+   The uppercase pass above took the CAPITALS off the two stamps
+   that carry a dealer's table name, and left every label on the
+   plate at the tracking uppercase had needed: +0.10em on the tag,
+   +0.12em on the clause lead, +0.06em on the hit count. §7 sets one
+   value for a label — `--t-label-track` — and these are labels.
+
+   IT IS NOT COSMETIC AT THIS SIZE. A 280px plate carries a tag, a
+   step name and a hit count on one 11px line; +0.14em over a
+   twelve-character step name is nearly two characters of width
+   spent on air, and the step name is the one that ellipsises when
+   the line runs out.
+
+   AND THE HANDLES ANSWER A KEYBOARD. A port is the control a person
+   drags a wire out of. It had a hover state and no focus ring, so
+   the canvas could be tabbed through without any way to see where
+   you were.
+   ============================================================ */
+
+.rl-node-tag,
+.rl-node-hits,
+.rl-line-lead {
+  letter-spacing: var(--t-label-track);
+}
+
+/* the port is a control: hover it had, focus it did not */
+.rl-node .rl-port.react-flow__handle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* the press is felt on a 9px square, so it is small and quick */
+.rl-node .rl-port.react-flow__handle:active {
+  transform: scale(1.1);
+  transition-duration: var(--d-press);
+}
+.rl-node .rl-port--route.react-flow__handle:active {
+  transform: translate(0, -50%) rotate(45deg) scale(1.15);
+}

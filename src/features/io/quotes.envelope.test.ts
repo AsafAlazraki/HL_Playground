@@ -316,7 +316,9 @@ describe('a quotes block from outside is narrowed at the door', () => {
     const result = validateEnvelope(fileWith({ nope: true }))
     expect(result.ok).toBe(false)
     if (result.ok) return
-    expect(result.error).toBe('FILE IS DAMAGED — BAD QUOTES BLOCK')
+    expect(result.error).toBe(
+      'That copy is damaged: the customer quotes block cannot be read.',
+    )
   })
 
   it('REFUSES A PICTURE ADDRESS THAT COULD RUN, and keeps the document', () => {

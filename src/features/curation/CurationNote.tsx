@@ -147,7 +147,39 @@ export function CurationNote({
           </button>
         ) : null}
 
-        <span className="cur-chip">{reading.chip}</span>
+        {/* ── THE CHIP, IN THE TWO TYPEFACES IT ALWAYS CLAIMED ─────
+            This header has said since it was written that "the count
+            is mono and tabular because it is a figure; the reason is
+            Inter because it is a sentence". It was one span and the
+            whole line was 11px tabular mono at the faint tier — so
+            "the series banner names this brand" was set in the face
+            reserved for figures, at the smallest size in the system,
+            in the lightest ink a person is allowed to read. That is
+            the costume this design system was written to remove, and
+            it was on every curated surface in the app.
+
+            The count is handed over as its own segment now
+            (`curationChipParts`) rather than being recovered by
+            splitting a joined string, so nothing here is parsing
+            anything. The middots are drawn by the markup and are
+            aria-hidden: a screen reader is given the full sentence
+            through the group's own label and does not need the
+            punctuation read to it. */}
+        <span className="cur-chip">
+          {reading.chipParts.map((part, i) => (
+            <span
+              className={i === 0 ? 'cur-chip-n' : 'cur-chip-why'}
+              key={`${i}-${part}`}
+            >
+              {i > 0 ? (
+                <span className="cur-chip-dot" aria-hidden="true">
+                  ·
+                </span>
+              ) : null}
+              {part}
+            </span>
+          ))}
+        </span>
       </div>
 
       {/* ── THE REACH LINE IS THE DOOR, NOT A REPORT ────────────────

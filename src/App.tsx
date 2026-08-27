@@ -1,12 +1,28 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { adoptKeptPatterns, seedWorkbookConstraints } from '@/features/constraints'
 import { StillnessProvider } from '@/features/views/stillness'
 import { TabGuard } from '@/features/session'
+import { SignIn, currentUser, type AppUser } from '@/features/auth'
 import { Shell } from '@/app/Shell'
 import { UndoKeys } from '@/app/UndoKeys'
 
 export default function App() {
+  /* ============================================================
+     WHO IS SIGNED IN — and an honest note about what this is not.
+
+     This is NOT authentication. The app is local-first, the
+     credential is in the bundle, and nothing here keeps anybody
+     out of anything (see features/auth/session.ts). It exists
+     because the product needs an identity: a quote is prepared BY
+     somebody, the dashboard is "my day", and a signed-in user
+     belongs to an ORGANISATION — which is the seam the admin app
+     will be built against when multi-tenancy arrives.
+
+     It gates the shell rather than sitting inside it, because the
+     first screen of a sales tool should say what the tool is for,
+     not ask for the name of a business. */
+  const [user, setUser] = useState<AppUser | null>(() => currentUser())
   const loaded = useProjectStore((s) => s.loaded)
   const init = useProjectStore((s) => s.init)
   const entities = useProjectStore((s) => s.entities)
@@ -50,6 +66,8 @@ export default function App() {
      one provider, one boolean, and the policy is true of every
      surface that reads it. `beginTyping` / `endTyping` keep working
      unchanged — the context is simply found further up. */
+  if (!user) return <SignIn onSignedIn={setUser} />
+
   return (
     <StillnessProvider>
       {/* THE TWO-TAB GUARD IS MOUNTED BEFORE THE SHEET IS, and that

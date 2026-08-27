@@ -983,6 +983,12 @@
 
 /* ============================================================
    THE RAIL — the quiet half of the left panel.
+
+   WHAT CHANGED. The chips carried their explanation in a `title`
+   attribute, which is not a surface this app drew: the OS tooltip
+   arrives a second late, in Segoe UI, in a black box, and never for
+   a keyboard. The sentence has a place on the rail now — see
+   TableTypeRail.tsx — and each chip says it can be picked up.
    ============================================================ */
 
 /* Ruled off at the bottom: the tray of types and the list of tables
@@ -1009,10 +1015,20 @@
   color: var(--fg-tertiary);
 }
 
-.tk-rail-hint {
-  margin-bottom: var(--s-2);
+/* THE FIXED SLOT. Two lines tall whatever is in it, and empty is
+   still two lines — a strip that reflows under the pointer is worse
+   than the tooltip it replaced, and every chip below this line would
+   move under the finger that was about to press one.
+
+   `min-height` is 2 x 12px x 1.45 = 35px, the caption step's own
+   arithmetic rather than a number picked to look right. 5.5:1 on
+   the panel's white. */
+.tk-rail-say {
+  min-height: 35px;
+  margin: 2px 0 var(--s-2);
   font-size: var(--t-caption-size);
   line-height: 1.45;
+  letter-spacing: 0;
   color: var(--fg-tertiary);
 }
 
@@ -1025,18 +1041,13 @@
   padding: 0;
 }
 
-/* On an empty sheet the hint line is not drawn (the invitation card
-   carries it), so the tray keeps its own breathing room. */
-.tk-rail-head + .tk-chips {
-  margin-top: var(--s-2);
-}
-
 .tk-chip {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--s-3);
   width: 100%;
-  padding: 7px var(--s-2);
+  padding: 7px var(--s-2) 7px 11px;
   border: 1px solid transparent;
   border-radius: var(--r-control);
   background: transparent;
@@ -1045,8 +1056,39 @@
   transition:
     background var(--d-fast) var(--ease),
     border-color var(--d-fast) var(--ease);
+  animation: ds-rise var(--d-slow) var(--ease-out-expo) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 22ms);
 }
-.tk-chip:hover {
+
+/* THE KIND'S HUE AS A RAIL — §1's sanctioned use, and the same
+   drawing the kind card in the dialog makes at four times the size.
+   It is 2px at rest and the full height of the chip under the
+   pointer, so the KIND lights up rather than the row. */
+.tk-chip::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 0;
+  width: 2px;
+  border-radius: 0 var(--r-chip) var(--r-chip) 0;
+  background: var(--tk-ink);
+  opacity: 0.55;
+  transition:
+    top var(--d-med) var(--ease-out-expo),
+    bottom var(--d-med) var(--ease-out-expo),
+    opacity var(--d-fast) var(--ease);
+}
+.tk-chip:hover::before,
+.tk-chip:focus-visible::before,
+.tk-chip.is-lit::before {
+  top: 3px;
+  bottom: 3px;
+  opacity: 1;
+}
+
+.tk-chip:hover,
+.tk-chip.is-lit {
   background: var(--surface-1);
   border-color: var(--line);
 }
@@ -1070,12 +1112,40 @@
 }
 
 .tk-chip-label {
+  flex: 1;
+  min-width: 0;
   font-size: var(--t-small-size);
   line-height: 1.3;
   color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* THE GRIP SAYS THE CHIP CAN BE PICKED UP, and it says it before
+   the pointer is on the chip's own 20 pixels of `cursor: grab`.
+   Opacity only, so it costs nothing at rest and never moves the
+   label — the column it occupies is reserved whether it is drawn or
+   not. `--fg-quaternary` is legal here and nowhere else on this
+   feature: it is a mark, it repeats a fact the cursor and the whole
+   tray already carry, and §1 bars that ink from MEANING rather than
+   from existing. */
+.tk-chip-grip {
+  flex: none;
+  color: var(--fg-quaternary);
+  opacity: 0;
+  transition: opacity var(--d-fast) var(--ease);
+}
+.tk-chip:hover .tk-chip-grip,
+.tk-chip:focus-visible .tk-chip-grip,
+.tk-chip.is-lit .tk-chip-grip {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-chip {
+    animation: none;
+  }
 }
 
 /* ============================================================

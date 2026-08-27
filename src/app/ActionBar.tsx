@@ -23,17 +23,25 @@
    over the same page, and a second material here would read as a
    second app.
 
-   THE LAYERING IS SOLVED ONCE, BY BEING INSIDE THE THING THAT ALREADY
-   SOLVED IT. A previous round found toasts painted across the dock,
-   fixed it with an 84px constant, and then found the same toasts
-   across the Fitment palette. `UndoKeys` answers that by MEASURING:
-   anything that floats over a page and must never be covered marks
-   itself `[data-note-clear]`, and the note layer floors itself above
-   the highest such thing. This bar is a child of `.dk-wrap`, which
-   already carries that attribute, so a note gets out of its way at
-   every window width with no new arithmetic and no second attribute
-   to remember. It is also inside `.dk-wrap`'s `pointer-events` rule,
-   so it takes its own presses and nothing else's.
+   THE LAYERING IS SOLVED ONCE, BY MEASUREMENT — AND THIS BAR NOW
+   DECLARES ITSELF. A previous round found toasts painted across the
+   dock, fixed it with an 84px constant, and then found the same
+   toasts across the Fitment palette. `UndoKeys` answers that by
+   MEASURING: anything that floats over a page and must never be
+   covered marks itself `[data-note-clear]`, and the note layer floors
+   itself above the highest such thing.
+
+   THE ATTRIBUTE USED TO BE INHERITED AND IS NOW WRITTEN HERE. This
+   bar was a child of `.dk-wrap`, which carried it — and the dock was
+   deleted. `.pagebar` is `position: fixed` at `bottom: var(--s-5)`
+   with nothing above it any more, so every undo note in the app came
+   up straight across the register's own Search, Fitment, Columns and
+   + Row controls: measured at 1280 x 860 the bar sits 786–836 and the
+   note came up at 776–818, over the whole left half of it. Nothing in
+   the note is clickable through (`.tb-toast` is `pointer-events:
+   none`), so the controls still worked — they were simply invisible
+   for the nine seconds a note stands, which is the fault the
+   measurement was written to end. One attribute, no arithmetic.
 
    WHAT IT REFUSES TO BE. Not a place for facts — a count is not an
    action, and DESIGN_CONTRACT's title block is where a page says what
@@ -154,7 +162,9 @@ export function ActionBar(): JSX.Element | null {
   }
 
   return (
-    <div className="pagebar">
+    /* see THE LAYERING at the head of this file: the note layer
+       measures this, so a toast can never cover the bar again */
+    <div className="pagebar" data-note-clear="">
       <div className="ab-shell">
       <div className="ab" role="toolbar" aria-label="What you can do here" ref={rootRef}>
         {shown.map((g, i) => (

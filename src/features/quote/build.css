@@ -1,386 +1,845 @@
 /* ============================================================
-   THE BUILD (qb-) — the step-by-step, drawn.
+   THE BUILD (qb-) — the guided build, drawn.
 
    CO-LOCATED WITH ITS FEATURE and appended to nothing: this file
-   styles `QuoteBuild.tsx` and only that. It shares exactly two
-   things with `quote.css` — the foot bar (`.qt-foot*`, so the two
-   draft surfaces end on the same line) and the column geometry it
-   sits inside (`.qt-root--edit`) — and it re-declares neither.
+   styles `QuoteBuild.tsx` and only that. It shares exactly one
+   thing with `quote.css` — the column geometry it sits inside
+   (`.qt-root--edit`) — and it re-declares none of it.
 
-   THE RULES THIS FILE IS ACCOUNTABLE TO, and each is checkable:
-     · no literal colour, anywhere. Every value is a token.
-     · nothing below 11px.
-     · uppercase only on `.mono-label`, which is the app's one
-       uppercase style. No name, no value, no button, no sentence.
-     · every figure is `--font-mono` with tabular numerals.
-     · ONE accent, about four times: the open stop, the focus ring,
-       the price change, and the one in-page action. Everything else
-       is ink and hairline.
-     · every pressable thing has hover, press AND focus, and the
+   ── THE THREE BANDS ──────────────────────────────────────────
+
+   `.qt-root--edit` is a flex COLUMN that does not scroll. This
+   file puts three children in it and only the middle one moves:
+
+     .qb-rail     navy, flex:none. The whole build at a glance.
+     .qb-body     flex:1, the one scrollport on the screen.
+     .qb-ledger   flex:none. The total, and the arithmetic.
+
+   THE LEDGER IS A SIBLING OF THE SCROLLPORT, NEVER STICKY INSIDE
+   IT, and that is measured rather than stylistic: a sticky box is
+   floored by its scroll container's CONTENT box, so every pixel of
+   bottom padding lifts it and hands the document a strip to paint
+   through. `.qt-root--edit` in quote.css carries the full
+   measurement; DESIGN_CONTRACT §8.7.
+
+   ── THE RULES THIS FILE IS ACCOUNTABLE TO ────────────────────
+   Each is checkable, and each was checked:
+
+     · NO LITERAL COLOUR, anywhere. Every value is a token —
+       including on the navy rail, which is why the lit state there
+       is `--chrome-raised` rather than a hand-rolled white wash.
+     · NOTHING BELOW 11px.
+     · UPPERCASE ONLY ON `.mono-label`, the app's one uppercase
+       style. No name, no value, no button, no sentence.
+     · EVERY FIGURE is `--font-mono` with tabular numerals, and
+       every money column is right-aligned so the figures stack.
+     · ONE ACCENT, about four times: the card that is on the quote,
+       the keyboard's highlight, the focus ring, and the one onward
+       action. THE RAIL TAKES NONE OF IT — see §THE RAIL.
+     · EVERY PRESSABLE THING has hover, press AND focus, and the
        press lands on pointer-down.
-     · every animation has a reduced-motion escape in this file.
+     · EVERY ANIMATION has a reduced-motion escape in this file.
 
-   THE ONE THING IT MAY NOT DO: pad itself to clear the dock. The
-   78px is reserved once, on `.shell-stage`. The foot is a SIBLING
-   of the scrollport, never sticky inside it — see the long note on
-   `.qt-root--edit` in quote.css for the measurement behind that.
+   ── CONTRAST, MEASURED ───────────────────────────────────────
+
+   On `--chrome` (#0b2138) the three chrome tiers measure 14.9, 7.6
+   and 4.6:1 — all three may carry a word.
+
+   ON `--chrome-raised` (#14304c) THEY DO NOT. That ground is
+   lighter, and `--chrome-fg-faint` measures **4.31:1** on it, which
+   fails. So every rule below that lifts a stop onto the raised
+   navy ALSO lifts its faint text to `--chrome-fg-soft` (7.0:1 on
+   the same ground, measured). That pairing is the reason the hover
+   and open-stop rules each set two colours instead of one; do not
+   simplify one of them away.
    ============================================================ */
 
-/* ---------------------------------------------------------- */
-/* The column                                                 */
-/* ---------------------------------------------------------- */
+/* ============================================================
+   §THE RAIL — the whole build, at a glance, never scrolling.
 
-.qb-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  background: var(--paper);
-}
+   IT IS NAVY BECAUSE THE APP'S FRAME IS. The side rail and the
+   masthead are `--chrome`; a build that opened on a third coloured
+   band would be a third idea in a system that has two.
 
-.qb-page {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+   THE ACCENT IS BARRED ON THIS GROUND. #0a5fc2 measures 2.7:1 on
+   #0b2138 — it is a state nobody can see — so nothing here is blue.
+   The open stop is lifted onto `--chrome-raised` and marked with a
+   filled `--chrome-fg` disc, which is the same idea in the material
+   that works on this ground (and the same move `.dk-item.is-active`
+   already makes on the dock).
+   ============================================================ */
+
+.qb-rail {
+  flex: none;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5) 0;
+  background: var(--chrome);
+  /* the hairline the frame ends on, not a border: a border would
+     add a pixel to the band's height at every zoom level */
+  box-shadow: inset 0 -1px 0 var(--chrome-line);
 }
 
-/* ---------------------------------------------------------- */
-/* The rig plate — what is being configured                   */
-/* ---------------------------------------------------------- */
-
-.qb-rig {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--sp-4);
-  padding: var(--sp-4);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec1);
-}
-
-.qb-rig-say {
+.qb-rail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
   min-width: 0;
+}
+
+.qb-rail-who {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: 1px;
+  min-width: 0;
 }
 
-.qb-rig-ref {
+.qb-rail-ref {
   margin: 0;
+  color: var(--chrome-fg-faint);
 }
 
-/* The name is the largest thing on the screen and the only thing at
-   this step. Tracking runs negative as size grows — DESIGN_CONTRACT
-   §3 — and it wraps rather than truncating: a hull's name is the one
-   string on this page a customer will read back to you. */
-.qb-rig-name {
+/* THE HULL'S NAME IS A NAME. It keeps its own case and its own
+   face — the display face is barred below 26px and this is 17px,
+   which is exactly the failure §2 of DESIGN_PRINCIPLES was written
+   after. Inter, semibold, tracked slightly negative. */
+.qb-rail-subject {
   margin: 0;
-  font-family: var(--font-ui);
-  font-size: 21px;
+  font-family: var(--font-sans);
+  font-size: var(--ui-xl-size);
   font-weight: 600;
-  letter-spacing: -0.016em;
-  line-height: 1.2;
-  color: var(--ink);
+  line-height: var(--ui-xl-lead);
+  letter-spacing: -0.012em;
+  color: var(--chrome-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.qb-rig-specs {
+/* WHERE YOU ARE, said twice on purpose: the figure for someone
+   checking, the name for someone glancing. They are one fact and
+   the rail is the only place either is printed. */
+.qb-rail-where {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-4);
+  align-items: baseline;
+  gap: var(--s-3);
+  margin: 0 auto 0 0;
+  min-width: 0;
+}
+
+.qb-rail-where-n {
+  flex: none;
+  margin: 0;
+  color: var(--chrome-fg-soft);
+}
+
+.qb-rail-where-name {
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  color: var(--chrome-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-rail-tail {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  flex: none;
+}
+
+.qb-rail-done {
+  margin: 0;
+  color: var(--chrome-fg-soft);
+  white-space: nowrap;
+}
+
+/* THE DOOR TO THE WHOLE SHEET, drawn the way the masthead draws its
+   controls so the two dark bands read as one frame. */
+.qb-rail-out {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--chrome-line);
+  border-radius: var(--r-control);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  color: var(--chrome-fg-soft);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+.qb-rail-out:hover {
+  color: var(--chrome-fg);
+  background: var(--chrome-raised);
+  border-color: var(--chrome-fg-faint);
+}
+.qb-rail-out:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.qb-rail-out:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   THE STOPS
+
+   NOTHING TRUNCATES MID-WORD (§3): the strip SCROLLS when it does
+   not fit, and each stop's chip clamps to one line at a word
+   boundary with the whole string still in the DOM and on `title`.
+   ------------------------------------------------------------ */
+
+.qb-rail-track {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  /* the scrollbar sits under the meter rather than over the stops */
+  padding-bottom: 2px;
+}
+
+.qb-rail-stops {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-1);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.qb-rig-spec {
+.qb-rail-slot {
+  flex: 1 1 0;
+  min-width: 132px;
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 12.5px;
 }
 
-.qb-rig-spec-lab {
+/* A STOP IS A LIST ROW, so it presses by DARKENING rather than by
+   scaling — a row that scales makes its neighbours look like they
+   moved (DESIGN_PRINCIPLES §4). Here "darkening" is the raised navy
+   held one beat longer, which on this ground is the same gesture. */
+.qb-stop {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-2) var(--s-3);
+  text-align: left;
+  border: 0;
+  border-radius: var(--r-control) var(--r-control) 0 0;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease);
+}
+.qb-stop:hover {
+  background: var(--chrome-raised);
+}
+/* CONTRAST, NOT DECORATION: on --chrome-raised the faint tier is
+   4.31:1 and fails. It steps up with the ground. See the header. */
+.qb-stop:hover .qb-stop-chose {
+  color: var(--chrome-fg-soft);
+}
+.qb-stop:hover .qb-stop-name {
+  color: var(--chrome-fg);
+}
+.qb-stop:active {
+  background: var(--chrome-raised);
+  transition-duration: var(--d-press);
+}
+.qb-stop:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+}
+
+.qb-stop-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--chrome-line);
+  border-radius: var(--r-full);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--chrome-fg-faint);
+  transition:
+    background var(--d-med) var(--ease),
+    color var(--d-med) var(--ease),
+    border-color var(--d-med) var(--ease);
+}
+
+.qb-stop-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+/* A TABLE'S NAME, in the dealer's own casing. Never uppercased —
+   uppercasing content is lossy, and `PVC` uppercased cannot be told
+   from a value somebody typed as `Pvc` (§2). */
+.qb-stop-name {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 550;
+  line-height: 1.3;
+  color: var(--chrome-fg-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* WHAT WAS CHOSEN ON IT. This is the whole reason the rail is worth
+   its height: "Yamaha F90XB" under MOTOR makes the band a readable
+   summary of the rig rather than eight ticks. */
+.qb-stop-chose {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--chrome-fg-faint);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* clamping breaks at a word boundary; this stops a long SKU
+     being cut through the middle of itself */
+  overflow-wrap: normal;
+  transition: color var(--d-fast) var(--ease);
+}
+
+/* DECIDED. The tick is the shape that carries it; the raised disc is
+   what makes the tick legible. Shape rather than shade, because on a
+   navy ground with the accent barred, shade is all that would be
+   left and eight of these need to be told apart at a glance. */
+.qb-stop.is-done .qb-stop-mark {
+  background: var(--chrome-raised);
+  border-color: var(--chrome-fg-faint);
+  color: var(--chrome-fg);
+}
+.qb-stop.is-done .qb-stop-chose {
+  color: var(--chrome-fg-soft);
+}
+
+/* THE ONE YOU ARE ON. Lit in white, because the accent measures
+   2.7:1 here and would be a state nobody can see. */
+.qb-stop.is-on {
+  background: var(--chrome-raised);
+  box-shadow: inset 0 -2px 0 var(--chrome-fg);
+}
+.qb-stop.is-on .qb-stop-mark {
+  background: var(--chrome-fg);
+  border-color: var(--chrome-fg);
+  color: var(--chrome);
+}
+.qb-stop.is-on .qb-stop-name {
+  color: var(--chrome-fg);
+}
+.qb-stop.is-on .qb-stop-chose {
+  color: var(--chrome-fg-soft);
+}
+
+/* HOW FAR ALONG, AS A LENGTH. The same two numbers the sentence in
+   the head already states in words — no third fact, nothing counted
+   twice — which is why it is aria-hidden at the call site. */
+.qb-rail-meter {
+  display: block;
+  height: 2px;
+  background: var(--chrome-line);
+}
+
+.qb-rail-meter-fill {
+  display: block;
+  width: var(--done, 0%);
+  height: 100%;
+  background: var(--chrome-fg-soft);
+  transition: width var(--d-slow) var(--ease-out-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qb-rail-meter-fill {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   §THE SPLIT — the hull held still, the decision moving.
+
+   THE ATMOSPHERE IS A BACKGROUND, NOT AN ELEMENT, and that is not
+   a style choice. `.ds-aurora` is absolutely positioned, and an
+   absolutely positioned child of a scroll container belongs to that
+   container's scrollable overflow — so it would sit over the first
+   screen and slide off the top the moment somebody scrolled to the
+   trailers, leaving the rest of the page on flat paint. Two radial
+   washes in the scrollport's OWN background do not travel with the
+   content, so the ground is the same at every scroll position.
+
+   BOTH ARE UNDER 6% ALPHA, which shifts the ground's luminance by
+   less than one contrast point: every measurement in this file still
+   holds over them. They carry nothing, and they go away entirely for
+   the two people who have asked for that — ds.css does this for
+   `.ds-aurora`, and a background cannot inherit that escape, so it
+   is written out below.
+   ============================================================ */
+
+.qb-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(62vw 46vh at 6% -6%, var(--aurora-1) 0%, transparent 68%),
+    radial-gradient(54vw 42vh at 98% 2%, var(--aurora-2) 0%, transparent 70%),
+    var(--paper);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .qb-body {
+    background: var(--paper);
+  }
+}
+@media (prefers-contrast: more) {
+  .qb-body {
+    background: var(--paper);
+  }
+}
+
+.qb-split {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-8);
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--s-6) var(--s-6) var(--s-8);
+}
+
+/* ------------------------------------------------------------
+   THE HULL
+
+   IT IS THE BIGGEST THING ON THE SCREEN AND IT STAYS. The picture
+   was 220px wide beside a 21px name — a thumbnail of the one object
+   the whole document is about — and it scrolled away the moment
+   somebody started picking. Sticky, so a person four steps into a
+   rig is still looking at the boat they are building.
+   ------------------------------------------------------------ */
+
+.qb-hull {
+  min-width: 0;
+}
+
+.qb-hull-stick {
+  position: sticky;
+  top: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.qb-hull-ref {
+  margin: var(--s-2) 0 0;
   color: var(--ink-faint);
 }
 
-.qb-rig-spec-val {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 12px;
-  color: var(--ink);
-}
-
-/* THE SENTENCE THAT ANSWERS PRODUCTION'S WORST FRICTION. Soft ink,
-   not faint: it is a sentence, and the faint tier is for metadata
-   beside the thing it describes. */
-.qb-rig-saved {
+/* THE DISPLAY FACE, and this is one of the two places in the quote
+   that may have it: `.ds-display-lg`'s clamp bottoms out at 26px,
+   which is the floor the face is allowed to exist under at all. The
+   utility carries the face, the width axis and the tracking; this
+   rule carries only the wrap and the measure. Everything else on the
+   screen — every name, every sentence, every label — is Inter, and
+   every figure is mono. */
+.qb-hull-name {
   margin: 0;
-  max-width: 52ch;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--ink-soft);
+  max-width: 18ch;
 }
 
-/* When the write is actually failing the same line says so, and it
-   has to be told apart from the reassurance without reading it. */
-.qb-rig-saved.is-bad {
-  color: var(--ink);
-  font-weight: 500;
-}
+/* THE SPEC STRIP reads as an instrument row rather than as loose
+   pairs: the column's name over the figure, and the figure in mono
+   at a size that can be read across a desk. Nothing is invented —
+   these are the frozen `subjectSpecs`, and there are as many of them
+   as the price file had.
 
-/* THE PACKAGE FIGURE USED TO BE DRAWN HERE TOO — `.qb-rig-money`,
-   `.qb-rig-total`, `.qb-rig-unpriced` — and the rules are gone with
-   the markup. The total, the delta and the unpriced count are on the
-   bar under the scrollport, which is on screen at every scroll
-   position; this plate is not. See `RigPlate` in QuoteBuild.tsx. */
-
-/* THE PRICE MOVING. One of the four accents on the screen, and the
-   only one that is transient — it clears itself after 2.6s, so it is
-   never a stale claim. A credit takes the ink rather than a second
-   hue: this app has one accent and a red for money would be a
-   second. */
-.qb-delta {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--blue);
-  animation: qb-delta-in var(--t-med) var(--ease-settle);
-}
-
-.qb-delta.is-down {
-  color: var(--ink-soft);
-}
-
-@keyframes qb-delta-in {
-  from {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* Reduced motion means the movement goes and the opacity stays — the
-   arrival still reads, it simply does not travel. */
-@media (prefers-reduced-motion: reduce) {
-  .qb-delta {
-    animation: qb-delta-fade var(--t-med) var(--ease-settle);
-  }
-
-  @keyframes qb-delta-fade {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-}
-
-/* ---------------------------------------------------------- */
-/* A warning about the subject                                */
-/* ---------------------------------------------------------- */
-
-.qb-alert {
+   NO DIVIDERS, deliberately. The strip wraps — the number of specs is
+   the data's business, not the layout's — and a `border-left` on
+   every item but the first puts a stray rule at the head of the
+   second row the moment it does. Air is the divider and it cannot be
+   wrong at any count. */
+.qb-hull-specs {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--sp-2);
+  gap: var(--s-3) var(--s-6);
+  margin: var(--s-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qb-hull-spec {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.qb-hull-spec-lab {
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.qb-hull-spec-val {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-lg-size);
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+
+/* THE REASSURANCE IS A FOOTNOTE to the plate rather than a line of
+   it — half a point of size and none of its ink. It is a SENTENCE,
+   and the faint tier is reserved for metadata beside the thing it
+   describes, so it takes the soft tier (8.1:1). */
+.qb-hull-saved {
   margin: 0;
-  padding: var(--sp-3);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius);
-  font-size: 12.5px;
+  max-width: 46ch;
+  font-size: var(--t-caption-size);
   line-height: 1.55;
   color: var(--ink-soft);
 }
 
-.qb-alert svg {
-  flex: none;
-  margin-top: 1px;
+/* WHEN THE WRITE IS FAILING it says the fault instead, and a screen
+   that promised the quote was safe while the write was failing would
+   be worse than one that promised nothing. Carmine, and it is the
+   only place on this screen that takes it. */
+.qb-hull-saved.is-bad {
+  color: var(--red);
+  font-weight: 500;
+}
+
+/* A LIVE READ ON THE SUBJECT — the hull went out of stock under a
+   draft that names it. Ochre rail, ink text: a kind hue is a rail, a
+   dot or a glyph, never a fill behind something that has to be read. */
+.qb-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-3);
+  border-left: 3px solid var(--accent-ochre);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--surface-3);
+  font-size: var(--t-small-size);
+  line-height: 1.55;
   color: var(--ink);
 }
 
-/* ---------------------------------------------------------- */
-/* The stops — every one reachable, always                    */
-/* ---------------------------------------------------------- */
+/* ------------------------------------------------------------
+   WALKING — the two chevrons, and they NAME where they go.
 
-/* PRODUCTION'S STEPPER IS A ROW OF `<div>`s WITH NO CLICK HANDLER
-   (highfield-quote-flow.tsx:2304-2317), so changing the hull colour
-   from the summary is six presses of Back. Every stop here is a
-   button, always enabled, in both directions. */
-.qb-stops {
+   A bare pair of arrows makes a person press one to find out. The
+   name of the next decision is the whole affordance, and it is the
+   pointer's half of the ← → keys printed under it.
+   ------------------------------------------------------------ */
+
+.qb-walk {
   display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--s-2);
+  margin-top: var(--s-1);
 }
 
-.qb-stops-count {
-  margin: 0;
+.qb-walk-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--grad-surface);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    transform var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+.qb-walk-btn--on {
+  justify-content: flex-end;
+}
+.qb-walk-btn:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--line-strong);
+  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+}
+.qb-walk-btn:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.qb-walk-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+/* AT THE END OF THE WALK the control still says what it is rather
+   than vanishing — "The start", "The end" — so the row does not
+   change shape as a person moves through it. It is inert and it
+   looks inert; what it is NOT is a control with no explanation,
+   because the word in it is the explanation. */
+.qb-walk-btn:disabled {
+  cursor: default;
+  color: var(--fg-quaternary);
+  background: none;
+  box-shadow: none;
 }
 
-.qb-stops-list {
+.qb-walk-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A SHORTCUT NOBODY IS TOLD ABOUT IS A SHORTCUT NOBODY HAS. */
+.qb-keys {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.qb-stop {
-  display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  padding: 7px 11px;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  cursor: pointer;
-  text-align: left;
-  transition:
-    transform var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
+  gap: 4px var(--s-2);
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-faint);
 }
 
-.qb-stop:hover {
-  border-color: var(--hairline-strong);
-}
-
-.qb-stop:active {
-  transform: scale(0.985);
-}
-
-.qb-stop:focus-visible {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
-.qb-stop.is-on {
-  background: var(--blue-wash);
-  border-color: var(--blue);
-}
-
-.qb-stop-mark {
+.qb-key {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
+  min-width: 20px;
   height: 18px;
-  flex: none;
-  border-radius: 999px;
-  border: 1px solid var(--hairline-strong);
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  background: var(--surface-1);
+  box-shadow: 0 1px 0 var(--line);
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  color: var(--ink-soft);
-}
-
-.qb-stop.is-done .qb-stop-mark {
-  border-color: transparent;
-  background: var(--ink);
-  color: var(--paper-high);
-}
-
-.qb-stop-name {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
   font-weight: 500;
-  color: var(--ink);
-}
-
-.qb-stop-at {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 11px;
   color: var(--ink-soft);
 }
 
-/* ---------------------------------------------------------- */
-/* The open step                                              */
-/* ---------------------------------------------------------- */
-
-.qb-step {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  padding: var(--sp-5);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec1);
+.qb-keys-say {
+  margin-right: var(--s-2);
+  color: var(--ink-faint);
 }
 
-.qb-step-head {
+/* ------------------------------------------------------------
+   THE PICTURE WELL
+   ------------------------------------------------------------ */
+
+.qb-well {
   display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--grad-sunken);
 }
 
-.qb-step-n {
+.qb-well--big {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-panel);
+  box-shadow: var(--e4), inset 0 0 0 1px var(--line-subtle);
+}
+
+.qb-well-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A PICTURE WE CANNOT FETCH IS A DECISION, NOT A FAULT. 108 of the
+   seeded photographs are in this repository and 76 are not. One
+   wording — the one `imageSources` settled on — so a shelf of them
+   reads as a convention somebody chose rather than as ninety-three
+   separate breakages. */
+.qb-well-held {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--s-3);
+  text-align: center;
+}
+
+.qb-well-held-word {
   margin: 0;
 }
 
-.qb-step-name {
+.qb-well-held-why {
+  max-width: 30ch;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* The seeded photographs are a mixed set — yard shots, studio
+   cut-outs, turquoise lifestyle. A whisper of desaturation at rest
+   pulls a shelf of them into one page; the pointer gives the colour
+   back. The same treatment Home gives its covers, so a boat looks
+   like the same boat on both screens. */
+.qb-card .qb-well-img {
+  filter: saturate(0.9);
+  transition:
+    filter var(--d-med) var(--ease),
+    transform var(--d-slow) var(--ease-out-expo);
+}
+.qb-card:hover .qb-well-img {
+  filter: saturate(1);
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qb-card:hover .qb-well-img {
+    transform: none;
+  }
+}
+
+/* ============================================================
+   THE OPEN DECISION — the one panel that changes.
+
+   The entrance and the exit are springs from `views/stillness`,
+   applied in QuoteBuild.tsx: transform and opacity only, and both
+   collapse to zero duration when the app is `still` (somebody is
+   typing, or the reader asked for reduced motion). Nothing about
+   the movement is in this file, which is why there is no
+   reduced-motion escape here — the gate is upstream and covers it.
+   ============================================================ */
+
+.qb-work {
+  min-width: 0;
+}
+
+.qb-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: var(--s-6);
+  border-radius: var(--r-panel);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+
+.qb-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.qb-panel-n {
   margin: 0;
-  font-family: var(--font-ui);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.009em;
+  color: var(--ink-faint);
+}
+
+/* The step's own name — the title step. It is a NAME and keeps its
+   own case; the hull above it is the one headline on this screen. */
+.qb-panel-name {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 620;
+  line-height: 1.2;
+  letter-spacing: -0.018em;
   color: var(--ink);
 }
 
 .qb-say {
   margin: 0;
-  max-width: 62ch;
-  font-size: 13px;
+  max-width: 68ch;
+  font-size: var(--t-small-size);
   line-height: 1.65;
   color: var(--ink-soft);
 }
 
 .qb-note {
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--t-caption-size);
   line-height: 1.55;
   color: var(--ink-soft);
 }
 
-/* ---------------------------------------------------------- */
-/* WHAT THE PRICE FILE MEASURES ABOUT THESE                   */
-/* ---------------------------------------------------------- */
+/* NEVER A ZERO WHERE THERE IS NO PRICE. The workbook's own quote
+   sheet renders an unmatched lookup as blank; this renders the
+   opposite of blank, and says it in words. One class for every place
+   on the screen that has to, so the wording cannot drift. */
+.qb-nil {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
 
-/* THE FOUR PROPERTIES — the count, the reason, the search that goes
+/* ------------------------------------------------------------
+   WHAT THE PRICE FILE MEASURES ABOUT THESE
+
+   THE FOUR PROPERTIES — the count, the reason, the search that goes
    past it, the switch that turns it off — are drawn by
-   `@/features/curation`, which owns them for every surface in the app
-   and brings its own stylesheet. Nothing in this file re-states them.
+   `@/features/curation`, which owns them for every surface in the
+   app and brings its own stylesheet. Nothing here re-states them.
 
-   WHAT IS LEFT IS THE HALF THAT IS OURS ALONE. HelmLogic's curation
-   toolbar names its reasons in a tooltip and can say nothing about how
-   often any of them is true, because nothing in that app measures.
-   Every rule in this one was adjudicated against the price file cell
-   by cell and carries a rate, so the rate gets a plate rather than a
-   parenthesis. */
-/* THE MEASUREMENT. This is the half production cannot draw, so it is
-   given a plate of its own — on paper rather than on the tint, so the
-   figure reads as a fact from the price file rather than as more of
-   our chrome. */
+   WHAT IS LEFT IS THE HALF THAT IS OURS ALONE. Production's curation
+   toolbar names its reasons in a tooltip and can say nothing about
+   how often any of them is true, because nothing in that app
+   measures. Every rule in this one was adjudicated against the price
+   file cell by cell and carries a rate, so the rate gets a plate
+   rather than a parenthesis — on paper rather than on a tint, so it
+   reads as a fact from the price file rather than as more of our own
+   chrome.
+   ------------------------------------------------------------ */
+
 .qb-measured {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: var(--sp-2) var(--sp-3);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
 }
 
 .qb-measured-head {
@@ -391,20 +850,21 @@
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--t-caption-size);
   color: var(--ink-soft);
 }
 
 .qb-measured-ref {
   flex: none;
+  margin: 0;
 }
 
 .qb-measured-rate {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 15px;
+  font-size: var(--t-mono-lg-size);
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -421,22 +881,35 @@
   color: var(--ink);
 }
 
+/* THE QUALIFICATION TRAVELS WITH THE FIGURE and may never be
+   separated from it — the ledger's own rule. */
 .qb-measured-caveat {
   margin: 0;
   max-width: 72ch;
-  font-size: 12px;
+  font-size: var(--t-caption-size);
   line-height: 1.6;
   color: var(--ink-soft);
 }
 
-/* ---------------------------------------------------------- */
-/* What is already on the quote from this step                */
-/* ---------------------------------------------------------- */
+/* ------------------------------------------------------------
+   WHAT THIS STEP HAS ALREADY PUT ON THE QUOTE
+   ------------------------------------------------------------ */
+
+.qb-chosen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.qb-chosen-head {
+  margin: 0;
+  color: var(--ink-faint);
+}
 
 .qb-picked {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--s-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -446,12 +919,13 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
   border-left: 3px solid var(--ink);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: inset 0 1px 0 var(--edge-light);
 }
 
 .qb-line-mark {
@@ -476,7 +950,7 @@
 .qb-card-facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px var(--sp-3);
+  gap: 3px var(--s-3);
 }
 
 .qb-card-fact {
@@ -518,7 +992,7 @@
   gap: 6px;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  font-size: var(--t-mono-lg-size);
   font-weight: 500;
   color: var(--ink);
 }
@@ -531,825 +1005,77 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: transparent;
   color: var(--ink-soft);
   cursor: pointer;
   transition:
-    transform var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
+    transform var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
 }
-
 .qb-line-drop:hover {
-  background: var(--paper-sunken);
+  background: var(--surface-3);
   color: var(--ink);
 }
-
 .qb-line-drop:active {
   transform: scale(0.94);
+  transition-duration: var(--d-press);
 }
-
 .qb-line-drop:focus-visible {
   outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
+  box-shadow: var(--focus);
 }
 
 /* The subject's line has no way off the quote — a quote for one boat
    is about that boat — so the column still exists and holds nothing.
-   Without it the money column of the hull would sit 24px right of
+   Without it the money column of the hull would sit 26px right of
    every other line's. */
 .qb-line-drop-none {
   display: inline-block;
-  width: 24px;
-  height: 24px;
-}
-
-/* ---------------------------------------------------------- */
-/* The offers — a photograph, a name, a price                 */
-/* ---------------------------------------------------------- */
-
-.qb-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* A CARD IS A BUTTON — the app's one repeated object, at the size the
-   contract sets, with the states it requires: rest, hover, press on
-   pointer-down, focus. */
-.qb-card {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  text-align: left;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec1);
-  cursor: pointer;
-  transition:
-    transform var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-
-.qb-card:hover:not(:disabled) {
-  border-color: var(--hairline-strong);
-  box-shadow: var(--ec3);
-  transform: translateY(-1px);
-}
-
-.qb-card:active:not(:disabled) {
-  transform: translateY(0) scale(0.994);
-  box-shadow: var(--e1);
-}
-
-.qb-card:focus-visible {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
-/* ALREADY ON THE QUOTE. Disabled, and it SAYS so on its own face —
-   `.qb-card-on` below — so nothing on this grid is a control that is
-   inert without an explanation. */
-.qb-card.is-on {
-  cursor: default;
-  opacity: 0.62;
-}
-
-/* Reached by searching past the narrowing, or by switching it off. It
-   is offered on exactly the same terms as everything else — the mark
-   is a fact, not a refusal. */
-.qb-card.is-outside {
-  border-style: dashed;
-}
-
-.qb-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: var(--sp-3);
-  flex: 1;
-  min-height: 0;
-}
-
-.qb-card-top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  min-height: 14px;
-}
-
-.qb-card-star {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--ink);
-}
-
-.qb-card-star-word {
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ink-soft);
-}
-
-.qb-card-outside,
-.qb-card-on {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ink-soft);
-}
-
-.qb-card-name {
-  font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 570;
-  letter-spacing: -0.009em;
-  line-height: 1.25;
-  color: var(--ink);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.qb-card-foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  margin-top: auto;
-  padding-top: 9px;
-  border-top: 1px solid var(--hairline);
-}
-
-.qb-card-price {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-
-/* NEVER A ZERO WHERE THERE IS NO PRICE. The workbook's own quote sheet
-   renders an unmatched lookup as blank; this renders the opposite of
-   blank, and says it in words. */
-.qb-card-nil {
-  font-size: 12px;
-  color: var(--ink-soft);
-}
-
-.qb-card-col {
-  margin: 0;
-  text-align: right;
-}
-
-/* ---------------------------------------------------------- */
-/* The picture well                                           */
-/* ---------------------------------------------------------- */
-
-.qb-well {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  background: var(--paper-sunken);
-  overflow: hidden;
-}
-
-.qb-well--big {
-  width: 220px;
-  flex: none;
-  border-radius: var(--radius-sm);
-}
-
-.qb-well-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* A PICTURE WE CANNOT FETCH IS A DECISION, NOT A FAULT. One wording,
-   the one `imageSources` settled on, so a grid of them reads as a
-   convention rather than as ninety-three separate breakages. */
-.qb-well-held {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: var(--sp-3);
-  text-align: center;
-}
-
-.qb-well-held-word {
-  margin: 0;
-}
-
-.qb-well-held-why {
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-  max-width: 30ch;
-}
-
-/* ---------------------------------------------------------- */
-/* Nothing to pick — the four-part empty state                */
-/* ---------------------------------------------------------- */
-
-.qb-none {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  max-width: 560px;
-  padding: var(--sp-6);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--e2);
-}
-
-.qb-none-eyebrow {
-  margin: 0;
-}
-
-.qb-none-say {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-
-/* THE LOAD-BEARING LINE: what the person already has, counted off the
-   sheet. A blank screen at somebody holding 434 trailers reads as
-   though the app lost them. */
-.qb-none-have {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-
-.qb-none-have strong {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.qb-none-held {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ink-soft);
-}
-
-/* THE ONE ACTION. Sentence case: a button is one of the four things
-   DESIGN_CONTRACT §3 says uppercase may never be. */
-.qb-act {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 13px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: var(--blue);
-  color: var(--paper-high);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    transform var(--t-fast) var(--ease-draft),
-    filter var(--t-fast) var(--ease-draft);
-}
-
-.qb-act:hover {
-  filter: brightness(1.06);
-}
-
-.qb-act:active {
-  transform: scale(0.97);
-}
-
-.qb-act:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
-/* ---------------------------------------------------------- */
-/* The tally on the handover                                  */
-/* ---------------------------------------------------------- */
-
-/* WHAT THE CUSTOMER IS ABOUT TO BE HANDED, one row per stop. It is a
-   reading of the same frozen lines the document prints and computes
-   nothing of its own — the sum at the foot is `quoteTotals`, passed
-   in, because five independent summations of one deal is the fault
-   this whole feature exists to end. */
-.qb-tally {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.qb-tally-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.6fr) auto;
-  align-items: baseline;
-  gap: var(--sp-3);
-  padding: 9px var(--sp-3);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.qb-tally-row:last-child {
-  border-bottom: 0;
-}
-
-.qb-tally-name {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink);
-}
-
-/* The chosen rows, run together. It WRAPS — nothing in this app
-   truncates mid-word, and half a motor's name on the last screen
-   before a quote goes out is worse than two lines. */
-.qb-tally-say {
-  min-width: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-  overflow-wrap: anywhere;
-}
-
-.qb-tally-amount {
-  justify-self: end;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 13px;
-  color: var(--ink);
-}
-
-.qb-tally-row--sum {
-  background: var(--paper-sunken);
-}
-
-.qb-tally-row--sum .qb-tally-amount {
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-/* Every reason the document may not go yet, in full. The bar above
-   carries the first one; a person who fixes that and is refused for a
-   second nobody mentioned has been told half the truth. */
-.qb-stops-why {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  background: var(--paper-sunken);
-  border-radius: var(--radius-sm);
-}
-
-/* ---------------------------------------------------------- */
-/* Moving between steps                                       */
-/* ---------------------------------------------------------- */
-
-.qb-move {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline);
-}
-
-.qb-move-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 11px;
-  height: 28px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition:
-    transform var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-
-.qb-move-btn:hover:not(:disabled) {
-  color: var(--ink);
-  border-color: var(--hairline-strong);
-}
-
-.qb-move-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.qb-move-btn:focus-visible {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
-.qb-move-btn:disabled {
-  cursor: default;
-  color: var(--fg-quaternary);
-  border-color: var(--hairline);
-}
-
-.qb-move-btn--next {
-  margin-left: auto;
-}
-
-/* ---------------------------------------------------------- */
-/* The line under the total                                   */
-/* ---------------------------------------------------------- */
-
-/* It names the control rather than repeating it — the act itself is on
-   the action bar, published at rank 90 with its refusal attached. */
-.qb-foot-where {
-  margin: 0 0 0 auto;
-  font-size: 12.5px;
-  color: var(--ink-soft);
-}
-
-/* ---------------------------------------------------------- */
-/* Narrow windows                                             */
-/* ---------------------------------------------------------- */
-
-@media (max-width: 720px) {
-  .qb-page {
-    padding: var(--sp-4) var(--sp-4) var(--sp-5);
-  }
-
-  .qb-rig {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .qb-well--big {
-    width: 100%;
-  }
-
-  .qb-line {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    row-gap: var(--sp-2);
-  }
+  width: 26px;
+  height: 26px;
 }
 
 /* ============================================================
-   THE BUILD, LIT.
-
-   Appended, not rewritten — every rule above still applies and
-   these change APPEARANCE only. Nothing here moves a control,
-   renames a class or alters what a surface means.
-
-   WHAT WAS WRONG WITH IT. The screen was correct and flat: white
-   rectangles on the page ground with one hairline each, a 220px
-   thumbnail of the boat, and the package figure drawn twice. A
-   person configuring a $90,000 rig was looking at a form.
-
-   WHAT CHANGES, and each one is a rule the system already has:
-     · the photograph is the biggest thing on the page — it is the
-       one honest product picture this screen can show, and it was
-       being drawn at catalogue-tile size
-     · surfaces are paint that is not FLAT paint: --grad-surface
-       plus the lit top edge, the same pair Home's cards take
-     · the shelf of offers ARRIVES, staggered, instead of appearing
-     · walking to the next decision is a scene change, not a
-       content swap
-     · one accent, and it is still about four: the open stop, the
-       progress it has made, the focus ring, and the price moving
-
-   ATMOSPHERE CARRIES NOTHING, and it is a BACKGROUND rather than an
-   element — see the note on `.qb-scroll` below for why that is not a
-   style choice. Both washes go away under
-   prefers-reduced-transparency and prefers-contrast: more, written
-   out here because a background cannot inherit ds.css's escape.
+   THE SHELF — a photograph, a name, a price, and WHY IT DOES NOT
+   FIT WHEN IT DOES NOT.
    ============================================================ */
 
-/* THE GROUND. Two radial washes on the scrollport's own background,
-   which on a scroll container is painted against the element and
-   does NOT travel with the content — so the atmosphere is the same
-   at the top of the build and at the bottom of it. Both are under 6%
-   alpha, which shifts the ground's luminance by less than one
-   contrast point: every measurement above this line still holds.
-
-   IT CARRIES NOTHING, and it goes away entirely for the two people
-   who have asked for that. ds.css does this for `.ds-aurora`; a
-   background cannot inherit that, so it is written here. */
-.qb-scroll {
-  position: relative;
-  isolation: isolate;
-  background:
-    radial-gradient(62vw 46vh at 6% -8%, var(--aurora-1) 0%, transparent 68%),
-    radial-gradient(54vw 42vh at 98% 0%, var(--aurora-2) 0%, transparent 70%),
-    var(--paper);
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .qb-scroll {
-    background: var(--paper);
-  }
-}
-@media (prefers-contrast: more) {
-  .qb-scroll {
-    background: var(--paper);
-  }
-}
-
-.qb-page {
-  position: relative;
-  z-index: 1;
-  gap: var(--sp-5);
-}
-
-/* ------------------------------------------------------------
-   THE RIG PLATE — a hull, at the size a hull deserves.
-
-   Two columns now that the money has gone to the bar: the
-   photograph, and everything that is words. At 1080px of page the
-   picture takes a third of it, which is the first time in this
-   feature a boat has been drawn larger than a catalogue tile.
-   ------------------------------------------------------------ */
-.qb-rig {
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--sp-6);
-  padding: var(--sp-5);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
-  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
-}
-
-.qb-rig-say {
-  gap: var(--sp-3);
-}
-
-.qb-rig-ref {
-  color: var(--ink-faint);
-}
-
-/* THE NAME IS THE HEADLINE OF THE SCREEN. 21px was a card title
-   under a 220px picture; at 360px of photograph beside it, it is the
-   only thing that can hold the other half of the plate. The step is
-   taken whole — size, weight, leading and tracking — and tracking
-   runs further negative as it grows, which is the correction the
-   type scale is built on. It wraps: a hull's name is the one string
-   here a customer reads back to you. */
-.qb-rig-name {
-  /* THE DISPLAY FACE, and this is one of the two places in the quote
-     that may have it: the step's clamp bottoms out at 26px, which is
-     the floor the face is allowed to exist under at all. The width
-     and the tracking are `.ds-display-lg`'s own, restated rather than
-     borrowed, because this rule also has to carry the wrap and the
-     measure. Everything else on the screen — every name, every
-     sentence, every label — is still Inter, and every figure is
-     still mono. */
-  font-family: var(--font-hero);
-  font-variation-settings: 'wdth' 103;
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: -0.028em;
-  max-width: 22ch;
-}
-
-/* THE SPEC STRIP reads as an instrument row rather than as six loose
-   pairs: the column's name over the figure, and the figure in mono
-   at a size that can be read across a desk. Nothing is invented —
-   these are the frozen `subjectSpecs`, and there are as many of them
-   as the price file had.
-
-   NO DIVIDERS BETWEEN THEM, deliberately. The strip wraps — the
-   number of specs is the data's business, not the layout's — and a
-   `border-left` on every item except the first puts a stray rule at
-   the head of the second row the moment it does. Air is the divider,
-   and it cannot be wrong at any count. */
-.qb-rig-specs {
-  gap: var(--sp-3) var(--sp-6);
-  align-items: flex-start;
-}
-
-.qb-rig-spec {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.qb-rig-spec-lab {
-  font-size: var(--t-caption-size);
-  font-weight: 500;
-  letter-spacing: var(--t-caption-track);
-  white-space: nowrap;
-}
-
-.qb-rig-spec-val {
-  font-size: var(--t-mono-lg-size);
-  font-weight: 500;
-  letter-spacing: -0.012em;
-}
-
-/* The reassurance is a footnote to the plate rather than a line of
-   it — so it loses half a point of size and none of its ink. It is
-   a SENTENCE, and the faint tier is for metadata beside the thing it
-   describes; the note this rule was written under settled that and
-   it still holds. */
-.qb-rig-saved {
-  margin-top: var(--sp-1);
-  font-size: var(--t-caption-size);
-  line-height: 1.55;
-}
-
-/* ------------------------------------------------------------
-   THE PICTURE WELL
-   ------------------------------------------------------------ */
-.qb-well {
-  background: var(--grad-sunken);
-}
-
-.qb-well--big {
-  width: 360px;
-  aspect-ratio: 4 / 3;
-  border-radius: var(--r-card);
-  box-shadow: var(--e2), inset 0 0 0 1px var(--line-subtle);
-}
-
-/* The seeded photographs are a mixed set — yard shots, studio
-   cut-outs, turquoise lifestyle. A whisper of desaturation at rest
-   pulls a shelf of them into one page; the pointer gives the colour
-   back. The same treatment Home gives its covers, so a boat looks
-   like the same boat on both screens. */
-.qb-card .qb-well-img {
-  filter: saturate(0.9);
-  transition:
-    filter var(--d-med) var(--ease),
-    transform var(--d-slow) var(--ease-out-expo);
-}
-.qb-card:hover:not(:disabled) .qb-well-img {
-  filter: saturate(1);
-  transform: scale(1.03);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .qb-card:hover:not(:disabled) .qb-well-img {
-    transform: none;
-  }
-}
-
-/* ------------------------------------------------------------
-   THE STOPS — and how far along they are
-
-   The bar is the same two numbers the sentence beside it already
-   says, which is why it is aria-hidden: it is a reading of a fact,
-   not a second fact.
-   ------------------------------------------------------------ */
-.qb-stops-head {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.qb-stops-count {
-  flex: none;
-  color: var(--ink-faint);
-}
-
-.qb-stops-meter {
-  flex: 1 1 auto;
-  height: 3px;
-  min-width: var(--sp-6);
-  border-radius: var(--r-full);
-  background: var(--surface-4);
-  overflow: hidden;
-}
-
-.qb-stops-meter-fill {
-  display: block;
-  width: var(--done, 0%);
-  height: 100%;
-  border-radius: var(--r-full);
-  background: var(--grad-brand);
-  transition: width var(--d-slow) var(--ease-out-expo);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .qb-stops-meter-fill {
-    transition: none;
-  }
-}
-
-.qb-stop {
-  background: var(--grad-surface);
-  box-shadow: inset 0 1px 0 var(--edge-light);
-  transition:
-    transform var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease),
-    border-color var(--d-fast) var(--ease);
-}
-.qb-stop:hover {
-  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
-}
-.qb-stop:active {
-  transition-duration: var(--d-press);
-}
-.qb-stop.is-on {
-  box-shadow: var(--glow-sm);
-}
-
-/* ------------------------------------------------------------
-   THE OPEN STEP — a panel that arrives
-
-   Keyed on the step in QuoteBuild.tsx, so moving between decisions
-   remounts this and it enters. Movement goes under reduced motion
-   and the fade stays: gentler feedback, not no feedback.
-   ------------------------------------------------------------ */
-.qb-step {
-  padding: var(--sp-6);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  animation: ds-rise var(--d-slow) var(--ease-out-expo) backwards;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .qb-rig,
-  .qb-step {
-    animation: ds-fade var(--d-med) var(--ease) backwards;
-  }
-}
-
-.qb-step-n {
-  color: var(--ink-faint);
-}
-
-/* the step's own name is the second-largest thing on the page, and
-   16px was a card title. The title step, one rung under the hull's. */
-.qb-step-name {
-  font-size: var(--t-title-size);
-  font-weight: var(--t-title-weight);
-  line-height: var(--t-title-lead);
-  letter-spacing: var(--t-title-track);
-}
-
-/* ------------------------------------------------------------
-   A LINE ALREADY ON THE QUOTE
-   ------------------------------------------------------------ */
-.qb-line {
-  padding: var(--sp-3);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  box-shadow: inset 0 1px 0 var(--edge-light);
-}
-
-/* ------------------------------------------------------------
-   THE OFFERS — the shelf, and how it arrives
-   ------------------------------------------------------------ */
-.qb-cards {
+.qb-shelf {
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(248px, 100%), 1fr));
-  gap: var(--sp-4);
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
+.qb-shelf-slot {
+  display: flex;
+  min-width: 0;
+}
+
+/* A CARD IS A BUTTON — the app's one repeated object, with the four
+   states the system requires: rest, hover, press on pointer-down,
+   focus. AND IT IS A TOGGLE: pressing one that is already on the
+   quote takes it back off, and `quotes.ts` raises the undo toast
+   rule 9 asks for. It used to be `disabled` in exactly that state,
+   which is the moment a person is most likely to press it. */
 .qb-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--grad-surface);
   box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  cursor: pointer;
   transition:
     transform var(--d-med) var(--ease-out-expo),
     box-shadow var(--d-med) var(--ease),
@@ -1360,65 +1086,286 @@
    be. One card is under the pointer at a time, so this is a light
    arriving on the thing being considered — never a colour the shelf
    wears at rest. */
-.qb-card:hover:not(:disabled) {
+.qb-card:hover {
   transform: translateY(-3px);
-  box-shadow:
-    var(--e4),
-    inset 0 1px 0 var(--edge-light),
-    var(--glow-md);
+  border-color: var(--line-strong);
+  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light), var(--glow-md);
 }
 
-/* PRESS SCALED TO THE SURFACE — 0.994 and the hover lift given
-   back, which on a 248px card is the difference between a press and
-   a glitch. It lands on pointer-down. */
-.qb-card:active:not(:disabled) {
+/* PRESS SCALED TO THE SURFACE — 0.994 and the hover lift given back,
+   which on a 248px card is the difference between a press and a
+   glitch. 0.97 here would be a 7px shrink. It lands on pointer-down. */
+.qb-card:active {
   transform: translateY(0) scale(0.994);
   box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
   transition-duration: var(--d-press);
 }
 
 .qb-card:focus-visible {
-  box-shadow: var(--glow-sm), var(--e-card);
+  outline: none;
+  box-shadow: var(--focus), var(--e-card);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qb-card:hover {
+    transform: none;
+  }
+  .qb-card:active {
+    transform: none;
+  }
+}
+
+/* ON THE QUOTE — the accent, once, as a border and a wash. The wash
+   is 9% and the ink over it is unchanged: --ink measures 16.6:1 on
+   it and --ink-soft 7.7:1, so the tint counts and still clears. */
+.qb-card.is-on {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  box-shadow: var(--e-card);
+}
+
+/* WHERE THE KEYBOARD IS POINTING. A ring rather than a fill, so it
+   can sit on a card that is already lit by `is-on` without the two
+   states fighting for the same surface. */
+.qb-card.is-lit {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--e-card);
+}
+
+/* REACHED BY SEARCHING PAST THE NARROWING, or by switching it off.
+   It is offered on exactly the same terms as everything else — the
+   dash is a FACT about where it came from, not a refusal — and the
+   sentence under the name is the other half. */
+.qb-card.is-outside {
+  border-style: dashed;
 }
 
 .qb-card-body {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
-  padding: var(--sp-4);
+  flex: 1;
+  min-height: 0;
+  padding: var(--s-4);
 }
 
-.qb-card-price {
-  font-size: var(--t-mono-lg-size);
-}
-
-.qb-card-col {
-  color: var(--ink-faint);
+.qb-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 14px;
 }
 
 /* THE SAME STAR AS THE DOCUMENT'S. A recommended line is marked in
    ochre on the printed quote (`.qt-star`), and it was ink here — so
-   the one mark that means "the price file itself points at this"
-   looked like two different marks depending on which screen you were
-   on. It is a GLYPH and never a fill behind text; the word beside it
-   keeps the soft ink, so nothing coloured has to be read. */
+   the one mark meaning "the price file itself points at this" looked
+   like two different marks depending on which screen you were on. It
+   is a GLYPH and never a fill behind text; the word beside it keeps
+   the soft ink, so nothing coloured has to be read. */
 .qb-card-star {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--accent-ochre);
 }
 
+.qb-card-star-word {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.qb-card-outside,
+.qb-card-on {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.qb-card.is-on .qb-card-on {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.qb-card-name {
+  font-family: var(--font-sans);
+  font-size: var(--ui-l-size);
+  font-weight: 570;
+  line-height: 1.25;
+  letter-spacing: -0.009em;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* ------------------------------------------------------------
-   THE ONE ACTION on an empty shelf
+   RULE 10, ON THE ROW.
+
+   "Anything that cannot be done says why, where it is." A row the
+   narrowing left out is reachable here — that is what the search and
+   the switch are for — and a chip reading "not on the shortlist"
+   with no reason is a refusal with no reason in a nicer typeface.
+
+   So the clause that rejected it is printed, with the figures on
+   both sides of it, computed by `freeze.ts` by re-running the
+   narrowing one clause at a time. Production draws no such row at
+   all, which is the whole reason this screen exists.
+
+   THE RAIL IS OCHRE AND THE TEXT IS INK. A kind hue is a 3px rail,
+   a dot or a glyph — never a fill behind something that has to be
+   read (§1). The sentence carries the meaning; the rail only says
+   where the sentence starts.
    ------------------------------------------------------------ */
+.qb-card-why {
+  padding-left: var(--s-2);
+  border-left: 3px solid var(--accent-ochre);
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.qb-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-top: auto;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+}
+
+.qb-card-price {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-lg-size);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.qb-card-col {
+  margin: 0;
+  text-align: right;
+  color: var(--ink-faint);
+}
+
+/* WHAT PRESSING IT WILL DO. It holds its own line at every state, so
+   the card never changes height when it appears — only its opacity
+   moves, which is what `prefers-reduced-motion` leaves alone.
+
+   IT IS ALWAYS VISIBLE ON A CARD THAT IS ON THE QUOTE, because
+   "press this again to take it off" is the half a person cannot
+   guess. On every other card it is a hover-and-focus hint for
+   something the card already looks like. */
+.qb-card-act {
+  flex-basis: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  opacity: 0;
+  transition: opacity var(--d-fast) var(--ease);
+}
+.qb-card:hover .qb-card-act,
+.qb-card:focus-visible .qb-card-act,
+.qb-card.is-lit .qb-card-act {
+  opacity: 1;
+  color: var(--ink-soft);
+}
+.qb-card.is-on .qb-card-act {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------
+   NOTHING TO PICK — the four-part empty state
+
+   Production draws an empty grid here and says nothing at all. This
+   is the app's own shape: an eyebrow, what the place IS, what the
+   person already has counted from the sheet, and ONE action.
+   ------------------------------------------------------------ */
+
+.qb-none {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  max-width: 560px;
+  padding: var(--s-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-1);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+
+.qb-none-eyebrow {
+  margin: 0;
+}
+
+.qb-none-say {
+  margin: 0;
+  font-size: var(--ui-l-size);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* THE LOAD-BEARING LINE: what the person already has, counted off
+   the sheet. A blank screen at somebody holding 434 trailers reads
+   as though the app lost them. */
+.qb-none-have {
+  margin: 0;
+  font-size: var(--t-small-size);
+  color: var(--ink-soft);
+}
+
+.qb-none-have strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.qb-none-held {
+  margin: 0;
+  font-size: var(--t-caption-size);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* THE ONE ACTION. Sentence case: a button is one of the four things
+   §2 says uppercase may never be. */
 .qb-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   padding: 9px 15px;
+  border: 1px solid transparent;
   border-radius: var(--r-control);
   background: var(--grad-brand);
   box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+  font-family: var(--font-sans);
   font-size: var(--t-body-size);
+  font-weight: 500;
+  color: var(--accent-fg);
+  cursor: pointer;
   transition:
     transform var(--d-fast) var(--ease),
     box-shadow var(--d-med) var(--ease);
 }
 .qb-act:hover {
-  filter: none;
   box-shadow: var(--e2), var(--glow-md), inset 0 1px 0 var(--edge-light);
 }
 .qb-act:active {
@@ -1426,71 +1373,677 @@
   transition-duration: var(--d-press);
 }
 .qb-act:focus-visible {
+  outline: none;
   box-shadow: var(--focus);
 }
 
 /* ------------------------------------------------------------
-   NOTHING TO PICK, and the tally on the handover
+   ONWARD — the one primary on the page's content column.
+
+   THE REFERENCE'S FULL-WIDTH "NEXT STEP: TRAILER" BAR, in this
+   app's language: it names the decision it is taking you to rather
+   than reading "next", and it is the only accent-filled control in
+   the split. The act that ISSUES the quote is on the action bar and
+   nowhere else — two primaries on one screen is the exact thing §1
+   says leaves nothing primary.
    ------------------------------------------------------------ */
-.qb-none {
-  padding: var(--sp-6);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+
+.qb-onward {
+  margin-top: var(--s-1);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
 }
 
+.qb-onward-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--s-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-card);
+  background: var(--grad-brand);
+  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
+  color: var(--accent-fg);
+  cursor: pointer;
+  transition:
+    transform var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease);
+}
+.qb-onward-btn:hover {
+  box-shadow: var(--e3), var(--glow-lg), inset 0 1px 0 var(--edge-light);
+}
+.qb-onward-btn:active {
+  transform: scale(0.994);
+  transition-duration: var(--d-press);
+}
+.qb-onward-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* THE ONE LABEL ON THIS SCREEN THAT SITS ON THE ACCENT. White on
+   #0a5fc2 is the pair the system measured (--accent-fg on
+   --accent); the label tier keeps its 11px floor and its tracking. */
+.qb-onward-lab {
+  flex: none;
+  margin: 0;
+  color: var(--accent-fg);
+  opacity: 0.86;
+}
+
+/* A TABLE'S NAME, in the dealer's own casing, at the size of the
+   thing you are about to do. */
+.qb-onward-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--ui-xl-size);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  text-align: left;
+  color: var(--accent-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ------------------------------------------------------------
+   THE HANDOVER'S TALLY
+
+   What the customer is about to be handed, one row per stop. A
+   reading of the same frozen lines the document prints; it computes
+   nothing of its own — the sum at the foot is `quoteTotals`, passed
+   in, because five independent summations of one deal is the fault
+   this whole feature exists to end.
+   ------------------------------------------------------------ */
+
 .qb-tally {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--grad-surface);
+}
+
+.qb-tally-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.6fr) auto;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: 9px var(--s-3);
+  border-bottom: 1px solid var(--line);
+}
+.qb-tally-row:last-child {
+  border-bottom: 0;
+}
+
+.qb-tally-name {
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* The chosen rows, run together. It WRAPS — nothing in this app
+   truncates mid-word, and half a motor's name on the last screen
+   before a quote goes out is worse than two lines. */
+.qb-tally-say {
+  min-width: 0;
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.qb-tally-amount {
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-small-size);
+  color: var(--ink);
 }
 
 .qb-tally-row--sum {
   background: var(--surface-3);
 }
-
 .qb-tally-row--sum .qb-tally-amount {
   font-size: var(--t-mono-lg-size);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
-/* ------------------------------------------------------------
-   MOVING BETWEEN STEPS
-   ------------------------------------------------------------ */
-.qb-move-btn {
-  height: var(--h-md);
+/* Every reason the document may not go yet, in full. The bar carries
+   the first one; a person who fixes that and is refused for a second
+   nobody mentioned has been told half the truth. */
+.qb-whys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
   border-radius: var(--r-control);
+  background: var(--surface-3);
+}
+
+/* ============================================================
+   §THE LEDGER — a total that opens onto its own arithmetic.
+
+   A RUNNING TOTAL IS A CLAIM. A bar that makes one and offers no
+   way to check it is asking a salesperson to read $88,715 to a
+   customer on trust; production's is a number and nothing else.
+   This one opens onto every step, every line and every figure — the
+   same frozen numbers the printed document will carry, summed by
+   the same `quoteTotals`.
+
+   THE FIGURES DO NOT ANIMATE. Every one is mono, tabular and
+   right-aligned in a fixed column, so a change lands on the frame it
+   happens and a column of them stacks on its own separators. A price
+   a dealer is reading aloud has to be TRUE instantly, not counted up
+   at them. What moves is a new line arriving — one `ds-rise` on
+   mount — and the delta chip beside the total.
+   ============================================================ */
+
+.qb-ledger {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-6);
   background: var(--grad-surface);
-  box-shadow: inset 0 1px 0 var(--edge-light);
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
+  /* it stands over the scrollport's last line, so it is above it */
+  position: relative;
+  z-index: 1;
+}
+
+.qb-ledger-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.qb-ledger-toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: var(--s-1) var(--s-2);
+  margin-left: calc(var(--s-2) * -1);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
+}
+.qb-ledger-toggle:hover {
+  background: var(--surface-3);
+}
+.qb-ledger-toggle:active {
+  transform: scale(0.99);
+  transition-duration: var(--d-press);
+}
+.qb-ledger-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.qb-ledger-lab {
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+/* THE ONE FIGURE THIS SCREEN IS ABOUT. Big enough to be read
+   without looking down, mono so it lines up with every other figure
+   in the app, and it does not count up. */
+.qb-ledger-total {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.024em;
+  color: var(--ink);
+}
+
+.qb-ledger-caret {
+  display: inline-flex;
+  align-self: center;
+  color: var(--ink-faint);
+  transition: transform var(--d-med) var(--ease);
+}
+.qb-ledger-caret.is-open {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qb-ledger-caret {
+    transition: none;
+  }
+}
+
+.qb-ledger-toggle-say {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  color: var(--ink-faint);
+}
+
+/* THE PRICE MOVING. A person who picks a $41,340 motor should SEE
+   $41,340 arrive. It is derived from the ONE summation and never
+   from the pick, it clears itself after 2.6s so it is never a stale
+   claim, and `null` — not 0 — is "nothing has moved". */
+.qb-delta {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  color: var(--accent);
+  animation: ds-fade var(--d-med) var(--ease) backwards;
+}
+.qb-delta.is-down {
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qb-delta {
+    animation: none;
+  }
+}
+
+/* CARMINE ON A QUOTE MEANS AN UNPRICED LINE OR A CREDIT, and
+   nothing else. */
+.qb-ledger-unpriced {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-caption-size);
+  color: var(--red);
+}
+
+.qb-levels {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.qb-levels-lab {
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+/* THE RUNG THE WHOLE QUOTE IS READ AT. Pure arithmetic on frozen
+   data — every rung was captured at pick time — so switching here
+   re-reads nothing live and cannot pick up a reimport. The label is
+   the business's own column name and keeps its case. */
+.qb-level {
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  cursor: pointer;
   transition:
     transform var(--d-fast) var(--ease),
     color var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease),
+    background var(--d-fast) var(--ease),
     border-color var(--d-fast) var(--ease);
 }
-.qb-move-btn:hover:not(:disabled) {
-  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
+.qb-level:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
 }
-.qb-move-btn:active:not(:disabled) {
+.qb-level:active {
+  transform: scale(0.97);
   transition-duration: var(--d-press);
 }
-.qb-move-btn:disabled {
-  background: none;
-  box-shadow: none;
+.qb-level:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.qb-level.is-on {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* It NAMES the control rather than repeating it — the act itself is
+   on the action bar, published at rank 90 with its refusal attached. */
+.qb-ledger-where {
+  margin: 0 0 0 auto;
+  font-size: var(--t-caption-size);
+  color: var(--ink-soft);
 }
 
 /* ------------------------------------------------------------
-   NARROW WINDOWS — the photograph goes full width and the spec
-   strip drops its dividers rather than wrapping into a ladder of
-   them.
+   THE ARITHMETIC, OPENED
    ------------------------------------------------------------ */
-@media (max-width: 900px) {
-  .qb-rig {
+
+.qb-ledger-open {
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  max-height: min(46vh, 460px);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.7fr);
+  align-items: start;
+  gap: var(--s-6);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
+}
+
+.qb-led {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.qb-led-group {
+  min-width: 0;
+}
+
+/* A GROUP HEAD IS A DOOR. Pressing a step's name in the breakdown
+   walks back to that decision — the fastest correction path on the
+   screen, and the reason the ledger is worth opening rather than
+   merely worth reading. Production's stepper is a row of `<div>`s
+   with no click handler, so changing a hull colour from the summary
+   is six presses of Back. */
+.qb-led-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  width: 100%;
+  padding: 4px var(--s-2);
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
+}
+.qb-led-head:hover {
+  background: var(--surface-3);
+}
+.qb-led-head:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+.qb-led-head:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* The typed lines belong to no step, so their head is a caption and
+   not a door: there is nothing to walk back to. */
+.qb-led-head--flat {
+  cursor: default;
+}
+.qb-led-head--flat:hover {
+  background: transparent;
+}
+
+.qb-led-head-name {
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.qb-led-head-sum {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  color: var(--ink);
+  text-align: right;
+  min-width: 10ch;
+}
+
+.qb-led-lines {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A NEW LINE ARRIVES. `ds-rise` fires on MOUNT and on nothing else,
+   so the row that was just added is the row that moves — a list of
+   ten does not re-animate because an eleventh appeared. ds.css
+   carries the reduced-motion escape for the utility. */
+.qb-led-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, auto) auto;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: 5px var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.qb-led-row:last-child {
+  border-bottom: 0;
+}
+
+.qb-led-name {
+  min-width: 0;
+  font-size: var(--t-caption-size);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.qb-led-qty {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+/* WHICH COLUMN THE FIGURE CAME FROM, frozen onto the line at pick
+   time. It is metadata beside the thing it describes, which is
+   exactly what the faint tier is for. */
+.qb-led-col {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-led-amount {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 5px;
+  min-width: 10ch;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-small-size);
+  color: var(--ink);
+  text-align: right;
+}
+
+.qb-led-typed {
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------
+   THE SUMS — and the ones that are honestly absent
+   ------------------------------------------------------------ */
+
+.qb-sums {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  min-width: 0;
+}
+
+.qb-sum {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.qb-sum-lab {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* WHERE A FIGURE IS NOT STATED, THE SENTENCE SAYS SO AND SAYS WHERE
+   ONE GOES. There is no tax-rate column anywhere in the seeded data
+   and the workbook shows a customer exactly one tax figure under a
+   clause reading that amounts are inclusive unless otherwise stated.
+   A blank stays blank, and this is the line that explains the blank
+   rather than quietly inventing an inc-GST number. */
+.qb-sum-note {
+  max-width: 34ch;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.qb-sum-fig {
+  flex: none;
+  margin: 0;
+  min-width: 10ch;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-small-size);
+  color: var(--ink);
+  text-align: right;
+}
+
+.qb-sum--total {
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--line-strong);
+}
+.qb-sum--total .qb-sum-lab {
+  font-weight: 600;
+}
+.qb-sum--total .qb-sum-fig {
+  font-size: var(--t-mono-lg-size);
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+
+.qb-ledger-say {
+  grid-column: 1 / -1;
+  margin: 0;
+  max-width: 78ch;
+  font-size: var(--t-caption-size);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* MORE THAN ONE THING CAN BE WRONG AT ONCE — a quote with no
+   customer on it and no price on any line is refused twice, and both
+   sentences are printed rather than the first one only. */
+.qb-ledger-whys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.qb-ledger-why {
+  margin: 0;
+  max-width: 78ch;
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   NARROW WINDOWS
+
+   The split collapses to one column and the hull stops being
+   sticky — a sticky pane taller than the viewport cannot be
+   scrolled past, which on a phone would trap a person above the
+   decision they came here to make.
+   ============================================================ */
+
+@media (max-width: 1080px) {
+  .qb-split {
     grid-template-columns: minmax(0, 1fr);
-    align-items: start;
+    gap: var(--s-5);
+    padding: var(--s-5) var(--s-4) var(--s-6);
+  }
+  .qb-hull-stick {
+    position: static;
   }
   .qb-well--big {
-    width: 100%;
+    aspect-ratio: 16 / 9;
   }
-  .qb-rig-specs {
-    gap: var(--sp-3) var(--sp-5);
+  .qb-hull-name {
+    max-width: none;
+  }
+  .qb-ledger-open {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .qb-rail {
+    padding: var(--s-3) var(--s-4) 0;
+  }
+  .qb-rail-head {
+    flex-wrap: wrap;
+    gap: var(--s-3);
+  }
+  .qb-panel {
+    padding: var(--s-4);
+  }
+  .qb-line {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    row-gap: var(--s-2);
+  }
+  .qb-ledger {
+    padding: var(--s-3) var(--s-4);
+  }
+  .qb-ledger-where {
+    margin-left: 0;
   }
 }

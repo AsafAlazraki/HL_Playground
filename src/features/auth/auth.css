@@ -1,0 +1,214 @@
+/* ============================================================
+   SIGN IN — two panels, and the left one says what the product
+   is for.
+
+   The app's first screen used to be "What's the name of your
+   business?", which is a setup wizard, not a front door. This is
+   the front door: the product's claim on the left over the navy
+   ground the rail uses, the form on paper on the right.
+   ============================================================ */
+
+.si {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+/* ---- the claim ------------------------------------------- */
+.si-say {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: var(--s-16) var(--s-12);
+  background: var(--chrome);
+  color: var(--chrome-fg);
+}
+.si-sky {
+  z-index: 0;
+}
+.si-say-in {
+  position: relative;
+  z-index: 1;
+  max-width: 30ch;
+}
+.si-eyebrow {
+  display: block;
+  margin-bottom: var(--s-5);
+  color: var(--chrome-fg-faint);
+}
+/* the one headline in the app that is allowed the display face */
+.si-head {
+  margin: 0;
+  color: var(--chrome-fg);
+}
+.si-lede {
+  margin: var(--s-5) 0 0;
+  max-width: 46ch;
+  font-size: var(--t-body-size);
+  line-height: 1.6;
+  /* 8.5:1 on --chrome, measured */
+  color: var(--chrome-fg-soft);
+}
+
+/* ---- the form -------------------------------------------- */
+.si-form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-12) var(--s-8);
+}
+.si-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 360px;
+}
+.si-form-head {
+  margin: 0;
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  color: var(--fg);
+}
+.si-form-note {
+  margin: var(--s-1) 0 var(--s-8);
+  font-size: var(--t-small-size);
+  color: var(--fg-tertiary);
+}
+
+.si-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--s-4);
+}
+.si-label {
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  color: var(--fg-secondary);
+}
+.si-input {
+  height: var(--h-lg);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.si-input:hover {
+  border-color: var(--line-strong);
+}
+.si-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+/* the field that failed carries the state, so the sentence below
+   is attached to something rather than floating */
+.si-input.is-wrong {
+  border-color: var(--danger);
+}
+.si-input.is-wrong:focus {
+  box-shadow: 0 0 0 3px var(--danger-wash);
+}
+
+.si-why {
+  margin: 0 0 var(--s-4);
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--danger);
+}
+
+.si-go {
+  height: var(--h-lg);
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.si-go:hover {
+  background: var(--accent-hover);
+}
+.si-go:active {
+  background: var(--accent-press);
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.si-go:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.si-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  margin-top: var(--s-4);
+  padding: var(--s-3);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-control);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), border-color var(--d-fast) var(--ease);
+}
+.si-demo:hover {
+  background: var(--surface-3);
+  border-color: var(--accent);
+}
+.si-demo:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+.si-demo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.si-demo-say {
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  color: var(--fg);
+}
+/* an address is an identifier, so it is mono (§2) */
+.si-demo-who {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+}
+
+.si-fine {
+  margin: var(--s-5) 0 0;
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  color: var(--fg-tertiary);
+}
+
+/* Under a laptop the claim panel stops earning its half and the
+   form takes the screen. The claim is not deleted — it moves
+   above the form, shortened by its own max-width. */
+@media (max-width: 900px) {
+  .si {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .si-say {
+    padding: var(--s-10) var(--s-6);
+  }
+  .si-form-side {
+    padding: var(--s-10) var(--s-6);
+  }
+}

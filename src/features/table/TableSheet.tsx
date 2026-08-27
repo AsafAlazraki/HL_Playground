@@ -78,9 +78,10 @@
    ============================================================ */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { JSX } from 'react'
+import { AnimatePresence } from 'motion/react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { displayFieldOf } from '@/types/model'
-import type { FieldDef, RowData } from '@/types/model'
+import { displayFieldOf, isSystemFieldId } from '@/types/model'
+import type { CellValue, FieldDef, RowData } from '@/types/model'
 import {
   distinctValues,
   type ColumnFilter,
@@ -100,9 +101,11 @@ import { useTableRoundTrip } from '@/features/io/TableRoundTrip'
 import { useActionBar } from '@/lib/actions'
 import type { ActionGroup, ActionItem } from '@/lib/actions'
 import { Grid } from './Grid'
+import type { GridRail } from './Grid'
+import { RowDetail, type FiledUnder } from './RowDetail'
 import { BandStrip } from './BandStrip'
 import { NoFieldsPlate, NoMatchPlate, NoRowsPlate } from './EmptyPlates'
-import { useTableData } from './useTableData'
+import { useTableData, type TableData } from './useTableData'
 import { useSheetCommands } from './useSheetCommands'
 import { useGroupedView } from './useGroupedView'
 import { useSectionedView } from './useSectionedView'
@@ -115,8 +118,77 @@ import { useColumnCommands } from './useColumnCommands'
 import type { NewColumn } from './useColumnCommands'
 import type { PushToast } from './Toasts'
 import { offerUndo } from '@/store/notes'
-import { plural, singleSel } from './helpers'
+import { cellText, isEmptyCell, plural, singleSel, valueForField } from './helpers'
+import { UNASSIGNED_LABEL } from './grouping'
+import {
+  ROW_METRICS,
+  setOnlyFilled,
+  setRowDensity,
+  useReadState,
+} from './tableReadState'
 import { clearRowReveal, useRowReveal } from './rowRevealState'
+
+/* THE ACCESSIBLE NAME OF THE ROW SEARCH, and it is a constant because
+   two things need to agree on it: the action the bar publishes, and
+   the '/' key, which has to find that box on a bar this component does
+   not own and must not reach into by class name. An aria-label this
+   file WROTE is a handle this file is allowed to hold. */
+const SEARCH_LABEL = 'Search every column of this table, including calculated ones'
+
+/** Put the caret in the row search, wherever the bar has drawn it. */
+function focusRowSearch(): void {
+  const box = document.querySelector<HTMLInputElement>(
+    `input[aria-label="${SEARCH_LABEL}"]`,
+  )
+  if (!box) return
+  box.focus()
+  box.select()
+}
+
+/* ============================================================
+   THE COLUMNS NOBODY HAS FILLED IN.
+
+   Four kinds of column are NEVER put away, and each has a reason:
+
+     a CALCULATED column is not something a person fills in, so
+       "nobody filled it in" is not a fact about it;
+     a REQUIRED column that is empty is a FAULT, and the register
+       stripes it in red pencil to say so — hiding it would hide the
+       thing the stripe exists to report;
+     the column that NAMES the row, because a register with no names
+       in it is not a register;
+     the columns the sheet is FILED under, because retyping one is how
+       a row moves to another drawer.
+
+   Everything else is judged on the rows currently on the sheet.
+   ============================================================ */
+function columnsWithValues(
+  fields: readonly FieldDef[],
+  rowIds: readonly string[],
+  rowById: Map<string, RowData>,
+  keep: ReadonlySet<string>,
+): Set<string> {
+  const out = new Set<string>()
+  for (const f of fields) {
+    if (
+      keep.has(f.id) ||
+      f.type === 'formula' ||
+      f.required === true ||
+      isSystemFieldId(f.id)
+    ) {
+      out.add(f.id)
+      continue
+    }
+    for (const id of rowIds) {
+      const row = rowById.get(id)
+      if (row && !isEmptyCell(row.values[f.id])) {
+        out.add(f.id)
+        break
+      }
+    }
+  }
+  return out
+}
 
 /** A narrowing, in the dealer's own words — moved here unchanged from
  *  `TableToolbar`, which no longer exists because every one of its
@@ -164,6 +236,12 @@ export function TableSheet({
   const data = useTableData(entityId, { sort, filters, search })
   const { entity, rows, hasFormula, viewActive, buildViewRows } = data
 
+  /* HOW THIS READER IS READING THIS TABLE — row height, and whether
+     the columns nobody has filled in are on screen. Session-lived and
+     per table; see `tableReadState`. */
+  const read = useReadState(entityId)
+  const metrics = ROW_METRICS[read.density]
+
   /* The heavy-entry lens keeps the nesting AND keeps the filing
      columns on screen: retyping one boat's Brand is how a single row
      moves to another group, and this is the place to do it. */
@@ -171,13 +249,40 @@ export function TableSheet({
     entityId,
     data,
     entity,
-    { hideLevelColumns: false },
+    { hideLevelColumns: false, metrics },
   )
+
+  /* -- the columns that carry a value ---------------------------
+     Counted whether or not the lens is on, because the rail says how
+     many the press WOULD put away before anybody presses it. */
+  const alwaysKeep = useMemo(() => {
+    const keep = new Set<string>(levelIds)
+    const display = entity ? displayFieldOf(entity)?.id : undefined
+    if (display) keep.add(display)
+    return keep
+  }, [levelIds, entity])
+
+  const filledColumns = useMemo(
+    () =>
+      columnsWithValues(
+        grouped.fields,
+        grouped.viewRows.map((vr) => vr.rowId),
+        grouped.rowById,
+        alwaysKeep,
+      ),
+    [grouped.fields, grouped.viewRows, grouped.rowById, alwaysKeep],
+  )
+
+  const lensed = useMemo<TableData>(() => {
+    if (!read.onlyFilled) return grouped
+    const kept = grouped.fields.filter((f) => filledColumns.has(f.id))
+    return kept.length === grouped.fields.length ? grouped : { ...grouped, fields: kept }
+  }, [read.onlyFilled, grouped, filledColumns])
 
   /* Bands last: a folded section takes its columns out of the
      addressable set, and everything below this line — the grid, the
      keys, the clipboard — must agree on that one set of columns. */
-  const sectioned = useSectionedView(entityId, grouped, entity)
+  const sectioned = useSectionedView(entityId, lensed, entity)
   const view = sectioned.data
 
   const cmd = useSheetCommands(entityId, view, pushToast, levelIds)
@@ -323,6 +428,85 @@ export function TableSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reveal])
 
+  /* -- THE ROW THAT IS OPEN --------------------------------------
+     BY ID, NEVER BY INDEX, and that is not a detail. Retyping a Series
+     inside the panel re-files the row into another drawer, a sort
+     moves it, a narrowing can take it off the sheet entirely — an
+     index would follow none of those and would quietly start showing
+     somebody a different boat. The index is derived from the id on
+     every render instead, which is the only direction that cannot
+     lie. */
+  const [openRowId, setOpenRowId] = useState<string | null>(null)
+  const openIndex = openRowId
+    ? view.viewRows.findIndex((vr) => vr.rowId === openRowId)
+    : -1
+  const openRow = openRowId ? view.rowById.get(openRowId) : undefined
+
+  /* A ROW THAT IS NO LONGER IN THE TABLE CANNOT BE OPEN. Deleted,
+     undone, or struck by a merge — the panel closes rather than
+     standing there holding the last values it saw. A row merely
+     narrowed OUT of view keeps the panel open: it is still a row of
+     this table, the stepper simply has nowhere to step. */
+  useEffect(() => {
+    if (openRowId !== null && !view.rowById.has(openRowId)) setOpenRowId(null)
+  }, [openRowId, view.rowById])
+
+  const openRowAt = useCallback(
+    (r: number) => {
+      const id = view.viewRows[r]?.rowId
+      if (id === undefined) return
+      setOpenRowId(id)
+      /* the cursor goes with it, in the column it was already in, so
+         the sheet lights the row the panel is showing and the arrows
+         carry on from there */
+      const col = Math.max(0, Math.min(cmd.sel.active.col, view.fields.length - 1))
+      cmd.setSel(singleSel({ row: r, col }))
+    },
+    [view.viewRows, view.fields.length, cmd],
+  )
+
+  const stepOpenRow = useCallback(
+    (delta: number) => {
+      if (openIndex < 0) return
+      const next = openIndex + delta
+      if (next < 0 || next >= view.viewRows.length) return
+      openRowAt(next)
+    },
+    [openIndex, view.viewRows.length, openRowAt],
+  )
+
+  const closeOpenRow = useCallback(() => {
+    setOpenRowId(null)
+    gridRef.current?.focus()
+  }, [gridRef])
+
+  /* WHICH DRAWERS THIS ROW IS IN, in the dealer's own level names —
+     "Series: Sport, Model: 460". Read off the row rather than off the
+     grouping tree, so it is right even when the row has been narrowed
+     out of the sheet the tree was built from. */
+  const openValues = useMemo<Record<string, CellValue>>(() => {
+    if (!openRow) return {}
+    return view.hasFormula ? view.computedFor(openRow) : openRow.values
+  }, [openRow, view])
+
+  const filedUnder = useMemo<FiledUnder[]>(() => {
+    if (!openRow || levelIds.length === 0) return []
+    return levelIds.map((id, i) => {
+      const field = data.fields.find((f) => f.id === id)
+      const text = field
+        ? cellText(
+            valueForField(openRow, field, openValues),
+            field,
+            data.refLabelOf(field),
+          )
+        : ''
+      return {
+        level: levelNames[i] ?? '',
+        value: text === '' ? UNASSIGNED_LABEL : text,
+      }
+    })
+  }, [openRow, levelIds, levelNames, data, openValues])
+
   /* -- ordering / narrowing ------------------------------------- */
 
   const onSort = useCallback((fieldId: string, dir: SortState['dir'] | null) => {
@@ -443,6 +627,34 @@ export function TableSheet({
   const bandCount = bands.length
   const foldedColumns = totalColumns - shownColumns
 
+  /* -- what the rail is handed ----------------------------------
+     Only the facts a scroller cannot work out for itself. Where the
+     window is, and which drawer it is inside, are computed inside
+     `Grid` from the offsets it already tracks. */
+  const rail = useMemo<GridRail>(
+    () => ({
+      matching: data.viewRows.length,
+      held: rows.length,
+      columns: grouped.fields.length,
+      shownColumns: lensed.fields.length,
+      density: read.density,
+      onDensity: (d) => setRowDensity(entityId, d),
+      onlyFilled: read.onlyFilled,
+      emptyColumns: grouped.fields.length - filledColumns.size,
+      onOnlyFilled: (v) => setOnlyFilled(entityId, v),
+    }),
+    [
+      data.viewRows.length,
+      rows.length,
+      grouped.fields.length,
+      lensed.fields.length,
+      read.density,
+      read.onlyFilled,
+      filledColumns.size,
+      entityId,
+    ],
+  )
+
   const bar = useMemo<ActionGroup[]>(() => {
     const out: ActionGroup[] = []
 
@@ -459,7 +671,9 @@ export function TableSheet({
             id: 'tb-search',
             value: search,
             placeholder: 'Search rows…',
-            label: 'Search every column of this table, including calculated ones',
+            /* the same string the '/' key looks the box up by — see
+               SEARCH_LABEL at the top of this file */
+            label: SEARCH_LABEL,
             onChange: setSearch,
           },
         ],
@@ -679,6 +893,12 @@ export function TableSheet({
            open them again. That is a dead end; the sheet stays. */
         <NoMatchPlate total={rows.length} onClear={clearView} />
       ) : (
+        /* THE LENS IS TWO COLUMNS WHEN A ROW IS OPEN, and one when it
+           is not. The sheet keeps its own width in the DOM — nothing
+           animates a layout property here — and the panel arrives on
+           transform and opacity, which is the whole motion budget this
+           surface spends. */
+        <div className={'tb-lens' + (openRow ? ' tb-lens-open' : '')}>
         <Grid
           entity={entity}
           fields={view.fields}
@@ -732,7 +952,41 @@ export function TableSheet({
           onToggleGroup={groups.toggle}
           onAddRowInGroup={groups.addRowIn}
           onRenameGroup={groups.rename}
+          metrics={metrics}
+          openRowId={openRowId}
+          onOpenRow={openRowAt}
+          onCloseRow={closeOpenRow}
+          onFocusSearch={focusRowSearch}
+          rail={rail}
         />
+
+        {/* THE ROW, READ AS A ROW. Mounted beside the sheet, never
+            over it — see the header of `RowDetail`. `AnimatePresence`
+            is what lets it leave along the path it arrived on; without
+            it a close is a disappearance. */}
+        <AnimatePresence initial={false}>
+          {openRow && openRowId !== null && (
+            <RowDetail
+              key={openRowId}
+              entity={entity}
+              row={openRow}
+              values={openValues}
+              index={openIndex}
+              shown={view.viewRows.length}
+              held={rows.length}
+              noun={noun}
+              filedUnder={filedUnder}
+              targetEntityOf={view.targetEntityOf}
+              targetRowsOf={view.targetRowsOf}
+              onSetText={(field, text) => cmd.setFieldText(openRowId, field, text)}
+              onSetValue={(field, v) => cmd.setFieldValue(openRowId, field, v)}
+              onImages={(fieldId, next) => cmd.setImages(openRowId, fieldId, next)}
+              onStep={stepOpenRow}
+              onClose={closeOpenRow}
+            />
+          )}
+        </AnimatePresence>
+        </div>
       )}
 
     </section>

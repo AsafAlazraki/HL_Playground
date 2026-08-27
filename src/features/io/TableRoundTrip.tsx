@@ -327,7 +327,12 @@ function UploadPreflight({
 
   return (
     <ConfirmSheet
-      eyebrow="RE-UPLOAD"
+      /* SENTENCE CASE, IN THE MARKUP. It read RE-UPLOAD as literal
+         capitals — which no `text-transform` pass could have caught —
+         beside four other call sites of this same confirm that say
+         "Replace the sheet", "Clear the sheet" and "Load the current
+         example". One question asked five ways. */
+      eyebrow="Re-upload"
       question={
         plan.ok
           ? `Put ${plan.fileName} into ${plan.tableName}?`
@@ -352,7 +357,14 @@ function UploadPreflight({
           {shown.map((c) => (
             <li className="io-diff-line" key={`${c.rowId}:${c.fieldId}`}>
               <span className="io-diff-where">{c.rowLabel}</span>
-              <span className="io-diff-col mono-label">{c.columnName}</span>
+              {/* A COLUMN NAME IS A NAME (§2), and this one carried
+                  `.mono-label`, whose identity IS uppercase — so a
+                  dealer's `Landed hull cost` was printed back at them
+                  as LANDED HULL COST on the one screen whose entire
+                  job is "check this against the email that sent you
+                  the file". It is now the caption step in the reading
+                  face, in the case the column is actually called. */}
+              <span className="io-diff-col">{c.columnName}</span>
               <span className="io-diff-from">{c.from === '' ? '—' : c.from}</span>
               <span className="io-diff-arrow" aria-hidden="true">
                 →
@@ -361,7 +373,8 @@ function UploadPreflight({
             </li>
           ))}
           {moreChanges > 0 ? (
-            <li className="io-diff-more mono-label">
+            /* a sentence, not a stamp: this read +12 MORE CELLS */
+            <li className="io-diff-more">
               +{moreChanges} more {moreChanges === 1 ? 'cell' : 'cells'}
             </li>
           ) : null}

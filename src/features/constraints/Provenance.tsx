@@ -15,18 +15,24 @@
    WHAT THIS DOES INSTEAD, AND WHAT IT DOES NOT DO.
 
    It does not rewrite the string. Every character of `source` is
-   still on the page, in its original order. What it does is READ
+   still on the page, in the order it was written — with one
+   deliberate move, which is that the verdict is lifted out of the
+   line it opens and stamped at the head, where a state stamp
+   belongs. What it does is READ
    the shape the adjudicator already wrote in — parts separated by
    ` · ` — and give each part the face its content deserves:
 
      the workbook      the file the rule came out of, named once at
                        the head, in the reading face
-     a cell reference  any part carrying a `!` — `Boat Module!KV:KW`
-                       — is an address somebody may type into Excel,
-                       so it is mono and full ink, and it WRAPS. A
-                       half-printed cell address cannot be looked up,
-                       and looking it up is the only reason it is
-                       printed
+     a cell reference  a part that OPENS with a sheet name and a
+                       bang — `Boat Module!KV:KW` — or with a
+                       formula. It is an address somebody may type
+                       into Excel, so it is mono and full ink, and it
+                       WRAPS: a half-printed cell address cannot be
+                       looked up, and looking it up is the only
+                       reason it is printed. Whatever the adjudicator
+                       wrote BESIDE the address is prose and is set
+                       as prose
      the verdict       ASSERTED or OBSERVED, the adjudicator's own
                        two words for "the file says so" against "the
                        file merely does so". It is a state this app
@@ -64,15 +70,40 @@ const WORKING = /^[A-Z][A-Z0-9_]{3,}(\.md)?\b/
 
 /** A cell address: a sheet name, a bang, a column letter or a row.
  *  `Boat Module!KV:KW`, `Registration Costs!C15:C19`, `Motor
- *  Library!GT`. */
-const HAS_CELL = /\w!\$?[A-Z]{1,3}/
+ *  Library!GT`.
+ *
+ *  IT IS NOT ENOUGH TO CONTAIN A BANG. "the 3 misses are
+ *  single-letter typos at Boat Module!KZ115, LF137, LF138" carries
+ *  one and is a sentence; setting it in mono because a classifier
+ *  found a bang would be prose in the reference face. So an address
+ *  line has to OPEN with a sheet name — a capital, at most three
+ *  words, at most thirty characters before the bang — which is what
+ *  every sheet in these workbooks is. */
+const CELL_HEAD = /^([A-Z][A-Za-z0-9 ()._'-]{0,29})!/
+
+/** …or be a formula, which is the other thing on this slab a person
+ *  reads character by character. */
+const FORMULA = /^=/
+
+/** The address itself, so the note beside it can be set as prose:
+ *  `Boat Module!KV:KW` out of `Boat Module!KV:KW Min HP / Max HP
+ *  column pair`. */
+const ADDRESS = /^[A-Z][A-Za-z0-9 ()._'-]{0,29}!\$?[A-Z]{1,3}[0-9]*(?::\$?[A-Z]{1,3}[0-9]*)?/
+
+const cellHead = (piece: string): boolean => {
+  const m = CELL_HEAD.exec(piece)
+  if (!m) return false
+  return (m[1] ?? '').trim().split(/\s+/).length <= 3
+}
 
 /** A file: something a person could open. */
 const IS_FILE = /\.(xlsx|xlsm|csv)\b/i
 
 type Part =
   | { k: 'file'; text: string }
-  | { k: 'cell'; text: string }
+  /** `addr` is the part set in mono and full ink; `note` is whatever
+   *  the adjudicator wrote beside it, and it is prose. */
+  | { k: 'cell'; text: string; addr: string; note: string }
   | { k: 'said'; text: string }
   | { k: 'working'; text: string }
 
@@ -110,12 +141,18 @@ export function readSource(text: string): Read {
       if (rest.length > 0) parts.push({ k: 'said', text: rest })
       continue
     }
-    if (WORKING.test(piece) && piece.length < 72 && !HAS_CELL.test(piece)) {
+    if (WORKING.test(piece) && piece.length < 72 && !cellHead(piece)) {
       parts.push({ k: 'working', text: piece })
       continue
     }
-    if (HAS_CELL.test(piece)) {
-      parts.push({ k: 'cell', text: piece })
+    if (FORMULA.test(piece) || cellHead(piece)) {
+      const addr = ADDRESS.exec(piece)?.[0] ?? ''
+      parts.push({
+        k: 'cell',
+        text: piece,
+        addr: addr === '' ? piece : addr,
+        note: addr === '' ? '' : piece.slice(addr.length).replace(/^[\s,]+/, ''),
+      })
       continue
     }
     if (IS_FILE.test(piece) && piece.length < 72) {
@@ -212,7 +249,10 @@ export function Provenance({ text, label = 'Read out of' }: ProvenanceProps): Re
         <ul className="cn-src-cells">
           {cells.map((c, i) => (
             <li key={`c${i}`} className="cn-src-cell">
-              {c.text}
+              <span className="cn-src-addr">{c.k === 'cell' ? c.addr : c.text}</span>
+              {c.k === 'cell' && c.note !== '' && (
+                <span className="cn-src-note"> {withFigures(c.note)}</span>
+              )}
             </li>
           ))}
         </ul>

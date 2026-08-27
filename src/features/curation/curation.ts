@@ -159,6 +159,9 @@ export interface CurationReading {
   quiet: boolean
   /** "12 of 434 trailers · the series banner names this brand · holds on 581 of 581 pairings" */
   chip: string
+  /** the same line as segments, count first. The drawing needs two
+   *  type treatments and a joined string can only carry one. */
+  chipParts: string[]
   /** the counts, in words, merged with the discontinued contract's own sentence */
   note: string
   /** what a search can still reach — '' when there is nothing beyond */
@@ -197,6 +200,36 @@ const nounFor = (name: string, n: number): string => (n === 1 ? singular(name) :
  * sentence nobody can attribute.
  */
 export function curationChip(input: CurationInput): string {
+  return curationChipParts(input).join(' · ')
+}
+
+/**
+ * THE SAME CHIP, UNJOINED — because the drawing needs two type
+ * treatments and a joined string can only have one.
+ *
+ * `curationChip` returns "12 of 434 trailers · the series banner
+ * names this brand · holds on 581 of 581 pairings", and every
+ * surface that drew it set the whole line in tabular mono. The first
+ * segment is a FIGURE and mono is what makes a figure line up; the
+ * segments after it are SENTENCES, and a sentence in 11px mono at
+ * the faint tier is the costume this design system was written to
+ * remove. The component's own header has claimed since it was
+ * written that "the count is mono because it is a figure; the reason
+ * is Inter because it is a sentence" — this is the function that
+ * makes that true.
+ *
+ * SPLITTING THE JOINED STRING WOULD NOT DO. A reason is authored by
+ * whoever wrote the narrowing and may legally contain a middot, so
+ * `chip.split(' · ')` is a parser guessing at something it could
+ * simply have been handed. The parts are the source; the joined
+ * string is derived from them, not the other way round — which also
+ * means the two can never disagree.
+ *
+ * The FIRST element is always the count and there is always exactly
+ * one of it. Everything after it is a reason or the rate belonging
+ * to the reason before it.
+ */
+export function curationChipParts(input: CurationInput): string[] {
   const { counts, name, narrowings, showingAll } = input
   const pool = atLeast0(counts.pool)
   const offered = atLeast0(counts.offered)
@@ -215,16 +248,18 @@ export function curationChip(input: CurationInput): string {
      the offer really is the pool, and otherwise the count is stated
      the same way it is stated everywhere else. */
   if (showingAll) {
-    return offered >= pool
-      ? `all ${fig(pool)} ${nounFor(name, pool)}`
-      : `${fig(offered)} of ${fig(pool)} ${nounFor(name, pool)}`
+    return [
+      offered >= pool
+        ? `all ${fig(pool)} ${nounFor(name, pool)}`
+        : `${fig(offered)} of ${fig(pool)} ${nounFor(name, pool)}`,
+    ]
   }
   const parts = [`${fig(offered)} of ${fig(pool)} ${nounFor(name, pool)}`]
   for (const w of narrowings) {
     parts.push(w.what)
     if (w.measured) parts.push(w.measured)
   }
-  return parts.join(' · ')
+  return parts
 }
 
 /**
@@ -372,6 +407,9 @@ export function readCuration(input: CurationInput): CurationReading {
        whose table has no retired stock draws no note at all. */
     quiet: narrowedOut === 0 && withheld === 0 && !input.showingAll,
     chip: curationChip(input),
+    /* the same line, unjoined, so the count can be a figure and the
+       reasons can be sentences — see `curationChipParts` */
+    chipParts: curationChipParts(input),
     note: curationNote(input),
     reach: reachNote(input),
     toggleLabel: toggle.label,

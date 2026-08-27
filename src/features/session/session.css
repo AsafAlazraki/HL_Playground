@@ -1,30 +1,63 @@
 /* ============================================================
-   THE TWO-TAB NOTICE.
+   THE TWO-TAB NOTICE (ts-).
 
    ONE OBJECT, drawn the way every other floating notice in this app
-   is drawn — a card on a hairline at the card radius, lifted far
-   enough off the page to read as floating over it rather than as
-   part of it. `io.css`'s freshness card is the calibration and this
-   matches it deliberately: two notifications that look like two
-   different kinds of thing teach a person to read them twice.
+   is drawn — a card on a hairline at the panel radius, on the
+   floating elevation rung, with the lit top hairline that makes an
+   edge look lit rather than drawn. `io.css`'s freshness card is the
+   calibration and this matches it deliberately: two notifications
+   that look like two different kinds of thing teach a person to
+   read them twice.
 
-   IT NOW TAKES THE FLOATING RUNG. `--ec3` is a card's hover shadow
-   and this is not a card on a page — it is an object over one, and
-   the system has a rung for exactly that (`--e-float`, a tight
-   contact shadow under a wide soft one, which is what makes an edge
-   look lit rather than drawn). The lit top hairline comes with it.
+   ============================================================
+   WHAT THIS PASS CHANGED, AND WHY.
 
-   BOTTOM LEFT, 96px UP. The 78px the dock reserves plus a gap, so it
-   never sits under the bar. Bottom right is the freshness notice,
-   bottom centre is the toast stack, top centre covers the page a
-   person just opened.
+   IT USED THE BRIDGE'S NAMES. Every ink, face and hairline in here
+   was `--ink-soft`, `--font-ui`, `--hairline-strong`, `--blue` —
+   the ORIGINAL system's names, resolved through `bridge.css`. They
+   still resolve, which is the whole point of the bridge, and they
+   also mean this file could not be read against the ramp
+   DESIGN_PRINCIPLES prints. It speaks the system's own names now:
+   `--fg`, `--fg-secondary`, `--font-sans`, `--line-strong`,
+   `--accent`. Nothing about the drawing changed with them.
 
-   NO ACCENT AT REST. Blue appears here exactly once, on the focus
-   ring of the one control — which is one of the four appearances the
-   contract budgets for a screen, not a fifth.
+   THE HEAD SAYS THE STATE. The card opened with an 11px uppercase
+   caption reading "Another tab" and then four lines of prose. The
+   word a person needs in the first quarter second is READ-ONLY: it
+   is the condition they are in, and the prose is why. So the head
+   is a lock, that word, and the count of what has been declined —
+   and it is the control that folds the prose away, because the
+   paragraph under it is worth reading once and the card may stand
+   in the corner all afternoon.
 
-   NO NEW TRANSLUCENCY. The roster is the dock and the page toolbar.
-   This is opaque.
+   THE ACCENT AND THE KIND HUE, BOTH SPENT ONCE (§1, §5). Blue
+   appears on the focus ring of the two controls and nowhere else.
+   The refused count takes `--warning` on a 3px RAIL down the card —
+   a rail, never a fill behind text, and only once something actually
+   has been refused, which is the difference between a warning and a
+   report.
+
+   CONTRAST, measured on the grounds this card uses — its own
+   `--grad-surface` over `--surface-1` (#ffffff), and `--surface-3`
+   (#eef3f8) under the head when it is folded:
+
+     --fg            on --surface-1   17.4 : 1
+     --fg-secondary  on --surface-1    8.1 : 1
+     --fg-secondary  on --surface-3    7.4 : 1
+     --fg-tertiary   on --surface-3    4.9 : 1   <- the floor holds
+     --warning       on --surface-1    5.4 : 1
+     --accent        on --surface-1    5.9 : 1
+
+   `--fg-quaternary` (2.6:1) appears nowhere. `--warning` carries no
+   word on this card — it is 3px of rail and nothing else.
+
+   UPPERCASE. Nowhere. "Read-only" is a state and a state is a word,
+   not a stamp; the caption it replaced was the only capital on the
+   card and it went with it (§2 — uppercase is a label style, and a
+   card with one line of chrome does not need a label above it).
+
+   NO NEW TRANSLUCENCY. The roster is the masthead and the floating
+   bar. This is opaque.
    ============================================================ */
 
 .ts-note {
@@ -37,75 +70,211 @@
   width: min(400px, calc(100vw - var(--s-6)));
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-2);
-  padding: var(--s-4);
   background: var(--grad-surface);
   border: 1px solid var(--line);
   border-radius: var(--r-panel);
   box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
+  /* the head's own ground has to stop at the card's corner when the
+     body is folded away */
+  overflow: hidden;
   animation: ts-arrive var(--d-med) var(--ease-out-expo) both;
 }
 
-/* the one uppercase style, on the one thing here that is a caption */
-.ts-eyebrow {
-  font-family: var(--font-ui);
-  font-size: var(--t-label-size);
-  font-weight: var(--t-label-weight);
-  line-height: var(--t-label-lead);
-  letter-spacing: var(--t-label-track);
-  text-transform: uppercase;
-  color: var(--ink-faint);
+/* THE RAIL, AND IT IS THE ONLY COLOUR ON THE CARD AT REST. 3px down
+   the left edge — a rail is the sanctioned place for a semantic hue
+   (§1: "a 3px rail, a dot, or a glyph — never a fill behind text"),
+   and it is drawn as an inset shadow so `overflow: hidden` cannot
+   round it off and it never pushes the content by a pixel. */
+.ts-note--held {
+  box-shadow:
+    inset 3px 0 0 var(--line-strong),
+    var(--e-float),
+    inset 0 1px 0 var(--edge-light);
+}
+/* NOTHING HAS BEEN LOST UNTIL SOMETHING HAS. The rail is a plain
+   hairline colour while the count is zero and turns amber the moment
+   it is not — the state is carried in from TabGuard rather than
+   inferred from the DOM, so the one thing that decides it is the one
+   number the card is reporting. */
+.ts-note--held.is-lost {
+  box-shadow:
+    inset 3px 0 0 var(--warning),
+    var(--e-float),
+    inset 0 1px 0 var(--edge-light);
+}
+.ts-note--took {
+  box-shadow:
+    inset 3px 0 0 var(--success),
+    var(--e-float),
+    inset 0 1px 0 var(--edge-light);
 }
 
-/* WHAT HAS HAPPENED — a sentence, in the voice the rest of the app
-   uses for one. `--ink-soft` is 7.7:1 on this card. */
-.ts-say {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-small-size);
-  line-height: 1.55;
-  letter-spacing: var(--t-small-track);
-  text-transform: none;
-  color: var(--ink-soft);
+/* FOLDED, IT IS A CHIP AND NOT A CARD. A 400px panel holding one
+   line is a panel pretending to be full; folded, the card takes the
+   width of what it says and the smaller radius that goes with it, so
+   the corner of the screen gets back everything the paragraph was
+   using. */
+.ts-note:not(.is-open) {
+  width: auto;
+  max-width: min(400px, calc(100vw - var(--s-6)));
+  border-radius: var(--r-card);
+}
+.ts-note:not(.is-open) .ts-head {
+  padding: var(--s-2) var(--s-3);
 }
 
-/* WHAT TO DO ABOUT IT — full ink, because it is the line the reader
-   came for and the only one that asks anything of them. */
-.ts-do {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  line-height: 1.5;
-  letter-spacing: var(--t-small-track);
-  text-transform: none;
-  color: var(--ink);
-}
+/* ------------------------------------------------------------
+   THE HEAD — the state, the count, and the fold
+   ------------------------------------------------------------ */
 
-/* THE COUNT OF WHAT WAS DECLINED. It only appears once something
-   actually has been, which is the difference between a warning and
-   a report. */
-.ts-refused {
-  margin: 0;
-  padding-top: var(--s-2);
+.ts-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
   width: 100%;
-  border-top: 1px solid var(--line-subtle);
-  font-family: var(--font-ui);
-  font-size: var(--t-small-size);
-  line-height: 1.5;
-  letter-spacing: var(--t-small-track);
-  text-transform: none;
-  color: var(--ink);
+  padding: var(--s-3) var(--s-4);
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.ts-head:hover {
+  background: var(--surface-3);
+}
+/* A CARD HEAD IS A ROW, AND A ROW DARKENS RATHER THAN SCALING (§4)
+   — a 400px surface that shrinks 3% under a press reads as a
+   glitch, and its neighbours look like they moved. Press lands on
+   pointer-down. */
+.ts-head:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+.ts-head:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+/* the takeover card's head is not a control — there is nothing to
+   fold, so there is nothing to press */
+.ts-head--still {
+  cursor: default;
+}
+.ts-head--still:hover {
+  background: transparent;
 }
 
+.ts-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  box-shadow: inset 0 0 0 1px var(--line-subtle);
+}
+.ts-mark--ok {
+  color: var(--success);
+}
+
+/* THE STATE IS A WORD, NOT A STAMP. "Read-only" at the heading step
+   is the first thing read and the only thing that has to be. */
+.ts-state {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
+  text-transform: none;
+  color: var(--fg);
+}
+
+/* -- what has been declined --------------------------------- */
+
+/* It only appears once something actually has been, which is the
+   difference between a warning and a report. */
+.ts-tally {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  flex: none;
+  animation: ts-tick var(--d-slow) var(--ease-out-back);
+}
+/* A FIGURE TAKES THE MONO FACE, tabular, so a count climbing from 9
+   to 10 does not shove the words beside it. Full ink: it is the one
+   fact on this card that is evidence rather than explanation. */
 .ts-count {
   font-family: var(--font-mono);
   font-size: var(--t-mono-lg-size);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--fg);
+}
+.ts-tally-say {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-secondary);
+}
+
+.ts-fold {
+  display: inline-flex;
+  flex: none;
+  color: var(--fg-tertiary);
+}
+.ts-chev {
+  transition: transform var(--d-med) var(--ease-out-expo);
+}
+.ts-chev.is-up {
+  transform: rotate(180deg);
+}
+
+/* ------------------------------------------------------------
+   THE BODY — why, and what to do about it
+   ------------------------------------------------------------ */
+
+.ts-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: 0 var(--s-4) var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+  padding-top: var(--s-3);
+  animation: ts-open var(--d-med) var(--ease-out-expo) backwards;
+}
+
+/* WHAT HAS HAPPENED — a sentence, in the voice the rest of the app
+   uses for one. `--fg-secondary` is 8.1:1 on this card. */
+.ts-say {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  letter-spacing: var(--t-small-track);
+  text-transform: none;
+  color: var(--fg-secondary);
+}
+
+/* WHAT TO DO ABOUT IT — full ink, because it is the line the reader
+   came for and the only one that asks anything of them. */
+.ts-do {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: var(--t-small-track);
+  text-transform: none;
+  color: var(--fg);
 }
 
 .ts-acts {
@@ -127,12 +296,12 @@
   border: 1px solid var(--line);
   border-radius: var(--r-control);
   background: var(--surface-1);
-  font-family: var(--font-ui);
+  font-family: var(--font-sans);
   font-size: var(--t-small-size);
   font-weight: 540;
   letter-spacing: -0.003em;
   text-transform: none;
-  color: var(--ink-soft);
+  color: var(--fg-secondary);
   cursor: pointer;
   transition:
     background var(--d-fast) var(--ease),
@@ -144,8 +313,8 @@
 
 .ts-act:hover {
   background: var(--surface-3);
-  border-color: var(--hairline-strong);
-  color: var(--ink);
+  border-color: var(--line-strong);
+  color: var(--fg);
 }
 
 /* PRESS LANDS ON POINTER-DOWN, and it is never cancelled — the
@@ -153,16 +322,20 @@
 .ts-act:active {
   transform: scale(0.97);
   background: var(--surface-4);
-  border-color: var(--hairline-strong);
-  color: var(--ink);
+  border-color: var(--line-strong);
+  color: var(--fg);
   transition-duration: var(--d-press);
 }
 
 .ts-act:focus-visible {
   outline: none;
-  border-color: var(--blue);
+  border-color: var(--accent);
   box-shadow: var(--glow-sm);
 }
+
+/* ------------------------------------------------------------
+   MOVEMENT
+   ------------------------------------------------------------ */
 
 /* ARRIVES, RATHER THAN APPEARING — on `--ease-out-expo`, the curve
    every summoned surface in the new system settles on. */
@@ -174,6 +347,34 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* The body unfolding. Opacity and transform only — never a height,
+   which is a layout property and would cost a reflow a frame. */
+@keyframes ts-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ONE PULSE ON THE ONE NUMBER THAT CHANGED. It runs when the count
+   ticks, because TabGuard keys the element on the figure — so it is
+   once per refused write, not once per render. */
+@keyframes ts-tick {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -193,7 +394,14 @@
   .ts-note {
     animation: ts-arrive-still var(--d-med) linear both;
   }
-  .ts-act {
+  .ts-body {
+    animation: ts-arrive-still var(--d-fast) linear backwards;
+  }
+  .ts-tally {
+    animation: none;
+  }
+  .ts-act,
+  .ts-chev {
     transition: none;
   }
   /* THE PRESS IS NOT CANCELLED, only its movement. The darken on

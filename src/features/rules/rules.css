@@ -2028,3 +2028,135 @@
 .rl-empty-meta {
   color: var(--fg-secondary);
 }
+
+/* ============================================================
+   THE FLOW BUILDER, BROUGHT UP TO THE SENTENCE'S STANDARD.
+
+   The pass above was a CHROME pass and said so: colour, edge,
+   radius and response, and not one size, gap or padding. It left
+   three things that are not chrome, and this is them.
+
+   1. A FINDING WAS DRAWN AS A FOOTNOTE, AND IN THE ONE INK THE
+      SYSTEM SAYS NOT TO READ MEANING OUT OF.
+
+      `.rl-issue--blocker` painted the whole message in --danger.
+      That is the mistake §1 warns about from the other direction:
+      --danger is measured as a MARK — a rail, a dot, a border —
+      and putting a sentence in it means a sentence a person has to
+      read is riding on a colour chosen to be seen rather than to
+      be read. Over --surface-3 it does not clear the floor.
+
+      So the severity moves to the rail, where the system puts kind
+      and state everywhere else, and the WORDS go to --fg (15.6:1
+      over --surface-3). It is both the more legible answer and the
+      more honest one: a blocker and an advisory differ in what
+      they oblige you to do, not in how hard they are to read.
+
+   2. THE FINDINGS HAD NO GROUND. They sat between the blurb and
+      the body on the panel's own paper with a hairline under them,
+      so "this node cannot run yet" had exactly the weight of the
+      caption above it. It is a block now, with its own ground and
+      its own count.
+
+   3. NOT EVERY CONTROL PRESSED. The sweep that fixed eleven of
+      them missed `.rl-select`, which is the single most-used
+      control on this panel — every clause side, every branch, every
+      link is one — and a select that does not answer a pointer-down
+      is the loudest possible place to skip rule 8.
+
+   AND ONE THING THAT IS NOT A FIX: the ports. A handle a person
+   drags a wire out of had hover and no focus ring, which made the
+   canvas unreachable from a keyboard without a mouse to confirm
+   where you were.
+   ============================================================ */
+
+/* -- the findings ------------------------------------------- */
+
+.rl-issues {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--surface-3);
+}
+/* SUPERSEDES the dot-and-coloured-sentence. The words are the
+   thing; the rail says how much they oblige you. */
+.rl-issue {
+  position: relative;
+  padding: 2px 0 2px var(--s-4);
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  color: var(--fg);
+}
+.rl-issue::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  width: 3px;
+  height: auto;
+  border-radius: var(--r-full);
+}
+.rl-issue--blocker {
+  color: var(--fg);
+}
+.rl-issue--blocker::before {
+  background: var(--danger);
+}
+.rl-issue--advisory {
+  color: var(--fg-secondary);
+}
+.rl-issue--advisory::before {
+  background: var(--warning);
+}
+
+/* -- the panel head ----------------------------------------- */
+
+.rl-insp-head {
+  background: var(--grad-surface);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+/* the one sanctioned label tracking. +0.10em is a caption's, and
+   this is a three-letter stamp for a step. */
+.rl-insp-tag {
+  letter-spacing: var(--t-label-track);
+  border-color: currentColor;
+}
+.rl-insp-kind {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+}
+
+/* -- the select, which is most of this panel ----------------- */
+
+.rl-select:active {
+  border-color: var(--accent);
+  background: var(--accent-wash-strong);
+  transition-duration: var(--d-press);
+}
+/* a select that has been answered reads as answered: the invalid
+   state already shouts, and this is its quiet opposite */
+.rl-select:disabled {
+  background: var(--surface-3);
+  border-color: var(--line);
+  color: var(--fg-secondary);
+  cursor: not-allowed;
+}
+
+/* -- the empty states --------------------------------------- */
+
+/* it is a state, not a disabled box: the dashed edge says "nothing
+   here yet", and the lead line is the readable tier because it is
+   the only instruction in the block */
+.rl-empty {
+  gap: var(--s-2);
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+}
+.rl-empty--bad {
+  border-style: solid;
+}

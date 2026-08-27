@@ -58,10 +58,19 @@ import {
   type ViewRow,
 } from '@/features/table/core'
 import { CellEditor, CellFace } from './GridCell'
+import { RegisterRail, type RailCrumb } from './RegisterRail'
+import type { RowDensity, RowMetrics } from './tableReadState'
 import { FilterMenu } from './FilterMenu'
 import { ColumnMenu } from './ColumnMenu'
 import { AddColumnPopover } from './AddColumnPopover'
-import { DisclosureGlyph, LockGlyph, MenuGlyph, PlusGlyph, SortChevron } from './glyphs'
+import {
+  DisclosureGlyph,
+  LockGlyph,
+  MenuGlyph,
+  OpenRowGlyph,
+  PlusGlyph,
+  SortChevron,
+} from './glyphs'
 import {
   ImageLightbox,
   ImageStrip,
@@ -69,6 +78,7 @@ import {
   type LightboxState,
 } from './ImageCell'
 import {
+  UNASSIGNED_LABEL,
   countLabel,
   firstLineAt,
   type GridLayout,
@@ -127,6 +137,31 @@ const NO_IMAGES: ImageRef[] = []
 
 export type { MoveDir }
 
+/* ============================================================
+   WHAT THE RAIL CANNOT COUNT FOR ITSELF.
+
+   Everything about WHERE THE WINDOW IS — the drawer you are inside,
+   the first and last row on screen — is a fact about this scroller
+   and is worked out here, from numbers this component already tracks
+   for windowing. Everything about what the TABLE holds is the
+   sheet's, and arrives on this. Absent = no rail, which is the
+   on-canvas card: a 249px card has no room for a status line and no
+   question it would answer. See `RegisterRail`.
+   ============================================================ */
+export interface GridRail {
+  /** rows that came through the narrowing, before any drawer folded */
+  matching: number
+  /** rows the table holds */
+  held: number
+  columns: number
+  shownColumns: number
+  density: RowDensity
+  onDensity: (d: RowDensity) => void
+  onlyFilled: boolean
+  emptyColumns: number
+  onOnlyFilled: (v: boolean) => void
+}
+
 export interface GridProps {
   entity: EntityDef
   /** the columns a leaf row shows — drawer columns are already gone,
@@ -184,6 +219,23 @@ export interface GridProps {
    *  measure the window a FIT has to share out, and scroll a band into
    *  view. Optional — the on-canvas register has no toolbar. */
   viewportRef?: RefObject<HTMLDivElement | null>
+
+  /** how tall this lens draws its lines. Absent = the register's own
+   *  geometry, which is what the card and every test still get. The
+   *  SAME metrics must have built `layout`, or the rows and the
+   *  scroller would disagree about where row 300 is. */
+  metrics?: RowMetrics
+  /** the row whose every field is open beside the sheet, by id */
+  openRowId?: string | null
+  /** press a row's open mark, or Enter — absent on a lens that has no
+   *  detail panel, and then Enter keeps its spreadsheet meaning */
+  onOpenRow?: (r: number) => void
+  /** Escape, while a row is open */
+  onCloseRow?: () => void
+  /** '/' — put the caret in the register's own row search */
+  onFocusSearch?: () => void
+  /** the status rail under the sheet. Absent on the card. */
+  rail?: GridRail
 
   onSel: (s: GridSel) => void
   onKey: (e: React.KeyboardEvent<HTMLDivElement>, pageSize: number) => void
@@ -289,6 +341,12 @@ export function Grid(props: GridProps): JSX.Element {
     colWidths,
     gridRef,
     viewportRef,
+    metrics,
+    openRowId,
+    onOpenRow,
+    onCloseRow,
+    onFocusSearch,
+    rail,
     onSel,
     onKey,
     onPasteText,
@@ -339,6 +397,15 @@ export function Grid(props: GridProps): JSX.Element {
 
   const rows = viewRows.length
   const cols = fields.length
+
+  /* THE DRAWN ROW HEIGHT, AND IT IS A NUMBER RATHER THAN A CLASS.
+     `layout` was built with these same metrics upstream, so every
+     line's `top` already agrees with them; what is left here is the
+     four places the grid does its own arithmetic in row units —
+     keeping the cursor in view, a page of PageDown, the windowing
+     decision and the selection rectangle. Absent (the card, the
+     tests) it is exactly the constant it has always been. */
+  const rowH = metrics?.rowH ?? ROW_H
 
   /* the filing columns, and only while the sheet is actually nested —
      see `levelIds` on the props */
@@ -484,7 +551,7 @@ export function Grid(props: GridProps): JSX.Element {
     return () => ro.disconnect()
   }, [])
 
-  const pageSize = Math.max(1, Math.floor((viewport.h - headH) / ROW_H) - 1)
+  const pageSize = Math.max(1, Math.floor((viewport.h - headH) / rowH) - 1)
 
   /* -- windowing ------------------------------------------------
      Body coordinates start below the frozen header — bands included —
@@ -498,13 +565,59 @@ export function Grid(props: GridProps): JSX.Element {
      full height from `layout.bodyH` either way. */
   const lines = layout.lines
   const bodyRoom = Math.max(0, viewport.h - headH)
-  const virtual = shouldWindowRows(rows, layout.bodyH, bodyRoom, ROW_H)
-  const over = rowOverscan(bodyRoom, ROW_H)
+  const virtual = shouldWindowRows(rows, layout.bodyH, bodyRoom, rowH)
+  const over = rowOverscan(bodyRoom, rowH)
   const viewTop = scrollTop - headH
   const first = virtual ? Math.max(0, firstLineAt(lines, viewTop) - over) : 0
   const last = virtual
     ? Math.min(lines.length, firstLineAt(lines, viewTop + viewport.h) + over + 1)
     : lines.length
+
+  /* -- WHERE THE WINDOW IS, for the rail ------------------------
+     Two walks over the lines the scroller is actually crossing, both
+     of them from numbers already computed above, so the rail costs no
+     listener and no measurement:
+
+       BACKWARDS from the top of the window for the drawer chain it
+       sits inside — the grouping line has scrolled off, the answer it
+       gave has not.
+
+       FORWARDS across the window for the first and last row on it.
+
+     A window standing entirely on grouping lines has no row on it,
+     and then `railFrom` stays 0 and the rail says the count without
+     inventing a range for it. */
+  let railFrom = 0
+  let railTo = 0
+  const railCrumbs: RailCrumb[] = []
+  if (rail && rows > 0 && lines.length > 0) {
+    const top = Math.max(0, viewTop)
+    const bottom = viewTop + bodyRoom
+    const at = Math.min(firstLineAt(lines, top), lines.length - 1)
+
+    const chain: Array<RailCrumb | undefined> = []
+    for (let k = at; k >= 0; k -= 1) {
+      const ln = lines[k]
+      if (ln.kind !== 'group') continue
+      const level = ln.node.level
+      if (chain[level] === undefined) {
+        chain[level] = {
+          level: levelNames[level] ?? '',
+          value: ln.node.value === '' ? UNASSIGNED_LABEL : ln.node.value,
+        }
+      }
+      if (level === 0) break
+    }
+    for (const c of chain) if (c) railCrumbs.push(c)
+
+    for (let k = at; k < lines.length; k += 1) {
+      const ln = lines[k]
+      if (ln.top >= bottom) break
+      if (ln.kind !== 'leaf') continue
+      if (railFrom === 0) railFrom = ln.r + 1
+      railTo = ln.r + 1
+    }
+  }
 
   /* -- keep the active cell in view ----------------------------- */
   const activeKey = `${sel.active.row}:${sel.active.col}`
@@ -534,10 +647,10 @@ export function Grid(props: GridProps): JSX.Element {
        the bar is owned in one place, `src/app/actionbar.css`, and
        says so; this is only the register declining to put the cursor
        where it cannot be read. */
-    const keep = Math.min(ROW_H, Math.round(el.clientHeight / 5))
+    const keep = Math.min(rowH, Math.round(el.clientHeight / 5))
     if (rowTop < el.scrollTop) el.scrollTop = rowTop
-    else if (rowTop + ROW_H > el.scrollTop + el.clientHeight - headH - keep) {
-      el.scrollTop = rowTop + ROW_H - el.clientHeight + headH + keep
+    else if (rowTop + rowH > el.scrollTop + el.clientHeight - headH - keep) {
+      el.scrollTop = rowTop + rowH - el.clientHeight + headH + keep
     }
     /* the pinned column is frozen on screen — scrolling to reveal it
        would only throw the sheet back to its left edge */
@@ -610,7 +723,7 @@ export function Grid(props: GridProps): JSX.Element {
     /* clicks inside the live editor, or on a grouping line's own
        controls, belong to those — not to the selection */
     const target = e.target as HTMLElement
-    if (target.closest('.tb-editor, .tb-grp, .tb-addrow')) return
+    if (target.closest('.tb-editor, .tb-grp, .tb-addrow, .tb-open')) return
     const cell = cellFrom(e)
     if (!cell) return
     /* Re-ordering pictures needs the browser's OWN drag to start, and
@@ -699,9 +812,16 @@ export function Grid(props: GridProps): JSX.Element {
 
   const onBodyDoubleClick = (e: ReactMouseEvent<HTMLDivElement>): void => {
     const target = e.target as HTMLElement
-    if (target.closest('.tb-editor, .tb-grp, .tb-addrow, .tb-imgslot')) return
+    if (target.closest('.tb-editor, .tb-grp, .tb-addrow, .tb-imgslot, .tb-open')) return
     const cell = cellFrom(e)
-    if (!cell || cell.col < 0) return
+    if (!cell) return
+    /* THE GUTTER IS THE ROW, so a double-press on it opens the row —
+       the same act the open mark performs, in the place a person aims
+       at when they mean "this whole line" rather than "this cell". */
+    if (cell.col < 0) {
+      if (onOpenRow) onOpenRow(cell.row)
+      return
+    }
     const field = fields[cell.col]
     if (field?.type === 'image') {
       const rowId = viewRows[cell.row]?.rowId
@@ -768,7 +888,7 @@ export function Grid(props: GridProps): JSX.Element {
       width: Math.max(0, right - left),
       /* a range that spans a drawer boundary covers the grouping line
          between them — one continuous rectangle, never a broken one */
-      height: Math.max(ROW_H, topOfLeaf(r1) + ROW_H - top),
+      height: Math.max(rowH, topOfLeaf(r1) + rowH - top),
     }
   }
 
@@ -904,10 +1024,64 @@ export function Grid(props: GridProps): JSX.Element {
     ) {
       return
     }
-    /* Enter opens the editor everywhere else on this sheet; on a
-       picture column there is no editor to open, so it opens the
-       chooser instead and the promise Enter makes stays true. */
-    if (!editing && activeField?.type === 'image' && (e.key === 'Enter' || e.key === 'F2')) {
+    const bare = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
+
+    /* ---- '/' PUTS THE CARET IN THE ROW SEARCH ----
+       It is a printable character, so on this sheet it would otherwise
+       begin typing a value — and that is the trade, stated: a price
+       file holds no value that STARTS with a slash, while "find the
+       row" is a thing a dealer does dozens of times an hour. If one
+       ever does, F2 opens the editor and takes it. Nothing is
+       animated: the caret is in the box on the same frame. */
+    if (!editing && bare && onFocusSearch && e.key === '/') {
+      e.preventDefault()
+      onFocusSearch()
+      return
+    }
+
+    /* ---- ESCAPE CLOSES THE OPEN ROW ----
+       Only when one is open and nothing nearer is claiming the key: a
+       menu, a filter or the add-column sheet each close on their own
+       Escape, and the stage above uses a spare one to leave the page.
+       This sits between the two. */
+    if (
+      !editing &&
+      e.key === 'Escape' &&
+      onCloseRow &&
+      openRowId != null &&
+      menu === null &&
+      filterFor === null &&
+      addCol === null
+    ) {
+      e.preventDefault()
+      onCloseRow()
+      return
+    }
+
+    /* ---- ENTER OPENS THE ROW ----
+       WHAT IT USED TO DO, and why losing it costs nothing: not
+       editing, Enter moved the cursor down one row — which is
+       ArrowDown, on the same sheet, unchanged. Enter INSIDE the editor
+       still commits and moves down, which is the one that carries
+       data entry, and F2 or any printable character still opens the
+       editor. What Enter buys instead is the answer to "what IS this
+       boat" without a sideways scroll.
+       On a lens with no detail panel (the on-canvas card) `onOpenRow`
+       is absent and Enter keeps its spreadsheet meaning exactly. */
+    if (!editing && bare && onOpenRow && e.key === 'Enter' && rows > 0) {
+      e.preventDefault()
+      onOpenRow(sel.active.row)
+      return
+    }
+
+    /* A picture column has no editor to open, so F2 — and Enter, on a
+       lens with no detail panel — opens the chooser instead, and the
+       promise those keys make stays true. */
+    if (
+      !editing &&
+      activeField?.type === 'image' &&
+      (e.key === 'F2' || (e.key === 'Enter' && !onOpenRow))
+    ) {
       const rowId = viewRows[sel.active.row]?.rowId
       if (rowId) {
         e.preventDefault()
@@ -920,7 +1094,18 @@ export function Grid(props: GridProps): JSX.Element {
 
   return (
     <div
-      className={'tb-grid' + (layout.grouped ? ' tb-grid-grouped' : '')}
+      className={
+        'tb-grid' +
+        (layout.grouped ? ' tb-grid-grouped' : '') +
+        /* the reader asked for air. A class, not a measurement: the
+           HEIGHTS are already in `layout`, and this is only the
+           padding and the leading that go with them. */
+        (metrics && metrics.rowH > ROW_H ? ' tb-grid-roomy' : '') +
+        /* the status rail is a FLOOR, not an overlay: the scroller
+           gives up 30px to it rather than having a strip drawn over
+           its last row. So the grid becomes a column when it has one. */
+        (rail ? ' tb-grid-railed' : '')
+      }
       ref={gridRef}
       role="grid"
       tabIndex={0}
@@ -1496,7 +1681,13 @@ export function Grid(props: GridProps): JSX.Element {
                   className={
                     'tb-row' +
                     (r % 2 === 1 ? ' tb-row-alt' : '') +
-                    (found === line.rowId ? ' tb-row-found' : '')
+                    (found === line.rowId ? ' tb-row-found' : '') +
+                    /* THE ROW WHOSE EVERY FIELD IS OPEN BESIDE THE
+                       SHEET. Not the selection — the cursor moves about
+                       inside a row while it is open — so it is a mark
+                       of its own, and it is a rail and a ground rather
+                       than a scale: a list row darkens, it never grows. */
+                    (openRowId === line.rowId ? ' tb-row-open' : '')
                   }
                   role="row"
                   /* the band row takes index 1 when it is drawn, so the
@@ -1515,15 +1706,56 @@ export function Grid(props: GridProps): JSX.Element {
                       tooltip, beside the number, available to anyone
                       who needs it and shouted at nobody who does not. */}
                   <div
-                    className={'tb-gut' + (sel.active.row === r ? ' tb-gut-on' : '')}
+                    className={
+                      'tb-gut' +
+                      (sel.active.row === r ? ' tb-gut-on' : '') +
+                      (openRowId === line.rowId ? ' tb-gut-open' : '')
+                    }
                     data-r={r}
                     data-c={-1}
                     role="rowheader"
                     aria-colindex={1}
                     style={{ width: GUTTER_W }}
-                    title={`Row ${r + 1} · click to select it, Ctrl+click to add it\nIdentifier ${line.rowId}`}
+                    title={
+                      onOpenRow
+                        ? `Row ${r + 1} · click to select it, Ctrl+click to add it, double-click to open every column of it\nIdentifier ${line.rowId}`
+                        : `Row ${r + 1} · click to select it, Ctrl+click to add it\nIdentifier ${line.rowId}`
+                    }
                   >
-                    {pad2(r + 1)}
+                    <span className="tb-gut-n">{pad2(r + 1)}</span>
+                    {/* THE WAY IN TO ONE ROW. At rest it is not drawn at
+                        all — the gutter is a column of ordinals and has
+                        to stay one — and it arrives with the pointer on
+                        the row, which is the moment the offer is worth
+                        making. `tabIndex={-1}` on purpose: twenty of
+                        these in the tab order would make Tab useless,
+                        and the keyboard has Enter, which is better than
+                        tabbing to a mark. */}
+                    {onOpenRow && (
+                      <button
+                        type="button"
+                        className="tb-open"
+                        tabIndex={-1}
+                        aria-expanded={openRowId === line.rowId}
+                        aria-label={`Open every column of row ${r + 1}`}
+                        title={
+                          openRowId === line.rowId
+                            ? 'Every column of this row is open — Escape closes it'
+                            : 'Open every column of this row — Enter'
+                        }
+                        onMouseDown={(e) => {
+                          /* the sweep-select this gutter starts belongs
+                             to the gutter, not to the mark on it */
+                          e.stopPropagation()
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOpenRow(r)
+                        }}
+                      >
+                        <OpenRowGlyph />
+                      </button>
+                    )}
                   </div>
                   {drawList.map((item) => {
                     if (item.kind === 'gap') return <ColumnGap key={item.key} w={item.w} />
@@ -1770,6 +2002,29 @@ export function Grid(props: GridProps): JSX.Element {
           </div>
         </div>
       </div>
+
+      {/* -- the status rail --------------------------------------
+          Below the sheet, outside the scroller, so nothing it says is
+          ever drawn over a row. See `RegisterRail` for why it is at
+          the foot and why it is worth 30px. */}
+      {rail && (
+        <RegisterRail
+          noun={noun}
+          crumbs={railCrumbs}
+          from={railFrom}
+          to={railTo}
+          onSheet={rows}
+          matching={rail.matching}
+          held={rail.held}
+          columns={rail.columns}
+          shownColumns={rail.shownColumns}
+          density={rail.density}
+          onDensity={rail.onDensity}
+          onlyFilled={rail.onlyFilled}
+          emptyColumns={rail.emptyColumns}
+          onOnlyFilled={rail.onOnlyFilled}
+        />
+      )}
 
       {menu && menuField && (
         <ColumnMenu

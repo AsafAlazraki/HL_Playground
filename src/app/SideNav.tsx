@@ -44,10 +44,67 @@
    it is 64px of glyphs, the choice is remembered, and every row
    keeps its accessible name so the collapsed rail is not a
    guessing game.
+
+   ------------------------------------------------------------
+   AND THE COLLAPSED RAIL DID NOT WORK. Two faults, both found by
+   collapsing it and trying to use it.
+
+   1. THERE WERE NO GLYPHS. The stylesheet's own note promised
+      "64px of glyphs and counts", and `NavRow` drew
+      `<span className="sn-row-pip" />` — a 5px dot — for every row
+      that was not handed one, which was all seven of them. So the
+      collapsed rail was a vertical column of seven identical dots,
+      distinguishable only by hovering each in turn for its
+      `title`, which is the exact failure the floating dock was
+      deleted for. Every row now carries a drawn mark: House, the
+      graph, the module grid, a document, people, the scales, a
+      shield. They are Phosphor at `light`, the weight `lib/icons`
+      calls the art direction, so they are the same hand as every
+      other mark in the app.
+
+   2. THE DATA MODEL DOOR DISAPPEARED. `.sn.is-tight` hid
+      `.sn-sec` AND `.sn-sec-body`, and the canvas — the screen
+      this rail's second section exists to reach, and the app's
+      one permanent surface underneath every window — lives
+      inside that body. Collapsing the rail removed it, along with
+      New table and all 51 tables, and left no way back to the
+      drawing except opening the rail again. A rail that loses a
+      door when it narrows is not a collapsed rail, it is a
+      smaller rail with less in it.
+
+      The fix is split across both files, because both halves were
+      wrong. Here: DATA is forced open while tight, so the row is
+      mounted whatever the reader left the disclosure set to.
+      There: the tight rules hide the section CAPTION and the table
+      tree — a 51-item tree in 64px is genuinely not a thing — and
+      keep the Data model row itself, which is a door like the
+      other six and is now drawn like one.
+
+   3. AND THE QUOTE COUNT SURVIVES THE COLLAPSE. `.sn-row-count`
+      is hidden at 64px because a pill of digits does not fit
+      beside a glyph; the FACT that there are quotes waiting is
+      the half worth keeping, so it becomes a dot on the corner of
+      the mark. Not a number — a number that small would be under
+      the 11px floor — a mark that says "there are some", with the
+      exact figure one press or one widen away.
+   ------------------------------------------------------------
    ============================================================ */
 
 import { useEffect, useMemo, useState } from 'react'
 import type { JSX, ReactNode } from 'react'
+import {
+  CaretDoubleLeft,
+  CaretDoubleRight,
+  FileText,
+  Graph,
+  House,
+  MagnifyingGlass,
+  Plus,
+  Scales,
+  ShieldCheck,
+  SquaresFour,
+  UsersThree,
+} from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   TABLE_KINDS,
@@ -58,7 +115,14 @@ import {
 } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ImportExportMenu } from '@/features/io'
-import { ICON_SIZE } from '@/lib/icons'
+import { ICON_SIZE, weightFor } from '@/lib/icons'
+
+/** Every mark on this rail is drawn at one size and one weight, so a
+ *  column of seven of them reads as one set rather than seven
+ *  decisions. `weightFor` is the art direction — 'light' at this
+ *  size, never 'bold' or 'fill'. */
+const MARK = ICON_SIZE.small
+const MARK_WEIGHT = weightFor(MARK)
 
 const KIND_ORDER: TableKind[] = [
   'boat',
@@ -127,6 +191,13 @@ function NavRow({
     >
       <span className="sn-row-mark" aria-hidden="true">
         {glyph ?? <span className="sn-row-pip" />}
+        {/* THE COUNT, WHEN THERE IS NO ROOM FOR THE COUNT. Drawn
+            always and revealed only by `.sn.is-tight` in shell.css,
+            so nothing is mounted or unmounted by the fold and the
+            rail cannot flash a badge in as it narrows. */}
+        {count !== undefined && count > 0 ? (
+          <span className="sn-row-pin" />
+        ) : null}
       </span>
       <span className="sn-row-name">{label}</span>
       {count !== undefined && count > 0 ? (
@@ -135,6 +206,12 @@ function NavRow({
     </button>
   )
 }
+
+/** One drawn mark, at the rail's one size and weight. Written once so
+ *  seven call sites cannot drift apart on either. */
+const mark = (Glyph: typeof House): ReactNode => (
+  <Glyph size={MARK} weight={MARK_WEIGHT} />
+)
 
 export function SideNav({
   current,
@@ -189,14 +266,16 @@ export function SideNav({
   }, [entities])
 
   const total = groups.reduce((n, g) => n + g.items.length, 0)
-  const rows = useMemo(
-    () =>
-      groups.reduce(
-        (n, g) => n + g.items.reduce((m, e) => m + (rowsByEntity[e.id]?.length ?? 0), 0),
-        0,
-      ),
-    [groups, rowsByEntity],
-  )
+
+  /* The industry, in the dealer's own noun. Falls back to nothing
+     rather than to a guess — an org with no industry recorded gets
+     a clean line, not the word "Unknown". */
+  const industryWord =
+    org?.industry === 'marine'
+      ? 'Marine'
+      : org?.industry
+        ? org.industry.charAt(0).toUpperCase() + org.industry.slice(1)
+        : ''
 
   /* Which sections are open. DATA opens because it is where the
      work is; its kind bands stay shut so 51 tables is a filing
@@ -207,6 +286,15 @@ export function SideNav({
     boat: true,
   })
   const toggle = (k: string): void => setOpen((o) => ({ ...o, [k]: !(o[k] ?? false) }))
+
+  /* DATA IS OPEN WHILE THE RAIL IS TIGHT, whatever the reader left the
+     disclosure set to — see fault 2 in the header. The Data model door
+     is inside this body, and a collapsed rail that cannot reach the
+     app's one permanent surface is a rail with a door missing. The
+     reader's own choice is not overwritten, only overruled while there
+     is no caption on screen to press: widening the rail hands it
+     straight back. */
+  const dataOpen = collapsed || open.data
 
   return (
     <nav
@@ -220,9 +308,20 @@ export function SideNav({
         </span>
         <span className="sn-head-say">
           <span className="sn-head-name">{org?.name ?? 'Your tables'}</span>
-          <span className="sn-head-note">
-            {total} tables · {rows.toLocaleString()} rows
-          </span>
+          {/* WHAT THE BUSINESS SELLS, NOT WHAT THE DATABASE HOLDS.
+
+              This read "51 tables · 15,651 rows", which is the
+              story of a system that manages data. That is not what
+              this is for. It exists so a business can sell a
+              complicated product easily, and the rail's first line
+              should say whose business it is and what they sell —
+              the counts belong on Home, where somebody is actually
+              looking at the sheet.
+
+              `industry` is on the org profile, so this is read, not
+              written: a motorcycle shop gets "Motorcycles" here for
+              free the day that industry ships. */}
+          <span className="sn-head-note">{industryWord}</span>
         </span>
         <button
           type="button"
@@ -255,6 +354,7 @@ export function SideNav({
             label="Home"
             on={current === 'home'}
             collapsed={collapsed}
+            glyph={mark(House)}
             onPick={onOpenHome}
           />
         </div>
@@ -263,20 +363,21 @@ export function SideNav({
         <div className="sn-grp">
           <button
             type="button"
-            className={`sn-sec${open.data ? ' is-open' : ''}`}
-            aria-expanded={open.data}
+            className={`sn-sec${dataOpen ? ' is-open' : ''}`}
+            aria-expanded={dataOpen}
             onClick={() => toggle('data')}
           >
             <span className="mono-label sn-sec-name">Data</span>
             <span className="sn-sec-wedge" aria-hidden="true" />
           </button>
 
-          {open.data ? (
+          {dataOpen ? (
             <div className="sn-sec-body">
               <NavRow
                 label="Data model"
                 on={current === null}
                 collapsed={collapsed}
+                glyph={mark(Graph)}
                 onPick={onOpenSheet}
               />
 
@@ -353,6 +454,7 @@ export function SideNav({
             label="Modules"
             on={current === 'module'}
             collapsed={collapsed}
+            glyph={mark(SquaresFour)}
             onPick={onOpenDashboard}
           />
         </div>
@@ -365,18 +467,21 @@ export function SideNav({
             on={current === 'quote'}
             count={quoteCount}
             collapsed={collapsed}
+            glyph={mark(FileText)}
             onPick={onOpenQuotes}
           />
           <NavRow
             label="Customers"
             on={current === 'customer'}
             collapsed={collapsed}
+            glyph={mark(UsersThree)}
             onPick={onOpenCustomers}
           />
           <NavRow
             label="Business rules"
             on={current === 'rules'}
             collapsed={collapsed}
+            glyph={mark(Scales)}
             onPick={onOpenRules}
           />
         </div>

@@ -224,7 +224,15 @@
    nowhere else, so it is only ever on screen when there is
    something to forget. Quiet at rest — this is not one of the two
    things the accent is spent on here — and it takes all three
-   states, because everything pressable does. */
+   states, because everything pressable does.
+
+   IT IS NOT UPPERCASE, THOUGH IT SITS IN AN UPPERCASE HEADING.
+   The heading is a GROUP CAPTION, which is on the short list of
+   things the one uppercase style is for; this is a BUTTON, which
+   is on the list of things it is never for. They sit on one line
+   in two cases on purpose — the caption names the group and the
+   control acts on it, and drawing them alike would make the act
+   look like more caption. */
 .hs-head-forget {
   margin-left: auto;
   padding: 2px 6px;
@@ -232,10 +240,10 @@
   border-radius: var(--r-chip);
   background: transparent;
   font-family: var(--font-ui);
-  font-size: var(--t-label-size);
-  font-weight: var(--t-label-weight);
-  letter-spacing: var(--t-label-track);
-  text-transform: uppercase;
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
   color: var(--ink-faint);
   cursor: pointer;
   transition:

@@ -1261,29 +1261,29 @@ export function validateEnvelope(raw: unknown): Validated {
   /* every message here is read by the user in the popover, so it stays in
      configurator words — tables, columns, rows — never the shape names the
      file format happens to use internally */
-  if (!isRecord(raw)) return { ok: false, error: 'NOT A HELMLOGIC SHEET FILE' }
+  if (!isRecord(raw)) return { ok: false, error: 'That is a .json file, but not one this app wrote. A saved copy carries a sheet, its tables and a revision number.' }
   if (raw.kind !== EXPORT_KIND)
-    return { ok: false, error: 'NOT A HELMLOGIC SHEET FILE' }
+    return { ok: false, error: 'That is a .json file, but not one this app wrote. A saved copy carries a sheet, its tables and a revision number.' }
   if (typeof raw.version !== 'number' || !READABLE_VERSIONS.includes(raw.version))
-    return { ok: false, error: `SAVED BY A DIFFERENT VERSION — EXPECTED V${EXPORT_VERSION} OR OLDER` }
+    return { ok: false, error: `That copy was saved by a newer version of HelmLogic (this one reads up to v${EXPORT_VERSION}). Save it again from the version that wrote it, or update this one.` }
   if (!Array.isArray(raw.entities))
-    return { ok: false, error: 'THIS FILE HAS NO TABLES IN IT' }
+    return { ok: false, error: 'That file has no tables in it, so there is nothing to put on the sheet.' }
   if (raw.groups !== undefined && !Array.isArray(raw.groups))
-    return { ok: false, error: 'FILE IS DAMAGED — BAD LAYOUT BLOCK' }
+    return { ok: false, error: 'That copy is damaged: the block that says where the tables sit on the sheet cannot be read.' }
   if (raw.rules !== undefined && !Array.isArray(raw.rules))
-    return { ok: false, error: 'FILE IS DAMAGED — BAD RULES BLOCK' }
+    return { ok: false, error: 'That copy is damaged: the business rules block cannot be read.' }
   if (raw.rows !== undefined && !isRecord(raw.rows))
-    return { ok: false, error: 'FILE IS DAMAGED — ROWS ARE NOT GROUPED BY TABLE' }
+    return { ok: false, error: 'That copy is damaged: its rows are not grouped by the table they belong to.' }
   /* the v2 blocks: a wrong SHAPE is a damaged file and is said so;
      an ABSENT one is a v1 file and is silence, not an error */
   if (raw.views !== undefined && !Array.isArray(raw.views))
-    return { ok: false, error: 'FILE IS DAMAGED — BAD PAGES BLOCK' }
+    return { ok: false, error: 'That copy is damaged: the pages block cannot be read.' }
   if (raw.modules !== undefined && !Array.isArray(raw.modules))
-    return { ok: false, error: 'FILE IS DAMAGED — BAD MODULES BLOCK' }
+    return { ok: false, error: 'That copy is damaged: the modules block cannot be read.' }
   if (raw.constraints !== undefined && !Array.isArray(raw.constraints))
-    return { ok: false, error: 'FILE IS DAMAGED — BAD RULES BLOCK' }
+    return { ok: false, error: 'That copy is damaged: the business rules block cannot be read.' }
   if (raw.quotes !== undefined && !Array.isArray(raw.quotes))
-    return { ok: false, error: 'FILE IS DAMAGED — BAD QUOTES BLOCK' }
+    return { ok: false, error: 'That copy is damaged: the customer quotes block cannot be read.' }
 
   const stamp = nowIso()
 
@@ -1300,6 +1300,27 @@ export function validateEnvelope(raw: unknown): Validated {
     return false
   }
 
+  /* THE REFUSAL IS A SENTENCE WITH A REASON, IN THE PLACE IT IS
+     REFUSED — DESIGN_PRINCIPLES §6 and rule 10.
+
+     Every refusal in this validator reaches a person through one of
+     two import doors, and BOTH of their stylesheets carry a note
+     saying the reason "stopped shouting … a sentence, set as one"
+     (io.css `.io-error-say`, onboarding.css `.ob-refuse-say`). Only
+     the CSS had stopped shouting: the strings themselves were
+     literal capitals — `DUPLICATE ID "__origin"` — which no
+     `text-transform` pass could ever have caught. That is the same
+     class of defect this repository has now recorded three times,
+     and this is the last file it was hiding in.
+
+     THE ID STAYS IN THE SENTENCE. It is the diagnostic that found
+     the two `__origin` / `__discontinued` bugs recorded at the head
+     of this file, and a dealer forwarding the line to whoever sent
+     them the file needs it. It is a value, so it keeps its own case
+     and its own face at the surface that prints it. */
+  const dupSay = (what: string, id: string): string =>
+    `That copy cannot be opened: ${what} shares an id with something else in the file (${id}), and the sheet could not tell the two apart.`
+
   /* -- entities (strict on id/name/fields, tolerant elsewhere) */
   const entities: EntityDef[] = []
   for (let i = 0; i < raw.entities.length; i++) {
@@ -1310,24 +1331,24 @@ export function validateEnvelope(raw: unknown): Validated {
       typeof e.name !== 'string' ||
       !Array.isArray(e.fields)
     ) {
-      return { ok: false, error: `TABLE ${i + 1} IS DAMAGED — NEEDS AN ID, A NAME AND COLUMNS` }
+      return { ok: false, error: `That copy is damaged: table ${i + 1} in it has no id, no name or no columns.` }
     }
-    if (!isSafeId(e.id)) return { ok: false, error: `TABLE ${i + 1} HAS AN UNSAFE ID` }
-    if (isDuplicate(e.id)) return { ok: false, error: `DUPLICATE ID "${e.id}"` }
+    if (!isSafeId(e.id)) return { ok: false, error: `That copy is damaged: table ${i + 1} in it carries an id this app will not accept.` }
+    if (isDuplicate(e.id)) return { ok: false, error: dupSay(`the table ${e.name}`, e.id) }
     const fields: FieldDef[] = []
     const seenInTable = new Set<string>()
     for (const f of e.fields as unknown[]) {
       if (!isRecord(f) || typeof f.id !== 'string' || typeof f.name !== 'string') {
-        return { ok: false, error: `DAMAGED COLUMN IN TABLE "${e.name}"` }
+        return { ok: false, error: `That copy is damaged: a column on ${e.name} cannot be read.` }
       }
-      if (!isSafeId(f.id)) return { ok: false, error: `UNSAFE COLUMN ID IN TABLE "${e.name}"` }
+      if (!isSafeId(f.id)) return { ok: false, error: `That copy is damaged: a column on ${e.name} carries an id this app will not accept.` }
       /* a well-known column id is the SAME id on every table that has
          one, by design — so it is checked against this table only */
       if (isWellKnownFieldId(f.id)) {
         if (seenInTable.has(f.id))
-          return { ok: false, error: `TABLE "${e.name}" HAS TWO "${f.name}" COLUMNS` }
+          return { ok: false, error: `That copy cannot be opened: ${e.name} has two columns called ${f.name}, and the sheet could not tell them apart.` }
       } else if (isDuplicate(f.id)) {
-        return { ok: false, error: `DUPLICATE ID "${f.id}"` }
+        return { ok: false, error: dupSay(`the column ${f.name} on ${e.name}`, f.id) }
       }
       seenInTable.add(f.id)
       fields.push({
@@ -1395,7 +1416,7 @@ export function validateEnvelope(raw: unknown): Validated {
   const groups: GroupDef[] = []
   for (const g of (raw.groups ?? []) as unknown[]) {
     if (!isRecord(g) || !isSafeId(g.id)) continue
-    if (isDuplicate(g.id)) return { ok: false, error: `DUPLICATE ID "${g.id}"` }
+    if (isDuplicate(g.id)) return { ok: false, error: dupSay('a group on the sheet', g.id) }
     const pos = isRecord(g.position) ? g.position : {}
     const size = isRecord(g.size) ? g.size : {}
     groups.push({
@@ -1411,7 +1432,7 @@ export function validateEnvelope(raw: unknown): Validated {
   const rules: RuleDef[] = []
   for (const r of (raw.rules ?? []) as unknown[]) {
     if (!isRecord(r) || !isSafeId(r.id)) continue
-    if (isDuplicate(r.id)) return { ok: false, error: `DUPLICATE ID "${r.id}"` }
+    if (isDuplicate(r.id)) return { ok: false, error: dupSay('a relationship on the sheet', r.id) }
 
     const remaps: RuleRemaps = { nodes: new Map(), branches: new Map() }
     const seenNodeIds = new Set<string>()
@@ -1442,15 +1463,15 @@ export function validateEnvelope(raw: unknown): Validated {
   if (isRecord(raw.rows)) {
     rows = {}
     for (const [entityId, list] of Object.entries(raw.rows)) {
-      if (!isSafeId(entityId)) return { ok: false, error: 'UNSAFE TABLE ID IN THE ROW DATA' }
+      if (!isSafeId(entityId)) return { ok: false, error: 'That copy is damaged: its rows name a table by an id this app will not accept.' }
       if (!Array.isArray(list))
-        return { ok: false, error: `THE ROWS FOR TABLE "${entityId}" ARE DAMAGED` }
+        return { ok: false, error: `That copy is damaged: the rows it carries for one of its tables cannot be read.` }
       const clean: RowData[] = []
       for (const r of list as unknown[]) {
         if (!isRecord(r) || typeof r.id !== 'string')
-          return { ok: false, error: 'DAMAGED ROW — MISSING ID' }
-        if (!isSafeId(r.id)) return { ok: false, error: 'UNSAFE ROW ID' }
-        if (isDuplicate(r.id)) return { ok: false, error: `DUPLICATE ID "${r.id}"` }
+          return { ok: false, error: 'That copy is damaged: one of its rows has no id.' }
+        if (!isSafeId(r.id)) return { ok: false, error: 'That copy is damaged: one of its rows carries an id this app will not accept.' }
+        if (isDuplicate(r.id)) return { ok: false, error: dupSay('a row', r.id) }
         const values: Record<string, CellValue> = {}
         if (isRecord(r.values)) {
           for (const [k, v] of Object.entries(r.values)) {
@@ -1493,7 +1514,7 @@ export function validateEnvelope(raw: unknown): Validated {
   for (const v of (raw.views ?? []) as unknown[]) {
     const view = normView(v, stamp, tableIds, fieldIds)
     if (!view) continue
-    if (isDuplicate(view.id)) return { ok: false, error: `DUPLICATE ID "${view.id}"` }
+    if (isDuplicate(view.id)) return { ok: false, error: dupSay('a page', view.id) }
     views.push(view)
   }
   const viewIds: ReadonlySet<string> = new Set(views.map((v) => v.id))
@@ -1506,7 +1527,7 @@ export function validateEnvelope(raw: unknown): Validated {
   /* a duplicate module id would make two dashboard cards share one
      store record, so the second edit would silently move the first */
   for (const m of modules) {
-    if (isDuplicate(m.id)) return { ok: false, error: `DUPLICATE ID "${m.id}"` }
+    if (isDuplicate(m.id)) return { ok: false, error: dupSay('a module', m.id) }
   }
 
   const constraints: ConstraintDef[] = []
@@ -1514,7 +1535,7 @@ export function validateEnvelope(raw: unknown): Validated {
     const constraint = normConstraint(c, stamp)
     if (!constraint) continue
     if (isDuplicate(constraint.id))
-      return { ok: false, error: `DUPLICATE ID "${constraint.id}"` }
+      return { ok: false, error: dupSay('a business rule', constraint.id) }
     constraints.push(constraint)
   }
 
