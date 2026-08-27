@@ -329,27 +329,71 @@ largest element is 34px has no focal point at all. Phase two's scale rule
 
 ---
 
-## 1b · COLOUR — I went backwards and this is the fix
+## 1b · COLOUR — and this needs a rule changed
 
-**The regression, named.** Phase one's first draft had the eight kind hues on
-every card as a full-height rail: indigo boats, rose motors, amber trailers,
-teal accessories, violet packages. When the navy chrome arrived I pushed those
-down to 7px dots and made the content area white-on-white. The rail got the
-colour and the *content* lost it. That is the "gone backwards".
+Said three times now, so it is not a detail.
 
-**The rule for phase two:**
+### What went backwards
 
-| Surface | Colour |
+Phase one's first draft had the eight kind hues as a **full-height rail on
+every card** — indigo boats, rose motors, amber trailers, teal accessories,
+violet packages. When the navy chrome arrived the rail took all the colour and
+the content area went white-on-white; the hues were demoted to 7px dots. The
+app got a coloured *frame* and a colourless *page*, which is backwards.
+
+### The rule that has to change
+
+DESIGN_PRINCIPLES §1 says:
+
+> **One accent.** Kind colour is an eighth-note, not a theme. Use them for a
+> 3px rail, a dot, or a glyph — never for a fill behind text, and never for
+> chrome.
+
+That rule was written for a calm data tool where the kinds are metadata about
+tables. **This is a selling tool, and the kind is not metadata — it is what the
+thing IS.** A boat, an outboard, a trailer and a rigging kit are the four
+nouns the entire business is made of, and a person should know which one they
+are looking at from across the room without reading.
+
+**Amended, and the amendment is narrow:** a kind hue may now carry a
+**surface** — a tinted band head, a card rail at full height, a filter chip, a
+selected state. It still may not sit behind reading text, and it is still never
+chrome. The 4.5:1 floor is untouched: the eight hues are already cut to equal
+luminance and measured on both grounds.
+
+### Where each hue appears
+
+| Surface | How colour is spent |
 |---|---|
-| The rail | navy, and the module rows carry their kind hue as a 3px rail |
-| A module card | its kind hue as a full-height left rail, and its photograph |
-| A catalogue card | the photograph IS the colour |
-| A configurator band | its kind hue on the band head |
-| A figure | ink, always — never hue |
-| Text | never on a hue fill |
+| Rail — module rows | 3px kind rail, and the count in the kind's ink |
+| Modules grid card | **full-height kind rail** + the brand's logo + its photograph |
+| Catalogue card | the photograph is the colour; the kind is a chip |
+| Configurator band head | a tinted band in the kind's hue at wash strength |
+| A chosen option | kind-tinted surface, kind rail, ink stays ink |
+| A refused option | struck through in `--danger`, the reason in `--ink-soft` |
+| A held-back line | `--warning` rail, not grey |
+| Filter chips | the kind's hue when active |
+| Figures | **never hue.** Always ink. A price is not decorative |
+| Body text | never on a hue fill |
 
-The eight hues are already cut to equal luminance and measured on both grounds.
-They exist. They are simply not being spent.
+### The three colours that are currently wasted
+
+1. **`--danger` and `--warning` are barely used.** A refusal is the most
+   important thing the solver produces and it is drawn in grey. Refused,
+   discontinued, over-rating and unchecked are four different states currently
+   sharing one appearance.
+2. **The photography.** 220 real photographs — turquoise water, sunset,
+   brushed alloy — reduced to card headers and 32px thumbnails. In a catalogue
+   they *are* the palette.
+3. **The accent itself.** One blue, used four times a screen, on a navy rail
+   where it is barred anyway. On a white page it can do far more work.
+
+### What stays disciplined
+
+Not a rainbow. The hues are **identity**, not decoration: a hue only ever
+appears on something that HAS that kind. Two things of the same kind are the
+same colour everywhere in the app, always. That is what makes it legible rather
+than loud — and it is the difference between colour and colouring in.
 
 ---
 
