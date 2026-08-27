@@ -94,7 +94,20 @@ describe('a new rule is empty', () => {
     const live = tokens.filter((t) => t.control)
     expect(live).toHaveLength(2)
     expect(live.every((t) => t.control?.k === 'field')).toBe(true)
-    expect(tokens.filter((t) => t.unchosen)).toHaveLength(2)
+  })
+
+  /* BOTH KINDS OF UNANSWERED SLOT SAY SO. `unchosen` is what draws
+     the dashed hairline, and it used to mark only the two column
+     slots — so one of the two things a person still has to answer
+     announced itself and the other, the value, was drawn as a
+     settled accent word reading `…`. All four are questions and all
+     four now look like questions; only the two columns are LIVE
+     yet, which is the separate and still-correct rule that the verb
+     and the value wait for the column. */
+  it('marks every unanswered slot, column and value alike', () => {
+    const tokens = sentenceTokens(draft(), ctx, true)
+    const unchosen = tokens.filter((t) => t.unchosen)
+    expect(unchosen.map((t) => t.role)).toEqual(['field', 'value', 'field', 'value'])
   })
 })
 

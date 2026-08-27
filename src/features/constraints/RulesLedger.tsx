@@ -71,6 +71,7 @@ import {
   type RuleState,
 } from './ruleLedger'
 import { WORKBOOK_RULES, type WorkbookRuleRef, type WorkbookRuleSeed } from './workbookRules'
+import { Provenance } from './Provenance'
 
 /** One sentence, measured off the loaded sheet on render, for a rule
  *  this app is actually running. Keyed by the adjudication's reference
@@ -293,7 +294,7 @@ function RuleRow({
           the business asked for it; this line is how you check. Mono
           because it is a reference, and it wraps rather than truncating
           — a half-printed cell address cannot be looked up. */}
-      <p className="cn-wb-src">{seed.source}</p>
+      <Provenance text={seed.source} />
     </li>
   )
 }

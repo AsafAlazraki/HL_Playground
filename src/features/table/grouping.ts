@@ -24,6 +24,21 @@ import {
 } from '@/types/model'
 import type { ViewRow } from '@/features/table/core'
 import { ADD_H, GROUP_H, ROW_H } from './helpers'
+import type { RowMetrics } from './tableReadState'
+
+/* THE DRAWN HEIGHTS ARE AN ARGUMENT NOW, NOT THREE CONSTANTS.
+
+   They stay `helpers.ts`'s constants by default, so every caller that
+   does not care — the on-canvas card, both tests — is byte-identical
+   to what it was. The register passes the reader's own density
+   instead: a taller row is a LAYOUT fact (`topOfLeaf`, `bodyH` and
+   every line's `top` are computed from it), so it cannot be a CSS
+   variable and cannot be applied after the fact. */
+const DEFAULT_METRICS: RowMetrics = {
+  rowH: ROW_H,
+  groupH: GROUP_H,
+  addH: ADD_H,
+}
 
 /** Path separator that cannot occur in a typed cell value. */
 const SEP = '\u001F'
@@ -176,19 +191,22 @@ export interface GridLayout {
   grouped: boolean
 }
 
-const flatLayout = (rows: readonly ViewRow[]): GridLayout => {
+const flatLayout = (
+  rows: readonly ViewRow[],
+  m: RowMetrics = DEFAULT_METRICS,
+): GridLayout => {
   const lines: GridLine[] = rows.map((vr, r) => ({
     kind: 'leaf',
-    top: r * ROW_H,
-    h: ROW_H,
+    top: r * m.rowH,
+    h: m.rowH,
     r,
     rowId: vr.rowId,
   }))
   return {
     lines,
     leafRows: rows as ViewRow[],
-    topOfLeaf: (r) => r * ROW_H,
-    bodyH: rows.length * ROW_H,
+    topOfLeaf: (r) => r * m.rowH,
+    bodyH: rows.length * m.rowH,
     grouped: false,
   }
 }
@@ -200,8 +218,12 @@ export function layoutGroups(
   rows: readonly ViewRow[],
   roots: readonly GroupNode[],
   collapsed: ReadonlySet<string>,
+  /** how tall the reader has asked the rows to be drawn. Omitted
+   *  everywhere but the full-window register, which is the only lens
+   *  that offers the choice. */
+  metrics: RowMetrics = DEFAULT_METRICS,
 ): GridLayout {
-  if (roots.length === 0) return flatLayout(rows)
+  if (roots.length === 0) return flatLayout(rows, metrics)
 
   const lines: GridLine[] = []
   const leafRows: ViewRow[] = []
@@ -211,8 +233,8 @@ export function layoutGroups(
   const walk = (nodes: readonly GroupNode[]): void => {
     for (const node of nodes) {
       const shut = collapsed.has(node.key)
-      lines.push({ kind: 'group', top: y, h: GROUP_H, node, collapsed: shut })
-      y += GROUP_H
+      lines.push({ kind: 'group', top: y, h: metrics.groupH, node, collapsed: shut })
+      y += metrics.groupH
       if (shut) continue
 
       if (node.children.length > 0) {
@@ -224,26 +246,26 @@ export function layoutGroups(
         lines.push({
           kind: 'leaf',
           top: y,
-          h: ROW_H,
+          h: metrics.rowH,
           r: leafRows.length,
           rowId: vr.rowId,
         })
         leafTops.push(y)
         leafRows.push(vr)
-        y += ROW_H
+        y += metrics.rowH
       }
 
       lines.push({
         kind: 'add',
         top: y,
-        h: ADD_H,
+        h: metrics.addH,
         key: node.key,
         level: node.level + 1,
         path: node.path,
         label: node.value === '' ? UNASSIGNED_LABEL : node.value,
         named: node.path.every((v) => v !== ''),
       })
-      y += ADD_H
+      y += metrics.addH
     }
   }
 

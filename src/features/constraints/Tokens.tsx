@@ -33,6 +33,14 @@ export interface TokenGroup {
 const cls = (role: TokenRole, live: boolean, extra?: string): string =>
   ['cn-tok', `cn-tok--${role}`, live ? 'is-live' : '', extra ?? ''].filter(Boolean).join(' ')
 
+/** THE WORD BEING POINTED AT. The composer's footer names the choice
+ *  still to be made and puts the cursor in it; this is the second
+ *  half of that — the word lights up so the eye lands where the
+ *  cursor went. It is colour and nothing else, so it survives
+ *  `prefers-reduced-motion` intact (§4: movement goes, colour stays). */
+const seeking = (sought: boolean, extra: string): string =>
+  sought ? `${extra} is-sought` : extra
+
 /** A word that is only a word — "When", "and", the comma. */
 export function Word({ text, tight }: { text: string; tight?: boolean }): ReactElement {
   return <span className={tight ? 'cn-word is-tight' : 'cn-word'}>{text}</span>
@@ -59,6 +67,18 @@ export interface SelectTokenProps {
   title?: string
   /** nothing has been chosen here yet: the face is a slot, not a name */
   unchosen?: boolean
+  /** THE SENTENCE'S OWN NAME FOR THIS WORD, written into the DOM.
+   *
+   *  The composer's footer says which choice is still to be made —
+   *  "Pick the column this rule looks at." — and rule 10 asks a
+   *  refusal to say why WHERE the thing is refused. A sentence can
+   *  run to a dozen words and the unanswered one is not always the
+   *  one your eye lands on, so the footer is a control that puts the
+   *  cursor in the exact word it is talking about. This is the
+   *  address it uses. */
+  tokenId?: string
+  /** the footer has just pointed at this word */
+  sought?: boolean
 }
 
 export function SelectToken({
@@ -71,6 +91,8 @@ export function SelectToken({
   label,
   title,
   unchosen = false,
+  tokenId,
+  sought = false,
 }: SelectTokenProps): ReactElement {
   /* a value that is no longer in the list would silently select the
      first option; keep it visible instead so the user sees the truth */
@@ -79,8 +101,9 @@ export function SelectToken({
 
   return (
     <span
-      className={cls(role, true, unchosen ? 'cn-tok--sel is-unset' : 'cn-tok--sel')}
+      className={cls(role, true, seeking(sought, unchosen ? 'cn-tok--sel is-unset' : 'cn-tok--sel'))}
       title={title}
+      data-tok={tokenId}
     >
       <select
         className="cn-tok-input"
@@ -133,6 +156,13 @@ export interface InputTokenProps {
   /** offered as native suggestions, never as a cage */
   suggestions?: string[]
   placeholder?: string
+  /** nothing has been typed here yet — the same question the
+   *  unanswered column asks, and it is drawn the same way */
+  unchosen?: boolean
+  /** see `SelectTokenProps.tokenId` */
+  tokenId?: string
+  /** the footer has just pointed at this word */
+  sought?: boolean
 }
 
 /** A number takes a typed input, not a list of every number anyone has
@@ -146,6 +176,9 @@ export function InputToken({
   type = 'text',
   suggestions,
   placeholder,
+  unchosen = false,
+  tokenId,
+  sought = false,
 }: InputTokenProps): ReactElement {
   const [draft, setDraft] = useState(value)
   const listId = useId()
@@ -169,7 +202,10 @@ export function InputToken({
   const chars = type === 'date' ? 11 : Math.max(4, Math.min(draft.length + 1, 24))
 
   return (
-    <span className={cls(role, true, 'cn-tok--input')}>
+    <span
+      className={cls(role, true, seeking(sought, unchosen ? 'cn-tok--input is-unset' : 'cn-tok--input'))}
+      data-tok={tokenId}
+    >
       <input
         className="cn-tok-typed"
         type={type}

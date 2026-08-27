@@ -72,6 +72,12 @@ export interface RuleSentenceProps {
    *  the same way the obligation picker already falls back when the
    *  condition's kind has no other column. */
   conceptKeys?: ReadonlySet<string>
+  /** THE WORD THE FOOTER IS POINTING AT. The composer says which
+   *  choice is still to be made and puts the cursor in it; this
+   *  lights the word up so the eye lands where the cursor went. It
+   *  is the id `sentenceTokens` gave the token — see
+   *  `missingSlot` in `state.ts`. */
+  soughtTokenId?: string | null
 }
 
 /* ---------------------------------------------------------- */
@@ -139,6 +145,7 @@ export function RuleSentence({
   onChange,
   big = false,
   conceptKeys,
+  soughtTokenId = null,
 }: RuleSentenceProps): ReactElement {
   const ctx = useSentenceCtx()
   /* a `table` constraint is a curated whitelist: readable as a
@@ -198,6 +205,7 @@ export function RuleSentence({
 
     const control = token.control
     const domain = token.domain
+    const sought = soughtTokenId !== null && token.id === soughtTokenId
 
     switch (control.k) {
       case 'field':
@@ -211,6 +219,8 @@ export function RuleSentence({
             label={control.side === 'if' ? 'The column the rule looks at' : 'The column the rule sets'}
             title={token.concept ? conceptOptionLabel(token.concept) : undefined}
             unchosen={token.unchosen}
+            tokenId={token.id}
+            sought={sought}
             onChange={(key) => changeConcept(control, key)}
           />
         )
@@ -229,6 +239,8 @@ export function RuleSentence({
             value={control.op}
             options={options}
             label="How the two are compared"
+            tokenId={token.id}
+            sought={sought}
             onChange={(op) =>
               apply(setClauseOp(constraint, control.side, control.clauseId, op as SentenceOp, ctx))
             }
@@ -249,6 +261,9 @@ export function RuleSentence({
                 value={asText(control.value, domain)}
                 options={options}
                 label="The value"
+                unchosen={token.unchosen}
+                tokenId={token.id}
+                sought={sought}
                 onChange={(text) =>
                   apply(
                     setClauseValue(
@@ -272,6 +287,9 @@ export function RuleSentence({
             suggestions={domain.control === 'text' ? domain.options : undefined}
             placeholder="…"
             label="The value"
+            unchosen={token.unchosen}
+            tokenId={token.id}
+            sought={sought}
             onCommit={(text) =>
               apply(
                 setClauseValue(constraint, control.side, control.clauseId, coerceValue(text, domain)),

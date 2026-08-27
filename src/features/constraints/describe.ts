@@ -37,6 +37,7 @@ import {
   conceptIndex,
   domainFor,
   isUnsetField,
+  isUnsetValue,
   type ColumnConcept,
   type ValueDomain,
 } from './columns'
@@ -316,12 +317,20 @@ function clauseTokens(
   if (isUnary(clause.op)) return
 
   const value = literalOf(clause.right)
+  /* AND THE VALUE SAYS SO TOO. The unanswered COLUMN has always
+     carried `unchosen`, which is what draws the dashed hairline under
+     it — "a column" is a question, and the rule under it says so from
+     across the sentence. An unanswered VALUE is exactly the same
+     question and was drawn as a settled accent word reading `…`, so
+     one of the two things still to answer announced itself and the
+     other did not. */
   out.push({
     id: `${side}:${clause.id}:value`,
     role: 'value',
     text: valueWords(value, domain?.control),
     concept,
     domain,
+    ...(isUnsetValue(value) ? { unchosen: true } : {}),
     ...(concept
       ? {
           control: {

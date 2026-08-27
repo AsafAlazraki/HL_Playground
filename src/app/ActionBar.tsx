@@ -154,7 +154,8 @@ export function ActionBar(): JSX.Element | null {
   }
 
   return (
-    <div className="ab-shell">
+    <div className="pagebar">
+      <div className="ab-shell">
       <div className="ab" role="toolbar" aria-label="What you can do here" ref={rootRef}>
         {shown.map((g, i) => (
           <Fragment key={g.id}>
@@ -225,6 +226,7 @@ export function ActionBar(): JSX.Element | null {
             </div>
           </>
         ) : null}
+      </div>
       </div>
     </div>
   )

@@ -617,7 +617,7 @@
   border-radius: var(--r-full);
   background: var(--surface-3);
   font-family: var(--font-sans);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -2085,7 +2085,7 @@
   background: var(--paper-high);
   color: var(--ink-soft);
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -2155,7 +2155,7 @@
 
 .md-link-name {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink);
 }
@@ -2202,7 +2202,7 @@
   background: transparent;
   color: var(--ink-faint);
   font-family: var(--font-ui);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   cursor: default;
 }
@@ -2302,7 +2302,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink);
 }
@@ -2362,7 +2362,7 @@
    ============================================================ */
 .md-gear {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -2495,7 +2495,7 @@
 }
 .md-stub .btn {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -2796,7 +2796,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
 }
@@ -2938,7 +2938,7 @@
    its name, so `--ink-soft` on this white ground. */
 .md-drawer-range {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
   color: var(--ink-soft);
@@ -2994,7 +2994,7 @@
   background: var(--paper-high);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -3646,7 +3646,7 @@
 
 .md-tile-fact-n {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
   line-height: 1.35;
@@ -3727,3 +3727,26 @@
 .md-tile-held-mark svg:first-child {
   opacity: 0.3;
 }
+
+/* ============================================================
+   THE HALF-PIXELS, CLEARED.
+
+   Eleven declarations in this file were set at 11.5px or 12.5px.
+   Neither is a step. §2 names seven — 28 / 20 / 15 / 14 / 13 / 12 /
+   11 — and says to take the whole step, because a size that is not on
+   the scale is a size nobody chose on purpose and nobody can match
+   from another file.
+
+   Where they came from is documented in this file already: 12.5/500
+   was the outgoing contract's toolbar-control label, and it was
+   applied here so the module buttons matched ~200 controls elsewhere
+   that still wear it. The system's small step is 13px and `.ds-btn`
+   in ds.css is set at `var(--t-small-size)` — so 12.5 no longer
+   matches the foundation, it matches the thing the foundation
+   replaced. 11.5 goes to the caption step, 12.
+
+   NOTHING REFLOWS BY MORE THAN HALF A PIXEL, and every one of these
+   sites is already `text-overflow: ellipsis` or a chip sized by its
+   padding. The point is not the half-pixel; it is that this file
+   stops carrying values that are not on the scale.
+   ============================================================ */

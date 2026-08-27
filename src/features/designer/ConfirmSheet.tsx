@@ -222,6 +222,74 @@ export function ConfirmFacts({ items }: { items: string[] }): ReactElement | nul
   )
 }
 
+/* ------------------------------------------------------------ */
+
+/** One counted consequence of the act the sheet is asking about. */
+export interface RadiusFact {
+  /**
+   * The figure, already written — `38 of 40`, `3`, `1`. A STRING
+   * rather than a number because half of these carry a denominator,
+   * and "38" over "of 40 rows" reads as two facts rather than one.
+   * It is set in mono and tabular, so a column of them lines up.
+   */
+  figure: string
+  /** what the figure is OF, as a clause: `business rules name it` */
+  say: string
+  /** this line is something lost, not something noted */
+  grave?: boolean
+}
+
+/**
+ * THE BLAST RADIUS, COUNTED — DESIGN_PRINCIPLES §7.
+ *
+ * "A confirm states its blast radius, computed: 3 business rules name
+ * this column, 1 formula reads it, 38 of 40 rows hold a value."
+ *
+ * Every one of those three numbers was already computed on this
+ * surface before this block existed, and every one of them was in a
+ * different voice and a different place: the row count in an 11px mono
+ * caption at the top, the formula readers inside a sentence two
+ * paragraphs down, the rules inside a third that also carried the
+ * engine's own error text. A person deciding whether to remove a
+ * column had to assemble the cost of it out of three registers of
+ * prose, in the four seconds before they press a red button.
+ *
+ * So the same numbers are stated once, as figures, in one column, in
+ * the order they matter: what leaves, then what breaks. The FIGURE is
+ * mono and tabular so the column aligns on its digits; the clause
+ * beside it is the reading face, because it is language. The named
+ * detail — WHICH rules, WHICH formulas — still follows underneath,
+ * because a count tells you how much and only a name tells you what.
+ *
+ * A line whose figure is zero is not passed in. "0 business rules name
+ * it" is a fact about nothing that reads, at a glance, as a finding.
+ */
+export function ConfirmRadius({
+  label,
+  facts,
+}: {
+  label: string
+  facts: RadiusFact[]
+}): ReactElement | null {
+  if (facts.length === 0) return null
+  return (
+    <div className="ds-cs-radius">
+      <span className="mono-label ds-cs-radius-lab">{label}</span>
+      <ul className="ds-cs-radius-list">
+        {facts.map((f) => (
+          <li
+            className={f.grave ? 'ds-cs-rad ds-cs-rad-grave' : 'ds-cs-rad'}
+            key={`${f.figure}:${f.say}`}
+          >
+            <span className="ds-cs-rad-fig">{f.figure}</span>
+            <span className="ds-cs-rad-say">{f.say}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /**
  * Values read out of the user's own rows, shown as themselves.
  * NEVER an example, never a placeholder — `label` says whose they are

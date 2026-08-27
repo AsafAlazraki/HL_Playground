@@ -118,6 +118,57 @@ export function PlusGlyph(): JSX.Element {
   )
 }
 
+/** THE MARK THAT OPENS A ROW. A chevron aimed at a rule standing on
+ *  the right edge — "this opens beside the sheet", which is exactly
+ *  where the row detail arrives. Drawn in the gutter, at rest invisible
+ *  and lit the moment the pointer is on the row. */
+export function OpenRowGlyph(): JSX.Element {
+  return (
+    <svg className="tb-glyph tb-openglyph" viewBox="0 0 10 10" aria-hidden="true">
+      <path
+        d="M2.2 2.2 L5.2 5 L2.2 7.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="square"
+        strokeLinejoin="miter"
+      />
+      <path d="M7.6 1.6 V8.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" />
+    </svg>
+  )
+}
+
+/** One row back, one row on. A wedge with a rule under (or over) it, so
+ *  the two read as "step to the neighbour" rather than as scroll
+ *  arrows. */
+export function StepGlyph({ dir }: { dir: 'up' | 'down' }): JSX.Element {
+  return (
+    <svg className="tb-glyph" viewBox="0 0 10 10" aria-hidden="true">
+      {dir === 'up' ? (
+        <>
+          <path d="M5 2.2 L8.2 6 L1.8 6 Z" fill="currentColor" stroke="none" />
+          <path d="M1.8 8.2 H8.2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" />
+        </>
+      ) : (
+        <>
+          <path d="M1.8 1.8 H8.2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" />
+          <path d="M5 7.8 L1.8 4 L8.2 4 Z" fill="currentColor" stroke="none" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+/** The wedge on a picker whose native arrow has been taken off, so a
+ *  list column still says it is a list. */
+export function CaretGlyph(): JSX.Element {
+  return (
+    <svg className="tb-glyph" viewBox="0 0 10 10" aria-hidden="true">
+      <path d="M2.4 4 L5 6.8 L7.6 4 Z" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 /** Column-menu handle — a small downward wedge, outlined so it never
  *  competes with the sort state drawn beside it. */
 export function MenuGlyph(): JSX.Element {

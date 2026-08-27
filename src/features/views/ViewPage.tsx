@@ -35,6 +35,7 @@ import {
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
+import { usePageActions, type ActionButton } from '@/lib/actions'
 import {
   bandOf,
   defaultColumns,
@@ -80,6 +81,55 @@ const uncapitalise = (s: string): string =>
    to this page — so this component is the body and nothing else. */
 export function ViewPage(props: ViewPageProps): ReactElement {
   return <ViewPageBody {...props} />
+}
+
+/** The DOM id of one block, in one place — the ledger writes it into
+ *  an anchor and the block wears it, so a rename cannot separate a
+ *  line from the block it points at. */
+const blockAnchor = (blockId: string): string => `vw-block-${blockId}`
+
+/* ============================================================
+   THE PAGE'S OWN PRIMARY, READ FROM THE ONE REGISTER THAT OWNS IT.
+
+   "Quote this one" is the most consequential press in the app: it
+   turns the rig a salesperson has just configured into a document.
+   It lives on the action bar, which is furniture fixed to the
+   window — and the figure it produces is stated at the top of THIS
+   page, in the rig panel, half a screen away from the button.
+
+   So the panel draws the same action at the foot of the total it is
+   about. NOT A SECOND BUTTON: it is the same `ActionButton` record,
+   read out of `@/lib/actions`, so the label, the accessible name,
+   the icon, the refusal sentence and the handler are whatever the
+   stage published. Rename it on the bar and this follows; retract it
+   — a page with no row open, a page mounted where quoting is not
+   offered — and this disappears with it. There is no way for the two
+   to disagree, because there is only one of them.
+
+   WHY IT IS NOT SIMPLY IMPORTED FROM `@/features/quote`. That would
+   make this feature depend on the quote's own door and on the shell
+   that navigates to it, and `quote/freeze.ts` already imports three
+   modules from here — the barrel is a cycle. The register is
+   `src/lib`, which both sides already reach for.
+
+   THE ID IS PREFERRED AND THE TONE IS THE FALLBACK, so a stage that
+   renames its action keeps its door and one that has not published
+   yet simply has none. §1's "one primary" is kept: this and the bar
+   are one action, drawn where the money is.
+   ============================================================ */
+function usePrimaryDoor(): ActionButton | null {
+  const groups = usePageActions()
+  return useMemo(() => {
+    let fallback: ActionButton | null = null
+    for (const group of groups) {
+      for (const item of group.items) {
+        if (item.kind !== 'button' || item.tone !== 'primary') continue
+        if (item.id === 'vw-quote') return item
+        if (!fallback) fallback = item
+      }
+    }
+    return fallback
+  }, [groups])
 }
 
 /* ---------------------------------------------------------- */
@@ -201,6 +251,42 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
     () => readRig({ ctx, engine, view, root, row }),
     [ctx, engine, view, root, row],
   )
+
+  /* ── THE LEDGER IS THE PAGE'S TABLE OF CONTENTS ───────────────
+
+     Every line in the rig panel names a block that is somewhere
+     further down this page — and on a boat with five lists and four
+     hundred cards in them, "further down" was the whole answer. A
+     line is a door now: press it and the page goes to the block the
+     figure came out of, and the block says so for a moment.
+
+     THE MARK IS A MOMENT AND NOT A SELECTION. Nothing is selected by
+     arriving somewhere, so the ring fades on its own rather than
+     waiting to be dismissed — and the sequence number is what makes
+     pressing the same line twice light it up twice.
+
+     MOVEMENT GOES WHEN THE PERSON HAS ASKED IT TO. `still` is this
+     app's one motion switch (stillness.tsx) and it covers both
+     reduced motion and somebody typing — a page that smooth-scrolls
+     under a caret is the exact fault that policy exists for. */
+  const [found, setFound] = useState<{ blockId: string; seq: number } | null>(null)
+
+  const goToBlock = useCallback(
+    (blockId: string) => {
+      const el = document.getElementById(blockAnchor(blockId))
+      if (!el) return
+      el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+      seq.current += 1
+      setFound({ blockId, seq: seq.current })
+    },
+    [still],
+  )
+
+  useEffect(() => {
+    if (!found) return
+    const t = setTimeout(() => setFound(null), 1600)
+    return () => clearTimeout(t)
+  }, [found])
 
   /* the safe answer is the narrow one, so the default is always
      "this row only" — and it resets when the page changes row */
@@ -399,7 +485,7 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
               no photograph the figure is `display: none`, drops out of
               the grid entirely, and the three that are left stack. */}
           <SpecStrip entity={root} row={row} engine={engine} />
-          <RigPanel rig={rig} root={root} />
+          <RigPanel rig={rig} root={root} entities={entities} onGoTo={goToBlock} />
         </header>
 
         {/* THE SUBJECT ITSELF IS HISTORY. Nothing sends a person here —
@@ -497,6 +583,10 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
               key={block.id}
               viewId={view.id}
               block={block}
+              /* the anchor the rig ledger's lines point at, and the
+                 moment's mark when one of them has just been pressed */
+              domId={blockAnchor(block.id)}
+              lit={found?.blockId === block.id}
               depth={2}
               ctx={ctx}
               engine={engine}
@@ -672,27 +762,56 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
    total QUOTE THIS ONE produces. Two summations of one deal that
    disagree is the failure `@/lib/money` exists to end, and this is
    the same discipline one layer up.
+
+   ── THREE THINGS THE PANEL DOES THAT IT DID NOT ───────────────
+
+   1 · EVERY LINE IS A DOOR. A line names a block that is somewhere
+       under it on a page four screens long, and "somewhere under
+       it" was the whole answer to "which trailer is that, then?".
+       Pressing a line takes the page to the block the figure came
+       out of. The subject's own line is not a door: it is the thing
+       you are already looking at.
+
+   2 · A LIST STILL HOLDING A CHOICE IS A LINE, NOT A FOOTNOTE. It
+       was a sentence at the bottom of the panel, in the third
+       paragraph, about the one thing on this page a salesperson has
+       to go and DO. It is a line in the ledger now, in its place in
+       the reading, saying what it is waiting for — and it is a door
+       to the list that is waiting. Rule 10: where it is.
+
+   3 · THE PRIMARY LANDS UNDER THE TOTAL. See `usePrimaryDoor`.
+
+   WHAT IS UNCHANGED: no figure is invented, `$0` is never drawn,
+   and a table with no price column is still named in words.
    ============================================================ */
 
-function RigPanel({ rig, root }: { rig: RigPrice; root: EntityDef }): ReactElement | null {
-  if (rig.counted === 0) return null
+function RigPanel({
+  rig,
+  root,
+  entities,
+  onGoTo,
+}: {
+  rig: RigPrice
+  root: EntityDef
+  entities: Record<string, EntityDef>
+  onGoTo: (blockId: string) => void
+}): ReactElement | null {
+  const door = usePrimaryDoor()
+
+  /* NOTHING TO SAY AND NOTHING TO OFFER. The total is still refused
+     outright when there is no figure to state, but a page that has
+     lists waiting on a choice, or tables that carry no price at all,
+     has something to say about why — and that is the panel's job as
+     much as the arithmetic is. */
+  if (rig.counted === 0 && rig.open.length === 0 && rig.unpriced.length === 0) return null
 
   const lines = rig.subject ? [rig.subject, ...rig.added] : rig.added
 
-  /* WHAT IS NOT IN THE FIGURE, in one paragraph rather than three.
-     Rule 10 — a thing that cannot be done says why, where it is —
-     and the thing that cannot be done here is a complete total. */
+  /* WHAT IS NOT IN THE FIGURE AND HAS NO LINE OF ITS OWN. The lists
+     holding a choice are drawn in the ledger now; what is left here
+     is the tables that can never contribute one, which is a fact
+     about the sheet rather than a decision anybody can go and make. */
   const notes: string[] = []
-  if (rig.open.length === 1) {
-    const one = rig.open[0]
-    notes.push(
-      `${one.picked} ${one.tableName} ${one.picked === 1 ? 'is' : 'are'} picked and none is recommended yet, so nothing from that list is in this figure.`,
-    )
-  } else if (rig.open.length > 1) {
-    notes.push(
-      `${rig.open.length} lists are still holding a choice — ${joinNames(rig.open.map((o) => o.tableName))} — so nothing from them is in this figure.`,
-    )
-  }
   if (rig.unpriced.length > 0) {
     notes.push(
       rig.unpriced.length <= 2
@@ -701,31 +820,107 @@ function RigPanel({ rig, root }: { rig: RigPrice; root: EntityDef }): ReactEleme
     )
   }
 
+  const DoorIcon = door?.icon
+
   return (
     <section className="vw-rig" aria-label={`What this ${singular(root.name)} comes to`}>
       <div className="vw-rig-head">
         <span className="mono-label vw-rig-lead">Added up</span>
-        <b className="vw-rig-total">{money(rig.total)}</b>
+        {/* NO `$0`. A page where nothing carries a price says so in
+            the lines below rather than stating a total nobody made. */}
+        {rig.counted > 0 ? <b className="vw-rig-total">{money(rig.total)}</b> : null}
       </div>
 
       <ul className="vw-rig-lines">
-        {lines.map((l) => (
-          <li
-            key={`${l.blockId}-${l.tableId}-${l.label}`}
-            className={`vw-rig-line${l.recommended ? ' is-star' : ''}`}
-          >
-            <span className="vw-rig-what">
-              {l.blockId === '' ? singular(l.tableName) : l.label}
-            </span>
-            {/* the business's own word for the rung it was read at —
-                `Sell inc Rego`, `Cash`. A name, so its case is its own. */}
-            <span className="vw-rig-rung">{l.rung}</span>
-            <span className="vw-rig-amt">{money(l.amount)}</span>
+        {lines.map((l) => {
+          const what = l.blockId === '' ? singular(l.tableName) : l.label
+          const body = (
+            <>
+              <span className="vw-rig-dot" aria-hidden="true" />
+              <span className="vw-rig-what">{what}</span>
+              {/* the business's own word for the rung it was read at
+                  — `Sell inc Rego`, `Cash`. A name, so its case is
+                  its own. */}
+              <span className="vw-rig-rung">{l.rung}</span>
+              <span className="vw-rig-amt">{money(l.amount)}</span>
+            </>
+          )
+          return (
+            <li
+              key={`${l.blockId}-${l.tableId}-${l.label}`}
+              className={`vw-rig-line${l.recommended ? ' is-star' : ''}`}
+              style={
+                { '--vw-line-accent': accentVar(entities[l.tableId]?.accent) } as CSSProperties
+              }
+            >
+              {l.blockId === '' ? (
+                <span className="vw-rig-still">{body}</span>
+              ) : (
+                <button
+                  type="button"
+                  className="vw-rig-door"
+                  /* the words on the line are the row's name and its
+                     figure; this says what pressing it DOES */
+                  aria-label={`Show ${what} on ${l.tableName}, further down this page`}
+                  onClick={() => onGoTo(l.blockId)}
+                >
+                  {body}
+                </button>
+              )}
+            </li>
+          )
+        })}
+
+        {/* A DECISION NOBODY HAS MADE YET, IN ITS PLACE IN THE LEDGER
+            rather than in a paragraph under it. It carries no amount,
+            because there is none — not a nought. */}
+        {rig.open.map((o) => (
+          <li key={`open-${o.blockId}`} className="vw-rig-line is-open">
+            <button
+              type="button"
+              className="vw-rig-door"
+              aria-label={`Choose which ${singular(o.tableName)} goes on this ${singular(root.name)}`}
+              onClick={() => onGoTo(o.blockId)}
+            >
+              <span className="vw-rig-dot" aria-hidden="true" />
+              <span className="vw-rig-what">{o.tableName}</span>
+              <span className="vw-rig-rung">
+                {o.picked} picked, none recommended yet — nothing from that list is in
+                this figure
+              </span>
+              <span className="vw-rig-amt vw-rig-amt--none">Choose</span>
+            </button>
           </li>
         ))}
       </ul>
 
       {notes.length > 0 ? <p className="vw-rig-note">{notes.join(' ')}</p> : null}
+
+      {/* THE NEXT MOVE, UNDER THE FIGURE IT PRODUCES. Same record as
+          the bar's — see `usePrimaryDoor` — so there is one action and
+          two places it can be reached, never two actions. */}
+      {door ? (
+        <div className="vw-rig-go">
+          <button
+            type="button"
+            className="vw-rig-btn"
+            aria-label={door.say ?? door.label}
+            /* NOT `disabled`. A disabled control drops out of the tab
+               order and takes its own explanation with it, and the
+               explanation is the whole point — the same ruling the
+               action bar's own buttons keep. */
+            aria-disabled={door.refusal ? true : undefined}
+            onClick={() => {
+              if (door.refusal) return
+              door.onPick()
+            }}
+          >
+            {DoorIcon ? <DoorIcon size={16} weight="bold" aria-hidden="true" /> : null}
+            <span>{door.label}</span>
+          </button>
+          {door.refusal ? <p className="vw-rig-why">{door.refusal}</p> : null}
+        </div>
+      ) : null}
     </section>
   )
 }

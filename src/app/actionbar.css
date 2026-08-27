@@ -758,3 +758,68 @@
   display: block;
   width: 100%;
 }
+
+/* ============================================================
+   THE PAGE BAR — the action bar's own surface.
+
+   It used to have none: `<ActionBar/>` was the first child of the
+   dock's `.dk-rig`, which carried the material, the border and the
+   elevation for both of them. Deleting the dock therefore deleted
+   every contextual control in the app, on every page, in one
+   commit — the register lost Search rows, Fitment, Columns, Delete
+   rows, + Row and View, and the screenshots showed a page with no
+   way to act on it.
+
+   It belongs to the PAGE. So it floats inside the content column
+   rather than over the whole window: `position: absolute` against
+   `.shell-stage`, centred on the column, which means it never
+   overlaps the navy rail and moves with the column when the rail
+   collapses.
+
+   This is one of the two surfaces §5 allows to be translucent —
+   it sits over scrolling rows and has to say so.
+   ============================================================ */
+.pagebar {
+  /* FIXED, AND POSITIONED OFF THE RAIL'S OWN WIDTH.
+
+     The first attempt was `position: absolute` against
+     `.shell-stage` — and `.shell-stage` is declared FOUR times in
+     shell.css, so the `position: relative` it needed lost to a
+     later duplicate. With no positioned ancestor the bar resolved
+     against the viewport, stretched to the full stage and blurred
+     the entire page behind it.
+
+     `--rail` is the one number both the grid and this bar read, so
+     they cannot disagree, and `width: max-content` is what stops a
+     flex child with no intrinsic width filling the line. */
+  position: fixed;
+  left: calc(var(--rail) + (100vw - var(--rail)) / 2);
+  bottom: var(--s-5);
+  transform: translateX(-50%);
+  z-index: 30;
+  width: max-content;
+  max-width: calc(100vw - var(--rail) - var(--s-10));
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
+  animation: ds-rise var(--d-med) var(--ease-out-expo) backwards;
+}
+.pagebar .ab-shell {
+  border-bottom: 0;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .pagebar {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pagebar {
+    animation: none;
+  }
+}
+}

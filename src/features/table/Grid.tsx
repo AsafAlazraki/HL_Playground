@@ -434,7 +434,7 @@ export function Grid(props: GridProps): JSX.Element {
   /* what a re-measure has to wait for: a name, a width or a type
      changing. Anything else the probe would answer identically. */
   const headKey = useMemo(
-    () => headFields.map((h) => `${h.field.name} ${h.w} ${h.field.type}`).join(''),
+    () => headFields.map((h) => `${h.field.name}\u0000${h.w}\u0000${h.field.type}`).join('\u0001'),
     [headFields],
   )
   const headRowH = useHeaderRowHeight(headProbeRef, headKey)

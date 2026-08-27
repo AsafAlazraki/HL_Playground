@@ -95,6 +95,24 @@
   color: var(--ink-soft);
 }
 
+/* WHAT THE FIND BOX LEFT OUT, SAID. It sits at the top of the list
+   it is about, inside it, so the count and the rows it counts can
+   never scroll apart. `--ink-soft` is 8.1:1 on the page ground and
+   the figures inside it take `.cx-num`, which is the ink — the two
+   numbers are the content of this line and the words are the frame
+   around them. */
+.cx-shown {
+  list-style: none;
+  padding: 0 0 var(--s-2);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  color: var(--ink-soft);
+}
+.cx-shown .cx-num {
+  font-size: var(--t-mono-sm-size);
+}
+
 /* A NAME NOBODY HAS TYPED IS NOT A NAME. It is set apart from real
    data so a screenshot can never be read as a customer called "no
    name yet" — the same device `.qt-doc-blank` uses on a quote.
@@ -159,15 +177,54 @@
   min-width: 0;
 }
 
+/* ============================================================
+   THE THREE HEADLINES ON THIS FEATURE TAKE THE DISPLAY FACE.
+
+   All three were already AT the display-lg step — the register's
+   name, one customer's name, and the line an empty state opens on
+   — and all three set `--font-ui`, so the step was taken and the
+   face that step exists for was not. Inter is an excellent
+   interface face and a characterless headline; it is the default
+   every generated interface reaches for, and a screen whose whole
+   subject is a person's name deserves better than the default.
+
+   THE FLOOR IS RESPECTED BY CONSTRUCTION, not by promise. Archivo
+   is reachable through exactly two type steps and this is one of
+   them: `--t-display-lg-size` is a clamp that bottoms out at 26px,
+   so there is no width at which these render below the floor the
+   face is barred under. Nothing else in this feature moves — every
+   name, sentence and label stays Inter, every figure stays mono.
+
+   The width and the tracking match `.ds-display-lg` in ds.css
+   exactly. They are restated rather than inherited because a
+   feature stylesheet is imported after the system's and would
+   otherwise be fighting a utility class over the same three
+   properties, which is the override layer this repo forbids.
+   ============================================================ */
 .cx-head-name,
-.cx-one-name {
-  margin: 0;
-  font-family: var(--font-ui);
+.cx-one-name,
+.cx-empty-title {
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 103;
   font-size: var(--t-display-lg-size);
   font-weight: var(--t-display-lg-weight);
   line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
+  letter-spacing: -0.028em;
   color: var(--ink);
+}
+@media (prefers-contrast: more) {
+  /* an extended width costs a little counter where a reader has
+     asked for legibility over voice — ds.css makes the same trade */
+  .cx-head-name,
+  .cx-one-name,
+  .cx-empty-title {
+    font-variation-settings: 'wdth' 100;
+  }
+}
+
+.cx-head-name,
+.cx-one-name {
+  margin: 0;
   overflow-wrap: anywhere;
 }
 
@@ -197,8 +254,50 @@
   flex: 0 0 auto;
 }
 
+/* REMOVE, AND WHAT IT COSTS, IN ONE COLUMN. The sentence is drawn
+   only when there is something to say (they have been quoted), so
+   this box is a button on its own the rest of the time and must not
+   reserve width for a paragraph that is not there. */
+.cx-one-dropbox {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-2);
+  max-width: 34ch;
+}
+
 .cx-one-drop {
   flex: 0 0 auto;
+}
+
+/* IT IS REASSURANCE, NOT A WARNING, so it is ink rather than
+   `--danger` — the act is undoable and already raises a note with
+   UNDO on it. `--ink-faint` is the 4.7:1 floor and this sits on the
+   page ground with nothing tinted under it, so the pair holds.
+   Right-aligned to the button it belongs to; a ragged LEFT edge is
+   harder to read, so it is capped at 34 characters rather than
+   allowed to run the width of the header. */
+.cx-one-drop-say {
+  margin: 0;
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-faint);
+  text-align: right;
+  text-wrap: pretty;
+}
+
+@media (max-width: 720px) {
+  /* stacked, the header's acts run full width and a right-aligned
+     paragraph under a left-aligned button reads as two things */
+  .cx-one-dropbox {
+    align-items: flex-start;
+    max-width: none;
+  }
+  .cx-one-drop-say {
+    text-align: left;
+  }
 }
 
 /* ============================================================
@@ -453,12 +552,6 @@
    that goes with it. */
 .cx-empty-title {
   margin: calc(var(--s-2) * -1) 0 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
-  color: var(--ink);
   text-wrap: balance;
 }
 

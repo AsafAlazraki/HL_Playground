@@ -109,17 +109,45 @@ export function CustomerPage({
           </p>
         </div>
 
-        <button
-          type="button"
-          className="cx-act cx-act--quiet cx-one-drop"
-          onClick={() => {
-            removeCustomer(row.id)
-            onRemoved?.()
-          }}
-        >
-          <Trash size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-          Remove
-        </button>
+        {/* ── WHAT REMOVING THEM COSTS, BEFORE IT IS PRESSED ──────
+            This file's own header has claimed since it was written
+            that "the screen that offers this says so before it is
+            pressed". It did not. There was a Remove button and
+            nothing else — and the fact worth knowing is a genuinely
+            reassuring one, so withholding it made the press feel
+            more dangerous than it is.
+
+            IT IS NOT A CONFIRM SHEET, and it must not become one:
+            the act is undoable and `removeCustomer` already raises
+            a note with UNDO on it (rule 9 — a dialog is for the
+            genuinely irreversible). This is the sentence beside the
+            control, which is where rule 10 puts an explanation.
+
+            IT IS ONLY DRAWN WHEN IT IS TRUE. Somebody with no
+            quotes loses nothing but the row, and a paragraph
+            explaining that documents survive would be furniture on
+            the screen of a customer who has no documents. */}
+        <div className="cx-one-dropbox">
+          <button
+            type="button"
+            className="cx-act cx-act--quiet cx-one-drop"
+            onClick={() => {
+              removeCustomer(row.id)
+              onRemoved?.()
+            }}
+          >
+            <Trash size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+            Remove
+          </button>
+          {theirs.length > 0 ? (
+            <p className="cx-one-drop-say">
+              Their {theirs.length === 1 ? 'quote' : `${theirs.length} quotes`} still
+              {theirs.length === 1 ? ' opens' : ' open'} and still
+              {theirs.length === 1 ? ' prints' : ' print'} — each one kept its own copy
+              of the name and details it was given. What is lost is this page.
+            </p>
+          ) : null}
+        </div>
       </header>
 
       {/* -- their details, from the table's own columns ---------- */}
@@ -230,9 +258,15 @@ function CustomerCell({
     return (
       <div className="cx-field cx-field--stub">
         <span className="cx-field-name">{field.name}</span>
+        {/* THE BAR IT NAMED IS GONE. This sentence sent a person to
+            "Tables on the bar" — the floating dock, which the
+            redesign removed. A refusal whose instruction names a
+            control that is not on screen is worse than no refusal:
+            it is a wrong answer given confidently. Every table now
+            lives under Tables in the rail down the left. */}
         <p className="cx-field-stub-say">
-          This column is edited on the {table.name} table — open it from <em>Tables</em>{' '}
-          on the bar.
+          This column is edited on the {table.name} table — open it under{' '}
+          <em>Tables</em> in the rail on the left.
         </p>
       </div>
     )

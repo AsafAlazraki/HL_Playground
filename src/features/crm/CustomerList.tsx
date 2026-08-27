@@ -269,6 +269,27 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
           </p>
         ) : (
           <ul className="cx-rows">
+            {/* ── THE FIND BOX ANSWERED SILENTLY ────────────────────
+                Typing in it removed rows from the list and said
+                nothing at all, so a register of two hundred that
+                narrowed to nine looked exactly like a register of
+                nine — and the head above it went on printing 200,
+                which is the reading a person would then have to
+                reconcile on their own. One line, only while
+                something is typed, and it is the same accounting the
+                palette prints along its own foot.
+
+                A LIST ITEM, BECAUSE IT IS INSIDE A LIST. A <p> here
+                would be an invalid child of <ul> and a screen reader
+                would read the list's length wrong; `role="presentation"`
+                takes it back out of the count. */}
+            {find.trim() !== '' ? (
+              <li className="cx-shown" role="presentation">
+                <span className="cx-num">{shown.length}</span> of{' '}
+                <span className="cx-num">{people.length}</span> — the rest do not match
+                “{find.trim()}”.
+              </li>
+            ) : null}
             {shown.map((c) => {
               const act = activity.get(c.rowId)
               return (

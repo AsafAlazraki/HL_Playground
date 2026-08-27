@@ -27,19 +27,19 @@
    the two never feels like moving between two apps.
    ============================================================ */
 
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   TABLE_KINDS,
   accentVar,
   isRetired,
+  rowLabel,
   type EntityDef,
   type TableKind,
 } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { countLabel, leafNoun } from '@/features/table/grouping'
 import { coverPhoto } from '@/features/table/coverPhoto'
-import { ImportExportMenu } from '@/features/io'
 import { ICON_SIZE } from '@/lib/icons'
 import { realDemoSet, startingPointWords } from './demoLoad'
 import { useDemoLoad } from './useDemoLoad'
@@ -119,6 +119,145 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
   const total = groups.reduce((n, g) => n + g.items.length, 0)
 
   /* ============================================================
+     HOW BIG THIS BUSINESS ACTUALLY IS, DRAWN RATHER THAN STATED.
+
+     "15,691 rows" is a true figure and it is the wrong size on the
+     page: a person reads it, believes it, and learns nothing about
+     the SHAPE of the thing they are standing in front of. 2,937 of
+     those rows are parts and 588 are hulls, and the difference
+     between a boat business and a parts business is exactly that
+     ratio — which no list of four numbers can say.
+
+     So the same rows are drawn once as a proportion: one segment
+     per kind, in that kind's own hue, its width its share. There is
+     no text on or behind it (§1's rule about kind colour is about
+     fills BEHIND TEXT), and every figure the strip claims is
+     repeated in words on the chips underneath, which are the
+     control — the picture is aria-hidden and the buttons carry the
+     counts.
+
+     ZERO IS NOT DRAWN. A kind holding no rows gets no segment at
+     all rather than a hairline that says "a little": a minimum
+     width on a real 0.9% share is honest (the bar would otherwise
+     round a true reading down to invisible) and a minimum width on
+     nothing is a claim nobody made.
+     ============================================================ */
+  const kinds = useMemo(() => {
+    const out = groups.map((g) => ({
+      key: g.key,
+      label: g.label,
+      tables: g.items.length,
+      rows: g.items.reduce((n, e) => n + (rowsByEntity[e.id]?.length ?? 0), 0),
+    }))
+    const rows = out.reduce((n, k) => n + k.rows, 0)
+    return {
+      list: out,
+      rows,
+      /* the share is computed here, once, so the strip and the chip
+         beside it can never disagree about what a segment means */
+      share: (n: number) => (rows === 0 ? 0 : n / rows),
+    }
+  }, [groups, rowsByEntity])
+
+  /* ============================================================
+     WHAT IS ACTUALLY IN THERE — two names off each table.
+
+     A gallery of fifty cards told you a table's name, its kind and
+     how many rows it holds, and nothing whatever about what those
+     rows ARE. "Parts & Accessories · 2,937 parts" is a filing
+     label; "Mech Rigging Kit · Stainless Bow Roller" is the answer
+     to what a person actually opened the card to find out.
+
+     IT IS THE FIRST TWO ROWS AND IT IS NOT A SAMPLE OF ANYTHING.
+     The rows arrive in the price file's own order, so these are
+     genuinely the top of the table rather than a pick — and they
+     are read through `rowLabel`, the same function the register and
+     the fitment page name a row with, so a card and the page it
+     opens call the same row the same thing.
+
+     A RELATIONSHIP TABLE GETS NONE. Its rows are pairings between
+     two other tables, not things, and their labels are references.
+     A card claiming to preview them would be previewing nothing.
+
+     Two rows per table across fifty-one tables is 102 label reads
+     on a render Home already walks every table for. */
+  const peeks = useMemo(() => {
+    const out: Record<string, string> = {}
+    for (const g of groups) {
+      if (g.key === 'join') continue
+      for (const e of g.items) {
+        const names: string[] = []
+        for (const row of rowsByEntity[e.id] ?? []) {
+          const label = rowLabel(e, row).trim()
+          if (label === '') continue
+          names.push(label)
+          if (names.length === 2) break
+        }
+        if (names.length > 0) out[e.id] = names.join(' · ')
+      }
+    }
+    return out
+  }, [groups, rowsByEntity])
+
+  /* ============================================================
+     WHICH BAND YOU ARE STANDING IN.
+
+     The strip is pinned to the top of the gallery, so it is on
+     screen for the whole scroll and can afford to say where the
+     scroll has got to. One `IntersectionObserver` over the section
+     heads, and the chip for the band in view is marked
+     `aria-current="location"` — which is what it is: not a page,
+     not a step, a place in this one.
+
+     IT SETS STATE ONLY WHEN THE ANSWER CHANGES. An observer that
+     re-rendered a fifty-card gallery on every scroll tick would
+     cost more than the sentence it draws is worth.
+     ============================================================ */
+  const secsRef = useRef<HTMLDivElement | null>(null)
+  const [atKind, setAtKind] = useState<string | null>(null)
+
+  useEffect(() => {
+    const host = secsRef.current
+    if (!host) return
+    const heads = Array.from(host.querySelectorAll<HTMLElement>('[data-sec]'))
+    if (heads.length === 0) return
+    const order = heads.map((h) => h.dataset.sec ?? '')
+    const seen = new Set<string>()
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const key = (entry.target as HTMLElement).dataset.sec
+          if (!key) continue
+          if (entry.isIntersecting) seen.add(key)
+          else seen.delete(key)
+        }
+        const next = order.find((k) => seen.has(k)) ?? null
+        setAtKind((prev) => (prev === next ? prev : next))
+      },
+      /* a band across the upper third of the window: the section
+         whose cards you are actually looking at, not the one whose
+         heading happens to be one pixel on screen */
+      { rootMargin: '-12% 0px -68% 0px', threshold: 0 },
+    )
+    for (const head of heads) io.observe(head)
+    return () => io.disconnect()
+  }, [groups])
+
+  /* Press a chip and the gallery goes there. `scroll-margin-top` on
+     the section (shell.css) keeps the heading clear of the pinned
+     strip, so the band you asked for starts under it rather than
+     behind it. Movement is the one thing reduced motion removes. */
+  const jumpTo = useCallback((key: string) => {
+    const el = document.getElementById(`hm-sec-${key}`)
+    if (!el) return
+    const still =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+  }, [])
+
+  /* ============================================================
      WHAT THE FRONT DOOR SAYS ABOUT THE BUSINESS, COUNTED.
 
      Home knew how many TABLES it was drawing and nothing else,
@@ -155,10 +294,23 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
      1280 — reading "…BMT —" with nowhere to find the rest. The
      `aria-label` on the card already carried the whole name for a
      screen reader; this is the same promise kept for the eye, and it is
-     measured, so the forty-nine cards that fit stay silent. */
+     measured, so the forty-nine cards that fit stay silent.
+
+     THE PEEK LINE IS THE SAME PROMISE. It is one line and it holds two
+     row names, so on a narrow column it is cut far more often than a
+     name is — and a preview a reader cannot finish reading is the exact
+     defect this hook exists for. Same measurement, same silence when it
+     fits; the key carries the peeks as well, so the pass is re-taken
+     when the rows move and at no other time. */
   const cardNames = useClipTitles<HTMLDivElement>(
-    '.hm-card-name',
-    useMemo(() => groups.flatMap((g) => g.items.map((e) => e.name)).join('|'), [groups]),
+    '.hm-card-name, .hm-card-peek',
+    useMemo(
+      () =>
+        groups
+          .flatMap((g) => g.items.map((e) => `${e.name}${peeks[e.id] ?? ''}`))
+          .join('|'),
+      [groups, peeks],
+    ),
   )
 
   /* HOW MUCH THE PREPARED SET PUTS ON THE SHEET. A door that replaces
@@ -409,8 +561,70 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
               </dl>
             </header>
 
+            {/* ============================================================
+                THE STRIP — the shape of the stock, and the way to any of
+                it in one press.
+
+                IT IS PINNED, and that is the whole reason it earns the
+                height. A gallery of fifty-one cards is four screens of
+                scrolling; a band of chips that scrolls away with the
+                masthead is a decoration you meet once, and the same band
+                held at the top is the answer to "where am I" and "take me
+                to the trailers" for the entire scroll. §5 names the
+                masthead as one of exactly two surfaces allowed to sit over
+                scrolling content and say so, and this is the masthead's
+                own strip; the material tokens turn opaque on their own
+                under `prefers-reduced-transparency`.
+
+                THE PICTURE AND THE CONTROL ARE SEPARATE ELEMENTS. The
+                strip is `aria-hidden` — it carries no figure that is not
+                also written on a chip — and the chips underneath are
+                ordinary buttons carrying the count in words and mono.
+                Nothing is said only in colour.
+                ============================================================ */}
+            <nav className="hm-scale" aria-label="Jump to a kind of table">
+              <span className="hm-scale-bar" aria-hidden="true">
+                {kinds.list
+                  .filter((k) => k.rows > 0)
+                  .map((k, i) => (
+                    <span
+                      key={k.key}
+                      className="hm-scale-seg"
+                      data-kind={k.key}
+                      style={{
+                        width: `${kinds.share(k.rows) * 100}%`,
+                        ['--i' as string]: i,
+                      }}
+                    />
+                  ))}
+              </span>
+
+              <div className="hm-scale-chips">
+                {kinds.list.map((k) => (
+                  <button
+                    type="button"
+                    key={k.key}
+                    className={`hm-jump${atKind === k.key ? ' is-at' : ''}`}
+                    aria-current={atKind === k.key ? 'location' : undefined}
+                    /* the visible words are the kind and its rows; the
+                       accessible name says what pressing it DOES, and
+                       names the tables the chip does not have room for */
+                    aria-label={`Go to ${k.label} — ${k.tables} ${
+                      k.tables === 1 ? 'table' : 'tables'
+                    }, ${k.rows.toLocaleString()} rows`}
+                    onClick={() => jumpTo(k.key)}
+                  >
+                    <span className="hm-jump-dot" aria-hidden="true" data-kind={k.key} />
+                    <span className="hm-jump-name">{k.label}</span>
+                    <span className="hm-jump-n">{k.rows.toLocaleString()}</span>
+                  </button>
+                ))}
+              </div>
+            </nav>
+
+            <div className="hm-secs" ref={secsRef}>
             {groups.map((g, gi) => (
-            <section className="hm-sec" key={g.key}>
+            <section className="hm-sec" key={g.key} id={`hm-sec-${g.key}`} data-sec={g.key}>
               <header className="hm-sec-head">
                 <span className="hm-sec-dot" aria-hidden="true" data-kind={g.key} />
                 <h2 className="hm-sec-name">{g.label}</h2>
@@ -492,6 +706,16 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                         </span>
                       </span>
                       <span className="hm-card-name">{e.name}</span>
+                      {/* WHAT IS IN IT, not just how much of it there is.
+                          Two row names off the top of the table, read with
+                          the same `rowLabel` the register and the fitment
+                          page use. It is outside the `aria-label` on
+                          purpose: the card's accessible name is what the
+                          card IS, and a reader who wants its contents
+                          presses it. */}
+                      {peeks[e.id] ? (
+                        <span className="hm-card-peek">{peeks[e.id]}</span>
+                      ) : null}
                       <span className="hm-card-stats">
                         <b>{rows.toLocaleString()}</b>
                         <span>{countLabel(rows, noun).replace(`${rows} `, '')}</span>
@@ -505,6 +729,7 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
               </div>
             </section>
             ))}
+            </div>
           </>
         )}
       </div>

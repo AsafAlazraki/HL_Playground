@@ -22,8 +22,8 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { FormulaEditor, ReferenceEditor, SelectOptionsEditor } from './FieldTypeEditors'
 import { GuardNote } from './GuardNote'
 import { useNameGuard } from './useNameGuard'
-import { ConfirmFacts, ConfirmSamples, ConfirmSheet } from './ConfirmSheet'
-import { columnFacts, factLines, retypePlan, type ColumnFacts, type RetypePlan } from './columnFacts'
+import { ConfirmRadius, ConfirmSamples, ConfirmSheet } from './ConfirmSheet'
+import { columnFacts, retypePlan, type ColumnFacts, type RetypePlan } from './columnFacts'
 import { formulaReaders, nameList, renameFieldRefs, ruleBreakage } from './dependents'
 /* PHOSPHOR ONLY, THROUGH `@/lib/icons`. This folder used to hand-draw
    eight SVGs of its own, so the same caret appeared here at 1.4px and
@@ -204,12 +204,38 @@ export function FieldRow({
   return (
     <div className={expanded ? 'ds-frow ds-frow-open' : 'ds-frow'} ref={rowRef}>
       <div className="ds-frow-head">
-        <div className="ds-frow-arrows" aria-hidden={count < 2 || undefined}>
+        {/* TWO REFUSALS THAT NEVER SAID WHY — DESIGN_PRINCIPLES rule 10.
+            The first column's UP arrow and the last one's DOWN arrow
+            were `disabled` at 30% opacity with nothing beside them, so
+            a person at the top of a 31-column list saw a grey control
+            and had to infer the reason. They say it now, in the place
+            they are refused, and the dashboard's own move arrows say it
+            the same way — `aria-disabled` plus a live guard rather than
+            `disabled`, so the control keeps its name and its place in
+            the tab order instead of vanishing from the keyboard.
+
+            AND THE WRAPPER WAS `aria-hidden` ON A ONE-COLUMN TABLE while
+            still drawing two focusable buttons inside it, which is the
+            one thing `aria-hidden` may never contain: a screen reader
+            is told there is nothing here and the keyboard then lands on
+            it. The hiding is gone; each button carries its own reason,
+            and "there is only one column" is a better one than silence. */}
+        <div className="ds-frow-arrows">
           <button
             type="button"
             className="ds-arrow-btn"
-            disabled={index === 0}
-            onClick={() => moveField(entity.id, field.id, -1)}
+            aria-disabled={index === 0 || undefined}
+            title={
+              count < 2
+                ? `${entity.name} has one column, so there is nothing to move it past`
+                : index === 0
+                  ? `${field.name || 'This column'} is already first`
+                  : `Move ${field.name || 'this column'} up`
+            }
+            onClick={() => {
+              if (index === 0) return
+              moveField(entity.id, field.id, -1)
+            }}
             aria-label={`Move the column ${field.name || 'untitled'} up`}
           >
             <CaretUp size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
@@ -217,8 +243,18 @@ export function FieldRow({
           <button
             type="button"
             className="ds-arrow-btn"
-            disabled={index === count - 1}
-            onClick={() => moveField(entity.id, field.id, 1)}
+            aria-disabled={index === count - 1 || undefined}
+            title={
+              count < 2
+                ? `${entity.name} has one column, so there is nothing to move it past`
+                : index === count - 1
+                  ? `${field.name || 'This column'} is already last`
+                  : `Move ${field.name || 'this column'} down`
+            }
+            onClick={() => {
+              if (index === count - 1) return
+              moveField(entity.id, field.id, 1)
+            }}
             aria-label={`Move the column ${field.name || 'untitled'} down`}
           >
             <CaretDown size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
@@ -589,8 +625,41 @@ function RetypeSheet({
             ]
       }
     >
-      <ConfirmFacts
-        items={[...factLines(facts), kept > 0 ? `${kept} convert` : 'none convert']}
+      {/* WHAT THE CHANGE COSTS, COUNTED — three figures in one column
+          instead of one run-on mono caption. The first is what is
+          there, the second what survives it, the third what does not;
+          only the third is marked grave, because it is the only line
+          that loses anything. `factLines` still words the empty case
+          for every other caller of this sheet. */}
+      <ConfirmRadius
+        label="What the change costs"
+        facts={
+          facts.filled === 0
+            ? [{ figure: '0', say: `of ${facts.rows} rows hold a value — nothing to lose` }]
+            : [
+                {
+                  figure: `${facts.filled} of ${facts.rows}`,
+                  say: facts.rows === 1 ? 'row holds a value' : 'rows hold a value',
+                },
+                ...(kept > 0
+                  ? [
+                      {
+                        figure: String(kept),
+                        say: `${kept === 1 ? 'value crosses' : 'values cross'} unchanged as ${target} data`,
+                      },
+                    ]
+                  : []),
+                ...(plan.lost > 0
+                  ? [
+                      {
+                        figure: String(plan.lost),
+                        say: `cannot be written as a ${target} and ${plan.lost === 1 ? 'is' : 'are'} cleared`,
+                        grave: true,
+                      },
+                    ]
+                  : []),
+              ]
+        }
       />
       <ConfirmSamples
         label="In it now"
@@ -673,10 +742,50 @@ function DeleteSheet({
         },
       ]}
     >
-      {/* one voice with the retype sheet: `factLines` is the only place
-          these counts are worded, so the two sheets can never describe
-          the same column two different ways */}
-      <ConfirmFacts items={factLines(facts)} />
+      {/* THE BLAST RADIUS, IN THE ORDER IT MATTERS — what leaves, then
+          what breaks. Every figure here was already computed on this
+          sheet; what it did not have was one column to read them in.
+          The named detail follows underneath, because a count says how
+          much and only a name says what. */}
+      <ConfirmRadius
+        label="What removing it takes"
+        facts={[
+          facts.filled === 0
+            ? { figure: '0', say: `of ${facts.rows} rows hold a value — the column is empty` }
+            : {
+                figure: `${facts.filled} of ${facts.rows}`,
+                say: `${facts.rows === 1 ? 'row holds' : 'rows hold'} a value that goes with it`,
+                grave: true,
+              },
+          ...(readers.length > 0
+            ? [
+                {
+                  figure: String(readers.length),
+                  say: `${readers.length === 1 ? 'calculation reads' : 'calculations read'} this column and ${readers.length === 1 ? 'breaks' : 'break'}`,
+                  grave: true,
+                },
+              ]
+            : []),
+          ...(rules.length > 0
+            ? [
+                {
+                  figure: String(rules.length),
+                  say: `${rules.length === 1 ? 'business rule names' : 'business rules name'} it and ${rules.length === 1 ? 'gains a blocker' : 'gain a blocker'}`,
+                  grave: true,
+                },
+              ]
+            : []),
+          ...(groupLevel >= 0
+            ? [
+                {
+                  figure: `Level ${groupLevel + 1}`,
+                  say: `grouping — ${tableName} loses that drawer on the sheet`,
+                  grave: true,
+                },
+              ]
+            : []),
+        ]}
+      />
       <ConfirmSamples
         label="In it now"
         values={facts.samples}
@@ -686,12 +795,10 @@ function DeleteSheet({
       {/* WHAT ELSE BREAKS. The rules stage already put a red mark on
           the rule an hour after the column left — one stage away, if
           you went looking. The warning belongs here, before it. */}
-      {groupLevel >= 0 ? (
-        <p className="ds-cs-line">
-          It is grouping level {groupLevel + 1}, so {tableName} loses that drawer
-          on the sheet.
-        </p>
-      ) : null}
+      {/* THE GROUPING LEVEL USED TO HAVE A SENTENCE OF ITS OWN HERE and
+          now has a counted line in the radius above, word for word.
+          Saying it twice, four lines apart, made a reader check whether
+          the second one was about something else. */}
       {readers.length > 0 ? (
         <p className="ds-cs-line ds-cs-line-warn">
           {nameList(readers.map((r) => r.name || 'an untitled column'))}{' '}

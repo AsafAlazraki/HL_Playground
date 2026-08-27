@@ -14,7 +14,7 @@ import {
 import { useProjectStore } from '@/store/useProjectStore'
 import { FORMULA_FUNCTIONS, validateFormula } from '@/lib/formula'
 import { GuardNote } from './GuardNote'
-import { ConfirmFacts, ConfirmSamples, ConfirmSheet } from './ConfirmSheet'
+import { ConfirmRadius, ConfirmSamples, ConfirmSheet } from './ConfirmSheet'
 /* Phosphor only, through the house icon module — see the note in
    FieldRow.tsx: this folder used to draw its own SVGs at its own
    stroke weight, a few hundred pixels from the app's. */
@@ -88,11 +88,24 @@ export function SelectOptionsEditor({
             if (e.key === 'Escape') setDraft('')
           }}
         />
+        {/* IT WENT GREY WHEN THE BOX WAS EMPTY AND SAID NOTHING —
+            rule 10. The reason is one clause long and the control is
+            the only place to put it. `aria-disabled` and a live guard
+            rather than `disabled`, so it keeps its name and its place
+            in the tab order; the same shape the column arrows take. */}
         <button
           type="button"
           className="ds-mini-btn ds-opt-addbtn"
-          onClick={add}
-          disabled={!draft.trim()}
+          onClick={() => {
+            if (!draft.trim()) return
+            add()
+          }}
+          aria-disabled={!draft.trim() || undefined}
+          title={
+            draft.trim()
+              ? `Add “${draft.trim()}” to the list`
+              : 'Type a choice in the box first'
+          }
           aria-label="Add option"
         >
           <Plus size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
@@ -286,10 +299,31 @@ export function ReferenceEditor({
             },
           ]}
         >
-          <ConfirmFacts
-            items={[
-              `${filled.length} of ${(rows ?? []).length} rows are linked`,
-              fromEntity ? `to ${fromEntity.name}` : 'to a table that is gone',
+          {/* ONE VOICE ACROSS THE FOUR DESTRUCTIVE ACTS on this surface.
+              A re-point, a retype, a removed column and a deleted table
+              all state their cost the same way now — a figure, then the
+              clause it is a figure of — so a person who has read one of
+              these sheets can read the next one at a glance. */}
+          <ConfirmRadius
+            label="What re-pointing costs"
+            facts={[
+              {
+                figure: `${filled.length} of ${(rows ?? []).length}`,
+                say: fromEntity
+                  ? `${(rows ?? []).length === 1 ? 'row is linked' : 'rows are linked'} to ${fromEntity.name}`
+                  : `${(rows ?? []).length === 1 ? 'row is linked' : 'rows are linked'} to a table that is gone`,
+              },
+              ...(filled.length > 0
+                ? [
+                    {
+                      figure: String(filled.length),
+                      say: `${filled.length === 1 ? 'link is' : 'links are'} emptied — a ${
+                        fromEntity?.name ?? 'linked'
+                      } row means nothing in ${pendingTarget.name}`,
+                      grave: true,
+                    },
+                  ]
+                : []),
             ]}
           />
           <ConfirmSamples label="Linked to" values={filledLabels} />

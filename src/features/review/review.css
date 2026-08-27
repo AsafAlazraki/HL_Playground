@@ -45,16 +45,13 @@
    never stand in for it.
    ============================================================ */
 
-.rv-sr-live {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
+/* THE VISUALLY-HIDDEN LIVE REGION THAT USED TO BE HERE IS GONE, and
+   its removal is the fix rather than the tidy-up. Applying a fix now
+   raises a real note with UNDO on it, and the toast strip is itself
+   `role="status" aria-live="polite"` — so keeping this second region
+   meant a screen reader heard the same sentence twice, and heard the
+   half of it with no way back FIRST. One announcement, and it is the
+   one carrying the act. See ReviewPanel.tsx's `apply`. */
 
 @keyframes rv-cleared {
   0% {
@@ -526,6 +523,31 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* THE FIX RAN AND THE MARK SURVIVED IT. Drawn only for the 1.5s the
+   card is flashing, so it is a report about what just happened and
+   never a permanent line on a card nobody pressed.
+
+   IT IS INK, NOT A SECOND SEVERITY. The card already carries its
+   hue in the margin rule and its word in the head; painting this
+   sentence in `--danger` too would put three reds on one card and
+   make a routine "that did not finish" read as a worse fault than
+   the finding it is about. `--ink-soft` on the card ground measures
+   7.7:1. The tinted ground it sits on comes from `rv-flash`, which
+   is under 8% alpha, so the pair still clears the ramp. */
+.rv-still {
+  margin: 0;
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
+  border-left: 2px solid var(--warning);
+  border-radius: 0 var(--r-chip) var(--r-chip) 0;
+  background: var(--chip-bg);
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-soft);
+  text-wrap: pretty;
 }
 
 /* WHAT CANNOT BE DONE SAYS WHY, WHERE IT IS. A finding with no

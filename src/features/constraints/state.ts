@@ -78,20 +78,40 @@ const NEEDS_COLUMN: Record<Side, string> = {
 
 const COLUMN_GONE = 'One column this rule names has been deleted. Point it at a column that is still there.'
 
+/** What is still to be answered, AND WHICH WORD IS ASKING.
+ *
+ *  `tokenId` is the sentence's own name for that word — the same id
+ *  `sentenceTokens` gives it — so a caller can put the cursor in the
+ *  exact word rather than leaving a person to hunt for it in a
+ *  twelve-word sentence. It is `null` when the group has no clause at
+ *  all, because then there is no word on screen to point at. */
+export interface MissingSlot {
+  say: string
+  tokenId: string | null
+}
+
 function gapIn(
   group: ClauseGroup | undefined,
   side: Side,
   ctx: SentenceCtx,
-): string | null {
-  if (!group || group.clauses.length === 0) return NEEDS_COLUMN[side]
+): MissingSlot | null {
+  if (!group || group.clauses.length === 0) {
+    return { say: NEEDS_COLUMN[side], tokenId: null }
+  }
   for (const clause of group.clauses) {
     const concept = ctx.index.get(clause.left.fieldId)
     if (!concept) {
-      return isUnsetField(clause.left.fieldId) ? NEEDS_COLUMN[side] : COLUMN_GONE
+      return {
+        say: isUnsetField(clause.left.fieldId) ? NEEDS_COLUMN[side] : COLUMN_GONE,
+        tokenId: `${side}:${clause.id}:field`,
+      }
     }
     if (isUnary(clause.op)) continue
     if (isUnsetValue(literalOf(clause.right))) {
-      return `Choose a value for ${concept.name}.`
+      return {
+        say: `Choose a value for ${concept.name}.`,
+        tokenId: `${side}:${clause.id}:value`,
+      }
     }
   }
   return null
@@ -100,6 +120,11 @@ function gapIn(
 /** What is still to be answered before this rule means anything — or
  *  `null` when a person has made every choice it needs. */
 export function missingChoice(c: ConstraintDef, ctx: SentenceCtx): string | null {
+  return missingSlot(c, ctx)?.say ?? null
+}
+
+/** The same answer, with the address of the word that is asking. */
+export function missingSlot(c: ConstraintDef, ctx: SentenceCtx): MissingSlot | null {
   /* a `table` constraint is an imported whitelist, not a sentence
      somebody is part-way through writing */
   if (c.kind === 'table') return null

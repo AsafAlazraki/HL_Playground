@@ -118,6 +118,19 @@ export interface SheetCommands {
   beginEdit: (cell: CellRef, seed?: string) => void
   /** write a picture column's ordered list — index 0 is the primary */
   setImages: (rowId: string, fieldId: string, next: ImageRef[]) => void
+  /* -- ONE FIELD OF ONE ROW, FROM A SURFACE THAT IS NOT A CELL ----
+     The row detail edits columns the grid may not even be drawing —
+     a folded band's, or a filing column the card hides — so it cannot
+     address anything by (row, col) and cannot go through the single
+     live editor. It takes the FIELD ITSELF and performs the exact
+     write `commitEdit` performs: the same coercion, the same refusal
+     sentence, the same store call, the same paste-mark cleared.
+     Nothing here is a second way of writing a cell; it is the same
+     way, reached without a cell. */
+  /** typed text, coerced. False = refused, and the reason was said. */
+  setFieldText: (rowId: string, field: FieldDef, text: string) => boolean
+  /** a canonical value a picker or a tick already holds */
+  setFieldValue: (rowId: string, field: FieldDef, v: CellValue) => void
   commitEdit: (move: MoveDir) => void
   cancelEdit: () => void
   setDraft: (t: string) => void
@@ -356,6 +369,41 @@ export function useSheetCommands(
       clearMark(rowId, fieldId)
     },
     [entityId, updateCell, clearMark],
+  )
+
+  const setFieldText = useCallback(
+    (rowId: string, field: FieldDef, text: string): boolean => {
+      /* the two columns nobody types into, refused in the same words
+         the cell editor refuses them in */
+      if (isSystemFieldId(field.id)) {
+        pushToast(`${field.name} is the row’s permanent identifier — read-only`, 'warn')
+        return false
+      }
+      if (field.type === 'formula') {
+        pushToast(`${field.name} is calculated — read-only`, 'warn')
+        return false
+      }
+      if (!rowById.has(rowId)) return false
+      const res = coerceCellText(text, field, refMapOf(field))
+      if (!res.ok) {
+        pushToast(`${field.name}: ${res.reason}`, 'warn')
+        return false
+      }
+      updateCell(entityId, rowId, field.id, res.value)
+      clearMark(rowId, field.id)
+      return true
+    },
+    [rowById, entityId, updateCell, clearMark, refMapOf, pushToast],
+  )
+
+  const setFieldValue = useCallback(
+    (rowId: string, field: FieldDef, v: CellValue) => {
+      if (isSystemFieldId(field.id) || field.type === 'formula') return
+      if (!rowById.has(rowId)) return
+      updateCell(entityId, rowId, field.id, v)
+      clearMark(rowId, field.id)
+    },
+    [rowById, entityId, updateCell, clearMark],
   )
 
   const moveActive = useCallback(
@@ -815,6 +863,8 @@ export function useSheetCommands(
     selectedRowIds,
     beginEdit,
     setImages,
+    setFieldText,
+    setFieldValue,
     commitEdit,
     cancelEdit,
     setDraft,

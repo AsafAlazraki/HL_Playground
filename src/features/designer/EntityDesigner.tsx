@@ -26,7 +26,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { FieldRow } from './FieldRow'
 import { GuardNote } from './GuardNote'
 import { useNameGuard } from './useNameGuard'
-import { ConfirmFacts, ConfirmSheet } from './ConfirmSheet'
+import { ConfirmRadius, ConfirmSheet } from './ConfirmSheet'
 import { draftColumnName } from './columnFacts'
 import { entityDependents, nameList } from './dependents'
 /* Phosphor only, through the house icon module — this folder used to
@@ -510,10 +510,64 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             },
           ]}
         >
-          <ConfirmFacts
-            items={[
-              rowCount === 1 ? '1 row' : `${rowCount} rows`,
-              entity.fields.length === 1 ? '1 column' : `${entity.fields.length} columns`,
+          {/* THE BLAST RADIUS OF THE LARGEST ACT IN THE APP, COUNTED —
+              DESIGN_PRINCIPLES §7. All five figures were already worked
+              out before the sheet opened (`entityDependents` walks every
+              table and validates every rule twice); what they did not
+              have was one column to be read in. Rows and columns first,
+              because they are what the person is looking at; then the
+              three things that happen on tables they are NOT looking at,
+              which is the whole reason this sheet is not a
+              `window.confirm`. The names follow underneath. */}
+          <ConfirmRadius
+            label="What deleting it takes"
+            facts={[
+              {
+                figure: String(rowCount),
+                say: rowCount === 1 ? 'row goes with it' : 'rows go with it',
+                grave: rowCount > 0,
+              },
+              {
+                figure: String(entity.fields.length),
+                say: entity.fields.length === 1 ? 'column goes with it' : 'columns go with it',
+                grave: entity.fields.length > 0,
+              },
+              ...(doomed.links.length > 0
+                ? [
+                    {
+                      figure: String(doomed.links.length),
+                      say:
+                        doomed.links.length === 1
+                          ? 'link column on another table goes too'
+                          : 'link columns on other tables go too',
+                      grave: true,
+                    },
+                  ]
+                : []),
+              ...(doomed.rootedRules.length > 0
+                ? [
+                    {
+                      figure: String(doomed.rootedRules.length),
+                      say:
+                        doomed.rootedRules.length === 1
+                          ? 'business rule is written about this table and stops existing'
+                          : 'business rules are written about this table and stop existing',
+                      grave: true,
+                    },
+                  ]
+                : []),
+              ...(doomed.brokenRules.length > 0
+                ? [
+                    {
+                      figure: String(doomed.brokenRules.length),
+                      say:
+                        doomed.brokenRules.length === 1
+                          ? 'business rule elsewhere gains a blocker'
+                          : 'business rules elsewhere gain a blocker',
+                      grave: true,
+                    },
+                  ]
+                : []),
             ]}
           />
 

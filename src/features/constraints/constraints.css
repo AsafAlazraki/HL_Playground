@@ -3855,3 +3855,393 @@
     white-space: normal;
   }
 }
+
+/* ============================================================
+   THE CITATION, DRAWN   (cn-src-*)
+
+   SUPERSEDES `.cn-wb-src` at the five surfaces that print a rule's
+   provenance. That rule stays — it is still the fallback for a
+   string this cannot read, and for the three places that print a
+   sentence rather than a citation — but where a real provenance
+   line lands it is now a slab with a shape.
+
+   THE ARGUMENT. This line is the point of the page: it is how a
+   person checks that a rule came out of their price file rather
+   than out of somebody's opinion. It was 11px mono, --fg-tertiary,
+   four hundred words, no shape, at the foot of a card. Everything
+   below is one idea — give each part of it the face its content
+   deserves, and let the eye find the cell address in one look.
+
+   CONTRAST, MEASURED OVER --surface-3 (#eef3f8):
+     --fg           15.6 : 1   the cell address, and every figure
+     --fg-secondary  7.4 : 1   the evidence prose
+     --accent        5.6 : 1   the ASSERTED stamp, over --accent-wash
+
+   THE ADDRESS IS FULL INK AND THE PROSE IS NOT, and that inversion
+   is deliberate: on every other surface in this app the prose is
+   the thing and the reference is metadata. Here the reference is
+   the thing.
+   ============================================================ */
+
+.cn-src {
+  margin: var(--s-4) 0 0;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border: 1px solid var(--line-subtle);
+  border-left: 2px solid var(--accent-line);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--surface-3);
+}
+
+.cn-src-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+}
+/* the one sanctioned uppercase: a section caption */
+.cn-src-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+}
+
+/* ASSERTED / OBSERVED — the adjudicator's own two words for how
+   firmly the file states it, and this app owns them as states, so
+   they take the mono stamp every other state on the surface takes.
+   ASSERTED is the stronger claim and it is the one that gets the
+   accent; OBSERVED is a pattern nobody wrote down, and it reads
+   quieter on purpose. */
+.cn-src-verdict {
+  padding: 1px 8px;
+  border-radius: var(--r-full);
+  background: var(--surface-4);
+  font-family: var(--font-mono);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  color: var(--fg-secondary);
+}
+.cn-src-verdict.is-asserted {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+/* the workbook the rule came out of — a dealer's own file name, so
+   it keeps the reading face and its own case */
+.cn-src-file {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+/* -- the addresses ------------------------------------------ */
+
+.cn-src-cells {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* A CELL ADDRESS IS THE ONE THING ON THIS SLAB SOMEBODY WILL TYPE
+   SOMEWHERE ELSE. Mono, full ink, and it wraps at any character —
+   `Boat Module!KZ115, LF137, LF138` truncated in the middle is a
+   reference that cannot be followed, which is the same as not
+   printing it. */
+.cn-src-cell {
+  position: relative;
+  padding-left: var(--s-4);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  line-height: 1.55;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.cn-src-cell::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.52em;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+/* -- the evidence ------------------------------------------- */
+
+.cn-src-said {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* prose is prose: the reading face, at the small step, with the
+   hanging rule that says these are parts of one citation */
+.cn-src-line {
+  position: relative;
+  padding-left: var(--s-4);
+  font-size: var(--t-small-size);
+  line-height: 1.62;
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+.cn-src-line::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 0.45em;
+  bottom: 0.25em;
+  width: 1px;
+  background: var(--line-strong);
+}
+/* a rate is a figure wherever it sits (§2) */
+.cn-src-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.94em;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+/* -- where the adjudication is written up -------------------- */
+
+.cn-src-working {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+}
+.cn-src-doc {
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   THE COMPOSER'S SENTENCE, AND THE REFUSAL THAT POINTS AT IT
+
+   TWO THINGS, AND THEY ARE ONE IDEA.
+
+   1. AN UNANSWERED VALUE NOW SAYS SO. The dashed hairline was
+      written for the unanswered COLUMN — "a column" is a question
+      and the rule under it says so from across the sentence — and
+      the unanswered VALUE, which is the other half of the same
+      question, was drawn as a settled accent word reading `…`. One
+      of the two things still to answer announced itself and the
+      other did not. Now both do, in the same signal.
+
+   2. THE REFUSAL IS A CONTROL. Rule 10 asks a thing that cannot be
+      done to say why, WHERE it is refused. The footer always said
+      why — "Choose a value for Hull Length (mtr)." — and could not
+      say where, over a sentence set at 23px that can run to a dozen
+      words with half of them underlined. Pressing it puts the
+      cursor in the exact word and lights that word for a moment.
+
+   THE LIGHT IS COLOUR AND NOTHING ELSE, which is what makes it
+   legal under `prefers-reduced-motion` (§4: movement goes, colour
+   and opacity stay) and what makes it safe inside a paragraph — a
+   word that moved would re-wrap the words after it.
+   ============================================================ */
+
+/* -- the sentence, given the room an instrument gets --------- */
+
+.cn-new-say {
+  position: relative;
+  margin: var(--s-5) 0 var(--s-3);
+  padding: var(--s-2) 0 var(--s-2) var(--s-5);
+}
+/* the rail says "this is the thing being written", and it fades out
+   down the paragraph so it never reads as a quote block */
+.cn-new-say::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  border-radius: var(--r-full);
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-line) 55%, transparent 100%);
+}
+
+/* -- an unanswered value asks the same question a column does - */
+
+.cn-tok--value.is-unset {
+  /* the role keeps its ink — a value is still a value — but the
+     weight comes off, because 560 reads as a settled answer */
+  font-weight: 450;
+}
+.cn-tok.is-unset.is-live {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--cn-tok-line) 0 4px,
+    transparent 4px 7px
+  );
+}
+
+/* -- the word the footer just pointed at --------------------- */
+
+@keyframes cn-seek {
+  0% {
+    background-color: var(--accent-wash-strong);
+  }
+  70% {
+    background-color: var(--accent-wash-strong);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.cn-tok.is-sought {
+  --cn-tok-line: var(--accent);
+  color: var(--accent);
+  animation: cn-seek 1500ms var(--ease) 1;
+}
+.cn-tok--field.is-sought {
+  color: var(--fg);
+}
+
+/* -- the refusal, as a control ------------------------------- */
+
+.cn-new-why.is-seek {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: 4px 8px;
+  margin-left: -8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.cn-new-why.is-seek:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+}
+.cn-new-why.is-seek:active {
+  background: var(--accent-wash-strong);
+  transition-duration: var(--d-press);
+}
+.cn-new-why.is-seek:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cn-new-why-say {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+/* the verb, and it is the accent's fourth appearance on this view */
+.cn-new-why-go {
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.cn-new-why.is-seek:hover .cn-new-why-say {
+  color: var(--fg);
+}
+
+/* ============================================================
+   WHAT IT WOULD DO — the second pass.
+
+   THREE THINGS, AND ONE OF THEM IS A HOLE THIS PANEL HAD FROM THE
+   START.
+
+   1. THE EMPTY PART OF THE BAR HAD NO WORD ATTACHED TO IT. It is
+      the largest area on the meter — on the ATM floor it is 97.7 %
+      of the sheet — and a person could read every figure above it
+      and still not know whether the track meant "rows that pass"
+      or "rows nobody has counted yet". It means neither. It is the
+      catalogue this rule never looks at, which is the entire
+      lesson F9 exists to teach, and now it says so.
+
+   2. THE FIGURES ARRIVE. The three cells mount when the condition
+      completes and when the sentence finishes — once each, not per
+      keystroke — so they take the house entrance, staggered by
+      `--i`. `prefers-reduced-motion` removes the movement and
+      keeps the fade, which is the ds contract and not a local one.
+
+   3. THE PANEL SAYS WHERE ITS NUMBERS CAME FROM. "counted on your
+      sheet, now" beside the heading. It is the argument the whole
+      application is making and it cost one line.
+   ============================================================ */
+
+.cn-conseq-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+}
+/* NOT a label step and NOT uppercase: it is a sentence about where
+   the figures came from, so it keeps its own case (§3). */
+.cn-conseq-live {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* -- what the track means ------------------------------------ */
+
+.cn-bar-rest {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+/* the swatch, so the sentence and the bar are visibly about the
+   same thing. It is the track's own colour, drawn at the track's
+   own hairline — a dot, never a fill behind text (§5). */
+.cn-bar-rest-dot {
+  flex: none;
+  align-self: center;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--surface-4);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+.cn-bar-rest .cn-fig {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95em;
+  color: var(--fg);
+}
+
+/* -- the panel itself, lifted off the card ------------------- */
+
+.cn-conseq {
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+
+/* THE STUB IS A PROMISE, so it reads like one rather than like a
+   disabled box: a dashed edge for "nothing measured yet", and the
+   ink stays at the readable tier because the sentence in it is the
+   only instruction on the panel. */
+.cn-conseq-stub {
+  margin: var(--s-4) 0 0;
+  padding: var(--s-4);
+  border: 1px dashed var(--line-strong);
+  line-height: 1.6;
+}

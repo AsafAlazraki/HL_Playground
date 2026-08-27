@@ -11,9 +11,16 @@ export { SearchField } from './SearchField'
 export type { SearchFieldProps } from './SearchField'
 
 /* the surface the field stands on now the masthead is gone — see
-   Finder.tsx. The dock's "Find anything" opens this. */
+   Finder.tsx. Two things open it: Ctrl+K / Cmd+K from anywhere, and
+   "Find anything" in the navy rail, which advertises that shortcut
+   beside itself. */
 export { Finder } from './Finder'
 export type { FinderProps } from './Finder'
+
+/* what the palette remembers between openings, and the pure part of
+   it that can be reasoned about without a browser */
+export { RECENT_LIMIT, clearRecent, readRecent, rememberPick, withPick } from './recent'
+export type { RecentPick } from './recent'
 
 export {
   BROWSE_LIMIT,

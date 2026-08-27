@@ -34,6 +34,9 @@ import {
   PAIR_ORIGIN_FIELD,
   PAIR_RECOMMENDED_FIELD,
   type CellValue,
+  type Clause,
+  type ClauseGroup,
+  type CompareOp,
   type EntityDef,
   type ImageRef,
   type RowData,
@@ -44,6 +47,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { newId, nowIso } from '@/lib/id'
 import {
   createViewFor,
+  evalPairRule,
   getViewDef,
   isCuratedOnly,
   joinRefFor,
@@ -57,7 +61,7 @@ import {
 /* DEEP, for the same reason `crm/customers` is deep below: `describe`
    is the pure half of the view feature — no store, no React — and the
    barrel does not export the two word-benders a sentence needs. */
-import { describeRule, plural, ruleReason } from '@/features/views/describe'
+import { describeRule, plural, ruleReason, thisOne } from '@/features/views/describe'
 /* THE MEASUREMENTS, READ AND NEVER TYPED. `ruleLedger` imports only
    `@/types/model` and one table name; it touches no store and no React,
    so reading it here closes no cycle. Every figure in it is asserted
@@ -523,6 +527,32 @@ export interface Candidate {
    *  whole table from every step; what it may not do is let a row the
    *  price file never paired with this hull look like one it did. */
   outside?: true
+  /**
+   * WHY THE NARROWING LEFT IT OUT, as one sentence with the two
+   * figures it turns on — "its Max boat length (5.20 m) is less than
+   * this boat's Length (5.60 m)."
+   *
+   * THIS IS THE DIFFERENCE BETWEEN THIS SCREEN AND THE ONE IT
+   * ANSWERS. Production's picker simply does not draw a row the
+   * fitment rule rejected, so the salesperson standing next to a
+   * customer learns that a trailer they can see on the yard "is not
+   * in the system". Ours reaches the whole table from every step
+   * (that is what `outside` is for) and then owes the person the
+   * other half: not merely THAT it is off the shortlist, but what
+   * measurement put it there, on the row itself, where the refusal
+   * is (DESIGN_PRINCIPLES rule 10).
+   *
+   * NOTHING HERE IS INVENTED. Every clause is re-run through the
+   * same `evalPairRule` the shortlist was built with, one at a time,
+   * so the clauses named are the clauses that actually failed; the
+   * values in brackets are read off the two rows and formatted by
+   * `formatCell`, the same function the register prints them with.
+   * Where a value cannot be read honestly — a hop through a link, a
+   * formula right-hand side — the bracket is left off rather than
+   * guessed at, and where no single clause can be blamed the field
+   * is simply absent and the card says only that it is off the list.
+   */
+  outsideWhy?: string
 }
 
 /** What a section may still take, and what it refused to offer.
@@ -842,6 +872,154 @@ function haystack(ctx: Ctx, entity: EntityDef, r: RelatedRow, join: JoinRef | nu
   return parts.join(' ').toLowerCase()
 }
 
+/* ============================================================
+   WHY A ROW IS OFF THE SHORTLIST — the sentence that only this
+   app can write.
+
+   hl-journeys.md §3.2 Q7/Q8 records what production does with a
+   row its rule rejected: nothing. It is not drawn, it is not
+   counted, and there is no control that reaches it — "operators
+   assign trailers in the boat model editor" — so a salesperson who
+   can SEE the trailer on the yard is told by their own system that
+   it does not exist. `stepOffer` already fixes the reachability
+   half: search and the show-everything switch both go past the
+   narrowing and mark what they found `outside`.
+
+   This is the other half, and it is rule 10. A row a person can
+   now see and pick, sitting under a chip reading "not on the
+   shortlist" and nothing else, is a refusal with no reason — the
+   same fault in a nicer typeface. So each one carries the clause
+   that failed, with the numbers on both sides of it.
+
+   THE HONESTY RULES, in order of how badly each would bite:
+
+     · THE CLAUSES ARE RE-RUN, NEVER RE-DERIVED. Each is put back
+       through `evalPairRule` on its own, so the ones named are
+       the ones that actually rejected this row. A sentence
+       assembled from the rule's shape rather than from its result
+       would drift the first time the engine's comparison changed.
+     · A VALUE IS PRINTED ONLY WHERE IT CAN BE READ. A left side
+       hopping through a link, or a formula on the right, has no
+       single cell to quote, so the bracket is dropped and the
+       clause stands alone. Never a placeholder, never a guess.
+     · WHEN NOTHING CAN BE BLAMED IT SAYS NOTHING. An empty string
+       comes back and the card falls silent rather than shrugging
+       at somebody in a sentence.
+   ============================================================ */
+
+/** The negative of each comparison, written out rather than composed,
+ *  because "not is at most" is not English and a person reading a
+ *  refusal has the least patience for a machine-shaped sentence. */
+const NOT_WORDS: Record<CompareOp, string> = {
+  eq: 'is not the same as',
+  neq: 'is',
+  gt: 'is not more than',
+  gte: 'is less than',
+  lt: 'is not less than',
+  lte: 'is more than',
+  contains: 'does not contain',
+  startsWith: 'does not start with',
+  endsWith: 'does not end with',
+  isEmpty: 'is not empty',
+  notEmpty: 'is empty',
+  isTrue: 'is not yes',
+  isFalse: 'is not no',
+}
+
+const columnName = (entity: EntityDef, fieldId: string): string =>
+  entity.fields.find((f) => f.id === fieldId)?.name ?? 'a column that is gone'
+
+/** One cell, as the register would print it — or '' when there is no
+ *  such column, so the caller can leave the bracket off entirely. */
+function cellSaid(entity: EntityDef, fieldId: string, row: RowData): string {
+  const field = entity.fields.find((f) => f.id === fieldId)
+  if (!field) return ''
+  const shown = formatCell(field, row.values[fieldId] ?? null, undefined, bandOf(entity, field))
+  return shown === '' ? 'blank' : shown
+}
+
+/** A bracketed value, or nothing at all. A hop through a link has no
+ *  one cell behind it, so it gets no figure rather than a wrong one. */
+const bracket = (path: { fieldId: string; viaFieldId?: string }, entity: EntityDef, row: RowData): string => {
+  if (path.viaFieldId) return ''
+  const said = cellSaid(entity, path.fieldId, row)
+  return said === '' ? '' : ` (${said})`
+}
+
+/** One failed comparison, in the operator's own column names and with
+ *  the two figures it turned on. */
+function failedClause(
+  c: Clause,
+  root: EntityDef,
+  rootRow: RowData,
+  target: EntityDef,
+  row: RowData,
+): string {
+  const left = `its ${columnName(target, c.left.fieldId)}${bracket(c.left, target, row)}`
+  const op = NOT_WORDS[c.op] ?? `does not match (${c.op})`
+  if (!c.right) return `${left} ${op}`
+  if (c.right.kind === 'literal') {
+    const v = c.right.value
+    return `${left} ${op} ${v === null || v === undefined || v === '' ? 'anything' : String(v)}`
+  }
+  if (c.right.kind === 'field') {
+    const named = `${thisOne(root)}’s ${columnName(root, c.right.path.fieldId)}`
+    return `${left} ${op} ${named}${bracket(c.right.path, root, rootRow)}`
+  }
+  /* a formula right-hand side is computed per row and has no cell to
+     quote, so it is named as what it is */
+  return `${left} ${op} what the rule works out for this one`
+}
+
+const sentence = (s: string): string =>
+  s === '' ? '' : `${s.charAt(0).toUpperCase()}${s.slice(1)}${/[.?!]$/.test(s) ? '' : '.'}`
+
+/** WHY THIS ROW IS NOT ON THE STEP'S SHORTLIST, or '' when the honest
+ *  answer is that we cannot say. See the block comment above. */
+function outsideWhy(args: {
+  ctx: Ctx
+  engine: ReturnType<typeof makeEngine>
+  root: EntityDef
+  rootRow: RowData
+  target: EntityDef
+  join: JoinRef | null
+  rule: ClauseGroup | undefined
+  row: RowData
+}): string {
+  const { ctx, engine, root, rootRow, target, join, rule, row } = args
+
+  /* NO RULE AT ALL admits every row, so nothing can be outside it and
+     there is nothing to explain. */
+  if (!rule) return ''
+
+  /* THE CURATED CASE, and it is the common one on this sheet: the
+     pairings ARE the menu, so the reason is not a measurement — it is
+     that the price file never wrote this pairing down. Naming the list
+     that would have recorded it makes the sentence checkable, and
+     saying nothing is wrong with the row is the part a salesperson
+     needs before they pick it anyway. */
+  if (isCuratedOnly(rule)) {
+    const joinName = join ? ctx.entities[join.entityId]?.name : undefined
+    const hull = rowLabel(root, rootRow)
+    return joinName
+      ? `${joinName} does not pair it with ${hull}. Nothing is wrong with it — the price file simply never recorded that pairing.`
+      : `Nobody has picked it for ${hull}.`
+  }
+
+  const source = { entityId: root.id, row: rootRow }
+  const failed: string[] = []
+  for (const c of rule.clauses) {
+    const holds = evalPairRule(engine, { combinator: 'AND', clauses: [c] }, { entityId: target.id, row }, source)
+    if (holds) continue
+    failed.push(failedClause(c, root, rootRow, target, row))
+  }
+  if (failed.length === 0) return ''
+
+  return rule.combinator === 'OR'
+    ? sentence(`none of these holds — ${failed.join('; ')}`)
+    : sentence(failed.join(' and '))
+}
+
 export interface StepOfferOptions {
   /** show the whole live table, narrowing switched off */
   all?: boolean
@@ -914,6 +1092,13 @@ export function stepOffer(
 
   const candidates = selected.slice(0, OFFER_CAP).map((r) => {
     const already = onQuote.get(r.pair?.rowId ?? r.row.id)
+    /* RULE 10, ON THE ROW ITSELF. Only for the rows the narrowing left
+       out — at most `OFFER_CAP` of them, each costing one re-run of the
+       clauses the shortlist was already built with. A row ON the
+       shortlist has nothing to explain. */
+    const why = inList.has(r.row.id)
+      ? ''
+      : outsideWhy({ ctx, engine, root, rootRow: row, target, join, rule: block?.rule, row: r.row })
     return {
       line: mintLine({
         ctx,
@@ -927,6 +1112,7 @@ export function stepOffer(
       }),
       ...(already ? { alreadyLineId: already } : {}),
       ...(inList.has(r.row.id) ? {} : { outside: true as const }),
+      ...(why === '' ? {} : { outsideWhy: why }),
     }
   })
 

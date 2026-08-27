@@ -1,5 +1,15 @@
 /* ============================================================
-   ONE SEARCH FIELD, IN THE MASTHEAD, OVER EVERYTHING.
+   ONE SEARCH FIELD, AND IT IS THE COMMAND PALETTE.
+
+   WHERE IT STANDS, in present tense, because this header has twice
+   outlived the chrome it named. It stands in `Finder` — a panel
+   summoned over whatever is on screen — and it is reached two ways:
+   Ctrl+K / Cmd+K from anywhere, bound both here and in the shell,
+   and the "Find anything" row in the navy rail, which prints that
+   shortcut beside itself. There is no masthead and there is no
+   dock. The paragraphs below that mention either are describing
+   what was measured at the time, and are kept because the
+   measurements are why this file is shaped the way it is.
 
    THE FAILURE THIS PREVENTS, measured on the real file (21 tables,
    651 rows): `document.querySelectorAll('input,textarea')` returned
@@ -79,8 +89,10 @@ import {
   normalizeQuery,
   optionsOf,
   search,
+  type Option,
   type TableFacts,
 } from './rowSearch'
+import { clearRecent, readRecent, rememberPick } from './recent'
 import './search.css'
 
 /* ------------------------------------------------------------ */
@@ -92,6 +104,12 @@ const MAC = /mac|iphone|ipad|ipod/i.test(
   typeof navigator === 'undefined' ? '' : navigator.userAgent,
 )
 const SHORTCUT_HINT = MAC ? '⌘K' : 'Ctrl K'
+
+/** How far Page Up / Page Down move the cursor. Eight is one
+ *  table's worth of rows (`DEFAULT_LIMITS.perTable`), so a page
+ *  lands roughly on the next group's heading rather than at some
+ *  arbitrary depth inside the group you were already reading. */
+const PAGE = 8
 
 /** Split a label around the matched run so the match can be inked
  *  without a second search, and without building a regular
@@ -129,6 +147,19 @@ const viaSays = (name: string, count: number): string =>
 
 const inkStyle = (accent: TableFacts['accent']): CSSProperties =>
   ({ '--hs-ink': accentVar(accent) }) as CSSProperties
+
+/** One remembered destination, RESOLVED — a name that is on the
+ *  sheet right now, not the id that was written down. `recent.ts`
+ *  argues why nothing stored is ever drawn directly. */
+interface RecallLine {
+  key: string
+  entityId: string
+  rowId?: string
+  /** the row's own label, or the table's name when a table was
+   *  picked. Never an id, and never a placeholder. */
+  label: string
+  table: TableFacts
+}
 
 /* ------------------------------------------------------------ */
 
@@ -204,7 +235,82 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
     [open, browsing, index, query],
   )
 
-  const options = useMemo(() => optionsOf(result), [result])
+  /* WHAT WAS OPENED LAST, RESOLVED AGAINST THE SHEET AS IT IS NOW.
+     Read once per opening — a pick is only ever made by `choose`,
+     which closes the palette, so there is nothing to watch while it
+     is open. `forgot` is bumped by the Forget button so the list
+     re-reads without the palette having to close and reopen.
+
+     ONE PASS, NOT SIX SEARCHES. At most six rows are wanted out of
+     15,691, so the wanted keys go into a set and the index is walked
+     once — and only while nothing is typed, because a recall list is
+     the answer to a question nobody is asking once they start
+     spelling a name. */
+  const [forgot, setForgot] = useState(0)
+  const recalls = useMemo<RecallLine[]>(() => {
+    if (!open || !browsing) return []
+    const picks = readRecent()
+    if (picks.length === 0) return []
+
+    const wanted = new Set<string>()
+    for (const p of picks) if (p.rowId) wanted.add(`${p.entityId} ${p.rowId}`)
+    const labels = new Map<string, string>()
+    if (wanted.size > 0) {
+      for (const r of index.rows) {
+        const k = `${r.entityId} ${r.rowId}`
+        if (wanted.has(k) && !labels.has(k)) labels.set(k, r.label)
+      }
+    }
+
+    const out: RecallLine[] = []
+    for (const p of picks) {
+      const table = index.facts[p.entityId]
+      /* the table was deleted, or the file was replaced from Import.
+         A remembered id that no longer resolves is simply dropped —
+         never drawn as a dead row and never repaired into some other
+         row that happens to be nearby. */
+      if (!table) continue
+      if (p.rowId === undefined) {
+        out.push({ key: `t:${p.entityId}`, entityId: p.entityId, label: table.name, table })
+        continue
+      }
+      const label = labels.get(`${p.entityId} ${p.rowId}`)
+      if (label === undefined || label === '') continue
+      out.push({
+        key: `r:${p.entityId}:${p.rowId}`,
+        entityId: p.entityId,
+        rowId: p.rowId,
+        label,
+        table,
+      })
+    }
+    return out
+    /* `forgot` is a deliberate dependency: it is the only thing that
+       changes the answer while the palette stays open. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, browsing, index, forgot])
+
+  /* THE CURSOR WALKS ONE FLAT LIST AND THE RECALLS ARE AT THE TOP OF
+     IT, in exactly the order they are painted — which is what makes
+     the very first Enter after Ctrl+K land on where you were last
+     rather than on the biggest table on the sheet. */
+  const options = useMemo<Option[]>(
+    () => [
+      ...recalls.map(
+        (r): Option =>
+          r.rowId === undefined
+            ? { kind: 'table', id: `recent-t:${r.entityId}`, entityId: r.entityId }
+            : {
+                kind: 'row',
+                id: `recent-r:${r.entityId}:${r.rowId}`,
+                entityId: r.entityId,
+                rowId: r.rowId,
+              },
+      ),
+      ...optionsOf(result),
+    ],
+    [recalls, result],
+  )
 
   /* THE PICTURE BESIDE A PLACE. `coverPhoto` returns a held,
      same-origin photograph or null — never a substitute — so a table
@@ -298,7 +404,12 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
          outside the canvas (Whiteboard.tsx's auto-pan). Nothing new
          is invented here — this is the door the panel's list uses. */
       select({ kind: 'entity', id: entityId })
+      /* REMEMBERED AFTER THE ACT, NEVER BEFORE IT. Writing the pick
+         first would leave a record of somewhere nobody went if the
+         reveal threw; and this is a convenience, so it goes last and
+         it is allowed to fail silently (`recent.ts`). */
       onReveal?.(entityId, rowId)
+      rememberPick(entityId, rowId)
       close(false)
     },
     [select, onReveal, close],
@@ -335,6 +446,21 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
         e.preventDefault()
         walkedRef.current = true
         setActive(options.length - 1)
+        return
+      /* A PAGE AT A TIME, AND IT CLAMPS RATHER THAN WRAPS. The
+         arrows wrap because walking off the end of six options is
+         obviously a walk; a PAGE that wrapped would throw somebody
+         from the middle of a forty-row answer to the far end of it,
+         which reads as the list having moved under them. */
+      case 'PageDown':
+        e.preventDefault()
+        walkedRef.current = true
+        setActive(Math.min(cursor + PAGE, options.length - 1))
+        return
+      case 'PageUp':
+        e.preventDefault()
+        walkedRef.current = true
+        setActive(Math.max(cursor - PAGE, 0))
         return
       case 'Enter': {
         const picked = options[cursor]
@@ -447,6 +573,103 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
       {open ? (
         <div className="hs-pop" data-material>
           <ul className="hs-list" id={listId} role="listbox" aria-label="Search results">
+            {/* ── WHERE YOU WERE, FIRST ────────────────────────────
+                A palette answers two questions and this is the one
+                the search could never answer: not "which of fifty-one
+                tables holds this" but "take me back". It is drawn
+                first because it is the shortest path in the whole
+                surface — Ctrl+K, Enter — and because after the second
+                opening it is the only part of the resting list that
+                is about THIS person's day rather than about the file.
+
+                IT IS OFFERED WITH A WAY TO CLEAR IT. A list of where
+                somebody has been is a record of their work; keeping
+                one with no way to empty it is the app deciding on
+                their behalf. */}
+            {recalls.length > 0 ? (
+              <li className="hs-section" role="presentation">
+                <p className="hs-head hs-head--plain" id={`${baseId}-h-recent`}>
+                  Where you were
+                  <button
+                    type="button"
+                    className="hs-head-forget"
+                    /* the palette must not close under the press —
+                       every option in this list cancels its own
+                       pointerdown for the same reason */
+                    onPointerDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      clearRecent()
+                      setForgot((n) => n + 1)
+                      setActive(0)
+                    }}
+                  >
+                    Forget
+                  </button>
+                </p>
+                <ul
+                  className="hs-group"
+                  role="group"
+                  aria-labelledby={`${baseId}-h-recent`}
+                >
+                  {recalls.map((r) => {
+                    painted += 1
+                    const i = painted
+                    const isRow = r.rowId !== undefined
+                    const shot = isRow ? null : coverOf(r.table.id)
+                    return (
+                      <li
+                        key={r.key}
+                        id={optionId(i)}
+                        role="option"
+                        aria-selected={i === cursor}
+                        className={`hs-opt ${
+                          isRow ? 'hs-opt--row' : 'hs-opt--place'
+                        }${i === cursor ? ' is-active' : ''}`}
+                        style={inkStyle(r.table.accent)}
+                        /* A ROW SAYS WHICH TABLE IT IS IN. There is no
+                           sticky group heading over this list to carry
+                           it — the recalls are deliberately mixed,
+                           because the last six things you opened are
+                           not sorted by table — so the line carries it
+                           itself, and so does the accessible name. */
+                        aria-label={
+                          isRow
+                            ? `${r.label} — in ${r.table.name}, opened recently`
+                            : `${r.table.name} — opened recently`
+                        }
+                        onPointerDown={(e) => e.preventDefault()}
+                        onClick={() => choose(r.entityId, r.rowId)}
+                        onPointerEnter={() => setActive(i)}
+                      >
+                        <span className="hs-opt-mark" aria-hidden="true">
+                          {shot ? (
+                            <img
+                              className="hs-opt-shot"
+                              src={shot.at}
+                              alt=""
+                              width={shot.w}
+                              height={shot.h}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <TableKindSymbol
+                              kind={kindOf(r.table.kind)}
+                              size={isRow ? ICON_SIZE.tiny : ICON_SIZE.small}
+                            />
+                          )}
+                        </span>
+                        <span className="hs-opt-label">{r.label}</span>
+                        <span className="hs-opt-where">
+                          {isRow ? r.table.name : tableCaption(r.table)}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </li>
+            ) : null}
+
             {result.tables.length > 0 ? (
               <li className="hs-section" role="presentation">
                 <p className="hs-head hs-head--plain" id={`${baseId}-h-tables`}>

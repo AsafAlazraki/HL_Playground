@@ -35,6 +35,7 @@ import type { ReactElement } from 'react'
 import { CheckCircle, ArrowSquareOut, Circle } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { WORKBOOK_RULES, type WorkbookRuleSeed } from './workbookRules'
+import { Provenance } from './Provenance'
 
 export interface WorkbookRuleListProps {
   /** ids the engine is actually carrying, so a seed that has since
@@ -155,7 +156,7 @@ export function WorkbookRuleList({
                   you check. It is mono because it is a reference, not
                   prose, and it wraps rather than truncating — a
                   half-printed cell reference cannot be looked up. */}
-              <p className="cn-wb-src">{seed.source}</p>
+              <Provenance text={seed.source} />
             </li>
           )
         })}

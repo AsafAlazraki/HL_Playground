@@ -23,6 +23,7 @@ import { useMemo } from 'react'
 import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { CAME_IN, RATE_COMMITMENT, leftOutArtefacts, leftOutSubstantive } from './leftOut'
+import { Provenance } from './Provenance'
 
 const VERDICT_WORD: Record<'out' | 'later', string> = {
   out: 'Deliberately left out',
@@ -87,7 +88,7 @@ export function LeftOutList(): ReactElement | null {
         <b>{RATE_COMMITMENT.says}</b> Because {RATE_COMMITMENT.because}.
       </p>
       <p className="cn-lo-measured">{RATE_COMMITMENT.measured}</p>
-      <p className="cn-wb-src">{RATE_COMMITMENT.source}</p>
+      <Provenance text={RATE_COMMITMENT.source} label="Measured on" />
 
       <ul className="cn-lo-list">
         {records.map((r) => (
@@ -102,7 +103,7 @@ export function LeftOutList(): ReactElement | null {
             {r.reopensWhen ? (
               <p className="cn-lo-reopen">Comes back when {r.reopensWhen}.</p>
             ) : null}
-            <p className="cn-wb-src">{r.source}</p>
+            <Provenance text={r.source} label="Measured on" />
           </li>
         ))}
       </ul>

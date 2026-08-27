@@ -36,7 +36,7 @@
    height for the rest of the session.
    ============================================================ */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 import { Article, ArrowsLeftRight, Plus } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
@@ -53,9 +53,10 @@ import {
 } from './describe'
 import { emptyClause, inferKind, singleGroup } from './edit'
 import { createConstraint } from './constraintDefs'
-import { missingChoice, previewConstraint } from './state'
+import { missingSlot, previewConstraint } from './state'
 import { RuleSentence } from './RuleSentence'
 import { ConsequenceMeter } from './ConsequenceMeter'
+import { Provenance } from './Provenance'
 import { StartingPointList } from './StartingPointList'
 import { RelateTwoThings } from './RelateTwoThings'
 import {
@@ -172,6 +173,28 @@ export function NewRuleSentence({
      provenance blocks, and never both: whichever one opened the
      sentence last is the one describing it. */
   const [bound, setBound] = useState<{ offer: BindingOffer; pair: RelatablePair } | null>(null)
+
+  /* THE REFUSAL POINTS AT ITSELF.
+   *
+   * Rule 10 asks a thing that cannot be done to say why, WHERE it is
+   * refused, and this footer has always said why: "Choose a value for
+   * Hull Length (mtr)." What it could not do was say WHERE — and the
+   * sentence above it can run to a dozen words, half of them
+   * underlined, in a composer set at 23px. So the reason is a control
+   * now: press it and the cursor lands in the exact word, which
+   * lights up for a moment so the eye follows the cursor rather than
+   * hunting for it. The light is colour only, so reduced motion keeps
+   * every bit of it. */
+  const sentenceRef = useRef<HTMLDivElement>(null)
+  const [sought, setSought] = useState<string | null>(null)
+  const seekTimer = useRef<number | null>(null)
+
+  useEffect(
+    () => () => {
+      if (seekTimer.current !== null) window.clearTimeout(seekTimer.current)
+    },
+    [],
+  )
 
   useEffect(() => {
     setDraft((current) =>
@@ -301,8 +324,21 @@ export function NewRuleSentence({
 
   if (!draft || !preview) return null
 
-  const missing = missingChoice(draft, ctx)
-  const ready = missing === null
+  const gap = missingSlot(draft, ctx)
+  const ready = gap === null
+
+  /** Put the cursor in the word the footer is talking about. The
+   *  address is the sentence's own id for the token (`missingSlot`),
+   *  written into the DOM by `Tokens`. */
+  const seek = (): void => {
+    const id = gap?.tokenId
+    if (!id) return
+    const host = sentenceRef.current?.querySelector<HTMLElement>(`[data-tok="${id}"]`)
+    host?.querySelector<HTMLSelectElement | HTMLInputElement>('select, input')?.focus()
+    setSought(id)
+    if (seekTimer.current !== null) window.clearTimeout(seekTimer.current)
+    seekTimer.current = window.setTimeout(() => setSought(null), 1600)
+  }
 
   /* THE CITATION COMES OFF THE SCREEN THE MOMENT IT STOPS BEING TRUE.
      Re-point a column and the sentence is no longer the one the offer
@@ -355,13 +391,16 @@ export function NewRuleSentence({
         )
       )}
 
-      <RuleSentence
-        constraint={draft}
-        editable
-        big
-        onChange={setDraft}
-        conceptKeys={conceptKeys}
-      />
+      <div className="cn-new-say" ref={sentenceRef}>
+        <RuleSentence
+          constraint={draft}
+          editable
+          big
+          onChange={setDraft}
+          conceptKeys={conceptKeys}
+          soughtTokenId={sought}
+        />
+      </div>
 
       <ColumnNotes concepts={preview.concepts} />
 
@@ -398,11 +437,19 @@ export function NewRuleSentence({
         >
           Add rule
         </button>
-        {!ready && (
-          <span className="cn-new-why" id="cn-new-why">
-            {missing}
-          </span>
-        )}
+        {gap !== null &&
+          (gap.tokenId !== null ? (
+            <button type="button" className="cn-new-why is-seek" id="cn-new-why" onClick={seek}>
+              <span className="cn-new-why-say">{gap.say}</span>
+              <span className="cn-new-why-go">Take me to it</span>
+            </button>
+          ) : (
+            /* no clause on that side at all, so there is no word on
+               screen to put a cursor in — say why and stop there */
+            <span className="cn-new-why" id="cn-new-why">
+              {gap.say}
+            </span>
+          ))}
       </div>
     </section>
   )
@@ -448,7 +495,7 @@ function StartedFrom({
           mono, 11px, wrapping so a cell address can actually be looked
           up. The workbook list and both theme bands already share it;
           a fourth copy would guarantee two of them eventually differ. */}
-      <p className="cn-wb-src">{offer.seed.source}</p>
+      <Provenance text={offer.seed.source} />
       <button type="button" className="cn-from-blank" onClick={onBlank}>
         Start from a blank sentence instead
       </button>

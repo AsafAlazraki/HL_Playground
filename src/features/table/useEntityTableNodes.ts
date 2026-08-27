@@ -30,6 +30,7 @@ import {
 import { foldedTableIds, forgetGroupState } from './tableGroupState'
 import { foldedSectionTableIds, forgetSectionState } from './tableSectionState'
 import { fittedTableIds, forgetFitState } from './tableFitState'
+import { forgetReadState, readTableIds } from './tableReadState'
 
 /** React Flow node type key. One key, one component. */
 export const ENTITY_TABLE_NODE_TYPE = 'entity-table'
@@ -152,6 +153,12 @@ export function useEntityTableNodes(): EntityTableFlowNode[] {
     }
     for (const id of fittedTableIds()) {
       if (!entities[id]) forgetFitState(id)
+    }
+    /* and the reader's own lens — row height, and whether the empty
+       columns are put away. Same rule as the three above: a later
+       table must never inherit a stale key's way of being read. */
+    for (const id of readTableIds()) {
+      if (!entities[id]) forgetReadState(id)
     }
   }, [entities])
 

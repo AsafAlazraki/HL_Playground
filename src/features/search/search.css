@@ -220,6 +220,43 @@
   text-transform: uppercase;
   color: var(--ink-soft);
 }
+/* FORGET WHERE I HAVE BEEN. It sits in the recall heading and
+   nowhere else, so it is only ever on screen when there is
+   something to forget. Quiet at rest — this is not one of the two
+   things the accent is spent on here — and it takes all three
+   states, because everything pressable does. */
+.hs-head-forget {
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
+}
+.hs-head-forget:hover {
+  background: var(--chip-bg);
+  color: var(--ink);
+}
+.hs-head-forget:active {
+  background: var(--chip-bg);
+  color: var(--ink);
+  transition-duration: var(--d-press);
+}
+.hs-head-forget:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+  color: var(--ink);
+}
+
 .hs-head-mark {
   flex: none;
   display: inline-flex;
@@ -545,7 +582,10 @@
      translucent surfaces this design allows; a third was not argued
      for. Built from --ink at a fraction, exactly as `.tb-scrim` is. */
   background: color-mix(in srgb, var(--ink) 42%, transparent);
-  animation: fade-in var(--d-med) var(--ease) both;
+  /* NO ENTRANCE. See the note on `.fx-panel` — the scrim is the
+     ground this palette stands on and it cannot arrive later than
+     the thing standing on it without the panel appearing to float
+     over a page for a frame and then have a floor slid under it. */
 }
 
 /* ONE CARD. The field is its head, the answer is its body, the
@@ -563,7 +603,35 @@
   border-radius: var(--r-panel);
   box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
   overflow: hidden;
-  animation: ds-scale-in var(--d-med) var(--ease-out-expo) both;
+
+  /* ── IT DOES NOT ANIMATE, AND THAT IS THE RULING ──────────────
+     This carried `ds-scale-in` over 220ms, which is a correct and
+     well-behaved entrance for a modal and the wrong thing entirely
+     for THIS surface.
+
+     The motion budget is a budget, not a licence, and its one hard
+     line is that a keyboard-initiated action opens on the frame of
+     the keypress. Ctrl+K is pressed a hundred times a day by
+     somebody who already knows what they are going to type: the
+     first two or three characters go in DURING those 220ms, into a
+     box that is still growing and still 4% too small, and the
+     first frame they can actually read is the one where they have
+     already finished asking. An entrance a person types through is
+     not an entrance, it is latency with a curve on it.
+
+     Everything a modal gets an entrance FOR is already true here
+     without one. Where it came from is not in question — a palette
+     is summoned, not navigated to. What it covers is not in
+     question — the scrim says so, and appears with it. That it is
+     above the page is not in question — `--e-hero` and the lit top
+     edge say it, in paint, on the first frame.
+
+     THE PRESSES INSIDE IT STILL ANIMATE. This is not a stillness
+     policy applied to a whole surface; it is the one moment that
+     must be instant. The rows still light, the field still takes
+     its ring, and the Forget button still has all three states —
+     those are responses to a person acting, which is what the
+     budget is for. */
 }
 
 .fx-panel .hs-root {
@@ -652,11 +720,11 @@
   }
 }
 
-/* MOVEMENT GOES, OPACITY STAYS. Under the setting the panel still
-   arrives, it just no longer travels to get here. The scrim's fade is
-   opacity only and is left alone. */
-@media (prefers-reduced-motion: reduce) {
-  .fx-panel {
-    animation-name: ds-fade;
-  }
-}
+/* NOTHING TO REDUCE. The palette has no entrance to take away, so
+   the setting has nothing to say about how it arrives — which is
+   the happy end of the argument above: the surface that must be
+   instant for a touch typist is also the one that is already still
+   for a person who asked for stillness. The state transitions
+   inside it are `--d-fast` colour and opacity changes, which the
+   setting keeps on purpose (movement goes, colour and opacity
+   stay), and the one that moves — the sheen — is not used here. */

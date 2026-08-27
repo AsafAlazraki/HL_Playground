@@ -104,6 +104,21 @@ export interface BlockCardProps {
   /** stagger position for the arrival */
   index: number
   /**
+   * The DOM id this block answers to, so the rig ledger's lines can
+   * point at it. Absent on a nested block — a rig line names a
+   * top-level list, and an id nothing links to is a promise nobody
+   * made.
+   */
+  domId?: string
+  /**
+   * Just arrived at, by a press somewhere else on the page.
+   *
+   * A MOMENT AND NOT A SELECTION: nothing is selected by being
+   * scrolled to, so the mark fades on its own rather than waiting to
+   * be dismissed, and it changes no state the block acts on.
+   */
+  lit?: boolean
+  /**
    * Whether this block prints the reason a CURATED list is short.
    *
    * Every block a page seeds is curated-only, so the reason is the
@@ -135,6 +150,8 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     appliesTo,
     configuring,
     index,
+    domId,
+    lit = false,
     sayWhyCurated = true,
     onDropTable,
     onRefuse,
@@ -405,6 +422,56 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       row: sourceRow,
     })
 
+  /* ── WHAT SHOW EVERYTHING BROUGHT IN, AND WHY IT WAS NOT HERE ──
+
+     Property 3 of the curation mechanism lets a person switch the
+     narrowing off and see the whole table. It did that and then said
+     nothing at all about WHICH of the rows in front of them the rule
+     had been holding back — so a shortlist of six and a table of four
+     hundred and thirty-four looked like one undifferentiated list,
+     and the answer to "so what did the rule actually do?" was to
+     switch it back on and count.
+
+     Rule 10 says a thing that cannot be done says why, where it is.
+     Nothing here is refused — these rows are pickable, and a person
+     who wants one is right to be able to have it — but a row the rule
+     excluded is a different fact from a row it admitted, and drawing
+     them identically is the omission the mechanism exists to end.
+
+     THE MARK IS A CHIP AND THE REASON IS ON IT. Four hundred
+     sentences would be furniture; the rule's own summary — the same
+     string the RULE handle prints — rides on each chip, and the
+     count and the narrowing itself are already stated once, above the
+     rows, by `CurationNote`.
+
+     IT IS ONLY EVER DRAWN WITH THE NARROWING OFF. With the rule in
+     force every row here satisfies it, so there is nothing to mark
+     and the clean page is untouched. */
+  const rulePinned = (r: RelatedRow): boolean => r.pair?.origin === 'added'
+
+  const offeredByRule = (r: RelatedRow): boolean => {
+    if (!showAll) return true
+    if (curated) return r.pair !== undefined
+    if (rulePinned(r)) return true
+    return evalPairRule(engine, block.rule, { entityId: target.id, row: r.row }, {
+      entityId: sourceEntity.id,
+      row: sourceRow,
+    })
+  }
+
+  /** Why this one was not on the list, in the rule's own words. */
+  const whyNotOffered = (): string => {
+    if (curated) {
+      return `Nobody picked this ${singular(target.name)} for this ${singular(
+        sourceEntity.name,
+      )}. It is here because you asked to see everything.`
+    }
+    const rule = summariseRule(block.rule, sourceEntity, target)
+    return rule === ''
+      ? 'The rule on this list does not bring this one in. It is here because you asked to see everything.'
+      : `The rule on this list keeps ${rule} — this one does not, so it is here only because you asked to see everything.`
+  }
+
   /* -- curation: every write lands on a join row -------------- */
 
   const withJoin = (fn: (j: JoinRef) => void): void => {
@@ -531,7 +598,10 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
 
   return (
     <motion.section
-      className={`vw-block${dragOver ? ' is-drop' : ''}${configuring ? ' is-config' : ''}`}
+      id={domId}
+      className={`vw-block${dragOver ? ' is-drop' : ''}${configuring ? ' is-config' : ''}${
+        lit ? ' is-found' : ''
+      }`}
       /* the column tracks are declared once, here, so the header
          hairline and every row underneath can never drift apart */
       /* THE COLUMN TRACKS ARE GONE WITH THE TABLE. A block is a grid
@@ -808,7 +878,7 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                     the top of the card, and the recommended one takes
                     the card's rail as well — a state you can see from
                     across a desk. */}
-                {r.recommended || r.origin === 'added' ? (
+                {r.recommended || r.origin === 'added' || rulePinned(r) || !offeredByRule(r) ? (
                   <span className="vw-row-tags">
                     {r.recommended ? (
                       <span
@@ -819,12 +889,24 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                         Recommended
                       </span>
                     ) : null}
-                    {r.origin === 'added' ? (
+                    {/* THE PIN SURVIVES SHOW EVERYTHING. With the rule
+                        switched off `relatedRows` is given no rule to be
+                        outside of, so every row comes back as a rule
+                        match and the pinned ones lost their chip exactly
+                        when the list they stood out from got longer. The
+                        STORED origin is the truth — the same reading
+                        `keepOrigin` already relies on. */}
+                    {r.origin === 'added' || rulePinned(r) ? (
                       <span
                         className="vw-tag vw-tag--added"
                         title="Pinned in although the rule does not match it"
                       >
                         added
+                      </span>
+                    ) : null}
+                    {!offeredByRule(r) ? (
+                      <span className="vw-tag vw-tag--past" title={whyNotOffered()}>
+                        {curated ? 'not picked' : 'outside the rule'}
                       </span>
                     ) : null}
                   </span>

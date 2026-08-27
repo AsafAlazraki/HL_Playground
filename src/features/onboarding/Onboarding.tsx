@@ -14,19 +14,51 @@
    themselves in front of. A person who cleared the sheet to
    restore a backup could not restore it. See OpenSavedCopy.tsx.
 
-   WHAT THIS PASS CHANGED, and why each thing went:
+   ============================================================
+   WHAT THIS PASS CHANGED, AND WHY.
 
-   THE ROOM. A navy blueprint field with a 16px/96px ruling became
-   the app's own canvas ground with the house atmosphere on it
-   (`.ds-aurora .ds-grain`, ds.css). A grid under an aurora is two
-   textures arguing; the grid was the retired art direction's and
-   it went with it.
+   IT IS ONE OBJECT NOW, NOT A CARD ON A FIELD. The screen was a
+   468px white panel floating in the middle of an aurora: correct,
+   calm, and identical to the first run of every other product a
+   person has ever set up. The app it opens is a navy rail against
+   a paper page — that is the shape of this product, decided in
+   `app/SideNav.tsx` — and the first screen had no part of it.
 
-   THE FOUR CORNER TICKS AND THE RULED HEADER. Eight elements of
-   drafting-office costume drawn on every one of the three screens.
-   Deleted. What identifies the product is the product's own mark,
-   which is now drawn in the one accent instead of being a hairline
-   the same weight as the rules around it.
+   So the panel is a SLAB IN TWO HALVES, one navy and one paper,
+   sharing a radius, a border and one shadow. The left half is who
+   this is and how far along you are; the right half is the one
+   question being asked. It is the app's own drawing, three seconds
+   before the app.
+
+   THE HERO STEP GETS ITS ONE JOB. `--t-hero` (Archivo, 34-52px)
+   exists for "the first line of a stage that IS the page", and
+   until now no stage used it. On step 2 the line is THE BUSINESS
+   THEY JUST TYPED, set 44px in the display face — which is the
+   whole argument ds.css makes for importing that face at all: "a
+   dealership's own name deserves better than the default". It is
+   their proper noun in their own case, never a stamp (§2), and it
+   steps down to `--t-display-lg` past 22 characters so a 60-char
+   name is set rather than squeezed.
+
+   HOW LONG THIS TAKES IS NOW ON SCREEN. There was no way to know
+   step 1 of what — a person typing their business name had no idea
+   whether they had opened a form with two fields or twelve. Two
+   numbered steps run down the navy half, the current one lit, the
+   finished one ticked. That is the functional gap this pass found
+   here and built.
+
+   THE ARRIVAL IS SEQUENCED. The slab rises once in `--d-scene`;
+   inside it the mark, the line, the steps and the question follow
+   on a 46ms beat (`.ob-in`, index set inline). It is under a
+   second end to end, it happens once in the life of a dealership,
+   and `prefers-reduced-motion` takes every bit of the movement
+   while keeping the light.
+
+   THE ACCENT IS BARRED ON THE NAVY HALF and that is measured, not
+   stylistic: `--accent` is 1.9:1 on `--chrome`. The crest behind
+   the mark, the current step's ring and the rule down the spine
+   are all white at low alpha — the same answer `shell.css` reached
+   for the rail's lit row.
 
    TWO OF THE FOUR INDUSTRY CARDS COULD NEVER BE PRESSED. They
    were `disabled` buttons stamped COMING SOON, drawn at the same
@@ -38,14 +70,24 @@
    ============================================================ */
 
 import { useState } from 'react'
-import type { CSSProperties, ReactElement } from 'react'
+import type { CSSProperties, ReactElement, ReactNode } from 'react'
 import { INDUSTRIES } from '@/types/model'
 import type { IndustryKey } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { OpenSavedCopy } from './OpenSavedCopy'
-import { BrandLockup, IndustryMark, INDUSTRY_ORDER } from './symbols'
+import { HelmMark, IndustryMark, INDUSTRY_ORDER } from './symbols'
 import './onboarding.css'
+
+/** Which of the three screens is up. `file` is off the numbered
+ *  path on purpose — it is an answer to step 1, not a third step. */
+type Step = 'name' | 'industry' | 'file'
+
+/** Past this many characters a business name is set at
+ *  `--t-display-lg` instead of `--t-hero`. Measured against the
+ *  360px navy half: 22 characters is where a 52px line stops
+ *  fitting on two lines and starts hyphen-hunting. */
+const HERO_CHARS = 22
 
 function BackArrow() {
   return (
@@ -83,6 +125,129 @@ function GoArrow({ size = 13 }: { size?: number }) {
   )
 }
 
+function TickMark() {
+  return (
+    <svg width="10" height="8" viewBox="0 0 10 8" aria-hidden="true" focusable="false">
+      <path
+        d="M1 4.2 3.6 6.8 9 1.4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/* -- the navy half ----------------------------------------- */
+
+/** The two questions, in the order they are asked. `file` is not
+ *  one of them, which is why this list has two entries and not
+ *  three: a saved copy answers both at once. */
+const STEPS: { key: Step; label: string }[] = [
+  { key: 'name', label: 'Your business' },
+  { key: 'industry', label: 'What you sell' },
+]
+
+/** What the big line says, per screen. On step 2 it is the dealer's
+ *  own name — the one string on this screen that is theirs. */
+function heroFor(step: Step, org: string): { line: string; note: string } {
+  if (step === 'industry') {
+    return {
+      line: org,
+      note: 'That name heads every quote you hand a customer, and you can change it whenever you like.',
+    }
+  }
+  if (step === 'file') {
+    return {
+      line: 'From a file',
+      note: 'A copy this app saved earlier goes back on the sheet exactly as it was — tables, rows, modules and pages.',
+    }
+  }
+  return {
+    line: 'Two questions',
+    note: 'What the business is called, and what it sells. Then the sheet is yours.',
+  }
+}
+
+function BrandPanel({ step, org }: { step: Step; org: string }): ReactElement {
+  const said = heroFor(step, org)
+  const at = STEPS.findIndex((s) => s.key === step)
+  /* a long name is set one step down rather than squeezed — see
+     HERO_CHARS. Both steps are Archivo and both are above its 26px
+     floor, so the face never renders where it blurs. */
+  const long = said.line.length > HERO_CHARS
+
+  return (
+    <aside className="ob-brand">
+      {/* THE LIGHT ON THE NAVY, and it carries nothing: one soft
+          radial in white at 7%, fixed to the top-left corner where
+          the mark is. Removed entirely under reduced transparency
+          and higher contrast, like every other atmosphere here. */}
+      <span className="ob-brand-lamp" aria-hidden="true" />
+
+      <div className="ob-brand-top ob-in" style={{ ['--i' as string]: 0 } as CSSProperties}>
+        <span className="ob-crest" aria-hidden="true">
+          <HelmMark size={22} />
+        </span>
+        <span className="ob-crest-word">HelmLogic</span>
+      </div>
+
+      <div className="ob-brand-say">
+        <p
+          key={`${step}:${long}`}
+          className={`ob-brand-line ob-in${long ? ' is-long' : ''}`}
+          style={{ ['--i' as string]: 1 } as CSSProperties}
+        >
+          {said.line}
+        </p>
+        <p
+          key={`note:${step}`}
+          className="ob-brand-note ob-in"
+          style={{ ['--i' as string]: 2 } as CSSProperties}
+        >
+          {said.note}
+        </p>
+      </div>
+
+      {/* HOW FAR ALONG YOU ARE. Two steps, because there are two
+          questions; the numbers are figures and take the mono face. */}
+      <ol className="ob-steps ob-in" style={{ ['--i' as string]: 3 } as CSSProperties}>
+        {STEPS.map((s, i) => {
+          const done = at > i
+          const here = at === i
+          return (
+            <li
+              key={s.key}
+              className={`ob-step${done ? ' is-done' : ''}${here ? ' is-here' : ''}`}
+              aria-current={here ? 'step' : undefined}
+            >
+              <span className="ob-step-mark" aria-hidden="true">
+                {done ? <TickMark /> : i + 1}
+              </span>
+              <span className="ob-step-name">{s.label}</span>
+            </li>
+          )
+        })}
+      </ol>
+
+      {step === 'file' ? (
+        /* TRUE WHERE IT IS SAID: `keepingOrganisation` in
+           features/io/apply.ts takes the organisation OFF THE FILE
+           when this machine has none, which is exactly the state
+           this screen is drawn in. So a saved copy really does
+           answer both questions, and neither is asked afterwards. */
+        <p className="ob-steps-note">A saved copy already answers both.</p>
+      ) : null}
+
+      <p className="ob-brand-foot ob-in" style={{ ['--i' as string]: 4 } as CSSProperties}>
+        Everything you put in stays in this browser.
+      </p>
+    </aside>
+  )
+}
+
 /* -- step 1 ------------------------------------------------ */
 
 function NameStep({
@@ -99,24 +264,24 @@ function NameStep({
   const ready = name.trim().length > 0
 
   return (
-    <section className="ob-screen">
-      <form
-        className="ob-card"
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (ready) onNext()
-        }}
-      >
-        <BrandLockup />
+    <form
+      className="ob-form"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (ready) onNext()
+      }}
+    >
+      <h1 className="ob-ask ob-in" style={{ ['--i' as string]: 2 } as CSSProperties}>
+        What&rsquo;s the name of your business?
+      </h1>
+      {/* WHY IT IS BEING ASKED, and it is true where it is said:
+          `freeze.ts` writes the organisation onto every quote and
+          `QuoteDocument` prints it at the head of the page. */}
+      <p className="ob-why ob-in" style={{ ['--i' as string]: 3 } as CSSProperties}>
+        It heads every quote you hand a customer. You can change it later.
+      </p>
 
-        <h1 className="ob-ask">What&rsquo;s the name of your business?</h1>
-        {/* WHY IT IS BEING ASKED, and it is true where it is said:
-            `freeze.ts` writes the organisation onto every quote and
-            `QuoteDocument` prints it at the head of the page. */}
-        <p className="ob-why">
-          It heads every quote you hand a customer. You can change it later.
-        </p>
-
+      <div className="ob-field ob-in" style={{ ['--i' as string]: 4 } as CSSProperties}>
         <input
           className="ob-input"
           type="text"
@@ -129,22 +294,41 @@ function NameStep({
           maxLength={60}
           spellCheck={false}
         />
+        {/* THE ONE THING A 60-CHARACTER CAP OWES ANYBODY: the count,
+            and only once it starts to matter. A dealer whose name is
+            being silently truncated at the 61st keystroke should be
+            able to see it coming. */}
+        {name.length >= 45 ? (
+          <span className="ob-count" aria-hidden="true">
+            {name.length}/60
+          </span>
+        ) : null}
+      </div>
 
-        <button type="submit" className="ob-primary" disabled={!ready}>
-          Continue
-          <GoArrow />
-        </button>
+      <button
+        type="submit"
+        className="ob-primary ob-in"
+        style={{ ['--i' as string]: 5 } as CSSProperties}
+        disabled={!ready}
+      >
+        Continue
+        <GoArrow />
+      </button>
 
-        {/* THE OTHER HONEST ANSWER, kept quiet. Naming the business is
-            what almost everybody does here, so this is a text button
-            under the primary rather than a second card competing with
-            it — but it is on screen, because after CLEAR SHEET this is
-            the only import door there is. */}
-        <button type="button" className="ob-alt" onClick={onOpenFile}>
-          Open a saved copy instead
-        </button>
-      </form>
-    </section>
+      {/* THE OTHER HONEST ANSWER, kept quiet. Naming the business is
+          what almost everybody does here, so this is a text button
+          under the primary rather than a second card competing with
+          it — but it is on screen, because after CLEAR SHEET this is
+          the only import door there is. */}
+      <button
+        type="button"
+        className="ob-alt ob-in"
+        style={{ ['--i' as string]: 6 } as CSSProperties}
+        onClick={onOpenFile}
+      >
+        Open a saved copy instead
+      </button>
+    </form>
   )
 }
 
@@ -162,7 +346,7 @@ function NameStep({
    `other` is a different KIND of answer and one boolean cannot tell the
    two apart. Its own blurb reads "Start from a blank sheet and build
    your own tables", and that is not a capability being promised — it is
-   the app as it ships today: New table is on the dock, `createTable`
+   the app as it ships today: New table is on the rail, `createTable`
    mints a table from any kind, and the custom preset exists precisely
    for "anything the presets do not cover" (model.ts, `--kind-custom`).
    So the stamp was telling anybody reading this screen that a shipped
@@ -204,15 +388,15 @@ function IndustryCard({
   return (
     <button
       type="button"
-      className="ob-kind ds-sheen ds-rise"
-      style={{ ['--i' as string]: index } as CSSProperties}
+      className="ob-kind ds-sheen ob-in"
+      style={{ ['--i' as string]: 4 + index } as CSSProperties}
       onClick={() => onPick(industry)}
     >
       <span className="ob-kind-go" aria-hidden="true">
         <GoArrow size={15} />
       </span>
       <span className="ob-kind-sym">
-        <IndustryMark industry={industry} size={ICON_SIZE.hero} />
+        <IndustryMark industry={industry} size={ICON_SIZE.large} />
       </span>
       <span className="ob-kind-label">{meta.label}</span>
       <span className="ob-kind-blurb">{meta.blurb}</span>
@@ -221,11 +405,9 @@ function IndustryCard({
 }
 
 function IndustryStep({
-  org,
   onBack,
   onPick,
 }: {
-  org: string
   onBack: () => void
   onPick: (k: IndustryKey) => void
 }) {
@@ -235,53 +417,52 @@ function IndustryStep({
   const one = soon.length === 1
 
   return (
-    <section className="ob-screen">
-      <div className="ob-col">
-        <button type="button" className="ob-back" onClick={onBack}>
-          <BackArrow />
-          Back
-        </button>
+    <div className="ob-form">
+      <button
+        type="button"
+        className="ob-back ob-in"
+        style={{ ['--i' as string]: 1 } as CSSProperties}
+        onClick={onBack}
+      >
+        <BackArrow />
+        Back
+      </button>
 
-        <header className="ob-head">
-          {/* THE NAME THEY JUST TYPED, AND IT IS NOT A LABEL. The second
-              screen says whose sheet this is without spending the
-              headline on a 60-character business name — but it is the
-              dealer's own proper noun, so it does NOT take
-              `.mono-label`, whose identity is uppercase. §2: a name
-              keeps its case, and uppercasing one is lossy. */}
-          <span className="ob-eyebrow">{org}</span>
-          <h1 className="ob-title">What do you sell?</h1>
-          {/* THE SUB-LINE SAYS WHAT PICKING EACH ONE GETS YOU. It does
-              not claim Marine "arrives ready" — both answers land on the
-              same empty sheet; what Marine gets you is table presets
-              already drawn for boats, motors and trailers. */}
-          <p className="ob-sub">
-            Marine is the one the table presets are drawn for. Other starts you on a
-            blank sheet and you draw your own.
-          </p>
-        </header>
+      <h1 className="ob-ask ob-in" style={{ ['--i' as string]: 2 } as CSSProperties}>
+        What do you sell?
+      </h1>
+      {/* THE SUB-LINE SAYS WHAT PICKING EACH ONE GETS YOU. It does
+          not claim Marine "arrives ready" — both answers land on the
+          same empty sheet; what Marine gets you is table presets
+          already drawn for boats, motors and trailers. */}
+      <p className="ob-why ob-in" style={{ ['--i' as string]: 3 } as CSSProperties}>
+        Marine is the one the table presets are drawn for. Other starts you on a blank
+        sheet and you draw your own.
+      </p>
 
-        <div className="ob-grid" role="group" aria-label="Choose an industry">
-          {live.map((key, i) => (
-            <IndustryCard key={key} industry={key} index={i} onPick={onPick} />
-          ))}
-        </div>
-
-        {/* WHAT CANNOT BE PICKED, AND WHY, IN THE PLACE IT IS REFUSED —
-            rather than two dead buttons drawn like live ones. The names
-            and the count come off INDUSTRIES, so the day cars ship this
-            sentence loses them by itself. */}
-        {soon.length > 0 && (
-          <p className="ob-soon">
-            <span className="mono-label ob-soon-tag">Not yet</span>
-            <span className="ob-soon-say">
-              {joinNames(soon)} {one ? 'has' : 'have'} no table presets drawn yet, so{' '}
-              {one ? 'it cannot' : 'they cannot'} be picked.
-            </span>
-          </p>
-        )}
+      <div className="ob-grid" role="group" aria-label="Choose an industry">
+        {live.map((key, i) => (
+          <IndustryCard key={key} industry={key} index={i} onPick={onPick} />
+        ))}
       </div>
-    </section>
+
+      {/* WHAT CANNOT BE PICKED, AND WHY, IN THE PLACE IT IS REFUSED —
+          rather than two dead buttons drawn like live ones. The names
+          and the count come off INDUSTRIES, so the day cars ship this
+          sentence loses them by itself. */}
+      {soon.length > 0 && (
+        <p
+          className="ob-soon ob-in"
+          style={{ ['--i' as string]: 4 + live.length } as CSSProperties}
+        >
+          <span className="mono-label ob-soon-tag">Not yet</span>
+          <span className="ob-soon-say">
+            {joinNames(soon)} {one ? 'has' : 'have'} no table presets drawn yet, so{' '}
+            {one ? 'it cannot' : 'they cannot'} be picked.
+          </span>
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -289,8 +470,32 @@ function IndustryStep({
 
 export function Onboarding(): ReactElement {
   const setOrganisation = useProjectStore((s) => s.setOrganisation)
-  const [step, setStep] = useState<'name' | 'industry' | 'file'>('name')
+  const [step, setStep] = useState<Step>('name')
   const [name, setName] = useState('')
+
+  let work: ReactNode
+  if (step === 'name') {
+    work = (
+      <NameStep
+        name={name}
+        onName={setName}
+        onNext={() => setStep('industry')}
+        onOpenFile={() => setStep('file')}
+      />
+    )
+  } else if (step === 'file') {
+    /* loading a file leaves onboarding by itself: the shell's gate
+       is `!org && tableCount === 0`, and a file that validated has
+       tables in it */
+    work = <OpenSavedCopy onBack={() => setStep('name')} />
+  } else {
+    work = (
+      <IndustryStep
+        onBack={() => setStep('name')}
+        onPick={(industry) => setOrganisation(name.trim(), industry)}
+      />
+    )
+  }
 
   return (
     <div className="ob-root">
@@ -302,27 +507,18 @@ export function Onboarding(): ReactElement {
           see ds.css. */}
       <div className="ds-aurora ds-grain ob-sky" aria-hidden="true" />
 
-      {step === 'name' ? (
-        <NameStep
-          key="name"
-          name={name}
-          onName={setName}
-          onNext={() => setStep('industry')}
-          onOpenFile={() => setStep('file')}
-        />
-      ) : step === 'file' ? (
-        /* loading a file leaves onboarding by itself: the shell's gate
-           is `!org && tableCount === 0`, and a file that validated has
-           tables in it */
-        <OpenSavedCopy key="file" onBack={() => setStep('name')} />
-      ) : (
-        <IndustryStep
-          key="industry"
-          org={name.trim()}
-          onBack={() => setStep('name')}
-          onPick={(industry) => setOrganisation(name.trim(), industry)}
-        />
-      )}
+      <div className="ob-screen">
+        <div className="ob-stage">
+          <BrandPanel step={step} org={name.trim() || 'Your business'} />
+          {/* KEYED ON THE STEP, so the question ARRIVES rather than
+              being swapped under the reader. The navy half does not
+              remount — only its two lines do — so the slab itself
+              never re-enters. */}
+          <section className="ob-work" key={step}>
+            {work}
+          </section>
+        </div>
+      </div>
     </div>
   )
 }

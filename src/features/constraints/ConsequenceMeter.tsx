@@ -24,7 +24,7 @@
    nouns, before they press anything.
    ============================================================ */
 
-import type { ReactElement } from 'react'
+import type { CSSProperties, ReactElement } from 'react'
 import { previewCount, type RulePreview } from './state'
 import './constraints.css'
 
@@ -56,7 +56,7 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
   if (concepts.length === 0) {
     return (
       <section className="cn-conseq">
-        <p className="cn-conseq-label">What it would do</p>
+        <ConseqHead />
         <p className="cn-conseq-stub">
           Pick a column above and this counts, from your own sheet, how many rows the rule
           would hold for and how many it would reject.
@@ -71,7 +71,7 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
   if (tables.length === 0) {
     return (
       <section className="cn-conseq">
-        <p className="cn-conseq-label">What it would do</p>
+        <ConseqHead />
         <p className="cn-conseq-say cn-conseq-say--none">
           No table carries every column this sentence names, so the rule would never apply to a
           row. A sentence talks about one kind of table at a time.
@@ -107,12 +107,12 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
      denominator is not a measurement. */
   return (
     <section className="cn-conseq">
-      <p className="cn-conseq-label">What it would do</p>
+      <ConseqHead />
 
       {conditionReady && (
         <>
           <div className="cn-conseq-read">
-            <div className="cn-conseq-cell">
+            <div className="cn-conseq-cell ds-rise" style={{ '--i': 0 } as CSSProperties}>
               <b className="cn-fig">{looked.toLocaleString()}</b>
               <span className="cn-conseq-term">
                 {looked === 1 ? 'row it looks at' : 'rows it looks at'}
@@ -120,14 +120,19 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
             </div>
             {ready && (
               <>
-                <div className="cn-conseq-cell is-keeps">
+                <div className="cn-conseq-cell is-keeps ds-rise" style={{ '--i': 1 } as CSSProperties}>
                   <b className="cn-fig">{kept.toLocaleString()}</b>
                   <span className="cn-conseq-term">keep it</span>
                 </div>
                 {/* RED ONLY WHERE IT MEANS SOMETHING. Nought rows
                     breaking a rule is good news, and good news is
                     not drawn in the danger ink. */}
-                <div className={broken > 0 ? 'cn-conseq-cell is-breaks' : 'cn-conseq-cell'}>
+                <div
+                  className={
+                    broken > 0 ? 'cn-conseq-cell is-breaks ds-rise' : 'cn-conseq-cell ds-rise'
+                  }
+                  style={{ '--i': 2 } as CSSProperties}
+                >
                   <b className="cn-fig">{broken.toLocaleString()}</b>
                   <span className="cn-conseq-term">break it today</span>
                 </div>
@@ -136,9 +141,36 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
           </div>
 
           <div className="cn-bar" role="img" aria-label={label}>
-            <span className="cn-bar-keeps" style={{ width: pct(engaged) }} />
-            {ready && broken > 0 && <span className="cn-bar-breaks" style={{ width: pct(broken) }} />}
+            <span
+              className="cn-bar-keeps"
+              style={{ width: pct(engaged) }}
+              title={ready ? `${kept.toLocaleString()} keep it` : `${looked.toLocaleString()} looked at`}
+            />
+            {ready && broken > 0 && (
+              <span
+                className="cn-bar-breaks"
+                style={{ width: pct(broken) }}
+                title={`${broken.toLocaleString()} break it today`}
+              />
+            )}
           </div>
+
+          {/* WHAT THE EMPTY PART OF THE BAR IS. It was the largest
+              area on the meter and the only one with no word attached
+              to it: a person could read the ink and still not know
+              whether the track meant "rows that pass" or "rows we have
+              not counted". It means neither — it is the catalogue this
+              rule never looks at, and on the ATM floor that is 97.7 %
+              of the sheet, which is the whole lesson of F9. */}
+          {rows - looked > 0 && (
+            <p className="cn-bar-rest">
+              <span className="cn-bar-rest-dot" aria-hidden="true" />
+              The rest of the bar is{' '}
+              <b className="cn-fig">{(rows - looked).toLocaleString()}</b>{' '}
+              {rows - looked === 1 ? preview.noun.one : preview.noun.many} the condition never
+              looks at.
+            </p>
+          )}
         </>
       )}
 
@@ -172,6 +204,23 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
 
       <Lesson preview={preview} />
     </section>
+  )
+}
+
+/* ---------------------------------------------------------- */
+
+/** THE HEAD, AND THE HALF OF IT THAT MATTERS MOST. "What it would
+ *  do" is the question; the stamp beside it is the answer to the
+ *  question a person asks second — where did these numbers come
+ *  from. Nothing here is stored, seeded or remembered: every figure
+ *  on this panel is walked out of the loaded sheet on this render,
+ *  and a figure that moves with the data cannot go stale. */
+function ConseqHead(): ReactElement {
+  return (
+    <div className="cn-conseq-head">
+      <p className="cn-conseq-label">What it would do</p>
+      <p className="cn-conseq-live">counted on your sheet, now</p>
+    </div>
   )
 }
 

@@ -79,6 +79,7 @@ import {
 } from '@/features/table'
 import { Onboarding } from '@/features/onboarding'
 import { SideNav } from './SideNav'
+import { ActionBar } from './ActionBar'
 import { useHasPageActions } from '@/lib/actions'
 import { Win } from './Win'
 import { useWindowKeys } from './useWindowKeys'
@@ -439,6 +440,13 @@ export function Shell() {
           onOpenCustomers={() => setStage({ kind: 'customer', customerId: null })}
           onAddTable={() => setPicking(true)}
           onSearch={() => setFinding(true)}
+          /* A QUOTE IS MINTED FROM THE ROW BEING SOLD —
+             `createQuoteFromView(viewId, rowId)` — so there is no
+             such thing as an empty quote: "one rig, one customer,
+             one moment". New quote therefore opens the finder to
+             pick the subject rather than inventing a blank
+             document. Structure is never a side effect (§7). */
+          onNewQuote={() => setFinding(true)}
           quoteCount={quoteCount}
         />
         <main className="shell-stage" aria-label="Desktop">
@@ -499,7 +507,37 @@ export function Shell() {
               })}
             </div>
           ) : null}
+
+          {/* ============================================================
+              THE ACTION BAR, RESCUED FROM THE DOCK.
+
+              It was rendered INSIDE `<Dock>` — `.dk-rig` was the
+              material and `<ActionBar/>` was its first child — so
+              deleting the dock took every contextual control on
+              every page with it: the register lost Search rows,
+              Fitment, Columns, Delete rows, + Row and View in one
+              commit. That is the "all of the same functionality"
+              rule broken, and it shipped.
+
+              It belongs to the PAGE, not to the navigation, which
+              is why it is mounted here inside `.shell-stage` and
+              floats within the content column rather than over the
+              whole window. It carries its own surface now
+              (`.pagebar`) instead of borrowing a deleted
+              component's.
+              ============================================================ */}
         </main>
+
+        {/* OUTSIDE `.shell-stage`, DELIBERATELY. That element carries
+            `.shell-stage > * { width:100%; height:100% }` so every
+            stage fills it — and a floating bar mounted inside it
+            inherited exactly that: 1296 x 1000, its backdrop-filter
+            blurring the whole register behind it. It is
+            `position: fixed`, so its DOM parent costs it nothing;
+            being a sibling of the stage rather than a child of it is
+            the whole fix, and it needs no override to undo a rule
+            that was right for stages. */}
+        <ActionBar />
       </div>
 
       {switcher ? (

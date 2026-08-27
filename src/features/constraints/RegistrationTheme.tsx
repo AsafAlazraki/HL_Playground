@@ -39,6 +39,7 @@ import {
   findFeeRegister,
   registrationKeys,
 } from './registration'
+import { Provenance } from './Provenance'
 
 export function RegistrationTheme(): ReactElement | null {
   const entities = useProjectStore((s) => s.entities)
@@ -139,7 +140,7 @@ export function RegistrationTheme(): ReactElement | null {
           <li key={r.rule} className="cn-rg-rule">
             <p className="cn-rg-rule-says">{r.rule}</p>
             <p className="cn-rg-rule-why">Because {r.because}.</p>
-            <p className="cn-wb-src">{r.source}</p>
+            <Provenance text={r.source} />
           </li>
         ))}
       </ul>

@@ -5146,6 +5146,39 @@
   /* 4.6:1 on --chrome — the floor, and the last tier allowed to
      carry a word that matters */
   --chrome-fg-faint: #7e94ab;
+
+  /* ----------------------------------------------------------
+     THE WASH LADDER, AND WHY IT HAD TO BE ONE.
+
+     Rule 1 says never write a literal colour, and the navy chrome
+     was the one place in the app still doing it: counted, thirty
+     white-alpha literals across the rail, the masthead and the
+     dock, at ELEVEN different alphas — .05 .07 .08 .09 .10 .12
+     .13 .14 .16 .20 .24. Three of those differences were
+     decisions; the other seven were somebody typing a number.
+     A hover at .07 in one rule and .08 in the next is not a
+     hierarchy, it is drift, and no reviewer can see it.
+
+     So: four grounds and three lines, and every state on navy
+     lands on one of them. THE ACCENT IS STILL BARRED HERE — it
+     measures 1.9:1 on --chrome — which is why a state on this
+     ground is made of white light rather than of blue.
+
+     The grounds are cumulative and were checked against the ink
+     that sits on them: at --chrome-wash-on (16%) the ground
+     composites to #2c3f53 and --chrome-fg holds 10.3:1 on it, so
+     the lit row is still the most legible row on the rail. The
+     tint counts, and it was counted.
+     ---------------------------------------------------------- */
+  --chrome-wash: rgba(255, 255, 255, 0.06);
+  --chrome-wash-hover: rgba(255, 255, 255, 0.1);
+  --chrome-wash-press: rgba(255, 255, 255, 0.15);
+  --chrome-wash-on: rgba(255, 255, 255, 0.16);
+  /* the hairline that divides, the one that outlines, and the lit
+     top edge that makes a floating navy surface read as raised */
+  --chrome-line-soft: rgba(255, 255, 255, 0.07);
+  --chrome-line-strong: rgba(255, 255, 255, 0.22);
+  --chrome-edge: rgba(255, 255, 255, 0.12);
 }
 
 [data-theme='dark'] {
@@ -5199,8 +5232,8 @@
 .shell-view-bar .btn:hover,
 .shell-view-bar .io-trigger:hover {
   color: var(--chrome-fg);
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--chrome-wash-hover);
+  border-color: var(--chrome-line-strong);
 }
 .shell-view-bar .btn:focus-visible,
 .shell-view-bar .io-trigger:focus-visible {
@@ -5213,19 +5246,19 @@
    one system rather than as a dark bar and a white pill.
    ------------------------------------------------------------ */
 .dk-rig {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--chrome-edge);
   background: color-mix(in srgb, var(--chrome) 88%, transparent);
   box-shadow:
     0 2px 6px rgba(4, 14, 26, 0.3),
     0 18px 40px -12px rgba(4, 14, 26, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    inset 0 1px 0 var(--chrome-edge);
 }
 .dk-item {
   color: var(--chrome-fg-soft);
 }
 .dk-item:hover {
   color: var(--chrome-fg);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chrome-wash-hover);
 }
 /* THE LIT STATE IS WHITE, NOT BLUE. --accent measures 1.9:1 on
    --chrome, so an accent wash here would be a state nobody can
@@ -5234,7 +5267,7 @@
 .dk-item.is-active,
 .dk-item.is-open {
   color: var(--chrome-fg);
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--chrome-wash-on);
 }
 .dk-item:focus-visible {
   outline: 2px solid var(--chrome-fg);
@@ -5249,11 +5282,11 @@
 }
 .ab-btn:hover {
   color: var(--chrome-fg);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chrome-wash-hover);
 }
 .ab-btn.is-on {
   color: var(--chrome-fg);
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--chrome-wash-on);
 }
 /* the one primary keeps the accent — it sits on the rig's
    translucent navy, where white-on-accent is the pair that was
@@ -5359,355 +5392,30 @@
   height: 100%;
 }
 
-/* ------------------------------------------------------------
-   THE RAIL
-   ------------------------------------------------------------ */
-.sn {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100dvh;
-  background: var(--chrome);
-  color: var(--chrome-fg);
-  border-right: 1px solid rgba(255, 255, 255, 0.07);
-}
 
-.sn-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-5) var(--s-4) var(--s-4);
-}
-.sn-crest {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex: none;
-  border-radius: var(--r-control);
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--chrome-fg);
-}
-.sn-head-say {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 1px;
-}
-.sn-head-name {
-  font-size: var(--t-heading-size);
-  font-weight: 600;
-  letter-spacing: var(--t-heading-track);
-  color: var(--chrome-fg);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 /* 5.2:1 on --chrome, measured — the floor, and this is metadata
    beside the thing it describes, which is what the floor is for */
-.sn-head-note {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  color: var(--chrome-fg-faint);
-  white-space: nowrap;
-}
 
 /* ---- find ------------------------------------------------- */
-.sn-find {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-2);
-  margin: 0 var(--s-3) var(--s-4);
-  padding: 0 var(--s-2) 0 var(--s-3);
-  height: var(--h-md);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--r-control);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--chrome-fg-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.sn-find:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.24);
-  color: var(--chrome-fg);
-}
-.sn-find:active {
-  background: rgba(255, 255, 255, 0.14);
-  transition-duration: var(--d-press);
-}
-.sn-find:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
-}
-.sn-kbd {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  color: var(--chrome-fg-faint);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: var(--r-chip);
-  padding: 1px 5px;
-}
 
 /* ---- the scrolling middle --------------------------------- */
-.sn-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0 var(--s-3) var(--s-4);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
-}
 .sn-grp + .sn-grp {
   margin-top: var(--s-5);
 }
-.sn-grp-head {
-  margin: 0 0 var(--s-2);
-  padding: 0 var(--s-2);
-  color: var(--chrome-fg-faint);
-}
 
 /* ---- a row ------------------------------------------------ */
-.sn-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  height: 34px;
-  padding: 0 var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--chrome-fg-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-body-size);
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.sn-row:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--chrome-fg);
-}
 /* A LIST ROW PRESSES BY DARKENING (§4). It does not scale — a row
    that scales makes its neighbours look like they moved. */
-.sn-row:active {
-  background: rgba(255, 255, 255, 0.13);
-  transition-duration: var(--d-press);
-}
-.sn-row:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: -2px;
-}
 /* THE CURRENT PLACE. White at 14% plus full-strength ink, and a
    rail down the left edge — three signals, because this is the
    one thing on the rail a person needs to find without reading. */
-.sn-row.is-on {
-  background: rgba(255, 255, 255, 0.14);
-  color: var(--chrome-fg);
-  font-weight: 600;
-  box-shadow: inset 2px 0 0 var(--chrome-fg);
-}
-.sn-row-mark {
-  display: inline-flex;
-  flex: none;
-  color: inherit;
-}
-.sn-row-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sn-row-count {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  color: var(--chrome-fg-faint);
-  background: rgba(255, 255, 255, 0.09);
-  border-radius: var(--r-full);
-  padding: 1px 6px;
-}
-.sn-row.is-on .sn-row-count {
-  color: var(--chrome-fg);
-}
 
 /* ---- a kind band, and the tables under it ----------------- */
-.sn-band-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  height: 30px;
-  padding: 0 var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--chrome-fg-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
-}
-.sn-band-head:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--chrome-fg);
-}
-.sn-band-head:active {
-  background: rgba(255, 255, 255, 0.13);
-  transition-duration: var(--d-press);
-}
-.sn-band-head:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: -2px;
-}
-.sn-band-head.is-open {
-  color: var(--chrome-fg);
-}
 /* THE KIND'S OWN HUE, as a dot. This is the one place a kind
    colour appears on the rail, and it is a dot rather than a fill
    behind text (§1). */
-.sn-band-dot {
-  width: 7px;
-  height: 7px;
-  flex: none;
-  border-radius: var(--r-full);
-  background: var(--tbn-accent, var(--chrome-fg-faint));
-}
-.sn-band-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sn-band-count {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  color: var(--chrome-fg-faint);
-}
-.sn-band-body {
-  display: flex;
-  flex-direction: column;
-  margin: 2px 0 var(--s-2);
-  padding-left: var(--s-4);
-  /* the hairline that ties a band's tables to their heading */
-  border-left: 1px solid rgba(255, 255, 255, 0.09);
-  margin-left: 10px;
-}
-.sn-leaf {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  min-height: 28px;
-  padding: 4px var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--chrome-fg-faint);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
-}
-.sn-leaf:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--chrome-fg);
-}
-.sn-leaf:active {
-  background: rgba(255, 255, 255, 0.13);
-  transition-duration: var(--d-press);
-}
-.sn-leaf:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: -2px;
-}
-.sn-leaf.is-on {
-  background: rgba(255, 255, 255, 0.14);
-  color: var(--chrome-fg);
-  font-weight: 600;
-}
-.sn-leaf-name {
-  flex: 1;
-  min-width: 0;
-  /* NOTHING TRUNCATES MID-WORD (§3). A brand name that does not
-     fit wraps to two lines rather than losing its word-shape. */
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.3;
-}
-.sn-leaf-count {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--chrome-fg-faint);
-}
 
 /* ---- the foot --------------------------------------------- */
-.sn-foot {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-3);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.sn-new {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--h-md);
-  border: 0;
-  border-radius: var(--r-control);
-  background: var(--accent);
-  color: var(--accent-fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.sn-new:hover {
-  background: var(--accent-hover);
-}
-.sn-new:active {
-  background: var(--accent-press);
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-.sn-new:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
-}
-.sn-foot .io-trigger {
-  width: 100%;
-  justify-content: center;
-  color: var(--chrome-fg-soft);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-.sn-foot .io-trigger:hover {
-  color: var(--chrome-fg);
-  background: rgba(255, 255, 255, 0.08);
-}
 
 /* ------------------------------------------------------------
    THE MASTHEAD LOSES ITS NAVY. With a navy rail down the side,
@@ -5790,6 +5498,422 @@
 .sn-band + .sn-band {
   margin-top: 1px;
 }
+
+/* ONE NUMBER FOR THE RAIL'S WIDTH, so the grid that lays it out and
+   the floating page bar that must clear it read the same value.
+   They were two literals and they had already drifted. */
+:root { --rail: 264px; }
+.shell-body { grid-template-columns: var(--rail) minmax(0, 1fr); }
+@media (max-width: 1100px) { :root { --rail: 216px; } }
+
+/* ============================================================
+   HOME, THE THIRD PASS — the strip, and what a card previews.
+
+   Appended rather than editing what is above it, for the same
+   reason the redesign pass was: the structural decisions Home has
+   already made are right, and only its surface and its REACH are
+   in question here. Every selector in this block is `.hm-`.
+
+   THE COMPLAINT THIS ANSWERS. Home was decent and it was static:
+   a masthead, four figures, and fifty-one cards you could only
+   arrive at by scrolling past everything above them. Three things
+   are added and nothing is taken away —
+
+     1 · A PROPORTION. 15,691 rows is a number; the same rows
+         drawn once as a segmented strip is a shape, and the shape
+         is the fact — "this is a parts business with boats in it"
+         — that no column of figures states.
+     2 · A WAY THROUGH. The strip is pinned, so the eight kinds
+         are one press away for the whole scroll, and the chip for
+         the band you are in says so.
+     3 · A PREVIEW. Every card names two of its own rows, so the
+         gallery says what is IN the tables instead of only how
+         many rows each one holds.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   THE PINNED STRIP.
+
+   FULL BLEED, and it has to be: `.hm-scroll` carries --sp-6 of
+   side padding, so a strip inset by that padding would let cards
+   slide past in the 32px gutters either side of it while it sat
+   over them. Negative margins take it out to the scrollport's own
+   edges and the padding is put back inside.
+
+   THE MATERIAL IS §5's MASTHEAD EXCEPTION AND NOT A NEW ONE. The
+   two surfaces allowed to be translucent are the ones that sit
+   OVER scrolling content and need to say so; the dock is gone, and
+   this is the masthead's own strip. `--glass-*` already collapses
+   to opaque paint under `prefers-reduced-transparency` in ds.css,
+   so this needs no second rule of its own.
+   ------------------------------------------------------------ */
+.hm-scale {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0 calc(var(--sp-6) * -1) var(--s-8);
+  padding: var(--s-3) var(--sp-6);
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+
+/* The strip itself: a track on the sunken ground with the segments
+   butted together. A gap between them would be white space a
+   reader has to decide whether to count. */
+.hm-scale-bar {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  box-shadow: inset 0 1px 2px var(--edge-dark);
+}
+
+/* A HAIRLINE FLOOR, the same one `.fo-bar` keeps and for the same
+   reason: a kind holding 0.4% of the stock is a true reading and
+   two pixels of paint, and a bar that rounds it down to invisible
+   has told the reader the opposite of what the chip beside it
+   says. Nought gets no segment at all — see `kinds` in
+   HomeStage.tsx for why a minimum width on nothing is a claim
+   nobody made. */
+.hm-scale-seg {
+  min-width: 5px;
+  flex: 0 0 auto;
+  background: var(--kind-slate);
+  /* the divider is drawn INSIDE the segment, so eight segments
+     still sum to exactly one bar */
+  box-shadow: inset -1px 0 0 var(--surface-1);
+  transform-origin: left center;
+  animation: hm-draw var(--d-scene) var(--ease-out-expo) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 45ms);
+}
+.hm-scale-seg:last-child {
+  box-shadow: none;
+}
+.hm-scale-seg[data-kind='boat'] { background: var(--kind-boat); }
+.hm-scale-seg[data-kind='motor'] { background: var(--kind-motor); }
+.hm-scale-seg[data-kind='trailer'] { background: var(--kind-trailer); }
+.hm-scale-seg[data-kind='accessory'] { background: var(--kind-accessory); }
+.hm-scale-seg[data-kind='package'] { background: var(--kind-package); }
+.hm-scale-seg[data-kind='dealer'] { background: var(--kind-dealer); }
+.hm-scale-seg[data-kind='custom'] { background: var(--kind-custom); }
+.hm-scale-seg[data-kind='join'] { background: var(--kind-join); }
+
+/* THE STRIP DRAWS ITSELF, ONCE. Transform only, from the left
+   edge, so eight segments read as one line being laid down rather
+   than as eight boxes appearing. It is an ARRIVAL and it never
+   repeats: nothing here moves on a press, a keystroke or a
+   scroll. The name is claimed by Home — `hm-`. */
+@keyframes hm-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.hm-scale-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+/* A CHIP IS A ROW OF THE STRIP, SO IT PRESSES LIKE ONE — it
+   darkens rather than scaling (§4: a row that scales makes its
+   neighbours look like they moved), and there are eight of them
+   in a line. Hover, press and focus, all three, and the press
+   lands on pointer-down. */
+.hm-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-sm);
+  padding: 0 var(--s-3) 0 var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.hm-jump:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+.hm-jump:active {
+  background: var(--surface-4);
+  transition-duration: var(--d-press);
+}
+.hm-jump:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* WHERE YOU ARE, IN THE ACCENT — one of the four appearances §1
+   allows a screen, and the same one the nav rail spends it on. */
+.hm-jump.is-at {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+  color: var(--fg);
+}
+.hm-jump-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: var(--r-full);
+  background: var(--kind-slate);
+}
+.hm-jump-dot[data-kind='boat'] { background: var(--kind-boat); }
+.hm-jump-dot[data-kind='motor'] { background: var(--kind-motor); }
+.hm-jump-dot[data-kind='trailer'] { background: var(--kind-trailer); }
+.hm-jump-dot[data-kind='accessory'] { background: var(--kind-accessory); }
+.hm-jump-dot[data-kind='package'] { background: var(--kind-package); }
+.hm-jump-dot[data-kind='dealer'] { background: var(--kind-dealer); }
+.hm-jump-dot[data-kind='custom'] { background: var(--kind-custom); }
+.hm-jump-dot[data-kind='join'] { background: var(--kind-join); }
+.hm-jump-name {
+  min-width: 0;
+}
+/* every figure is mono and tabular, so eight counts in a row line
+   up on their digits instead of drifting by the width of a 1 */
+.hm-jump-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+}
+.hm-jump.is-at .hm-jump-n {
+  color: var(--fg-secondary);
+}
+
+/* The sections, and the clearance a pinned strip costs them: a
+   heading landed on by a jump has to start UNDER the strip rather
+   than behind it. 84px is the strip's height plus the gap the eye
+   needs to read the band as beginning there. */
+.hm-secs {
+  min-width: 0;
+}
+.hm-sec {
+  scroll-margin-top: calc(var(--s-16) + var(--s-5));
+}
+
+/* ------------------------------------------------------------
+   THE PEEK — two of the table's own rows, on the card.
+
+   SET AS SECONDARY TEXT AND NOT AS DATA. These are names, so they
+   are Inter and not mono, and they sit a tier under the table's
+   own name at `--fg-tertiary` — 5.5:1 on white, and the card's
+   `--grad-surface` bottoms out at #fcfcfd, which moves that by
+   less than a tenth of a point.
+
+   ONE LINE, AND THE WHOLE OF IT IS REACHABLE. §3 forbids a name
+   being cut with nowhere to find the rest; `useClipTitles`
+   measures this element and gives it its own full text as a
+   `title` when, and only when, it is actually clipped — the
+   promise `.hm-card-name` already keeps, extended to the line
+   that needs it more often.
+   ------------------------------------------------------------ */
+.hm-card-peek {
+  margin-top: 2px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--t-caption-size);
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: color var(--d-fast) var(--ease);
+}
+/* the card lighting up brings its contents with it */
+.hm-card:hover .hm-card-peek,
+.hm-card:focus-visible .hm-card-peek {
+  color: var(--fg-secondary);
+}
+
+/* ------------------------------------------------------------
+   RHYTHM. A gallery of eight bands needs the bands to read as
+   bands: the heading takes air above it that the cards under it
+   do not, so the eye lands on a name rather than on a wall. The
+   masthead gives some of its own back, because the strip now
+   stands between it and the first card.
+   ------------------------------------------------------------ */
+.hm-sec + .hm-sec {
+  margin-top: var(--s-12);
+}
+.hm-mast {
+  margin-bottom: var(--s-6);
+}
+
+@media (max-width: 900px) {
+  /* two rows of chips plus the strip is most of a narrow screen,
+     so it stops being pinned and becomes an ordinary band */
+  .hm-scale {
+    position: static;
+    margin-bottom: var(--s-6);
+  }
+  .hm-sec {
+    scroll-margin-top: var(--s-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-scale-seg {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   THE RAIL, SECOND PASS — sections, and a width it can give back.
+
+   The first rail was a flat list. This one is shaped like the
+   business: DATA (the shape of what you sell) · MODULES (the
+   places) · SELLING (rules, quotes, customers) · SETTINGS (who
+   may do what). See SideNav.tsx's header for the argument.
+
+   Everything below REPLACES the corresponding first-pass rule
+   rather than layering over it — the earlier `.sn-*` block was
+   deleted in the same commit, because two declarations of one
+   selector is how a stylesheet stops being a design.
+   ============================================================ */
+
+.sn {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100dvh;
+  background: var(--chrome);
+  color: var(--chrome-fg);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  /* the rail is the one element whose WIDTH animates, and it is a
+     deliberate exception: it is a layout property, but it is a
+     direct manipulation the person asked for and there is nothing
+     to interrupt. 200ms keeps it inside the drawer budget. */
+  transition: width var(--d-slow) var(--ease-out-expo);
+}
+
+/* ---- head ------------------------------------------------- */
+.sn-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-3) var(--s-4);
+}
+.sn-crest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--r-control);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--chrome-fg);
+}
+.sn-head-say {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+  flex: 1;
+}
+.sn-head-name {
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: var(--t-heading-track);
+  color: var(--chrome-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 5.2:1 on --chrome, measured — metadata beside the thing it
+   describes, which is exactly what the floor is for */
+.sn-head-note {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  color: var(--chrome-fg-faint);
+  white-space: nowrap;
+}
+.sn-fold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-faint);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.sn-fold:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--chrome-fg);
+}
+.sn-fold:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.sn-fold:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+
+/* ---- find ------------------------------------------------- */
+.sn-find {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 var(--s-3) var(--s-4);
+  padding: 0 var(--s-2);
+  height: var(--h-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-control);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--chrome-fg-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.sn-find:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: var(--chrome-fg);
+}
+.sn-find:active {
+  background: rgba(255, 255, 255, 0.14);
+  transition-duration: var(--d-press);
+}
+.sn-find:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+.sn-find-mark {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  font-size: 14px;
+}
 .sn-find-say {
   flex: 1;
   min-width: 0;
@@ -5797,4 +5921,426 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.sn-kbd {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--chrome-fg-faint);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--r-chip);
+  padding: 1px 5px;
+}
+
+/* ---- the scrolling middle --------------------------------- */
+.sn-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 var(--s-3) var(--s-4);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+.sn-grp + .sn-grp {
+  margin-top: var(--s-4);
+}
+.sn-grp-head {
+  margin: 0 0 var(--s-1);
+  padding: 0 var(--s-2);
+  color: var(--chrome-fg-faint);
+}
+
+/* ---- a section header (DATA) ------------------------------ */
+.sn-sec {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-1) var(--s-2);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.sn-sec-name {
+  flex: 1;
+  color: var(--chrome-fg-faint);
+  transition: color var(--d-fast) var(--ease);
+}
+.sn-sec:hover .sn-sec-name {
+  color: var(--chrome-fg-soft);
+}
+.sn-sec:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+  border-radius: var(--r-control);
+}
+/* a wedge that turns rather than two glyphs that swap */
+.sn-sec-wedge {
+  width: 0;
+  height: 0;
+  flex: none;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--chrome-fg-faint);
+  transform: rotate(-90deg);
+  transition: transform var(--d-fast) var(--ease-out-expo);
+}
+.sn-sec.is-open .sn-sec-wedge {
+  transform: rotate(0deg);
+}
+.sn-sec-body {
+  margin-top: 2px;
+}
+
+/* ---- a row ------------------------------------------------ */
+.sn-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: 34px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.sn-row:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+}
+/* A LIST ROW PRESSES BY DARKENING (§4) — a row that scales makes
+   its neighbours look like they moved. */
+.sn-row:active {
+  background: rgba(255, 255, 255, 0.13);
+  transition-duration: var(--d-press);
+}
+.sn-row:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+}
+.sn-row.is-on {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--chrome-fg);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--chrome-fg);
+}
+.sn-row-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  flex: none;
+  color: inherit;
+}
+.sn-row-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-full);
+  background: currentColor;
+  opacity: 0.5;
+}
+.sn-row.is-on .sn-row-pip {
+  opacity: 1;
+}
+.sn-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sn-row-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--chrome-fg-faint);
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: var(--r-full);
+  padding: 1px 6px;
+}
+.sn-row.is-on .sn-row-count {
+  color: var(--chrome-fg);
+}
+
+/* ---- bands: Tables, then each kind ------------------------ */
+.sn-band-head,
+.sn-kind {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.sn-band-head:hover,
+.sn-kind:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+}
+.sn-band-head:active,
+.sn-kind:active {
+  background: rgba(255, 255, 255, 0.13);
+  transition-duration: var(--d-press);
+}
+.sn-band-head:focus-visible,
+.sn-kind:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+}
+.sn-band-head.is-open,
+.sn-kind.is-open {
+  color: var(--chrome-fg);
+}
+/* the kind's own hue, as a DOT — never a fill behind text (§1) */
+.sn-band-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  margin-left: 4px;
+  border-radius: var(--r-full);
+  background: var(--tbn-accent, var(--chrome-fg-faint));
+}
+.sn-band-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sn-band-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--chrome-fg-faint);
+}
+.sn-band-body,
+.sn-leaves {
+  display: flex;
+  flex-direction: column;
+  margin-left: 11px;
+  padding-left: var(--s-3);
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+}
+.sn-band + .sn-band {
+  margin-top: 1px;
+}
+
+/* ---- a table ---------------------------------------------- */
+.sn-leaf {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 28px;
+  padding: 4px var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-faint);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.sn-leaf:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+}
+.sn-leaf:active {
+  background: rgba(255, 255, 255, 0.13);
+  transition-duration: var(--d-press);
+}
+.sn-leaf:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+}
+.sn-leaf.is-on {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--chrome-fg);
+  font-weight: 600;
+}
+/* NOTHING TRUNCATES MID-WORD (§3): a brand name that does not fit
+   wraps to two lines rather than losing its word-shape. */
+.sn-leaf-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+}
+.sn-leaf-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--chrome-fg-faint);
+}
+
+/* new table sits WITH the tables, not with the primary act */
+.sn-add {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 28px;
+  margin-top: 2px;
+  padding: 4px var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--chrome-fg-faint);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.sn-add:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+}
+.sn-add:active {
+  background: rgba(255, 255, 255, 0.13);
+  transition-duration: var(--d-press);
+}
+.sn-add:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: -2px;
+}
+
+/* ---- the foot --------------------------------------------- */
+.sn-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+/* THE ONE PRIMARY ACT IN THE APP. It keeps the accent because it
+   sits on navy where white-on-accent is the pair that was
+   measured, and it is the only saturated thing on the rail. */
+.sn-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  height: var(--h-lg);
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.sn-new:hover {
+  background: var(--accent-hover);
+}
+.sn-new:active {
+  background: var(--accent-press);
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+.sn-new:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+.sn-new-mark {
+  font-size: 16px;
+  line-height: 1;
+}
+.sn-foot .io-trigger {
+  width: 100%;
+  justify-content: center;
+  color: var(--chrome-fg-soft);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sn-foot .io-trigger:hover {
+  color: var(--chrome-fg);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================
+   TIGHT — the rail gives its width back.
+
+   264px is 20% of a 1280 laptop. Collapsed it is 64px of glyphs
+   and counts. Every row keeps its accessible name (SideNav sets
+   aria-label and title when tight), so this is not a guessing
+   game, and the choice is remembered in localStorage.
+
+   Words are hidden with width/opacity rather than `display:none`
+   so the rail can animate rather than jump.
+   ============================================================ */
+.sn.is-tight {
+  align-items: stretch;
+}
+.sn.is-tight .sn-head {
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-2) var(--s-3);
+}
+.sn.is-tight .sn-head-say,
+.sn.is-tight .sn-find-say,
+.sn.is-tight .sn-kbd,
+.sn.is-tight .sn-row-name,
+.sn.is-tight .sn-row-count,
+.sn.is-tight .sn-grp-head,
+.sn.is-tight .sn-sec,
+.sn.is-tight .sn-sec-body,
+.sn.is-tight .sn-new-say,
+.sn.is-tight .sn-foot .io-trigger {
+  display: none;
+}
+.sn.is-tight .sn-find {
+  justify-content: center;
+  margin: 0 var(--s-2) var(--s-3);
+  padding: 0;
+}
+.sn.is-tight .sn-row {
+  justify-content: center;
+  padding: 0;
+}
+.sn.is-tight .sn-scroll {
+  padding: 0 var(--s-2) var(--s-3);
+}
+.sn.is-tight .sn-foot {
+  padding: var(--s-2);
+}
+.sn.is-tight .sn-new {
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sn,
+  .sn-sec-wedge {
+    transition: none;
+  }
 }

@@ -30,6 +30,7 @@ import {
   type LeafNoun,
 } from './grouping'
 import { useCollapsedGroups } from './tableGroupState'
+import type { RowMetrics } from './tableReadState'
 
 export interface GroupedView {
   /** hand this to Grid AND to useSheetCommands — they must agree */
@@ -56,6 +57,9 @@ export function useGroupedView(
      *  is everything; FALSE in the full-window lens, where re-filing a
      *  single row by retyping its Brand has to be possible. */
     hideLevelColumns?: boolean
+    /** how tall this lens draws its rows. Absent everywhere but the
+     *  full-window register — see `tableReadState`. */
+    metrics?: RowMetrics
   } = {},
 ): GroupedView {
   const hideLevelColumns = opts.hideLevelColumns !== false
@@ -96,9 +100,10 @@ export function useGroupedView(
     })
   }, [levelIds, fields, viewRows, rowById, hasFormula, computedFor, refLabelOf])
 
+  const metrics = opts.metrics
   const layout = useMemo(
-    () => layoutGroups(viewRows, groups, collapsed),
-    [viewRows, groups, collapsed],
+    () => layoutGroups(viewRows, groups, collapsed, metrics),
+    [viewRows, groups, collapsed, metrics],
   )
 
   const grouped = layout.grouped

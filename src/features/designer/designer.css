@@ -1,9 +1,29 @@
 /* ============================================================
-   Entity Designer — schema sheet styles   (prefix: ds-)
-   CHART ROOM chrome: white instrument panel, marine-navy ink,
-   hairlines, red-pencil marks, mono micro-labels, corner ticks.
-   Rhythm on the --sp scale: sections gap --sp-5, related
-   controls --sp-2/-3, micro-label to value --sp-1.
+   THE COLUMN SETUP — one table's shape   (prefix: ds-)
+
+   THIS FILE SAID "CHART ROOM CHROME" AT THE TOP OF IT, and meant
+   it: corner registration ticks on the title block, dimension-line
+   ticks on every section rule, two rubber stamps set on a rotation,
+   and eleven labels tracked out to +0.2em. That is the design
+   DESIGN_PRINCIPLES §0 was written to replace, and this was the one
+   surface of the app the re-skin never reached — `git log` on this
+   folder stops three commits before the blue landed.
+
+   The bridge re-pointed its colours, so it was never WRONG; it was
+   a marine-blue drawing office sitting one press away from a navy
+   rail and a page. The motifs go here, and what replaces them is
+   the system's own: a lit gradient surface with `--edge-light` on
+   its top hairline, one accent, the label tracking at +0.06em, and
+   a press on everything a person can press.
+
+   WHAT DOES NOT CHANGE: the layout. Not one `--sp` value, not one
+   flex rule, not one width. Every geometry number in this file was
+   arrived at against real column lists — 31 columns on Highfield,
+   30 on Surtees — and a re-skin that reflows them is a re-skin that
+   has to be re-measured.
+
+   Rhythm on the --sp scale: sections gap --sp-5, related controls
+   --sp-2/-3, micro-label to value --sp-1.
    ============================================================ */
 
 .ds-root {
@@ -33,12 +53,12 @@
 .ds-caption {
   margin-top: var(--sp-1);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   color: var(--ink-faint);
 }
 
 .ds-hint {
-  font-size: 11.5px;
+  font-size: 12px;
   font-style: italic;
   color: var(--ink-faint);
 }
@@ -47,34 +67,26 @@
 /* title block                                                */
 /* ---------------------------------------------------------- */
 
+/* THE FOUR CORNER REGISTRATION TICKS ARE GONE. They were 2px of
+   full-strength ink hung off the outside of the card at -4px, which
+   is a drawing-office motif — a sheet of paper pinned under a
+   plotter — and the drawing office is the design that was replaced.
+   They also carried a real cost: sitting OUTSIDE the border they
+   were clipped by the panel this sheet lives in at narrow widths, so
+   half the app drew three of them.
+
+   What replaces them is the system's own way of saying "raised":
+   a gradient ground rather than flat paint, the lit top hairline
+   (`--edge-light`, ds.css §4b), and the card elevation rung. Nothing
+   about the geometry moves. */
 .ds-titleblock {
   position: relative;
-  border: 1px solid var(--hairline-strong);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--paper-high);
-  box-shadow: var(--shadow-sheet);
-}
-
-/* corner registration ticks */
-.ds-titleblock::before,
-.ds-titleblock::after {
-  content: '';
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  pointer-events: none;
-}
-.ds-titleblock::before {
-  top: -4px;
-  left: -4px;
-  border-top: 2px solid var(--ink);
-  border-left: 2px solid var(--ink);
-}
-.ds-titleblock::after {
-  bottom: -4px;
-  right: -4px;
-  border-bottom: 2px solid var(--ink);
-  border-right: 2px solid var(--ink);
+  background: var(--grad-surface);
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    var(--e-card);
 }
 
 /* every row shares the same 12px inner left edge */
@@ -94,20 +106,40 @@
 .ds-sheet-tag {
   color: var(--ink-faint);
   font-size: 11px;
-  letter-spacing: 0.2em;
+  /* +0.2em was the outgoing micro tracking, and the redesign's own
+     bridge note calls it "the single worst thing in the outgoing
+     type". The label step is +0.06em and this is a label. */
+  letter-spacing: 0.06em;
 }
 
-/* SAVED stamp — lights while mutations land, fades after */
+/* SAID SAVED IN GREEN, IN A GREEN BOX, ROTATED TWO DEGREES.
+   Three faults in eleven characters. A rubber stamp on a slant is the
+   drawing office; the kind hues are "a rail, a dot or a glyph, never a
+   fill behind text" (§1); and `--kind-green` as TEXT measures well
+   under the 4.5 floor on white, so the one word that confirms the
+   dealer's work landed was the least legible thing on the panel.
+
+   It is now the thing itself: a green DOT — the kind hue doing the one
+   job the kind hues have — and the word in the ordinary quiet ink,
+   which clears 5.5:1. It still appears on the same beat and fades on
+   the same curve. */
 .ds-saved {
-  color: var(--accent-viridian);
-  border: 1px solid currentColor;
-  border-radius: var(--radius-sm);
-  padding: 1px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--ink-faint);
   font-size: 11px;
-  letter-spacing: 0.2em;
-  transform: rotate(-2deg);
+  letter-spacing: 0.06em;
   opacity: 0;
   transition: opacity 420ms var(--ease-draft);
+}
+.ds-saved::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--kind-green);
 }
 .ds-saved-show {
   opacity: 1;
@@ -208,7 +240,7 @@
 .ds-about-what {
   min-width: 0;
   overflow: hidden;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.35;
   color: var(--ink-faint);
   text-overflow: ellipsis;
@@ -232,7 +264,7 @@
   background: transparent;
   resize: none;
   overflow: hidden;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--ink-soft);
 }
@@ -278,7 +310,7 @@
 .ds-ink-name {
   padding-bottom: 2px;
   font-size: 11px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.06em;
   color: var(--ink-soft);
 }
 
@@ -294,39 +326,33 @@
 .ds-sect-label {
   color: var(--ink);
 }
+/* THE DIMENSION LINE GOES. A hairline with an end tick at each end is
+   how a draughtsman writes a measurement, and this rule measures
+   nothing — it separates a caption from a figure. Two ticks and a
+   6px hop of full-strength ink, four times a page, for decoration.
+
+   A rule is a rule now, and it fades as it runs so the caption at its
+   head is what the eye lands on rather than the line. */
 .ds-sect-rule {
   position: relative;
   flex: 1;
   height: 1px;
-  background: var(--hairline);
-}
-.ds-sect-rule::before,
-.ds-sect-rule::after {
-  content: '';
-  position: absolute;
-  top: -2.5px;
-  width: 1px;
-  height: 6px;
-  background: var(--hairline-strong);
-}
-.ds-sect-rule::before {
-  left: 0;
-}
-.ds-sect-rule::after {
-  right: 0;
+  background: linear-gradient(90deg, var(--line-strong) 0%, var(--line) 62%, transparent 100%);
 }
 .ds-sect-meta {
   color: var(--blue);
+  font-variant-numeric: tabular-nums;
 }
 .ds-sect-danger .ds-sect-label {
   color: var(--red);
 }
 .ds-sect-danger .ds-sect-rule {
-  background: color-mix(in srgb, var(--red) 30%, transparent);
-}
-.ds-sect-danger .ds-sect-rule::before,
-.ds-sect-danger .ds-sect-rule::after {
-  background: var(--red);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--red) 45%, transparent) 0%,
+    color-mix(in srgb, var(--red) 16%, transparent) 62%,
+    transparent 100%
+  );
 }
 
 /* ---------------------------------------------------------- */
@@ -718,7 +744,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12.5px;
+  font-size: 13px;
 }
 .ds-opt-btns {
   display: flex;
@@ -746,7 +772,7 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
   background: var(--paper-high);
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--ink);
   text-align: left;
   cursor: pointer;
@@ -836,16 +862,27 @@
   align-items: flex-start;
   gap: var(--sp-2);
 }
+/* THE SECOND ROTATED STAMP, and it fails the same three ways as the
+   first — see `.ds-saved`. It is the mark that says an expression
+   parses, which is the single most reassuring thing on the formula
+   workbench, and it was set in a hue that does not clear the floor. */
 .ds-fx-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
   flex: none;
-  padding: 1px 6px;
-  border: 1px solid currentColor;
-  border-radius: var(--radius-sm);
-  color: var(--accent-viridian);
+  color: var(--ink-soft);
   font-size: 11px;
-  letter-spacing: 0.2em;
-  transform: rotate(-1.5deg);
+  letter-spacing: 0.06em;
   animation: fade-in var(--t-med) var(--ease-draft) both;
+}
+.ds-fx-stamp::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--kind-green);
 }
 .ds-fx-chips {
   display: flex;
@@ -1046,7 +1083,7 @@
   min-width: 0;
 }
 .ds-add-item-name {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink);
 }
@@ -1074,13 +1111,13 @@
 .ds-note-tag {
   flex: none;
   font-size: 11px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.06em;
   color: var(--red);
 }
 .ds-note-text {
   flex: 1 1 12ch;
   min-width: 0;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--ink);
 }
@@ -1167,10 +1204,11 @@
 .ds-sect-mark .ds-sect-rule {
   background: color-mix(in srgb, var(--red) 28%, transparent);
 }
-.ds-sect-mark .ds-sect-rule::before,
-.ds-sect-mark .ds-sect-rule::after {
-  background: var(--red);
-}
+/* THE TWO RULES THAT COLOURED THE SECTION RULE'S END TICKS stood
+   here. The ticks were a dimension-line motif and are gone (see
+   `.ds-sect-rule`), so these styled pseudo-elements with no `content`
+   and could never have painted. Struck rather than left behind to
+   look load-bearing to the next reader. */
 
 .ds-mark-list {
   list-style: none;
@@ -1213,11 +1251,11 @@
 }
 .ds-mark-title {
   font-size: 11px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.06em;
   color: var(--red);
 }
 .ds-mark-why {
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.55;
   color: var(--ink-soft);
 }
@@ -1238,7 +1276,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--red);
   cursor: pointer;
@@ -1431,7 +1469,7 @@
 .ds-cs-facts {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.5;
   letter-spacing: 0.01em;
   color: var(--ink-soft);
@@ -1615,7 +1653,7 @@
 .ds-add-btn,
 .ds-danger-btn {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -1650,8 +1688,341 @@
    ============================================================ */
 .ds-cs-cancel {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+}
+
+/* ============================================================
+   RESPONSE — the pass this file never had.
+
+   DESIGN_PRINCIPLES rule 8: "Every pressable thing has hover, press
+   and focus. Press lands on pointer-down." §4 says the outgoing build
+   had sixteen `:active` rules across the whole app, one of which
+   served the system.
+
+   THIS FILE HAD ONE, in 1,657 lines and forty-odd pressable surfaces
+   — `.ds-mark-fix:active { translateY(1px) }`, on a control the app
+   does not currently draw. Every other button, swatch, row, chip,
+   choice and tray item on the column setup answered a press with
+   nothing at all. Hover was thorough; the moment of contact was not
+   designed anywhere.
+
+   THE SCALE IS CALIBRATED TO THE SURFACE, which is the whole of §4's
+   argument and the reason this is not one `:active` rule with a
+   comma-separated list:
+
+     small controls   scale(0.97)  — a 22px mini button, a swatch, a
+                                     caret. The press is FELT.
+     rows and doors   darken       — a row that scales makes its
+                                     neighbours look like they moved,
+                                     and this sheet is a list of rows.
+     the confirm's choices  darken — they are 480px wide. 0.97 on one
+                                     of those is a 14px shrink.
+
+   AND THE CONFIRM SHEET IS PORTALLED TO `document.body`, so it is
+   NOT inside `.ds-root` and never received ds.css's foundation focus
+   ring. Three buttons on the most destructive dialog in the
+   application, and only Cancel could be seen to hold the keyboard.
+   The ring is given to the choices here, in the sheet's own file,
+   because there is nowhere else it can come from.
+
+   MOTION BUDGET, checked: every duration below is `--t-press` (90ms)
+   or `--t-fast` (120ms), inside the 90–160ms press band, and every
+   animated property is transform or a colour. Nothing here animates
+   layout. `prefers-reduced-motion` is honoured at the foot of this
+   section — movement goes, colour and opacity stay, which is §4's
+   rule and not "no feedback".
+   ============================================================ */
+
+/* -- small controls: the press is felt ----------------------- */
+.ds-mini-btn:active:not(:disabled),
+.ds-arrow-btn:active:not(:disabled),
+.ds-frow-del:active,
+.ds-note-action:active,
+.ds-fx-insert-chip:active,
+.ds-fx-fns-toggle:active {
+  transform: scale(0.97);
+  transition-duration: var(--t-press);
+}
+
+/* the reviewer's fix button pressed DOWNWARD by a pixel, which is the
+   one direction §4 singles out as wrong — a control that moves down
+   reads as the page shifting, not as the button taking the press */
+.ds-mark-fix:active {
+  transform: scale(0.97);
+  transition-duration: var(--t-press);
+}
+
+/* -- rows and doors: the press is a darkening ---------------- */
+.ds-frow-main:active,
+.ds-about-toggle:active,
+.ds-name-view:active,
+.ds-add-item:active,
+.ds-ref-item:active {
+  background: var(--surface-3);
+  transition-duration: var(--t-press);
+}
+
+/* -- the accent ink swatches --------------------------------
+   Sixteen pixels across, no focus ring of its own, and the
+   foundation's ring would have squared its corners: ds.css's
+   `.ds-root :focus-visible` sets `border-radius: var(--r-control)`,
+   so a colour DOT took the keyboard by becoming a rounded square.
+   The ring is given here at higher specificity, and the circle is
+   held.
+
+   THE HIT AREA IS THE OTHER HALF. 16px is under any pointer target
+   anybody recommends, and these sit 8px apart on a strip of eight.
+   The box grows to 24px through a transparent border and
+   `background-clip: content-box`, so the DOT stays 16px and the
+   target is 24 — the swatch's own colour is set inline as a
+   `background`, and clipping it to the content box is what keeps the
+   border invisible without a second colour being written here. */
+.ds-swatch {
+  width: 24px;
+  height: 24px;
+  border: 4px solid transparent;
+  background-clip: content-box;
+}
+.ds-swatch:active {
+  transform: scale(0.92);
+  transition-duration: var(--t-press);
+}
+.ds-root .ds-swatch:focus-visible {
+  outline: none;
+  border-radius: 50%;
+  box-shadow: var(--focus);
+}
+/* the chosen one keeps its double ring; the halo is the paper, so it
+   reads as a hole punched round the ink rather than a second colour */
+.ds-swatch-sel {
+  box-shadow:
+    0 0 0 1px var(--paper-high),
+    0 0 0 2.5px currentColor;
+}
+
+/* -- the confirm sheet, which lives outside .ds-root --------- */
+.ds-cs-choice:active {
+  background: var(--surface-3);
+  transition-duration: var(--t-press);
+}
+.ds-cs-choice-danger:active {
+  background: var(--red-wash);
+}
+.ds-cs-choice:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.ds-cs-choice-danger:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--paper-high),
+    0 0 0 4px var(--red);
+}
+/* it had no transition at all, so its hover was a jump */
+.ds-cs-cancel {
+  border-radius: var(--radius-sm);
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-draft);
+}
+.ds-cs-cancel:hover {
+  background: var(--surface-3);
+}
+.ds-cs-cancel:active {
+  transform: scale(0.97);
+  transition-duration: var(--t-press);
+}
+
+/* §4, verbatim: movement goes, colour and opacity stay. A press that
+   darkens is still a press; a press that scales becomes one. */
+@media (prefers-reduced-motion: reduce) {
+  .ds-mini-btn:active:not(:disabled),
+  .ds-arrow-btn:active:not(:disabled),
+  .ds-frow-del:active,
+  .ds-note-action:active,
+  .ds-fx-insert-chip:active,
+  .ds-fx-fns-toggle:active,
+  .ds-mark-fix:active,
+  .ds-swatch:active,
+  .ds-cs-cancel:active {
+    transform: none;
+    background: var(--surface-3);
+  }
+  .ds-swatch:hover,
+  .ds-fx-insert-chip:hover {
+    transform: none;
+  }
+}
+
+/* ============================================================
+   THE TABLE'S NAME IS THE THING YOU SCAN FOR.
+
+   It was 17px, which is not a step — `--ui-xl-size` from the
+   outgoing scale, sitting between the heading step (15) and the
+   title step (20). §2: "Take the whole step. Size, weight, leading
+   and tracking travel together."
+
+   It takes the TITLE step, which is what the six steps name a panel
+   header, and the input takes it too — the view and the edit are the
+   same control one keystroke apart, and a name that changes size
+   when you click it is a name that looks like it moved.
+   ============================================================ */
+.ds-name-view,
+.ds-name-input {
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+}
+
+/* ============================================================
+   THE OPEN ROW IS MARKED BY A RAIL, NOT BY FOUR BLUE EDGES.
+
+   `.ds-frow-open` took `border-color: var(--blue)` on all four sides
+   plus the sheet shadow. On a 31-column table with one row open that
+   is the accent drawing a box round a third of the panel, and §1
+   allows it about four appearances a screen — the primary action, the
+   focused control, the current row, the computed column. A rail on
+   the leading edge says "this one" with a twelfth of the ink.
+   ============================================================ */
+.ds-frow-open {
+  border-color: var(--line-strong);
+  box-shadow:
+    inset 3px 0 0 var(--blue),
+    var(--e-card-hover);
+}
+
+/* ============================================================
+   THE BLAST RADIUS — see `ConfirmRadius` in ConfirmSheet.tsx for
+   why the figures were gathered into one column.
+
+   THE FIGURE IS MONO AND TABULAR AND THE CLAUSE IS NOT. That is the
+   whole typographic argument of the block: `38 of 40` is a
+   measurement and lines up on its digits with the `3` and the `1`
+   under it; "rows hold a value that goes with it" is language and
+   belongs in the reading face. Setting both in mono — which is what
+   the caption it replaces did — makes the sentence look like data
+   and the data look like nothing in particular.
+
+   THE GRAVE LINES CARRY THE COST IN DANGER INK. Measured: `--danger`
+   #b3261e over `--paper-sunken` #e9eff6 is 5.6:1, over white 6.5:1 —
+   both clear the floor with room. It is ink on a tint, never a fill
+   behind text (§1), and it appears only on a line that LOSES
+   something: a count of rows that stay put is not a casualty.
+   ============================================================ */
+.ds-cs-radius {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+  box-shadow: inset 2px 0 0 var(--line-strong);
+}
+.ds-cs-radius-lab {
+  color: var(--ink-faint);
+}
+.ds-cs-radius-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* the figure column is as wide as its widest figure and no wider,
+     so `38 of 40` sets the gutter and a bare `3` right-aligns into it */
+  grid-template-columns: max-content 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: baseline;
+}
+/* the row is a grid ROW, not a box — `display: contents` lets the two
+   spans land in the parent's two columns so every figure on the sheet
+   shares one right edge, however many lines there are */
+.ds-cs-rad {
+  display: contents;
+}
+.ds-cs-rad-fig {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--ink);
+  text-align: right;
+  white-space: nowrap;
+}
+.ds-cs-rad-say {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.ds-cs-rad-grave .ds-cs-rad-fig {
+  color: var(--red);
+}
+.ds-cs-rad-grave .ds-cs-rad-say {
+  color: var(--ink);
+}
+
+/* ============================================================
+   THE SHEET ITSELF — a dialog is a dialog step, and it opens like
+   one.
+
+   THE QUESTION WAS SET AT `--display-s-size`, 22px, under a comment
+   about Instrument Serif — a face that was retired by the redesign
+   and is not on this page. §2 gives dialog titles the TITLE step, and
+   the display steps to stage titles and empty states. A modal at
+   520px wide asking one sentence does not need the second-largest
+   type in the system to be taken seriously; it needs to be the
+   clearest thing in its own box, and at 20px/600 against 13px
+   evidence it is.
+
+   THE ENTRANCE: 200–500ms is the modal band, `--d-slower` is 420ms,
+   and `--ease-out-expo` is the entrance curve. `sheet-in` at
+   `--t-med` (180ms) was under the band and on the state curve — the
+   sheet arrived like a hover.
+   ============================================================ */
+.ds-cs-question {
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  color: var(--ink);
+}
+.ds-cs-sheet {
+  border-color: var(--line);
+  background: var(--grad-surface);
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    var(--e-float);
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-cs-sheet {
+    animation: fade-in var(--t-med) var(--ease-draft) both;
+  }
+}
+
+/* ============================================================
+   THE ADD-COLUMN TRAY is a dropdown, and the band is 150–250ms.
+   `--t-fast` is 120ms, which is a press. It is also the one control
+   on this page a person opens dozens of times a day, so it gets the
+   bottom of the band rather than the top, and it grows from the top
+   edge it came out of rather than from its own middle (ds.css,
+   ORIGIN).
+   ============================================================ */
+.ds-add-menu {
+  transform-origin: 50% 0%;
+  animation: ds-rise 160ms var(--ease-out-expo) both;
+  border-color: var(--line);
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    var(--e3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-add-menu {
+    animation: fade-in var(--t-fast) var(--ease-draft) both;
+  }
 }

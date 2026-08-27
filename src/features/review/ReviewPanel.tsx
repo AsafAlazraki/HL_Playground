@@ -36,6 +36,24 @@
    so the card is gone on the very next render. We hold a short
    "mark cleared" ghost in its place so the correction is legible
    instead of a silent disappearance.
+
+   TWO THINGS APPLYING A FIX DID NOT DO, and both were holes rather
+   than choices. They are the reason this file was opened again.
+
+     · IT WAS NOT UNDOABLE FROM ANYWHERE ON SCREEN. "Apply fix"
+       renames a column or rewrites a link on a dealer's real price
+       file, in one press, with nothing asked and nothing said.
+       Rule 9 asks for a toast with UNDO on it for exactly this,
+       and the ghost card is not one — it is a confirmation that
+       fades. `sayUndoable` now pins the step and offers the way
+       back, and the rail's own duplicate live region went with it
+       so a screen reader hears the act once, not twice.
+     · A FIX THAT DID NOT CLEAR ITS MARK SAID NOTHING. Renaming one
+       of three columns that share a name leaves two. The card
+       flashed for a second and a half and then looked exactly like
+       a card nobody had pressed, which leaves "the button is
+       broken" as the reasonable reading. It now says what
+       happened, on itself, while it is flashing.
    ============================================================ */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -45,6 +63,7 @@ import type { AccentKey, EntityDef } from '@/types/model'
 import { applyLintFix } from '@/lib/lint'
 import type { FindingSeverity, LintFinding } from '@/lib/lint'
 import { useProjectStore } from '@/store/useProjectStore'
+import { sayUndoable } from '@/store/notes'
 import { useLintFindings } from './useLintFindings'
 import { marksLabel, pluralize, ruleTitle, severityWord, targetLine } from './describe'
 import { AdvisoryMark, CloseGlyph, PencilCross, PencilTick, TargetArrow } from './glyphs'
@@ -132,6 +151,28 @@ function FindingCard({
 
       <p className="rv-why">{finding.why}</p>
 
+      {/* ── THE FIX RAN AND THE MARK IS STILL HERE ────────────────
+          A card that survives its own correction is the one outcome
+          this rail had no words for. It flashed — a 1.5s pulse — and
+          then sat there looking exactly like a card nobody had
+          pressed, so the honest readings available to a person were
+          "the button is broken" and "I mis-clicked", neither of which
+          is what happened.
+
+          What happened is that the fix was legal, was applied, and
+          did not satisfy the rule: renaming one of three columns that
+          share a name leaves two, and a link repaired to a table that
+          is itself unlinked trades one mark for another. Rule 10 —
+          anything that cannot be done says why, where it is — and
+          this is the same obligation one step later: something that
+          did not finish says so, on the card it did not finish. */}
+      {flashing ? (
+        <p className="rv-still" role="status">
+          Applied — and this mark is still here. The correction was legal but did not
+          satisfy the rule on its own; read the reason above for what is left.
+        </p>
+      ) : null}
+
       {finding.fix ? (
         <div className="rv-fix">
           <span className="rv-fix-label">{finding.fix.label}</span>
@@ -206,7 +247,6 @@ export function ReviewPanel({ onClose }: { onClose: () => void }): JSX.Element {
   const select = useProjectStore((s) => s.select)
 
   const [flashes, setFlashes] = useState<Flash[]>([])
-  const [announce, setAnnounce] = useState('')
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(
@@ -228,6 +268,24 @@ export function ReviewPanel({ onClose }: { onClose: () => void }): JSX.Element {
     if (!fix) return
     applyLintFix(fix)
 
+    /* ── AND IT CAN BE PUT BACK ───────────────────────────────────
+       RULE 9, WHICH THIS SCREEN WAS BREAKING IN THE ONE PLACE IT
+       MATTERS MOST. "Apply fix" renames a column, retypes a field or
+       rewrites a link on somebody's real price file — one press, no
+       question asked, and until now no report either. The ghost card
+       below is a good confirmation and it is NOT an undo: it says
+       what happened, it fades after a second and a half, and it
+       leaves a person who pressed the wrong card's button reaching
+       for a keyboard shortcut nothing on screen has mentioned.
+
+       `sayUndoable` pins the exact history step these writes folded
+       into and puts UNDO on the note, which is the shape the rule
+       asks for. It MUST be raised in this turn of the event loop —
+       it reads the top of the stack on a microtask — so it stands
+       here, immediately after the mutation, and never inside the
+       timeout that clears the ghost. */
+    sayUndoable(`${fix.label} — applied`)
+
     const flash: Flash = {
       key: (flashSeq += 1),
       findingId: finding.id,
@@ -240,7 +298,12 @@ export function ReviewPanel({ onClose }: { onClose: () => void }): JSX.Element {
       index,
     }
     setFlashes((prev) => [...prev, flash])
-    setAnnounce(`${fix.label} — applied.`)
+    /* NOT ANNOUNCED TWICE. This rail kept its own visually-hidden
+       live region and spoke the fix into it; the toast raised above
+       is itself `role="status" aria-live="polite"`, so keeping both
+       would read the same sentence to a screen reader twice and only
+       one of the two carries the Undo a person can actually reach.
+       The note wins, and the region goes with the duplicate. */
 
     const t = setTimeout(() => {
       setFlashes((prev) => prev.filter((f) => f.key !== flash.key))
@@ -361,9 +424,6 @@ export function ReviewPanel({ onClose }: { onClose: () => void }): JSX.Element {
           )}
         </div>
 
-        <p className="rv-sr-live" role="status" aria-live="polite">
-          {announce}
-        </p>
       </header>
 
       <div className="rv-body">

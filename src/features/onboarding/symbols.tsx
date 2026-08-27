@@ -54,24 +54,17 @@ export function HelmMark({ size = 30 }: { size?: number }): ReactElement {
   )
 }
 
-/** The mark and the wordmark, at the head of every onboarding panel.
- *
- *  ONE LOCKUP, NOT TWO. Step 1 and the saved-copy screen each drew
- *  their own copy of it and they had already drifted — the wordmark
- *  carried `.block-heading`, whose identity is uppercase, and was then
- *  un-uppercased again by a rule further down the stylesheet. It is one
- *  component now, and the badge behind the mark is the single place the
- *  brand ramp is used as paint on these screens. */
-export function BrandLockup(): ReactElement {
-  return (
-    <div className="ob-mark">
-      <span className="ob-mark-badge" aria-hidden="true">
-        <HelmMark size={22} />
-      </span>
-      <span className="ob-mark-word">HelmLogic</span>
-    </div>
-  )
-}
+/* THE LOCKUP LIVES ON THE NAVY HALF NOW, and it is drawn once by
+   `Onboarding.tsx` rather than by each screen.
+
+   `BrandLockup` used to be exported from here so step 1 and the
+   saved-copy screen could each draw their own — which is the shape
+   of the drift it was written to fix, one level up: two callers, one
+   component, and the moment a third screen appeared it was three
+   places that had to agree about a badge. The slab has ONE head, the
+   screens hang inside it, and the accent that used to fill the badge
+   is barred on `--chrome` anyway (1.9:1, measured). `HelmMark` above
+   is the whole of what this file still owes onboarding. */
 
 /** Reading order of the four choices — Marine leads, because it is the
  *  one that works. */
