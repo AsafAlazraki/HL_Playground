@@ -1142,6 +1142,22 @@ export interface ProjectExport {
   /** limits every row must keep, including the workbook-derived ones a
    *  person has since edited or switched off */
   constraints?: ConstraintDef[]
+
+  /** THE JOBS AT THE DEALERSHIP, so the grants on a module mean
+   *  something on the other side of an export.
+   *
+   *  `ModuleDef.access` names roles by id. Without the roles
+   *  travelling beside them, a project exported and re-imported comes
+   *  back with every grant intact and nothing to resolve it against —
+   *  the grants are not wrong, they are unreadable, which is worse
+   *  because it looks like a permission rather than a dangling id.
+   *  `orphanRoleIds` in features/modules/access.ts finds exactly that
+   *  case and the settings panel says so in words, but the honest fix
+   *  is for them not to be orphaned in the first place.
+   *
+   *  Optional like the rest of v2, so a file written before this
+   *  imports exactly as it did. */
+  roles?: RoleDef[]
 }
 
 /* ---------------------------------------------------------- */
