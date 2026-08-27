@@ -38,78 +38,78 @@
 [data-theme='light'] {
   color-scheme: light;
 
-  --bg-sunken: #f1f2f5;
-  --bg: #fbfbfc;
-  --bg-canvas: #f7f8fa;
+  --bg-sunken: #e9eff6;
+  --bg: #f6f9fc;
+  --bg-canvas: #f1f6fb;
   --surface-1: #ffffff;
   --surface-2: #ffffff;
-  --surface-3: #f2f4f7;
-  --surface-4: #e8ebf0;
+  --surface-3: #eef3f8;
+  --surface-4: #dfe9f2;
 
-  --line-subtle: rgba(9, 12, 18, 0.06);
-  --line: rgba(9, 12, 18, 0.11);
-  --line-strong: rgba(9, 12, 18, 0.2);
+  --line-subtle: rgba(8, 27, 46, 0.07);
+  --line: rgba(8, 27, 46, 0.12);
+  --line-strong: rgba(8, 27, 46, 0.22);
 
   /* Measured in-browser against --surface-1 (#ffffff), not
      estimated:  18.9 / 7.7 / 4.7 / 2.8.
      --fg-tertiary is the floor and clears 4.5. --fg-quaternary
      does NOT, which is why it is barred from carrying meaning. */
-  --fg: #0e1116;
-  --fg-secondary: #4b5462;
-  --fg-tertiary: #6b7482;
-  --fg-quaternary: #949cab;
+  --fg: #081b2e;
+  --fg-secondary: #3d5266;
+  --fg-tertiary: #5a6b7c;
+  --fg-quaternary: #93a3b3;
   --fg-on-accent: #ffffff;
 
   /* 5.9:1 on white, measured */
-  --accent: #4a56d2;
-  --accent-hover: #3d48bd;
-  --accent-press: #333da3;
+  --accent: #0a5fc2;
+  --accent-hover: #0b6ad9;
+  --accent-press: #084e9e;
   --accent-fg: #ffffff;
-  --accent-wash: rgba(74, 86, 210, 0.09);
-  --accent-wash-strong: rgba(74, 86, 210, 0.15);
-  --accent-line: rgba(74, 86, 210, 0.32);
-  --accent-glow: rgba(74, 86, 210, 0.2);
+  --accent-wash: rgba(10, 95, 194, 0.09);
+  --accent-wash-strong: rgba(10, 95, 194, 0.15);
+  --accent-line: rgba(10, 95, 194, 0.32);
+  --accent-glow: rgba(10, 95, 194, 0.2);
 
-  --success: #1a7f37;
-  --success-wash: rgba(26, 127, 55, 0.1);
-  --warning: #9a6700;
-  --warning-wash: rgba(154, 103, 0, 0.1);
-  --danger: #c9372c;
-  --danger-wash: rgba(201, 55, 44, 0.09);
-  --danger-solid: #c9372c;
+  --success: #146c2e;
+  --success-wash: rgba(20, 108, 46, 0.1);
+  --warning: #8a5a00;
+  --warning-wash: rgba(138, 90, 0, 0.1);
+  --danger: #b3261e;
+  --danger-wash: rgba(179, 38, 30, 0.09);
+  --danger-solid: #b3261e;
 
   /* the same eight hues, darkened to hold 4.5:1 on white */
-  --kind-indigo: #4552cc;
-  --kind-cyan: #0f7285;
-  --kind-teal: #0d7a5f;
-  --kind-green: #2f7d3f;
-  --kind-amber: #8a6208;
-  --kind-orange: #a8501a;
-  --kind-rose: #b8385a;
-  --kind-violet: #6e42b8;
-  --kind-slate: #5a6474;
+  --kind-indigo: #1d4ed8;
+  --kind-cyan: #0e7490;
+  --kind-teal: #0f766e;
+  --kind-green: #15803d;
+  --kind-amber: #a16207;
+  --kind-orange: #b45309;
+  --kind-rose: #be1250;
+  --kind-violet: #7c3aed;
+  --kind-slate: #475569;
 
   --chip-fg: var(--fg-tertiary);
-  --chip-bg: rgba(9, 12, 18, 0.05);
+  --chip-bg: rgba(8, 27, 46, 0.06);
   --chip-computed-fg: var(--accent);
   --chip-computed-bg: var(--accent-wash);
   --chip-linked-fg: var(--kind-cyan);
-  --chip-linked-bg: rgba(15, 114, 133, 0.09);
+  --chip-linked-bg: rgba(14, 116, 144, 0.09);
 
-  --e1: 0 1px 2px rgba(9, 12, 18, 0.06);
+  --e1: 0 1px 2px rgba(8, 27, 46, 0.06);
   --e2:
-    0 1px 2px rgba(9, 12, 18, 0.06),
-    0 6px 16px -6px rgba(9, 12, 18, 0.12);
+    0 1px 2px rgba(8, 27, 46, 0.06),
+    0 6px 16px -6px rgba(8, 27, 46, 0.12);
   --e3:
-    0 2px 6px rgba(9, 12, 18, 0.08),
-    0 20px 44px -12px rgba(9, 12, 18, 0.18);
-  --e-card: 0 1px 2px rgba(9, 12, 18, 0.05), 0 4px 12px -6px rgba(9, 12, 18, 0.1);
+    0 2px 6px rgba(8, 27, 46, 0.08),
+    0 20px 44px -12px rgba(8, 27, 46, 0.18);
+  --e-card: 0 1px 2px rgba(8, 27, 46, 0.05), 0 4px 12px -6px rgba(8, 27, 46, 0.1);
   --e-card-hover:
-    0 2px 4px rgba(9, 12, 18, 0.07),
-    0 12px 28px -10px rgba(9, 12, 18, 0.16);
+    0 2px 4px rgba(8, 27, 46, 0.07),
+    0 12px 28px -10px rgba(8, 27, 46, 0.16);
 
-  --canvas-dot: rgba(9, 12, 18, 0.07);
-  --canvas-edge: rgba(9, 12, 18, 0.22);
+  --canvas-dot: rgba(8, 27, 46, 0.08);
+  --canvas-edge: rgba(8, 27, 46, 0.24);
   --canvas-edge-active: var(--accent);
 }
 
@@ -120,13 +120,13 @@
      Cool-neutral near-black. The steps are close on purpose: on
      dark, a 6-8 point lift reads as "raised" without ever
      looking like a different colour. */
-  --bg-sunken: #07080a;   /* behind the canvas, wells */
-  --bg: #0a0b0d;          /* app ground */
-  --bg-canvas: #0c0e11;   /* the sheet */
-  --surface-1: #131519;   /* cards, panels, the resting plane */
-  --surface-2: #1a1d22;   /* raised: popovers, menus, selected rows */
-  --surface-3: #22262c;   /* inputs, hover on surface-2 */
-  --surface-4: #2a2f36;   /* pressed, hover on surface-3 */
+  --bg-sunken: #050f1a;   /* behind the canvas, wells */
+  --bg: #071522;          /* app ground */
+  --bg-canvas: #08192a;   /* the sheet */
+  --surface-1: #101f2f;   /* cards, panels, the resting plane */
+  --surface-2: #16283a;   /* raised: popovers, menus, selected rows */
+  --surface-3: #1d3145;   /* inputs, hover on surface-2 */
+  --surface-4: #253c52;   /* pressed, hover on surface-3 */
 
   /* -- lines --------------------------------------------------
      Alpha, not hex, so one border composes correctly over every
@@ -144,24 +144,24 @@
                                      therefore decoration only:
                                      rules, ticks, disabled marks.
                                      Never a word that matters. */
-  --fg: #edeef0;
-  --fg-secondary: #a0a6b0;
-  --fg-tertiary: #7b828d;
-  --fg-quaternary: #565d68;
+  --fg: #eaf1f8;
+  --fg-secondary: #a8bccf;
+  --fg-tertiary: #7d94a9;
+  --fg-quaternary: #5a6f83;
   --fg-on-accent: #ffffff;
 
   /* -- accent -------------------------------------------------
      One hue, roughly four appearances per screen. 5.1:1 on
      --surface-1 measured, so it is legal as text and not only as
      paint. (Light's accent measures 5.9:1 on white.) */
-  --accent: #6e7bfa;
-  --accent-hover: #8189ff;
-  --accent-press: #5a66e0;
+  --accent: #58a6ff;
+  --accent-hover: #6cb2ff;
+  --accent-press: #3d8ef5;
   --accent-fg: #ffffff;
-  --accent-wash: rgba(110, 123, 250, 0.14);
-  --accent-wash-strong: rgba(110, 123, 250, 0.22);
-  --accent-line: rgba(110, 123, 250, 0.38);
-  --accent-glow: rgba(110, 123, 250, 0.28);
+  --accent-wash: rgba(88, 166, 255, 0.14);
+  --accent-wash-strong: rgba(88, 166, 255, 0.22);
+  --accent-line: rgba(88, 166, 255, 0.38);
+  --accent-glow: rgba(88, 166, 255, 0.28);
 
   /* -- semantic ----------------------------------------------- */
   --success: #56d364;
@@ -181,7 +181,7 @@
      This replaces 22 inks (7 accents + 7 "bright" variants + 8
      field-type colours). Field types no longer carry hue at all;
      see --chip-* below. */
-  --kind-indigo: #7c8cff;
+  --kind-indigo: #6ea8ff;
   --kind-cyan: #4fc3d9;
   --kind-teal: #3fcba8;
   --kind-green: #5fd07e;
@@ -203,7 +203,7 @@
   --chip-computed-fg: var(--accent);
   --chip-computed-bg: var(--accent-wash);
   --chip-linked-fg: var(--kind-cyan);
-  --chip-linked-bg: rgba(79, 195, 217, 0.12);
+  --chip-linked-bg: rgba(79, 195, 217, 0.14);
 
   /* -- elevation ----------------------------------------------
      On dark the shadow alone does almost nothing; the lift comes
@@ -790,9 +790,9 @@
 @media (prefers-contrast: more) {
   :root,
   [data-theme='light'] {
-    --line-subtle: rgba(9, 12, 18, 0.16);
-    --line: rgba(9, 12, 18, 0.3);
-    --line-strong: rgba(9, 12, 18, 0.5);
+    --line-subtle: rgba(8, 27, 46, 0.16);
+    --line: rgba(8, 27, 46, 0.3);
+    --line-strong: rgba(8, 27, 46, 0.5);
     --fg-secondary: #333c49;
     --fg-tertiary: #4b5462;
     --fg-quaternary: #4b5462;
@@ -845,14 +845,14 @@
      --accent stays the single ACTION colour. These two are its
      neighbours on the wheel and exist ONLY to make a gradient
      out of it. Neither may be used as a flat fill behind text. */
-  --accent-2: #7b46d9;
-  --accent-3: #2f86cf;
+  --accent-2: #0d94c4;
+  --accent-3: #12508f;
 
   --grad-brand: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
   --grad-brand-soft: linear-gradient(
     135deg,
-    rgba(74, 86, 210, 0.11) 0%,
-    rgba(123, 70, 217, 0.09) 100%
+    rgba(10, 95, 194, 0.11) 0%,
+    rgba(13, 148, 196, 0.09) 100%
   );
   --grad-brand-wide: linear-gradient(
     120deg,
@@ -870,7 +870,7 @@
   );
   /* the hairline highlight along a raised surface's top edge */
   --edge-light: rgba(255, 255, 255, 0.9);
-  --edge-dark: rgba(9, 12, 18, 0.05);
+  --edge-dark: rgba(8, 27, 46, 0.05);
 
   /* a surface that is paint, but not FLAT paint */
   --grad-surface: linear-gradient(180deg, #ffffff 0%, #fcfcfd 100%);
@@ -888,19 +888,19 @@
      soft one, which is what makes an edge look lit rather than
      drawn. */
   --e4:
-    0 1px 1px rgba(9, 12, 18, 0.04),
-    0 4px 8px -2px rgba(9, 12, 18, 0.06),
-    0 16px 32px -8px rgba(9, 12, 18, 0.12),
-    0 32px 64px -16px rgba(9, 12, 18, 0.14);
+    0 1px 1px rgba(8, 27, 46, 0.04),
+    0 4px 8px -2px rgba(8, 27, 46, 0.06),
+    0 16px 32px -8px rgba(8, 27, 46, 0.12),
+    0 32px 64px -16px rgba(8, 27, 46, 0.14);
   --e-float:
-    0 0 0 1px rgba(9, 12, 18, 0.04),
-    0 2px 4px rgba(9, 12, 18, 0.05),
-    0 12px 24px -6px rgba(9, 12, 18, 0.12),
-    0 28px 56px -12px rgba(9, 12, 18, 0.16);
+    0 0 0 1px rgba(8, 27, 46, 0.04),
+    0 2px 4px rgba(8, 27, 46, 0.05),
+    0 12px 24px -6px rgba(8, 27, 46, 0.12),
+    0 28px 56px -12px rgba(8, 27, 46, 0.16);
   --e-hero:
-    0 2px 4px rgba(9, 12, 18, 0.03),
-    0 12px 28px -8px rgba(9, 12, 18, 0.1),
-    0 48px 96px -24px rgba(9, 12, 18, 0.18);
+    0 2px 4px rgba(8, 27, 46, 0.03),
+    0 12px 28px -8px rgba(8, 27, 46, 0.1),
+    0 48px 96px -24px rgba(8, 27, 46, 0.18);
 
   /* -- material, for the two surfaces that float over content -- */
   --glass-bg: rgba(255, 255, 255, 0.72);
@@ -913,21 +913,21 @@
      page somewhere to go. Alpha is deliberately under 6% — over
      white this shifts luminance by less than one contrast point,
      so text sitting on it keeps the ratio measured above. */
-  --aurora-1: rgba(74, 86, 210, 0.055);
-  --aurora-2: rgba(123, 70, 217, 0.04);
-  --aurora-3: rgba(47, 134, 207, 0.045);
+  --aurora-1: rgba(10, 95, 194, 0.06);
+  --aurora-2: rgba(13, 148, 196, 0.05);
+  --aurora-3: rgba(18, 80, 143, 0.045);
   --grain-opacity: 0.035;
 }
 
 [data-theme='dark'] {
-  --accent-2: #a07bff;
-  --accent-3: #56aeea;
+  --accent-2: #5ad1e8;
+  --accent-3: #4d9bff;
 
   --grad-brand: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
   --grad-brand-soft: linear-gradient(
     135deg,
-    rgba(110, 123, 250, 0.18) 0%,
-    rgba(160, 123, 255, 0.13) 100%
+    rgba(88, 166, 255, 0.18) 0%,
+    rgba(90, 209, 232, 0.13) 100%
   );
   --grad-brand-wide: linear-gradient(
     120deg,
@@ -972,9 +972,9 @@
   --glass-sat: 160%;
   --glass-edge: rgba(255, 255, 255, 0.08);
 
-  --aurora-1: rgba(110, 123, 250, 0.09);
-  --aurora-2: rgba(160, 123, 255, 0.07);
-  --aurora-3: rgba(86, 174, 234, 0.06);
+  --aurora-1: rgba(88, 166, 255, 0.1);
+  --aurora-2: rgba(90, 209, 232, 0.07);
+  --aurora-3: rgba(77, 155, 255, 0.06);
   --grain-opacity: 0.05;
 }
 

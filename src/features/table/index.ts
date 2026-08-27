@@ -71,3 +71,5 @@ export { forgetFitState } from './tableFitState'
    sheet can go to it. One pending request per table, consumed once —
    see `rowRevealState` for why this is not a prop and not a stage. */
 export { forgetRowReveal, requestRowReveal } from './rowRevealState'
+
+export { coverPhoto, type CoverPhoto } from './coverPhoto'

@@ -4760,3 +4760,80 @@
   transform: translateY(-3px);
   box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
 }
+
+/* ------------------------------------------------------------
+   THE PICTURE ON A CARD.
+
+   220 real photographs ship in `public/seed-images` and until now
+   the largest any of them was ever drawn was a 20px cell
+   thumbnail. A card that holds one gives it the top third: a
+   16:9 band, cropped to the centre, with the card's own surface
+   fading up over its foot so the name never sits on photography.
+
+   `coverPhoto` guarantees the file is same-origin and held, so
+   there is no broken-image state to design for. A table without
+   a held picture keeps the plain card exactly as it was — the
+   two forms are meant to sit in one grid without the grid
+   looking ragged, which is why the shot is a BAND rather than a
+   full-bleed background.
+   ------------------------------------------------------------ */
+.hm-card--shot {
+  padding-top: 0;
+  overflow: hidden;
+}
+.hm-card-shot {
+  position: relative;
+  display: block;
+  margin: 0 calc(var(--s-4) * -1) var(--s-3) -18px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.hm-card-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  /* the photographs are a mixed set -- yard shots, studio cut-outs,
+     turquoise lifestyle. A whisper of desaturation at rest pulls
+     them into one page; hover gives the colour back. */
+  filter: saturate(0.92);
+  transform: scale(1.02);
+  transition:
+    transform var(--d-scene) var(--ease-out-expo),
+    filter var(--d-med) var(--ease);
+}
+.hm-card:hover .hm-card-shot img,
+.hm-card:focus-visible .hm-card-shot img {
+  transform: scale(1.06);
+  filter: saturate(1.04);
+}
+/* the surface climbing back over the foot of the picture, so the
+   band has no hard edge against the card */
+.hm-card-shot::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 38%;
+  background: linear-gradient(180deg, transparent 0%, var(--surface-1) 100%);
+  pointer-events: none;
+}
+/* the kind rail runs the whole card once there is a picture above
+   it, because a rail that starts below a photograph looks broken */
+.hm-card--shot::before {
+  top: 0;
+  bottom: 0;
+}
+.hm-card--shot .hm-card-kind {
+  padding-left: 18px;
+  padding-right: var(--s-4);
+}
+.hm-card--shot .hm-card-name,
+.hm-card--shot .hm-card-stats {
+  padding-left: 18px;
+  padding-right: var(--s-4);
+}
+.hm-card--shot .hm-card-stats {
+  padding-bottom: var(--s-3);
+}

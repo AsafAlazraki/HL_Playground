@@ -38,6 +38,7 @@ import {
 } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { countLabel, leafNoun } from '@/features/table/grouping'
+import { coverPhoto } from '@/features/table/coverPhoto'
 import { ImportExportMenu } from '@/features/io'
 import { ICON_SIZE } from '@/lib/icons'
 import { realDemoSet, startingPointWords } from './demoLoad'
@@ -437,13 +438,21 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
 
               <div className="hm-grid">
                 {g.items.map((e, i) => {
-                  const rows = rowsByEntity[e.id]?.length ?? 0
+                  const held = rowsByEntity[e.id]
+                  const rows = held?.length ?? 0
                   const noun = leafNoun(e)
+                  /* THE PICTURE, WHERE WE HOLD ONE. `coverPhoto`
+                     refuses every address the repository does not
+                     ship a copy of, so this is null or it is a
+                     same-origin file that will draw. Nothing is
+                     substituted for a table without one — that card
+                     keeps its crest, which is the honest reading. */
+                  const cover = coverPhoto(e, held)
                   return (
                     <button
                       type="button"
                       key={e.id}
-                      className="hm-card ds-sheen ds-rise"
+                      className={`hm-card ds-sheen ds-rise${cover ? ' hm-card--shot' : ''}`}
                       style={{
                         ['--tbn-accent' as string]: accentVar(e.accent),
                         /* the stagger index, capped in CSS at 14 steps.
@@ -477,6 +486,18 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                           wrong one is the jargon: §6 asks for the
                           dealer's nouns in chrome. The role is the
                           honest label, and the group is the proof. */}
+                      {cover ? (
+                        <span className="hm-card-shot" aria-hidden="true">
+                          <img
+                            src={cover.at}
+                            alt=""
+                            width={cover.w}
+                            height={cover.h}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </span>
+                      ) : null}
                       <span className="hm-card-kind">
                         <TableKindSymbol
                           kind={kindOf(e.kind)}

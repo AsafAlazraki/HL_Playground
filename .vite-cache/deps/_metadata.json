@@ -1,0 +1,80 @@
+{
+  "hash": "b71cea12",
+  "configHash": "37513130",
+  "lockfileHash": "cccf7259",
+  "browserHash": "cc1fc17a",
+  "optimized": {
+    "@phosphor-icons/react": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/@phosphor-icons/react/dist/index.es.js",
+      "file": "@phosphor-icons_react.js",
+      "fileHash": "c59b5c9a",
+      "needsInterop": false
+    },
+    "@xyflow/react": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/@xyflow/react/dist/esm/index.js",
+      "file": "@xyflow_react.js",
+      "fileHash": "32ef82bc",
+      "needsInterop": false
+    },
+    "dexie": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/dexie/import-wrapper.mjs",
+      "file": "dexie.js",
+      "fileHash": "ce89b27c",
+      "needsInterop": false
+    },
+    "motion/react": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/motion/dist/es/react.mjs",
+      "file": "motion_react.js",
+      "fileHash": "371cc09e",
+      "needsInterop": false
+    },
+    "nanoid": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/nanoid/index.browser.js",
+      "file": "nanoid.js",
+      "fileHash": "c50999bd",
+      "needsInterop": false
+    },
+    "react-dom": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "0133ca87",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "f20ab0a7",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "b5f17592",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "474ca173",
+      "needsInterop": true
+    },
+    "react/jsx-runtime": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "a4be2512",
+      "needsInterop": true
+    },
+    "zustand": {
+      "src": "../../../HelmLogic Dynamic Config/node_modules/zustand/esm/index.mjs",
+      "file": "zustand.js",
+      "fileHash": "c3cec856",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "rolldown-runtime-DC62tzP2": {
+      "file": "rolldown-runtime-DC62tzP2.js",
+      "isDynamicEntry": false
+    }
+  }
+}
