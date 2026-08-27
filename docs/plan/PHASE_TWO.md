@@ -144,6 +144,46 @@ SELLING
 **Six doors.** The modules are not enumerated in the rail — there are fourteen
 of them and they belong on their own screen, which is the point of that screen.
 
+### New quote — small module cards, and I got this wrong twice
+
+The instruction, verbatim: *"that is the flow of how i want it from new quote —
+opens popup with small module cards not the way it is now! i thought i made
+that clear"*.
+
+It was clear. What shipped is a two-pane picker: a LIST of places down the left
+and rows on the right. What was asked for is a **popup of small module cards** —
+the same objects as the modules screen, smaller.
+
+```
+   What are you quoting?
+
+   ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐
+   │ HF │ │ YA │ │ ST │ │ DU │ │ GF │      ← small cards: logo, name, count
+   └────┘ └────┘ └────┘ └────┘ └────┘
+   ┌────┐ ┌────┐ ┌────┐ ┌────┐
+   │ JE │ │ SU │ │ FO │ │ NSM│
+   └────┘ └────┘ └────┘ └────┘
+
+   [ search everything ]
+```
+
+Press one → it opens *in place* to that module's rows. Same objects, one layer
+deeper, no second column of prose. The modules a quote cannot start from are
+still shown and still say why, but as a quiet band beneath rather than as half
+the list.
+
+### Brand logos — already built, never surfaced
+
+`ModuleDef.logo` is an `ImageRef` and `features/modules/logo.ts` already has the
+size ceiling (512px edge, 96KB kept, 32MB refused), the kind refusal and the
+fallback for a logo that cannot be drawn. **The capability exists and nothing
+shows it.**
+
+Phase two surfaces it: the logo is the face of a module card, of a small card
+in the picker, and of the module's own header — with the crest as the fallback,
+which is what the code already does. Upload lives in the module's Settings tab,
+where it already is.
+
 ### The side menu is not right yet, specifically
 
 Named so it is fixable rather than a feeling:
@@ -158,6 +198,26 @@ Named so it is fixable rather than a feeling:
 4. **The collapsed state loses the counts**, which are the one thing worth
    keeping when the words go.
 5. **264px is too wide** for what it holds once the tree goes.
+
+**And it is still too complicated even at six doors.** The minimum that is
+honest:
+
+```
+  [ search ]        Ctrl K
+
+  Today
+  Modules
+  Quotes                3
+  Customers
+
+  [ the person ]
+  [ Admin ]
+```
+
+**Four navigation rows.** Everything else in this application is reached
+*through* one of those four, which is what makes them navigation rather than a
+menu. If four is still too many, Customers folds into Quotes — they are the two
+halves of one job — and it becomes three.
 
 ### Inside a module
 
