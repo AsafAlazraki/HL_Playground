@@ -324,14 +324,22 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
       <Row
         key={q.id}
         kind={kindFor(q)}
-        title={q.subjectLabel}
+        /* THE CUSTOMER IS THE HEADING, and the subject was. A deal
+           is a person waiting on an answer; the boat is what they
+           are waiting on. The board's cards were already drawn this
+           way and this one was not, so the same three quotes read
+           as two different things on two screens.
+
+           A quote addressed to nobody says so rather than drawing
+           an empty line — it is a real state and the most common
+           one on a fresh sheet. */
+        title={customer || 'No customer yet'}
         under={
           <>
-            <span className="dsh-ref ds-mono-sm">{q.reference}</span>
+            <span className="dsh-subject">{q.subjectLabel}</span>
             <span className={`dsh-state${q.state === 'issued' ? ' is-issued' : ' is-draft'}`}>
               {q.state === 'issued' ? 'Issued' : 'Draft'}
             </span>
-            {customer && !grouped ? <span className="dsh-when">{customer}</span> : null}
           </>
         }
         tail={
@@ -350,11 +358,25 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
             <span className="dsh-sum ds-mono">{money(totals.total)}</span>
           )
         }
-        label={`Open quote ${q.reference} — ${q.subjectLabel}`}
+        label={`Open quote ${q.reference} \u2014 ${q.subjectLabel}`}
         onPick={() => acts.onOpenQuote(q.id)}
       />
     )
   }
+
+  /* WHAT IS IN THE PIPELINE UNDER THIS FILTER. The card listed
+     three quotes and never said what they came to — the one figure
+     a person opens a quotes card to see, and the only one that
+     answers "how is the month going".
+
+     IT IS COMPUTED FROM THE FILTERED LIST, not from every quote,
+     so the figure and the rows beneath it can never disagree.
+     Lines with no price are counted separately and said, for the
+     same reason a single quote says it: a total that silently
+     absorbed them would be a confident number about an incomplete
+     one. */
+  const worth = list.reduce((n, q) => n + quoteTotals(q).total, 0)
+  const partial = list.filter((q) => quoteTotals(q).unpricedCount > 0).length
 
   return (
     <>
@@ -381,6 +403,22 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
         </button>
       </div>
 
+      {list.length > 0 ? (
+        <p className="dsh-worth">
+          <b className="dsh-worth-n ds-mono">{money(worth)}</b>
+          <span className="dsh-worth-say">
+            across {plural(list.length, 'quote', 'quotes')}
+          </span>
+          {partial > 0 ? (
+            <span className="dsh-worth-note">
+              {partial === list.length && list.length === 1
+                ? 'one has a line with no price'
+                : `${partial} with a line not priced`}
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+
       {list.length === 0 ? (
         /* A FILTER THAT HOLDS NOTHING SAYS SO WHERE IT IS
            REFUSED (rule 10), and it is a fact rather than an
@@ -400,7 +438,11 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
         <div className="dsh-list">{list.slice(0, QUOTE_ROWS).map(line)}</div>
       )}
 
-      <More say="All quotes" onPick={acts.onOpenQuotes} />
+      {/* NO "All quotes" AT THE FOOT. The card's header already
+          carries Open, in the same place on every card — this was a
+          second door to one place, and the one at the bottom moved
+          as the list changed length. The same duplication was
+          removed from the modules card. */}
     </>
   )
 }

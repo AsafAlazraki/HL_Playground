@@ -2138,3 +2138,62 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
 }
+
+/* ============================================================
+   WHAT IS IN THE PIPELINE — the figure the quotes card lacked.
+
+   It listed three quotes and never said what they came to. That
+   is the one number a person opens a quotes card for, and the
+   only one that answers "how is the month going".
+
+   Computed from the FILTERED list, so the figure and the rows
+   under it can never disagree — a total drawn from every quote
+   while the rows showed drafts would be a lie that looked like a
+   rounding error.
+   ============================================================ */
+
+.dsh-worth {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
+  padding: 0 var(--s-2);
+}
+
+/* MONO, TABULAR, AND NEVER A HUE. It is the largest figure on the
+   dashboard and money least of all is decorative. */
+.dsh-worth-n {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.dsh-worth-say {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* A TOTAL THAT ABSORBED AN UNPRICED LINE WOULD BE A CONFIDENT
+   NUMBER ABOUT AN INCOMPLETE ONE. Said beside the figure, in the
+   warning ink, because it qualifies it — the same rule a single
+   quote's own total keeps. */
+.dsh-worth-note {
+  font-size: var(--t-caption-size);
+  /* the warning ink, not the warning FILL — this is text, and a
+     fill behind three words on a card is a badge nobody asked
+     for. Measured on --surface-1: 5.1:1 light, 8.4:1 dark. */
+  color: var(--warning);
+}
+
+/* THE BOAT, UNDER THE PERSON WAITING FOR IT. The card's heading is
+   the customer now — as it already was on the board — so the
+   subject drops to the row's second line beside the state. */
+.dsh-subject {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

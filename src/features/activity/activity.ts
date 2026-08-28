@@ -214,3 +214,71 @@ export function whenSay(at: number, now = Date.now()): string {
   }
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
 }
+
+/* ------------------------------------------------------------
+   A LOG IS READ BY DAY.
+
+   Fifteen rows each carrying "7 minutes ago", "2 hours ago",
+   "Tuesday" is fifteen relative times a person has to convert
+   into a shape. What somebody actually asks of an audit log is
+   "what happened today", then "what happened before that" — so
+   the rows are cut into days and the day is said once, at the
+   top of its run, instead of on every row.
+
+   THE DAY IS COMPUTED IN THE READER'S OWN TIME ZONE, from the
+   stored epoch. A log written at 11pm and read at 1am is two
+   days, and it should say so.
+   ------------------------------------------------------------ */
+
+export interface Day {
+  /** "Today", "Yesterday", "Tuesday", "12 Mar" — the shortest
+   *  true form, the same ladder `whenSay` climbs */
+  name: string
+  /** for React, and stable across a re-render at midnight */
+  key: string
+  rows: Entry[]
+}
+
+const startOfDay = (at: number): number => {
+  const d = new Date(at)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+/** Cut a log into days, newest first, preserving the order it was
+ *  handed. Pure, and takes `now` so a test is not at the mercy of
+ *  the clock. */
+export function byDay(rows: readonly Entry[], now = Date.now()): Day[] {
+  const today = startOfDay(now)
+  const out: Day[] = []
+  for (const r of rows) {
+    const key = String(startOfDay(r.at))
+    const last = out[out.length - 1]
+    if (last && last.key === key) {
+      last.rows.push(r)
+      continue
+    }
+    const days = Math.round((today - Number(key)) / 86_400_000)
+    const d = new Date(r.at)
+    const name =
+      days <= 0
+        ? 'Today'
+        : days === 1
+          ? 'Yesterday'
+          : days < 7
+            ? d.toLocaleDateString(undefined, { weekday: 'long' })
+            : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+    out.push({ name, key, rows: [r] })
+  }
+  return out
+}
+
+/** Just the time of day — "4:12 pm". On a log already cut into
+ *  days, "7 minutes ago" is a second unit for the same fact and
+ *  the clock time is the one that sorts by eye. */
+export function clockSay(at: number): string {
+  return new Date(at).toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}

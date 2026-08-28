@@ -136,3 +136,77 @@
     display: none;
   }
 }
+
+/* ============================================================
+   THE LOG, CUT INTO DAYS.
+
+   Fifteen rows each carrying "7 minutes ago", "2 hours ago",
+   "Tuesday" is fifteen relative times a person converts into a
+   shape before they can read anything. The day is said once, at
+   the top of its run; the rows under it carry the clock, which is
+   the unit that sorts by eye down a column.
+   ============================================================ */
+
+.ac-days {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* THE DAY IS A LABEL — §3 allows uppercase here. `.mono-label`
+   carries the size, the tracking and the 11px floor. */
+.ac-day-name {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 var(--s-2);
+  padding: 2px 0;
+  /* STICKY NEEDS A GROUND. Without it the rows scroll THROUGH the
+     heading, which reads as a rendering fault rather than as a
+     pinned label. */
+  background: var(--surface-1);
+  color: var(--fg-tertiary);
+}
+
+.ac-day .ac-list {
+  overflow: visible;
+}
+
+/* ---- who and when, under the sentence ---------------------- */
+
+/* THEY WERE PUSHED TO THE FAR RIGHT of the row. On a 640px card
+   that put the name and the time four hundred pixels from the
+   words they belong to, with an empty channel between — two
+   columns of unrelated things rather than one entry. */
+.ac-row {
+  grid-template-columns: 9px minmax(0, 1fr);
+}
+.ac-meta {
+  grid-column: 2;
+  gap: var(--s-2);
+  margin-top: 1px;
+}
+.ac-when,
+.ac-who {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+/* the two are one line of provenance, so a separator between them
+   rather than a gap that could read as two facts */
+.ac-who::before {
+  content: '·';
+  margin-right: var(--s-2);
+  color: var(--fg-quaternary);
+}
+
+/* AND THE NAME STAYS at every width now. It was hidden under a
+   laptop because it was competing for one line with the sentence;
+   under the sentence there is nothing to compete with, and "who
+   did it" is half of what an audit log is for. */
+@media (max-width: 1100px) {
+  .ac-who {
+    display: inline;
+  }
+}

@@ -12,7 +12,7 @@
    ============================================================ */
 
 import type { JSX } from 'react'
-import { useActivity, useModuleActivity, whenSay, type Entry } from './activity'
+import { byDay, clockSay, useActivity, useModuleActivity, type Entry } from './activity'
 
 export interface ActivityCardProps {
   orgSlug: string
@@ -24,19 +24,32 @@ export interface ActivityCardProps {
   onOpenAll?: () => void
 }
 
-function Row({ e, now }: { e: Entry; now: number }): JSX.Element {
+function Row({ e }: { e: Entry }): JSX.Element {
   return (
     <li className={`ac-row${e.tone ? ` ac-row--${e.tone}` : ''}`}>
       <span className="ac-dot" aria-hidden="true" />
       <span className="ac-said">{e.text}</span>
+      {/* WHO AND WHEN SIT UNDER THE SENTENCE, and they used to be
+          pushed to the far right of the row. On a 640px card that
+          put "Asaf Alazraki  7 minutes ago" four hundred pixels
+          from the words it belongs to, with an empty channel
+          between them — a layout that reads as two columns of
+          unrelated things rather than as one entry.
+
+          THE TIME IS THE CLOCK, NOT "7 minutes ago". The list is
+          cut into days above this (see `byDay`), so a relative
+          time is a second unit for a fact the day heading has
+          already given — and of the two, the clock is the one that
+          sorts by eye down a column.
+
+          WHO IS NOT INVENTED. An entry written before anybody
+          signed in carries no name, and the row simply does not
+          claim one rather than saying "System". */}
       <span className="ac-meta">
-        {/* WHO IS NOT INVENTED. An entry written before anybody
-            signed in carries no name, and the row simply does not
-            claim one rather than saying "System". */}
-        {e.who ? <span className="ac-who">{e.who}</span> : null}
         <time className="ac-when" dateTime={new Date(e.at).toISOString()}>
-          {whenSay(e.at, now)}
+          {clockSay(e.at)}
         </time>
+        {e.who ? <span className="ac-who">{e.who}</span> : null}
       </span>
     </li>
   )
@@ -62,15 +75,29 @@ export function ActivityList({
   const all = useActivity(orgSlug, moduleId ? undefined : limit)
   const mine = useModuleActivity(orgSlug, moduleId ?? '', limit)
   const rows = moduleId ? mine : all
-  const now = Date.now()
+
+  /* READ ONCE PER RENDER rather than per row, so every day on the
+     card is measured from the same instant — a list that asked the
+     clock fifteen times can straddle midnight inside one paint. */
+  const days = byDay(rows, Date.now())
 
   if (rows.length === 0) return null
   return (
-    <ul className="ac-list">
-      {rows.map((e) => (
-        <Row e={e} now={now} key={e.id} />
+    <div className="ac-days">
+      {days.map((d) => (
+        <section className="ac-day" key={d.key}>
+          {/* THE DAY IS SAID ONCE, at the top of its run. Fifteen
+              rows each carrying their own relative time is fifteen
+              conversions a person has to do to see a shape. */}
+          <h4 className="mono-label ac-day-name">{d.name}</h4>
+          <ul className="ac-list">
+            {d.rows.map((e) => (
+              <Row e={e} key={e.id} />
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   )
 }
 
@@ -80,15 +107,9 @@ export function ActivityCard({
   limit = 6,
   onOpenAll,
 }: ActivityCardProps): JSX.Element {
-  /* one hook or the other, chosen by the prop — both read the same
-     store, so a module card and the business card never disagree */
   const all = useActivity(orgSlug, moduleId ? undefined : limit)
   const mine = useModuleActivity(orgSlug, moduleId ?? '', limit)
   const rows = moduleId ? mine : all
-
-  /* read once per render rather than per row, so every relative
-     time on the card is measured from the same instant */
-  const now = Date.now()
 
   return (
     <section className="ac" aria-label="Recent activity">
@@ -108,11 +129,10 @@ export function ActivityCard({
             : 'Nothing has changed yet. Edits, prices and quotes show up here as they happen.'}
         </p>
       ) : (
-        <ul className="ac-list">
-          {rows.map((e) => (
-            <Row e={e} now={now} key={e.id} />
-          ))}
-        </ul>
+        /* THE SAME LIST THE DASHBOARD DRAWS. One implementation of
+           what an entry looks like, so the module's log and the
+           front door's cannot drift apart. */
+        <ActivityList orgSlug={orgSlug} {...(moduleId ? { moduleId } : {})} limit={limit} />
       )}
     </section>
   )
