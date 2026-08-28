@@ -978,3 +978,82 @@
     transform: none;
   }
 }
+
+/* ============================================================
+   THE REGISTER'S OWN CONTROLS — sort, and what a person is worth.
+   ============================================================ */
+
+/* HOW THE BOOK IS ORDERED. Same shape as the board's sort, because
+   it is the same control answering the same kind of question, and
+   two different-looking sort controls in one application is two
+   things to learn. */
+.cx-order {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-2) 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+}
+.cx-order:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+/* IT DIMS RATHER THAN DISAPPEARS while a search is on. A control
+   that vanishes has to be re-found; one that is visibly inert has
+   explained itself. */
+.cx-order:has(select:disabled) {
+  opacity: 0.55;
+}
+/* "Sort" is a label — §3 — and the value beside it is not. */
+.cx-order-say {
+  font-size: var(--t-caption-size);
+  font-weight: 620;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+.cx-order-in {
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+}
+.cx-order-in:focus {
+  outline: none;
+}
+.cx-order-in:disabled {
+  cursor: default;
+}
+
+/* WHAT THEY HAVE BEEN QUOTED. Mono and tabular so the column reads
+   down, and never a hue — a figure is not decorative, and money
+   least of all. */
+.cx-row-worth {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* THE ROW GAINS A FIFTH COLUMN. Name, contact, when, worth, count
+   — and the three figures on the right are all `justify-self: end`
+   so they line up down the register whatever is in them. */
+.cx-row-open {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) auto auto auto;
+}
+
+@media (max-width: 900px) {
+  /* the money goes before the contact does: a phone number is how
+     you act on the row, and the figure is on their page */
+  .cx-row-worth {
+    display: none;
+  }
+  .cx-row-open {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}

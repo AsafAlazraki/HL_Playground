@@ -79,10 +79,17 @@ export function CustomerStage({
       onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
-        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
-          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-          <span>Back</span>
-        </button>
+        {/* BACK ONLY FROM A CUSTOMER, never from the register.
+            Customers is one of the rail's four doors — you do not
+            arrive at it FROM anywhere, so "Back" pointed at whatever
+            happened to be open before and read as a control that had
+            lost its place. The same fix the quotes list got. */}
+        {openId ? (
+          <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
+            <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+            <span>Back</span>
+          </button>
+        ) : null}
 
         <p className="shell-view-what">
           <span className="shell-view-what-name">{openId ? 'Customer' : 'Customers'}</span>

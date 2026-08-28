@@ -48,7 +48,9 @@ import type { ReactElement } from 'react'
 import { MagnifyingGlass, Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
-import { localDay, useQuotes } from '@/features/quote'
+import { money } from '@/lib/money'
+import { PageHead } from '@/features/page'
+import { localDay, quoteTotals, useQuotes } from '@/features/quote'
 import { customerRegister, matchCustomers, readCustomers } from './customers'
 import { addCustomer, ensureCustomerRegister } from './register'
 import './crm.css'
@@ -63,8 +65,14 @@ export interface CustomerListProps {
 /** What the list knows about one person beyond their own cells. */
 interface Activity {
   quotes: number
-  /** the newest quote's day, or '' when there is none */
+  /** the day of their latest, in the reader's own locale */
   last: string
+  /** and the raw stamp of it, because a date drawn for a person is
+   *  not a date a sort can trust — "3 Aug" and "3 Aug" are the same
+   *  string in two different years */
+  at: string
+  /** everything they have been quoted, summed */
+  worth: number
 }
 
 /** One counted figure with its term under it — the same drawing
@@ -85,6 +93,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const quotes = useQuotes()
   const [find, setFind] = useState('')
+  const [order, setOrder] = useState<'name' | 'recent' | 'worth' | 'most'>('name')
 
   const table = customerRegister(entities)
   const rows = table ? (rowsByEntity[table.id] ?? []) : []
@@ -102,19 +111,65 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
     for (const q of quotes) {
       const rowId = q.customerRef?.rowId
       if (!rowId) continue
+      /* WHAT THEY HAVE BEEN QUOTED, summed. It is the figure a CRM
+         is opened for — "who is worth calling back" — and it could
+         not be a column on the customers table because it lives in
+         the quote registry, which is the same reason the count and
+         the date could not. */
+      const worth = quoteTotals(q).total
       const seen = by.get(rowId)
       /* the diary is already newest-first, so the FIRST one seen for
          a person is their latest — no second sort */
-      if (seen) seen.quotes += 1
-      else by.set(rowId, { quotes: 1, last: localDay(q.createdAt) })
+      if (seen) {
+        seen.quotes += 1
+        seen.worth += worth
+      } else {
+        by.set(rowId, { quotes: 1, last: localDay(q.createdAt), at: q.createdAt, worth })
+      }
     }
     return by
   }, [quotes])
 
-  const shown = useMemo(
-    () => matchCustomers(people, find, people.length),
-    [people, find],
-  )
+  /* HOW THE BOOK IS ORDERED. Four answers, and each is a real
+     question somebody asks of a register: who is new, who is worth
+     the most, who has been quoted most often, and — the default —
+     alphabetical, because that is how you find a person whose name
+     you already know.
+
+     SEARCH ORDERS BY RELEVANCE AND THAT WINS. `matchCustomers`
+     ranks a name that STARTS with the query above one that merely
+     contains it; re-sorting that alphabetically would throw the
+     ranking away and put the best match in the middle. So the sort
+     applies to the whole book and steps aside while somebody is
+     typing. */
+  const shown = useMemo(() => {
+    const hit = matchCustomers(people, find, people.length)
+    if (find.trim() !== '') return hit
+    const rank = [...hit]
+    switch (order) {
+      case 'recent':
+        return rank.sort(
+          (a, b) => (activity.get(b.rowId)?.at ?? '').localeCompare(activity.get(a.rowId)?.at ?? ''),
+        )
+      case 'worth':
+        return rank.sort(
+          (a, b) => (activity.get(b.rowId)?.worth ?? 0) - (activity.get(a.rowId)?.worth ?? 0),
+        )
+      case 'most':
+        return rank.sort(
+          (a, b) => (activity.get(b.rowId)?.quotes ?? 0) - (activity.get(a.rowId)?.quotes ?? 0),
+        )
+      default:
+        /* A NAMELESS ROW SORTS LAST, not first under an empty
+           string — the same rule the board keeps. */
+        return rank.sort((a, b) => {
+          if (a.name === '' && b.name === '') return 0
+          if (a.name === '') return 1
+          if (b.name === '') return -1
+          return a.name.localeCompare(b.name)
+        })
+    }
+  }, [people, find, order, activity])
 
   /* how many of the people in the book have ever been quoted — the
      one number on this page that says what a CRM is for */
@@ -175,37 +230,57 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
     <div className="cx-root">
       <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
       <div className="cx-scroll">
-        <header className="cx-head">
-          <div className="cx-head-id">
-            <span className="cx-head-eyebrow">Register</span>
-            <h1 className="cx-head-name">{table.name}</h1>
-            {table.description ? (
-              <p className="cx-head-desc">{table.description}</p>
-            ) : null}
-          </div>
-
-          {people.length > 0 ? (
-            <div className="cx-head-acts">
-              <dl className="cx-tally cx-tally--head">
-                <Fig
-                  n={people.length}
-                  of={people.length === 1 ? 'customer' : 'customers'}
-                />
-                <Fig n={withQuotes} of="quoted" />
-              </dl>
+        {/* THE APPLICATION'S HEADER, and this page used to have none
+            at all — it began with a card. See features/page. */}
+        <PageHead
+          eyebrow="Register"
+          name={table.name}
+          count={
+            withQuotes === 0
+              ? `${people.length} ${people.length === 1 ? 'person' : 'people'}`
+              : `${people.length} · ${withQuotes} quoted`
+          }
+          {...(table.description ? { line: table.description } : {})}
+          acts={
+            <>
               <div className="cx-find">
                 <span className="cx-find-mark" aria-hidden="true">
                   <MagnifyingGlass size={ICON_SIZE.small} weight="light" />
                 </span>
                 <input
                   className="cx-find-input"
+                  type="search"
                   value={find}
                   placeholder="Find a customer"
-                  aria-label="Find a customer"
-                  spellCheck={false}
+                  aria-label="Find a customer by name, contact or note"
                   onChange={(e) => setFind(e.target.value)}
                 />
               </div>
+
+              {/* THE SORT STEPS ASIDE WHILE SOMEBODY IS TYPING.
+                  `matchCustomers` ranks by relevance and re-sorting
+                  that alphabetically would bury the best match in the
+                  middle of the list, so the control says so rather
+                  than appearing to be ignored. */}
+              <label className="cx-order">
+                <span className="cx-order-say">Sort</span>
+                <select
+                  className="cx-order-in"
+                  value={find.trim() === '' ? order : 'match'}
+                  disabled={find.trim() !== ''}
+                  aria-label="How to order the register"
+                  onChange={(e) =>
+                    setOrder(e.target.value as 'name' | 'recent' | 'worth' | 'most')
+                  }
+                >
+                  {find.trim() !== '' ? <option value="match">Best match</option> : null}
+                  <option value="name">Name A–Z</option>
+                  <option value="recent">Quoted most recently</option>
+                  <option value="worth">Worth the most</option>
+                  <option value="most">Most quotes</option>
+                </select>
+              </label>
+
               <button
                 type="button"
                 className="cx-act cx-act--primary"
@@ -217,9 +292,9 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                 <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
                 New customer
               </button>
-            </div>
-          ) : null}
-        </header>
+            </>
+          }
+        />
 
         {people.length === 0 ? (
           <div className="cx-empty ds-rise">
@@ -293,6 +368,13 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                     </span>
                     <span className="cx-row-contact">{c.contact.join('  ·  ')}</span>
                     <span className="cx-row-when">{act?.last ?? ''}</span>
+                    {/* WHAT THEY HAVE BEEN QUOTED. Drawn only where
+                        there is something to draw: a column of em
+                        dashes down a new register is noise, and the
+                        count beside it already says "none". */}
+                    <span className="cx-num cx-row-worth">
+                      {act ? money(act.worth) : ''}
+                    </span>
                     <span className="cx-num cx-row-count">
                       {act
                         ? `${act.quotes} ${act.quotes === 1 ? 'quote' : 'quotes'}`
