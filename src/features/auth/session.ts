@@ -40,22 +40,61 @@ export interface AppUser {
   orgSlug: string
   orgName: string
 
-  /** MAY THEY CHANGE THE SHAPE OF THE BUSINESS — the data model,
-   *  the tables, the rules, the roles, the saved configurations.
+  /** WHAT THIS PERSON MAY REACH, as a named rung rather than a
+   *  flag. It began as `admin: boolean` and that was one question
+   *  too few: administering a dealership's own settings and
+   *  administering the SHAPE OF ITS DATA are different jobs, and
+   *  the second is the one that can break the first.
    *
-   *  IT IS NOT A `RoleDef`, deliberately, and the two must not be
-   *  merged. A `RoleDef` is the dealership's own word for a job and
-   *  it grants CAPABILITIES INSIDE A MODULE — browse Boats, quote
-   *  from Trailers. Administering the tenancy is not a capability of
-   *  any module: it is the thing that decides what the modules ARE.
-   *  A salesperson can have every capability in every module and
-   *  still have no business editing the data model.
+   *  THE LADDER:
+   *    'sales'       quote, browse the catalogue, keep customers.
+   *                  No Admin door at all.
+   *    'admin'       the dealership's own set-up — modules, roles,
+   *                  business rules, saved configurations,
+   *                  import/export. Everything about how THIS
+   *                  business sells.
+   *    'super-admin' the same, plus the data model and the tables
+   *                  themselves. The shape everything else is
+   *                  built on, and the one place a wrong move
+   *                  costs a price file.
    *
-   *  A BOOLEAN AND NOT A ROLE LIST, because there is exactly one
-   *  question here today and inventing a second role system to
-   *  answer it would leave two places to look when somebody cannot
-   *  reach a screen. */
-  admin: boolean
+   *  IT IS NOT A `RoleDef`, and the two must not be merged. A
+   *  `RoleDef` is the dealership's own word for a job and it
+   *  grants CAPABILITIES INSIDE A MODULE — browse Boats, quote
+   *  from Trailers. This says which of the APPLICATION a person
+   *  gets. A salesperson can hold every capability in every module
+   *  and still have no business editing the data model; the two
+   *  answer different questions and a person needs both.
+   *
+   *  ORDERED, so a check is `atLeast(user, 'admin')` and never a
+   *  list of equalities somebody will forget to extend. */
+  role: Role
+}
+
+/** The rungs, in order. `ORDER` is the only place the ladder's
+ *  shape is written down; everything else asks `atLeast`. */
+export type Role = 'sales' | 'admin' | 'super-admin'
+
+const ORDER: readonly Role[] = ['sales', 'admin', 'super-admin']
+
+/** The dealership's own word for each rung, for a screen that has
+ *  to say it. Never generated from the id — "super-admin" with the
+ *  hyphen taken out is not a name a person wrote. */
+export const ROLE_NAME: Record<Role, string> = {
+  sales: 'Sales',
+  admin: 'Administrator',
+  'super-admin': 'Super admin',
+}
+
+/** Is this person at least this far up the ladder?
+ *
+ *  Takes `null` and answers false, because "nobody is signed in"
+ *  and "signed in without the rung" are the same answer to every
+ *  caller and forcing each one to test twice is how a gate ends up
+ *  open on the path nobody thought about. */
+export function atLeast(user: AppUser | null | undefined, rung: Role): boolean {
+  if (!user) return false
+  return ORDER.indexOf(user.role) >= ORDER.indexOf(rung)
 }
 
 /** The seeded operator. See the warning above: this is a demo
@@ -70,8 +109,11 @@ const SEEDED: ReadonlyArray<{ user: AppUser; password: string }> = [
       title: 'Sales',
       orgSlug: 'northside-marine',
       orgName: 'Northside Marine',
-      /* the one seeded operator owns this tenancy */
-      admin: true,
+      /* THE ONE SEEDED OPERATOR OWNS THIS TENANCY, so they hold
+         the top rung — the data model and the tables included.
+         There is one account in this build and it is the person
+         who commissioned it. */
+      role: 'super-admin',
     },
   },
 ]

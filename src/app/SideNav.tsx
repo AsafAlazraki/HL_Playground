@@ -99,6 +99,7 @@ import {
 import { useProjectStore } from '@/store/useProjectStore'
 import { TableKindSymbol } from '@/features/tablekit'
 import { placeCount } from '@/features/modules'
+import { atLeast } from '@/features/auth'
 import { WhoChip, type AppUser } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 
@@ -373,7 +374,7 @@ export function SideNav({
               a refusal, it is simply not their application; drawing
               it greyed would be telling every salesperson every day
               about a screen they will never open. */}
-          {user?.admin ? (
+          {atLeast(user, 'admin') ? (
             <button
               type="button"
               className={`sn-admin${current === 'admin' ? ' is-on' : ''}`}

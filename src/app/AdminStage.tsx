@@ -73,6 +73,7 @@ import {
 } from '@/features/tenancy'
 import type { AppUser } from '@/features/auth'
 import { PageHead } from '@/features/page'
+import { atLeast, ROLE_NAME } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
 
@@ -153,6 +154,12 @@ export function AdminStage({
   const roles = useProjectStore((s) => s.roles)
   const org = useProjectStore((s) => s.meta.org)
   const constraints = useConstraints()
+
+  /* THE TOP RUNG. `atLeast` rather than an equality: a check
+     written `role === 'super-admin'` is a gate that stays shut the
+     day a rung is added above it, and there is one above it in
+     every multi-tenant build. */
+  const top = atLeast(user, 'super-admin')
 
   /* WHOSE SET-UP IS ON SCREEN. Held here rather than in the shell's
      Stage union — see the header. */
@@ -289,6 +296,11 @@ export function AdminStage({
           <PageHead
             eyebrow={org?.name ?? 'Your business'}
             name="Admin"
+            /* THE RUNG IS SAID, because what is on this screen
+               depends on it and a person who cannot see a door
+               should be able to tell whether it is missing or
+               simply not theirs. */
+            count={user ? ROLE_NAME[user.role] : undefined}
             line="The shape of what you sell, and who may change it."
           />
 
@@ -296,6 +308,19 @@ export function AdminStage({
             <p className="mono-label ad-band-name" id="ad-band-shape">
               The shape of what you sell
             </p>
+            {/* THE TOP RUNG'S OWN BAND. The data model and the
+                tables are the shape everything else is built on,
+                and a wrong move here costs a price file rather than
+                a setting. An administrator runs the dealership's
+                selling; a super admin runs what it is selling FROM.
+
+                ABSENT, NOT REFUSED. Rule 10 asks that anything
+                which cannot be done says why, where it is — that
+                covers an act a person can reach for. A band that is
+                not theirs is not a refusal; drawing it greyed would
+                tell every administrator, every day, about two
+                screens they will never open. */}
+            {top ? (
             <div className="ad-grid">
               <Door
                 glyph={Graph}
@@ -314,6 +339,9 @@ export function AdminStage({
                 fact={one(facts.rows, 'row', 'rows')}
                 onPick={onOpenTables}
               />
+            </div>
+            ) : null}
+            <div className="ad-grid">
               <Door
                 glyph={TreeStructure}
                 name="Configure"
