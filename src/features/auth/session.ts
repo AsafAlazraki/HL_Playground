@@ -39,6 +39,23 @@ export interface AppUser {
   /** the organisation they belong to. One today; the seam for many. */
   orgSlug: string
   orgName: string
+
+  /** MAY THEY CHANGE THE SHAPE OF THE BUSINESS — the data model,
+   *  the tables, the rules, the roles, the saved configurations.
+   *
+   *  IT IS NOT A `RoleDef`, deliberately, and the two must not be
+   *  merged. A `RoleDef` is the dealership's own word for a job and
+   *  it grants CAPABILITIES INSIDE A MODULE — browse Boats, quote
+   *  from Trailers. Administering the tenancy is not a capability of
+   *  any module: it is the thing that decides what the modules ARE.
+   *  A salesperson can have every capability in every module and
+   *  still have no business editing the data model.
+   *
+   *  A BOOLEAN AND NOT A ROLE LIST, because there is exactly one
+   *  question here today and inventing a second role system to
+   *  answer it would leave two places to look when somebody cannot
+   *  reach a screen. */
+  admin: boolean
 }
 
 /** The seeded operator. See the warning above: this is a demo
@@ -53,6 +70,8 @@ const SEEDED: ReadonlyArray<{ user: AppUser; password: string }> = [
       title: 'Sales',
       orgSlug: 'northside-marine',
       orgName: 'Northside Marine',
+      /* the one seeded operator owns this tenancy */
+      admin: true,
     },
   },
 ]
@@ -118,7 +137,22 @@ export function currentUser(): AppUser | null {
     const raw = globalThis.localStorage?.getItem(KEY)
     if (!raw) return null
     const u = JSON.parse(raw) as AppUser
-    return u && typeof u.email === 'string' ? u : null
+    if (!u || typeof u.email !== 'string') return null
+
+    /* A STORED SESSION IS A COPY, AND THE SEED IS THE ORIGINAL.
+       A session written before a field existed is missing it — the
+       `admin` flag arrived after people were already signed in, and
+       reading those sessions back gave every one of them a falsy
+       flag and hid the Admin door from its owner.
+
+       So a stored session is refreshed from the seeded account with
+       the same email, and only what identifies the SESSION survives
+       — nothing here is a merge. If the email is not one this build
+       ships, the stored copy stands as it is: it is somebody's
+       session and this function's job is to read it, not to judge
+       it. */
+    const seeded = SEEDED.find((a) => a.user.email === u.email)
+    return seeded ? { ...seeded.user } : u
   } catch {
     return null
   }

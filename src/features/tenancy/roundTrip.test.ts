@@ -109,6 +109,9 @@ const ASAF = {
   title: 'Sales',
   orgSlug: 'northside-marine',
   orgName: 'Northside Marine',
+  /* this fixture is about SCOPING, not about permission — see
+     `AppUser.admin`. False, because nothing here is testing it. */
+  admin: false,
 }
 
 /** A second business, so the scoping can be shown to be real rather

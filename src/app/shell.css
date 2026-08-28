@@ -5674,7 +5674,17 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--sp-6) var(--sp-6);
+  /* NO HORIZONTAL PADDING OF ITS OWN — `PageHead` owns the page's
+     gutter and the bands below it take the same one, so a door's
+     left edge is the title's left edge. Two elements both padding
+     to a gutter is how a grid ends up further in than the heading
+     above it. */
+  padding: 0 0 var(--sp-6);
+}
+.ad-band,
+.ad-well > .ad-empty {
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
 }
 /* A MEASURE, NOT A STRETCH. At 1600 an unbounded grid made the
    drawing's door 1300px wide with a 40px mark in the corner of it —
@@ -5683,10 +5693,7 @@
 .ad-well > * {
   max-width: 1080px;
 }
-.ad-head {
-  max-width: 62ch;
-  margin-bottom: var(--sp-6);
-}
+
 .ad-eyebrow {
   margin: 0 0 var(--s-2);
   color: var(--fg-tertiary);

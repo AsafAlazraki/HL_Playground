@@ -72,6 +72,7 @@ import {
   subscribeToArchive,
 } from '@/features/tenancy'
 import type { AppUser } from '@/features/auth'
+import { PageHead } from '@/features/page'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
 
@@ -263,18 +264,19 @@ export function AdminStage({
         </div>
       ) : (
         <div className="ad-well">
-          <header className="ad-head">
-            <p className="mono-label ad-eyebrow">Admin</p>
-            {/* THE ONE BIG THING ON THE SCREEN. `ds-hero` is Archivo
-                and bottoms out at 34px, which is the floor the third
-                face is allowed at all (§2). */}
-            <h2 className="ad-name ds-hero">{org?.name ?? 'Your business'}</h2>
-            {/* THE ONE LINE. A stage gets its name and at most one
-                line, and this is it for the whole surface. */}
-            <p className="ad-say">
-              The shape of what you sell, and who may change it.
-            </p>
-          </header>
+          {/* THE APPLICATION'S HEADER. This was the fourth of five
+              different ones — a 52px hero over its own eyebrow with
+              its own gutter. See features/page/PageHead.tsx.
+
+              THE NAME IS "Admin", NOT THE DEALERSHIP'S. Same reason
+              the modules page stopped shouting it: the rail says
+              whose business this is on every screen, and a person
+              who pressed Admin wants to know they are in Admin. */}
+          <PageHead
+            eyebrow={org?.name ?? 'Your business'}
+            name="Admin"
+            line="The shape of what you sell, and who may change it."
+          />
 
           <section className="ad-band" aria-labelledby="ad-band-shape">
             <p className="mono-label ad-band-name" id="ad-band-shape">

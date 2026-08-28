@@ -359,19 +359,35 @@ export function SideNav({
             onSignOut={onSignOut}
             onOpenConfigurations={onOpenConfigurations}
           />
-          <button
-            type="button"
-            className={`sn-admin${current === 'admin' ? ' is-on' : ''}`}
-            onClick={onOpenAdmin}
-            aria-current={current === 'admin' ? 'page' : undefined}
-            aria-label={collapsed ? 'Admin' : undefined}
-            title={collapsed ? 'Admin' : undefined}
-          >
-            <span className="sn-admin-mark" aria-hidden="true">
-              <GearSix size={ICON_SIZE.small} weight={MARK_WEIGHT} />
-            </span>
-            <span className="sn-admin-say">Admin</span>
-          </button>
+          {/* ADMIN IS FOR PEOPLE WHO ADMINISTER. The data model, the
+              tables, the rules, the roles and the saved
+              configurations are all behind this one door, and they
+              are the shape of the business rather than the day's
+              work — a salesperson has no business in there and, more
+              to the point, should not have to walk past it.
+
+              THE DOOR IS ABSENT RATHER THAN REFUSING. Rule 10 asks
+              that anything which cannot be done says why, where it
+              is — but that is about acts a person can reach for. A
+              whole area of the application that is not theirs is not
+              a refusal, it is simply not their application; drawing
+              it greyed would be telling every salesperson every day
+              about a screen they will never open. */}
+          {user?.admin ? (
+            <button
+              type="button"
+              className={`sn-admin${current === 'admin' ? ' is-on' : ''}`}
+              onClick={onOpenAdmin}
+              aria-current={current === 'admin' ? 'page' : undefined}
+              aria-label={collapsed ? 'Admin' : undefined}
+              title={collapsed ? 'Admin' : undefined}
+            >
+              <span className="sn-admin-mark" aria-hidden="true">
+                <GearSix size={ICON_SIZE.small} weight={MARK_WEIGHT} />
+              </span>
+              <span className="sn-admin-say">Admin</span>
+            </button>
+          ) : null}
         </div>
       </div>
     </nav>
