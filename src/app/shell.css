@@ -1662,6 +1662,16 @@
   border-radius: 0 var(--r-control) var(--r-control) 0;
   margin-left: -1px;
 }
+/* A CONTROL THAT LEAVES THE PAGE IS NOT PART OF THE SEGMENT. Board
+   and List swap what is under the header; History opens another
+   screen. Same row, because all three are ways of looking at the
+   same quotes — separated, because only two of them are a choice
+   about THIS page. */
+.shell-quote-away {
+  margin-left: var(--s-3);
+  border-radius: var(--r-control);
+}
+
 /* THE ONE THAT IS ON. `aria-pressed` is the truth and the class
    follows it, so the two can never disagree. Raised above its
    neighbour so its full border is drawn rather than half-covered

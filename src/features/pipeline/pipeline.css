@@ -1524,3 +1524,46 @@
     transform: none;
   }
 }
+
+/* ============================================================
+   THE BOARD'S OWN TOOLBAR — under the page's title, where every
+   other screen puts the controls that narrow it.
+
+   It was a `PageHead` of the board's own, which put "SELLING /
+   Pipeline" underneath the Board / List switcher the stage drew in
+   the bar above — the page's controls over the page's title, and
+   the reverse of every other screen. The stage owns the header
+   now; this is the row beneath it.
+   ============================================================ */
+.pb-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  flex: none;
+  padding: 0 var(--page-gutter) var(--s-4);
+}
+
+/* THE TYPE CHIPS SIT IN THE SAME ROW, so a person changing what
+   they are looking at does it in one place. They keep their own
+   gap and take no gutter — the row owns the page's inset, and two
+   elements padding to one gutter is how a filter row ends up
+   further in than the title above it. */
+.pb-tools .pb-types {
+  padding: 0;
+  margin: 0;
+}
+
+/* HOW MUCH OF THE BOARD IS SHOWING, and only while that is less
+   than all of it. The page's header counts every quote; this
+   counts what survived the filters, which is a different fact and
+   belongs beside the controls that caused it. Pushed to the end of
+   the row so the Stages door stays at the edge it has always been
+   at. */
+.pb-narrowed {
+  margin: 0 0 0 auto;
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}

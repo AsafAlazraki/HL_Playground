@@ -4641,9 +4641,17 @@
   font-size: var(--t-small-size);
   line-height: 1.3;
   color: var(--fg);
+  /* IT CLAMPS TO TWO LINES; IT DOES NOT TRUNCATE MID-WORD. §3.
+     `nowrap` + `ellipsis` cut "Highfield - SP760WL(Windlass) (HYP)"
+     at "(HY…" — 284px of name in a 240px column — which is a model
+     code a person cannot read back over a phone. Two lines is the
+     rule's own answer and this range needs both of them. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 /* THE SERIES IT SITS IN. Highfield runs Series then Model then
    Variant, so a bare variant code says almost nothing alone. */

@@ -47,10 +47,11 @@
 import type { ReactElement } from 'react'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, CaretLeft, ClockCounterClockwise, Kanban, ListBullets } from '@phosphor-icons/react'
-import { QuoteList, QuotePage, useQuote } from '@/features/quote'
+import { QuoteList, QuotePage, useQuote, useQuotes } from '@/features/quote'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { currentUser } from '@/features/auth'
+import { PageHead } from '@/features/page'
 import { Board } from '@/features/pipeline'
 import { stageKeys, useStageEscape } from './stageKeys'
 
@@ -97,6 +98,10 @@ export function QuoteStage({
   onClose,
 }: QuoteStageProps): ReactElement {
   const quote = useQuote(quoteId)
+  /* HOW MANY THERE ARE, for the page's header. The board counts
+     what survived its own filters, which is a different fact and
+     is drawn beside the controls that caused it. */
+  const quoteCount = useQuotes().length
   /* the id counts as open only when the document is really there */
   const openId = quote ? quote.id : null
 
@@ -226,17 +231,28 @@ export function QuoteStage({
               All quotes
             </button>
           </div>
-        ) : (
-          <div className="shell-quote-acts">
-            {/* BOARD OR LIST, and the board is the default.
-                "Where is everything, and what is stuck" is a
-                question about shape, and a list cannot draw a
-                shape. The list is kept and is one press away,
-                because it is still the right screen for finding
-                one known quote among two hundred.
+        ) : null}
+      </div>
 
-                The choice is remembered, so a person who prefers
-                the list is not handed the board every morning. */}
+      {/* ONE HEADER FOR THE PAGE, DRAWN BY THE PAGE.
+
+          The board drew its own and the list drew none, so the two
+          views of one screen had two different anatomies — and the
+          view switcher sat in the bar ABOVE the title, which is the
+          reverse of every other screen in the app.
+
+          The stage owns it because the stage is what "the Quotes
+          page" IS; Board and List are two ways of looking at it,
+          and neither should be deciding what the page is called.
+          The switcher is in `tools` for the same reason the modules
+          grid's type filters are: it says which part of the page
+          you are looking at, which is what that row is for. */}
+      {quote ? null : (
+        <PageHead
+          eyebrow="Selling"
+          name="Quotes"
+          count={`${quoteCount} ${quoteCount === 1 ? 'quote' : 'quotes'}`}
+          tools={
             <div className="shell-quote-views" role="group" aria-label="How to show the quotes">
               <button
                 type="button"
@@ -256,20 +272,25 @@ export function QuoteStage({
                 <ListBullets size={ICON_SIZE.tiny} aria-hidden="true" />
                 List
               </button>
+              {/* THE DIARY IS A THIRD VIEW OF THE SAME QUOTES, so it
+                  sits with the other two rather than alone on the bar
+                  above the title. It is separated from them because
+                  it LEAVES this page — the first two swap what is
+                  under the header, this one opens another screen. */}
+              {onOpenHistory ? (
+                <button
+                  type="button"
+                  className="btn shell-quote-act shell-quote-away"
+                  onClick={onOpenHistory}
+                >
+                  <ClockCounterClockwise size={ICON_SIZE.tiny} aria-hidden="true" />
+                  History
+                </button>
+              ) : null}
             </div>
-            {onOpenHistory ? (
-              <button
-                type="button"
-                className="btn shell-quote-act"
-                onClick={onOpenHistory}
-              >
-                <ClockCounterClockwise size={ICON_SIZE.tiny} aria-hidden="true" />
-                History
-              </button>
-            ) : null}
-          </div>
-        )}
-      </div>
+          }
+        />
+      )}
 
       <div className="shell-quote-well">
         {quote ? (

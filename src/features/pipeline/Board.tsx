@@ -42,7 +42,6 @@ import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { TableKind } from '@/types/model'
-import { PageHead } from '@/features/page'
 import { StageEditor } from './StageEditor'
 import {
   SORTS,
@@ -263,93 +262,103 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
 
   return (
     <div className="pb" ref={boardRef}>
-      <PageHead
-        eyebrow="Selling"
-        name="Pipeline"
-        /* THE COUNT SAYS WHEN IT IS A SUBSET. "12 quotes" while a
-           search is on is a lie by omission; "12 of 84" is the same
-           control admitting what it is doing. */
-        count={`${narrowed ? `${total} of ${all.length}` : total} ${
-          all.length === 1 ? 'quote' : 'quotes'
-        }`}
-        acts={
-          <>
-            <label className="pb-find">
-              <MagnifyingGlass size={ICON_SIZE.small} aria-hidden="true" />
-              <input
-                className="pb-find-in"
-                type="search"
-                value={query}
-                placeholder="Search quotes"
-                aria-label="Search quotes by reference, customer or what is being sold"
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </label>
+      {/* THE BOARD DOES NOT OWN THE PAGE'S HEADER ANY MORE.
 
-            <label className="pb-sort">
-              <span className="pb-sort-say">Sort</span>
-              <select
-                className="pb-sort-in"
-                value={sort}
-                aria-label="How to order every column"
-                onChange={(e) => {
-                  setSort(e.target.value as SortId)
-                  /* A BOARD-WIDE SORT CLEARS THE OVERRIDES, or the
-                     control appears not to work on exactly the
-                     columns somebody had already touched. */
-                  setPerCol({})
-                }}
-              >
-                {SORTS.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+          It drew its own `PageHead` — "SELLING / Pipeline" — while
+          the Quotes stage above it drew the Board / List / History
+          switcher, so the page's controls appeared ABOVE its title
+          and the List view had no header at all. Every other screen
+          reads title, then the page's own controls, then content.
+          Reported as, exactly, "uniformity mate".
 
-            {/* THE DEALERSHIP'S OWN COLUMNS. It sits on the board
-                rather than only in Admin because the person who
-                wants a stage called "Awaiting deposit" is looking
-                at the board when they think of it. */}
-            <button
-              type="button"
-              className="pb-stages-go"
-              aria-expanded={editing}
-              onClick={() => setEditing((v) => !v)}
-            >
-              <Sliders size={ICON_SIZE.tiny} aria-hidden="true" />
-              Stages
-            </button>
-          </>
-        }
-        tools={
-          /* WHAT SORT OF THING IS BEING SOLD. The same filter the
-             modules grid carries, in the same words and the same
-             hues, because it is the same question about the same
-             catalogue. Drawn only where there is more than one type
-             to choose between — a lone "All" chip is a control with
-             no choice in it. */
-          chips.length > 2 ? (
-            <ul className="pb-types" aria-label="Show one type of quote">
-              {chips.map((c) => (
-                <li key={c.key}>
-                  <button
-                    type="button"
-                    className="k-filter pb-type"
-                    data-kind={c.kind}
-                    aria-pressed={type === c.key}
-                    onClick={() => setType(c.key)}
-                  >
-                    {c.label}
-                    <span className="pb-type-n">{c.count}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : undefined
-        }
-      />
+          The STAGE owns the header now, because the stage is the
+          thing that is "the Quotes page" — Board and List are two
+          views of it. What is left here is this view's own toolbar,
+          which is the row every other page puts under its title. */}
+      <div className="pb-tools">
+        <label className="pb-find">
+          <MagnifyingGlass size={ICON_SIZE.small} aria-hidden="true" />
+          <input
+            className="pb-find-in"
+            type="search"
+            value={query}
+            placeholder="Search quotes"
+            aria-label="Search quotes by reference, customer or what is being sold"
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+
+        <label className="pb-sort">
+          <span className="pb-sort-say">Sort</span>
+          <select
+            className="pb-sort-in"
+            value={sort}
+            aria-label="How to order every column"
+            onChange={(e) => {
+              setSort(e.target.value as SortId)
+              /* A BOARD-WIDE SORT CLEARS THE OVERRIDES, or the
+                 control appears not to work on exactly the columns
+                 somebody had already touched. */
+              setPerCol({})
+            }}
+          >
+            {SORTS.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {/* WHAT SORT OF THING IS BEING SOLD. The same filter the
+            modules grid carries, in the same words and the same
+            hues. Drawn only where there is more than one type to
+            choose between — a lone "All" chip is a control with no
+            choice in it. */}
+        {chips.length > 2 ? (
+          <ul className="pb-types" aria-label="Show one type of quote">
+            {chips.map((c) => (
+              <li key={c.key}>
+                <button
+                  type="button"
+                  className="k-filter pb-type"
+                  data-kind={c.kind}
+                  aria-pressed={type === c.key}
+                  onClick={() => setType(c.key)}
+                >
+                  {c.label}
+                  <span className="pb-type-n">{c.count}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {/* HOW MUCH OF THE BOARD YOU ARE LOOKING AT, and only while
+            that is less than all of it. The page's own header counts
+            every quote; this counts what survived the filters, which
+            is a different fact and belongs beside the controls that
+            caused it. */}
+        {narrowed ? (
+          <p className="pb-narrowed ds-mono">
+            {total} of {all.length}
+          </p>
+        ) : null}
+
+        {/* THE DEALERSHIP'S OWN COLUMNS. It sits on the board rather
+            than only in Admin because the person who wants a stage
+            called "Awaiting deposit" is looking at the board when
+            they think of it. */}
+        <button
+          type="button"
+          className="pb-stages-go"
+          aria-expanded={editing}
+          onClick={() => setEditing((v) => !v)}
+        >
+          <Sliders size={ICON_SIZE.tiny} aria-hidden="true" />
+          Stages
+        </button>
+      </div>
 
       {editing ? (
         <StageEditor orgSlug={orgSlug} onClose={() => setEditing(false)} />
