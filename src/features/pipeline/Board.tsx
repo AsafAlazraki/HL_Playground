@@ -30,11 +30,12 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { JSX, PointerEvent as ReactPointerEvent } from 'react'
-import { ArrowsDownUp, MagnifyingGlass } from '@phosphor-icons/react'
+import { ArrowsDownUp, MagnifyingGlass, Sliders } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { TableKind } from '@/types/model'
+import { StageEditor } from './StageEditor'
 import {
   SORTS,
   kindOfQuote,
@@ -46,7 +47,8 @@ import {
 } from './finding'
 import { say } from '@/store/notes'
 import { quoteTotals, useQuotes, type QuoteDef } from '@/features/quote'
-import { STAGES, boardOf, moveTo, stageById, stageOf, useStages, type StageId } from './stages'
+import { boardOf, moveTo, stageOf, useStages, type StageId } from './stages'
+import { useStageDefs, type StageDef } from './stageStore'
 
 export interface BoardProps {
   orgSlug: string
@@ -68,6 +70,9 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
   const all = useQuotes()
   const entities = useProjectStore((st) => st.entities)
   const at = useStages(orgSlug)
+  /* THE DEALERSHIP'S OWN COLUMNS — named, coloured and ordered in
+     the panel behind the Stages button. See `stageStore.ts`. */
+  const stages = useStageDefs(orgSlug)
 
   const [query, setQuery] = useState('')
   const [type, setType] = useState<TableKind | 'all'>('all')
@@ -82,6 +87,7 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
   const [sort, setSort] = useState<SortId>('recent')
   const [perCol, setPerCol] = useState<Partial<Record<StageId, SortId>>>({})
   const [menu, setMenu] = useState<StageId | null>(null)
+  const [editing, setEditing] = useState(false)
 
   /* THE CHIPS ARE COUNTED OFF EVERY QUOTE, not off the filtered
      list: a type chip whose count changed as you typed would be
@@ -97,7 +103,7 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
     [all, entities, type, query],
   )
 
-  const columns = useMemo(() => boardOf(quotes, at), [quotes, at])
+  const columns = useMemo(() => boardOf(quotes, at, stages), [quotes, at, stages])
 
   /* the card under the pointer, and the column it is over. Both null
      at rest, so nothing on the board is lit when nobody is dragging */
@@ -107,7 +113,7 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
 
   const move = useCallback(
     (q: QuoteDef, to: StageId): void => {
-      const from = stageOf(q, at)
+      const from = stageOf(q, at, stages)
       if (from === to) return
       moveTo(orgSlug, q, to)
       /* `say` WITH ITS OWN ACT, NOT `sayUndoable`. That helper pins
@@ -122,11 +128,11 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
          listens to this same bus — reads as a history rather than
          as a list of nudges. */
       say({
-        text: `${q.reference} moved to ${stageById(to).name}.`,
+        text: `${q.reference} moved to ${stages.find((s) => s.id === to)?.name ?? to}.`,
         act: { label: 'Undo', onPick: () => moveTo(orgSlug, q, from) },
       })
     },
-    [orgSlug, at],
+    [orgSlug, at, stages],
   )
 
   /** WHICH COLUMN IS UNDER THE POINTER, measured rather than
@@ -240,8 +246,26 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
               ))}
             </select>
           </label>
+
+          {/* THE DEALERSHIP'S OWN COLUMNS. It sits on the board
+              rather than only in Admin because the person who wants
+              a stage called "Awaiting deposit" is looking at the
+              board when they think of it. */}
+          <button
+            type="button"
+            className="pb-stages-go"
+            aria-expanded={editing}
+            onClick={() => setEditing((v) => !v)}
+          >
+            <Sliders size={ICON_SIZE.tiny} aria-hidden="true" />
+            Stages
+          </button>
         </div>
       </header>
+
+      {editing ? (
+        <StageEditor orgSlug={orgSlug} onClose={() => setEditing(false)} />
+      ) : null}
 
       {/* WHAT SORT OF THING IS BEING SOLD. The same filter the
           modules grid carries, in the same words and the same hues,
@@ -269,7 +293,7 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
       ) : null}
 
       <div className="pb-cols">
-        {STAGES.map((stage) => {
+        {stages.map((stage) => {
           const deals = sortDeals(columns[stage.id], perCol[stage.id] ?? sort)
           /* THE COLUMN'S MONEY, and it is the reason a board beats a
              list at a glance: what is sitting in Issued is what the
@@ -337,7 +361,7 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
                      different facts, and a column giving the first
                      answer to the second question is simply wrong. */
                   <p className="pb-none">
-                    {narrowed ? 'Nothing here matches.' : stage.empty}
+                    {narrowed ? 'Nothing here matches.' : stage.empty || 'Nothing here yet.'}
                   </p>
                 ) : (
                   deals.map((q) => {
@@ -353,13 +377,13 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
                            `preventDefault` so the arrows do not also
                            scroll the board sideways underneath. */
                         onKeyDown={(e) => {
-                          const i = STAGES.findIndex((s) => s.id === stage.id)
-                          if (e.key === 'ArrowRight' && i < STAGES.length - 1) {
+                          const i = stages.findIndex((s) => s.id === stage.id)
+                          if (e.key === 'ArrowRight' && i < stages.length - 1) {
                             e.preventDefault()
-                            move(q, STAGES[i + 1].id)
+                            move(q, stages[i + 1].id)
                           } else if (e.key === 'ArrowLeft' && i > 0) {
                             e.preventDefault()
-                            move(q, STAGES[i - 1].id)
+                            move(q, stages[i - 1].id)
                           } else if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault()
                             onOpen(q.id)

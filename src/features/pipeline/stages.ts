@@ -26,58 +26,26 @@
    back to its derived stage clears the override rather than
    storing it — so the store holds decisions, not defaults.
 
-   WHAT IS NOT HERE YET, and is in docs/plan/SALES_BOARD.md:
-   dealer-defined stages, what a stage change TRIGGERS, comments,
-   attachments and reassignment. This is the spine those hang off.
+   THE STAGES THEMSELVES ARE THE DEALERSHIP'S — named, coloured and
+   ordered in `stageStore.ts`. This file holds only WHERE EACH DEAL
+   IS, which is a different store with a different lifetime: the
+   list changes when a manager reorganises, the overrides change
+   every time somebody drags a card.
+
+   WHAT IS NOT HERE YET, and is in docs/plan/SALES_BOARD.md: what a
+   stage change TRIGGERS, comments, attachments and reassignment.
+   This is the spine those hang off.
    ============================================================ */
 
 import { useCallback, useSyncExternalStore } from 'react'
 import type { QuoteDef } from '@/features/quote'
 
-export type StageId = 'draft' | 'issued' | 'negotiating' | 'won' | 'lost'
-
-export interface Stage {
-  id: StageId
-  name: string
-  /** one line under the column head when it is empty. A statement
-   *  of what belongs here, never an instruction. */
-  empty: string
-  /** THE END OF THE ROAD, and it is drawn quieter for it. Won and
-   *  lost are both closed; a board where the two closed columns
-   *  shout as loudly as the three live ones is a board that draws
-   *  the eye to work already finished. */
-  closed: boolean
-  /** won is the only green thing on this screen, and lost the only
-   *  struck-through one. `tone` names which, and nothing else on
-   *  the board carries a hue. */
-  tone?: 'good' | 'gone'
-}
-
-export const STAGES: readonly Stage[] = [
-  {
-    id: 'draft',
-    name: 'Draft',
-    empty: 'Quotes being built. Nothing here yet.',
-    closed: false,
-  },
-  {
-    id: 'issued',
-    name: 'Issued',
-    empty: 'Given to a customer, waiting on an answer.',
-    closed: false,
-  },
-  {
-    id: 'negotiating',
-    name: 'Negotiating',
-    empty: 'Deals being talked through.',
-    closed: false,
-  },
-  { id: 'won', name: 'Won', empty: 'Nothing won yet.', closed: true, tone: 'good' },
-  { id: 'lost', name: 'Lost', empty: 'Nothing lost.', closed: true, tone: 'gone' },
-]
-
-export const stageById = (id: StageId): Stage =>
-  STAGES.find((s) => s.id === id) ?? STAGES[0]
+/** A stage id is whatever the dealership called it — the list is
+ *  theirs now, and lives in `stageStore.ts`. Two ids are anchors
+ *  that always exist (`ANCHORS`), because a quote nobody has moved
+ *  derives its column from the document and needs somewhere to
+ *  land. */
+export type StageId = string
 
 /* ------------------------------------------------------------
    THE STORE. Overrides only — see the header.
@@ -88,8 +56,14 @@ const key = (orgSlug: string): string => `hl.pipeline.v1:${orgSlug}`
 let cache: { k: string; v: Record<string, StageId> } | null = null
 const listeners = new Set<() => void>()
 
-const isStage = (v: unknown): v is StageId =>
-  typeof v === 'string' && STAGES.some((s) => s.id === v)
+/* ANY STRING, and the check is deliberately that loose. The stage
+   LIST is a separate store a dealer edits (`stageStore.ts`), so an
+   override naming a stage this list does not have is a normal
+   consequence of editing one and not the other — `stageOf` lands it
+   in the first column rather than dropping it. Validating against
+   the list here would silently delete a decision the moment
+   somebody renamed a column. */
+const isStage = (v: unknown): v is StageId => typeof v === 'string' && v !== ''
 
 function read(orgSlug: string): Record<string, StageId> {
   const k = key(orgSlug)
@@ -131,19 +105,28 @@ export const derivedStage = (q: QuoteDef): StageId =>
 
 /** Where this deal is: what somebody decided, or what the document
  *  implies. Pure, and takes the overrides, so a board can be
- *  tested without a browser. */
-export function stageOf(q: QuoteDef, at: Record<string, StageId>): StageId {
-  return at[q.id] ?? derivedStage(q)
+ *  tested without a browser.
+ *
+ *  A DEAL STANDING IN A STAGE THAT NO LONGER EXISTS lands in the
+ *  first column rather than nowhere. The editor moves a removed
+ *  stage's deals to its neighbour, so this should never fire — but
+ *  a stored id and a stored stage list are two separate things in
+ *  storage and either can be edited without the other. Losing a
+ *  deal off the board is not a failure mode worth allowing. */
+export function stageOf(
+  q: QuoteDef,
+  at: Record<string, StageId>,
+  stages?: readonly { id: string }[],
+): StageId {
+  const want = at[q.id] ?? derivedStage(q)
+  if (!stages || stages.some((s) => s.id === want)) return want
+  return stages[0]?.id ?? want
 }
 
 /** Move one deal. Setting it back to its derived stage CLEARS the
  *  override rather than storing it, so the store never fills with
  *  entries that say what the document already said. */
-export function moveTo(
-  orgSlug: string,
-  q: QuoteDef,
-  stage: StageId,
-): void {
+export function moveTo(orgSlug: string, q: QuoteDef, stage: StageId): void {
   const at = { ...read(orgSlug) }
   if (stage === derivedStage(q)) delete at[q.id]
   else at[q.id] = stage
@@ -179,12 +162,16 @@ export function useStages(orgSlug: string): Record<string, StageId> {
 export function boardOf(
   quotes: readonly QuoteDef[],
   at: Record<string, StageId>,
+  stages: readonly { id: string }[],
 ): Record<StageId, QuoteDef[]> {
-  const out = {} as Record<StageId, QuoteDef[]>
-  for (const s of STAGES) out[s.id] = []
-  for (const q of quotes) out[stageOf(q, at)].push(q)
-  for (const s of STAGES) {
-    out[s.id].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+  const out: Record<StageId, QuoteDef[]> = {}
+  for (const s of stages) out[s.id] = []
+  for (const q of quotes) {
+    const id = stageOf(q, at, stages)
+    ;(out[id] ??= []).push(q)
+  }
+  for (const id of Object.keys(out)) {
+    out[id].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
   }
   return out
 }

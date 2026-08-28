@@ -243,23 +243,10 @@
   text-overflow: ellipsis;
 }
 
-/* WON IS THE ONE GREEN THING, and it is a rail on the column
-   rather than a fill behind text — a tint counts (rule 4) and
-   these cards carry three tiers of ink. */
-.pb-col[data-tone='good'] .pb-col-name {
-  color: var(--success);
-}
-.pb-col[data-tone='gone'] .pb-col-name {
-  color: var(--fg-tertiary);
-}
-/* A LOST DEAL IS STRUCK, not greyed into illegibility: the figure
-   is still readable because "how much did we lose" is a question
-   somebody asks. */
-.pb-col[data-tone='gone'] .pb-card-sum {
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-  color: var(--fg-secondary);
-}
+/* THE COLUMN'S COLOUR IS THE DEALERSHIP'S CHOICE NOW — see the
+   `[data-tone]` set at the foot of this file, which is the single
+   place the six colours are declared. `good`/`gone` were this
+   file's own two-value guess and are gone with them. */
 
 /* ============================================================
    RESPONSIVE. Below a laptop the columns keep their width and the
@@ -538,5 +525,406 @@
   .pb-types {
     padding-left: var(--s-5);
     padding-right: var(--s-5);
+  }
+}
+
+/* ============================================================
+   THE STAGE COLOURS.
+
+   SIX, FROM THE SYSTEM'S OWN TOKENS, and not a colour well. A free
+   picker invites a dealer to choose something that fails 4.5:1
+   against the column head, and nothing in this repo can check
+   contrast automatically (see CLAUDE.md). Each of these is used
+   two ways and both were measured: as a 10% wash behind the
+   column, and as the ink of the column's name on that wash.
+
+   The tone sets `--stage`, and every rule below reads that one
+   custom property — so adding a seventh colour is one block here
+   and nothing else anywhere.
+   ============================================================ */
+
+[data-tone='neutral'] {
+  --stage: var(--fg-tertiary);
+}
+[data-tone='blue'] {
+  --stage: var(--kind-boat);
+}
+[data-tone='amber'] {
+  --stage: var(--kind-trailer);
+}
+[data-tone='violet'] {
+  --stage: var(--kind-package);
+}
+[data-tone='green'] {
+  --stage: var(--success);
+}
+[data-tone='red'] {
+  --stage: var(--danger);
+}
+
+/* THE COLUMN WEARS IT AS A CAP, not as a fill. A column filled with
+   its own hue puts three tiers of ink on a tint and breaks rule 4
+   in five places at once; a 3px cap over the head says the same
+   thing and touches no text. */
+.pb-col[data-tone] {
+  border-top: 3px solid var(--stage);
+}
+.pb-col[data-tone] .pb-col-name {
+  color: var(--stage);
+}
+/* neutral is the exception: `--fg-tertiary` as a 3px cap reads as a
+   grubby line rather than as a choice, so it gets the hairline it
+   would have had anyway */
+.pb-col[data-tone='neutral'] {
+  border-top: 1px solid var(--line-subtle);
+}
+.pb-col[data-tone='neutral'] .pb-col-name {
+  color: var(--fg-secondary);
+}
+
+/* A CLOSED COLUMN'S FIGURES ARE STRUCK ONLY WHEN IT IS THE RED ONE.
+   "Finished" covers both won and lost; struck-through money means
+   money that did not happen, which is only true of the second. */
+.pb-col[data-tone='red'] .pb-card-sum {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   THE EDITOR (se-) — a panel over the board.
+
+   It is a panel and not a page because you are changing the thing
+   you are looking at: the column behind it renames as you type,
+   which is the whole argument for not walking away to a settings
+   screen to do this.
+   ============================================================ */
+
+.se {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  margin: 0 var(--s-8) var(--s-4);
+  padding: var(--s-4) var(--s-5) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e-float);
+}
+
+.se-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--s-2) var(--s-3);
+  margin-bottom: var(--s-3);
+}
+.se-name {
+  grid-column: 1;
+  margin: 0;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+/* ONE LINE, and it is the only prose on this panel. Everything else
+   here is a control with a label on it. */
+.se-say {
+  grid-column: 1;
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+}
+.se-shut {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.se-shut:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.se-shut:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.se-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ONE ROW PER STAGE, and the columns are named so a stage's name,
+   its colour and its count line up down the panel however long the
+   names are — the thing a person scans is the left edge of each
+   control, not the row. */
+.se-row {
+  display: grid;
+  /* THE NAME IS CAPPED AT 320px, and it was `1fr`. A stage is
+     called "Awaiting deposit", not a paragraph, and a full-width
+     field pushed its own colour swatches a thousand pixels away
+     from it — three controls that belong to one stage, marooned at
+     opposite ends of the row. The last column takes the slack
+     instead. */
+  grid-template-columns: auto minmax(140px, 320px) auto auto auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--line-subtle);
+}
+.se-row:first-child {
+  border-top: 0;
+}
+
+.se-move {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.se-move-go {
+  width: 20px;
+  height: 15px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--fg-tertiary);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.se-move-go:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.se-move-go:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* AT AN END IT IS INERT, NOT ABSENT. A control that disappears at
+   the top of a list makes the row above it a different shape from
+   every other row. */
+.se-move-go[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.se-in {
+  min-width: 0;
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+}
+.se-in:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+.se-tones {
+  display: inline-flex;
+  gap: 4px;
+}
+.se-tone {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--stage);
+  cursor: pointer;
+  transition:
+    transform var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.se-tone:hover {
+  transform: scale(1.12);
+}
+/* THE CHOSEN ONE WEARS A RING RATHER THAN A TICK. A tick inside an
+   18px swatch is four legible pixels; a ring is unmistakable at a
+   glance and works on all six colours. */
+.se-tone.is-on {
+  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--stage);
+}
+.se-tone:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.se-closed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* HOW MANY DEALS ARE STANDING IN IT — the fact that makes removing
+   one a decision rather than a guess. */
+.se-n {
+  min-width: 3ch;
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--fg-tertiary);
+}
+
+.se-drop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.se-drop:hover {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+.se-drop:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* THE REASON, UNDER THE ROW IT BELONGS TO. Spans the full width so
+   it reads as a sentence rather than as a caption on the last
+   column. */
+.se-why {
+  grid-column: 1 / -1;
+  margin: var(--s-1) 0 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: 3px solid var(--warning);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--warning-wash);
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg);
+}
+
+.se-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+}
+.se-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.se-add:hover {
+  background: var(--surface-2);
+}
+.se-add:focus-visible,
+.se-reset:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.se-reset {
+  margin-left: auto;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+}
+.se-reset:hover {
+  color: var(--fg);
+}
+
+/* ---- the door on the toolbar ------------------------------- */
+
+.pb-stages-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.pb-stages-go:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.pb-stages-go[aria-expanded='true'] {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.pb-stages-go:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+@media (max-width: 1100px) {
+  .se {
+    margin-left: var(--s-5);
+    margin-right: var(--s-5);
+  }
+  /* the row becomes two: the name and its handles on one line, the
+     colour, the flag and the count beneath. Nothing is dropped. */
+  .se-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .se-tones,
+  .se-closed,
+  .se-n {
+    grid-column: 2 / -1;
   }
 }

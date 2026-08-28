@@ -4,15 +4,28 @@
    comments and attachments — is docs/plan/SALES_BOARD.md. */
 export { Board } from './Board'
 export type { BoardProps } from './Board'
+export { StageEditor } from './StageEditor'
+export type { StageEditorProps } from './StageEditor'
 export {
-  STAGES,
+  ANCHORS,
+  DEFAULT_STAGES,
+  TONES,
+  mintId,
+  neighbourOf,
+  resetStages,
+  setStages,
+  stagesOf,
+  useStageDefs,
+  whyNot,
+  type StageDef,
+  type StageTone,
+} from './stageStore'
+export {
   boardOf,
   derivedStage,
   forgetPipeline,
   moveTo,
-  stageById,
   stageOf,
   useStages,
-  type Stage,
   type StageId,
 } from './stages'

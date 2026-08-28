@@ -12,7 +12,8 @@
 import { describe, expect, it } from 'vitest'
 import type { EntityDef } from '@/types/model'
 import type { QuoteDef } from '@/features/quote'
-import { boardOf, derivedStage, stageOf, STAGES } from './stages'
+import { boardOf, derivedStage, stageOf } from './stages'
+import { DEFAULT_STAGES } from './stageStore'
 import { kindOfQuote, matches, sortDeals, typeChips } from './finding'
 
 const STAMP = '2026-08-01T00:00:00.000Z'
@@ -66,7 +67,7 @@ describe('where a deal is', () => {
      store stays empty until somebody makes a decision. */
   it('puts every quote in a column with an empty store', () => {
     const qs = [quote({ id: 'a' }), quote({ id: 'b', state: 'issued' })]
-    const cols = boardOf(qs, {})
+    const cols = boardOf(qs, {}, DEFAULT_STAGES)
     expect(cols['draft'].map((q) => q.id)).toEqual(['a'])
     expect(cols['issued'].map((q) => q.id)).toEqual(['b'])
     expect(cols['won']).toEqual([])
@@ -77,9 +78,21 @@ describe('where a deal is', () => {
     expect(stageOf(q, { a: 'won' })).toBe('won')
   })
 
+  /* A DEAL WHOSE STAGE HAS BEEN DELETED lands in the first column
+     rather than vanishing. The editor moves a removed stage's deals
+     to its neighbour, so this should never fire — but the stage
+     LIST and the per-deal overrides are two stores and either can be
+     edited without the other. */
+  it('lands a deal whose stage no longer exists in the first column', () => {
+    const q = quote({ id: 'a' })
+    expect(stageOf(q, { a: 'gone-stage' }, DEFAULT_STAGES)).toBe(DEFAULT_STAGES[0].id)
+    /* and with no list to check against, it is taken at its word */
+    expect(stageOf(q, { a: 'gone-stage' })).toBe('gone-stage')
+  })
+
   it('draws every stage, including the empty ones', () => {
-    const cols = boardOf([], {})
-    expect(Object.keys(cols).sort()).toEqual(STAGES.map((s) => s.id).sort())
+    const cols = boardOf([], {}, DEFAULT_STAGES)
+    expect(Object.keys(cols).sort()).toEqual(DEFAULT_STAGES.map((s) => s.id).sort())
   })
 })
 
