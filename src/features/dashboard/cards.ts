@@ -440,6 +440,43 @@ export function moduleRows(
     })
 }
 
+/** HOW MANY QUOTES HAVE BEEN RAISED AGAINST EACH PLACE.
+ *
+ *  Keyed by the place's own key, so the caller does a lookup rather
+ *  than a scan per tile: twenty-five tiles each filtering the whole
+ *  quote list is twenty-five passes over the same array on every
+ *  render, and the dashboard redraws on every note.
+ *
+ *  A QUOTE POINTS AT A TABLE, NOT AT A MODULE. `rootTableId` is
+ *  the table the subject was configured from, which is exactly
+ *  what a place is when a module holds several — so Highfield's
+ *  count is Highfield's, not Boats'. Where a module is ONE place,
+ *  the place stands for every table the module holds and the
+ *  counts of those tables add up.
+ *
+ *  Pure, and it takes the places rather than reading them, for the
+ *  same reason everything else in this file does. */
+export function quotesPerPlace(
+  places: readonly { key: string; moduleId: string; tableId: string | undefined }[],
+  modules: Record<string, ModuleDef>,
+  quotes: readonly QuoteDef[],
+): Record<string, number> {
+  const byTable: Record<string, number> = {}
+  for (const q of quotes) byTable[q.rootTableId] = (byTable[q.rootTableId] ?? 0) + 1
+
+  const out: Record<string, number> = {}
+  for (const p of places) {
+    if (p.tableId !== undefined) {
+      out[p.key] = byTable[p.tableId] ?? 0
+      continue
+    }
+    let n = 0
+    for (const id of modules[p.moduleId]?.tableIds ?? []) n += byTable[id] ?? 0
+    out[p.key] = n
+  }
+  return out
+}
+
 /* ---------------------------------------------------------- */
 /* Worth fixing                                               */
 /* ---------------------------------------------------------- */

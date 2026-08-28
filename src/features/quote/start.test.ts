@@ -41,6 +41,7 @@
    ============================================================ */
 
 import { describe, expect, it, vi } from 'vitest'
+import { placesOf } from '@/features/modules/places'
 import type { ConstraintDef, EntityDef, RowData } from '@/types/model'
 
 /* Persistence is mocked: the subject is what the reading derives,
@@ -105,15 +106,36 @@ const door = (name: string) => {
   return hit
 }
 
+/* A DOOR IS A PLACE NOW, NOT A MODULE, so a test that wants "the
+   boats" wants the run of doors under that category rather than one
+   door called Boats — there is no door called Boats any more, and
+   that is the change these tests are checking. */
+const under = (category: string) => {
+  const hits = doors().filter((d) => d.moduleName === category)
+  if (hits.length === 0) throw new Error(`no places under ${category}`)
+  return hits
+}
+const firstUnder = (category: string) => under(category)[0]
+
 /* ============================================================
    1 · EVERY PLACE IS DRAWN, AND A SHUT ONE SAYS WHY
    ============================================================ */
 
 describe('the places a quote can start from', () => {
-  it('draws every module, in the dashboard’s own order', () => {
+  /* ONE DOOR PER PLACE, AND IT USED TO BE ONE PER MODULE.
+     The picker's first screen offered Boats, Motors, Factory
+     Packages and Trailers — four categories — when what a dealer
+     quotes is a Highfield, a Stabicraft, a Yamaha. `placesOf` is the
+     modules screen's own reader and this now calls it, so the
+     picker, the modules grid and the dashboard tiles cannot
+     disagree about what a place is. */
+  it('draws every place, in the dashboard’s own order', () => {
     const list = doors()
-    expect(list.length).toBe(Object.keys(sheet().modules).length)
-    expect(list.length).toBeGreaterThan(1)
+    const { modules, entities, rowsByEntity } = sheet()
+    expect(list.length).toBe(placesOf(modules, entities, rowsByEntity).length)
+    /* strictly more doors than modules, which is the whole point:
+       the categories were hiding the brands inside them */
+    expect(list.length).toBeGreaterThan(Object.keys(modules).length)
     /* the dashboard's order and not a ranking of what works — a
        person who learned the dashboard must not learn a second list */
     const orders = list.map((d) => d.module.order)
@@ -122,7 +144,11 @@ describe('the places a quote can start from', () => {
 
   it('opens exactly the places whose own settings declare Quote', () => {
     const open = doors().filter((d) => d.refusal === '')
-    expect(open.map((d) => d.name).sort()).toEqual(
+    /* THE CATEGORIES THAT CARRY THE VERB, checked through the places
+       under them rather than by naming eighteen brands here — a test
+       that lists the seed's brands fails the day one is added, which
+       is a test of the fixture and not of the reading. */
+    expect([...new Set(open.map((d) => d.moduleName))].sort()).toEqual(
       ['Boats', 'Factory Packages', 'Motors', 'Trailers'].sort(),
     )
     for (const d of open) expect(d.module.capabilities).toContain('quote')
@@ -161,7 +187,7 @@ describe('the places a quote can start from', () => {
   })
 
   it('prints the same census the dashboard card prints', () => {
-    const boats = door('Boats')
+    const boats = firstUnder('Boats')
     expect(boats.say).toContain(String(boats.census.items))
     expect(boats.census.items).toBeGreaterThan(0)
   })
@@ -174,13 +200,16 @@ describe('the places a quote can start from', () => {
 describe('what a place holds', () => {
   it('never lists a discontinued row or a retired table', () => {
     const { entities, rowsByEntity } = sheet()
-    const trailers = door('Trailers')
-
-    /* the seed really does carry both cases, so this is a test of the
-       data as well as of the reading */
-    const retired = trailers.tables.length
-    const all = trailers.module.tableIds.length
-    expect(all).toBeGreaterThan(retired)
+    /* A RETIRED TABLE IS ITS OWN PLACE NOW, so "the trailers" is a
+       run of doors and the held stock is the one among them whose
+       table is struck — which is a better test than the old one: it
+       proves the retired place is still DRAWN and still refuses,
+       rather than merely that a category skipped it. */
+    const trailerDoors = under('Trailers')
+    const trailers = trailerDoors.find((d) => d.tables.length > 0)
+    expect(trailers).toBeDefined()
+    if (!trailers) throw new Error('no live trailer place')
+    expect(trailerDoors.some((d) => d.tables.length === 0)).toBe(true)
 
     const listed = new Set(trailers.tables.map((t) => t.id))
     const rows = catalogueOf(trailers, rowsByEntity)
@@ -194,13 +223,16 @@ describe('what a place holds', () => {
     }
     /* and the count held back is SAID rather than left as the
        difference between two numbers */
-    expect(trailers.census.held).toBeGreaterThan(0)
-    expect(trailers.say).toContain(String(trailers.census.held))
+    /* the count held back is SAID rather than left as the difference
+       between two numbers, wherever there is one */
+    const held = trailerDoors.filter((d) => d.census.held > 0)
+    expect(held.length).toBeGreaterThan(0)
+    for (const d of held) expect(d.say).toContain(String(d.census.held))
   })
 
   it('searches word by word, over the heading as well as the name', () => {
     const { rowsByEntity } = sheet()
-    const boats = door('Boats')
+    const boats = firstUnder('Boats')
     const all = catalogueOf(boats, rowsByEntity)
 
     const withTrail = all.find((e) => e.trail !== '')
@@ -229,7 +261,7 @@ describe('what a place holds', () => {
 
   it('caps what is drawn and says exactly how many it kept back', () => {
     const { rowsByEntity } = sheet()
-    const boats = door('Boats')
+    const boats = firstUnder('Boats')
     const all = catalogueOf(boats, rowsByEntity)
     expect(all.length).toBeGreaterThan(SUBJECT_CAP)
 
@@ -245,7 +277,7 @@ describe('what a place holds', () => {
 
   it('asks for a second letter only on a list too long to draw', () => {
     const { rowsByEntity } = sheet()
-    const boats = door('Boats')
+    const boats = firstUnder('Boats')
     const all = catalogueOf(boats, rowsByEntity)
     expect(subjectsIn(boats, all, 'y').waiting).toBe(true)
     expect(subjectsIn(boats, all, 'ya').waiting).toBe(false)
@@ -264,10 +296,16 @@ describe('what a place holds', () => {
    3 · THE PREVIEWED WALK IS THE WALK
    ============================================================ */
 
-/** The first live row of a place, as the picker would offer it. */
+/** The first live row of a place, as the picker would offer it.
+ *
+ *  TAKES A CATEGORY, NOT A PLACE. These tests are about what a quote
+ *  WALKS — the joins a boat has and a motor does not — and the walk
+ *  belongs to the kind rather than to the brand. Asking for "a
+ *  boat" and being handed the first one keeps them true whichever
+ *  brands the seed happens to carry. */
 function firstSubject(name: string) {
   const { entities, rowsByEntity } = sheet()
-  const d = door(name)
+  const d = firstUnder(name)
   const entry = catalogueOf(d, rowsByEntity)[0]
   expect(entry).toBeDefined()
   const entity = entities[entry.tableId]

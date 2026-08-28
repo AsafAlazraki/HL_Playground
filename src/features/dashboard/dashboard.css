@@ -720,7 +720,13 @@
 .dsh-card-body {
   display: flex;
   flex-direction: column;
-  padding: 0 var(--s-2) var(--s-2);
+  /* THE SAME GUTTER AS THE HEAD, and it was eight pixels narrower.
+     The head pads 16 and the body padded 8, so every list, every
+     tile and the colour key all began eight pixels to the LEFT of
+     the mark and the heading above them — a misalignment small
+     enough to look like a mistake rather than a choice, which is
+     exactly what it was. */
+  padding: 0 var(--s-4) var(--s-3);
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
@@ -1715,8 +1721,11 @@
   overflow-y: auto;
   /* room for the scrollbar so the right column is not clipped by
      it, and a hair of inset so a focus ring is never cropped */
+  /* a hair of inset so a focus ring is never cropped, and the
+     scrollbar's width given back on the right so the second column
+     is not clipped by it */
   padding: 1px var(--s-1) var(--s-1) 1px;
-  margin: 0 calc(var(--s-1) * -1) 0 -1px;
+  margin: 0 calc(var(--s-2) * -1) 0 -1px;
 }
 
 .dsh-tile {
@@ -1911,7 +1920,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 84px;
+  /* FOUR FIFTHS OF THE TILE. It was closer to half, and a strip of
+     small grey text taking half a tile competes with the mark the
+     tile exists to show. 96 over a 24px foot is 80/20. */
+  min-height: 96px;
   padding: var(--s-4) var(--s-5);
   border-radius: var(--r-control) var(--r-control) 0 0;
   background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
@@ -1965,8 +1977,8 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--s-2);
-  min-height: 30px;
-  padding: var(--s-2) var(--s-3);
+  min-height: 24px;
+  padding: 5px var(--s-3) var(--s-2);
 }
 
 .dsh-tile-under {
@@ -1997,81 +2009,43 @@
   color: var(--fg-tertiary);
 }
 
-.dsh-tile-acts {
-  grid-area: 1 / 1 / 2 / 3;
-  display: flex;
+
+/* ---- the figures in the foot ------------------------------ */
+
+/* THE HOVER BUTTONS ARE GONE, and they worked. Quote and Catalog
+   appeared under the pointer on a card whose whole job is to get
+   you INTO a module — where both acts live anyway, with more room
+   and more context around them. A shortcut past a screen is not a
+   fix for that screen.
+
+   WHAT THE ROOM BOUGHT INSTEAD is the quote count: how many quotes
+   are out on this brand. It is the one fact on the tile that is
+   about the DAY rather than about the catalogue — 588 Highfield
+   variants is the size of the range; three quotes is three people
+   waiting on an answer. */
+.dsh-tile-figs {
+  display: inline-flex;
+  align-items: center;
   gap: var(--s-2);
-  justify-content: flex-start;
-  opacity: 0;
-  /* INERT UNTIL SHOWN. Without this the buttons stay in the tab
-     order and stay clickable while invisible — a control you can
-     press by accident and cannot see. */
-  pointer-events: none;
-  transition: opacity var(--d-fast) var(--ease);
 }
 
-/* THE SWAP. `:focus-within` is not decoration: it is the whole
-   keyboard story, so the control a person has tabbed onto is never
-   the invisible one. */
-.dsh-tile:hover .dsh-tile-under,
-.dsh-tile:focus-within .dsh-tile-under,
-.dsh-tile:hover .dsh-tile-sum,
-.dsh-tile:focus-within .dsh-tile-sum {
-  opacity: 0;
-}
-.dsh-tile:hover .dsh-tile-acts,
-.dsh-tile:focus-within .dsh-tile-acts {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.dsh-tile-act {
-  padding: 3px var(--s-3);
-  border: 1px solid var(--line);
+/* It takes the accent, and it is the only thing on this card that
+   does. Rule 5 gives the accent to action and this is not an
+   action — but it is the single figure a person is scanning
+   twenty-five tiles to find, and the kind hue cannot carry it
+   because the kind hue is already saying something else about the
+   same tile. Drawn only when it is not zero, so the colour never
+   appears twenty-five times at once and a column of "0" never
+   reads as a fault. */
+.dsh-tile-q {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px 1px 5px;
   border-radius: var(--r-full);
-  background: var(--surface-1);
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-caption-size);
-  font-weight: 560;
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.dsh-tile-act:hover {
-  background: var(--surface-2);
-  color: var(--fg);
-}
-.dsh-tile-act:active {
-  transform: translateY(0.5px);
-  transition-duration: var(--d-press);
-}
-.dsh-tile-act:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-/* ONE OF THE TWO IS PRIMARY, and it is Quote. A dealer opens this
-   card to sell something; the catalogue is how you get there when
-   you do not yet know which one. */
-.dsh-tile-act.is-go {
-  border-color: transparent;
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-.dsh-tile-act.is-go:hover {
-  background: var(--accent-strong);
-  color: var(--accent-fg);
-}
-
-/* A TOUCH SCREEN HAS NO HOVER, so the acts would never appear. It
-   keeps the category and the count, and the tile itself is the
-   door — the behaviour it had before these were added. */
-@media (hover: none) {
-  .dsh-tile-acts {
-    display: none;
-  }
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
 }

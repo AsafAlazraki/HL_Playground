@@ -95,6 +95,7 @@ import {
   readLogoFile,
   type LogoRead,
 } from './logo'
+import { brandLogoFor } from './brandLogos'
 import './modules.css'
 
 export interface ModuleSettingsProps {
@@ -248,6 +249,9 @@ function Mark({
   primaryKind: TableKind | undefined
 }): ReactElement {
   const updateModule = useProjectStore((s) => s.updateModule)
+  /* WHAT THIS MODULE IS DRAWN WITH WHEN IT HAS NO LOGO OF ITS OWN.
+     Eight brands ship with a mark; see `brandLogos.ts`. */
+  const bundled = brandLogoFor(module.name)
   const [address, setAddress] = useState('')
   const [refusal, setRefusal] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
@@ -298,6 +302,17 @@ function Mark({
         <span className="md-mark-plate">
           {module.logo ? (
             <MarkPicture src={module.logo.src} alt={`${module.name} mark`} />
+          ) : bundled ? (
+            /* THE PLATE MUST SHOW WHAT THE APP IS ACTUALLY DRAWING.
+               Eight brands ship with a mark (`brandLogos.ts`), so a
+               module with no `logo` of its own is not markless — the
+               dashboard and the modules grid have been showing
+               Highfield's wordmark all along. A plate showing the
+               kind symbol here would be this screen disagreeing with
+               every other screen about what this module looks like,
+               and the person would replace a mark they never knew
+               they had. It is labelled as supplied, below. */
+            <MarkPicture src={bundled.src} alt={`${module.name} mark`} />
           ) : (
             <span className="md-mark-fall">
               <TableKindSymbol kind={kindOf(primaryKind)} size={ICON_SIZE.large} />
@@ -349,6 +364,17 @@ function Mark({
             <button type="button" className="md-linkbtn" onClick={clear}>
               Take the mark off
             </button>
+          ) : bundled ? (
+            /* NOT A BUTTON. There is nothing to take off — the mark
+               is supplied rather than stored, and "Take the mark off"
+               would have to mean "store an emptiness", which is a
+               state this model does not have and should not grow one
+               for. Choosing a file replaces it, which is the act a
+               person actually wants. */
+            <p className="md-mark-say">
+              This mark comes with the app. Choose a file or paste an address to use your
+              own instead.
+            </p>
           ) : null}
         </div>
       </div>

@@ -7,7 +7,7 @@
    window's identity lives here.
    ============================================================ */
 
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import type { EntityDef, TableKind } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
@@ -23,6 +23,11 @@ import { DesignStage } from './DesignStage'
 import { RulesStage } from './RulesStage'
 import { FlowStage } from './FlowStage'
 import { QuoteStage } from './QuoteStage'
+/* DEEP, NOT THROUGH THE BARREL — `quote/index.ts` says why:
+   `quote/index` → `QuoteStart` → `start.ts` → `quote/index` is a
+   cycle, and Vite resolves it to `undefined` at run time rather
+   than failing to build. */
+import { QuoteStart, type QuoteStartProps } from '@/features/quote/QuoteStart'
 import { ModuleStage } from './ModuleStage'
 import { CustomerStage } from './CustomerStage'
 import { AdminStage } from './AdminStage'
@@ -83,6 +88,23 @@ export type Stage =
      ============================================================ */
   | { kind: 'module'; moduleId: string | null; tab?: ModuleTab }
   | { kind: 'customer'; customerId: string | null }
+  /* ============================================================
+     STARTING A QUOTE — a PAGE, and it used to be a dialog over a
+     scrim.
+
+     Raising a quote is not an interruption of the work; it IS the
+     work, and the most important thing this application does. A
+     sheet over a dimmed dashboard says "answer this and get back
+     to what you were doing". A page says "this is what you are
+     doing" — and it gets the whole window, which a configurator
+     wants and a dialog can never have.
+
+     `at` is the place it opens standing in, or null for the grid
+     of every place. A quick action on a brand's tile knows the
+     answer to the picker's first question; the rail's New quote
+     does not.
+     ============================================================ */
+  | { kind: 'start'; at: string | null }
   /* ============================================================
      THE CATALOGUE — agreed with the CATALOGUE agent (territory
      key: `catalogue`). "The screen that does not exist today and
@@ -204,6 +226,7 @@ export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNo
   if (s.kind === 'customer') return s.customerId ? 'Customer' : 'Customers'
   if (s.kind === 'admin') return 'Admin'
   if (s.kind === 'catalogue') return 'Catalogue'
+  if (s.kind === 'start') return 'New quote'
   const e = entities[s.entityId]
   if (!e) return 'Table'
   const mark = <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.tiny} />
@@ -261,6 +284,28 @@ export interface StageHandlers {
 
 /** What a window draws. Every stage is mounted exactly as it was —
  *  the window supplies the frame, so none of them changed. */
+/** THE PICKER AS A STAGE.
+ *
+ *  `QuoteStart` takes the sheet as props rather than reading it —
+ *  deliberately, so it can be tested and read without a store — and
+ *  `renderStage`'s handler bag carries navigation, not data. This
+ *  is the seam between the two: one component, four lines, and it
+ *  is the only thing in this file that touches the store, exactly
+ *  as every other stage's own root does. */
+function QuoteStartStage(props: Omit<QuoteStartProps, 'modules' | 'entities' | 'rowsByEntity'>): ReactElement {
+  const modules = useProjectStore((st) => st.modules)
+  const entities = useProjectStore((st) => st.entities)
+  const rowsByEntity = useProjectStore((st) => st.rowsByEntity)
+  return (
+    <QuoteStart
+      modules={modules}
+      entities={entities}
+      rowsByEntity={rowsByEntity}
+      {...props}
+    />
+  )
+}
+
 export function renderStage(s: Stage, h: StageHandlers): ReactNode {
   switch (s.kind) {
     case 'home':
@@ -360,6 +405,18 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           /* the fan-out counts pairings off relationship tables; this
              is how a person reaches the rows behind a figure */
           onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
+        />
+      )
+    case 'start':
+      return (
+        <QuoteStartStage
+          {...(s.at ? { startAt: s.at } : {})}
+          onStarted={(quoteId) => h.openWin({ kind: 'quote', quoteId })}
+          /* THE DOOR UNDER A REFUSAL. A place that cannot raise a
+             price says why and names the switch; only the shell
+             knows the switch is on that module's own page. */
+          onOpenPlace={(moduleId) => h.openWin({ kind: 'module', moduleId })}
+          onClose={h.close}
         />
       )
     case 'quote':

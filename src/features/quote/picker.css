@@ -22,40 +22,38 @@
    the one place a strip cannot fit, it scrolls.
    ============================================================ */
 
-.qs-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-dialog);
-  display: grid;
-  place-items: center;
-  padding: var(--s-6);
-}
+/* ============================================================
+   A PAGE, AND IT USED TO BE A DIALOG OVER A SCRIM.
 
-/* NO FADE. A scrim that fades IS the dialog animating on open under
-   another name, and this dialog is opened from a key. */
-.qs-scrim {
-  position: absolute;
-  inset: 0;
-  background: var(--bg-sunken);
-  opacity: 0.72;
-}
+   Raising a quote is not an interruption of the work — it IS the
+   work, and the most important thing this application does. A
+   sheet over a dimmed dashboard says "answer this and get back to
+   what you were doing"; a page says "this is what you are doing".
 
-.qs-dialog {
-  position: relative;
+   It also gets the WHOLE WINDOW, which is the practical half. The
+   dialog was capped at 960px because a dialog wider than that
+   stops reading as a dialog — so a configurator's first screen,
+   a grid of every brand the dealership sells, was drawn in a
+   letterbox with the app greyed out behind it. Nine cards fitted.
+   There are twenty-five places.
+
+   WHAT WENT WITH THE DIALOG: the fixed overlay, the scrim, the
+   z-index, the click-outside-to-close, `aria-modal`, and the focus
+   trap. WHAT STAYED: Escape (back a step, then out), the arrows
+   and Enter over the list, and the back arrow — none of which were
+   ever modal behaviours.
+   ============================================================ */
+.qs-page {
   display: flex;
   flex-direction: column;
-  width: min(960px, 100%);
-  /* A MIN AS WELL AS A MAX. Layer one is a grid of nine cards and
-     layer two is a list of fifty rows; without a floor the dialog
-     grew by 300px the moment somebody pressed a card, which reads as
-     the panel jumping rather than as a door opening. */
-  min-height: min(560px, 86vh);
-  max-height: min(760px, 92vh);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
+  /* THE STAGE'S FULL HEIGHT, and the page never scrolls: the head
+     and the foot are pinned and the middle scrolls inside itself,
+     which is the same contract every other stage in this app
+     keeps. `min-height: 0` is what lets the middle be shorter than
+     its content. */
+  height: 100%;
+  min-height: 0;
   background: var(--surface-1);
-  box-shadow: var(--e-hero);
-  overflow: hidden;
 }
 
 /* ------------------------------------------------------------
@@ -67,7 +65,10 @@
   align-items: center;
   gap: var(--s-3);
   flex: none;
-  padding: var(--s-5) var(--s-5) var(--s-4);
+  /* A PAGE'S GUTTER, not a dialog's. The stage is as wide as the
+     window and 20px of inset on a 1600px screen reads as text
+     jammed against the rail. */
+  padding: var(--s-6) var(--s-8) var(--s-5);
   border-bottom: 1px solid var(--line-subtle);
 }
 
@@ -199,7 +200,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: var(--s-5);
+  padding: var(--s-6) var(--s-8);
 }
 
 .qs-body--rows {
@@ -218,8 +219,13 @@
 
 .qs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: var(--s-3);
+  /* THIS IS A PAGE NOW, so the grid gets the room a page has. At
+     168px a 1300px stage drew seven narrow cards a row and the
+     brand marks came out fifteen pixels tall; at 240 it draws five
+     and every mark is legible from a metre away, which is how a
+     dealer actually uses this screen. */
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s-4);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -236,16 +242,17 @@
 .qs-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-2);
+  align-items: stretch;
+  gap: 0;
   width: 100%;
-  padding: var(--s-4);
+  padding: 0;
   border: 1px solid var(--line);
   border-left: 3px solid var(--kind);
   border-radius: var(--r-card);
   background: var(--surface-1);
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
   box-shadow: var(--e1);
   transition:
     border-color var(--d-fast) var(--ease),
@@ -280,24 +287,29 @@
 
 .qs-card-mark {
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-control);
-  background: var(--surface-2);
+  /* THE MARK IS THE CARD'S FACE, not a 44px badge in its corner.
+     Same reasoning as the dashboard tiles: a wordmark IS the
+     brand's name, so it is the heading, and the kind's colour is
+     the ground behind it rather than a glyph beside it. */
+  min-height: 92px;
+  padding: var(--s-4) var(--s-5);
+  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
+  border-bottom: 1px solid color-mix(in srgb, var(--kind) 18%, transparent);
   color: var(--kind);
   overflow: hidden;
 }
 
-.qs-card-logo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+/* THE MARK ITSELF. Capped in both directions because these files
+   run from nine-to-one to three-to-one, and a rule capping only
+   width draws the squarer ones three times the height of the
+   wider ones. */
+.qs-card-mark .md-place-logo {
+  max-width: 100%;
+  max-height: 44px;
   object-fit: contain;
-  background: var(--surface-1);
 }
 
 .qs-card-name {
@@ -306,12 +318,40 @@
   letter-spacing: var(--t-heading-track);
   line-height: 1.25;
   color: var(--fg);
+  text-align: center;
+  text-wrap: balance;
   overflow-wrap: break-word;
   min-width: 0;
+}
+/* the name stands in for a mark, so it goes when there is one */
+.qs-card-mark:has(img) .qs-card-name {
+  display: none;
+}
+
+/* ---- the card's foot: what sort, and how many -------------- */
+
+.qs-card-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4) var(--s-3);
+}
+
+/* THE CATEGORY, which the mark cannot carry: Highfield's wordmark
+   says Highfield and not that it is a boat. */
+.qs-card-cat {
+  min-width: 0;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* A FIGURE IS NEVER A HUE. */
 .qs-card-n {
+  flex: none;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: var(--t-mono-sm-size);

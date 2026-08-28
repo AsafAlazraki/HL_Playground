@@ -82,7 +82,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
-import { createPortal } from 'react-dom'
 import {
   ArrowLeft,
   ArrowRight,
@@ -111,11 +110,9 @@ import {
 import { placeRules, subjectVerdict, type SubjectVerdict } from './subjectRules'
 import { unsellableSubject } from './freeze'
 import { createQuoteFromView } from './quotes'
+import { PlaceMark } from '@/features/modules/PlaceMark'
 import { FrozenPhoto } from './photo'
 import './picker.css'
-
-const FOCUSABLE =
-  'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
 
 export interface QuoteStartProps {
   /** the sheet, handed over rather than read — see the header */
@@ -152,7 +149,6 @@ export function QuoteStart({
   onClose,
 }: QuoteStartProps): ReactElement | null {
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const overlayRef = useRef<HTMLDivElement | null>(null)
   const findRef = useRef<HTMLInputElement | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
   const closeRef = useRef(onClose)
@@ -172,14 +168,23 @@ export function QuoteStart({
      rather than like moving a highlight. */
   const [placeId, setPlaceId] = useState<string | null>(startAt ?? null)
   const [showShut, setShowShut] = useState(false)
-  const door = doors.find((d) => d.moduleId === placeId) ?? null
+  /* MATCHED ON THE DOOR'S KEY, and then on the module's id.
+     `startAt` comes from a module tile and names a MODULE; the
+     doors are places. Where a module is one place the two strings
+     are the same; where it is several, the first of them is the
+     honest landing — better than opening on the grid and throwing
+     the answer away. */
+  const door =
+    doors.find((d) => d.key === placeId) ??
+    doors.find((d) => d.moduleId === placeId) ??
+    null
 
   /* a place struck from the sheet while this is up must not leave the
      dialog pointing at nothing */
   useEffect(() => {
-    if (placeId === null || doors.some((d) => d.moduleId === placeId)) return
+    if (placeId === null || door !== null) return
     setPlaceId(null)
-  }, [doors, placeId])
+  }, [doors, placeId, door])
 
   const [query, setQuery] = useState('')
   const [hi, setHi] = useState(-1)
@@ -296,28 +301,14 @@ export function QuoteStart({
       if (!root) return
       const inside = event.target instanceof Node && root.contains(event.target)
 
-      if (event.key === 'Tab') {
-        if (!inside && document.activeElement !== document.body) return
-        const items = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE))
-        if (items.length === 0) return
-        const first = items[0]
-        const last = items[items.length - 1]
-        const active = document.activeElement as HTMLElement | null
-        if (!active || !root.contains(active)) {
-          event.preventDefault()
-          first.focus()
-        } else if (event.shiftKey && active === first) {
-          event.preventDefault()
-          last.focus()
-        } else if (!event.shiftKey && active === last) {
-          event.preventDefault()
-          first.focus()
-        }
-        event.stopPropagation()
-        return
-      }
-
-      if (!inside) return
+      /* NO FOCUS TRAP, BECAUSE THIS IS NOT A DIALOG ANY MORE.
+         A trap is the one thing a modal owes a keyboard — it is
+         also the thing that makes a modal a modal. This is a page:
+         Tab walks out of it into the rail exactly as it does on
+         every other page, which is what a person expects when the
+         thing they are looking at is a screen rather than a sheet
+         over one. */
+            if (!inside) return
 
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -359,26 +350,23 @@ export function QuoteStart({
     return () => window.removeEventListener('keydown', onKeyDown, true)
   }, [shown.length, hi, start, placeId])
 
-  if (typeof document === 'undefined') return null
+  return (
+    /* A PAGE, NOT A POPUP.
 
-  return createPortal(
-    <div
-      className="qs-overlay"
-      ref={overlayRef}
-      onMouseDown={(event) => {
-        if (event.target === overlayRef.current) closeRef.current()
-      }}
-    >
-      {/* NO FADE. See §MOTION in this file's header. */}
-      <div className="qs-scrim" aria-hidden="true" />
+       This was a dialog in a portal over a scrim, and starting a
+       quote is not an interruption of the work — it IS the work,
+       and the most important thing this application does. A sheet
+       over a dimmed dashboard says "answer this and get back to
+       what you were doing"; a page says "this is what you are
+       doing". It also gets the whole window, which a configurator
+       wants and a dialog can never have.
 
-      <div
-        className="qs-dialog"
-        ref={rootRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="qs-q"
-      >
+       What went with the dialog: the scrim, the portal, the
+       click-outside-to-close, `aria-modal`, and the focus trap.
+       What stayed: Escape (back a step, then out), the arrow keys
+       and Enter over the list, and the back arrow — none of which
+       were ever modal behaviours. */
+    <div className="qs-page" ref={rootRef}>
         <header className="qs-head">
           {door === null ? (
             <h2 className="qs-q" id="qs-q">
@@ -437,8 +425,8 @@ export function QuoteStart({
               <>
                 <ul className="qs-grid" aria-label="The places you can quote from">
                   {open.map((d) => (
-                    <li key={d.moduleId} className="qs-cell">
-                      <ModuleCard door={d} onPick={() => setPlaceId(d.moduleId)} />
+                    <li key={d.key} className="qs-cell">
+                      <ModuleCard door={d} onPick={() => setPlaceId(d.key)} />
                     </li>
                   ))}
                 </ul>
@@ -473,7 +461,7 @@ export function QuoteStart({
                     {showShut ? (
                       <ul className="qs-shut-list">
                         {shut.map((d) => (
-                          <ShutRow key={d.moduleId} door={d} onOpenPlace={onOpenPlace} />
+                          <ShutRow key={d.key} door={d} onOpenPlace={onOpenPlace} />
                         ))}
                       </ul>
                     ) : null}
@@ -617,9 +605,7 @@ export function QuoteStart({
             )}
           </footer>
         ) : null}
-      </div>
-    </div>,
-    document.body,
+    </div>
   )
 }
 
@@ -650,20 +636,30 @@ function ModuleCard({ door, onPick }: { door: QuoteDoor; onPick: () => void }): 
       aria-label={`${door.name}, ${countSay(door)}`}
       onClick={onPick}
     >
-      <span className="qs-card-mark" aria-hidden="true">
-        <TableKindSymbol kind={door.kind} size={22} />
-        {door.module.logo ? (
-          <FrozenPhoto
-            img={door.module.logo}
-            fallbackAlt={door.name}
-            className="qs-card-logo"
-            w={96}
-            h={96}
-          />
-        ) : null}
+      {/* THE BRAND'S MARK IS THE CARD, exactly as it is on the
+          dashboard tiles, and `PlaceMark` is the one implementation
+          of "what mark does this place get" — the dealer's upload,
+          then the bundled brand mark, then nothing. The kind symbol
+          is NOT the fallback here: this grid is coloured by kind
+          already and the eyebrow says the category in words.
+
+          The name is still in the markup and CSS hides it when a
+          mark was really painted, so a mark that cannot be drawn
+          leaves a named card rather than an empty one. */}
+      <span className="qs-card-mark">
+        <PlaceMark
+          logo={door.module.logo}
+          name={door.name}
+          master={door.tables[0]}
+          size={22}
+          fallback="none"
+        />
+        <span className="qs-card-name">{door.name}</span>
       </span>
-      <span className="qs-card-name">{door.name}</span>
-      <span className="qs-card-n">{countSay(door)}</span>
+      <span className="qs-card-foot">
+        <span className="qs-card-cat">{door.moduleName}</span>
+        <span className="qs-card-n">{countSay(door)}</span>
+      </span>
     </button>
   )
 }

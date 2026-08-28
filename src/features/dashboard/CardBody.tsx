@@ -103,6 +103,7 @@ import {
   resolveRecent,
   rollFindings,
   rollRules,
+  quotesPerPlace,
 } from './cards'
 import type { QuoteLens } from './cards'
 import type { DashboardActs } from './acts'
@@ -505,6 +506,14 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
 
   const reorder = useReorder({ count: places.length, onMove: move, slotAttr: 'data-dsh-tile' })
 
+  /* ONE PASS OVER THE QUOTES FOR THE WHOLE CARD, not one per tile.
+     See `quotesPerPlace`. */
+  const quotes = useQuotes()
+  const quotesAt = useMemo(
+    () => quotesPerPlace(places, modules, quotes),
+    [places, modules, quotes],
+  )
+
   if (places.length === 0) {
     return <Nothing say={CARDS['my-modules'].empty} act="Modules" onAct={acts.onOpenModules} />
   }
@@ -610,42 +619,42 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
                 would make the whole tile ambiguous to a keyboard.
                 Reached by tabbing, and `:focus-within` on the tile
                 keeps them up while they are. */}
+            {/* THE FOOT IS A FIFTH OF THE TILE, and the mark is the
+                other four. It was closer to half and half, which
+                made the strip of small grey text compete with the
+                thing the tile exists to show.
+
+                THE HOVER BUTTONS ARE GONE. Quote and Catalog were
+                real, they worked, and they were the wrong answer:
+                two grey pills that appeared under the pointer, on a
+                card whose job is to get you INTO a module — where
+                both acts live anyway, with more room and more
+                context. The right fix is a fast module page, not a
+                shortcut past it.
+
+                WHAT THE ROOM BOUGHT INSTEAD IS THE QUOTE COUNT. How
+                many quotes are out on this brand is the one fact a
+                salesperson wants off a dashboard that a row count
+                cannot give them — 588 Highfield variants is the
+                catalogue's size and says nothing about the day. */}
             <div className="dsh-tile-foot">
-              {/* THE CATEGORY, which is the fact the mark cannot
-                  carry: Highfield's wordmark says Highfield and
-                  not that it is a boat. Always drawn where a mark
-                  is showing; suppressed only when the panel is
-                  already the module's own name and this would
-                  repeat the word directly above it. */}
               <span className="dsh-tile-under">{p.moduleName}</span>
-              <span className="dsh-tile-sum ds-mono">
-                {p.retired ? 'held' : p.census.items.toLocaleString()}
-              </span>
-              {/* A PLACE THAT IS NO LONGER SOLD OFFERS NEITHER. You
-                  cannot raise a quote against it and its catalogue
-                  is history — drawing the buttons and refusing on
-                  press is worse than not drawing them. */}
-              {p.retired ? null : (
-                <span className="dsh-tile-acts">
-                  <button
-                    type="button"
-                    className="dsh-tile-act is-go"
-                    onClick={() => acts.onNewQuote(p.moduleId)}
-                  >
-                    Quote
-                  </button>
-                  <button
-                    type="button"
-                    className="dsh-tile-act"
-                    onClick={() => {
-                      rememberPlace(p.moduleId, p.tableId)
-                      acts.onOpenModule(p.moduleId)
-                    }}
-                  >
-                    Catalog
-                  </button>
+              <span className="dsh-tile-figs">
+                <span className="dsh-tile-sum ds-mono">
+                  {p.retired ? 'held' : p.census.items.toLocaleString()}
                 </span>
-              )}
+                {/* DRAWN ONLY WHERE THERE ARE ANY. A column of "0"
+                    down a grid of twenty-five tiles is noise that
+                    reads as a fault; the tiles with quotes on them
+                    are the ones worth spotting, and they are the
+                    only ones that light up. */}
+                {quotesAt[p.key] ? (
+                  <span className="dsh-tile-q" title={`${quotesAt[p.key]} quotes`}>
+                    <FileText size={12} weight={MARK_WEIGHT} aria-hidden="true" />
+                    <span className="ds-mono">{quotesAt[p.key]}</span>
+                  </span>
+                ) : null}
+              </span>
             </div>
 
             {/* THE GRIP IS ITS OWN CONTROL, NOT THE TILE. Dragging

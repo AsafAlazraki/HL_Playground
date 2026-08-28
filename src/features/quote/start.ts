@@ -82,6 +82,7 @@ import {
   type IndexSection,
   type ModuleCensus,
 } from '@/features/modules/read'
+import { moduleAt, placesOf } from '@/features/modules/places'
 import { defaultBlocksFor } from '@/features/views/relations'
 import { retiredTablesSentence } from '@/features/views/sellable'
 
@@ -91,6 +92,20 @@ import { retiredTablesSentence } from '@/features/views/sellable'
 
 /** One place in the business, read as a door into a quote. */
 export interface QuoteDoor {
+  /** THE DOOR'S OWN IDENTITY, and it is not the module's.
+   *
+   *  A module holding seven boat tables is seven doors — Highfield,
+   *  Stabicraft, Stacer — because that is what a dealer opens. Two
+   *  of them would share a `moduleId`, so the picker cannot key on
+   *  it. Same key as `Place.key`, so a tile on the dashboard and a
+   *  door here are provably the same thing. */
+  key: string
+  /** the table this door stands for, or undefined where the module
+   *  is one door and stands for everything it holds */
+  tableId: string | undefined
+  /** the category above the name — Boats, Trailers. Drawn as the
+   *  eyebrow, never as the heading. */
+  moduleName: string
   moduleId: string
   name: string
   description: string
@@ -186,29 +201,60 @@ export function quoteDoors(
     ? [...(modules as readonly ModuleDef[])]
     : Object.values(modules as Record<string, ModuleDef>)
 
-  return list
-    .slice()
-    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
-    .map((module) => {
-      const all = moduleTables(module, entities)
-      const listed = listedTables(module, entities)
-      const census = moduleCensus(module, entities, rowsByEntity)
-      const primary = all[0]
-      return {
-        moduleId: module.id,
-        name: module.name,
-        description: module.description,
-        module,
-        tables: listed,
-        kind:
-          primary && primary.kind && primary.kind in TABLE_KINDS
-            ? primary.kind
-            : 'custom',
-        census,
-        say: censusLine(census),
-        refusal: refusalFor(module, all, listed, census),
-      }
-    })
+  /* ONE DOOR PER PLACE, AND IT USED TO BE ONE PER MODULE.
+     The first screen of the picker offered Boats, Motors, Factory
+     Packages and Trailers — four categories — when what a dealer
+     is quoting is a Highfield, a Stabicraft, a Yamaha. The modules
+     screen was fixed for this (`places.ts`) and the dashboard
+     after it; this was the last surface still asking the old
+     question, and it was asking it as the FIRST question of the
+     app's most important flow.
+
+     `placesOf` is that same reader, and `moduleAt` is how a place
+     becomes a module narrowed to one table — so every door below
+     is built from the module the person actually opens, and the
+     refusal, the census and the catalogue are all computed against
+     that narrowing rather than against the whole category. */
+  const byId: Record<string, ModuleDef> = {}
+  for (const m of list) byId[m.id] = m
+
+  return placesOf(byId, entities, rowsByEntity).map((place) => {
+    /* THE NARROWED MODULE CARRIES THE PLACE'S NAME.
+       `moduleAt` narrows the tables and keeps the module's own name,
+       which is right for what it was written for. Here it is wrong:
+       every sentence downstream — the refusal above all — is built
+       from `module.name`, and a refusal about Highfield that says
+       "Boats cannot raise a price" names a thing the person is not
+       looking at. Renaming the narrowed copy is what makes rule 10
+       hold on this screen: the reason is given in the place it
+       happened, in that place's own name. */
+    const base = byId[place.moduleId] as ModuleDef
+    const module =
+      place.tableId === undefined
+        ? base
+        : { ...moduleAt(base, place.tableId), name: place.name }
+    const all = moduleTables(module, entities)
+    const listed = listedTables(module, entities)
+    const census = moduleCensus(module, entities, rowsByEntity)
+    const primary = all[0]
+    return {
+      key: place.key,
+      tableId: place.tableId,
+      moduleName: place.moduleName,
+      moduleId: module.id,
+      name: place.name,
+      description: module.description,
+      module,
+      tables: listed,
+      kind:
+        primary && primary.kind && primary.kind in TABLE_KINDS
+          ? primary.kind
+          : 'custom',
+      census,
+      say: censusLine(census),
+      refusal: refusalFor(module, all, listed, census),
+    }
+  })
 }
 
 /* ---------------------------------------------------------- */

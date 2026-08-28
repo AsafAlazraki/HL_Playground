@@ -416,11 +416,6 @@ export function Shell({ user, onSignOut }: ShellProps) {
      15,691 rows of fifty-one tables by name, which is the right answer
      to "find me a row" and the wrong first thing to put in front of
      somebody who has just said they are making a sale. */
-  /* THE QUOTE PICKER, AND WHERE IT OPENS. `null` is shut; a string
-     is the module it should already be standing in; '' is open with
-     nothing chosen, which is what the rail's New quote means. A
-     boolean could not carry the place a tile's quick action names. */
-  const [starting, setStarting] = useState<string | null>(null)
   const [configuring, setConfiguring] = useState(false)
 
   /* ESCAPE SHUTS THE CONFIGURATIONS SHEET. It had a scrim you could
@@ -542,7 +537,7 @@ export function Shell({ user, onSignOut }: ShellProps) {
              business already answers for itself: which place, then
              which one — and it draws the walk that choice opens
              before it is committed. */
-          onNewQuote={() => setStarting('')}
+          onNewQuote={() => setStage({ kind: 'start', at: null })}
           quoteCount={quoteCount}
           customerCount={customerCount}
         />
@@ -616,7 +611,11 @@ export function Shell({ user, onSignOut }: ShellProps) {
                 newTable: () => setPicking(true),
                 /* the picker and the finder are the shell's dialogs,
                    exactly as the new-table dialog is */
-                newQuote: (moduleId?: string) => setStarting(moduleId ?? ''),
+                /* A PAGE, NOT A SHEET. Raising a quote is not an
+                   interruption of the work — it is the work. See
+                   the `start` stage in winKit.tsx. */
+                newQuote: (moduleId?: string) =>
+                  setStage({ kind: 'start', at: moduleId ?? null }),
                 find: () => setFinding(true),
                 /* THE DRAWING. Not a stage — the surface under every
                    stage — so reaching it empties the window stack, and
@@ -744,25 +743,6 @@ export function Shell({ user, onSignOut }: ShellProps) {
         </div>
       ) : null}
 
-      {starting !== null ? (
-        <QuoteStart
-          modules={modules}
-          entities={entities}
-          rowsByEntity={rowsByEntity}
-          onStarted={(quoteId) => setStage({ kind: 'quote', quoteId })}
-          /* THE DOOR UNDER A REFUSAL. A place that cannot raise a
-             price says why and names the switch; only the shell knows
-             that the switch lives on that module's own page, so the
-             route comes from here — the same arrangement every other
-             cross-feature door on this screen uses. */
-          {...(starting ? { startAt: starting } : {})}
-          onOpenPlace={(moduleId) => {
-            setStarting(null)
-            setStage({ kind: 'module', moduleId })
-          }}
-          onClose={() => setStarting(null)}
-        />
-      ) : null}
 
       {/* AN OLDER COPY OF THE EXAMPLE SAYS SO. Drawn only over the
           prepared set it is about, only when this browser was really
