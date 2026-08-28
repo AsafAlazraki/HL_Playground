@@ -111,6 +111,18 @@
   --canvas-dot: rgba(8, 27, 46, 0.08);
   --canvas-edge: rgba(8, 27, 46, 0.24);
   --canvas-edge-active: var(--accent);
+
+  /* -- the scrim ---------------------------------------------
+     THE ONE SURFACE A MODAL DIMS ITS PAGE WITH. It had no token,
+     so the two features that needed a dark wash in BOTH themes
+     wrote the literal — `.do-scrim` and `.cfg-scrim`, the only
+     two rgba() colours left in the board's stylesheet. Every
+     other scrim in the app is already built from `--mat-dim-bg`,
+     `--bg-sunken` or a `color-mix` of `--ink`; none of those flips
+     to a DARKER wash on dark, which is what a scrim over an
+     already-dark page has to do. Hence a token of its own, and
+     hence two values rather than one alpha. */
+  --scrim: rgba(8, 27, 46, 0.38);
 }
 
 [data-theme='dark'] {
@@ -244,6 +256,10 @@
   --canvas-dot: rgba(255, 255, 255, 0.055);
   --canvas-edge: rgba(255, 255, 255, 0.18);
   --canvas-edge-active: var(--accent);
+
+  /* deeper on dark: the page beneath is already near-black, so 38%
+     of it reads as a haze rather than a dimming */
+  --scrim: rgba(2, 8, 14, 0.58);
 }
 
 /* ============================================================

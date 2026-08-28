@@ -163,7 +163,12 @@ describe('the counts come from the data', () => {
     const open = linkedThings({ ...base, module: makeModule(), entities, roles })
     const openRow = open.find((t) => t.key === 'access')
     expect(openRow?.count).toBe(0)
-    expect(openRow?.says).toContain('open to everyone')
+    /* Case-insensitive because the sentence now OPENS on the fact —
+       "Open to everyone until a role is ticked" — where it used to
+       bury it mid-clause behind "Nobody has been given access, so".
+       What is asserted is that the row says the place is open, and
+       that is what this matches. */
+    expect(openRow?.says).toMatch(/open to everyone/i)
 
     const closed = linkedThings({
       ...base,

@@ -59,9 +59,17 @@ const { createViewFor } = await import('@/features/views')
 const { readCuration } = await import('@/features/curation')
 const { holdRate, ledgerFor } = await import('@/features/constraints/ruleLedger')
 const { mintQuoteFromView, stepOffer, stepReason } = await import('./freeze')
-const { buildSteps, decidedCount, firstOpenStep, savedNote, stepAfter, stepBefore, SUBJECT_STEP } =
-  await import('./steps')
-const { lineAmount } = await import('./totals')
+const {
+  buildSteps,
+  decidedCount,
+  firstOpenStep,
+  savedNote,
+  stepAfter,
+  stepBefore,
+  weighPick,
+  SUBJECT_STEP,
+} = await import('./steps')
+const { lineAmount, quoteTotals } = await import('./totals')
 import type { QuoteDef, QuoteSection } from './types'
 
 /* ---------------------------------------------------------- */
@@ -373,5 +381,117 @@ describe('a quote reopened after a reload can still be built', () => {
        hull the sheet no longer has. */
     expect(stepOffer(orphan, trailerCase.section).candidates).toEqual([])
     expect(stepReason(orphan, trailerCase.section)).toBeNull()
+  })
+})
+
+
+/* ---------------------------------------------------------- */
+/* 5 · a choice says what it would cost, before it is made     */
+/* ---------------------------------------------------------- */
+
+/* CONFIGURATOR.md §C asks the configurator to show "the consequence
+   before the commitment". The claim `weighPick` makes is narrow and
+   worth guarding exactly because it is narrow: the preview a person
+   reads while deciding, and the total they read out after deciding,
+   come from ONE summation and therefore cannot disagree.
+
+   The way this fails silently is by drifting into a second copy of
+   the arithmetic — summing `unitPrice` and forgetting quantity, or
+   summing the package and forgetting the adjustments. Both are
+   asserted below against the real seed rather than a fixture. */
+
+describe('what a choice would do to the total, before it is taken', () => {
+  it('previews an add, and the round trip back off lands on the number it started at', () => {
+    const found = trailerCase ?? motorCase
+    expect(found).toBeTruthy()
+    if (!found) return
+    const { quote, section } = found
+
+    const priced = stepOffer(quote, section, { all: true }).candidates.find(
+      (c) => c.alreadyLineId === undefined && lineAmount(c.line).amount !== null,
+    )
+    expect(priced).toBeTruthy()
+    if (!priced) return
+
+    const now = quoteTotals(quote).total
+    const on = weighPick(quote, priced.line)
+    expect(on.delta).not.toBeNull()
+    expect(on.would).toBe(now + (on.delta as number))
+
+    /* the document that would exist if it were taken, weighed from
+       the other side: taking it back off returns the total the
+       preview started from, and the two deltas are one figure with
+       two signs */
+    const taken: QuoteDef = { ...quote, lines: [...quote.lines, priced.line] }
+    const off = weighPick(taken, priced.line, priced.line.id)
+    expect(off.would).toBe(now)
+    expect(off.delta).toBe(-(on.delta as number))
+  })
+
+  it('counts the ADJUSTMENTS a person typed, not just the package', () => {
+    const found = trailerCase ?? motorCase
+    if (!found) return
+    const { quote, section } = found
+    const priced = stepOffer(quote, section, { all: true }).candidates.find(
+      (c) => c.alreadyLineId === undefined && lineAmount(c.line).amount !== null,
+    )
+    if (!priced) return
+
+    /* a trade-in is signed negative, and a preview that summed the
+       package alone would be $4,000 out at the moment a salesperson
+       is reading a figure to a customer */
+    const withTrade: QuoteDef = {
+      ...quote,
+      adjustments: [
+        { id: 'adj-1', kind: 'tradeIn' as const, label: 'Trade-in', amount: -4000 },
+      ],
+    }
+    const w = weighPick(withTrade, priced.line)
+    expect(w.would).toBe(quoteTotals(withTrade).total + (lineAmount(priced.line).amount as number))
+    expect(w.would).toBe(weighPick(quote, priced.line).would - 4000)
+  })
+
+  it('counts the QUANTITY on the line it is weighing', () => {
+    const found = trailerCase ?? motorCase
+    if (!found) return
+    const { quote, section } = found
+    const priced = stepOffer(quote, section, { all: true }).candidates.find(
+      (c) => c.alreadyLineId === undefined && lineAmount(c.line).amount !== null,
+    )
+    if (!priced) return
+
+    const three = { ...priced.line, qty: 3 }
+    expect(weighPick(quote, three).delta).toBe(
+      (weighPick(quote, priced.line).delta as number) * 3,
+    )
+  })
+
+  it('says a blank is a blank — never a delta of nothing', () => {
+    const found = trailerCase ?? motorCase
+    if (!found) return
+    const { quote, section } = found
+    const any = stepOffer(quote, section, { all: true }).candidates[0]
+    if (!any) return
+
+    /* THE RULE THE WHOLE FEATURE KEEPS: a line with no price is not
+       summed as zero. `delta: 0` would read on the bar as "this one
+       is free", which is the silent-$0 fault stakeholders catch. */
+    const unpriced = { ...any.line, unitPrice: null, overridePrice: undefined }
+    const w = weighPick(quote, unpriced)
+    expect(w.delta).toBeNull()
+    expect(w.would).toBe(quoteTotals(quote).total)
+  })
+
+  it('leaves the document it is weighing exactly as it found it', () => {
+    const found = trailerCase ?? motorCase
+    if (!found) return
+    const { quote, section } = found
+    const any = stepOffer(quote, section, { all: true }).candidates[0]
+    if (!any) return
+
+    const before = JSON.stringify(quote)
+    weighPick(quote, any.line)
+    weighPick(quote, any.line, quote.lines[0]?.id)
+    expect(JSON.stringify(quote)).toBe(before)
   })
 })

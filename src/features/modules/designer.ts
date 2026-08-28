@@ -89,8 +89,14 @@ export const NOT_YET_SAYS: Partial<Record<DesignerCapability, string>> = {
   add: 'Adding an item from here is not built yet — the sheet is where rows are made today.',
   edit: 'Editing from here is not built yet — the sheet is where data changes today.',
   delete: 'Removing an item from here is not built yet.',
-  relate: 'Ticking what goes with what happens on the item’s own page today.',
-  quote: 'Quoting starts from an item’s own page today — open one and press “Quote this one”.',
+  /* WHERE THE VERB WORKS, NOT HOW TO WORK IT. Both of these closed
+     with a route — "happens on the item's own page today", "open one
+     and press 'Quote this one'" — which is a step-by-step for a
+     control on a page this note is not on. The fact a person needs is
+     which page owns the verb; finding the button on it is that page's
+     job, and it has one. */
+  relate: 'Ticked on an item’s own page today.',
+  quote: 'Quoting starts from an item’s own page today.',
   export: 'Taking a copy of this list out is not built yet.',
 }
 

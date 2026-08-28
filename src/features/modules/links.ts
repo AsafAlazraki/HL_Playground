@@ -183,7 +183,9 @@ export function linkedThings(args: LinkReadArgs): LinkedThing[] {
       key: 'quotes',
       name: plural(raised.length, 'quote raised here', 'quotes raised here'),
       count: raised.length,
-      says: 'Each prints what it froze, so it never moves when the sheet does.',
+      /* THE SECOND CLAUSE SAID THE FIRST ONE AGAIN. "so it never moves
+         when the sheet does" is what "prints what it froze" means. */
+      says: 'Each prints what it froze.',
       home: 'elsewhere',
       where: 'Opened from Quotes on the bar.',
       names: raised
@@ -195,8 +197,11 @@ export function linkedThings(args: LinkReadArgs): LinkedThing[] {
       key: 'access',
       name: plural(granted.length, 'role with access', 'roles with access'),
       count: granted.length,
+      /* THE COUNT BESIDE IT IS ALREADY 0 AND THE PANEL FOUR HEADINGS
+         UP ALREADY SAYS THE PLACE IS OPEN. What is left is the fact
+         neither of those carries: what ends it. */
       says: isUnrestricted(module)
-        ? 'Nobody has been given access, so this module is open to everyone.'
+        ? 'Open to everyone until a role is ticked.'
         : 'The jobs that may act in here, and what each of them may do.',
       home: 'settings',
       where: 'In “Who may do what” above.',

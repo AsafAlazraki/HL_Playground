@@ -28,7 +28,7 @@
    log, because the log listens to the same bus.
    ============================================================ */
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { JSX, PointerEvent as ReactPointerEvent } from 'react'
 import {
   ArrowsDownUp,
@@ -43,8 +43,9 @@ import { money } from '@/lib/money'
 import { useProjectStore } from '@/store/useProjectStore'
 import { placesOf } from '@/features/modules/places'
 import { Picker } from '@/features/picker'
-import type { TableKind } from '@/types/model'
-import { StageEditor } from './StageEditor'
+import { TABLE_KINDS, type TableKind } from '@/types/model'
+import { currentUser } from '@/features/auth'
+import { BoardSetup } from './BoardSetup'
 import {
   SORTS,
   kindOfQuote,
@@ -56,14 +57,32 @@ import {
 } from './finding'
 import { say } from '@/store/notes'
 import { quoteTotals, useQuotes, type QuoteDef } from '@/features/quote'
-import { DealPane } from './DealPane'
+import { DealOverview } from './DealOverview'
+import { DealPage } from './DealPage'
+import { waitedSay } from './dealParts'
+import { useCardFields, type CardFieldId } from './cardFields'
 import { countOf, useDealNotes } from './dealNotes'
-import { boardOf, moveTo, stageOf, useStages, type StageId } from './stages'
+import {
+  arrivedAt,
+  boardOf,
+  moveTo,
+  stageOf,
+  useSince,
+  useStages,
+  type StageId,
+} from './stages'
 import { useStageDefs, type StageDef } from './stageStore'
 
 export interface BoardProps {
   orgSlug: string
   onOpen: (quoteId: string) => void
+  /** THE BOARD TELLS THE PAGE WHICH SCREEN IT IS SHOWING. A deal's
+   *  whole record replaces the columns and draws its own head, so
+   *  the stage's "Selling / Quotes / 14 quotes" and its Board | List
+   *  | History row were sitting above an open file — two headers,
+   *  and the top one naming a screen that was no longer on. The
+   *  stage owns the header, so the stage has to be told. */
+  onRecord?: ((open: boolean) => void) | undefined
 }
 
 /** shortest true form of a date on a card */
@@ -77,7 +96,7 @@ function whenSay(iso: string, now = Date.now()): string {
   return new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
 }
 
-export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
+export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
   const all = useQuotes()
   const entities = useProjectStore((st) => st.entities)
   const at = useStages(orgSlug)
@@ -106,9 +125,42 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
      store per card would be eighty reads of the same object. */
   const notes = useDealNotes(orgSlug)
 
-  /** the deal whose pane is open, by id. See `DealPane` for why a
-   *  card opens a pane rather than the document. */
+  /* WHEN EACH DEAL ARRIVED WHERE IT STANDS, for the card that
+     chose to draw it. Read once for the board, like the notes and
+     for the same reason. */
+  const since = useSince(orgSlug)
+
+  /* WHAT THIS PERSON WANTS ON A CARD — theirs, not the business's.
+     See `cardFields.ts`: the columns are shared and this is not,
+     and the panel says so out loud. */
+  /* MEMOISED BECAUSE THE HOOK IS KEYED BY IT. `useCardFields`
+     builds its snapshot callback from this object; a fresh one
+     every render re-subscribes the store on every render, which
+     costs nothing visible and is exactly the kind of thing that
+     stops being free when somebody adds a listener to it. */
+  const who = useMemo(
+    () => ({
+      orgSlug,
+      /* NOBODY SIGNED IN STILL GETS A BOARD. The choice is keyed to
+         a name that cannot collide with a real user id, so an
+         unsigned session keeps its own preference for as long as it
+         lasts rather than writing into somebody else's. */
+      userId: currentUser()?.id ?? 'nobody',
+    }),
+    [orgSlug],
+  )
+  const card = useCardFields(who)
+  const shows = (id: CardFieldId): boolean => card.fields.includes(id)
+
+  /** the deal whose overview is open, by id. See `DealOverview` for
+   *  why a card opens a popup rather than the document. */
   const [open, setOpen] = useState<string | null>(null)
+
+  /** the deal whose WHOLE RECORD is open, by id. One at a time and
+   *  never both: the record is a screen, the overview is a glance
+   *  over the board, and a glance floating over a screen that
+   *  contains the same words is two of everything. */
+  const [record, setRecord] = useState<string | null>(null)
 
   /* COLUMNS FOLDED OUT OF THE WAY, so the three that matter get
      the width. It is component state and not a store, and the
@@ -164,12 +216,24 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
   const columns = useMemo(() => boardOf(quotes, at, stages), [quotes, at, stages])
 
   /* THE OPEN DEAL IS FOUND IN `all`, NOT IN THE FILTERED LIST.
-     Typing in the search must not slam shut the pane you were
+     Typing in the search must not slam shut the popup you were
      reading — the filter is about which cards are drawn, and the
-     pane is a thing you deliberately opened. It resolves to
+     popup is a thing you deliberately opened. It resolves to
      undefined only when the quote itself is gone, and then nothing
      is drawn, which is the truth. */
   const openQuote = open === null ? undefined : all.find((q) => q.id === open)
+  const recordQuote = record === null ? undefined : all.find((q) => q.id === record)
+  const showingRecord = recordQuote !== undefined
+  /* PUBLISHED, NOT LIFTED. `record` is the board's own state — it
+     survives a filter change and a fold and belongs here — but which
+     screen is on is the page's business, so the fact travels up and
+     the state does not. Cleared on unmount, otherwise switching to
+     the List while a record is open would leave the stage headerless
+     over a list. */
+  useEffect(() => {
+    onRecord?.(showingRecord)
+    return () => onRecord?.(false)
+  }, [showingRecord, onRecord])
 
   /* the card under the pointer, and the column it is over. Both null
      at rest, so nothing on the board is lit when nobody is dragging */
@@ -177,22 +241,25 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
   const [over, setOver] = useState<StageId | null>(null)
   const boardRef = useRef<HTMLDivElement | null>(null)
 
-  /** Close the pane and put focus back on the card it was about.
-   *  The pane takes focus when it opens (see `DealPane`), so
+  /** Put focus back on the card a deal was opened from.
+   *
+   *  The popup takes focus when it opens (see `DealOverview`), so
    *  without this a keyboard user who pressed Escape would be left
    *  with focus on nothing and the next Tab would restart at the
    *  top of the page. The frame's wait is for React to have drawn
    *  the card again before it is asked to take focus. */
+  const focusCard = useCallback((id: string | null): void => {
+    if (id === null) return
+    requestAnimationFrame(() => {
+      boardRef.current?.querySelector<HTMLElement>(`[data-deal="${CSS.escape(id)}"]`)?.focus()
+    })
+  }, [])
+
   const shutPane = useCallback((): void => {
     const was = open
     setOpen(null)
-    if (was === null) return
-    requestAnimationFrame(() => {
-      boardRef.current
-        ?.querySelector<HTMLElement>(`[data-deal="${CSS.escape(was)}"]`)
-        ?.focus()
-    })
-  }, [open])
+    focusCard(was)
+  }, [open, focusCard])
 
   const move = useCallback(
     (q: QuoteDef, to: StageId): void => {
@@ -287,6 +354,35 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
 
   const total = quotes.length
   const narrowed = total !== all.length
+
+  /* THE WHOLE RECORD TAKES THE BOARD'S PLACE, and the board is not
+     drawn behind it. A record is a screen you went to, not a thing
+     floating over the columns — and keeping five columns mounted
+     underneath it would mean a drag that lands nowhere and a
+     board's worth of cards taking focus behind a screen you cannot
+     see them through. Coming back restores the arrangement whole,
+     because the state that describes it — the filters, the folds,
+     the per-column order — is all held above this line. */
+  if (recordQuote) {
+    return (
+      <div className="pb pb-is-record" ref={boardRef}>
+        <DealPage
+          orgSlug={orgSlug}
+          quote={recordQuote}
+          stage={stages.find((s) => s.id === stageOf(recordQuote, at, stages))}
+          onBack={() => {
+            const was = record
+            setRecord(null)
+            /* BACK TO THE CARD, not to the top of the board. The
+               popup it was opened from is deliberately NOT reopened:
+               you asked for the file, you are done with the file. */
+            focusCard(was)
+          }}
+          onOpenQuote={onOpen}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="pb" ref={boardRef}>
@@ -399,10 +495,14 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
           </p>
         ) : null}
 
-        {/* THE DEALERSHIP'S OWN COLUMNS. It sits on the board rather
-            than only in Admin because the person who wants a stage
-            called "Awaiting deposit" is looking at the board when
-            they think of it. */}
+        {/* THE COLUMNS AND THE CARD, IN ONE PANEL. It sits on the
+            board rather than only in Admin because the person who
+            wants a stage called "Awaiting deposit" is looking at the
+            board when they think of it — and it says "Customise"
+            rather than "Stages" because it stopped being only about
+            stages: what a card shows is behind the same button, and
+            two buttons would make a person choose which half of one
+            thought they were having. */}
         <button
           type="button"
           className="pb-stages-go"
@@ -410,20 +510,21 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
           onClick={() => setEditing((v) => !v)}
         >
           <Sliders size={ICON_SIZE.tiny} aria-hidden="true" />
-          Stages
+          Customise
         </button>
       </div>
 
       {editing ? (
-        <StageEditor orgSlug={orgSlug} onClose={() => setEditing(false)} />
+        <BoardSetup orgSlug={orgSlug} onClose={() => setEditing(false)} />
       ) : null}
 
-      {/* THE FLOOR: the columns, and the open deal beside them. A
-          pane in the same row rather than over the board — see
-          `DealPane` for the argument. The board narrows, keeps its
-          shape, and goes on taking drops while the pane is open. */}
-      <div className={`pb-floor${openQuote ? ' has-deal' : ''}`}>
-        <div className="pb-cols">
+      {/* THE FLOOR: the columns, and nothing else in the row with
+          them. A deal used to open as a pane HERE, and moving it
+          over the board took the row's second child away — the
+          floor is a flex row with one item now and stays a flex row
+          because it is what gives the columns their height. */}
+      <div className="pb-floor">
+        <div className={`pb-cols${openQuote ? ' is-behind' : ''}`}>
           {stages.map((stage) => {
             const deals = sortDeals(columns[stage.id], perCol[stage.id] ?? sort)
 
@@ -441,6 +542,13 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
                   }`}
                   data-stage={stage.id}
                   data-tone={stage.tone}
+                  /* A FOLDED COLUMN KEEPS ITS TINT. 44px of the
+                     dealer's own colour is the only thing telling
+                     them which column they folded away, and dropping
+                     the wash here would make the fold look like a
+                     different kind of column rather than the same one
+                     turned on its side. */
+                  data-wash={stage.wash}
                   aria-label={stage.name}
                 >
                   <button
@@ -473,6 +581,13 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
                 }`}
                 data-stage={stage.id}
                 data-tone={stage.tone}
+                /* THE TINT IS A SECOND ATTRIBUTE FROM THE COLOUR, and
+                   the pairing is what was measured. See
+                   `stageStore.ts` and the matrix in `pipeline.css`:
+                   a washed column's name steps to `--fg-secondary`
+                   because amber on an 8% amber wash measures 4.44:1
+                   and does not ship. */
+                data-wash={stage.wash}
                 aria-label={stage.name}
               >
                 <header className="pb-col-head">
@@ -531,19 +646,34 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
                 {deals.length > 0 ? (
                   <p className="pb-col-sum ds-mono">{money(sum)}</p>
                 ) : null}
+                {/* WHAT BELONGS IN THIS COLUMN, under its head. One
+                    field and two positions — the same sentence goes
+                    in the body when the column is empty, because the
+                    words do not change when the last card arrives.
+                    See `StageDef.about`. */}
+                {deals.length > 0 && stage.about ? (
+                  <p className="pb-col-about">{stage.about}</p>
+                ) : null}
 
                 <div className="pb-col-body">
                   {deals.length === 0 ? (
-                    /* AN EMPTY COLUMN SAYS WHY IT IS EMPTY. "Nothing
-                       won yet" and "nothing matches what you typed" are
-                       different facts, and a column giving the first
-                       answer to the second question is simply wrong. */
+                    /* AN EMPTY COLUMN SAYS WHY IT IS EMPTY. What
+                       belongs here and "nothing matches what you
+                       typed" are different facts, and a column giving
+                       the first answer to the second question is
+                       simply wrong. */
                     <p className="pb-none">
-                      {narrowed ? 'Nothing here matches.' : stage.empty || 'Nothing here yet.'}
+                      {narrowed ? 'Nothing here matches.' : stage.about || 'Nothing here yet.'}
                     </p>
                   ) : (
                     deals.map((q) => {
                       const t = quoteTotals(q)
+                      /* HOW LONG IT HAS STOOD HERE, and null when
+                         nothing honest can be said — a deal moved by
+                         a build that recorded no instant draws
+                         nothing rather than a guessed number. See
+                         `arrivedAt`. */
+                      const arrived = arrivedAt(q, at, since)
                       /* HOW MANY THINGS HAVE BEEN SAID ABOUT IT — and
                          a zero is not drawn at all. A badge reading 0
                          on eighty cards would make the board look
@@ -585,38 +715,86 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
                               : ''
                           }. Left and right arrows move it.`}
                         >
-                          <span className="pb-card-top">
-                            <span className="pb-card-ref ds-mono">{q.reference}</span>
-                            {/* THE COUNT SITS IN THE METADATA ROW, NOT THE
-                                MONEY ROW. It was measured in the foot first
-                                and it cost the seller's name three
-                                characters on a 250px column — "Dana
-                                Whitcom…". A badge is metadata and belongs
-                                with the reference and the date; the foot is
-                                a figure and a name and had no room for a
-                                third thing. */}
-                            {said > 0 ? (
-                              <span className="pb-card-said">
-                                <ChatTeardropText
-                                  size={ICON_SIZE.tiny}
-                                  aria-hidden="true"
-                                />
-                                <span className="pb-card-said-n ds-mono">{said}</span>
-                              </span>
-                            ) : null}
-                            <span className="pb-card-when ds-mono">{whenSay(q.updatedAt)}</span>
-                          </span>
+                          {/* THE METADATA ROW, drawn only when it has
+                              something in it. Two of its three parts
+                              are the person's choice and the third
+                              appears on a minority of cards, so an
+                              empty row is a real state and an empty
+                              flex row with a gap is a 4px hole above
+                              every customer's name. */}
+                          {shows('reference') || said > 0 || shows('touched') ? (
+                            <span className="pb-card-top">
+                              {shows('reference') ? (
+                                <span className="pb-card-ref ds-mono">{q.reference}</span>
+                              ) : null}
+                              {/* THE COUNT SITS IN THE METADATA ROW, NOT
+                                  THE MONEY ROW. It was measured in the
+                                  foot first and it cost the seller's name
+                                  three characters on a 250px column —
+                                  "Dana Whitcom…". A badge is metadata and
+                                  belongs with the reference and the date;
+                                  the foot is a figure and a name and had
+                                  no room for a third thing.
+
+                                  AND IT IS NOT ONE OF THE FOUR. It is a
+                                  mark rather than a fact: it costs no
+                                  line, it is drawn only above zero, and
+                                  it is the one thing on the board that
+                                  says WHICH deals somebody is working.
+                                  See `cardFields.ts`. */}
+                              {said > 0 ? (
+                                <span className="pb-card-said">
+                                  <ChatTeardropText
+                                    size={ICON_SIZE.tiny}
+                                    aria-hidden="true"
+                                  />
+                                  <span className="pb-card-said-n ds-mono">{said}</span>
+                                </span>
+                              ) : null}
+                              {shows('touched') ? (
+                                <span className="pb-card-when ds-mono">
+                                  {whenSay(q.updatedAt)}
+                                </span>
+                              ) : null}
+                            </span>
+                          ) : null}
                           {/* THE CUSTOMER IS THE HEADING, because the
                               deal is a person waiting on an answer. A
                               quote with nobody on it yet says so rather
-                              than drawing an empty line. */}
+                              than drawing an empty line. It is not in
+                              the picker: a card with nobody's name on
+                              it is a row in a ledger. */}
                           <span className="pb-card-who">
                             {q.customer.name.trim() || 'No customer yet'}
                           </span>
-                          <span className="pb-card-what">{q.subjectLabel}</span>
+                          {shows('subject') ? (
+                            <span className="pb-card-what">{q.subjectLabel}</span>
+                          ) : null}
+                          {/* THE TWO FACTS THAT ARE NEITHER METADATA NOR
+                              MONEY. Drawn as a row of their own so the
+                              foot stays a figure and a name — the
+                              measurement that put the note badge up top
+                              in the first place. */}
+                          {shows('kind') || (shows('waiting') && arrived !== null) ? (
+                            <span className="pb-card-tags">
+                              {shows('kind') ? (
+                                <span
+                                  className="k-chip pb-card-kind"
+                                  data-kind={kindOfQuote(q, entities)}
+                                >
+                                  {TABLE_KINDS[kindOfQuote(q, entities)].label}
+                                </span>
+                              ) : null}
+                              {shows('waiting') && arrived !== null ? (
+                                <span className="pb-card-waited">
+                                  {`Here ${waitedSay(arrived)}`}
+                                </span>
+                              ) : null}
+                            </span>
+                          ) : null}
                           <span className="pb-card-foot">
                             <span className="pb-card-sum ds-mono">{money(t.total)}</span>
-                            {q.preparedBy ? (
+                            {shows('by') && q.preparedBy ? (
                               <span className="pb-card-by">{q.preparedBy}</span>
                             ) : null}
                           </span>
@@ -630,17 +808,26 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
           })}
         </div>
 
-        {openQuote ? (
-          <DealPane
-            orgSlug={orgSlug}
-            quote={openQuote}
-            stage={stages.find((s) => s.id === stageOf(openQuote, at, stages))}
-            notes={notes}
-            onClose={shutPane}
-            onOpenQuote={onOpen}
-          />
-        ) : null}
       </div>
+
+      {/* THE DEAL, OVER THE BOARD. It was a pane in the row above
+          and it moved for the reason `DealOverview` argues: a pane
+          did not hide the board, it NARROWED it, which reflows every
+          column and moves the card you were pointing at. A popup
+          leaves the arrangement exactly where it was. */}
+      {openQuote ? (
+        <DealOverview
+          orgSlug={orgSlug}
+          quote={openQuote}
+          stage={stages.find((s) => s.id === stageOf(openQuote, at, stages))}
+          onClose={shutPane}
+          onOpenQuote={onOpen}
+          onOpenRecord={() => {
+            setRecord(openQuote.id)
+            setOpen(null)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

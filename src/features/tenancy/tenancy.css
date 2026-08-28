@@ -412,7 +412,11 @@
   display: grid;
   place-items: center;
   padding: var(--s-8);
-  background: rgba(8, 27, 46, 0.5);
+  /* THE SCRIM IS A TOKEN NOW. This wrote `rgba(8, 27, 46, 0.5)`,
+     which is a dark wash in both themes and therefore a haze
+     rather than a dimming over an already-dark page. `--scrim`
+     is the same ink on light and deepens on dark. */
+  background: var(--scrim);
   animation: ds-fade var(--d-fast) var(--ease);
 }
 .cfg-sheet {

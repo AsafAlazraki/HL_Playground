@@ -141,6 +141,14 @@ export function QuoteStage({
      renamed the dealership. */
   const orgSlug = currentUser()?.orgSlug ?? 'northside-marine'
 
+  /** whether the BOARD is showing a deal's whole record rather than
+   *  its columns. The record draws its own head and its own way back,
+   *  so this page's header — the one that says "Quotes · 14 quotes"
+   *  and carries the Board | List | History row — would be a second
+   *  header naming a screen that is not on. Published by `Board`;
+   *  see `BoardProps.onRecord` for why the state stays down there. */
+  const [recordOpen, setRecordOpen] = useState(false)
+
   const [view, setView] = useState<'board' | 'list'>(() => {
     try {
       return globalThis.localStorage?.getItem(VIEW_KEY) === 'list' ? 'list' : 'board'
@@ -260,7 +268,7 @@ export function QuoteStage({
           The switcher is in `tools` for the same reason the modules
           grid's type filters are: it says which part of the page
           you are looking at, which is what that row is for. */}
-      {quote ? null : (
+      {quote || recordOpen ? null : (
         <PageHead
           eyebrow="Selling"
           name="Quotes"
@@ -313,7 +321,7 @@ export function QuoteStage({
             onOpenCustomer={onOpenCustomer}
           />
         ) : view === 'board' ? (
-          <Board orgSlug={orgSlug} onOpen={(id) => onOpen(id)} />
+          <Board orgSlug={orgSlug} onOpen={(id) => onOpen(id)} onRecord={setRecordOpen} />
         ) : (
           <QuoteList onOpen={(id) => onOpen(id)} openId={openId} tableCount={tableCount} />
         )}

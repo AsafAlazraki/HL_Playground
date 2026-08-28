@@ -43,10 +43,11 @@
    ── THE THREE BANDS OF THE SCREEN ────────────────────────────
 
      THE PRODUCT   left, never scrolling, full height. The
-                   photograph, the name at display scale, the specs
-                   as hairlines. IT CHANGES WITH THE BUILD: pick a
-                   motor and the render crossfades to it, 260ms,
-                   opacity only. §THE PRODUCT.
+                   photograph, WHAT HAS BEEN DECIDED, the name at
+                   display scale, the specs as hairlines. IT CHANGES
+                   WITH THE BUILD: pick a motor and the render
+                   crossfades to it, 260ms, opacity only. §THE
+                   PRODUCT.
      THE BANDS     right, scrolling. Accordions in a fixed order —
                    the hull, motors, trailers, what the dealer fits,
                    then the paperwork — several open at once, each
@@ -158,6 +159,23 @@
                             the frame it changes; only the delta
                             chip beside it animates. A dealer reads
                             a price aloud.
+     the proposal           DOES NOT ANIMATE AT ALL, and takes the
+                            delta chip's own slot. It tracks a
+                            pointer, and an entrance on every card a
+                            mouse crosses is a strip that flickers.
+
+   ── THE KEYBOARD, WHICH IS THE WHOLE OF §C ───────────────────
+
+   A salesperson does this forty times a day. Inside an open band:
+
+     Tab              reaches the shelf — ONE stop, not one per card
+     ↓ ↑              move the highlight AND the focus, wrapping
+     Home / End       the first and the last
+     Enter / Space    the card's own activation. No handler.
+     Escape           back to the band's head, then out of the page
+
+   Arrowing or hovering a card weighs it on the price bar before it
+   is taken. `steps.ts` `weighPick` does the arithmetic.
 
    ── WHAT THIS FILE MAY NOT DO ────────────────────────────────
 
@@ -196,8 +214,8 @@ import { money, quoteLevelChoices } from './pricing'
 import { issueBlockers, lineAmount, looseLines, quoteTotals } from './totals'
 import { addLine, issueQuote, persistNote, removeLine, setLevel, setQty } from './quotes'
 import { recallOpen, rememberOpen } from './place'
-import { buildSteps, savedNote } from './steps'
-import type { BuildStep } from './steps'
+import { buildSteps, savedNote, weighPick } from './steps'
+import type { BuildStep, Weighing } from './steps'
 import { ADMIN_BAND, openByDefault, orderBands, type Band } from './bands'
 import { deltaSay, levelConflict, type Conflict } from './conflict'
 import { CustomerField } from './QuoteEditor'
@@ -227,6 +245,13 @@ const NO_OFFER: StepOffer = {
  *  clauses to say why. `OFFER_CAP` is the ceiling `stepOffer` itself
  *  applies; this is what is drawn before asking. */
 const REFUSED_SHOWN = 8
+
+/** The proposal on the pointer, with the band that owns it. The
+ *  arithmetic is `weighPick` in `steps.ts` — pure, and there rather
+ *  than here so `steps.test.ts` can assert it without this screen's
+ *  React, motion and icon graph coming with it (the runner takes
+ *  `.ts` only, and its config says so on purpose). */
+type Weigh = Weighing & { bandId: string }
 
 export interface QuoteBuildProps {
   quote: QuoteDef
@@ -332,6 +357,25 @@ export function QuoteBuild({
 
   const delta = useTotalDelta(totals.total)
   const saveProblem = persistNote()
+
+  /* ── THE PROPOSAL ON THE POINTER, AND WHY IT CARRIES A BAND ID ───
+     Several bands are open at once and each shortlist runs its own
+     effect, so when the document changes EVERY open band republishes
+     — the one with the highlight publishes its weighing and all the
+     others publish null. Last writer wins, and the last writer is
+     whichever band React commits last, not the one a person is
+     pointing at.
+
+     So a band may only clear what it itself put there. Two lines,
+     and without them the price bar's proposal blinks out the moment
+     any other band re-renders. */
+  const [weighing, setWeighing] = useState<Weigh | null>(null)
+  const onWeigh = useCallback((bandId: string, w: Weigh | null) => {
+    setWeighing((was) => {
+      if (w !== null) return w
+      return was === null || was.bandId !== bandId ? was : null
+    })
+  }, [])
   const subjectNote = unsellableSubject(quote.rootTableId, quote.rootRowId)
 
   /* THE PROPOSAL ON THE TABLE, AND IT IS NOT COMMITTED. While this is
@@ -375,6 +419,7 @@ export function QuoteBuild({
       <div className="qb-body">
         <ProductPane
           quote={quote}
+          steps={steps}
           showing={showing}
           onShow={setShowing}
           still={still}
@@ -392,6 +437,7 @@ export function QuoteBuild({
                 open={open.includes(band.id)}
                 still={still}
                 onToggle={() => toggle(band.id)}
+                onWeigh={onWeigh}
               />
             ))}
 
@@ -413,6 +459,7 @@ export function QuoteBuild({
         steps={steps}
         totals={totals}
         delta={delta}
+        weighing={weighing}
         refusals={refusals}
         levels={levels}
         onLevel={askLevel}
@@ -468,6 +515,7 @@ export function QuoteBuild({
 
 function ProductPane({
   quote,
+  steps,
   showing,
   onShow,
   still,
@@ -475,6 +523,7 @@ function ProductPane({
   saveProblem,
 }: {
   quote: QuoteDef
+  steps: readonly BuildStep[]
   showing: string | null
   onShow: (id: string | null) => void
   still: boolean
@@ -484,7 +533,40 @@ function ProductPane({
   const shot = quote.lines.find((l) => l.id === showing)
   const img = shot ? shot.image : quote.subjectImage
   const name = shot ? shot.label : quote.subjectLabel
-  const plates = quote.lines.filter((l) => l.image)
+
+  /* ── WHAT IS ALREADY DECIDED, WHERE IT CANNOT SCROLL AWAY ────────
+     CONFIGURATOR.md §C: "A person deep in Dealer Fit needs to see
+     the hull and the motor without scrolling." Measured at 1600×1000
+     on a Highfield SP760ST with every band open: the scrollport runs
+     to 6,211px against an 805px viewport, the Dealer Fit band starts
+     at 2,605px and the motor band's head — the only place the chosen
+     motor was written — sits at 169px. Two thousand four hundred and
+     thirty-six pixels of scroll to answer "which motor did I pick".
+
+     THE HULL WAS NEVER THE PROBLEM at this width: this pane is a
+     flex SIBLING of the scrollport, so the photograph, the name and
+     the specs are on screen the whole time. Below 1023 the two stack
+     and the whole page scrolls, and that is unchanged.
+
+     THIS IS THE PLATES ROW, GIVEN NAMES. It drew the same lines as
+     56×42 thumbnails with the name in a `title` attribute — so the
+     one surface that already knew what had been decided could only
+     be read by hovering it, and a line with no photograph was not in
+     it at all. Same control, same act (press it and the render
+     becomes that thing), one fact added.
+
+     AND IT DREW THE HULL TWICE. `quote.lines` holds the subject as a
+     line of its own, so a plate was drawn for `quote.subjectImage`
+     and a second, identical one for that line — two of the same
+     photograph, first and second, on every quote. The subject step
+     owns its line here, so it is one row.
+
+     NO FIGURES ON IT. A column of prices beside a total a person
+     could sum and find short — a typed line belongs to no band — is
+     a second ledger that can disagree with the first. The money is
+     on the price bar and its arithmetic is one press away there. */
+  const subjectLineId = steps.find((s) => s.subject)?.lines[0]?.id
+  const decided = steps.filter((s) => !s.subject).flatMap((s) => s.lines)
 
   return (
     <aside className="qb-product" aria-label="What this quote is about">
@@ -505,15 +587,15 @@ function ProductPane({
         still={still}
       />
 
-      {plates.length > 0 ? (
-        <div className="qb-plates" role="group" aria-label="The photographs of this build">
+      {decided.length > 0 ? (
+        <ul className="qb-plates" aria-label="What is decided so far">
           <Plate
             img={quote.subjectImage}
             name={quote.subjectLabel}
-            on={showing === null}
+            on={showing === null || showing === subjectLineId}
             onPick={() => onShow(null)}
           />
-          {plates.map((line) => (
+          {decided.map((line) => (
             <Plate
               key={line.id}
               img={line.image}
@@ -522,7 +604,7 @@ function ProductPane({
               onPick={() => onShow(line.id)}
             />
           ))}
-        </div>
+        </ul>
       ) : null}
 
       <div className="qb-ident">
@@ -611,6 +693,10 @@ function Render({
 /** 260ms, transform and opacity only — PHASE_TWO §4.1's own number. */
 const FADE = { duration: 0.26, ease: [0.2, 0.8, 0.2, 1] } as const
 
+/** One decided thing: what it is, and the photograph of it. Pressing
+ *  it puts that photograph in the render above — which is why it is
+ *  still a pressed toggle rather than a list item, and why the name
+ *  it carries is the label the act already announced. */
 function Plate({
   img,
   name,
@@ -624,20 +710,24 @@ function Plate({
 }): ReactElement {
   const { paint } = useImageDisplay(img?.src ?? '')
   return (
-    <button
-      type="button"
-      className={`qb-plate${on ? ' is-on' : ''}`}
-      aria-pressed={on}
-      aria-label={`Show ${name}`}
-      title={name}
-      onClick={onPick}
-    >
-      {img && paint ? (
-        <FrozenPhoto img={img} fallbackAlt={name} className="qb-plate-img" w={112} h={84} />
-      ) : (
-        <span className="qb-plate-mark" aria-hidden="true" />
-      )}
-    </button>
+    <li className="qb-plate-slot">
+      <button
+        type="button"
+        className={`qb-plate${on ? ' is-on' : ''}`}
+        aria-pressed={on}
+        aria-label={`Show ${name}`}
+        onClick={onPick}
+      >
+        <span className="qb-plate-shot">
+          {img && paint ? (
+            <FrozenPhoto img={img} fallbackAlt={name} className="qb-plate-img" w={112} h={84} />
+          ) : (
+            <span className="qb-plate-mark" aria-hidden="true" />
+          )}
+        </span>
+        <span className="qb-plate-name">{name}</span>
+      </button>
+    </li>
   )
 }
 
@@ -664,20 +754,27 @@ function BandBlock({
   open,
   still,
   onToggle,
+  onWeigh,
 }: {
   quote: QuoteDef
   band: Band
   open: boolean
   still: boolean
   onToggle: () => void
+  onWeigh: (bandId: string, w: Weigh | null) => void
 }): ReactElement {
   const step = band.step
+  /* WHERE ESCAPE PUTS A PERSON BACK. The head is the band's own way
+     out on the keyboard, so the shortlist has to be able to reach
+     it — see `Shortlist`'s key handling. */
+  const headRef = useRef<HTMLButtonElement>(null)
   return (
     <section className="qb-band" data-kind={band.kind}>
       <h2 className="qb-band-h">
         <button
           type="button"
           className="qb-band-head k-band"
+          ref={headRef}
           aria-expanded={open}
           onClick={onToggle}
         >
@@ -707,7 +804,14 @@ function BandBlock({
               ))}
             </ul>
           ) : (
-            <Shortlist quote={quote} step={step} still={still} />
+            <Shortlist
+              quote={quote}
+              step={step}
+              still={still}
+              bandId={band.id}
+              headRef={headRef}
+              onWeigh={onWeigh}
+            />
           )}
         </motion.div>
       ) : null}
@@ -739,16 +843,46 @@ function Shortlist({
   quote,
   step,
   still,
+  bandId,
+  headRef,
+  onWeigh,
 }: {
   quote: QuoteDef
   step: BuildStep
   still: boolean
+  bandId: string
+  /** the band's own head — where Escape puts a person back */
+  headRef: RefObject<HTMLButtonElement | null>
+  onWeigh: (bandId: string, w: Weigh | null) => void
 }): ReactElement {
   const [query, setQuery] = useState('')
   const [all, setAll] = useState(false)
   const [showRefused, setShowRefused] = useState(false)
+  /** where the keyboard is in this shelf, and now also WHERE THE
+   *  FOCUS IS — the two were separate and that was the bug. */
   const [hi, setHi] = useState(-1)
+  /** where the pointer is, on POINTER MOVE rather than on pointer
+   *  enter. Chromium dispatches boundary events when a scroll brings
+   *  a new element under a stationary mouse, so `pointerenter` fired
+   *  every time the keyboard scrolled the shelf — measured: End then
+   *  Home left the price bar weighing the card the mouse happened to
+   *  be resting over rather than the one the arrows had landed on.
+   *  A move is a gesture; a scroll under a still hand is not. */
+  const [over, setOver] = useState<number | null>(null)
+  /** whether a card in THIS shelf actually holds the focus. `hi` is
+   *  the roving tabindex's place and it has to survive a blur —
+   *  otherwise Tab back into the shelf lands on card 0 rather than
+   *  where the person left. So it cannot also be the answer to "is
+   *  the keyboard here": measured before this, focusing a card and
+   *  then tabbing out of the shelf, opening another band and
+   *  scrolling 3,000px away all left the price bar proposing a motor
+   *  that was neither focused nor on the screen. Focus-in and
+   *  focus-out on the LIST, not on each card, so moving card to card
+   *  is one focusout+focusin pair the list swallows rather than a
+   *  frame with nothing focused. */
+  const [kbdHere, setKbdHere] = useState(false)
   const shelfRef = useRef<HTMLUListElement>(null)
+  const cardRefs = useRef<Array<HTMLButtonElement | null>>([])
 
   const offer: StepOffer = useMemo(
     () => (step.subject ? NO_OFFER : stepOffer(quote, step.section, { all, query })),
@@ -818,13 +952,37 @@ function Shortlist({
     setHi(-1)
   }, [query, all])
 
+  /* THE HIGHLIGHT IS SCROLLED TO ON A PICK AS WELL AS ON A MOVE.
+     Measured: taking a row mounts the `.qb-picked` list ABOVE the
+     shelf and pushes every card down by the height of one line, so
+     the card a person had just pressed slid out from under the
+     pointer that pressed it. `step.lines.length` is the count that
+     changes when that happens. */
   useEffect(() => {
     if (hi < 0) return
     const el = shelfRef.current?.children[hi]
     /* NO `behavior: 'smooth'` — keyboard-initiated, so it lands on the
        same frame as the keypress. The motion budget's one absolute. */
     if (el instanceof HTMLElement) el.scrollIntoView({ block: 'nearest' })
-  }, [hi])
+  }, [hi, step.lines.length])
+
+  /* ── WHAT MOVING TO A CHOICE SAYS, BEFORE IT IS TAKEN ────────────
+     The pointer outranks the keyboard: a hand on the mouse is the
+     thing a person is looking at. Published upward rather than drawn
+     here, because the number it changes is on the price bar and a
+     preview drawn beside the card would be a second running total.
+
+     THE KEYBOARD ONLY ANSWERS WHILE IT IS HERE. `kbdHere`, not `hi` —
+     see the note where it is declared. */
+  const weighed = over ?? (kbdHere && hi >= 0 ? hi : null)
+  useEffect(() => {
+    const c = weighed === null ? undefined : candidates[weighed]
+    onWeigh(
+      bandId,
+      c === undefined ? null : { bandId, ...weighPick(quote, c.line, c.alreadyLineId) },
+    )
+    return () => onWeigh(bandId, null)
+  }, [weighed, candidates, quote, bandId, onWeigh])
 
   const take = useCallback(
     (c: Candidate) => {
@@ -834,31 +992,93 @@ function Shortlist({
     [quote.id, step.section.blockId],
   )
 
+  /** Move the keyboard's place AND the focus together. They were two
+   *  things and it was the bug: `hi` drew a ring on one card while
+   *  the browser's focus sat on another, so Enter took the lit one
+   *  and Space took the focused one. Now there is one place.
+   *
+   *  `preventScroll`, then one explicit `scrollIntoView({ block:
+   *  'nearest' })` in the effect above — otherwise focus scrolls the
+   *  card to the middle and the effect scrolls it back. */
+  const land = useCallback((n: number): void => {
+    setHi(n)
+    /* THE LAST GESTURE WINS. A hand resting on the mouse must not go
+       on answering for a person who has moved to the keyboard. */
+    setOver(null)
+    cardRefs.current[n]?.focus({ preventScroll: true })
+  }, [])
+
   /* THE KEYS BELONG TO THE BAND, not to the window. The deck had a
      window listener because one step was open at a time; seven open
      accordions cannot share one highlight, and a global arrow key
      that moved a list somebody was not looking at would be worse
-     than no shortcut at all. */
+     than no shortcut at all.
+
+     THERE IS NO Enter BRANCH ANY MORE, and that is the fix rather
+     than an omission. A card is a `<button>`: the browser fires its
+     click on Enter-down and on Space-up, so a handler that also took
+     a candidate was a second activation of a possibly different row.
+     With focus following the highlight, both keys land on the card
+     the person is looking at, through the card's own `onClick`.
+
+     ESCAPE IS PREVENTED, WHICH IS HOW IT LEAVES THE BAND WITHOUT
+     LEAVING THE PAGE. `stageKeys.ts` rung 3 stands down for a
+     keystroke that arrives `defaultPrevented`; without that the
+     stage's own Escape closes the whole quote, which is what it did
+     — measured, one press from inside a shelf and the configurator
+     was gone. A second press, now on the head, closes the page as it
+     always has. */
   const onKeyDown = (e: React.KeyboardEvent): void => {
     if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      if (candidates.length === 0) return
+    const target = e.target
+    const inShelf =
+      target instanceof Node && shelfRef.current !== null && shelfRef.current.contains(target)
+
+    if (e.key === 'Escape') {
+      /* A FIELD OWNS ITS ESCAPE WHILE IT HOLDS SOMETHING TO CLEAR —
+         `stageKeys.ts` rung 2 says so in as many words, and a search
+         typed past a narrowing is the thing a person most wants back
+         one keystroke at a time. */
+      if (!inShelf && query !== '') {
+        e.preventDefault()
+        setQuery('')
+        return
+      }
       e.preventDefault()
-      const s = e.key === 'ArrowDown' ? 1 : -1
-      setHi((n) => {
-        const next = n + s
-        if (next < 0) return candidates.length - 1
-        if (next >= candidates.length) return 0
-        return next
-      })
+      setHi(-1)
+      headRef.current?.focus()
       return
     }
-    if (e.key === 'Enter' && hi >= 0) {
-      const c = candidates[hi]
-      if (!c) return
+
+    if (candidates.length === 0) return
+
+    if (!inShelf) {
+      /* The search box hands the shelf over on ArrowDown and keeps
+         every other key: Home and End are the caret's in a text
+         field, and taking them would be a shortcut that breaks
+         typing. It lands where the keyboard last was, not at the
+         top — a person who arrowed to the sixth motor, corrected a
+         letter of the search and came back meant the sixth motor. */
+      if (e.key !== 'ArrowDown') return
       e.preventDefault()
-      take(c)
+      land(hi < 0 ? 0 : Math.min(hi, candidates.length - 1))
+      return
     }
+
+    if (e.key === 'Home') {
+      e.preventDefault()
+      land(0)
+      return
+    }
+    if (e.key === 'End') {
+      e.preventDefault()
+      land(candidates.length - 1)
+      return
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    e.preventDefault()
+    const next = hi + (e.key === 'ArrowDown' ? 1 : -1)
+    land(next < 0 ? candidates.length - 1 : next >= candidates.length ? 0 : next)
   }
 
   const held =
@@ -921,14 +1141,50 @@ function Shortlist({
       ) : null}
 
       {candidates.length > 0 ? (
-        <ul className="qb-shelf" ref={shelfRef}>
+        /* ONE TAB STOP, NOT THIRTY. The shelf is a composite: Tab
+           reaches it, the arrows move inside it, Tab leaves it. Every
+           card carried `tabindex=0` before, so walking past a motor
+           band on the way to the customer box was nine presses and
+           past a rigging band was ten. */
+        <ul
+          className="qb-shelf"
+          ref={shelfRef}
+          onFocus={() => setKbdHere(true)}
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) setKbdHere(false)
+          }}
+        >
+          {/* ── THE KEY IS THE ROW, NOT THE MINTED LINE ─────────────
+              `stepOffer` calls `mintLine` for every candidate on
+              every run and `mintLine` calls `newId()`, so `line.id`
+              is a different string each time the memo recomputes —
+              which is on every pick, every keystroke of the search
+              and every press of the switch. Keyed on it, React
+              unmounted and rebuilt all nine cards on each of those:
+              measured, the focus was on the floor after every Enter
+              (so the next Enter did nothing and Escape left the whole
+              page), and `ds-rise` replayed its entrance on the whole
+              shelf because every card was newly mounted.
+
+              `pairRowId ?? rowId` is the identity `stepOffer` itself
+              keys on to decide whether a candidate is already on the
+              quote, so it is stable by construction and unique inside
+              one shelf: the selection is distinct target rows, and
+              two pairings of one row differ by their pair row. */}
           {candidates.map((c, i) => (
-            <li key={c.line.id} className="qb-shelf-slot">
+            <li key={c.line.pairRowId ?? c.line.rowId} className="qb-shelf-slot">
               <OfferCard
                 candidate={c}
                 index={i}
                 still={still}
                 lit={i === hi}
+                tabbable={i === (hi < 0 ? 0 : hi)}
+                cardRef={(el) => {
+                  cardRefs.current[i] = el
+                }}
+                onOver={() => setOver((n) => (n === i ? n : i))}
+                onLeave={() => setOver((n) => (n === i ? null : n))}
+                onFocus={() => setHi(i)}
                 onPick={() => {
                   setHi(i)
                   take(c)
@@ -1117,6 +1373,7 @@ function PriceBar({
   steps,
   totals,
   delta,
+  weighing,
   refusals,
   levels,
   onLevel,
@@ -1128,6 +1385,9 @@ function PriceBar({
   steps: readonly BuildStep[]
   totals: ReturnType<typeof quoteTotals>
   delta: number | null
+  /** the choice under the pointer or the keyboard, and what it would
+   *  do — never what the document carries */
+  weighing: Weigh | null
   refusals: readonly string[]
   levels: ReturnType<typeof quoteLevelChoices>
   onLevel: (key: string, label: string) => void
@@ -1198,11 +1458,55 @@ function PriceBar({
           </span>
         </button>
 
-        {delta !== null ? (
-          <span className={`qb-delta${delta < 0 ? ' is-down' : ''}`} role="status">
-            {deltaSay(delta)}
-          </span>
-        ) : null}
+        {/* ── ONE SLOT, AND THE REPORT GOES FIRST ───────────────────
+            The committed figure to the left DOES NOT MOVE while
+            either of these is up — the same rule the conflict sheet
+            keeps, and the difference between a sheet a person decides
+            and a notification they acknowledge.
+
+            THE PROPOSAL TOOK THE DELTA'S PLACE AND THE PLACE NEVER
+            CAME BACK. The proposal was tested first, and after a
+            click the pointer is still on the card that was clicked —
+            so `weighing` is never null on the frame the pick lands,
+            the delta branch is unreachable in the whole ordinary
+            mouse flow, and the report of what a pick DID could not
+            draw. This file's own argument for adding no UNDO toast on
+            "put on" rests on that report. So it goes first now, for
+            the 2.6s it lives, and the proposal resumes under it:
+            measured on the SP760ST, hovering the second Yamaha reads
+            WOULD BE $173,041 +$29,460, clicking it and moving the
+            mouse away reads +$29,460 against a committed $173,041,
+            and 2.6s later the proposal comes back as the reverse.
+            Two signed figures side by side with only one of them
+            about the future is a person reading the wrong one aloud;
+            two in sequence, one costumed as a pill saying WOULD BE,
+            is not.
+
+            NO `role="status"` ON THE PROPOSAL. It tracks a pointer
+            and an arrow key, so a walk down a shelf queues one polite
+            announcement per keystroke behind the card label the
+            person is actually listening to — and that label already
+            carries the name and the price. The report keeps its own — it is the one thing
+            on this screen nothing else says. */}
+        <span className="qb-weigh-slot">
+          {delta !== null ? (
+            <span className={`qb-delta${delta < 0 ? ' is-down' : ''}`} role="status">
+              {deltaSay(delta)}
+            </span>
+          ) : weighing !== null ? (
+            <span className="qb-weigh">
+              <span className="qb-weigh-lab mono-label">Would be</span>
+              <span className="qb-weigh-fig">{money(weighing.would)}</span>
+              {weighing.delta === null ? (
+                <span className="qb-nil">no price on it</span>
+              ) : (
+                <span className={`qb-weigh-delta${weighing.delta < 0 ? ' is-down' : ''}`}>
+                  {deltaSay(weighing.delta)}
+                </span>
+              )}
+            </span>
+          ) : null}
+        </span>
 
         {totals.unpricedCount > 0 ? (
           <span className="qb-price-unpriced">{totals.unpricedCount} not priced</span>
@@ -1763,12 +2067,24 @@ function OfferCard({
   index,
   still,
   lit,
+  tabbable,
+  cardRef,
+  onOver,
+  onLeave,
+  onFocus,
   onPick,
 }: {
   candidate: Candidate
   index: number
   still: boolean
   lit: boolean
+  /** the shelf's one tab stop — see the roving note where it is set */
+  tabbable: boolean
+  cardRef: (el: HTMLButtonElement | null) => void
+  /** on pointer MOVE, not on pointer enter — see `Shortlist` */
+  onOver: () => void
+  onLeave: () => void
+  onFocus: () => void
   onPick: () => void
 }): ReactElement {
   const line = candidate.line
@@ -1782,6 +2098,8 @@ function OfferCard({
         candidate.outside ? ' is-outside' : ''
       }${lit ? ' is-lit' : ''}`}
       style={{ ['--i' as string]: index } as CSSProperties}
+      ref={cardRef}
+      tabIndex={tabbable ? 0 : -1}
       aria-pressed={on}
       aria-label={
         on
@@ -1790,6 +2108,9 @@ function OfferCard({
               line.unitPrice === null ? '' : `, ${money(line.unitPrice)}`
             }`
       }
+      onPointerMove={onOver}
+      onPointerLeave={onLeave}
+      onFocus={onFocus}
       onClick={onPick}
     >
       <PictureWell img={line.image} name={line.label} />

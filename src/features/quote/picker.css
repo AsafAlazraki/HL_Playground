@@ -123,8 +123,20 @@
   transform: scale(0.94);
 }
 
+/* ── `var(--accent)`, NOT `var(--focus)` ───────────────────────────
+   `--focus` is a BOX-SHADOW value (`0 0 0 2px var(--bg), 0 0 0 4px
+   var(--accent)`), so `outline: 2px solid var(--focus)` is invalid at
+   computed-value time and the whole declaration is thrown away.
+   Measured on a real ArrowDown with `:focus-visible` matching: the
+   computed outline on a lit card was `rgb(8,27,46) none 3px` — no
+   ring at all, and no box-shadow ring either, because `ds.css`'s
+   global `.ds-root :focus-visible` never reaches the app (`.ds-root`
+   is on the design preview and the entity designer, and nowhere
+   else — 0 matches in the running app). 13 declarations in this file
+   and 8 in picker.css drew nothing; they draw the accent now, which
+   is what the other 45 outline rules in this app already say. */
 .qs-back:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -188,7 +200,7 @@
 }
 
 .qs-close:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -272,7 +284,7 @@
 }
 
 .qs-card:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -391,7 +403,7 @@
 }
 
 .qs-shut-head:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -465,7 +477,7 @@
 }
 
 .qs-shut-go:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -510,7 +522,7 @@
 }
 
 .qs-refusal-go:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -660,7 +672,7 @@
 }
 
 .qs-row:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
@@ -905,7 +917,7 @@
 }
 
 .qs-go:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

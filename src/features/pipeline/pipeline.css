@@ -70,14 +70,16 @@
   padding: 0 var(--page-gutter) var(--s-6);
 }
 
-/* WITH A DEAL OPEN, the board's right gutter goes: the floor's gap
-   is the space to the pane, and the pane carries the page gutter on
-   its own right edge. Keeping both would put 48px between the board
-   and the pane and 32px between the pane and the window, and the
-   pane would read as a third region rather than as part of this
-   one. */
-.pb-floor.has-deal .pb-cols {
-  padding-right: 0;
+/* THE COLUMNS DO NOT MOVE UNDER A MODAL. `.do-scrim` covers the
+   window and the popup is `aria-modal`, but a sideways wheel or a
+   trackpad swipe still reached this scroller and slid the board
+   behind the dialog — so the card you opened was somewhere else
+   when you shut it, which is the whole fault the popup was chosen
+   over a pane to avoid. `overflow: hidden` rather than a body lock:
+   this is the scroller, and the board is a fixed-height column, so
+   nothing else in the page scrolls anyway. */
+.pb-cols.is-behind {
+  overflow: hidden;
 }
 
 .pb-col {
@@ -306,16 +308,6 @@
    replaced.
    ============================================================ */
 
-
-@media (prefers-reduced-motion: reduce) {
-  .pb-card,
-  .pb-col {
-    transition: none;
-  }
-  .pb-card.is-held {
-    transform: none;
-  }
-}
 
 /* ============================================================
    FINDING THINGS ON THE BOARD — the toolbar, the type filters,
@@ -604,15 +596,145 @@
   --stage: var(--danger);
 }
 
-/* THE COLUMN WEARS IT AS A CAP, not as a fill. A column filled with
-   its own hue puts three tiers of ink on a tint and breaks rule 4
-   in five places at once; a 3px cap over the head says the same
-   thing and touches no text. */
+/* THE COLUMN WEARS IT AS A CAP. A 3px cap over the head says which
+   column this is and touches no text at all, which is why it is
+   what an UNWASHED column gets and why it survives every wash
+   below it. */
 .pb-col[data-tone] {
   border-top: 3px solid var(--stage);
 }
 .pb-col[data-tone] .pb-col-name {
   color: var(--stage);
+}
+
+/* ============================================================
+   THE WASH — a second decision from the colour, and the whole of
+   what measuring it cost.
+
+   HOW STRONGLY A COLUMN IS TINTED is the dealer's to say, because
+   a board where every column is washed is a board where none of
+   them stands out, and that is a judgement about their own
+   pipeline rather than ours. Two steps and an off: 8% and 18% of
+   the tone mixed into `--surface-2`.
+
+   WHY THOSE TWO NUMBERS AND NOT A SLIDER. The column's NAME sits
+   on this. Every figure below was READ BACK IN THE BROWSER off a
+   real element in a real washed column — `getComputedStyle`, the
+   full ancestor chain composited, translucent ink composited over
+   the ground it lands on — and not calculated from token values.
+   The pairing is what is measured, not the colour: a colour on its
+   own passes nothing.
+
+     THE TONE AS INK ON ITS OWN WASH — the arrangement that does
+     NOT ship, measured by putting it back temporarily:
+
+                     light 8%   light 18%   dark 8%   dark 18%
+       neutral         2.42        2.23       2.68      2.42
+       blue            5.92        5.04       5.41      4.46
+       amber           4.44        3.88       6.17      5.06
+       violet          5.07        4.34       4.69      3.97
+       green           5.81        4.97       6.66      5.34
+       red             5.74        4.84       5.32      4.51
+
+   NINE OF THOSE TWENTY-FOUR ARE UNDER 4.5. Four are neutral, which
+   is `--fg-quaternary` and was never legal as ink anyway — that is
+   why the rule below this one has existed since the tones shipped.
+   The other five are the new failures: amber twice, violet twice
+   and blue once. A free colour well would have produced worse, and
+   no guard in this repo can see any of it.
+
+   SO A WASHED COLUMN DOES NOT KEEP ITS TONE AS INK. The name steps
+   to `--fg-secondary`, and the metadata under it steps from
+   `--fg-tertiary` to `--fg-secondary` as well, because the floor
+   moves too. WORST CASE ACROSS ALL SIX TONES, per theme and wash:
+
+                     light 8%   light 18%   dark 8%   dark 18%
+       --fg            15.28       12.88     11.26      9.04
+       --fg-secondary    7.10        5.98      6.57      5.27
+       --fg-tertiary     4.81        4.06      4.08      3.28   <- fails
+
+   `--fg-secondary` clears 4.5 in all twenty-four pairings with a
+   real margin; `--fg-tertiary` is under it in eleven of them. The
+   hue is still said twice — by the cap and by the wash — and
+   neither of those carries a word.
+
+   The mechanism is one custom property and a `color-mix`, the same
+   shape `ds.css` uses for the kind surfaces. Six tones times three
+   washes would be eighteen rules that can drift.
+   ============================================================ */
+
+[data-wash='none'] {
+  --stage-wash: 0%;
+}
+[data-wash='soft'] {
+  --stage-wash: 8%;
+}
+[data-wash='full'] {
+  --stage-wash: 18%;
+}
+
+.pb-col[data-wash='soft'],
+.pb-col[data-wash='full'] {
+  background: color-mix(in srgb, var(--stage) var(--stage-wash), var(--surface-2));
+}
+/* A WASHED CLOSED COLUMN KEEPS ITS WASH. `is-closed` sets
+   `background: none` so a finished column reads as the page
+   itself; an explicit tint is a dealer overruling that for this
+   column, and the dashed border still says "finished". Ordered
+   after `.is-closed` so it wins on source order at equal
+   specificity — both are (0,2,1). */
+.pb-col.is-closed[data-wash='soft'],
+.pb-col.is-closed[data-wash='full'] {
+  background: color-mix(in srgb, var(--stage) var(--stage-wash), var(--surface-2));
+}
+
+/* THE INK STEPS UP ON A WASH. See the second table above: the
+   name loses its hue and `--fg-tertiary` loses its licence. */
+.pb-col[data-wash='soft'] .pb-col-name,
+.pb-col[data-wash='full'] .pb-col-name,
+.pb-col[data-wash='soft'] .pb-col-shut-name,
+.pb-col[data-wash='full'] .pb-col-shut-name {
+  color: var(--fg-secondary);
+}
+.pb-col[data-wash='soft'] .pb-col-n,
+.pb-col[data-wash='full'] .pb-col-n,
+.pb-col[data-wash='soft'] .pb-col-about,
+.pb-col[data-wash='full'] .pb-col-about,
+.pb-col[data-wash='soft'] .pb-none,
+.pb-col[data-wash='full'] .pb-none,
+.pb-col[data-wash='soft'] .pb-col-sortgo,
+.pb-col[data-wash='full'] .pb-col-sortgo,
+.pb-col[data-wash='soft'] .pb-col-shutgo,
+.pb-col[data-wash='full'] .pb-col-shutgo,
+.pb-col[data-wash='soft'] .pb-col-open,
+.pb-col[data-wash='full'] .pb-col-open {
+  color: var(--fg-secondary);
+}
+/* THE DROP TARGET STILL WINS. `is-over` is the whole of the drag
+   affordance and a column that kept its own tint under a held card
+   would say nothing about where the card is going. Specificity is
+   (0,3,1) against the wash's (0,2,1). */
+.pb-col.is-over[data-wash] {
+  background: var(--accent-wash);
+}
+
+/* WHAT BELONGS IN THIS COLUMN, under its head. Caption tier,
+   because it is a description of the thing above it and must not
+   compete with the count and the sum beside it. Two lines at most
+   — a caption that grows to five is a column head that has eaten
+   the first card. */
+.pb-col-about {
+  margin: 0 0 var(--s-2);
+  padding: 0 var(--s-2);
+  flex: none;
+  font-size: var(--t-caption-size);
+  line-height: 1.35;
+  color: var(--fg-tertiary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 /* NEUTRAL KEEPS THE CAP, AND THIS RULE USED TO TAKE IT AWAY.
 
@@ -729,10 +851,16 @@
      field pushed its own colour swatches a thousand pixels away
      from it — three controls that belong to one stage, marooned at
      opposite ends of the row. The last column takes the slack
-     instead. */
-  grid-template-columns: auto minmax(140px, 320px) auto auto auto auto minmax(0, 1fr);
+     instead.
+
+     AN EIGHTH TRACK ARRIVED WITH THE TINT. The colour and the tint
+     are two controls now (see the wash block above), so the row is
+     move, name, colour, tint, finished, count, remove and the
+     slack — and the sentence saying what belongs in the column
+     goes on a second line under the name field it belongs with. */
+  grid-template-columns: auto minmax(140px, 320px) auto auto auto auto auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2) var(--s-3);
   padding: var(--s-2) 0;
   border-top: 1px solid var(--line-subtle);
 }
@@ -1108,72 +1236,108 @@
 }
 
 /* ============================================================
-   ONE DEAL, OPEN (dp-) — its facts and its conversation.
+   ONE DEAL, OVER THE BOARD (do-) — the popup.
 
-   A COLUMN OF ITS OWN, at the right of the board. The head and the
-   composer are fixed and the middle scrolls, so the box you type
-   into never walks off the bottom of a long thread — the one
-   property a conversation panel has to have.
+   IT WAS A 360px PANE IN THE COLUMNS' OWN ROW. Opening it narrowed
+   the board, which reflows five columns and moves the card you
+   were pointing at; the argument is in `DealOverview.tsx`. Over
+   the board, the arrangement behind it does not move at all.
 
-   EVERY INK ON IT IS FROM THE RAMP. The thread's notes sit on
-   `--surface-2` and the ramp's floor (`--fg-tertiary`) is used
-   only for metadata beside the thing it describes; the words
-   themselves are `--fg`.
+   THE SCRIM IS A WASH, NOT A BLACKOUT. You can still read which
+   column the open card is standing in, which is the fact you were
+   looking at when you clicked it. It is `--scrim`, which is a token
+   now rather than the two literal colours that were written here —
+   38% of the ink on light and 58% of a deeper black on dark, both
+   defined in ds.css beside the reason. It carries no text, so rule
+   4 has nothing to say about it.
+
+   THE HEAD AND THE FOOT ARE FIXED AND THE MIDDLE SCROLLS. The
+   composer is in the scrolling middle rather than pinned, and that
+   is safe here only because the popup draws the LAST THREE notes
+   and counts the rest — a glance cannot grow a thread long enough
+   to push the box off the bottom. The whole record draws every
+   note and puts the composer under them, which is where a composer
+   belongs on a file. Raise the three and this stops being true.
+
+   EVERY INK ON IT IS FROM THE RAMP. Notes sit on `--surface-2` and
+   the ramp's floor (`--fg-tertiary`) is used only for metadata
+   beside the thing it describes; the words themselves are `--fg`.
    ============================================================ */
 
-/* THE PANE TAKES FOCUS WHEN IT OPENS — see DealPane.tsx. It is
-   `tabIndex={-1}`, so a mouse click never rings it, and a keyboard
-   press does: `:focus-visible` is exactly the distinction, and it
-   is what tells somebody who pressed Enter that they are now
-   inside the thing that appeared. */
-.dp:focus {
-  outline: none;
+.do-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-6);
+  background: var(--scrim);
+  animation: do-in var(--d-fast) var(--ease);
 }
-.dp:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+@keyframes do-in {
+  from {
+    opacity: 0;
+  }
 }
 
-.dp {
+.do {
   display: flex;
   flex-direction: column;
-  flex: 0 0 auto;
-  width: 360px;
-  min-height: 0;
-  margin: 0 var(--page-gutter) var(--s-6) 0;
+  width: min(920px, 100%);
+  max-height: min(84vh, 780px);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface-1);
-  box-shadow: var(--e2);
+  box-shadow: var(--e-hero, var(--e3));
   overflow: hidden;
+  animation: do-rise var(--d-med) var(--ease);
+}
+@keyframes do-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}
+/* THE POPUP TAKES FOCUS WHEN IT OPENS — see DealOverview.tsx. It
+   is `tabIndex={-1}`, so a mouse click never rings it and a
+   keyboard press does: `:focus-visible` is exactly that
+   distinction, and it is what tells somebody who pressed Enter
+   that they are now inside the thing that appeared. */
+.do:focus {
+  outline: none;
+}
+.do:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
-.dp-head {
+.do-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 2px var(--s-3);
   flex: none;
-  padding: var(--s-4) var(--s-4) var(--s-3);
+  padding: var(--s-4) var(--s-5) var(--s-3);
   border-bottom: 1px solid var(--line-subtle);
 }
-.dp-ref {
+.do-ref {
   grid-column: 1;
   font-size: var(--t-mono-sm-size);
   color: var(--fg-tertiary);
 }
 /* THE CUSTOMER IS THE HEADING, as it is on the card. */
-.dp-who {
+.do-who {
   grid-column: 1;
   margin: 0;
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  letter-spacing: var(--t-heading-track);
-  line-height: var(--t-heading-lead);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  letter-spacing: var(--t-title-track);
+  line-height: var(--t-title-lead);
   color: var(--fg);
   overflow-wrap: anywhere;
 }
-.dp-what {
+.do-what {
   grid-column: 1;
   margin: 0;
   font-size: var(--t-small-size);
@@ -1181,7 +1345,7 @@
   color: var(--fg-secondary);
   overflow-wrap: anywhere;
 }
-.dp-shut {
+.do-shut {
   grid-column: 2;
   grid-row: 1 / span 3;
   display: inline-flex;
@@ -1199,23 +1363,54 @@
     background var(--d-fast) var(--ease),
     transform var(--d-press) var(--ease);
 }
-.dp-shut:hover {
+.do-shut:hover {
   background: var(--surface-2);
   color: var(--fg);
 }
-.dp-shut:active {
+.do-shut:active {
   transform: scale(0.97);
 }
-.dp-shut:focus-visible {
+.do-shut:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
-.dp-body {
+/* TWO COLUMNS AND A FULL-WIDTH FOOT UNDER THEM. The facts are a
+   dl of short pairs and want a narrow measure; the thread is prose
+   and wants a wide one. Links and files run the whole width
+   because a filename in a 40-character box wraps on every row. */
+.do-body {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  align-content: start;
+  gap: var(--s-5);
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--s-4);
+  padding: var(--s-4) var(--s-5) var(--s-5);
+}
+.do-left,
+.do-right {
+  min-width: 0;
+}
+.do-under {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-5);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+}
+
+.do-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex: none;
+  padding: var(--s-3) var(--s-5);
+  border-top: 1px solid var(--line-subtle);
+  background: var(--surface-2);
 }
 
 /* THE FACTS. Label left, value right, one grid so every value
@@ -1280,12 +1475,16 @@
    one. The pane exists for the conversation, so the accent is on
    Add note; this is a way out of the pane, drawn like every other
    secondary control on this screen. */
-.dp-open {
+/* THE TWO DOORS IN THE FOOT. `do-open` is the primary — the
+   document itself — and `do-more` is the lateral one to the whole
+   record. Same anatomy, different weight, so which is which is
+   readable without reading the words. */
+.do-open,
+.do-more {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
   height: var(--h-md);
-  margin: 0 0 var(--s-5);
   padding: 0 var(--s-4);
   border: 1px solid var(--line);
   border-radius: var(--r-control);
@@ -1298,16 +1497,29 @@
   transition:
     background var(--d-fast) var(--ease),
     border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
     transform var(--d-press) var(--ease);
 }
-.dp-open:hover {
-  background: var(--surface-2);
+.do-more {
+  border-color: transparent;
+  background: transparent;
+  color: var(--fg-secondary);
+  font-weight: 500;
+}
+.do-open:hover {
+  background: var(--surface-3);
   border-color: var(--line-strong);
 }
-.dp-open:active {
+.do-more:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+.do-open:active,
+.do-more:active {
   transform: scale(0.97);
 }
-.dp-open:focus-visible {
+.do-open:focus-visible,
+.do-more:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -1483,45 +1695,30 @@
 }
 
 /* ============================================================
-   RESPONSIVE. Below a laptop the pane FLOATS over the board rather
-   than taking a share of it: 360px out of a 1000px window would
-   leave the columns at their 248px floor with a sideways scroll,
-   which is the board reduced to a list — the screen this one
-   replaced. Over it, the board keeps its own width and comes back
-   whole the moment the pane closes.
+   RESPONSIVE. The deal used to be a 360px pane sharing the row
+   with the columns, and this section used to float it over the
+   board under 1100px so that the columns did not fall to their
+   248px floor with a sideways scroll — the board reduced to a
+   list, which is the screen it replaced. The popup is over the
+   board at EVERY width now, so that whole rule went with it. What
+   is left is the popup's own inside, which has two columns and
+   cannot keep both on a narrow window.
    ============================================================ */
-@media (max-width: 1100px) {
-  .pb-floor {
-    position: relative;
+/* THE POPUP GOES TO ONE COLUMN under a laptop. Two columns of
+   minmax(0, 5fr)/(7fr) at 900px leaves the facts' labels wrapping
+   in a 190px track — the thread reads down, so the facts read down
+   above it. */
+@media (max-width: 900px) {
+  .do-body,
+  .do-under,
+  .dr-cols {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .pb-floor.has-deal .pb-cols {
-    padding-right: var(--page-gutter);
+  .do-scrim {
+    padding: var(--s-4);
   }
-  .dp {
-    position: absolute;
-    top: 0;
-    bottom: var(--s-6);
-    right: var(--page-gutter);
-    left: auto;
-    z-index: var(--z-panel);
-    width: min(360px, calc(100% - var(--page-gutter) * 2));
-    margin: 0;
-    box-shadow: var(--e-float);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dp-open,
-  .dp-say-go,
-  .dp-shut,
-  .pb-col-open,
-  .pb-col-shutgo {
-    transition: none;
-  }
-  .dp-open:active,
-  .dp-say-go:active,
-  .dp-shut:active {
-    transform: none;
+  .do {
+    max-height: 90vh;
   }
 }
 
@@ -1566,4 +1763,713 @@
   font-variant-numeric: tabular-nums;
   color: var(--fg-tertiary);
   white-space: nowrap;
+}
+
+/* ============================================================
+   THE TWO CONTROLS THE PANEL GREW — the tint, and the caption.
+   ============================================================ */
+
+/* WORDS, NOT SWATCHES. Three grey squares would say nothing: the
+   thing being chosen is an AMOUNT, and an amount reads as a word.
+   A segmented set of three rather than a `Picker`, because all
+   three fit and a dropdown that hides two of three options is a
+   control that costs a press to say what it is doing. */
+.se-washes {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  overflow: hidden;
+}
+.se-wash {
+  height: 26px;
+  padding: 0 var(--s-3);
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.se-wash:first-child {
+  border-left: 0;
+}
+.se-wash:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+/* PRESS ON POINTER-DOWN (rule 8). A 26px segment is too small to
+   scale legibly, so it takes the ink — the answer the system gives
+   a list row, and the one the sort and fold handles above already
+   use. */
+.se-wash:active {
+  background: var(--surface-4);
+  color: var(--fg);
+  transition-duration: var(--d-press);
+}
+.se-wash:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* THE CHOSEN ONE IS FILLED. `--surface-4` under `--fg` is the same
+   pressed ground the segment takes under a finger, which is right:
+   the chosen segment IS the pressed one. */
+.se-wash.is-on {
+  background: var(--surface-4);
+  color: var(--fg);
+  font-weight: 560;
+}
+
+/* WHAT BELONGS IN THIS COLUMN. Under the name it belongs to rather
+   than in a track of its own: it is a caption for that field, and
+   a sentence sitting in the seventh column of a row would read as
+   a caption for the delete button. */
+.se-about {
+  grid-column: 2 / -1;
+  min-width: 0;
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+}
+.se-about::placeholder {
+  color: var(--fg-tertiary);
+}
+.se-about:focus {
+  outline: none;
+  border-color: var(--accent);
+  color: var(--fg);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+/* ============================================================
+   WHAT EACH CARD SHOWS — the second half of the panel.
+   ============================================================ */
+
+/* THE CAPTION FOR EACH HALF. A label style, which §3 allows: it
+   names a section rather than a thing. */
+.se-part {
+  margin: var(--s-4) 0 var(--s-2);
+  color: var(--fg-tertiary);
+}
+/* THE SPINE, SAID OUT LOUD. A person looking for "customer" in the
+   list below and not finding it would conclude the board had lost
+   it. */
+.se-spine {
+  margin: 0 0 var(--s-3);
+}
+
+.se-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+/* THE LIST ITEM IS A FLEX BOX SO THE BUTTON FILLS IT. One of the
+   six carries a second line and the other five do not; without
+   this the row is five short chips and one tall one, which reads
+   as the tall one being a different kind of control. */
+.se-fields > li {
+  display: flex;
+}
+.se-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-height: var(--h-md);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.se-field-name {
+  font-size: var(--t-small-size);
+  font-weight: 550;
+}
+/* THE ONE LINE UNDER A CHOICE THAT NEEDS EXPLAINING. Most do not —
+   a list where every row carries a sentence is a list nobody
+   reads. */
+.se-field-say {
+  font-size: var(--t-caption-size);
+  line-height: 1.3;
+  color: var(--fg-tertiary);
+}
+.se-field:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.se-field:active {
+  transform: scale(0.98);
+  transition-duration: var(--d-press);
+}
+.se-field:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* ON IS THE ACCENT, and this is the accent one appearance in the
+   panel: it means "this is what your card is drawing", which is
+   exactly what an accent is for. */
+.se-field.is-on {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--fg);
+}
+.se-field.is-on .se-field-say {
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   THE DEAL IN PIECES (dp-) — drawn in the popup and on the record.
+
+   Everything below is shared by both containers. See
+   `dealParts.tsx`: two screens drawing one deal from two sets of
+   markup is the shape where a fact gets fixed in one and stays
+   wrong in the other.
+   ============================================================ */
+
+/* THE PHOTOGRAPH, or nothing. No placeholder and no frame — see
+   `DealPhoto`. */
+.dp-photo {
+  margin: 0 0 var(--s-4);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.dp-photo-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+/* HOW LONG IT HAS STOOD IN THIS COLUMN, beside the column name
+   rather than as a row of its own: the two are one fact, and
+   splitting them puts "Negotiating" three lines above "11 days". */
+.dp-stage-for {
+  margin-left: var(--s-2);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+.dp-thread-part,
+.dp-part {
+  min-width: 0;
+}
+.dp-part-say {
+  margin: 0 0 var(--s-2);
+  color: var(--fg-tertiary);
+}
+/* HOW MUCH OF THE THREAD IS NOT SHOWN, and where the rest is. A
+   popup that quietly dropped the first six notes would be a popup
+   that lies about a conversation. */
+.dp-older {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* ---- links and files, which are one kind of list ----------- */
+
+.dp-links,
+.dp-files {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  list-style: none;
+  margin: 0 0 var(--s-3);
+  padding: 0;
+}
+.dp-link,
+.dp-file {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: 3px var(--s-1) 3px var(--s-2);
+  border-radius: var(--r-control);
+  transition: background var(--d-fast) var(--ease);
+}
+.dp-link:hover,
+.dp-file:hover {
+  background: var(--surface-2);
+}
+.dp-link-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: var(--s-1) 0;
+  border-radius: var(--r-control);
+  color: var(--accent);
+  font-size: var(--t-small-size);
+  text-decoration: none;
+}
+.dp-link-go:hover {
+  text-decoration: underline;
+}
+.dp-link-go:active {
+  color: var(--accent-press);
+}
+.dp-link-go:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* NOTHING TRUNCATES MID-WORD (§3). A long label wraps rather than
+   becoming "Finance approv…" — the list is a column wide and has
+   the room to give it a second line. */
+.dp-link-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* THE REMOVE HANDLE. Quiet until the row is under the cursor, the
+   rule the column head own two handles keep — a list of eight
+   links with eight lit bins is eight controls competing with eight
+   names. */
+.dp-drop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.dp-link:hover .dp-drop,
+.dp-file:hover .dp-drop,
+.dp-drop:focus-visible {
+  opacity: 1;
+}
+.dp-drop:hover {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+.dp-drop:active {
+  background: var(--danger-wash);
+  color: var(--danger);
+  transition-duration: var(--d-press);
+}
+.dp-drop:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* WITH NO POINTER THERE IS NO HOVER, and then "quiet until wanted"
+   means "invisible, permanently". The column head's own handles can
+   afford that — folding a column is a convenience with the whole
+   board as its alternative. Removing a link has no alternative at
+   all, so on a touch screen these are simply drawn. */
+@media (hover: none) {
+  .dp-drop {
+    opacity: 1;
+  }
+}
+
+.dp-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+.dp-add-in {
+  min-width: 0;
+  flex: 1 1 120px;
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+}
+.dp-add-url {
+  flex: 1 1 160px;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+}
+.dp-add-in::placeholder {
+  color: var(--fg-tertiary);
+}
+.dp-add-in:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+.dp-add-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.dp-add-go:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+}
+.dp-add-go:active {
+  transform: scale(0.97);
+}
+.dp-add-go:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.dp-attach {
+  margin-top: var(--s-1);
+}
+
+/* THE NATIVE FILE INPUT IS OFF SCREEN, NOT `display: none`. Hidden
+   that way it leaves the keyboard nothing to focus and the label
+   nothing to announce; off screen it is still a real control, and
+   the button beside it forwards a click to it. */
+.dp-file-in {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.dp-file-name {
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: var(--t-small-size);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.dp-file-size {
+  flex: none;
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+.dp-file-thumb {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-control);
+  object-fit: cover;
+}
+.dp-file-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--fg-tertiary);
+}
+
+/* WHAT WAS DONE, WHICH IS NOT A WARNING. The `logo.ts` rule applied
+   to a success: an app that stores somebody file without saying
+   what it did to it has changed their file quietly. Drawn as a
+   statement — no warning rail, no danger ink. */
+.dp-did {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-caption-size);
+  line-height: 1.45;
+  color: var(--fg-tertiary);
+}
+
+/* ============================================================
+   THE WHOLE RECORD (dr-) — the file behind the glance.
+
+   IT TAKES THE BOARD REGION, and the board is not drawn behind it.
+   A record is a screen you went to, not a thing floating over the
+   columns; see `DealPage.tsx`.
+
+   THE WAY BACK IS ONE CONTROL, TOP LEFT, ALWAYS THERE — the shape
+   every stage in this app uses, so somebody who learned it once
+   does not learn it again here.
+   ============================================================ */
+
+.pb-is-record {
+  padding-top: 0;
+}
+
+.dr {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.dr:focus {
+  outline: none;
+}
+.dr:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.dr-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: none;
+  padding: var(--s-3) var(--page-gutter);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.dr-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-3) 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.dr-back:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.dr-back:active {
+  transform: scale(0.97);
+}
+.dr-back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* THE REFERENCE IS THE CRUMB. It takes the middle and the door out
+   takes the end, so the bar reads back — what this is — away. */
+.dr-ref {
+  margin-right: auto;
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+}
+.dr-open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.dr-open:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+}
+.dr-open:active {
+  transform: scale(0.97);
+}
+.dr-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* THE PAGE SCROLLS, NOT THE WINDOW — the contract every stage in
+   this app keeps. */
+.dr-well {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-5) var(--page-gutter) var(--s-8);
+}
+.dr-head {
+  max-width: 1100px;
+  margin: 0 0 var(--s-5);
+}
+/* THE CUSTOMER IS THE HEADING, as it is everywhere else a deal is
+   drawn. A record is the fullest form of it, so it takes the
+   display step rather than the title one. */
+.dr-who {
+  margin: 0;
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  letter-spacing: var(--t-display-track);
+  line-height: var(--t-display-lead);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.dr-what {
+  margin: var(--s-1) 0 0;
+  font-size: var(--t-body-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+.dr-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+  align-content: start;
+  gap: var(--s-6);
+  max-width: 1100px;
+}
+.dr-col {
+  min-width: 0;
+}
+/* THE THREAD, THE LINKS AND THE FILES STACK IN ONE COLUMN and each
+   needs air between it and the next: three lists butted together
+   read as one long list with three headings in it. */
+.dr-col-wide > * + * {
+  margin-top: var(--s-6);
+}
+.dr-col .dp-photo-img {
+  max-height: 300px;
+}
+
+/* ============================================================
+   THE TWO FACTS A CARD CAN DRAW THAT ARE NEITHER METADATA NOR
+   MONEY — what type of thing it is, and how long it has stood
+   here. A row of their own, so the foot stays a figure and a name:
+   the measurement that put the note badge in the top row rather
+   than in the foot in the first place.
+   ============================================================ */
+.pb-card-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: 2px;
+}
+/* THE KIND CHIP IS `k-chip` FROM THE SYSTEM, which is the one
+   place the eight hues and their tints are declared. What is added
+   here is only that a card is small: the chip loses two pixels of
+   height so a card carrying one does not grow taller than a card
+   without. */
+.pb-card-kind {
+  height: 18px;
+}
+.pb-card-waited {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   REDUCED MOTION, LAST IN THE FILE ON PURPOSE.
+
+   MOVEMENT GOES, LIGHT STAYS — the system rule. Colour and opacity
+   feedback survive; travel and scale do not.
+
+   IT IS AT THE END BECAUSE IT LOST ONCE. Two smaller blocks used
+   to sit in the middle of the file, above the rules for the popup,
+   the record page and the panel — and at equal specificity the
+   LATER rule wins, so a `transition` written below them survived
+   the preference that was meant to switch it off. Read back in the
+   browser with the media emulated, which is the only way that
+   shows. Anything added below this line has to be added to it.
+
+   WHAT THE SYSTEM ALREADY DOES, so this is not mistaken for the
+   whole answer: `ds.css` puts `transition-duration: 0.01ms` and
+   `animation-duration: 0.01ms` on everything inside `.ds-root`
+   under the same preference, both `!important`. That covers the
+   TRAVEL. What it does not cover is a `transform` that is the
+   resting state of a class rather than the end of a transition —
+   `.pb-card.is-held` is rotated and scaled the whole time it is
+   held, and no duration makes that still. That is what the third
+   rule below is for.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .pb-card,
+  .pb-col,
+  .pb-col-open,
+  .pb-col-shutgo,
+  .pb-col-sortgo,
+  .do-open,
+  .do-more,
+  .do-shut,
+  .dp-say-go,
+  .dp-add-go,
+  .dp-drop,
+  .dp-link,
+  .dp-file,
+  .dr-back,
+  .dr-open,
+  .se-field,
+  .se-wash,
+  .se-tone {
+    transition: none;
+  }
+  .do,
+  .do-scrim {
+    animation: none;
+  }
+  .pb-card.is-held,
+  .do-open:active,
+  .do-more:active,
+  .do-shut:active,
+  .dp-say-go:active,
+  .dp-add-go:active,
+  .dr-back:active,
+  .dr-open:active,
+  .se-field:active,
+  .se-tone:hover {
+    transform: none;
+  }
 }

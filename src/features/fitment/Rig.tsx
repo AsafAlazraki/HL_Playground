@@ -256,16 +256,17 @@ export function Rig({ reading }: RigProps): ReactElement | null {
       <header className="rg-head">
         <p className="rg-eyebrow">One at a time</p>
         <h3 className="rg-title">
-          Take one {subjectNoun.one} and see what still fits — and what does not
+          What still fits one {subjectNoun.one} — and what does not
         </h3>
         {/* THE LEGEND SURVIVED AND THE INSTRUCTIONS DID NOT. Two of
             the four sentences said what this section is and what
             pressing the picker below does — both of which the heading
             and the picker say for themselves. The one a person cannot
-            work out by looking is what a struck-through row means. */}
+            work out by looking is what a struck-through row means, and
+            that is all this is now: the mark, and where its reason
+            sits. */}
         <p className="rg-lede">
-          What stops fitting stays on the list, struck through, with the rule&rsquo;s own
-          words beside it.
+          What stops fitting stays, struck through, with the rule&rsquo;s words.
         </p>
       </header>
 

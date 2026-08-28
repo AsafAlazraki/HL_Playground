@@ -128,13 +128,120 @@ export function stageOf(
  *  entries that say what the document already said. */
 export function moveTo(orgSlug: string, q: QuoteDef, stage: StageId): void {
   const at = { ...read(orgSlug) }
-  if (stage === derivedStage(q)) delete at[q.id]
+  const derived = stage === derivedStage(q)
+  if (derived) delete at[q.id]
   else at[q.id] = stage
+  /* THE ARRIVAL IS RECORDED BEFORE THE MOVE IS ANNOUNCED, and the
+     order is load-bearing. `write` is what wakes every listener,
+     and `markMoved` deliberately does not wake them again — two
+     notifications for one act would render the board twice. Record
+     it afterwards and the board draws once, with the old arrival
+     time, and then nothing tells it to look again. */
+  markMoved(orgSlug, q.id, derived ? null : Date.now())
   write(orgSlug, at)
 }
 
 export function forgetPipeline(): void {
   cache = null
+  sinceCache = null
+}
+
+/* ------------------------------------------------------------
+   WHEN IT ARRIVED — a second store, and a small one.
+
+   "How long has this been sitting here" is the question a sales
+   manager asks a board on a Monday, and the card picker offers it
+   as a fact a card can draw. Nothing recorded it: the override
+   store holds WHERE, and where carries no clock.
+
+   IT IS ITS OWN KEY AND NOT A WIDER OVERRIDE VALUE. Changing
+   `Record<id, StageId>` into `Record<id, {stage, at}>` would mean
+   every board already stored on somebody's machine failing
+   `isStage` and landing every deal back where the document says it
+   goes — a silent un-doing of every drag anybody ever made. A
+   parallel key costs one more read and cannot do that.
+
+   AND WHEN IT CANNOT ANSWER IT SAYS NOTHING. Three cases:
+
+     · a deal moved by this build            — the recorded instant
+     · a deal moved by an EARLIER build      — unknown, and the card
+                                               draws nothing. A
+                                               guess here would be a
+                                               number with the
+                                               file's authority
+                                               behind it
+     · a deal nobody has moved               — derived, exactly as
+                                               its column is: an
+                                               issued quote has stood
+                                               in Issued since it was
+                                               issued, a draft since
+                                               it was written
+   ------------------------------------------------------------ */
+
+const sinceKey = (orgSlug: string): string => `hl.pipeline.since.v1:${orgSlug}`
+
+let sinceCache: { k: string; v: Record<string, number> } | null = null
+
+/** Every recorded arrival. Exported for the same reason `read` is
+ *  not: the board takes one snapshot and hands it to every card. */
+export function sinceOf(orgSlug: string): Record<string, number> {
+  const k = sinceKey(orgSlug)
+  if (sinceCache && sinceCache.k === k) return sinceCache.v
+  const out: Record<string, number> = {}
+  try {
+    const raw = globalThis.localStorage?.getItem(k)
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object') {
+        for (const [id, at] of Object.entries(parsed as Record<string, unknown>)) {
+          if (typeof at === 'number' && Number.isFinite(at)) out[id] = at
+        }
+      }
+    }
+  } catch {
+    /* a browser refusing storage still gets a working board; the
+       cards simply do not draw a waiting time */
+  }
+  sinceCache = { k, v: out }
+  return out
+}
+
+/** Record — or forget — when this deal arrived where it is.
+ *  Forgetting is what a move back to the derived stage does, so the
+ *  two stores never disagree about whether a decision was made. */
+function markMoved(orgSlug: string, quoteId: string, at: number | null): void {
+  const next = { ...sinceOf(orgSlug) }
+  if (at === null) delete next[quoteId]
+  else next[quoteId] = at
+  sinceCache = { k: sinceKey(orgSlug), v: next }
+  try {
+    globalThis.localStorage?.setItem(sinceKey(orgSlug), JSON.stringify(next))
+  } catch {
+    /* the in-memory copy stands for this session */
+  }
+  /* no listener loop of its own: every write here happens inside
+     `moveTo`, which notifies through the override store one line
+     up. Two notifications for one act would render the board twice */
+}
+
+/** WHEN THIS DEAL ARRIVED WHERE IT IS, in epoch ms, or null when
+ *  nothing honest can be said. Pure, and takes both stores, so the
+ *  three cases in the header are testable without a browser. */
+export function arrivedAt(
+  q: QuoteDef,
+  at: Record<string, StageId>,
+  since: Record<string, number>,
+): number | null {
+  const moved = at[q.id] !== undefined
+  if (moved) return since[q.id] ?? null
+  const iso = derivedStage(q) === 'issued' ? (q.issuedAt ?? q.createdAt) : q.createdAt
+  const ms = Date.parse(iso ?? '')
+  return Number.isNaN(ms) ? null : ms
+}
+
+export function useSince(orgSlug: string): Record<string, number> {
+  const snap = useCallback(() => sinceOf(orgSlug), [orgSlug])
+  return useSyncExternalStore(subscribe, snap, snap)
 }
 
 /* ------------------------------------------------------------

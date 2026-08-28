@@ -57,7 +57,7 @@
    ============================================================ */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties, JSX } from 'react'
-import { Rows, SquaresFour } from '@phosphor-icons/react'
+import { ArrowRight, Rows, SquaresFour } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   isDiscontinued,
@@ -89,6 +89,14 @@ import { useTableData } from './useTableData'
 import { branchNoun, countLabel, leafNoun } from './grouping'
 import { requestRowReveal } from './rowRevealState'
 import { LENS_LABEL, setCatalogueLens, useCatalogueLens } from './catalogueLens'
+import { handoverFor } from './handover'
+/* DEEP, NOT THROUGH THE BARREL, for the cycle `winKit.tsx` records
+   against `@/features/quote` — and `@/features/views` reaches this
+   feature through `modules/read.ts`, so the same care is taken with
+   `createViewFor`. Neither file imports a surface. */
+import { createViewFor } from '@/features/views/viewDefs'
+import { createQuoteFromView } from '@/features/quote/quotes'
+import { unsellableSubject } from '@/features/quote/freeze'
 import type { PushToast } from './Toasts'
 import './catalogue.css'
 
@@ -179,6 +187,17 @@ export interface CatalogueProps {
    *  register, which is the honest default for a surface that has a
    *  register underneath it. */
   onOpenRow?: (rowId: string) => void
+  /* ============================================================
+     THE HAND-OVER (CONFIGURATOR.md §D, fault 5).
+
+     A quote was minted from this row and the host opens it. Absent
+     means THE CARDS DRAW NO CONFIGURE ACT AT ALL — a host with no
+     route to a quote window cannot finish the act, and a door that
+     mints a document and then leaves it nowhere is worse than no
+     door. The blueprint's focus lens passes none, for exactly that
+     reason; the table stage passes one.
+     ============================================================ */
+  onConfigure?: (quoteId: string) => void
 }
 
 export function Catalogue({
@@ -190,6 +209,7 @@ export function Catalogue({
   onCount,
   heading = true,
   onOpenRow,
+  onConfigure,
 }: CatalogueProps): JSX.Element {
   const entity = useProjectStore((s) => s.entities[entityId]) as EntityDef | undefined
   const lens = useCatalogueLens(entityId)
@@ -288,6 +308,76 @@ export function Catalogue({
   const kind = kindOf(entity?.kind)
 
   /* ------------------------------------------------------------
+     THE HAND-OVER — "Configure this one" (CONFIGURATOR.md §D).
+
+     THE FAULT, in the plan's words: "you browse in one and build in
+     the other, and the two do not hand over. A person who finds a
+     boat in the catalogue should be able to start configuring it
+     without going back to a picker and finding it again." Driven
+     before this change: standing on Formosa - GRT 425 (Tiller) in
+     the gallery, the only thing pressing it could do was take you
+     to that row in the REGISTER. Quoting it meant leaving — New
+     quote, the Formosa card, and then finding the same hull a
+     second time among that place's own 39. It is now one press,
+     and it lands on the build screen with the subject, the motor,
+     the trailer, the parts and the rigging already standing.
+
+     IT FOLLOWS THE PICKER'S PATH EXACTLY, and that is the whole
+     point — `createViewFor` then `createQuoteFromView`, with
+     `unsellableSubject` as the last gate, which is what `QuoteStart`
+     does and what `ViewStage`'s "Quote this one" does. Three doors
+     into one mechanism; none of them mints differently.
+
+     THE VERDICT IS ONE READING FOR THE WHOLE PAGE, not one per
+     card. Whether a quote can start here is a fact about the TABLE
+     and its modules, so the `PAGE` cards painted below would each
+     be running the same module census for the same answer.
+     ------------------------------------------------------------ */
+  const modules = useProjectStore((s) => s.modules)
+  const entities = useProjectStore((s) => s.entities)
+  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const handover = useMemo(
+    () =>
+      onConfigure
+        ? handoverFor(entity, modules, entities, rowsByEntity)
+        : /* no route, so nothing is being offered and nothing is
+             being refused — see `onConfigure` */
+          { can: false, why: '' },
+    [onConfigure, entity, modules, entities, rowsByEntity],
+  )
+
+  const configure = useCallback(
+    (rowId: string) => {
+      if (!onConfigure) return
+      /* THE LAST GATE, AND IT IS A LIVE READ ABOUT ONE ROW — the
+         same sentence the picker and the view stage refuse with, so
+         all three surfaces refuse identically. The card already
+         withholds the act from a discontinued row; this catches the
+         row struck between the paint and the press. */
+      const barred = unsellableSubject(entityId, rowId)
+      if (barred !== '') {
+        pushToast(barred, 'warn')
+        return
+      }
+      /* `createViewFor` is idempotent and creates no table, no column
+         and no join, so nothing about the sheet changes because
+         somebody pressed a photograph. Structure is never a side
+         effect (§7); a page for a table a person has just asked to
+         sell is not structure. */
+      const view = createViewFor(entityId)
+      const made = createQuoteFromView(view.id, rowId)
+      if (!made) {
+        /* `createQuoteFromView` returns null when the view or the row
+           has gone. Never an empty document, and never silence. */
+        pushToast('That one has left the sheet, so there is nothing to quote.', 'warn')
+        return
+      }
+      onConfigure(made.id)
+    },
+    [onConfigure, entityId, pushToast],
+  )
+
+  /* ------------------------------------------------------------
      THE PAGE'S OWN CONTROLS, BUILT ONCE AND HANDED TO THE HEADER.
 
      They used to be a third row of this component's own — a
@@ -375,6 +465,13 @@ export function Catalogue({
           eyebrow={TABLE_KINDS[kind].label}
           name={entity.name}
           count={fact}
+          /* WHY NOTHING HERE CAN BE CONFIGURED, ONCE (rule 10, and
+             the prose budget). `PageHead`'s `line` is the app's one
+             slot for a sentence about a page, so the reason sits
+             where every other page's does — and it is said ONCE
+             rather than once per card, which is fault 1 of this
+             same plan ("one fact, said four times"). */
+          {...(handover.why !== '' ? { line: handover.why } : {})}
           acts={<Lens entityId={entityId} lens={lens} />}
           tools={tools}
         />
@@ -384,6 +481,10 @@ export function Catalogue({
             <p className="cat-fact">{fact}</p>
             <Lens entityId={entityId} lens={lens} />
           </div>
+          {/* the same sentence, in a host that has already spent the
+              page's name — `.ph-line` is the shared class, so it is
+              the one appearance a refusal has in this app */}
+          {handover.why !== '' ? <p className="ph-line cat-why">{handover.why}</p> : null}
           {/* THE SAME ROW PAGEHEAD DRAWS, drawn by hand because the
               host has already spent the name. `.ph-tools` is the
               shared class and taking it is the point: the filters of
@@ -403,6 +504,7 @@ export function Catalogue({
             page={page}
             onMore={() => setPage((p) => p + PAGE)}
             onClear={clearView}
+            {...(handover.can ? { onConfigure: configure } : {})}
             onOpenRow={(rowId) => {
               if (onOpenRow) {
                 onOpenRow(rowId)
@@ -488,6 +590,7 @@ function Gallery({
   onMore,
   onClear,
   onOpenRow,
+  onConfigure,
 }: {
   entity: EntityDef
   data: ReturnType<typeof useTableData>
@@ -499,6 +602,9 @@ function Gallery({
   onMore: () => void
   onClear: () => void
   onOpenRow: (rowId: string) => void
+  /** mint a quote from this row and land on it. Absent = this table
+   *  cannot raise one, and the head above says why. */
+  onConfigure?: (rowId: string) => void
 }): JSX.Element {
   const { viewRows, rowById, rows, viewActive } = data
 
@@ -686,6 +792,45 @@ function Gallery({
                       ) : null}
                     </span>
                   </button>
+
+                  {/* ============================================
+                      THE DOOR OUT OF THE CATALOGUE.
+
+                      A SIBLING OF THE CARD, NOT A CHILD OF IT. The
+                      card is a `<button>` and a button inside a
+                      button is invalid HTML that browsers repair by
+                      un-nesting — the act would land outside the
+                      tile and the card would swallow its presses.
+
+                      IT IS WITHHELD FROM A DISCONTINUED ROW, and
+                      the card already says "No longer sold" three
+                      lines up. That IS the reason, in the place the
+                      thing is refused (rule 10) — writing it again
+                      beside the missing act would be the same fact
+                      twice on one card.
+
+                      THE NAME IS ON THE LABEL, NOT ON THE FACE. A
+                      person can see which photograph the pill is
+                      on; a reader hearing "Configure" 39 times
+                      cannot. `aria-label` carries the model, which
+                      is what `ViewStage` does for the same act.
+                      ============================================ */}
+                  {onConfigure && !held ? (
+                    <button
+                      type="button"
+                      className="cat-go"
+                      aria-label={`Configure ${name}`}
+                      onClick={() => onConfigure(row.id)}
+                    >
+                      <span>Configure</span>
+                      {/* FORWARD, NOT A TOOL. `SlidersHorizontal` is
+                          this application's Columns mark and it is on
+                          this very screen's action bar; the mark for
+                          going on to the next step is the picker's
+                          own. */}
+                      <ArrowRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </li>
               )
             })}

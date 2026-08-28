@@ -1475,6 +1475,35 @@
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+
+/* RULE 8, AND IT WAS THE ONLY RULE THIS CLASS HAD. Six controls in
+   this feature carry `md-linkbtn` and it declared a focus ring and
+   nothing else — no hover, no press — which mattered more once "Why
+   it is what it is" became the sole route to a rule's 62-word
+   reason. A link's hover is its ink, not a ground. */
+.md-linkbtn:hover {
+  color: var(--accent-hover);
+}
+
+.md-linkbtn:active {
+  transform: scale(0.97);
+  color: var(--accent-hover);
+}
+
+.md-linkbtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-control);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-linkbtn:active {
+    transform: none;
+  }
 }
 
 /* -- the capability strip ------------------------------------ */
@@ -1887,6 +1916,30 @@
   align-self: flex-start;
 }
 
+/* ── THE LAST THREE UPPERCASE BUTTONS IN THE APP ──────────────────
+   §2's list of what uppercase may never be ends with "a button", and
+   a sweep of every control on ten surfaces found exactly three that
+   still were: "USE IT", "ADD A TABLE TO THIS LIST" and "ADD A LIST
+   TO THIS PAGE", all 11px mono, all on this one panel. They are not
+   a modules decision — they are `base.css`'s original `.btn`, which
+   is 11px mono uppercase and which nothing on this panel had
+   overridden. Every other button in the app is overridden somewhere,
+   which is why the count is three and not three hundred. Given the
+   type the rest of the app's secondary buttons wear rather than a
+   bare `text-transform: none`, because a sentence-case 11px mono
+   button is neither thing. */
+.md-add-btn,
+.md-plain-btn {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: none;
+  /* "Use it" sits beside a `flex: 1` address box, and two words wide
+     enough to wrap is a control that reads "Use / it". Two words. */
+  white-space: nowrap;
+}
+
 /* ============================================================
    NARROW WINDOWS. The create panel's two halves stack rather
    than shrink: a table list at 300px is a list of truncated
@@ -2166,23 +2219,18 @@
    rules, which is what makes them trustworthy and what cannot be
    dumped into a panel. Three lines, the whole of it in the DOM, and
    one press opens it. Nothing truncates mid-word. */
+/* THE CLAMP IS GONE WITH THE THING IT WAS CLAMPING. This was three
+   lines of `-webkit-line-clamp` over a paragraph that is now drawn
+   only while its disclosure is open — and the clamp was never doing
+   any work anyway: measured at 1600x1000 the longest of these
+   descriptions laid out in a 37px box 1241px wide, the same height
+   open as shut. A paragraph a person asked to see is not truncated. */
 .md-flow-say {
   margin: 0;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  overflow: hidden;
   font-size: var(--ui-s-size);
   letter-spacing: var(--ui-s-track);
   line-height: 1.55;
   color: var(--ink-soft);
-}
-.md-flow-say.is-open {
-  display: block;
-  -webkit-line-clamp: none;
-  line-clamp: none;
-  overflow: visible;
 }
 
 /* ============================================================

@@ -212,6 +212,24 @@ which **one** served the design system and **three cancelled feedback** with
 Press lands on **pointer-down**, not on release. The moment feedback waits for
 the click, directness falls off a cliff.
 
+### `--focus` is a box-shadow. It is not an outline colour
+
+`outline: 2px solid var(--focus)` is **invalid** and the whole declaration is
+thrown away at computed-value time — `--focus` expands to two box-shadow rings,
+not a colour. 21 declarations across `build.css` and `picker.css` were written
+that way and drew **no focus ring at all**; measured on a real ArrowDown with
+`:focus-visible` matching, the computed outline on the highlighted card was
+`rgb(8,27,46) none 3px`.
+
+And there is no safety net under them: `ds.css`'s global
+`.ds-root :focus-visible { box-shadow: var(--focus) }` **never reaches the
+app** — `.ds-root` is on `/design.html` and the entity designer and nowhere
+else, 0 matches in the running app. Every focus ring the app draws is a
+per-feature rule. So: `outline: 2px solid var(--accent)` with an
+`outline-offset`, which is what the other 45 outline rules already say — or
+`box-shadow: var(--focus)` where the ring has to read against its own accent
+ground.
+
 Scale the press to the surface: `0.97` on a control, `0.994` plus losing the
 hover lift on a card. `0.97` on a 236px card is a 7px shrink and reads as a
 glitch. A list row **darkens** instead of scaling, so its neighbours do not look
@@ -383,6 +401,13 @@ two stylesheets fighting over one screen is worse than the problem it solves.
 
 **Changing the system itself?** That is `ds.css`, and it changes every screen at
 once — so it wants a reason, and a note in this file.
+
+**The one change made to `ds.css` since this file was written** is `--scrim`,
+light and dark. A modal's dim had no token, so the two features that needed a
+wash that gets *darker* on dark — the board's deal popup and the saved-
+configuration sheet — wrote literal `rgba()` instead. Every other scrim in the
+app builds from `--mat-dim-bg`, `--bg-sunken` or a `color-mix` of `--ink`, and
+none of those three deepens on dark.
 
 ---
 

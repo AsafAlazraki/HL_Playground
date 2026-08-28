@@ -35,6 +35,7 @@ export function TableWorkspace({
   entityId,
   doors,
   onCount,
+  onQuote,
 }: {
   /** FOCUS lens: pin the workspace to this one entity and hide the tabs */
   entityId?: string
@@ -46,6 +47,12 @@ export function TableWorkspace({
   /** how many rows the sheet is showing, and how many it holds; the
    *  title block that says it lives above this component */
   onCount?: (shown: number, total: number) => void
+  /** THE CATALOGUE'S HAND-OVER, PASSED STRAIGHT THROUGH. A quote was
+   *  minted from a photograph and something has to open it, and only
+   *  the shell can raise a window. Absent — the blueprint's focus
+   *  lens — and the cards draw no Configure act, which is the honest
+   *  answer for a host with nowhere to land. See `CatalogueProps`. */
+  onQuote?: (quoteId: string) => void
 } = {}): JSX.Element {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -128,6 +135,7 @@ export function TableWorkspace({
           pushToast={toasts.push}
           doors={doors}
           onCount={onCount}
+          {...(onQuote ? { onConfigure: onQuote } : {})}
         />
       ) : (
         <NoEntitiesPlate

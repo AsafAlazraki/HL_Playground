@@ -187,8 +187,7 @@ function Capabilities({
           reaches into every role that held it, and nothing on the
           screen shows that until it has happened. */}
       <p className="md-panel-say">
-        These are the verbs, not the people. Switch one off and every role holding it stops
-        holding it.
+        Switching one off takes it from every role that holds it.
       </p>
 
       <ul className="md-caps">
@@ -534,10 +533,15 @@ function IndexPanel({
         </button>
         {/* A DISABLED CONTROL OWES A REASON AND A WAY ROUND, and it
             does not owe a description of what the face draws — the
-            faces are on the screen above this button. */}
+            faces are on the screen above this button. The last clause
+            is neither: it is the one fact on this screen that is
+            stated nowhere else, and the prose pass took it out with
+            the description. Searched the whole rendered Settings
+            screen — "every module" appeared once before and zero
+            times after. */}
         <p className="md-stub-say">
-          Not built yet. Change the column order or the price columns on the table itself,
-          and every module follows.
+          Not built yet. Column order and prices are set on the table itself, and every
+          module follows.
         </p>
       </div>
     </section>
@@ -597,10 +601,9 @@ function DetailPanel({
         <>
           {tables.length > 1 ? (
             <>
-              <p className="md-panel-say">
-                Each table keeps its own item page — its own columns and its own lists of
-                what goes with it.
-              </p>
+              {/* NO SENTENCE ABOVE THE TABS. "Each table keeps its own
+                  item page" is what a row of table-named tabs under
+                  the heading "What one item shows" already is. */}
               <div className="md-tabs" role="group" aria-label="Which item page">
                 {tables.map((t) => (
                   <button

@@ -331,11 +331,20 @@ function FlowRow({
       {/* THE REASON IS THE EVIDENCE, and on the seeded rules it is
           several hundred words of measurement — which is exactly what
           makes them trustworthy and exactly what cannot be dumped into
-          a panel. Clamped to three lines with the whole of it in the
-          DOM, and one press opens it. Nothing truncates mid-word. */}
+          a panel.
+
+          IT IS SHUT NOW, AND IT WAS NOT SHUT BEFORE. The paragraph was
+          clamped rather than hidden, and the clamp never bit: measured
+          on this panel at 1600x1000, both descriptions render in a
+          37px box 1241px wide and pressing this button changed that
+          height by 0px — 0px at 1280x800 as well. So the control
+          promised a reason that was already fully on screen, and the
+          two of them were 118 of the Pricing tab's 314 visible words.
+          Not one word is cut: the same string, verbatim, one press
+          away, which is the shape `RulesLedger` already uses for the
+          same material and for the same reason. */}
       {rule.description ? (
         <>
-          <p className={`md-flow-say${open ? ' is-open' : ''}`}>{rule.description}</p>
           <button
             type="button"
             className="md-linkbtn"
@@ -344,6 +353,7 @@ function FlowRow({
           >
             {open ? 'Less' : 'Why it is what it is'}
           </button>
+          {open ? <p className="md-flow-say">{rule.description}</p> : null}
         </>
       ) : null}
     </li>

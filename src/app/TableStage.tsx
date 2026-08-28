@@ -82,6 +82,17 @@ export interface TableStageProps {
   onOpenView?: (entityId: string) => void
   /** open the column setup for this table */
   onOpenDesign?: (entityId: string) => void
+  /* ============================================================
+     THE CATALOGUE'S HAND-OVER (CONFIGURATOR.md §D, fault 5).
+
+     A photograph in the catalogue mints a quote and something has
+     to open it. It is a pass-through and nothing more: this stage
+     never mints, the catalogue does, and only the shell can raise
+     the quote window. Absent and the cards draw no Configure act
+     at all, because a door that mints a document and leaves it
+     nowhere is worse than no door.
+     ============================================================ */
+  onQuote?: (quoteId: string) => void
 }
 
 export function TableStage({
@@ -89,6 +100,7 @@ export function TableStage({
   onClose,
   onOpenView,
   onOpenDesign,
+  onQuote,
 }: TableStageProps) {
   const entity = useProjectStore((s) => s.entities[entityId])
   const rows = useProjectStore((s) => s.rowsByEntity[entityId])
@@ -217,7 +229,12 @@ export function TableStage({
       </div>
 
       <div className="shell-table-body">
-        <TableWorkspace entityId={entityId} doors={doors} onCount={setShown} />
+        <TableWorkspace
+          entityId={entityId}
+          doors={doors}
+          onCount={setShown}
+          {...(onQuote ? { onQuote } : {})}
+        />
       </div>
     </div>
   )

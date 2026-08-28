@@ -28,7 +28,7 @@
    ============================================================ */
 
 import { heldBackSentence } from '@/features/views/sellable'
-import { lineAmount } from './totals'
+import { lineAmount, quoteTotals } from './totals'
 import type { QuoteDef, QuoteLine, QuoteSection } from './types'
 
 /** The first section of every quote is the subject itself — the hull
@@ -226,6 +226,64 @@ export function stepBefore(steps: readonly BuildStep[], id: string): string | nu
   const i = steps.findIndex((s) => s.id === id)
   if (i <= 0) return null
   return steps[i - 1].id
+}
+
+/* ============================================================
+   WHAT A CHOICE WOULD DO, BEFORE IT IS MADE
+
+   CONFIGURATOR.md §C asks for "the consequence before the
+   commitment": moving to a choice shows what it does to the running
+   total, and taking it commits. A person deciding between a $1,900
+   and a $3,400 motor is choosing a TOTAL, and adding a line to a
+   figure with a tax rate and adjustments already in it is not
+   arithmetic anybody does in their head with a customer talking.
+
+   IT IS THE ONE SUMMATION, RUN OVER A DOCUMENT THAT DOES NOT EXIST.
+   `quoteTotals` is pure and takes a whole quote, so the honest
+   preview is that same function over this quote with the line added
+   — or, for a row already on it, with the line taken away. A second
+   copy of the arithmetic would be a preview that can disagree with
+   the bar it is previewing, which is the fault `conflict.ts` was
+   written to avoid: one function, called by both.
+
+   IT READS NOTHING. `line` arrives already frozen — `stepOffer`
+   mints every candidate before it is drawn — so weighing a choice
+   touches no table, no pairing and no price file. It is a loop over
+   the handful of lines already on the document, and it is why this
+   can run on every arrow key without anything re-filtering 15,691
+   rows behind it.
+
+   `delta` IS NULL, NEVER 0, FOR A ROW WITH NO PRICE. A blank is
+   never summed as nothing anywhere else in this feature and it is
+   not summed as nothing here: what a person is shown is the total
+   UNCHANGED, said as such.
+   ============================================================ */
+
+export interface Weighing {
+  /** what the document would total. Never what it carries. */
+  would: number
+  /** the signed change, or null when the row carries no price at
+   *  all. The sign is also what says which way the press goes: a row
+   *  already on the quote comes OFF when it is pressed, and that is
+   *  exactly why its figure is negative. */
+  delta: number | null
+}
+
+export function weighPick(
+  quote: QuoteDef,
+  line: QuoteLine,
+  /** the line this candidate is already on the quote as, if it is */
+  alreadyLineId?: string,
+): Weighing {
+  const next: QuoteDef =
+    alreadyLineId === undefined
+      ? { ...quote, lines: [...quote.lines, line] }
+      : { ...quote, lines: quote.lines.filter((l) => l.id !== alreadyLineId) }
+  const would = quoteTotals(next).total
+  return {
+    would,
+    delta: lineAmount(line).amount === null ? null : would - quoteTotals(quote).total,
+  }
 }
 
 /* ---------------------------------------------------------- */

@@ -185,6 +185,16 @@ import {
   type ExclusionReading,
 } from './discoverValues'
 
+/** THE ARTICLE, WORKED OUT RATHER THAN TYPED. A hard-coded "A"
+ *  printed "A accessory" on Business rules. The noun is a `TableKind`
+ *  — a closed union of seven literals, of which `accessory` is the
+ *  only vowel-initial one, so the orthographic test is exhaustive
+ *  over the whole set rather than a guess at English. NOT off the
+ *  dealer's sheet, which is what this comment said before and is the
+ *  kind of claim that lends a file's authority to a fiction.
+ *  Capital, because every use of it here opens a sentence. */
+const an = (noun: string): string => (/^[aeiou]/i.test(noun.trim()) ? 'An' : 'A')
+
 /* ---------------------------------------------------------- */
 /* What it is pointed at                                       */
 /* ---------------------------------------------------------- */
@@ -1088,7 +1098,7 @@ function selectorCandidates(sc: ShapeCtx): Candidate[] {
            is read from its table's name, or from its outermost
            level — see `groupVocabulary` */
         binds: { far: boundColumn(col), near: null },
-        statement: `A ${partnerKind} is only offered with a ${subjectKind} whose own identity its “${col.name}” names.`,
+        statement: `${an(partnerKind)} ${partnerKind} is only offered with ${an(subjectKind).toLowerCase()} ${subjectKind} whose own identity its “${col.name}” names.`,
         because: `${hits} of ${tested} pairings the price file writes agree`,
         source: `${col.name} on ${col.fieldByTable.size} ${partnerKind} table${col.fieldByTable.size === 1 ? '' : 's'}, against the ${subjectKind} identities read out of the project: ${colGroups
           .filter((g) => usedGroups.has(fold(g.name).trim()))
@@ -1935,7 +1945,27 @@ function rank(a: Candidate, b: Candidate): number {
   const left = (c: Candidate): number => c.discrimination?.meanLeft ?? 1
   if (left(a) !== left(b)) return left(a) - left(b)
   if (a.rate !== b.rate) return b.rate - a.rate
-  return b.tested - a.tested
+  if (a.tested !== b.tested) return b.tested - a.tested
+  /* AND THEN A TOTAL ORDER, WHICH IT DID NOT HAVE. `rank` ran out of
+     keys on a tie and left the sort to fall back on input order —
+     and input order here is the insertion order of a Map keyed on
+     candidate ids, which `newId()` mints with `nanoid`, so it was a
+     different order on every run. `maxPerShape` then kept a
+     different N of a tied group each time: measured, the categorical
+     selector over "Boat Size (Mtr)" was inside the cap on some runs
+     and outside it on others, which is the whole of the
+     `discoverNorthside` flake that three passes have now recorded as
+     "fails about one run in four" without fixing it.
+
+     `statement` and not `id`, because after the merge above the pair
+     (shape, statement) is unique BY CONSTRUCTION — it is the merge
+     key — while ids carry the relationship a finding was reached
+     through and some of them carry a minted one. Deterministic
+     input, deterministic output; the note ten lines down says the
+     same file must give the same answer whichever door it came
+     through, and now it does on the same door twice as well. */
+  if (a.statement !== b.statement) return a.statement < b.statement ? -1 : 1
+  return a.shape < b.shape ? -1 : a.shape > b.shape ? 1 : 0
 }
 
 /* THE SAME FILE MUST GIVE THE SAME ANSWER, WHICHEVER DOOR IT CAME

@@ -106,28 +106,6 @@ export type Stage =
      ============================================================ */
   | { kind: 'start'; at: string | null }
   /* ============================================================
-     THE CATALOGUE — agreed with the CATALOGUE agent (territory
-     key: `catalogue`). "The screen that does not exist today and
-     should be the most-used in the app" (PHASE_TWO §2.2): a
-     photographic grid entered by KIND, with the register as a
-     density toggle on it rather than as the front door.
-
-     `kindKey` is which door was pressed — boat, motor, trailer,
-     accessory — or `null` for everything at once, which is what
-     Ctrl+K and the landing screen's "browse it all" want.
-     `TableKind` rather than a free string, so a door can only ever
-     name a kind the model has.
-
-     WHAT IT DRAWS TODAY, SAID PLAINLY RATHER THAN STUBBED: the
-     gallery of tables, which is a real screen and the closest
-     honest answer until the catalogue exists. Nothing in this
-     application routes here yet — the rail's four doors do not,
-     and Admin's do not — so no door currently lands on the wrong
-     screen. The catalogue agent replaces ONE line in `renderStage`
-     below, marked with the same words, and the seam is done.
-     ============================================================ */
-  | { kind: 'catalogue'; kindKey: TableKind | null }
-  /* ============================================================
      ADMIN — the drawing, the tables, the rules, what fits what,
      who may do what, and the two doors a file comes in and goes
      out by. Eight doors came off the rail into one stage; see
@@ -166,11 +144,7 @@ export const winKey = (s: Stage): string =>
         ? `module:${s.moduleId ?? 'dash'}`
         : s.kind === 'customer'
           ? `customer:${s.customerId ?? 'list'}`
-          : s.kind === 'catalogue'
-            ? /* one window per DOOR — Boats and Motors are two
-                 places, the way two modules are */
-              `catalogue:${s.kindKey ?? 'all'}`
-            : s.kind
+          : s.kind
 
 /** THE TOP OF THE DESKTOP, measured rather than guessed.
 
@@ -225,7 +199,6 @@ export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNo
   if (s.kind === 'module') return s.moduleId ? 'Module' : 'Modules'
   if (s.kind === 'customer') return s.customerId ? 'Customer' : 'Customers'
   if (s.kind === 'admin') return 'Admin'
-  if (s.kind === 'catalogue') return 'Catalogue'
   if (s.kind === 'start') return 'New quote'
   const e = entities[s.entityId]
   if (!e) return 'Table'
@@ -362,21 +335,6 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           onNewTable={h.newTable}
         />
       )
-    case 'catalogue':
-      /* THE ONE LINE THE CATALOGUE AGENT REPLACES. Until their
-         surface exists this door lands on the gallery of tables —
-         a real screen, not a placeholder — and nothing in the app
-         routes here yet, so no door currently lands on the wrong
-         one. `s.kindKey` is the door that was pressed and is what
-         the catalogue filters by; it is deliberately read here so
-         the field cannot be dropped as unused. */
-      return (
-        <HomeStage
-          key={s.kindKey ?? 'all'}
-          onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
-          onNewTable={h.newTable}
-        />
-      )
     case 'table':
       return (
         <TableStage
@@ -384,6 +342,21 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           onClose={h.close}
           onOpenView={(id) => h.openWin({ kind: 'view', entityId: id })}
           onOpenDesign={(id) => h.openWin({ kind: 'design', entityId: id })}
+          /* ============================================================
+             THE CATALOGUE HANDS OVER — CONFIGURATOR.md §D, fault 5:
+             "you browse in one and build in the other, and the two do
+             not hand over."
+
+             This stage mounts the catalogue (through `TableWorkspace`),
+             so the catalogue's "Configure this one" lands here and the
+             shell raises the quote it minted. Wired to exactly the
+             place the `view` case wires "Quote this one" and the
+             `start` case wires the picker's `onStarted`, because all
+             three are the same act arriving from three doors — and a
+             quote that opened in a different kind of window depending
+             on where it was started would be three applications.
+             ============================================================ */
+          onQuote={(quoteId) => h.openWin({ kind: 'quote', quoteId })}
         />
       )
     case 'view':

@@ -207,45 +207,115 @@
   }
 }
 
-/* ---- the plates: how a person goes back to the hull ---------- */
+/* ---- what is decided, and how a person goes back to the hull ---
+
+   IT WAS A ROW OF UNLABELLED THUMBNAILS. 56×42 each, the name only
+   in a `title`, so the one surface on this screen that already knew
+   what had been chosen could be read only by hovering it — and a
+   decided line with no photograph was not drawn at all.
+
+   It is a COLUMN of rows now, each carrying the name beside the
+   picture, and it is the answer to CONFIGURATOR.md §C's "a person
+   deep in Dealer Fit needs to see the hull and the motor without
+   scrolling": 2,436px of scroll on a measured SP760ST build, or a
+   list that is never not on screen. The act is unchanged — press it
+   and the render above becomes that thing.
+
+   IT IS `flex: none` UNDER A `flex: 1 1 auto` RENDER, so a short
+   window takes the height out of the photograph and never out of
+   this. Measured at 1024×768, where the pane has 513px: the render
+   floors at its own 180px and the rig keeps all five of its rows.
+   ---------------------------------------------------------------- */
 
 .qb-plates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
   flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qb-plate-slot {
+  display: flex;
+  min-width: 0;
 }
 
 .qb-plate {
-  width: 56px;
-  height: 42px;
-  padding: 0;
-  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-width: 0;
+  padding: 3px;
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--surface-3);
-  overflow: hidden;
+  background: transparent;
+  text-align: left;
   cursor: pointer;
   transition:
     border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
     transform var(--d-press) var(--ease);
 }
 
 .qb-plate:hover {
-  border-color: var(--line-strong);
+  background: var(--surface-3);
+  border-color: var(--line);
 }
 
 .qb-plate:active {
-  transform: scale(0.97);
+  transform: scale(0.994);
+  background: var(--surface-4);
 }
 
+/* §4: reduced motion is GENTLER feedback, not none — the movement
+   goes and the tone stays, so the press is still felt. */
+@media (prefers-reduced-motion: reduce) {
+  .qb-plate {
+    transition:
+      border-color var(--d-fast) var(--ease),
+      background var(--d-fast) var(--ease);
+  }
+  .qb-plate:active {
+    transform: none;
+  }
+}
+
+/* ── `var(--accent)`, NOT `var(--focus)` ───────────────────────────
+   `--focus` is a BOX-SHADOW value (`0 0 0 2px var(--bg), 0 0 0 4px
+   var(--accent)`), so `outline: 2px solid var(--focus)` is invalid at
+   computed-value time and the whole declaration is thrown away.
+   Measured on a real ArrowDown with `:focus-visible` matching: the
+   computed outline on a lit card was `rgb(8,27,46) none 3px` — no
+   ring at all, and no box-shadow ring either, because `ds.css`'s
+   global `.ds-root :focus-visible` never reaches the app (`.ds-root`
+   is on the design preview and the entity designer, and nowhere
+   else — 0 matches in the running app). 13 declarations in this file
+   and 8 in picker.css drew nothing; they draw the accent now, which
+   is what the other 45 outline rules in this app already say. */
 .qb-plate:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .qb-plate.is-on {
+  background: var(--surface-3);
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* the picture keeps the size it always had; only its surroundings
+   changed */
+.qb-plate-shot {
+  flex: none;
+  display: block;
+  width: 56px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+  overflow: hidden;
 }
 
 .qb-plate-img {
@@ -260,6 +330,26 @@
   width: 100%;
   height: 100%;
   background: var(--surface-4);
+}
+
+/* NO CLAMP, for the reason `.qb-card-name` already records and this
+   rule was measured breaking: a two-line clamp cut "…TA800T-E…" and
+   "…6X6 Sng Ke…" at 1024, because `-webkit-line-clamp` ellipses at
+   the last position that fits and a rigging kit's name is 96
+   characters of pipe-separated parts. §3's one absolute. It wraps in
+   full and the row grows; a long name costs a ragged column and
+   never a lost word. */
+.qb-plate-name {
+  min-width: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.35;
+  color: var(--fg-secondary);
+  overflow-wrap: break-word;
+}
+
+.qb-plate.is-on .qb-plate-name,
+.qb-plate:hover .qb-plate-name {
+  color: var(--fg);
 }
 
 /* ---- the identity: the biggest thing on the screen ----------- */
@@ -451,7 +541,7 @@
 }
 
 .qb-band-head:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
@@ -586,7 +676,7 @@
 }
 
 .qb-card:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -605,7 +695,7 @@
 }
 
 .qb-card.is-lit {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -861,7 +951,7 @@
 }
 
 .qb-refused-head:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1005,7 +1095,7 @@
 }
 
 .qb-act:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1117,7 +1207,7 @@
 }
 
 .qb-line-drop:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1231,7 +1321,7 @@
 }
 
 .qb-price-fig:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1286,6 +1376,56 @@
   }
 }
 
+/* ── THE PROPOSAL, IN THE DELTA'S OWN SLOT ─────────────────────────
+
+   What the choice under the pointer WOULD do, drawn where the report
+   of what the last one DID is drawn — one at a time, because two
+   signed figures in one strip and only one of them about the future
+   is a person reading the wrong number to a customer.
+
+   IT IS QUIETER THAN THE COMMITTED TOTAL and that is the whole
+   point: `--fg-secondary` against the total's `--fg`, no elevation,
+   no accent. The committed figure is the fact; this is a question.
+
+   NO ANIMATION ON IT. `qb-delta` rises in because it reports
+   something that happened; this tracks a pointer and a 200ms
+   entrance on every card a mouse crosses is a strip that flickers.
+   Only the ink transitions.  */
+.qb-weigh {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: 3px var(--s-3);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  transition: color var(--d-fast) var(--ease);
+}
+
+.qb-weigh-lab {
+  color: var(--fg-tertiary);
+}
+
+.qb-weigh-fig {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-size);
+  font-weight: 600;
+  color: var(--fg-secondary);
+}
+
+.qb-weigh-delta {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  font-weight: 600;
+  color: var(--success);
+}
+
+.qb-weigh-delta.is-down {
+  color: var(--accent);
+}
+
 .qb-price-unpriced {
   font-size: var(--t-caption-size);
   font-weight: 550;
@@ -1325,7 +1465,7 @@
 }
 
 .qb-level:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1377,12 +1517,71 @@
 .qb-door:focus-visible,
 .qb-give-fix:focus-visible,
 .qb-give-more:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .qb-door {
   margin-left: auto;
+}
+
+/* ── THE SLOT, AND WHY IT IS A ROW OF ITS OWN BELOW 1440 ──────────
+
+   The proposal chip is far wider than the delta chip whose place it
+   takes, so below a certain width the bar wraps and every act on it
+   rises by a row the instant a pointer touches a card. Measured at
+   1280x1000 on the SP760ST quote, before this rule: `.qb-price-bar`
+   61.3px at rest and 112.1px with the chip up, its top edge moving
+   938.8 -> 887.9 and "Give it to the customer" with it. The note in
+   QuoteBuild.tsx used to claim the bar does not reflow; that was
+   measured at 1600, which is the one width where it was true.
+
+   THE SLACK IN THE STRIP WITH THE CHIP IN IT, measured with the
+   reserved row switched back off, all six children present:
+
+       1600   +234.7px      1366    +19.5px
+       1500   +141.7px      1280    -31.0px   <- it wraps here
+       1440    +86.9px      1152   -148.3px
+
+   The chip is 214.9px — an 11px WOULD BE, a 13px mono figure and an
+   11px mono delta, two 8px gaps and 12px of pill either side — and
+   no trimming of it survives a longer price: taking the pill's
+   border and padding away entirely saves 26 of the 31.
+
+   SO THE SLOT STOPS SHARING. Below 1440 it is a full-width line that
+   is ALWAYS there, empty or not, and the bar has one geometry at
+   every width — nothing on it can move under a pointer, whatever the
+   chip is asked to say. The cost is that line, and it is paid only
+   below 1440: measured at 1280 the bar is 100.3px at rest and
+   100.3px with the chip up, against 61.3 and 112.1 before, so it
+   sits between the two states it was already flicking between.
+
+   1439 AND NOT 1365. The mono figure runs 7.8px a character and the
+   chip carries two of them, so 1366's 19.5px of margin is a single
+   extra digit in a bigger boat's price and 1440's 86.9px is five.
+   Above 1440 the slot is inline and vanishes when empty. */
+.qb-weigh-slot {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+}
+
+.qb-weigh-slot:empty {
+  display: none;
+}
+
+@media (max-width: 1439px) {
+  /* LAST, NOT WHERE IT SITS IN THE MARKUP. A full-width item in the
+     middle of the children cuts the strip into three rows — measured
+     at 1280, 151.1px against the 100.2px it takes as the final one.
+     The markup keeps the slot beside the total because that is the
+     figure it is about. */
+  .qb-weigh-slot,
+  .qb-weigh-slot:empty {
+    display: flex;
+    flex: 1 0 100%;
+    order: 1;
+  }
 }
 
 /* RULE 10, ON ITS OWN LINE. Not `disabled` — a disabled control
@@ -1471,7 +1670,7 @@
 }
 
 .qb-give:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1858,7 +2057,7 @@
 }
 
 .qb-sheet-no:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1886,7 +2085,7 @@
 }
 
 .qb-sheet-ok:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

@@ -12,8 +12,8 @@
 import { describe, expect, it } from 'vitest'
 import type { EntityDef } from '@/types/model'
 import type { QuoteDef } from '@/features/quote'
-import { boardOf, derivedStage, stageOf } from './stages'
-import { DEFAULT_STAGES } from './stageStore'
+import { arrivedAt, boardOf, derivedStage, stageOf } from './stages'
+import { DEFAULT_STAGES, forgetStageStore, stagesOf } from './stageStore'
 import { kindOfQuote, matches, sortDeals, typeChips } from './finding'
 
 const STAMP = '2026-08-01T00:00:00.000Z'
@@ -159,5 +159,139 @@ describe('ordering a column', () => {
      and a column opening with blanks looks broken. */
   it('sorts a nameless customer last, not first', () => {
     expect(sortDeals(set, 'customer').map((q) => q.id)).toEqual(['b', 'a', 'c'])
+  })
+})
+
+/* ---------------------------------------------------------- */
+
+/* ============================================================
+   HOW LONG A DEAL HAS STOOD WHERE IT IS.
+
+   Three cases, and the third is the one worth a test: a deal
+   moved by a build that recorded no instant has NO honest answer,
+   and `arrivedAt` returns null rather than a guess. A number with
+   the file authority behind it that nobody measured is exactly
+   what this repository keeps catching.
+   ============================================================ */
+describe('when a deal arrived where it stands', () => {
+  const made = '2026-08-01T00:00:00.000Z'
+  const given = '2026-08-10T00:00:00.000Z'
+
+  it('is the recorded instant when this build moved it', () => {
+    const q = quote({ id: 'a', createdAt: made })
+    expect(arrivedAt(q, { a: 'won' }, { a: 999 })).toBe(999)
+  })
+
+  /* THE HONEST NULL. An override written before the instant was
+     recorded says WHERE but not WHEN, and "since it was created"
+     would be wrong for a card moved to Won last week. */
+  it('is null when it was moved by a build that recorded no instant', () => {
+    const q = quote({ id: 'a', createdAt: made })
+    expect(arrivedAt(q, { a: 'won' }, {})).toBeNull()
+  })
+
+  /* A DEAL NOBODY HAS MOVED DERIVES ITS ARRIVAL exactly as it
+     derives its column: an issued quote has stood in Issued since
+     it was issued, a draft since it was written. */
+  it('derives a draft from when it was written', () => {
+    const q = quote({ id: 'a', createdAt: made })
+    expect(arrivedAt(q, {}, {})).toBe(Date.parse(made))
+  })
+
+  it('derives an issued quote from when it was issued', () => {
+    const q = quote({ id: 'a', state: 'issued', createdAt: made, issuedAt: given })
+    expect(arrivedAt(q, {}, {})).toBe(Date.parse(given))
+  })
+
+  it('falls back to when it was written if the issue stamp is missing', () => {
+    const q = quote({ id: 'a', state: 'issued', createdAt: made })
+    expect(arrivedAt(q, {}, {})).toBe(Date.parse(made))
+  })
+
+  /* A DOCUMENT WRITTEN BY AN OLDER BUILD can carry a stamp this
+     one cannot parse. Nothing is drawn rather than NaN. */
+  it('is null rather than NaN when the stamp cannot be parsed', () => {
+    const q = quote({ id: 'a', createdAt: 'the fourth of never' })
+    expect(arrivedAt(q, {}, {})).toBeNull()
+  })
+})
+
+/* ---------------------------------------------------------- */
+
+/* ============================================================
+   WHAT A STORED STAGE LIST HAS TO SURVIVE — including a rename.
+
+   `empty` became `about` when the sentence started being drawn
+   under a FULL column as well as an empty one. A board already
+   stored on somebody machine holds the old key, and dropping those
+   sentences would have deleted words a dealer typed in order to
+   make room for a field with a better name.
+   ============================================================ */
+describe('a stored stage list', () => {
+  /* THE SUITE RUNS UNDER `environment: 'node'` ON PURPOSE — see
+     vitest.config.ts — so there is no `localStorage` to write to.
+     A four-line Map is the whole of what `stageStore.read` uses,
+     and it keeps this test measuring the PARSER rather than a
+     browser: swapping in jsdom for one describe would slow every
+     suite in the repository to test a getItem. */
+  const shim = new Map<string, string>()
+  const store = (v: unknown): void => {
+    forgetStageStore()
+    ;(globalThis as { localStorage?: unknown }).localStorage = {
+      getItem: (k: string) => shim.get(k) ?? null,
+      setItem: (k: string, s: string) => shim.set(k, s),
+      removeItem: (k: string) => shim.delete(k),
+    }
+    shim.set('hl.pipeline.stages.v1:t', JSON.stringify(v))
+  }
+
+  it('reads the old `empty` key as `about`', () => {
+    store([
+      { id: 'draft', name: 'Draft', empty: 'Being built.', tone: 'neutral' },
+      { id: 'issued', name: 'Issued', empty: 'Waiting.', tone: 'blue' },
+    ])
+    expect(stagesOf('t').map((s) => s.about)).toEqual(['Being built.', 'Waiting.'])
+  })
+
+  it('prefers `about` when a board carries both', () => {
+    store([
+      { id: 'draft', name: 'Draft', about: 'New words', empty: 'Old words', tone: 'neutral' },
+      { id: 'issued', name: 'Issued', about: '', tone: 'blue' },
+    ])
+    expect(stagesOf('t')[0].about).toBe('New words')
+  })
+
+  /* EVERY EXISTING BOARD IS AN UNWASHED ONE. A stage stored before
+     the field existed was drawn plain, so plain is what it meant. */
+  it('gives a stage with no wash the plain one', () => {
+    store([
+      { id: 'draft', name: 'Draft', tone: 'neutral' },
+      { id: 'issued', name: 'Issued', tone: 'blue' },
+    ])
+    expect(stagesOf('t').map((s) => s.wash)).toEqual(['none', 'none'])
+  })
+
+  it('reads a stored wash back', () => {
+    store([
+      { id: 'draft', name: 'Draft', tone: 'neutral', wash: 'full' },
+      { id: 'issued', name: 'Issued', tone: 'blue', wash: 'soft' },
+    ])
+    expect(stagesOf('t').map((s) => s.wash)).toEqual(['full', 'soft'])
+  })
+
+  it('refuses a wash this build does not have, rather than storing it', () => {
+    store([
+      { id: 'draft', name: 'Draft', tone: 'neutral', wash: 'neon' },
+      { id: 'issued', name: 'Issued', tone: 'blue' },
+    ])
+    expect(stagesOf('t')[0].wash).toBe('none')
+  })
+
+  /* THE ANCHORS MUST BE THERE, or a quote nobody has moved has
+     nowhere to be drawn — so a list missing one falls back to the
+     defaults WHOLE rather than half. */
+  it('falls back to the shipped five when an anchor is missing', () => {
+    store([{ id: 'draft', name: 'Draft', tone: 'neutral' }])
+    expect(stagesOf('t')).toEqual(DEFAULT_STAGES.map((s) => ({ ...s })))
   })
 })

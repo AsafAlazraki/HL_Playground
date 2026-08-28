@@ -322,9 +322,14 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
               true of every figure in this application, and a page that
               says so about itself is asking to be believed rather than
               read. The first sentence is the fact. */}
+          {/* THE FIVE KINDS ARE NAMED TWICE ON THIS PAGE and the
+              eyebrow two lines up already says whose file this is. The
+              second naming is "Where they differ", where each kind
+              carries its own count and the tables that lack it — so
+              this line keeps the number and lets that band do the
+              naming. */}
           <p className="fo-lede">
-            Your price file already records what may go with what, in{' '}
-            {reading.roles.length} kinds of pairing: {reading.roles.join(', ')}.
+            What may go with what, in {reading.roles.length} kinds of pairing.
           </p>
 
           <ul className="fo-ledger">
@@ -366,10 +371,14 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
           <h3 className="fo-band-title">
             {n(typed)} of these {n(reading.pairs)} pairings were typed by a person
           </h3>
+          {/* THE HEADING ABOVE ALREADY PRINTS THE OTHER HALF. It reads
+              "8,344 of these 8,649 pairings were typed by a person", so
+              "the other 8,344 somebody typed in" was the same sentence
+              a second time; the closing clause about a judgement only
+              your people hold was this app's opinion of the number
+              rather than the number. */}
           <p className="fo-band-lede">
-            {n(derived)} came from a live link in the workbook; the other {n(typed)}{' '}
-            somebody typed in — a lookup that can be re-run against a judgement only your
-            people hold.
+            The other {n(derived)} came from a live link in the workbook.
           </p>
           <Derived reading={reading} onOpenTable={onOpenTable} />
           {/* NO REPO PATH ON A DEALER'S SCREEN. This line ended "the
@@ -379,11 +388,18 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
               the worst case of it: it names a file that is not even one
               they could open. The provenance a person can actually
               check is the column, and it stays. */}
+          {/* THE GLOSSARY WENT AND THE CITATION STAYED. This line
+              defined two values — 'rule' and 'added' — that appear
+              NOWHERE on this page: `Derived` below it draws table
+              names and "305 of 8,649", never the words themselves.
+              They are values in the dealer's own Origin column, and
+              the sentence directly above already says in English what
+              'rule' means ("came from a live link in the workbook").
+              What a citation owes is the column it read and the count
+              it read, and both are still here. */}
           <p className="fo-src">
-            Read from the Origin column every relationship table carries ·
-            &lsquo;rule&rsquo; where the workbook cell was a live external link and the
-            business pointed at the library row, &lsquo;added&rsquo; where the same text
-            was typed · 352 of 61,854 live fan-out cells are formulas
+            Read from the Origin column every relationship table carries · 352 of 61,854
+            live fan-out cells are formulas
           </p>
         </section>
 
@@ -391,10 +407,11 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
         <section className="fo-band" aria-label="What differs between them">
           <p className="fo-band-eyebrow">Where they differ</p>
           <h3 className="fo-band-title">Not every {noun.one} has every relationship</h3>
-          <p className="fo-band-lede">
-            The tables are not variations on one shape — an absence is a business decision,
-            and it does not show from inside a table.
-          </p>
+          {/* NO LEDE. "The tables are not variations on one shape — an
+              absence is a business decision" is this app's reading of
+              the rows under it, and every row under it states its own
+              absence by name. The heading is the claim; the list is
+              the evidence. */}
           <ul className="fo-roles">
             {roles.map((role) => (
               <li className="fo-role" key={role.role}>
@@ -408,15 +425,21 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                       nothing is missing. When nothing is missing, say
                       so in words. */}
                   {role.absent.length === 0 ? (
-                    <>Every table carries it</>
+                    <>Every table carries it.</>
                   ) : (
                     <>
                       {role.present.length} of {reading.fans.length}{' '}
-                      {role.present.length === 1 ? 'table carries' : 'tables carry'} it
+                      {role.present.length === 1 ? 'table carries' : 'tables carry'} it.
                     </>
                   )}
-                  {' — '}
-                  {role.present.map((p) => p.tableName).join(', ')}.
+                  {/* THE PRESENT TABLES WERE NAMED AND THE ABSENT ONES
+                      ARE NAMED, WHICH IS THE SAME PARTITION TWICE. Five
+                      of these rows printed all seven brand names after
+                      the count — 72 words across the band, on a page
+                      whose fan cards name every one of those tables
+                      three screens above. The information a reader
+                      cannot reconstruct is which table is MISSING it,
+                      and that is the clause that stays. */}
                   {role.absent.length > 0 ? (
                     <>
                       {' '}
@@ -440,11 +463,16 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
               A {selector.noun.one}&rsquo;s {selector.heading} says which {noun.one} it is
               built for
             </h3>
+            {/* THE SECOND SENTENCE WAS A LEGEND FOR THE BAR. Every bar
+                below already prints its own figure twice — "12 of 434"
+                and "2.76% of the catalogue" — so the paragraph was
+                teaching a reader to read a number that is written out
+                beside it in words. The measured fact is the first
+                sentence, and it is the one nothing else on the band
+                states. */}
             <p className="fo-band-lede">
               {selector.catalogue.named} of {selector.catalogue.live} {selector.noun.many}{' '}
               sit under a {selector.heading} that names a brand, and that is what chooses.
-              The bar is how much of the catalogue each brand&rsquo;s headings leave
-              standing: three of a hundred has picked something, ninety-eight has not.
             </p>
             <ul className="fo-picks">
               {selector.readings.map((r) => {
@@ -544,17 +572,20 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                 stays on the list with the warning beside it. A page
                 about being honest with numbers may not round a warning
                 down to zero, so the count is computed. */}
+            {/* THE SAME FACT WAS IN IT TWICE. "it only ever warns — it
+                takes nothing off the list" and "they stay on the list
+                with the warning beside them" are one sentence written
+                out at both ends of a 72-word paragraph, which was the
+                longest run on this page. The rule, the count and the
+                check that has not run all stay. */}
             <p className="fo-band-note">
-              A capacity floor is checked alongside it and it only ever warns — it takes
-              nothing off the list.{' '}
+              A capacity floor is checked alongside it and only ever warns.{' '}
               {selector.floorWarned > 0 ? (
                 <>
                   {selector.floorWarned} {noun.one}
                   {selector.floorWarned === 1 ? ' is' : 's are'} offered a{' '}
                   {selector.noun.one} in {selector.floorWarned === 1 ? 'its' : 'their'} own
-                  series rated under {selector.floorWarned === 1 ? 'its' : 'their'} weight,
-                  and {selector.floorWarned === 1 ? 'it stays' : 'they stay'} on the list
-                  with the warning beside {selector.floorWarned === 1 ? 'it' : 'them'}.
+                  series rated under {selector.floorWarned === 1 ? 'its' : 'their'} weight.
                 </>
               ) : (
                 <>
@@ -565,9 +596,9 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
               {selector.floorUnchecked.length > 0 ? (
                 <>
                   {' '}
-                  It does not run at all for <b>{selector.floorUnchecked.join(', ')}</b>,
-                  whose bands carry no weight column — a check that has not run, not a check
-                  that passed.
+                  It does not run for <b>{selector.floorUnchecked.join(', ')}</b>, whose
+                  bands carry no weight column — a check that has not run, not one that
+                  passed.
                 </>
               ) : null}
             </p>
@@ -599,8 +630,8 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
             not discover their mistake, they conclude the thing they
             wanted cannot be done — so each says what it is not. */}
         <p className="fo-tail">
-          Counted from the pairings your file already holds. <b>Rule builder</b> works one
-          out instead.
+          Counted from what your file already holds. <b>Rule builder</b> works one out
+          instead.
         </p>
       </div>
     </section>
@@ -694,7 +725,7 @@ function GroupRow({
         {group.via === 'column' ? (
           group.pairs === 0 ? (
             <>
-              Named on none of the {n(offered)} {carriedOn} pairings it could sit on.
+              on none of the {n(offered)} {carriedOn} pairings
             </>
           ) : (
             <>
@@ -746,10 +777,16 @@ function GroupRow({
       ) : null}
 
       {held.map((strand) => (
+        /* THE SET-ASIDE BAND AT THE FOOT OF THIS PAGE ALREADY SPELLS
+           OUT THE SAFETY. "The table and its rows stay on the sheet,
+           and a quote that already names one still opens, still totals
+           and still prints" is `heldBackSentence`'s own wording, drawn
+           once at the bottom of the selector band — so this line was
+           the same reassurance in weaker words. What only this row can
+           say is which join table, and how many. */
         <p className="fo-row-held" key={strand.id}>
-          {n(strand.pairs)} more sit on <b>{strand.joinTableName}</b>, which is history
-          rather than stock. They are not offered, and nothing is deleted — a quote that
-          already names one still opens.
+          {n(strand.pairs)} more sit on <b>{strand.joinTableName}</b> — history rather
+          than stock, and not offered.
         </p>
       ))}
     </li>
@@ -916,10 +953,14 @@ function HeldBack({
           Each `fo-gap-say` used to close "are paired with no {role}
           anywhere on the sheet" — eight rows, four of them ending in
           the same eleven words, which is a table typed out as
-          sentences. The clause a reader needs once is up here. */}
+          sentences. The clause a reader needs once is up here.
+
+          AND THE HALF THAT WAS AN OPINION IS GONE. It closed "— a
+          question for whoever keeps the file rather than a fault in
+          it", which is this app rating somebody else's data over their
+          shoulder. The rows are the finding; who owns it is theirs. */}
       <p className="fo-band-lede">
-        Rows the price file records no partner for, anywhere on the sheet — a question for
-        whoever keeps the file rather than a fault in it.
+        Rows with no partner recorded anywhere on the sheet.
       </p>
       <ul className="fo-gaps">
         {gaps.map((gap) => (

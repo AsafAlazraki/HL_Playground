@@ -350,7 +350,7 @@ function Mark({
             />
             <button
               type="button"
-              className="btn"
+              className="btn md-plain-btn"
               disabled={address.trim() === ''}
               onClick={() => {
                 take(logoFromAddress(address))
@@ -455,13 +455,13 @@ function Access({ module }: { module: ModuleDef }): ReactElement {
       <p className={`md-set-state${open ? ' is-open' : ''}`}>
         {open ? (
           <>
-            <strong>{module.name} is open to everyone.</strong> Tick a box below and
-            only the ticked roles may act here.
+            <strong>{module.name} is open to everyone.</strong> Ticking a box narrows it
+            to those roles.
           </>
         ) : (
           <>
             <strong>Only the roles ticked below may act in {module.name}.</strong>{' '}
-            Clearing every tick opens it to everyone again.
+            Clearing every tick opens it again.
           </>
         )}
       </p>

@@ -92,6 +92,18 @@
   color: var(--fg-secondary);
 }
 
+/* WHY NOTHING HERE CAN BE CONFIGURED, in a host that has already
+   spent the page's name. `PageHead` draws the same sentence in the
+   same class inside its own gutter; this branch has no header to
+   sit in, so it takes the gutter directly. `.ph-line` carries every
+   other property, deliberately — a refusal that looked different
+   depending on who mounted the catalogue would be two refusals. */
+.cat-why {
+  flex: none;
+  padding: 0 var(--page-gutter) var(--s-3);
+  background: var(--surface-1);
+}
+
 /* -- gallery / list ------------------------------------------ */
 
 .cat-lens {
@@ -392,6 +404,10 @@
 .cat-tile {
   min-width: 0;
   --rise: 8px;
+  /* the anchor for the hand-over pill, which is a SIBLING of the
+     card rather than a child of it — a button inside a button is
+     invalid HTML, and browsers repair it by un-nesting */
+  position: relative;
 }
 
 .cat-card {
@@ -429,13 +445,48 @@
      words — rule 10, in the place the thing is refused. */
   border-left: 3px solid var(--fg-quaternary);
 }
-.cat-card:hover {
+/* THE LIFT IS SCOPED TO THE TILE, NOT TO THE CARD, and that is the
+   hand-over pill's doing rather than a restyle. The pill sits over
+   the photograph as a SIBLING of the card, so pointing at the pill
+   is not pointing at the card: on `.cat-card:hover` the card stayed
+   flat while the pill — which has to travel with it or the two
+   visibly part — moved. One hover, on the tile, and both surfaces
+   answer it together. */
+.cat-tile:hover .cat-card {
   transform: translateY(-1px);
   border-color: var(--line-strong);
 }
+
+/* AND THE ELEVATION WITH IT, WHICH IS `.k-lift:hover` RESTATED — the
+   third time this file restates a ds.css rule for a cascade reason,
+   and the same reason as the two above it.
+
+   `.k-lift:hover` is keyed on the CARD, so the moment the pointer
+   crossed onto the pill the card fell out of it. Read off the live
+   element at 1600 on Formosa, pointer on the card body and then on
+   the pill 30px away:
+
+     card body   --e4 + the lit hairline + a kind glow  (3 layers)
+     pill        --e1                                   (1 layer)
+
+   A card that drops two elevation rungs because the cursor moved
+   into its own button is the card flinching from the act. The
+   composition is ds.css's own, token for token; it is not a
+   hand-rolled shadow (§3) and it must be changed there, not here. */
+.cat-tile:hover .cat-card.k-lift {
+  box-shadow:
+    var(--e4),
+    inset 0 1px 0 var(--edge-light),
+    0 10px 30px -14px var(--kind);
+}
+
 /* A CARD PRESSES AT 0.994 (§4). 0.97 on a 240px card is a 7px shrink
-   and reads as a glitch; the hover lift goes at the same moment. */
-.cat-card:active {
+   and reads as a glitch; the hover lift goes at the same moment.
+   Stated three ways because both hover rules above outweigh a bare
+   `:active`, and the press must win over the hover it happens under. */
+.cat-card:active,
+.cat-tile:hover .cat-card:active,
+.cat-tile:hover .cat-card.k-lift:active {
   transform: scale(0.994);
   box-shadow: var(--e1);
 }
@@ -532,6 +583,105 @@
 
 .cat-tile-held {
   font-size: var(--t-caption-size);
+}
+
+/* ------------------------------------------------------------
+   THE HAND-OVER — "Configure this one", on the photograph.
+
+   WHERE IT SITS AND WHY. Top right of the tile, which is the top
+   right of the photograph: the name, the price and the specs are
+   all below the shot, so the pill cannot cover a word of them at
+   any width. It is drawn ALWAYS rather than on hover — a control
+   that only exists while a mouse is over it is a control a person
+   with a finger, a keyboard or a screen reader does not have, and
+   this is the act the whole screen is for.
+
+   THE GROUND IS OPAQUE, WHICH IS A CONTRAST DECISION AND NOT A
+   style one. `--surface-1` over a photograph means the ink is
+   measured against one known colour instead of against turquoise
+   water, a white hull or a black outboard — §1's "the tint counts"
+   applied to the hardest ground in the app. Measured in the
+   browser on Formosa, compositing the whole ancestor chain and the
+   translucency in it:
+
+                    rest        hovered
+       light        17.41 : 1   6.12 : 1
+       dark         14.64 : 1   7.30 : 1
+
+   The pill is 102.2 x 28px at 1600, 1280, 1024, 768 and 600, on a
+   tile that narrows from 496 to 178.7 — so the widest it ever gets
+   is 57% of the narrowest card, and it never leaves the tile.
+
+   ONE ACCENT, AND IT IS NOT SPENT 48 TIMES. At rest the pill is
+   quiet chrome. It takes the accent on TILE hover — one tile at a
+   time — so the screen still holds §1's four accents and the card
+   the mouse is on says plainly what pressing it will do.
+   ------------------------------------------------------------ */
+.cat-go {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  box-shadow: var(--e1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+
+/* IT TRAVELS WITH THE CARD. `.cat-tile:hover .cat-card` lifts one
+   pixel; a pill that stayed put would slide a pixel down the
+   photograph every time the mouse crossed the tile. */
+.cat-tile:hover .cat-go {
+  transform: translateY(-1px);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+.cat-go:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--accent-fg);
+}
+/* A CONTROL PRESSES AT 0.97 (§4) — it is a control and not a card,
+   and 0.97 on a 100px pill is three pixels. The lift is restated
+   so the press does not drop it back onto the photograph. */
+.cat-go:active,
+.cat-tile:hover .cat-go:active {
+  transform: translateY(-1px) scale(0.97);
+}
+/* THE RING IS THE ONLY FOCUS SIGNAL, AND IT IS THE TWO-RING ONE.
+   The first correction here took the accent GROUND off focus and
+   left the ring `--blue` — which IS the accent — so the ring still
+   vanished whenever the pill wore the accent, and it wears it on
+   every tile hover. Rest the mouse on the tile you tabbed into and
+   the two are the same colour: measured, outline rgb(10,95,194) two
+   pixels off a rgb(10,95,194) ground.
+
+   `--focus` is the system's answer to exactly this and it is why it
+   is two rings: 2px of the page ground, then 2px of accent. It has
+   to be a BOX-SHADOW — it is a box-shadow value, and `outline: 2px
+   solid var(--focus)` is invalid and silently thrown away, which is
+   the fault this pass cleared out of 21 declarations in the quote
+   feature. */
+.cat-go:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 /* -- more ------------------------------------------------------ */
@@ -702,9 +852,22 @@
   }
 }
 
+/* MOVEMENT GOES, COLOUR AND OPACITY STAY (§4). The pill still turns
+   accent on hover and still shows its focus ring — what it loses is
+   the pixel it travels and the shrink under the finger. */
 @media (prefers-reduced-motion: reduce) {
-  .cat-card:hover,
+  .cat-tile:hover .cat-card,
   .cat-card:active,
+  .cat-tile:hover .cat-card:active,
+  /* ALL THREE PRESS SELECTORS, NOT TWO. The press is stated three
+     ways so it wins under a hover; a reduced-motion block that
+     answers only two of them loses on specificity to the third —
+     measured under emulated `reduce`, pointer-down on a card still
+     gave matrix(0.994, 0, 0, 0.994, 0, 0). */
+  .cat-tile:hover .cat-card.k-lift:active,
+  .cat-tile:hover .cat-go,
+  .cat-go:active,
+  .cat-tile:hover .cat-go:active,
   .cat-lens-btn:active,
   .cat-facet:active,
   .cat-clear:active {

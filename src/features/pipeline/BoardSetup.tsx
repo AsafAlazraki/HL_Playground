@@ -1,41 +1,66 @@
 /* ============================================================
-   THE STAGES, EDITED — names, colours and order.
+   THE BOARD, MADE YOURS — one panel, two decisions.
 
-   IT OPENS ON THE BOARD, not only in Admin, because the person who
+   IT WAS `StageEditor` AND HELD ONE OF THEM. Columns were
+   editable and the card was not, so "how this board looks" lived
+   half in a panel and half in nobody's hands. Two panels would
+   have been worse: a person who wants their board to suit them
+   thinks about the columns and the cards in one sitting, and a
+   second button beside the first would make them choose which
+   half of one thought they were having. Reported, about a
+   different screen and in exactly these words: "uniformity mate".
+
+   IT OPENS ON THE BOARD, not in Admin, because the person who
    wants a column called "Awaiting deposit" thinks of it while
    looking at the board. It is a panel over the columns rather than
    a page: you are changing the thing you are looking at, and
-   walking away to a settings screen to do it loses the sight of
-   what you are changing.
+   walking away to a settings screen loses sight of what you are
+   changing.
 
-   EVERY CHANGE IS IMMEDIATE, and there is no Save. A panel with a
-   Save button has two truths in it — what is on screen and what is
+   EVERY CHANGE IS IMMEDIATE, AND THERE IS NO SAVE. A panel with a
+   Save button holds two truths — what is on screen and what is
    stored — and the board behind this one is drawn from the second.
-   Typing a name renames the column you can see over your shoulder,
-   which is the whole reason it is a panel.
+   Typing a name renames the column over your shoulder, which is
+   the whole reason it is a panel.
+
+   THE TWO HALVES ARE STORED IN DIFFERENT PLACES AND THE PANEL
+   SAYS SO. Columns are the BUSINESS's: rename one and it is
+   renamed for everybody who signs in. What a card shows is one
+   PERSON's, keyed by them and their organisation, the way the
+   dashboard's tile order already is. Putting them side by side
+   without saying which is which would be the panel quietly
+   teaching somebody the wrong thing about their own data.
 
    REMOVING A STAGE SAYS WHERE ITS DEALS WILL GO, before the act,
    and offers UNDO after it (rule 9). Nothing here can lose a deal:
    `neighbourOf` names the column to the left and the deals are
    moved there.
 
-   WHAT CANNOT BE DONE SAYS WHY, WHERE IT IS (rule 10). Draft and
-   Issued cannot be removed — a quote nobody has moved derives its
-   column from the document and needs somewhere to land — and the
-   reason is printed under the control rather than the control
-   being greyed with no explanation.
+   WHAT CANNOT BE DONE SAYS WHY, WHERE IT IS (rule 10), three
+   times over: Draft and Issued cannot be removed, a board cannot
+   go below two columns, and a fifth fact cannot go on a card.
+   None of the three is a greyed control.
    ============================================================ */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { JSX } from 'react'
 import { Plus, Trash, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { say } from '@/store/notes'
+import { currentUser } from '@/features/auth'
 import { useQuotes } from '@/features/quote'
+import {
+  CARD_CAP,
+  CARD_FIELDS,
+  toggleField,
+  useCardFields,
+  whyNotField,
+  type CardFieldId,
+} from './cardFields'
 import { moveTo, stageOf, useStages } from './stages'
 import {
-  ANCHORS,
   TONES,
+  WASHES,
   mintId,
   neighbourOf,
   resetStages,
@@ -45,18 +70,31 @@ import {
   type StageDef,
 } from './stageStore'
 
-export interface StageEditorProps {
+export interface BoardSetupProps {
   orgSlug: string
   onClose: () => void
 }
 
-export function StageEditor({ orgSlug, onClose }: StageEditorProps): JSX.Element {
+export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
   const stages = useStageDefs(orgSlug)
   const quotes = useQuotes()
   const at = useStages(orgSlug)
+  /* THE SAME KEY THE BOARD USES, memoised for the same reason —
+     see `Board.tsx`. The panel and the board must agree about
+     whose preference this is, or the four chips lit here would be
+     a different four from the ones on the cards behind them. */
+  const who = useMemo(
+    () => ({ orgSlug, userId: currentUser()?.id ?? 'nobody' }),
+    [orgSlug],
+  )
+  const card = useCardFields(who)
+
   /* the reason a removal was refused, kept per stage so it prints
      under the row it belongs to rather than at the top of the panel */
   const [refused, setRefused] = useState<Record<string, string>>({})
+  /* the reason a fifth fact was refused. One at a time: a person
+     presses one control and gets one sentence. */
+  const [capped, setCapped] = useState<string | null>(null)
 
   const patch = (id: string, next: Partial<StageDef>): void => {
     setStages(
@@ -78,7 +116,7 @@ export function StageEditor({ orgSlug, onClose }: StageEditorProps): JSX.Element
     const name = 'New stage'
     setStages(orgSlug, [
       ...stages,
-      { id: mintId(stages, name), name, empty: '', tone: 'neutral', closed: false },
+      { id: mintId(stages, name), name, about: '', tone: 'neutral', wash: 'none', closed: false },
     ])
   }
 
@@ -117,18 +155,30 @@ export function StageEditor({ orgSlug, onClose }: StageEditorProps): JSX.Element
     })
   }
 
+  const pickField = (id: CardFieldId): void => {
+    const why = whyNotField(card.fields, id)
+    if (why) {
+      setCapped(why)
+      return
+    }
+    setCapped(null)
+    card.set(toggleField(card.fields, id))
+  }
+
   return (
-    <section className="se" aria-label="The stages on this board">
+    <section className="se" aria-label="How this board is drawn">
       <header className="se-head">
-        <h3 className="se-name">Stages</h3>
+        <h3 className="se-name">This board</h3>
         <p className="se-say">
-          Rename them, colour them, and put them in the order your business works in.
+          Your columns are the dealership&rsquo;s and everybody sees them. What a card shows is
+          yours alone.
         </p>
         <button type="button" className="se-shut" onClick={onClose} aria-label="Done">
           <X size={ICON_SIZE.small} aria-hidden="true" />
         </button>
       </header>
 
+      <h4 className="mono-label se-part">Columns</h4>
       <ul className="se-list">
         {stages.map((stage, i) => {
           const deals = quotes.filter((q) => stageOf(q, at, stages) === stage.id).length
@@ -189,15 +239,34 @@ export function StageEditor({ orgSlug, onClose }: StageEditorProps): JSX.Element
                 ))}
               </span>
 
+              {/* HOW STRONGLY THE COLUMN IS TINTED — a second choice
+                  from the colour, for the reason `stageStore.ts`
+                  gives. Words rather than swatches: three grey
+                  squares would say nothing, and the thing being
+                  chosen is an amount. */}
+              <span className="se-washes" role="group" aria-label={`Tint for ${stage.name}`}>
+                {WASHES.map((w) => (
+                  <button
+                    type="button"
+                    key={w.id}
+                    className={`se-wash${stage.wash === w.id ? ' is-on' : ''}`}
+                    aria-pressed={stage.wash === w.id}
+                    onClick={() => patch(stage.id, { wash: w.id })}
+                  >
+                    {w.label}
+                  </button>
+                ))}
+              </span>
+
               <label className="se-closed">
                 <input
                   type="checkbox"
                   checked={stage.closed}
                   onChange={(e) => patch(stage.id, { closed: e.target.checked })}
                 />
-                {/* "Closed" IS THE WORD THE BOARD USES for a column
-                    holding finished work — won, lost — and it is
-                    drawn quieter there for it. */}
+                {/* "Finished work" IS THE WORD THE BOARD USES for a
+                    column holding won and lost, and it is drawn
+                    quieter there for it. */}
                 <span>Finished work</span>
               </label>
 
@@ -212,6 +281,18 @@ export function StageEditor({ orgSlug, onClose }: StageEditorProps): JSX.Element
                 <Trash size={ICON_SIZE.tiny} aria-hidden="true" />
               </button>
 
+              {/* WHAT BELONGS IN THIS COLUMN, in one line. Drawn
+                  under the head when the column has cards and in the
+                  body when it has none — one field, because the
+                  words do not change when the last card arrives. */}
+              <input
+                className="se-about"
+                value={stage.about}
+                placeholder="What belongs here"
+                aria-label={`What belongs in ${stage.name}`}
+                onChange={(e) => patch(stage.id, { about: e.target.value })}
+              />
+
               {/* THE REFUSAL, IN THE PLACE IT HAPPENED. Not a
                   disabled button with no explanation, and not a
                   dialog somewhere else. */}
@@ -219,11 +300,47 @@ export function StageEditor({ orgSlug, onClose }: StageEditorProps): JSX.Element
                 <p className="se-why" role="alert">
                   {why}
                 </p>
-              ) : ANCHORS.includes(stage.id) ? null : null}
+              ) : null}
             </li>
           )
         })}
       </ul>
+
+      <h4 className="mono-label se-part">What each card shows</h4>
+      {/* THE SPINE IS SAID RATHER THAN LEFT TO BE HUNTED FOR. A
+          person looking for "customer" in this list and not finding
+          it would conclude the board had lost it. */}
+      <p className="se-say se-spine">
+        Every card draws the customer, the money, and a mark when there are notes on it.
+        Choose up to {CARD_CAP} more.
+      </p>
+      <ul className="se-fields">
+        {CARD_FIELDS.map((f) => {
+          const on = card.fields.includes(f.id)
+          return (
+            <li key={f.id}>
+              <button
+                type="button"
+                className={`se-field${on ? ' is-on' : ''}`}
+                aria-pressed={on}
+                onClick={() => pickField(f.id)}
+              >
+                <span className="se-field-name">{f.label}</span>
+                {f.under ? <span className="se-field-say">{f.under}</span> : null}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      {/* THE CAP SAYS SO RATHER THAN SWAPPING SILENTLY. A person who
+          has just been told "four" can decide which of their own
+          four to give up; an app that decides for them has thrown
+          away the choice this panel exists to offer. */}
+      {capped ? (
+        <p className="se-why" role="alert">
+          {capped}
+        </p>
+      ) : null}
 
       <footer className="se-foot">
         <button type="button" className="se-add" onClick={add}>
@@ -237,7 +354,7 @@ export function StageEditor({ orgSlug, onClose }: StageEditorProps): JSX.Element
             const before = [...stages]
             resetStages(orgSlug)
             say({
-              text: 'Stages put back to the ones this build ships with.',
+              text: 'Columns put back to the ones this build ships with.',
               act: { label: 'Undo', onPick: () => setStages(orgSlug, before) },
             })
           }}
