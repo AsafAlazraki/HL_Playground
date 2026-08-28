@@ -77,6 +77,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { nowIn } from '@/features/activity'
 import { accentVar } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import {
@@ -118,6 +119,10 @@ export interface ModuleStageProps {
   /** Mint a quote from the item on screen and open it. Absent = the
    *  control is not drawn, so this stage still works on its own. */
   onQuote?: (quoteId: string) => void
+  /** put the quote picker up, standing in a given module. Only the
+   *  shell can, so it is handed in; absent, the module dashboard
+   *  states the fact and offers no button. */
+  onNewQuote?: ((moduleId?: string) => void) | undefined
   /* ============================================================
      WHICH TAB THIS MODULE OPENS ON — the seam agreed with the
      MODULE WORKSPACE agent (`src/features/modules/**`).
@@ -143,11 +148,24 @@ export function ModuleStage({
   moduleId,
   onOpen,
   onQuote,
+  onNewQuote,
   tab,
   onClose,
 }: ModuleStageProps): ReactElement {
   const modules = useProjectStore((s) => s.modules)
   const entities = useProjectStore((s) => s.entities)
+
+  /* WHERE THE PERSON IS, TOLD TO THE AUDIT LOG. `Entry.moduleId`
+     was never written by anything, so every module's activity card
+     was structurally empty — see the note in activity.ts. The shell
+     is the only thing that knows which module is on screen, and it
+     is already the thing that tells `openPlace.ts` the same fact.
+     Cleared on the way out so a change made on the dashboard is not
+     filed under the module somebody was in ten minutes ago. */
+  useEffect(() => {
+    nowIn(moduleId)
+    return () => nowIn(null)
+  }, [moduleId])
 
   const [detail, setDetail] = useState<DetailAt | null>(null)
   const [settings, setSettings] = useState<SettingsAt | null>(null)
@@ -393,6 +411,12 @@ export function ModuleStage({
                NAMES them — a fact that cannot be opened is better than
                a control that does nothing. */
             onOpenQuote={onQuote}
+            /* AND THE WAY TO START ONE, standing here. The picker
+               opens ALREADY IN THIS PLACE — it takes a module and
+               `QuoteStart` uses it as its initial place — so the
+               dashboard's empty quotes card offers the act rather
+               than describing the route to it. */
+            {...(onNewQuote ? { onNewQuote: () => onNewQuote(open.id) } : {})}
           />
         ) : (
           <Dashboard

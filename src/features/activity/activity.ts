@@ -133,8 +133,42 @@ export function startRecording(orgSlug: string): () => void {
   return onSaid((note) => {
     const words = note.text.trim().split(/\s+/).length
     if (!note.act && words < 3) return
-    record(orgSlug, { text: note.text, ...(note.tone ? { tone: note.tone } : {}) })
+    record(orgSlug, {
+      text: note.text,
+      ...(atPlace ? { moduleId: atPlace } : {}),
+      ...(note.tone ? { tone: note.tone } : {}),
+    })
   })
+}
+
+/* ------------------------------------------------------------
+   WHERE THE PERSON WAS WHEN IT HAPPENED.
+
+   `Entry.moduleId` existed from the first version of this file and
+   NOTHING EVER SET IT — so `useModuleActivity` filtered a list in
+   which every entry had `moduleId: undefined` and a module's
+   activity card was structurally guaranteed to be empty. A field
+   nobody writes is worse than a missing feature: it looks answered.
+
+   The note bus cannot carry a module, and it should not — 27 call
+   sites raising toasts have no business knowing what is on screen.
+   So the SHELL says where it is, exactly as `openPlace.ts` already
+   does for the workspace, and the recorder stamps it.
+
+   WHAT THIS CLAIMS, PRECISELY: "you were standing in Highfield when
+   this happened", not "this changed Highfield". Those differ when
+   somebody edits one module's table while another is open, which
+   this cannot detect and does not pretend to. It is the claim every
+   audit log of this shape makes, and it is worth far more than a
+   column of nothing.
+   ------------------------------------------------------------ */
+let atPlace: string | null = null
+
+/** Called by the shell when a module opens, and with null when it
+ *  closes. Not a hook and not in the store: it is a fact about the
+ *  screen, and the recorder reads it once per note. */
+export function nowIn(moduleId: string | null): void {
+  atPlace = moduleId
 }
 
 /* ------------------------------------------------------------

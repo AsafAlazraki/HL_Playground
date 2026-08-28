@@ -4,6 +4,7 @@ export {
   activityOf,
   record,
   clearActivity,
+  nowIn,
   startRecording,
   useActivity,
   useModuleActivity,

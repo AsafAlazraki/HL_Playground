@@ -30,8 +30,11 @@ import { type EntityDef, type ModuleDef } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import { coverPhoto } from '@/features/table/coverPhoto'
-import { localDay, priceLevelsFor, useQuotes } from '@/features/quote'
+import { localDay, priceLevelsFor, quoteTotals, useQuotes } from '@/features/quote'
+import { ActivityList, useModuleActivity } from '@/features/activity'
+import { money } from '@/lib/money'
 import {
+  buildEntries,
   listedTables,
   moduleCensus,
   moduleTables,
@@ -44,6 +47,15 @@ import { ModuleRulesPanel } from './ModuleRulesPanel'
 import './modules.css'
 
 const grouped = (n: number): string => n.toLocaleString('en-AU')
+
+/** How many of each a GLANCE is. The full list of either is one
+ *  press away — the Quotes tab, and the whole log — and a dashboard
+ *  that reprints them is two lists of one thing. */
+const RECENT_QUOTES = 4
+const ACTIVITY_ROWS = 6
+/** How much of the range the dashboard shows. The catalogue tab is
+ *  one press away and draws all of it. */
+const PREVIEW_ROWS = 6
 
 /* ============================================================
    DASHBOARD — what is in this place
@@ -59,16 +71,32 @@ export interface ModuleHomeProps {
   onOpenQuote?: ((quoteId: string) => void) | undefined
   /** stand at another of the module's places, without leaving it */
   onPlace: (tableId: string) => void
-  /** the door into the stock, which is where the photography leads */
+  /** the door into the stock — the catalogue tab, by another route */
   onStock: () => void
+  /** the module's own quotes tab, from the recent-quotes card */
+  onQuotes?: (() => void) | undefined
+  /** start a quote standing in this place. Absent = the card says
+   *  nothing has been quoted and offers no button, which is better
+   *  than a button that cannot work. */
+  onNewQuote?: (() => void) | undefined
+  /** whose business this is. The activity log is kept per
+   *  organisation, so a card that reads it is TOLD which one rather
+   *  than reaching for the session — the same arrangement every
+   *  other derivation in this feature keeps. */
+  orgSlug: string
 }
 
 export function ModuleHome({
   module,
   owner,
   place,
+  onOpen,
   onPlace,
   onStock,
+  onQuotes,
+  onOpenQuote,
+  onNewQuote,
+  orgSlug,
 }: ModuleHomeProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -108,6 +136,11 @@ export function ModuleHome({
     [quotes, mine],
   )
 
+  /* WHAT HAS CHANGED IN HERE. Read before the branch so the card
+     can choose between its two states without calling a hook
+     conditionally. */
+  const here = useModuleActivity(orgSlug, owner.id, ACTIVITY_ROWS)
+
   /* THE PLACES BESIDE THIS ONE. Only where the module holds more than
      one table, because a module that is one place has none. */
   const siblings = useMemo(
@@ -123,125 +156,257 @@ export function ModuleHome({
   /* THE FIGURES THIS PLACE CAN STATE ABOUT ITSELF, and each one only
      where it is true of something. A zero is a cell of chrome. */
   const cells: { term: string; figure: number }[] = []
-  if (census.pictured > 0) cells.push({ term: 'photographed', figure: census.pictured })
+  /* "photographed" IS NOT A SALES FACT. It counted how many rows
+     carry a picture, which is a statement about how complete OUR
+     data is, drawn first and largest on a page about what a
+     dealership sells. The catalogue is where a missing photograph
+     is worth knowing about. */
   if (census.priced > 0) cells.push({ term: 'priced', figure: census.priced })
   if (census.held > 0) cells.push({ term: 'held back', figure: census.held })
   if (raised > 0) cells.push({ term: raised === 1 ? 'quote raised' : 'quotes raised', figure: raised })
   for (const b of census.branches) cells.push({ term: b.noun, figure: b.count })
 
+  /* THE FIRST FEW THE CATALOGUE WOULD DRAW. `buildEntries` is the
+     catalogue tab's own reader, asked for the entries WITHOUT their
+     formatted facts — three formatted cells on 588 rows is a cost
+     this strip has no use for, and `read.ts` documents that flag as
+     existing for exactly this. */
+  const preview = useMemo(
+    () => buildEntries(listed, rowsByEntity, { facts: false }).slice(0, PREVIEW_ROWS),
+    [listed, rowsByEntity],
+  )
+
+  /* THE FEW MOST RECENT, for the card. The full list is the Quotes
+     tab eighteen pixels above; this is a glance. */
+  const recent = useMemo(
+    () =>
+      quotes
+        .filter((q) => mine.has(q.rootTableId))
+        .slice()
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, RECENT_QUOTES),
+    [quotes, mine],
+  )
+
   return (
     <div className="md-home">
-      {/* THE PHOTOGRAPHY. 220 real photographs ship with this app and
-          the largest any of them had ever been drawn was a card
-          header. This is one of this place's own, at the size the
-          seed was shot at, and it is a DOOR — into the stock, which
-          is what it is a photograph of.
+      {/* ============================================================
+          WHAT THIS PAGE USED TO BE, AND WHY IT IS NOT ANY MORE.
 
-          NOTHING IS SUBSTITUTED. `coverPhoto` refuses every address
-          the repository does not ship a copy of, so a place without
-          one gets its kind's own mark on its own wash and never a
-          stand-in for a boat nobody photographed. */}
-      <button
-        type="button"
-        /* A PLACE WITH NO PHOTOGRAPH GETS A SHORTER PLATE. 534 of
-           Highfield's 588 rows carry a picture and not one of them is
-           an address this repository ships a copy of, so `coverPhoto`
-           refuses them all — correctly. A 320px empty box would be a
-           broken screen; a 120px band with the kind's own mark is the
-           honest drawing of "we hold no picture of this". */
-        className={`md-home-plate${cover ? '' : ' md-home-plate--none'}`}
-        onClick={onStock}
-      >
-        {cover ? (
-          <img
-            className="md-home-shot"
-            src={cover.at}
-            alt={cover.alt}
-            width={cover.w}
-            height={cover.h}
-            loading="eager"
-            decoding="async"
-            draggable={false}
-          />
-        ) : (
-          <span className="md-home-plate-mark">
-            <TableKindSymbol kind={kindOf(master?.kind)} size={ICON_SIZE.large} />
-          </span>
-        )}
-        {/* THE DOOR NAMES ITS DESTINATION. The count is in the
-            header, once — printing it again here would be one fact
-            twice on one screen. */}
-        <span className="md-home-plate-say">
-          <span className="md-home-plate-word">Catalog</span>
-          <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-        </span>
-      </button>
+          A 300px desaturated top-down photograph of ONE row, drawn
+          as a door labelled "Catalog" — directly beneath a tab bar
+          whose second tab is Catalog. Two doors to one place and the
+          big one was the worse one, because it was a picture of a
+          single boat standing in for a brand of 588.
 
-      {cells.length > 0 ? (
-        <dl className="md-home-figs">
-          {cells.map((c) => (
-            <div className="md-home-fig" key={c.term}>
-              <dd>{grouped(c.figure)}</dd>
-              <dt>{c.term}</dt>
+          Under it: "534 photographed", which is a fact about how
+          complete our data is and not about anything a dealer sells.
+          Under that, "What you can do here — Browse · Search · Open
+          one · Relate · Quote": the application listing its own
+          capabilities back at the person using them.
+
+          What a place in a business should answer is what is
+          HAPPENING in it and what to do next. So: the quotes raised
+          from here, the record of what changed here, and the range
+          itself as doors. ============================================ */}
+
+      <div className="md-home-grid">
+        {/* ---- the deals ------------------------------------- */}
+        <section className="md-hcard" aria-labelledby="md-home-q">
+          <header className="md-hcard-head">
+            <h3 className="md-hcard-name" id="md-home-q">
+              Recent quotes
+            </h3>
+            {recent.length > 0 && onQuotes ? (
+              <button type="button" className="md-hcard-all" onClick={onQuotes}>
+                All {raised}
+              </button>
+            ) : null}
+          </header>
+
+          {recent.length === 0 ? (
+            /* THE EMPTY STATE OFFERS THE ACT rather than narrating a
+               route to it. The old one on the Quotes tab spends two
+               sentences explaining where quotes come from. */
+            <div className="md-hcard-none">
+              <p className="md-hcard-none-say">Nothing quoted from here yet.</p>
+              {onNewQuote ? (
+                <button type="button" className="md-hcard-go" onClick={onNewQuote}>
+                  Start a quote
+                </button>
+              ) : null}
             </div>
-          ))}
-        </dl>
-      ) : null}
-
-      {siblings.length > 1 ? (
-        <section className="md-home-strip">
-          <h3 className="mono-label md-home-cap">Also in {owner.name}</h3>
-          <ul className="md-home-chips">
-            {siblings.map((t) => {
-              const here = t.id === (place ?? master?.id)
-              return (
-                <li key={t.id}>
-                  {/* EVERY SIBLING IS A DOOR, including the one you
-                      are standing in — pressing it changes nothing,
-                      which is honest, and a chip that stopped being
-                      pressable at the moment it became current would
-                      be a control that moves under the pointer. */}
+          ) : (
+            <ul className="md-hq-list">
+              {recent.map((q) => (
+                <li key={q.id}>
                   <button
                     type="button"
-                    className={`md-home-chip${here ? ' is-here' : ''}`}
-                    data-kind={kindOf(t.kind)}
-                    aria-current={here ? 'true' : undefined}
-                    onClick={() => onPlace(t.id)}
+                    className="md-hq"
+                    disabled={!onOpenQuote}
+                    onClick={() => onOpenQuote?.(q.id)}
                   >
-                    <TableKindSymbol kind={kindOf(t.kind)} size={ICON_SIZE.tiny} />
-                    {t.name}
+                    {/* THE SUBJECT AS THE QUOTE FROZE IT — never
+                        re-read from the sheet. A boat renamed since
+                        is still the boat this was written for. */}
+                    <span className="md-hq-what">{q.subjectLabel}</span>
+                    <span className="md-hq-who">
+                      {q.customer.name.trim() || 'No customer yet'}
+                    </span>
+                    <span className="md-hq-sum ds-mono">{money(quoteTotals(q).total)}</span>
+                    <span className="md-hq-when ds-mono">{localDay(q.createdAt)}</span>
                   </button>
                 </li>
-              )
-            })}
-          </ul>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* ---- what changed here ----------------------------- */}
+        <section className="md-hcard" aria-labelledby="md-home-a">
+          <header className="md-hcard-head">
+            <h3 className="md-hcard-name" id="md-home-a">
+              Activity
+            </h3>
+          </header>
+          {/* SCOPED TO THIS PLACE. Until today `Entry.moduleId` was
+              written by nothing at all, so this card could only ever
+              have been empty — see the note in activity.ts about
+              what the stamp claims and what it does not. */}
+          {here.length === 0 ? (
+            <p className="md-hcard-none-say">
+              Nothing has changed in here yet. Edits, prices and quotes show up as they
+              happen.
+            </p>
+          ) : (
+            <ActivityList orgSlug={orgSlug} moduleId={owner.id} limit={ACTIVITY_ROWS} />
+          )}
+        </section>
+      </div>
+
+      {/* ---- the range, as doors ----------------------------- */}
+      {cells.length > 0 || census.branches.length > 0 ? (
+        <section className="md-hcard md-hcard--wide" aria-labelledby="md-home-r">
+          <header className="md-hcard-head">
+            <h3 className="md-hcard-name" id="md-home-r">
+              The range
+            </h3>
+            <button type="button" className="md-hcard-all" onClick={onStock}>
+              Open catalog
+            </button>
+          </header>
+
+          {cells.length > 0 ? (
+            <dl className="md-home-figs">
+              {cells.map((c) => (
+                <div className="md-home-fig" key={c.term}>
+                  <dd>{grouped(c.figure)}</dd>
+                  <dt>{c.term}</dt>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+
+          {/* WHAT IS ACTUALLY IN HERE. The card was two numbers and a
+              row of chips that repeated them — "7 series" as a
+              figure and "7 series" as a chip, eight pixels apart.
+              A range card should show the range.
+
+              THESE ARE THE FIRST ROWS THE CATALOGUE WOULD DRAW, in
+              its own order, through its own reader — so this strip
+              and the tab beside it can never disagree about what is
+              first or what it costs. Each is a door onto the item,
+              which is the only thing on this page that opens one. */}
+          {preview.length > 0 ? (
+            <ul className="md-home-stock">
+              {preview.map((e) => (
+                <li key={`${e.tableId}:${e.rowId}`}>
+                  <button
+                    type="button"
+                    className="md-stock"
+                    onClick={() => onOpen(e.tableId, e.rowId)}
+                  >
+                    <span className="md-stock-say">
+                      <span className="md-stock-name">{e.label}</span>
+                      {/* THE SERIES IT SITS IN, where the table is cut
+                          by one. Highfield runs Series then Model then
+                          Variant, so a bare variant code says almost
+                          nothing on its own. */}
+                      {e.branch ? (
+                        <span className="md-stock-branch">{e.branch}</span>
+                      ) : null}
+                    </span>
+                    {/* A PRICE IS A FIGURE: mono, tabular, no hue. A
+                        row this table prices nothing for draws no
+                        empty cell — `price` is '' and the span is
+                        simply absent. */}
+                    {e.price ? (
+                      <span className="md-stock-price ds-mono">{e.price}</span>
+                    ) : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
 
-      {related.length > 0 ? (
-        <section className="md-home-strip">
-          <h3 className="mono-label md-home-cap">What goes with these</h3>
-          <ul className="md-home-links">
-            {related.map((r) => (
-              <li className="md-home-link" key={r.tableId}>
-                <TableKindSymbol kind={kindOf(r.kind)} size={ICON_SIZE.tiny} />
-                <span className="md-home-link-name">{r.name}</span>
-                {/* THE SHARE, NOT A TICK. "on 3 of 7" is the fact a
-                    person can act on. */}
-                <span className="md-home-link-share">
-                  on {r.on} of {r.of}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      {/* ---- where else to go -------------------------------- */}
+      {siblings.length > 1 || related.length > 0 ? (
+        <div className="md-home-foot">
+          {siblings.length > 1 ? (
+            <section className="md-home-strip">
+              <h3 className="mono-label md-home-cap">Also in {owner.name}</h3>
+              <ul className="md-home-chips">
+                {siblings.map((t) => {
+                  const at = t.id === (place ?? master?.id)
+                  return (
+                    <li key={t.id}>
+                      {/* EVERY SIBLING IS A DOOR, including the one
+                          you are standing in — pressing it changes
+                          nothing, which is honest, and a chip that
+                          stopped being pressable the moment it became
+                          current would move under the pointer. */}
+                      <button
+                        type="button"
+                        className={`md-home-chip${at ? ' is-here' : ''}`}
+                        data-kind={kindOf(t.kind)}
+                        aria-current={at ? 'true' : undefined}
+                        onClick={() => onPlace(t.id)}
+                      >
+                        <TableKindSymbol kind={kindOf(t.kind)} size={ICON_SIZE.tiny} />
+                        {t.name}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          ) : null}
 
-      {verbs.length > 0 ? (
-        <section className="md-home-strip">
-          <h3 className="mono-label md-home-cap">What you can do here</h3>
-          <p className="md-home-verbs">{verbs.join(' · ')}</p>
-        </section>
+          {related.length > 0 ? (
+            <section className="md-home-strip">
+              <h3 className="mono-label md-home-cap">Goes with these</h3>
+              <ul className="md-home-links">
+                {related.map((r) => (
+                  <li className="md-home-link" key={r.tableId}>
+                    <TableKindSymbol kind={kindOf(r.kind)} size={ICON_SIZE.tiny} />
+                    <span className="md-home-link-name">{r.name}</span>
+                    {/* "on 3 of 7" IS THE FACT, and it was drawn even
+                        when it read "on 1 of 1" — a share of one is
+                        not a share, it is a yes, and a row of them
+                        told a salesperson nothing five times. */}
+                    {r.of > 1 ? (
+                      <span className="md-home-link-share">
+                        on {r.on} of {r.of}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </div>
       ) : null}
     </div>
   )

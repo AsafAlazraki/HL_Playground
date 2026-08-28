@@ -3858,6 +3858,24 @@
   border: 1px solid var(--line);
   color: var(--kind, var(--fg-secondary));
 }
+/* A WORDMARK NEEDS A WIDE PLATE, and a kind symbol needs a square
+   one. The plate only widens when it is HOLDING a wordmark —
+   `:has(img)` asks the question of the element that answered it,
+   rather than this rule re-deciding whether a mark was drawn. */
+.md-work-mark:has(.md-place-logo) {
+  width: auto;
+  min-width: 46px;
+  max-width: 168px;
+  padding: 6px var(--s-3);
+  /* the brand's own ink on the kind's tint would be two colours
+     arguing; a mark gets paper */
+  background: var(--surface-1);
+}
+.md-work-mark .md-place-logo {
+  max-width: 100%;
+  max-height: 32px;
+  object-fit: contain;
+}
 .md-work-logo {
   display: block;
   width: 44px;
@@ -3988,78 +4006,9 @@
    NOTHING IS SUBSTITUTED: a place without one gets its kind's mark
    on its kind's wash, at the same height, so the page does not
    change shape. */
-.md-home-plate {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: clamp(180px, 30vh, 320px);
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  background: color-mix(in srgb, var(--kind) 8%, var(--surface-3));
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  cursor: pointer;
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease);
-}
-.md-home-plate:hover {
-  border-color: var(--line-strong);
-  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
-}
-.md-home-plate:active {
-  box-shadow: var(--e1);
-  transition-duration: var(--d-press);
-}
-.md-home-plate:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.md-home-shot {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transition: transform var(--d-scene) var(--ease-out-expo);
-}
-.md-home-plate:hover .md-home-shot {
-  transform: scale(1.02);
-}
-.md-home-plate-mark {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--kind, var(--fg-tertiary));
-}
 /* THE COUNT SITS ON THE APP'S OWN SURFACE, never straight on the
    photograph — a figure over a yard shot is a figure whose contrast
    changes with the picture behind it. */
-.md-home-plate-say {
-  position: absolute;
-  left: var(--s-3);
-  bottom: var(--s-3);
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  border: 1px solid var(--line);
-  box-shadow: var(--e1);
-  color: var(--fg-secondary);
-}
-.md-home-plate--none {
-  height: 120px;
-}
-.md-home-plate-word {
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  color: var(--fg);
-}
 
 /* -- the figures this place can state about itself ------------
    Each cell exists only where it is true of something: a zero is a
@@ -4165,11 +4114,6 @@
   font-size: var(--t-caption-size);
   font-variant-numeric: tabular-nums;
   color: var(--fg-tertiary);
-}
-.md-home-verbs {
-  margin: 0;
-  font-size: var(--t-small-size);
-  color: var(--fg-secondary);
 }
 
 /* ============================================================
@@ -4401,4 +4345,319 @@
   .md-home-plate:hover .md-home-shot {
     transform: none;
   }
+}
+
+/* ============================================================
+   A MODULE'S DASHBOARD — what is happening in this place.
+
+   WHAT THIS REPLACED. A 300px desaturated top-down photograph of
+   ONE row, drawn as a door labelled "Catalog" — directly beneath a
+   tab bar whose second tab is Catalog. Two doors to one place, and
+   the large one was the worse one, because it was a picture of a
+   single boat standing in for a brand of 588. Under it "534
+   photographed", which is a statement about how complete our data
+   is rather than about anything a dealership sells. Under that,
+   "What you can do here — Browse · Search · Open one · Relate ·
+   Quote": the application reading its own capability list back to
+   the person using it.
+
+   A place in a business should answer what is HAPPENING in it and
+   what to do next. So: the deals raised from here, the record of
+   what changed here, and the range itself as doors.
+   ============================================================ */
+
+.md-home-grid {
+  display: grid;
+  /* TWO CARDS AT A LAPTOP AND ONE BELOW IT. The quotes card is the
+     wider of the two because its rows carry four things and the
+     log's carry two. */
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
+}
+
+@media (max-width: 1000px) {
+  .md-home-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.md-hcard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+
+.md-hcard-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.md-hcard-name {
+  margin: 0;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  color: var(--fg);
+}
+
+/* THE DOOR OUT OF THE CARD — the same word and the same place as
+   the dashboard's "Open", because it is the same idea and two
+   words for one control is two things to learn. */
+.md-hcard-all {
+  padding: 2px 4px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--d-fast) var(--ease);
+}
+.md-hcard-all:hover {
+  background: var(--accent-wash);
+}
+.md-hcard-all:active {
+  background: var(--accent-wash-strong);
+  transition-duration: var(--d-press);
+}
+.md-hcard-all:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- an empty card offers the act ------------------------- */
+
+.md-hcard-none {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+.md-hcard-none-say {
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+.md-hcard-go {
+  height: var(--h-md);
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.md-hcard-go:hover {
+  background: var(--accent-strong);
+}
+.md-hcard-go:active {
+  transform: translateY(0.5px);
+  transition-duration: var(--d-press);
+}
+.md-hcard-go:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- a deal, at a glance ---------------------------------- */
+
+.md-hq-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* THE SUBJECT IS THE HEADING AND THE CUSTOMER IS UNDER IT, which
+   is the other way round from the board — and deliberately. On the
+   board you are asking "whose deal is this"; here you already know
+   the place and are asking "which boat". */
+.md-hq {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 1px var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-2);
+  margin-left: calc(var(--s-2) * -1);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.md-hq:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.md-hq:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* A FACT THAT CANNOT BE OPENED IS BETTER THAN A CONTROL THAT DOES
+   NOTHING — the shape this feature's item rows already take when
+   the shell hands down no route. */
+.md-hq:disabled {
+  cursor: default;
+}
+
+.md-hq-what {
+  min-width: 0;
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  line-height: 1.3;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.md-hq-sum {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: var(--t-small-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  white-space: nowrap;
+}
+.md-hq-who {
+  grid-column: 1;
+  min-width: 0;
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.md-hq-when {
+  grid-column: 2;
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
+/* ---- the activity rows, inside this card ------------------ */
+
+/* `activity.css` draws the rows; here it is inside a card already,
+   so it takes the scroll and nothing else — no second border, no
+   second background. */
+.md-hcard > .ac-list {
+  min-height: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* ---- the range ------------------------------------------- */
+
+.md-hcard--wide {
+  margin-bottom: var(--s-4);
+}
+
+/* A COUNTED FACT ON THIS CARD IS NOT A DOOR, so it is not drawn as
+   one. `.md-home-chip` is a button elsewhere on this page; this is
+   the same shape without the affordances, because "7 series" is
+   something to read and not something to press. */
+.md-home-chip.is-fact {
+  cursor: default;
+  color: var(--fg-secondary);
+  background: var(--surface-2);
+  border-color: var(--line-subtle);
+}
+
+/* ---- where else to go ------------------------------------- */
+
+/* THE TWO NAVIGATION STRIPS SHARE A ROW at laptop width. They are
+   the quietest thing on the page and used to be stacked, each with
+   its own caption, which gave two asides the vertical weight of
+   two sections. */
+.md-home-foot {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: var(--s-4) var(--s-6);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+}
+
+/* ---- the range, as stock rather than as two numbers -------- */
+
+/* THE FIRST FEW ITEMS THE CATALOGUE WOULD DRAW. The card was a
+   figure row and a chip row that repeated it — "7 series" as a
+   figure and "7 series" as a chip, eight pixels apart. A range card
+   should show the range. */
+.md-home-stock {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 2px var(--s-3);
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+}
+
+.md-stock {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.md-stock:hover {
+  background: var(--surface-2);
+}
+.md-stock:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.md-stock-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.md-stock-name {
+  font-size: var(--t-small-size);
+  line-height: 1.3;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* THE SERIES IT SITS IN. Highfield runs Series then Model then
+   Variant, so a bare variant code says almost nothing alone. */
+.md-stock-branch {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.md-stock-price {
+  flex: none;
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+  white-space: nowrap;
 }

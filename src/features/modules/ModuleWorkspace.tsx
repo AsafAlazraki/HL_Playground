@@ -41,9 +41,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { currentUser } from '@/features/auth'
+import { PlaceMark } from './PlaceMark'
 import { accentVar, type ImageRef, type ModuleDef } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
-import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
 import { ICON_SIZE } from '@/lib/icons'
 import { moduleCensus, moduleTables } from './read'
 import { moduleAt } from './places'
@@ -83,6 +84,11 @@ export interface ModuleIndexProps {
   /** Opening one of the quotes raised here. Absent = the quotes are
    *  still NAMED, as a fact about this place, but they are not doors. */
   onOpenQuote?: (quoteId: string) => void
+  /** START A QUOTE STANDING IN THIS PLACE. Only the shell can put
+   *  the picker on screen, so it is handed down; absent, the
+   *  dashboard's empty quotes card states the fact and offers no
+   *  button rather than offering one that cannot work. */
+  onNewQuote?: (() => void) | undefined
   /** The shell's own door into set-up, kept because the access screen
    *  hands out that route. Set-up is a TAB here, so this workspace
    *  never calls it; a host that still wants a separate settings page
@@ -95,9 +101,16 @@ export function ModuleIndex({
   place,
   onOpen,
   onOpenQuote,
+  onNewQuote,
 }: ModuleIndexProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  /* WHOSE BUSINESS THIS IS, for the activity card. From the
+     session, not the sheet: `OrgProfile` carries a display name and
+     no slug, and every per-organisation store in this app is keyed
+     by the signed-in person's `orgSlug`. Two keys for one business
+     is a log that empties when somebody renames the dealership. */
+  const orgSlug = currentUser()?.orgSlug ?? 'northside-marine'
 
   /* MOVING BETWEEN THE PLACES OF ONE MODULE, without leaving it.
      The seven brands in Boats are seven doors on the grid, and a
@@ -158,8 +171,25 @@ export function ModuleIndex({
   return (
     <section className="md-work" style={style} aria-label={name} data-kind={kindOf(table?.kind ?? tables[0]?.kind)}>
       <header className="md-work-head">
+        {/* THE BRAND'S OWN MARK. This drew `WorkMark`, which was a
+            THIRD copy of "what mark does this place get" — after the
+            modules grid's and the dashboard tiles' — and it had
+            drifted in both the ways a third copy drifts: it did not
+            know about the bundled brand marks (`brandLogos.ts`), so
+            Highfield got a generic boat glyph here while its wordmark
+            was drawn on the two screens either side of this one; and
+            it set `width={44} height={44}` on an image that is always
+            a wordmark, which is the same square-on-a-9:1-file bug
+            fixed in `.md-place-logo` today.
+
+            `PlaceMark` is the one implementation. */}
         <span className="md-work-mark">
-          <WorkMark logo={owner.logo} name={name} kind={kindOf(table?.kind ?? tables[0]?.kind)} />
+          <PlaceMark
+            logo={owner.logo}
+            name={name}
+            master={table ?? tables[0]}
+            size={ICON_SIZE.medium}
+          />
         </span>
         <div className="md-work-id">
           {/* THE MODULE IT BELONGS TO, and only when that is not the
@@ -217,6 +247,14 @@ export function ModuleIndex({
             onOpenQuote={onOpenQuote}
             onPlace={setPick}
             onStock={() => setTab('stock')}
+            /* THE TWO DOORS THE DASHBOARD'S CARDS NEED. Both are
+               tabs of this same workspace, so the workspace hands
+               them down rather than the panel reaching for a
+               router — the arrangement every other panel here
+               keeps. */
+            onQuotes={() => setTab('quotes')}
+            {...(onNewQuote ? { onNewQuote } : {})}
+            orgSlug={orgSlug}
           />
         ) : tab === 'stock' ? (
           /* KEYED ON THE PLACE, so switching brands is a new page
@@ -241,32 +279,3 @@ export function ModuleIndex({
 
 /* ---------------------------------------------------------- */
 
-interface WorkMarkProps {
-  logo: ImageRef | undefined
-  name: string
-  kind: ReturnType<typeof kindOf>
-}
-
-/** The dealer's own mark, or the kind's — through the app's one
- *  answer to "may this address be painted here". */
-function WorkMark({ logo, name, kind }: WorkMarkProps): ReactElement {
-  const { paint, probe, at } = useImageDisplay(logo?.src ?? '')
-  if (logo && paint) {
-    const alt = logo.alt?.trim() ?? ''
-    return (
-      <img
-        className="md-work-logo"
-        src={at}
-        alt={alt === name ? '' : alt}
-        width={44}
-        height={44}
-        loading={probe ? 'eager' : 'lazy'}
-        decoding="async"
-        draggable={false}
-        onLoad={() => noteImageLoaded(logo.src)}
-        onError={() => noteImageFailed(logo.src)}
-      />
-    )
-  }
-  return <TableKindSymbol kind={kind} size={ICON_SIZE.medium} />
-}

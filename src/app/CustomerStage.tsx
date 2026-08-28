@@ -9,13 +9,23 @@
    its own. Only the shell knows those.
 
    WHAT THIS FILE IS, AND ALL IT IS:
-     1. a way back   — one control, top left, always there;
-     2. a crumb      — what is on screen, in the bar's own voice;
-     3. a box        — `<CustomerList>` or `<CustomerPage>` fills it
+     1. one link     — "All customers", from a person back to the
+                       register, because the door on the rail is
+                       behind the stage a person is standing on. It
+                       is the ONLY control on the bar, and it used to
+                       be one of two;
+     2. a box        — `<CustomerList>` or `<CustomerPage>` fills it
                        and scrolls itself;
-     4. one link     — "All customers", from a person back to the
-                       register, because the door on the dock is
-                       behind the stage a person is standing on.
+     3. two wires    — a quote opens in a window of its own, and the
+                       picker that starts one is a dialog the shell
+                       hosts. Neither is a thing a feature can do for
+                       itself, and both are optional.
+
+   THE CRUMB IS GONE AND SO IS "BACK". Both pages under this stage
+   now draw `PageHead`, which names them better than a centred line
+   in the bar could; and two ways back from one screen was a
+   question about which of them was the real one. The reasoning for
+   each is on the bar itself.
 
    IT WRITES NO CRM LOGIC. Not a count, not a match, not a cell.
 
@@ -35,7 +45,7 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
-import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
+import { CaretLeft } from '@phosphor-icons/react'
 import { CustomerList, CustomerPage } from '@/features/crm'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
@@ -51,6 +61,16 @@ export interface CustomerStageProps {
    *  history is still LISTED, because a fact that cannot be opened
    *  is better than a control that does nothing. */
   onOpenQuote?: (quoteId: string) => void
+  /** start a quote — the picker, which is a dialog the shell hosts
+   *  and not something a feature can open for itself.
+   *
+   *  IT IS OPTIONAL FOR THE SAME REASON `onOpenQuote` IS. Absent,
+   *  the customer page's empty history states the fact and offers
+   *  nothing; present, it offers the act instead of a paragraph
+   *  describing where the act lives. A stage that could not be
+   *  mounted without a picker would be a stage the tests cannot
+   *  mount. */
+  onNewQuote?: () => void
   onClose: () => void
 }
 
@@ -58,6 +78,7 @@ export function CustomerStage({
   customerId,
   onOpen,
   onOpenQuote,
+  onNewQuote,
   onClose,
 }: CustomerStageProps): ReactElement {
   const openId = customerId
@@ -79,46 +100,41 @@ export function CustomerStage({
       onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
-        {/* BACK ONLY FROM A CUSTOMER, never from the register.
-            Customers is one of the rail's four doors — you do not
-            arrive at it FROM anywhere, so "Back" pointed at whatever
-            happened to be open before and read as a control that had
-            lost its place. The same fix the quotes list got. */}
-        {openId ? (
-          <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
-            <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-            <span>Back</span>
-          </button>
-        ) : null}
+        {/* ONE WAY BACK, AND IT IS THE ONE THAT SAYS WHERE IT GOES.
 
-        {/* THE BAR STOPPED SAYING THE PAGE'S NAME.
+            A customer's page carried two. "Back", top left, and "All
+            customers" on the right of the same bar — measured at
+            1600x1000 they sat 48px apart on two rows, because the
+            bar had wrapped to hold them both. Two controls doing one
+            job is worse than either alone: a person has to work out
+            whether they differ.
 
-            It used to be the only heading these pages had, and it was
-            marked up as one. `PageHead` now draws the title, the
-            eyebrow, the counted fact and the acts — so the bar was
-            printing a second, worse copy of the same thing directly
-            above it: "Quotes we have made · a rig, a customer and a
-            moment" over "SELLING / Pipeline". Two titles, and the
-            centred one won the eye because it was first.
+            "All customers" is the survivor because it NAMES ITS
+            DESTINATION, and because the two did not in fact agree —
+            "Back" called `onClose`, which empties the window, while
+            the register is one step up rather than out. The control
+            that read as the obvious way out was the one that went
+            somewhere else.
 
-            It is kept where the surface below has NO PageHead — a
-            quote document, one customer, the access grid — because
-            there it is still the only thing naming what is on screen.
-            Reported as "header of page is crap", and it was. */}
-        {openId ? (
-          <p className="shell-view-what">
-            <span className="shell-view-what-name">Customer</span>
-            <span className="shell-view-what-sep" aria-hidden="true">
-              ·
-            </span>
-            {/* THE ASIDE SAYS WHAT SORT OF PLACE THIS IS, never what
-                is in it — the rule ModuleStage's own aside was
-                written from. The person's name is the page's
-                business; the bar says the durable thing. */}
-            <span className="shell-view-what-say">the history with one of them</span>
-          </p>
-        ) : null}
+            NOTHING IS LOST. Escape still closes the stage
+            (`useStageEscape`), the rail's four doors are how you
+            move between pages, and the register half of this same
+            stage has had no back control since it stopped pretending
+            you arrive at Customers from somewhere.
 
+            THE CRUMB WENT WITH IT, under the rule that took it off
+            every other stage this week: the bar names the page only
+            where the surface under it has no `PageHead`. One
+            customer now has one — eyebrow "Customer", the person's
+            name as the title, their quotes as the counted fact — so
+            "Customer · the history with one of them" had become a
+            second, quieter title sitting directly on top of a better
+            one, which is the same "two titles and the centred one
+            wins the eye" that the pipeline was reported for.
+
+            So the bar for a customer is one control, and the bar for
+            the register is empty — which is what a stage looks like
+            when the page below it can name itself. */}
         {openId ? (
           <div className="shell-quote-acts">
             <button
@@ -146,6 +162,7 @@ export function CustomerStage({
             key={openId}
             rowId={openId}
             onOpenQuote={onOpenQuote}
+            {...(onNewQuote ? { onNewQuote } : {})}
             onRemoved={() => onOpen(null)}
           />
         ) : (

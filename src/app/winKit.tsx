@@ -443,6 +443,13 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           /* the history is a list of DOORS, not a readout — a quote
              opens in a window of its own, which only the shell knows */
           onOpenQuote={(quoteId) => h.openWin({ kind: 'quote', quoteId })}
+          /* AND THE EMPTY HISTORY IS A DOOR TOO. A customer with
+             nothing quoted to them used to be told the four-step
+             route to the button; the button is one wire. Wrapped
+             rather than passed by reference because `newQuote` takes
+             an optional moduleId and a click handler would hand it
+             the event. */
+          onNewQuote={() => h.newQuote()}
           onClose={h.close}
         />
       )
@@ -481,6 +488,9 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
              while the same boat opened from Tables could. Wired to
              the same place the view case wires it. */
           onQuote={(quoteId) => h.openWin({ kind: 'quote', quoteId })}
+          /* AND STARTING ONE FROM HERE. The picker opens standing
+             in this module — see the `start` stage above. */
+          onNewQuote={h.newQuote}
           onClose={h.close}
         />
       )
