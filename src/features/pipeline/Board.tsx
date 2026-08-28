@@ -35,6 +35,7 @@ import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { TableKind } from '@/types/model'
+import { PageHead } from '@/features/page'
 import { StageEditor } from './StageEditor'
 import {
   SORTS,
@@ -202,94 +203,96 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
 
   return (
     <div className="pb" ref={boardRef}>
-      <header className="pb-head">
-        <h2 className="pb-name ds-heading">Pipeline</h2>
-        {/* THE COUNT SAYS WHEN IT IS A SUBSET. "12 quotes" while a
-            search is on is a lie by omission; "12 of 84" is the same
-            control admitting what it is doing. */}
-        <p className="pb-n ds-mono">
-          {narrowed ? `${total} of ${all.length}` : total}{' '}
-          {all.length === 1 ? 'quote' : 'quotes'}
-        </p>
+      <PageHead
+        eyebrow="Selling"
+        name="Pipeline"
+        /* THE COUNT SAYS WHEN IT IS A SUBSET. "12 quotes" while a
+           search is on is a lie by omission; "12 of 84" is the same
+           control admitting what it is doing. */
+        count={`${narrowed ? `${total} of ${all.length}` : total} ${
+          all.length === 1 ? 'quote' : 'quotes'
+        }`}
+        acts={
+          <>
+            <label className="pb-find">
+              <MagnifyingGlass size={ICON_SIZE.small} aria-hidden="true" />
+              <input
+                className="pb-find-in"
+                type="search"
+                value={query}
+                placeholder="Search quotes"
+                aria-label="Search quotes by reference, customer or what is being sold"
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </label>
 
-        <div className="pb-tools">
-          <label className="pb-find">
-            <MagnifyingGlass size={ICON_SIZE.small} aria-hidden="true" />
-            <input
-              className="pb-find-in"
-              type="search"
-              value={query}
-              placeholder="Search quotes"
-              aria-label="Search quotes by reference, customer or what is being sold"
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
+            <label className="pb-sort">
+              <span className="pb-sort-say">Sort</span>
+              <select
+                className="pb-sort-in"
+                value={sort}
+                aria-label="How to order every column"
+                onChange={(e) => {
+                  setSort(e.target.value as SortId)
+                  /* A BOARD-WIDE SORT CLEARS THE OVERRIDES, or the
+                     control appears not to work on exactly the
+                     columns somebody had already touched. */
+                  setPerCol({})
+                }}
+              >
+                {SORTS.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="pb-sort">
-            <span className="pb-sort-say">Sort</span>
-            <select
-              className="pb-sort-in"
-              value={sort}
-              aria-label="How to order every column"
-              onChange={(e) => {
-                setSort(e.target.value as SortId)
-                /* A BOARD-WIDE SORT CLEARS THE OVERRIDES, or the
-                   control appears not to work on exactly the columns
-                   somebody had already touched. */
-                setPerCol({})
-              }}
+            {/* THE DEALERSHIP'S OWN COLUMNS. It sits on the board
+                rather than only in Admin because the person who
+                wants a stage called "Awaiting deposit" is looking
+                at the board when they think of it. */}
+            <button
+              type="button"
+              className="pb-stages-go"
+              aria-expanded={editing}
+              onClick={() => setEditing((v) => !v)}
             >
-              {SORTS.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
+              <Sliders size={ICON_SIZE.tiny} aria-hidden="true" />
+              Stages
+            </button>
+          </>
+        }
+        tools={
+          /* WHAT SORT OF THING IS BEING SOLD. The same filter the
+             modules grid carries, in the same words and the same
+             hues, because it is the same question about the same
+             catalogue. Drawn only where there is more than one type
+             to choose between — a lone "All" chip is a control with
+             no choice in it. */
+          chips.length > 2 ? (
+            <ul className="pb-types" aria-label="Show one type of quote">
+              {chips.map((c) => (
+                <li key={c.key}>
+                  <button
+                    type="button"
+                    className="k-filter pb-type"
+                    data-kind={c.kind}
+                    aria-pressed={type === c.key}
+                    onClick={() => setType(c.key)}
+                  >
+                    {c.label}
+                    <span className="pb-type-n">{c.count}</span>
+                  </button>
+                </li>
               ))}
-            </select>
-          </label>
-
-          {/* THE DEALERSHIP'S OWN COLUMNS. It sits on the board
-              rather than only in Admin because the person who wants
-              a stage called "Awaiting deposit" is looking at the
-              board when they think of it. */}
-          <button
-            type="button"
-            className="pb-stages-go"
-            aria-expanded={editing}
-            onClick={() => setEditing((v) => !v)}
-          >
-            <Sliders size={ICON_SIZE.tiny} aria-hidden="true" />
-            Stages
-          </button>
-        </div>
-      </header>
+            </ul>
+          ) : undefined
+        }
+      />
 
       {editing ? (
         <StageEditor orgSlug={orgSlug} onClose={() => setEditing(false)} />
-      ) : null}
-
-      {/* WHAT SORT OF THING IS BEING SOLD. The same filter the
-          modules grid carries, in the same words and the same hues,
-          because it is the same question about the same catalogue.
-          Drawn only where there is more than one type to choose
-          between — a lone "All" chip is a control with no choice
-          in it. */}
-      {chips.length > 2 ? (
-        <ul className="pb-types" aria-label="Show one type of quote">
-          {chips.map((c) => (
-            <li key={c.key}>
-              <button
-                type="button"
-                className="k-filter pb-type"
-                data-kind={c.kind}
-                aria-pressed={type === c.key}
-                onClick={() => setType(c.key)}
-              >
-                {c.label}
-                <span className="pb-type-n">{c.count}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
       ) : null}
 
       <div className="pb-cols">

@@ -24,23 +24,6 @@
   padding: var(--s-6) 0 0;
 }
 
-.pb-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  flex: none;
-  padding: 0 var(--s-8) var(--s-4);
-}
-.pb-name {
-  margin: 0;
-  color: var(--fg);
-}
-.pb-n {
-  margin: 0;
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
-}
 
 /* ---- the columns ------------------------------------------- */
 
@@ -57,7 +40,10 @@
   min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0 var(--s-8) var(--s-6);
+  /* THE PAGE'S GUTTER, so the first column's left edge is the
+     title's left edge. See page.css: it is one custom property and
+     every page reads it. */
+  padding: 0 var(--page-gutter) var(--s-6);
 }
 
 .pb-col {
@@ -254,13 +240,7 @@
    stacks, because five stacked columns is the list this screen
    replaced.
    ============================================================ */
-@media (max-width: 1100px) {
-  .pb-head,
-  .pb-cols {
-    padding-left: var(--s-5);
-    padding-right: var(--s-5);
-  }
-}
+
 
 @media (prefers-reduced-motion: reduce) {
   .pb-card,
@@ -282,12 +262,6 @@
    without looking.
    ============================================================ */
 
-.pb-tools {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  margin-left: auto;
-}
 
 /* ---- search ------------------------------------------------ */
 
@@ -378,7 +352,7 @@
   gap: var(--s-2);
   list-style: none;
   margin: 0;
-  padding: 0 var(--s-8) var(--s-4);
+  padding: 0;
   flex: none;
 }
 .pb-type {
@@ -509,22 +483,14 @@
    is a search box.
    ============================================================ */
 @media (max-width: 1100px) {
-  .pb-head {
-    flex-wrap: wrap;
-  }
-  .pb-tools {
-    width: 100%;
-    margin-left: 0;
-  }
+  /* the search takes what is left of the row rather than shrinking
+     to a box nobody can tell is a search box */
   .pb-find {
     flex: 1 1 auto;
+    min-width: 140px;
   }
   .pb-find-in {
     width: 100%;
-  }
-  .pb-types {
-    padding-left: var(--s-5);
-    padding-right: var(--s-5);
   }
 }
 
@@ -604,7 +570,7 @@
   position: relative;
   z-index: 3;
   flex: none;
-  margin: 0 var(--s-8) var(--s-4);
+  margin: 0 var(--page-gutter) var(--s-4);
   padding: var(--s-4) var(--s-5) var(--s-3);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
@@ -913,10 +879,7 @@
 }
 
 @media (max-width: 1100px) {
-  .se {
-    margin-left: var(--s-5);
-    margin-right: var(--s-5);
-  }
+
   /* the row becomes two: the name and its handles on one line, the
      colour, the flag and the count beneath. Nothing is dropped. */
   .se-row {

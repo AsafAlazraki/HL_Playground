@@ -1,0 +1,133 @@
+/* ============================================================
+   THE PAGE HEADER (ph-) — one of them, for every page.
+
+   THE GUTTER IS THE APPLICATION'S GUTTER. `--s-8` at a laptop and
+   above, `--s-5` below it, and every page's contents line up with
+   its own title because they take the same value. That was the
+   fault as much as the typography was: the modules grid was inset
+   24px under a title inset 24px, the pipeline 32 under 32, and the
+   dashboard 32 under 32 with a card body inset a further 8 — so no
+   two pages had the same left edge and moving between them felt
+   like moving between applications.
+
+   IT IS DECLARED ONCE, HERE, as a custom property, so a page that
+   wants to line up with its header has one thing to read.
+   ============================================================ */
+
+:root {
+  --page-gutter: var(--s-8);
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --page-gutter: var(--s-5);
+  }
+}
+
+.ph {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-5);
+  flex: none;
+  flex-wrap: wrap;
+  padding: var(--s-6) var(--page-gutter) var(--s-4);
+}
+
+/* A TIGHTER ONE for a page that is mostly content — a catalogue, a
+   register. Same anatomy and the same gutter; less air above it,
+   because the content IS the page and a 96px header over a grid of
+   two hundred rows is a header taking room from the thing it
+   names. */
+.ph.is-tight {
+  padding-top: var(--s-5);
+  padding-bottom: var(--s-3);
+}
+
+.ph-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* WHAT KIND OF PAGE THIS IS. Uppercase is legal here and only here
+   — §3 allows it on a section caption, a group caption and a
+   stamp, and this is the first of those. `.mono-label` carries the
+   size, the tracking and the 11px floor. */
+.ph-eyebrow {
+  color: var(--fg-tertiary);
+}
+
+.ph-line-1 {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+/* ONE SIZE FOR EVERY PAGE TITLE, and it is not the hero face.
+   Archivo at 64px is right for a landing surface and wrong for the
+   fifth screen of a working day — it was drawing the eye to the
+   word "Modules" on a page whose subject is twenty-five brands.
+   34px is display-face territory (§ the 26px floor) and still
+   sits below the dashboard's greeting, which is the one place in
+   the app that earns a bigger voice. */
+.ph-name {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-hero);
+  font-size: clamp(26px, 2.4cqi, 34px);
+  font-weight: 660;
+  line-height: 1.08;
+  letter-spacing: -0.028em;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+/* THE COUNTED FACT BESIDE THE NAME. Mono, tabular, never a hue —
+   a figure is not decorative. It sits on the title's baseline
+   rather than under it, because it is part of what the page is:
+   "Modules 25", not "Modules" and then a number. */
+.ph-count {
+  font-size: var(--t-small-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
+/* ONE SENTENCE. The prose budget starts at the top of the page. */
+.ph-line {
+  margin: 0;
+  max-width: 68ch;
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+
+.ph-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+}
+
+/* ---- the page's own row of controls ------------------------ */
+
+/* FILTERS AND SEARCH SIT BENEATH THE HEADER, not in it. A header
+   says what the page is; a filter says which part of it you are
+   looking at. Putting them on one line makes the title move
+   whenever the controls wrap, which is what the pipeline's toolbar
+   did at 1100px. */
+.ph-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: none;
+  flex-wrap: wrap;
+  padding: 0 var(--page-gutter) var(--s-4);
+}
+.ph-tools.is-tight {
+  padding-bottom: var(--s-3);
+}

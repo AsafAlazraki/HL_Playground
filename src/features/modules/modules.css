@@ -142,12 +142,9 @@
    and a row of controls that ran off the edge would hide the last
    two kinds behind an edge with no affordance. */
 
-.md-filters {
-  position: relative;
-  z-index: 1;
-  flex: none;
-  padding: 0 var(--s-6) var(--s-4);
-}
+/* NO GUTTER OF ITS OWN — `.ph-tools` is the row and owns the
+   page's inset. Two elements both padding to the gutter is how a
+   filter row ends up further in than the title above it. */
 .md-filter-row {
   display: flex;
   flex-wrap: wrap;
@@ -276,7 +273,9 @@
   grid-auto-rows: min-content;
   gap: var(--s-4);
   margin: 0;
-  padding: 0 var(--s-6) var(--s-6);
+  /* THE PAGE'S GUTTER, so the first card's left edge is the
+     title's left edge. See features/page/page.css. */
+  padding: 0 var(--page-gutter) var(--s-6);
   list-style: none;
 }
 

@@ -88,6 +88,7 @@ import { accessReading, type AccessReading } from './read'
 import { AccessScreen } from './AccessScreen'
 import { reorderPlan } from './designer'
 import { placeFilters, placesOf, placesUnder, type Place } from './places'
+import { PageHead } from '@/features/page'
 import { rememberPlace } from './openPlace'
 import { PlaceMark } from './PlaceMark'
 import './modules.css'
@@ -237,71 +238,85 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
           `prefers-reduced-transparency` and `prefers-contrast: more`. */}
       <div className="ds-aurora ds-grain md-dash-sky" aria-hidden="true" />
 
-      <header className="md-dash-mast">
-        <div className="md-dash-say">
-          <span className="mono-label md-dash-eyebrow">
-            {business === '' ? 'This sheet' : 'Your business'}
-          </span>
-          {/* THE ONE BIG THING ON THE SCREEN. Nothing else here is
-              above the heading step, which is what makes it a
-              hierarchy rather than seven sizes. */}
-          <h1 className="ds-hero md-dash-org">{name}</h1>
-        </div>
+      {/* ONE HEADER, THE APPLICATION'S. This screen used to draw
+          the business's name at 64px over its own eyebrow with its
+          own 24px gutter — a landing surface's header on the fifth
+          screen of a working day, and the third different header
+          anatomy in the app. `PageHead` is the one anatomy: what
+          kind of page, what it is, what you can do to it, and then
+          the page's own filters on their own row. See
+          features/page/PageHead.tsx for the five it replaced.
 
-        <div className="md-dash-acts">
-          {/* THE DOOR THE RAIL PROMISES. Drawn whether or not there
-              are places: the screen behind it says honestly that
-              access is granted in a place when there are none yet. */}
-          <button type="button" className="btn md-access" onClick={() => setSurface('access')}>
-            <ShieldCheck size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-            Access &amp; roles
-          </button>
-
-          {moduleCount > 1 ? (
+          THE NAME IS "Modules", NOT THE DEALERSHIP'S. The rail
+          carries the business's name at the top of every screen;
+          repeating it here as the largest words on the page told
+          somebody who pressed "Modules" the name of the company
+          they work for. The eyebrow keeps it. */}
+      <PageHead
+        eyebrow={business === '' ? 'This sheet' : name}
+        name="Modules"
+        count={`${places.length} ${places.length === 1 ? 'place' : 'places'}`}
+        acts={
+          <>
+            {/* THE DOOR THE RAIL PROMISES. Drawn whether or not
+                there are places: the screen behind it says honestly
+                that access is granted in a place when there are
+                none yet. */}
             <button
               type="button"
-              className={`btn md-order${ordering ? ' is-on' : ''}`}
-              aria-pressed={ordering}
-              onClick={() => setOrdering((v) => !v)}
+              className="btn md-access"
+              onClick={() => setSurface('access')}
             >
-              {ordering ? 'Done' : 'Reorder'}
+              <ShieldCheck size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+              Access &amp; roles
             </button>
-          ) : null}
-        </div>
-      </header>
 
-      {/* FILTER BY TYPE. Every chip is a kind that is really present,
-          in TABLE_KINDS' own order, carrying its own count and — when
-          it is on — its own hue. `.k-filter` is the system's, so this
-          chip and a chip anywhere else in the app are one control. */}
-      {chips.length > 2 ? (
-        <div className="md-filters" role="group" aria-label="Show one type of place">
-          <ul className="md-filter-row">
-            {chips.map((chip) => (
-              <li key={chip.key}>
-                <button
-                  type="button"
-                  className="k-filter md-filter"
-                  data-kind={chip.kind}
-                  aria-pressed={live === chip.key}
-                  onClick={() => setFilter(chip.key)}
-                >
-                  {chip.label}
-                  <span className="md-filter-n">{chip.count}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+            {moduleCount > 1 ? (
+              <button
+                type="button"
+                className={`btn md-order${ordering ? ' is-on' : ''}`}
+                aria-pressed={ordering}
+                onClick={() => setOrdering((v) => !v)}
+              >
+                {ordering ? 'Done' : 'Reorder'}
+              </button>
+            ) : null}
+          </>
+        }
+        tools={
+          /* FILTER BY TYPE. Every chip is a kind that is really
+             present, in TABLE_KINDS' own order, carrying its own
+             count and — when it is on — its own hue. `.k-filter` is
+             the system's, so this chip and a chip anywhere else in
+             the app are one control. */
+          chips.length > 2 ? (
+            <ul className="md-filter-row">
+              {chips.map((chip) => (
+                <li key={chip.key}>
+                  <button
+                    type="button"
+                    className="k-filter md-filter"
+                    data-kind={chip.kind}
+                    aria-pressed={live === chip.key}
+                    onClick={() => setFilter(chip.key)}
+                  >
+                    {chip.label}
+                    <span className="md-filter-n">{chip.count}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : undefined
+        }
+      />
 
       {moduleCount === 0 ? (
-        /* THE EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT — the one
+        /* THE EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT â€” the one
            place on this screen prose earns its space. */
         <div className="md-empty">
           <span className="mono-label md-empty-eyebrow">Nothing here yet</span>
           <p className="md-empty-say">
-            A module is a place in your business — the boats you sell, the trailers, the
+            A module is a place in your business â€” the boats you sell, the trailers, the
             quotes you have raised. You pick the table it is about and give it a name.
           </p>
           <p className="md-empty-count">
@@ -332,7 +347,7 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
         <>
           {/* THE GRID SCROLLS, THE PAGE NEVER DOES. `1fr` rows inside a
               definite height, so the cards grow when there are few and
-              the box — not the document — scrolls when there are many. */}
+              the box â€” not the document â€” scrolls when there are many. */}
           <ul className="md-grid">
             {deck.map((seat, i) => (
               <PlaceCard
