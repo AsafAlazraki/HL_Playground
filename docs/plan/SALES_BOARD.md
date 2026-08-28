@@ -33,17 +33,22 @@ the filters and the diary in one commit. Do the mapping first, with a
 test that every stored quote lands somewhere, and only then draw a
 board.
 
-### 2 · Swimlanes
+### 2 · Swimlanes — and they are the COLUMNS
 
-Rows across the board, cutting the same deals a second way — by
-salesperson, by brand, by month. A lane is a grouping, not a second
-axis of truth: a deal is in exactly one stage and appears in exactly
-one lane.
+Settled 28 August 2026: the swimlanes are the stage columns
+themselves, not a second axis of rows across them. The board reads
+left to right through the lifecycle and that is the whole model.
 
-Brand is the lane that matters most, and it is already available:
-`quotesPerPlace` (`features/dashboard/cards.ts`) resolves a quote to a
-place through `rootTableId`, which is what makes "Highfield's pipeline"
-a real question the data can answer.
+A rows-and-columns board was considered and rejected: it asks a
+person to hold two groupings in their head at once, it makes every
+lane a fifth the height, and the question it answers — "how is
+Highfield doing" — is already answered better by the type filter
+and the search, which narrow the same board rather than dividing
+it.
+
+So the work here is DEPTH IN A COLUMN rather than a second axis:
+per-column sort (done), and a column that can be collapsed when
+somebody wants the width for the three that matter.
 
 ### 3 · Drag and drop between stages
 
