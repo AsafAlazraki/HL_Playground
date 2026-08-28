@@ -26,10 +26,10 @@
 
 .pb-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-3);
   flex: none;
-  padding: 0 var(--s-8) var(--s-5);
+  padding: 0 var(--s-8) var(--s-4);
 }
 .pb-name {
   margin: 0;
@@ -93,11 +93,10 @@
 
 .pb-col-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--s-2);
   flex: none;
-  padding: 0 var(--s-2) 2px;
+  padding: 0 var(--s-1) 2px var(--s-2);
 }
 /* A STAGE NAME IS A LABEL, so §3 lets it be uppercase — it is the
    one uppercase thing on this screen, and it is what makes the
@@ -111,6 +110,10 @@
   color: var(--fg-secondary);
 }
 .pb-col-n {
+  /* the count sits hard against the name and the sort control takes
+     the end of the row, so the head reads name-count … control
+     rather than as three things spread evenly across it */
+  margin-right: auto;
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
   color: var(--fg-tertiary);
@@ -279,5 +282,261 @@
   }
   .pb-card.is-held {
     transform: none;
+  }
+}
+
+/* ============================================================
+   FINDING THINGS ON THE BOARD — the toolbar, the type filters,
+   and each column's own order.
+
+   THE TOOLBAR SITS IN THE HEAD, on the same line as the title and
+   the count, because it is about the board rather than about any
+   column. Search first: it is the control a person reaches for
+   without looking.
+   ============================================================ */
+
+.pb-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-left: auto;
+}
+
+/* ---- search ------------------------------------------------ */
+
+.pb-find {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-tertiary);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+/* THE WHOLE FIELD TAKES THE FOCUS RING, not the bare input inside
+   it — a ring drawn around an input that has a border and a glyph
+   outside it reads as two nested boxes. */
+.pb-find:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+  color: var(--accent);
+}
+.pb-find-in {
+  width: 168px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+}
+.pb-find-in:focus {
+  outline: none;
+}
+.pb-find-in::placeholder {
+  color: var(--fg-tertiary);
+}
+/* the browser's own clear button in a `type="search"` is drawn in
+   its own grey and its own size; ours is Escape and the field */
+.pb-find-in::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+/* ---- sort -------------------------------------------------- */
+
+.pb-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-2) 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+}
+.pb-sort:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+/* "Sort" IS A LABEL, so §3 lets it be uppercase and tracked. The
+   value beside it is a value and is neither. */
+.pb-sort-say {
+  font-size: var(--t-caption-size);
+  font-weight: 620;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+.pb-sort-in {
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+}
+.pb-sort-in:focus {
+  outline: none;
+}
+
+/* ---- the type filters -------------------------------------- */
+
+.pb-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--s-8) var(--s-4);
+  flex: none;
+}
+.pb-type {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 30px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-full);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  cursor: pointer;
+}
+.pb-type:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+/* A COUNT IS A FIGURE, so it is mono and never the hue, whatever
+   the chip around it is doing. */
+.pb-type-n {
+  font-family: var(--font-mono);
+  font-size: var(--t-caption-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+.pb-type[aria-pressed='true'] .pb-type-n {
+  color: var(--fg-secondary);
+}
+
+/* ---- each column's own order ------------------------------- */
+
+.pb-col-sort {
+  position: relative;
+  display: inline-flex;
+}
+
+/* QUIET UNTIL WANTED. Five of these lit at once would be five
+   controls competing with five column names. It appears when the
+   column is under the cursor, when it has keyboard focus, when its
+   menu is open — and permanently once it carries an override,
+   because a setting you cannot see is a board that has stopped
+   explaining itself. */
+.pb-col-sortgo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease);
+}
+.pb-col:hover .pb-col-sortgo,
+.pb-col-sortgo:focus-visible,
+.pb-col-sortgo[aria-expanded='true'],
+.pb-col-sortgo.is-set {
+  opacity: 1;
+}
+.pb-col-sortgo:hover {
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+.pb-col-sortgo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* AN OVERRIDE IS LIT. This is the accent's one appearance on the
+   board and it means "this column is not doing what the toolbar
+   says", which is exactly the kind of thing an accent is for. */
+.pb-col-sortgo.is-set {
+  color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.pb-col-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 2;
+  min-width: 168px;
+  list-style: none;
+  margin: 0;
+  padding: var(--s-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e-float);
+}
+.pb-col-pick {
+  display: block;
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease);
+}
+.pb-col-pick:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.pb-col-pick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.pb-col-pick.is-on {
+  color: var(--accent);
+  font-weight: 560;
+}
+
+/* ============================================================
+   RESPONSIVE. Under a laptop the toolbar drops below the title
+   rather than squeezing the search field to nothing — a search box
+   narrower than the word "Search quotes" is a box nobody can tell
+   is a search box.
+   ============================================================ */
+@media (max-width: 1100px) {
+  .pb-head {
+    flex-wrap: wrap;
+  }
+  .pb-tools {
+    width: 100%;
+    margin-left: 0;
+  }
+  .pb-find {
+    flex: 1 1 auto;
+  }
+  .pb-find-in {
+    width: 100%;
+  }
+  .pb-types {
+    padding-left: var(--s-5);
+    padding-right: var(--s-5);
   }
 }

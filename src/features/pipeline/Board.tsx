@@ -30,7 +30,20 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { JSX, PointerEvent as ReactPointerEvent } from 'react'
+import { ArrowsDownUp, MagnifyingGlass } from '@phosphor-icons/react'
+import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
+import { useProjectStore } from '@/store/useProjectStore'
+import type { TableKind } from '@/types/model'
+import {
+  SORTS,
+  kindOfQuote,
+  matches,
+  sortDeals,
+  sortLabel,
+  typeChips,
+  type SortId,
+} from './finding'
 import { say } from '@/store/notes'
 import { quoteTotals, useQuotes, type QuoteDef } from '@/features/quote'
 import { STAGES, boardOf, moveTo, stageById, stageOf, useStages, type StageId } from './stages'
@@ -52,8 +65,38 @@ function whenSay(iso: string, now = Date.now()): string {
 }
 
 export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
-  const quotes = useQuotes()
+  const all = useQuotes()
+  const entities = useProjectStore((st) => st.entities)
   const at = useStages(orgSlug)
+
+  const [query, setQuery] = useState('')
+  const [type, setType] = useState<TableKind | 'all'>('all')
+
+  /* ONE SORT FOR THE BOARD, AND AN OVERRIDE PER COLUMN.
+     Five sort controls in five column heads is five loud controls
+     all saying the same word. One in the toolbar covers the case a
+     person actually has — "show me the big ones" — and the
+     per-column menu is there for the one column they want to look
+     at differently. A column with no override is not in this map,
+     so changing the board sort still moves it. */
+  const [sort, setSort] = useState<SortId>('recent')
+  const [perCol, setPerCol] = useState<Partial<Record<StageId, SortId>>>({})
+  const [menu, setMenu] = useState<StageId | null>(null)
+
+  /* THE CHIPS ARE COUNTED OFF EVERY QUOTE, not off the filtered
+     list: a type chip whose count changed as you typed would be
+     counting the search rather than the business. */
+  const chips = useMemo(() => typeChips(all, entities), [all, entities])
+
+  const quotes = useMemo(
+    () =>
+      all.filter(
+        (q) =>
+          (type === 'all' || kindOfQuote(q, entities) === type) && matches(q, query),
+      ),
+    [all, entities, type, query],
+  )
+
   const columns = useMemo(() => boardOf(quotes, at), [quotes, at])
 
   /* the card under the pointer, and the column it is over. Both null
@@ -149,19 +192,85 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
   )
 
   const total = quotes.length
+  const narrowed = total !== all.length
 
   return (
     <div className="pb" ref={boardRef}>
       <header className="pb-head">
         <h2 className="pb-name ds-heading">Pipeline</h2>
+        {/* THE COUNT SAYS WHEN IT IS A SUBSET. "12 quotes" while a
+            search is on is a lie by omission; "12 of 84" is the same
+            control admitting what it is doing. */}
         <p className="pb-n ds-mono">
-          {total} {total === 1 ? 'quote' : 'quotes'}
+          {narrowed ? `${total} of ${all.length}` : total}{' '}
+          {all.length === 1 ? 'quote' : 'quotes'}
         </p>
+
+        <div className="pb-tools">
+          <label className="pb-find">
+            <MagnifyingGlass size={ICON_SIZE.small} aria-hidden="true" />
+            <input
+              className="pb-find-in"
+              type="search"
+              value={query}
+              placeholder="Search quotes"
+              aria-label="Search quotes by reference, customer or what is being sold"
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+
+          <label className="pb-sort">
+            <span className="pb-sort-say">Sort</span>
+            <select
+              className="pb-sort-in"
+              value={sort}
+              aria-label="How to order every column"
+              onChange={(e) => {
+                setSort(e.target.value as SortId)
+                /* A BOARD-WIDE SORT CLEARS THE OVERRIDES, or the
+                   control appears not to work on exactly the columns
+                   somebody had already touched. */
+                setPerCol({})
+              }}
+            >
+              {SORTS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
+
+      {/* WHAT SORT OF THING IS BEING SOLD. The same filter the
+          modules grid carries, in the same words and the same hues,
+          because it is the same question about the same catalogue.
+          Drawn only where there is more than one type to choose
+          between — a lone "All" chip is a control with no choice
+          in it. */}
+      {chips.length > 2 ? (
+        <ul className="pb-types" aria-label="Show one type of quote">
+          {chips.map((c) => (
+            <li key={c.key}>
+              <button
+                type="button"
+                className="k-filter pb-type"
+                data-kind={c.kind}
+                aria-pressed={type === c.key}
+                onClick={() => setType(c.key)}
+              >
+                {c.label}
+                <span className="pb-type-n">{c.count}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       <div className="pb-cols">
         {STAGES.map((stage) => {
-          const deals = columns[stage.id]
+          const deals = sortDeals(columns[stage.id], perCol[stage.id] ?? sort)
           /* THE COLUMN'S MONEY, and it is the reason a board beats a
              list at a glance: what is sitting in Issued is what the
              month depends on. Unpriced lines are excluded rather
@@ -180,6 +289,42 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
               <header className="pb-col-head">
                 <h3 className="pb-col-name">{stage.name}</h3>
                 <span className="pb-col-n ds-mono">{deals.length}</span>
+                {/* THIS COLUMN'S OWN ORDER. Quiet until the column is
+                    under the cursor or its menu is open, and lit
+                    whenever it differs from the board's — an override
+                    you cannot see is a board that has stopped
+                    explaining itself. */}
+                <span className="pb-col-sort">
+                  <button
+                    type="button"
+                    className={`pb-col-sortgo${perCol[stage.id] ? ' is-set' : ''}`}
+                    aria-expanded={menu === stage.id}
+                    aria-label={`Order ${stage.name}. ${sortLabel(perCol[stage.id] ?? sort)}`}
+                    onClick={() => setMenu(menu === stage.id ? null : stage.id)}
+                  >
+                    <ArrowsDownUp size={ICON_SIZE.tiny} aria-hidden="true" />
+                  </button>
+                  {menu === stage.id ? (
+                    <ul className="pb-col-menu">
+                      {SORTS.map((o) => (
+                        <li key={o.id}>
+                          <button
+                            type="button"
+                            className={`pb-col-pick${
+                              (perCol[stage.id] ?? sort) === o.id ? ' is-on' : ''
+                            }`}
+                            onClick={() => {
+                              setPerCol((m) => ({ ...m, [stage.id]: o.id }))
+                              setMenu(null)
+                            }}
+                          >
+                            {o.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </span>
               </header>
               {deals.length > 0 ? (
                 <p className="pb-col-sum ds-mono">{money(sum)}</p>
@@ -187,7 +332,13 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
 
               <div className="pb-col-body">
                 {deals.length === 0 ? (
-                  <p className="pb-none">{stage.empty}</p>
+                  /* AN EMPTY COLUMN SAYS WHY IT IS EMPTY. "Nothing
+                     won yet" and "nothing matches what you typed" are
+                     different facts, and a column giving the first
+                     answer to the second question is simply wrong. */
+                  <p className="pb-none">
+                    {narrowed ? 'Nothing here matches.' : stage.empty}
+                  </p>
                 ) : (
                   deals.map((q) => {
                     const t = quoteTotals(q)
