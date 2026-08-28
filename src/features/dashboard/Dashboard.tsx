@@ -353,7 +353,13 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
                   <Sliders size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
                 )}
               </span>
-              {arranging ? 'Done' : 'Arrange'}
+              {/* "Edit", not "Arrange". Arranging is what the mode
+                  DOES, and it was named for the mechanism rather
+                  than for the person's intent — you press it
+                  because you want to change your dashboard, and
+                  every other application in the world calls that
+                  Edit. */}
+              {arranging ? 'Done' : 'Edit'}
             </button>
           </div>
         </header>

@@ -1703,7 +1703,13 @@
   /* two columns wherever the card is wide enough, one where it is
      not. 190px is the width at which "Parts & Accessories" sets on
      two lines rather than three. */
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  /* 240, AND IT WAS 190. Three columns fitted at 190 and the
+     wordmarks came out seventeen pixels tall — Highfield's file is
+     nine to one, so the mark's height is the column's width
+     divided by nine, and a mark you have to lean in to read is not
+     a showpiece. Two wider columns give the same marks 33px and
+     the tile still holds "Parts & Accessories" on one line. */
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--s-2);
   min-height: 0;
   overflow-y: auto;
@@ -1751,96 +1757,23 @@
   border-style: dashed;
 }
 
-.dsh-tile-face {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  align-items: center;
-  gap: 2px var(--s-3);
-  width: 100%;
-  padding: var(--s-3);
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  border-radius: inherit;
-}
-.dsh-tile-face:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-.dsh-tile-face:active {
-  transform: translateY(0.5px);
-  transition: transform var(--d-press) var(--ease);
-}
 
 /* THE MARK SITS ON A PLATE, and the plate is the paper colour
    rather than the kind's tint, because a dealer's logo is usually
    dark ink on transparent and would otherwise sit on a coloured
    ground nobody designed it for. The kind symbol takes the kind's
    colour; an uploaded logo keeps its own. */
-.dsh-tile-mark {
-  grid-row: span 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  border: 1px solid color-mix(in srgb, var(--kind) 18%, var(--line-subtle));
-  color: var(--kind);
-}
-.dsh-tile-mark .md-place-logo {
-  max-width: 22px;
-  max-height: 22px;
-  object-fit: contain;
-}
 
-.dsh-tile-say {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
 
 /* A BRAND'S NAME IS A NAME, so it is not uppercase and not
    tracked out — rule 3. Two lines, then it ellipses. */
-.dsh-tile-name {
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  line-height: 1.25;
-  color: var(--fg);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 
 /* the category, second and quieter: Highfield IS a boat, and that
    is worth knowing after you know it is Highfield */
-.dsh-tile-under {
-  font-size: var(--t-caption-size);
-  line-height: 1.3;
-  color: var(--fg-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* HOW MUCH IS IN IT. Mono and tabular because it is a figure, and
    figures in a grid that do not line up are a grid you cannot
    read down. */
-.dsh-tile-sum {
-  grid-column: 2;
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-secondary);
-}
-.dsh-tile.is-held-back .dsh-tile-sum {
-  color: var(--fg-tertiary);
-}
 
 /* THE GRIP IS A SECOND CONTROL, not the tile itself. Dragging the
    face would mean a press that travels three pixels opens a brand
@@ -1903,4 +1836,242 @@
 .dsh-card-body > .ac-list {
   min-height: 0;
   overflow-y: auto;
+}
+
+/* ============================================================
+   THE TILES, SECOND PASS — the brand's mark IS the tile.
+
+   WHAT CHANGED AND WHY. Every tile carried a boat, a motor or a
+   trailer glyph: four pictures repeated twenty-five times, saying
+   a thing the tile's own colour already said. They are gone, and
+   the kind is said ONCE in a key above the grid.
+
+   What replaces them is the BRAND's own wordmark, and it is the
+   heading rather than an ornament beside one. A wordmark IS the
+   brand's name, set better than this application will ever set
+   it; drawing the mark and then the name is saying the same word
+   twice, once in Highfield's type and once in ours. Where a
+   dealer has no mark for a place, the name takes the panel and is
+   set large — so every tile is the same object, and the only
+   difference is whose type the name is in.
+   ============================================================ */
+
+/* ---- the key ---------------------------------------------- */
+.dsh-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  list-style: none;
+  margin: 0 0 var(--s-3);
+  padding: 0 0 var(--s-3) 1px;
+  border-bottom: 1px solid var(--line-subtle);
+  flex: none;
+}
+.dsh-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+/* the swatch is the tiles' own hue at full strength — a key drawn
+   in the tint is a key you cannot see */
+.dsh-key-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--kind);
+}
+
+/* ---- the panel: the mark, or the name --------------------- */
+
+.dsh-tile-face {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* THE KIND'S COLOUR LIVES HERE NOW, and at 14% rather than the 6%
+   the whole tile used to carry. It is a panel behind a mark rather
+   than a wash behind a paragraph, so it can be strong enough to
+   read as a colour — which is what makes twenty-five tiles group
+   into four families at a glance.
+
+   IT IS A TINT AND NOT THE HUE ITSELF. These wordmarks are the
+   brands' own ink — Highfield navy, Stabicraft red — and a
+   saturated ground under them would either clash or swallow them.
+   14% of the kind over paper keeps every mark legible and still
+   says boat, motor, trailer at arm's length. */
+.dsh-tile-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 84px;
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--r-control) var(--r-control) 0 0;
+  background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
+  border-bottom: 1px solid color-mix(in srgb, var(--kind) 20%, transparent);
+  transition: background var(--d-fast) var(--ease);
+}
+.dsh-tile:hover .dsh-tile-panel {
+  background: color-mix(in srgb, var(--kind) 20%, var(--surface-1));
+}
+
+/* THE MARK. Contained rather than cropped, and capped in BOTH
+   directions: these files run from 9:1 (Highfield) to 3:1, and a
+   rule that only capped width would draw the squarer ones three
+   times the height of the wider ones. */
+.dsh-tile-panel .md-place-logo {
+  max-height: 40px;
+}
+
+/* THE NAME, WHERE THERE IS NO MARK. Centred, because it is
+   standing in for one — and hidden the moment a mark was really
+   painted, which `:has(img)` asks of the element that answered it
+   rather than re-deciding here. */
+.dsh-tile-name {
+  font-size: var(--t-body-size);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  text-align: center;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dsh-tile-panel:has(img) .dsh-tile-name {
+  display: none;
+}
+
+/* ---- the foot: what it is, how much, and what to do ------- */
+
+/* THE ACTS SHARE THE ROW AND CROSS-FADE WITH IT. A row that
+   appeared by growing the tile would shove every tile below it
+   down the moment the pointer crossed one — the reason most
+   hover-action grids feel broken. Grid rather than absolute
+   positioning, so the foot reserves its own height and the tile is
+   the same size whether or not it is under the cursor. */
+.dsh-tile-foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 30px;
+  padding: var(--s-2) var(--s-3);
+}
+
+.dsh-tile-under {
+  font-size: var(--t-caption-size);
+  line-height: 1.3;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity var(--d-fast) var(--ease);
+}
+/* WHERE THE PANEL IS ALREADY THE MODULE'S OWN NAME, this would
+   repeat the word directly above it. Two selectors rather than a
+   prop: the tile knows both strings and CSS cannot compare them,
+   so the case is narrowed to the one that matters — no mark, and
+   therefore a name in the panel. */
+.dsh-tile:not(:has(.dsh-tile-panel img)) .dsh-tile-under {
+  color: var(--fg-quaternary);
+}
+
+.dsh-tile-sum {
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+  transition: opacity var(--d-fast) var(--ease);
+}
+.dsh-tile.is-held-back .dsh-tile-sum {
+  color: var(--fg-tertiary);
+}
+
+.dsh-tile-acts {
+  grid-area: 1 / 1 / 2 / 3;
+  display: flex;
+  gap: var(--s-2);
+  justify-content: flex-start;
+  opacity: 0;
+  /* INERT UNTIL SHOWN. Without this the buttons stay in the tab
+     order and stay clickable while invisible — a control you can
+     press by accident and cannot see. */
+  pointer-events: none;
+  transition: opacity var(--d-fast) var(--ease);
+}
+
+/* THE SWAP. `:focus-within` is not decoration: it is the whole
+   keyboard story, so the control a person has tabbed onto is never
+   the invisible one. */
+.dsh-tile:hover .dsh-tile-under,
+.dsh-tile:focus-within .dsh-tile-under,
+.dsh-tile:hover .dsh-tile-sum,
+.dsh-tile:focus-within .dsh-tile-sum {
+  opacity: 0;
+}
+.dsh-tile:hover .dsh-tile-acts,
+.dsh-tile:focus-within .dsh-tile-acts {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dsh-tile-act {
+  padding: 3px var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 560;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.dsh-tile-act:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.dsh-tile-act:active {
+  transform: translateY(0.5px);
+  transition-duration: var(--d-press);
+}
+.dsh-tile-act:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ONE OF THE TWO IS PRIMARY, and it is Quote. A dealer opens this
+   card to sell something; the catalogue is how you get there when
+   you do not yet know which one. */
+.dsh-tile-act.is-go {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.dsh-tile-act.is-go:hover {
+  background: var(--accent-strong);
+  color: var(--accent-fg);
+}
+
+/* A TOUCH SCREEN HAS NO HOVER, so the acts would never appear. It
+   keeps the category and the count, and the tile itself is the
+   door — the behaviour it had before these were added. */
+@media (hover: none) {
+  .dsh-tile-acts {
+    display: none;
+  }
 }

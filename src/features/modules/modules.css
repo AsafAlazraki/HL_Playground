@@ -414,31 +414,58 @@
   justify-content: center;
   color: var(--kind, var(--fg-secondary));
 }
+/* WITH NO PHOTOGRAPH BEHIND IT the mark is the card's whole face,
+   so a wordmark gets the room a heading would get rather than the
+   40px square a glyph needs. */
+.md-place-mark:not(.is-over):has(.md-place-logo) {
+  width: 100%;
+  max-width: 190px;
+  height: 46px;
+}
 .md-place-mark.is-over {
   position: absolute;
   left: var(--s-2);
   bottom: var(--s-2);
-  width: 34px;
-  height: 34px;
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--r-control);
   box-shadow: var(--e1);
 }
-/* `contain` rather than `cover`: a mark is a drawing and cropping
-   one is defacing it. The two sizes match the width and height the
-   component declares, so a logo arriving late never moves the name
-   under it. */
+/* A MARK IS NOT A SQUARE, AND THIS RULE USED TO INSIST IT WAS.
+   `width: 40px; height: 40px` was written when the only thing that
+   could appear here was the kind symbol, which IS square. Then real
+   brand marks arrived and every one of them is a wordmark —
+   Highfield's file is 6430x701, nine to one — so `object-fit:
+   contain` did exactly what it was asked and drew a 40px-wide,
+   4px-tall smear inside a 40px box, on this screen and on the front
+   door's tiles at the same time.
+
+   So the mark has no size of its own any more: it fills the slot it
+   is given, up to a ceiling, and each surface gives it a slot of
+   the shape it has room for. `contain` still rather than `cover`,
+   because a mark is a drawing and cropping one is defacing it. */
 .md-place-logo {
   display: block;
-  width: 40px;
-  height: 40px;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   border-radius: var(--r-chip);
 }
-.md-place-mark.is-over .md-place-logo {
-  width: 22px;
-  height: 22px;
+/* THE SLOT ON A PHOTOGRAPH'S CORNER. Wide enough for a wordmark to
+   be read at a glance rather than squeezed into a badge, and it
+   only widens when it is HOLDING one — a kind symbol keeps its
+   square, because a 34px glyph floating in an 84px plate is a plate
+   with a hole in it. */
+.md-place-mark.is-over {
+  width: 34px;
+  height: 34px;
+  padding: 4px;
+}
+.md-place-mark.is-over:has(.md-place-logo) {
+  width: auto;
+  min-width: 34px;
+  max-width: 132px;
+  height: 32px;
 }
 
 /* -- its name, and its one fact ------------------------------- */

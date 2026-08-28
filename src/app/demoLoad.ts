@@ -19,6 +19,7 @@
    reachable from no surface in the app.
    ============================================================ */
 
+import { say } from '@/store/notes'
 import { useProjectStore } from '@/store/useProjectStore'
 import { DEMOS, type DemoSet } from '@/demos'
 
@@ -211,6 +212,26 @@ export async function applyDemoSet(demo: DemoSet): Promise<void> {
      button that was pressed. Swallowing it here would leave a door
      that looks pressed and does nothing. */
   await demo.load()
+
+  /* AND IT SAYS SO, WHICH IS HOW IT REACHES THE AUDIT LOG.
+     Putting a price file on the sheet is the largest single change
+     anybody makes to this business — 51 tables and 15,691 rows in
+     one press — and until now it was the ONLY change that passed
+     without a word. Every smaller act already announces itself
+     through this bus, and `features/activity` listens to the bus
+     rather than to the acts, so a change that stays silent is a
+     change the log cannot know about. Counted off the store after
+     the load rather than off the set's own metadata: what the
+     sheet actually holds is the fact worth recording. */
+  const after = useProjectStore.getState()
+  const tables = Object.keys(after.entities).length
+  let rows = 0
+  for (const list of Object.values(after.rowsByEntity)) rows += list.length
+  say({
+    text: `Loaded ${demo.name} — ${rows.toLocaleString()} rows across ${tables} ${
+      tables === 1 ? 'table' : 'tables'
+    }.`,
+  })
 }
 
 /**

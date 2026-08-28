@@ -4891,8 +4891,19 @@
 .sn-head {
   display: flex;
   align-items: center;
+  /* 8px, not 12. The rail is 224px and the head spends 28 on the
+     crest and 24 on the fold before the name gets a pixel; four
+     more between them is the difference between "Northside Marine"
+     and "Northside Mari…". */
   gap: var(--s-2);
-  padding: var(--s-4) var(--s-3) var(--s-3);
+  /* THE RAIL'S SPACING, MEASURED RATHER THAN GUESSED. Four doors
+     sat 104px from the top of a 1000px rail with 630px of nothing
+     under them, and every gap between the pieces above them was
+     the SAME gap — crest to search to doors — so the three
+     unrelated things read as one undifferentiated stack. The
+     business name is a header and gets a header's room; the
+     search is a control and gets a control's. */
+  padding: var(--s-5) var(--s-3) var(--s-4);
 }
 .sn-crest {
   display: inline-flex;
@@ -4950,9 +4961,12 @@
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  margin: 0 var(--s-3) var(--s-4);
+  /* SEPARATED FROM THE DOORS, not floated between them and the
+     header. It is a different KIND of thing — a control, not a
+     destination — and the gap under it is what says so. */
+  margin: 0 var(--s-3) var(--s-5);
   padding: 0 var(--s-2);
-  height: var(--h-md);
+  height: var(--h-lg);
   border: 1px solid var(--chrome-edge);
   border-radius: var(--r-control);
   background: var(--chrome-wash);
@@ -5018,6 +5032,9 @@
   scrollbar-width: thin;
   scrollbar-color: var(--chrome-wash-on) transparent;
 }
+.sn-row + .sn-row {
+  margin-top: 2px;
+}
 .sn-grp + .sn-grp {
   margin-top: var(--s-4);
 }
@@ -5029,9 +5046,14 @@
 .sn-row {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: var(--s-3);
   width: 100%;
-  height: 38px;
+  /* 42, AND IT WAS 38. Four rows is the whole of this rail's
+     navigation and they had a denser rhythm than the search box
+     above them — a list of four things drawn at the density of a
+     list of forty. The glyph and the word also sat 8px apart at
+     a size where 12 is the gap the rest of the app uses. */
+  height: 42px;
   padding: 0 var(--s-2);
   border: 0;
   border-radius: var(--r-control);

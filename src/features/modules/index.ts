@@ -75,7 +75,7 @@ export type { ModuleHomeProps, ModulePricingProps, ModuleQuotesProps } from './M
    card called Boats. Exported because a picker, an export or a review
    that has to list the places must reach the same answer this grid
    draws. */
-export { moduleAt, placeFilters, placesOf, placesUnder } from './places'
+export { moduleAt, placeCount, placeFilters, placesOf, placesUnder } from './places'
 export type { Place, PlaceFilter } from './places'
 
 /* WHICH DOOR SOMEBODY CAME THROUGH — the seam the shell's route does

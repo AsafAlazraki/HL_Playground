@@ -83,16 +83,16 @@
   background: var(--fg-quaternary);
   transform: translateY(-2px);
 }
-/* the tone is a DOT, never the sentence's colour — a log entry is
-   read, and reading text must not carry a hue */
-.ac-row--danger .ac-dot {
-  background: var(--danger);
-}
+/* THE TONE IS A DOT, never the sentence's colour: a log entry is
+   READ, and reading text must not carry a hue.
+
+   There are two tones in this application and not five — `ToastTone`
+   is 'info' | 'warn' — so there are two rules here. Rules for
+   'good' and 'danger' were written and deleted: a stylesheet
+   carrying classes for states the type system cannot produce is a
+   stylesheet that has stopped describing the app. */
 .ac-row--warn .ac-dot {
   background: var(--warning);
-}
-.ac-row--good .ac-dot {
-  background: var(--success);
 }
 .ac-said {
   min-width: 0;

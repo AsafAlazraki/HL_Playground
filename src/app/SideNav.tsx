@@ -98,6 +98,7 @@ import {
 } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { TableKindSymbol } from '@/features/tablekit'
+import { placeCount } from '@/features/modules'
 import { WhoChip, type AppUser } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 
@@ -238,10 +239,12 @@ export function SideNav({
     }
   }, [collapsed])
 
-  const moduleCount = useMemo(
-    () => Object.keys(modules).length,
-    [modules],
-  )
+  /* THE COUNT BESIDE "Modules" IS PLACES, NOT MODULES. It read 9
+     next to a screen headed "All 25": the rail was counting the
+     grouping and the screen was counting the things a dealer
+     opens. See `placeCount`. */
+  const entities = useProjectStore((s) => s.entities)
+  const moduleCount = useMemo(() => placeCount(modules, entities), [modules, entities])
 
   return (
     <nav

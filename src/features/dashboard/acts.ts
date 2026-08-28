@@ -38,8 +38,13 @@ export interface DashboardActs {
   /** the drawing — the app's one permanent surface */
   onOpenDataModel: () => void
   /** the picker that starts a quote. A quote is minted from the
-   *  row being sold, so this can never mean "create empty". */
-  onNewQuote: () => void
+   *  row being sold, so this can never mean "create empty".
+   *
+   *  The optional module is WHERE to start: a quick action on a
+   *  brand's tile knows the answer to the picker's first question
+   *  and passing it saves asking. Omitted, the picker opens on the
+   *  grid of places, which is what the rail's New quote does. */
+  onNewQuote: (moduleId?: string) => void
   /** the finder */
   onFind: () => void
 }

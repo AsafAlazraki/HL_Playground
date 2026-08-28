@@ -23,7 +23,7 @@
    ============================================================ */
 import { describe, expect, it } from 'vitest'
 import type { EntityDef, ModuleDef, RowData } from '@/types/model'
-import { moduleAt, placeFilters, placesOf, placesUnder } from './places'
+import { moduleAt, placeCount, placeFilters, placesOf, placesUnder } from './places'
 
 const STAMP = '2026-01-01T00:00:00.000Z'
 
@@ -138,5 +138,32 @@ describe('narrowing a module to one of its tables', () => {
   it('leaves a one-table module whole, so it can never narrow to nothing', () => {
     const motors = MODULES.motors as ModuleDef
     expect(moduleAt(motors, 'ya').tableIds).toEqual(['ya'])
+  })
+})
+
+/* ---------------------------------------------------------- */
+
+/* THE RAIL'S COUNT AND THE SCREEN'S LIST MUST BE THE SAME NUMBER.
+   `placeCount` is a second implementation of one line of
+   `placesOf` — it exists because the rail would otherwise pay for
+   a full census of every row in the business to draw one figure —
+   and a second implementation is exactly the thing that drifts.
+   So it is checked against the first rather than against a
+   literal: a rule change in `placesOf` that this does not follow
+   fails here instead of on the screen. */
+describe('counting places without building them', () => {
+  it('agrees with the list it is a count of', () => {
+    expect(placeCount(MODULES, ENTITIES)).toBe(placesOf(MODULES, ENTITIES, ROWS).length)
+  })
+
+  it('counts a module whose tables have all been deleted as one place', () => {
+    const orphaned = { ...MODULES, gone: module('gone', 'Gone', ['no-such-table'], 3) }
+    expect(placeCount(orphaned, ENTITIES)).toBe(placesOf(orphaned, ENTITIES, ROWS).length)
+    expect(placeCount(orphaned, ENTITIES)).toBe(placeCount(MODULES, ENTITIES) + 1)
+  })
+
+  it('counts one place per table where a module holds several', () => {
+    /* Boats holds two, so three modules are four places */
+    expect(placeCount(MODULES, ENTITIES)).toBe(4)
   })
 })

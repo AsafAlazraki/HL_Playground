@@ -109,7 +109,7 @@ import type { DashboardActs } from './acts'
 import { useRecentPicks } from './useRecentPicks'
 import { useReorder } from './reorder'
 import { applyOrder, useTileOrder, type TileWho } from './tileOrder'
-import { PlaceMark, placesOf, rememberPlace } from '@/features/modules'
+import { PlaceMark, placeFilters, placesOf, rememberPlace } from '@/features/modules'
 import { ActivityList, useActivity } from '@/features/activity'
 
 const MARK = ICON_SIZE.small
@@ -509,7 +509,31 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
     return <Nothing say={CARDS['my-modules'].empty} act="Modules" onAct={acts.onOpenModules} />
   }
 
+  /* THE KEY, WHICH IS WHAT PAID FOR TAKING THE SYMBOLS OFF.
+     Every tile used to carry a boat, a motor or a trailer, which
+     meant the same four glyphs repeated 25 times to say a thing
+     the tile's own colour was already saying. Said ONCE, above the
+     grid, it is four words instead of 25 pictures — and it is the
+     only place in this application where the kind colours are
+     explained rather than merely used.
+
+     Counted from the places on screen, so a business with no
+     trailers has no trailer swatch. `placeFilters` is the modules
+     screen's own reader and its first chip is "All", which is a
+     filter rather than a colour and is dropped here. */
+  const key = placeFilters(places).filter((f) => f.kind !== undefined)
+
   return (
+    <>
+      <ul className="dsh-key" aria-label="What the colours mean">
+        {key.map((f) => (
+          <li className="dsh-key-item" key={f.key} data-kind={kindOf(f.kind)}>
+            <span className="dsh-key-dot" aria-hidden="true" />
+            {f.label}
+          </li>
+        ))}
+      </ul>
+
     <div className="dsh-tiles" ref={reorder.containerRef}>
       {reorder.order.map((original, slot) => {
         const p = places[original]
@@ -542,30 +566,87 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
                 acts.onOpenModule(p.moduleId)
               }}
             >
-              <span className="dsh-tile-mark" aria-hidden="true">
+              {/* THE MARK IS THE HEADING WHERE THERE IS ONE.
+                  A brand's wordmark IS its name, set better than
+                  this application will ever set it, so drawing
+                  both is saying the same word twice — once in
+                  Highfield's own type and once in ours. The name
+                  is still here, underneath, and CSS hides it when
+                  a mark was actually painted.
+
+                  WHY CSS AND NOT A TERNARY. Whether a mark is
+                  drawn is decided inside `PlaceMark`: it needs a
+                  logo AND the app's permission to paint that
+                  address. A ternary here would be a second copy of
+                  that decision, and the day it disagreed the tile
+                  would be blank — no mark, and no name either.
+                  `:has(img)` cannot disagree, because it is asking
+                  the question of the thing that answered it. */}
+              <span className="dsh-tile-panel">
                 <PlaceMark
                   logo={modules[p.moduleId]?.logo}
                   name={p.name}
                   master={master}
                   size={ICON_SIZE.small}
+                  fallback="none"
                 />
-              </span>
-              <span className="dsh-tile-say">
                 <span className="dsh-tile-name">{p.name}</span>
-                {/* THE CATEGORY IS THE EYEBROW, not the heading. It
-                    is still true and still worth knowing — Highfield
-                    is a boat — but it is the second fact on the tile
-                    and never the first. Drawn only where the place
-                    is not simply its module, or it would repeat the
-                    name directly above it. */}
-                {p.name !== p.moduleName ? (
-                  <span className="dsh-tile-under">{p.moduleName}</span>
-                ) : null}
               </span>
+            </button>
+
+            {/* THE FOOT IS THE COUNT, AND UNDER THE CURSOR IT IS THE
+                TWO THINGS YOU CAME TO DO.
+
+                They occupy the SAME cell and cross-fade, so nothing
+                moves: a row of actions that appears by growing the
+                tile would shove every tile below it down the moment
+                the pointer crossed one, which is the reason most
+                hover-action grids feel broken. The count is what
+                you read; the actions are what you press; you are
+                never doing both in the same instant.
+
+                They are real buttons and not links-in-a-button:
+                nesting them inside the face would be invalid and
+                would make the whole tile ambiguous to a keyboard.
+                Reached by tabbing, and `:focus-within` on the tile
+                keeps them up while they are. */}
+            <div className="dsh-tile-foot">
+              {/* THE CATEGORY, which is the fact the mark cannot
+                  carry: Highfield's wordmark says Highfield and
+                  not that it is a boat. Always drawn where a mark
+                  is showing; suppressed only when the panel is
+                  already the module's own name and this would
+                  repeat the word directly above it. */}
+              <span className="dsh-tile-under">{p.moduleName}</span>
               <span className="dsh-tile-sum ds-mono">
                 {p.retired ? 'held' : p.census.items.toLocaleString()}
               </span>
-            </button>
+              {/* A PLACE THAT IS NO LONGER SOLD OFFERS NEITHER. You
+                  cannot raise a quote against it and its catalogue
+                  is history — drawing the buttons and refusing on
+                  press is worse than not drawing them. */}
+              {p.retired ? null : (
+                <span className="dsh-tile-acts">
+                  <button
+                    type="button"
+                    className="dsh-tile-act is-go"
+                    onClick={() => acts.onNewQuote(p.moduleId)}
+                  >
+                    Quote
+                  </button>
+                  <button
+                    type="button"
+                    className="dsh-tile-act"
+                    onClick={() => {
+                      rememberPlace(p.moduleId, p.tableId)
+                      acts.onOpenModule(p.moduleId)
+                    }}
+                  >
+                    Catalog
+                  </button>
+                </span>
+              )}
+            </div>
 
             {/* THE GRIP IS ITS OWN CONTROL, NOT THE TILE. Dragging
                 the face would mean a press that travels three pixels
@@ -584,6 +665,7 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
         )
       })}
     </div>
+    </>
   )
 }
 

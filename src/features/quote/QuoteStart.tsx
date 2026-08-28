@@ -128,6 +128,17 @@ export interface QuoteStartProps {
    *  way to the settings that would clear it. Absent = the refusal is
    *  still SAID and not offered as a door. */
   onOpenPlace?: (moduleId: string) => void
+  /** OPEN ALREADY STANDING IN A PLACE.
+   *
+   *  A quick action on a module tile says "start a quote HERE", and
+   *  a picker that then asks which place to start in has thrown the
+   *  answer away. Absent — pressing New quote in the rail — it
+   *  opens on the grid of places, which is still the right first
+   *  screen when nobody has said where.
+   *
+   *  It is the INITIAL value only, not a lock: the back arrow to
+   *  the grid works exactly as it does when nothing was passed. */
+  startAt?: string
   onClose: () => void
 }
 
@@ -137,6 +148,7 @@ export function QuoteStart({
   rowsByEntity,
   onStarted,
   onOpenPlace,
+  startAt,
   onClose,
 }: QuoteStartProps): ReactElement | null {
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -158,7 +170,7 @@ export function QuoteStart({
      pane could not be empty; a grid can be the whole first screen,
      which is what makes pressing a card feel like opening a door
      rather than like moving a highlight. */
-  const [placeId, setPlaceId] = useState<string | null>(null)
+  const [placeId, setPlaceId] = useState<string | null>(startAt ?? null)
   const [showShut, setShowShut] = useState(false)
   const door = doors.find((d) => d.moduleId === placeId) ?? null
 

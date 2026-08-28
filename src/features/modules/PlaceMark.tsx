@@ -28,6 +28,7 @@
 
 import type { JSX } from 'react'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
+import { markFor } from './brandLogos'
 import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
 import type { EntityDef, ImageRef } from '@/types/model'
 
@@ -44,31 +45,66 @@ export interface PlaceMarkProps {
    *  a page header want different marks and neither should have
    *  to override CSS to get one. */
   size: number
+
+  /** WHAT TO DRAW WHEN THERE IS NO MARK AT ALL.
+   *
+   *  'kind' — the boat, the motor, the trailer. Right on the
+   *  modules screen, where the symbol sits in the corner of a
+   *  photograph and is the only thing saying what sort of place
+   *  this is.
+   *
+   *  'none' — nothing, and the caller draws nothing in its place.
+   *  Right on the dashboard tiles, where fourteen tiles carrying
+   *  four repeated symbols is not identity, it is wallpaper: the
+   *  kind is already the tile's colour, and a legend above the
+   *  grid says what the colours mean once rather than fourteen
+   *  times.
+   *
+   *  Default 'kind', which is what every existing caller wants. */
+  fallback?: 'kind' | 'none'
 }
 
-export function PlaceMark({ logo, name, master, size }: PlaceMarkProps): JSX.Element {
-  const { paint, probe, at } = useImageDisplay(logo?.src ?? '')
+export function PlaceMark({
+  logo,
+  name,
+  master,
+  size,
+  fallback = 'kind',
+}: PlaceMarkProps): JSX.Element | null {
+  /* THE MODULE'S OWN LOGO FIRST, THEN THE BRAND'S. `markFor` is
+     one line and it is written down in `brandLogos.ts` rather than
+     here so that every surface drawing a place resolves the mark
+     the same way — a screen that skipped the fallback would show
+     Highfield's wordmark on one page and a grey square on the
+     next. An uploaded logo always wins; nothing here writes. */
+  const mark = markFor(logo, name)
+  const { paint, probe, at } = useImageDisplay(mark?.src ?? '')
 
-  if (logo && paint) {
-    const alt = logo.alt?.trim() ?? ''
+  if (mark && paint) {
+    const alt = mark.alt?.trim() ?? ''
     return (
       <img
         className="md-place-logo"
         src={at}
-        /* a logo whose alt is the module's name is decorative HERE,
-           because the name is drawn next to it — repeating it makes
-           a screen reader say the module twice */
+        /* a mark whose alt is the place's own name is decorative
+           HERE, because the name is drawn beside it — repeating it
+           makes a screen reader say the module twice */
         alt={alt === name ? '' : alt}
-        width={size}
-        height={size}
+        /* NO width/height ATTRIBUTES, and that is deliberate. Every
+           one of these is a WORDMARK — Highfield is 6430x701 — so a
+           square box would letterbox it into a smear. The caller's
+           CSS gives it a slot and `object-fit: contain` fits the
+           mark to it; `size` below is the square the FALLBACK
+           symbol is drawn at, which is a different question. */
         loading={probe ? 'eager' : 'lazy'}
         decoding="async"
         draggable={false}
-        onLoad={() => noteImageLoaded(logo.src)}
-        onError={() => noteImageFailed(logo.src)}
+        onLoad={() => noteImageLoaded(mark.src)}
+        onError={() => noteImageFailed(mark.src)}
       />
     )
   }
 
+  if (fallback === 'none') return null
   return <TableKindSymbol kind={kindOf(master?.kind)} size={size} />
 }

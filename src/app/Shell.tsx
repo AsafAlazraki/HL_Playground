@@ -416,7 +416,11 @@ export function Shell({ user, onSignOut }: ShellProps) {
      15,691 rows of fifty-one tables by name, which is the right answer
      to "find me a row" and the wrong first thing to put in front of
      somebody who has just said they are making a sale. */
-  const [starting, setStarting] = useState(false)
+  /* THE QUOTE PICKER, AND WHERE IT OPENS. `null` is shut; a string
+     is the module it should already be standing in; '' is open with
+     nothing chosen, which is what the rail's New quote means. A
+     boolean could not carry the place a tile's quick action names. */
+  const [starting, setStarting] = useState<string | null>(null)
   const [configuring, setConfiguring] = useState(false)
 
   /* ESCAPE SHUTS THE CONFIGURATIONS SHEET. It had a scrim you could
@@ -538,7 +542,7 @@ export function Shell({ user, onSignOut }: ShellProps) {
              business already answers for itself: which place, then
              which one — and it draws the walk that choice opens
              before it is committed. */
-          onNewQuote={() => setStarting(true)}
+          onNewQuote={() => setStarting('')}
           quoteCount={quoteCount}
           customerCount={customerCount}
         />
@@ -612,7 +616,7 @@ export function Shell({ user, onSignOut }: ShellProps) {
                 newTable: () => setPicking(true),
                 /* the picker and the finder are the shell's dialogs,
                    exactly as the new-table dialog is */
-                newQuote: () => setStarting(true),
+                newQuote: (moduleId?: string) => setStarting(moduleId ?? ''),
                 find: () => setFinding(true),
                 /* THE DRAWING. Not a stage — the surface under every
                    stage — so reaching it empties the window stack, and
@@ -740,7 +744,7 @@ export function Shell({ user, onSignOut }: ShellProps) {
         </div>
       ) : null}
 
-      {starting ? (
+      {starting !== null ? (
         <QuoteStart
           modules={modules}
           entities={entities}
@@ -751,11 +755,12 @@ export function Shell({ user, onSignOut }: ShellProps) {
              that the switch lives on that module's own page, so the
              route comes from here — the same arrangement every other
              cross-feature door on this screen uses. */
+          {...(starting ? { startAt: starting } : {})}
           onOpenPlace={(moduleId) => {
-            setStarting(false)
+            setStarting(null)
             setStage({ kind: 'module', moduleId })
           }}
-          onClose={() => setStarting(false)}
+          onClose={() => setStarting(null)}
         />
       ) : null}
 

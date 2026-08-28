@@ -98,6 +98,35 @@ const kindOfTable = (e: EntityDef | undefined): TableKind =>
 
 /** Every door on the modules grid, in the modules' own stored order
  *  and then in each module's own table order. */
+/** HOW MANY PLACES THERE ARE, WITHOUT BUILDING THEM.
+ *
+ *  The rail draws this beside "Modules" and used to draw
+ *  `Object.keys(modules).length` — 9, next to a screen headed
+ *  "All 25". The rail was counting the grouping and the screen
+ *  was counting the things.
+ *
+ *  It is a second implementation of one line of `placesOf`, which
+ *  is a real risk, so it is written directly beneath it and the
+ *  rule is stated once in both: a module with no live table is
+ *  still one place, and a module with tables is one place per
+ *  table. `places.test.ts` checks the two agree over the seed.
+ *
+ *  The reason it is not simply `placesOf(...).length` is that
+ *  `placesOf` runs a census per place — every row of every table
+ *  counted, grouped and priced — and the rail would pay for all
+ *  of it on every keystroke to draw one number. */
+export function placeCount(
+  modules: Record<string, ModuleDef>,
+  entities: Record<string, EntityDef>,
+): number {
+  let n = 0
+  for (const module of Object.values(modules)) {
+    const live = module.tableIds.filter((id) => entities[id] !== undefined)
+    n += live.length === 0 ? 1 : live.length
+  }
+  return n
+}
+
 export function placesOf(
   modules: Record<string, ModuleDef>,
   entities: Record<string, EntityDef>,

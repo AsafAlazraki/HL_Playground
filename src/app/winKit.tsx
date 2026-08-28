@@ -244,7 +244,7 @@ export interface StageHandlers {
      shell already knows; two — the picker and the finder — are
      dialogs the shell hosts, exactly as `newTable` is, and for the
      same reason: one host, one answer. */
-  newQuote: () => void
+  newQuote: (moduleId?: string) => void
   find: () => void
   /** THE DRAWING. It is not a stage — it is the surface UNDER every
    *  stage, so reaching it means emptying the window stack, and only
