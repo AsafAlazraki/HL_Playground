@@ -1643,6 +1643,36 @@
   gap: var(--sp-2);
   margin-left: auto;
 }
+
+/* BOARD OR LIST — a segmented pair, so it reads as ONE control with
+   two settings rather than as two unrelated buttons. The seam
+   between them is a single hairline: two adjacent 1px borders make
+   a 2px line, which is the detail that makes most segmented
+   controls look homemade. */
+.shell-quote-views {
+  display: inline-flex;
+}
+.shell-quote-views .shell-quote-act {
+  border-radius: 0;
+}
+.shell-quote-views .shell-quote-act:first-child {
+  border-radius: var(--r-control) 0 0 var(--r-control);
+}
+.shell-quote-views .shell-quote-act:last-child {
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  margin-left: -1px;
+}
+/* THE ONE THAT IS ON. `aria-pressed` is the truth and the class
+   follows it, so the two can never disagree. Raised above its
+   neighbour so its full border is drawn rather than half-covered
+   by the overlap above. */
+.shell-quote-views .shell-quote-act.is-on {
+  position: relative;
+  z-index: 1;
+  background: var(--accent-wash);
+  border-color: var(--accent);
+  color: var(--accent);
+}
 /* "All quotes" — a button, so sentence case, on the same control
    step as every other control on a page toolbar. */
 .btn.shell-quote-act {

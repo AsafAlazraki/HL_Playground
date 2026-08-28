@@ -265,9 +265,16 @@
   overflow-y: auto;
   overflow-x: hidden;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(186px, 100%), 1fr));
-  grid-auto-rows: minmax(138px, 1fr);
-  gap: var(--s-3);
+  /* 300, AND IT WAS 186. Six columns at 1600 gave each card a
+     54px-tall letterbox for its photograph with the brand's mark
+     sitting on top of a third of it — neither legible, and the
+     card carried six devices in 186px: a rail, a photo, a mark, a
+     name, a count and a type chip. Four columns is a photograph
+     you can see and a wordmark you can read, which is what a
+     person is actually choosing between. */
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  grid-auto-rows: min-content;
+  gap: var(--s-4);
   margin: 0;
   padding: 0 var(--s-6) var(--s-6);
   list-style: none;
@@ -296,7 +303,9 @@
   isolation: isolate;
   overflow: hidden;
   display: grid;
-  grid-template-rows: minmax(46px, 1fr) auto auto;
+  /* the face takes its own aspect ratio rather than a share of a
+     fixed row height, so a photograph is never squeezed */
+  grid-template-rows: auto auto auto;
   width: 100%;
   min-width: 0;
   text-align: left;
@@ -355,6 +364,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* A PICTURE'S OWN SHAPE. 16:9 is the shape a product photograph
+     is taken in and the shape every one of these files is; a face
+     that took whatever height was left cropped them all
+     differently and made a grid of them look like an accident. */
+  aspect-ratio: 16 / 9;
   min-height: 0;
   overflow: hidden;
   background: var(--surface-3);
@@ -451,21 +465,22 @@
   object-fit: contain;
   border-radius: var(--r-chip);
 }
-/* THE SLOT ON A PHOTOGRAPH'S CORNER. Wide enough for a wordmark to
-   be read at a glance rather than squeezed into a badge, and it
-   only widens when it is HOLDING one — a kind symbol keeps its
-   square, because a 34px glyph floating in an 84px plate is a plate
+/* THE PLATE ON A PHOTOGRAPH'S CORNER. Wide enough for a wordmark to
+   be READ at a glance rather than squeezed into a badge, and it
+   only widens when it is holding one — a kind symbol keeps its
+   square, because a 34px glyph floating in a 160px plate is a plate
    with a hole in it. */
 .md-place-mark.is-over {
-  width: 34px;
-  height: 34px;
-  padding: 4px;
+  width: 38px;
+  height: 38px;
+  padding: 5px;
 }
 .md-place-mark.is-over:has(.md-place-logo) {
   width: auto;
-  min-width: 34px;
-  max-width: 132px;
-  height: 32px;
+  min-width: 38px;
+  max-width: 160px;
+  height: 40px;
+  padding: 6px var(--s-3);
 }
 
 /* -- its name, and its one fact ------------------------------- */

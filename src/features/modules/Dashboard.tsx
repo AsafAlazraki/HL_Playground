@@ -500,17 +500,23 @@ function PlaceCard({
           </span>
         </span>
 
+        {/* THE TYPE CHIP IS GONE. It said "Boats" on twenty-five
+            cards, under a full-height rail already drawn in the
+            boat hue, on a grid whose filter chips carry the same
+            eight words with the same eight colours and a count
+            each. Three ways of saying one thing, and the chip was
+            the one that cost a card its fourth line.
+
+            The foot is drawn only when something has to be said in
+            it, which today means a place a dealer has closed. */}
+        {restricted && access ? (
         <span className="md-place-foot">
-          {/* THE TYPE, IN ITS OWN HUE. `.k-chip` is the system's, so
-              a boat is the same colour here as anywhere else. */}
-          <span className="k-chip md-place-type">{place.typeLabel}</span>
-          {restricted && access ? (
             <span className="md-place-shut" title={access.hint}>
               <Lock size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
               {access.say}
             </span>
-          ) : null}
         </span>
+        ) : null}
       </button>
 
       {/* REORDERING IS A FACT ABOUT MODULES, NOT ABOUT THE BRANDS

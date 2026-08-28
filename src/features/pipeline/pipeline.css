@@ -1,0 +1,283 @@
+/* ============================================================
+   THE SALES BOARD (pb-)
+
+   A BOARD IS A SHAPE, and everything here serves reading that
+   shape at a glance: five columns of equal width, a count and a
+   sum under each head, and cards whose heading is the CUSTOMER
+   because a deal is a person waiting on an answer.
+
+   THE BOARD SCROLLS SIDEWAYS AND THE COLUMNS SCROLL DOWN. The
+   page itself never scrolls, which is the contract every stage in
+   this app keeps.
+
+   COLOUR IS ALMOST ABSENT ON PURPOSE. Won is the only green thing
+   and Lost the only struck one; the three live columns are the
+   page's own paper. A board where every column has a hue is a
+   board where the two that matter cannot be found.
+   ============================================================ */
+
+.pb {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: var(--s-6) 0 0;
+}
+
+.pb-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex: none;
+  padding: 0 var(--s-8) var(--s-5);
+}
+.pb-name {
+  margin: 0;
+  color: var(--fg);
+}
+.pb-n {
+  margin: 0;
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+/* ---- the columns ------------------------------------------- */
+
+.pb-cols {
+  display: grid;
+  /* EQUAL AND NEVER NARROWER THAN A CARD. `auto-flow: column` with
+     a floor is what lets five columns share a wide window and
+     scroll sideways on a narrow one, without any column ever
+     collapsing to a sliver a card cannot be dropped into. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(248px, 1fr);
+  gap: var(--s-4);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 var(--s-8) var(--s-6);
+}
+
+.pb-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: var(--s-3);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-2);
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+/* CLOSED COLUMNS ARE QUIETER. Won and Lost are finished work and
+   should not compete with the three that still need doing. */
+.pb-col.is-closed {
+  background: none;
+  border-style: dashed;
+}
+
+/* THE COLUMN UNDER THE POINTER, while a card is held. This is the
+   whole of the drop affordance: no ghost card, no insertion line,
+   no animation — the target lights and the card follows on
+   release, which is legible at any drag speed. */
+.pb-col.is-over {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.pb-col-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  flex: none;
+  padding: 0 var(--s-2) 2px;
+}
+/* A STAGE NAME IS A LABEL, so §3 lets it be uppercase — it is the
+   one uppercase thing on this screen, and it is what makes the
+   column heads read as a scale rather than as five headings. */
+.pb-col-name {
+  margin: 0;
+  font-size: var(--t-caption-size);
+  font-weight: 620;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+}
+.pb-col-n {
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+/* THE COLUMN'S MONEY — the figure a board is read for. Mono,
+   tabular and never a hue: it is a figure, and a figure is not
+   decorative. */
+.pb-col-sum {
+  margin: 0 0 var(--s-2);
+  padding: 0 var(--s-2);
+  flex: none;
+  font-size: var(--t-small-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.pb-col-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1px;
+}
+
+.pb-none {
+  margin: 0;
+  padding: var(--s-2);
+  font-size: var(--t-caption-size);
+  line-height: 1.45;
+  color: var(--fg-tertiary);
+}
+
+/* ---- a deal ------------------------------------------------ */
+
+.pb-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  box-shadow: var(--e1);
+  text-align: left;
+  /* GRAB, NOT POINTER. The card can be opened and can be moved, and
+     the cursor says which is the primary gesture — the one that
+     changes the board. */
+  cursor: grab;
+  /* the browser's own scroll-and-pan must not fight the drag */
+  touch-action: none;
+  transition:
+    box-shadow var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.pb-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--e2);
+}
+.pb-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* HELD: lifted, and the only card on the board that is. */
+.pb-card.is-held {
+  cursor: grabbing;
+  box-shadow: var(--e-float);
+  transform: rotate(-0.6deg) scale(1.02);
+}
+
+.pb-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+.pb-card-ref {
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+}
+.pb-card-when {
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
+/* THE CUSTOMER IS THE HEADING. A deal is a person waiting on an
+   answer, and the reference is an index number. */
+.pb-card-who {
+  font-size: var(--t-small-size);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.pb-card-what {
+  font-size: var(--t-caption-size);
+  line-height: 1.35;
+  color: var(--fg-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pb-card-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-top: 2px;
+}
+.pb-card-sum {
+  font-size: var(--t-small-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.pb-card-by {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* WON IS THE ONE GREEN THING, and it is a rail on the column
+   rather than a fill behind text — a tint counts (rule 4) and
+   these cards carry three tiers of ink. */
+.pb-col[data-tone='good'] .pb-col-name {
+  color: var(--success);
+}
+.pb-col[data-tone='gone'] .pb-col-name {
+  color: var(--fg-tertiary);
+}
+/* A LOST DEAL IS STRUCK, not greyed into illegibility: the figure
+   is still readable because "how much did we lose" is a question
+   somebody asks. */
+.pb-col[data-tone='gone'] .pb-card-sum {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   RESPONSIVE. Below a laptop the columns keep their width and the
+   board scrolls sideways — which is what a board IS. Nothing
+   stacks, because five stacked columns is the list this screen
+   replaced.
+   ============================================================ */
+@media (max-width: 1100px) {
+  .pb-head,
+  .pb-cols {
+    padding-left: var(--s-5);
+    padding-right: var(--s-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-card,
+  .pb-col {
+    transition: none;
+  }
+  .pb-card.is-held {
+    transform: none;
+  }
+}

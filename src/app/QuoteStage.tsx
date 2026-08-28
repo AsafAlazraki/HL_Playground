@@ -45,11 +45,18 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
-import { ArrowLeft, CaretLeft, ClockCounterClockwise } from '@phosphor-icons/react'
+import { useEffect, useState } from 'react'
+import { ArrowLeft, CaretLeft, ClockCounterClockwise, Kanban, ListBullets } from '@phosphor-icons/react'
 import { QuoteList, QuotePage, useQuote } from '@/features/quote'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
+import { currentUser } from '@/features/auth'
+import { Board } from '@/features/pipeline'
 import { stageKeys, useStageEscape } from './stageKeys'
+
+/** WHICH VIEW OF THE QUOTES, remembered. A person who prefers the
+ *  list should not be handed the board every morning. */
+const VIEW_KEY = 'hl.quotes.view'
 
 export interface QuoteStageProps {
   /** the quote being looked at, or null for the list of them */
@@ -104,6 +111,33 @@ export function QuoteStage({
      already knows — and hands the number down. */
   const tableCount = useProjectStore((s) => Object.keys(s.entities).length)
 
+  /* THE BOARD NEEDS TO KNOW WHOSE BUSINESS THIS IS, because a
+     pipeline is stored per organisation — the same key the
+     dashboard's arrangement and the activity log use.
+
+     IT COMES FROM THE SESSION, NOT FROM THE SHEET. `OrgProfile`
+     carries a display name and no slug; the signed-in person
+     carries `orgSlug`, which is what every other per-organisation
+     store in this app is already keyed by. Two different keys for
+     one business would mean a board that emptied when somebody
+     renamed the dealership. */
+  const orgSlug = currentUser()?.orgSlug ?? 'northside-marine'
+
+  const [view, setView] = useState<'board' | 'list'>(() => {
+    try {
+      return globalThis.localStorage?.getItem(VIEW_KEY) === 'list' ? 'list' : 'board'
+    } catch {
+      return 'board'
+    }
+  })
+  useEffect(() => {
+    try {
+      globalThis.localStorage?.setItem(VIEW_KEY, view)
+    } catch {
+      /* a browser refusing storage still gets a working screen */
+    }
+  }, [view])
+
   /* Escape is the control in track 1 of the bar, on the keyboard. Not
      "back to all quotes", which is a lateral move inside this window
      and sits in track 3 — Escape is the way OUT, everywhere. */
@@ -129,14 +163,23 @@ export function QuoteStage({
       onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
-        {/* `shell-view-back`, no `btn`, labelled "Back" — TableStage is
-            the calibration. `.btn` stamped this "BACK TO THE SHEET" in
-            11px uppercase mono; uppercase is a label style and this is
-            a button. */}
-        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
-          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-          <span>Back</span>
-        </button>
+        {/* BACK ONLY FROM A DOCUMENT, never from the list.
+            Quotes is one of the rail's four doors — you do not
+            arrive at it FROM anywhere, so "Back" pointed at
+            whatever happened to be open before and read as a
+            control that had lost its place. On a document it is
+            real: the document was opened from the list.
+
+            `shell-view-back`, no `btn` — TableStage is the
+            calibration. `.btn` stamped this "BACK TO THE SHEET" in
+            11px uppercase mono; uppercase is a label style and this
+            is a button. */}
+        {quote ? (
+          <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
+            <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
+            <span>Back</span>
+          </button>
+        ) : null}
 
         {/* THE HEADING THIS PAGE DID NOT HAVE. Quotes returned zero
             elements for `h1..h6` — the list of every quote the business
@@ -177,21 +220,49 @@ export function QuoteStage({
               All quotes
             </button>
           </div>
-        ) : onOpenHistory ? (
+        ) : (
           <div className="shell-quote-acts">
-            <button
-              type="button"
-              className="btn shell-quote-act"
-              onClick={onOpenHistory}
-            >
-              <ClockCounterClockwise
-                size={ICON_SIZE.tiny}
-                aria-hidden="true"
-              />
-              History
-            </button>
+            {/* BOARD OR LIST, and the board is the default.
+                "Where is everything, and what is stuck" is a
+                question about shape, and a list cannot draw a
+                shape. The list is kept and is one press away,
+                because it is still the right screen for finding
+                one known quote among two hundred.
+
+                The choice is remembered, so a person who prefers
+                the list is not handed the board every morning. */}
+            <div className="shell-quote-views" role="group" aria-label="How to show the quotes">
+              <button
+                type="button"
+                className={`btn shell-quote-act${view === 'board' ? ' is-on' : ''}`}
+                aria-pressed={view === 'board'}
+                onClick={() => setView('board')}
+              >
+                <Kanban size={ICON_SIZE.tiny} aria-hidden="true" />
+                Board
+              </button>
+              <button
+                type="button"
+                className={`btn shell-quote-act${view === 'list' ? ' is-on' : ''}`}
+                aria-pressed={view === 'list'}
+                onClick={() => setView('list')}
+              >
+                <ListBullets size={ICON_SIZE.tiny} aria-hidden="true" />
+                List
+              </button>
+            </div>
+            {onOpenHistory ? (
+              <button
+                type="button"
+                className="btn shell-quote-act"
+                onClick={onOpenHistory}
+              >
+                <ClockCounterClockwise size={ICON_SIZE.tiny} aria-hidden="true" />
+                History
+              </button>
+            ) : null}
           </div>
-        ) : null}
+        )}
       </div>
 
       <div className="shell-quote-well">
@@ -201,6 +272,8 @@ export function QuoteStage({
             onOpenQuote={(id) => onOpen(id)}
             onOpenCustomer={onOpenCustomer}
           />
+        ) : view === 'board' ? (
+          <Board orgSlug={orgSlug} onOpen={(id) => onOpen(id)} />
         ) : (
           <QuoteList onOpen={(id) => onOpen(id)} openId={openId} tableCount={tableCount} />
         )}

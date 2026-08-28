@@ -37,6 +37,7 @@ import './features/auth/auth.css'
 import './features/tenancy/tenancy.css'
 import './features/banner/banner.css'
 import './features/activity/activity.css'
+import './features/pipeline/pipeline.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(
