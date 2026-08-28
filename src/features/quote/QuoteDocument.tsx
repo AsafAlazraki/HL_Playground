@@ -12,7 +12,7 @@
    ('Quote Sheet'!$D$4:$AD$391), reduced to what our data can
    honestly fill:
      title block · customer · subject · the rig · the money box ·
-     the unpriced notice · footer
+     the unpriced notice · the dealer's own note · footer
 
    WHAT IS DELIBERATELY NOT ON IT
    ─────────────────────────────────────────────────────────────
@@ -41,9 +41,8 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
-import { Star } from '@phosphor-icons/react'
 import { money } from './pricing'
-import { lineAmount, linesOf, quoteTotals } from './totals'
+import { lineAmount, linesOf, looseLines, quoteTotals } from './totals'
 import { FrozenPhoto } from './photo'
 import type { QuoteDef, QuoteLine } from './types'
 
@@ -55,15 +54,53 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
   const totals = quoteTotals(quote)
   const issued = quote.issuedAt ?? quote.updatedAt
 
+  /* THE LINES NO SECTION CLAIMS, AND WHY THE DOCUMENT HAS TO DRAW
+     THEM. `quoteTotals` sums `quote.lines`; this page used to draw
+     only `quote.sections`, so any line held by `lines` and by no
+     section was CHARGED and never PRINTED. Measured on the shipped
+     build: the Package figure includes it, no row on the page does.
+
+     It is not hypothetical. `isQuoteish` (quotes.ts) is a shape check
+     — `Array.isArray(sections)` and nothing more — so a quote read
+     back from storage or arriving in a file can carry lines no
+     section names; `addFreeLine` puts a typed line in the last
+     section and there is no last section on a quote with none; and
+     `removeLine`'s undo restores a line to `lines` and to a section
+     only when it found one to restore it to.
+
+     `looseLines` was written for exactly this and `QuoteBuild` has
+     drawn it since; the one page a customer keeps did not. */
+  const loose = looseLines(quote)
+
+  /* A REVISED QUOTATION SAYS SO, AND IT SAID NOTHING AT ALL.
+     "Make a new version" mints a copy carrying `supersedesId`, and
+     `QuotePage` tells the salesperson it "says on it that it
+     supersedes this one" — measured on the running app, it does not:
+     `supersedesId` reaches the diary as " · new version" and reaches
+     this page nowhere. A customer holding two quotations for the
+     same hull, with different totals and nothing on either saying
+     which replaces which, is the fault that promise exists to
+     prevent.
+
+     One word, in the caption a customer reads first, and it is the
+     most this page can honestly say: `supersedesId` is an ID, and
+     `makeNewVersion` (quotes.ts) does NOT freeze the superseded
+     quote's REFERENCE onto the copy. Naming it would mean reaching
+     into the live registry from a frozen document, which is the one
+     thing this file may never do. The reference belongs on the copy
+     at mint time; that is a change in quotes.ts and is reported, not
+     papered over here. */
+  const kind = quote.supersedesId === undefined ? 'Quotation' : 'Revised quotation'
+
   return (
-    <article className="qt-doc" aria-label={`Quotation ${quote.reference}`}>
+    <article className="qt-doc" aria-label={`${kind} ${quote.reference}`}>
       <span className="qt-tick qt-tick--tl" aria-hidden="true" />
       <span className="qt-tick qt-tick--tr" aria-hidden="true" />
 
       {/* -- 1. the title block ------------------------------- */}
       <header className="qt-doc-head">
         <div className="qt-doc-who">
-          <p className="mono-label">Quotation</p>
+          <p className="mono-label">{kind}</p>
           {quote.organisation ? <p className="qt-doc-org">{quote.organisation}</p> : null}
         </div>
         <dl className="qt-plate">
@@ -152,6 +189,24 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
             </tbody>
           )
         })}
+
+        {/* AND THE LINES NO SECTION CLAIMS, LAST AND WITH NO HEADING.
+            The build screen files these under "Typed onto the quote",
+            which is true of the one route that makes them there and
+            false of the two that make them in a file — so on the
+            customer's copy they are drawn as what they provably are:
+            lines of this quote. A heading here would be a claim about
+            where they came from, and this document invents nothing.
+            `.qt-doc-loose` gives the group the same air a section head
+            would have given it, so it reads as its own block rather
+            than as more of the one above. */}
+        {loose.length > 0 ? (
+          <tbody className="qt-doc-loose">
+            {loose.map((line) => (
+              <DocLine key={line.id} line={line} />
+            ))}
+          </tbody>
+        ) : null}
       </table>
 
       {/* -- 5. the money box --------------------------------- */}
@@ -210,7 +265,29 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
         </p>
       ) : null}
 
-      {quote.note ? <p className="qt-doc-note">{quote.note}</p> : null}
+      {/* -- 6b. what the dealer wrote on it -------------------
+          THE ONE PLACE THIS DOCUMENT CARRIES CONDITIONS, and it was
+          set as the smallest reading text on the page — 12px, soft
+          ink, no caption, floating between a carmine warning and the
+          closing rule. The header above says why there are no
+          twenty-seven clauses: writing plausible ones would be
+          fabricating a contract. What the dealer TYPED is not
+          fabricated, and the field they typed it in is labelled "Note
+          on the quote" with the placeholder "validity, conditions —
+          printed as typed". On a $150,000 quotation that is the
+          sentence a customer needs after the total, so it is given a
+          rule, the caption the field already carries, and the reading
+          size the rest of the document uses.
+
+          The caption is the field's own word. "Terms" would be a
+          claim this app has no right to make about a free-text line
+          somebody typed. */}
+      {quote.note ? (
+        <section className="qt-doc-note">
+          <p className="mono-label">Note</p>
+          <p className="qt-doc-note-say">{quote.note}</p>
+        </section>
+      ) : null}
 
       {/* -- 7. footer ---------------------------------------- */}
       <footer className="qt-doc-foot">
@@ -237,14 +314,34 @@ function DocLine({ line }: { line: QuoteLine }): ReactElement {
   return (
     <tr className="qt-doc-line">
       <td className="qt-col-desc">
+        {/* NO STAR ON THE CUSTOMER'S COPY, AND IT IS THE SAME FACT
+            TWICE. A recommended line drew an ochre star AND the word
+            "recommended" beside it, in one cell. This file's own
+            header rules that "carmine appears in exactly two places —
+            an unpriced line, and a credit. Everything else is ink,
+            hairline and paper", and an ochre glyph is neither; on a
+            mono printer it lands as a grey dot with no legend on the
+            page to read it by. The word survives, because a word
+            needs no key. The star stays on the two WORKING screens
+            (`QuoteEditor`, `QuoteBuild`), where a dense row is scanned
+            rather than read and `.qt-star` still holds its column. */}
         <span className="qt-doc-line-name">
-          {line.recommended ? (
-            <span className="qt-star" title="Recommended">
-              <Star size={10} weight="fill" aria-hidden="true" />
-            </span>
-          ) : null}
           {line.label}
-          {line.recommended ? <span className="qt-doc-tag mono-label">recommended</span> : null}
+          {/* THE SPACE IS LOAD-BEARING AND IT WAS MISSING. JSX eats
+              the newline between an expression and the next element,
+              so the name and the stamp arrived as one unbreakable
+              run: measured at 375px of window, the description
+              cell's min-content was 147.3px — "F4SMHA" welded to
+              "RECOMMENDED" — and that single run set the whole line
+              table's floor, laying the rig out at 244.2px inside a
+              213px column. With a break opportunity between them the
+              rig lays out at 213px, exactly the column it is in. */}
+          {line.recommended ? (
+            <>
+              {' '}
+              <span className="qt-doc-tag mono-label">recommended</span>
+            </>
+          ) : null}
         </span>
         {/* the join's own facts — rigging kit, prop, engine hole,
             slot. True of THIS motor on THIS hull and of neither

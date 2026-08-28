@@ -57,10 +57,11 @@ export function ConsequenceMeter({ preview }: ConsequenceMeterProps): ReactEleme
     return (
       <section className="cn-conseq">
         <ConseqHead />
-        <p className="cn-conseq-stub">
-          Pick a column above and this counts, from your own sheet, how many rows the rule
-          would hold for and how many it would reject.
-        </p>
+        {/* THE STUB SAYS WHY IT IS BLANK AND WHAT UNBLANKS IT, and
+            nothing else. It used to also describe what the meter
+            counts — which is what the meter's own head and its two
+            figures say the moment there is anything to count. */}
+        <p className="cn-conseq-stub">Nothing to count yet. Pick a column above.</p>
       </section>
     )
   }

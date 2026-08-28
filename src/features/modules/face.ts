@@ -138,12 +138,19 @@ export function readFace(rows: readonly FaceRow[]): ModuleFace {
      loud for the same reason the curation note states its hidden
      count: a decision whose basis is not on the screen is a decision
      an admin has to take on trust. */
+  /* THE CLAUSE AFTER THE FIGURES WAS AN ARGUMENT ABOUT THE
+     ALGORITHM — "a register can be priced from end to end, and on
+     this sheet the longest names and the shortest are both on
+     registers" — printed at a dealer. What an admin standing at the
+     control needs is the two figures and the word `neither`; why
+     they lost the vote is in this file's own header, where the
+     reasoning belongs and where `faceSignals.test.ts` guards it. */
   const alsoCounted =
     live === 0
       ? ''
       : `${grouped(priced)} of ${grouped(live)} carry a price and a name here runs ${nameWords} ${
           nameWords === 1 ? 'word' : 'words'
-        }, but neither decides the face: a register can be priced from end to end, and on this sheet the longest names and the shortest are both on registers.`
+        } — neither decides the face.`
 
   return { mode, pictured, live, priced, nameWords, why, alsoCounted }
 }

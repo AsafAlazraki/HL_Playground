@@ -620,10 +620,13 @@ export function ModuleStock({
               {h.why}
             </span>
           ))}
-          . The addresses are kept exactly as{' '}
-          {linkedPictures.total === 1 ? 'it was' : 'they were'} imported and travel with every
-          export, so nothing has been lost and nothing has been substituted — the day those
-          pictures can be fetched, the same tiles paint them.
+          {/* THE APOLOGY CAME OFF THE END. It closed "so nothing has
+              been lost and nothing has been substituted — the day
+              those pictures can be fetched, the same tiles paint
+              them": forty words of the app defending itself after a
+              nineteen-word fact. The clause that survives is the one
+              a person can check. */}
+          . The addresses travel with every export.
         </p>
       ) : null}
 

@@ -2141,15 +2141,6 @@
   list-style: none;
 }
 
-/* The workbook list is drawn here as its own section rather than as
-   the footnote it is in the rules pane, so it does not need the rule
-   above it that separates it from the rules a person authored. */
-.md-rules-well .cn-wb {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-}
-
 /* -- the derivations ----------------------------------------- */
 
 .md-flows {
@@ -3375,18 +3366,10 @@
   font-weight: 560;
   color: var(--fg);
 }
-.md-acc-void-count {
-  margin: 0;
-  font-size: var(--t-body-size);
-  line-height: var(--t-body-lead);
-  color: var(--fg);
-}
-.md-acc-void-count strong {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-lg-size);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
+/* `.md-acc-void-count` STOOD HERE — "You have 9 places and no jobs",
+   under a tally already printing Jobs 0 and Places 9 as figures, and
+   beside an eyebrow already reading "No jobs yet". The zero was on
+   that screen three ways and the nine twice. */
 
 /* -- grants naming nobody ------------------------------------- */
 

@@ -1332,8 +1332,8 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
               is the one thing on this sheet nobody would find on their
               own, and the thing it exists to do. */}
           <p className="wb-legend-say">
-            Every table you have, with a line wherever one points at another.
-            Point at a table to trace its links; press it to open the register.
+            Every table you have, with a line wherever one points at another — point at one
+            to trace its links.
           </p>
           <p className="wb-legend-count">
             <b>{shape.tables}</b> table{shape.tables === 1 ? '' : 's'}
@@ -1351,8 +1351,7 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
               sheet that always frames every table. */}
           {framedPart ? (
             <p className="wb-legend-more">
-              Opened close enough to read. <b>Fit</b>, bottom left, frames all{' '}
-              {shape.tables} at once.
+              <b>Fit</b>, bottom left, frames all {shape.tables} at once.
             </p>
           ) : null}
         </aside>

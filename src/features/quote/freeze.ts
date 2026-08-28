@@ -1219,7 +1219,11 @@ function measureFor(root: EntityDef, target: EntityDef): StepMeasure | null {
     rate,
     of: entry.measure.of,
     caveat: entry.caveat,
-    clause: `holds at ${rate} across the price file (${ref})`,
+    /* NO SPEC REFERENCE IN THE CLAUSE. It ended "(F8)" — a section
+       number in a document nobody outside this repo has, printed on
+       the configurator's curation chip at a boat dealer. `ref` still
+       keys the ledger entry, which is where it belongs. */
+    clause: `holds at ${rate} across the price file`,
   }
 }
 

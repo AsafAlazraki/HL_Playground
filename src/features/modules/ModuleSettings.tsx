@@ -83,6 +83,7 @@ import { useImageDisplay } from '@/lib/imageSources'
 import { useConstraints, useSentenceCtx } from '@/features/constraints'
 import { useQuotes } from '@/features/quote'
 import { AccessGrid } from './AccessGrid'
+import { ACCESS_NOT_ENFORCED, ROLE_IS } from './accessSay'
 import { ModuleDesigner } from './ModuleDesigner'
 import { rulesPanelId } from './ModuleRulesPanel'
 import { useModuleConfiguresRules } from './ruleCapability'
@@ -460,25 +461,21 @@ function Access({ module }: { module: ModuleDef }): ReactElement {
         ) : (
           <>
             <strong>Only the roles ticked below may act in {module.name}.</strong>{' '}
-            Everybody else may do nothing here. Clearing every tick opens it to everyone
-            again.
+            Clearing every tick opens it to everyone again.
           </>
         )}
       </p>
 
-      {/* WHAT IS NOT TRUE YET, SAID WHERE IT WOULD BE ASSUMED. */}
-      <p className="md-set-note">
-        Nobody signs in to this build, so nothing here is enforced yet. It is recorded
-        and travels with the module.
-      </p>
+      {/* WHAT IS NOT TRUE YET, SAID WHERE IT WOULD BE ASSUMED — and
+          in the same words Access & roles uses, from `accessSay.ts`.
+          It was two wordings of one fact on two screens that set the
+          same thing. */}
+      <p className="md-set-note">{ACCESS_NOT_ENFORCED}</p>
 
       {roles.length === 0 ? (
         <div className="md-set-void">
           <span className="mono-label md-set-void-eyebrow">No roles yet</span>
-          <p className="md-set-void-say">
-            A role is a job at your dealership, in the words you use for it. A role says
-            nothing on its own — it becomes real here, where you say what it may do.
-          </p>
+          <p className="md-set-void-say">{ROLE_IS}</p>
           <p className="md-set-void-count">
             You have{' '}
             <strong>

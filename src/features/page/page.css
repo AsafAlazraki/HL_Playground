@@ -74,11 +74,31 @@
    34px is display-face territory (§ the 26px floor) and still
    sits below the dashboard's greeting, which is the one place in
    the app that earns a bigger voice. */
+/* THE UNIT IS THE VIEWPORT, AND IT SAYS SO NOW. This clamp was
+   written in `cqi`, and nothing in the chain above a `.ph` declares
+   `container-type` — so `cqi` was resolving against the small
+   viewport, which is what `vw` means, on every page in the app.
+
+   That is not a distinction without a difference. Five rules in
+   this codebase already open a container — `.dsh`
+   (dashboard.css:79), `.cx-rec` and `.cx-pane` (crm.css:789, 807),
+   `.qb-product` (build.css:82) and `.vw-root` (views.css:32) — and
+   the day a `PageHead` renders inside one of them, that page's
+   title silently sizes off a different box and stops matching every
+   other page's. The unit is now written as what it actually
+   resolves to, so it cannot be re-parented by a rule in another
+   feature's stylesheet.
+
+   MEASURED before and after, `.ph-name` computed font-size on the
+   Modules, Quotes, Customers and Admin headers:
+   1920 34 · 1600 34 · 1440 34 · 1280 30.72 · 1024 26 · 900 26 ·
+   768 26 — identical, both ways, at all seven. Nothing on screen
+   moved; a trap was taken out. */
 .ph-name {
   margin: 0;
   min-width: 0;
   font-family: var(--font-hero);
-  font-size: clamp(26px, 2.4cqi, 34px);
+  font-size: clamp(26px, 2.4vw, 34px);
   font-weight: 660;
   line-height: 1.08;
   letter-spacing: -0.028em;
@@ -106,10 +126,50 @@
   color: var(--fg-secondary);
 }
 
+/* THE ACTS FOLD, and until now they were the one part of this
+   header that could not.
+
+   `.ph` wraps and `.ph-tools` wraps, so it read as though the whole
+   anatomy folded. It did not, and the reason is which axis each
+   `flex: none` sits on. `.ph-tools` is a child of the STAGE, a
+   column, so `flex: none` freezes its HEIGHT and its width still
+   stretches — its own `flex-wrap` then works. `.ph-acts` is a child
+   of `.ph`, a ROW, so `flex: none` froze its WIDTH at max-content
+   and no amount of wrapping above it could help.
+
+   MEASURED on Customers, whose header carries three acts — a 220px
+   search, a 154.09 sort and a 143.09 "New customer", 533.19 of them
+   with the two gaps. Against the room the header has inside its
+   gutters:
+
+     768   560px of room  ·  fits, by 26.8
+     600   496px of room  ·  the box measured 17px of overflow
+     480   376px of room  ·  the box measured 137px of overflow
+
+   and `.cx-scroll` took the difference as a sideways scroll on the
+   register — a page that scrolls horizontally to reach its own New
+   button. Shrinkable and wrapping, the three acts fold onto a
+   second line the way the tools row already does. Wrap only engages
+   when the line will not hold: every header on every screen was
+   re-measured at nine widths afterwards and all seven are unchanged
+   by this rule — same box, same title left, same size, same height
+   as they measured without it — at 1024 and above. They are not
+   identical to EACH OTHER, and were never meant to be: a header's
+   height is its own acts' business, and three distinct heights
+   measure at 1024. Only Customers, only at 600 and
+   480, is 40px taller, which is the second row of acts.
+
+   The children keep `flex: none` so a button never squashes its own
+   label to fit — the row breaks, the control does not. */
 .ph-acts {
   display: flex;
   align-items: center;
   gap: var(--s-2);
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.ph-acts > * {
   flex: none;
 }
 

@@ -100,12 +100,33 @@
 
 /* ---- the render, crossfading -------------------------------- */
 
+/* ── THE FIELD IS THE PANE'S OWN GROUND, NOT A GREY WELL ─────────
+
+   MEASURED at 1600×1000. The seeded photographs are 1536×864 — 16:9
+   — and the well is 529px wide, so `object-fit: contain` renders the
+   boat 505×284 and it is WIDTH-bound: the well's remaining height is
+   air whatever the well is told to be. Against `--surface-3`
+   (#eef3f8) that air was two 84px grey bands with the photograph's
+   own white ground sitting between them as a visible white card
+   inside a grey box — three tones in one 500px rectangle, and the
+   single blandest thing on the screen.
+
+   On `--surface-1` the photograph's ground and the field are one
+   colour and the boat simply floats on the pane, with a hairline to
+   say where the picture may go. Nothing is cropped and no photograph
+   is assumed to have a white ground: one that does not still lands
+   as its own rectangle on the pane's paint.
+
+   It KEEPS `flex: 1 1 auto`. A fixed aspect would have left ~190px
+   of dead pane under the specs at this size; air above and below a
+   product shot on white is not dead, it is the shot. */
 .qb-render {
   position: relative;
   flex: 1 1 auto;
   min-height: 180px;
+  border: 1px solid var(--line-subtle);
   border-radius: var(--r-card);
-  background: var(--surface-3);
+  background: var(--surface-1);
   overflow: hidden;
 }
 
@@ -128,6 +149,10 @@
   border-radius: var(--r-control);
 }
 
+/* A PICTURE WE CANNOT FETCH IS A PLATE, NOT A VOID. The field above
+   is the pane's own paint now, so the honest-absence state has to
+   bring its own ground or it reads as an empty pane rather than as a
+   photograph that is held elsewhere. */
 .qb-render-held {
   display: flex;
   flex-direction: column;
@@ -135,6 +160,8 @@
   gap: var(--s-1);
   text-align: center;
   padding: var(--s-4);
+  border-radius: var(--r-card);
+  background: var(--surface-3);
 }
 
 .qb-render-say {
@@ -152,7 +179,9 @@
   /* ITS OWN GROUND AND ITS OWN HAIRLINE. The layer above stops 26px
      short so the caption never sits over a photograph — but a pale
      boat on a pale strip reads as though it does, so the strip says
-     where it starts. */
+     where it starts. It is the one place `--surface-3` is still
+     right in this pane: the field around it is white now, and a
+     caption needs to look like a caption and not like more picture. */
   background: var(--surface-3);
   border-top: 1px solid var(--line-subtle);
   /* A FADE, NEVER AN ELLIPSIS. §3: nothing truncates mid-word.
@@ -160,6 +189,16 @@
      only the luminance of its own gradient, so no theme colour can
      be substituted for it and rule 1 has nothing to say about it. */
   mask-image: linear-gradient(to right, #000 82%, transparent 100%);
+}
+
+/* AND WHEN THERE IS NO CAPTION, THE PICTURE TAKES THE STRIP BACK.
+   On the hull — where this pane starts and where it returns when a
+   line comes off the quote — the caption read the same five words as
+   the heading 24px beneath it, so `ProductPane` draws it only for a
+   plate. The 26px of reserved space goes with it rather than being
+   left as a blank band under the photograph. */
+.qb-render.is-bare .qb-render-layer {
+  inset: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -238,18 +277,39 @@
   color: var(--fg-tertiary);
 }
 
-/* THE NUMBER PHASE_TWO §3 ASKS FOR. The outgoing dashboard's
-   largest element was 34px across seven sizes, which is not a
-   hierarchy — it is the absence of one. Archivo, well above its
-   26px floor, tracked negative as size grows (§2), and sized
-   against the column rather than the window. */
+/* ── THE HEADLINE WAS A MODEL CODE, AT 79px, OVER THREE LINES ────
+
+   MEASURED at 1600×1000 on a Highfield RU230KAM: `clamp(34px, 15cqw,
+   84px)` resolved to 79.3px in a 529px column, and "Highfield -
+   RU230KAM (PVC) WH" set across three lines 228.5px tall — 28% of
+   the pane's 806px, and more of it than the photograph of the boat
+   got. On a Highfield SP420 (HYP) I-B-C it was three lines again.
+
+   A MODEL CODE IS AN IDENTIFIER, NOT A HEADLINE. `PageHead` reached
+   the same conclusion for the same reason and wrote it down: Archivo
+   at 64px "is right for a landing surface and wrong for the fifth
+   screen of a working day". Its `.ph-name` is the app's page-title
+   size now, and this is a page title, so it takes the same step —
+   the same face, the same 660 weight, the same 1.08 leading, the
+   same −0.028em, and the same 26–34px range.
+
+   THE COEFFICIENT IS NOT COPIED, BECAUSE THE CONTAINER IS NOT THE
+   SAME BOX. `.ph-name` reads 2.4cqi off a page-width container;
+   this reads off a 340–660px pane, so 2.4cqi would sit on the 26px
+   floor at every width the split is used at. 6.4cqi puts a 529px
+   pane at 33.9px, a 660px pane at the 34px ceiling, and a 406px pane
+   — the narrowest the 1280 rule allows — at 26px, the floor Archivo
+   may be set at. Read back in the browser at three widths.
+
+   What it bought: measured after, the name is 33.85px over one line
+   and the photograph took the difference. */
 .qb-name {
   margin: 0;
   font-family: var(--font-hero);
-  font-size: clamp(34px, 15cqw, 84px);
-  font-weight: 700;
-  line-height: 0.96;
-  letter-spacing: -0.035em;
+  font-size: clamp(26px, 6.4cqi, 34px);
+  font-weight: 660;
+  line-height: 1.08;
+  letter-spacing: -0.028em;
   color: var(--fg);
   text-wrap: balance;
   overflow-wrap: break-word;
@@ -430,10 +490,30 @@
 }
 
 /* THE ONE FACT §1a's prose budget allows a card. It fades rather
-   than truncating, and the whole of it is on the `title`. */
+   than truncating, and the whole of it is on the `title`.
+
+   IT IS `--fg-secondary` BECAUSE THE TINT COUNTS, and this is the
+   mistake DESIGN_PRINCIPLES §1 records being "made and caught during
+   the redesign", made again here. At `--fg-tertiary` it was measured
+   on the band heads' own kind tints — composited chain, in the
+   browser, both themes:
+
+     dark   3.86 : 1  on the accessory head   ← fails
+     dark   3.96 : 1  on the trailer head     ← fails
+     dark   4.13 : 1  on the motor head       ← fails
+     dark   4.18 : 1  on the paperwork head   ← fails
+     light  4.79 : 1  on the motor head       ← clears, barely
+
+   `--fg-tertiary` is the ramp's floor and it is quoted at 5.5:1 on
+   white; a kind tint takes 1.3 points off it in dark. `Yamaha -
+   F60LC` and `3 offered` are the whole of what a shut band says, so
+   this is not decoration.
+
+   Re-measured on the same two heads after the change: 7.06 and 7.10
+   in light, 6.65 and 6.38 in dark. */
 .qb-band-fact {
   font-size: var(--t-small-size);
-  color: var(--fg-tertiary);
+  color: var(--fg-secondary);
   white-space: nowrap;
   overflow: hidden;
   min-width: 0;
@@ -844,36 +924,53 @@
 }
 
 /* ============================================================
-   AN EMPTY BAND — the one place prose earns its space
+   AN EMPTY BAND — and it is now mostly the DOOR.
+
+   It held two paragraphs and a button. The first paragraph was the
+   curation chip 60px above it, in prose; the second moved to that
+   chip's own note slot, where it is drawn for a band that has a
+   shortlist too. So what is left is a way in, and a sentence only
+   in the three states the chip cannot describe.
+
+   IT IS CENTRED, and it is the only centred thing on this screen.
+   Everything in a band body is a left-aligned list of options; this
+   is the absence of one, and centring is how a placeholder says so
+   without a word. `flex-wrap` rather than a column, so the sentence
+   and the door sit on one line where there is room for both.
    ============================================================ */
 
 .qb-none {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   gap: var(--s-3);
-  padding: var(--s-4);
+  padding: var(--s-5) var(--s-4);
   border: 1px dashed var(--line);
   border-radius: var(--r-card);
   background: var(--surface-2);
+  text-align: center;
 }
 
 .qb-none-say {
   margin: 0;
-  max-width: 60ch;
+  max-width: 52ch;
   font-size: var(--t-body-size);
   line-height: 1.55;
   color: var(--fg);
 }
 
-.qb-none-held {
-  margin: 0;
-  max-width: 60ch;
-  font-size: var(--t-small-size);
-  line-height: 1.55;
-  color: var(--fg-secondary);
-}
+/* ── OUTLINED, NOT FILLED, AND THE REASON IS RULE 5 ──────────────
+   This was a solid `--accent` button. One of them is right; a person
+   who opens the trailer band, the second trailer band and the parts
+   band gets three, on a screen that already spends its accent on the
+   handover and the current nav row — and §1 allows the accent about
+   four appearances before nothing on the screen is primary any more.
 
+   Outlined keeps it unmistakably the act (accent ink measures 5.9:1
+   on white and 5.1:1 on the dark surface — ds.css records both, so
+   it is legal as text and not only as paint) and lets three of them
+   coexist without the page turning into a row of calls to action. */
 .qb-act {
   display: inline-flex;
   align-items: center;
@@ -881,22 +978,30 @@
   padding: 7px var(--s-4);
   border: 1px solid var(--accent);
   border-radius: var(--r-control);
-  background: var(--accent);
-  color: var(--accent-fg);
+  background: var(--surface-1);
+  color: var(--accent);
   font-size: var(--t-small-size);
   font-weight: 600;
   cursor: pointer;
   transition:
     background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
     transform var(--d-press) var(--ease);
 }
 
 .qb-act:hover {
-  background: var(--accent-hover);
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
+/* PRESS LANDS ON THE FILL AS WELL AS THE SCALE. An outlined control
+   that only shrinks on pointer-down is the weaker half of §4's
+   "every pressable thing has hover, press and focus". */
 .qb-act:active {
   transform: scale(0.97);
+  background: var(--accent-press);
+  border-color: var(--accent-press);
+  color: var(--accent-fg);
 }
 
 .qb-act:focus-visible {
@@ -1230,11 +1335,18 @@
   box-shadow: var(--e1);
 }
 
-.qb-door {
+/* ONE SECONDARY BUTTON, WORN THREE TIMES. The sheet door on the
+   price bar, the way to the customer box on the refusal strip and
+   the way to the rest of the reasons are the same kind of control —
+   a quiet bordered thing that opens something — so they are one
+   rule. Three separately-tuned greys on one 113px strip is exactly
+   the "uniformity" the owner keeps asking for. */
+.qb-door,
+.qb-give-fix,
+.qb-give-more {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  margin-left: auto;
   padding: 7px var(--s-3);
   border: 1px solid var(--line);
   border-radius: var(--r-control);
@@ -1249,18 +1361,28 @@
     transform var(--d-press) var(--ease);
 }
 
-.qb-door:hover {
+.qb-door:hover,
+.qb-give-fix:hover,
+.qb-give-more:hover {
   border-color: var(--line-strong);
   color: var(--fg);
 }
 
-.qb-door:active {
+.qb-door:active,
+.qb-give-fix:active,
+.qb-give-more:active {
   transform: scale(0.97);
 }
 
-.qb-door:focus-visible {
+.qb-door:focus-visible,
+.qb-give-fix:focus-visible,
+.qb-give-more:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+.qb-door {
+  margin-left: auto;
 }
 
 /* RULE 10, ON ITS OWN LINE. Not `disabled` — a disabled control
@@ -1268,15 +1390,61 @@
    and not squeezed in beside the total either: measured at 1024x768
    the sentence wrapped to four lines inside the control row and the
    price bar took 150px of a 768px window. A `--warning` rail, the
-   full width, one line at every size. */
+   full width, one line at every size.
+
+   IT IS A ROW NOW, NOT A PARAGRAPH. `refusalFact` leaves the strip
+   one sentence, and the act it used to describe in words stands
+   beside it as a control — so the strip reads fact, door, and the
+   count of anything else, left to right.
+
+   Measured with all three children present, mark and both controls:
+   36.4px — one line — at 1600, 1440, 1280, 1024, 900, 768 and 600,
+   and 63.2px — two lines — at 480 and below. That is why it wraps
+   rather than scrolls: a refusal that has to be dragged sideways to
+   be read is not a refusal, and §3 allows the wrap. */
 .qb-give-why {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
   margin: 0;
-  padding: var(--s-2) var(--s-5);
+  padding: 4px var(--s-5);
   border-bottom: 1px solid var(--line-subtle);
   border-left: 3px solid var(--warning);
-  font-size: var(--t-caption-size);
-  line-height: 1.5;
+}
+
+/* The mark is the only thing on the strip carrying the warning hue,
+   and it carries no words — §1, a kind colour is never behind
+   reading text. */
+.qb-give-mark {
+  flex: none;
+  color: var(--warning);
+}
+
+.qb-give-fact {
+  min-width: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.45;
   color: var(--fg-secondary);
+  overflow-wrap: break-word;
+}
+
+/* SMALLER THAN THE SHEET DOOR, and deliberately: these two sit
+   inside a strip, not on the control row. Measured at 1600×1000 —
+   the strip was 35.0px tall as a plain paragraph; with these at the
+   sheet door's 7px it went to 44.4px; at 4px, with the strip's own
+   padding brought to 4px to match, it is 36.4px. The control is
+   27.4px tall, which is the size `.qb-line-drop` has used since the
+   redesign. */
+.qb-give-fix,
+.qb-give-more {
+  flex: none;
+  padding: 4px var(--s-3);
+  font-size: var(--t-caption-size);
+}
+
+.qb-give-more {
+  font-variant-numeric: tabular-nums;
 }
 
 .qb-give {
@@ -1763,8 +1931,14 @@
     padding: var(--s-2) var(--s-4);
     gap: var(--s-3);
   }
+  /* ONLY THE GUTTER CHANGES. This read `6px var(--s-4)`, which was a
+     reduction from the strip's old 8px and became an INCREASE the
+     moment the base came down to 4px — measured, it put the strip
+     back to 40px here while 1600 held 36.4px. The vertical padding
+     is the base's now, at every width. */
   .qb-give-why {
-    padding: 6px var(--s-4);
+    padding-left: var(--s-4);
+    padding-right: var(--s-4);
   }
 }
 
@@ -1792,12 +1966,13 @@
      came to 700px of a 900px window, so the first band a person came
      here to open was below the fold — which is the defect the old
      deck was measured to have at this width and the reason it kept
-     its split. The composition is different when it is a column: the
-     name is still three times the body size and still the largest
-     thing on the screen, and the first band is on it. */
-  .qb-name {
-    font-size: clamp(30px, 9cqw, 54px);
-  }
+     its split.
+
+     THE OVERRIDE THAT USED TO SIT HERE IS GONE. It capped the name at
+     54px, which was only ever a smaller version of the wrong idea;
+     the base rule now tops out at 34px, and a stacked pane 768px wide
+     resolves 6.4cqi to 49px and takes that ceiling — the same title
+     size as every other page in the app, at every width. */
   .qb-specs {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }

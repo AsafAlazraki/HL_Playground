@@ -90,17 +90,18 @@ export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): React
             {nowhereToStart ? 'Nothing to quote from yet' : 'No quotes yet'}
           </span>
 
-          {/* WHAT THE PLACE IS, AS A TITLE. The four parts were all
-              here and all set as paragraphs, so the card read as a
-              notice rather than as a screen — and this is the page a
-              salesperson lands on before they have made anything.
-              The sentence under it is unchanged; only its first
-              clause is promoted to the heading it always was. */}
-          <h2 className="qt-none-title">A quote is one rig, one customer, one moment.</h2>
+          {/* A TITLE THAT IS A FACT, NOT A DEFINITION. It read "A
+              quote is one rig, one customer, one moment" — a
+              definition of the noun on the button the reader has just
+              pressed, and then the sentence under it defined the same
+              noun again. The heading now carries the PROMISE, which
+              is the one thing about a quote a person cannot work out
+              by making one, and the sentence under it is what that
+              promise means on a Friday. */}
+          <h2 className="qt-none-title">A quote freezes its prices the day you hand it over.</h2>
 
           <p className="qt-none-say">
-            The row you are selling, frozen with its prices on the day you hand it
-            over — so a quote given on Monday still says the same number on Friday.
+            So a quote given on Monday still says the same number on Friday.
           </p>
 
           {/* WHAT YOU ALREADY HAVE, counted, and only when the stage
@@ -118,21 +119,24 @@ export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): React
             </p>
           )}
 
-          <p className="qt-none-do">
-            {nowhereToStart ? (
-              <>
-                A quote is written from a row, so a table comes first. Start one from{' '}
-                <em>New table</em> on the bar, or load your price file from{' '}
-                <em>Home</em> — then the row you pick becomes the quote.
-              </>
-            ) : (
-              <>
-                Press <em>New quote</em> at the foot of the rail and pick what you are
-                selling — the row you choose becomes the quote. Or open a table, press{' '}
-                <em>Fitment</em> and quote the rig you are looking at.
-              </>
-            )}
-          </p>
+          {/* THE INSTRUCTION IS GONE AND THE REFUSAL IS NOT.
+
+              With tables loaded there was nothing here but directions
+              to a button: "Press New quote at the foot of the rail"
+              — and New quote is in the rail, labelled, about 40px
+              away. A screen that narrates its own controls is the
+              clutter this pass exists to remove.
+
+              WITH NO TABLES THERE IS NO ACT ON THIS SCREEN AT ALL,
+              which is a different case and keeps its sentence: rule
+              10 asks a thing that cannot be done to say why, in the
+              place it cannot be done, and this is that place. */}
+          {nowhereToStart ? (
+            <p className="qt-none-do">
+              A quote is written from a row, and there are no tables yet — load your price
+              file from <em>Home</em>.
+            </p>
+          ) : null}
         </div>
       </div>
     )

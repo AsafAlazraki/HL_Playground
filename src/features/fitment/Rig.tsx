@@ -258,11 +258,14 @@ export function Rig({ reading }: RigProps): ReactElement | null {
         <h3 className="rg-title">
           Take one {subjectNoun.one} and see what still fits — and what does not
         </h3>
+        {/* THE LEGEND SURVIVED AND THE INSTRUCTIONS DID NOT. Two of
+            the four sentences said what this section is and what
+            pressing the picker below does — both of which the heading
+            and the picker say for themselves. The one a person cannot
+            work out by looking is what a struck-through row means. */}
         <p className="rg-lede">
-          Everything above counts the pairings your file already holds. This works one out.
-          Pick a {subjectNoun.one} and every rule your business has written runs against it
-          at once, both ways round, until nothing more can be ruled out. What stops fitting
-          stays on the list, struck through, with the rule&rsquo;s own words beside it.
+          What stops fitting stays on the list, struck through, with the rule&rsquo;s own
+          words beside it.
         </p>
       </header>
 

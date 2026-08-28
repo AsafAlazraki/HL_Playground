@@ -535,10 +535,11 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
               <div className="hm-mast-say">
                 <span className="mono-label hm-mast-eyebrow">Your sheet</span>
                 <h1 className="ds-hero hm-mast-name">{org?.name ?? 'Your tables'}</h1>
-                <p className="hm-mast-note">
-                  Every table you have, grouped by what it holds. Press one to open its
-                  register.
-                </p>
+                {/* PRESSING A CARD OPENS IT EVERYWHERE IN THIS APP,
+                    and the second sentence said so under a grid of
+                    them. It was also all but word for word the
+                    whiteboard legend's own opening. */}
+                <p className="hm-mast-note">Every table you have, grouped by what it holds.</p>
               </div>
 
               <dl className="hm-tally">

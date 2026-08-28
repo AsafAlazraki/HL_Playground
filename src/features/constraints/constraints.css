@@ -723,137 +723,16 @@
 }
 
 /* ============================================================
-   THE WORKBOOK'S OWN RULES
+   THE WORKBOOK'S OWN RULES — the card list that stood here is gone.
 
-   Drawn whether or not the engine can run them. The STATUS leads
-   each card, because "is this actually protecting me?" is the only
-   question a person has here, and a rule that looks identical
-   whether or not it is enforced is worse than no list at all.
-
-   Three states, three weights of ink. Checked is confident;
-   checked-elsewhere is confident and points; not-checked is
-   deliberately quiet and always carries its reason on the next
-   line — a status with no explanation reads as a bug.
+   `WorkbookRuleList` drew the sixteen seeds status-first for the
+   module rules panel, and `RulesLedger` drew the same sixteen
+   rate-first for Business rules. Measured on the module's Pricing
+   tab, thirteen of the sentences were VERBATIM the same on both
+   screens. One drawing survives; these twelve rules went with the
+   component. `.cn-wb-src` below did NOT: four surfaces print
+   provenance through it and it was always the shared one.
    ============================================================ */
-
-.cn-wb {
-  margin-top: calc(var(--sp-6) + var(--sp-2));
-  padding-top: var(--sp-5);
-  border-top: 1px solid var(--hairline);
-}
-
-.cn-wb-eyebrow {
-  margin: 0;
-  color: var(--ink-faint);
-}
-
-/* THE ONE TYPE DEFECT IN THE APP, as opposed to a calibration.
-   This is an <h3> (`WorkbookRuleList.tsx:89`) that never reset
-   `font-weight`, so the UA's `bold` applied — and only the 400 cut
-   of Instrument Serif is loaded (`main.tsx:4`), so Chrome had
-   nothing to switch to and SYNTHESISED the bold by smearing the 400
-   outline. On a high-contrast serif that closes the thin strokes and
-   blobs the bracketed serifs: this heading was the only word in the
-   product not drawn by its typeface. `--display-weight` states 400
-   so no element's default can decide it again. */
-.cn-wb-title {
-  margin: var(--sp-2) 0 0;
-  font-family: var(--font-display);
-  font-size: var(--display-s-size);
-  font-weight: var(--display-weight);
-  line-height: var(--display-s-lead);
-  letter-spacing: var(--display-s-track);
-  color: var(--ink);
-}
-
-.cn-wb-lede {
-  margin: var(--sp-2) 0 0;
-  max-width: 62ch;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-.cn-wb-lede b {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink);
-}
-.cn-wb-lede em {
-  font-style: italic;
-}
-
-.cn-wb-list {
-  margin: var(--sp-4) 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-
-.cn-wb-item {
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--hairline);
-  border-left: 2px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-}
-/* The left edge carries the state, so the list can be read down its
-   margin without reading a word of it. */
-.cn-wb-item.is-here {
-  border-left-color: var(--viridian, #2f6f5e);
-}
-.cn-wb-item.is-elsewhere {
-  border-left-color: var(--blue);
-}
-.cn-wb-item.is-pending {
-  border-left-color: var(--hairline);
-  background: var(--paper);
-}
-
-.cn-wb-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-.cn-wb-item.is-here .cn-wb-status {
-  color: var(--viridian, #2f6f5e);
-}
-.cn-wb-item.is-elsewhere .cn-wb-status {
-  color: var(--blue);
-}
-.cn-wb-status-mark {
-  display: inline-flex;
-  flex: 0 0 auto;
-}
-.cn-wb-status b {
-  font-weight: 600;
-  letter-spacing: 0.1em;
-}
-
-.cn-wb-says {
-  margin: var(--sp-2) 0 0;
-  max-width: 68ch;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--ink);
-}
-
-.cn-wb-why {
-  margin: var(--sp-2) 0 0;
-  max-width: 68ch;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
 
 /* The cell reference. Mono because it is a reference to look up, and
    it WRAPS — a truncated cell address cannot be checked, which would
@@ -870,12 +749,12 @@
 /* ============================================================
    THE TWO THEME BANDS — registration, and what is not in here.
 
-   THE SHARED SHELL (`cn-band`). Both sit below the workbook rules
-   and both are "the honest state of this system" content, so they
-   take the same top rule and the same three-part head that `.cn-wb`
-   has. The head is factored here rather than copied: three surfaces
-   on one pane disagreeing about the size of an eyebrow is the kind
-   of drift that makes a page look assembled rather than drawn.
+   THE SHARED SHELL (`cn-band`). Both sit below the ledger and both
+   are "the honest state of this system" content, so they take the
+   same top rule and the same three-part head. The head is factored
+   here rather than copied: three surfaces on one pane disagreeing
+   about the size of an eyebrow is the kind of drift that makes a
+   page look assembled rather than drawn.
 
    `.cn-wb-src` above is SHARED by all three, deliberately. A
    provenance line is one thing — mono, 11px, wrapping so a cell
@@ -900,8 +779,9 @@
   color: var(--ink-faint);
 }
 
-/* Same step as `.cn-wb-title`, and for the same reason: the weight
-   is stated so no element default can decide it. */
+/* The weight is stated so no element default can decide it — an <h3>
+   that never reset `font-weight` is what shipped the one real type
+   defect this app has had. */
 .cn-band-title {
   margin: var(--sp-2) 0 0;
   font-family: var(--font-display);
@@ -1265,8 +1145,8 @@
   padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--hairline);
   /* The left edge says "this one is being checked", the same signal
-     `.cn-wb-item.is-here` carries three sections up. A reader should
-     not have to learn a second vocabulary halfway down one page.
+     the ledger's own rows carry. A reader should not have to learn a
+     second vocabulary halfway down one page.
      No literal fallback: `--viridian` is defined in styles/bridge.css,
      so the fallback in the older rule is dead code and DESIGN_PRINCIPLES
      rule 1 is "never write a colour". */
@@ -1454,25 +1334,22 @@
 /* ============================================================
    A NAME IS A NAME — the uppercase pass, business-rules side.
 
-   `.cn-wb-status` is a mono STATUS STAMP and stays uppercase: it is
-   the app's own word for a state ("checked in", "not here"), which is
-   one of the three uses DESIGN_CONTRACT §3 sanctions. But when the
-   state is `elsewhere` the stamp appends WHERE, in a <b>, and that is
-   the rule's own name off the project — "Fitment · Motor fitment" was
-   coming out "FITMENT · MOTOR FITMENT". A stamp may shout its own
-   word; it may not shout the dealer's.
+   The rule that stood here read `.cn-wb-status b`: a mono status
+   stamp may shout its own word ("checked in") and may not shout the
+   dealer's, and when the state was `elsewhere` the stamp appended
+   the rule's own name off the project — "Fitment · Motor fitment"
+   was coming out "FITMENT · MOTOR FITMENT". The stamp went with
+   `WorkbookRuleList`; `RulesLedger`'s own pill was never uppercased,
+   so there is nothing left here to correct. The DISTINCTION is what
+   is worth keeping in writing, because the next stamp will need it.
 
    Everything else uppercase on this surface was checked and left
-   alone, deliberately: `.cn-eyebrow`, `.cn-wb-eyebrow`,
-   `.cn-band-eyebrow` are captions; `.cn-count` and `.cn-meta` are
-   mono stamps; `.cn-lo-verdict` is a card caption in the app's words
-   and `.cn-lo-size` beside it already carried
-   `text-transform: none`, which is the same distinction drawn here.
+   alone, deliberately: `.cn-eyebrow` and `.cn-band-eyebrow` are
+   captions; `.cn-count` and `.cn-meta` are mono stamps;
+   `.cn-lo-verdict` is a card caption in the app's words and
+   `.cn-lo-size` beside it already carried `text-transform: none`,
+   which is the same distinction drawn here.
    ============================================================ */
-.cn-wb-status b {
-  letter-spacing: 0.01em;
-  text-transform: none;
-}
 
 /* ============================================================
    AND `.cn-done`, WHICH THE PASS ABOVE DID NOT LIST.
@@ -2205,17 +2082,16 @@
 }
 
 /* The reason, and it is required. "Not checked yet" on its own is a
-   shrug; this line is the position. */
+   shrug; this line is the position. It used to open with a bold
+   `.cn-rl-why-k` reading "Not checked here." — the same words as the
+   pill four rows up, on all ten pending cards — and that span went
+   with the repetition. */
 .cn-rl-why {
   margin: var(--sp-2) 0 0;
   max-width: 68ch;
   font-size: 13px;
   line-height: 1.55;
   color: var(--ink-soft);
-}
-.cn-rl-why-k {
-  font-weight: 600;
-  color: var(--ink);
 }
 
 /* -- the person's own rules, below the workbook's ------------ */
@@ -3765,15 +3641,13 @@
   padding-top: var(--s-6);
   border-top: 1px solid var(--line-subtle);
 }
-.cn-band-eyebrow,
-.cn-wb-eyebrow {
+.cn-band-eyebrow {
   color: var(--fg-tertiary);
 }
 /* SUPERSEDES the 22px display step on both: 20px is the title step
    and these are panel headings, not page titles. One size for a
    band heading everywhere on the surface. */
-.cn-band-title,
-.cn-wb-title {
+.cn-band-title {
   margin: var(--s-2) 0 0;
   font-family: var(--font-sans);
   font-size: var(--t-title-size);
@@ -3782,8 +3656,7 @@
   letter-spacing: var(--t-title-track);
   color: var(--fg);
 }
-.cn-band-lede,
-.cn-wb-lede {
+.cn-band-lede {
   margin-top: var(--s-3);
   font-size: var(--t-small-size);
   line-height: 1.6;

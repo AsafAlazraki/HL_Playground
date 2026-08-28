@@ -265,9 +265,16 @@ export function totalIsNothingByDefault(quote: QuoteDef): boolean {
 export function issueBlockers(quote: QuoteDef): string[] {
   const why: string[] = []
 
+  /* THE DIRECTION WAS WRONG AND THE CONSEQUENCE WAS SAID TWICE.
+     "Type the customer name at the top" pointed at the top of a
+     screen where the customer box is the LAST band, and the freeze
+     clause after it is `NO_CUSTOMER_WHY`'s job — that sentence is
+     drawn against the box itself, which is where a person fixes it.
+     Three surfaces read this string, so what it owes all three is
+     the fact and what it stops, and no route at all. */
   if (quote.customer.name.trim() === '') {
     why.push(
-      'This quote is addressed to nobody. Type the customer name at the top — giving it to them freezes the document, so a name left out now cannot be added afterwards.',
+      'This quote is addressed to nobody. It cannot be given to a customer until it has a name.',
     )
   }
 

@@ -66,7 +66,14 @@ import {
   parseAmount,
   quoteLevelChoices,
 } from './pricing'
-import { issueBlockers, lineAmount, linesOf, needsOverrideReason, quoteTotals } from './totals'
+import {
+  issueBlockers,
+  lineAmount,
+  linesOf,
+  looseLines,
+  needsOverrideReason,
+  quoteTotals,
+} from './totals'
 import {
   addAdjustment,
   addLine,
@@ -110,13 +117,18 @@ const ADJUSTMENT_DOORS: Array<{ kind: AdjustmentKind; door: string }> = [
 /** THE SENTENCE UNDER THE EMPTY CUSTOMER FIELD.
  *
  *  DESIGN_PRINCIPLES rule 10: the refusal goes where the thing is
- *  refused. The foot bar says the quote cannot go out; this says which
- *  keystroke fixes it, at the field it is about — the same arrangement
- *  the override's reason field already has. Drawn only while it is
- *  true, so it is a refusal in place and not a permanent instruction
- *  nobody reads. */
+ *  refused. Drawn only while it is true, so it is a refusal in place
+ *  and not a permanent instruction nobody reads.
+ *
+ *  IT CARRIES THE CONSEQUENCE AND NOTHING ELSE NOW. It opened "A
+ *  quote is addressed to somebody", which defines a noun, and went
+ *  on to "until this is written it cannot be given to the customer",
+ *  which is word for word what `issueBlockers` prints at the button
+ *  that is refused — two of this app's three statements of one fact.
+ *  What is left is the half neither of the others says: what typing
+ *  a name now buys, and what leaving it costs later. */
 const NO_CUSTOMER_WHY =
-  'A quote is addressed to somebody. Until this is written it cannot be given to the customer — giving it to them freezes the document, so the name cannot be added later.'
+  'Giving it to the customer freezes the document, so a name left out now cannot be added later.'
 
 export interface QuoteEditorProps {
   quote: QuoteDef
@@ -136,6 +148,8 @@ export function QuoteEditor({
   onOpenCustomer,
 }: QuoteEditorProps): ReactElement {
   const totals = quoteTotals(quote)
+  /* see the block that draws it, under the sections */
+  const loose = looseLines(quote)
   const levels = useMemo(() => quoteLevelChoices(quote.lines), [quote.lines])
   const [details, setDetails] = useState(false)
   const [contact, setContact] = useState(false)
@@ -300,6 +314,39 @@ export function QuoteEditor({
           {quote.sections.map((section) => (
             <SectionCard key={section.blockId} quote={quote} section={section} />
           ))}
+
+          {/* THE LINES NO SECTION CLAIMS, AND THIS SCREEN IS WHERE
+              THEY CAN BE ACTED ON. `quoteTotals` sums `quote.lines`
+              and this reading drew only `quote.sections`, so a line
+              held by `lines` and by no section was charged in the
+              foot bar, absent from the sheet, and — because the only
+              remove control lives on a row — impossible to take off.
+              `QuoteBuild` has drawn them since it was written and the
+              printed document does now; this was the last of the
+              three readings that did not.
+
+              Three routes make one: an imported or restored quote
+              whose `sections` name no lines (`isQuoteish` checks the
+              shape and nothing else), `addFreeLine` on a quote with
+              no last section to put it in, and `removeLine`'s undo,
+              which restores a line to a section only when it found
+              one to take it from.
+
+              "Also on this quote" rather than the build screen's
+              "Typed onto the quote": that heading is true of the one
+              route that types them and false of the other two, and
+              this screen is where somebody decides whether to keep
+              the line. */}
+          {loose.length > 0 ? (
+            <section className="qt-section">
+              <header className="qt-section-head">
+                <h2 className="mono-label">Also on this quote</h2>
+              </header>
+              {loose.map((line) => (
+                <LineRow key={line.id} quote={quote} line={line} removable />
+              ))}
+            </section>
+          ) : null}
 
           {/* -- adjustments ------------------------------------- */}
           <section className="qt-adjustments">
@@ -732,9 +779,8 @@ export function CustomerField({
           rather than offering to build a table from inside a quote. */}
       {open && book && !book.has && !noCustomer ? (
         <p className="qt-who-none">
-          This quote will print their name and details either way. To keep them —
-          so a second quote to them starts from what you already know — open{' '}
-          <em>Customers</em> on the bar and start the register there.
+          Their name and details print either way. <em>Customers</em> keeps them for the
+          next quote.
         </p>
       ) : null}
 
@@ -881,8 +927,7 @@ function SectionCard({
         section.pickedCount && section.pickedCount > 1 ? (
           <p className="qt-section-empty">
             {section.pickedCount} {section.title} were picked for this one, so none was
-            chosen for you — pick the one you are quoting. Starring it on the page makes
-            it come across on its own next time.
+            chosen for you. Starring one makes it come across on its own next time.
             {section.heldCount ? ` ${heldBackSentence(section.heldCount, section.title)}` : ''}
           </p>
         ) : (

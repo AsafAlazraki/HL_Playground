@@ -31,6 +31,7 @@ import {
 import type { LintFinding } from '@/lib/lint'
 import type { RecentPick } from '@/features/search'
 import type { QuoteDef } from '@/features/quote'
+import { ACTIVITY_EMPTY } from '@/features/activity'
 import type { CardId } from './arrangement'
 
 /* ---------------------------------------------------------- */
@@ -95,7 +96,7 @@ export const CARDS: Record<CardId, CardMeta> = {
   'activity': {
     name: 'Activity',
     says: 'What changed anywhere in the business, and who changed it.',
-    empty: 'Nothing has changed yet. Edits, prices and quotes show up here as they happen.',
+    empty: ACTIVITY_EMPTY,
     wide: false,
     tall: false,
   },
@@ -115,7 +116,7 @@ export const CARDS: Record<CardId, CardMeta> = {
   },
   'recently-opened': {
     name: 'Where I have been',
-    says: 'The tables and rows you opened last, so you can get back.',
+    says: 'The tables and rows you opened last.',
     empty: 'Nothing opened yet. What you open shows up here.',
     wide: false,
     tall: false,

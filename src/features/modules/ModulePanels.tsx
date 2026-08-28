@@ -31,7 +31,7 @@ import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import { coverPhoto } from '@/features/table/coverPhoto'
 import { localDay, priceLevelsFor, quoteTotals, useQuotes } from '@/features/quote'
-import { ActivityList, useModuleActivity } from '@/features/activity'
+import { ACTIVITY_EMPTY_HERE, ActivityList, useModuleActivity } from '@/features/activity'
 import { money } from '@/lib/money'
 import {
   buildEntries,
@@ -274,10 +274,7 @@ export function ModuleHome({
               have been empty — see the note in activity.ts about
               what the stamp claims and what it does not. */}
           {here.length === 0 ? (
-            <p className="md-hcard-none-say">
-              Nothing has changed in here yet. Edits, prices and quotes show up as they
-              happen.
-            </p>
+            <p className="md-hcard-none-say">{ACTIVITY_EMPTY_HERE}</p>
           ) : (
             <ActivityList orgSlug={orgSlug} moduleId={owner.id} limit={ACTIVITY_ROWS} />
           )}
@@ -453,10 +450,7 @@ export function ModuleQuotes({ module, owner, onOpenQuote }: ModuleQuotesProps):
        here, which is a true and useful answer on a freshly loaded
        sheet — and it arrives the moment somebody quotes a boat. */
     return (
-      <p className="md-none">
-        No quote has been raised from {module.name} yet. One appears here the moment a
-        quote is started from an item in it.
-      </p>
+      <p className="md-none">No quote has been raised from {module.name} yet.</p>
     )
   }
 

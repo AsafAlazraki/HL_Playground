@@ -5605,6 +5605,31 @@
   .sn-crest {
     display: none;
   }
+  /* AND THE DOOR'S GAP COMES DOWN WITH THE COLUMN — because at 168
+     the twelve-pixel gap was costing a name.
+
+     MEASURED at 768, on the row that did not fit. The rail is 168
+     and its border takes 1, so `.sn-scroll` has 167; its own 8+8
+     leaves the row 151; the row spends 8+8 on padding, 20 on the
+     mark, 18.61 on the count pill and TWELVE TWICE on the gaps —
+     which hands `.sn-row-name` 72.39px for a word that wants 72.94
+     at weight 500 and 74.05 when the row is lit at 600. So
+     "Customers" drew as "Custom… 1" — measured on all seventeen
+     screens of this app at 768, and on the rail itself at 700 and
+     620, which take the same 168. The sweep that first looked for
+     it used a one-pixel threshold, called 72 < 73 noise, and
+     reported the rail clean while the screenshot showed the cut.
+
+     8px hands the name 80.39 — 6.34 of headroom on the lit weight,
+     which is the whole word plus room for a longer one. It is also
+     the gap `.sn-find` directly above already uses between its
+     glyph and its words, so at this width the control and the doors
+     under it agree rather than differ by four pixels nobody chose.
+     12 stays at 224 and 200, where it is affordable and where the
+     comment on `.sn-row` argues for it. */
+  .sn-row {
+    gap: var(--s-2);
+  }
 }
 
 /* AT 600 THE RAIL IS A STRIP, whatever the reader last chose.
@@ -5867,9 +5892,29 @@
 }
 
 @media (max-width: 900px) {
-  .ad-well {
-    padding: var(--sp-5) var(--sp-4);
-  }
+  /* `.ad-well { padding: var(--sp-5) var(--sp-4) }` USED TO STAND
+     HERE, and it was a second gutter under a page that already has
+     one — the exact thing `.ad-well`'s own base rule forbids in
+     writing, added later and never measured against it.
+
+     MEASURED, `.ph-name`'s left edge on Admin against the same
+     edge on Modules, Quotes and Customers:
+
+       width    Admin    every other page
+       1024      220      220     (query not firing)
+        900      236      220
+        768      204      188
+
+     16px of it, at 900 and at every stop below — so Admin was the
+     one screen whose title, eyebrow, sentence and door grid all sat
+     further in than the "Back" bar directly above them, which takes
+     `--page-gutter` like everything else. Two left edges on one
+     page, on the screen a dealer opens to change how their business
+     works.
+
+     `--page-gutter` already narrows 32 → 20 at 1100, which is the
+     whole of what this query was reaching for. The base rule's
+     bottom padding is what should apply here and now does. */
   .ad-grid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }

@@ -15,6 +15,16 @@
    in a fresh draft that carries `supersedesId`, so the conversation
    has a history and neither document was edited behind anyone's
    back.
+
+   THE SENTENCE BELOW USED TO PROMISE MORE THAN THE APP DID. It read
+   "and says on it that it supersedes this one", and nothing on the
+   copy said anything: `supersedesId` reached the diary as " · new
+   version" and reached the printed document nowhere. `QuoteDocument`
+   now captions a superseding copy REVISED QUOTATION, which is the
+   most that can be said from frozen data — `makeNewVersion` freezes
+   the superseded quote's ID and not its REFERENCE, so the document
+   cannot name it without reading the live registry, and it never
+   does that. The sentence says what the app does now.
    ============================================================ */
 
 import { useMemo, useState } from 'react'
@@ -141,10 +151,8 @@ export function QuotePage({
             and never on the customer's paper.
             ============================================================ */}
         <p className="qt-issued-why">
-          Nothing on this quote can be changed now — it is the record of what the customer was
-          offered, and the date it was given to them is above. To change anything, press{' '}
-          <em>Make a new version</em>: it opens as a draft you can work on, and says on it that it
-          supersedes this one.
+          Nothing here can be changed — it is the record of what the customer was offered.{' '}
+          <em>Make a new version</em> opens a draft that prints as a revised quotation.
         </p>
       </div>
 

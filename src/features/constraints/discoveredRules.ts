@@ -46,7 +46,7 @@
    copied rather than referenced), it holds dismissals, which are not
    rules at all, and it holds every kept pattern whose shape this app
    cannot yet state as a sentence — with the blocker, in words, the
-   same way `WorkbookRuleList` draws the sixteen workbook seeds.
+   same way `RulesLedger` draws the sixteen workbook seeds.
 
    THE SHAPE IS `constraintDefs.ts`'s, deliberately: a module-level
    registry keyed by organisation, a synchronous snapshot, a
@@ -419,7 +419,7 @@ function asObservedPattern(k: KeptPattern): ObservedPattern {
  * Rule 10 in one function: a card listing a kept pattern that this
  * app cannot state has to say so IN PLACE, in words a person can
  * argue with, rather than leaving a row that quietly does nothing.
- * `WorkbookRuleList` already draws exactly this for the sixteen
+ * `RulesLedger` already draws exactly this for the sixteen
  * workbook seeds; this is the same answer for a measured one.
  *
  * PURE — it takes the tables rather than reading the store, so a

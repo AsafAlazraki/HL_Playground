@@ -70,13 +70,12 @@ import type { WorkbookRuleRef, WorkbookRuleSeed } from './workbookRules'
 /**
  * The three states a workbook rule can be in, as a bare value.
  *
- * IT IS THE STATE AND NOT THE SENTENCE, because two surfaces draw this
- * and they say different things about it. The ledger on BUSINESS RULES
- * subordinates the pending case to the finding above it — "not checked
- * here", then the reason. `WorkbookRuleList`, which a module draws,
- * leads with it. Both readings are right for their page; what may
- * never differ between them is WHICH rules are in which state, so that
- * one decision lives here.
+ * IT IS THE STATE AND NOT THE SENTENCE, because the surfaces that draw
+ * it say different things about it. The ledger on BUSINESS RULES
+ * subordinates the pending case to the finding above it — a pill, then
+ * the reason — while a module states only how many of its own subject's
+ * rules are checked. What may never differ between them is WHICH rules
+ * are in which state, so that one decision lives here.
  *
  * `liveIds` IS THE TRUTH AND `seed.blocked` IS ONLY A DEFAULT. The
  * moment the contract grows what a rule needs, its id appears in the

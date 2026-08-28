@@ -74,6 +74,7 @@ import {
 import {
   OBSERVED_SAY,
   SHAPE_SAY,
+  becauseSay,
   counterSay,
   deleteSay,
   excludedSay,
@@ -485,8 +486,19 @@ function CandidateCard({
 
   return (
     <li className="dx-card">
+      {/* THE VERDICT IS A STAMP, NOT THE TAIL OF A SENTENCE. It was
+          the second half of `dx-because` — "Because 169 of 169
+          pairings the price file writes agree. Clears the bar a
+          filter would have to clear." — and the second sentence is
+          IDENTICAL on every card of the same verdict. Measured on the
+          seeded file: eight cards, eight `dx-because` paragraphs,
+          nineteen words each and eight of those nineteen the same
+          eight words. A state that repeats down a list is a stamp;
+          it takes `.dx-tag` beside the shape, where a reader can
+          compare eight of them without reading eight sentences. */}
       <p className="dx-meta">
         <span className="dx-tag">{shape.name}</span>
+        <span className="dx-tag">{verdictSay(c.verdict)}</span>
         <span className="dx-meta-sep" aria-hidden="true">
           ·
         </span>
@@ -512,9 +524,7 @@ function CandidateCard({
         </div>
       </div>
 
-      <p className="dx-because">
-        Because {c.because}. {verdictSay(c.verdict)}.
-      </p>
+      {becauseSay(c) === '' ? null : <p className="dx-because">Because {becauseSay(c)}.</p>}
 
       <div className="dx-acts">
         <button

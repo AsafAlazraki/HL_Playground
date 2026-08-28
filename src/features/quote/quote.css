@@ -2033,7 +2033,15 @@
   z-index: 1;
 }
 
+/* THE CONTROLS OVER THE DOCUMENT WRAP RATHER THAN PUSHING THE PAGE
+   SIDEWAYS. `.qt-issued-bar` is a flex row of a status stamp and up
+   to three buttons with no wrap; measured at 320px of window,
+   "Make a new version" ran 6px past `.qt-root` and the whole stage
+   scrolled horizontally — with the sheet itself, measured in the
+   same sweep, entirely inside its own edges. The scroll was the
+   chrome, not the quote. */
 .qt-issued-bar {
+  flex-wrap: wrap;
   gap: var(--s-2);
 }
 
@@ -2044,8 +2052,21 @@
 /* ------------------------------------------------------------
    NARROW WINDOWS — the sheet keeps its margins in proportion
    rather than crushing the line table against its own edge.
+
+   `screen and`, AND THAT WORD IS A PRINT FIX, NOT A TIDY-UP. A
+   printed A4 page at the @page margin of 14mm is 182mm of measure,
+   which is 688 CSS px — under this breakpoint — so every rule in
+   here was applying to the PAPER as well as to a narrow window.
+   Measured with `emulateMedia({media:'print'})` at 688 × 1017 (A4
+   less its margins, at 96dpi): the subject stacked, and
+   `flex-direction: column` from this block survived into print
+   because the print block only ever answered the photograph's SIZE
+   — so the 55mm cap it sets was applied to a photo that had already
+   been sent below the boat's name, and the rig ran to 1247.6px,
+   1.23 of a page, to say what fits on one. The document's whole
+   printed layout was being chosen by a screen breakpoint.
    ------------------------------------------------------------ */
-@media (max-width: 820px) {
+@media screen and (max-width: 820px) {
   .qt-doc {
     padding: var(--s-8) var(--s-6) var(--s-8);
   }
@@ -2511,5 +2532,394 @@
   .qt-doc-foot {
     margin-top: 10mm;
     padding-top: 2mm;
+  }
+}
+
+/* ============================================================
+   THE DOCUMENT, FINISHED — the letterhead, the columns, the
+   money box and the note the dealer typed.
+
+   Appended LAST, and in this file that word is load-bearing
+   twice. Every appearance pass here has been appended AFTER the
+   print block that answered it, and a media query adds no
+   specificity, so at equal weight the later rule wins on paper as
+   well as on screen — the trap the "A4 — RESTATED" note above was
+   written from. This section obeys the rule it inherits: the
+   screen values first, then one print block at the very foot of
+   the file restating every one of them that paper had already
+   chosen a different answer for. Nothing may be appended after it
+   without doing the same.
+
+   Nothing here changes a selector's meaning or a layout mode
+   except where the comment says the layout mode WAS the defect.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   THE COLUMN HEAD SITS OVER ITS COLUMN, WHICH IT DID NOT.
+
+   `.qt-doc-lines th, .qt-doc-lines td { text-align: left }` is
+   (0,1,1). `.qt-col-qty, .qt-col-amt { text-align: right }` is
+   (0,1,0). So the CELLS took their right alignment from
+   `.qt-doc-lines td.qt-col-*` at (0,2,1) and won it, and the HEADS
+   had nothing at that weight and stayed left.
+
+   Measured at 1600 × 1400 on an issued quote, ink boxes taken with
+   a Range rather than the cell: "AMOUNT" ran 1198.3 → 1241.8 while
+   the figures it names ended at 1295 — the head 53.2px to the left
+   of its own column, on the one document a customer reads a column
+   of money down. "QTY" lined up, and by arithmetic rather than by
+   rule: 21.8px of ink in a 37.8px cell less its 16px of padding is
+   21.8px, so it filled its box exactly. One column right by
+   accident is not a column that is right.
+
+   Written at (0,2,1) on the head only, so the print block's
+   `.qt-doc .mono-label { font-size: 7.5pt }` (0,2,0) keeps every
+   size it measured — the specificity trap the note beside
+   `.qt-doc-lines td.qt-col-amt` above already paid for once.
+   ------------------------------------------------------------ */
+.qt-doc-lines thead th.qt-col-qty,
+.qt-doc-lines thead th.qt-col-amt {
+  text-align: right;
+}
+
+/* A LINE'S NAME IS TEXT, NOT A ROW OF BOXES. `.qt-doc-line-name`
+   was `display: flex` with no wrap, so as soon as the description
+   column was narrow enough to break a name, the name took one
+   column and the RECOMMENDED stamp took another beside it and the
+   pair read as two fields. Measured at 640px of window: "Yamaha -
+   F4SMHA" broke after "Yamaha -" with the stamp sitting to the
+   right of the break on its own baseline.
+
+   Block, and the stamp flows after the last word like the word it
+   is. The star that used to hold the first flex slot is off this
+   document entirely — see `DocLine` in QuoteDocument.tsx. */
+.qt-doc-line-name {
+  display: block;
+}
+.qt-doc-tag {
+  /* `DocLine` now writes a word space before this, which is where
+     the break opportunity the narrow layout needs comes from — see
+     the note there. Measured in the sheet, IBM Plex Mono at 11px
+     advances 6.57px per character, space included, so 4px on top of
+     it puts the stamp clear of the name without reading as a gap. */
+  margin-left: var(--s-1);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   THE LETTERHEAD OUTRANKS THE ADDRESSEE, AND IT DID NOT.
+
+   Measured on the issued document at 1600px of window:
+   `.qt-doc-org` "Northside Marine" at 20px/600,
+   `.qt-doc-customer-name` "Margaret & Dean Whitlock" at 20px/560. The business whose paper this is
+   and the person it is addressed to were set at one size, one tier
+   apart in weight, in two stacked blocks of identical shape — and
+   the plate in the opposite corner is the only bordered object in
+   the title area, so the heaviest mark at the top of the quotation
+   was the reference number.
+
+   The org takes the display step (28px), the one step between title
+   and the 32px the subject holds, so the reading order down the
+   page is now boat 32 → letterhead 28 → addressee 20 → contact 13.
+   It stays Inter: the note on `.qt-doc-name` rules that exactly one
+   headline changes face and the rest of the page does not, and a
+   second display face in the title block is the thing that note
+   exists to prevent.
+   ------------------------------------------------------------ */
+.qt-doc-org {
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  line-height: var(--t-display-lead);
+  letter-spacing: var(--t-display-track);
+}
+
+/* AND THE TITLE BLOCK WRAPS BEFORE IT COLLIDES. `.qt-doc-head` is a
+   flex row of the letterhead and the plate, and `.qt-doc-who` had
+   `min-width: 0` against a plate with `min-width: 236px` — so the
+   letterhead shrank to nothing and the plate PAINTED OVER IT.
+   Measured at 420px of window: the sheet's content column is 258px,
+   "QUOTATION" and "Northside Marine" sat at x 113 with the plate's
+   own box starting at 137, the words interleaved.
+
+   A basis of 240px is the letterhead's floor rather than its wish,
+   so the letterhead can no longer be squeezed to nothing and the
+   plate drops beneath the name instead of into it.
+
+   THE FLEX ARITHMETIC IS NOT WHAT TRIPS IT, and it is worth saying
+   so rather than leaving a number here that never fires: 240 + a
+   24px column gap + the plate's 236 is 500px of content, but the
+   820px breakpoint below sets `.qt-plate { width: 100% }`, which
+   wraps the line first. Stepping the window 900 → 340 in 4px, the
+   plate drops at 820px of window — 556px of content. The basis is
+   the floor that makes the drop safe, not the trigger for it. */
+.qt-doc-head {
+  flex-wrap: wrap;
+  row-gap: var(--s-5);
+}
+.qt-doc-who {
+  flex: 1 1 240px;
+}
+.qt-plate {
+  flex: 0 1 auto;
+}
+
+/* ------------------------------------------------------------
+   THE MONEY BOX HAS A MEASURE, AND IT WAS TAKING WHATEVER THE
+   LONGEST LABEL ASKED FOR.
+
+   `min-width: 380px` under `justify-content: flex-end` sets a floor
+   and no ceiling, and `.qt-money-row` is a flex row whose `dt` is
+   the label somebody typed. Measured with a real trade-in on it
+   ("2016 Quintrex 420 Renegade with Mercury 40 — subject to final
+   inspection"): the box was 546px of a 782px measure on screen and
+   the FULL 688px on A4, where the rule above "Package" and the
+   double rule under "Total" ran the whole width of the page and the
+   money box stopped reading as a box at all. The document's spine
+   moved with the wording of a discount.
+
+   420px is a fixed measure — 54% of the sheet's 782 — so the rules
+   start in the same place on every quote in the drawer. The label
+   wraps inside it, which is what a trade-in description does on
+   paper anyway; `align-items: baseline` was already on the row, so
+   a wrapped label still sets its first line against its figure.
+   ------------------------------------------------------------ */
+.qt-money-rows {
+  flex: 0 1 auto;
+  width: 420px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* AND GIVING THE BOX A MEASURE PUT A FIGURE AT RISK, which is the
+   one thing it may never be. `.qt-money-row` is a flex row and its
+   `dd` had no floor, so inside 420px a long trade-in description
+   squeezed the amount until it broke: measured on the first pass of
+   this change, "−$8,200" wrapped after the minus sign, the sign on
+   one line and the figure on the next. A figure is atomic. */
+.qt-money-row dd {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* THE EX-TAX LINE IS A FOOTNOTE TO THE TOTAL, not another
+   adjustment. It sits below the double rule and was drawn at the
+   package row's own size and ink, so the page ended on two figures
+   of equal voice one line apart. A tier down in ink (--ink-soft,
+   8.1:1 on this sheet's white — the paper ramp above carries the
+   measurement) and the ordinary mono size, which is what every
+   other derived figure in the app gets. `.qt-money-row dd` is
+   (0,1,1); this is (0,2,1) and wins without touching the credit's
+   carmine, which is (0,1,0) and lives on rows this cannot reach. */
+.qt-money-row--tax {
+  padding-top: var(--s-3);
+}
+.qt-money-row--tax dt {
+  color: var(--ink-soft);
+}
+.qt-money-row--tax dd {
+  font-size: var(--t-mono-size);
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------
+   THE NOTE THE DEALER TYPED — the only conditions this document
+   carries, and it was the smallest reading text on it.
+
+   Measured before: 12px, `--ink-soft`, no caption, no rule, sitting
+   between a carmine warning and the closing hairline with nothing
+   to say it was part of the document rather than a stray line of
+   chrome. It is where a dealer writes how long the price holds; on
+   a $150,000 quotation that is the sentence a customer looks for
+   after the total.
+
+   A rule, the caption the field already carries ("Note on the
+   quote"), and the document's small step. The measure is capped at
+   68ch because it is a paragraph: 782px of 13px Inter runs to about
+   a hundred characters, half again the line prose is read at.
+   ------------------------------------------------------------ */
+.qt-doc-note {
+  margin-top: var(--s-6);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--hairline);
+  font-size: var(--t-small-size);
+}
+.qt-doc-note .mono-label {
+  display: block;
+}
+.qt-doc-note-say {
+  margin: var(--s-2) 0 0;
+  max-width: 68ch;
+  font-size: var(--t-small-size);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* THE JOIN'S FACTS ARE PAIRS AND WERE READING AS A PARAGRAPH. The
+   strip under a line carries "Prop Part No. 6FP-45943-00", "Engine
+   Hole TBA", "Slot 1" and the rigging kit's whole name, and the gap
+   BETWEEN pairs was --sp-3 (12px) — a word space at 11px mono is
+   about 6.6px, so two facts were separated by less than two spaces
+   and the row read as one sentence in two ink tiers. Measured on
+   the Yamaha F90XB line: five pairs across two wrapped rows, no
+   break a reader could find. 20px between pairs and 8px between
+   rows is the smallest gap that reads as a list, and the strip
+   still wraps rather than truncating. */
+.qt-doc-detail {
+  gap: var(--s-2) var(--s-5);
+}
+
+/* THE LINES NO SECTION CLAIMS get the air a section head would have
+   given them, and no heading — see the note in QuoteDocument.tsx
+   for why inventing one would be a claim. Without this they run on
+   from the block above and are read as part of it, which is the
+   same misattribution one step quieter than not printing them. */
+.qt-doc-loose .qt-doc-line:first-child td {
+  padding-top: var(--s-6);
+}
+
+/* ------------------------------------------------------------
+   NARROW WINDOWS, CONTINUED — the photograph stops growing, and
+   the plate takes the width it wrapped onto.
+
+   The stacked layout hands the photograph `width: 100%` in a 4/3
+   box, and the sheet is still 880px wide until 1024px of window:
+   measured at 760px of window the picture was 494 × 370, a hull
+   twice the size of the one the wide layout prints and the whole of
+   the first screen. 360px is the wide layout's 300 and a little, so
+   the document reads at one scale however the window is dragged.
+   ------------------------------------------------------------ */
+@media screen and (max-width: 820px) {
+  .qt-doc-photo {
+    max-width: 360px;
+  }
+  .qt-plate {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* MONEY NEVER BREAKS; A SENTENCE MAY, AND ONLY WHERE IT MUST.
+     `white-space: nowrap` on the amount cell is right for "$53,720"
+     and wrong for "not priced here", which is fifteen characters of
+     11px mono — 99px of ink the column had to hold in one piece.
+     Measured at 420px of window: the amount column's min-content was
+     113px, the table 329px inside a 258px sheet, and `.qt-root` grew
+     a horizontal scrollbar — a customer's document scrolling
+     sideways.
+
+     It is inside the breakpoint because letting it wrap everywhere
+     broke the WIDE layout instead, and the mechanism is the cell's
+     min-content rather than a shortfall in the column. With nowrap
+     the phrase pins the column at 112.8px and its ink measures
+     96.8px inside 16px of padding — no slack, but no shortfall
+     either. Drop the nowrap and the column loses the floor it was
+     holding, auto table layout reclaims 8.6px of it (112.8 →
+     104.2), and an 880px sheet with room to spare prints "not
+     priced / here" over two lines. The wording is untouched either way — `.qt-nil` is the
+     app's own phrase in four other places. */
+  .qt-doc .qt-nil {
+    white-space: normal;
+  }
+
+  /* AND THE TABLE ITSELF STOPS OVERFLOWING ITS OWN PAPER. Three
+     columns of a money table have a floor, and on a phone the sheet
+     is under it. Measured at 420px of window — sheet 308px, content
+     column 258px — the rig laid out at 329px: 46px past the sheet's
+     own right edge, painting onto the canvas outside the white, with
+     `.qt-root` scrolling sideways under it. Letting "not priced
+     here" wrap took it to 270.2px, still 12.2px into the sheet's
+     margin; on a quote carrying "$198,610" it was 302px, 19px
+     outside the paper.
+
+     Two economies, in the order that costs the least. The cell's
+     side padding goes from 8px to 4px, which is 24px across three
+     columns and touches nothing a person reads. The amount drops
+     from the large mono step to the ordinary one, 15px to 13px,
+     which is still two steps above the 11px floor. Both together,
+     and the break opportunity `DocLine` now writes before the
+     RECOMMENDED stamp, put the table back inside the paper:
+     measured after, 258px in a 258px column at 420 of window and
+     213px in 213px at 375, and nothing inside `.qt-doc` past the
+     sheet's edge at any width swept from 1600 down to 320.
+
+     The detail strip may break inside a token — and only it. It is
+     mono metadata (a part number, an engine hole, a slot), the one
+     thing on the page that is read a character at a time rather
+     than as a word, and its longest unbreakable run was setting the
+     description column's floor. A NAME never breaks: `.qt-doc-line-
+     name` is untouched, which is the whole of the rule. */
+  .qt-doc-lines th,
+  .qt-doc-lines td {
+    padding: var(--s-3) var(--s-1);
+  }
+  .qt-doc-lines td.qt-col-amt {
+    font-size: var(--t-mono-size);
+  }
+  .qt-doc-detail {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ============================================================
+   A4 — RESTATED AGAIN, AND THIS BLOCK IS NOW THE LAST ONE.
+
+   Everything above that paper had already answered differently is
+   answered here, after it, where nothing wins by source order. The
+   figures are this file's own printed scale — 10pt body, 9pt data,
+   7.5pt labels, 22pt subject, 55mm photograph — carried on to the
+   two things the screen has newly changed, the letterhead and the
+   note. Nothing below sets a colour.
+   ============================================================ */
+@media print {
+  /* the letterhead, in points. 28px on screen is 20pt at this
+     document's 10pt/14px scale; 18pt keeps it clearly under the
+     22pt the boat is named at, which is the order the page reads
+     in. */
+  .qt-doc-org {
+    font-size: 18pt;
+  }
+
+  /* the money box's measure in the page's own unit. 420px is 54% of
+     the screen sheet's 782px measure; 98mm is 54% of the 182mm an
+     A4 page has left inside a 14mm margin, so the rules start in
+     the same place on paper as on screen. */
+  .qt-money-rows {
+    width: 98mm;
+    max-width: 100%;
+  }
+  .qt-money-row--tax {
+    padding-top: 2mm;
+  }
+  .qt-money-row--tax dd {
+    font-size: 8.5pt;
+  }
+
+  .qt-doc-note {
+    margin-top: 5mm;
+    padding-top: 3mm;
+    font-size: 9pt;
+  }
+  .qt-doc-note-say {
+    margin-top: 1.5mm;
+    font-size: 9pt;
+  }
+
+  .qt-doc-loose .qt-doc-line:first-child td {
+    padding-top: 5mm;
+  }
+
+  /* A DOCUMENT DOES NOT END ON ITS OWN SECOND PAGE. The rig, the
+     money box, the title block and the subject were already held
+     together; the note and the closing rule were not, so a quote
+     that broke near the foot could put the dealer's conditions on
+     one page and the date and reference that identify them on the
+     next. Three lines is the smallest fragment worth a page
+     anywhere on it. */
+  .qt-doc-note,
+  .qt-doc-foot {
+    break-inside: avoid;
+  }
+  .qt-doc {
+    orphans: 3;
+    widows: 3;
   }
 }

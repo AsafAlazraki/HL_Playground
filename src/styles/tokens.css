@@ -164,8 +164,8 @@
      THE 400 CUT IS THE ONLY ONE LOADED (`main.tsx:4-5`). Never set
      a weight above 400 on this face: with no 700 file to reach for,
      Chrome SYNTHESISES bold by smearing the 400 outline and the
-     serif brackets blob. `.cn-wb-title` is an <h3> that never reset
-     `font-weight`, so the UA's bold applied and that is exactly what
+     serif brackets blob. A workbook-rule <h3> that never reset
+     `font-weight` let the UA's bold apply and that is exactly what
      was shipping — one real defect, as opposed to a calibration.
      `--display-weight` exists so a display rule can state 400 rather
      than inherit whatever its element happens to be.

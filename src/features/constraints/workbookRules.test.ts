@@ -66,7 +66,7 @@ describe('workbook rule seeds', () => {
   it('never leaves a blocked rule unexplained to a person', () => {
     /* `blocked` is written for whoever will implement the missing
        contract; `plainly` is the one line a sales manager can act
-       on. WorkbookRuleList prints the second, so a seed with only
+       on. RulesLedger prints the second, so a seed with only
        the first reaches the screen as an unexplained "Not checked
        yet" — which is what makes a person distrust the list. */
     for (const seed of WORKBOOK_RULES) {

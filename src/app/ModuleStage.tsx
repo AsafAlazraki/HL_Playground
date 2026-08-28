@@ -79,7 +79,6 @@ import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { nowIn } from '@/features/activity'
 import { accentVar } from '@/types/model'
-import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import {
   Dashboard,
   ModuleIndex,
@@ -266,10 +265,10 @@ export function ModuleStage({
      names no place at all. */
   const subject = setup && setupModule ? setupModule : open
 
-  /* The primary table's kind mark, so the bar says what sort of place
-     this is at a glance. Guarded: a module whose primary table has
-     been struck from the sheet still draws, without a mark. */
-  const primary = subject ? entities[subject.tableIds[0] ?? ''] : undefined
+  /* `primary` STOOD HERE — the primary table, read only so the view
+     bar could draw its kind mark. The bar no longer names the page at
+     all (see the note in it), and both surfaces below already carry
+     the same mark through `PlaceMark`, so the lookup went with it. */
 
   const style = subject
     ? ({ '--view-accent': accentVar(subject.accent) } as CSSProperties)
@@ -308,35 +307,21 @@ export function ModuleStage({
             "NORTHSIDE MARINE / Modules · 25 places", and the centred
             copy won the eye by being first.
 
-            A MODULE THAT IS OPEN KEEPS IT. There it is naming a
-            thing the page below does not: which place you are
-            standing in, with its kind's mark beside it. */}
-        {subject ? (
-          <p className="shell-view-what">
-            {open && primary ? (
-              <span className="shell-view-what-mark">
-                <TableKindSymbol kind={kindOf(primary.kind)} size={ICON_SIZE.small} />
-              </span>
-            ) : null}
-            <span className="shell-view-what-name">{subject.name}</span>
-            <span className="shell-view-what-sep" aria-hidden="true">
-              ·
-            </span>
-            {/* THE ASIDE SAYS WHAT KIND OF PLACE THIS IS, NOT WHAT IS
-                IN IT. It carried `module.description` for one
-                screenshot, which is how that was caught: a module
-                made from Highfield inherits that table's description,
-                and Highfield's is a 202-character note about which
-                row of which spreadsheet its columns were read from.
-                In a 10px mono bar with `white-space: nowrap` it ran
-                the full width of the window and ellipsised
-                mid-sentence — while the index printed the SAME
-                paragraph in full, two lines below. */}
-            <span className="shell-view-what-say">
-              {setup ? 'how this place is set up' : 'a place in your business'}
-            </span>
-          </p>
-        ) : null}
+            AND NOW IT STOPS INSIDE ONE TOO. The exemption above read
+            "a module that is open keeps it, there it is naming a
+            thing the page below does not", and that was not true of
+            either surface this stage draws: `ModuleWorkspace` prints
+            `h2.md-work-name` and `ModuleSettings` prints
+            `h2.md-idx-name`, both the module's own name, both with
+            the same mark beside them through `PlaceMark`. The strip
+            read "Boats · a place in your business" over a page
+            already headed Boats — the name twice, and an aside that
+            is a mission statement rather than a fact about this
+            place. It was the last of the two-title pairs; Modules,
+            Quotes, Customers and Admin had all lost theirs.
+
+            The way back and the acts stay: they are the only things
+            in this bar the page below does not carry. */}
 
         {/* THE WAY BACK TO THE DASHBOARD. The panel's own door is
             behind this stage, so without this the only route from a

@@ -227,13 +227,21 @@ describe('a quote with no customer on it may not be given to a customer', () => 
     expect(getQuote(q.id)?.customer.name).toBe('R. Kelleher')
   })
 
-  it('says why, and says it where the name is typed', () => {
+  it('says what is wrong and what it stops, and points nowhere', () => {
     const q = draft({ customer: { name: '' } })
     const why = issueBlockers(getQuote(q.id) as QuoteDef)
     expect(why).toHaveLength(1)
-    /* the sentence names the field, and says why it cannot wait */
-    expect(why[0]).toContain('customer name at the top')
-    expect(why[0]).toContain('freezes the document')
+    /* THIS ASSERTION USED TO PIN THE DEFECT. It required the string
+       "customer name at the top", and the customer box is the LAST
+       band on the build screen — so the test was holding a wrong
+       direction in place. Three surfaces print this sentence and the
+       field sits somewhere different on each, so it may not name a
+       place at all: what it owes is the fact and what the fact stops.
+       The freeze clause is `NO_CUSTOMER_WHY`, drawn against the box
+       itself, which is the one surface that can honestly say "here". */
+    expect(why[0]).toContain('addressed to nobody')
+    expect(why[0]).toContain('cannot be given')
+    expect(why[0]).not.toMatch(/at the top|on the bar|below|above/)
   })
 })
 

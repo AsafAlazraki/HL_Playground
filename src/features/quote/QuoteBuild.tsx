@@ -85,6 +85,68 @@
 
    Nothing true was lost and no refusal was touched.
 
+   ── AND THEN IT WAS COUNTED AGAIN, AND FOUR THINGS SAID ONE ──
+
+   Measured at 1600×1000 on a fresh quote for a Highfield RU230KAM,
+   with the NSM Custom Trailers band open — every visible text node
+   under `.qb-body` and `.qb-price`, a run being a node of twelve
+   words or more: 205 words, 91 of them (44.4%) in runs. The budget
+   this repo works to is under 20%.
+
+   THE FIGURES IN THIS PARAGRAPH WERE 242 / 126 / 52.1 % AND DID NOT
+   REPRODUCE. Two passes re-took them the way this comment describes
+   and got 216 / 97 / 44.9 % and 205 / 91 / 44.4 %; the pair above is
+   the integrator's own reading, on this tree, on that boat. The
+   error was against the writer — the screen was better than they
+   claimed, before and after.
+
+   Where the 126 were. FOUR surfaces were saying one fact — that
+   nothing in that table is paired with this boat:
+
+     the curation chip     "0 of 73 NSM Custom Trailers · Highfield
+                           × NSM Custom — Trailer Fitment names
+                           which ones go with this one · holds at
+                           100% across the price file (F8)"
+     the curation NOTE     "73 NSM Custom Trailers are not offered
+                           here, because Highfield × NSM Custom —
+                           Trailer Fitment names which ones go with
+                           this one — it holds at 100% across the
+                           price file (F8)."   ← the chip, in prose
+     the empty state       "Nothing in NSM Custom Trailers is paired
+                           with this one on the price file. The
+                           catalogue is still there."
+     the disclosure        "NOT OFFERED 73 ›"
+
+   And TWO controls doing one act: `CurationNote`'s "Show everything"
+   switch and the empty state's "Show all 73 NSM Custom Trailers",
+   60px apart.
+
+   THE CHIP IS THE ONE THAT IS RIGHT, and the reason is uniformity
+   rather than taste: `CurationNote` is the mechanism every curated
+   list in this application mounts, so a dealer learns to read one
+   line in one place. It is also the only one of the four carrying
+   the MEASURED RATE, which is the part a person cannot reconstruct.
+
+   So the note keeps only its second half — the discontinued
+   contract's sentence, which is a DIFFERENT fact and is in no chip —
+   the empty state keeps its DOOR and loses its sentence, the
+   disclosure is drawn only where there is a shortlist to contrast it
+   with, and the generic switch stands down where the door with the
+   count in its label is already on screen.
+
+   COUNTED AGAIN AFTERWARDS, same boat, same window, same band open:
+   125 words, 12 in runs of twelve or more — 9.6%. And that single
+   run is the dealer's own data rather than anything this app wrote:
+   the join clause "Highfield × NSM Custom — Trailer Fitment names
+   which ones go with this one" on the curation chip, twelve words
+   exactly. NO SENTENCE THE APP WRITES ABOUT ITSELF REACHES TWELVE
+   on this screen. The four runs it replaced were the four surfaces
+   named above: the note, the strip, the empty state and the chip.
+
+   The other 84 words that went: the footer strip's paragraph (§THE
+   PRICE), the render caption that repeated the heading, and the
+   customer refusal printed a third time under the paperwork tally.
+
    ── MOTION, AND ITS BUDGET ───────────────────────────────────
 
      the render crossfade   260ms, opacity only, on a build change
@@ -104,7 +166,7 @@
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, ReactElement } from 'react'
+import type { CSSProperties, ReactElement, RefObject } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { CaretDown, Check, Rows, Star, Warning, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
@@ -215,6 +277,42 @@ export function QuoteBuild({
     setOpen((was) => (was.includes(id) ? was.filter((x) => x !== id) : [...was, id]))
   }, [])
 
+  /* ── ADDRESSING THE QUOTE, FROM THE BAR THAT REFUSES IT ─────────
+     The strip under the bands said "Type the customer name at the
+     top". Measured on a fresh quote at 1600×1000: the top of this
+     screen holds a reference stamp, a photograph and a headline, and
+     the customer box is in the LAST band — shut, because
+     `openByDefault` opens the first band with something to decide. A
+     person who read the sentence and looked up found nothing there.
+
+     `totals.ts` owns those words and four surfaces read them, so the
+     fix is not to reword the sentence: it is to give the refusal the
+     act it was describing. This opens the paperwork band, brings the
+     box to the middle of the scrollport and puts the caret in it.
+
+     THE FOCUS CANNOT BE TAKEN IN THE PRESS. The band's body mounts on
+     the render that follows the press, so `nameRef.current` is still
+     null inside the handler. It is asked for here and taken in the
+     effect below, which re-runs when `open` changes — that is the
+     render the box exists on. */
+  const nameRef = useRef<HTMLInputElement>(null)
+  const [seekName, setSeekName] = useState(false)
+  const addressTo = useCallback(() => {
+    setOpen((was) => (was.includes(ADMIN_BAND) ? was : [...was, ADMIN_BAND]))
+    setSeekName(true)
+  }, [])
+  useEffect(() => {
+    if (!seekName) return
+    const box = nameRef.current
+    if (box === null) return
+    /* NO `behavior: 'smooth'`. The caret lands on the same frame as
+       the press — the motion budget's one absolute for anything a
+       keystroke immediately follows. */
+    box.scrollIntoView({ block: 'center' })
+    box.focus()
+    setSeekName(false)
+  }, [seekName, open])
+
   /* THE RENDER — which photograph the left column is showing.
      `null` is the hull, which is where it starts and where it goes
      back to when the line it was showing comes off the quote. */
@@ -302,6 +400,7 @@ export function QuoteBuild({
               steps={steps}
               open={open.includes(ADMIN_BAND)}
               refusals={refusals}
+              nameRef={nameRef}
               onToggle={() => toggle(ADMIN_BAND)}
               onOpenCustomer={onOpenCustomer}
             />
@@ -317,6 +416,7 @@ export function QuoteBuild({
         refusals={refusals}
         levels={levels}
         onLevel={askLevel}
+        onAddress={addressTo}
         onOpenSheet={onOpenSheet}
         onIssue={() => {
           if (issueQuote(quote.id)) onIssued?.(quote)
@@ -388,7 +488,22 @@ function ProductPane({
 
   return (
     <aside className="qb-product" aria-label="What this quote is about">
-      <Render img={img} name={name} still={still} />
+      {/* THE CAPTION IS DRAWN ONLY WHEN IT IS NEWS. Measured: the
+          strip under the photograph read "Highfield - SP420 (HYP)
+          I-B-C" and the heading below it read the same five words.
+          The test is NOT "is a line showing" — the hull is minted as
+          a line too, and it is the newest photographed one on a fresh
+          quote, so that test caught nothing. It is whether the name
+          differs from the one the heading is about to print. The
+          caption exists for the moment a person presses a plate and
+          the picture becomes a motor; on the hull the heading is the
+          caption, and the photograph takes the 26px back. */}
+      <Render
+        img={img}
+        name={name}
+        say={name === quote.subjectLabel ? '' : name}
+        still={still}
+      />
 
       {plates.length > 0 ? (
         <div className="qb-plates" role="group" aria-label="The photographs of this build">
@@ -455,17 +570,21 @@ function ProductPane({
 function Render({
   img,
   name,
+  say,
   still,
 }: {
   img: QuoteLine['image']
   name: string
+  /** what the strip under the picture reads — '' draws no strip, and
+   *  the layer above takes the height back */
+  say: string
   still: boolean
 }): ReactElement {
   const { paint } = useImageDisplay(img?.src ?? '')
   const key = img && paint ? img.src : `held:${name}`
 
   return (
-    <div className="qb-render">
+    <div className={`qb-render${say === '' ? ' is-bare' : ''}`}>
       <AnimatePresence initial={false}>
         <motion.div
           key={key}
@@ -484,7 +603,7 @@ function Render({
           )}
         </motion.div>
       </AnimatePresence>
-      <p className="qb-render-say">{name}</p>
+      {say === '' ? null : <p className="qb-render-say">{say}</p>}
     </div>
   )
 }
@@ -651,6 +770,8 @@ function Shortlist({
     )
   }, [showRefused, quote, step, query])
 
+  const searching = query.trim() !== ''
+
   const curation: CurationInput | null = why
     ? {
         name: why.tableName,
@@ -669,7 +790,28 @@ function Shortlist({
         search: { term: query, beyond: offer.beyond },
       }
     : null
-  const reading = curation ? readCuration(curation) : null
+  /* ── THE NOTE'S FIRST SENTENCE WAS THE CHIP, WORD FOR WORD ───────
+     Measured on Parts & Accessories, 1600×1000. The chip read
+     "3 of 2,937 Parts & Accessories · Highfield × P/D Parts names
+     which ones go with this one"; the boxed paragraph 30px under it
+     read "2,934 Parts & Accessories are not offered here, because
+     Highfield × P/D Parts names which ones go with this one." Same
+     count, same rule, one in a control strip and one as prose. On the
+     trailer band the same pair cost 15 and 36 words.
+
+     Its SECOND sentence is not in any chip — the discontinued
+     contract's "…are no longer sold, so they are not offered here.
+     They are still on the sheet." — and that half is kept.
+     `heldBackSentence` is the same clause from the same file
+     (`sellable.ts`) that `curationNote` composes its half from, and
+     `offer.heldCount` is the same number: `admitted` is
+     `rows + heldCount` and `narrowed` is `rows`, so the `matched -
+     offered` the reading subtracts IS `heldCount`. The only word that
+     differs is "either", which was only ever correct because the
+     sentence this pass deleted came before it. */
+  const reading = curation
+    ? { ...readCuration(curation), note: heldBackSentence(offer.heldCount, curation.name) }
+    : null
 
   const candidates = offer.candidates
   useEffect(() => {
@@ -728,6 +870,29 @@ function Shortlist({
 
   const notOffered = offer.pool - offer.admitted
 
+  /* ── ONE DOOR PAST THE NARROWING, NOT TWO ────────────────────────
+     When a band offers nothing, the empty state draws a door whose
+     label carries the count — "Show all 73 NSM Custom Trailers". Two
+     inches above it `CurationNote` was drawing its generic "Show
+     everything", which is the SAME act with a vaguer label: one press
+     of either sets `all`. Two controls doing one thing 60px apart is
+     the owner's "uniformity" complaint written as markup.
+
+     So exactly where the door is drawn, the switch stands down — and
+     nowhere else. The moment `all` is on, `door` is false again and
+     the switch is back, because turning the narrowing off has to be
+     undoable from the same place it was turned off.
+
+     AND THE DOOR CAN NEVER BE DRAWN WITHOUT THE CHIP ABOVE IT, which
+     is the invariant that makes deleting the empty state's sentence
+     safe. `stepReason` returns null — no chip — on exactly four
+     conditions: the subject block, a missing root, a missing target
+     table, a missing view. `stepOffer` returns `EMPTY_STEP_OFFER` on
+     the same four, and that carries `catalogue: 0`, which is the one
+     thing `door` requires to be non-zero. A band with no explanation
+     therefore always takes the sentence branch instead. */
+  const door = candidates.length === 0 && !searching && !all && offer.catalogue > 0
+
   /* eslint-disable-next-line jsx-a11y/no-static-element-interactions */
   return (
     <div onKeyDown={onKeyDown}>
@@ -736,7 +901,7 @@ function Shortlist({
           reading={reading}
           tone="block"
           showingAll={all}
-          onShowAll={setAll}
+          onShowAll={door ? undefined : setAll}
           refusal={held}
           search={{
             value: query,
@@ -779,6 +944,7 @@ function Shortlist({
           why={why}
           query={query}
           all={all}
+          door={door}
           onSeeAll={() => {
             setQuery('')
             setAll(true)
@@ -792,13 +958,22 @@ function Shortlist({
         </p>
       ) : null}
 
-      {/* ── NEVER HIDE ────────────────────────────────────────────
+      {/* ── NEVER HIDE, AND NEVER SAY IT TWICE ────────────────────
           `422 of 434` is not a number to be embarrassed by; it is the
           number a dealer quotes down the phone. The count is always
           said, the rule that produced it is named on the chip above,
           and every one of those rows is one press away with the
-          measurement that removed it written on it. */}
-      {!all && notOffered > 0 ? (
+          measurement that removed it written on it.
+
+          IT IS DRAWN ONLY WHERE THERE IS A SHORTLIST TO CONTRAST IT
+          WITH. Measured on the trailer band: with nothing offered,
+          "NOT OFFERED 73" sat under a door reading "Show all 73 NSM
+          Custom Trailers" — the same 73 rows, reached two ways, one
+          of them a fourth statement of a fact the chip had already
+          made. Where the shortlist is empty the door IS this control,
+          and it lands those rows as pickable cards each carrying the
+          same `outsideWhy` this list would have shown. */}
+      {!all && notOffered > 0 && candidates.length > 0 ? (
         <div className="qb-refused">
           <button
             type="button"
@@ -888,6 +1063,55 @@ function RefusedRow({ candidate }: { candidate: Candidate }): ReactElement {
    it names the rate it used. No 1.1 divisor, ever.
    ============================================================ */
 
+/* ============================================================
+   A REFUSAL'S FACT AND ITS CONSEQUENCE ARE TWO SENTENCES, and only
+   the first belongs on a strip that is on screen for as long as
+   somebody is building.
+
+   WHAT WAS THERE, measured at 1600×1000 on a fresh quote: 30 words
+   of the 205 on the whole screen, permanently —
+
+     "This quote is addressed to nobody. Type the customer name at
+      the top — giving it to them freezes the document, so a name
+      left out now cannot be added afterwards."
+
+   Three things in one strip: a fact, an instruction, and a rule
+   about issuing. The fact belongs here, beside the button it
+   refuses. The instruction is now a DOOR (`onAddress`) instead of
+   a direction, which also settles that it was pointing at the
+   wrong end of the screen. And the rule about issuing is printed
+   by `CustomerField` against the box itself, and by the ledger
+   under the total, which now lists every blocker in full.
+
+   THE SENTENCE ITSELF HAS SINCE BEEN CUT AT THE SOURCE. `totals.ts`
+   now pushes "This quote is addressed to nobody. It cannot be given
+   to a customer until it has a name" — the wrong direction gone, and
+   the freeze clause left to `NO_CUSTOMER_WHY`, which is drawn
+   against the box. `refusalFact` still splits it in the same place
+   and the strip still reads the same six words.
+
+   THE SPLIT is the first full stop followed by a capital, and all
+   four of `issueBlockers`' sentences have that shape — run against
+   the real strings: "…addressed to nobody. It…", "…to offer.
+   Add…", "…as no charge. Price…", "…beside it. Open…", including
+   the four-clause plural form and the one that opens with a 21-word
+   rigging-kit name. A head of three words or fewer is not a fact,
+   so the whole sentence is kept rather than a fragment of one, and
+   that is what catches a label like "2.5 Mtr. Blue".
+
+   WHERE IT WOULD STILL BE WRONG: a line label carrying a full stop
+   MID-label with a capital after it and more than three words
+   before it. Nothing in the seed does, and the cost if one did is a
+   short strip rather than a wrong one — the whole sentence is
+   printed in the ledger under the total either way.
+   ============================================================ */
+function refusalFact(say: string): string {
+  const at = say.search(/\.\s+[A-Z]/)
+  if (at < 0) return say
+  const head = say.slice(0, at + 1)
+  return head.split(/\s+/).length <= 3 ? say : head
+}
+
 function PriceBar({
   quote,
   steps,
@@ -896,6 +1120,7 @@ function PriceBar({
   refusals,
   levels,
   onLevel,
+  onAddress,
   onOpenSheet,
   onIssue,
 }: {
@@ -906,10 +1131,13 @@ function PriceBar({
   refusals: readonly string[]
   levels: ReturnType<typeof quoteLevelChoices>
   onLevel: (key: string, label: string) => void
+  /** open the paperwork band and put the caret in the customer box */
+  onAddress: () => void
   onOpenSheet: () => void
   onIssue: () => void
 }): ReactElement {
   const [ledger, setLedger] = useState(false)
+  const unaddressed = quote.customer.name.trim() === ''
 
   return (
     <footer className="qb-price">
@@ -918,16 +1146,37 @@ function PriceBar({
       ) : null}
 
       {/* RULE 10, AND IT GETS ITS OWN LINE. The reason a quote cannot
-          go out is a SENTENCE — the prose budget's one permanent
-          exemption — and a sentence squeezed into a strip beside a
-          total, a rung control and two buttons wrapped to four lines
-          at 1024 and took a fifth of the window. Across the width it
-          is one line at every size, it is still beside the control it
-          refuses, and the control row stays a row. */}
+          go out is stated beside the control it refuses — a sentence
+          squeezed into the strip beside a total, a rung control and
+          two buttons wrapped to four lines at 1024 and took a fifth
+          of the window. Across the width it is one line at every
+          size, and the control row stays a row.
+
+          IT IS THE FACT AND THE ACT, and no longer a paragraph: see
+          `refusalFact` above. The rest of the sentence is beside the
+          box it is about and inside the ledger, and where a second
+          reason exists the count of them is a door onto that ledger
+          rather than a number a person has to go looking for. */}
       {refusals.length > 0 ? (
-        <p className="qb-give-why" role="status">
-          {refusals[0]}
-        </p>
+        <div className="qb-give-why" role="status">
+          <Warning
+            className="qb-give-mark"
+            size={ICON_SIZE.tiny}
+            weight="fill"
+            aria-hidden="true"
+          />
+          <span className="qb-give-fact">{refusalFact(refusals[0])}</span>
+          {unaddressed ? (
+            <button type="button" className="qb-give-fix" onClick={onAddress}>
+              Name the customer
+            </button>
+          ) : null}
+          {refusals.length > 1 ? (
+            <button type="button" className="qb-give-more" onClick={() => setLedger(true)}>
+              {refusals.length - 1} more
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="qb-price-bar">
@@ -1133,12 +1382,17 @@ function Ledger({
         </p>
       ) : null}
 
-      {/* EVERY reason it may not go out. The bar above carries the
-          first one; a person who fixes that and is refused for a
-          second nobody mentioned has been told half the truth. */}
-      {refusals.length > 1 ? (
+      {/* EVERY reason it may not go out, IN FULL — and that is the
+          change: this listed `slice(1)`, because the bar above was
+          printing the first one whole. The bar now prints the first
+          SENTENCE of the first one, so the rest of it has to be
+          recoverable, and the natural place is the same disclosure
+          that already carries the arithmetic. A person who fixes the
+          reason on the bar and is refused for a second nobody
+          mentioned has been told half the truth. */}
+      {refusals.length > 0 ? (
         <div className="qb-ledger-whys" role="status">
-          {refusals.slice(1).map((w) => (
+          {refusals.map((w) => (
             <p key={w} className="qb-ledger-why">
               {w}
             </p>
@@ -1299,6 +1553,7 @@ function AdminBand({
   steps,
   open,
   refusals,
+  nameRef,
   onToggle,
   onOpenCustomer,
 }: {
@@ -1306,11 +1561,36 @@ function AdminBand({
   steps: readonly BuildStep[]
   open: boolean
   refusals: readonly string[]
+  /** owned by the stage, so the price bar's refusal can put the caret
+   *  in this box from the other end of the screen */
+  nameRef: RefObject<HTMLInputElement | null>
   onToggle: () => void
   onOpenCustomer?: (rowId: string) => void
 }): ReactElement {
-  const nameRef = useRef<HTMLInputElement>(null)
   const named = quote.customer.name.trim()
+
+  /* ── WHAT THE BOX ABOVE DOES NOT ALREADY SAY ─────────────────────
+     Measured with this band open at 1600×1000: `CustomerField` prints
+     "A quote is addressed to somebody. Until this is written it
+     cannot be given to the customer — giving it to them freezes the
+     document, so the name cannot be added later." against the box —
+     and 180px below it this list printed `issueBlockers`' version of
+     the same fact again. One screen, one missing name, three
+     statements of it counting the price bar.
+
+     Asking `issueBlockers` for the same quote WITH a name leaves
+     exactly the reasons that are NOT about the name. No string
+     matching, and nothing to drift if `totals.ts` ever reorders its
+     sentences or adds a fifth.
+
+     NOT MEMOISED. `issueBlockers` returns a fresh array on every
+     call, so `refusals` is a new identity each render and a
+     `useMemo` keyed on it would never hit — a hook that costs more
+     than the four `if`s it is guarding. */
+  const others: readonly string[] =
+    named === ''
+      ? issueBlockers({ ...quote, customer: { ...quote.customer, name: 'a name' } })
+      : refusals
 
   return (
     <section className="qb-band" data-kind="custom">
@@ -1350,9 +1630,9 @@ function AdminBand({
             ))}
           </ul>
 
-          {refusals.length > 0 ? (
+          {others.length > 0 ? (
             <div className="qb-ledger-whys" role="status">
-              {refusals.map((w) => (
+              {others.map((w) => (
                 <p key={w} className="qb-ledger-why">
                   {w}
                 </p>
@@ -1391,11 +1671,32 @@ function useTotalDelta(total: number): number | null {
 }
 
 /* ============================================================
-   NOTHING OFFERED — and why, and what to do about it
+   NOTHING OFFERED — and it is the ACT, because the chip above is
+   already the explanation.
 
-   Production draws an empty grid here and says nothing at all. An
-   empty state is the ONE place the prose budget spends: it keeps
-   its sentence AND its act.
+   Production draws an empty grid here and says nothing at all. This
+   box was the opposite mistake: it restated what the curation chip
+   two lines above it had just said, and then offered a second
+   button for the switch sitting beside that chip.
+
+   What it drew, measured on the trailer band at 1600×1000:
+
+     "Nothing in NSM Custom Trailers is paired with this one on the
+      price file. The catalogue is still there."      20 words
+     "73 … are no longer sold, so they are …"         the held line
+     [Show all 73 NSM Custom Trailers]                the door
+
+   The first is the chip in prose. The second moved into the chip's
+   own note slot, and is better off there — it is drawn now whether
+   the band is empty or not, where before a band offering four
+   motors with nine discontinued behind them never said so at all,
+   because this box only exists when the shelf is bare. The DOOR is
+   what is left, and it is what the band was for.
+
+   A SENTENCE SURVIVES IN THE THREE STATES THE CHIP CANNOT DESCRIBE:
+   a search that found nothing, a table with no live stock in it,
+   and the narrowing already switched off. The chip prints a count
+   and a rule, and none of those three is a rule.
    ============================================================ */
 
 function NothingOffered({
@@ -1404,6 +1705,7 @@ function NothingOffered({
   why,
   query,
   all,
+  door,
   onSeeAll,
 }: {
   step: BuildStep
@@ -1411,33 +1713,32 @@ function NothingOffered({
   why: StepReason | null
   query: string
   all: boolean
+  /** whether the way past the narrowing is drawn HERE. Computed in
+   *  `Shortlist`, because the curation switch reads the same flag to
+   *  decide whether to stand down. */
+  door: boolean
   onSeeAll: () => void
 }): ReactElement {
   const name = why?.tableName ?? step.title
   const searching = query.trim() !== ''
 
-  const held =
-    offer.historic === 'table'
-      ? retiredTableSentence(name)
-      : offer.historic === 'pairs'
-        ? retiredPairsSentence(name, 'The list it was picked from')
-        : heldBackSentence(offer.heldCount, name)
-
+  /* The retired-table and retired-pairs sentences are NOT drawn here
+     any more and nothing was lost: `Shortlist` already hands both to
+     `CurationNote` as its `refusal`, where they also make the switch
+     inert — measured, they were being printed twice on a historic
+     table, once in the note box and once under it. */
   const say = searching
-    ? `Nothing in ${name} matches “${query.trim()}”. The search already covers the whole table.`
+    ? `Nothing in ${name} matches “${query.trim()}”.`
     : offer.catalogue === 0
       ? `${name} has nothing in it that is still sold.`
       : all
-        ? `${name} holds ${offer.catalogue} still sold, and none can be offered here.`
-        : `Nothing in ${name} is paired with this one on the price file. The catalogue is still there.`
-
-  const showAll = !searching && !all && offer.catalogue > 0
+        ? `None of the ${offer.catalogue} still sold can be offered here.`
+        : ''
 
   return (
     <div className="qb-none">
-      <p className="qb-none-say">{say}</p>
-      {held !== '' ? <p className="qb-none-held">{held}</p> : null}
-      {showAll ? (
+      {say === '' ? null : <p className="qb-none-say">{say}</p>}
+      {door ? (
         <button type="button" className="qb-act" onClick={onSeeAll}>
           Show all {offer.catalogue} {name}
         </button>

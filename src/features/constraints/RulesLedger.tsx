@@ -348,12 +348,18 @@ function RuleRow({
 
       {/* LAST, AND NEVER WITHOUT A REASON. `plainly` is required beside
           `blocked` for precisely this line; if one is ever missing, say
-          so rather than print an empty excuse. */}
+          so rather than print an empty excuse.
+
+          THE STAMP CAME OFF THE FRONT OF IT. This line opened "Not
+          checked here." and the pill four rows up already says
+          exactly that — measured on Business rules, ten of ten
+          pending cards printed the phrase twice, once as a state and
+          once as the first three words of its own reason. A state is
+          a mark; a reason is a sentence; saying the state again in
+          the sentence spends a tenth of the reason repeating the
+          chip. The reason is untouched. */}
       {state === 'pending' ? (
-        <p className="cn-rl-why">
-          <span className="cn-rl-why-k">Not checked here.</span>{' '}
-          {seed.plainly ?? 'This app cannot express this rule yet.'}
-        </p>
+        <p className="cn-rl-why">{seed.plainly ?? 'This app cannot express this rule yet.'}</p>
       ) : null}
 
       {/* THE PROVENANCE IS THE POINT. Anyone can write a rule and claim

@@ -341,9 +341,12 @@ npm test
 
 `check-styles` is the one written for the redesign. The characteristic failure of
 a stylesheet change is an element that still renders and is silently unstyled —
-`tsc` green, build green, feature reachable, screen wrong. **35 pre-existing
-orphans are baselined in `tools/style-baseline.json`; you may not add a 36th.**
+`tsc` green, build green, feature reachable, screen wrong. **19 pre-existing
+orphans are baselined in `tools/style-baseline.json`; you may not add a 20th.**
 When you clear one, run `node tools/check-styles.mjs --update-baseline`.
+
+It was 35 until the prose pass; sixteen went with the surfaces that stopped
+drawing them, and the baseline was re-banked once at the end of it.
 
 ### What the guards cannot see
 

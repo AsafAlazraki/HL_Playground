@@ -12,7 +12,7 @@
    `docs/specs/FOUR_MODULES.md` §2. A decision nobody can find reads
    exactly like an omission.
 
-   It is the same argument `WorkbookRuleList.tsx` makes about rules —
+   It is the same argument `RulesLedger.tsx` makes about rules —
    "what the system does NOT check is a fact a person needs, because
    otherwise they assume it does" — applied one level down, to data.
 

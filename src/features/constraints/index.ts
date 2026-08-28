@@ -179,23 +179,22 @@ export {
 } from './startingPoints'
 export type { MissingColumn, OfferState, OfferTally, StartingPoint } from './startingPoints'
 
-/* THE PRICE FILE'S OWN RULES, DRAWABLE ANYWHERE. Exported for the
-   module rules panel, which shows the subset naming a column of a
-   kind its tables carry. There is one card design and one set of
-   words for a workbook rule, and this is how a second surface gets
-   them rather than writing a third. */
-export { WorkbookRuleList } from './WorkbookRuleList'
-export type { WorkbookRuleListProps } from './WorkbookRuleList'
+/* THE PRICE FILE'S OWN RULES, LED BY THEIR MEASUREMENT AND GROUPED BY
+   SUBJECT — and there is now exactly ONE drawing of them.
 
-/* THE SAME RULES, LED BY THEIR MEASUREMENT AND GROUPED BY SUBJECT.
-   `WorkbookRuleList` above leads with STATUS, which is right for a
-   module page asking "what is being checked about the thing I am
-   standing in". BUSINESS RULES asks a different question — "what does
-   this price file assert" — and a list of sixteen cards stamped "Not
-   checked yet" answered it badly enough that the owner called the
-   whole page half baked. `RulesLedger` is that second reading: the
-   rate first, the rule, its qualification, what this app measured on
-   the loaded sheet, and only then what is not checked and why.
+   `WorkbookRuleList` stood here too, a status-first reading of the
+   same sixteen seeds, and the module rules panel drew it. Two
+   renderings of one dataset is the drift this repo has merged three
+   times elsewhere, and it cost more than tidiness: measured on the
+   module's Pricing tab, thirteen of that list's sentences appeared
+   VERBATIM on Business rules, and the tab came in at 82.3 % of its
+   words in runs of twelve or more against a house budget of 20 %. It
+   is deleted; the module panel states the CUT as a count, which is
+   the one thing this page cannot say.
+
+   `RulesLedger` is the reading that survived: the rate first, the
+   rule, its qualification, what this app measured on the loaded
+   sheet, and only then what is not checked and why.
 
    TWO READINGS, ONE SET OF FACTS. `ruleState()` decides which rules
    are in which state for both of them, so the two surfaces can differ

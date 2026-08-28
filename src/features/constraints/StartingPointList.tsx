@@ -5,7 +5,7 @@
    It is drawn in the action bar's panel rather than on the page,
    because it is a way IN to the sentence and not a thing to read: the
    page below already carries the sixteen rules in full, with their
-   evidence, under `WorkbookRuleList`. Two copies of one list on one
+   evidence, under `RulesLedger`. Two copies of one list on one
    screen is the fault this app keeps catching in the price file
    itself.
 

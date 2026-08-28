@@ -176,9 +176,10 @@ export function WhoChip({
             </button>
           </div>
 
-          <p className="who-fine">
-            Everything you do stays in this browser. Signing out does not delete it.
-          </p>
+          {/* THE FIRST SENTENCE IS THE SIGN-IN SCREEN'S PROMISE, word
+              for word (`si-fine`). What this menu owes is the half
+              about the button directly above it. */}
+          <p className="who-fine">Signing out does not delete anything in this browser.</p>
         </div>
       ) : null}
     </div>

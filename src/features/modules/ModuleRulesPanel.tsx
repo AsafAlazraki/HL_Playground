@@ -9,8 +9,7 @@
 
    IT BUILDS NO SECOND ENGINE. Every rule on this panel is drawn by
    the component that already draws it in BUSINESS RULES:
-   `RuleCard` for a limit, `NewRuleSentence` for writing one,
-   `WorkbookRuleList` for what the price file itself states. The
+   `RuleCard` for a limit and `NewRuleSentence` for writing one. The
    only thing this feature adds is the SCOPE — which of them reach
    the tables this module is about — and that is computed in
    `moduleRules.ts` from the columns, never stored on the module.
@@ -32,11 +31,14 @@
          the wrong idea about both. Each one switches here and is
          drawn in FITMENT, which the section says.
 
-     3 · WHAT YOUR PRICE FILE ALREADY STATES. The workbook rules
-         whose columns are of a kind these tables carry, with their
-         evidence, their measured rate and an honest status. This is
-         the half a person cannot get anywhere else: what is NOT
-         being checked, in writing, so they do not assume it is.
+     3 · WHAT YOUR PRICE FILE ALREADY STATES, as a count and not as
+         a list. How many of the file's adjudicated rules are about
+         the tables this module stands in, and how many of those are
+         checked. The list itself — every rule with its rate, its
+         reasoning and the cell it was read out of — is drawn by
+         `RulesLedger` on Business rules, and drawing it twice is
+         what made this the app's worst-measured screen for prose.
+         See the comment over section 3 below.
 
    NOTHING HERE IS INVENTED. There is no seeded example, no
    suggested rule and no plausible sentence anywhere on this panel.
@@ -54,7 +56,6 @@ import { ICON_SIZE } from '@/lib/icons'
 import {
   NewRuleSentence,
   RuleCard,
-  WorkbookRuleList,
   evaluateConstraints,
   sortConstraints,
   useConstraints,
@@ -143,14 +144,11 @@ export function ModuleRulesPanel({ module, tables }: ModuleRulesPanelProps): Rea
 
   const subject = kinds.length === 0 ? 'these tables' : kindWords(kinds)
 
-  /* WHICH HALF OF A CROSS-KIND RULE IS THIS MODULE'S. A1 compares the
-     boat's Max HP with the motor's HP Rating; it is claimed by Boats
-     AND by Motors, and each of them needs telling that the other half
-     is somebody else's column. Said once, over the list, rather than
-     on eight cards — the cards carry the rule and its evidence, and a
-     repeated annotation on most of them would read as a warning. */
-  const crossing = governing.filter((g) => g.alsoKinds.length > 0)
-  const otherKinds = [...new Set(crossing.flatMap((g) => g.alsoKinds))]
+  /* HOW MANY OF THE CUT ARE ACTUALLY CHECKED, computed the same way
+     the ledger computes it: the engine is carrying the id, or the
+     seed names the surface enforcing it. `seed.blocked` is only a
+     default for when neither is true, so it is never read here. */
+  const checked = seeds.filter((s) => liveIds.has(s.id) || s.enforcedIn).length
 
   return (
     <section
@@ -182,8 +180,7 @@ export function ModuleRulesPanel({ module, tables }: ModuleRulesPanelProps): Rea
 
         {limits.length === 0 ? (
           <p className="md-rules-none">
-            No rule anyone has written names a column on {subject} yet. The sentence below is
-            the way to write the first one.
+            No rule anyone has written names a column on {subject} yet.
           </p>
         ) : (
           <ul className="md-rules-list">
@@ -221,10 +218,7 @@ export function ModuleRulesPanel({ module, tables }: ModuleRulesPanelProps): Rea
             which is the explanation. */}
 
         {flows.length === 0 ? (
-          <p className="md-rules-none">
-            Nothing works out a list from {subject} yet. Fitment on the bar is where one is
-            built.
-          </p>
+          <p className="md-rules-none">Nothing works out a list from {subject} yet — Fitment builds those.</p>
         ) : (
           <ul className="md-flows">
             {flows.map((f) => (
@@ -240,29 +234,53 @@ export function ModuleRulesPanel({ module, tables }: ModuleRulesPanelProps): Rea
       </div>
 
       {/* -- 3 · WHAT THE PRICE FILE STATES --------------------- */}
+      {/* ============================================================
+          THE LIST CAME OFF THIS PANEL AND THE COUNT STAYED.
+
+          MEASURED, this tab: 1,868 visible words with 1,537 of them
+          (82.3 %) in runs of twelve or more, against a house budget
+          of 20 %. The single largest contributor was this section —
+          sixteen `cn-src-line` provenance narratives, nine rule
+          statements, six "what is missing" paragraphs and two ledes,
+          and thirteen of those sentences appear VERBATIM on Business
+          rules, which draws every one of the same seeds.
+
+          TWO COMPONENTS WERE DRAWING ONE DATASET. `RulesLedger` is
+          the better of the two by a distance — grouped by subject,
+          led by the measured rate, the reasoning behind a disclosure,
+          the live reading walked on render — and it is on the screen
+          a person goes to for rules. `WorkbookRuleList` was the
+          earlier drawing and is deleted rather than left dormant: two
+          renderings of one set of seeds is the drift this repo has
+          already merged three times elsewhere.
+
+          WHAT THIS PANEL KEEPS IS THE PART BUSINESS RULES CANNOT SAY:
+          the CUT. How many of the file's rules are about the tables
+          this module is standing in, and how many of those are
+          actually checked. That is a fact about this module; the
+          evidence behind each rule is a fact about the rule.
+
+          NO ACT WAS ON THE LIST. It was read-only — no switch, no
+          door, no control of any kind — so nothing became
+          unreachable, and the reasons it carried are drawn in full,
+          per rule, on Business rules.
+          ============================================================ */}
       <div className="md-rules-well">
+        <p className="md-rules-cap mono-label">From your price file</p>
         {seeds.length === 0 ? (
-          <>
-            <p className="md-rules-cap mono-label">From your price file</p>
-            <p className="md-rules-none">
-              <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-              Nothing read out of your price file talks about {subject}. That is not a
-              guarantee it holds no rules — it is a statement about what has been adjudicated
-              so far, and the whole list is in Business rules.
-            </p>
-          </>
+          <p className="md-rules-none">
+            <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+            Nothing adjudicated so far talks about {subject} — which is not the same as there
+            being none.
+          </p>
         ) : (
-          <WorkbookRuleList
-            liveIds={liveIds}
-            seeds={seeds}
-            scope={
-              `These are the ones naming a column on ${subject}.` +
-              (crossing.length > 0
-                ? ` ${crossing.length} of them compare that column with one on ${kindWords(otherKinds)}, so the same rule is drawn in those places too.`
-                : '') +
-              ' The rest of the list — and the trailer selector, the registration table and what the import left out — are in Business rules on the bar.'
-            }
-          />
+          <p className="md-rules-say">
+            <span className="md-rules-count">
+              {seeds.length} {seeds.length === 1 ? 'rule' : 'rules'} about {subject} ·{' '}
+              {checked} checked
+            </span>{' '}
+            In full on Business rules.
+          </p>
         )}
       </div>
     </section>

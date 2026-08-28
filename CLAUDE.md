@@ -29,9 +29,10 @@ npm test
 ```
 
 Runs three guards: `vitest`, the reachability check, and **`check-styles`**,
-which fails if a class is written in TSX that no stylesheet declares. 35
+which fails if a class is written in TSX that no stylesheet declares. 19
 pre-existing orphans are baselined in `tools/style-baseline.json`; you may not
-add a 36th. Clear one and run `node tools/check-styles.mjs --update-baseline`.
+add a 20th. Clear one and run `node tools/check-styles.mjs --update-baseline`.
+It was 35 before the prose pass cleared sixteen of them.
 
 `npm run build` must also pass.
 

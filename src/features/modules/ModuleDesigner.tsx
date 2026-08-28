@@ -179,11 +179,16 @@ function Capabilities({
   return (
     <section className="md-panel">
       <h3 className="md-panel-name mono-label">What may be done here</h3>
+      {/* THE MIDDLE SENTENCE DESCRIBED THE LIST UNDER IT. "What is
+          switched on here is the whole of what this module can do —
+          and it is the column list of Who may do what above" is a
+          caption for two controls that are both on screen and both
+          labelled. The consequence is not: switching a verb off
+          reaches into every role that held it, and nothing on the
+          screen shows that until it has happened. */}
       <p className="md-panel-say">
-        These are the verbs, not the people. What is switched on here is the whole of
-        what this module can do — and it is the column list of{' '}
-        <em>Who may do what</em> above, because a role can only ever be given a subset of
-        it. Switch one off and every role holding it stops holding it.
+        These are the verbs, not the people. Switch one off and every role holding it stops
+        holding it.
       </p>
 
       <ul className="md-caps">
@@ -527,11 +532,12 @@ function IndexPanel({
         <button type="button" className="btn" disabled>
           Choose the face
         </button>
+        {/* A DISABLED CONTROL OWES A REASON AND A WAY ROUND, and it
+            does not owe a description of what the face draws — the
+            faces are on the screen above this button. */}
         <p className="md-stub-say">
-          The face shows the name, the first picture column and the table’s own selling
-          price. Choosing a different column for a module, or putting extra columns on the
-          face, is not built yet — change the column order or the price columns on the
-          table itself and every module follows.
+          Not built yet. Change the column order or the price columns on the table itself,
+          and every module follows.
         </p>
       </div>
     </section>

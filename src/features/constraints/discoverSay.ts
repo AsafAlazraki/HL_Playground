@@ -95,6 +95,28 @@ export function verdictSay(v: Verdict): string {
   return 'Measured and refused'
 }
 
+/** THE `because` CLAUSE, OR NOTHING WHERE IT IS THE FIGURE AGAIN.
+ *
+ *  TWO OF THE FIVE SHAPES BUILD IT OUT OF `hits` AND `tested`
+ *  (`discover.ts` at the categorical-selector and numeric-bound
+ *  branches), which is the HOLDS figure and its own caption said a
+ *  third time as a sentence. Read off the first card on the seeded
+ *  file: "169 of 169" in mono, then "pairings your file writes
+ *  agree" under it, then "Because 169 of 169 pairings the price file
+ *  writes agree." — and eight of the eight cards drawn are one of
+ *  those two shapes.
+ *
+ *  THE OTHER THREE KEEP IT, because they name something the pair of
+ *  figures does not: the distinct values behind a join key, the
+ *  determinant behind a dependency, what a uniqueness claim admits.
+ *  The test is the SHAPE and not the string — a substring match
+ *  against the figure would go quietly wrong the day the wording
+ *  moves. */
+export function becauseSay(c: Candidate): string {
+  if (c.shape === 'categorical-selector' || c.shape === 'numeric-bound') return ''
+  return c.because
+}
+
 /** WHAT IT WOULD DO IF KEPT. Two answers, and neither prunes. */
 export function enforcementSay(c: Candidate): string {
   return c.enforcement === 'warn'
@@ -135,11 +157,16 @@ export interface Figures {
  * teach it without asking anybody to take it on trust.
  */
 export function figuresFor(c: Candidate): Figures {
+  /* THE CAPTION IS WHAT THE FIGURE COUNTS, AND NOT A SENTENCE.
+     Sixteen of these are on Business rules at once — two per card,
+     eight cards — and each used to carry a frame the reader had
+     already read fifteen times. "— every one that could be tested"
+     restates `581 of 581`, which is printed two lines up in mono. */
   const holds = `${n(c.hits)} of ${n(c.tested)}`
   const holdsSay =
     c.hits === c.tested
-      ? `pairings your price file writes agree — every one that could be tested`
-      : `pairings your price file writes agree · ${pct(c.rate)}, so ${n(c.tested - c.hits)} disagree`
+      ? `pairings your file writes agree`
+      : `pairings your file writes agree · ${pct(c.rate)}, ${n(c.tested - c.hits)} disagree`
 
   const d = c.discrimination
   if (!d) {
@@ -147,13 +174,12 @@ export function figuresFor(c: Candidate): Figures {
       holds,
       holdsSay,
       leaves: '—',
-      leavesSay:
-        'This shape does not narrow a list, so there is nothing left standing to count.',
+      leavesSay: 'This shape narrows no list.',
       standing: 'not-measured',
     }
   }
 
-  const of = `of the ${n(d.catalogue)} rows it could offer, measured over ${n(d.over)}`
+  const of = `of ${n(d.catalogue)} it could offer, over ${n(d.over)}`
   if (d.vacuous) {
     return {
       holds,
@@ -161,7 +187,7 @@ export function figuresFor(c: Candidate): Figures {
       leaves: pct(d.meanLeft),
       /* THRESHOLDS.vacuous: "a bound no row in the catalogue could
          ever violate is arithmetic, not a rule". */
-      leavesSay: `${of}. Not one of them could break it, so it is arithmetic about two ranges rather than a rule.`,
+      leavesSay: `${of}. Not one could break it — arithmetic, not a rule.`,
       standing: 'arithmetic',
     }
   }
@@ -170,7 +196,7 @@ export function figuresFor(c: Candidate): Figures {
       holds,
       holdsSay,
       leaves: pct(d.meanLeft),
-      leavesSay: `${of}. It rejects almost nothing, so it is a floor and not a selector.`,
+      leavesSay: `${of}. It rejects almost nothing: a floor, not a selector.`,
       standing: 'floor',
     }
   }

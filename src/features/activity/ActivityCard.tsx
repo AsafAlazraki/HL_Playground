@@ -12,7 +12,15 @@
    ============================================================ */
 
 import type { JSX } from 'react'
-import { byDay, clockSay, useActivity, useModuleActivity, type Entry } from './activity'
+import {
+  ACTIVITY_EMPTY,
+  ACTIVITY_EMPTY_HERE,
+  byDay,
+  clockSay,
+  useActivity,
+  useModuleActivity,
+  type Entry,
+} from './activity'
 
 export interface ActivityCardProps {
   orgSlug: string
@@ -123,11 +131,7 @@ export function ActivityCard({
       </header>
 
       {rows.length === 0 ? (
-        <p className="ac-none">
-          {moduleId
-            ? 'Nothing has changed in here yet. Edits, prices and quotes show up as they happen.'
-            : 'Nothing has changed yet. Edits, prices and quotes show up here as they happen.'}
-        </p>
+        <p className="ac-none">{moduleId ? ACTIVITY_EMPTY_HERE : ACTIVITY_EMPTY}</p>
       ) : (
         /* THE SAME LIST THE DASHBOARD DRAWS. One implementation of
            what an entry looks like, so the module's log and the

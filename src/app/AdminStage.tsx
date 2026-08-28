@@ -254,14 +254,16 @@ export function AdminStage({
             centred one won the eye because it was first.
 
             It is kept where the surface below has NO PageHead — a
-            quote document, one customer, the access grid — because
-            there it is still the only thing naming what is on screen.
-            Reported as "header of page is crap", and it was. */}
-        {showing === 'index' ? null : (
-          <p className="shell-view-what" role="heading" aria-level={1}>
-            <span className="shell-view-what-name">Access &amp; roles</span>
-          </p>
-        )}
+            quote document, one customer — because there it is still
+            the only thing naming what is on screen.
+            Reported as "header of page is crap", and it was.
+
+            AND ACCESS & ROLES IS NOT ONE OF THOSE. `AccessScreen`
+            draws its own hero, `h1.md-acc-title`, reading "Access &
+            roles" — measured on the page, that h1 sat at top 131 with
+            this strip's identical words at top 28, 103px apart. The
+            surface names itself; the bar keeps the Back button and
+            the act, and stops printing the title a second time. */}
         {showing === 'access' ? (
           <div className="shell-quote-acts">
             <button

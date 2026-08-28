@@ -317,11 +317,14 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
         <header className="fo-head">
           <p className="fo-eyebrow">From your price file</p>
           <h2 className="fo-title">What one {noun.one} can be sold with</h2>
+          {/* THE SECOND SENTENCE DESCRIBED THE PAGE. "Every figure
+              below is counted off the sheet as it stands right now" is
+              true of every figure in this application, and a page that
+              says so about itself is asking to be believed rather than
+              read. The first sentence is the fact. */}
           <p className="fo-lede">
-            Your price file already records what may go with what, and it keeps{' '}
-            {reading.roles.length} kinds of pairing: {reading.roles.join(', ')}. Every
-            figure below is counted off the sheet as it stands right now, so the moment a
-            pairing changes, so does the picture.
+            Your price file already records what may go with what, in{' '}
+            {reading.roles.length} kinds of pairing: {reading.roles.join(', ')}.
           </p>
 
           <ul className="fo-ledger">
@@ -364,20 +367,23 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
             {n(typed)} of these {n(reading.pairs)} pairings were typed by a person
           </h3>
           <p className="fo-band-lede">
-            Every pairing remembers how it arrived. {n(derived)} of them came from a live
-            link in the workbook — the business pointed at a row in a library and the
-            spreadsheet fetched it. The other {n(typed)} somebody decided and typed in.
-            That is the difference between a lookup that can be re-run and a judgement
-            only your people hold, and until this page nothing here told you which was
-            which.
+            {n(derived)} came from a live link in the workbook; the other {n(typed)}{' '}
+            somebody typed in — a lookup that can be re-run against a judgement only your
+            people hold.
           </p>
           <Derived reading={reading} onOpenTable={onOpenTable} />
+          {/* NO REPO PATH ON A DEALER'S SCREEN. This line ended "the
+              count is stated on the Origin column itself, in
+              src/demos/northside.ts" — DESIGN_PRINCIPLES §6, "never
+              name a file the user did not import", and a source path is
+              the worst case of it: it names a file that is not even one
+              they could open. The provenance a person can actually
+              check is the column, and it stays. */}
           <p className="fo-src">
-            Read from the Origin column every relationship table carries · &lsquo;rule&rsquo;
-            where the workbook cell was a live external link and the business pointed at
-            the library row, &lsquo;added&rsquo; where the same text was typed · 352 of
-            61,854 live fan-out cells are formulas · the count is stated on the
-            Origin column itself, in src/demos/northside.ts
+            Read from the Origin column every relationship table carries ·
+            &lsquo;rule&rsquo; where the workbook cell was a live external link and the
+            business pointed at the library row, &lsquo;added&rsquo; where the same text
+            was typed · 352 of 61,854 live fan-out cells are formulas
           </p>
         </section>
 
@@ -386,9 +392,8 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
           <p className="fo-band-eyebrow">Where they differ</p>
           <h3 className="fo-band-title">Not every {noun.one} has every relationship</h3>
           <p className="fo-band-lede">
-            The tables are not variations on one shape. Each row below is one relationship,
-            which of your {noun.many} carry it, and which carry none — an absence is a
-            business decision and it does not show from inside a table.
+            The tables are not variations on one shape — an absence is a business decision,
+            and it does not show from inside a table.
           </p>
           <ul className="fo-roles">
             {roles.map((role) => (
@@ -438,9 +443,8 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
             <p className="fo-band-lede">
               {selector.catalogue.named} of {selector.catalogue.live} {selector.noun.many}{' '}
               sit under a {selector.heading} that names a brand, and that is what chooses.
-              The bar is how much of the whole catalogue each brand&rsquo;s headings leave
-              standing — a rule that leaves three of a hundred has picked something, and
-              one that leaves ninety-eight has not.
+              The bar is how much of the catalogue each brand&rsquo;s headings leave
+              standing: three of a hundred has picked something, ninety-eight has not.
             </p>
             <ul className="fo-picks">
               {selector.readings.map((r) => {
@@ -565,20 +569,23 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                   whose bands carry no weight column — a check that has not run, not a check
                   that passed.
                 </>
-              ) : null}{' '}
-              The whole account of both — where each runs, where it cannot, and what it sets
-              aside — is on <b>Business rules</b>.
+              ) : null}
             </p>
             {/* see `setAside` in the selector memo for why this is one
                 line, here, and in the contract's own words */}
             {selector.setAside === '' ? null : (
               <p className="fo-band-note">{selector.setAside}</p>
             )}
+            {/* THE CITATION IS THE DEALER'S OWN SHEET, and nothing
+                else. This line opened with a path into this repo and
+                closed with a spec document and four rule references —
+                neither is a thing a person here can open, and
+                DESIGN_PRINCIPLES §6 forbids naming a file they did not
+                import. What is left is checkable: the workbook, the
+                column, and the count. */}
             <p className="fo-src">
-              Computed by the selector in src/features/constraints/trailerFitment.ts, which
-              is the only implementation of this rule in the app · Trailer Module!A, eleven
-              series banners naming a boat brand · ASSERTED · 581 of 581 testable live
-              pairings, 0 counter-examples · docs/specs/FITMENT_RULES.md §1.2, F8, F9, R11
+              Trailer Module!A, eleven series banners naming a boat brand · ASSERTED · 581
+              of 581 testable live pairings, 0 counter-examples
             </p>
           </section>
         ) : null}
@@ -592,9 +599,8 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
             not discover their mistake, they conclude the thing they
             wanted cannot be done — so each says what it is not. */}
         <p className="fo-tail">
-          Everything here is counted from the pairings your file already holds. To work one
-          out instead — walk every row of a table and collect what matches — open{' '}
-          <b>Rule builder</b> on the bar.
+          Counted from the pairings your file already holds. <b>Rule builder</b> works one
+          out instead.
         </p>
       </div>
     </section>
@@ -906,10 +912,14 @@ function HeldBack({
     <section className="fo-band" aria-label="What does not resolve">
       <p className="fo-band-eyebrow">What is not there</p>
       <h3 className="fo-band-title">The gaps, counted rather than hidden</h3>
+      {/* THE FRAME IS SAID ONCE, HERE, and the rows below are a table.
+          Each `fo-gap-say` used to close "are paired with no {role}
+          anywhere on the sheet" — eight rows, four of them ending in
+          the same eleven words, which is a table typed out as
+          sentences. The clause a reader needs once is up here. */}
       <p className="fo-band-lede">
-        A relationship that reaches most of a table still leaves the rest with nothing to
-        offer. These are the {noun} the price file records no partner for, which is a
-        question for whoever keeps the file rather than a fault in it.
+        Rows the price file records no partner for, anywhere on the sheet — a question for
+        whoever keeps the file rather than a fault in it.
       </p>
       <ul className="fo-gaps">
         {gaps.map((gap) => (
@@ -921,8 +931,7 @@ function HeldBack({
                 keeps its own name, spelled its own way, and the
                 sentence goes round it. */}
             <span className="fo-gap-say">
-              of the {n(gap.subjects)} rows on <b>{gap.table}</b> are paired with no{' '}
-              {gap.role} anywhere on the sheet.
+              of the {n(gap.subjects)} rows on <b>{gap.table}</b> · no {gap.role}
             </span>
           </li>
         ))}
@@ -930,10 +939,9 @@ function HeldBack({
           <li className="fo-gap" key="held">
             <b className="fo-gap-n">{n(reading.heldBackPairs)}</b>
             <span className="fo-gap-say">
-              pairings are held back before any of this is counted, because{' '}
+              held back before any of this is counted ·{' '}
               <b>{reading.heldBackTables.join(', ')}</b>{' '}
-              {reading.heldBackTables.length === 1 ? 'is' : 'are'} history rather than
-              stock.
+              {reading.heldBackTables.length === 1 ? 'is' : 'are'} history, not stock
             </span>
           </li>
         ) : null}

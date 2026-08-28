@@ -66,6 +66,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar, type ModuleDef, type RoleDef } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
 import { AccessGrid } from './AccessGrid'
+import { ACCESS_NOT_ENFORCED, ROLE_IS } from './accessSay'
 import {
   accessCensus,
   grantedTo,
@@ -168,10 +169,7 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
             <div className="md-acc-say">
               <span className="mono-label md-acc-eyebrow">Settings</span>
               <h1 className="ds-hero md-acc-title">Access &amp; roles</h1>
-              <p className="md-acc-note">
-                A role is a job at your dealership, in your own words. It says nothing on
-                its own — it becomes real in a place, where you say what it may do there.
-              </p>
+              <p className="md-acc-note">{ROLE_IS}</p>
             </div>
 
             <div className="md-acc-aside">
@@ -197,19 +195,14 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
               FOOTNOTE. Everything below this line is a decision
               somebody is making about their business, and they are
               entitled to know when it starts to bite. */}
-          <p className="md-acc-real">
-            Nobody signs in to this build, so nothing here is enforced today. What you set
-            is recorded on the place itself, travels with it, and is what will be enforced
-            the day people sign in.
-          </p>
+          <p className="md-acc-real">{ACCESS_NOT_ENFORCED}</p>
 
           {places.length === 0 ? (
             <div className="md-acc-void">
               <span className="mono-label md-acc-void-eyebrow">No places yet</span>
               <p className="md-acc-void-say">
-                Access is granted in a place — the boats you sell, the workshop, the
-                trailers. There are none yet, so there is nothing to grant. Make one from{' '}
-                <em>The places</em>, and this page fills itself in.
+                Access is granted in a place, and there are none yet. <em>The places</em> is
+                where one is made.
               </p>
             </div>
           ) : (
@@ -246,27 +239,21 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
               {/* 1 · EVERY JOB, EVERY PLACE */}
               <section className="md-acc-panel">
                 <h2 className="md-acc-panel-name mono-label">Every job, every place</h2>
-                <p className="md-acc-panel-say">
-                  How much of each place each job holds. A place nobody has closed is open
-                  to everyone, which is where every place starts and is not a decision
-                  anybody has to unmake.
-                </p>
+                {/* THE HEADING ABOVE ALREADY SAYS WHAT THE GRID IS.
+                    What it cannot say is the default, which is the one
+                    thing a person reads this grid wrongly without. */}
+                <p className="md-acc-panel-say">A place nobody has closed is open to everyone.</p>
 
                 {roles.length === 0 ? (
                   <div className="md-acc-void">
                     <span className="mono-label md-acc-void-eyebrow">No jobs yet</span>
-                    <p className="md-acc-void-say">
-                      Nothing is written down until you write it. Name the first job at
-                      your dealership and it becomes a row here, with a column for every
-                      place you have.
-                    </p>
-                    <p className="md-acc-void-count">
-                      You have{' '}
-                      <strong>
-                        {places.length} {places.length === 1 ? 'place' : 'places'}
-                      </strong>{' '}
-                      and no jobs.
-                    </p>
+                    <p className="md-acc-void-say">Nothing is written down until you write it.</p>
+                    {/* THE TALLY ABOVE ALREADY SAYS BOTH NUMBERS. It
+                        prints Jobs 0 and Places 9 as figures; the
+                        eyebrow beside this said "No jobs yet"; and
+                        this line said "You have 9 places and no jobs"
+                        — the zero three ways and the nine twice, on
+                        one screen. The figures are the statement. */}
                     <NewRole draft={draft} onDraft={setDraft} onAdd={addRole} first />
                   </div>
                 ) : (
@@ -296,10 +283,7 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
                   <div className="md-acc-panel-head">
                     <div className="md-acc-panel-id">
                       <h2 className="md-acc-panel-name mono-label">In one place</h2>
-                      <p className="md-acc-panel-say">
-                        Tick what each job may do in <em>{picked.name}</em>. Every column
-                        says what it hands over.
-                      </p>
+                      <p className="md-acc-panel-say">Every column says what it hands over.</p>
                     </div>
                     {onSettings ? (
                       <button
@@ -369,8 +353,8 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
                 <section className="md-acc-panel">
                   <h2 className="md-acc-panel-name mono-label">Where each job reaches</h2>
                   <p className="md-acc-panel-say">
-                    Counted over the places themselves: a job may work in a place it has
-                    been granted something in, and in every place nobody has closed.
+                    A job reaches a place it has been granted something in, and every place
+                    nobody has closed.
                   </p>
                   <ul className="md-acc-jobs">
                     {roles.map((role) => (

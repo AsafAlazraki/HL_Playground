@@ -152,7 +152,13 @@ describe('the two figures are drawn as a pair', () => {
     expect(floor.standing).toBe('floor')
     expect(selector.leaves).toBe('4.1%')
     expect(floor.leaves).toBe('97.7%')
-    expect(floor.leavesSay).toContain('floor and not a selector')
+    /* THE WORDING SHORTENED IN THE PROSE PASS — "It rejects almost
+       nothing, so it is a floor and not a selector" became "It
+       rejects almost nothing: a floor, not a selector". The words
+       these assertions are FOR are the two nouns and the negation;
+       the connective they used to pin was the half that made the
+       caption a sentence instead of a caption. */
+    expect(floor.leavesSay).toContain('a floor, not a selector')
     expect(selector.leavesSay).not.toContain('floor')
   })
 
@@ -173,7 +179,7 @@ describe('the two figures are drawn as a pair', () => {
     )
     expect(f.standing).toBe('arithmetic')
     expect(f.leaves).toBe('100.0%')
-    expect(f.leavesSay).toContain('arithmetic about two ranges')
+    expect(f.leavesSay).toContain('arithmetic, not a rule')
   })
 
   /* A SHAPE THAT NARROWS NOTHING SAYS SO, rather than being handed a
@@ -182,7 +188,7 @@ describe('the two figures are drawn as a pair', () => {
     const f = figuresFor(candidate({ shape: 'join-key', discrimination: null }))
     expect(f.leaves).toBe('—')
     expect(f.standing).toBe('not-measured')
-    expect(f.leavesSay).toContain('does not narrow a list')
+    expect(f.leavesSay).toContain('narrows no list')
   })
 })
 

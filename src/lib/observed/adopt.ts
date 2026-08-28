@@ -68,7 +68,7 @@
    A pattern that cannot be adopted is NOT lost and NOT silently
    dropped: `blocked` comes back with the reason in words, and the
    register keeps holding it as a report. That is the same answer
-   `WorkbookRuleList` already draws for the sixteen workbook seeds.
+   `RulesLedger` already draws for the sixteen workbook seeds.
 
    Pure TypeScript. No React, no store, no DOM: it takes a resolver
    for concept -> field id and returns a value.

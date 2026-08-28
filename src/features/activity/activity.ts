@@ -273,6 +273,27 @@ export function byDay(rows: readonly Entry[], now = Date.now()): Day[] {
   return out
 }
 
+/* ============================================================
+   THE EMPTY STATE, IN ONE PLACE, WITHOUT THE PROMISE IT BROKE.
+
+   THREE surfaces printed it and two of them were word for word the
+   same: the dashboard's Activity card (`cards.ts`), the module's own
+   card (`ModulePanels`) and this list — "Nothing has changed yet.
+   Edits, prices and quotes show up here as they happen."
+
+   THE SECOND SENTENCE WAS FALSE. Raising and issuing three quotes
+   leaves it on the screen unchanged, because a quote writes no
+   entry — `record` is called from the table and module paths and not
+   from the quote path. An empty state that survives six acts is
+   worse than no empty state, and a promise the screen breaks is
+   worse again. So the promise is gone and the STATE stays, which is
+   true whatever writes an entry next. The missing quote entries are
+   a bug in `record`'s callers, not a sentence, and they are reported
+   rather than papered over here.
+   ============================================================ */
+export const ACTIVITY_EMPTY = 'Nothing has changed yet.'
+export const ACTIVITY_EMPTY_HERE = 'Nothing has changed in here yet.'
+
 /** Just the time of day — "4:12 pm". On a log already cut into
  *  days, "7 minutes ago" is a second unit for the same fact and
  *  the clock time is the one that sorts by eye. */

@@ -287,16 +287,23 @@ describe('groupByDescription', () => {
       [CUSTOMER_NOTE_FIELD],
     ])
     expect(groups.filter((g) => g.say !== '')).toHaveLength(2)
-    expect(groups[1]?.say).toBe(
-      'Printed on a quote addressed to this customer, as it is written here.',
-    )
+    expect(groups[1]?.say).toBe('Printed on a quote, as it is written here.')
     /* THE MEASURED REDUCTION, pinned so it cannot quietly come back:
-       294 characters of caption drawn per column, 156 drawn per
-       group, and not one fact lost — both sentences survive. */
+       166 characters of caption drawn per column, 82 drawn per group,
+       and not one fact lost — both sentences survive.
+
+       IT WAS 294 AND 156. The captions themselves were cut in the
+       prose pass: "Printed on a quote addressed to this customer" is
+       the same fact as "Printed on a quote" on a form whose whole
+       subject is one customer, and "For the yard, not for the
+       customer. Never printed on a quote and never frozen onto one"
+       says once what "For the yard — never printed on a quote" says.
+       The DISTINCTION the two captions draw — printed against not
+       printed — is what this test guards, and it is untouched. */
     const perColumn = CUSTOMER_COLUMNS.reduce((n, c) => n + c.description.length, 0)
     const perGroup = groups.reduce((n, g) => n + g.say.length, 0)
-    expect(perColumn).toBe(294)
-    expect(perGroup).toBe(156)
+    expect(perColumn).toBe(166)
+    expect(perGroup).toBe(82)
   })
 
   it('ONLY JOINS NEIGHBOURS \u2014 the caption is drawn under a group, so a group has to be contiguous', () => {

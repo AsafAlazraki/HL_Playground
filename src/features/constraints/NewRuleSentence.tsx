@@ -72,8 +72,11 @@ import { BECAUSE_PLACEHOLDER } from './RuleCard'
 import { useSentenceCtx } from './useCtx'
 import './constraints.css'
 
-export const NEW_RULE_CAPTION =
-  'It reads as a sentence, and it takes effect the moment you add it.'
+/* HALF OF THIS SAID WHAT THE CONTROL BELOW PLAINLY IS. "It reads as
+   a sentence" describes the thing a person is looking at; the half
+   worth 11px of the header is the one they cannot see, which is when
+   it starts biting. */
+export const NEW_RULE_CAPTION = 'It takes effect the moment you add it.'
 
 const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many)
 
@@ -277,7 +280,7 @@ export function NewRuleSentence({
         at: `${counted.points} of ${counted.total}`,
         icon: Article,
         panelLabel: 'From the price file',
-        panelSay: `${counted.total} rules read out of the workbooks. ${counted.points} name columns this sentence can be pointed at; the rest say what stops them.`,
+        panelSay: `${counted.total} rules read out of your price file. ${counted.points} ${counted.points === 1 ? 'names a column' : 'name columns'} this sentence can be pointed at; the rest say what stops them.`,
         closeOnAct: true,
         content: <StartingPointList offers={offers} onPick={pick} />,
       })
@@ -382,11 +385,20 @@ export function NewRuleSentence({
         <MeasuredFrom bound={measured} onBlank={blank} />
       ) : (
         counted.points > 0 && (
+          /* THE SECOND SENTENCE NAMED THE BUTTON BESIDE IT. "From the
+             price file on the bar opens all N, each with what stops it
+             or what it can start" is a caption for a control that is
+             on screen, labelled, and counted — which is the door's own
+             job. What is left is the fact a person cannot get from
+             looking: how many of the file's rules this sentence could
+             be pointed at.
+
+             AND THE VERB AGREES NOW. It read "1 of them name columns"
+             on the seeded file, where `counted.points` is 1. */
           <p className="cn-new-offer">
             Your price file already asserts {counted.total}{' '}
-            {plural(counted.total, 'rule', 'rules')}, and {counted.points} of them name columns
-            this sentence can be pointed at. <b>From the price file</b> on the bar opens all{' '}
-            {counted.total}, each with what stops it or what it can start.
+            {plural(counted.total, 'rule', 'rules')}; {counted.points} of them{' '}
+            {plural(counted.points, 'names', 'name')} a column this sentence can be pointed at.
           </p>
         )
       )}

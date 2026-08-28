@@ -49,6 +49,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, CaretLeft, ClockCounterClockwise, Kanban, ListBullets } from '@phosphor-icons/react'
 import { QuoteList, QuotePage, useQuote, useQuotes } from '@/features/quote'
 import { useProjectStore } from '@/store/useProjectStore'
+import { isRetired } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
 import { currentUser } from '@/features/auth'
 import { PageHead } from '@/features/page'
@@ -114,7 +115,19 @@ export function QuoteStage({
      step is impossible, which is what that page used to be on a cleared
      install. So the stage reads the sheet — it is in `src/app`, it
      already knows — and hands the number down. */
-  const tableCount = useProjectStore((s) => Object.keys(s.entities).length)
+  /* WHAT A DEALER MEANS BY "TABLES YOU HAVE", and it is not
+     `Object.keys(entities).length`. That counted 53 on this sheet —
+     joins and retired tables included — while the Admin door two
+     screens away counted the same noun at 24, live and non-join, and
+     the whiteboard legend framed 54. One noun, three numbers, and a
+     person who notices starts checking the app's arithmetic instead
+     of reading it. This one now counts what the Admin door counts,
+     which is also what `nowhereToStart` actually needs: you cannot
+     write a quote from a join table or from a table that is history. */
+  const tableCount = useProjectStore(
+    (s) =>
+      Object.values(s.entities).filter((e) => !isRetired(e) && e.role !== 'join').length,
+  )
 
   /* THE BOARD NEEDS TO KNOW WHOSE BUSINESS THIS IS, because a
      pipeline is stored per organisation — the same key the

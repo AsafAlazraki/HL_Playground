@@ -96,26 +96,22 @@ export const CUSTOMER_COLUMNS: ReadonlyArray<{
   {
     id: CUSTOMER_PHONE_FIELD,
     name: 'Phone',
-    description:
-      'Printed on a quote addressed to this customer, as it is written here.',
+    description: 'Printed on a quote, as it is written here.',
   },
   {
     id: CUSTOMER_EMAIL_FIELD,
     name: 'Email',
-    description:
-      'Printed on a quote addressed to this customer, as it is written here.',
+    description: 'Printed on a quote, as it is written here.',
   },
   {
     id: CUSTOMER_ADDRESS_FIELD,
     name: 'Address',
-    description:
-      'Printed on a quote addressed to this customer, as it is written here.',
+    description: 'Printed on a quote, as it is written here.',
   },
   {
     id: CUSTOMER_NOTE_FIELD,
     name: 'Notes',
-    description:
-      'For the yard, not for the customer. Never printed on a quote and never frozen onto one.',
+    description: 'For the yard — never printed on a quote.',
   },
 ]
 

@@ -130,9 +130,9 @@ export function linkedThings(args: LinkReadArgs): LinkedThing[] {
       key: 'tables',
       name: plural(tables.length, 'table', 'tables'),
       count: tables.length,
-      says: 'The price files this place is about. The first one is the primary.',
+      says: 'The first one is the primary.',
       home: 'settings',
-      where: 'Change which tables, and their order, in “What this place lists” above.',
+      where: 'In “What this place lists” above.',
       names: tables.map((t) => t.name),
     },
     {
@@ -140,7 +140,7 @@ export function linkedThings(args: LinkReadArgs): LinkedThing[] {
       name: plural(blocks.length, 'heading', 'headings'),
       count: blocks.length,
       says: view
-        ? `Opening one item shows ${view.name}, and these are the headings on it.`
+        ? `The headings on ${view.name}.`
         : 'This module has no item page, so its list does not open onto anything.',
       /* THE ONE ROW THAT CAN HONESTLY SAY "NOT YET". A module with no
          item page has nothing to reorder and no control anywhere in
@@ -149,8 +149,8 @@ export function linkedThings(args: LinkReadArgs): LinkedThing[] {
          place reaches. */
       home: view ? 'settings' : 'not-yet',
       where: view
-        ? 'Reorder the headings and choose their columns in “What one item shows” above.'
-        : 'An item page is minted when a module is made. Giving one to a module that has none is not built yet — nothing in the app does it today.',
+        ? 'In “What one item shows” above.'
+        : 'An item page is minted when a module is made; giving one to a module that has none is not built.',
       names: blocks
         .map((b) => entities[b.tableId]?.name)
         .filter((n): n is string => n !== undefined),
@@ -159,23 +159,20 @@ export function linkedThings(args: LinkReadArgs): LinkedThing[] {
       key: 'related',
       name: plural(related.length, 'table it reaches', 'tables it reaches'),
       count: related.length,
-      says:
-        'Tables joined to the things in here — what goes with them. A join is a table on the sheet like any other.',
+      says: 'What goes with the things in here.',
       home: 'elsewhere',
-      where:
-        'Which pairs are approved is ticked on an item’s own page; the join table itself lives on the sheet.',
+      where: 'Ticked on an item’s own page.',
       names: related.map((r) => `${r.name} · on ${r.on} of ${r.of}`),
     },
     {
       key: 'rules',
       name: plural(governing, 'rule', 'rules'),
       count: governing,
-      says:
-        'Limits every row here must keep, the derivations that walk these tables, and what the price file itself states.',
+      says: 'Limits these rows must keep, and what walks them.',
       home: args.configures ? 'settings' : 'elsewhere',
       where: args.configures
-        ? 'Read and switch them in “The rules it goes by” above.'
-        : 'Switch “Set rules” on in “What may be done here” to read and change them from this module. They are also on Business rules and Fitment.',
+        ? 'In “The rules it goes by” above.'
+        : 'Switch “Set rules” on above, or read them on Business rules.',
       names: [
         ...limits.map((c) => c.because),
         ...flows.map((f) => f.rule.name),
@@ -186,10 +183,9 @@ export function linkedThings(args: LinkReadArgs): LinkedThing[] {
       key: 'quotes',
       name: plural(raised.length, 'quote raised here', 'quotes raised here'),
       count: raised.length,
-      says:
-        'Documents written against a row in this module. A quote prints what it froze, so it never moves when the sheet does.',
+      says: 'Each prints what it froze, so it never moves when the sheet does.',
       home: 'elsewhere',
-      where: 'Quotes are opened and edited from Quotes on the bar.',
+      where: 'Opened from Quotes on the bar.',
       names: raised
         .slice()
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -203,7 +199,7 @@ export function linkedThings(args: LinkReadArgs): LinkedThing[] {
         ? 'Nobody has been given access, so this module is open to everyone.'
         : 'The jobs that may act in here, and what each of them may do.',
       home: 'settings',
-      where: 'Add and change them in “Who may do what” above.',
+      where: 'In “Who may do what” above.',
       names: namedRoles,
     },
   ]
