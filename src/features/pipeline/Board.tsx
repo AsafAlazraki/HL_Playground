@@ -41,6 +41,8 @@ import {
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
 import { useProjectStore } from '@/store/useProjectStore'
+import { placesOf } from '@/features/modules/places'
+import { Picker } from '@/features/picker'
 import type { TableKind } from '@/types/model'
 import { StageEditor } from './StageEditor'
 import {
@@ -85,6 +87,7 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
 
   const [query, setQuery] = useState('')
   const [type, setType] = useState<TableKind | 'all'>('all')
+  const [place, setPlace] = useState<string>('all')
 
   /* ONE SORT FOR THE BOARD, AND AN OVERRIDE PER COLUMN.
      Five sort controls in five column heads is five loud controls
@@ -124,13 +127,38 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
      counting the search rather than the business. */
   const chips = useMemo(() => typeChips(all, entities), [all, entities])
 
+  /* THE PLACES QUOTES CAN COME FROM, and only those that any
+     quote actually came from — a filter offering twenty-five names
+     when three of them have ever been quoted is a list of
+     twenty-two dead ends. */
+  const modules = useProjectStore((st) => st.modules)
+  const rowsByEntity = useProjectStore((st) => st.rowsByEntity)
+  const places = useMemo(() => {
+    const byTable = new Map<string, { key: string; name: string; moduleName: string }>()
+    for (const pl of placesOf(modules, entities, rowsByEntity)) {
+      /* a place that IS its module stands for every table in it */
+      const ids = pl.tableId ? [pl.tableId] : (modules[pl.moduleId]?.tableIds ?? [])
+      for (const id of ids) {
+        byTable.set(id, { key: pl.key, name: pl.name, moduleName: pl.moduleName })
+      }
+    }
+    const live = new Map<string, { key: string; name: string; moduleName: string }>()
+    for (const q of all) {
+      const hit = byTable.get(q.rootTableId)
+      if (hit) live.set(hit.key, hit)
+    }
+    return { list: [...live.values()], byTable }
+  }, [modules, entities, rowsByEntity, all])
+
   const quotes = useMemo(
     () =>
       all.filter(
         (q) =>
-          (type === 'all' || kindOfQuote(q, entities) === type) && matches(q, query),
+          (type === 'all' || kindOfQuote(q, entities) === type) &&
+          (place === 'all' || places.byTable.get(q.rootTableId)?.key === place) &&
+          matches(q, query),
       ),
-    [all, entities, type, query],
+    [all, entities, type, place, query, places],
   )
 
   const columns = useMemo(() => boardOf(quotes, at, stages), [quotes, at, stages])
@@ -288,33 +316,59 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
           />
         </label>
 
-        <label className="pb-sort">
-          <span className="pb-sort-say">Sort</span>
-          <select
-            className="pb-sort-in"
-            value={sort}
-            aria-label="How to order every column"
-            onChange={(e) => {
-              setSort(e.target.value as SortId)
-              /* A BOARD-WIDE SORT CLEARS THE OVERRIDES, or the
-                 control appears not to work on exactly the columns
-                 somebody had already touched. */
-              setPerCol({})
-            }}
-          >
-            {SORTS.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/* THE APP'S OWN DROPDOWN, and this was a native
+            `<select>`. A native select draws the operating system's
+            menu — its own typeface, its own row height, its own
+            focus ring — in the middle of a screen built to a design
+            system with a token for each of those. See
+            features/picker. */}
+        <Picker
+          label="Sort"
+          value={sort}
+          options={SORTS.map((o) => ({ id: o.id, label: o.label }))}
+          ariaLabel="How to order every column"
+          onPick={(id) => {
+            setSort(id)
+            /* A BOARD-WIDE SORT CLEARS THE OVERRIDES, or the control
+               appears not to work on exactly the columns somebody
+               had already touched. */
+            setPerCol({})
+          }}
+        />
 
         {/* WHAT SORT OF THING IS BEING SOLD. The same filter the
             modules grid carries, in the same words and the same
             hues. Drawn only where there is more than one type to
             choose between — a lone "All" chip is a control with no
             choice in it. */}
+        {/* WHICH BRAND. "Show me Highfield" is the question a dealer
+            actually asks of a pipeline, and the board could only
+            answer "show me boats". A quote points at a table and a
+            table belongs to a place — resolved through `placesOf`,
+            which is the same reading the modules grid and the
+            dashboard tiles use, rather than a fourth interpretation
+            of the same relationship.
+
+            A PICKER AND NOT CHIPS, because there are twenty-five
+            places and eight kinds: chips are right for a set you can
+            see at once and wrong for one you cannot. */}
+        {places.list.length > 1 ? (
+          <Picker
+            label="Place"
+            value={place}
+            options={[
+              { id: 'all', label: 'Every place' },
+              ...places.list.map((pl) => ({
+                id: pl.key,
+                label: pl.name,
+                under: pl.name === pl.moduleName ? undefined : pl.moduleName,
+              })),
+            ]}
+            ariaLabel="Show quotes from one place"
+            onPick={setPlace}
+          />
+        ) : null}
+
         {chips.length > 2 ? (
           <ul className="pb-types" aria-label="Show one type of quote">
             {chips.map((c) => (

@@ -1,0 +1,165 @@
+/* ============================================================
+   THE PICKER (pk-) — the app's one dropdown.
+
+   It replaces two native `<select>` elements, which drew the
+   operating system's own menu in the middle of a screen built to
+   a design system: its own typeface, its own row height, its own
+   focus ring. Every measurement below comes from a token, which
+   is the whole point of having replaced it.
+   ============================================================ */
+
+.pk {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-2) 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+
+/* THE WHOLE CONTROL TAKES THE RING, not the button inside it — a
+   ring drawn around a button that already sits inside a bordered
+   box reads as two nested controls. */
+.pk:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+/* INERT, NOT ABSENT. A control that vanishes has to be re-found;
+   one that is visibly dimmed has explained itself, and its
+   `title` says why. */
+.pk.is-off {
+  opacity: 0.55;
+}
+.pk.is-off .pk-go {
+  cursor: default;
+}
+
+/* "Sort" IS A LABEL — §3 allows uppercase here and only here. The
+   value beside it is a value and is neither uppercase nor
+   tracked. */
+.pk-label {
+  font-size: var(--t-caption-size);
+  font-weight: 620;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
+.pk-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 100%;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  cursor: pointer;
+}
+/* NO RING ON THE BUTTON. The container above wears it, so a
+   keyboard user sees one ring around one control. */
+.pk-go:focus-visible {
+  outline: none;
+}
+.pk-val {
+  white-space: nowrap;
+}
+
+/* ---- the list --------------------------------------------- */
+
+.pk-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  /* WIDE ENOUGH FOR THE LONGEST OPTION and never wider than a
+     column of reading. `max-content` on its own let a row with an
+     `under` line run to 600px. */
+  width: max-content;
+  max-width: min(320px, 90vw);
+  max-height: 320px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: var(--s-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e-float);
+}
+.pk-list:focus {
+  outline: none;
+}
+
+.pk-opt {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-2);
+  border-radius: var(--r-control);
+  color: var(--fg-secondary);
+  cursor: pointer;
+}
+
+/* THE CURSOR AND THE CHOICE ARE TWO DIFFERENT THINGS, and they
+   are drawn differently on purpose. `.is-at` is where the
+   keyboard or pointer is — it moves as you browse. `.is-on` is
+   what is actually chosen, and it keeps its tick wherever the
+   cursor goes. A list that merged them would commit on every
+   arrow press, which is a control you cannot browse. */
+.pk-opt.is-at {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.pk-opt.is-on {
+  color: var(--fg);
+  font-weight: 560;
+}
+
+.pk-tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.35em;
+  color: var(--accent);
+}
+
+.pk-opt-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.pk-opt-name {
+  font-size: var(--t-small-size);
+  line-height: 1.35;
+}
+/* ONE LINE, WHERE A CHOICE NEEDS EXPLAINING — and most do not. A
+   list where every row carries a sentence is a list nobody
+   reads. */
+.pk-opt-under {
+  font-size: var(--t-caption-size);
+  line-height: 1.35;
+  color: var(--fg-tertiary);
+}
+
+/* At higher contrast the hover tint is not enough on its own to
+   say where the cursor is, so it gains an edge. */
+@media (prefers-contrast: more) {
+  .pk-opt.is-at {
+    outline: 1px solid var(--fg-tertiary);
+    outline-offset: -1px;
+  }
+}

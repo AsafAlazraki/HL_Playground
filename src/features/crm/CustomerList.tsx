@@ -50,6 +50,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
 import { PageHead } from '@/features/page'
+import { Picker } from '@/features/picker'
 import { localDay, quoteTotals, useQuotes } from '@/features/quote'
 import { customerRegister, matchCustomers, readCustomers } from './customers'
 import { addCustomer, ensureCustomerRegister } from './register'
@@ -262,24 +263,37 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                   that alphabetically would bury the best match in the
                   middle of the list, so the control says so rather
                   than appearing to be ignored. */}
-              <label className="cx-order">
-                <span className="cx-order-say">Sort</span>
-                <select
-                  className="cx-order-in"
-                  value={find.trim() === '' ? order : 'match'}
-                  disabled={find.trim() !== ''}
-                  aria-label="How to order the register"
-                  onChange={(e) =>
-                    setOrder(e.target.value as 'name' | 'recent' | 'worth' | 'most')
-                  }
-                >
-                  {find.trim() !== '' ? <option value="match">Best match</option> : null}
-                  <option value="name">Name A–Z</option>
-                  <option value="recent">Quoted most recently</option>
-                  <option value="worth">Worth the most</option>
-                  <option value="most">Most quotes</option>
-                </select>
-              </label>
+              {/* THE SAME DROPDOWN THE BOARD USES. Two sort
+                  controls that looked different were two things to
+                  learn; both were native selects, which is to say
+                  neither looked like this application. */}
+              <Picker
+                label="Sort"
+                value={find.trim() === '' ? order : 'match'}
+                options={
+                  find.trim() === ''
+                    ? [
+                        { id: 'name' as const, label: 'Name A\u2013Z' },
+                        { id: 'recent' as const, label: 'Quoted most recently' },
+                        { id: 'worth' as const, label: 'Worth the most' },
+                        { id: 'most' as const, label: 'Most quotes' },
+                      ]
+                    : [{ id: 'match' as const, label: 'Best match' }]
+                }
+                ariaLabel="How to order the register"
+                /* THE SORT STEPS ASIDE WHILE SOMEBODY IS SEARCHING,
+                   and says why rather than appearing ignored.
+                   `matchCustomers` ranks a name that STARTS with the
+                   query above one that merely contains it, and
+                   re-sorting that alphabetically would bury the best
+                   match in the middle of the list. */
+                {...(find.trim() === ''
+                  ? {}
+                  : { disabledWhy: 'While you are searching, the closest names come first.' })}
+                onPick={(id) => {
+                  if (id !== 'match') setOrder(id)
+                }}
+              />
 
               <button
                 type="button"
