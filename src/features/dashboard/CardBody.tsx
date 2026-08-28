@@ -55,11 +55,13 @@
    both themes — against a 3:1 floor for a graphical object.
    ============================================================ */
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { JSX, ReactNode } from 'react'
 import {
   ClockCounterClockwise,
+  DotsSixVertical,
   FileText,
+  Pulse,
   Scales,
   SealWarning,
   SquaresFour,
@@ -105,6 +107,10 @@ import {
 import type { QuoteLens } from './cards'
 import type { DashboardActs } from './acts'
 import { useRecentPicks } from './useRecentPicks'
+import { useReorder } from './reorder'
+import { applyOrder, useTileOrder, type TileWho } from './tileOrder'
+import { PlaceMark, placesOf, rememberPlace } from '@/features/modules'
+import { ActivityList, useActivity } from '@/features/activity'
 
 const MARK = ICON_SIZE.small
 const MARK_WEIGHT = weightFor(MARK)
@@ -114,6 +120,7 @@ const MARK_WEIGHT = weightFor(MARK)
 export const CARD_ICON: Record<CardId, Icon> = {
   'my-quotes': FileText,
   'my-modules': SquaresFour,
+  activity: Pulse,
   'the-price-file': Table,
   'recently-opened': ClockCounterClockwise,
   'data-quality': SealWarning,
@@ -440,62 +447,176 @@ function RecentlyOpened({ acts }: { acts: DashboardActs }): JSX.Element {
 /* My modules                                                 */
 /* ---------------------------------------------------------- */
 
-const MODULE_ROWS = 8
+/* THE MODULES CARD DRAWS PLACES, AND IT USED TO DRAW CATEGORIES.
+   That is the whole of this rewrite and it is worth being exact
+   about, because the card looked finished while it was wrong.
 
-function MyModules({ acts }: { acts: DashboardActs }): JSX.Element {
+   It listed the nine MODULES — Boats, Motors, Factory Packages,
+   Trailers, Parts & Accessories, Dealer Fit Packages, Labour
+   Rates, Oils & Consumables, Registration Costs. Those are
+   categories. What a dealer opens is Highfield, Yamaha, Stacer,
+   Stabicraft, Surtees, Dunbier, REDCO, Mackay, GFAB, ePropulsion,
+   Jeanneau, Formosa, Haines and NSM Custom — and every one of them
+   was hidden inside a grouping, behind a card that named a sibling
+   and counted the rest. The modules SCREEN was fixed for exactly
+   this reason (`places.ts`); the front door was still drawing the
+   old shape, so the two disagreed about what a module even is.
+
+   `placesOf` is that screen's own reader, so the card and the page
+   it opens now list the same things in the same order and cannot
+   drift apart.
+
+   A TILE, NOT A ROW, because a brand is recognised by its mark
+   before its name is read, and a row of text with a colour rail
+   beside it throws that away. `PlaceMark` draws the dealer's own
+   logo where one has been given and the kind's symbol where none
+   has — the same mark this place draws on the modules screen.
+
+   IT SCROLLS RATHER THAN TRUNCATES. Eight rows and an "All 14
+   modules" link was the front door of a business admitting it
+   could not show you the business.
+   ---------------------------------------------------------- */
+
+function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.Element {
   const modules = useProjectStore((s) => s.modules)
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
-  const rows = useMemo(
-    () => moduleRows(modules, entities, rowsByEntity),
-    [modules, entities, rowsByEntity],
+  const { order, set } = useTileOrder(who)
+
+  const places = useMemo(
+    () => applyOrder(placesOf(modules, entities, rowsByEntity), (p) => p.key, order),
+    [modules, entities, rowsByEntity, order],
   )
 
-  if (rows.length === 0) {
+  /* THE PERSON'S OWN ORDER, NOT THE BUSINESS'S. Dragging a tile
+     writes a key list for this person on this dashboard; it does
+     not touch `ModuleDef.order`, because that would rearrange the
+     modules screen for everybody who signs in. See tileOrder.ts. */
+  const move = useCallback(
+    (from: number, to: number): void => {
+      const keys = places.map((p) => p.key)
+      const [held] = keys.splice(from, 1)
+      if (held === undefined) return
+      keys.splice(to, 0, held)
+      set(keys)
+    },
+    [places, set],
+  )
+
+  const reorder = useReorder({ count: places.length, onMove: move, slotAttr: 'data-dsh-tile' })
+
+  if (places.length === 0) {
     return <Nothing say={CARDS['my-modules'].empty} act="Modules" onAct={acts.onOpenModules} />
   }
 
-  /* THE MODULE'S OWN SENTENCE IS GONE FROM THIS ROW, and it is
-     the largest single deletion in this pass. Northside's
-     descriptions run to forty words — "Boat-plus-engine bundles
-     the Motor Library files under the boat row's motor slot…" —
-     and five of them made this card the loudest block of prose on
-     the front door. A card gets a name and ONE fact; the fact
-     here is how much is in the place, which is what tells you
-     whether to open the door. The sentence is still the admin's,
-     still stored, and still read on the module's own screen. */
   return (
-    <>
-      <div className="dsh-list">
-        {rows.slice(0, MODULE_ROWS).map((r) => (
-          <Row
-            key={r.module.id}
-            title={r.module.name}
-            /* A MODULE'S HUE IS ITS PRIMARY TABLE'S, NOT ITS OWN.
-               `ModuleDef.accent` exists, but it is the module
-               page's chrome and is chosen by whoever made the
-               module; the kind is what the place SELLS, and the
-               same fact colours the same brand in the rail, on
-               the sheet and here. A module whose primary table
-               has been struck gets no rail rather than a grey
-               one — an absent fact is drawn as absent. */
-            kind={
-              r.module.tableIds[0] !== undefined && entities[r.module.tableIds[0]]
-                ? kindOf(entities[r.module.tableIds[0]].kind)
-                : undefined
-            }
-            tail={<span className="dsh-sum ds-mono">{r.rows.toLocaleString()}</span>}
-            label={`Open ${r.module.name}`}
-            onPick={() => acts.onOpenModule(r.module.id)}
-          />
-        ))}
-      </div>
-      <More
-        say={rows.length > MODULE_ROWS ? `All ${rows.length} modules` : 'All modules'}
-        onPick={acts.onOpenModules}
-      />
-    </>
+    <div className="dsh-tiles" ref={reorder.containerRef}>
+      {reorder.order.map((original, slot) => {
+        const p = places[original]
+        if (!p) return null
+        const master = p.tableId !== undefined ? entities[p.tableId] : undefined
+        return (
+          <div
+            key={p.key}
+            data-dsh-tile=""
+            /* THE KIND CARRIES THE TILE. `data-kind` sets `--kind`
+               (ds.css); the tile draws its mark plate from it, so
+               the same brand is the same colour here, in the rail
+               and on its own page. */
+            data-kind={kindOf(p.kind)}
+            className={`dsh-tile${reorder.held === slot ? ' is-held' : ''}${
+              p.retired ? ' is-held-back' : ''
+            }`}
+          >
+            <button
+              type="button"
+              className="dsh-tile-face"
+              /* THE DOOR REMEMBERS WHICH BRAND WAS PRESSED.
+                 A module workspace opened at "Boats" above a card
+                 that said "Highfield" is the fault `openPlace.ts`
+                 exists to prevent: the grid records the table, the
+                 workspace stands there. The dashboard is a second
+                 grid onto the same places and owes the same fact. */
+              onClick={() => {
+                rememberPlace(p.moduleId, p.tableId)
+                acts.onOpenModule(p.moduleId)
+              }}
+            >
+              <span className="dsh-tile-mark" aria-hidden="true">
+                <PlaceMark
+                  logo={modules[p.moduleId]?.logo}
+                  name={p.name}
+                  master={master}
+                  size={ICON_SIZE.small}
+                />
+              </span>
+              <span className="dsh-tile-say">
+                <span className="dsh-tile-name">{p.name}</span>
+                {/* THE CATEGORY IS THE EYEBROW, not the heading. It
+                    is still true and still worth knowing — Highfield
+                    is a boat — but it is the second fact on the tile
+                    and never the first. Drawn only where the place
+                    is not simply its module, or it would repeat the
+                    name directly above it. */}
+                {p.name !== p.moduleName ? (
+                  <span className="dsh-tile-under">{p.moduleName}</span>
+                ) : null}
+              </span>
+              <span className="dsh-tile-sum ds-mono">
+                {p.retired ? 'held' : p.census.items.toLocaleString()}
+              </span>
+            </button>
+
+            {/* THE GRIP IS ITS OWN CONTROL, NOT THE TILE. Dragging
+                the face would mean a press that travels three pixels
+                opens a brand instead of moving it, which is the
+                fault every draggable list has. Keyboard-operable
+                for the same reason the card grips are. */}
+            <button
+              type="button"
+              className="dsh-tile-grip"
+              aria-label={`Move ${p.name}. Arrow keys move it.`}
+              {...reorder.handleProps(original)}
+            >
+              <DotsSixVertical size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+            </button>
+          </div>
+        )
+      })}
+    </div>
   )
+}
+
+/* ---------------------------------------------------------- */
+/* Activity                                                   */
+/* ---------------------------------------------------------- */
+
+/** WHAT CHANGED, ANYWHERE, AND WHO CHANGED IT.
+ *
+ *  The rows come from `features/activity`, which listens to the
+ *  note bus rather than being called by the acts it records — so
+ *  this card cannot miss a change that raised a toast and cannot
+ *  invent one that did not. See `activity.ts`.
+ *
+ *  IT IS NOT SCOPED TO THIS PERSON. "Who did it" is the whole
+ *  reason a shared dealership machine wants a log, and a log
+ *  filtered to me answers a question I already know the answer
+ *  to. The name is on every row.
+ *
+ *  ITS EMPTY STATE OFFERS NOTHING, deliberately, and it is the
+ *  only card on this dashboard that does. There is no act that
+ *  makes activity happen: it fills as the business is used, and a
+ *  button here would have to point at something unrelated. */
+function Activity({ orgSlug }: { orgSlug: string }): JSX.Element {
+  const rows = useActivity(orgSlug)
+  if (rows.length === 0) return <Nothing say={CARDS.activity.empty} />
+
+  /* NO LIMIT AND NO "SEE ALL" LINK. The store keeps a fortnight of
+     heavy use and hands back the lot; the card scrolls. A link
+     under a truncated log would have to point at a page that does
+     not exist, and inventing one to justify the link is how a
+     dashboard grows a screen nobody asked for. */
+  return <ActivityList orgSlug={orgSlug} />
 }
 
 /* ---------------------------------------------------------- */
@@ -663,17 +784,29 @@ export interface CardBodyProps {
   id: CardId
   /** the signed-in person's name, as it is frozen onto a quote */
   me: string
+  /** who is looking. The tile order on the modules card is this
+   *  person's own preference rather than the business's, so the
+   *  card needs the same pair the arrangement is keyed by. */
+  userId: string
+  /** whose business this is. The activity log is kept per
+   *  organisation, so a card that reads it needs to be told which
+   *  one rather than reaching for the session itself — the same
+   *  reason every other derivation in this feature takes its
+   *  inputs as arguments. */
+  orgSlug: string
   acts: DashboardActs
 }
 
-export function CardBody({ id, me, acts }: CardBodyProps): JSX.Element {
+export function CardBody({ id, me, userId, orgSlug, acts }: CardBodyProps): JSX.Element {
   switch (id) {
     case 'my-quotes':
       return <Quotes me={me} acts={acts} />
     case 'recently-opened':
       return <RecentlyOpened acts={acts} />
     case 'my-modules':
-      return <MyModules acts={acts} />
+      return <MyModules acts={acts} who={{ userId, orgSlug }} />
+    case 'activity':
+      return <Activity orgSlug={orgSlug} />
     case 'the-price-file':
       return <ThePriceFile acts={acts} />
     case 'data-quality':

@@ -65,11 +65,13 @@
        → a lateral link on Quotes, where the diary belongs: it is
          the same job as the list it sits beside.
 
-   THE MODULES ARE NOT ENUMERATED. There are fourteen of them and
-   they belong on their own screen, which is the point of that
-   screen. What is here is where THIS PERSON WAS — at most four,
-   resolved against the live store every paint, never trusted (see
-   moduleRecent.ts).
+   THE MODULES ARE NOT ENUMERATED, AND NEITHER IS WHERE YOU WERE.
+   The rail is four doors. A "Recent" section was tried here and
+   removed: it repeated what the front door already lists, it grew
+   and shrank under the cursor so the doors below it moved, and a
+   rail whose contents change as you use it is a rail you have to
+   read every time instead of aiming at. Where you were belongs on
+   Home, which is a page you look AT rather than navigate BY.
 
    THE PRIMARY ACTION IS "NEW QUOTE", NOT "NEW TABLE". A dealer
    makes quotes all day and tables almost never; New table lives
@@ -95,12 +97,9 @@ import {
   UsersThree,
 } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { isRetired } from '@/types/model'
-import { TableKindSymbol, kindOf } from '@/features/tablekit'
-import { moduleRowCount } from '@/features/modules'
+import { TableKindSymbol } from '@/features/tablekit'
 import { WhoChip, type AppUser } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
-import { useModuleRecent } from './moduleRecent'
 
 /** Every mark on this rail is drawn at one size and one weight, so a
  *  column of them reads as one set rather than five decisions.
@@ -118,7 +117,6 @@ const MARK_WEIGHT = weightFor(MARK)
  *  collapsed is a rail somebody collapses every morning. */
 const RAIL_KEY = 'hl.rail.collapsed'
 /** And so is the one section, for the same reason. */
-const RECENT_KEY = 'hl.rail.recent.open'
 
 const readFlag = (key: string, fallback: boolean): boolean => {
   try {
@@ -135,8 +133,11 @@ export interface SideNavProps {
   /** which module is open, when one is — so a remembered row can be
    *  lit rather than only the Modules door above it */
   currentModuleId?: string | null
-  /** the day: what am I selling, and what did I leave open */
-  onOpenToday: () => void
+  /** the day: what am I selling, and what did I leave open. The
+   *  row is labelled Home — the app's own noun for its front door,
+   *  settled in 84dc447 — and the handler keeps the shorter name
+   *  because it is what the door IS rather than what it says. */
+  onOpenHome: () => void
   /** the grid of places — one card per module */
   onOpenModules: () => void
   /** one place, opened straight from the rail */
@@ -211,7 +212,7 @@ const mark = (Glyph: typeof House): ReactNode => (
 export function SideNav({
   current,
   currentModuleId,
-  onOpenToday,
+  onOpenHome,
   onOpenModules,
   onOpenModule,
   onOpenQuotes,
@@ -225,8 +226,6 @@ export function SideNav({
   quoteCount,
   customerCount,
 }: SideNavProps): JSX.Element {
-  const entities = useProjectStore((s) => s.entities)
-  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const modules = useProjectStore((s) => s.modules)
   const org = useProjectStore((s) => s.meta.org)
 
@@ -239,46 +238,10 @@ export function SideNav({
     }
   }, [collapsed])
 
-  const [recentOpen, setRecentOpen] = useState(() => readFlag(RECENT_KEY, true))
-  useEffect(() => {
-    try {
-      globalThis.localStorage?.setItem(RECENT_KEY, recentOpen ? '1' : '0')
-    } catch {
-      /* as above */
-    }
-  }, [recentOpen])
-
   const moduleCount = useMemo(
     () => Object.keys(modules).length,
     [modules],
   )
-
-  /* WHERE THIS PERSON WAS, RESOLVED AGAINST THE LIVE STORE. A
-     remembered id is a guess about a project that has gone on
-     changing; anything that no longer resolves is dropped here
-     rather than drawn as a door to nothing. */
-  const recentIds = useModuleRecent()
-  const recent = useMemo(() => {
-    const out: {
-      id: string
-      name: string
-      kind: string
-      count: number
-    }[] = []
-    for (const id of recentIds) {
-      const m = modules[id]
-      if (!m) continue
-      const primary = m.tableIds.map((t) => entities[t]).find(Boolean)
-      if (primary && isRetired(primary)) continue
-      out.push({
-        id,
-        name: m.name,
-        kind: primary ? kindOf(primary.kind) : 'custom',
-        count: moduleRowCount(m, entities, rowsByEntity),
-      })
-    }
-    return out
-  }, [recentIds, modules, entities, rowsByEntity])
 
   return (
     <nav
@@ -335,7 +298,7 @@ export function SideNav({
             on={current === 'home'}
             collapsed={collapsed}
             glyph={mark(House)}
-            onPick={onOpenToday}
+            onPick={onOpenHome}
           />
           <NavRow
             label="Modules"
@@ -362,62 +325,6 @@ export function SideNav({
             onPick={onOpenCustomers}
           />
         </div>
-
-        {/* ---- WHERE YOU WERE — the one section, and it collapses.
-                Drawn only when there is something in it: an empty
-                disclosure is a control that lies about having
-                contents. --------------------------------------------- */}
-        {recent.length > 0 ? (
-          <div className="sn-grp sn-grp-recent">
-            <button
-              type="button"
-              className={`sn-sec${recentOpen ? ' is-open' : ''}`}
-              aria-expanded={recentOpen}
-              onClick={() => setRecentOpen((o) => !o)}
-            >
-              <span className="mono-label sn-sec-name">Recent</span>
-              {/* HOW MANY ARE INSIDE WHEN IT IS SHUT — fault 6's
-                  second half. Drawn only while shut, because open it
-                  is a count of rows you can see. */}
-              {recentOpen ? null : (
-                <span className="sn-sec-count">{recent.length}</span>
-              )}
-              <span className="sn-sec-wedge" aria-hidden="true" />
-            </button>
-
-            {recentOpen ? (
-              <div className="sn-sec-body">
-                {recent.map((m) => (
-                  <button
-                    type="button"
-                    key={m.id}
-                    /* THE KIND CARRIES THE ROW. `data-kind` sets
-                       `--kind` (ds.css) and this row draws it as a
-                       full-height rail down its left edge.
-
-                       IT DOES NOT TAKE `.k-rail`, deliberately, and
-                       the reason is cascade rather than taste:
-                       `.k-rail` and `.sn-mod` are both (0,1,0), and
-                       shell.css loads after ds.css, so any border
-                       shorthand written here would silently win. One
-                       declaration, in the rule that draws the row. */
-                    className={`sn-mod${
-                      currentModuleId === m.id ? ' is-on' : ''
-                    }`}
-                    data-kind={m.kind}
-                    aria-current={currentModuleId === m.id ? 'page' : undefined}
-                    onClick={() => onOpenModule(m.id)}
-                  >
-                    <span className="sn-mod-name">{m.name}</span>
-                    <span className="sn-mod-count">
-                      {m.count.toLocaleString()}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
       </div>
 
       <div className="sn-foot">

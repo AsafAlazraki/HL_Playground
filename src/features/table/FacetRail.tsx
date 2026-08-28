@@ -191,11 +191,18 @@ function FacetButton({
       aria-haspopup="dialog"
       onPointerDown={(e) => {
         /* PRESS LANDS ON POINTER-DOWN — rule 8. Opening on click
-           would put the sheet a whole event behind the finger. */
+           would put the sheet a whole event behind the finger.
+           `preventDefault` stops the press starting a text selection
+           across the rail — and it also stops the button taking
+           focus, which is why focus is then given explicitly: a
+           person who opens a sheet with the mouse and shuts it with
+           Escape must land back on the control they pressed. */
         if (e.button !== 0) return
         e.preventDefault()
-        const rect = ref.current?.getBoundingClientRect()
-        if (rect) onOpen(rect)
+        const el = ref.current
+        if (!el) return
+        el.focus()
+        onOpen(el.getBoundingClientRect())
       }}
       onKeyDown={(e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return

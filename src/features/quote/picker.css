@@ -36,7 +36,8 @@
 .qs-scrim {
   position: absolute;
   inset: 0;
-  background: rgb(8 27 46 / 38%);
+  background: var(--bg-sunken);
+  opacity: 0.72;
 }
 
 .qs-dialog {
@@ -848,7 +849,7 @@
   border: 1px solid var(--accent);
   border-radius: var(--r-control);
   background: var(--accent);
-  color: var(--accent-fg, #fff);
+  color: var(--accent-fg);
   cursor: pointer;
   transition:
     background var(--d-fast) var(--ease),

@@ -42,6 +42,38 @@ function Row({ e, now }: { e: Entry; now: number }): JSX.Element {
   )
 }
 
+/** JUST THE ROWS, WITH NO CARD AROUND THEM.
+ *
+ *  The dashboard already draws a bordered box with a heading and
+ *  a mark in it, and a second bordered box inside the first is the
+ *  card-in-a-card every dashboard grows if nobody stops it. So the
+ *  chrome and the contents are two components: the front door
+ *  takes the contents, the module page takes the whole card.
+ *
+ *  It returns null when there is nothing, rather than drawing its
+ *  own empty sentence — the caller knows which words are right for
+ *  the surface it is on, and the dashboard has one house style for
+ *  emptiness that this must not compete with. */
+export function ActivityList({
+  orgSlug,
+  moduleId,
+  limit = 6,
+}: Omit<ActivityCardProps, 'onOpenAll'>): JSX.Element | null {
+  const all = useActivity(orgSlug, moduleId ? undefined : limit)
+  const mine = useModuleActivity(orgSlug, moduleId ?? '', limit)
+  const rows = moduleId ? mine : all
+  const now = Date.now()
+
+  if (rows.length === 0) return null
+  return (
+    <ul className="ac-list">
+      {rows.map((e) => (
+        <Row e={e} now={now} key={e.id} />
+      ))}
+    </ul>
+  )
+}
+
 export function ActivityCard({
   orgSlug,
   moduleId,

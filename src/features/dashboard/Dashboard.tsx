@@ -57,7 +57,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { JSX } from 'react'
 import { motion } from 'motion/react'
-import { DotsSixVertical, Plus, Sliders, X } from '@phosphor-icons/react'
+import { ArrowUpRight, DotsSixVertical, Plus, Sliders, X } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { say } from '@/store/notes'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
@@ -93,6 +93,29 @@ export interface DashboardProps extends DashboardActs {
   /** who is signed in. Everything on this page that says "my"
    *  means this person, and the arrangement is filed under them. */
   user: AppUser
+}
+
+/** WHERE EACH CARD'S "Open" GOES, and which cards have one.
+ *
+ *  A partial map on purpose. Four of the seven cards are a glance
+ *  at a page that exists; three are complete in themselves — the
+ *  activity log, the reviewer's findings and where-you-have-been
+ *  have no single screen that is "more of this". Returning
+ *  `undefined` for those is what stops the header growing a
+ *  control that lies. */
+function openFor(id: CardId, acts: DashboardActs): (() => void) | undefined {
+  switch (id) {
+    case 'my-quotes':
+      return acts.onOpenQuotes
+    case 'my-modules':
+      return acts.onOpenModules
+    case 'the-price-file':
+      return acts.onOpenDataModel
+    case 'rules-warning':
+      return acts.onOpenRules
+    default:
+      return undefined
+  }
 }
 
 export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
@@ -388,6 +411,11 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
                    dashboard.css, where the width that decides
                    them is known. See `CardMeta.wide`. */
                 data-wide={CARDS[id].wide ? '' : undefined}
+                /* AND THIS ONE ASKS FOR BOTH ROWS. The grid flows
+                   down a column before it moves right, so a card
+                   spanning two rows takes a column to itself and
+                   the two half-height cards stack beside it. */
+                data-tall={CARDS[id].tall ? '' : undefined}
                 /* NOT `.ds-lit`. That utility sets `box-shadow`
                    outright, and this card's own rule sets
                    `box-shadow` too — one of them would silently
@@ -416,6 +444,32 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
                     </span>
                   )}
                   <h2 className="dsh-card-name ds-heading">{CARDS[id].name}</h2>
+                  {/* THE DOOR OUT OF THE CARD.
+                      A dashboard card is a glance at something that
+                      has a page of its own, and until now the only
+                      way through was a "See all" link buried under
+                      the list — different words on every card, in a
+                      different place on every card, and absent
+                      entirely on two of them. One control, one
+                      position, one word.
+
+                      IT IS DRAWN ONLY WHERE THERE IS SOMEWHERE TO
+                      GO. `openFor` returns nothing for the activity
+                      log, which is complete on the card and has no
+                      page behind it; a button that opened a screen
+                      invented to justify the button is worse than
+                      no button. */}
+                  {!arranging && openFor(id, acts) ? (
+                    <button
+                      type="button"
+                      className="dsh-open"
+                      onClick={openFor(id, acts)}
+                      aria-label={`Open ${CARDS[id].name}`}
+                    >
+                      <span className="dsh-open-say">Open</span>
+                      <ArrowUpRight size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                    </button>
+                  ) : null}
                   {arranging ? (
                     <button
                       type="button"
@@ -428,7 +482,13 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
                   ) : null}
                 </header>
                 <div className="dsh-card-body">
-                  <CardBody id={id} me={user.name} acts={acts} />
+                  <CardBody
+                    id={id}
+                    me={user.name}
+                    userId={user.id}
+                    orgSlug={user.orgSlug}
+                    acts={acts}
+                  />
                 </div>
               </motion.section>
             )

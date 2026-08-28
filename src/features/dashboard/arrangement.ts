@@ -53,6 +53,7 @@ import { newId } from '@/lib/id'
  *  — and nothing else, because the arrangement stores ids only. */
 export type CardId =
   | 'my-quotes'
+  | 'activity'
   | 'recently-opened'
   | 'my-modules'
   | 'the-price-file'
@@ -60,8 +61,9 @@ export type CardId =
   | 'rules-warning'
 
 export const CARD_IDS: readonly CardId[] = [
-  'my-quotes',
   'my-modules',
+  'my-quotes',
+  'activity',
   'the-price-file',
   'recently-opened',
   'data-quality',
@@ -156,14 +158,33 @@ export interface Arrangement {
  *  same question from any screen and this one must fit the
  *  viewport.
  *
+ *  'the-price-file' CAME OFF THE DEFAULT SET. It counted tables
+ *  and named the biggest ones, which is a fact about the shape of
+ *  the data rather than about the day's work — true, and of no
+ *  use to somebody who came here to sell a boat. It stays in the
+ *  catalogue and the tray offers it, because an admin laying out
+ *  a new tenancy does want it.
+ *
+ *  WHAT TOOK ITS PLACE IS 'activity': what changed, and who
+ *  changed it. On a shared dealership machine that is the
+ *  question the front door was not answering at all.
+ *
+ *  THE THREE ARE A COMPOSITION, NOT A LIST, AND THE ORDER IS THE
+ *  COMPOSITION. The grid flows down a column before it moves
+ *  right (dashboard.css), so these three read: quotes at the top
+ *  left, activity directly beneath it, and modules beside them
+ *  taking the full height on its own — because a list of every
+ *  brand in the business is the one thing here that is worth the
+ *  whole column. See `CardMeta.tall`.
+ *
  *  A card with nothing in it yet does not disqualify itself from
  *  the default — it says so in a sentence and offers the act
  *  that would give it something, which is more use to a new
  *  person than an absence they cannot see. */
 export const DEFAULT_CARDS: readonly CardId[] = [
   'my-quotes',
+  'activity',
   'my-modules',
-  'the-price-file',
 ]
 
 /** FIXED IDS, DELIBERATELY. The default is rebuilt from scratch

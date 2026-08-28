@@ -82,6 +82,12 @@ export type { Place, PlaceFilter } from './places'
    not carry yet, and what it is and is not. */
 export { forgetPlaces, placeFor, rememberPlace } from './openPlace'
 
+/* THE MARK FOR A PLACE — the dealer's logo, or the kind's symbol
+   when there is none. Exported because the front door draws module
+   tiles and must draw the same mark this screen does. */
+export { PlaceMark } from './PlaceMark'
+export type { PlaceMarkProps } from './PlaceMark'
+
 export { ModuleSettings } from './ModuleSettings'
 export type { ModuleSettingsProps } from './ModuleSettings'
 

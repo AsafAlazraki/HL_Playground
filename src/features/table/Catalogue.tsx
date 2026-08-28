@@ -296,7 +296,9 @@ export function Catalogue({
 
   return (
     <section
-      className="cat-root"
+      /* written out rather than interpolated, so `check-styles` can
+         see the class as a literal and hold this file to its contract */
+      className={'cat-root' + (lens === 'list' ? ' cat-root--list' : '')}
       data-kind={kind}
       aria-label={entity.name}
     >
@@ -307,7 +309,16 @@ export function Catalogue({
               <TableKindSymbol kind={kind} size={ICON_SIZE.tiny} />
               <span>{TABLE_KINDS[kind].label}</span>
             </p>
-            <h1 className="ds-hero cat-name">{entity.name}</h1>
+            {/* THE HEAD DOES LESS WORK WHEN THE CONTENT IS DENSE.
+                The gallery is the showroom and the name is its hero
+                at 34–52px; the register is the workbench, where 155px
+                of chrome is nine rows a dealer doing entry does not
+                get. One step down — the WHOLE step, size, weight,
+                leading and tracking together, which is what
+                `.ds-display-lg` is — and the identity is unchanged. */}
+            <h1 className={`${lens === 'gallery' ? 'ds-hero' : 'ds-display-lg'} cat-name`}>
+              {entity.name}
+            </h1>
             <p className="cat-fact">{fact}</p>
           </div>
           <Lens entityId={entityId} lens={lens} />

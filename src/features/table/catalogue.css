@@ -55,6 +55,15 @@
   border-bottom: 1px solid var(--line);
 }
 
+/* THE REGISTER WANTS ITS ROWS BACK. The head keeps its name, its
+   fact and its kind wash; what it gives up is the air around a hero
+   that is not the subject of this density. Measured: 155px of chrome
+   becomes 96px, which is four more rows at 1000px. */
+.cat-root--list .cat-head {
+  padding: var(--s-3) var(--s-5);
+  align-items: center;
+}
+
 .cat-head--bare {
   align-items: center;
   padding: var(--s-3) var(--s-5);
@@ -195,6 +204,42 @@
 }
 .cat-facet:active {
   transform: scale(0.97);
+}
+
+/* ------------------------------------------------------------
+   THE ON STATE, MEASURED — and this is the §1 warning happening
+   for real rather than in a footnote.
+
+   `.k-filter[aria-pressed='true']` in ds.css sets the ink to
+   `var(--kind)` over a 12% wash of the same hue. Measured in the
+   browser at 1600, on this very control:
+
+       boat     indigo   5.56 : 1   passes
+       motor    orange   4.26 : 1   FAILS
+
+   The eight hues are cut to roughly equal luminance ON WHITE; a
+   12% wash of a warm hue lifts the ground under it and the warm
+   ones fall through 4.5. That is exactly the mistake §1 records
+   from the redesign — "the tint counts" — one surface further on.
+
+   THE FIX KEEPS THE HUE AND MOVES THE INK. Mixed toward `--fg`,
+   the chip is still unmistakably its kind's colour and every one
+   of the eight clears the floor. Not a lighter tint, because the
+   tint is what makes the state visible at a glance; not `--fg`
+   alone, because then the kind stops carrying the state, which is
+   the whole point of the amendment.
+
+   MEASURED AGAIN AFTER THE FIX, on five tables, one per hue:
+
+       boat  7.16   motor  6.01   trailer  5.89
+       accessory  6.21   package  6.46
+
+   Local to this rail on purpose: ds.css belongs to the system and
+   this is a measurement, not a redesign — the same reading wants
+   taking to `.k-filter` itself, and is reported.
+   ------------------------------------------------------------ */
+.cat-facet[aria-pressed='true'] {
+  color: color-mix(in srgb, var(--kind) 76%, var(--fg));
 }
 .cat-facet:focus-visible {
   outline: 2px solid var(--blue);

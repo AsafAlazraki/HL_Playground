@@ -89,6 +89,7 @@ import { AccessScreen } from './AccessScreen'
 import { reorderPlan } from './designer'
 import { placeFilters, placesOf, placesUnder, type Place } from './places'
 import { rememberPlace } from './openPlace'
+import { PlaceMark } from './PlaceMark'
 import './modules.css'
 
 export interface DashboardProps {
@@ -480,7 +481,7 @@ function PlaceCard({
               logo={module?.logo}
               name={place.name}
               master={master}
-              big={cover === null}
+              size={cover === null ? ICON_SIZE.large : ICON_SIZE.medium}
             />
           </span>
         </span>
@@ -551,45 +552,3 @@ function PlaceCard({
 
 /* ---------------------------------------------------------- */
 
-interface PlaceMarkProps {
-  logo: ImageRef | undefined
-  name: string
-  master: EntityDef | undefined
-  /** the face is the mark's own rather than a photograph's corner,
-   *  so it is drawn at the size an empty face deserves */
-  big: boolean
-}
-
-/** THE DEALER'S OWN MARK, OR THE KIND'S.
- *
- *  `useImageDisplay` is the app's one answer to "may this address be
- *  painted here" — it holds the per-host verdict, resolves an address
- *  we ship a copy of to that copy, and returns `paint: false` for
- *  everything it will not request. A logo that cannot be drawn is
- *  therefore not a broken glyph and not an empty box: the card falls
- *  back to the kind symbol, which is what every module without a logo
- *  draws today. */
-function PlaceMark({ logo, name, master, big }: PlaceMarkProps): ReactElement {
-  const { paint, probe, at } = useImageDisplay(logo?.src ?? '')
-  const box = big ? ICON_SIZE.large : ICON_SIZE.medium
-  if (logo && paint) {
-    const alt = logo.alt?.trim() ?? ''
-    return (
-      <img
-        className="md-place-logo"
-        src={at}
-        alt={alt === name ? '' : alt}
-        width={box}
-        height={box}
-        loading={probe ? 'eager' : 'lazy'}
-        decoding="async"
-        draggable={false}
-        onLoad={() => noteImageLoaded(logo.src)}
-        onError={() => noteImageFailed(logo.src)}
-      />
-    )
-  }
-  /* THE ONE PLACE KIND MARKS ARE DRAWN is tablekit, here as
-     everywhere else — the same boat, whatever screen it is on. */
-  return <TableKindSymbol kind={kindOf(master?.kind)} size={box} />
-}

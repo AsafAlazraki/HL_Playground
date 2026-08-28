@@ -89,6 +89,13 @@
   padding: var(--s-6);
   border-right: 1px solid var(--line);
   background: var(--surface-1);
+  /* A SHORT WINDOW SCROLLS THE PANE, NOT THE PAGE. Measured at
+     1024x768 the pane has 513px and its own contents want 551 — the
+     photograph, the plates, a 47px name and five hairline specs — so
+     the last spec was clipped by the price bar. The pane scrolls
+     inside itself: the page is still one screen, the boat is still
+     beside the bands, and nothing is cut. */
+  overflow-y: auto;
 }
 
 /* ---- the render, crossfading -------------------------------- */
@@ -142,7 +149,16 @@
   color: var(--fg-tertiary);
   white-space: nowrap;
   overflow: hidden;
-  /* A FADE, NEVER AN ELLIPSIS. §3: nothing truncates mid-word. */
+  /* ITS OWN GROUND AND ITS OWN HAIRLINE. The layer above stops 26px
+     short so the caption never sits over a photograph — but a pale
+     boat on a pale strip reads as though it does, so the strip says
+     where it starts. */
+  background: var(--surface-3);
+  border-top: 1px solid var(--line-subtle);
+  /* A FADE, NEVER AN ELLIPSIS. §3: nothing truncates mid-word.
+     `#000` here is an ALPHA CHANNEL and not an ink — a mask reads
+     only the luminance of its own gradient, so no theme colour can
+     be substituted for it and rule 1 has nothing to say about it. */
   mask-image: linear-gradient(to right, #000 82%, transparent 100%);
 }
 
@@ -628,10 +644,11 @@
   line-height: 1.3;
   color: var(--fg);
   /* NO CLAMP. `-webkit-line-clamp` cuts at the last position that
-     fits, which on "…XS 6.5\" Speakers + 1.8mtr Aerial" is inside a
-     word — §3's one absolute. The name wraps in full instead and the
-     grid row stretches every card in it to the tallest, so a long
-     SKU costs a ragged edge and never a lost word. */
+     fits, which on a name like `Fusion Apollo RA670 Stereo w 2 Pairs
+     of XS 6.5 Speakers + 1.8mtr Aerial` lands inside a word — §3's
+     one absolute. The name wraps in full instead and the grid row
+     stretches every card in it to the tallest, so a long SKU costs a
+     ragged edge and never a lost word. */
   overflow-wrap: break-word;
 }
 
@@ -639,13 +656,19 @@
 .qb-line-facts {
   display: flex;
   flex-wrap: wrap;
+  min-width: 0;
   gap: 2px var(--s-3);
   font-size: var(--t-caption-size);
   color: var(--fg-secondary);
 }
 
+/* A PAIR FACT WRAPS. `nowrap` was right for a fact like `HP 175`
+   and wrong for `Rigging Kit Option  Mech Rigging Kit - 703 Side
+   Mount w CL5 Gauge Kit`, which ran off the card and was cut inside
+   a word by the card's own overflow — §3's one absolute. */
 .qb-card-fact {
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .qb-card-fact-lab {
@@ -859,7 +882,7 @@
   border: 1px solid var(--accent);
   border-radius: var(--r-control);
   background: var(--accent);
-  color: var(--accent-fg, #fff);
+  color: var(--accent-fg);
   font-size: var(--t-small-size);
   font-weight: 600;
   cursor: pointer;
@@ -1261,7 +1284,7 @@
   border: 1px solid var(--accent);
   border-radius: var(--r-control);
   background: var(--accent);
-  color: var(--accent-fg, #fff);
+  color: var(--accent-fg);
   font-size: var(--t-small-size);
   font-weight: 620;
   white-space: nowrap;
@@ -1494,7 +1517,25 @@
   display: grid;
   place-items: end center;
   padding: var(--s-6);
-  background: rgb(8 27 46 / 32%);
+}
+
+/* THE SCRIM IS A PSEUDO-ELEMENT, NOT THE WRAPPER'S OWN BACKGROUND.
+
+   NEVER A LITERAL COLOUR (rule 1): it is the page's own sunken
+   ground at low opacity, which is the convention the picker next
+   door already keeps. And `opacity` on the wrapper would fade the
+   SHEET along with the ground it sits on — the wrapper is the
+   sheet's parent — so the ground gets a layer of its own. */
+.qb-sheet-scrim::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bg-sunken);
+  opacity: 0.72;
+}
+
+.qb-sheet {
+  position: relative;
 }
 
 .qb-sheet {
@@ -1658,7 +1699,7 @@
   border: 1px solid var(--accent);
   border-radius: var(--r-control);
   background: var(--accent);
-  color: var(--accent-fg, #fff);
+  color: var(--accent-fg);
   font-size: var(--t-small-size);
   font-weight: 620;
   white-space: nowrap;
@@ -1713,6 +1754,17 @@
   }
   .qb-shelf {
     grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+  }
+  /* THE BAR WRAPS TO TWO ROWS HERE and that is fine — what is not
+     fine is paying full padding for both. Measured at 1024x768 the
+     price bar took 175px of a 768px window; this brings it to ~140
+     without moving a control or shortening a refusal. */
+  .qb-price-bar {
+    padding: var(--s-2) var(--s-4);
+    gap: var(--s-3);
+  }
+  .qb-give-why {
+    padding: 6px var(--s-4);
   }
 }
 
@@ -1809,6 +1861,16 @@
 @media (max-width: 600px) {
   .qb-shelf {
     grid-template-columns: minmax(0, 1fr);
+  }
+  /* THE HANDOVER TAKES THE ROW IT IS ALREADY USING. At 600 the bar
+     wraps to three rows and the third held one button and a gap; a
+     full-width primary costs nothing and is the easier target. */
+  .qb-give {
+    width: 100%;
+  }
+  .qb-door {
+    flex: 1;
+    justify-content: center;
   }
   .qb-sheet-scrim {
     padding: 0;

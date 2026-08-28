@@ -1,4 +1,4 @@
-export { ActivityCard } from './ActivityCard'
+export { ActivityCard, ActivityList } from './ActivityCard'
 export type { ActivityCardProps } from './ActivityCard'
 export {
   activityOf,

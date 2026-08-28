@@ -509,7 +509,7 @@ export function Shell({ user, onSignOut }: ShellProps) {
           currentModuleId={
             focused && focused.stage.kind === 'module' ? focused.stage.moduleId : null
           }
-          onOpenToday={() => setStage({ kind: 'home' })}
+          onOpenHome={() => setStage({ kind: 'home' })}
           onOpenModules={() => setStage({ kind: 'module', moduleId: null })}
           onOpenModule={(moduleId) => setStage({ kind: 'module', moduleId })}
           onOpenQuotes={() => setStage({ kind: 'quote', quoteId: null })}

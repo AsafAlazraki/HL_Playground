@@ -145,26 +145,30 @@ describe('the catalogue', () => {
          would silently make a card narrow rather than loudly
          fail, which is the class of bug this guard is for */
       expect(typeof meta.wide).toBe('boolean')
+      expect(typeof meta.tall).toBe('boolean')
     }
   })
 
   /* THE DEFAULT SET PACKS THE GRID EXACTLY, AND THAT IS
      ARITHMETIC RATHER THAN AN OPINION.
 
-     dashboard.css lays four tracks at 1300px of column and gives
-     a wide card two of them. The set a person starts with spends
+     dashboard.css lays TWO ROWS and flows down a column before it
+     moves right. A card is one cell unless it is `tall`, which is
+     two. The set a person starts with spends
 
-       3 wide x 2  +  2 compact x 1  =  8 cells
+       2 short x 1  +  1 tall x 2  =  4 cells
 
-     which is two full rows and no hole. Any later change to
-     `DEFAULT_CARDS` or to a `wide` flag that breaks the multiple
-     puts a card-shaped gap back on the front door, and the gap
-     is the thing this pass was written to remove. It is checked
-     over the DEFAULT set only: a person who puts all seven on has
-     arranged their own dashboard and that is their business. */
-  it('the cards a person starts with fill whole rows of the four-track grid', () => {
-    const cells = DEFAULT_CARDS.reduce((n, id) => n + (CARDS[id].wide ? 2 : 1), 0)
-    expect(cells % 4).toBe(0)
+     which is two full columns and no hole. The old form of this
+     guard counted a four-TRACK row grid and was correct for the
+     layout that was here; the shape changed, so the arithmetic
+     changed with it. What has not changed is why it is guarded:
+     a set that does not divide leaves a card-shaped absence on
+     the front door, which is the fault this whole pass exists to
+     remove. Checked over the DEFAULT set only — a person who puts
+     all seven on has arranged their own dashboard. */
+  it('the cards a person starts with fill whole columns of the two-row grid', () => {
+    const cells = DEFAULT_CARDS.reduce((n, id) => n + (CARDS[id].tall ? 2 : 1), 0)
+    expect(cells % 2).toBe(0)
   })
 
   /* ONE QUOTES CARD, NOT THREE. The front door drew "My quotes",
@@ -182,9 +186,23 @@ describe('the catalogue', () => {
   /* AND THE DEFAULT SET IS THE ONE A SALESPERSON LANDS ON. Three
      cards, because the screen must fit the viewport at 1024x768
      where the column is 696px and one card wide — five did not,
-     measured, by 799px. */
-  it('the default set is three cards and the quotes card is first', () => {
-    expect(DEFAULT_CARDS).toEqual(['my-quotes', 'my-modules', 'the-price-file'])
+     measured, by 799px.
+
+     THE ORDER IS THE LAYOUT. The grid flows down a column before
+     it moves right (dashboard.css), so this array reads: quotes
+     top left, activity directly under it, modules beside them over
+     both rows. Asserted because changing the array silently
+     changes the composition. */
+  it('the default set is three cards, in the order the grid lays out', () => {
+    expect(DEFAULT_CARDS).toEqual(['my-quotes', 'activity', 'my-modules'])
+  })
+
+  /* EXACTLY ONE CARD IS TALL, and the grid depends on it: two
+     half-height cards stack in the first column only because the
+     third takes both rows of the second. Two tall cards would
+     leave a hole under the first of them. */
+  it('exactly one card asks for both rows', () => {
+    expect(CARD_IDS.filter((id) => CARDS[id].tall)).toEqual(['my-modules'])
   })
 })
 

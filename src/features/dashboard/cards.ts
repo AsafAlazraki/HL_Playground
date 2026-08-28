@@ -65,6 +65,23 @@ export interface CardMeta {
    *  "no quotes have been raised here yet" is the opposite of
    *  what the extra width was for. */
   wide: boolean
+
+  /** DOES THIS CARD ASK FOR TWO ROWS?
+   *
+   *  Exactly one does — the modules card — and the reason is that
+   *  it is the only card holding a LIST OF PLACES rather than a
+   *  list of facts. Nine modules at eight rows a card meant an
+   *  "All 9 modules" link under a truncated list: the front door
+   *  of a business that could not show you the business. Given the
+   *  height of two cards it shows every module as a tile and
+   *  scrolls the few that overflow, and the link is gone because
+   *  there is nothing left for it to reveal.
+   *
+   *  The quotes card is deliberately NOT tall. It was, and at full
+   *  height it drew four quotes and three hundred pixels of
+   *  nothing under them. Half the height, and activity takes the
+   *  other half — which is the composition the dashboard now is. */
+  tall: boolean
 }
 
 export const CARDS: Record<CardId, CardMeta> = {
@@ -72,37 +89,50 @@ export const CARDS: Record<CardId, CardMeta> = {
     name: 'Quotes',
     says: 'Every quote raised here, filtered to drafts, mine or issued.',
     empty: 'No quotes have been raised here yet.',
-    wide: true,
+    wide: false,
+    tall: false,
+  },
+  'activity': {
+    name: 'Activity',
+    says: 'What changed anywhere in the business, and who changed it.',
+    empty: 'Nothing has changed yet. Edits, prices and quotes show up here as they happen.',
+    wide: false,
+    tall: false,
   },
   'my-modules': {
     name: 'My modules',
-    says: 'The places in the business, and how much is in each.',
+    says: 'Every place in the business, as a tile, in your own order.',
     empty: 'No modules yet. A module is a place in the business — a brand, a workshop, a counter.',
     wide: false,
+    tall: true,
   },
   'the-price-file': {
     name: 'The price file',
     says: 'What you sell, counted, and the biggest tables it is held in.',
     empty: 'No tables yet. The price file is what everything else is built on.',
     wide: false,
+    tall: false,
   },
   'recently-opened': {
     name: 'Where I have been',
     says: 'The tables and rows you opened last, so you can get back.',
     empty: 'Nothing opened yet. What you open shows up here.',
     wide: false,
+    tall: false,
   },
   'data-quality': {
     name: 'Worth fixing',
     says: 'What the reviewer found in your tables that is still outstanding.',
     empty: 'Nothing outstanding. Every table reads the way it should.',
     wide: false,
+    tall: false,
   },
   'rules-warning': {
     name: 'Rules that warn',
     says: 'Rules that annotate rather than remove — the ones worth reading.',
     empty: 'No rule is set to warn. Every rule here removes what it disagrees with.',
     wide: false,
+    tall: false,
   },
 }
 
