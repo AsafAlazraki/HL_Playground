@@ -6,6 +6,28 @@ export { Board } from './Board'
 export type { BoardProps } from './Board'
 export { StageEditor } from './StageEditor'
 export type { StageEditorProps } from './StageEditor'
+export { DealPane } from './DealPane'
+export type { DealPaneProps } from './DealPane'
+/* WHAT WAS SAID ABOUT A DEAL — a store beside the quote, never on
+   it, for the reason `dealNotes.ts` gives at length. */
+export {
+  composeNote,
+  countOf,
+  dropNote,
+  forgetDealNotes,
+  mintNote,
+  mintNoteId,
+  notesFor,
+  notesOf,
+  parseBag,
+  saveNote,
+  useDealNotes,
+  whyNotNote,
+  withNote,
+  withoutNote,
+  type DealNote,
+  type NoteBag,
+} from './dealNotes'
 export {
   ANCHORS,
   DEFAULT_STAGES,

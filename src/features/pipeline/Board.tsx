@@ -30,7 +30,14 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { JSX, PointerEvent as ReactPointerEvent } from 'react'
-import { ArrowsDownUp, MagnifyingGlass, Sliders } from '@phosphor-icons/react'
+import {
+  ArrowsDownUp,
+  CaretDoubleLeft,
+  CaretDoubleRight,
+  ChatTeardropText,
+  MagnifyingGlass,
+  Sliders,
+} from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -48,6 +55,8 @@ import {
 } from './finding'
 import { say } from '@/store/notes'
 import { quoteTotals, useQuotes, type QuoteDef } from '@/features/quote'
+import { DealPane } from './DealPane'
+import { countOf, useDealNotes } from './dealNotes'
 import { boardOf, moveTo, stageOf, useStages, type StageId } from './stages'
 import { useStageDefs, type StageDef } from './stageStore'
 
@@ -90,6 +99,27 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
   const [menu, setMenu] = useState<StageId | null>(null)
   const [editing, setEditing] = useState(false)
 
+  /* WHAT HAS BEEN SAID ABOUT EACH DEAL. One read of one store for
+     the whole board — the card only needs a count, and asking the
+     store per card would be eighty reads of the same object. */
+  const notes = useDealNotes(orgSlug)
+
+  /** the deal whose pane is open, by id. See `DealPane` for why a
+   *  card opens a pane rather than the document. */
+  const [open, setOpen] = useState<string | null>(null)
+
+  /* COLUMNS FOLDED OUT OF THE WAY, so the three that matter get
+     the width. It is component state and not a store, and the
+     decision is deliberate: everything this feature persists is a
+     fact about the BUSINESS — its stages, and where each deal
+     stands — shared by everybody who signs in on this machine.
+     Which columns I have folded is a fact about ME at this moment,
+     and this app has no per-person view store to put it in. The
+     board's own sort is not persisted either, for the same reason;
+     one of them quietly persisting and the other not would be the
+     confusing half of both answers. */
+  const [shut, setShut] = useState<readonly StageId[]>([])
+
   /* THE CHIPS ARE COUNTED OFF EVERY QUOTE, not off the filtered
      list: a type chip whose count changed as you typed would be
      counting the search rather than the business. */
@@ -106,11 +136,36 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
 
   const columns = useMemo(() => boardOf(quotes, at, stages), [quotes, at, stages])
 
+  /* THE OPEN DEAL IS FOUND IN `all`, NOT IN THE FILTERED LIST.
+     Typing in the search must not slam shut the pane you were
+     reading — the filter is about which cards are drawn, and the
+     pane is a thing you deliberately opened. It resolves to
+     undefined only when the quote itself is gone, and then nothing
+     is drawn, which is the truth. */
+  const openQuote = open === null ? undefined : all.find((q) => q.id === open)
+
   /* the card under the pointer, and the column it is over. Both null
      at rest, so nothing on the board is lit when nobody is dragging */
   const [held, setHeld] = useState<string | null>(null)
   const [over, setOver] = useState<StageId | null>(null)
   const boardRef = useRef<HTMLDivElement | null>(null)
+
+  /** Close the pane and put focus back on the card it was about.
+   *  The pane takes focus when it opens (see `DealPane`), so
+   *  without this a keyboard user who pressed Escape would be left
+   *  with focus on nothing and the next Tab would restart at the
+   *  top of the page. The frame's wait is for React to have drawn
+   *  the card again before it is asked to take focus. */
+  const shutPane = useCallback((): void => {
+    const was = open
+    setOpen(null)
+    if (was === null) return
+    requestAnimationFrame(() => {
+      boardRef.current
+        ?.querySelector<HTMLElement>(`[data-deal="${CSS.escape(was)}"]`)
+        ?.focus()
+    })
+  }, [open])
 
   const move = useCallback(
     (q: QuoteDef, to: StageId): void => {
@@ -179,7 +234,12 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
           const to = columnAt(ev.clientX)
           if (to) move(q, to)
         } else {
-          onOpen(q.id)
+          /* A PRESS THAT DID NOT TRAVEL OPENS THE DEAL'S PANE, not
+             the document. See `DealPane`: the board's answer is its
+             own arrangement, and leaving it to read four facts and
+             a thread throws that answer away. The document is one
+             named press further in. */
+          setOpen(q.id)
         }
         setHeld(null)
         setOver(null)
@@ -195,7 +255,7 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
       window.addEventListener('pointerup', finish)
       window.addEventListener('pointercancel', cancel)
     },
-    [columnAt, move, onOpen],
+    [columnAt, move],
   )
 
   const total = quotes.length
@@ -295,131 +355,228 @@ export function Board({ orgSlug, onOpen }: BoardProps): JSX.Element {
         <StageEditor orgSlug={orgSlug} onClose={() => setEditing(false)} />
       ) : null}
 
-      <div className="pb-cols">
-        {stages.map((stage) => {
-          const deals = sortDeals(columns[stage.id], perCol[stage.id] ?? sort)
-          /* THE COLUMN'S MONEY, and it is the reason a board beats a
-             list at a glance: what is sitting in Issued is what the
-             month depends on. Unpriced lines are excluded rather
-             than counted as zero — see `quoteTotals`. */
-          const sum = deals.reduce((n, q) => n + quoteTotals(q).total, 0)
-          return (
-            <section
-              key={stage.id}
-              className={`pb-col${stage.closed ? ' is-closed' : ''}${
-                over === stage.id ? ' is-over' : ''
-              }`}
-              data-stage={stage.id}
-              data-tone={stage.tone}
-              aria-label={stage.name}
-            >
-              <header className="pb-col-head">
-                <h3 className="pb-col-name">{stage.name}</h3>
-                <span className="pb-col-n ds-mono">{deals.length}</span>
-                {/* THIS COLUMN'S OWN ORDER. Quiet until the column is
-                    under the cursor or its menu is open, and lit
-                    whenever it differs from the board's — an override
-                    you cannot see is a board that has stopped
-                    explaining itself. */}
-                <span className="pb-col-sort">
+      {/* THE FLOOR: the columns, and the open deal beside them. A
+          pane in the same row rather than over the board — see
+          `DealPane` for the argument. The board narrows, keeps its
+          shape, and goes on taking drops while the pane is open. */}
+      <div className={`pb-floor${openQuote ? ' has-deal' : ''}`}>
+        <div className="pb-cols">
+          {stages.map((stage) => {
+            const deals = sortDeals(columns[stage.id], perCol[stage.id] ?? sort)
+
+            /* A FOLDED COLUMN IS STILL A COLUMN. It keeps its
+               `data-stage`, so `columnAt` still finds it and a card
+               can be dropped on it without unfolding it first — which
+               is exactly what somebody who folded Lost wants to do
+               with the next dead deal. */
+            if (shut.includes(stage.id)) {
+              return (
+                <section
+                  key={stage.id}
+                  className={`pb-col is-shut${stage.closed ? ' is-closed' : ''}${
+                    over === stage.id ? ' is-over' : ''
+                  }`}
+                  data-stage={stage.id}
+                  data-tone={stage.tone}
+                  aria-label={stage.name}
+                >
                   <button
                     type="button"
-                    className={`pb-col-sortgo${perCol[stage.id] ? ' is-set' : ''}`}
-                    aria-expanded={menu === stage.id}
-                    aria-label={`Order ${stage.name}. ${sortLabel(perCol[stage.id] ?? sort)}`}
-                    onClick={() => setMenu(menu === stage.id ? null : stage.id)}
+                    className="pb-col-open"
+                    aria-expanded={false}
+                    aria-label={`Unfold ${stage.name}, ${deals.length} ${
+                      deals.length === 1 ? 'deal' : 'deals'
+                    }`}
+                    onClick={() => setShut((s) => s.filter((id) => id !== stage.id))}
                   >
-                    <ArrowsDownUp size={ICON_SIZE.tiny} aria-hidden="true" />
+                    <CaretDoubleRight size={ICON_SIZE.tiny} aria-hidden="true" />
+                    <span className="pb-col-shut-n ds-mono">{deals.length}</span>
+                    <span className="pb-col-shut-name">{stage.name}</span>
                   </button>
-                  {menu === stage.id ? (
-                    <ul className="pb-col-menu">
-                      {SORTS.map((o) => (
-                        <li key={o.id}>
-                          <button
-                            type="button"
-                            className={`pb-col-pick${
-                              (perCol[stage.id] ?? sort) === o.id ? ' is-on' : ''
-                            }`}
-                            onClick={() => {
-                              setPerCol((m) => ({ ...m, [stage.id]: o.id }))
-                              setMenu(null)
-                            }}
-                          >
-                            {o.label}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </span>
-              </header>
-              {deals.length > 0 ? (
-                <p className="pb-col-sum ds-mono">{money(sum)}</p>
-              ) : null}
+                </section>
+              )
+            }
 
-              <div className="pb-col-body">
-                {deals.length === 0 ? (
-                  /* AN EMPTY COLUMN SAYS WHY IT IS EMPTY. "Nothing
-                     won yet" and "nothing matches what you typed" are
-                     different facts, and a column giving the first
-                     answer to the second question is simply wrong. */
-                  <p className="pb-none">
-                    {narrowed ? 'Nothing here matches.' : stage.empty || 'Nothing here yet.'}
-                  </p>
-                ) : (
-                  deals.map((q) => {
-                    const t = quoteTotals(q)
-                    return (
-                      <button
-                        type="button"
-                        key={q.id}
-                        className={`pb-card${held === q.id ? ' is-held' : ''}`}
-                        onPointerDown={(e) => begin(q, e)}
-                        /* THE KEYBOARD'S OWN WAY ACROSS THE BOARD.
-                           Left and right move a column; Enter opens.
-                           `preventDefault` so the arrows do not also
-                           scroll the board sideways underneath. */
-                        onKeyDown={(e) => {
-                          const i = stages.findIndex((s) => s.id === stage.id)
-                          if (e.key === 'ArrowRight' && i < stages.length - 1) {
-                            e.preventDefault()
-                            move(q, stages[i + 1].id)
-                          } else if (e.key === 'ArrowLeft' && i > 0) {
-                            e.preventDefault()
-                            move(q, stages[i - 1].id)
-                          } else if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            onOpen(q.id)
-                          }
-                        }}
-                        aria-label={`${q.reference}, ${q.customer.name || 'no customer'}, in ${stage.name}. Left and right arrows move it.`}
-                      >
-                        <span className="pb-card-top">
-                          <span className="pb-card-ref ds-mono">{q.reference}</span>
-                          <span className="pb-card-when ds-mono">{whenSay(q.updatedAt)}</span>
-                        </span>
-                        {/* THE CUSTOMER IS THE HEADING, because the
-                            deal is a person waiting on an answer. A
-                            quote with nobody on it yet says so rather
-                            than drawing an empty line. */}
-                        <span className="pb-card-who">
-                          {q.customer.name.trim() || 'No customer yet'}
-                        </span>
-                        <span className="pb-card-what">{q.subjectLabel}</span>
-                        <span className="pb-card-foot">
-                          <span className="pb-card-sum ds-mono">{money(t.total)}</span>
-                          {q.preparedBy ? (
-                            <span className="pb-card-by">{q.preparedBy}</span>
-                          ) : null}
-                        </span>
-                      </button>
-                    )
-                  })
-                )}
-              </div>
-            </section>
-          )
-        })}
+            /* THE COLUMN'S MONEY, and it is the reason a board beats a
+               list at a glance: what is sitting in Issued is what the
+               month depends on. Unpriced lines are excluded rather
+               than counted as zero — see `quoteTotals`. */
+            const sum = deals.reduce((n, q) => n + quoteTotals(q).total, 0)
+            return (
+              <section
+                key={stage.id}
+                className={`pb-col${stage.closed ? ' is-closed' : ''}${
+                  over === stage.id ? ' is-over' : ''
+                }`}
+                data-stage={stage.id}
+                data-tone={stage.tone}
+                aria-label={stage.name}
+              >
+                <header className="pb-col-head">
+                  <h3 className="pb-col-name">{stage.name}</h3>
+                  <span className="pb-col-n ds-mono">{deals.length}</span>
+                  {/* THIS COLUMN'S OWN ORDER. Quiet until the column is
+                      under the cursor or its menu is open, and lit
+                      whenever it differs from the board's — an override
+                      you cannot see is a board that has stopped
+                      explaining itself. */}
+                  <span className="pb-col-sort">
+                    <button
+                      type="button"
+                      className={`pb-col-sortgo${perCol[stage.id] ? ' is-set' : ''}`}
+                      aria-expanded={menu === stage.id}
+                      aria-label={`Order ${stage.name}. ${sortLabel(perCol[stage.id] ?? sort)}`}
+                      onClick={() => setMenu(menu === stage.id ? null : stage.id)}
+                    >
+                      <ArrowsDownUp size={ICON_SIZE.tiny} aria-hidden="true" />
+                    </button>
+                    {menu === stage.id ? (
+                      <ul className="pb-col-menu">
+                        {SORTS.map((o) => (
+                          <li key={o.id}>
+                            <button
+                              type="button"
+                              className={`pb-col-pick${
+                                (perCol[stage.id] ?? sort) === o.id ? ' is-on' : ''
+                              }`}
+                              onClick={() => {
+                                setPerCol((m) => ({ ...m, [stage.id]: o.id }))
+                                setMenu(null)
+                              }}
+                            >
+                              {o.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </span>
+                  {/* FOLD IT AWAY. Quiet until the column is under the
+                      cursor, like the sort beside it — five fold
+                      handles lit at once is five controls competing
+                      with five column names. */}
+                  <button
+                    type="button"
+                    className="pb-col-shutgo"
+                    aria-expanded={true}
+                    aria-label={`Fold ${stage.name} away`}
+                    onClick={() => setShut((s) => [...s, stage.id])}
+                  >
+                    <CaretDoubleLeft size={ICON_SIZE.tiny} aria-hidden="true" />
+                  </button>
+                </header>
+                {deals.length > 0 ? (
+                  <p className="pb-col-sum ds-mono">{money(sum)}</p>
+                ) : null}
+
+                <div className="pb-col-body">
+                  {deals.length === 0 ? (
+                    /* AN EMPTY COLUMN SAYS WHY IT IS EMPTY. "Nothing
+                       won yet" and "nothing matches what you typed" are
+                       different facts, and a column giving the first
+                       answer to the second question is simply wrong. */
+                    <p className="pb-none">
+                      {narrowed ? 'Nothing here matches.' : stage.empty || 'Nothing here yet.'}
+                    </p>
+                  ) : (
+                    deals.map((q) => {
+                      const t = quoteTotals(q)
+                      /* HOW MANY THINGS HAVE BEEN SAID ABOUT IT — and
+                         a zero is not drawn at all. A badge reading 0
+                         on eighty cards would make the board look
+                         busy while saying nothing; the count exists so
+                         the board can show WHICH deals have a
+                         conversation on them, which is only a fact
+                         about the ones that do. Same rule the
+                         dashboard's own counts keep. */
+                      const said = countOf(notes, q.id)
+                      return (
+                        <button
+                          type="button"
+                          key={q.id}
+                          data-deal={q.id}
+                          className={`pb-card${held === q.id ? ' is-held' : ''}${
+                            open === q.id ? ' is-open' : ''
+                          }`}
+                          onPointerDown={(e) => begin(q, e)}
+                          /* THE KEYBOARD'S OWN WAY ACROSS THE BOARD.
+                             Left and right move a column; Enter opens.
+                             `preventDefault` so the arrows do not also
+                             scroll the board sideways underneath. */
+                          onKeyDown={(e) => {
+                            const i = stages.findIndex((s) => s.id === stage.id)
+                            if (e.key === 'ArrowRight' && i < stages.length - 1) {
+                              e.preventDefault()
+                              move(q, stages[i + 1].id)
+                            } else if (e.key === 'ArrowLeft' && i > 0) {
+                              e.preventDefault()
+                              move(q, stages[i - 1].id)
+                            } else if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              setOpen(q.id)
+                            }
+                          }}
+                          aria-label={`${q.reference}, ${q.customer.name || 'no customer'}, in ${stage.name}${
+                            said > 0
+                              ? `, ${said} ${said === 1 ? 'note' : 'notes'}`
+                              : ''
+                          }. Left and right arrows move it.`}
+                        >
+                          <span className="pb-card-top">
+                            <span className="pb-card-ref ds-mono">{q.reference}</span>
+                            {/* THE COUNT SITS IN THE METADATA ROW, NOT THE
+                                MONEY ROW. It was measured in the foot first
+                                and it cost the seller's name three
+                                characters on a 250px column — "Dana
+                                Whitcom…". A badge is metadata and belongs
+                                with the reference and the date; the foot is
+                                a figure and a name and had no room for a
+                                third thing. */}
+                            {said > 0 ? (
+                              <span className="pb-card-said">
+                                <ChatTeardropText
+                                  size={ICON_SIZE.tiny}
+                                  aria-hidden="true"
+                                />
+                                <span className="pb-card-said-n ds-mono">{said}</span>
+                              </span>
+                            ) : null}
+                            <span className="pb-card-when ds-mono">{whenSay(q.updatedAt)}</span>
+                          </span>
+                          {/* THE CUSTOMER IS THE HEADING, because the
+                              deal is a person waiting on an answer. A
+                              quote with nobody on it yet says so rather
+                              than drawing an empty line. */}
+                          <span className="pb-card-who">
+                            {q.customer.name.trim() || 'No customer yet'}
+                          </span>
+                          <span className="pb-card-what">{q.subjectLabel}</span>
+                          <span className="pb-card-foot">
+                            <span className="pb-card-sum ds-mono">{money(t.total)}</span>
+                            {q.preparedBy ? (
+                              <span className="pb-card-by">{q.preparedBy}</span>
+                            ) : null}
+                          </span>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </section>
+            )
+          })}
+        </div>
+
+        {openQuote ? (
+          <DealPane
+            orgSlug={orgSlug}
+            quote={openQuote}
+            stage={stages.find((s) => s.id === stageOf(openQuote, at, stages))}
+            notes={notes}
+            onClose={shutPane}
+            onOpenQuote={onOpen}
+          />
+        ) : null}
       </div>
     </div>
   )

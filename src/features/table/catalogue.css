@@ -6,13 +6,14 @@
    about this file. The register underneath keeps its own sheet
    exactly as it was.
 
+   THE HEAD IS NOT HERE. It is `PageHead` (src/features/page), the
+   application's one page header, and the long note where this
+   file's own header used to be says what that cost and what it
+   bought. Anything this file insets sits on `--page-gutter`.
+
    WHAT COLOUR IS SPENT ON, and it is the amendment in §1 being
    used rather than argued about:
 
-     the head        a full-height kind rail and an 8% wash of the
-                     kind — the surface a hue is now allowed to
-                     carry, so a person knows they are in boats
-                     rather than trailers before reading a word
      a band head     `.k-band`, the section of one kind of thing
      a filter chip   `.k-filter`, on when it is narrowing
      a tile          `.k-rail` down its left edge, `.k-lift` on
@@ -37,59 +38,49 @@
 }
 
 /* ------------------------------------------------------------
-   THE HEAD — a name, one fact, and the way to change density.
-   The prose budget allows a stage its name and at most one line;
-   this is that line and there is nothing else on it.
+   THE HEAD IS `PageHead`, AND THAT IS THE WHOLE OF THIS SECTION.
+
+   WHAT WAS HERE, AND WHY IT WENT. This file used to draw a header
+   of its own: an eyebrow with the kind's symbol, the brand name in
+   Archivo at 52px in the gallery and 34px in the register, a fact
+   line, an 8% kind wash and a 4px kind rail, all inset `--s-5`.
+   Every part of it was argued for on this screen and the sum of it
+   was the sixth page header in an application that had just spent a
+   day reducing five to one. Measured at 1600 before the change:
+
+     the title's left edge        248px   (--s-5 + the 4px rail)
+     the first card's left edge   244px   (--s-5)
+     every other page's title     256px   (--page-gutter, 32)
+
+   Four pixels apart from its own content and eight from the rest of
+   the app. `PageHead tight` is now the header, so all three numbers
+   are one number and there is nothing here to keep them in step.
+
+   WHAT THE CHANGE COSTS, said out loud rather than discovered
+   later: the kind wash and the kind rail behind the title are gone,
+   and with them "you know you are in boats before reading a word"
+   at the very top of the page. The kind is not lost — the eyebrow
+   says BOATS, every card carries `.k-rail` in the hue, every band
+   head is `.k-band`, and a facet chip turns the kind's colour when
+   it is narrowing. That is §1's amendment landing on the things
+   that HAVE the kind rather than on the chrome above them, which is
+   what §1 asks for anyway. An 8% tint behind a title was the
+   weakest of the four and the only one that cost alignment.
    ------------------------------------------------------------ */
 
-.cat-head {
-  /* same restatement as the tile below: this file loads after ds.css
-     and would otherwise cancel the rail it is asking for */
-  border-left: 4px solid var(--kind);
+/* THE HOSTED HEAD — `heading={false}`, where a module has already
+   spent the page's name on its own tab. One row: the counted fact
+   and the density control, on the page's gutter so the fact's left
+   edge is the host title's left edge. */
+.cat-bare {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--s-4);
+  flex: none;
   flex-wrap: wrap;
-  padding: var(--s-5) var(--s-5) var(--s-4);
-  border-bottom: 1px solid var(--line);
-}
-
-/* THE REGISTER WANTS ITS ROWS BACK. The head keeps its name, its
-   fact and its kind wash; what it gives up is the air around a hero
-   that is not the subject of this density. Measured: 155px of chrome
-   becomes 96px, which is four more rows at 1000px. */
-.cat-root--list .cat-head {
-  padding: var(--s-3) var(--s-5);
-  align-items: center;
-}
-
-.cat-head--bare {
-  align-items: center;
-  padding: var(--s-3) var(--s-5);
+  padding: var(--s-3) var(--page-gutter);
   background: var(--surface-1);
-}
-
-.cat-head-say {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.cat-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--fg-secondary);
-}
-
-.cat-name {
-  margin: 0;
-  color: var(--fg);
-  /* NOTHING TRUNCATES MID-WORD (§3). A brand with a long name wraps
-     to two lines and the head grows; it does not clip. */
-  overflow-wrap: break-word;
 }
 
 .cat-fact {
@@ -154,21 +145,49 @@
 
 /* ------------------------------------------------------------
    THE RAIL — search, then one control per facet.
-   ONE ROW, AND IT SCROLLS RATHER THAN BEING CUT (§3): eight facets
-   at 1024 do not fit, and a facet you cannot reach is a filter the
-   app does not have.
+
+   IT NO LONGER OWNS A ROW; it fills the one `PageHead` gives it,
+   so the inset, the height and the rule beneath it are the page's
+   rather than this file's. What it keeps is the scroll: ONE ROW,
+   SCROLLED RATHER THAN CUT (§3) and rather than wrapped. Eight
+   facets at 1024 do not fit, a facet you cannot reach is a filter
+   the app does not have, and wrapping — which is what `.ph-tools`
+   does for four chips — would make the gallery below start at a
+   different height on every table.
+
+   `flex: none` ON THE ROW IS LOAD-BEARING, and it is why this is
+   in the tools row rather than a child of `.cat-root`. As a plain
+   child of that flex column the rail had no `flex` of its own, so
+   the gallery's content basis — 588 cards — shrank it: measured at
+   1600, a 25.7px border box around a 37px scrollHeight, with every
+   pill and the search box sliced 2.6px top and bottom. `.ph-tools`
+   is `flex: none`, so the row is its content's height.
    ------------------------------------------------------------ */
 
 .cat-rail {
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  padding: var(--s-2) var(--s-5);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-1);
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
+  /* `overflow-y: hidden` clips at the padding box, and this row
+     holds two different focus rings: the system's `--focus`
+     (ds.css) reaches 4px past a control's border box and lands on
+     the search field, and a facet chip's own outline reaches 3px
+     (2px of outline, 1px of offset). Without this clearance the
+     ring was cut flat along the top and bottom — the same failure
+     the squashed row had, arriving through the other axis. 4px is
+     the wider of the two, exactly.
+
+     DELIBERATELY NOT `--s-1`, WHICH IS ALSO 4px TODAY. This is ring
+     clearance, not rhythm. If the spacing scale is retuned this
+     number must NOT move with it; if `--focus` grows, it must. A
+     token here would couple it to the wrong thing and the coupling
+     would look correct. */
+  padding: 4px 0;
 }
 
 .cat-find {
@@ -303,12 +322,19 @@
   min-height: 0;
 }
 
+/* THE GRID TAKES THE PAGE'S INSET AND NOT ONE OF ITS OWN. This is
+   the rule that was broken: the header was inset 24 (20 + a 4px
+   rail), the grid 20, and the rest of the application 32, so the
+   first photograph's left edge was four pixels short of the title
+   above it and twelve short of every other page. It is
+   `--page-gutter` on both, and the two edges are now one number —
+   measured at 1600 as 256 and 256. */
 .cat-gallery {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--s-4) var(--s-5) var(--s-10);
+  padding: var(--s-4) var(--page-gutter) var(--s-10);
 }
 
 .cat-band + .cat-band {
@@ -317,7 +343,15 @@
 
 .cat-band-head {
   position: sticky;
-  top: 0;
+  /* A STICKY OFFSET IS MEASURED FROM THE SCROLLPORT'S PADDING EDGE,
+     not from its border box — so `top: 0` parked this head 16px
+     down, and a 16px strip of scrolling photographs showed ABOVE
+     the head that is supposed to be covering them. Measured at
+     1600: gallery top 166.4, head parked at 182.4, cards visible
+     through the 16px between. Pulling the offset back by the
+     gallery's own top padding lands it at 166.4 and the band head
+     is the only thing under the filters. */
+  top: calc(var(--s-4) * -1);
   z-index: 2;
   display: flex;
   align-items: baseline;
@@ -633,14 +667,15 @@
   }
 }
 
+/* NO GUTTER OVERRIDES AT A BREAKPOINT. There were three — `--s-4`
+   under 1024 and `--s-3` under 768, applied to the head, the rail
+   and the grid — and every one of them re-opened the fault at a
+   narrower window: `--page-gutter` already steps to `--s-5` under
+   1100, and a second ladder beside it meant the grid and the title
+   parted company again the moment the window crossed 1024. One
+   ladder, declared in page.css, and this file reads it. */
 @media (max-width: 1024px) {
-  .cat-head,
-  .cat-rail,
-  .cat-gallery {
-    padding-left: var(--s-4);
-    padding-right: var(--s-4);
-  }
-  .cat-head {
+  .cat-bare {
     align-items: flex-start;
     flex-direction: column;
     gap: var(--s-3);
@@ -651,12 +686,6 @@
 }
 
 @media (max-width: 768px) {
-  .cat-head,
-  .cat-rail,
-  .cat-gallery {
-    padding-left: var(--s-3);
-    padding-right: var(--s-3);
-  }
   .cat-grid {
     grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   }

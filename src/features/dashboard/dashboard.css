@@ -123,7 +123,24 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: var(--s-6) var(--s-8) var(--s-6);
+  /* ------------------------------------------------------------
+     THE HORIZONTAL INSET IS THE APPLICATION'S, NOT THIS PAGE'S.
+
+     It was `--s-8` written out. That is the same 32px as
+     `--page-gutter` at a laptop and above, and it is NOT the same
+     below it: measured at 1024x768, `:root` resolves
+     `--page-gutter` to 20px (page.css steps it down under 1100)
+     while this padding stayed at 32 — so the greeting began at
+     x=232 and the modules page begins its title at x=220. Twelve
+     pixels is exactly the size of misalignment that reads as a
+     different application rather than as a decision.
+
+     Writing the value a token happens to equal at one width is
+     how five pages ended up with five gutters in the first place.
+     The vertical stays `--s-6`, which is what `.ph` pads above
+     its eyebrow.
+     ------------------------------------------------------------ */
+  padding: var(--s-6) var(--page-gutter);
 }
 
 /* ARRANGE MODE IS A MODE, NOT THE SCREEN. It adds a tray holding
@@ -143,15 +160,31 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--s-6);
+  /* THE SAME THREE MEASURES `.ph` USES, and they were three
+     different ones. Measured on the modules page at 1600x1000:
+     `.ph` gaps 20px between its title block and its acts, pads
+     16px beneath itself, and `.ph-say` gaps 2px between the
+     eyebrow and the name. This header gapped 24, 20 and 4. The
+     greeting is untouched — it is still 44px at 1600 and still
+     the one big thing on the screen (§the dashboard exception);
+     what changed is the air around it, which is the part that was
+     answering to nothing. */
+  gap: var(--s-5);
   flex-wrap: wrap;
-  margin-bottom: var(--s-5);
+  margin-bottom: var(--s-4);
 }
 
 .dsh-head-say {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  /* 2px, LIKE `.ph-say`, AND IT WAS 4. The stamp is this page's
+     eyebrow — an 11px uppercase label over a display-size name —
+     and 4px under an 11px label is enough to read as a separate
+     line rather than as the name's own caption. Measured at 1600,
+     stamp bottom 38.3: the greeting's top was 42.3 and is 40.3,
+     so the 4px is 2px — which is what the eyebrow and the title
+     keep on every other page. */
+  gap: 2px;
   min-width: 0;
 }
 
@@ -262,7 +295,10 @@
    ============================================================ */
 
 .dsh-fast {
-  margin-bottom: var(--s-5);
+  /* THE FAST ACTIONS ARE THIS PAGE'S `.ph-tools` — a row of the
+     page's own controls under the header — so they close the same
+     16px `.ph-tools` pads beneath itself, not 20. */
+  margin-bottom: var(--s-4);
 }
 
 .dsh-fast-row {
@@ -572,7 +608,44 @@
   overflow-x: hidden;
 }
 
-@container dsh (min-width: 880px) {
+/* ------------------------------------------------------------
+   880 WAS 56 PIXELS TOO HIGH, AND IT WAS THE LAST THING ON THIS
+   SCREEN THAT SCROLLED.
+
+   Measured at 1024x768 with the rail at its full 200px: the
+   column is 824px, which fell under 880, so the dashboard drew
+   ONE column of three 784px cards at their 200px row minimum —
+   632px of cards in 607px of room, and the grid scrolled by 25px.
+   That is the one size of the four this pass was asked to hold
+   where the page did not fit.
+
+   THE THRESHOLD IS NOW DERIVED FROM THE GRID'S OWN MINIMUM
+   instead of guessed. `grid-auto-columns` declares a column may
+   be as narrow as 300px; two of those plus the 20px gap plus two
+   20px gutters is 660px of column, so anything from about 680 up
+   can honestly hold two. 760 is that figure with room, and it is
+   deliberately clear of the 720px narrow query below — an overlap
+   band would have both rules setting `grid-template-columns` and
+   the later one winning by position, which is not a decision
+   anybody made.
+
+   THE JUSTIFICATION FOR 880 STILL HOLDS WHERE IT MEANT SOMETHING.
+   The note beneath the narrow branch says two columns at phone
+   width gives "two columns of 170px cards". True at 400. At 824
+   it gives two columns of 382px — within ten pixels of the 371px
+   this file already measures at 1440, and wider than the 350px
+   the new threshold allows at its own floor. The rule was
+   protecting against a width it had stopped being.
+
+   AND IT FIXES IT BY CONSTRUCTION, not by shaving. Two rows of
+   `minmax(0, 1fr)` are an equal share of whatever height is left,
+   so the cards get shorter rather than the page getting longer —
+   which is the whole reason this branch exists. The alternative
+   was to drop the one-column row minimum from 200px to 190 and
+   buy 30px, and that is shrinking every card on the screen to
+   solve a problem at one width.
+   ------------------------------------------------------------ */
+@container dsh (min-width: 760px) {
   .dsh-grid {
     grid-template-columns: none;
     /* the two halves. `minmax(0, 1fr)` rather than `1fr` so a card
@@ -1582,14 +1655,26 @@
    ============================================================ */
 
 @container dsh (max-width: 720px) {
+  /* ONLY THE VERTICAL GIVES WAY HERE. The inline inset is
+     `--page-gutter` at every width and this query may not fork
+     it: a container under 720px means a window under about 950,
+     where the token has already stepped itself down to 20px. The
+     16px that used to be written here was a THIRD value for one
+     edge, on the narrowest screens — where a page agreeing with
+     itself matters most, because there is no room to absorb a
+     disagreement. */
   .dsh-in {
-    padding: var(--s-5) var(--s-4);
+    padding-block: var(--s-5);
   }
 
+  /* THE GREETING AND THE EDIT BUTTON STACK, so they stop being a
+     row and the gap becomes a vertical one. The `margin-bottom`
+     that used to sit here is gone for the same reason it left the
+     short-window query: `--s-4` is now what this header closes at
+     every width. */
   .dsh-head {
     align-items: flex-start;
     gap: var(--s-3);
-    margin-bottom: var(--s-4);
   }
 
   .dsh-grid {
@@ -1609,16 +1694,20 @@
    screen. `vh` is legal here where `cqi` is not: the shortage is
    the viewport's, not the column's. */
 @media (max-height: 820px) {
+  /* THE VERTICAL ONLY, for the same reason as the narrow query:
+     the shortage is the window's HEIGHT and the gutter is not a
+     height. This rule used to restate `--s-8` on the inline axis
+     and so quietly overrode the token at 1024x768, which is a
+     short window as well as a narrow one — the one size where the
+     two disagreements landed on the same screen.
+
+     THE HEAD AND FAST-ACTION MARGINS ARE GONE FROM HERE and are
+     not a regression: they set `--s-4`, which is now what both
+     take at every height, because that is what `.ph` and
+     `.ph-tools` pad. A query that repeats the base is a rule
+     somebody will later change on one side only. */
   .dsh-in {
-    padding: var(--s-5) var(--s-8);
-  }
-
-  .dsh-head {
-    margin-bottom: var(--s-4);
-  }
-
-  .dsh-fast {
-    margin-bottom: var(--s-4);
+    padding-block: var(--s-5);
   }
 
   .dsh-grid {

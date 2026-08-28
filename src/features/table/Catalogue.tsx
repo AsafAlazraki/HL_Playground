@@ -79,6 +79,7 @@ import {
   priceColumnOf,
 } from '@/features/views/columns'
 import { pictureField, rowPicture, Picture } from '@/features/views/pictures'
+import { PageHead } from '@/features/page'
 import type { ColumnFilter, SortState } from '@/features/table/core'
 import { TableSheet, SEARCH_LABEL } from './TableSheet'
 import { NoMatchPlate } from './EmptyPlates'
@@ -286,6 +287,66 @@ export function Catalogue({
 
   const kind = kindOf(entity?.kind)
 
+  /* ------------------------------------------------------------
+     THE PAGE'S OWN CONTROLS, BUILT ONCE AND HANDED TO THE HEADER.
+
+     They used to be a third row of this component's own — a
+     `.cat-rail` between the head and the body — and that row was
+     the reason the catalogue was the last screen in the app on its
+     own gutter. `PageHead`'s `tools` slot is where a page's filters
+     and search go now, so they take the page's inset for free and a
+     person finds them where the pipeline, the modules grid and the
+     customer register keep theirs.
+
+     IT ALSO FIXED A REAL CLIPPING BUG. `.cat-rail` was a plain
+     child of the `.cat-root` flex column with no `flex: none`, so
+     the gallery's enormous content basis shrank it: measured at
+     1600, the rail's border box was 25.7px around a 37px
+     scrollHeight, and every chip and the search box were sliced
+     2.6px off the top and the bottom — visibly flat-topped pills.
+     `.ph-tools` is `flex: none`, so the row is now its content's
+     height and the pills are round again.
+     ------------------------------------------------------------ */
+  const tools = (
+    /* ONE ROW THAT SCROLLS RATHER THAN WRAPPING (§3, and the note
+       at the top of FacetRail). `.ph-tools` wraps, which is right
+       for four chips and wrong for a table with ten columns worth
+       of facets: the header would grow a row every time somebody
+       opened a wider table, and the gallery below it would start at
+       a different height per table. Scrolling keeps the header two
+       rows tall whatever the table holds. */
+    <div className="cat-rail">
+      <label className="cat-find">
+        <input
+          className="field-input"
+          type="search"
+          value={search}
+          spellCheck={false}
+          placeholder={`Search every ${noun.one}…`}
+          /* the same accessible name the '/' key looks the box up
+             by, so the register's keyboard route still lands here
+             when the catalogue has taken the box off its bar */
+          aria-label={SEARCH_LABEL}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </label>
+
+      <FacetRail
+        facets={facets}
+        filters={filters}
+        onFilters={setFilters}
+        say={say}
+        print={print}
+      />
+
+      {viewActive ? (
+        <button type="button" className="cat-clear" onClick={clearView}>
+          Clear
+        </button>
+      ) : null}
+    </div>
+  )
+
   /* A TABLE WITH NO ROWS IS THE REGISTER'S BUSINESS. Its plates say
      what is missing AND carry the act that fixes it — "add the first
      column", "paste a block straight from Excel" — which is the one
@@ -296,70 +357,41 @@ export function Catalogue({
 
   return (
     <section
-      /* written out rather than interpolated, so `check-styles` can
-         see the class as a literal and hold this file to its contract */
-      className={'cat-root' + (lens === 'list' ? ' cat-root--list' : '')}
+      /* `cat-root--list` USED TO BE HERE AND IS GONE. Its only job
+         was to shrink this component's own header in the register
+         density — 155px of chrome down to 96 — and `PageHead tight`
+         is now that header in both densities, at one size, because
+         a page title that changes size when you change the view is
+         a page pretending to be two. A modifier that styles nothing
+         is what `check-styles` exists to catch, so it is removed
+         rather than left as a hook nobody reads. */
+      className="cat-root"
       data-kind={kind}
       aria-label={entity.name}
     >
       {heading ? (
-        <header className="cat-head k-wash k-rail-thick">
-          <div className="cat-head-say">
-            <p className="cat-eyebrow mono-label">
-              <TableKindSymbol kind={kind} size={ICON_SIZE.tiny} />
-              <span>{TABLE_KINDS[kind].label}</span>
-            </p>
-            {/* THE HEAD DOES LESS WORK WHEN THE CONTENT IS DENSE.
-                The gallery is the showroom and the name is its hero
-                at 34–52px; the register is the workbench, where 155px
-                of chrome is nine rows a dealer doing entry does not
-                get. One step down — the WHOLE step, size, weight,
-                leading and tracking together, which is what
-                `.ds-display-lg` is — and the identity is unchanged. */}
-            <h1 className={`${lens === 'gallery' ? 'ds-hero' : 'ds-display-lg'} cat-name`}>
-              {entity.name}
-            </h1>
-            <p className="cat-fact">{fact}</p>
-          </div>
-          <Lens entityId={entityId} lens={lens} />
-        </header>
-      ) : (
-        <div className="cat-head cat-head--bare">
-          <p className="cat-fact">{fact}</p>
-          <Lens entityId={entityId} lens={lens} />
-        </div>
-      )}
-
-      <div className="cat-rail">
-        <label className="cat-find">
-          <input
-            className="field-input"
-            type="search"
-            value={search}
-            spellCheck={false}
-            placeholder={`Search every ${noun.one}…`}
-            /* the same accessible name the '/' key looks the box up
-               by, so the register's keyboard route still lands here
-               when the catalogue has taken the box off its bar */
-            aria-label={SEARCH_LABEL}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </label>
-
-        <FacetRail
-          facets={facets}
-          filters={filters}
-          onFilters={setFilters}
-          say={say}
-          print={print}
+        <PageHead
+          tight
+          eyebrow={TABLE_KINDS[kind].label}
+          name={entity.name}
+          count={fact}
+          acts={<Lens entityId={entityId} lens={lens} />}
+          tools={tools}
         />
-
-        {viewActive ? (
-          <button type="button" className="cat-clear" onClick={clearView}>
-            Clear
-          </button>
-        ) : null}
-      </div>
+      ) : (
+        <>
+          <div className="cat-bare">
+            <p className="cat-fact">{fact}</p>
+            <Lens entityId={entityId} lens={lens} />
+          </div>
+          {/* THE SAME ROW PAGEHEAD DRAWS, drawn by hand because the
+              host has already spent the name. `.ph-tools` is the
+              shared class and taking it is the point: the filters of
+              a hosted catalogue sit on the host's gutter, at the
+              host's tools height, rather than on a second one. */}
+          <div className="ph-tools is-tight">{tools}</div>
+        </>
+      )}
 
       <div className="cat-body">
         {lens === 'gallery' && rows.length > 0 ? (

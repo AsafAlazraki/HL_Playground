@@ -15,10 +15,12 @@
    notices until it is in somebody's hand.
    ============================================================ */
 import { describe, expect, it } from 'vitest'
-import type { EntityDef, RowData } from '@/types/model'
+import type { EntityDef, FieldDef, RowData } from '@/types/model'
+import { dayWorthSaying, groupByDescription } from './form'
 
 const {
   CUSTOMER_ADDRESS_FIELD,
+  CUSTOMER_COLUMNS,
   CUSTOMER_EMAIL_FIELD,
   CUSTOMER_NOTE_FIELD,
   CUSTOMER_PHONE_FIELD,
@@ -233,5 +235,143 @@ describe('counting a project’s tables the way Home counts them', () => {
 
   it('is zero for an empty project rather than throwing', () => {
     expect(liveTableCount({})).toBe(0)
+  })
+})
+
+/* ============================================================
+   THE FORM'S CAPTIONS — one per run, not one per box.
+
+   `form.ts` exists because the register ships three columns whose
+   descriptions are the same sentence word for word, and drawing it
+   under each of them put 207 characters of identical prose (69 x 3,
+   the figure form.ts opens with) under three boxes standing side by
+   side. The tests that matter are the
+   ones about a DEALER'S table rather than ours: this only earns its
+   place if it does the right thing for columns nobody here has
+   seen.
+   ============================================================ */
+describe('groupByDescription', () => {
+  const col = (id: string, description?: string): FieldDef =>
+    description === undefined
+      ? { id, name: id, type: 'text' }
+      : { id, name: id, type: 'text', description }
+
+  /* THE REGISTER AS THE APP ACTUALLY MAKES IT. `register()` above
+     builds the columns without their descriptions, because nothing
+     else in this suite reads one; this is the shape
+     `ensureCustomerRegister` writes, descriptions and all, so the
+     figures below are a claim about the real screen. */
+  const shipped = (): EntityDef => ({
+    ...register(),
+    fields: [
+      { id: 'f-name', name: 'Name', type: 'text', required: true },
+      ...CUSTOMER_COLUMNS.map(
+        (c): FieldDef => ({
+          id: c.id,
+          name: c.name,
+          type: 'text',
+          description: c.description,
+        }),
+      ),
+    ],
+  })
+
+  it('collapses the register\u2019s three contact columns into ONE caption', () => {
+    const groups = groupByDescription(customerFormFields(shipped()))
+    /* Name has no description, Phone/Email/Address share one, Notes
+       has its own — three groups, four columns' worth of caption
+       reduced to two sentences */
+    expect(groups.map((g) => g.fields.map((f) => f.id))).toEqual([
+      ['f-name'],
+      [CUSTOMER_PHONE_FIELD, CUSTOMER_EMAIL_FIELD, CUSTOMER_ADDRESS_FIELD],
+      [CUSTOMER_NOTE_FIELD],
+    ])
+    expect(groups.filter((g) => g.say !== '')).toHaveLength(2)
+    expect(groups[1]?.say).toBe(
+      'Printed on a quote addressed to this customer, as it is written here.',
+    )
+    /* THE MEASURED REDUCTION, pinned so it cannot quietly come back:
+       294 characters of caption drawn per column, 156 drawn per
+       group, and not one fact lost — both sentences survive. */
+    const perColumn = CUSTOMER_COLUMNS.reduce((n, c) => n + c.description.length, 0)
+    const perGroup = groups.reduce((n, g) => n + g.say.length, 0)
+    expect(perColumn).toBe(294)
+    expect(perGroup).toBe(156)
+  })
+
+  it('ONLY JOINS NEIGHBOURS \u2014 the caption is drawn under a group, so a group has to be contiguous', () => {
+    const groups = groupByDescription([
+      col('a', 'same'),
+      col('b', 'other'),
+      col('c', 'same'),
+    ])
+    expect(groups.map((g) => g.say)).toEqual(['same', 'other', 'same'])
+    expect(groups).toHaveLength(3)
+  })
+
+  it('groups the undescribed columns too, and they draw no caption', () => {
+    const groups = groupByDescription([col('a'), col('b'), col('c', 'why')])
+    expect(groups).toHaveLength(2)
+    expect(groups[0]?.say).toBe('')
+    expect(groups[0]?.fields.map((f) => f.id)).toEqual(['a', 'b'])
+  })
+
+  it('reads a description that differs only in whitespace as the same sentence', () => {
+    const groups = groupByDescription([col('a', 'why  '), col('b', ' why')])
+    expect(groups).toHaveLength(1)
+    expect(groups[0]?.say).toBe('why')
+  })
+
+  it('KEEPS EVERY COLUMN EXACTLY ONCE, in the table\u2019s own order', () => {
+    const cols = [col('a'), col('b', 'x'), col('c', 'x'), col('d'), col('e', 'y')]
+    const groups = groupByDescription(cols)
+    expect(groups.flatMap((g) => g.fields).map((f) => f.id)).toEqual([
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+    ])
+  })
+
+  it('is empty for a table with no editable columns rather than throwing', () => {
+    expect(groupByDescription([])).toEqual([])
+  })
+})
+
+/* ============================================================
+   THE DAY BESIDE THE REFERENCE — said once, or not at all.
+
+   `referenceFor` stamps `YYYYMMDD-NN` from the same three local
+   fields `localDay` formats as `YYYY-MM-DD`, deliberately, so one
+   moment can never be printed as two calendar days. The side
+   effect on a history row is that both sat there saying the same
+   eight digits an inch apart.
+   ============================================================ */
+describe('dayWorthSaying', () => {
+  it('says NOTHING when the reference already opens with the day', () => {
+    expect(dayWorthSaying('20260828-05', '2026-08-28')).toBe('')
+    expect(dayWorthSaying('20260828-01', '2026-08-28')).toBe('')
+  })
+
+  it('says the day for a reference that does not carry one — an imported quote', () => {
+    expect(dayWorthSaying('Q-7', '2026-08-28')).toBe('2026-08-28')
+    expect(dayWorthSaying('seed-3', '2026-08-28')).toBe('2026-08-28')
+    expect(dayWorthSaying('', '2026-08-28')).toBe('2026-08-28')
+  })
+
+  it('says the day when the reference carries a DIFFERENT one', () => {
+    expect(dayWorthSaying('20260817-02', '2026-08-28')).toBe('2026-08-28')
+  })
+
+  it('is not fooled by a reference that merely contains the stamp', () => {
+    expect(dayWorthSaying('INV/20260828', '2026-08-28')).toBe('2026-08-28')
+  })
+
+  it('says the day rather than guessing when the day is not a day', () => {
+    /* `localDay` falls back to the first ten characters of an
+       unparseable stored value, so this is reachable */
+    expect(dayWorthSaying('20260828-01', 'not-a-day')).toBe('not-a-day')
+    expect(dayWorthSaying('20260828-01', '')).toBe('')
   })
 })

@@ -33,6 +33,27 @@
       head AND was what the empty state was asking for, so an empty
       register offered two ways to do the only thing there was to do.
 
+   AND WHAT THE PASS AFTER IT CHANGED, on one person's record.
+
+   5. THE PAGE HAD THREE GUTTERS. `.cx-scroll` inset everything 20px,
+      `PageHead` adds `--page-gutter` on top, and the list under it
+      was a 1180px block centred in the remainder — so on the
+      register the title's left edge measured 276 and the rows it
+      names 322. The scroller's horizontal inset is gone and every
+      block takes `--page-gutter` once; measured after, both are 256,
+      which is where Modules and Quotes put theirs.
+
+   6. THE RECORD WAS A BANNER OVER AN EMPTY PAGE. Five fields in one
+      row across 1180px with four captions under them, three of them
+      the same 69 characters, over a history that got a paragraph of
+      directions. It is two panes now — details at a measure, history
+      in the room that was empty — and the captions are one per run
+      of columns that share one.
+
+   7. THE FEATURE'S OWN PAGE HEADERS ARE GONE. `.cx-head` and
+      `.cx-one-head` were consistent with each other and with nothing
+      else in the application; both screens take `PageHead`.
+
    THE ONE ACCENT, roughly four times: the primary button, the
    focused control, the open row's rail, and the money column. That
    is the whole budget and it is not spent anywhere else. Severity,
@@ -67,18 +88,41 @@
   z-index: 0;
 }
 
+/* THE PAGE HAS ONE GUTTER AND IT IS `--page-gutter`.
+
+   MEASURED BEFORE THIS CHANGE, at 1600x1000 on the register: the
+   page title's left edge sat at 276 and the list of rows it names
+   at 322 — 46px apart, and 78px apart on the right. Neither figure
+   was anybody's decision. `.cx-scroll` carried a 20px inset of its
+   own, `PageHead` adds `--page-gutter` (32px) on top of it, and the
+   rows underneath were a 1180px block centred in what was left. So
+   the title was inset 52, the rows 98, and the same page had three
+   gutters in it.
+
+   It also disagreed with the rest of the application: Modules and
+   Quotes both put their title's left edge at 256 — the well edge
+   plus `--page-gutter`, once — and this page put it at 276.
+
+   So the scroller keeps its VERTICAL rhythm and gives up its
+   horizontal inset entirely, and every block under the header takes
+   `--page-gutter` and nothing else. Measured after: title, rows,
+   details and history all begin at 256. */
 .cx-scroll {
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  padding: var(--s-5) var(--s-5) var(--s-12);
+  padding: 0 0 var(--s-12);
 }
 
-/* the prose form of an absent answer — 44ch, the house measure */
+/* the prose form of an absent answer — 44ch, the house measure.
+   Centred rather than gutter-aligned because it is the only thing
+   on its page; the `min()` is what keeps it off the edge at a width
+   narrower than the measure, now that the scroller has no padding
+   to do that for it. */
 .cx-void {
-  max-width: 44ch;
+  max-width: min(44ch, calc(100% - var(--page-gutter) * 2));
   margin: var(--s-8) auto 0;
   font-size: var(--t-body-size);
   line-height: 1.7;
@@ -86,9 +130,13 @@
   color: var(--ink-soft);
 }
 
+/* A DEAD END IS A SENTENCE, so it takes a sentence's measure. It
+   was capped at 1180px, which is a container width borrowed from
+   the list it replaces and is nearly three times the line length
+   anybody reads comfortably. */
 .cx-none {
-  max-width: 1180px;
-  margin: var(--s-5) auto 0;
+  max-width: 62ch;
+  margin: var(--s-5) var(--page-gutter) 0;
   font-size: var(--t-body-size);
   line-height: var(--t-body-lead);
   letter-spacing: var(--t-body-track);
@@ -137,131 +185,108 @@
 }
 
 /* ============================================================
-   THE TWO PAGE HEADS
+   THE PAGE HEAD IS `PageHead`, ON BOTH SCREENS.
 
-   Both take the same three parts in the same order — eyebrow,
-   name, what is true about it — so moving from the register to one
-   person is a change of subject and not a change of application.
+   THE FEATURE'S OWN TWO HEADERS ARE GONE. `.cx-head` and
+   `.cx-one-head` were a good pair — same eyebrow, same name, same
+   counted fact — and they were a good pair with themselves and with
+   nothing else. Measured against the rest of the application they
+   put the title's left edge 20px further in than every other page
+   and set it at 52px where every other page sets 34, so a person
+   moving Modules → Quotes → Customers watched the title jump twice.
+
+   What is left here is the one thing PageHead does not have a slot
+   for: the Remove control and the sentence that says what removing
+   costs, handed to it as `acts`.
    ============================================================ */
 
-/* THE ONE UPPERCASE STYLE ON THIS SCREEN, and it is a section
-   caption, which is what the style is for. */
-.cx-head-eyebrow {
-  display: block;
-  margin-bottom: var(--s-2);
-  font-family: var(--font-ui);
-  font-size: var(--t-label-size);
-  font-weight: var(--t-label-weight);
-  line-height: var(--t-label-lead);
-  letter-spacing: var(--t-label-track);
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.cx-head,
-.cx-one-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--s-6);
-  flex-wrap: wrap;
-  max-width: 1180px;
-  margin: 0 auto var(--s-6);
-  padding-bottom: var(--s-4);
-  border-bottom: 1px solid var(--line-subtle);
-  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
-}
-
-.cx-head-id,
-.cx-one-id {
-  min-width: 0;
-}
-
 /* ============================================================
-   THE THREE HEADLINES ON THIS FEATURE TAKE THE DISPLAY FACE.
+   THE ONE HEADLINE LEFT ON THIS FEATURE TAKES THE DISPLAY FACE.
 
-   All three were already AT the display-lg step — the register's
-   name, one customer's name, and the line an empty state opens on
-   — and all three set `--font-ui`, so the step was taken and the
-   face that step exists for was not. Inter is an excellent
-   interface face and a characterless headline; it is the default
-   every generated interface reaches for, and a screen whose whole
-   subject is a person's name deserves better than the default.
+   It was three — the register's name, one customer's name, and the
+   line an empty state opens on — and two of them are now the
+   application's page title, which has its own face and its own
+   step. What still earns the hero here is the empty state, which
+   is a first screen and the one place on this feature with nothing
+   else to look at.
+
+   All three were already AT the display-lg step and all three set
+   `--font-ui`, so the step was taken and the face that step exists
+   for was not. Inter is an excellent interface face and a
+   characterless headline; it is the default every generated
+   interface reaches for.
 
    THE FLOOR IS RESPECTED BY CONSTRUCTION, not by promise. Archivo
-   is reachable through exactly two type steps and this is one of
-   them: `--t-display-lg-size` is a clamp that bottoms out at 26px,
-   so there is no width at which these render below the floor the
+   is reachable through exactly two type steps and this takes the
+   upper one: `--t-hero-size` is a clamp that bottoms out at 34px,
+   so there is no width at which this renders below the 26px the
    face is barred under. Nothing else in this feature moves — every
    name, sentence and label stays Inter, every figure stays mono.
 
-   The width and the tracking match `.ds-display-lg` in ds.css
-   exactly. They are restated rather than inherited because a
-   feature stylesheet is imported after the system's and would
-   otherwise be fighting a utility class over the same three
-   properties, which is the override layer this repo forbids.
+   IT NOW MATCHES `.ds-hero`, AND IT HAD COME TO MATCH NEITHER SET.
+   The paragraph below used to say the width and tracking matched
+   `.ds-display-lg` exactly, and when it was written that was true:
+   at f14ba04 this was a complete display-lg set — `wdth 103`,
+   -0.028em, display-lg size, weight and leading. f99977a raised it
+   to the hero step and moved four of those six lines, leaving the
+   width at 103 and setting tracking to the RAW `--t-hero-track`
+   (-0.033em). What was left was the hero step wearing
+   `.ds-display-lg`'s width and no face-specific tracking at all —
+   and a comment, still accurate about a rule that no longer
+   existed, sitting on top of it.
+
+   `.ds-hero` overrides both of those for Archivo on purpose:
+   `wdth 105`, and -0.036em rather than the -0.033em the step
+   declares, because Archivo runs optically larger than Inter at
+   the same size and its counters are tighter. Those two lines are
+   the whole reason `.ds-hero` is more than an alias for the step.
+   Two sets crossed in one headline is what §2's "take the whole
+   step" forbids. It is the hero set now, matching `.ds-hero`.
+
+   RESTATED RATHER THAN INHERITED because a feature stylesheet is
+   imported after the system's and would otherwise fight the
+   utility class over the same properties, which is the override
+   layer this repo forbids.
+
+   ONE BLOCK, NOT TWO. The margin and the wrap used to live in a
+   second `.cx-empty-title` 330 lines down, beside the empty
+   state's other rules. That was harmless — the two blocks shared
+   no property — but it is indistinguishable from a stylesheet
+   appended to itself, which has happened in this repo, and a
+   selector nobody can read whole is a selector nobody audits:
+   f99977a's half-move survived the thirteen commits to HEAD, one
+   of which edited this very file. It is declared once now.
+
+   The hero step clamps 34→52px, so nothing moves at 1024 and there
+   is a focal point at 1600.
    ============================================================ */
-/* SOMETHING ON THIS STAGE IS BIG. The register's own name is the
-   subject of the screen and it was set at 34px, the same size as
-   every other stage title in the app; the hero step clamps 34→52px,
-   so nothing moves at 1024 and there is a focal point at 1600. */
-.cx-head-name,
-.cx-one-name,
 .cx-empty-title {
   font-family: var(--font-hero);
-  font-variation-settings: 'wdth' 103;
+  font-variation-settings: 'wdth' 105;
   font-size: var(--t-hero-size);
   font-weight: var(--t-hero-weight);
   line-height: var(--t-hero-lead);
-  letter-spacing: var(--t-hero-track);
+  letter-spacing: -0.036em;
   color: var(--ink);
+  /* the eyebrow above is an 11px label with its own leading; the
+     hero's 1.03 leaves too much air under it unless the headline
+     is pulled back up into it */
+  margin: calc(var(--s-2) * -1) 0 0;
+  text-wrap: balance;
 }
 @media (prefers-contrast: more) {
   /* an extended width costs a little counter where a reader has
      asked for legibility over voice — ds.css makes the same trade */
-  .cx-head-name,
-  .cx-one-name,
   .cx-empty-title {
     font-variation-settings: 'wdth' 100;
   }
 }
 
-.cx-head-name,
-.cx-one-name {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.cx-head-desc,
-.cx-one-contact {
-  margin: var(--s-2) 0 0;
-  max-width: 68ch;
-  font-size: var(--t-body-size);
-  line-height: var(--t-body-lead);
-  letter-spacing: var(--t-body-track);
-  color: var(--ink-soft);
-  overflow-wrap: anywhere;
-}
-
-.cx-one-facts {
-  margin: 6px 0 0;
-  font-size: var(--t-small-size);
-  letter-spacing: var(--t-small-track);
-  color: var(--ink-faint);
-}
-
-.cx-head-acts {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  flex-wrap: wrap;
-  flex: 0 0 auto;
-}
-
-/* REMOVE, AND WHAT IT COSTS, IN ONE COLUMN. The sentence is drawn
-   only when there is something to say (they have been quoted), so
-   this box is a button on its own the rest of the time and must not
-   reserve width for a paragraph that is not there. */
+/* REMOVE, AND WHAT IT COSTS, IN ONE COLUMN — handed to `PageHead`
+   as its `acts`. The sentence is drawn only when there is something
+   to say (they have been quoted), so this box is a button on its
+   own the rest of the time and must not reserve width for a
+   paragraph that is not there. */
 .cx-one-dropbox {
   flex: 0 0 auto;
   display: flex;
@@ -532,13 +557,29 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--s-4);
-  max-width: 680px;
+  /* the `min()` replaces the 20px the scroller used to hold back on
+     every side. A card centred at a fixed 680 had nothing keeping it
+     off the edge once that went */
+  max-width: min(680px, calc(100% - var(--page-gutter) * 2));
   margin: var(--s-6) auto 0;
   padding: var(--s-8) var(--s-8) var(--s-6);
   background: var(--grad-surface);
   border: 1px solid var(--line);
   border-radius: var(--r-panel);
   box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
+}
+
+/* AND IT IS CENTRED ONLY WHEN IT IS THE WHOLE PAGE. A project with
+   no register at all draws this card and nothing else, and a card
+   alone on a page belongs in the middle of it. A register that
+   exists and is empty draws it UNDER the page header — and a card
+   floating at 572 under a title at 256 is the same misalignment
+   `--page-gutter` exists to stop, measured on that exact screen.
+   The sibling selector is the cheapest honest way to tell the two
+   apart: it IS the difference. */
+.ph + .cx-empty,
+.ph-tools + .cx-empty {
+  margin-inline: var(--page-gutter) 0;
 }
 
 .cx-empty-eyebrow {
@@ -551,13 +592,11 @@
   color: var(--ink-faint);
 }
 
-/* THE LINE THE PAGE OPENS ON. It is a headline and it is the only
-   one here, so it takes the display step and the negative tracking
-   that goes with it. */
-.cx-empty-title {
-  margin: calc(var(--s-2) * -1) 0 0;
-  text-wrap: balance;
-}
+/* THE LINE THE PAGE OPENS ON is `.cx-empty-title`, and it is
+   declared in one place — the hero-face section at the top of this
+   file, with its margin and its wrap. It is the only headline this
+   feature still draws, so it lives with the argument for the face
+   rather than with the layout around it. */
 
 .cx-empty-say {
   margin: 0;
@@ -591,9 +630,12 @@
    press rather than scaling: neighbours must not appear to move.
    ============================================================ */
 
+/* THE ROWS BEGIN WHERE THE TITLE BEGINS. They were a 1180px block
+   centred in the scroller, which put their left edge 46px to the
+   right of the page title naming them — see the note on `.cx-scroll`
+   for the three-gutter arithmetic that produced it. */
 .cx-rows {
-  max-width: 1180px;
-  margin: 0 auto;
+  margin: 0 var(--page-gutter);
   padding: 0;
   list-style: none;
   border: 1px solid var(--line);
@@ -705,15 +747,120 @@
 }
 
 /* ============================================================
-   ONE CUSTOMER — their details, from the table's own columns
+   ONE CUSTOMER — their details on one side, the history on the
+   other.
+
+   WHAT WAS THERE, MEASURED at 1600x1000. The form was
+   `repeat(auto-fill, minmax(260px, 1fr))` across 1180px, which
+   resolved to four columns: Name alone on the first row at 520px,
+   then Phone, Email, Address and Notes side by side at 280px each,
+   left edges at 322 / 622 / 922 / 1222. A phone number is eleven
+   characters in a box wide enough for forty. Under each of the four
+   sat a two-line caption, three of them the same 69 characters.
+
+   Below all that, the history — the thing the screen is FOR — got a
+   caption and a paragraph, and the page ended at y=545 in a 920px
+   well. 375px of nothing, under details that had been stretched
+   across the horizon to fill it.
+
+   SO THE DETAILS TAKE ONE COLUMN AT A MEASURE, and the history
+   takes the room. `--s-8` between them: two panes want a gap wider
+   than the gap between two fields inside one pane, or the reading
+   runs across the seam.
+
+   THE CONTAINER IS QUERIED, NOT THE WINDOW. This page is mounted in
+   a stage well that is the window minus the rail — 1376 of 1600
+   here, and less when a window is shared. A window-width rule would
+   switch to one column at a width the page itself never has.
+   `views.css` makes the same call for the same reason.
+
+   720px is where two columns stop paying: below it the details
+   pane's 340 leaves under 350 for a quote's subject and its money,
+   and the history's own two-line row is already the answer to a
+   narrow column — a third fold is where it starts truncating.
    ============================================================ */
 
-.cx-form {
+.cx-rec {
+  /* NAMED, because there are two nested containers here and an
+     anonymous query binds to the nearest one — which is exactly the
+     bug that would make the row's own fold silently query the page
+     instead of the pane it is in. `dashboard.css` names `dsh` for
+     the same reason. */
+  container: crm-page / inline-size;
+  padding: 0 var(--page-gutter);
+}
+
+.cx-rec-cols {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
-  gap: var(--s-4) var(--s-5);
-  max-width: 1180px;
-  margin: 0 auto var(--s-8);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-8);
+  align-items: start;
+}
+
+@container crm-page (min-width: 720px) {
+  .cx-rec-cols {
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  }
+}
+
+.cx-pane {
+  container: crm-pane / inline-size;
+  min-width: 0;
+}
+
+/* THE ONE UPPERCASE STYLE ON THIS SCREEN, and it is a section
+   caption, which is exactly what the style is for (§3). Two of
+   them, because there are two panes and an unlabelled column of
+   input boxes beside a labelled list of documents reads as one
+   thing with a stray form attached. */
+.cx-pane-head {
+  margin: 0 0 var(--s-3);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-subtle);
+  font-family: var(--font-ui);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* THE GAP BETWEEN GROUPS HAS TO BEAT THE GAP INSIDE ONE, or the
+   caption under a run reads as a caption under its last field.
+   Measured at 20px between groups and 12px inside: Name→Phone came
+   out 75px apart and Phone→Email 66px, a 9px difference that says
+   nothing. 24 against 12 doubles it, and the caption itself — which
+   sits 14px under the group it belongs to and 24px above the next —
+   does the rest. */
+.cx-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  margin: 0;
+}
+
+/* A RUN OF COLUMNS THAT SHARE ONE SENTENCE. The fields sit closer
+   to each other than the groups do, so the caption underneath is
+   visibly about the three boxes above it and not about the next
+   one. See form.ts for what decides a run. */
+.cx-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+/* ONE CAPTION FOR THE GROUP, in the columns' own words. It was four
+   captions — 294 characters saying two things, three of them the
+   same 69-character sentence under three boxes standing in a row.
+   156 characters now, and both facts still said. */
+.cx-group-say {
+  margin: 2px 0 0;
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-soft);
+  text-wrap: pretty;
 }
 
 .cx-field {
@@ -736,18 +883,34 @@
   color: var(--ink-soft);
 }
 
-/* the name column is the widest thing a person types here */
+/* THE NAME COLUMN NEEDS NO SPECIAL WIDTH ANY MORE. It carried
+   `grid-column: 1 / -1` to break out of a four-across grid that no
+   longer exists; every field is now the pane's own width, and the
+   name is not wider than an address. The modifier stays because the
+   markup still marks which field is the display column — it is what
+   the placeholder hangs off.
+
+   WHAT "THE PANE'S WIDTH" IS, MEASURED, because it is not one
+   number. Above the 720px container fold the grid track supplies
+   it and every field is 340. Below the fold there is no track and
+   nothing here caps the measure, so a field is the whole column:
+   660 at a 900px window, 552 at 760. That is wider than the 340
+   this pass argued a phone number into, and it was left that way
+   deliberately. A single column IS the page at those widths, and a
+   340px form floating in a 700px well with the history full-width
+   beneath it spends the little width there is on nothing. The
+   measure is a two-column decision; full-width fields are the
+   one-column one. Both are the pane's width — the pane is just a
+   different width. */
 .cx-field--name {
-  grid-column: 1 / -1;
-  max-width: 520px;
+  max-width: none;
 }
 
 .cx-field--tick {
   flex-direction: row;
   align-items: center;
   gap: var(--s-2);
-  align-self: end;
-  padding-bottom: 7px;
+  padding-bottom: 2px;
 }
 
 .cx-tick {
@@ -782,14 +945,9 @@
   box-shadow: var(--glow-sm);
 }
 
-/* what the column is FOR, from the column's own description — the
-   same sentence the sheet shows, not a second one written here */
-.cx-field-say {
-  font-size: var(--t-caption-size);
-  line-height: 1.5;
-  letter-spacing: var(--t-caption-track);
-  color: var(--ink-soft);
-}
+/* `.cx-field-say` — the per-field caption — is gone. What a column
+   is FOR is still said in the column's own words; it is said once
+   per run of columns that say it, as `.cx-group-say` above. */
 
 /* A COLUMN THIS PAGE WILL NOT PRETEND TO EDIT. Not a disabled text
    box — an empty box with a grey border is a control that looks
@@ -817,31 +975,29 @@
 
 /* -- the history with them ----------------------------------- */
 
-.cx-hist {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-
-/* the one section caption on the page, so it takes the one
-   uppercase style */
-.cx-hist-head {
-  margin: 0 0 var(--s-2);
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--line-subtle);
-  font-family: var(--font-ui);
-  font-size: var(--t-label-size);
-  font-weight: var(--t-label-weight);
-  line-height: var(--t-label-lead);
-  letter-spacing: var(--t-label-track);
-  text-transform: uppercase;
-  color: var(--ink-faint);
+/* NOTHING YET, AND THE ACT. What stood here was four steps of
+   navigation — "open a table, press Fitment, pick the one you are
+   selling and press Quote this one, then choose this customer at
+   the top of the quote", 44 words describing a route instead of
+   being a door. A panel rather than a loose paragraph, because it
+   holds the pane's shape: an empty right-hand column that is
+   literally empty makes the page look broken rather than new. */
+.cx-hist-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--paper-sunken);
 }
 
 .cx-hist-none {
-  margin: var(--s-3) 0 0;
-  max-width: 60ch;
+  margin: 0;
+  max-width: 46ch;
   font-size: var(--t-body-size);
-  line-height: 1.7;
+  line-height: 1.6;
   letter-spacing: var(--t-body-track);
   color: var(--ink-soft);
 }
@@ -851,23 +1007,45 @@
   color: var(--ink);
 }
 
+/* THE HISTORY IS A CARD, the same one the register's rows are. Two
+   lists of the same kind of thing — documents you can open — in one
+   feature, drawn one way. */
 .cx-hist-list {
   margin: 0;
   padding: 0;
   list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--grad-surface);
+  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+  overflow: hidden;
 }
 
 .cx-hist-row + .cx-hist-row {
   border-top: 1px solid var(--line-subtle);
 }
 
+/* TWO LINES, NOT FIVE COLUMNS. The row was
+   `auto minmax(0,1fr) auto auto auto` — day, subject, state, money,
+   arrow — strung across the full page width. In a right-hand pane
+   that is 900px at 1600 and 400px at 1100, five columns is where a
+   boat's name starts being cut in half, and §3 is explicit that
+   nothing truncates.
+
+   So what the quote IS and what it COSTS take the first line, and
+   the two identifiers plus its state take the second. That reading
+   order is the one somebody scanning a history uses: which boat,
+   how much, then which document and when. */
 .cx-hist-open {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'what money go'
+    'meta state go';
   align-items: center;
-  gap: var(--s-3);
+  gap: 2px var(--s-3);
   width: 100%;
-  padding: 9px 6px;
+  padding: var(--s-3) var(--s-4);
   text-align: left;
   background: transparent;
   border: 0;
@@ -897,7 +1075,36 @@
   background: transparent;
 }
 
-/* tinted-bed rule, same measurement as .cx-row-when above */
+/* THE SECOND LINE: which document, and when it was written. Both
+   are identifiers, so both are mono and both are quieter than the
+   subject above them — the reference is what a person reads back
+   down a phone, not what they scan the list by.
+
+   THE DAY IS DROPPED WHEN THE REFERENCE ALREADY CARRIES IT, which
+   on this dealer's data is every quote but one. `referenceFor`
+   stamps `20260828-01`; `localDay` renders `2026-08-28`. Printed
+   together that is the same eight digits twice, six pixels apart,
+   in the same mono face — and the argument for keeping both (a
+   filing number is parsed letter by letter, a date is read) needs
+   the two to differ in more than punctuation. They do not.
+
+   IT IS KEPT WHEN THE REFERENCE DOES NOT CARRY IT. An imported
+   quote, or one minted before `referenceFor` existed, has a
+   reference like `seed-7` that says nothing about when — and then
+   the day is the only thing on the line that dates the row. Driven
+   at 1600x1000: exactly one row in the seeded history prints a day,
+   and it is the imported one. `dayWorthSaying` in form.ts decides
+   and returns '' rather than a flag, so this rule never has to know
+   which case it is looking at. */
+.cx-hist-meta {
+  grid-area: meta;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cx-hist-ref,
 .cx-hist-when {
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
@@ -906,9 +1113,18 @@
   color: var(--ink-soft);
 }
 
+/* a separator, not a value — aria-hidden in the markup for the same
+   reason */
+.cx-hist-dot {
+  font-size: var(--t-caption-size);
+  color: var(--ink-faint);
+}
+
 .cx-hist-what {
+  grid-area: what;
   min-width: 0;
   font-size: var(--t-body-size);
+  font-weight: 520;
   letter-spacing: var(--t-body-track);
   color: var(--ink);
   overflow-wrap: anywhere;
@@ -927,6 +1143,7 @@
    column for; a draft is ink, because it is the resting state and
    not an alarm. */
 .cx-hist-state {
+  grid-area: state;
   justify-self: end;
   font-size: var(--t-caption-size);
   font-weight: 500;
@@ -938,13 +1155,19 @@
   color: var(--success);
 }
 
+/* the money sits on the subject's line, right-aligned against the
+   money on every other row — 11ch holds $1,234,567 without the
+   column moving when a row is added */
 .cx-hist-total {
+  grid-area: money;
   justify-self: end;
   min-width: 11ch;
   text-align: right;
 }
 
 .cx-hist-go {
+  grid-area: go;
+  align-self: center;
   color: var(--ink-faint);
   transition: color var(--d-fast) var(--ease);
 }
@@ -953,13 +1176,16 @@
   color: var(--blue);
 }
 
-@media (max-width: 720px) {
+/* THE PANE IS THE THING THAT GOT NARROW, not the window, so the
+   fold is a container query. Below 340 of pane the arrow goes: it
+   is an affordance for a row that is already a button, and the
+   money must not be the thing that yields. */
+@container crm-pane (max-width: 340px) {
   .cx-hist-open {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-  .cx-hist-state {
-    grid-column: 2 / -1;
-    justify-self: start;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'what money'
+      'meta state';
   }
   .cx-hist-go {
     display: none;
@@ -970,10 +1196,6 @@
    MOTION GOES, FEEDBACK STAYS.
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .cx-head,
-  .cx-one-head {
-    animation: none;
-  }
   .cx-act:active {
     transform: none;
   }

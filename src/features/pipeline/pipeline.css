@@ -27,17 +27,41 @@
 
 /* ---- the columns ------------------------------------------- */
 
-.pb-cols {
-  display: grid;
-  /* EQUAL AND NEVER NARROWER THAN A CARD. `auto-flow: column` with
-     a floor is what lets five columns share a wide window and
-     scroll sideways on a narrow one, without any column ever
-     collapsing to a sliver a card cannot be dropped into. */
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(248px, 1fr);
+/* THE FLOOR — the columns, and the open deal's pane beside them.
+   The pane is IN this row rather than over the board, so opening
+   a deal narrows the board instead of covering it: the arrangement
+   of the columns is the board's answer and a pane that hides it
+   makes you rebuild the answer on the way back. See DealPane.tsx. */
+.pb-floor {
+  display: flex;
+  align-items: stretch;
+  /* THE GAP IS THE FLOOR'S, NOT THE BOARD'S PADDING. Measured with
+     `padding-right` on the scroller instead: padding on an
+     `overflow-x` box only extends the SCROLL, so the columns were
+     still clipped hard against the pane's left edge with nothing
+     between them — "Dana W" against a border. A gap on the row
+     leaves 16px of page between the two whatever the board is
+     scrolled to. */
   gap: var(--s-4);
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
+}
+
+.pb-cols {
+  /* FLEX, AND IT WAS A GRID. `grid-auto-columns: minmax(248px, 1fr)`
+     sizes every track identically, which is exactly right until one
+     column can be FOLDED — a track rule has no way to say "these
+     five share the width and that one is 44px". Flex says it in two
+     declarations: `flex: 1 1 0` plus a 248px floor on an open
+     column reproduces the old behaviour measured to the pixel, and
+     `flex: 0 0 44px` on a folded one is the thing the grid could
+     not express. */
+  display: flex;
+  gap: var(--s-4);
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
   /* THE PAGE'S GUTTER, so the first column's left edge is the
@@ -46,11 +70,24 @@
   padding: 0 var(--page-gutter) var(--s-6);
 }
 
+/* WITH A DEAL OPEN, the board's right gutter goes: the floor's gap
+   is the space to the pane, and the pane carries the page gutter on
+   its own right edge. Keeping both would put 48px between the board
+   and the pane and 32px between the pane and the window, and the
+   pane would read as a third region rather than as part of this
+   one. */
+.pb-floor.has-deal .pb-cols {
+  padding-right: 0;
+}
+
 .pb-col {
   display: flex;
   flex-direction: column;
+  /* EQUAL AND NEVER NARROWER THAN A CARD — the floor exists so no
+     column can collapse to a sliver a card cannot be dropped into. */
+  flex: 1 1 0;
   min-height: 0;
-  min-width: 0;
+  min-width: 248px;
   padding: var(--s-3);
   border: 1px solid var(--line-subtle);
   border-radius: var(--r-card);
@@ -172,6 +209,16 @@
   box-shadow: var(--e-float);
   transform: rotate(-0.6deg) scale(1.02);
 }
+/* THE CARD THE PANE IS ABOUT. A ring rather than a fill: the card
+   still has to be read, and a tint behind three tiers of ink is
+   the rule-4 failure this board avoids everywhere else. The pane
+   and the board can never disagree about which deal is open. */
+.pb-card.is-open {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    var(--e2);
+}
 
 .pb-card-top {
   display: flex;
@@ -184,9 +231,27 @@
   color: var(--fg-tertiary);
 }
 .pb-card-when {
+  /* the date takes the end of the row and the note count sits
+     hard against the reference, so the row reads ref-count … date
+     rather than as three things spread evenly across 226px */
+  margin-left: auto;
   font-size: var(--t-mono-sm-size);
   color: var(--fg-tertiary);
   white-space: nowrap;
+}
+
+/* HOW MANY THINGS HAVE BEEN SAID ABOUT THIS DEAL. Never drawn at
+   zero — see Board.tsx. A glyph and a figure in the metadata ink,
+   because it is a fact ABOUT the card rather than a fact ON it. */
+.pb-card-said {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--fg-tertiary);
+}
+.pb-card-said-n {
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
 }
 
 /* THE CUSTOMER IS THE HEADING. A deal is a person waiting on an
@@ -411,7 +476,8 @@
   cursor: pointer;
   transition:
     opacity var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease);
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
 }
 .pb-col:hover .pb-col-sortgo,
 .pb-col-sortgo:focus-visible,
@@ -422,6 +488,14 @@
 .pb-col-sortgo:hover {
   background: var(--surface-3);
   color: var(--fg-secondary);
+}
+/* PRESS (rule 8), and it was missing. Added when the fold handle
+   arrived beside it with one: two 22px controls in one column head,
+   identical in every other respect, and only one of them answering
+   a press would read as a bug in whichever one you found second. */
+.pb-col-sortgo:active {
+  color: var(--fg);
+  transition-duration: var(--d-press);
 }
 .pb-col-sortgo:focus-visible {
   outline: 2px solid var(--accent);
@@ -900,5 +974,553 @@
   .se-closed,
   .se-n {
     grid-column: 2 / -1;
+  }
+}
+
+/* ============================================================
+   A FOLDED COLUMN.
+
+   THE OWNER'S ASK WAS FOR THE WIDTH BACK, and every figure here is
+   measured on this build at 1600px rather than estimated.
+
+   Five equal columns get 250px each — two pixels over their own
+   floor. Folding Won and Lost gives the three live ones 387px, a
+   55% gain, which is where a customer's name stops wrapping.
+
+   It also answers the one cost of opening a deal. The pane takes
+   360px, and five 248px columns plus their gaps need 1304px of the
+   936px the board has left, so two columns go off the right edge
+   into the sideways scroll. Fold the two closed ones and all five
+   are on screen again with the pane open: measured at 261px, 44px,
+   44px and zero overflow.
+
+   IT IS STILL A COLUMN. It keeps `data-stage`, so `columnAt` finds
+   it and a card can be dropped on a folded column without
+   unfolding it first — which is exactly what somebody who folded
+   Lost wants to do with the next dead deal. It keeps its coloured
+   cap, so the board's left-to-right reading survives the fold.
+   ============================================================ */
+
+.pb-col.is-shut {
+  flex: 0 0 44px;
+  min-width: 0;
+  padding: var(--s-2) 0;
+  overflow: hidden;
+}
+
+.pb-col-open {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 0;
+  padding: var(--s-1) 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.pb-col-open:hover {
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+.pb-col-open:active {
+  /* A FOLDED COLUMN IS 44px WIDE and a scale press on it reads as a
+     twitch. It darkens instead — the same answer the system gives
+     for a list row, and for the same reason. */
+  background: var(--surface-3);
+  transition-duration: var(--d-press);
+}
+.pb-col-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.pb-col-shut-n {
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+
+/* THE NAME TURNED ON ITS SIDE, and it is the one thing a 44px
+   strip has room for. Still the column head's label style — the
+   fold changes the orientation, not what the word is. */
+.pb-col-shut-name {
+  writing-mode: vertical-rl;
+  min-height: 0;
+  font-size: var(--t-caption-size);
+  font-weight: 620;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--stage);
+}
+.pb-col[data-tone="neutral"] .pb-col-shut-name {
+  color: var(--fg-secondary);
+}
+
+/* THE FOLD HANDLE, quiet until wanted — the same rule the sort
+   control beside it keeps, and for the same reason: five handles
+   lit at once is five controls competing with five column names. */
+.pb-col-shutgo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+.pb-col:hover .pb-col-shutgo,
+.pb-col-shutgo:focus-visible {
+  opacity: 1;
+}
+.pb-col-shutgo:hover {
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+/* PRESS, ON POINTER-DOWN (rule 8). A 22px control is too small to
+   scale legibly, so it takes the ink instead — the same answer the
+   system gives a list row. */
+.pb-col-shutgo:active {
+  color: var(--fg);
+  transition-duration: var(--d-press);
+}
+.pb-col-shutgo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   ONE DEAL, OPEN (dp-) — its facts and its conversation.
+
+   A COLUMN OF ITS OWN, at the right of the board. The head and the
+   composer are fixed and the middle scrolls, so the box you type
+   into never walks off the bottom of a long thread — the one
+   property a conversation panel has to have.
+
+   EVERY INK ON IT IS FROM THE RAMP. The thread's notes sit on
+   `--surface-2` and the ramp's floor (`--fg-tertiary`) is used
+   only for metadata beside the thing it describes; the words
+   themselves are `--fg`.
+   ============================================================ */
+
+/* THE PANE TAKES FOCUS WHEN IT OPENS — see DealPane.tsx. It is
+   `tabIndex={-1}`, so a mouse click never rings it, and a keyboard
+   press does: `:focus-visible` is exactly the distinction, and it
+   is what tells somebody who pressed Enter that they are now
+   inside the thing that appeared. */
+.dp:focus {
+  outline: none;
+}
+.dp:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.dp {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: 360px;
+  min-height: 0;
+  margin: 0 var(--page-gutter) var(--s-6) 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e2);
+  overflow: hidden;
+}
+
+.dp-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 2px var(--s-3);
+  flex: none;
+  padding: var(--s-4) var(--s-4) var(--s-3);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.dp-ref {
+  grid-column: 1;
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+}
+/* THE CUSTOMER IS THE HEADING, as it is on the card. */
+.dp-who {
+  grid-column: 1;
+  margin: 0;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  line-height: var(--t-heading-lead);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.dp-what {
+  grid-column: 1;
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.4;
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+.dp-shut {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.dp-shut:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.dp-shut:active {
+  transform: scale(0.97);
+}
+.dp-shut:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.dp-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-4);
+}
+
+/* THE FACTS. Label left, value right, one grid so every value
+   starts at the same x however long the labels are — `display:
+   contents` on the pair is what puts a dt/dd into the parent grid
+   without a wrapper element in the way. */
+.dp-facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--s-2) var(--s-4);
+  margin: 0 0 var(--s-3);
+}
+.dp-fact {
+  display: contents;
+}
+.dp-fact-say {
+  margin: 0;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+.dp-fact-is {
+  margin: 0;
+  font-size: var(--t-small-size);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+/* THE STAGE, WEARING ITS COLUMN'S COLOUR AS A DOT. `--stage` comes
+   from the `[data-tone]` set above — one custom property, six
+   colours, and none of them behind text. */
+.dp-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.dp-stage::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: var(--r-full);
+  background: var(--stage);
+}
+
+/* A QUOTE WITH AN UNPRICED LINE DOES NOT PRINT A CONFIDENT TOTAL.
+   The document says so, the dashboard says so, and so does this. */
+.dp-partial {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+}
+
+.dp-more {
+  margin: 0 0 var(--s-3);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* THE DOOR TO THE DOCUMENT, and it is deliberately NOT the accent
+   one. The pane exists for the conversation, so the accent is on
+   Add note; this is a way out of the pane, drawn like every other
+   secondary control on this screen. */
+.dp-open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  margin: 0 0 var(--s-5);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.dp-open:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+.dp-open:active {
+  transform: scale(0.97);
+}
+.dp-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.dp-thread-say {
+  margin: 0 0 var(--s-2);
+  color: var(--fg-tertiary);
+}
+
+.dp-none {
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg-tertiary);
+}
+
+.dp-thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dp-note {
+  padding: var(--s-3);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}
+.dp-note-top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin: 0 0 2px;
+}
+.dp-note-who {
+  font-size: var(--t-caption-size);
+  font-weight: 620;
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+.dp-note-when {
+  margin-left: auto;
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+/* A NOTE IS TYPED PROSE AND ITS LINE BREAKS ARE THE PERSON'S.
+   `pre-wrap` rather than a collapse: somebody who typed three
+   lines meant three lines, and running them together is the app
+   editing what was said. */
+.dp-note-text {
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  color: var(--fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* THE BROWSER REFUSED TO KEEP IT — see dealNotes.ts. Same shape as
+   the stage editor's refusal, because it is the same kind of
+   sentence: a fact about what could not be done, where it
+   happened. */
+.dp-warn {
+  margin: var(--s-3) 0 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: 3px solid var(--warning);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--warning-wash);
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg);
+}
+
+/* ---- what you type ----------------------------------------- */
+
+.dp-say {
+  flex: none;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+  background: var(--surface-2);
+}
+.dp-say-in {
+  display: block;
+  width: 100%;
+  min-height: 58px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  line-height: 1.5;
+  resize: vertical;
+}
+.dp-say-in:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+.dp-say-in::placeholder {
+  color: var(--fg-tertiary);
+}
+
+.dp-why {
+  margin: var(--s-2) 0 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: 3px solid var(--warning);
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  background: var(--warning-wash);
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg);
+}
+
+.dp-say-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+}
+/* THE KEY THAT SENDS, as a mono stamp — section 3 allows mono and
+   a stamp, and this is one. */
+.dp-say-hint {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+}
+/* THE PANE'S ONE PRIMARY ACT. Never disabled: pressing it with an
+   empty box prints the reason under the box (rule 10), which is
+   the whole of why there is no `:disabled` rule here. */
+.dp-say-go {
+  height: var(--h-md);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-control);
+  background: var(--accent);
+  /* `--accent-fg`, NOT `--fg-on-accent`, and the difference is a
+     failure not a preference. Both tokens exist; `--fg-on-accent`
+     is still #ffffff in the dark theme, where the accent is a
+     BRIGHT blue — measured here at 2.53:1, which is the exact
+     figure ds.css records beside `--accent-fg` as the defect that
+     token was added to fix. `--accent-fg` is dark ink on dark's
+     bright accent and measures 7.30:1. This button was written
+     with the wrong one and a sweep caught it; the name that reads
+     right is the one that fails. */
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.dp-say-go:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.dp-say-go:active {
+  background: var(--accent-press);
+  border-color: var(--accent-press);
+  transform: scale(0.97);
+}
+.dp-say-go:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   RESPONSIVE. Below a laptop the pane FLOATS over the board rather
+   than taking a share of it: 360px out of a 1000px window would
+   leave the columns at their 248px floor with a sideways scroll,
+   which is the board reduced to a list — the screen this one
+   replaced. Over it, the board keeps its own width and comes back
+   whole the moment the pane closes.
+   ============================================================ */
+@media (max-width: 1100px) {
+  .pb-floor {
+    position: relative;
+  }
+  .pb-floor.has-deal .pb-cols {
+    padding-right: var(--page-gutter);
+  }
+  .dp {
+    position: absolute;
+    top: 0;
+    bottom: var(--s-6);
+    right: var(--page-gutter);
+    left: auto;
+    z-index: var(--z-panel);
+    width: min(360px, calc(100% - var(--page-gutter) * 2));
+    margin: 0;
+    box-shadow: var(--e-float);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dp-open,
+  .dp-say-go,
+  .dp-shut,
+  .pb-col-open,
+  .pb-col-shutgo {
+    transition: none;
+  }
+  .dp-open:active,
+  .dp-say-go:active,
+  .dp-shut:active {
+    transform: none;
   }
 }
