@@ -236,11 +236,25 @@ export function AdminStage({
           <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
           <span>Back</span>
         </button>
-        <p className="shell-view-what" role="heading" aria-level={1}>
-          <span className="shell-view-what-name">
-            {showing === 'index' ? 'Admin' : 'Access & roles'}
-          </span>
-        </p>
+        {/* THE BAR STOPPED SAYING THE PAGE'S NAME.
+
+            It used to be the only heading these pages had, and it was
+            marked up as one. `PageHead` now draws the title, the
+            eyebrow, the counted fact and the acts — so the bar was
+            printing a second, worse copy of the same thing directly
+            above it: "Quotes we have made · a rig, a customer and a
+            moment" over "SELLING / Pipeline". Two titles, and the
+            centred one won the eye because it was first.
+
+            It is kept where the surface below has NO PageHead — a
+            quote document, one customer, the access grid — because
+            there it is still the only thing naming what is on screen.
+            Reported as "header of page is crap", and it was. */}
+        {showing === 'index' ? null : (
+          <p className="shell-view-what" role="heading" aria-level={1}>
+            <span className="shell-view-what-name">Access &amp; roles</span>
+          </p>
+        )}
         {showing === 'access' ? (
           <div className="shell-quote-acts">
             <button

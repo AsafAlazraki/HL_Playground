@@ -509,8 +509,10 @@
    and nothing else anywhere.
    ============================================================ */
 
+/* NEUTRAL IS A COLOUR, NOT AN ABSENCE. It is what a stage wears
+   when nobody has chosen — quiet, and still a choice. */
 [data-tone='neutral'] {
-  --stage: var(--fg-tertiary);
+  --stage: var(--fg-quaternary);
 }
 [data-tone='blue'] {
   --stage: var(--kind-boat);
@@ -538,12 +540,21 @@
 .pb-col[data-tone] .pb-col-name {
   color: var(--stage);
 }
-/* neutral is the exception: `--fg-tertiary` as a 3px cap reads as a
-   grubby line rather than as a choice, so it gets the hairline it
-   would have had anyway */
-.pb-col[data-tone='neutral'] {
-  border-top: 1px solid var(--line-subtle);
-}
+/* NEUTRAL KEEPS THE CAP, AND THIS RULE USED TO TAKE IT AWAY.
+
+   It gave neutral a 1px hairline instead of the 3px cap the other
+   four wear, on the reasoning that grey at 3px reads as a grubby
+   line rather than as a decision. That reasoning was about the cap
+   ON ITS OWN. On the board it is never on its own: it sits beside
+   four columns that DO have one, and the first column of the
+   pipeline — Draft, the one every quote starts in — came out
+   looking unstyled next to them, as though the CSS had failed for
+   it. Reported as exactly that.
+
+   Five columns are five of the same object. What neutral gets is a
+   quieter colour, not a different anatomy. The NAME keeps the
+   secondary tier because `--fg-quaternary` is a rule colour and
+   does not clear 4.5:1 as text. */
 .pb-col[data-tone='neutral'] .pb-col-name {
   color: var(--fg-secondary);
 }

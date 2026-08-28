@@ -91,19 +91,33 @@ export function CustomerStage({
           </button>
         ) : null}
 
-        <p className="shell-view-what">
-          <span className="shell-view-what-name">{openId ? 'Customer' : 'Customers'}</span>
-          <span className="shell-view-what-sep" aria-hidden="true">
-            ·
-          </span>
-          {/* THE ASIDE SAYS WHAT SORT OF PLACE THIS IS, never what is
-              in it — the rule ModuleStage's own aside was written
-              from. The person's name is the page's business; the bar
-              says the durable thing. */}
-          <span className="shell-view-what-say">
-            {openId ? 'the history with one of them' : 'the people you sell to'}
-          </span>
-        </p>
+        {/* THE BAR STOPPED SAYING THE PAGE'S NAME.
+
+            It used to be the only heading these pages had, and it was
+            marked up as one. `PageHead` now draws the title, the
+            eyebrow, the counted fact and the acts — so the bar was
+            printing a second, worse copy of the same thing directly
+            above it: "Quotes we have made · a rig, a customer and a
+            moment" over "SELLING / Pipeline". Two titles, and the
+            centred one won the eye because it was first.
+
+            It is kept where the surface below has NO PageHead — a
+            quote document, one customer, the access grid — because
+            there it is still the only thing naming what is on screen.
+            Reported as "header of page is crap", and it was. */}
+        {openId ? (
+          <p className="shell-view-what">
+            <span className="shell-view-what-name">Customer</span>
+            <span className="shell-view-what-sep" aria-hidden="true">
+              ·
+            </span>
+            {/* THE ASIDE SAYS WHAT SORT OF PLACE THIS IS, never what
+                is in it — the rule ModuleStage's own aside was
+                written from. The person's name is the page's
+                business; the bar says the durable thing. */}
+            <span className="shell-view-what-say">the history with one of them</span>
+          </p>
+        ) : null}
 
         {openId ? (
           <div className="shell-quote-acts">

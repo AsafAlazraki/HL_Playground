@@ -284,39 +284,41 @@ export function ModuleStage({
             affordances eighteen pixels apart is one too many, and
             the vague one is the one to lose. */}
 
-        <p className="shell-view-what">
-          {open && primary ? (
-            <span className="shell-view-what-mark">
-              <TableKindSymbol kind={kindOf(primary.kind)} size={ICON_SIZE.small} />
-            </span>
-          ) : null}
-          <span className="shell-view-what-name">{subject ? subject.name : 'Modules'}</span>
-          <span className="shell-view-what-sep" aria-hidden="true">
-            ·
-          </span>
-          {/* THE ASIDE SAYS WHAT KIND OF PLACE THIS IS, NOT WHAT IS IN
-              IT. It carried `module.description` for one screenshot,
-              which is how this was caught: a module made from Highfield
-              inherits that table's description, and Highfield's is a
-              202-character note about which row of which spreadsheet
-              its columns were read from. Set in a 10px uppercase mono
-              bar with `white-space: nowrap`, it ran the full width of
-              the window, ellipsised mid-sentence and left the crumb
-              unreadable — while the index printed the SAME paragraph
-              in full, in prose, two lines below it.
+        {/* THE BAR STOPPED SAYING THE PAGE'S NAME on the grid of
+            places, because `PageHead` says it now — "Modules ·
+            the places in your business" was printing directly above
+            "NORTHSIDE MARINE / Modules · 25 places", and the centred
+            copy won the eye by being first.
 
-              So the bar says the durable thing and the page says the
-              admin's thing. This is also the shape the other four
-              stages' asides already have: a phrase about the SORT of
-              screen you are on, not a summary of its contents. */}
-          <span className="shell-view-what-say">
-            {setup
-              ? 'how this place is set up'
-              : open
-                ? 'a place in your business'
-                : 'the places in your business'}
-          </span>
-        </p>
+            A MODULE THAT IS OPEN KEEPS IT. There it is naming a
+            thing the page below does not: which place you are
+            standing in, with its kind's mark beside it. */}
+        {subject ? (
+          <p className="shell-view-what">
+            {open && primary ? (
+              <span className="shell-view-what-mark">
+                <TableKindSymbol kind={kindOf(primary.kind)} size={ICON_SIZE.small} />
+              </span>
+            ) : null}
+            <span className="shell-view-what-name">{subject.name}</span>
+            <span className="shell-view-what-sep" aria-hidden="true">
+              ·
+            </span>
+            {/* THE ASIDE SAYS WHAT KIND OF PLACE THIS IS, NOT WHAT IS
+                IN IT. It carried `module.description` for one
+                screenshot, which is how that was caught: a module
+                made from Highfield inherits that table's description,
+                and Highfield's is a 202-character note about which
+                row of which spreadsheet its columns were read from.
+                In a 10px mono bar with `white-space: nowrap` it ran
+                the full width of the window and ellipsised
+                mid-sentence — while the index printed the SAME
+                paragraph in full, two lines below. */}
+            <span className="shell-view-what-say">
+              {setup ? 'how this place is set up' : 'a place in your business'}
+            </span>
+          </p>
+        ) : null}
 
         {/* THE WAY BACK TO THE DASHBOARD. The panel's own door is
             behind this stage, so without this the only route from a

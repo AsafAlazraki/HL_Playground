@@ -4464,6 +4464,23 @@
   --chrome-raised: #101f2f;
 }
 
+/* THE BAR TAKES THE PAGE'S GUTTER.
+
+   It had none, so its contents began at the rail's edge — 224px —
+   while the title, the filters and the first column of every page
+   below it began at 256. The view switcher on Quotes sat 32px to
+   the left of everything it belongs to and read as a control that
+   had come adrift from the page.
+
+   `--page-gutter` is the one inset (features/page/page.css), and
+   this is the last thing in the shell that was not taking it.
+   Declared on the BAR rather than on each stage, because a stage
+   that has to remember to align itself is a stage that will
+   eventually forget. */
+.shell-view-bar {
+  padding-inline: var(--page-gutter);
+}
+
 /* A STAGE TITLE IS A NAME (§3: uppercase is never a name style).
    It was an 11px uppercase mono stamp, letterspaced because it had
    to survive on white beside nothing; on its own bar it can simply
