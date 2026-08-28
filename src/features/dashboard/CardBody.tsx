@@ -680,7 +680,24 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
                 cannot give them — 588 Highfield variants is the
                 catalogue's size and says nothing about the day. */}
             <div className="dsh-tile-foot">
-              <span className="dsh-tile-under">{p.moduleName}</span>
+              {/* THE KIND, AS A PILL WITH ITS OWN MARK.
+                  The category was a bare word here and the kind's
+                  symbol was nowhere on the tile at all — it came off
+                  when the brand wordmark became the face, on the
+                  reasoning that four glyphs repeated twenty-five
+                  times is wallpaper rather than identity.
+
+                  That reasoning holds for a glyph drawn LARGE in
+                  place of a mark. It does not hold for one at 12px
+                  beside the word it belongs to: there it is not
+                  competing with the wordmark above, it is telling
+                  you what sort of thing this brand sells, which the
+                  wordmark cannot. The colour key above the grid maps
+                  the hue; this names it on the tile. */}
+              <span className="dsh-tile-kind" data-kind={kindOf(p.kind)}>
+                <TableKindSymbol kind={kindOf(p.kind)} size={12} />
+                {p.moduleName}
+              </span>
               <span className="dsh-tile-figs">
                 <span className="dsh-tile-sum ds-mono">
                   {p.retired ? 'held' : p.census.items.toLocaleString()}

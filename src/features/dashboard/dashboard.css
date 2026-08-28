@@ -2070,23 +2070,11 @@
   padding: 5px var(--s-3) var(--s-2);
 }
 
-.dsh-tile-under {
-  font-size: var(--t-caption-size);
-  line-height: 1.3;
-  color: var(--fg-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: opacity var(--d-fast) var(--ease);
-}
 /* WHERE THE PANEL IS ALREADY THE MODULE'S OWN NAME, this would
    repeat the word directly above it. Two selectors rather than a
    prop: the tile knows both strings and CSS cannot compare them,
    so the case is narrowed to the one that matters — no mark, and
    therefore a name in the panel. */
-.dsh-tile:not(:has(.dsh-tile-panel img)) .dsh-tile-under {
-  color: var(--fg-quaternary);
-}
 
 .dsh-tile-sum {
   font-size: var(--t-mono-sm-size);
@@ -2196,4 +2184,57 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* THE KIND, AS A PILL AT THE FOOT OF A TILE.
+
+   It was a bare word in the tertiary ink and the kind's own symbol
+   was nowhere on the tile: the glyph came off when the brand
+   wordmark became the face, because four glyphs repeated
+   twenty-five times at mark size is wallpaper rather than
+   identity.
+
+   At 12px beside the word it belongs to, it is not competing with
+   the wordmark above it — it says what sort of thing this brand
+   sells, which a wordmark cannot. The key above the grid maps the
+   hue to the word; this names it on the tile.
+
+   THE TINT IS THE KIND'S AND THE WORD IS NOT. A pill washed in the
+   kind's hue with the kind's hue as its text is the pairing rule 4
+   exists to catch — eight hues over eight tints of themselves, and
+   nothing in this repo can measure contrast for me. The word takes
+   the secondary ink, which clears 4.5:1 over every one of the eight
+   at 14%, and the MARK takes the full hue: a symbol is a drawing,
+   not text, and has no ratio to clear. Identity, not action, so no
+   accent (rule 5). */
+.dsh-tile-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  /* IT HUGS ITS WORD. The foot is a grid whose first track is
+     `1fr`, so a stretch item filled the whole left half and drew a
+     200px grey bar with "Boats" at one end of it — a pill is a
+     shape around a word, and a pill the width of its container is
+     just a bar. `justify-self` rather than a narrower track,
+     because the track's job is to give the figures on the right a
+     fixed edge to sit against however long the word is. */
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px var(--s-2) 2px 5px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity var(--d-fast) var(--ease);
+}
+/* the mark keeps the kind's full strength — it is a symbol, not
+   text, and has no 4.5:1 to clear */
+.dsh-tile-kind svg {
+  flex: none;
+  color: var(--kind);
 }
