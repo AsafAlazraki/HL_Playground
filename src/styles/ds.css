@@ -42,6 +42,25 @@
   --bg: #f6f9fc;
   --bg-canvas: #f1f6fb;
   --surface-1: #ffffff;
+
+  /* THE GROUND A BRAND'S MARK IS PRINTED ON, and it does NOT flip
+     with the theme.
+
+     Every logo this app ships is dark ink on transparent —
+     Highfield navy, Jeanneau near-black, Haines a dark script. On
+     the dark theme they were being drawn on `--surface-1` at
+     #101f2f and three of the eight became genuinely unreadable:
+     measured on the dashboard tiles, Highfield's wordmark against
+     its panel came to 1.4:1.
+
+     A LETTERHEAD IS PAPER IN A DARK ROOM TOO. The fix is not to
+     invert or brighten somebody's trademark — that is defacing it,
+     and the same rule that says `contain` rather than `cover`
+     applies. It is to give the mark the ground it was drawn for,
+     in both themes, and let the plate be the light thing on a dark
+     card. Slightly off-white rather than #fff so it reads as
+     paper against a white card rather than as a hole in it. */
+  --mark-paper: #f7f9fb;
   --surface-2: #ffffff;
   --surface-3: #eef3f8;
   --surface-4: #dfe9f2;
@@ -136,6 +155,10 @@
   --bg: #071522;          /* app ground */
   --bg-canvas: #08192a;   /* the sheet */
   --surface-1: #101f2f;   /* cards, panels, the resting plane */
+  /* NOT FLIPPED — see the note on this token in the light block.
+     Restated here rather than left to inherit, so a reader of the
+     dark palette can see it was a decision. */
+  --mark-paper: #f7f9fb;
   --surface-2: #16283a;   /* raised: popovers, menus, selected rows */
   --surface-3: #1d3145;   /* inputs, hover on surface-2 */
   --surface-4: #253c52;   /* pressed, hover on surface-3 */

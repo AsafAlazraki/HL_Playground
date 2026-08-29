@@ -439,7 +439,10 @@
   position: absolute;
   left: var(--s-2);
   bottom: var(--s-2);
-  background: var(--surface-1);
+  /* PAPER, IN BOTH THEMES — see `--mark-paper` in ds.css. Every
+     logo here is dark ink on transparent, and on the dark theme
+     `--surface-1` is #101f2f, which swallowed three of the eight. */
+  background: var(--mark-paper);
   border: 1px solid var(--line);
   border-radius: var(--r-control);
   box-shadow: var(--e1);
@@ -3899,8 +3902,9 @@
   max-width: 168px;
   padding: 6px var(--s-3);
   /* the brand's own ink on the kind's tint would be two colours
-     arguing; a mark gets paper */
-  background: var(--surface-1);
+     arguing; a mark gets paper — and paper does not flip with the
+     theme, because the ink on these files does not either. */
+  background: var(--mark-paper);
 }
 .md-work-mark .md-place-logo {
   max-width: 100%;

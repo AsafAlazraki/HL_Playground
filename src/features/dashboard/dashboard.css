@@ -2029,6 +2029,14 @@
    times the height of the wider ones. */
 .dsh-tile-panel .md-place-logo {
   max-height: 40px;
+  /* THE MARK IS PRINTED ON PAPER, in both themes. On dark the
+     panel is `color-mix(kind 14%, #101f2f)` and every logo this
+     app ships is dark ink on transparent — Highfield's wordmark
+     measured 1.4:1 against its own tile. The plate is the light
+     thing on a dark card; the kind's tint still frames it. */
+  padding: 6px var(--s-3);
+  border-radius: var(--r-control);
+  background: var(--mark-paper);
 }
 
 /* THE NAME, WHERE THERE IS NO MARK. Centred, because it is

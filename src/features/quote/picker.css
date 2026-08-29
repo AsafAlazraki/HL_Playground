@@ -308,7 +308,7 @@
      the ground behind it rather than a glyph beside it. */
   min-height: 92px;
   padding: var(--s-4) var(--s-5);
-  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
+  background: color-mix(in srgb, var(--kind) 12%, var(--mark-paper));
   border-bottom: 1px solid color-mix(in srgb, var(--kind) 18%, transparent);
   color: var(--kind);
   overflow: hidden;
