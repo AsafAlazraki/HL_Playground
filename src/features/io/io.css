@@ -1090,3 +1090,20 @@
     transform: none;
   }
 }
+
+/* TOUCH TARGETS — see ds.css beside `.k-filter`. 123 x 22: wide
+   enough to hit and less than half tall enough. */
+@media (pointer: coarse) {
+  .io-trigger {
+    position: relative;
+  }
+  .io-trigger::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

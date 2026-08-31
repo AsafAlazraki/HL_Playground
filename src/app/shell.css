@@ -5980,3 +5980,22 @@
     grid-column: auto;
   }
 }
+
+/* TOUCH TARGETS — see ds.css beside `.k-filter`. The rail's fold
+   is 24 x 24 and back is 71 x 28. */
+@media (pointer: coarse) {
+  .sn-fold,
+  .shell-view-back {
+    position: relative;
+  }
+  .sn-fold::after,
+  .shell-view-back::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

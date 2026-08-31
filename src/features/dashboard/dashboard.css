@@ -2246,3 +2246,24 @@
   flex: none;
   color: var(--kind);
 }
+
+/* TOUCH TARGETS. The mechanism and the measurements are in
+   ds.css beside `.k-filter`; these are this screen's three. */
+@media (pointer: coarse) {
+  .dsh-open,
+  .dsh-act,
+  .dsh-tile-grip {
+    position: relative;
+  }
+  .dsh-open::after,
+  .dsh-act::after,
+  .dsh-tile-grip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

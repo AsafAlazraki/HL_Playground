@@ -1756,3 +1756,51 @@
     background: var(--surface-1);
   }
 }
+
+/* ============================================================
+   TOUCH TARGETS, AND NOTHING IN THIS APPLICATION HAD EVER
+   CONSIDERED THEM.
+
+   Measured on the real app at 390x900 — a phone in a hand on the
+   floor of a boat show, which is where a dealer actually stands:
+
+     .dsh-tile-grip      20 x 20     the drag handle on a module
+     .pb-col-sortgo      22 x 22     a board column's own order
+     .pb-col-shutgo      22 x 22     collapsing a column
+     .io-trigger        123 x 22     import / export
+     .sn-fold            24 x 24     narrowing the rail
+     .dsh-open           29 x 19     the door out of a card
+     .shell-view-back    71 x 28     back, from a document
+     .k-filter            * x 30     every filter chip in the app
+
+   WCAG 2.5.8 puts the floor at 24 x 24 and 2.5.5 at 44 x 44.
+   Three of those fail even the lower one, and 20 x 20 on glass is
+   a control a person misses and then presses something else.
+
+   THE HIT AREA GROWS AND THE CONTROL DOES NOT. Padding the button
+   would move every layout it sits in — the tile foot, the column
+   head, the rail — and all of them were measured at these sizes.
+   An absolutely-positioned `::after` centred on the control takes
+   the presses without occupying a pixel of flow. `max()` so a
+   control already larger than 44 keeps its own size rather than
+   being shrunk to it.
+
+   `pointer: coarse` ONLY. A mouse is precise and a 44px invisible
+   pad around a 20px grip would swallow presses meant for the tile
+   underneath it — which is exactly the fault this is fixing, in
+   the other direction.
+   ============================================================ */
+@media (pointer: coarse) {
+  .k-filter {
+    position: relative;
+  }
+  .k-filter::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

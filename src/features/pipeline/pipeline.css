@@ -2473,3 +2473,22 @@
     transform: none;
   }
 }
+
+/* TOUCH TARGETS — see ds.css beside `.k-filter`. Both of these
+   measured 22 x 22, under even WCAG 2.5.8's floor of 24. */
+@media (pointer: coarse) {
+  .pb-col-sortgo,
+  .pb-col-shutgo {
+    position: relative;
+  }
+  .pb-col-sortgo::after,
+  .pb-col-shutgo::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
