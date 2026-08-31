@@ -1325,7 +1325,31 @@
   outline-offset: 2px;
 }
 
+/* ON THE PICKER THERE IS NOTHING TO OPEN. The figure there is the
+   hull's own price and there is no document behind it to break down,
+   so it is a plate: `flow.tsx` renders a span, and the three states
+   a control owes a person come off with the control. `:hover` and
+   `:active` above are attribute-free, so they would otherwise light
+   up a thing nothing happens on. */
+.qb-price-fig.is-flat,
+.qb-price-fig.is-flat:hover,
+.qb-price-fig.is-flat:active {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
 .qb-price-lab {
+  color: var(--fg-tertiary);
+}
+
+/* A ROW WITH NO PRICE NEVER READS AS 0, and it does not read at 30px
+   either: the slot is a figure's slot, and six words set in it would
+   be the loudest sentence on the screen. `--fg-tertiary` is
+   `--ink-faint`, 5.5:1 on this bar's opaque `--surface-1`. */
+.qb-price-nil {
+  font-size: var(--t-small-size);
+  font-weight: 550;
   color: var(--fg-tertiary);
 }
 
@@ -1481,7 +1505,6 @@
    a quiet bordered thing that opens something — so they are one
    rule. Three separately-tuned greys on one 113px strip is exactly
    the "uniformity" the owner keeps asking for. */
-.qb-door,
 .qb-give-fix,
 .qb-give-more {
   display: inline-flex;
@@ -1501,28 +1524,34 @@
     transform var(--d-press) var(--ease);
 }
 
-.qb-door:hover,
 .qb-give-fix:hover,
 .qb-give-more:hover {
   border-color: var(--line-strong);
   color: var(--fg);
 }
 
-.qb-door:active,
 .qb-give-fix:active,
 .qb-give-more:active {
   transform: scale(0.97);
 }
 
-.qb-door:focus-visible,
 .qb-give-fix:focus-visible,
 .qb-give-more:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.qb-door {
+/* ── THE LAST ACT ON THE BAR, WHICHEVER SCREEN IT IS ─────────────
+   `.qb-door` carried `margin-left: auto` and pushed itself and the
+   handover to the right end of the strip. The door is gone — the
+   flow line's Address stop is that door now — so the rule belongs to
+   whatever the screen's own last act is: "Give it to the customer"
+   on Configure and Address, "Start the quote" on Choose. It is a
+   POSITION inside this bar, so it is declared with the bar rather
+   than three times in three stylesheets. */
+.qb-price-act {
   margin-left: auto;
+  align-self: center;
 }
 
 /* ── THE SLOT, AND WHY IT IS A ROW OF ITS OWN BELOW 1440 ──────────
@@ -2223,7 +2252,7 @@
     padding: var(--s-3) var(--s-4);
     gap: var(--s-3);
   }
-  .qb-door {
+  .qb-price-act {
     margin-left: 0;
   }
   .qb-give-why {
@@ -2241,10 +2270,6 @@
      full-width primary costs nothing and is the easier target. */
   .qb-give {
     width: 100%;
-  }
-  .qb-door {
-    flex: 1;
-    justify-content: center;
   }
   .qb-sheet-scrim {
     padding: 0;

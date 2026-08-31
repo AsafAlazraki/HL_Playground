@@ -61,6 +61,32 @@
      card. Slightly off-white rather than #fff so it reads as
      paper against a white card rather than as a hole in it. */
   --mark-paper: #f7f9fb;
+
+  /* AND THE INK THAT GOES ON IT, which shipping the paper alone left
+     out — twice, in two features, in the same way.
+
+     A plate that does not flip has to be written on with an ink that
+     does not flip either, and both surfaces that print on
+     `--mark-paper` reached for a token that does. Measured on dark:
+
+       `.qs-card-name` (quote/picker.css:327) is `var(--fg)`, and a
+       brand with no logo file draws its NAME on the plate. #eaf1f8
+       on the eight tinted plates measures 1.00 to 1.04 : 1. Five of
+       the fifteen cards on "What are you quoting?" were blank.
+
+       `.md-place-mark` (modules/modules.css:422) is `var(--kind)`,
+       and the dark kind ramp is the BRIGHT cut: --kind-indigo
+       #6ea8ff on the plate is 2.29:1, --kind-amber #e2a83e is
+       2.01:1. Formosa's boat glyph and the trailer glyphs on the
+       modules grid are invisible.
+
+     #081b2e is light's own --fg, which is the ink these logos were
+     drawn in and the ink the plate was cut for: 16.49:1 on
+     --mark-paper, and 14.67 to 15.27:1 on the eight kind-tinted
+     plates `.qs-card-mark` mixes. Stated once here so neither site
+     has to write a literal, and so the next surface that prints on
+     paper has somewhere to look. */
+  --mark-ink: #081b2e;
   --surface-2: #ffffff;
   --surface-3: #eef3f8;
   --surface-4: #dfe9f2;
@@ -149,16 +175,25 @@
 
   /* -- ground ------------------------------------------------
      Cool-neutral near-black. The steps are close on purpose: on
-     dark, a 6-8 point lift reads as "raised" without ever
-     looking like a different colour. */
+     dark, a small lift reads as "raised" without ever looking
+     like a different colour. Counted per channel rather than
+     asserted, because the floor above is measured against them:
+     sunken->bg +2/+6/+8, bg->canvas +1/+4/+8, canvas->1 +8/+6/+5,
+     1->2 +6/+9/+11, 2->3 +7/+9/+11, 3->4 +8/+11/+13. So the top of
+     the ramp steps roughly twice as hard as the bottom, which is
+     why --surface-3 and --surface-4 are far enough from
+     --surface-1 to need the ink floor re-measured on them. */
   --bg-sunken: #050f1a;   /* behind the canvas, wells */
   --bg: #071522;          /* app ground */
   --bg-canvas: #08192a;   /* the sheet */
   --surface-1: #101f2f;   /* cards, panels, the resting plane */
-  /* NOT FLIPPED — see the note on this token in the light block.
+  /* NOT FLIPPED — see the note on these two in the light block.
      Restated here rather than left to inherit, so a reader of the
-     dark palette can see it was a decision. */
+     dark palette can see it was a decision. The ink is restated for
+     the same reason: it is the half that was missing, and the half
+     a dark theme is most likely to be given a flipping token for. */
   --mark-paper: #f7f9fb;
+  --mark-ink: #081b2e;
   --surface-2: #16283a;   /* raised: popovers, menus, selected rows */
   --surface-3: #1d3145;   /* inputs, hover on surface-2 */
   --surface-4: #253c52;   /* pressed, hover on surface-3 */
@@ -171,24 +206,70 @@
   --line-strong: rgba(255, 255, 255, 0.15);
 
   /* -- text ---------------------------------------------------
-     Measured in-browser against --surface-1 (#131519):
-       --fg            15.7 : 1
-       --fg-secondary   7.5 : 1
-       --fg-tertiary    4.7 : 1   <- the floor. Clears 4.5.
-       --fg-quaternary  2.8 : 1   <- does NOT clear 4.5, and is
-                                     therefore decoration only:
-                                     rules, ticks, disabled marks.
-                                     Never a word that matters. */
+     Re-measured in-browser against the CURRENT --surface-1
+     (#101f2f). The figures that stood here — 15.7 / 7.5 / 4.7 / 2.8
+     "against --surface-1 (#131519)" — named a ground this palette
+     stopped using when it went marine, and not one of the four
+     matched #131519 either. They are replaced by what was read
+     back:
+       --fg            14.64 : 1
+       --fg-secondary   8.55 : 1
+       --fg-tertiary    6.62 : 1   <- the floor. See below.
+       --fg-quaternary  3.21 : 1   <- does NOT clear 4.5, and is
+                                      therefore decoration only:
+                                      rules, ticks, disabled marks.
+                                      Never a word that matters.
+
+     THE FLOOR IS MEASURED ON THE DEEPEST SURFACE IT MAY LAND ON,
+     NOT ONLY ON --surface-1, and that is what moved it. --fg-tertiary
+     was #7d94a9, which clears 4.5 on --surface-1 (5.31) and fails on
+     the two surfaces below it in this same block:
+
+       --surface-3 #1d3145  4.24 : 1   inputs, hover on surface-2
+       --surface-4 #253c52  3.62 : 1   pressed, hover on surface-3
+
+     A floor that holds on one of four declared grounds is not a
+     floor. It was failing in the running app, in dark, at every site
+     a driven sweep reached: `.qb-price-lab` and `.qb-give` in the
+     configurator, `.qs-sec-count` on the quote picker and
+     `.cn-conseq-live` under a business rule all measured 4.24:1, and
+     `search.css` had already noticed and worked around it per-rule
+     (`.hs-foot-say`, `.hs-key`). #8fa6bb is the smallest step along
+     the same blue-grey line that clears 4.5 on all four:
+
+       surface-1 6.62   surface-2 5.96   surface-3 5.29
+       surface-4 4.52   bg 7.32   bg-sunken 7.65   bg-canvas 7.05
+
+     Light is untouched here on purpose. Its floor #5a6b7c measures
+     5.48 on --surface-1, 4.91 on --surface-3 and 4.46 on
+     --surface-4 — so it has the same fault, a tenth of the size,
+     and one unit of darkening (#596a7b) clears it at 4.53. It is
+     left standing because DESIGN_PRINCIPLES §1 publishes this ink's
+     ratios in a table, and moving light's ramp without moving that
+     table is how a doc starts lying. Flagged, not fixed. */
   --fg: #eaf1f8;
   --fg-secondary: #a8bccf;
-  --fg-tertiary: #7d94a9;
+  --fg-tertiary: #8fa6bb;
   --fg-quaternary: #5a6f83;
   --fg-on-accent: #ffffff;
 
   /* -- accent -------------------------------------------------
-     One hue, roughly four appearances per screen. 5.1:1 on
+     One hue, roughly four appearances per screen. 6.60:1 on
      --surface-1 measured, so it is legal as text and not only as
-     paint. (Light's accent measures 5.9:1 on white.) */
+     paint. (Light's accent measures 5.9:1 on white.)
+
+     THAT FIGURE READ 5.1:1 AND WAS NEVER TRUE OF THIS PALETTE — the
+     --accent-fg note fifteen lines below already quotes 6.60:1 for
+     the same pair, so the file disagreed with itself. 6.60 is what
+     the browser returns for #58a6ff on #101f2f.
+
+     WHERE IT IS NOT LEGAL AS TEXT, measured: the accent on its own
+     wash. 5.18:1 on --accent-wash over --surface-1 — but 4.16:1 on
+     --accent-wash over --surface-3, and 4.41:1 on
+     --accent-wash-strong over --surface-1. A hue on a tint of
+     itself is the pairing rule 4 exists to catch, and these two
+     grounds do not clear it. `.cn-src-verdict` in constraints.css
+     is doing the first of those and measures 4.14:1 in the app. */
   --accent: #58a6ff;
   --accent-hover: #6cb2ff;
   --accent-press: #3d8ef5;
@@ -851,13 +932,22 @@
     --fg-tertiary: #4b5462;
     --fg-quaternary: #4b5462;
   }
+  /* THE DARK PAIR WERE NEUTRAL GREYS FROM THE PRE-MARINE PALETTE and
+     one of them had stopped being a lift at all: #a0a6b0 measures
+     6.81:1 on --surface-1, against a base floor that is now 6.62 —
+     0.19 of a point, which is not a higher-contrast mode, it is a
+     rounding error. Re-cut onto the same blue-grey line as the base
+     ramp and given real headroom, measured on
+     --surface-1 / --surface-3 / --surface-4:
+       --fg-secondary #c3d3e0  10.89 / 8.69 / 7.43  (base 8.55)
+       --fg-tertiary  #aabdcd   8.63 / 6.89 / 5.89  (base 6.62) */
   [data-theme='dark'] {
     --line-subtle: rgba(255, 255, 255, 0.18);
     --line: rgba(255, 255, 255, 0.3);
     --line-strong: rgba(255, 255, 255, 0.48);
-    --fg-secondary: #c7ccd4;
-    --fg-tertiary: #a0a6b0;
-    --fg-quaternary: #a0a6b0;
+    --fg-secondary: #c3d3e0;
+    --fg-tertiary: #aabdcd;
+    --fg-quaternary: #aabdcd;
   }
   .ds-root .ds-chip,
   .ds-root .verb,
@@ -999,8 +1089,30 @@
   --edge-light: rgba(255, 255, 255, 0.07);
   --edge-dark: rgba(0, 0, 0, 0.4);
 
-  --grad-surface: linear-gradient(180deg, #171a1f 0%, #131519 100%);
-  --grad-sunken: linear-gradient(180deg, #0c0e11 0%, #090a0c 100%);
+  /* THE THREE TOKENS THE MARINE RE-TINT LEFT BEHIND, and they are
+     the reason a dark screen had two neutral families on it.
+
+     When the ground moved from a warm near-black to the blue ramp,
+     --surface-1 went #131519 -> #101f2f and --bg-sunken went to
+     #050f1a. These three were written against the OLD ground and
+     were never moved, so ~50 selectors across 25 stylesheets — the
+     Admin doors, the module panels, the constraint sheets, the crm
+     cards, the dashboard cards — painted #171a1f, a warm grey, on a
+     blue-black page. It is not a contrast fault; both read fine.
+     It is a HUE fault, and it is visible: on Admin, `.ad-door` and
+     `.md-acc-panel` sit next to `.ad-well` and read brown beside it.
+
+     Re-cut onto the marine ramp, keeping each gradient's SHAPE. On
+     light --grad-surface runs --surface-1 (#ffffff) down a hair to
+     #fcfcfd; on dark it now runs --surface-1 (#101f2f, luminance
+     0.0130) down to #0d1a29 (0.0098), the same relative fall the old
+     pair had (0.0102 -> 0.0074). Ink on the new stops, measured:
+     --fg 14.64 / 15.40, --fg-secondary 8.55 / 8.99, --fg-tertiary
+     6.62 / 6.97, --accent 6.60 / 6.95. --grad-sunken runs --bg
+     (#071522) to below --bg-sunken (#040d16), 16.18 / 17.16 for
+     --fg. */
+  --grad-surface: linear-gradient(180deg, #101f2f 0%, #0d1a29 100%);
+  --grad-sunken: linear-gradient(180deg, #071522 0%, #040d16 100%);
 
   --glow-sm: 0 0 0 3px var(--accent-glow);
   --glow-md: 0 0 18px -2px var(--accent-glow);
@@ -1021,7 +1133,11 @@
     0 12px 28px -8px rgba(0, 0, 0, 0.5),
     0 48px 96px -24px rgba(0, 0, 0, 0.7);
 
-  --glass-bg: rgba(19, 21, 25, 0.72);
+  /* the third of them: --surface-1 at 72%, not the retired #131519.
+     Composited over --bg it was rgb(16,21,28) and is now rgb(13,28,43),
+     which is the masthead and the dock reading as the same material
+     as the cards beneath them. --fg on it: 15.14:1. */
+  --glass-bg: rgba(16, 31, 47, 0.72);
   --glass-blur: 20px;
   --glass-sat: 160%;
   --glass-edge: rgba(255, 255, 255, 0.08);
@@ -1462,10 +1578,23 @@
   border-left: 4px solid var(--kind);
 }
 
-/* A TINT, NOT A FILL. 8% on light and 14% on dark, which is under
-   the threshold at which any ink on it moves by a contrast point —
-   the same argument the aurora is capped by, and the reason text
-   on these is still measured against the ground beneath. */
+/* A TINT, NOT A FILL. 8% on light and 14% on dark.
+
+   THE CLAIM THAT STOOD HERE — "under the threshold at which any ink
+   on it moves by a contrast point ... text on these is still
+   measured against the ground beneath" — is false at the floor, and
+   was the reason to check. Measured across all nine hues, the wash
+   moves --fg-tertiary by well over a point on dark: 5.31:1 on
+   --surface-1 became 3.99–4.39 on the wash and 3.83–4.28 on the
+   band, which is a fail on every hue. --fg and --fg-secondary do
+   sit within the claim (11.0–12.1 and 6.4–7.1).
+
+   Raising the floor to #8fa6bb — see the dark ink ramp above, which
+   it was raised for a different reason — takes the wash to 4.93–5.42
+   and the band to 4.73–5.28, so the tints hold as they are. Light,
+   at 8% and 10%, measures 4.79–4.93 and 4.62–4.81. The threshold
+   argument is kept for --fg and --fg-secondary and withdrawn for
+   the floor: on a kind wash, the floor is measured on the wash. */
 .k-wash {
   background: color-mix(in srgb, var(--kind) 8%, var(--surface-1));
 }
@@ -1492,8 +1621,26 @@
 }
 
 /* a chip that says which kind, in the kind's own ink on its own
-   tint. The INK is the hue at full strength, which is measured
-   above 4.5:1 on both grounds; the tint is under it. */
+   tint — which is a hue on a tint of ITSELF, and therefore the one
+   pairing rule 4 exists to catch.
+
+   IT WAS MEASURED AGAINST THE WRONG GROUND. This said "the INK is
+   the hue at full strength, which is measured above 4.5:1 on both
+   grounds; the tint is under it" — true of the hue on --surface-1,
+   which is not what the chip puts behind it. Measured on the chip's
+   OWN composited ground, the tint took three hues under the floor on
+   each theme:
+
+     dark, 20%    slate 3.98   violet 4.25   rose 4.36
+     light, 12%   amber 4.20   orange 4.25   green 4.27
+
+   The light ramp is the tighter of the two, because those hues were
+   already darkened to hold 4.5:1 on white and have almost no
+   headroom left to spend on a tint of themselves. So the tint comes
+   down rather than the ink moving: 12% -> 6% on light (range now
+   4.56–6.94, worst is amber) and 20% -> 12% on dark (4.52–6.80,
+   worst is slate). A chip is still a chip — pill, hue ink, tinted
+   ground — and now every one of the eighteen clears. */
 .k-chip {
   display: inline-flex;
   align-items: center;
@@ -1501,7 +1648,7 @@
   height: 20px;
   padding: 0 7px;
   border-radius: var(--r-full);
-  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
+  background: color-mix(in srgb, var(--kind) 6%, var(--surface-1));
   color: var(--kind);
   font-family: var(--font-sans);
   font-size: var(--t-caption-size);
@@ -1509,7 +1656,7 @@
   white-space: nowrap;
 }
 [data-theme='dark'] .k-chip {
-  background: color-mix(in srgb, var(--kind) 20%, var(--surface-1));
+  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
 }
 
 /* a filter chip: quiet until it is on, then the kind carries it */
@@ -1526,8 +1673,15 @@
   border-color: var(--line-strong);
   color: var(--fg);
 }
+/* the on-state is the same hue-on-its-own-tint pairing as .k-chip and
+   carried the same fault at the same 12%: amber 4.20, orange 4.25,
+   green 4.27 on light. One tint value for both themes here, because
+   6% clears on light (4.56 worst) and on dark (4.65 worst) — the
+   chip needs the second value only because it starts from a darker
+   ground on dark. The BORDER is what makes a pressed filter read
+   from across the row, and it is untouched at 45%. */
 .k-filter[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
+  background: color-mix(in srgb, var(--kind) 6%, var(--surface-1));
   border-color: color-mix(in srgb, var(--kind) 45%, transparent);
   color: var(--kind);
 }

@@ -1,5 +1,25 @@
 /* ============================================================
-   THE QUOTE WHILE IT IS STILL A DRAFT.
+   ADDRESS — the third moment of raising a quote.
+
+   ── WHAT CHANGED, AND IT IS A NAME RATHER THAN A REWRITE ─────
+
+   This screen was reached by a button in the corner of the price
+   bar reading "The whole quote", and `QuotePage` framed it as an
+   alternative READING of a draft: the sequence for building, the
+   sheet for finishing. Meanwhile the act CONFIGURATOR.md §A calls
+   the third moment — addressing the quote — was a shut accordion
+   3,277px down the configurator, measured with every band open on a
+   Highfield CL360 at 1600x1000 against an 805px viewport.
+
+   So the third screen was not missing. It was here, holding the
+   customer field, the adjustments, the tax rate, the note, the
+   contact lines, the re-read and the handover, under a name that
+   said how much document it showed rather than what a person came
+   to do. It is Address now, it is the flow's last stop, and the
+   configurator's paperwork band — which duplicated this field, the
+   ledger and `issueBlockers` — is gone.
+
+   ── WHAT IT STILL IS ─────────────────────────────────────────
 
    It opens ALREADY MADE. The subject is on it, and one section per
    view block in the view's own order: a section whose block had a
@@ -93,6 +113,7 @@ import {
   updateAdjustment,
   useCustomerQuotes,
 } from './quotes'
+import { FlowFoot, FlowLine, RunningTotal, type FlowStop } from './flow'
 import { FrozenPhoto } from './photo'
 import { CHARGE_TITLE } from './types'
 import type {
@@ -140,12 +161,17 @@ export interface QuoteEditorProps {
    *  nothing) but not offered as a door, so this screen still works
    *  wherever it is mounted. */
   onOpenCustomer?: (rowId: string) => void
+  /** move to another moment of the flow. Absent = the flow line is
+   *  drawn as three stops and none of them is a control, which is
+   *  what this screen does wherever it is mounted on its own. */
+  onGo?: (to: FlowStop) => void
 }
 
 export function QuoteEditor({
   quote,
   onIssued,
   onOpenCustomer,
+  onGo,
 }: QuoteEditorProps): ReactElement {
   const totals = quoteTotals(quote)
   /* see the block that draws it, under the sections */
@@ -194,6 +220,11 @@ export function QuoteEditor({
      refused for a second reason nobody mentioned has been told half
      the truth. */
   const refusals = issueBlockers(quote)
+
+  /** what the flow line's last stop carries — a name and one fact,
+   *  and the fact is the answer to the question the stop is named
+   *  for. '' is "nobody has typed it yet" and never a placeholder. */
+  const named = quote.customer.name.trim()
 
   return (
     /* THE DOCUMENT SCROLLS AND THE TOTAL DOES NOT — and they are
@@ -530,34 +561,37 @@ export function QuoteEditor({
         </div>
       </div>
 
-      {/* -- the foot bar: under the document, never over it ---- */}
-      <div className="qt-foot">
-        <div className="qt-foot-line">
-          <div className="qt-foot-sum">
-            <span className="mono-label">Total</span>
-            <span className="qt-foot-total">{money(totals.total)}</span>
-            {totals.unpricedCount > 0 ? (
-              <span className="qt-foot-unpriced">
-                {totals.unpricedCount} not priced
-              </span>
-            ) : null}
-          </div>
-          {/* DISABLED, WITH THE REASONS ONE LINE AWAY — never a disabled
-              control on its own. `issueQuote` refuses the same cases, so
-              the button and the registry cannot disagree; if it ever
-              returns false the document stays a draft and the stage is
-              not told anything happened. */}
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={refusals.length > 0}
-            onClick={() => {
-              if (issueQuote(quote.id)) onIssued?.(quote)
+      {/* ── THE FOOT BAR IS THE FLOW'S BAR ──────────────────────
+          It was `.qt-foot`: its own strip, its own ground, the total
+          at `--t-mono-lg-size` (13px mono) and the refusals BELOW the
+          figure. The build screen's was `.qb-price`, `--surface-1`,
+          the total at clamp(22px, 1.9vw, 30px) with the refusals
+          above it. One document, two footers, and a figure that
+          changed size and place when a person pressed one button.
+
+          So this mounts the one that was measured — the wrap
+          breakpoints, the reserved proposal row and the press states
+          in build.css all come with it — and the reasons move above
+          the strip, where they sit on the other two.
+
+          THE REASONS ARE STILL EVERY ONE OF THEM, in full, which is
+          the difference between this and the price bar's own line:
+          that one prints the first SENTENCE of the first reason
+          beside the button it refuses, and this is where the rest
+          have always been recoverable. */}
+      <FlowFoot
+        line={
+          <FlowLine
+            at="address"
+            facts={{
+              choose: quote.subjectLabel,
+              address: named === '' ? 'nobody yet' : named,
             }}
-          >
-            Give it to the customer
-          </button>
-        </div>
+            reach={['configure']}
+            {...(onGo ? { onGo } : {})}
+          />
+        }
+      >
         {refusals.length > 0 ? (
           <div className="qt-foot-whys" role="status">
             {refusals.map((why) => (
@@ -567,7 +601,39 @@ export function QuoteEditor({
             ))}
           </div>
         ) : null}
-      </div>
+
+        <div className="qb-price-bar">
+          <RunningTotal
+            label="Total"
+            amount={totals.total}
+            sub={
+              totals.totalExcludingTax === null
+                ? 'incl. tax'
+                : `${money(totals.totalExcludingTax)} ex · ${totals.taxRate}%`
+            }
+          />
+          {totals.unpricedCount > 0 ? (
+            <span className="qb-price-unpriced">{totals.unpricedCount} not priced</span>
+          ) : null}
+          {/* NOT `disabled`, WHICH IS A CHANGE. It was, with the
+              reasons one line away — and a disabled control drops out
+              of the tab order and takes its own explanation with it,
+              which is the argument the build screen's own handover
+              already makes. `issueQuote` refuses the same cases either
+              way, so the button and the registry cannot disagree. */}
+          <button
+            type="button"
+            className="qb-give qb-price-act"
+            aria-disabled={refusals.length > 0 || undefined}
+            onClick={() => {
+              if (refusals.length > 0) return
+              if (issueQuote(quote.id)) onIssued?.(quote)
+            }}
+          >
+            Give it to the customer
+          </button>
+        </div>
+      </FlowFoot>
     </>
   )
 }
@@ -850,12 +916,28 @@ function SectionCard({
      turns the narrowing off, and anything reached that way arrives
      marked `outside` so nothing looks like a pairing the price file
      made when it did not. */
+  /* ── AND IT RE-RAN ON EVERY KEYSTROKE OF SOMETHING ELSE ────────
+     `quote` as a dependency is the whole document, so an open picker
+     re-solved its shortlist whenever ANY field of the quote changed —
+     the customer's name, the tax rate, a note. Measured on this
+     screen with the Parts & Accessories picker open: 51, 61, 65, 60
+     and 58ms for five consecutive letters typed into the customer
+     box, and every candidate row rebuilt on each of them.
+
+     THE DEPENDENCIES ARE WHAT `stepOffer` ACTUALLY READS, which is a
+     short list and a checkable one: `rootTableId` and `rootRowId` for
+     the hull, `viewId` for the page whose blocks the bands are,
+     `levelKey` for the rung every candidate is priced at, `lines` for
+     "already on the quote", and the section. Nothing else on a
+     QuoteDef reaches it. */
+  const { rootTableId, rootRowId, viewId, levelKey, lines: onQuote } = quote
   const offer: StepOffer = useMemo(
     () =>
       picking
         ? stepOffer(quote, section, { all: showAll, query: search })
         : EMPTY_OFFER,
-    [picking, quote, section, showAll, search],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+    [picking, rootTableId, rootRowId, viewId, levelKey, onQuote, section, showAll, search],
   )
   const candidates = offer.candidates
 
@@ -993,11 +1075,18 @@ function SectionCard({
             </p>
           ) : (
             <ul className="qt-picker-list">
-              {/* keyed on the minted line, never on the row: one hull
-                  offers the same motor in several slots, so a row id is
-                  not unique among candidates (FITMENT_RULES.md §1.4) */}
+              {/* KEYED ON THE OFFER, NEVER ON THE MINTED LINE. It was
+                  `c.line.id`, on the reasoning that one hull offers the
+                  same motor in several slots so a row id is not unique
+                  (FITMENT_RULES.md §1.4) — which is true of the ROW and
+                  answered by `Candidate.key`, the pairing. The line's
+                  id is minted fresh on every `stepOffer` run, so that
+                  key changed whenever anything on the quote did:
+                  measured, four candidates tagged in this list and one
+                  letter typed into the customer's name left 4 rows and
+                  0 survivors. See the note on `Candidate.key`. */}
               {candidates.map((c) => (
-                <li key={c.line.id}>
+                <li key={c.key}>
                   <button
                     type="button"
                     className="qt-pick"

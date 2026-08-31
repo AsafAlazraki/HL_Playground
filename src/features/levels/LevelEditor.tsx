@@ -41,6 +41,7 @@ import { useMemo, useState } from 'react'
 import type { JSX } from 'react'
 import { CaretDown, CaretRight } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
+import { PageHead } from '@/features/page'
 import { rowLabel, type CellValue, type FieldDef } from '@/types/model'
 import type { PushNote } from '@/store/notes'
 import {
@@ -114,29 +115,44 @@ function TablePicker({ onPick }: { onPick: (id: string) => void }): JSX.Element 
   if (tables.length === 0) {
     return (
       <section className="lv">
-        <header className="lv-head">
-          <p className="lv-eyebrow ds-label">Configure at every level</p>
-          <h1 className="lv-title">Nothing to configure yet</h1>
-          <p className="lv-sub ds-body">
-            This door sets a value once and gives it to every row beneath. It needs a table
-            with rows in it — import a price file, or open the sample workbook.
-          </p>
-        </header>
+        <PageHead
+          eyebrow="Admin"
+          name="Configure"
+          line="It needs a table with rows in it — import a price file, or open the sample workbook."
+        />
       </section>
     )
   }
 
   return (
     <section className="lv">
-      <header className="lv-head">
-        <p className="lv-eyebrow ds-label">Configure at every level</p>
-        <h1 className="lv-title">Which table?</h1>
-        {/* ONE LINE. What happens to a row that disagrees is said on
-            that row, by the editor, at the moment it is left alone —
-            which is where a person can do something about it. */}
-        <p className="lv-sub ds-body">Set it once; every row beneath takes it.</p>
-      </header>
-      <ul className="lv-pick">
+      {/* THE APPLICATION'S ONE HEADER, and this page was the fifth
+          screen still drawing its own. Measured at 1600 before:
+          `.lv-title` was 52px Archivo with its left edge at 248,
+          against `.ph-name` at 34px with its left edge at 256 on
+          Admin, Modules, Quotes and Customers — a title half again
+          as large as every other page's, 8px further out, over an
+          eyebrow set in Inter where every other eyebrow is mono.
+
+          AND IT IS NAMED FOR THE DOOR THAT OPENS IT. The title read
+          "Which table?", which is a question — ruled out as a name
+          by the same commit that renamed the fitment stage — while
+          the door, the rail and the window title all say Configure.
+          The question is now the group caption over the list, where
+          a caption may ask one. */}
+      <PageHead
+        eyebrow="Admin"
+        name="Configure"
+        count={`${tables.length} ${tables.length === 1 ? 'table' : 'tables'}`}
+        /* ONE LINE. What happens to a row that disagrees is said on
+           that row, by the editor, at the moment it is left alone —
+           which is where a person can do something about it. */
+        line="Set it once; every row beneath takes it."
+      />
+      <p className="mono-label lv-pick-cap" id="lv-pick-cap">
+        Which table?
+      </p>
+      <ul className="lv-pick" aria-labelledby="lv-pick-cap">
         {tables.map((t) => (
           <li key={t.entity.id}>
             <button className="lv-pick-row" type="button" onClick={() => onPick(t.entity.id)}>
@@ -201,24 +217,39 @@ function LevelStage({ model, push, onBack }: StageProps): JSX.Element {
 
   return (
     <section className="lv ds-rise">
-      <header className="lv-head">
-        <p className="lv-eyebrow ds-label">Configure at every level</p>
-        <h1 className="lv-title">{model.entity.name}</h1>
-        <p className="lv-sub ds-body">
-          Set a value once at a level and every {model.noun.one} beneath it takes it. It is
-          written onto the rows themselves, so a quote made afterwards reads it without
-          being told.
-        </p>
-        {onBack ? (
-          <button className="lv-back ds-btn ds-btn--ghost ds-btn--sm" type="button" onClick={onBack}>
-            Another table
-          </button>
-        ) : null}
-      </header>
+      {/* `PageHead`, like every other page — see the note on the
+          picker above for what this replaced and what it measured.
+
+          ONE SENTENCE, NOT TWO. The second one ("It is written onto
+          the rows themselves, so a quote made afterwards reads it
+          without being told") is a fact about the mechanism, and
+          `PageHead` holds one line by contract: "Two is a paragraph
+          and belongs somewhere else". It is not lost — `SetPanel`
+          says it at the moment it matters, over the button that
+          does the writing.
+
+          "ANOTHER TABLE" IS AN ACT ON THE WHOLE PAGE, so it goes in
+          `acts` where every other page's acts are, rather than
+          absolutely positioned into the corner of a header box. */}
+      <PageHead
+        eyebrow="Configure"
+        name={model.entity.name}
+        count={`${model.root.rows.length.toLocaleString()} ${
+          model.root.rows.length === 1 ? model.noun.one : model.noun.many
+        }`}
+        line={`Set a value once at a level and every ${model.noun.one} beneath it takes it.`}
+        acts={
+          onBack ? (
+            <button className="btn lv-back" type="button" onClick={onBack}>
+              Another table
+            </button>
+          ) : undefined
+        }
+      />
 
       <div className="lv-body">
         <nav className="lv-pane lv-pane-tree" aria-label="Levels">
-          <p className="lv-pane-head ds-label">Which level</p>
+          <p className="mono-label lv-pane-head">Which level</p>
           <ul className="lv-tree">
             <TreeBranch
               nodes={[model.root]}
@@ -239,7 +270,19 @@ function LevelStage({ model, push, onBack }: StageProps): JSX.Element {
         </nav>
 
         <div className="lv-pane lv-pane-cols">
-          <p className="lv-pane-head ds-label">What {level.label} says</p>
+          {/* THE LEVEL'S NAME IS NOT UPPERCASED. This head read
+              "What {level.label} says" inside one uppercase style,
+              so on the real sheet it drew WHAT PARTS & ACCESSORIES
+              SAYS — a table's own name, shouted. Rule 3: uppercase
+              is a label style, never a name, and uppercasing content
+              is lossy (a dealer who typed "P/D Parts" and a dealer
+              who typed "P/D PARTS" become the same screen). The
+              caption stays a caption and the name keeps its case
+              beside it. */}
+          <p className="lv-pane-head">
+            <span className="mono-label lv-pane-cap">Every column at</span>
+            <span className="lv-pane-at">{level.label}</span>
+          </p>
           <ul className="lv-cols">
             {columns.map((col) => (
               <li key={col.field.id}>

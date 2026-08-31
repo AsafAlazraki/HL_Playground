@@ -109,7 +109,9 @@ import {
 } from './start'
 import { placeRules, subjectVerdict, type SubjectVerdict } from './subjectRules'
 import { unsellableSubject } from './freeze'
-import { createQuoteFromView } from './quotes'
+import { createQuoteFromView, unaddressedDraftFor } from './quotes'
+import { quoteTotals } from './totals'
+import { FlowFoot, FlowLine, RunningTotal } from './flow'
 import { PlaceMark } from '@/features/modules/PlaceMark'
 import { FrozenPhoto } from './photo'
 import './picker.css'
@@ -243,19 +245,50 @@ export function QuoteStart({
      this one", asked here so the two surfaces refuse identically. */
   const barred = chosen ? unsellableSubject(chosen.tableId, chosen.rowId) : ''
 
-  const start = useCallback(() => {
-    if (!chosen || barred !== '') return
-    /* `createViewFor` is idempotent and creates no table, no column
-       and no join, so nothing about the sheet changes because
-       somebody arrowed down a list. Structure is never a side
-       effect (§7); a page for a table a person has just asked to
-       sell is not structure. */
-    const view = createViewFor(chosen.tableId)
-    const made = createQuoteFromView(view.id, chosen.rowId)
-    if (!made) return
-    closeRef.current()
-    onStarted(made.id)
-  }, [chosen, barred, onStarted])
+  /* ── THE DRAFT THIS PERSON ALREADY STARTED FOR THIS ROW ──────────
+     Read at render, the same way `unsellableSubject` above is: this
+     screen is the focused window and the shell keys the stage on the
+     focused window's id, so coming back to it is a fresh mount and a
+     fresh read. `quotes.ts` carries the measurement this answers —
+     three drafts for one boat after two attempts, with the build on
+     the one nothing on screen mentioned. */
+  const standing = chosen ? unaddressedDraftFor(chosen.tableId, chosen.rowId) : undefined
+
+  const start = useCallback(
+    (fresh: boolean) => {
+      if (!chosen || barred !== '') return
+      /* ── FORWARD AGAIN GOES BACK TO THE SAME DOCUMENT ──────────
+         Unless a person asked for another one in as many words. */
+      if (!fresh && standing) {
+        onStarted(standing.id)
+        return
+      }
+      /* `createViewFor` is idempotent and creates no table, no column
+         and no join, so nothing about the sheet changes because
+         somebody arrowed down a list. Structure is never a side
+         effect (§7); a page for a table a person has just asked to
+         sell is not structure. */
+      const view = createViewFor(chosen.tableId)
+      const made = createQuoteFromView(view.id, chosen.rowId)
+      if (!made) return
+      /* ── AND IT NO LONGER CLOSES ITSELF ────────────────────────
+         `closeRef.current()` was here, and it is what made stepping
+         back impossible: the picker is a stage in the shell's window
+         stack (`winKit.tsx`, `{ kind: 'start' }`) and closing it left
+         nothing behind the quote to step back TO. Measured before
+         this — from a configured quote the only route to Choose was
+         the rail's New quote, which is not a way back but a new act,
+         and it minted a second draft.
+
+         Leaving it standing is what a stack means: the quote opens on
+         top, the stage's own Back pops it, and the screen underneath
+         is the one the person came from. Nothing is duplicated —
+         `winKey` is `'start'` for every picker, so pressing New quote
+         again raises this one rather than opening a second. */
+      onStarted(made.id)
+    },
+    [chosen, barred, standing, onStarted],
+  )
 
   /* THE CARET LANDS IN THE SEARCH once a place is open, because that
      is what a person who just pressed a module card is about to do.
@@ -343,7 +376,7 @@ export function QuoteStart({
         if (event.target !== findRef.current) return
         if (hi < 0) return
         event.preventDefault()
-        start()
+        start(false)
       }
     }
     window.addEventListener('keydown', onKeyDown, true)
@@ -542,7 +575,7 @@ export function QuoteStart({
                               onPick={() => setHi(at)}
                               onTake={() => {
                                 setHi(at)
-                                start()
+                                start(false)
                               }}
                             />
                           )
@@ -565,45 +598,117 @@ export function QuoteStart({
 
         {/* ── THE FOOTER: WHAT THIS CHOICE BUYS ─────────────── */}
         {door !== null && door.refusal === '' ? (
-          <footer className="qs-foot">
-            {chosen === undefined || preview === null ? (
-              <p className="qs-foot-hint">Highlight one to see what its quote will hold.</p>
-            ) : (
-              <>
-                <div className="qs-picked">
-                  <span className="qs-picked-say">
-                    {chosen.trail === '' ? null : (
-                      <span className="qs-picked-trail">{chosen.trail}</span>
-                    )}
-                    <span className="qs-picked-name">{chosen.label}</span>
-                  </span>
-                  {chosen.price === '' ? (
-                    <span className="qs-picked-nil">no price on this one</span>
-                  ) : (
-                    <span className="qs-picked-price">{chosen.price}</span>
+          <>
+            <div className="qs-foot">
+              {chosen === undefined || preview === null ? (
+                <p className="qs-foot-hint">Highlight one to see what its quote will hold.</p>
+              ) : (
+                <>
+                  {/* THE PRICE CAME OFF THIS STRIP. It was on the right
+                      of the name, at `--t-mono-lg-size` — and 60px
+                      lower, the moment the quote existed, the same
+                      number was on the build screen's bar at
+                      clamp(22px, 1.9vw, 30px) on the LEFT. One figure,
+                      two sizes, two places, and a person watching it
+                      lost it at the one moment they pressed a button.
+                      It is on the bar below now, in the slot the total
+                      will occupy for the rest of the flow. */}
+                  <div className="qs-picked">
+                    <span className="qs-picked-say">
+                      {chosen.trail === '' ? null : (
+                        <span className="qs-picked-trail">{chosen.trail}</span>
+                      )}
+                      <span className="qs-picked-name">{chosen.label}</span>
+                    </span>
+                  </div>
+
+                  <Walk preview={preview} />
+
+                  {verdict === null || verdict.problems.length === 0 ? null : (
+                    <Verdict verdict={verdict} />
                   )}
-                </div>
 
-                <Walk preview={preview} />
+                  {barred === '' ? null : (
+                    <p className="qs-barred">
+                      <Warning size={ICON_SIZE.small} weight="fill" aria-hidden="true" />
+                      <span>{barred}</span>
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
 
-                {verdict === null || verdict.problems.length === 0 ? null : (
-                  <Verdict verdict={verdict} />
+            {/* ── THE FLOW'S OWN BAR, AND THIS IS ITS FIRST SCREEN ──
+                Same object, same slot, same face and same size as the
+                total on the two screens that follow — see flow.tsx.
+                What it carries here is the hull's own price, because
+                there is no document yet, and the label says exactly
+                that rather than calling it a total. */}
+            <FlowFoot
+              line={
+                <FlowLine
+                  at="choose"
+                  facts={{ choose: chosen === undefined ? 'nothing yet' : chosen.label }}
+                />
+              }
+            >
+              <div className="qb-price-bar">
+                {/* ── AND WHEN A DRAFT IS STANDING, IT IS ITS TOTAL ──
+                    The figure a person left is the figure they come
+                    back to. `chosen.amount` is the row's price as a
+                    NUMBER — the field `IndexEntry` carries so nothing
+                    re-parses a rendered string — and `quoteTotals` is
+                    the one summation, so neither figure here is a
+                    second reading of anything. */}
+                <RunningTotal
+                  label={standing ? 'Total' : 'Starts at'}
+                  amount={
+                    standing
+                      ? quoteTotals(standing).total
+                      : chosen === undefined
+                        ? null
+                        : (chosen.amount ?? null)
+                  }
+                  sub={
+                    standing
+                      ? standing.reference
+                      : chosen === undefined
+                        ? 'nothing highlighted'
+                        : 'the boat, before anything is added'
+                  }
+                />
+                {chosen === undefined || barred !== '' ? null : (
+                  <>
+                    {/* THE ACT SAYS WHICH ACT IT IS. A button reading
+                        "Start the quote" that opens a document made
+                        twenty minutes ago is a lie about what just
+                        happened, and the person would have to read the
+                        reference to notice. */}
+                    <button type="button" className="qs-go qb-price-act" onClick={() => start(false)}>
+                      <span className="qs-go-name">
+                        {standing ? 'Back to the quote you started' : 'Start the quote'}
+                      </span>
+                      <ArrowRight size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
+                    </button>
+                    {/* AND THE OTHER ONE STAYS POSSIBLE. Two quotes for
+                        one hull to two customers is an ordinary
+                        Tuesday; the draft is only offered back while
+                        NOBODY is named on it (see `unaddressedDraftFor`),
+                        so this is the door out of that one case. */}
+                    {standing ? (
+                      <button
+                        type="button"
+                        className="qs-again"
+                        onClick={() => start(true)}
+                      >
+                        Start another
+                      </button>
+                    ) : null}
+                  </>
                 )}
-
-                {barred === '' ? (
-                  <button type="button" className="qs-go" onClick={start}>
-                    <span className="qs-go-name">Start the quote</span>
-                    <ArrowRight size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
-                  </button>
-                ) : (
-                  <p className="qs-barred">
-                    <Warning size={ICON_SIZE.small} weight="fill" aria-hidden="true" />
-                    <span>{barred}</span>
-                  </p>
-                )}
-              </>
-            )}
-          </footer>
+              </div>
+            </FlowFoot>
+          </>
         ) : null}
     </div>
   )

@@ -27,15 +27,15 @@
    does that. The sentence says what the app does now.
    ============================================================ */
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { ReactElement } from 'react'
-import { ArrowUUpLeft, ListNumbers, Printer, UserCircle } from '@phosphor-icons/react'
+import { ArrowUUpLeft, Printer, UserCircle } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
-import { useActionBar, type ActionGroup } from '@/lib/actions'
 import { localDay } from './day'
 import { QuoteBuild } from './QuoteBuild'
 import { QuoteDocument } from './QuoteDocument'
 import { QuoteEditor } from './QuoteEditor'
+import type { FlowStop } from './flow'
 import { makeNewVersion, useQuote } from './quotes'
 import type { QuoteDef } from './types'
 import './quote.css'
@@ -162,28 +162,43 @@ export function QuotePage({
 }
 
 /* ============================================================
-   A DRAFT HAS TWO READINGS, AND THEY ARE ONE DOCUMENT.
+   A DRAFT IS TWO OF THE FLOW'S THREE MOMENTS.
 
-   THE SEQUENCE is for BUILDING: one decision at a time, with what
-   fits, why it fits and what it does to the price. THE SHEET is for
-   FINISHING: the whole thing at once, with the adjustments, the
-   contact lines, the tax rate and the re-read. They are not two
+   CONFIGURE is for BUILDING: one decision at a time, with what
+   fits, why it fits and what it does to the price. ADDRESS is for
+   FINISHING: who it is for, the adjustments, the tax rate, the
+   contact lines, the re-read and the handover. They are not two
    modes of a quote — a quote has exactly two states and they are
-   `draft` and `issued`. They are two ways of looking at the same
-   draft, and every line either one produces was minted and persisted
-   by the same `freeze.ts`, so switching loses nothing and duplicates
-   nothing.
+   `draft` and `issued`. They are two moments of raising one, and
+   every line either one produces was minted and persisted by the
+   same `freeze.ts`, so moving between them loses nothing and
+   duplicates nothing.
 
-   WHY THE SEQUENCE OPENS FIRST. A freshly minted quote is a hull, a
+   ADDRESS WAS ALREADY BUILT AND WAS NOT NAMED. This surface is
+   `QuoteEditor`, and until now it was reached by a bordered button
+   in the corner of the price bar reading "The whole quote" — framed
+   as an alternative READING of a draft rather than as the third
+   moment of raising one, while the actual "address" act was a shut
+   accordion 3,277px down the configurator (see QuoteBuild's own
+   note, with the measurement). CONFIGURATOR.md §A asks for Choose ·
+   Configure · Address and says address "is a step, not a footnote".
+   Nothing new was built to answer that: the step existed, the
+   footnote was deleted, and the flow line names what is left.
+
+   WHY CONFIGURE OPENS FIRST. A freshly minted quote is a hull, a
    customer nobody has typed yet, and a row of decisions waiting — a
-   person arriving at it is BUILDING. The sheet is where they go when
-   they are nearly done, and getting there is one press on the action
-   bar, published by whichever half is on screen.
+   person arriving at it is BUILDING.
 
-   IT IS SESSION STATE AND NOTHING ELSE. Which reading is up says
+   IT IS SESSION STATE AND NOTHING ELSE. Which moment is up says
    nothing about anybody's business, so it does not reach the project
-   store, does not persist and does not export — the same line
-   `src/lib/actions.ts` draws for the action bar itself.
+   store, does not persist and does not export.
+
+   AND THE ACTION BAR IS GONE FROM HERE. This published a "Step by
+   step" button into `.pagebar` whenever the sheet was up — a second
+   fixed strip under the price bar, saying in a dock what the flow
+   line now says in the bar itself, in the place a person is already
+   reading the total. QuoteBuild's own note records why one bar at
+   the foot of this column is the limit.
    ============================================================ */
 
 function QuoteDraft({
@@ -193,52 +208,29 @@ function QuoteDraft({
   quote: QuoteDef
   onOpenCustomer?: (rowId: string) => void
 }): ReactElement {
-  const [sheet, setSheet] = useState(false)
+  const [at, setAt] = useState<FlowStop>('configure')
 
-  /* The way BACK to the sequence. The way out to the sheet is
-     published by `QuoteBuild` itself, beside the rest of that
-     screen's actions; this is its opposite number, and it is here
-     rather than in the editor because the editor is older than the
-     sequence and knows nothing about it. */
-  const bar = useMemo<ActionGroup[] | null>(
-    () =>
-      sheet
-        ? [
-            {
-              id: 'qt-reading',
-              rank: 50,
-              items: [
-                {
-                  kind: 'button',
-                  id: 'qt-steps',
-                  label: 'Step by step',
-                  say: 'Go back to building this quote one decision at a time',
-                  icon: ListNumbers,
-                  onPick: () => setSheet(false),
-                },
-              ],
-            },
-          ]
-        : null,
-    [sheet],
-  )
-  useActionBar('quote-reading', bar)
+  /* CHOOSE IS NOT REACHABLE FROM HERE and `FlowLine` will not draw a
+     control for it — the picker is a stage the shell mounts and this
+     feature may not import it without closing the cycle `quote/index
+     → QuoteStart → start.ts → modules/read → quote/index`. The way
+     back to it is the stage's own Back, which lands there because
+     `QuoteStart` no longer closes itself when it mints. See flow.tsx. */
+  const go = (to: FlowStop): void => {
+    if (to === 'configure' || to === 'address') setAt(to)
+  }
 
-  if (sheet) {
+  if (at === 'address') {
     return (
       <div className="qt-root qt-root--edit">
-        <QuoteEditor quote={quote} onOpenCustomer={onOpenCustomer} />
+        <QuoteEditor quote={quote} onOpenCustomer={onOpenCustomer} onGo={go} />
       </div>
     )
   }
 
   return (
     <div className="qt-root qt-root--edit">
-      <QuoteBuild
-        quote={quote}
-        onOpenCustomer={onOpenCustomer}
-        onOpenSheet={() => setSheet(true)}
-      />
+      <QuoteBuild quote={quote} onGo={go} />
     </div>
   )
 }

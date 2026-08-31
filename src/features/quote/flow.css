@@ -1,0 +1,145 @@
+/* ============================================================
+   THE FLOW LINE — three names, and the one you are on.
+
+   It is the top track of the bar `flow.tsx` mounts on all three
+   screens, so it is in the same place, in the same type, at the
+   same height, whichever of Choose, Configure or Address is up.
+
+   WHAT IT IS NOT: a stepper. No circles, no numbers, no meter, no
+   percentage, no connector line filling up. See flow.tsx for the
+   argument and the two pieces of evidence behind it. What marks the
+   stop you are on is ONE 2px accent rule under the name, which is
+   the same signal the app's own tab strips use.
+
+   MEASURED, on a Highfield CL360 at 1600x1000, light:
+     the stop you are on   `--fg` on `--surface-1`        17.4 : 1
+     the stops you are not `--fg-secondary` on the same    8.1 : 1
+     the fact under either `--fg-tertiary` on the same     5.5 : 1
+   `--fg-tertiary` is `--ink-faint`, the ramp's floor, and the bar's
+   ground is opaque `--surface-1` — no tint under any of the three,
+   so these are the ramp's own figures rather than a second reading
+   of them.
+   ============================================================ */
+
+.qf-line {
+  display: flex;
+  align-items: center;
+  padding: var(--s-2) var(--s-5) 0;
+}
+
+.qf-stops {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.qf-stop {
+  display: flex;
+  min-width: 0;
+}
+
+/* THE SEPARATOR IS A RULE, NOT A CHEVRON. An arrow between the
+   stops would say "and then", which is a promise about order this
+   flow does not entirely keep — Address can be answered first, and
+   often is, because the customer is standing there. A hairline says
+   "these are three parts of one thing", which is true. */
+.qf-stop + .qf-stop {
+  border-left: 1px solid var(--line);
+  margin-left: var(--s-2);
+  padding-left: calc(var(--s-2) + var(--s-1));
+}
+
+.qf-go {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: var(--s-1) var(--s-2);
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--r-control) var(--r-control) 0 0;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+}
+
+/* A STOP NOTHING CAN REACH IS NOT A CONTROL. No pointer, no hover,
+   no press — see flow.tsx for why Choose is one of these. */
+.qf-go--flat {
+  cursor: default;
+}
+
+button.qf-go {
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+button.qf-go:hover {
+  background: var(--surface-3);
+  border-color: var(--line);
+  border-bottom-color: var(--line-strong);
+}
+
+button.qf-go:active {
+  transform: scale(0.97);
+}
+
+button.qf-go:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.qf-stop-name {
+  font-size: var(--t-small-size);
+  font-weight: 550;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+/* NOTHING TRUNCATES MID-WORD. A hull's name is long and the picker
+   draws it here — it wraps to a second line and the stop grows,
+   which is the rule §3 sets for a strip that does not fit. */
+.qf-stop-fact {
+  font-size: var(--t-caption-size);
+  line-height: 1.4;
+  color: var(--fg-tertiary);
+  overflow-wrap: break-word;
+}
+
+.qf-stop.is-done .qf-stop-name {
+  color: var(--fg-secondary);
+}
+
+.qf-stop.is-here .qf-go {
+  border-bottom-color: var(--accent);
+}
+
+.qf-stop.is-here .qf-stop-name {
+  color: var(--fg);
+  font-weight: 620;
+}
+
+/* ============================================================
+   EVERY WIDTH. Three stops of two lines each is 300px of the strip
+   at 1600 and it is the first thing that has to give: below 900 the
+   facts go and the names stay, because knowing WHICH of the three
+   you are on is the whole job and the hull is on the page twice
+   over anyway.
+   ============================================================ */
+
+@media (max-width: 899px) {
+  .qf-line {
+    padding: var(--s-2) var(--s-4) 0;
+  }
+  .qf-stop-fact {
+    display: none;
+  }
+}

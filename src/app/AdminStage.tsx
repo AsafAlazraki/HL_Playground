@@ -321,29 +321,41 @@ export function AdminStage({
                 covers an act a person can reach for. A band that is
                 not theirs is not a refusal; drawing it greyed would
                 tell every administrator, every day, about two
-                screens they will never open. */}
-            {top ? (
+                screens they will never open.
+
+                ONE GRID, NOT TWO — and this is the other half of
+                the fix in `shell.css`. The top rung's two doors sat
+                in a grid of their own directly above the other
+                three, which meant the second grid could not
+                back-fill the first one's last row: "All tables" was
+                marooned on a line of its own with 771px blank
+                beside it at 1600, at every width from 768 up. One
+                grid, five doors, the drawing worth two of them —
+                six cells into three columns, exactly. The band the
+                top rung cannot see is three doors into the same
+                three columns, also exactly. */}
             <div className="ad-grid">
-              <Door
-                glyph={Graph}
-                name="Data model"
-                fact={`${one(facts.tables, 'table', 'tables')} · ${one(
-                  facts.joins,
-                  'relationship',
-                  'relationships',
-                )}`}
-                wide
-                onPick={onOpenDrawing}
-              />
-              <Door
-                glyph={Stack}
-                name="All tables"
-                fact={one(facts.rows, 'row', 'rows')}
-                onPick={onOpenTables}
-              />
-            </div>
-            ) : null}
-            <div className="ad-grid">
+              {top ? (
+                <>
+                  <Door
+                    glyph={Graph}
+                    name="Data model"
+                    fact={`${one(facts.tables, 'table', 'tables')} · ${one(
+                      facts.joins,
+                      'relationship',
+                      'relationships',
+                    )}`}
+                    wide
+                    onPick={onOpenDrawing}
+                  />
+                  <Door
+                    glyph={Stack}
+                    name="All tables"
+                    fact={one(facts.rows, 'row', 'rows')}
+                    onPick={onOpenTables}
+                  />
+                </>
+              ) : null}
               <Door
                 glyph={TreeStructure}
                 name="Configure"

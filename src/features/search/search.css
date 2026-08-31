@@ -23,11 +23,21 @@
    in one list is a theme rather than an eighth-note.
 
    CONTRAST, MEASURED RATHER THAN ASSUMED. Everything that sits on
-   the lit row is stepped up a tier: `--ink-faint` is the 4.7:1 floor
-   on white and 4.16:1 once `--blue-wash` is under it. The keyboard
-   legend is `--ink-soft` for the same reason — `--ink-faint` on
-   `--surface-3` measures 4.91:1 on light but 4.24:1 on dark, which
-   fails, and a hint nobody can read is furniture.
+   the lit row is stepped up a tier: `--ink-faint` is the floor, and
+   a tint under it costs about half a point.
+
+   THE DARK HALF OF THAT ARGUMENT HAS BEEN ANSWERED AT THE RAMP. The
+   keyboard legend and the foot took `--ink-soft` because
+   `--ink-faint` on `--surface-3` measured 4.91:1 on light and
+   4.24:1 on dark — a rule-4 failure on one theme only. That was one
+   of four sites a dark-mode sweep found, and the fault was the
+   token: `--fg-tertiary` was cut against `--surface-1` alone and
+   failed on the two surfaces below it. It is #8fa6bb now and the
+   same pair measures 5.29:1 (ds.css carries the working). The rules
+   below keep `--ink-soft` regardless — a foot legend is secondary
+   text and reads better at 7.5:1 than at 5.3 — but they are a
+   choice now rather than a workaround, and the comments beside them
+   say so.
    ============================================================ */
 
 .hs-root {
@@ -506,12 +516,14 @@
   border-top: 1px solid var(--line-subtle);
   background: var(--surface-3);
 }
-/* MEASURED, AND IT WAS WRONG. `--ink-faint` on `--surface-3` is
-   4.91:1 on light and 4.24:1 on dark — so this line and the key
-   words beside it failed on one of the two themes while passing on
-   the other, which is exactly the failure a light-only eyeball
-   check misses. The whole foot is `--ink-soft`: 7.5:1 dark,
-   8.1:1 light. */
+/* MEASURED, AND IT WAS WRONG — on one theme only, which is exactly
+   the failure a light-only eyeball check misses. `--ink-faint` on
+   `--surface-3` was 4.91:1 on light and 4.24:1 on dark. The dark
+   ramp's floor has since been re-cut against the surfaces it
+   actually lands on and the same pair is 5.29:1, so this is no
+   longer forced. It stays `--ink-soft` — 7.5:1 dark, 8.1:1 light —
+   because the accounting line under a list of results is secondary
+   text and wants the tier above the floor, not the floor. */
 .hs-foot-say {
   min-width: 0;
   font-family: var(--font-mono);
@@ -543,7 +555,8 @@
   font-size: var(--t-mono-sm-size);
   font-weight: 500;
   line-height: 1;
-  /* --ink-faint measures 4.24:1 on --surface-3 in dark and fails */
+  /* was 4.24:1 for --ink-faint on --surface-3 in dark, now 5.29:1
+     since the ramp was re-cut; kept at --ink-soft with the foot */
   color: var(--ink-soft);
 }
 .hs-key-say {
@@ -588,8 +601,26 @@
   padding: 12vh var(--s-4) var(--s-4);
   /* A WASH, NOT A BLUR. The dock and the masthead are the two
      translucent surfaces this design allows; a third was not argued
-     for. Built from --ink at a fraction, exactly as `.tb-scrim` is. */
-  background: color-mix(in srgb, var(--ink) 42%, transparent);
+     for.
+
+     AND IT IS `--scrim`, NOT A MIX OF `--ink`. This read
+     `color-mix(in srgb, var(--ink) 42%, transparent)` — copied from
+     `.tb-scrim`, and wrong on dark for the same reason `.tb-scrim`
+     is: `--ink` is `--fg`, which flips. On light that composites to
+     rgb(146,156,165), luminance 0.326 over the page's 0.899 — a
+     dimming. On dark the computed value was
+     `color(srgb 0.917647 0.945098 0.972549 / 0.42)` and it
+     composited to rgb(102,113,124), luminance 0.161 over the page's
+     0.007: a NEAR-WHITE wash over the whole application, twenty-three
+     times brighter than what it covered. Opening the finder on dark
+     turned the app light. A scrim dims; that one bleached.
+
+     `--scrim` is the token DESIGN_PRINCIPLES §9 records being added
+     for exactly this — the one wash that has to get DARKER on dark.
+     Measured after: light rgb(156,165,174) L 0.370 (still a dimming,
+     a hair lighter than the 0.326 it replaced), dark rgb(4,13,22)
+     L 0.0037 against the page's 0.0070. */
+  background: var(--scrim);
   /* NO ENTRANCE. See the note on `.fx-panel` — the scrim is the
      ground this palette stands on and it cannot arrive later than
      the thing standing on it without the panel appearing to float

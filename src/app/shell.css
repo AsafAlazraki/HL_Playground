@@ -5772,9 +5772,44 @@
   margin: 0 0 var(--s-3);
   color: var(--fg-tertiary);
 }
+/* THE COLUMN COUNT COMES FROM THE DOOR COUNT, NOT FROM THE WIDTH.
+
+   `repeat(auto-fill, minmax(230px, 1fr))` stood here, and auto-fill
+   answers one question — how many 230px columns fit — which is not
+   the question this grid asks. The bands hold SIX cells and THREE
+   (the drawing's door is worth two), and the width kept choosing
+   four. Four divides neither. Measured on the running Admin, the
+   space left blank on the row "All tables" sat on:
+
+     1920 · 1600 · 1440   band 1016   4 cols   771px blank
+     1280                 band  992   4 cols   753px blank
+     1100                 band  860   3 cols   581px blank
+     1024                 band  784   3 cols   531px blank
+      900                 band  660   3 cols   448px blank
+      768                 band  560   2 cols   286px blank
+      600                 band  496   1 col    none
+
+   — and at four columns BOTH other bands left a whole 257px column
+   empty as well, because three doors never fill four. It is not a
+   min-width that is wrong; 230 → 260 only moves which width the
+   hole appears at.
+
+   THREE IS THE COUNT THAT DIVIDES BOTH BANDS. Six cells is 2 rows,
+   three cells is 1, exactly, with nothing left over. Two divides
+   the six as well and leaves the organisation's third door on a
+   short last row — a trailing row, which every grid has, and not a
+   hole with a door marooned beside it.
+
+   THE BREAKS ARE WHERE THE CARD WOULD GET NARROWER THAN IT IS
+   TODAY. A door measures 245px at 1600 now; three columns hold
+   that until the band falls under 3 × 245 + 24 = 759px, which is
+   viewport 1024 (band 784, card 253). Below it, two. `minmax(0,
+   1fr)` rather than `1fr` so a long door name cannot push a column
+   past its share — `1fr` is `minmax(auto, 1fr)` and auto is the
+   name's own width. */
 .ad-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--s-3);
 }
 
@@ -5813,10 +5848,16 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* the first door is the drawing, and it is the widest thing in the
-   band because it is the surface every other door is about */
+/* THE DRAWING'S DOOR IS THE WIDEST THING IN THE BAND because it is
+   the surface every other door is about — but `1 / -1` is what
+   marooned the door beside it. A full-width card ENDS its row, so
+   "All tables" could only ever start a new one and nothing was
+   allowed to join it. Two thirds instead of three: the pair fills
+   one row, and the drawing keeps the emphasis without becoming the
+   1016px card with a 40px mark in the corner that the note above
+   `.ad-well` was already complaining about. */
 .ad-door.is-wide {
-  grid-column: 1 / -1;
+  grid-column: span 2;
 }
 /* A DOOR WITH NO HONEST FIGURE carries none, and its name takes the
    whole box rather than sitting above an empty line. */
@@ -5891,11 +5932,19 @@
   color: var(--accent);
 }
 
-@media (max-width: 900px) {
+/* 1023, NOT 900, AND THE NUMBER IS THE CARD'S. Three columns hold a
+   door at the 245px it measures at 1600 until the band falls under
+   3 × 245 + 24 = 759px. The band is the stage less two gutters, so
+   759 arrives just below viewport 1024 — where the band measures
+   784 and the door 253. At 900 (the old stop) three columns would
+   have drawn a 212px door, which is narrower than the one this
+   grid draws on a 1600 screen. */
+@media (max-width: 1023px) {
   /* `.ad-well { padding: var(--sp-5) var(--sp-4) }` USED TO STAND
-     HERE, and it was a second gutter under a page that already has
-     one — the exact thing `.ad-well`'s own base rule forbids in
-     writing, added later and never measured against it.
+     HERE — under a `max-width: 900px` query — and it was a second
+     gutter under a page that already has one, the exact thing
+     `.ad-well`'s own base rule forbids in writing, added later and
+     never measured against it.
 
      MEASURED, `.ph-name`'s left edge on Admin against the same
      edge on Modules, Quotes and Customers:
@@ -5916,11 +5965,18 @@
      whole of what this query was reaching for. The base rule's
      bottom padding is what should apply here and now does. */
   .ad-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 700px) {
   .ad-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* ONE COLUMN CANNOT HOLD A SPAN OF TWO. Left standing, the
+     drawing's door would open an implicit second column and hang
+     off the right edge of a phone — the grid does not clamp a span
+     down to fit. */
+  .ad-door.is-wide {
+    grid-column: auto;
   }
 }

@@ -515,6 +515,36 @@ const joinRowOf = (ctx: Ctx, join: JoinRef | null, r: RelatedRow): RowData | und
 export interface Candidate {
   /** already frozen: picking it is one push, no second read */
   line: QuoteLine
+  /* ============================================================
+     THE CANDIDATE'S IDENTITY, WHICH IS NOT ITS LINE'S.
+
+     `line.id` is a fresh `newId()` on every call, because `mintLine`
+     mints the line a pick WOULD write and a line's id is its identity
+     ON A QUOTE — two picks of one motor are two lines. Nothing is
+     wrong with that until a surface mistakes it for the identity of
+     the OFFER, and two did: `QuoteEditor`'s picker and the build
+     screen's refusal list both keyed React on `c.line.id`.
+
+     MEASURED, on a Highfield CL360 at 1600x1000. Eight refusal rows
+     were tagged in the DOM and a motor was put on the quote: 8 rows
+     after, 0 tagged ones survived. Four candidates were tagged in the
+     sheet's Parts & Accessories picker and ONE letter was typed into
+     the customer's name: 4 after, 0 survived. Every one of those
+     lists is destroyed and rebuilt by a keystroke that has nothing to
+     do with it, which costs the focus on any card inside it — the
+     fault the shelf's own key note records having already been bitten
+     by, fixed there and left standing in the other two.
+
+     So the offer says what it is: the pairing. `pair.rowId` where
+     there is a join and the row id where there is not — the same
+     identity `onQuote` is keyed on three lines below, because "is
+     this one already on the quote" and "is this the same offer as
+     last time" are the same question. It is unique inside one offer
+     by construction: the selection is distinct target rows, and two
+     pairings of one row differ by their join row (FITMENT_RULES.md
+     §1.4 — `Highfield ADV7` slots 4-9 are all F250XSB2).
+     ============================================================ */
+  key: string
   /** the line on the quote this candidate is already on, if any */
   alreadyLineId?: string
   /** THIS ROW IS OUTSIDE THE NARROWING, and is being offered anyway
@@ -717,6 +747,7 @@ export function candidateOffer(quote: QuoteDef, section: QuoteSection): Offer {
   const candidates = result.rows.slice(0, OFFER_CAP).map((r) => {
     const already = onQuote.get(r.pair?.rowId ?? r.row.id)
     return {
+      key: r.pair?.rowId ?? r.row.id,
       line: mintLine({
         ctx,
         engine,
@@ -1102,6 +1133,7 @@ export function stepOffer(
       ? ''
       : outsideWhy({ ctx, engine, root, rootRow: row, target, join, rule: block?.rule, row: r.row })
     return {
+      key: r.pair?.rowId ?? r.row.id,
       line: mintLine({
         ctx,
         engine,

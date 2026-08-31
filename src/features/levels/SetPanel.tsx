@@ -27,6 +27,7 @@
 import { useMemo, useState } from 'react'
 import type { JSX } from 'react'
 import { rowLabel, type CellValue, type FieldDef } from '@/types/model'
+import { Picker } from '@/features/picker'
 import type { PushNote } from '@/store/notes'
 import {
   planLines,
@@ -436,42 +437,60 @@ function ValueControl({
     )
   }
 
+  /* THE APP'S ONE DROPDOWN, NOT THE OPERATING SYSTEM'S. This was a
+     native `<select>`, which draws the OS menu — its own face, its
+     own row height, its own focus ring — in the middle of a screen
+     whose every other measurement comes from a token. `Picker` is
+     what the rest of the app uses and it gives the keyboard back:
+     arrows, Home/End, type-ahead, Escape, focus returned to the
+     trigger. See features/picker/Picker.tsx.
+
+     "— NONE —" IS AN OPTION AND NOT A HOLE. The native control's
+     empty first option meant the same thing; here it is spelled,
+     because a blank row in a styled list reads as a rendering
+     fault. */
   if (field.type === 'select') {
+    const opts = field.options ?? []
     return (
-      <select
-        id="lv-value"
-        className="lv-select ds-input"
-        value={draft}
-        onChange={(e) => onDraft(e.target.value)}
-      >
-        <option value="">Choose one…</option>
-        {(field.options ?? []).map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+      <div className="lv-pick-one">
+        <Picker
+          label="Value"
+          ariaLabel={`Value for ${field.name}`}
+          value={draft}
+          options={[{ id: '', label: 'Choose one…' }, ...opts.map((o) => ({ id: o, label: o }))]}
+          onPick={onDraft}
+          disabledWhy={
+            opts.length === 0
+              ? 'This column has no choices on it yet. Add them in Columns first.'
+              : undefined
+          }
+        />
+      </div>
     )
   }
 
   if (field.type === 'reference') {
     return (
-      <select
-        id="lv-value"
-        className="lv-select ds-input"
-        value={draft}
-        onChange={(e) => onDraft(e.target.value)}
-      >
-        <option value="">Choose one…</option>
-        {/* THE VALUE IS THE ROW ID, NOT THE NAME. A reference cell
-            stores an id; writing the name into it would produce a
-            column that looks right and resolves to nothing. */}
-        {refOptions.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      <div className="lv-pick-one">
+        <Picker
+          label="Points at"
+          ariaLabel={`What ${field.name} points at`}
+          value={draft}
+          /* THE VALUE IS THE ROW ID, NOT THE NAME. A reference cell
+             stores an id; writing the name into it would produce a
+             column that looks right and resolves to nothing. */
+          options={[
+            { id: '', label: 'Choose one…' },
+            ...refOptions.map((o) => ({ id: o.id, label: o.label })),
+          ]}
+          onPick={onDraft}
+          disabledWhy={
+            refOptions.length === 0
+              ? 'The table this points at has no rows yet.'
+              : undefined
+          }
+        />
+      </div>
     )
   }
 

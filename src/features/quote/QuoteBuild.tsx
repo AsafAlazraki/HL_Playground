@@ -216,9 +216,9 @@ import { addLine, issueQuote, persistNote, removeLine, setLevel, setQty } from '
 import { recallOpen, rememberOpen } from './place'
 import { buildSteps, savedNote, weighPick } from './steps'
 import type { BuildStep, Weighing } from './steps'
-import { ADMIN_BAND, openByDefault, orderBands, type Band } from './bands'
+import { openByDefault, orderBands, type Band } from './bands'
 import { deltaSay, levelConflict, type Conflict } from './conflict'
-import { CustomerField } from './QuoteEditor'
+import { FlowFoot, FlowLine, RunningTotal, type FlowStop } from './flow'
 import { FrozenPhoto } from './photo'
 import type { QuoteDef, QuoteLine } from './types'
 import './build.css'
@@ -257,20 +257,45 @@ export interface QuoteBuildProps {
   quote: QuoteDef
   /** the stage's own "it is issued now" move */
   onIssued?: (quote: QuoteDef) => void
-  /** open the customer this quote is addressed to. Absent = the link
-   *  is still SAID on the paperwork band and not offered as a door. */
-  onOpenCustomer?: (rowId: string) => void
-  /** the door to the whole document at once — the adjustments, the
-   *  contact lines, the tax rate, the re-read. */
-  onOpenSheet: () => void
+  /* ============================================================
+     THE THIRD MOMENT, AND IT IS NOT A BAND ANY MORE.
+
+     The paperwork was the last accordion on this page: the customer
+     box, a tally of what was on the quote, and a second printing of
+     every reason the quote could not go out. Measured on a Highfield
+     CL360 at 1600x1000, with every band open, `.qb-scroll` ran to
+     3,762px against an 805px viewport and that band's head sat at
+     3,277px — 87% of the way down a page four screens tall, SHUT,
+     because `openByDefault` opens the first band with something to
+     decide. Shut and unopened it still sat at 942px, below the fold
+     on a 1,019px scroll.
+
+     CONFIGURATOR.md §A: "Nobody does *address*, and it is a step,
+     not a footnote." A shut accordion at 3,277px is a footnote. And
+     as a BAND it was a peer of Yamaha Outboards — a shelf you pick
+     from — which is not what it is.
+
+     So Address is the flow's third moment and it is the sheet: who
+     it is for, the adjustments, the tax rate, the note, the contact
+     lines, the re-read, and the handover. That surface already
+     existed (`QuoteEditor`) and was drawn as an alternative READING
+     of a draft, reached by a button in the corner of this bar called
+     "The whole quote". It is not an alternative reading. It is where
+     a quote is finished, and it is named now.
+
+     WHAT WENT WITH THE BAND, and nothing true went with it: the
+     tally repeated the ledger under the total line for line, and the
+     refusal list repeated `issueBlockers` a third time — the price
+     bar says the first reason, the ledger says all of them, and
+     `CustomerField` prints the freeze clause against the box. The
+     ONE thing the band did that nothing else did was let a name be
+     typed without leaving this page, and the refusal's own act now
+     walks to the page where the box is, with the caret in it.
+     ============================================================ */
+  onGo: (to: FlowStop) => void
 }
 
-export function QuoteBuild({
-  quote,
-  onIssued,
-  onOpenCustomer,
-  onOpenSheet,
-}: QuoteBuildProps): ReactElement {
+export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactElement {
   const steps = useMemo(() => buildSteps(quote), [quote])
   /* ONE STORE READ FOR THE WHOLE DOCUMENT. The hue on a band head is
      the kind of thing the band holds, read off the table rather than
@@ -289,9 +314,7 @@ export function QuoteBuild({
      id that no longer names a band of this document is discarded
      here rather than trusted. */
   const [open, setOpen] = useState<string[]>(() => {
-    const back = recallOpen(quote.id).filter(
-      (id) => id === ADMIN_BAND || bands.some((b) => b.id === id),
-    )
+    const back = recallOpen(quote.id).filter((id) => bands.some((b) => b.id === id))
     return back.length > 0 ? back : openByDefault(bands)
   })
   useEffect(() => {
@@ -306,37 +329,18 @@ export function QuoteBuild({
      The strip under the bands said "Type the customer name at the
      top". Measured on a fresh quote at 1600×1000: the top of this
      screen holds a reference stamp, a photograph and a headline, and
-     the customer box is in the LAST band — shut, because
-     `openByDefault` opens the first band with something to decide. A
-     person who read the sentence and looked up found nothing there.
+     the customer box was in the LAST band — shut, and 3,277px down
+     with every band open. A person who read the sentence and looked
+     up found nothing there.
 
      `totals.ts` owns those words and four surfaces read them, so the
-     fix is not to reword the sentence: it is to give the refusal the
-     act it was describing. This opens the paperwork band, brings the
-     box to the middle of the scrollport and puts the caret in it.
-
-     THE FOCUS CANNOT BE TAKEN IN THE PRESS. The band's body mounts on
-     the render that follows the press, so `nameRef.current` is still
-     null inside the handler. It is asked for here and taken in the
-     effect below, which re-runs when `open` changes — that is the
-     render the box exists on. */
-  const nameRef = useRef<HTMLInputElement>(null)
-  const [seekName, setSeekName] = useState(false)
-  const addressTo = useCallback(() => {
-    setOpen((was) => (was.includes(ADMIN_BAND) ? was : [...was, ADMIN_BAND]))
-    setSeekName(true)
-  }, [])
-  useEffect(() => {
-    if (!seekName) return
-    const box = nameRef.current
-    if (box === null) return
-    /* NO `behavior: 'smooth'`. The caret lands on the same frame as
-       the press — the motion budget's one absolute for anything a
-       keystroke immediately follows. */
-    box.scrollIntoView({ block: 'center' })
-    box.focus()
-    setSeekName(false)
-  }, [seekName, open])
+     fix was never to reword the sentence: it is to give the refusal
+     the act it describes. The act is now the flow's own third stop.
+     The caret lands in the box without a second mechanism here —
+     `QuoteEditor` focuses `nameRef` on mount, keyed on `quote.id`,
+     and Address mounts it fresh. The `seekName` effect that used to
+     do it from this end is deleted with the band it was reaching
+     into. */
 
   /* THE RENDER — which photograph the left column is showing.
      `null` is the hull, which is where it starts and where it goes
@@ -440,16 +444,6 @@ export function QuoteBuild({
                 onWeigh={onWeigh}
               />
             ))}
-
-            <AdminBand
-              quote={quote}
-              steps={steps}
-              open={open.includes(ADMIN_BAND)}
-              refusals={refusals}
-              nameRef={nameRef}
-              onToggle={() => toggle(ADMIN_BAND)}
-              onOpenCustomer={onOpenCustomer}
-            />
           </div>
         </div>
       </div>
@@ -463,8 +457,7 @@ export function QuoteBuild({
         refusals={refusals}
         levels={levels}
         onLevel={askLevel}
-        onAddress={addressTo}
-        onOpenSheet={onOpenSheet}
+        onGo={onGo}
         onIssue={() => {
           if (issueQuote(quote.id)) onIssued?.(quote)
         }}
@@ -884,13 +877,26 @@ function Shortlist({
   const shelfRef = useRef<HTMLUListElement>(null)
   const cardRefs = useRef<Array<HTMLButtonElement | null>>([])
 
+  /* ── THE DEPENDENCIES ARE WHAT `stepOffer` READS, NOT THE QUOTE ──
+     `quote` is the whole document, so every open band re-solved its
+     shortlist whenever anything on the quote changed — a quantity, a
+     note, the tax rate. It reads five fields and a section: the hull
+     (`rootTableId`, `rootRowId`), the page whose blocks the bands are
+     (`viewId`), the rung every candidate is priced at (`levelKey`),
+     and `lines`, for "already on the quote". Nothing else on a
+     QuoteDef reaches it, which is what makes this list checkable
+     rather than a guess at what matters. */
+  const { rootTableId, rootRowId, viewId, levelKey, lines: onQuote } = quote
   const offer: StepOffer = useMemo(
     () => (step.subject ? NO_OFFER : stepOffer(quote, step.section, { all, query })),
-    [quote, step, all, query],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+    [rootTableId, rootRowId, viewId, levelKey, onQuote, step.section, step.subject, all, query],
   )
   const why: StepReason | null = useMemo(
     () => (step.subject ? null : stepReason(quote, step.section)),
-    [quote, step],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `stepReason`
+    // reads the same hull and the same section, and no line at all.
+    [rootTableId, rootRowId, viewId, step.section, step.subject],
   )
 
   /* THE ROWS THE NARROWING LEFT OUT, and their reasons — a SECOND
@@ -902,7 +908,9 @@ function Shortlist({
     return stepOffer(quote, step.section, { all: true, query }).candidates.filter(
       (c) => c.outside === true,
     )
-  }, [showRefused, quote, step, query])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the same five
+    // fields of the quote `stepOffer` reads; see the note on `offer`.
+  }, [showRefused, rootTableId, rootRowId, viewId, levelKey, onQuote, step.section, step.subject, query])
 
   const searching = query.trim() !== ''
 
@@ -1166,13 +1174,14 @@ function Shortlist({
               page), and `ds-rise` replayed its entrance on the whole
               shelf because every card was newly mounted.
 
-              `pairRowId ?? rowId` is the identity `stepOffer` itself
-              keys on to decide whether a candidate is already on the
-              quote, so it is stable by construction and unique inside
-              one shelf: the selection is distinct target rows, and
-              two pairings of one row differ by their pair row. */}
+              THE OFFER NOW CARRIES THAT KEY ITSELF. This computed
+              `pairRowId ?? rowId` off the minted line; `stepOffer`
+              publishes the same string as `Candidate.key`, which is
+              also what `onQuote` is keyed on, so the two surfaces that
+              were still keyed on the minted id could be fixed without
+              a third copy of the reasoning. */}
           {candidates.map((c, i) => (
-            <li key={c.line.pairRowId ?? c.line.rowId} className="qb-shelf-slot">
+            <li key={c.key} className="qb-shelf-slot">
               <OfferCard
                 candidate={c}
                 index={i}
@@ -1246,8 +1255,13 @@ function Shortlist({
 
           {showRefused ? (
             <ul className="qb-refused-list">
+              {/* THE OFFER'S OWN KEY, for the reason the shelf above
+                  already keeps: `c.line.id` is minted fresh on every
+                  `stepOffer` run. Measured with eight rows open on the
+                  Yamaha band — putting a motor on the quote left 8 rows
+                  and 0 of the tagged originals. */}
               {refused.slice(0, REFUSED_SHOWN).map((c) => (
-                <RefusedRow key={c.line.id} candidate={c} />
+                <RefusedRow key={c.key} candidate={c} />
               ))}
               {refused.length === 0 ? (
                 <li className="qb-refused-none">
@@ -1377,8 +1391,7 @@ function PriceBar({
   refusals,
   levels,
   onLevel,
-  onAddress,
-  onOpenSheet,
+  onGo,
   onIssue,
 }: {
   quote: QuoteDef
@@ -1391,16 +1404,30 @@ function PriceBar({
   refusals: readonly string[]
   levels: ReturnType<typeof quoteLevelChoices>
   onLevel: (key: string, label: string) => void
-  /** open the paperwork band and put the caret in the customer box */
-  onAddress: () => void
-  onOpenSheet: () => void
+  /** move to another moment of the flow — Address is the only one
+   *  this screen can reach; see flow.tsx for why Choose is not. */
+  onGo: (to: FlowStop) => void
   onIssue: () => void
 }): ReactElement {
   const [ledger, setLedger] = useState(false)
-  const unaddressed = quote.customer.name.trim() === ''
+  const named = quote.customer.name.trim()
 
   return (
-    <footer className="qb-price">
+    <FlowFoot
+      line={
+        <FlowLine
+          at="configure"
+          /* CONFIGURE CARRIES NO FACT, and that is the argument in
+             flow.tsx made concrete: the bands above and the figure
+             40px below are already saying what is on the rig, and a
+             count of decided stops here would be the "step 5 of 8"
+             plate this screen deleted with the deck it came on. */
+          facts={{ choose: quote.subjectLabel, address: named === '' ? 'nobody yet' : named }}
+          reach={['address']}
+          onGo={onGo}
+        />
+      }
+    >
       {ledger ? (
         <Ledger quote={quote} steps={steps} totals={totals} refusals={refusals} />
       ) : null}
@@ -1426,8 +1453,8 @@ function PriceBar({
             aria-hidden="true"
           />
           <span className="qb-give-fact">{refusalFact(refusals[0])}</span>
-          {unaddressed ? (
-            <button type="button" className="qb-give-fix" onClick={onAddress}>
+          {named === '' ? (
+            <button type="button" className="qb-give-fix" onClick={() => onGo('address')}>
               Name the customer
             </button>
           ) : null}
@@ -1440,23 +1467,20 @@ function PriceBar({
       ) : null}
 
       <div className="qb-price-bar">
-        <button
-          type="button"
-          className="qb-price-fig"
-          aria-expanded={ledger}
-          onClick={() => setLedger((v) => !v)}
-        >
-          <span className="qb-price-lab mono-label">Total</span>
-          <span className="qb-price-now">{money(totals.total)}</span>
-          <span className="qb-price-tax">
-            {totals.totalExcludingTax === null
+        {/* THE SAME OBJECT THE PICKER AND THE SHEET DRAW. It is the
+            one that was measured — this bar's own — so the other two
+            mount it rather than resembling it. See flow.tsx. */}
+        <RunningTotal
+          label="Total"
+          amount={totals.total}
+          sub={
+            totals.totalExcludingTax === null
               ? 'incl. tax'
-              : `${money(totals.totalExcludingTax)} ex · ${totals.taxRate}%`}
-          </span>
-          <span className={`qb-band-mark${ledger ? ' is-open' : ''}`} aria-hidden="true">
-            <CaretDown size={ICON_SIZE.tiny} weight="bold" />
-          </span>
-        </button>
+              : `${money(totals.totalExcludingTax)} ex · ${totals.taxRate}%`
+          }
+          open={ledger}
+          onToggle={() => setLedger((v) => !v)}
+        />
 
         {/* ── ONE SLOT, AND THE REPORT GOES FIRST ───────────────────
             The committed figure to the left DOES NOT MOVE while
@@ -1528,20 +1552,31 @@ function PriceBar({
           </div>
         ) : null}
 
-        {/* THE HANDOVER LIVES ON THE PRICE BAR, which is where
-            PHASE_TWO §2.3 puts it and where a person's eye already
-            is. NOT `disabled`: a disabled control drops out of the
-            tab order and takes its own explanation with it, so the
-            first reason it cannot go is printed beside it and the
-            rest are under the total. */}
-        <button type="button" className="qb-door" onClick={onOpenSheet}>
-          <Rows size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-          The whole quote
-        </button>
+        {/* ── AND "THE WHOLE QUOTE" IS GONE FROM THIS ROW ──────────
+            It was a bordered button in the corner reading "The whole
+            quote", and it went to exactly where the flow line's
+            Address stop goes — the same act, twice, 240px apart on
+            one 113px strip. That is the pattern this file's own
+            header has already deleted twice ("TWO controls doing one
+            act", "ONE DOOR PAST THE NARROWING, NOT TWO"), and this
+            was the third instance.
 
+            THE STOP IS THE BETTER OF THE TWO because it is named for
+            the place it goes rather than for the amount of document
+            it shows, and because it is drawn beside the two stops it
+            is a peer of. Nothing was lost: the sheet is one press
+            away from the same bar, and it is now labelled with where
+            it lands.
+
+            THE HANDOVER STAYS, on both. It is this bar's own act
+            (PHASE_TWO §2.3) and the bar is on all three screens. NOT
+            `disabled`: a disabled control drops out of the tab order
+            and takes its own explanation with it, so the first
+            reason it cannot go is printed beside it and the rest are
+            under the total. */}
         <button
           type="button"
-          className="qb-give"
+          className="qb-give qb-price-act"
           aria-disabled={refusals.length > 0 || undefined}
           onClick={() => {
             if (refusals.length > 0) return
@@ -1551,7 +1586,7 @@ function PriceBar({
           Give it to the customer
         </button>
       </div>
-    </footer>
+    </FlowFoot>
   )
 }
 
@@ -1840,114 +1875,6 @@ function ConflictSheet({
   )
 }
 
-/* ============================================================
-   THE PAPERWORK — the one question no table can carry.
-
-   It is the last band rather than a modal at the end. Production
-   asks it in a "Finalize Project" dialog that types the customer as
-   five free-text fields, from scratch, every time, with no lookup
-   and no dedupe — while a `CustomerPicker` sits imported in the same
-   file. Here it is the last thing on the page, it uses the register
-   the app already has, and `issueBlockers` refuses in the same words
-   on the price bar.
-   ============================================================ */
-
-function AdminBand({
-  quote,
-  steps,
-  open,
-  refusals,
-  nameRef,
-  onToggle,
-  onOpenCustomer,
-}: {
-  quote: QuoteDef
-  steps: readonly BuildStep[]
-  open: boolean
-  refusals: readonly string[]
-  /** owned by the stage, so the price bar's refusal can put the caret
-   *  in this box from the other end of the screen */
-  nameRef: RefObject<HTMLInputElement | null>
-  onToggle: () => void
-  onOpenCustomer?: (rowId: string) => void
-}): ReactElement {
-  const named = quote.customer.name.trim()
-
-  /* ── WHAT THE BOX ABOVE DOES NOT ALREADY SAY ─────────────────────
-     Measured with this band open at 1600×1000: `CustomerField` prints
-     "A quote is addressed to somebody. Until this is written it
-     cannot be given to the customer — giving it to them freezes the
-     document, so the name cannot be added later." against the box —
-     and 180px below it this list printed `issueBlockers`' version of
-     the same fact again. One screen, one missing name, three
-     statements of it counting the price bar.
-
-     Asking `issueBlockers` for the same quote WITH a name leaves
-     exactly the reasons that are NOT about the name. No string
-     matching, and nothing to drift if `totals.ts` ever reorders its
-     sentences or adds a fifth.
-
-     NOT MEMOISED. `issueBlockers` returns a fresh array on every
-     call, so `refusals` is a new identity each render and a
-     `useMemo` keyed on it would never hit — a hook that costs more
-     than the four `if`s it is guarding. */
-  const others: readonly string[] =
-    named === ''
-      ? issueBlockers({ ...quote, customer: { ...quote.customer, name: 'a name' } })
-      : refusals
-
-  return (
-    <section className="qb-band" data-kind="custom">
-      <h2 className="qb-band-h">
-        <button
-          type="button"
-          className="qb-band-head k-band"
-          aria-expanded={open}
-          onClick={onToggle}
-        >
-          <span className={`qb-band-mark${open ? ' is-open' : ''}`} aria-hidden="true">
-            <CaretDown size={ICON_SIZE.tiny} weight="bold" />
-          </span>
-          <span className="qb-band-name">Who it is for</span>
-          <span className="qb-band-fact">{named === '' ? 'nobody yet' : named}</span>
-          <span className="qb-band-fig" />
-        </button>
-      </h2>
-
-      {open ? (
-        <div className="qb-band-body">
-          <CustomerField quote={quote} nameRef={nameRef} onOpenCustomer={onOpenCustomer} />
-
-          <ul className="qb-tally" aria-label="What is on this quote">
-            {steps.map((s) => (
-              <li key={s.id} className="qb-tally-row">
-                <span className="qb-tally-name">{s.title}</span>
-                <span className="qb-tally-say">
-                  {s.lines.length === 0
-                    ? 'nothing chosen'
-                    : s.lines.map((l) => l.label).join('  ·  ')}
-                </span>
-                <span className="qb-tally-amount">
-                  {s.amount === null ? <span className="qb-nil">not priced</span> : money(s.amount)}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          {others.length > 0 ? (
-            <div className="qb-ledger-whys" role="status">
-              {others.map((w) => (
-                <p key={w} className="qb-ledger-why">
-                  {w}
-                </p>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </section>
-  )
-}
 
 /* ============================================================
    THE PRICE MOVING — derived from the ONE summation.

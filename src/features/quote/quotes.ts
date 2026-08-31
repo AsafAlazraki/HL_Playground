@@ -321,6 +321,45 @@ export function createQuoteFromView(
   return quote
 }
 
+/* ============================================================
+   THE DRAFT ALREADY STANDING FOR THIS ROW.
+
+   WHAT IT IS FOR, MEASURED. Stepping back from the configurator to
+   the picker and forward again minted a SECOND quote for the same
+   boat and stranded the first: on a Highfield CL360, reference
+   20260829-02 carried a Yamaha and totalled $16,508; New quote →
+   Highfield → CL360 → Start the quote landed on 20260829-03 at
+   $11,060, and the motor was on a draft nothing on screen mentioned.
+   Two attempts, three drafts, and the salesperson's work on the
+   screen they had just left.
+
+   Nothing was corrupted and no line was lost — every pick is written
+   as it is made, which is this feature's whole invariant — but the
+   BUILD was lost, which is what a person means by losing work.
+
+   SO THE PICKER ASKS FIRST. A draft is offered back when it is for
+   the same row of the same table and NOBODY HAS BEEN NAMED ON IT:
+   an addressed quote is a deal in progress and a second quote for
+   the same hull to a different customer is an ordinary Tuesday, so
+   that one is left alone and a new one is minted. `issued` is never
+   offered back — it is a photograph and takes no edits.
+
+   THE NEWEST WINS, which is what `list` is already sorted by, so a
+   person who deliberately raised two comes back to the one they
+   were last on rather than to the oldest one they had forgotten.
+   ============================================================ */
+export function unaddressedDraftFor(tableId: string, rowId: string): QuoteDef | undefined {
+  loadQuotes()
+  if (tableId === '' || rowId === '') return undefined
+  return list.find(
+    (q) =>
+      q.state === 'draft' &&
+      q.rootTableId === tableId &&
+      q.rootRowId === rowId &&
+      q.customer.name.trim() === '',
+  )
+}
+
 /** "Make another quote like this one" — mints from TODAY's data,
  *  which is exactly why it is a different quote and not a copy. It
  *  is one of the only two things the kept ids are for. */
