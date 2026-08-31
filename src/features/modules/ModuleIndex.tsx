@@ -190,6 +190,16 @@ export interface ModuleStockProps {
    *  seven brands would undo the split on the first press. Absent =
    *  the whole module, which is what a one-table module always is. */
   place?: string
+  /** WHICH DRAWER TO OPEN ON, from the dashboard's range card. A
+   *  SEED AND NOT A CONTROL: it sets where this page starts and the
+   *  page owns it from there, which is why it is read once into
+   *  `useState` rather than watched. The workspace keys this
+   *  component on it, so arriving at a second series is a new page.
+   *
+   *  It does nothing where the catalogue is not filing itself into
+   *  drawers — under `DRAWER_FLOOR` headings it is a grouped list,
+   *  and landing on a drawer that is not drawn would be a lie. */
+  openAt?: string
   /** clicking an item — the table it belongs to and the row itself */
   onOpen: (tableId: string, rowId: string) => void
 }
@@ -197,6 +207,7 @@ export interface ModuleStockProps {
 export function ModuleStock({
   module: owner,
   place,
+  openAt,
   onOpen,
 }: ModuleStockProps): ReactElement {
   /* THE PLACE, NOT THE BAG IT IS FILED IN. Every reader below takes a
@@ -211,7 +222,7 @@ export function ModuleStock({
   /* WHICH DRAWER IS OPEN, or none. A position inside this page and
      nowhere else: it is not stored on the module, because which
      heading somebody is reading is not a fact about the place. */
-  const [openKey, setOpenKey] = useState<string | null>(null)
+  const [openKey, setOpenKey] = useState<string | null>(openAt ?? null)
   /* PROPERTY 3 — THE NARROWING SWITCHED OFF, WITHOUT LOSING IT.
      `openKey = null` would also show everything, and it is not the
      same act: it forgets which drawer was open, so the switch could

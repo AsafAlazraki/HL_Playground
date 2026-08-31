@@ -43,6 +43,7 @@ import type { CSSProperties, KeyboardEvent, ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { currentUser } from '@/features/auth'
 import { PlaceMark } from './PlaceMark'
+import { markFor } from './brandLogos'
 import { accentVar, type ImageRef, type ModuleDef } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
@@ -118,6 +119,10 @@ export function ModuleIndex({
      grid and back in. Which one is being stood at is a position on
      this page — the same kind of fact as which tab is open — so it is
      state here and is written nowhere. */
+  /* WHICH SERIES THE CATALOGUE SHOULD OPEN ON, when the dashboard's
+     range card sent us there. A position, like the tab and the place,
+     so it is state here and is written nowhere. */
+  const [stockAt, setStockAt] = useState<string | null>(null)
   const [pick, setPick] = useState<string | undefined>(undefined)
 
   /* THE PROP WINS, and what the grid remembered is the fallback. A
@@ -167,6 +172,11 @@ export function ModuleIndex({
 
   const style = { '--md-accent': accentVar(owner.accent) } as CSSProperties
   const name = table ? table.name : owner.name
+  /* THE ONE READER FOR "does this place have a mark of its own" —
+     the module's uploaded logo first, then the bundled brand marks.
+     `PlaceMark` asks it the same way, so the crest and the plate can
+     never disagree about whether a wordmark exists. */
+  const crest = markFor(owner.logo, name)
 
   return (
     <section className="md-work" style={style} aria-label={name} data-kind={kindOf(table?.kind ?? tables[0]?.kind)}>
@@ -183,15 +193,47 @@ export function ModuleIndex({
             fixed in `.md-place-logo` today.
 
             `PlaceMark` is the one implementation. */}
-        <span className="md-work-mark">
-          <PlaceMark
-            logo={owner.logo}
-            name={name}
-            master={table ?? tables[0]}
-            size={ICON_SIZE.medium}
-          />
-        </span>
-        <div className="md-work-id">
+        {/* ============================================================
+            THE LOGO IS THE HEADER, NOT AN ICON BESIDE ONE.
+
+            "I want the logo to be the showpiece thing. SO — if a logo
+            is present, don't show the header and logo takes it
+            instead w the relevant color background to signify boat
+            trailer motor etc."
+
+            It drew both: a 46px plate holding the Highfield wordmark
+            at 32px tall, and then the words "Highfield Inflatables"
+            beside it in display type. The brand said its own name
+            twice, once at a size nobody could read it.
+
+            So where a mark exists it becomes a crest — the wordmark
+            large, on the ground of its KIND, which is where "the
+            relevant colour" comes from: a boat brand sits on the boat
+            tint, a trailer brand on the trailer tint. The name does
+            not disappear from the document; it stays as this panel's
+            heading for the outline and for a screen reader, and the
+            eyebrow stays visible because a tint is a hint and a word
+            is a fact.
+
+            A PLACE WITH NO MARK IS UNCHANGED. Most tables have no
+            logo and never will, and a crest with a boat glyph in it
+            would be a large empty gesture. Those keep the 46px plate
+            and the name in display type. */}
+        {crest ? (
+          <span className="md-work-crest">
+            <img className="md-work-crest-img" src={crest.src} alt="" />
+          </span>
+        ) : (
+          <span className="md-work-mark">
+            <PlaceMark
+              logo={owner.logo}
+              name={name}
+              master={table ?? tables[0]}
+              size={ICON_SIZE.medium}
+            />
+          </span>
+        )}
+        <div className={`md-work-id${crest ? ' is-crested' : ''}`}>
           {/* THE MODULE IT BELONGS TO, and only when that is not the
               name below it. Two cases print the same word twice: a
               module that is one place, and a module whose primary
@@ -201,7 +243,7 @@ export function ModuleIndex({
           {standing && owner.name !== name ? (
             <span className="mono-label md-work-of">{owner.name}</span>
           ) : null}
-          <h2 className="ds-display-lg md-work-name">{name}</h2>
+          <h2 className={crest ? 'md-work-name is-quiet' : 'ds-display-lg md-work-name'}>{name}</h2>
         </div>
         {/* ONE FACT, THE SAME ONE THE CARD CARRIED. A figure is never
             a hue and is always mono and tabular. */}
@@ -246,7 +288,10 @@ export function ModuleIndex({
             onOpen={onOpen}
             onOpenQuote={onOpenQuote}
             onPlace={setPick}
-            onStock={() => setTab('stock')}
+            onStock={(where) => {
+              setStockAt(where ?? null)
+              setTab('stock')
+            }}
             /* THE TWO DOORS THE DASHBOARD'S CARDS NEED. Both are
                tabs of this same workspace, so the workspace hands
                them down rather than the panel reaching for a
@@ -260,7 +305,16 @@ export function ModuleIndex({
           /* KEYED ON THE PLACE, so switching brands is a new page
              rather than the same page re-pointed: the find box and
              the drawer that is open both belong to the place. */
-          <ModuleStock key={`${owner.id}:${at ?? ''}`} module={owner} place={standing ? at : undefined} onOpen={onOpen} />
+          <ModuleStock
+            /* KEYED ON THE DRAWER TOO, so pressing a second series
+               from the dashboard is a fresh page at that series
+               rather than the same page keeping the first one. */
+            key={`${owner.id}:${at ?? ''}:${stockAt ?? ''}`}
+            module={owner}
+            place={standing ? at : undefined}
+            {...(stockAt ? { openAt: stockAt } : {})}
+            onOpen={onOpen}
+          />
         ) : tab === 'quotes' ? (
           <ModuleQuotes module={module} owner={owner} onOpenQuote={onOpenQuote} />
         ) : tab === 'pricing' ? (

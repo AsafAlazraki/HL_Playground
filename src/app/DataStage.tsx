@@ -121,7 +121,12 @@ export function DataStage({
   useStageEscape(onClose)
 
   return (
-    <div className="shell-viewstage ad-root" onKeyDown={stageKeys}>
+    {/* `ad`, THE SAME ROOT CLASS ADMIN'S STAGE CARRIES. This was
+        written as `ad-root`, which no stylesheet declares — so the
+        screen was missing whatever `.ad` sets and `check-styles`
+        was right to fail it. The two screens are siblings and share
+        the stage, the well, the band and the door. */}
+    <div className="shell-viewstage ad" onKeyDown={stageKeys}>
       <div className="shell-view-bar" />
 
       <div className="ad-well">

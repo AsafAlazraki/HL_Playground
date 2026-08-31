@@ -4404,10 +4404,16 @@
 
 .md-home-grid {
   display: grid;
-  /* TWO CARDS AT A LAPTOP AND ONE BELOW IT. The quotes card is the
-     wider of the two because its rows carry four things and the
-     log's carry two. */
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  /* THE RANGE AND THE RAIL BESIDE IT. The range is the wider
+     because it is the only card here that is never empty — its
+     rows are the module — and the rail holds the two that are
+     empty until somebody quotes from this place.
+
+     `align-items: start` is what stops the rail's cards being
+     stretched to the range's height: an activity log with two
+     lines in it should be two lines tall. */
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  align-items: start;
   gap: var(--s-4);
   margin-bottom: var(--s-4);
 }
@@ -4601,8 +4607,11 @@
 
 /* ---- the range ------------------------------------------- */
 
+/* THE RANGE CARD sits in the grid now rather than under it, so it
+   has no margin of its own — the grid's own gap is the spacing, and
+   a margin here would be that gap plus a second one. */
 .md-hcard--wide {
-  margin-bottom: var(--s-4);
+  min-width: 0;
 }
 
 /* A COUNTED FACT ON THIS CARD IS NOT A DOOR, so it is not drawn as
@@ -4704,4 +4713,215 @@
   font-variant-numeric: tabular-nums;
   color: var(--fg-secondary);
   white-space: nowrap;
+}
+
+/* ============================================================
+   THE CREST — a brand's own mark, at the size of a headline.
+
+   The header drew a 46px plate holding a wordmark at 32px tall and
+   then set the brand's name beside it in display type: the same
+   brand, said twice, once too small to read. The owner's
+   instruction was to pick one — "if a logo is present, don't show
+   the header and logo takes it instead w the relevant color
+   background".
+
+   THE GROUND IS THE KIND'S. `--kind` is already set on `.md-work`
+   from the table's kind, which is what makes a boat brand read as
+   a boat brand and a trailer brand as a trailer brand without a
+   word being printed. It is a TINT, not the hue: 12% of the kind
+   over the surface, so the brand's own ink stays the darkest thing
+   in the panel and clears 4.5:1 against it.
+
+   BUT ONLY WHERE THE INK CAN TAKE IT. These are supplied files in
+   somebody else's ink — navy, black, dark grey — and in dark mode
+   they vanish against any dark ground. So dark mode puts the mark
+   back on `--mark-paper`, the constant ground every other brand
+   mark in this app uses, and keeps the kind as a hairline instead.
+   The tint is the reward for a theme that can carry it.
+   ============================================================ */
+
+.md-work-crest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 132px;
+  /* WIDE ENOUGH FOR THE MARK TO REACH ITS HEIGHT. These files are
+     wordmarks — Highfield's is 6430x701, a ratio of 9.17:1 — so on a
+     300px plate the width binds first and a 44px cap yields 28px of
+     actual mark. 380 gives the ratio room to hit the cap. */
+  max-width: 380px;
+  min-height: 64px;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid color-mix(in srgb, var(--kind) 26%, var(--line));
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+
+.md-work-crest-img {
+  display: block;
+  max-width: 100%;
+  /* THE SHOWPIECE SIZE. 32px was a favicon of a wordmark; 44
+     reads as the brand at arm's length and still clears the
+     64px panel with its padding. */
+  max-height: 44px;
+  object-fit: contain;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .md-work-crest {
+    border-color: color-mix(in srgb, var(--kind) 40%, var(--line));
+    background: var(--mark-paper);
+  }
+}
+:root[data-theme='dark'] .md-work-crest {
+  border-color: color-mix(in srgb, var(--kind) 40%, var(--line));
+  background: var(--mark-paper);
+}
+
+/* THE NAME UNDER A CREST is the eyebrow's neighbour, not a
+   headline: the crest is already saying it at 44px. It stays in
+   the document — it is this panel's heading and its accessible
+   name — at the size of the label above it. */
+.md-work-id.is-crested {
+  align-self: center;
+}
+.md-work-name.is-quiet {
+  margin: 0;
+  font-size: var(--t-body);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--fg-secondary);
+}
+
+/* ============================================================
+   THE MODULE DASHBOARD — the range leads.
+
+   Two cards that are empty until somebody quotes were the top
+   third of every module page, and the 588 boats were third and
+   below the fold of a laptop. The grid is inverted: the range is
+   the tall card, the deals and the log are a rail beside it.
+   ============================================================ */
+
+.md-home-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+/* THE RAIL'S CARDS DO NOT STRETCH. A log with two lines in it
+   should be two lines tall; stretching it to match the range
+   card beside it is how the empty state got to be 145px in the
+   first place. */
+.md-home-rail > .md-hcard {
+  flex: none;
+}
+
+/* ---- the series ------------------------------------------- */
+
+.md-home-series {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+}
+
+.md-series {
+  display: grid;
+  /* name · count ....... band | caret.
+
+     THE COUNT SITS WITH THE NAME, not at the far end of the row.
+     Giving the name `1fr` pushed both figures to the right edge and
+     on an 835px card that is 500px of white between "Sport" and
+     "199" — a row you have to track across with a finger. The name
+     takes its own width, the count follows it, and only the money
+     is aligned right, where a column of money belongs. */
+  grid-template-columns: minmax(0, auto) auto minmax(0, 1fr) 16px;
+  align-items: baseline;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+
+.md-series:hover {
+  background: var(--surface-2);
+}
+.md-series:active {
+  background: var(--surface-3);
+}
+.md-series:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.md-series-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--t-body);
+  color: var(--fg-primary);
+}
+
+/* HOW MANY, AND THE WORD IS IN THE COLUMN HEAD not on every row:
+   seven rows each ending "models" is the same word seven times.
+   A figure is never a hue. */
+.md-series-n {
+  font-size: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+
+.md-series-band {
+  justify-self: end;
+  font-size: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--fg-tertiary);
+}
+
+/* THE CARET IS THE AFFORDANCE and appears on approach. It holds
+   its column at all times so nothing shifts when it arrives. */
+.md-series-go {
+  justify-self: end;
+  align-self: center;
+  color: var(--fg-tertiary);
+  opacity: 0;
+  transition: opacity var(--d-fast) var(--ease);
+}
+.md-series:hover .md-series-go,
+.md-series:focus-visible .md-series-go {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-series,
+  .md-series-go {
+    transition: none;
+  }
+}
+
+@media (max-width: 700px) {
+  /* THE BAND FOLDS AWAY FIRST. A name that has to ellipsise to
+     three characters to keep a price range on the line is a
+     worse row than one without the range. */
+  .md-series {
+    grid-template-columns: minmax(0, 1fr) auto 16px;
+  }
+  .md-series-band {
+    display: none;
+  }
 }

@@ -35,6 +35,7 @@ import { ACTIVITY_EMPTY_HERE, ActivityList, useModuleActivity } from '@/features
 import { money } from '@/lib/money'
 import {
   buildEntries,
+  categoryDrawers,
   listedTables,
   moduleCensus,
   moduleTables,
@@ -72,7 +73,11 @@ export interface ModuleHomeProps {
   /** stand at another of the module's places, without leaving it */
   onPlace: (tableId: string) => void
   /** the door into the stock — the catalogue tab, by another route */
-  onStock: () => void
+  /** Open the catalogue. `at` is a drawer key (`categoryDrawers`)
+   *  when a particular series was pressed, and absent when the card's
+   *  own "Open catalog" was — the catalogue lands on that series where
+   *  it files itself into drawers, and simply opens where it does not. */
+  onStock: (at?: string) => void
   /** the module's own quotes tab, from the recent-quotes card */
   onQuotes?: (() => void) | undefined
   /** start a quote standing in this place. Absent = the card says
@@ -153,6 +158,40 @@ export function ModuleHome({
     [owner, entities],
   )
 
+  /* THE FIRST FEW THE CATALOGUE WOULD DRAW. `buildEntries` is the
+     catalogue tab's own reader, asked for the entries WITHOUT their
+     formatted facts — three formatted cells on 588 rows is a cost
+     this strip has no use for, and `read.ts` documents that flag as
+     existing for exactly this. */
+  const entries = useMemo(
+    () => buildEntries(listed, rowsByEntity, { facts: false }),
+    [listed, rowsByEntity],
+  )
+  const preview = useMemo(() => entries.slice(0, PREVIEW_ROWS), [entries])
+
+  /* THE SHAPE OF THE BRAND, which is what this card should have been
+     saying all along.
+
+     WHAT IT SAID BEFORE. "588 priced · 7 series", then six of those
+     588 rows — Highfield RU230KAM (PVC) WH, RU230KAM (HYP) WH,
+     RU230KAM (PVC) LG, RU230KAM (HYP) LG… four near-identical
+     variant codes of the SAME model, because the first six rows of a
+     sheet ordered by series are six variants of one boat. Six rows
+     chosen by their position in a spreadsheet is not a range.
+
+     WHAT IT SAYS NOW. The seven series, each with what it holds and
+     what it costs: `Sport · 40 models · $8,400–$24,900`. That is the
+     whole 588 accounted for in seven lines, and it is the shape a
+     dealer actually thinks in — a customer asks for a Sport, not for
+     an RU230KAM.
+
+     `categoryDrawers` IS ALREADY THIS READER and is already tested.
+     It cuts entries by their banner, counts each, and finds the
+     cheapest and dearest REAL ROW under it — never an average and
+     never a guess. It was written for the catalogue's drawers; the
+     question it answers is the same one. */
+  const series = useMemo(() => categoryDrawers(entries, listed), [entries, listed])
+
   /* THE FIGURES THIS PLACE CAN STATE ABOUT ITSELF, and each one only
      where it is true of something. A zero is a cell of chrome. */
   const cells: { term: string; figure: number }[] = []
@@ -164,17 +203,14 @@ export function ModuleHome({
   if (census.priced > 0) cells.push({ term: 'priced', figure: census.priced })
   if (census.held > 0) cells.push({ term: 'held back', figure: census.held })
   if (raised > 0) cells.push({ term: raised === 1 ? 'quote raised' : 'quotes raised', figure: raised })
-  for (const b of census.branches) cells.push({ term: b.noun, figure: b.count })
+  /* THE BRANCH COUNT IS ONLY A FACT WHERE THE BRANCHES ARE NOT
+     DRAWN. "7 series" printed above a list of exactly seven series
+     is the same reading twice, which is the fault the row strip was
+     built to fix — reintroduced by the thing that fixed it. */
+  if (series.length <= 1) {
+    for (const b of census.branches) cells.push({ term: b.noun, figure: b.count })
+  }
 
-  /* THE FIRST FEW THE CATALOGUE WOULD DRAW. `buildEntries` is the
-     catalogue tab's own reader, asked for the entries WITHOUT their
-     formatted facts — three formatted cells on 588 rows is a cost
-     this strip has no use for, and `read.ts` documents that flag as
-     existing for exactly this. */
-  const preview = useMemo(
-    () => buildEntries(listed, rowsByEntity, { facts: false }).slice(0, PREVIEW_ROWS),
-    [listed, rowsByEntity],
-  )
 
   /* THE FEW MOST RECENT, for the card. The full list is the Quotes
      tab eighteen pixels above; this is a glance. */
@@ -211,76 +247,24 @@ export function ModuleHome({
           itself as doors. ============================================ */}
 
       <div className="md-home-grid">
-        {/* ---- the deals ------------------------------------- */}
-        <section className="md-hcard" aria-labelledby="md-home-q">
-          <header className="md-hcard-head">
-            <h3 className="md-hcard-name" id="md-home-q">
-              Recent quotes
-            </h3>
-            {recent.length > 0 && onQuotes ? (
-              <button type="button" className="md-hcard-all" onClick={onQuotes}>
-                All {raised}
-              </button>
-            ) : null}
-          </header>
+      {/* ============================================================
+          THE RANGE LEADS, AND THE TWO CARDS THAT ARE USUALLY EMPTY
+          DO NOT.
 
-          {recent.length === 0 ? (
-            /* THE EMPTY STATE OFFERS THE ACT rather than narrating a
-               route to it. The old one on the Quotes tab spends two
-               sentences explaining where quotes come from. */
-            <div className="md-hcard-none">
-              <p className="md-hcard-none-say">Nothing quoted from here yet.</p>
-              {onNewQuote ? (
-                <button type="button" className="md-hcard-go" onClick={onNewQuote}>
-                  Start a quote
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <ul className="md-hq-list">
-              {recent.map((q) => (
-                <li key={q.id}>
-                  <button
-                    type="button"
-                    className="md-hq"
-                    disabled={!onOpenQuote}
-                    onClick={() => onOpenQuote?.(q.id)}
-                  >
-                    {/* THE SUBJECT AS THE QUOTE FROZE IT — never
-                        re-read from the sheet. A boat renamed since
-                        is still the boat this was written for. */}
-                    <span className="md-hq-what">{q.subjectLabel}</span>
-                    <span className="md-hq-who">
-                      {q.customer.name.trim() || 'No customer yet'}
-                    </span>
-                    <span className="md-hq-sum ds-mono">{money(quoteTotals(q).total)}</span>
-                    <span className="md-hq-when ds-mono">{localDay(q.createdAt)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+          MEASURED ON A FRESHLY LOADED PRICE FILE, which is the state
+          every module is in until somebody quotes from it: "Recent
+          quotes — Nothing quoted from here yet" and "Activity —
+          Nothing has changed in here yet", side by side, 145px tall,
+          the first thing on a page about a brand with 588 boats.
+          Two empty boxes were the headline and the 588 were third.
 
-        {/* ---- what changed here ----------------------------- */}
-        <section className="md-hcard" aria-labelledby="md-home-a">
-          <header className="md-hcard-head">
-            <h3 className="md-hcard-name" id="md-home-a">
-              Activity
-            </h3>
-          </header>
-          {/* SCOPED TO THIS PLACE. Until today `Entry.moduleId` was
-              written by nothing at all, so this card could only ever
-              have been empty — see the note in activity.ts about
-              what the stamp claims and what it does not. */}
-          {here.length === 0 ? (
-            <p className="md-hcard-none-say">{ACTIVITY_EMPTY_HERE}</p>
-          ) : (
-            <ActivityList orgSlug={orgSlug} moduleId={owner.id} limit={ACTIVITY_ROWS} />
-          )}
-        </section>
-      </div>
-
+          So the grid is inverted. The range is the tall card on the
+          left because it is the only one that is never empty — a
+          module with no stock has no page. The deals and the log
+          become a narrow rail beside it: still first-class, still
+          the same cards, but sized to what they usually hold rather
+          than to what they hold on the best day of the year.
+          ============================================================ */}
       {/* ---- the range, as doors ----------------------------- */}
       {cells.length > 0 || census.branches.length > 0 ? (
         <section className="md-hcard md-hcard--wide" aria-labelledby="md-home-r">
@@ -288,7 +272,7 @@ export function ModuleHome({
             <h3 className="md-hcard-name" id="md-home-r">
               The range
             </h3>
-            <button type="button" className="md-hcard-all" onClick={onStock}>
+            <button type="button" className="md-hcard-all" onClick={() => onStock()}>
               Open catalog
             </button>
           </header>
@@ -304,17 +288,63 @@ export function ModuleHome({
             </dl>
           ) : null}
 
-          {/* WHAT IS ACTUALLY IN HERE. The card was two numbers and a
-              row of chips that repeated them — "7 series" as a
-              figure and "7 series" as a chip, eight pixels apart.
-              A range card should show the range.
+          {/* WHAT IS ACTUALLY IN HERE.
 
-              THESE ARE THE FIRST ROWS THE CATALOGUE WOULD DRAW, in
-              its own order, through its own reader — so this strip
-              and the tab beside it can never disagree about what is
-              first or what it costs. Each is a door onto the item,
-              which is the only thing on this page that opens one. */}
-          {preview.length > 0 ? (
+              THE SIX ROWS THIS DREW. Highfield's first six, in sheet
+              order: RU230KAM (PVC) WH, RU230KAM (HYP) WH, RU230KAM
+              (PVC) LG, RU230KAM (HYP) LG, RU250KAM (PVC) WH,
+              RU250KAM (HYP) WH. Two models in two tube materials and
+              two colours — six lines that are really two boats, all
+              of them Roll-Up, chosen for nothing but being at the top
+              of a spreadsheet. It told you nothing about the other
+              582 and it named the same boat four times.
+
+              THE SEVEN THIS DRAWS. Every series, what it holds and
+              what it costs, biggest first — which accounts for all
+              588 in seven lines and is the shape a dealer thinks in.
+              Nobody asks for an RU230KAM; they ask for a Roll-Up.
+
+              A SERIES OPENS THE CATALOGUE. Where a table carries
+              twelve headings or more the catalogue files itself into
+              drawers and lands on this one; below that it is a
+              grouped list and the press simply opens it. Both are
+              honest and neither pretends to a filter that is not
+              there. */}
+          {series.length > 1 ? (
+            <ul className="md-home-series">
+              {series.map((d) => (
+                <li key={d.key}>
+                  <button
+                    type="button"
+                    className="md-series"
+                    onClick={() => onStock(d.key)}
+                  >
+                    <span className="md-series-name">{d.name || `No ${d.of}`}</span>
+                    <span className="md-series-n ds-mono">{grouped(d.count)}</span>
+                    {/* THE TWO ENDS ARE REAL ROWS, never an average:
+                        the cheapest and the dearest line the drawer
+                        holds. A series that prices nothing draws no
+                        empty cell. */}
+                    {d.low ? (
+                      <span className="md-series-band ds-mono">
+                        {d.low === d.high ? d.low : `${d.low}–${d.high}`}
+                      </span>
+                    ) : (
+                      <span className="md-series-band" />
+                    )}
+                    <CaretRight
+                      size={ICON_SIZE.small}
+                      className="md-series-go"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : preview.length > 0 ? (
+            /* A FLAT TABLE HAS NO SERIES TO SHOW — Formosa declares no
+               grouping at all — so it keeps the row strip, which is
+               the right answer for a range that is simply a list. */
             <ul className="md-home-stock">
               {preview.map((e) => (
                 <li key={`${e.tableId}:${e.rowId}`}>
@@ -325,18 +355,10 @@ export function ModuleHome({
                   >
                     <span className="md-stock-say">
                       <span className="md-stock-name">{e.label}</span>
-                      {/* THE SERIES IT SITS IN, where the table is cut
-                          by one. Highfield runs Series then Model then
-                          Variant, so a bare variant code says almost
-                          nothing on its own. */}
                       {e.branch ? (
                         <span className="md-stock-branch">{e.branch}</span>
                       ) : null}
                     </span>
-                    {/* A PRICE IS A FIGURE: mono, tabular, no hue. A
-                        row this table prices nothing for draws no
-                        empty cell — `price` is '' and the span is
-                        simply absent. */}
                     {e.price ? (
                       <span className="md-stock-price ds-mono">{e.price}</span>
                     ) : null}
@@ -347,6 +369,79 @@ export function ModuleHome({
           ) : null}
         </section>
       ) : null}
+
+        {/* ---- the rail: what has happened here ------------- */}
+        <div className="md-home-rail">
+          {/* ---- the deals ------------------------------------- */}
+          <section className="md-hcard" aria-labelledby="md-home-q">
+            <header className="md-hcard-head">
+              <h3 className="md-hcard-name" id="md-home-q">
+                Recent quotes
+              </h3>
+              {recent.length > 0 && onQuotes ? (
+                <button type="button" className="md-hcard-all" onClick={onQuotes}>
+                  All {raised}
+                </button>
+              ) : null}
+            </header>
+
+            {recent.length === 0 ? (
+              /* THE EMPTY STATE OFFERS THE ACT rather than narrating a
+                 route to it. The old one on the Quotes tab spends two
+                 sentences explaining where quotes come from. */
+              <div className="md-hcard-none">
+                <p className="md-hcard-none-say">Nothing quoted from here yet.</p>
+                {onNewQuote ? (
+                  <button type="button" className="md-hcard-go" onClick={onNewQuote}>
+                    Start a quote
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <ul className="md-hq-list">
+                {recent.map((q) => (
+                  <li key={q.id}>
+                    <button
+                      type="button"
+                      className="md-hq"
+                      disabled={!onOpenQuote}
+                      onClick={() => onOpenQuote?.(q.id)}
+                    >
+                      {/* THE SUBJECT AS THE QUOTE FROZE IT — never
+                          re-read from the sheet. A boat renamed since
+                          is still the boat this was written for. */}
+                      <span className="md-hq-what">{q.subjectLabel}</span>
+                      <span className="md-hq-who">
+                        {q.customer.name.trim() || 'No customer yet'}
+                      </span>
+                      <span className="md-hq-sum ds-mono">{money(quoteTotals(q).total)}</span>
+                      <span className="md-hq-when ds-mono">{localDay(q.createdAt)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* ---- what changed here ----------------------------- */}
+          <section className="md-hcard" aria-labelledby="md-home-a">
+            <header className="md-hcard-head">
+              <h3 className="md-hcard-name" id="md-home-a">
+                Activity
+              </h3>
+            </header>
+            {/* SCOPED TO THIS PLACE. Until today `Entry.moduleId` was
+                written by nothing at all, so this card could only ever
+                have been empty — see the note in activity.ts about
+                what the stamp claims and what it does not. */}
+            {here.length === 0 ? (
+              <p className="md-hcard-none-say">{ACTIVITY_EMPTY_HERE}</p>
+            ) : (
+              <ActivityList orgSlug={orgSlug} moduleId={owner.id} limit={ACTIVITY_ROWS} />
+            )}
+          </section>
+        </div>
+      </div>
 
       {/* ---- where else to go -------------------------------- */}
       {siblings.length > 1 || related.length > 0 ? (
