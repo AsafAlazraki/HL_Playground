@@ -572,6 +572,7 @@ export function QuoteStart({
                               entity={entities[entry.tableId]}
                               at={at}
                               on={at === hi}
+                              titled={grp.trail !== ''}
                               onPick={() => setHi(at)}
                               onTake={() => {
                                 setHi(at)
@@ -838,6 +839,7 @@ function SubjectRow({
   entity,
   at,
   on,
+  titled,
   onPick,
   onTake,
 }: {
@@ -845,6 +847,9 @@ function SubjectRow({
   entity: EntityDef | undefined
   at: number
   on: boolean
+  /** Does the group above this row already print its trail? When it
+   *  does, the row must not print it again — see below. */
+  titled: boolean
   onPick: () => void
   onTake: () => void
 }): ReactElement {
@@ -869,14 +874,28 @@ function SubjectRow({
               img={entry.img}
               fallbackAlt={entry.label}
               className="qs-row-img"
-              w={56}
-              h={38}
+              /* THE PICTURE IS THE IDENTIFIER, so it is worth room.
+                 44x30 was a favicon of a boat on the screen where
+                 somebody picks between a $2,770 Roll-Up and a
+                 $129,830 Sport, and the label alone —
+                 "CL400 (PVC) DG-G-DG" — does not tell them apart. */
+              w={72}
+              h={48}
             />
           ) : null}
         </span>
         <span className="qs-row-say">
           <span className="qs-row-name">{entry.label}</span>
-          {entry.trail === '' ? null : <span className="qs-row-trail">{entry.trail}</span>}
+          {/* THE TRAIL, AND ONLY WHERE IT HAS NOT JUST BEEN SAID.
+              Groups are cut BY the trail, so a row inside a titled
+              group carries the heading's own words by construction —
+              "CLASSIC ▸ CL400" as the heading and "Classic ▸ CL400"
+              under each of the rows beneath it. With the model code
+              in the label as well, `CL400` appeared four times in
+              three lines. A flat table has no heading and keeps it. */}
+          {entry.trail === '' || titled ? null : (
+            <span className="qs-row-trail">{entry.trail}</span>
+          )}
         </span>
         <span className="qs-row-price">{entry.price}</span>
       </button>

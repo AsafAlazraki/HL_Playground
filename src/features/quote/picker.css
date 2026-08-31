@@ -650,8 +650,14 @@
 /* A LIST ROW DARKENS RATHER THAN SCALING, so its neighbours never
    look like they moved. §4. */
 .qs-row {
+  /* THE PICTURE'S SIZE IS WRITTEN ONCE. The column was `44px` here
+     and the well was `44px` forty lines down, and growing one
+     without the other put the photograph straight through the
+     boat's name. They read the same two values now. */
+  --qs-pic-w: 72px;
+  --qs-pic-h: 48px;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  grid-template-columns: var(--qs-pic-w) minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--s-3);
   width: 100%;
@@ -681,13 +687,16 @@
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+/* THE PICTURE IS THE IDENTIFIER on this screen and is sized like
+   one. 44x30 is a favicon; these are boats being told apart from
+   each other by somebody spending five figures. */
 .qs-row-pic {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 30px;
+  width: var(--qs-pic-w);
+  height: var(--qs-pic-h);
   border-radius: var(--r-control);
   background: var(--surface-4);
   color: var(--fg-tertiary);

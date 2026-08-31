@@ -366,6 +366,39 @@ export function subjectsIn(
   const waiting = all.length > SEARCH_FLOOR && typed.length > 0 && typed.length < SEARCH_MIN
 
   const matched = waiting ? all.slice() : matchSubjects(all, typed)
+
+  /* ============================================================
+     THE FIRST FIFTY ARE A SLICE OF A SHEET, AND THAT IS THE BUG.
+
+     `shown` is capped at fifty and then cut into groups, so the
+     headings a person reads are whatever series happened to fall in
+     the first fifty ROWS OF THE SPREADSHEET. On Highfield that reads:
+
+       Classic ▸ CL400 · Classic ▸ CL460 · Sport ▸ SP900 ·
+       Patrol ▸ PA540ST · Patrol ▸ PA460 · Sport ▸ SP760ST ·
+       Sport ▸ SP660 · Classic ▸ CL310LS · Sport ▸ SP330 …
+
+     Sport three times, Classic three times, interleaved, each a
+     fragment of one or two boats. There is nothing to scan and no
+     way to tell whether you have seen all the Sports.
+
+     ORDERED BY SERIES AND THEN BY MODEL, the same fifty become
+     Adventure, then all of Classic, then Coaster — whole headings a
+     person can read down. `numeric` so CL310 sorts before CL400 and
+     SP660 before SP900, which a plain string compare gets wrong.
+
+     ONLY WHEN NOBODY IS SEARCHING. With a query typed, `matchSubjects`
+     has already put the best matches first and that order is the
+     answer to the question being asked; re-sorting it alphabetically
+     would bury the thing somebody is looking for. */
+  if (typed === '') {
+    matched.sort(
+      (a, b) =>
+        a.trail.localeCompare(b.trail, 'en-AU', { numeric: true }) ||
+        a.label.localeCompare(b.label, 'en-AU', { numeric: true }),
+    )
+  }
+
   const shown = matched.slice(0, SUBJECT_CAP)
   return {
     all,
