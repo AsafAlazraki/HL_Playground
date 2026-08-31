@@ -549,8 +549,19 @@ export function ModuleQuotes({ module, owner, onOpenQuote }: ModuleQuotesProps):
     )
   }
 
+  /* WHAT THIS PLACE HAS OUT, added up. Every quote raised from here,
+     at what it comes to — the one figure a person opening this tab is
+     usually after, and it was the one thing the tab did not say. */
+  const worth = raised.reduce((n, q) => n + quoteTotals(q).total, 0)
+
   return (
     <ul className="md-qs">
+      <li className="md-qs-worth" role="presentation">
+        <b className="md-qs-worth-n ds-mono">{money(worth)}</b>
+        <span className="md-qs-worth-say">
+          across {raised.length === 1 ? 'one quote' : `${grouped(raised.length)} quotes`}
+        </span>
+      </li>
       {raised.map((q) => {
         const body = (
           <>
@@ -565,6 +576,13 @@ export function ModuleQuotes({ module, owner, onOpenQuote }: ModuleQuotesProps):
                 because a reference and a date are values a person
                 reads back to somebody on the phone. */}
             <span className="md-q-ref">{q.reference}</span>
+            {/* WHAT IT IS WORTH. The row carried the subject, the
+                state, the reference and the day — everything about a
+                quote except the number a dealer actually asks about.
+                `quoteTotals` is the same reader the dashboard card
+                and the board's cards take, so three surfaces cannot
+                disagree about what a deal comes to. */}
+            <span className="md-q-sum ds-mono">{money(quoteTotals(q).total)}</span>
             <span className="md-q-when">{localDay(q.createdAt)}</span>
           </>
         )

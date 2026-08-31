@@ -4167,7 +4167,7 @@
 }
 .md-q {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
   align-items: baseline;
   gap: var(--s-3);
   width: 100%;
@@ -4789,7 +4789,10 @@
 }
 .md-work-name.is-quiet {
   margin: 0;
-  font-size: var(--t-body);
+  font-size: var(--t-body-size);
+  font-weight: var(--t-body-weight);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0;
@@ -4872,7 +4875,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--t-body);
+  font-size: var(--t-body-size);
+  font-weight: var(--t-body-weight);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
   color: var(--fg-primary);
 }
 
@@ -4880,14 +4886,20 @@
    seven rows each ending "models" is the same word seven times.
    A figure is never a hue. */
 .md-series-n {
-  font-size: var(--t-small);
+  font-size: var(--t-small-size);
+  font-weight: var(--t-small-weight);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
   font-variant-numeric: tabular-nums;
   color: var(--fg-secondary);
 }
 
 .md-series-band {
   justify-self: end;
-  font-size: var(--t-small);
+  font-size: var(--t-small-size);
+  font-weight: var(--t-small-weight);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   color: var(--fg-tertiary);
@@ -4924,4 +4936,46 @@
   .md-series-band {
     display: none;
   }
+}
+
+/* ---- what this place has out ------------------------------ */
+
+/* THE SUM OF EVERY QUOTE RAISED HERE, above the list of them. A
+   figure is never a hue, and this one is the reason somebody opened
+   the tab. */
+.md-qs-worth {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3) var(--s-3);
+  border-bottom: 1px solid var(--line-subtle);
+  margin-bottom: var(--s-2);
+}
+
+.md-qs-worth-n {
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-primary);
+}
+
+.md-qs-worth-say {
+  font-size: var(--t-small-size);
+  font-weight: var(--t-small-weight);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  color: var(--fg-secondary);
+}
+
+/* A LINE'S OWN MONEY. Mono and tabular so a column of them reads as
+   a column, and never coloured — see the figure rule. */
+.md-q-sum {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-small-size);
+  font-weight: var(--t-small-weight);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  color: var(--fg-primary);
 }

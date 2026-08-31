@@ -31,6 +31,7 @@ import { FlowArrow, Graph, Scales, Stack, TreeStructure } from '@phosphor-icons/
 import type { Icon } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useConstraints } from '@/features/constraints/constraintDefs'
+import { WORKBOOK_RULES } from '@/features/constraints'
 import { PageHead } from '@/features/page'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
@@ -116,7 +117,22 @@ export function DataStage({
     (n, e) => n + e.fields.filter((f) => f.type === 'reference').length,
     0,
   )
-  const rules = constraints.length
+  /* ============================================================
+     THE DOOR SAID "0 rules" AND THERE ARE SIXTEEN BEHIND IT.
+
+     `useConstraints()` returns the rules SOMEBODY HAS WRITTEN, which
+     on a freshly loaded sheet is none — so the door to the busiest
+     screen in this area advertised itself as empty. The screen it
+     opens counts three things: sixteen read out of the price file,
+     nought written by hand, and six of them being enforced. A person
+     looking for "the business rules management" reads "0 rules" and
+     goes somewhere else, which is exactly what happened.
+
+     THE DOOR TAKES ONE FACT, so it is the one a person is looking
+     for: how many rules this business has, from wherever they came.
+     `WORKBOOK_RULES` is the same constant the screen's own tally
+     counts, so the door and the tab it lands on cannot disagree. */
+  const rules = WORKBOOK_RULES.length + constraints.length
 
   useStageEscape(onClose)
 

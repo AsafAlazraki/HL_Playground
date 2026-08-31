@@ -72,6 +72,7 @@ import {
 } from './ruleLedger'
 import { WORKBOOK_RULES, type WorkbookRuleRef, type WorkbookRuleSeed } from './workbookRules'
 import { Provenance, readSource, withFigures } from './Provenance'
+import { splitReason } from './plainly'
 
 /** One sentence, measured off the loaded sheet on render, for a rule
  *  this app is actually running. Keyed by the adjudication's reference
@@ -231,6 +232,14 @@ function RuleRow({
   const measure = entry?.measure
   /* THE REASONING, SHUT BY DEFAULT. See the note at the disclosure. */
   const [why, setWhy] = useState(false)
+
+  /* THE REASON, CUT AT ITS OWN FIRST SENTENCE. Every one of these
+     strings is built the same way — a sentence that IS the reason,
+     then a paragraph explaining the app's limitation behind it — and
+     the card was printing both, unconditionally, on every pending
+     rule. Nothing is reworded and nothing is dropped: the remainder
+     moves one press, behind the same "Why" the caveat already uses. */
+  const reason = splitReason(seed.plainly)
   /* the `said` pieces of the citation — read from the seed's own
      string, so this and the citation below can never disagree */
   const narrative = readSource(seed.source)
@@ -318,6 +327,13 @@ function RuleRow({
         {why ? (
           <>
             <p className="cn-rl-because">Because {seed.because}.</p>
+            {/* THE REST OF THE REASON, where there was more than one
+                sentence of it. It is the same paragraph the card used
+                to print in full and is not touched — only moved to
+                where the rest of the app's own caveats live. */}
+            {reason.rest === '' ? null : (
+              <p className="cn-rl-caveat">{reason.rest}</p>
+            )}
             {entry ? <p className="cn-rl-caveat">{entry.caveat}</p> : null}
             {/* THE ADJUDICATOR'S NARRATIVE, drawn here rather than in
                 the citation below. The citation itself — the file and
@@ -359,7 +375,9 @@ function RuleRow({
           the sentence spends a tenth of the reason repeating the
           chip. The reason is untouched. */}
       {state === 'pending' ? (
-        <p className="cn-rl-why">{seed.plainly ?? 'This app cannot express this rule yet.'}</p>
+        <p className="cn-rl-why">
+          {reason.first === '' ? 'This app cannot express this rule yet.' : reason.first}
+        </p>
       ) : null}
 
       {/* THE PROVENANCE IS THE POINT. Anyone can write a rule and claim
