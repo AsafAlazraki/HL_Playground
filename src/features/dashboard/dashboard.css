@@ -2012,7 +2012,9 @@
   /* FOUR FIFTHS OF THE TILE. It was closer to half, and a strip of
      small grey text taking half a tile competes with the mark the
      tile exists to show. 96 over a 24px foot is 80/20. */
-  min-height: 96px;
+  /* TALLER, because the mark is the tile's face and 96 was sized
+     around a 40px mark. */
+  min-height: 112px;
   padding: var(--s-4) var(--s-5);
   border-radius: var(--r-control) var(--r-control) 0 0;
   background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
@@ -2028,12 +2030,33 @@
    rule that only capped width would draw the squarer ones three
    times the height of the wider ones. */
 .dsh-tile-panel .md-place-logo {
-  max-height: 40px;
-  /* THE MARK IS PRINTED ON PAPER, in both themes. On dark the
-     panel is `color-mix(kind 14%, #101f2f)` and every logo this
-     app ships is dark ink on transparent — Highfield's wordmark
-     measured 1.4:1 against its own tile. The plate is the light
-     thing on a dark card; the kind's tint still frames it. */
+  /* BIGGER. 40px was sized when the mark shared the tile with a
+     name; it is the tile's whole face now and was floating in it. */
+  max-height: 56px;
+  max-width: 100%;
+}
+
+/* THE PAPER PLATE IS A DARK-THEME REPAIR AND IT BELONGS ONLY
+   THERE. On dark the panel is `color-mix(kind 14%, #101f2f)` and
+   every logo this app ships is dark ink on transparent —
+   Highfield's wordmark measured 1.4:1 against its own tile, which
+   is not a contrast complaint, it was gone. On LIGHT the panel is
+   already a pale tint that dark ink reads on perfectly well, and
+   the plate did nothing there but paste a white sticker onto a
+   coloured card. Reported as exactly that.
+
+   `:root:not([data-theme='light'])` rather than a bare media
+   query, so an explicit light choice on a dark OS is still light —
+   the same three-state pattern every other themed rule here
+   keeps. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .dsh-tile-panel .md-place-logo {
+    padding: 6px var(--s-3);
+    border-radius: var(--r-control);
+    background: var(--mark-paper);
+  }
+}
+:root[data-theme='dark'] .dsh-tile-panel .md-place-logo {
   padding: 6px var(--s-3);
   border-radius: var(--r-control);
   background: var(--mark-paper);

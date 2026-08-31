@@ -439,9 +439,10 @@
   position: absolute;
   left: var(--s-2);
   bottom: var(--s-2);
-  /* PAPER, IN BOTH THEMES — see `--mark-paper` in ds.css. Every
-     logo here is dark ink on transparent, and on the dark theme
-     `--surface-1` is #101f2f, which swallowed three of the eight. */
+  /* PAPER ONLY WHERE IT IS NEEDED. This plate sits ON a
+     photograph, so it needs a ground in both themes — unlike the
+     dashboard tiles, where the panel is already a pale tint on
+     light and the plate was a white sticker on a coloured card. */
   background: var(--mark-paper);
   border: 1px solid var(--line);
   border-radius: var(--r-control);

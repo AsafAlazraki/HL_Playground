@@ -518,6 +518,10 @@ export function Shell({ user, onSignOut }: ShellProps) {
              export and Saved configurations are all behind this one —
              see AdminStage.tsx, which is why that is not a graveyard. */
           onOpenAdmin={() => setStage({ kind: 'admin' })}
+          /* THE SHAPE OF WHAT THE BUSINESS SELLS, as its own door.
+             It was a band inside Admin behind a 32px link at the
+             foot of the rail. */
+          onOpenData={() => setStage({ kind: 'data' })}
           user={user}
           onSignOut={onSignOut}
           onOpenConfigurations={() => setConfiguring(true)}

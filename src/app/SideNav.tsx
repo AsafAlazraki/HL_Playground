@@ -94,6 +94,7 @@ import {
   MagnifyingGlass,
   Plus,
   SquaresFour,
+  Stack,
   UsersThree,
 } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -149,6 +150,9 @@ export interface SideNavProps {
   /** the drawing, the tables, the rules, who may do what, and the
    *  two doors a file comes in and goes out by */
   onOpenAdmin: () => void
+  /** the shape of what the business sells — its own door, not a
+   *  band inside Admin. See DataStage.tsx. */
+  onOpenData: () => void
   onSearch: () => void
   /** Opens the picker that starts a quote. A quote is minted from
    *  the row being sold, so this can never be "create empty". */
@@ -220,6 +224,7 @@ export function SideNav({
   onOpenQuotes,
   onOpenCustomers,
   onOpenAdmin,
+  onOpenData,
   onSearch,
   onNewQuote,
   user,
@@ -246,6 +251,9 @@ export function SideNav({
      opens. See `placeCount`. */
   const entities = useProjectStore((s) => s.entities)
   const moduleCount = useMemo(() => placeCount(modules, entities), [modules, entities])
+  /* HOW MANY TABLES THE SHAPE IS MADE OF — the figure beside Data,
+     counted at paint like every other count in this rail. */
+  const tableCount = useMemo(() => Object.keys(entities).length, [entities])
 
   return (
     <nav
@@ -320,6 +328,27 @@ export function SideNav({
             glyph={mark(FileText)}
             onPick={onOpenQuotes}
           />
+          {/* DATA IS A DOOR IN THE RAIL, for whoever owns the shape
+              of the business. It was a band inside Admin, behind a
+              32px link at the very foot of this rail under the
+              person's own name — the owner looked for it twice and
+              could not find it.
+
+              THE ROW IS ABSENT BELOW super-admin rather than
+              refused, the same as Admin's: an area that is not
+              yours is not a refusal, and greying it would tell
+              every salesperson every day about a screen they will
+              never open. */}
+          {atLeast(user, 'super-admin') ? (
+            <NavRow
+              label="Data"
+              on={current === 'data'}
+              count={tableCount}
+              collapsed={collapsed}
+              glyph={mark(Stack)}
+              onPick={onOpenData}
+            />
+          ) : null}
           <NavRow
             label="Customers"
             on={current === 'customer'}

@@ -31,6 +31,7 @@ import { QuoteStart, type QuoteStartProps } from '@/features/quote/QuoteStart'
 import { ModuleStage } from './ModuleStage'
 import { CustomerStage } from './CustomerStage'
 import { AdminStage } from './AdminStage'
+import { DataStage } from './DataStage'
 
 /** THE TABS INSIDE A MODULE. Named here, in the shell's own union,
  *  because the shell is what routes to one — the feature that draws
@@ -105,6 +106,21 @@ export type Stage =
      does not.
      ============================================================ */
   | { kind: 'start'; at: string | null }
+  /* ============================================================
+     DATA — its own door, and not a room inside Admin.
+
+     The data model, the tables, Configure, Business rules and What
+     fits what were a band on the Admin screen, reached through a
+     32px link at the foot of the rail. The owner looked for that
+     functionality twice and could not find it, then said where it
+     belongs: its own menu item, not under Admin.
+
+     It is also the honest split. Admin is about the ORGANISATION —
+     who may do what, what has been saved, what goes in and out.
+     This is the SHAPE OF WHAT THE BUSINESS SELLS, which is the
+     thing the rest of the application is built on top of.
+     ============================================================ */
+  | { kind: 'data' }
   /* ============================================================
      ADMIN — the drawing, the tables, the rules, what fits what,
      who may do what, and the two doors a file comes in and goes
@@ -199,6 +215,7 @@ export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNo
   if (s.kind === 'module') return s.moduleId ? 'Module' : 'Modules'
   if (s.kind === 'customer') return s.customerId ? 'Customer' : 'Customers'
   if (s.kind === 'admin') return 'Admin'
+  if (s.kind === 'data') return 'Data'
   if (s.kind === 'start') return 'New quote'
   const e = entities[s.entityId]
   if (!e) return 'Table'
@@ -423,6 +440,17 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
              an optional moduleId and a click handler would hand it
              the event. */
           onNewQuote={() => h.newQuote()}
+          onClose={h.close}
+        />
+      )
+    case 'data':
+      return (
+        <DataStage
+          onOpenDrawing={h.openSheet}
+          onOpenTables={() => h.openWin({ kind: 'gallery' })}
+          onOpenLevels={() => h.openWin({ kind: 'levels', entityId: null })}
+          onOpenRules={() => h.openWin({ kind: 'rules' })}
+          onOpenFitment={() => h.openWin({ kind: 'flow' })}
           onClose={h.close}
         />
       )
