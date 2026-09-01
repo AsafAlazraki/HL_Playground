@@ -2972,17 +2972,141 @@
    box that is no longer written go with the markup rather than
    staying behind as a dead selector. */
 
+/* ============================================================
+   HOME — THE BOARD.
+
+   WHAT WAS HERE, AND WHAT WAS MEASURED WRONG WITH IT. Each group
+   was a full-width band carrying its own
+   `repeat(auto-fill, minmax(230px, 1fr))`. At 1920 that grid is
+   1629px and six columns wide, so Boats' seven cards filled a row
+   and Motors' two filled 28% of one — 72% of the band was hole,
+   and Accessories, Packages and Custom table were the same. Five
+   of the seven groups on the app's opening screen were mostly
+   empty row. `auto-fill` is the right rule for a list of unknown
+   length and the wrong one for a group of exactly two.
+
+   THE BOARD REPLACES THE BANDS. One grid, whose column is ONE
+   CARD wide, and a group is a SHELF that spans as many of those
+   columns as it needs to stand exactly two cards tall. The
+   arithmetic is in HomeStage.tsx (`shelfFor`); what this file
+   does is spend it: `--hm-u` is the shelf's width in units and
+   `--hm-lead` is how many the first card takes. Because every
+   shelf is two rows tall, every shelf in a board row is the same
+   height, and `grid-auto-flow: dense` slots a one-unit shelf into
+   the gap a four-unit one leaves. Measured at 1920: five units
+   across, Boats(4) + Motors(1) fill a row exactly, Trailers(4) +
+   Accessories(1) fill the next.
+
+   AND THE UNIT IS A CARD, NOT A FRACTION OF THE WINDOW. It ramps
+   230px → 340px between a small laptop and 2560, so a card stays
+   a card and the WINDOW gets more of them. Nothing is stretched
+   to fill a wide screen; the layout gains columns instead. The
+   board itself stops at `--measure`.
+   ============================================================ */
+
 .hm-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  /* 120px of floor is what the page bar costs a scrolling page */
-  padding: var(--s-8) var(--s-8) 120px;
+  /* THE SIDE GUTTER IS THE PAGE'S NOW, NOT THIS SCREEN'S. It was a
+     flat --s-8 at every width; `--gutter` is 34.6px at 1440 — the
+     same 32 within a rounding — and opens to 56 on a 2560 screen,
+     which is the whole point of the fluid layer: above 1180 this
+     application had no opinion at all.
+
+     IT IS NAMED HERE BECAUSE THE PINNED STRIP MIRRORS IT. `.hm-scale`
+     bleeds out to the scrollport by negative-margining exactly this
+     number and putting it back inside as padding. Two literals that
+     must agree had already drifted once in this file (see --rail at
+     the head), so there is one name and both places read it. The
+     fallback is the tuned figure: delete response.css from main.tsx
+     and the fixed design returns exactly, which is that file's own
+     contract. */
+  --hm-gutter: var(--gutter, var(--s-8));
+  /* 120px of floor is what the page bar costs a scrolling page — and
+     what it costs GROWS, because the bar and the dock beneath it now
+     answer the window. `--acts-clear` is that cost derived rather
+     than typed (dock + 2px + bar; 132px at the tuned width), so the
+     floor is never less than the bar needs and never less than the
+     120 this page was measured with. */
+  padding: var(--s-8) var(--hm-gutter) max(120px, var(--acts-clear, 120px));
 }
 
+/* THE AIR BETWEEN TWO BANDS. `--s-12` is 48px and `--section-gap`
+   tops out at 44, so the fluid layer adds no headroom here at any
+   width the app is used at — the `max()` says that out loud rather
+   than leaving two numbers to be reconciled by hand the next time
+   either moves. */
 .hm-sec + .hm-sec {
-  margin-top: var(--s-12);
+  margin-top: max(var(--s-12), var(--section-gap, 0px));
 }
+
+/* `.hm-board` — THE SHELF GRID, KEPT THOUGH NOTHING WRITES IT YET.
+   Home is laid out as bands of `.hm-grid` here, not as one dense
+   board; what the board carries that nothing else states is the
+   fluid layer's opinion about this page — a column of it is ONE
+   CARD and that card RAMPS, and the picture band on the card ramps
+   with it. The arithmetic is in HomeStage.tsx (`shelfFor`) if the
+   board comes back; the ramps are below either way. */
+.hm-board {
+  /* one column of the board is one card */
+  --hm-unit: clamp(230px, 16vw, 340px);
+  /* THE PICTURE BAND, IDENTICAL ON EVERY CARD so a table with a
+     photograph and a table without are the same height — and a
+     fixed height rather than an `aspect-ratio`, because the lead
+     card is twice as wide as its neighbours and a ratio would make
+     it twice as tall, which is the ragged row again. Ramped so the
+     band stays about 1:2.5 against the card at every width. */
+  --hm-shot: clamp(96px, 6.6vw, 140px);
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--hm-unit), 100%), 1fr));
+  grid-auto-flow: row dense;
+  /* a short shelf ends where it ends rather than stretching to the
+     height of the tallest thing beside it */
+  align-items: start;
+  /* THE OUTER TIER. 32px between shelves against 12px between the
+     cards inside one, so a shelf reads as a group and not as six
+     cards that happen to be near each other. */
+  gap: var(--section-gap) var(--sp-6);
+  width: min(100%, var(--measure));
+  margin-inline: auto;
+}
+
+/* THE BAND STOPS AT THE MEASURE, AND THAT IS THE POINT OF THE WHOLE
+   FLUID LAYER. The board capped itself at `--measure` and centred
+   what was left; there is no board here — the SECTION is the band —
+   so the cap lands on the section. `min(100%, …)` keeps it honest
+   in a narrow window and the 100% fallback means a build without
+   response.css is unchanged. Below 1180 nothing moves; above it the
+   page keeps gaining columns until 2600 and then stops, rather than
+   running to the edge of a 2560 screen.
+
+   `grid-column` is the board's own line, kept and inert: `.hm-secs`
+   is not a grid here and `--hm-u` is never set, so it costs nothing
+   and records where the shelf arithmetic went. */
+.hm-sec {
+  grid-column: span var(--hm-u, 1);
+  min-width: 0;
+  width: min(100%, var(--measure, 100%));
+  margin-inline: auto;
+}
+
+/* ------------------------------------------------------------
+   THE GROUP HEAD. It was a 13px semibold word and a bare number —
+   the treatment a filter chip gets — and it is the only structure
+   on a page of fifty tables. It now takes the kind's own mark on a
+   plate, the title step for the name, and its figures on a line of
+   their own beneath: how many tables, and how many of the thing
+   they hold, in the dealer's word for it. Both counted.
+   ------------------------------------------------------------ */
+
+/* THE HEAD IS A FLEX ROW HERE and not the two-track grid the shelf
+   used, because what stands in it is different: a dot in the kind's
+   own hue, the name, the count as a chip, and a rule that runs out
+   to the edge — the rule is what makes the group a band, and a rule
+   cannot be a grid track of unknown width. The shelf's plate and its
+   figures line are kept below for the same reason `.hm-board` is. */
 .hm-sec-head {
   display: flex;
   /* centre, not baseline: the kind dot beside the name is a circle and
@@ -2993,15 +3117,43 @@
   animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
   animation-delay: calc(min(var(--i, 0), 14) * 26ms);
 }
+
+/* the plate stands on the PAGE, not inside a card, so it owes no
+   radius subtraction to anything */
+.hm-sec-mark {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  background: var(--paper-high);
+  /* the kind hue as a GLYPH, which is what §1 allows it for */
+  color: var(--tbn-accent, var(--ink-faint));
+}
+
 /* the heading step, not 13px: at 1600px the group name is the only
-   landmark on the page and 13px is a caption */
+   landmark on the page and 13px is a caption.
+
+   ALL FOUR NAMES, NOT THREE. §6 says a type step is a set and the
+   leading was the one that had been left off — `redesign` wrote a
+   hard `line-height: 1.15` here, but 1.15 was tuned against a 17px
+   step and this is the heading step, so the set's own
+   `--t-heading-lead` is what goes in that slot. The size is the only
+   one of the four response.css ramps (15 → 17.5px); the tracking is
+   already in `em`, so it stays proportional at every width without a
+   second set of numbers to keep in sync. */
 .hm-sec-name {
+  grid-column: 2;
   margin: 0;
   font-family: var(--font-ui);
   font-size: var(--t-heading-size);
   font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
   letter-spacing: var(--t-heading-track);
   color: var(--ink);
+  text-wrap: balance;
 }
 .hm-sec-count {
   padding: 1px 7px;
@@ -3013,28 +3165,97 @@
   color: var(--fg-tertiary);
 }
 
-/* BIGGER. The gallery was six 230px cards to a 1600px row, which is a
-   file listing. Four bigger cards is a product. */
-.hm-grid {
-  display: grid;
-  gap: var(--s-5);
-  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+.hm-sec-figures {
+  grid-column: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 3px 0 0;
+  font-size: var(--micro-l-size);
+  color: var(--ink-faint);
+}
+.hm-sec-figures b {
+  font-family: var(--font-mono);
+  font-size: var(--data-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+}
+.hm-sec-figures i {
+  width: 1px;
+  height: 9px;
+  margin: 0 4px;
+  background: var(--hairline-strong);
 }
 
-/* THE SAME CARD THE SHEET DRAWS — kind rail, kind name, table name,
-   what is in it — so moving between the two never feels like moving
-   between two apps.
+/* ------------------------------------------------------------
+   THE CARDS INSIDE ONE SHELF. Exactly `--hm-u` columns — never
+   `auto-fill`, because auto-fill is what put the hole in the band.
+   The lead card takes `--hm-lead` of them, which is 2 when the
+   group holds an odd number of tables and 1 when it holds an even
+   one; that is the whole trick that makes the last row full.
+   ------------------------------------------------------------ */
+
+.hm-cells {
+  display: grid;
+  grid-template-columns: repeat(var(--hm-u, 1), minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hm-cell {
+  display: grid;
+  min-width: 0;
+}
+.hm-cell--lead {
+  grid-column: span var(--hm-lead, 1);
+}
+
+/* BIGGER, AND THE UNIT IS A CARD RATHER THAN A FRACTION OF THE
+   WINDOW. The gallery was six 230px cards to a 1600px row, which is
+   a file listing; four bigger cards is a product. That fixed 320
+   was still a fixed number, and above 1440 a fixed card on a wider
+   screen is a physically smaller card — the exact complaint the
+   fluid layer was written to answer.
+
+   SO THE CARD RAMPS AND THE WINDOW GAINS COLUMNS. 320 at 1440 (the
+   tuned figure, held at every width below it, so nothing that was
+   already right regresses) to 400 at 2560. The slope is the ramp
+   `redesign` gave the board's own unit, re-anchored: it ran
+   230 → 340 from a 230px card, and this runs 320 → 400 from a 320px
+   one, because a card that started bigger does not need to gain as
+   much to keep looking like the same object. `auto-fill` then does
+   what it is actually good at — an unknown number of equal things.
+
+   THE MEASURE IS NOT SPENT HERE, it is spent on `.hm-sec` above, so
+   the group's head and its cards stop at the same line.
 
    IT IS DECLARED BEFORE `.hm-card--shot`, AND HAS TO BE. That variant
    is the same specificity and takes `padding-top` off a card with a
    photograph on it; this rule moved BELOW it would put the padding
    back and push every picture down its own card. */
+.hm-grid {
+  --hm-unit: clamp(320px, 217px + 7.14vw, 400px);
+  display: grid;
+  gap: var(--s-5);
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--hm-unit), 100%), 1fr));
+}
+
+/* THE SAME CARD THE SHEET DRAWS — kind rail, kind name, table
+   name, what is in it — so moving between the two never feels like
+   moving between two apps. What is new is the picture above it. */
 .hm-card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
+  /* a grid item floors at its min-content width unless told not to —
+     the chain at the head of this file says why, and a card is the
+     last box on it */
+  min-width: 0;
   min-height: 150px;
   padding: var(--s-4) var(--s-4) var(--s-3) 18px;
   border: 1px solid var(--hairline);
@@ -3062,9 +3283,11 @@
     bottom var(--d-med) var(--ease-out-expo),
     width var(--d-med) var(--ease-out-expo);
 }
-/* the glow is the KIND's hue, not the accent's — the one place in the
-   app a kind colour lifts off its 3px rail, and it does it as light
-   rather than as a fill behind text (§1) */
+/* ONE COLOUR AND ONE SPATIAL SIGNAL, never two spatial: the lift is
+   the only thing that moves, and everything else that changes is
+   light. The glow is the KIND's hue, not the accent's — the one
+   place in the app a kind colour lifts off its 3px rail, and it does
+   it as light rather than as a fill behind text (§1). */
 .hm-card:hover {
   border-color: var(--line-strong);
   box-shadow:
@@ -3073,28 +3296,76 @@
     0 10px 30px -14px var(--tbn-accent, transparent);
   transform: translateY(-3px);
 }
+/* the press deepens the hover's direction rather than reversing it:
+   the card settles back down and shrinks by 0.5%, which on a 250px
+   card is a little over a pixel */
 .hm-card:active {
   transform: translateY(0) scale(0.994);
   box-shadow: var(--e1);
   transition-duration: var(--d-press);
 }
-/* FOCUS HAS TO BE FINDABLE, and this was the one card in the app you
-   could not find. The ring was a 1px border colour change plus a 3px
-   halo in `--blue-wash`, which is blue at 9% alpha: measured 1.09:1
-   against the card's own white, so on a grid of fifty cards a keyboard
-   user tabbing through had no idea which one was theirs.
-   `.md-card:focus-visible` — deliberately THE SAME CARD, in
-   modules.css:148 — already draws `2px solid var(--blue)` at 2px
-   offset, and so does `.md-tile`, `.rl-chipbtn`, `.ob-primary` and
-   every row in the shell. That is the house ring; Home now takes it.
-   The wash stays as the third layer so the ring reads as belonging to
-   the card rather than sitting on top of it, and the blue border keeps
-   the card's own edge lit. */
+/* FOCUS HAS TO BE FINDABLE. The house ring — `.md-card`, `.md-tile`,
+   `.rl-chipbtn`, `.ob-primary` and every row in the shell draw the
+   same one. It is never animated. */
 .hm-card:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* THE PHOTOGRAPH, AND THE PLATE THAT STANDS IN ITS PLACE. The two
+   are the same box on purpose: a table whose own rows carry a
+   picture we may draw and a table whose rows do not are the same
+   card, the same height, in the same grid row. Full-bleed, so the
+   card's own `overflow: hidden` gives it the card's corner and no
+   radius is written twice. */
+.hm-card-shot,
+.hm-card-plate {
+  display: block;
+  flex: none;
+  width: 100%;
+  height: var(--hm-shot);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper);
+}
+.hm-card-shot {
+  object-fit: cover;
+  object-position: center;
+}
+/* A WHISPER OF THE KIND HUE BEHIND A GLYPH — which is what §1
+   allows the kind hues for, and never a fill behind text. 7% keeps
+   it a ground rather than a colour, so a page mixing plates and
+   photographs still reads as one drawing. */
+.hm-card-plate {
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--tbn-accent, var(--ink-faint)) 7%, var(--paper));
+  color: var(--tbn-accent, var(--ink-faint));
+}
+
+.hm-card-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  /* THE INNER TIER: 12/14 of padding against 6 of gap, so the three
+     lines read as one block inside the card rather than as three
+     things evenly spaced down it. */
+  padding: 12px 14px 12px 17px;
+}
+/* the kind rail, on the body rather than the whole card so it does
+   not draw a stripe across the photograph */
+.hm-card-body::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tbn-accent, var(--ink-faint));
 }
 
 .hm-card-kind {
@@ -3102,34 +3373,58 @@
   align-items: center;
   gap: 5px;
   color: var(--tbn-accent, var(--ink-faint));
+  /* the label step, taken whole with its own tracking (§6). It is
+     `--t-label-size` here rather than `--ui-xs-size`; the two are
+     the same ramp — response.css gives both clamp(11px … 12px) —
+     and this one carries the tracking token beside it. */
   font-size: var(--t-label-size);
   font-weight: 600;
   letter-spacing: var(--t-label-track);
   text-transform: uppercase;
 }
-/* THREE LINES, BECAUSE ONE TABLE IN FIFTY-ONE NEEDS THREE. The clamp
-   is a wall against a pathological name, not a cut on the longest true
+/* TWO LINES RESERVED, THREE ALLOWED — and those are two separate
+   arguments that happen to fit in one rule.
+
+   THE NAME RESERVES BOTH ITS LINES. That is the fix for a ragged
+   grid: "Stacer" is one line and "Dunbier / Haines BMT Trailers" is
+   two, and without it the cards in a row were different heights and
+   the row looked broken. `min-height` holds two lines of leading
+   whether or not the second is used, and `balance` splits a two-line
+   name evenly instead of leaving one word alone.
+
+   THREE, BECAUSE ONE TABLE IN FIFTY-ONE NEEDS THREE. The clamp is a
+   wall against a pathological name, not a cut on the longest true
    one the sheet holds. Measured across every card on Home at 1280,
    1440 and 1920 when the grid was `minmax(230px, 1fr)` and the name
-   box was 221px at all three — it is `minmax(320px, 1fr)` now, which
+   box was 221px at all three — the unit ramps from 320px now, which
    only makes the box wider — exactly one name overflowed two lines:
    "Haines Signature × Dunbier/Haines BMT — Trailer Fitment", which
-   wants 56px of a 38px box. Every other name on the sheet fits in two,
-   so raising the clamp costs no card a row of height it was not
-   already going to take. */
+   wants 56px of a 38px box. Every other name on the sheet fits in
+   two, so the third line costs no card a row of height it was not
+   already going to take, and the reserved two keep the row square.
+   Either way the full text stays in the DOM and arrives as a `title`
+   when it is really cut (useClipTitles.ts, measured per card). */
 .hm-card-name {
   margin-top: 1px;
   font-family: var(--font-ui);
-  font-size: 17px;
+  /* 17px, which is what this was tuned to — and `--ui-xl-size` IS
+     17px, ramping to 20 on a 2560 screen. The step that carried the
+     old 15px (`--ui-l-size`) tops out exactly where this one starts,
+     so spending the next step up keeps the tuned figure at 1440 and
+     still answers the window above it. */
+  font-size: var(--ui-xl-size);
   font-weight: 570;
   line-height: 1.25;
   letter-spacing: -0.012em;
   color: var(--ink);
+  text-wrap: balance;
+  min-height: calc(1.25em * 2);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 .hm-card-stats {
   display: flex;
   align-items: baseline;
@@ -3137,14 +3432,22 @@
   margin-top: auto;
   padding-top: var(--s-3);
   border-top: 1px solid var(--hairline);
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   color: var(--ink-faint);
 }
 .hm-card-stats b {
   font-family: var(--font-mono);
   /* the row count is the fact the card is scanned for, so at 320px it
-     is the size of a heading rather than of the words beside it */
-  font-size: 16px;
+     is the size of a heading rather than of the words beside it.
+
+     16px IS ALREADY THE CEILING OF THE PUBLISHED STEP — `--data-l-size`
+     runs 14 → 16 — so spending the token here would have shrunk this
+     figure by two points at the tuned width, which is the one thing
+     the fluid layer promises never to do. This is that step's own
+     ramp shifted up to start where this number was tuned: the same
+     0.179vw slope, 16px at 1440, 18px at 2560, and 16px flat below —
+     so it holds with or without response.css loaded. */
+  font-size: clamp(16px, 0.839rem + 0.179vw, 18px);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -3155,6 +3458,188 @@
   height: 10px;
   margin: 0 4px;
   background: var(--hairline-strong);
+}
+
+/* ------------------------------------------------------------
+   THE RELATIONSHIPS SHELF.
+
+   IT WAS 27 OF THE 51 CARDS and took more vertical space than
+   every product group put together — a derived join table being
+   the largest thing on the front door. It is one bar now, at the
+   foot of the board, spanning it. Shut, it states its own count;
+   open, every one of the 27 is listed under the table it joins,
+   still a control that opens that table. Nothing was deleted and
+   no count is hidden.
+   ------------------------------------------------------------ */
+
+.hm-sec--rel {
+  grid-column: 1 / -1;
+}
+.hm-rel-h {
+  margin: 0;
+}
+
+.hm-rel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--paper-high);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.hm-rel-head:hover {
+  border-color: var(--hairline-strong);
+}
+.hm-rel-head:active {
+  background: var(--press-wash);
+}
+.hm-rel-head:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-color: var(--blue);
+}
+.hm-rel-mark {
+  display: flex;
+  flex: none;
+  color: var(--ink-faint);
+}
+.hm-rel-name {
+  font-family: var(--font-ui);
+  font-size: var(--ui-l-size);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+.hm-rel-say {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  font-size: var(--micro-l-size);
+  color: var(--ink-faint);
+}
+.hm-rel-say b {
+  font-family: var(--font-mono);
+  font-size: var(--data-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+.hm-rel-caret {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-faint);
+  transition: transform var(--t-med) var(--ease-draft);
+}
+.hm-rel-head[aria-expanded='true'] .hm-rel-caret {
+  transform: rotate(90deg);
+}
+
+/* the open list is content on the page rather than a second box
+   under the first — one border where one border is meant */
+.hm-rel-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+  gap: var(--sp-5) var(--sp-5);
+  align-items: start;
+  margin-top: var(--sp-4);
+}
+.hm-rel-fam {
+  min-width: 0;
+}
+.hm-rel-owner {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 0 6px;
+  padding: 0 8px 6px;
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 600;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+}
+.hm-rel-owner-n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--data-s-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+.hm-rel-list {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* A ROW DARKENS RATHER THAN MOVING, so its neighbours do not look
+   like they shifted. */
+.hm-rel-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  color: var(--ink-soft);
+  transition: background var(--t-fast) var(--ease-draft);
+}
+.hm-rel-item:hover {
+  background: var(--paper-high);
+  color: var(--ink);
+}
+.hm-rel-item:active {
+  background: var(--press-wash);
+}
+.hm-rel-item:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+/* NOTHING TRUNCATES MID-WORD — a name that does not fit wraps, and
+   the whole of it is on the control's `title` either way. */
+.hm-rel-item-name {
+  min-width: 0;
+}
+.hm-rel-item-n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--data-s-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* WHEN THE WINDOW IS NARROWER THAN TWO CARDS. Every shelf gives up
+   its width and takes the whole column; the cards inside fall back
+   to `auto-fill`, which is the right rule when there is only one
+   column to fill. Named for the content — two cards plus the gap
+   plus the page's own gutters — and not for a device. */
+@media (max-width: 600px) {
+  .hm-sec,
+  .hm-sec--rel {
+    grid-column: 1 / -1;
+  }
+  .hm-cells {
+    grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
+  }
+  .hm-cell--lead {
+    grid-column: auto;
+  }
 }
 /* ============================================================
    THE FIRST SCREEN — Home with nothing on the sheet.
@@ -3888,6 +4373,34 @@
    SOMEWHERE); the declaration lives here, with the box it belongs
    to, because a selector that is declared in three places is three
    people's opinion of one element. */
+
+/* AND WHERE THE DOCK STRIP WENT, because the argument for it was
+   good and the number in it had already gone wrong.
+
+   `.shell-stage { inset: 0 0 78px 0 }` stood here and reserved a
+   band across the WHOLE PAGE that nothing could reach into.
+   Padding each surface could not have done that job: several
+   stages carry their own sticky footers — the quote total, the
+   flow rail — and a sticky element resolves against its SCROLL
+   CONTAINER, not against a padded ancestor, so they kept landing
+   under the bar and the quote total ended up floating across the
+   middle of its own page. Reserving the strip once fixed every
+   stage at the same time.
+
+   THE 78 WAS ALREADY 4px SHORT. The dock is 60px tall sitting 22px
+   off the floor, which is 82 — and once the dock started answering
+   the window that 4px graze would have opened to a 24px overlap
+   with page content passing behind it. `--dock-clear` in
+   src/styles/response.css derives the strip instead of typing it,
+   and `--acts-clear` adds the second tier's own bar on top.
+
+   THE CHARGE MOVED RATHER THAN VANISHING. The floating page bar is
+   inside the content column now and is paid for by the surface it
+   sits on, not by the whole page, so the stage keeps the whole
+   grid cell (see the head of this file) and the scrolling surfaces
+   spend the derived number themselves — `.hm-scroll` above takes
+   `max(120px, var(--acts-clear, 120px))` as its floor. A stage
+   that grows a sticky footer of its own has to do the same. */
 .surface {
   position: absolute;
   /* OPAQUE, AND OVER EVERYTHING. This was transparent with the
@@ -4562,11 +5075,18 @@
 /* ------------------------------------------------------------
    THE PINNED STRIP.
 
-   FULL BLEED, and it has to be: `.hm-scroll` carries --s-8 of
-   side padding, so a strip inset by that padding would let cards
-   slide past in the 32px gutters either side of it while it sat
-   over them. Negative margins take it out to the scrollport's own
-   edges and the padding is put back inside.
+   FULL BLEED, and it has to be: `.hm-scroll` carries a side gutter,
+   so a strip inset by that gutter would let cards slide past in the
+   channel either side of it while it sat over them. Negative margins
+   take it out to the scrollport's own edges and the gutter is put
+   back inside.
+
+   IT READS THE GUTTER BY NAME, NOT BY NUMBER. That padding was a
+   flat 32px and is `--hm-gutter` now — 34.6 at 1440, 56 at 2560 —
+   and the two are the same measurement stated twice. Written as
+   literals they drift, and a 2px drift here is a 2px channel with
+   photographs sliding up through it. `--hm-gutter` is declared on
+   `.hm-scroll` and inherits down to this strip.
 
    AND THE SCROLLER GIVES UP ITS TOP PADDING TO IT. A sticky child
    cannot leave its containing block, and the containing block is
@@ -4608,8 +5128,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
-  margin: 0 calc(var(--s-8) * -1) var(--s-8);
-  padding: var(--s-3) var(--s-8);
+  margin: 0 calc(var(--hm-gutter, var(--s-8)) * -1) var(--s-8);
+  padding: var(--s-3) var(--hm-gutter, var(--s-8));
   border-bottom: 1px solid var(--line);
   background: var(--surface-1);
   box-shadow: var(--e2);
@@ -5999,3 +6519,50 @@
     transform: translate(-50%, -50%);
   }
 }
+
+/* ============================================================
+   THE DOCK ANSWERS THE WINDOW — added with the fluid layer.
+
+   It was `width: 44px` per item and nothing else, so it measured
+   520px on a 2304px window and 520px on a 1024px one, and there
+   was no @media rule anywhere in the app above 1180px for it to
+   respond to. A 44px target on a 2560px display is a physically
+   smaller thing than the same 44px on a laptop, and this is the
+   app's primary navigation.
+
+   The tokens are in src/styles/response.css; the rules are here
+   because this is the stylesheet that owns the dock.
+   ============================================================ */
+
+.dk {
+  gap: var(--dock-gap);
+  padding: var(--dock-pad);
+  /* it floats over the sheet — it may never be wider than the
+     window it floats over */
+  max-width: calc(100vw - var(--sp-4, 16px) * 2);
+}
+
+.dk-item {
+  width: var(--dock-item);
+  height: var(--dock-item);
+}
+
+.dk-sep {
+  margin: 0 var(--dock-gap);
+}
+
+/* Below the tablet edge ten destinations do not fit at any target
+   size worth pressing, so the dock stops being a fixed lozenge and
+   becomes a rail that scrolls. A dock that silently clips its last
+   three items is worse than one that admits it scrolls. */
+@media (max-width: 720px) {
+  .dk {
+    overflow-x: auto;
+    scrollbar-width: none;
+    justify-content: flex-start;
+  }
+  .dk::-webkit-scrollbar {
+    display: none;
+  }
+}
+

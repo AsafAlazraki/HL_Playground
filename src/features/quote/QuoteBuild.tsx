@@ -500,6 +500,20 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
    construction at every size, and at 1024 and below the two stack
    and the whole page scrolls instead.
 
+   WHAT THE RAIL WAS, AND WHICH HALF OF IT SURVIVED. The responsive
+   pass split this page into a `qb-rail` and a `qb-main` above
+   1040px of stage, with the rig plate and the step list stacked in
+   a STICKY aside, so a person four hundred pixels down a wall of
+   motors still had the hull, the reference and the running package
+   on screen. THE RULE IT WAS DRAWN FROM IS KEPT, and it is why this
+   pane exists at all: the left column carries what is true of the
+   WHOLE BUILD rather than of the step somebody happens to be on.
+   The MECHANISM is not, for the paragraph above — and the step list
+   the rail also held went with the deck, so there is no second
+   plate left to stack. 1024 rather than 1040 because the split is
+   measured against the widths this photograph needs, not against a
+   column of stops.
+
    THE RENDER CROSSFADES. Two layers, opacity only, 260ms — the one
    moment on this screen that earns real motion, and the thing the
    app had none of. The plates under it are how a person goes back
@@ -1319,6 +1333,23 @@ function RefusedRow({ candidate }: { candidate: Candidate }): ReactElement {
    the reason quote.css records at length: a sticky box is floored by
    its scroll container's content box, so it ends up painted across
    the middle of its own document.
+
+   AND IT IS FULL BLEED, WHICH ANSWERS A WIDTH PROBLEM RATHER THAN
+   ESCAPING IT. The bar this screen used to borrow was the draft
+   sheet's, and that sheet ends an 880px document — an 880px strip
+   under a page running to `--measure` (2,074px on the window these
+   counts were taken at) reads as a widget somebody left in the
+   middle. The responsive pass answered that by giving the borrowed
+   bar the page's own width, under a second class so neither
+   stylesheet re-declared the other's rules. This bar is not
+   borrowed and spans the stage, so the question does not arise and
+   there is one class to carry it.
+
+   WHAT STILL APPLIES IS THE FIGURE. The total takes the app's
+   largest number step, which ramps 22px → 30px: a wide window gets
+   a proportionally larger total rather than a total adrift in a
+   wider bar, tracking negative because the size grew — rule 7.
+   build.css carries the ramp and `RunningTotal` only draws it.
 
    THE FIGURE DOES NOT COUNT UP. Every configurator in the research
    agrees, including both that show a price: Porsche's total simply

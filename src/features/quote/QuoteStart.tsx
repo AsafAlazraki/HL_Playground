@@ -674,9 +674,13 @@ export function QuoteStart({
                     standing
                       ? standing.reference
                       : chosen === undefined
-                        ? 'nothing highlighted'
+                        ? /* THE FACT IS IN THE FIGURE SLOT NOW, so this
+                             one goes quiet rather than saying the same
+                             thing a second time. */
+                          ''
                         : 'the boat, before anything is added'
                   }
+                  nil="nothing highlighted yet"
                 />
                 {chosen === undefined || barred !== '' ? null : (
                   <>

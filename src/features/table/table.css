@@ -5133,3 +5133,392 @@ body.tb-resizing {
   color: var(--ink-soft);
   user-select: text;
 }
+
+
+/* ============================================================
+   THE REGISTER ON A LARGE SCREEN — RULE 9, AND THE SIX PIXELS
+   THAT WERE EATING EVERY ROW RULE.
+
+   Measured in the running app on Highfield Inflatables (588
+   variants, 33 columns) at 1280, 1440, 1920 and 2560 CSS px.
+   WCAG reflow exempts a data table from the no-two-axis rule and
+   this sheet takes that exemption: it is 5,134px wide and it is
+   supposed to be. What it was NOT allowed to be is unruled,
+   unranked and set at a fixed size inside an app whose every
+   other surface had just learned to grow.
+
+   THIS PASS WAS WRITTEN BEFORE "THE REGISTER, RE-DRESSED" ABOVE
+   AND IS FOLDED IN AFTER IT, so a word about which half of it is
+   still load-bearing. The re-dress reached four of the eight
+   findings below on its own terms — the heading's rank, the
+   numeric heading's berth, the depth on the frozen chrome, the
+   tabular figures — and argued them better than this did, from
+   the same screenshots. Where it did, the finding is kept here as
+   the RECORD and the declaration is not repeated: a rule restated
+   three sections later would quietly win the cascade over the
+   thing that superseded it, and that is the one way a merge like
+   this loses work.
+
+   What is still in force is everything the re-dress did not
+   reach, and it is the whole responsive half: the size ramps
+   (§7), the measure on a drawer head (§8), the two alignments the
+   re-dress left centred (§2), the value weight (§4), the sideways
+   rule on the frozen columns (§5), the row band's curve (§6), and
+   the four number classes that were not on screen when the
+   re-dress's tabular list was written.
+
+   THE RAMPS ANCHOR ON THE RE-DRESS'S FIGURES, NOT ON THE ONES
+   THIS PASS MEASURED. Every clamp below still resolves at 1440 to
+   whatever the rule above it settled on — the heading is 12.5px
+   there because §2 raised it to 12.5px, not the 12px this pass
+   found. Same contract, later anchor.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1 · ONE ROW HEIGHT, NOT TWO — AND THE FIGHT IS ALREADY OVER.
+
+   `.tb-row` took `height` inline from `ROW_H` (34px) and
+   `min-height: 40px` from the density block, and `min-height`
+   wins. So every row painted 40px tall while `grouping.ts`
+   stacked the tops 34px apart, and the last six pixels of each
+   row — the pixels carrying `.tb-cell`'s bottom border — sat
+   underneath an opaque successor. Read off the live DOM at all
+   four widths: 2 of every 2 sampled row boundaries buried. A
+   588-row price register with no horizontal rules at all.
+
+   `helpers.ts` now carries the design system's 40px as the one
+   authority (see the note there), and the `min-height: 40px` rule
+   this was written against is GONE from this file — "ROWS GET AIR
+   — AND NOW THE GEOMETRY AGREES WITH THE PAINT" above deletes it
+   and says why at length. The floor is still stated as `0`
+   because it costs nothing and it is what makes the fight
+   unrepeatable: the paint follows the arithmetic, and no later
+   rule can put a minimum back without meeting this one first.
+   ------------------------------------------------------------ */
+.tb-row {
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------
+   2 · RULE 9 — TABULAR FIGURES, EVERYWHERE A FIGURE IS DRAWN.
+
+   `.tb-num` was already mono and already right-aligned, and it
+   still read `font-variant-numeric: normal` — measured on the
+   live sheet. IBM Plex Mono is fixed-pitch for its LETTERS; its
+   default figures are not the tabular set, so a column of prices
+   lined up on the cell edge and not on the decimal.
+
+   §5 above names ten of them and is the rule that carries this.
+   FOUR MORE, which were not on screen when that list was written:
+   the two cell editors, the total beside a count, the entity tab
+   counts and the lightbox's dimensions. Every place this register
+   prints a number belongs here, including the ones that are
+   counts rather than data — an ordinal or a tally that changes
+   width as you scroll past 99 is the same fault.
+   ------------------------------------------------------------ */
+.tb-editor-num,
+.tb-editor-date,
+.tb-count-tot,
+.tb-tab-count,
+.tb-lightbox-dim {
+  font-variant-numeric: tabular-nums;
+}
+
+/* THE ROW ORDINAL IS A NUMBER AND STOPS BEING CENTRED. Rule 9
+   allows two alignments and centre is not one of them; centring
+   also meant "9" and "588" shared no edge, so the gutter read as
+   a ragged column of its own beside 588 rows that were not.
+   Right-aligned, so the ordinals stack.
+
+   THE INSET IS 22px AND NOT --sp-2, and that number is the open
+   mark's. `.tb-open` is absolutely positioned at `right: 2px` and
+   is 18px wide, so it occupies the last 20px of a 48px gutter the
+   moment the pointer is on the row. At the 8px this rule
+   originally asked for, a three-digit ordinal ran straight under
+   it on every hovered line of the file. 22px clears the mark
+   outright and still leaves 26px — comfortably more than "588"
+   measures at 11px mono — so the ordinals stack AND the second
+   way into a row stays where §the-lens put it. */
+.tb-gut {
+  justify-content: flex-end;
+  padding-right: 22px;
+}
+
+/* AND THE TICK COLUMN. A boolean was the one value in the sheet
+   drawn down the middle of its column, so a column of ticks
+   agreed with neither its own heading nor the values either side
+   of it. It takes the register's single left edge — the same one
+   `.tb-cell`'s --sp-3 inset gives every other value. */
+.tb-boolwrap {
+  justify-content: flex-start;
+}
+
+/* ------------------------------------------------------------
+   3 · RULE 9 — A NUMBER COLUMN'S NAME POINTS THE WAY ITS FIGURES
+   DO. CARRIED ABOVE; THE BERTH WENT THE OTHER WAY.
+
+   Every figure in this register is right-aligned and every
+   heading was left-aligned, so on Highfield's pricing band the
+   word sat at one edge of the column and the money at the other.
+   Only a declared `number` column turns round (`tb-th-num` in
+   Grid.tsx): text, dates, picks and references all read from the
+   left, and a formula column may hold either. §2 of the re-dress
+   states exactly that, in the same two declarations this pass
+   wrote — `.tb-th-num .tb-th-main` and `.tb-th-num .tb-th-name`
+   both `text-align: right` — so the finding is answered and
+   nothing is restated here.
+
+   WHERE THE TWO PASSES DISAGREED IS THE ⌄ MENU, and the re-dress
+   wins on the newer structure. `.tb-th-top` reserves 18px on the
+   right for the menu; leave that in place under a right-aligned
+   name and the name ends further from the column edge than its
+   own values do. This pass moved the menu to the LEFT on numeric
+   columns to free the right edge. The re-dress instead reverses
+   the head row (`.tb-th-num .tb-th-top { flex-direction:
+   row-reverse }`), which carries the sort wedge across with the
+   name, keeps the pair reading as one control, and leaves the
+   menu — and the resize grip that shares that boundary — where
+   they are on every other column in the sheet. One berth for the
+   menu across 33 columns beats six pixels of alignment on some of
+   them, so the menu stays right and `.tb-th-tight` goes on
+   dropping the reserve on a narrow column exactly as it did.
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   4 · RULE 9 — THE DATA IS THE DARKEST AND HEAVIEST THING ON THE
+   SHEET. HALF OF THIS IS THE RE-DRESS'S NOW.
+
+   It was the other way round, measured: `.tb-th-name` was `--ink`
+   at weight 580 and `.tb-val` was `--ink` at 400. The labels were
+   heavier than the values they label, so a scroll down Highfield
+   read as a grid of headings with grey text under it.
+
+   THIS PASS FIXED THAT BY LIGHTENING THE HEADING — `--ink-soft`
+   at 540. §2 of the re-dress fixes the same complaint from the
+   other end and with the better argument: the names of 33 columns
+   are the only thing telling a reader what a thousand figures
+   MEAN, so they take the heading weight and full ink (12.5px /
+   620) and the values rise to meet them instead. That decision
+   is upstream of this one and it stands; the heading half of this
+   block is NOT restated, and the exceptions it carried (sorted,
+   selected, hovered) are moot once the heading is `--ink` at
+   rest.
+
+   WHAT SURVIVES IS THE VALUE. `.tb-val` inherited 400 from the
+   body and nothing above sets it. 480 is one step, not a bold:
+   colour carries the rank and weight only confirms it, and a
+   heavier step than 480 across thirty columns of every row is a
+   sheet that reads as bold when the point is the opposite. The
+   filed columns keep their `--ink-soft` — `.tb-cell-filed
+   .tb-val` is two classes and outranks this. */
+.tb-val {
+  font-weight: 480;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------
+   5 · RULE 7 — THE DEPTH LADDER, ON THE ONE SURFACE THAT NEEDS
+   IT.
+
+   Flat page, small shadow on a card, MEDIUM SPREAD ON A STICKY
+   HEADER, large diffuse on a modal. This register's frozen header
+   had a hairline and nothing else, so 588 rows passed through it
+   rather than under it.
+
+   IT IS SPENT ONLY WHILE THE SHEET IS SCROLLED. At the top there
+   is nothing beneath the header to lift off, and a shadow drawn
+   over the first row at rest is the "one shadow on everything"
+   mistake rule 7 names. The flags are set by Grid.tsx from
+   `scrollTop` and `scrollLeft`, which were already state there
+   for the row window — so this costs attributes on TWO elements
+   per sheet and no new `position: sticky` anywhere (see the note
+   in Grid.tsx: a register already carries two per rendered row,
+   and that count is what took a canvas from 54 fps to 12).
+
+   TWO NAMES FOR EACH STATE, AND BOTH ARE LIVE, because §1 of the
+   re-dress arrived at the same two facts and spelled them
+   differently. Grid.tsx emits all four and its own note says why:
+   `data-lifted` on the sheet and `data-lift` on the head stack
+   for the vertical; `data-shifted` on the sheet, which publishes
+   the edge as `--tb-edge` for every pin to restate alongside its
+   own shadow, and `data-xscroll` on the sheet, which steps the
+   rule's OWN INK on the same pins. The re-dress's head-stack
+   shadow is the more specific selector and is the one that
+   paints; this one stays declared so the attribute Grid.tsx still
+   writes is not an attribute nothing reads.
+   ------------------------------------------------------------ */
+.tb-headstack[data-lift] {
+  box-shadow: var(--e2);
+}
+
+/* THE FROZEN COLUMNS DEEPEN THE SAME WAY, AND WITH A LINE RATHER
+   THAN A SHADOW. A box-shadow here would be one per rendered row,
+   on elements that are already sticky and already carry an inset
+   shadow for the selection ring — so the edge is stated as a step
+   in the rule's own ink instead. At rest it is the hairline it has
+   always been; with columns actually passing underneath it, it is
+   a rule you can see. It composes with `--tb-edge` rather than
+   competing: one is the border, the other is the shadow.
+
+   THE TRANSITION IS RESTATED IN FULL, not appended to, because
+   §1's rule above names these same six selectors at the same
+   specificity and a second `transition` on them would REPLACE it
+   — losing the background, colour and shadow eases the re-dress
+   put there. Four properties, one list, one place. */
+.tb-gut,
+.tb-corner,
+.tb-bandcorner,
+.tb-th-pin,
+.tb-band-pin,
+.tb-cell-pin {
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-med) var(--ease-draft),
+    border-color var(--t-med) var(--ease-draft);
+}
+.tb-sheet[data-xscroll] .tb-cell-pin,
+.tb-sheet[data-xscroll] .tb-th-pin,
+.tb-sheet[data-xscroll] .tb-band-pin,
+.tb-sheet[data-xscroll] .tb-gut,
+.tb-sheet[data-xscroll] .tb-corner,
+.tb-sheet[data-xscroll] .tb-bandcorner {
+  border-right-color: color-mix(in srgb, var(--ink) 26%, transparent);
+}
+
+/* ------------------------------------------------------------
+   6 · RULE 8 — THE ROW BAND ARRIVES, IT DOES NOT SNAP.
+
+   The hover band was the register's only row-finder while the
+   rules were buried, and it changed instantly: one colour, no
+   curve. 120ms on the --ease-draft curve, one property.
+   Background only — nothing here animates a layout property, and
+   nothing gains a layer.
+
+   ONLY `.tb-row` IS NAMED. The frozen name column needs the same
+   number so the pin cannot lag the row it belongs to, and it
+   already has it: `.tb-cell-pin` is in the four-property list
+   above, whose first entry is this exact background ease. Naming
+   it twice would drop the other three.
+   ------------------------------------------------------------ */
+.tb-row {
+  transition: background var(--t-fast) var(--ease-draft);
+}
+
+/* ------------------------------------------------------------
+   7 · THE REGISTER GROWS WITH THE WINDOW.
+
+   79% of the app's font-size declarations are literal px and this
+   sheet held eleven of them. Measured before this block: at 2560
+   the app's body had ramped to 16px and every value in the
+   register was still 12.5px, every heading 12px, every row
+   ordinal 11px — the register had visibly SHRUNK relative to the
+   application around it.
+
+   Each ramp below is one whole step (rule 6) and every one of
+   them is anchored so that AT 1440 IT RESOLVES TO THE FIGURE THE
+   RULE ABOVE IT ALREADY SETTLED ON, to the decimal — the same
+   contract response.css keeps. Nothing that was tuned moves; the
+   ceiling is +1px at 2560, which is about 8%, against the 14% the
+   body took.
+
+   THE ANCHORS ARE THE RE-DRESS'S, NOT THIS PASS'S. Three of them
+   moved when "THE REGISTER, RE-DRESSED" landed and the ramps
+   follow them rather than the other way round: the heading is
+   12.5px at 1440 (§2 raised it from 12), a top-level drawer name
+   is 14px and a nested one 12.5px (§7's ladder, which replaced a
+   single 11px mono step), and the drawer's caption and count stay
+   at 11px — the floor rule 2 calls absolute — rather than being
+   pushed to 12 by a token that did not know about them.
+
+   IT IS DELIBERATELY SHALLOWER THAN THE BODY RAMP because a
+   column is not allowed to grow with it: the 116px column floor
+   is enforced twice, in `table.css` for the paint and in
+   `helpers.ts` for the layout maths, and they may never disagree
+   (the band header takes its widths from the maths and carries no
+   min-width). So the type takes the headroom the columns can
+   actually spare and no more.
+
+   Where a published token already IS the ramp — `--data-size` and
+   `--ui-s-size` are both clamp(12px … 13px), and `--data-s-size`
+   is clamp(11px … 12px) — the token is spent rather than a second
+   copy of its arithmetic written out. The slope is one number
+   everywhere, 0.089vw, which is +1px across the 1120px between
+   1440 and 2560; the rem term is only ever the anchor minus that
+   slope's value at 1440.
+   ------------------------------------------------------------ */
+.tb-cell {
+  font-size: clamp(13px, 0.732rem + 0.089vw, 14px);
+}
+.tb-val,
+.tb-editor {
+  font-size: clamp(12.5px, 0.701rem + 0.089vw, 13.5px);
+}
+.tb-num,
+.tb-fx,
+.tb-editor-num {
+  font-size: var(--data-size);
+}
+.tb-date,
+.tb-editor-date {
+  font-size: clamp(11.5px, 0.639rem + 0.089vw, 12.5px);
+}
+.tb-sys,
+.tb-gut {
+  font-size: var(--data-s-size);
+}
+/* the heading, and the box you rename it in, which has to stay
+   the same size as the word it opens over. Anchored on §2's
+   12.5px — `--ui-s-size` would have resolved to 12 at 1440 and
+   undone the half-pixel that rule was arguing for. */
+.tb-th-name,
+.tb-th-edit {
+  font-size: clamp(12.5px, 0.701rem + 0.089vw, 13.5px);
+}
+/* `.tb-th` set no size of its own, so it inherited `body` and
+   measured 16px at 2560 — a 14px box at 1440 quietly becoming a
+   16px one is the type scale being bypassed, not a decision */
+.tb-th {
+  font-size: var(--ui-s-size);
+}
+/* A DRAWER'S OWN VALUE IS DATA AND TAKES THE DATA RAMP, at each
+   step of the ladder §7 of the re-dress cut: 14px on a top-level
+   band, 12.5px on the two nested ones. The bare selector carries
+   the nested figure so a fourth level — grouping puts no ceiling
+   on the count — grows with the three above it instead of being
+   left behind at the base 11px. */
+.tb-grp-name,
+.tb-grpline[data-level='1'] .tb-grp-name,
+.tb-grpline[data-level='2'] .tb-grp-name {
+  font-size: clamp(12.5px, 0.701rem + 0.089vw, 13.5px);
+}
+.tb-grpline[data-level='0'] .tb-grp-name {
+  font-size: clamp(14px, 0.795rem + 0.089vw, 15px);
+}
+/* the caption beside it is a label and takes the label one —
+   which for these two is 11px, the floor, so `--data-s-size` is
+   the token that ramps them without lifting the anchor */
+.tb-grp-lab,
+.tb-grp-count {
+  font-size: var(--data-s-size);
+}
+
+/* ------------------------------------------------------------
+   8 · RULE 4 — A LEADER LINE STOPS BEING A LEADER LINE AT
+   2,500px.
+
+   A drawer's head is `Series · Roll-Up ————— 32 variants`, and
+   `.tb-grp` is given the window's whole width inline, so on a
+   2560 screen the count sat 2,470px from the name it counts.
+   Rule 4: a narrow thing in a wide window is not stretched, it is
+   given a measure. Capped at 1440 — the width the design was
+   tuned at — so at and below that width NOTHING MOVES, and above
+   it the drawer head keeps a measure a person can read across
+   while the sheet behind it goes on being as wide as it likes.
+   `max-width` rather than `width` because the width is inline,
+   and a literal 1440 rather than `--measure` because this is the
+   figure the band was tuned at, not the page's own column.
+   ------------------------------------------------------------ */
+.tb-grp {
+  max-width: min(100%, 1440px);
+}

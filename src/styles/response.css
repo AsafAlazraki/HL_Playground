@@ -1,0 +1,192 @@
+/* ============================================================
+   RESPONSE — the fluid layer.
+
+   WHAT WAS WRONG, MEASURED BEFORE ANY OF THIS WAS WRITTEN.
+   41,000 lines of CSS carried 55 @media rules. 34 of them were
+   accessibility preferences (reduced-motion, reduced-transparency,
+   prefers-contrast) and 2 were print. That left NINETEEN width
+   breakpoints for the whole application, and every one of them was
+   a phone or tablet rule: 620, 720, 760, 780, 900, 940, 1000, 1180.
+
+   THE LARGEST BREAKPOINT IN THE APP WAS 1180px. Above that width —
+   which is to say, on every machine this is actually demonstrated
+   on — the app had no layout opinion at all. `max-width: 1180px`
+   appears 18 times across 7 stylesheets; it was not a measure, it
+   was the page. On a 2304px window that left 49% of the screen as
+   dead grid, and the dock measured 520px whatever the window did.
+
+   WHAT THIS FILE IS. One layer, loaded last, that makes the tuned
+   design GROW instead of sitting in the middle of a void. It adds
+   no colour, no component and no selector that did not already
+   exist. Delete its line in main.tsx and the fixed design returns
+   exactly — the same contract bridge.css offers.
+
+   THE ANCHORS, AND WHY THEY ARE WHERE THEY ARE. Every ramp below
+   runs between 1440px and 2560px. 1440 because that is the width
+   the design was tuned at and it must not move there; 2560 because
+   beyond it a reading measure stops being a measure. Below 1440
+   every value holds at the tuned figure — this file only ever adds
+   headroom upward, so nothing that was already right can regress.
+
+   TYPE IS RAMPED AS COMPLETE STEPS (DESIGN_PRINCIPLES rule 6) and
+   the floor is respected (rule 2): the smallest clamp minimum in
+   this file is 11px, on the label step. TRACKING IS NOT RAMPED
+   because it does not need to be — every tracking token is in `em`,
+   so it is already proportional to whatever the size resolves to,
+   which is rule 7 holding by construction rather than by a second
+   set of numbers to keep in sync.
+
+   EACH RAMP CARRIES A rem TERM, NOT vw ALONE. A font-size of pure
+   vw does not respond to browser zoom, which turns a readability
+   aid into a trap. `0.714rem + 0.179vw` zooms and reflows.
+   ============================================================ */
+
+:root {
+  /* -- the page ------------------------------------------------
+     `min(100%, …)` keeps every existing container honest inside a
+     narrow window; the clamp is what lets it grow. At 1440 this
+     resolves to 1296px against the old hard 1180 — a 10% gain on
+     the tuned width — and it keeps opening to a 2600px ceiling. */
+  --measure: min(100%, clamp(1180px, 90vw, 2600px));
+
+  /* the gutter a full-bleed surface keeps off the window edge */
+  --gutter: clamp(16px, 2.4vw, 56px);
+
+  /* the air between stacked sections of a page */
+  --section-gap: clamp(24px, 2vw, 44px);
+
+  /* -- type, ramped as whole steps ----------------------------
+     THESE ARE THE NAMES THE APP ACTUALLY READS. ds.css publishes a
+     `--t-*` scale, but bridge.css re-declares the legacy `--ui-*`,
+     `--display-*`, `--data-*`, `--micro-*` and `--stamp-*` names as
+     fixed px literals, and those are what `body` and every feature
+     stylesheet consume. Ramping `--t-*` alone moved 21% of the type
+     and left `body` at 14px — measured, not assumed. So both scales
+     are ramped here, and the bridge names are the ones that matter.
+
+     THE 11px FLOOR IS ENFORCED BY THE CLAMP MINIMUM. bridge.css set
+     `--micro-s`, `--micro-xs` and `--data-xs` to 10px, under the
+     floor DESIGN_PRINCIPLES calls absolute. Their minimum is 11px
+     here, so the violation closes at every width rather than only
+     on a large screen. */
+
+  /* the ds.css scale */
+  --t-display-size: clamp(28px, 0.786rem + 1.071vw, 40px);
+  --t-title-size: clamp(20px, 0.688rem + 0.625vw, 27px);
+  --t-heading-size: clamp(15px, 0.737rem + 0.223vw, 17.5px);
+  --t-body-size: clamp(14px, 0.714rem + 0.179vw, 16px);
+  --t-small-size: clamp(13px, 0.692rem + 0.134vw, 14.5px);
+  --t-caption-size: clamp(12px, 0.670rem + 0.089vw, 13px);
+  --t-label-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+  --t-mono-lg-size: clamp(15px, 0.777rem + 0.179vw, 17px);
+  --t-mono-size: clamp(13px, 0.692rem + 0.134vw, 14.5px);
+  --t-mono-sm-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+
+  /* the bridge scale — what the 41,000 lines below it read */
+
+  /* THE DISPLAY RAMP IS DELIBERATELY SHALLOW, AND IT WAS SHALLOWER
+     THAN THE FIRST DRAFT. These four tokens are spent on module
+     headers, CRM, quotes and constraints — dense data surfaces —
+     as well as on onboarding. Established practice caps a dashboard
+     page title around 28px and a widget title around 24px, on the
+     ground that an oversized heading on a data screen steals room
+     from the data and reads as a marketing page. The first draft
+     ramped these to 52/44/34/28 and would have done exactly that.
+
+     The baseline does not move, because this file's whole contract
+     is that it only ever adds headroom: 38/32/26/22 at 1440 are the
+     tuned figures and they stay. What changed is the ceiling — a
+     large screen now gets a heading that is proportionally bigger,
+     not a heading that has changed job. Onboarding is the one
+     genuinely display-like surface, and it takes its hero size in
+     its own stylesheet rather than dragging the whole scale up. */
+  --display-xl-size: clamp(38px, 1.732rem + 0.714vw, 46px);
+  --display-l-size: clamp(32px, 1.518rem + 0.536vw, 38px);
+  --display-m-size: clamp(26px, 1.304rem + 0.357vw, 30px);
+  --display-s-size: clamp(22px, 1.134rem + 0.268vw, 25px);
+
+  --ui-xl-size: clamp(17px, 0.822rem + 0.268vw, 20px);
+  --ui-l-size: clamp(15px, 0.777rem + 0.179vw, 17px);
+  --ui-m-size: clamp(14px, 0.714rem + 0.179vw, 16px);
+  --ui-size: clamp(13px, 0.692rem + 0.134vw, 14.5px);
+  --ui-s-size: clamp(12px, 0.670rem + 0.089vw, 13px);
+  --ui-xs-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+
+  --stamp-l-size: clamp(13px, 0.732rem + 0.089vw, 14px);
+  --stamp-size: clamp(12px, 0.670rem + 0.089vw, 13px);
+  --stamp-s-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+
+  --micro-l-size: clamp(11px, 0.567rem + 0.134vw, 12.5px);
+  --micro-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+  --micro-s-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+  --micro-xs-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+
+  --data-xs-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+  --data-s-size: clamp(11px, 0.607rem + 0.089vw, 12px);
+  --data-size: clamp(12px, 0.670rem + 0.089vw, 13px);
+  --data-l-size: clamp(14px, 0.714rem + 0.179vw, 16px);
+  --data-xl-size: clamp(22px, 0.732rem + 0.714vw, 30px);
+
+  /* -- the dock ------------------------------------------------
+     It was `width: 44px` per item and nothing else, so it measured
+     520px on a 2304px window and 520px on a 1024px one. */
+  --dock-item: clamp(44px, 2.2vw, 56px);
+  --dock-gap: clamp(4px, 0.22vw, 7px);
+  --dock-pad: clamp(8px, 0.42vw, 12px);
+
+  /* THE STRIP NO PAGE MAY REACH INTO, DERIVED RATHER THAN TYPED.
+     shell.css reserved a hard 78px for the dock. The dock was 60px
+     tall sitting 22px off the floor, which is 82px — so the strip
+     was 4px short before anything here was written, and making the
+     dock grow would have turned a 4px graze into a 24px overlap
+     with page content passing behind it.
+
+     22px is the offset .dk-wrap sits at; the last 8px is air. */
+  --dock-clear: calc(
+    var(--dock-item) + var(--dock-pad) * 2 + 22px + 8px
+  );
+
+  /* -- the action bar, the second tier ------------------------
+     actionbar.css states the contract: 40px of bar against 60px of
+     dock, "subordinate, and obviously a different tier at a
+     glance". That tier relationship is a RATIO, not two numbers —
+     if the dock grows to 80px and the bar stays 40 the second tier
+     stops reading as a tier and starts reading as a mistake.
+     60 / 1.5 = 40, so the ratio is preserved exactly at the tuned
+     baseline and the ceiling stops the bar becoming a slab. */
+  --ab-height: clamp(
+    40px,
+    calc((var(--dock-item) + var(--dock-pad) * 2) / 1.5),
+    48px
+  );
+  /* the contract's 28px control in a 40px bar is 0.7 of it */
+  --ab-control: calc(var(--ab-height) * 0.7);
+
+  /* WHAT THE SECOND TIER COSTS THE PAGE. actionbar.css charges a
+     hard 132px while a bar is present, built as 22 off the bottom
+     + 60 of dock + 10 of gap + 40 of bar. Three of those four
+     numbers now move. Derived, this is dock-clear (which already
+     carries the 22 and the dock, plus 8px of air the bar does not
+     want) + the 10px gap + the bar: 90 + 2 + 40 = 132 at the
+     baseline, which is the contract's own figure, unchanged. */
+  --acts-clear: calc(var(--dock-clear) + 2px + var(--ab-height));
+}
+
+/* ============================================================
+   WHY THERE ARE NO SELECTORS BELOW THIS LINE.
+
+   The rules that spend these tokens live in the stylesheet that
+   owns the surface — `shell.css` for the dock, `onboarding.css`
+   for the first screen — because CLAUDE.md says stylesheets are
+   co-located with their feature and a shared override layer is
+   worse than the problem it solves.
+
+   IT IS ALSO THE ONLY THING THAT WORKS. A feature stylesheet is
+   imported by its component, so it lands AFTER main.tsx's own
+   imports and wins on equal specificity. The first draft of this
+   file styled `.dk-item` here and measured no change at all: the
+   dock stayed 44px because shell.css had the same selector later
+   in the cascade. Custom properties do not have that problem —
+   `--measure` resolved from here on the first try — which is why
+   this file publishes names and spends none of them.
+   ============================================================ */

@@ -347,7 +347,32 @@ export function RulesPane(): ReactElement {
         {noColumns ? (
           <NoColumns />
         ) : (
-          <>
+          /* THE BANDS, IN ONE BOX SO THE HEAD CAN SIT BESIDE THEM.
+             Above the split — `cnpage` at 1200px of CONTAINER, which
+             is a 1248px window once `.cn-root`'s padding is counted —
+             the sheet is two columns: the head takes a rail of its own
+             and stays put, and everything under the segmented control
+             scrolls past it. That is DESIGN rule 4: a page with more
+             room than it needs SPLITS, it does not stretch a 62ch
+             paragraph to 2000px. Below the split this element is a
+             plain block and the page is exactly the single column it
+             was. The whole thing caps at 1780 — rail 380 + gap 44 +
+             bands 1292 + padding 64 — because a fourth column of cards
+             is not a better page.
+
+             THE RAIL IS NOW TITLE AND LEDE. It was sized around the
+             head's four measured figures; those are gone (see the note
+             in the header above — the counts they carried are on the
+             segments and on the cards, where they can be acted on).
+             The split still earns its keep: what the reader keeps in
+             view is the page's name and the one line that separates
+             this surface from Fitment, which is the sentence they are
+             most likely to need twice.
+
+             ONE BOX, THREE VIEWS, so the grid sees exactly two
+             children — head and bands — however many views are
+             mounted. */
+          <div className="cn-bands">
             {/* THE THREE VIEWS. The control is the page's heading now:
                 each segment names what is behind it and counts it, so
                 nobody has to scroll to find out whether it is worth
@@ -492,7 +517,7 @@ export function RulesPane(): ReactElement {
               <RegistrationTheme />
               <LeftOutList />
             </div>
-          </>
+          </div>
         )}
       </div>
     </section>

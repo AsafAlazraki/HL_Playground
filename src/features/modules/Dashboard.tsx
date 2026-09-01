@@ -251,7 +251,32 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
           carries the business's name at the top of every screen;
           repeating it here as the largest words on the page told
           somebody who pressed "Modules" the name of the company
-          they work for. The eyebrow keeps it. */}
+          they work for. The eyebrow keeps it.
+
+          AND WHAT THE WIDTH PASS MEASURED, because this anatomy is
+          the answer to it. The organisation's name, the count under
+          it and the two things you may do to this page were a
+          full-width banner over a 1080px column of cards: at 2560
+          that left half the window empty and STILL gave the cards
+          three columns. The fix that pass drew was to move the
+          banner into a 340px rail beside the grid, so the facts took
+          a column suited to their content and the cards took the
+          rest. `PageHead` reaches the same end by the other route —
+          the header is that same narrow group of related facts, on
+          one row, and the GRID takes every pixel under it. Nothing
+          on this screen is stretched to fill: the header stops where
+          its content stops and the grid answers a wider window with
+          MORE COLUMNS, never with wider cards.
+
+          THE COUNT IS THAT PASS'S ONE FACT, in `PageHead`'s own
+          slot. It read "N modules · N tables" in the rail — the fact
+          that tells an admin the sheet is all still here. It reads
+          in PLACES now, because places are what the grid draws and a
+          count that disagrees with the cards under it is the fault
+          `read.ts` exists to prevent. The table figure is still on
+          the screen and is now the actionable half of itself: the
+          sentence under the grid says how many tables are not in a
+          place yet, and only while that is true of something. */}
       <PageHead
         eyebrow={business === '' ? 'This sheet' : name}
         name="Modules"
@@ -271,6 +296,19 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
               Access &amp; roles
             </button>
 
+            {/* REORDER STANDS WITH THE PAGE'S OTHER ACT, and it is
+                drawn only when there is an order to put things in.
+
+                It was a button and a sentence stranded under the
+                last row of cards — on a nine-card grid a long way
+                from the control that puts you in the mode, and
+                further at every width above 1180 where the grid gets
+                another column and another row of scroll. And it was
+                offered against ONE module with a sentence beside it
+                excusing itself: a dead control explaining why it is
+                dead. One module cannot be arranged, so there is no
+                control, which is the same refusal made in the place
+                it applies. */}
             {moduleCount > 1 ? (
               <button
                 type="button"
@@ -476,6 +514,27 @@ function PlaceCard({
           onOpen(place.moduleId, place.tableId)
         }}
       >
+        {/* THE FACE IS A WELL, NOT A BARE GLYPH — and the name is the
+            line directly under it.
+
+            The mark and the name used to be two stacked rows: a 22px
+            glyph alone on a line, then the name on the next. A row
+            whose only occupant is a glyph is 28px of card height
+            carrying one fact, and it left the place's name — the
+            thing a person is actually scanning for — starting a
+            third of the way down a 260px card. They are the same
+            fact about the place, so the plate became a well that a
+            dealer's own logo and a kind symbol occupy the same
+            square of, and a card with a mark is the same height as a
+            card without.
+
+            HERE THE WELL IS THE WHOLE FACE, because the card grew a
+            photograph. `coverPhoto` fills it where the table has
+            one, the mark sits over it at the smaller step where it
+            does and at the larger step where it does not, and the
+            name is the first line of the body beneath — one fact
+            about the place, read top to bottom, at every column
+            count the grid resolves to. */}
         <span className="md-place-face">
           {cover ? (
             <img

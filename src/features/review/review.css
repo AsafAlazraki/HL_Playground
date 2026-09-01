@@ -86,9 +86,21 @@
    THE RAIL — same 340px geometry as the inspector
    ============================================================ */
 
+/* A RAIL TAKES THE WIDTH ITS CONTENT WANTS (rule 4), and 340px was a
+   literal that had never been asked what the content was. What is in
+   here is prose — every card carries a sentence explaining the mark —
+   and 340px less the card and body padding leaves a 268px measure,
+   about 42 characters, which is under half a comfortable line and is
+   why every "why" in this rail wrapped four times.
+
+   It grows to 440px on a wide screen (a ~58-character measure) and
+   NEVER past it: this is a margin note beside a sheet, and a margin
+   note that takes a quarter of a 2560px window has stopped being one.
+   It never shrinks below 340 either, so nothing that fitted before
+   stops fitting. */
 .rv-rail {
-  flex: 0 0 340px;
-  width: 340px;
+  flex: 0 0 clamp(340px, 22vw, 440px);
+  width: clamp(340px, 22vw, 440px);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -352,15 +364,21 @@
 }
 /* THE MARGIN RULE, and it carries severity twice: in its hue and
    in whether it is solid. Two channels, so the split survives a
-   reader who cannot separate the hues. */
+   reader who cannot separate the hues.
+
+   IT NO LONGER COPIES THE CARD'S CORNER ONTO A 3px SLIVER (rule 1).
+   A 10px radius on a 3px width is not a 10px corner — the browser
+   clamps it to half the width and the mark reads as a rounded pill
+   hanging off the card. It runs between the two corners instead,
+   inset top and bottom by the card's own `--r-card`, which is what
+   a pencil line down a margin actually looks like. */
 .rv-card::before {
   content: '';
   position: absolute;
-  top: -1px;
-  bottom: -1px;
+  top: var(--r-card);
+  bottom: var(--r-card);
   left: -1px;
   width: 3px;
-  border-radius: var(--r-card) 0 0 var(--r-card);
   background: var(--danger);
 }
 .rv-card[data-severity='advisory']::before {

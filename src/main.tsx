@@ -27,9 +27,10 @@ import '@fontsource/ibm-plex-mono/600.css'
 import '@xyflow/react/dist/style.css'
 import './styles/tokens.css'
 import './styles/base.css'
-/* THE BRIDGE — last, so it wins. It redefines ~50 token names in
-   terms of src/styles/ds.css and re-skins every stylesheet in the
-   app without touching a selector, a component or a line of TSX.
+/* THE BRIDGE — after the base tokens, so it wins over them. It
+   redefines ~50 token names in terms of src/styles/ds.css and
+   re-skins every stylesheet in the app without touching a
+   selector, a component or a line of TSX.
    The app is 97.6% tokenised, which is what makes that possible.
    Delete this one line to put the old design back. */
 import './styles/bridge.css'
@@ -40,6 +41,21 @@ import './features/page/page.css'
 import './features/picker/picker.css'
 import './features/activity/activity.css'
 import './features/pipeline/pipeline.css'
+/* THE FLUID LAYER — last, so it wins. It ramps the tuned design
+   upward instead of leaving it centred in a void above 1180px.
+   Delete this one line to put the fixed-width design back.
+
+   LAST MEANS AFTER THE FEATURE SHEETS ABOVE, not merely after the
+   bridge. This file carries no selector but `:root` — it publishes
+   `--measure`, `--gutter`, `--section-gap`, the dock and actionbar
+   clearances, and every type step as a clamp() — and several of
+   those names are also declared on `:root` by tokens.css and
+   re-declared by bridge.css. Equal specificity, so source order
+   decides: parsed last, the ramp wins; parsed anywhere earlier the
+   fixed figure wins and the app is silently back to 1180px with no
+   error to show for it. Any stylesheet added later goes ABOVE this
+   line. */
+import './styles/response.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

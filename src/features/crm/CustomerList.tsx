@@ -231,175 +231,208 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
     <div className="cx-root">
       <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
       <div className="cx-scroll">
-        {/* THE APPLICATION'S HEADER, and this page used to have none
-            at all — it began with a card. See features/page. */}
-        <PageHead
-          eyebrow="Register"
-          name={table.name}
-          count={
-            withQuotes === 0
-              ? `${people.length} ${people.length === 1 ? 'person' : 'people'}`
-              : `${people.length} · ${withQuotes} quoted`
-          }
-          {...(table.description ? { line: table.description } : {})}
-          acts={
-            <>
-              <div className="cx-find">
-                <span className="cx-find-mark" aria-hidden="true">
-                  <MagnifyingGlass size={ICON_SIZE.small} weight="light" />
-                </span>
-                <input
-                  className="cx-find-input"
-                  type="search"
-                  value={find}
-                  placeholder="Find a customer"
-                  aria-label="Find a customer by name, contact or note"
-                  onChange={(e) => setFind(e.target.value)}
+        {/* THE FRAME SCROLLS; THE PAGE INSIDE IT HAS A WIDTH.
+
+            `.cx-scroll` is the frame, and it is the only thing that
+            moves. It gave up its own horizontal inset so that every
+            block under the header takes `--page-gutter` once and
+            nothing else — measured after: the title, the rows, the
+            details and the history all begin at 256.
+
+            THIS is the page, and it is a GRID OF TWO TRACKS: the
+            application's header, then the body of the register. It
+            takes the measure — `min(var(--measure), 1900px)`, see
+            `.cx-page` in crm.css for the arithmetic — because above
+            1180px the design used to have no opinion at all, and a
+            register row carries five things. Past ~1900px it stops
+            being a row you can scan and becomes a name at one end of
+            the desk and a number at the other, so the page declines
+            the width rather than spending it.
+
+            THE HEAD STAYS A BANNER ACROSS BOTH TRACKS. Turning it
+            into a sticky column beside the list was the earlier
+            answer to a 2560px window, and it was written when this
+            screen drew its own `.cx-head`. It draws `PageHead` now —
+            the same header Modules, Quotes and Data use — and
+            Customers is not the one page in the application whose
+            title, actions and find box sit somewhere else. */}
+        <div className="cx-page">
+          {/* THE APPLICATION'S HEADER, and this page used to have none
+              at all — it began with a card. See features/page. */}
+          <PageHead
+            eyebrow="Register"
+            name={table.name}
+            count={
+              withQuotes === 0
+                ? `${people.length} ${people.length === 1 ? 'person' : 'people'}`
+                : `${people.length} · ${withQuotes} quoted`
+            }
+            {...(table.description ? { line: table.description } : {})}
+            acts={
+              <>
+                <div className="cx-find">
+                  <span className="cx-find-mark" aria-hidden="true">
+                    <MagnifyingGlass size={ICON_SIZE.small} weight="light" />
+                  </span>
+                  <input
+                    className="cx-find-input"
+                    type="search"
+                    value={find}
+                    placeholder="Find a customer"
+                    aria-label="Find a customer by name, contact or note"
+                    onChange={(e) => setFind(e.target.value)}
+                  />
+                </div>
+
+                {/* THE SORT STEPS ASIDE WHILE SOMEBODY IS TYPING.
+                    `matchCustomers` ranks by relevance and re-sorting
+                    that alphabetically would bury the best match in the
+                    middle of the list, so the control says so rather
+                    than appearing to be ignored. */}
+                {/* THE SAME DROPDOWN THE BOARD USES. Two sort
+                    controls that looked different were two things to
+                    learn; both were native selects, which is to say
+                    neither looked like this application. */}
+                <Picker
+                  label="Sort"
+                  value={find.trim() === '' ? order : 'match'}
+                  options={
+                    find.trim() === ''
+                      ? [
+                          { id: 'name' as const, label: 'Name A\u2013Z' },
+                          { id: 'recent' as const, label: 'Quoted most recently' },
+                          { id: 'worth' as const, label: 'Worth the most' },
+                          { id: 'most' as const, label: 'Most quotes' },
+                        ]
+                      : [{ id: 'match' as const, label: 'Best match' }]
+                  }
+                  ariaLabel="How to order the register"
+                  /* THE SORT STEPS ASIDE WHILE SOMEBODY IS SEARCHING,
+                     and says why rather than appearing ignored.
+                     `matchCustomers` ranks a name that STARTS with the
+                     query above one that merely contains it, and
+                     re-sorting that alphabetically would bury the best
+                     match in the middle of the list. */
+                  {...(find.trim() === ''
+                    ? {}
+                    : { disabledWhy: 'While you are searching, the closest names come first.' })}
+                  onPick={(id) => {
+                    if (id !== 'match') setOrder(id)
+                  }}
                 />
-              </div>
 
-              {/* THE SORT STEPS ASIDE WHILE SOMEBODY IS TYPING.
-                  `matchCustomers` ranks by relevance and re-sorting
-                  that alphabetically would bury the best match in the
-                  middle of the list, so the control says so rather
-                  than appearing to be ignored. */}
-              {/* THE SAME DROPDOWN THE BOARD USES. Two sort
-                  controls that looked different were two things to
-                  learn; both were native selects, which is to say
-                  neither looked like this application. */}
-              <Picker
-                label="Sort"
-                value={find.trim() === '' ? order : 'match'}
-                options={
-                  find.trim() === ''
-                    ? [
-                        { id: 'name' as const, label: 'Name A\u2013Z' },
-                        { id: 'recent' as const, label: 'Quoted most recently' },
-                        { id: 'worth' as const, label: 'Worth the most' },
-                        { id: 'most' as const, label: 'Most quotes' },
-                      ]
-                    : [{ id: 'match' as const, label: 'Best match' }]
-                }
-                ariaLabel="How to order the register"
-                /* THE SORT STEPS ASIDE WHILE SOMEBODY IS SEARCHING,
-                   and says why rather than appearing ignored.
-                   `matchCustomers` ranks a name that STARTS with the
-                   query above one that merely contains it, and
-                   re-sorting that alphabetically would bury the best
-                   match in the middle of the list. */
-                {...(find.trim() === ''
-                  ? {}
-                  : { disabledWhy: 'While you are searching, the closest names come first.' })}
-                onPick={(id) => {
-                  if (id !== 'match') setOrder(id)
-                }}
-              />
-
-              <button
-                type="button"
-                className="cx-act cx-act--primary"
-                onClick={() => {
-                  const row = addCustomer()
-                  if (row) onOpen(row.id)
-                }}
-              >
-                <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                New customer
-              </button>
-            </>
-          }
-        />
-
-        {people.length === 0 ? (
-          <div className="cx-empty ds-rise">
-            <span className="cx-empty-eyebrow">Nobody in it yet</span>
-            <h2 className="cx-empty-title">The register is here and waiting.</h2>
-            <p className="cx-empty-say">Add somebody, or file them from a quote.</p>
-
-            <button
-              type="button"
-              className="cx-act cx-act--primary"
-              onClick={() => {
-                const row = addCustomer()
-                if (row) onOpen(row.id)
-              }}
-            >
-              <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-              New customer
-            </button>
-          </div>
-        ) : shown.length === 0 ? (
-          /* A DEAD END SAYS WHAT ELSE IT WOULD HAVE ANSWERED TO. The
-             register is searched by name AND by everything in the
-             contact lines and the note — see `haystack` — so saying so
-             is the difference between "no" and "try this". */
-          <p className="cx-none">
-            Nothing matches “{find.trim()}”. Their name is searched, and so is anything
-            in their contact details.
-          </p>
-        ) : (
-          <ul className="cx-rows">
-            {/* ── THE FIND BOX ANSWERED SILENTLY ────────────────────
-                Typing in it removed rows from the list and said
-                nothing at all, so a register of two hundred that
-                narrowed to nine looked exactly like a register of
-                nine — and the head above it went on printing 200,
-                which is the reading a person would then have to
-                reconcile on their own. One line, only while
-                something is typed, and it is the same accounting the
-                palette prints along its own foot.
-
-                A LIST ITEM, BECAUSE IT IS INSIDE A LIST. A <p> here
-                would be an invalid child of <ul> and a screen reader
-                would read the list's length wrong; `role="presentation"`
-                takes it back out of the count. */}
-            {find.trim() !== '' ? (
-              <li className="cx-shown" role="presentation">
-                <span className="cx-num">{shown.length}</span> of{' '}
-                <span className="cx-num">{people.length}</span> — the rest do not match
-                “{find.trim()}”.
-              </li>
-            ) : null}
-            {shown.map((c) => {
-              const act = activity.get(c.rowId)
-              return (
-                <li
-                  key={c.rowId}
-                  className={`cx-row${openId === c.rowId ? ' is-open' : ''}`}
+                <button
+                  type="button"
+                  className="cx-act cx-act--primary"
+                  onClick={() => {
+                    const row = addCustomer()
+                    if (row) onOpen(row.id)
+                  }}
                 >
-                  <button
-                    type="button"
-                    className="cx-row-open"
-                    onClick={() => onOpen(c.rowId)}
-                    aria-label={c.name === '' ? 'A customer with no name yet' : c.name}
-                  >
-                    <span className="cx-row-name">
-                      {c.name === '' ? (
-                        <span className="cx-blank">no name yet</span>
-                      ) : (
-                        c.name
-                      )}
-                    </span>
-                    <span className="cx-row-contact">{c.contact.join('  ·  ')}</span>
-                    <span className="cx-row-when">{act?.last ?? ''}</span>
-                    {/* WHAT THEY HAVE BEEN QUOTED. Drawn only where
-                        there is something to draw: a column of em
-                        dashes down a new register is noise, and the
-                        count beside it already says "none". */}
-                    <span className="cx-num cx-row-worth">
-                      {act ? money(act.worth) : ''}
-                    </span>
-                    <span className="cx-num cx-row-count">
-                      {act
-                        ? `${act.quotes} ${act.quotes === 1 ? 'quote' : 'quotes'}`
-                        : '—'}
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+                  <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                  New customer
+                </button>
+              </>
+            }
+          />
+
+          {/* THE BODY IS THE SECOND TRACK, and it is a box of its own
+              so that it can be one. A grid child that holds a list of
+              rows needs `min-width: 0`, or the widest contact line in
+              the register sets the width of the page. See `.cx-main`. */}
+          <div className="cx-main">
+            {people.length === 0 ? (
+              <div className="cx-empty ds-rise">
+                <span className="cx-empty-eyebrow">Nobody in it yet</span>
+                <h2 className="cx-empty-title">The register is here and waiting.</h2>
+                <p className="cx-empty-say">Add somebody, or file them from a quote.</p>
+
+                <button
+                  type="button"
+                  className="cx-act cx-act--primary"
+                  onClick={() => {
+                    const row = addCustomer()
+                    if (row) onOpen(row.id)
+                  }}
+                >
+                  <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                  New customer
+                </button>
+              </div>
+            ) : shown.length === 0 ? (
+              /* A DEAD END SAYS WHAT ELSE IT WOULD HAVE ANSWERED TO. The
+                 register is searched by name AND by everything in the
+                 contact lines and the note — see `haystack` — so saying so
+                 is the difference between "no" and "try this". */
+              <p className="cx-none">
+                Nothing matches “{find.trim()}”. Their name is searched, and so is anything
+                in their contact details.
+              </p>
+            ) : (
+              <ul className="cx-rows">
+                {/* ── THE FIND BOX ANSWERED SILENTLY ────────────────────
+                    Typing in it removed rows from the list and said
+                    nothing at all, so a register of two hundred that
+                    narrowed to nine looked exactly like a register of
+                    nine — and the head above it went on printing 200,
+                    which is the reading a person would then have to
+                    reconcile on their own. One line, only while
+                    something is typed, and it is the same accounting the
+                    palette prints along its own foot.
+
+                    A LIST ITEM, BECAUSE IT IS INSIDE A LIST. A <p> here
+                    would be an invalid child of <ul> and a screen reader
+                    would read the list's length wrong; `role="presentation"`
+                    takes it back out of the count. */}
+                {find.trim() !== '' ? (
+                  <li className="cx-shown" role="presentation">
+                    <span className="cx-num">{shown.length}</span> of{' '}
+                    <span className="cx-num">{people.length}</span> — the rest do not match
+                    “{find.trim()}”.
+                  </li>
+                ) : null}
+                {shown.map((c) => {
+                  const act = activity.get(c.rowId)
+                  return (
+                    <li
+                      key={c.rowId}
+                      className={`cx-row${openId === c.rowId ? ' is-open' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        className="cx-row-open"
+                        onClick={() => onOpen(c.rowId)}
+                        aria-label={c.name === '' ? 'A customer with no name yet' : c.name}
+                      >
+                        <span className="cx-row-name">
+                          {c.name === '' ? (
+                            <span className="cx-blank">no name yet</span>
+                          ) : (
+                            c.name
+                          )}
+                        </span>
+                        <span className="cx-row-contact">{c.contact.join('  ·  ')}</span>
+                        <span className="cx-row-when">{act?.last ?? ''}</span>
+                        {/* WHAT THEY HAVE BEEN QUOTED. Drawn only where
+                            there is something to draw: a column of em
+                            dashes down a new register is noise, and the
+                            count beside it already says "none". */}
+                        <span className="cx-num cx-row-worth">
+                          {act ? money(act.worth) : ''}
+                        </span>
+                        <span className="cx-num cx-row-count">
+                          {act
+                            ? `${act.quotes} ${act.quotes === 1 ? 'quote' : 'quotes'}`
+                            : '—'}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

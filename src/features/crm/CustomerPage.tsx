@@ -255,12 +255,21 @@ export function CustomerPage({
           }
         />
 
-        {/* THE TWO PANES. The container is queried rather than the
-            window, because this page is mounted inside a stage well
-            whose width is the window MINUS the rail — so a window
-            rule would have switched to one column at a width the
-            page never actually has. `views.css` makes the same
-            call for the same reason. */}
+        {/* THE TWO PANES — TWO GROUPS, SIDE BY SIDE WHEN THERE IS
+            ROOM. What they are is fixed: a form of the register's
+            own columns, and the documents written to this person.
+            The only thing the width changes is whether the second
+            sits below the first or beside it, and how much room
+            each is given — the fold and the widths either side of
+            it are `.cx-rec-cols` in crm.css, which spends the
+            page's measure rather than naming a number here.
+
+            THE CONTAINER IS QUERIED, NOT THE WINDOW, because this
+            page is mounted inside a stage well whose width is the
+            window MINUS the rail — so a window rule would have
+            switched to one column at a width the page never
+            actually has. `views.css` makes the same call for the
+            same reason. */}
         <div className="cx-rec">
           <div className="cx-rec-cols">
             {/* -- their details, from the table's own columns ------- */}

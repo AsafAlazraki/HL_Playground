@@ -31,6 +31,64 @@
    the viewport that cannot be scrolled past would trap a person
    above the decision they came for.
 
+   ── THE WIDTH, AND WHAT THE WIDE PASS CHANGED ────────────────
+
+   THE MEASURED FAULT, and it survives the rewrite. 41,000 lines of
+   CSS carried nineteen width breakpoints and the largest was 1180px:
+   above that width — which is to say on every machine this is
+   actually demonstrated on — the app had no layout opinion at all.
+   The configurator's own version of it was a hard `max-width` on the
+   options column. On a 2560px window the product pane takes its
+   660px ceiling and leaves 1900px of scrollport, of which an 880px
+   column used 880 and left 510px of dead paper on either side. That
+   is this screen's money view, and it was the worst instance of it.
+
+   WIDENING PROSE WAS NOT THE FIX. A 2300px run of prose is not a
+   reading measure, and a 2300px row with a name at one end and a
+   price at the other is a hunt across a foot of glass. So the page
+   SPLITS rather than stretches — which this file already does, at
+   `.qb-body`, and did before the wide pass reached it. What the wide
+   pass adds on top is where the extra width is allowed to GO:
+
+     THE COLUMN opens. `.qb-bands` takes `--measure`, which is a
+     `min(100%, clamp(1180px, 90vw, 2600px))`, so it cannot overflow
+     a narrow stage and it keeps opening past the old cap. Its
+     gutter is `--gutter`, which only ever exceeds the tuned 24px
+     above 1440 because the `max-width: 1440px` rule at the foot of
+     this file pins the narrow end.
+
+     THE SHELF SPENDS IT. Choosing a motor off a wall of photographs
+     is what this surface is FOR, and it is the one thing on the
+     screen that gets bigger with the window: `.qb-shelf` is
+     `auto-fill` over a `cqi` floor, so the column decides how many
+     cards fit and the card decides how wide it is willing to be.
+
+     EVERYTHING ELSE STOPS. `.qb-picked` and `.qb-tally` take a hard
+     measure and end; every sentence in this file is measured in
+     `ch`. A row does not have to fill the window.
+
+   IT IS A CONTAINER, NOT THE WINDOW, that the shelf reads.
+   `.qb-scroll` carries `container: qb / inline-size`, because the
+   stage this surface mounts in is not the window — a panel can take
+   260px off it — so a `vw` card floor would size the grid for a
+   width the grid does not have. The five STRUCTURAL breakpoints at
+   the foot stay on the window, because PHASE_TWO §1d states them as
+   window widths and the stack they describe is a fact about the
+   viewport, not about the column.
+
+   WHAT WAS NOT SPENT, and it is a decision rather than an omission.
+   `--section-gap` floors at 24px; the gap between bands is tuned at
+   12px, because a stack of accordion cards is not a stack of page
+   sections. response.css's own contract is that it only ever adds
+   headroom above 1440 and never moves a tuned figure below it, so
+   spending that token here would have broken the contract it
+   belongs to. The band gap stays at `--s-3`.
+
+   TYPE NEEDED NO EDIT. Every size in this file is already a scale
+   token, and response.css ramps the `--t-*` scale itself, so the
+   whole file grew with the window the moment that layer loaded.
+   The one exception was the total, and it is noted where it happens.
+
    ── COLOUR ───────────────────────────────────────────────────
 
    Every band head takes `.k-band` in its own kind's hue — the
@@ -488,15 +546,42 @@
   min-width: 0;
   min-height: 0;
   overflow: auto;
+  /* THE SHELF BELOW ASKS THIS BOX HOW WIDE IT IS, NOT THE WINDOW.
+     The stage this surface mounts in is not the viewport — a panel
+     takes 260px off it and the product pane takes another 660 — so a
+     `vw` card floor would size the grid against a width the grid
+     does not have. Naming the container is the whole cost of getting
+     that right; nothing else about this box changes. */
+  container: qb / inline-size;
 }
 
 .qb-bands {
   display: flex;
   flex-direction: column;
+  /* NOT `--section-gap`. That token floors at 24px and this stack is
+     tuned at 12: bands are accordion cards, not page sections, and
+     response.css only ever adds headroom above 1440. */
   gap: var(--s-3);
-  max-width: 880px;
+  /* WAS A HARD `max-width: 880px`. At 1440 the scrollport is ~835px
+     and the cap never bound, so nothing moves at the tuned width;
+     above ~1520 the cap was the only thing standing between this
+     column and 510px of dead paper on either side at 2560.
+     `--measure` is a `min(100%, clamp(…))`, so it cannot overflow a
+     narrow stage and it keeps opening to a 2600px ceiling. */
+  max-width: var(--measure);
   margin: 0 auto;
-  padding: var(--s-6) var(--s-6) var(--s-8);
+  /* the gutter a full-bleed surface keeps off the window edge. The
+     `max-width: 1440px` rule at the foot pins the narrow end at
+     `--s-5`, so this only ever exceeds the tuned 24px upward. */
+  padding: var(--s-6) var(--gutter) var(--s-8);
+
+  /* THE CARD'S OWN WIDTH, DECLARED ONCE AND SPENT ONCE, on the
+     shelf. `cqi` is 1% of `.qb-scroll`'s inline size, so a card grows
+     because its COLUMN got wider, which is the only reason a card
+     should grow. The floor is this file's tuned 220px and does not
+     move; the ceiling stops a wall of six boats becoming a wall of
+     three billboards. */
+  --qb-card-min: clamp(220px, 14cqi, 272px);
 }
 
 /* THE BAND CARRIES ITS KIND ON ITS LEADING EDGE — `.k-rail`'s
@@ -631,9 +716,16 @@
    THE SHORTLIST
    ============================================================ */
 
+/* THE ONE PLACE ON THIS SCREEN THAT SPENDS A WIDE WINDOW. Choosing a
+   motor off a wall of photographs is the thing this surface is for,
+   and it is the thing 510px of dead paper on either side was taking
+   away. `auto-fill` over a `cqi` floor: the column decides how many
+   fit, and the card decides how wide it is willing to be. At 1440
+   the floor resolves to its 220px minimum and the grid is exactly
+   what it was; at 2560 the same rule draws 266px cards. */
 .qb-shelf {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--qb-card-min, 220px), 100%), 1fr));
   gap: var(--s-3);
   margin: 0;
   padding: 0;
@@ -1103,10 +1195,16 @@
    LINES ALREADY ON THE QUOTE
    ============================================================ */
 
+/* RULE 4 — A ROW DOES NOT HAVE TO FILL THE WINDOW. At 1912px of main
+   column a line with its name at one end and its money at the other
+   is a hunt across a foot of glass. The picked lines take a measure
+   and stop; the offers below spend the rest of the width, because a
+   grid of photographs is what extra width is actually for. */
 .qb-picked {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
+  width: min(100%, 1080px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1135,6 +1233,8 @@
   min-width: 0;
 }
 
+/* RULE 9 — the entered data is the darkest and heaviest thing in the
+   row. Its facts are one tier down, their labels one further. */
 .qb-line-name {
   font-size: var(--t-small-size);
   font-weight: 570;
@@ -1157,7 +1257,7 @@
 }
 
 .qb-line-qty-in {
-  width: 58px;
+  width: 62px;
   text-align: right;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -1202,8 +1302,15 @@
   color: var(--danger);
 }
 
+/* THE PRESS IS A TONE, NOT A SCALE — a control that shrinks inside a
+   row makes its neighbours look like they moved. This read
+   `transform: scale(0.94)`; the redesign pass replaced it with
+   colour, and the two token names it arrived under (`--blue-wash`,
+   `--ink`) are bridge.css aliases of the two below. Same paint, this
+   file's vocabulary. */
 .qb-line-drop:active {
-  transform: scale(0.94);
+  background: var(--accent-wash);
+  color: var(--fg);
 }
 
 .qb-line-drop:focus-visible {
@@ -1221,9 +1328,14 @@
    THE PAPERWORK BAND'S TALLY
    ============================================================ */
 
+/* IT TAKES A MEASURE AND STOPS. This is the last thing read before a
+   document goes out; a 1900px row is not a better reading of it than
+   a 960px one, it is the same reading with a longer eye movement.
+   The column around it opens to `--measure` — this does not. */
 .qb-tally {
   display: flex;
   flex-direction: column;
+  width: min(100%, 960px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1354,11 +1466,26 @@
 }
 
 /* THE FIGURE DOES NOT ANIMATE. Mono, tabular, and replaced on the
-   frame it changes — a dealer reads this aloud. */
+   frame it changes — a dealer reads this aloud.
+
+   IT IS THE ONE RAMP IN THIS FILE WRITTEN BY HAND, and the wide pass
+   made one correction to it. It read `clamp(22px, 1.9vw, 30px)`: a
+   font-size in pure `vw` does not respond to browser zoom, which
+   turns a readability aid into a trap — response.css states the rule
+   and every ramp in that file carries a `rem` term for it. Half the
+   term is now `rem`, chosen so the figure is UNCHANGED at 1440,
+   where 0.855rem + 0.95vw resolves to the same 27.36px it always
+   did. It still floors at 22 and still tops out at 30.
+
+   `--data-xl-size` is the house token for a figure this size and it
+   is deliberately not used here: it resolves to 22px at 1440, which
+   would have shrunk this screen's headline number by five points to
+   buy a name. The total on this bar is bigger than the total on a
+   document on purpose. */
 .qb-price-now {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: clamp(22px, 1.9vw, 30px);
+  font-size: clamp(22px, 0.855rem + 0.95vw, 30px);
   font-weight: 600;
   letter-spacing: -0.022em;
   color: var(--fg);
@@ -2122,14 +2249,25 @@
    EVERY WIDTH, DRIVEN RATHER THAN HOPED FOR.
 
    PHASE_TWO §1d: 1600, 1440, 1280, 1024 and 768 are requirements
-   and not a pass at the end. The table it sets:
+   and not a pass at the end. The table it sets, with the row the
+   wide pass added at the top of it:
 
+     →2560  the column opens with the window and the shelf spends
+            it; nothing else does. No rule below fires
      ≥1600  the full composition
      1440   the same, tighter gutters
      1280   the split holds; the product column narrows
      1024   the split becomes STACKED
      768    one column, the product above its options
      ≤600   one column, the price bar stays pinned
+
+   EVERY RULE BELOW REDUCES, and that is now load-bearing rather than
+   incidental. The wide end is answered by `--measure`, `--gutter`
+   and a `cqi` card floor on the base rules, so a window larger than
+   1440 matches no query here at all and simply resolves the clamps
+   further along. These five are what a SMALL window gets, and the
+   first of them pins the tuned figure `--gutter` would otherwise
+   have moved.
 
    Nothing under 11px at any of them, nothing truncates mid-word,
    and `body` never scrolls horizontally.
@@ -2221,6 +2359,14 @@
   .qb-product,
   .qb-bands {
     padding: var(--s-4);
+  }
+  /* THE OPEN BAND TIGHTENS WITH THE PAGE AROUND IT. The wide pass
+     carried this as `.qb-step { padding: var(--sp-4) }` — the plate
+     that used to hold one decision at a time. This file's plate is
+     the band body, and 16 → 12 here is the same tier the two rules
+     above just took. */
+  .qb-band-body {
+    padding: var(--s-3);
   }
   .qb-band-head {
     grid-template-columns: 18px minmax(0, 1fr) auto;

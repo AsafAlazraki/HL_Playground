@@ -30,6 +30,24 @@
    used to carry its own copy of the lockup and its own panel, which
    is how the two drifted apart the first time. What is left here is
    the one question and its answer.
+
+   AND THE HALF IT DRAWS IS THE NAME SCREEN'S HALF, for the reason
+   that split was made in the first place: what is being asked goes
+   on one side, what you do about it on the other. A door that
+   looked like a different product from the screen one press behind
+   it is not a door, it is a detour. That division used to be drawn
+   here — a card that answered a container query about its own
+   width — and it is now the slab itself, so this file is the DO
+   column and nothing above it.
+
+   A COLUMN NEEDS A TOP EDGE, which is what the two group captions
+   are: "The file" over the drop zone, "This file holds" over the
+   plate. 11px mono uppercase is the one sanctioned use of capitals
+   (a caption is not a name and not a value), and the caption
+   replaces an aria-label, so what the block is called is on the
+   screen and not only in the accessibility tree. `.ob-drop` and
+   `.ob-plate` take the label tier of top margin for the same
+   reason: a caption and its block read as one thing or as two.
    ============================================================ */
 
 import { useRef, useState } from 'react'
@@ -136,6 +154,7 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
 
       {summary && pending ? (
         <>
+          <span className="ob-field-label">This file holds</span>
           <div className="ob-plate">
             <div className="ob-plate-head">
               <span className="ob-plate-name">{summary.name}</span>
@@ -160,7 +179,11 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
                 `text-transform` pass could have caught — and the
                 second one names the FILE the person just chose, so
                 their `Boats-Feb.json` came back as `BOATS-FEB.JSON`.
-                A file name is a value. */}
+                A file name is a value. The io panel's own copy of
+                this plate (`.io-plate-also`, `.io-plate-src`) was
+                corrected to "Also —" / "Source —" by the pass at
+                io.css:770 and this one was missed, so the same plate
+                was drawn two ways one screen apart. */}
             {also.length > 0 && <div className="ob-plate-also">Also — {also.join(' · ')}</div>}
             <div className="ob-plate-also">Source — {pending.fileName}</div>
           </div>
@@ -187,6 +210,11 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
         </>
       ) : (
         <>
+          {/* the caption and the block it names arrive on the same
+              beat, or they arrive as two things */}
+          <span className="ob-field-label ob-in" style={at(4)}>
+            The file
+          </span>
           <button
             type="button"
             className={`ob-drop ob-in${dragOver ? ' is-over' : ''}`}

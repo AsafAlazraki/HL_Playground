@@ -51,8 +51,12 @@
   padding: var(--s-2) 0 var(--s-3);
 }
 
+/* the page form was a hard 1180px, which is an opinion about a
+   1440 screen and none at all about anything wider. `--measure` is
+   that same 1180 as its floor and then 90vw up to 2600, so the
+   column grows with the window instead of stranding it. */
 .cur--page {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--s-4);
   padding: var(--s-3) 0;
 }

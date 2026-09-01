@@ -746,10 +746,17 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
                               <KindMark entity={e} />
                             </span>
                             <span className="vw-add-name">{e.name}</span>
-                            <span className="vw-add-cells">
-                              <span className="vw-add-cell">
+                            {/* WHAT IS IN THE PLACE, as a figure and the
+                                word for it — the figure is the data and
+                                reads first, the word is the label and
+                                recedes. It was a bare number in a 56px
+                                column, which is a number nobody can act
+                                on because nothing says what it counts. */}
+                            <span className="vw-place-count">
+                              <span className="vw-place-n">
                                 {(rowsByEntity[e.id] ?? []).length}
                               </span>
+                              <span className="mono-label vw-place-noun">rows</span>
                             </span>
                           </button>
                         </li>

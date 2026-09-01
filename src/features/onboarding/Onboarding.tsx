@@ -263,6 +263,24 @@ function NameStep({
 }) {
   const ready = name.trim().length > 0
 
+  /* ONE QUESTION, ON A SLAB THAT ANSWERS THE WINDOW.
+
+     Measured before any of this: at 1728 the first screen drew a
+     345px card alone in the middle of a window eight times its area,
+     because it was a phone layout that had never been given a desktop
+     opinion. Widening one column to fill a monitor was never the
+     answer — a question and a field both have a measure, and past it
+     neither gets easier to read. So the screen SPLITS: what is being
+     asked on one side, what you do about it on the other.
+
+     THAT SPLIT IS NOW THE SLAB ITSELF. `.ob-stage` is the two halves,
+     navy and paper, and it collapses to one column under 900px — the
+     same argument the card's own `@container` rule was making, moved
+     one level up and settled without a device breakpoint inside the
+     component. This form is only ever the DO half, so it never has to
+     carry the question's measure and the field's at once, and the
+     fluid layer reaches it through the stylesheet: `--gutter` on
+     `.ob-screen`, `--ob-hero-size` on `.ob-ask`, the clamped input. */
   return (
     <form
       className="ob-form"
@@ -276,19 +294,48 @@ function NameStep({
       </h1>
       {/* WHY IT IS BEING ASKED, and it is true where it is said:
           `freeze.ts` writes the organisation onto every quote and
-          `QuoteDocument` prints it at the head of the page. */}
+          `QuoteDocument` prints it at the head of the page.
+
+          RULE 10, AND DRAWN IN BOTH STATES. A control that cannot be
+          pressed says why, where it is, rather than sitting grey and
+          silent — but a sentence that appears only while Continue is
+          dead makes the column jump on the first keystroke. So the
+          paragraph is always here and only its first sentence comes
+          and goes; onboarding.css records the same ruling beside
+          `.ob-why`. */}
       <p className="ob-why ob-in" style={{ ['--i' as string]: 3 } as CSSProperties}>
+        {ready ? null : 'Type a name and Continue lights up. '}
         It heads every quote you hand a customer. You can change it later.
       </p>
 
-      <div className="ob-field ob-in" style={{ ['--i' as string]: 4 } as CSSProperties}>
+      {/* A REAL LABEL, NOT AN aria-label. The field carried its name
+          only in the accessibility tree, so the one thing on this half
+          a person actually fills in went unheaded on the screen. 11px
+          mono uppercase is the one sanctioned use of capitals (§2) — a
+          group caption — and the pair takes the label-to-field tier:
+          `--s-6` of air above the caption, `--s-2` between it and the
+          rule it names. Both are set here rather than in the sheet
+          because `.ob-field` owns that 24px there and the caption now
+          stands between it and the sentence above. */}
+      <label
+        className="ob-field-label ob-in"
+        htmlFor="ob-org-name"
+        style={{ ['--i' as string]: 4, marginTop: 'var(--s-6)' } as CSSProperties}
+      >
+        Business name
+      </label>
+
+      <div
+        className="ob-field ob-in"
+        style={{ ['--i' as string]: 5, marginTop: 'var(--s-2)' } as CSSProperties}
+      >
         <input
+          id="ob-org-name"
           className="ob-input"
           type="text"
           value={name}
           onChange={(e) => onName(e.target.value)}
           placeholder="Northside Marine"
-          aria-label="Business name"
           autoComplete="organization"
           autoFocus
           maxLength={60}
@@ -308,7 +355,7 @@ function NameStep({
       <button
         type="submit"
         className="ob-primary ob-in"
-        style={{ ['--i' as string]: 5 } as CSSProperties}
+        style={{ ['--i' as string]: 6 } as CSSProperties}
         disabled={!ready}
       >
         Continue
@@ -323,7 +370,7 @@ function NameStep({
       <button
         type="button"
         className="ob-alt ob-in"
-        style={{ ['--i' as string]: 6 } as CSSProperties}
+        style={{ ['--i' as string]: 7 } as CSSProperties}
         onClick={onOpenFile}
       >
         Open a saved copy instead
@@ -363,8 +410,7 @@ function NameStep({
 const STARTS_BLANK: ReadonlySet<IndustryKey> = new Set<IndustryKey>(['other'])
 
 /** Can this answer be picked today? */
-const isReady = (k: IndustryKey): boolean =>
-  INDUSTRIES[k].available || STARTS_BLANK.has(k)
+const isReady = (k: IndustryKey): boolean => INDUSTRIES[k].available || STARTS_BLANK.has(k)
 
 /** `Automotive and Motorcycles & ATVs` — plain English, no comma
  *  where a person would not put one. */
@@ -418,6 +464,15 @@ function IndustryStep({
 
   return (
     <div className="ob-form">
+      {/* BACK USED TO FLOAT. It sat on a rail above a CENTRED header
+          above a grid on a third measure, so the one control up there
+          had nothing to line up with and read as abandoned to the
+          left. Back, the question, the clause and the grid are one
+          column now and share one left edge — which is what makes
+          this read as a page rather than as three things dropped on a
+          field. The grid decides its own column count from the width
+          it is given (`auto-fit` in onboarding.css), so four answers
+          never draw as three and an orphan. */}
       <button
         type="button"
         className="ob-back ob-in"

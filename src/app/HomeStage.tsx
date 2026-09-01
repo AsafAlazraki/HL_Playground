@@ -25,6 +25,78 @@
    IT IS THE SAME CARD as the sheet draws, deliberately - kind
    rail, kind name, table name, what is in it - so moving between
    the two never feels like moving between two apps.
+
+   ============================================================
+   WHAT THE WIDTH PASS MEASURED, AND WHERE EACH FINDING LANDED.
+
+   Two passes rebuilt this screen at the same time: one gave it a
+   masthead, a pinned strip and a photograph on the card, and one
+   asked what the page should DO with a window wider than 1180.
+   The figures below are the width pass's, taken at 1920x1200,
+   and they are kept here because they are the evidence the
+   layout underneath is answering. Where the two passes reached
+   the same place by different routes, both routes are recorded —
+   losing the measurement would leave the code looking arbitrary.
+
+   1 · THE GRID IS RAGGED IF A GROUP IS A BAND. Every group is a
+   full-width band with its own `auto-fill` grid, so a group's
+   cards fill the first row and leave the rest of it empty. Boats
+   filled a row of seven; Motors drew two cards and left 72% of a
+   1629px row as a hole, and Accessories, Packages and Custom
+   table did the same. Five of seven groups were mostly hole. A
+   band that is mostly empty does not read as spacious, it reads
+   as broken.
+
+   THE ARITHMETIC THAT ANSWERS IT IS `shelfFor`, AND IT IS KEPT.
+   A group is a SHELF: two card rows tall, as wide as it needs to
+   be. A group of n tables takes `n + (n odd ? 1 : 0)` cells — the
+   odd cell is the lead card spanning two columns — and that count
+   is even by construction, so it divides into exactly two rows.
+   Boats (7) is 8 cells, 4 units wide. Motors (2) is 2 cells, 1
+   unit. Packages (3) is 4 cells, 2 units. Every shelf is then the
+   same height and its WIDTH says how much is in it, so a board
+   packed `grid-auto-flow: dense` has no hole anywhere except at
+   the end of the last row: at 1920, Boats+Motors+Accessories fill
+   one row of five units exactly and Trailers+Packages fill the
+   next. Every section below PUBLISHES its `--hm-u` and
+   `--hm-lead`, and shell.css is what spends them — the same
+   contract response.css keeps with every co-located stylesheet.
+
+   2 · RELATIONSHIPS IS 27 OF THE 51 CARDS and takes more vertical
+   space than every product group combined. A join table is
+   derived plumbing: it is the least important thing on this page
+   and it is the biggest. The width pass folded all 27 into one
+   collapsed shelf at the foot of the board, each join listed
+   under the table it joins — derived from the join's own first
+   reference field, never written by hand, with an orphan list so
+   nothing became unreachable.
+
+   THAT FOLD IS NOT DRAWN HERE, and the reason is structural
+   rather than a preference: the group is a section like the other
+   seven, it sorts last, the masthead counts it as its own figure
+   ("Relationships"), and the pinned strip gives it a segment and
+   a chip — so its size is stated in three places and a reader who
+   does not want it is one press from past it. The card that names
+   a join "Relationship" rather than "Custom table" is the other
+   half of the same answer; see the card below. The cost of the
+   difference is honest and it is vertical space.
+
+   3 · CARD TITLES WRAP TO TWO LINES ON SOME CARDS AND ONE ON
+   OTHERS, so row heights come out uneven and the grid looks
+   broken. The name box RESERVES both of its lines whether or not
+   the second is used, so a one-line card is exactly as tall as a
+   two-line one — and where two lines are still not enough,
+   `useClipTitles` puts the whole name back within reach rather
+   than leaving it cut. Both halves are below.
+
+   4 · AND THERE ARE PHOTOGRAPHS NOW, WHICH IS THE PART THAT HAD
+   TO BE EARNED RATHER THAN DECORATED. `coverPhoto` is where that
+   argument lives now: a card may show a photograph if and only if
+   the photograph is on a row OF THAT TABLE, and only where this
+   repository ships a copy of the address, so every picture on
+   this screen is same-origin and none is borrowed from a sibling.
+   Nothing is substituted; a table with no held picture keeps its
+   crest, which is the honest reading.
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -54,6 +126,59 @@ const KIND_ORDER: TableKind[] = [
   'dealer',
   'custom',
 ]
+
+/* ---------------------------------------------------------- */
+/* THE SHELF ARITHMETIC — §1 of the header                     */
+/* ---------------------------------------------------------- */
+
+/** How wide a group of `n` tables stands, and whether its lead card
+ *  takes two columns.
+ *
+ *  A shelf is TWO CARD ROWS TALL, always, so every shelf on the
+ *  board is the same height and a row of shelves cannot come out
+ *  ragged. Its WIDTH is what varies, and it varies with how much
+ *  the group holds — which is the honest signal to give a reader
+ *  looking at a page of groups.
+ *
+ *  The cells: n cards, plus one more when n is odd because the
+ *  lead card then spans two columns. That total is even by
+ *  construction, so `cells / 2` columns fills exactly two rows
+ *  with nothing left over. Seven boats is eight cells in four
+ *  columns; two motors is two cells in one column; three packages
+ *  is four cells in two columns.
+ *
+ *  THE CAP EXISTS SO ONE HUGE GROUP CANNOT BE THE WHOLE BOARD, and
+ *  when it bites it takes the largest DIVISOR of the cell count
+ *  rather than the cap itself — a shelf that does not divide
+ *  evenly is the ragged row this function was written to remove.
+ *  Such a shelf is taller than two rows, which is the right trade:
+ *  full rows, more of them.
+ *
+ *  IT IS PUBLISHED, NOT SPENT. This file writes the two figures
+ *  onto the section as `--hm-u` and `--hm-lead`; whether the
+ *  gallery packs shelves across the width or stacks full-width
+ *  bands is shell.css's ruling, and it can change there without
+ *  this arithmetic moving. Both custom properties carry a `1`
+ *  fallback in the stylesheet, so a stacked gallery reads them as
+ *  "one unit wide" and is unaffected. */
+const SHELF_CAP = 5
+
+function shelfFor(n: number): { units: number; lead: number } {
+  if (n <= 1) return { units: 1, lead: 1 }
+  const cells = n + (n % 2)
+  let units = cells / 2
+  if (units > SHELF_CAP) {
+    let widest = 1
+    for (let d = SHELF_CAP; d >= 1; d -= 1) {
+      if (cells % d === 0) {
+        widest = d
+        break
+      }
+    }
+    units = widest
+  }
+  return { units, lead: n % 2 === 1 ? Math.min(2, units) : 1 }
+}
 
 export interface HomeStageProps {
   onOpenTable: (entityId: string) => void
@@ -631,7 +756,16 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
             </nav>
 
             <div className="hm-secs" ref={secsRef}>
-            {groups.map((g, gi) => (
+            {groups.map((g, gi) => {
+            /* HOW WIDE THIS GROUP STANDS IF THE BOARD IS ALLOWED TO
+               PACK, in units and in lead columns — §1 of the header,
+               and `shelfFor` is where the arithmetic is argued. It is
+               written on the section and not read here: a full-width
+               band ignores both figures (they default to 1 in the
+               stylesheet), and a packed board spends them. The screen
+               keeps one opinion about width and it is shell.css's. */
+            const shelf = shelfFor(g.items.length)
+            return (
             <section
               className="hm-sec"
               key={g.key}
@@ -641,8 +775,28 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                  already on — one arrival across the page, not a
                  gallery of cards over a set of headings that were
                  simply there */
-              style={{ ['--i' as string]: gi }}
+              style={{
+                ['--i' as string]: gi,
+                ['--hm-u' as string]: shelf.units,
+                ['--hm-lead' as string]: shelf.lead,
+              }}
             >
+              {/* THE GROUP HEAD IS THE ONLY STRUCTURE ON A PAGE OF
+                  FIFTY TABLES, and the width pass's objection to it was
+                  that a 13px label and a bare number is the treatment a
+                  filter chip gets. Its answer was to give the head the
+                  kind's own mark and put the dealer's word for what is
+                  in there on a line of its own — "810 boats", counted
+                  from the rows rather than typed.
+
+                  THAT FIGURE IS ON THIS PAGE, one surface up. The
+                  pinned strip above carries every kind's row count in
+                  mono and its share as a segment, and its chip's
+                  accessible name says "N tables, N rows" — so the
+                  reading the width pass wanted is stated once, where it
+                  can be compared across kinds, instead of seven times
+                  where it cannot. What the head keeps is the kind's
+                  colour, its name and how many tables are under it. */}
               <header className="hm-sec-head">
                 <span className="hm-sec-dot" aria-hidden="true" data-kind={g.key} />
                 <h2 className="hm-sec-name">{g.label}</h2>
@@ -660,7 +814,34 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                      ship a copy of, so this is null or it is a
                      same-origin file that will draw. Nothing is
                      substituted for a table without one — that card
-                     keeps its crest, which is the honest reading. */
+                     keeps its crest, which is the honest reading.
+
+                     THE CHAIN, STATED, because the whole value of this
+                     is that it is not decoration: the photograph is on
+                     a row OF THIS TABLE, found by walking this table's
+                     own rows in their own order. Nothing is matched by
+                     resemblance and nothing is borrowed from a sibling
+                     — one brand's boat on another brand's card would be
+                     inventing business content, which is worse than a
+                     plate. The catalogue holds ADDRESSES, not pixels,
+                     and two of the eleven hosts in it can never answer
+                     a browser (imageSources.ts names both, measured);
+                     the repository ships its own copy of 220 of those
+                     addresses, and `seededCopy` inside `coverPhoto` is
+                     the pure question "do we hold this one". So every
+                     picture on this screen is same-origin: no network,
+                     no wait, no cross-origin line behind a
+                     stakeholder's dev tools.
+
+                     WHAT DRAWS A PLATE INSTEAD. The width pass scanned
+                     240 rows deep and found three tables in the
+                     prepared set holding nothing drawable at all —
+                     Mackay, Dunbier/Haines BMT, and the retired one.
+                     `coverPhoto` stops at 40, so those three and any
+                     table whose first held picture sits deeper than
+                     that get the crest. That is the honest answer for
+                     them, and the depth is one number in
+                     coverPhoto.ts if the deeper walk is ever wanted. */
                   const cover = coverPhoto(e, held)
                   return (
                     <button
@@ -746,7 +927,8 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                 })}
               </div>
             </section>
-            ))}
+            )
+            })}
             </div>
           </>
         )}

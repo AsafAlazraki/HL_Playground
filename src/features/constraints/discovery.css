@@ -56,22 +56,11 @@
   color: var(--ink-faint);
 }
 
-/* THE LINE THAT MAY NOT BE CROSSED, said first and in prose. Set off
-   by a rule rather than by a colour, because it is the frame for
-   everything below it and not a warning about any one card. */
-.dx-line {
-  margin: var(--sp-3) 0 0;
-  padding-left: var(--sp-3);
-  max-width: 62ch;
-  border-left: 2px solid var(--hairline-strong);
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-.dx-line b {
-  font-weight: 600;
-  color: var(--ink);
-}
+/* THE LINE THAT MAY NOT BE CROSSED is now `.cn-evidence.is-observed`
+   in `constraints.css` — the same element the asserted ledger carries
+   in its other state, so one device tells the two bands apart instead
+   of two paragraphs a reader has to hold in their head. `.dx-line`
+   was that paragraph and it is gone with it. */
 
 /* ============================================================
    WHILE IT IS WORKING
@@ -755,6 +744,13 @@
    through a three-second run. It is the house curve now, and it is
    still a transform rather than a width — a transition on a layout
    property is the one motion rule this design states twice.
+
+   THREE — THE PAIR ALSO DRAWS. The two figures carry two tracks on
+   one baseline now as well as their numbers, so nine cards can be
+   compared by shape instead of by reading eighteen percentages.
+   Those elements are new, and they are defined at the foot of this
+   file under THE TWO FIGURES, DRAWN, with the reasoning for the bar
+   and for the 2px floor on a fill.
    ============================================================ */
 
 .dx-eyebrow {
@@ -768,7 +764,14 @@
 
 /* the line that may not be crossed. It is the frame for everything
    below it, so it takes the accent rail every quoted line on this
-   surface takes rather than a warning colour of its own. */
+   surface takes rather than a warning colour of its own.
+
+   THE PARAGRAPH ITSELF HAS SINCE MOVED to `.cn-evidence.is-observed`
+   in `constraints.css` — one device tells the observed band and the
+   asserted ledger apart, rather than two paragraphs a reader has to
+   hold in their head. These declarations are kept for any surface
+   that still stamps `.dx-line`: they are the re-skin of that line,
+   not a second opinion about it. */
 .dx-line {
   margin-top: var(--s-4);
   padding: 2px 0 2px var(--s-3);
@@ -1093,4 +1096,119 @@
 }
 .dx-no-n {
   color: var(--fg);
+}
+
+/* ============================================================
+   THE TWO FIGURES, DRAWN
+
+   WHY A BAR AND NOT ANOTHER SENTENCE. The pair above already says
+   both facts correctly, and it was still the hardest thing on the
+   page to use, because the judgement it asks for is a COMPARISON:
+   nine cards, each with a rate and a share, and the reader has to
+   work out which ones actually choose something. Two tracks on one
+   baseline turn that into a shape — a rule worth keeping is a LONG
+   top bar and a SHORT bottom one. F8 draws as 100 % over a sliver.
+   F9 draws as 100 % over a bar that is nearly full, and the eye
+   refuses it before the sentence has been read.
+
+   THERE IS NO COLOUR IN IT. Both fills are the drawing ink itself.
+   Nothing here is coloured to mean anything, exactly as the band
+   header promises, and the meaning survives greyscale, both themes
+   and a reader who cannot separate two hues, because the meaning
+   is LENGTH.
+
+   THE 2px FLOOR ON A FILL is in `DiscoveryPanel.barWidth`, and it is
+   the honest choice rather than the tidy one: the rule this band
+   exists to find leaves 0.92 % standing, and a bar that rounded that
+   to nothing would say "it rejects everything", which is not what
+   was measured.
+
+   THESE ELEMENTS ARE NEW, so they are written in the re-skin's own
+   names rather than in the older ones `bridge.css` re-points. Three
+   consequences, each of which is the same decision made twice:
+
+   — the track is `--surface-4` under an inset `--line`, which is
+     what `.dx-bar` was re-drawn as above. Two bars on one card may
+     not disagree about what a track looks like.
+   — the fill is `--fg`, the drawing ink, and the range beneath it
+     `--line-strong`. Still no hue anywhere in the device.
+   — the ease is `--ease`, for the reason given at the head of the
+     re-skin: `--ease-settle` is defined by no stylesheet, so a
+     transition named after it is an invalid declaration that never
+     runs. These bars were written against it and so never moved.
+   ============================================================ */
+
+/* SPACING TIERS, so the figure and its bar read as one unit and the
+   two units read as two: 2px inside a figure's own label/number,
+   7px around its bar, --s-4/--s-6 between the figures themselves
+   (that gap was --sp-3/--sp-4 before the re-skin restated it). */
+.dx-fig-track {
+  position: relative;
+  display: block;
+  height: 7px;
+  margin: 7px 0;
+  border-radius: var(--r-full);
+  background: var(--surface-4);
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+
+.dx-fig-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-full);
+  background: var(--fg);
+  /* a width that moves when a report is re-run is a state change:
+     this element's box reflows nothing around it */
+  transition: width var(--d-med) var(--ease);
+}
+
+/* NARROWEST TO WIDEST, because a mean on its own hides a rule that
+   picks hard for one hull and not at all for the next. It sits UNDER
+   the mean fill, so what shows is the reach above the mean. */
+.dx-fig-range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--line-strong);
+  transition:
+    left var(--d-med) var(--ease),
+    width var(--d-med) var(--ease);
+}
+
+/* THE VERDICT ON THE SECOND AXIS, in three words, spanning both
+   figures because it is a reading of the pair and not of either one.
+   The stamp is `.cn-rl-pill`'s geometry — one page may not hold two
+   opinions about what a stamp looks like — which the re-skin took
+   from 20px and 11.5px to 22px and `--t-caption-size`, on
+   `--surface-3`. This follows it there. */
+.dx-standing {
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  margin: 0;
+  padding: 0 10px;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+/* the one that chose something is the one that gets the ink */
+.dx-standing.is-selects {
+  border-color: var(--fg);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dx-fig-fill,
+  .dx-fig-range {
+    transition: none;
+  }
 }

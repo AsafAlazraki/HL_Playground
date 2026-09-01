@@ -31,14 +31,42 @@ export type { CellRef, CellRange, NormalRange }
 /* geometry                                                   */
 /* ---------------------------------------------------------- */
 
-/** Uniform row height. Spec asks for a consistent 32–36px. */
-export const ROW_H = 34
+/** UNIFORM ROW HEIGHT, AND IT IS THE ONLY PLACE THE NUMBER LIVES.
+ *
+ *  THE FAULT, MEASURED in the running register on Highfield
+ *  Inflatables at 1280, 1440, 1920 and 2560: every row was drawn TWO
+ *  DIFFERENT HEIGHTS AT ONCE. `.tb-row` carries `height` inline from
+ *  this constant — 34px — while `table.css:3126` had raised the same
+ *  element to `min-height: 40px` when DESIGN_PRINCIPLES §3 settled on
+ *  a 40px row ("the grid was tighter than a spreadsheet while claiming
+ *  to be easier than one"). `min-height` beats `height`, so the box
+ *  painted 40px tall while `grouping.ts` went on stacking the tops
+ *  34px apart. Read off the live DOM at all four widths:
+ *
+ *      row 1  top 196  painted 40   <- next row starts at 230
+ *      row 2  top 230  painted 40   <- 6px of row 1 is underneath it
+ *      row 3  top 264  painted 40
+ *
+ *  Six pixels of every row sat under its successor, and because a row
+ *  is opaque (`--paper-high`, and the stripe and hover band on top of
+ *  that) what those six pixels covered was the CELL'S BOTTOM BORDER.
+ *  The register had no horizontal rules at all — 2 of every 2 sampled
+ *  boundaries buried — which is exactly the complaint that this sheet
+ *  is messy to scroll: 588 rows of figures with nothing ruling them
+ *  off, and every value sitting 3px low in the band that was left.
+ *
+ *  The number the DESIGN SYSTEM asked for is 40 and the number the
+ *  ARITHMETIC used was 34, so the arithmetic moves. `table.css` now
+ *  states `min-height: 0` on `.tb-row` beside the note that says why:
+ *  one authority, here, and the paint follows it. */
+export const ROW_H = 40
 /** A grouping line — structure, so a touch taller than a data row and
- *  drawn much quieter. */
-export const GROUP_H = 36
+ *  drawn much quieter. Kept at ROW_H + 4, the relationship it has
+ *  always had. */
+export const GROUP_H = 44
 /** The quiet + ROW at the foot of a group. Shorter than a data row so
  *  it reads as an invitation, not as an empty entry. */
-export const ADD_H = 28
+export const ADD_H = 32
 /** One step of nesting, per hierarchy level. */
 export const INDENT_W = 18
 /** Frozen header row height. */

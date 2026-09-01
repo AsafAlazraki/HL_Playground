@@ -3715,6 +3715,185 @@
   }
 }
 
+/*
+   ---- AND THEN THE WINDOW ----------------------------------
+   Both sides appended here and both are kept: above is the
+   re-drawn surface, below is the responsive pass over it. The
+   responsive block lands LAST on purpose — it restates a few of
+   the same selectors to swap a tuned-at-1440 literal for a
+   clamp() that holds that figure below 1440 and ramps it to
+   2560, and it can only win from second place.
+
+   TWO THINGS HAD TO BE REOPENED FOR THE SECOND BLOCK. The
+   conflict cut through an open rule inside an open @media, and
+   through an open comment: the `/*` and the `}` `}` that bracket
+   this region are OUTSIDE it, so they can only serve one side.
+   The first block is closed here and the second is re-opened,
+   which is what lets both survive.
+   ------------------------------------------------------------ */
+
+/* ============================================================
+   THE PAGE, ABOVE 1240px — TWO COLUMNS, NOT ONE STRETCHED ONE
+
+   WHAT WAS MEASURED. `.cn-sheet` was `max-width: 840px; margin: 0
+   auto`, so on a 2560px window this page was an 840px column with
+   860px of empty paper on either side of it, and every band, every
+   card and the rule builder queued up inside that column. There was
+   no width breakpoint anywhere in this file — none above 1180px
+   existed anywhere in the application — so the page looked identical
+   at 1280 and at 2560.
+
+   WHAT IT DOES NOW, AND WHY THAT AND NOT A WIDER COLUMN. The head is
+   a SUMMARY: a title, two ledes and four measured figures, none of
+   which changes as you read. The bands under it are the work. Above
+   1240px those two things stop queueing and sit side by side — the
+   summary takes a rail of its own and stays put while every band
+   scrolls past it, so the four figures the page argues from are on
+   screen at the moment you read the card that answers to them. That
+   is rule 4: a page with more room than it needs SPLITS. It does not
+   stretch a 62ch paragraph across 2000px, which is what raising
+   `max-width` on its own would have done.
+
+   THE NUMBERS ARE THE CONTENT'S, NOT A DEVICE'S.
+     1200px  the rail's own minimum (300) plus the widest thing in
+             the main column that must not wrap — the rule builder's
+             sentence beside its measurement — plus the sheet's
+             padding. Below it this whole block is off and the page is
+             exactly the 840px column it was.
+
+             IT IS THE CONTENT BOX AND THAT IS WHY IT IS NOT 1240.
+             A container query on `inline-size` measures the
+             container's CONTENT box, and `.cn-root` carries
+             `--sp-5` of padding on each side. At 1240 this block did
+             not fire on a 1280px window — measured, 1280 − 48 = 1232
+             — so a 1280px machine got none of it. 1200 puts the real
+             viewport threshold at 1248.
+     1780px  the cap. rail 380 + gap 44 + bands 1292 + padding 64.
+             Past it the page stops growing and centres, because a
+             fourth column of cards is not a better page.
+
+   IT IS A CONTAINER QUERY AND NOT A MEDIA QUERY, because this pane
+   takes no props and is mounted in three places — the rules stage, a
+   floating window, and a module page — at three different widths.
+   The page responds to the box it is in. Rule 5.
+   ============================================================ */
+
+.cn-root {
+  container-type: inline-size;
+  container-name: cnpage;
+}
+
+/* Below the split this is a plain block and changes nothing. */
+.cn-bands {
+  min-width: 0;
+}
+
+@container cnpage (min-width: 1200px) {
+  .cn-sheet {
+    display: grid;
+    grid-template-columns: clamp(300px, 22cqw, 380px) minmax(0, 1fr);
+    column-gap: var(--section-gap);
+    align-items: start;
+    max-width: min(var(--measure), 1780px);
+  }
+
+  /* THE SUMMARY RAIL. The hairline that separated head from bands
+     turns ninety degrees with them: it was a rule under the head and
+     it is a rule beside it, so the page is still two parts and the
+     reader is not asked to learn a new join. */
+  .cn-head {
+    position: sticky;
+    /* the sheet's own top padding, so it parks where it started */
+    top: var(--sp-5);
+    padding-bottom: 0;
+    padding-right: var(--section-gap);
+    border-bottom: none;
+    border-right: 1px solid var(--hairline);
+    /* A RAIL THAT DOES NOT FIT SCROLLS ITSELF rather than hiding its
+       last figure under the fold. `--dock-clear` is the strip no page
+       may reach into; the rest is the stage bar above this pane and
+       the sheet's own padding. It only engages on a short window — at
+       900px tall the head measures about 530 and this is about 640. */
+    max-height: calc(100dvh - var(--dock-clear) - 120px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* FOUR FIGURES IN A COLUMN, not two by two. In a 317px rail the
+     2 x 2 grid put "stated by a formula, a header or a divider · seen
+     only in the values" into a 140px box, which is six lines of five
+     words. One per row, each with its own hairline, reads as a
+     ledger — which is what it is. */
+  .cn-tally {
+    grid-template-columns: 1fr;
+    gap: var(--sp-3);
+    margin-top: var(--sp-4);
+  }
+
+  /* the ledes are already capped at 62ch; in a 380px rail the cap
+     never binds, so they simply take the rail's measure */
+  .cn-lede,
+  .cn-lede--other {
+    max-width: none;
+  }
+
+  /* THE RULE BUILDER IS A CARD AND A CARD TAKES A MAX-WIDTH.
+     Measured at 1920: the bands column is 1244px, so the split gave
+     the sentence an 810px column — 450px more than a sentence with a
+     dropdown in it has any use for, and rule 4 says do not make a
+     card 900px wide because there is 900px available. 1100 leaves
+     the sentence 668 and the measurement 360, which is the
+     proportion the two halves actually want. */
+  .cn-new {
+    max-width: 1100px;
+  }
+
+  /* THE BANDS. Capped so the cards inside keep a card's shape: 1292px
+     is two 460px card columns plus their gutter, and there is no
+     honest third. */
+  .cn-bands {
+    max-width: 1292px;
+    /* the cards inside respond to THIS box, not to the window */
+    container-type: inline-size;
+    container-name: cnbands;
+  }
+
+  /* the first band no longer needs the rule that separated it from
+     the head, because the head is beside it now */
+  .cn-bands > .cn-ledger {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+/* TWO CARD COLUMNS, AND THE WIDTH THAT DECIDES IT IS THE CARD'S.
+   `.cn-rl` and `.dx-card` both set their prose at 68ch, which is
+   about 460px at this size; below 980 there is room for one such card
+   and above it there is room for two. Multi-column and not grid
+   because these cards are wildly uneven — a rule with four
+   counter-examples is three times the height of one without — and a
+   grid row is as tall as its tallest cell. */
+@container cnbands (min-width: 980px) {
+  .cn-grp-list,
+  .dx-list,
+  .dx-kept,
+  .dx-no-list,
+  .cn-list {
+    display: block;
+    column-width: 460px;
+    column-gap: var(--sp-4);
+  }
+  .cn-grp-list > *,
+  .dx-list > *,
+  .dx-kept > *,
+  .dx-no-list > *,
+  .cn-list > * {
+    break-inside: avoid;
+    margin-bottom: var(--sp-4);
+  }
+}
+
 /* ============================================================
    THE CITATION, DRAWN   (cn-src-*)
 
@@ -4348,4 +4527,222 @@
 .cn-rg-row.s-warned,
 .cn-rg-row.s-held {
   padding-left: var(--s-4);
+}
+
+/*
+   ---- AND THEN THE WINDOW ----------------------------------
+   Both sides appended here and both are kept: above is the
+   re-drawn surface, below is the responsive pass over it. The
+   responsive block lands LAST on purpose — it restates a few of
+   the same selectors to swap a tuned-at-1440 literal for a
+   clamp() that holds that figure below 1440 and ramps it to
+   2560, and it can only win from second place.
+
+   TWO THINGS HAD TO BE REOPENED FOR THE SECOND BLOCK. The
+   conflict cut through an open rule inside an open @media, and
+   through an open comment: the `/*` and the `}` `}` that bracket
+   this region are OUTSIDE it, so they can only serve one side.
+   The first block is closed here and the second is re-opened,
+   which is what lets both survive.
+   ------------------------------------------------------------ */
+
+/* ============================================================
+   ASSERTED vs OBSERVED — one device, two states
+
+   THE MOST VALUABLE DISTINCTION ON THIS PAGE WAS ONLY EVER IN PROSE,
+   and the two paragraphs that carried it were four hundred pixels
+   apart. A rule this file ASSERTS is stated by a cell, a formula, a
+   header or a divider, and it may narrow a list. A rule the app
+   OBSERVED was measured in the values, nobody stated it, and it may
+   warn and may NEVER prune stock. Getting those the wrong way round
+   is the one mistake this surface must not let a person make.
+
+   SO IT IS A RAIL, AND THE RAIL'S LINE IS THE STATE. Solid = the file
+   says so. Dashed = we noticed. No colour is spent, which matters
+   twice: the accent budget is four to a screen and already committed,
+   and a distinction carried by hue alone is not carried at all. The
+   words say the same thing for anyone who reads rather than scans.
+   ============================================================ */
+
+.cn-evidence {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  /* SPACING TIERS: 4px inside the pair, 12px between stamp and
+     sentence, --sp-4 under the whole block. */
+  gap: var(--sp-1) var(--sp-3);
+  max-width: 80ch;
+  margin: 0 0 var(--sp-4);
+  padding-left: var(--sp-3);
+  border-left: 2px solid var(--ink);
+}
+
+/* Both states are written out. The solid rail is the default and
+   could have been left implicit, but a reader comparing the two has
+   to be able to see them beside each other — and the guard only
+   knows a class that some rule declares. */
+.cn-evidence.is-asserted {
+  border-left-style: solid;
+  border-left-color: var(--ink);
+}
+
+.cn-evidence.is-observed {
+  border-left-style: dashed;
+  border-left-color: var(--ink-soft);
+}
+
+/* the one uppercase style, on the one thing here that is a label */
+.cn-evidence-k {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.cn-evidence-say {
+  flex: 1 1 32ch;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+.cn-evidence-say b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* the discovered band's stamp sits under its own lede, so it takes
+   the air the ledger's gets from the band rule above it */
+.dx > .cn-evidence {
+  margin-top: var(--sp-3);
+}
+
+/* ============================================================
+   THE RULE BUILDER — THE WORDS AND WHAT THEY WOULD DO, SIDE BY SIDE
+
+   THE COMPLAINT WAS EXACT: creating a rule is not good enough. What
+   was wrong with it is that the one thing this builder has and no
+   other rule builder has — a live measurement of what the sentence
+   you are half way through writing would do to eleven thousand real
+   rows — was drawn BELOW the sentence, below the citations and below
+   the because-line. On a wide window that put it off the bottom of
+   the card: you chose your words, then scrolled to find out what they
+   cost, then scrolled back.
+
+   Above 780px of card it takes a rail beside the sentence and stays
+   there. Every dropdown you touch moves a bar you are already looking
+   at. Nothing about the measurement changed — it is the same
+   `ConsequenceMeter` reading the same preview — only where it is.
+
+   THE FOOT IS OUTSIDE THE SPLIT. Narrow, the card reads in exactly
+   the order it always did, and the button that commits the rule is
+   the last thing on it at every width.
+   ============================================================ */
+
+.cn-new {
+  container-type: inline-size;
+  container-name: cnnew;
+}
+
+.cn-new-split,
+.cn-new-work,
+.cn-new-effect {
+  min-width: 0;
+}
+
+@container cnnew (min-width: 780px) {
+  .cn-new-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    /* OUTER PADDING BEATS INNER GAP or the two halves do not read as
+       one card: --sp-5 around the card, --sp-5 between the columns,
+       --sp-3 between rows inside each half. */
+    column-gap: var(--sp-5);
+    align-items: start;
+  }
+
+  .cn-new-effect {
+    position: sticky;
+    top: var(--sp-4);
+    /* NESTED RADIUS. The card outside is 10px with --sp-5 of padding
+       between it and this panel, so the arithmetic gives 0 and the
+       control step (6px) is as close to it as this system goes. What
+       the rule forbids is copying the parent's 10px onto a child, and
+       a second --radius here is exactly that. */
+    padding: var(--sp-4);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    background: var(--paper-sunken);
+  }
+
+  /* the meter brought its own rule and top margin for the stacked
+     layout; in a panel of its own it needs neither */
+  .cn-new-effect .cn-conseq {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  /* CONTRAST: everything in this panel now sits on --paper-sunken,
+     where --ink-faint measures 4.21:1 and FAILS. The two elements
+     that took it step up to --ink-soft, which is 6.8:1 there. The
+     same mistake, in this same file, is written up at .cn-add. */
+  .cn-new-effect .cn-conseq-label,
+  .cn-new-effect .cn-conseq-share {
+    color: var(--ink-soft);
+  }
+
+  /* the stub draws its own sunken card; inside this panel that is a
+     tint on a tint */
+  .cn-new-effect .cn-conseq-stub {
+    background: var(--paper-high);
+  }
+
+  /* the sentence and its citations get the room; a reading takes the
+     measure a reading needs */
+  .cn-new-effect .cn-conseq-say,
+  .cn-new-effect .cn-conseq-note,
+  .cn-new-effect .cn-conseq-stub {
+    max-width: none;
+  }
+}
+
+/* ============================================================
+   A DASHBOARD IS NOT A MARKETING PAGE
+
+   `.cn-title` took `--display-l-size`, which the fluid layer ramps to
+   38px on a wide screen. This is a register of business rules over a
+   real price file: established practice caps a page title on a data
+   screen around 28px, and the room this gives back goes to the four
+   figures under it. The whole step moves together — size, weight,
+   leading and tracking — because reaching in for one is rule 6's
+   exact failure.
+   ============================================================ */
+
+.cn-title {
+  font-size: var(--display-m-size);
+  line-height: var(--display-m-lead);
+  letter-spacing: var(--display-m-track);
+  /* free, and it fixes the ragged second line in a 317px rail */
+  text-wrap: balance;
+}
+
+.cn-band-title,
+.cn-new-title,
+.cn-void-title {
+  text-wrap: balance;
+}
+
+.cn-lede,
+.cn-band-lede,
+.cn-rl-says,
+.cn-rl-because,
+.cn-rl-caveat,
+.cn-conseq-say,
+.cn-conseq-note {
+  text-wrap: pretty;
 }

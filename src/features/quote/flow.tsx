@@ -173,12 +173,31 @@ export interface RunningTotalProps {
    *  Absent, it is a plate rather than a control. */
   open?: boolean
   onToggle?: () => void
+  /** What stands in for the figure when there is none. Defaults to
+   *  the row-has-no-price sentence; a caller whose null means
+   *  something else says so. */
+  nil?: string
 }
 
 export function RunningTotal({
   label,
   amount,
   sub = '',
+  /* WHAT TO SAY WHEN THERE IS NO FIGURE, because `amount === null`
+     means two different things and this bar was saying one of them
+     for both.
+
+     A ROW THAT CARRIES NO PRICE is the case this was written for:
+     "no price on this one" is exactly right, the row exists and the
+     sheet prices nothing for it.
+
+     NOTHING CHOSEN YET is the other, and there the sentence reads
+     "STARTS AT no price on this one — nothing highlighted", which
+     tells a person that a thing they have not picked has no price.
+     Measured on the subject chooser, which is the FIRST screen of
+     the quote flow and is on screen before anybody has touched a
+     row, so it is the state most people see first. */
+  nil = 'no price on this one',
   open,
   onToggle,
 }: RunningTotalProps): ReactElement {
@@ -186,7 +205,7 @@ export function RunningTotal({
     <>
       <span className="qb-price-lab mono-label">{label}</span>
       {amount === null ? (
-        <span className="qb-price-nil">no price on this one</span>
+        <span className="qb-price-nil">{nil}</span>
       ) : (
         <span className="qb-price-now">{money(amount)}</span>
       )}

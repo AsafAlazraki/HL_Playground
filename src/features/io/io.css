@@ -1107,3 +1107,264 @@
     transform: translate(-50%, -50%);
   }
 }
+
+/* ============================================================
+   THE DOORS, ON A REAL MONITOR — and the two grids that could
+   not reflow.
+
+   TWO UNCONDITIONAL COLUMN COUNTS were written into this file:
+   `.io-cards` at `1fr 1fr` and `.io-plate-grid` at
+   `repeat(3, 1fr)`. Neither carries a minmax, so neither has a
+   width at which it gives up and wraps — below the width its
+   columns need, a fixed track count does not reflow, it
+   overflows. The panel is 348px today so nothing had broken
+   yet; the panel is no longer 348px at every width, which is
+   what turns a latent fault into a live one.
+
+   THE PANEL ITSELF NOW HAS A WIDTH OPINION. `width: 348px` was
+   the same number on a 1024px laptop and a 2560px monitor, and
+   on the narrow end it is wider than a 360px window minus its
+   gutters. It is a popover, not a page, so it grows a little
+   and then stops (rule 4) — the two export cards are what the
+   extra 92px is spent on.
+
+   NESTED RADIUS, WHICH THIS PANEL GOT WRONG THREE TIMES. The
+   popover is a 10px card. The export cards, the drop zone and
+   the import plate all sit a full --sp-4 inside it and all three
+   wore the parent's 10px — a child inset 16px from a 10px corner
+   is not concentric with it at any radius above about zero, and
+   the control step is 6px. This is the toolbar-inside-a-card
+   mistake, made by three siblings at once.
+   ============================================================ */
+
+.io-pop {
+  /* grows a little on a large screen, and stops; never wider than
+     the window it has to sit inside */
+  width: min(clamp(348px, 24vw, 440px), calc(100vw - var(--gutter) * 2));
+  /* dvh, so a mobile browser's collapsing toolbar cannot leave the
+     footer under the chrome */
+  max-height: min(calc(100vh - 96px), calc(100dvh - 96px));
+}
+
+/* THE FIRST OF THE TWO. `1fr 1fr` is a promise that two cards always
+   fit; `auto-fit` with a floor is the same two cards at every width
+   the panel actually has, and one card when it does not. 144px is
+   what "Structure only" needs before its title wraps mid-word. */
+.io-cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(144px, 100%), 1fr));
+}
+
+.io-card {
+  border-radius: var(--radius-sm);
+  /* outer padding above inner gap, or the card is a list of three
+     unrelated lines rather than one thing */
+  padding: var(--sp-3);
+  gap: var(--sp-1);
+}
+/* HOVER PICKS TWO SIGNALS. It was border colour AND background AND a
+   1px lift — three changes in one transition, of which two were
+   colour. The lift plus the wash is the pair; the border keeps its
+   job on focus.
+   AND `transform: none` IS NOT A PRESS. DESIGN_PRINCIPLES names it by
+   name as feedback being cancelled: the card rose on hover and then
+   did nothing at all when it was pressed. It now returns to the
+   surface and deepens its wash, which is the hover direction
+   inverted rather than switched off. */
+.io-card:hover {
+  border-color: var(--hairline);
+  background: var(--blue-wash);
+  transform: translateY(-1px);
+}
+.io-card:active {
+  transform: translateY(0);
+  background: var(--blue-wash-strong);
+}
+
+.io-drop {
+  border-radius: var(--radius-sm);
+}
+
+/* A SENTENCE IS NOT A LABEL. Both lines of the drop zone were
+   corrected to sentence case in the TSX and left wearing the 11px
+   label's face and +0.14em of its tracking, which is rule 7 backwards
+   on a line that is now two ordinary sentences. They take the UI face
+   at the panel's own control step; the hierarchy between them stays
+   where it was, in the weight. */
+.io-drop-main {
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 560;
+  letter-spacing: 0;
+}
+.io-drop-sub {
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* the two sentences under the export cards, same correction */
+.io-card-sub,
+.io-blank-note,
+.io-kept-note {
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  font-weight: 400;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.io-plate {
+  border-radius: var(--radius-sm);
+}
+
+/* THE SECOND OF THE TWO. Same fault as `.io-cards` and the same fix,
+   plus the dividers: `border-right` with a `:last-child` exception is
+   correct for exactly one arrangement, and the moment a row wraps the
+   exception is on the wrong cell. A 1px gap over the hairline is
+   correct in every arrangement there is. */
+.io-plate-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(92px, 100%), 1fr));
+  gap: 1px;
+  background: var(--hairline);
+}
+.io-stat {
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border-right: 0;
+  background: var(--paper-high);
+}
+.io-stat-num {
+  font-size: var(--data-l-size);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   THE REFUSAL, WHICH IS THE ONE THING ON THIS PANEL A PERSON IS
+   FORCED TO READ.
+
+   It was 11px mono at +0.1em — the label's tracking — drawn
+   entirely in `--red` over a red tint. Three separate reasons a
+   sentence was the hardest thing in the panel to read, on the
+   one occasion something has gone wrong.
+
+   THE FLAG IS RED; THE REASON IS INK. `--ink` is the ramp's top
+   and clears the floor over this tint with room to spare, where
+   `--red` on `--red-wash` is the pairing the panel's own header
+   note already records as marginal. The red is spent on the rail
+   and the stamp, where it is a signal rather than a body colour.
+   ============================================================ */
+.io-error {
+  padding: var(--sp-3);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.io-error strong {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: var(--micro-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+/* ============================================================
+   THE RE-UPLOAD PREFLIGHT — five fixed columns, on a sheet whose
+   width nobody here controls.
+
+   `minmax(0, 1.7fr) … 12px …` never overflows, but at a narrow
+   sheet it squeezes the row name and the two prices into three
+   ribbons and every line wraps four deep. The row it belongs to
+   is a COMPONENT on somebody else's surface, so it answers its
+   own container and not the window (rule 5): above 520px of list
+   it keeps the five-across reading, and below it the name and the
+   column take a line of their own and the two figures sit side by
+   side under them, which is the comparison the line exists for.
+
+   520px is where the longest real value stops fitting: the
+   register's own `Highfield - RU230KAM (PVC) WH` against
+   `LANDED HULL FREIGHT` and two six-figure prices.
+
+   AND THE LIST GETS TALLER ON A TALLER SCREEN. 220px was about
+   six of these lines whatever the window did; a 1080px screen
+   shows nine and stops counting later.
+   ============================================================ */
+.io-diff {
+  container-type: inline-size;
+  max-height: clamp(160px, 30vh, 320px);
+}
+
+@container (max-width: 520px) {
+  .io-diff-line {
+    grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr);
+    row-gap: 2px;
+  }
+  .io-diff-where,
+  .io-diff-col {
+    grid-column: 1 / -1;
+  }
+  .io-diff-from {
+    grid-column: 1;
+  }
+  .io-diff-arrow {
+    grid-column: 2;
+  }
+  .io-diff-to {
+    grid-column: 3;
+  }
+}
+
+/* ============================================================
+   THE FRESHNESS NOTICE, ON THE STRIP NO PAGE MAY REACH INTO.
+
+   It was pinned at `bottom: 96px` against a dock that measured a
+   hard 78px. The dock is now `--dock-clear` wide at every width —
+   derived from the dock's own item size rather than typed twice —
+   and 96px is only correct at one of them. It also took its
+   window inset from `--sp-6`, which is not the gutter every other
+   full-bleed surface keeps.
+   ============================================================ */
+.io-fresh {
+  bottom: calc(var(--dock-clear) + var(--sp-3));
+  right: var(--gutter);
+  width: min(clamp(430px, 30vw, 520px), calc(100vw - var(--gutter) * 2));
+}
+
+/* ============================================================
+   THREE PRESSABLE THINGS WITH NO FOCUS AND NO PRESS.
+
+   Rule 8 has no exceptions and this panel had three: the two
+   export cards, the drop zone and CLEAR SHEET all carried a
+   hover and nothing else. A keyboard reaching the most
+   destructive control in the app and getting no ring back is the
+   one that matters.
+
+   Focus is NOT animated and is not in any transition list above.
+   ============================================================ */
+.io-card:focus-visible,
+.io-drop:focus-visible {
+  outline: none;
+  border-style: solid;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.io-drop:active {
+  transform: scale(0.994);
+}
+.io-clear:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.io-clear:not(:disabled):active {
+  transform: scale(0.97);
+}

@@ -11,7 +11,11 @@
      tier height       36px   — was 40. The navigation tier is 60, so
                                subordinate by a wider margin than
                                before, which is what 40-against-60
-                               was for in the first place
+                               was for in the first place. 36 is the
+                               figure at 1440: the tier takes 4 off
+                               `--ab-height` and rises with it above
+                               that width, so the margin is a ratio
+                               and not two numbers to keep in sync
      control           28px, radius 7px, padding 0 10px
                                (DESIGN_CONTRACT §2, "toolbar control")
      tier radius        0     — was 18. The tier has no shape of its
@@ -83,7 +87,20 @@
   display: flex;
   align-items: center;
   gap: 0;
-  height: 36px;
+  /* 36 AT THE TUNED WIDTH, AND IT GROWS WITH THE TIER UNDER IT.
+     The 4px this pass took off the bar is still taken off it — the
+     subtraction is what says "subordinate", not the literal 36 —
+     but the figure it is taken from now answers the window.
+     `--ab-height` (styles/response.css) is the navigation tier's own
+     ramp held at the contract's ratio, 60 / 1.5 = 40 at 1440, so
+     this resolves to exactly 36 at the width the design was tuned
+     at and keeps the two tiers in proportion on a 2560 window
+     instead of standing a 28px control in a slab. The control is
+     `--ab-control`, 0.7 of the same figure, so its 4px of air holds
+     at every width rather than only at the baseline. */
+  height: calc(var(--ab-height, 40px) - 4px);
+  /* against the rig, not against the window: see the note at the
+     foot of this file. The shell owns the width cap now. */
   max-width: 100%;
   padding: 0 6px;
 }
@@ -123,10 +140,18 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 28px;
+  /* 0.7 of the bar, which is the contract's 28-in-40 */
+  height: var(--ab-control);
   padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  /* CONCENTRIC, NOT GUESSED. A child radius inside a rounded parent
+     is the parent's radius minus the padding between them, or the
+     two curves do not share a centre and the control reads as a
+     sticker sitting on the bar rather than a part of it. The bar is
+     18px with a 28-in-40 control, so the gap is 6 and the control
+     is 12 — it was 7, which is neither the parent's radius nor
+     concentric with it. */
+  border-radius: calc(18px - (var(--ab-height) - var(--ab-control)) / 2);
   background: transparent;
   color: var(--fg-secondary);
   font-family: var(--font-ui);
@@ -653,6 +678,10 @@
      toolbar control, untouched) sits in 4px of air rather than 6.
      It is subordinate to the 60px navigation tier by a wider margin
      than before, which is what the original 40-against-60 was for.
+     Both figures are the ones at 1440 and both now ramp: the tier
+     is `--ab-height` less 4 and the control is `--ab-control`, so
+     the wider margin is held as a ratio above that width instead of
+     thinning to nothing on a large screen. See `.ab` above.
 
      THE CONTROLS CENTRE. The rig is as wide as its widest tier, so
      on a page with two verbs the tier is as wide as the navigation
@@ -703,9 +732,31 @@
    disagree about whether there is one. Specificity (0,3,0) beats
    shell.css's (0,1,0) outright, so it does not depend on import
    order. Still no transition: this is a layout property.
+
+   DERIVED NOW, NOT TYPED — see `--acts-clear` in
+   `styles/response.css`. Three of the four numbers in the old sum
+   started moving when the dock began answering the window, and a
+   hard figure would have put the bar's bottom edge back over the
+   register's horizontal scrollbar on exactly the large screens this
+   is demonstrated on: "it must not cover anything interactive" is a
+   requirement, and it is a requirement at every width.
+
+   `--acts-clear` is the TWO-BAR reservation — dock-clear, the 10px
+   gap, the bar — which is 132 at the tuned baseline. The 15px this
+   pass reclaimed by joining the two tiers into one object is the
+   difference between that and the sum above, so it is subtracted
+   here: the 10px gap became a 1px hairline and two rig borders (7
+   back), the tier lost 4, and the joined object takes the dock's
+   own 4px of bottom-margin overlap once rather than refusing it.
+
+   THE 15 IS A CONSTANT, NOT A FUDGE. Every term that moves —
+   `--dock-item`, `--dock-pad`, `--ab-height` — appears once on each
+   side of that subtraction and cancels, so this tracks the rig to
+   the pixel as the instrument grows: 117 at 1440, 142.5 at 2560,
+   which is 22 + the rig measured at that width less the 4.
    ============================================================ */
 .shell-root.has-acts .shell-stage {
-  inset: 0 0 117px 0;
+  inset: 0 0 calc(var(--acts-clear, 132px) - 15px) 0;
 }
 
 /* ============================================================
@@ -890,3 +941,11 @@
   color: var(--fg-secondary);
   box-shadow: none;
 }
+
+/* THE STAGE RESERVATION IS NOT DECLARED DOWN HERE. The responsive
+   pass rewrote `.shell-root.has-acts .shell-stage` at the foot of
+   the file it inherited; this file states it once, above, where the
+   arithmetic that argues for the number is written — and it is
+   `--acts-clear` less the 15px the joined instrument gives back.
+   Two declarations of one selector is two people's opinion of one
+   element, which is the thing this pass has been undoing. */

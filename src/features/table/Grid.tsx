@@ -1226,28 +1226,52 @@ export function Grid(props: GridProps): JSX.Element {
           setScrollLeft((prev) => (Math.abs(prev - l) < 1 ? prev : l))
         }}
       >
-        {/* WHETHER THE SHEET HAS MOVED, SAID ON THE SHEET.
+        {/* WHETHER THE SHEET HAS MOVED, SAID ON THE SHEET — THE DEPTH
+            LADDER, AND WHY IT IS ATTRIBUTES AND NOT MORE STICKY
+            ELEMENTS.
 
             A frozen header only reads as frozen once something has
             gone under it. At rest it is a row at the top of a page and
-            a shadow under it is ornament; the moment the first row
-            slides beneath, the shadow is the only thing telling a
-            reader that the names above are pinned rather than scrolled
-            off. The same argument, sideways, for the row-number gutter
-            and the frozen name column — forty columns of figures pass
+            a shadow under it is ornament — there is nothing beneath it
+            to lift off; the moment the first row slides under, there
+            are 588, and the shadow is the only thing telling a reader
+            that the names above are pinned rather than scrolled off.
+            The same argument, sideways, for the row-number gutter and
+            the frozen name column — forty columns of figures pass
             under them and nothing said they were passing UNDER.
 
-            Both are read off the scroll offsets this component already
-            tracks for windowing, so neither costs a listener, a
-            measurement or a render. */}
+            So the lift is a fact about the SCROLL. Both flags are read
+            off the scroll offsets this component already tracks for
+            windowing, so neither costs a listener, a measurement or a
+            render: one class recalculation on the frame the sheet
+            leaves the top or the left edge, and nothing on any frame
+            after it.
+
+            They are set HERE, on the two elements that already exist
+            and are already sticky — the head stack (one per sheet)
+            and the sheet itself (one per sheet) — because a register
+            carries two `position: sticky` per RENDERED ROW already
+            (the row-number gutter and the frozen name column) and
+            that count, times the rows on screen, is what took a
+            canvas from 54 fps to 12. A third is not affordable and is
+            not needed: one flag on one ancestor styles every pin.
+
+            Two names for the sideways state, and both are spent: the
+            sheet's `data-shifted` carries the edge as a shadow
+            (`--tb-edge`, which each pinned cell restates alongside its
+            own), and `data-xscroll` steps the rule's own ink on the
+            same pins — a border colour rather than a second shadow per
+            rendered row. One fact, read twice, off one attribute
+            each. */}
         <div
           className="tb-sheet"
           style={{ width: sheetW }}
           data-lifted={scrollTop > 0 ? '' : undefined}
           data-shifted={scrollLeft > 0 ? '' : undefined}
+          {...(scrollLeft > 0 ? { 'data-xscroll': '' } : {})}
         >
           {/* -- frozen header: bands, then headings -------------- */}
-          <div className="tb-headstack">
+          <div className="tb-headstack" {...(scrollTop > 0 ? { 'data-lift': '' } : {})}>
             {banded && (
               <div
                 className="tb-bands"
@@ -1393,7 +1417,9 @@ export function Grid(props: GridProps): JSX.Element {
                          in this register paints hard against the right
                          rule of its column; a heading left-aligned over
                          it left the two ends of the column disagreeing
-                         about where the column was. */
+                         about where the column was. Only a declared
+                         `number` column turns round to face its own
+                         figures — see the note in table.css §3. */
                       (f.type === 'number' ? ' tb-th-num' : '') +
                       (filed.has(f.id) ? ' tb-th-filed' : '') +
                       (system ? ' tb-th-sys' : '') +

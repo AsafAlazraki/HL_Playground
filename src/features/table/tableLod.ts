@@ -3,17 +3,17 @@
 
    THE MEASUREMENT, not a taste.
 
-   A data row is `ROW_H` = 34 drawing units tall and its type is set
+   A data row is `ROW_H` = 40 drawing units tall and its type is set
    at 14px. On the blueprint both are multiplied by the camera's
    zoom, so what the reader actually sees is:
 
        zoom   row on screen   type on screen
-       1.00       34.0 px          14.0 px
-       0.80       27.2 px          11.2 px
-       0.70       23.8 px           9.8 px
-       0.60       20.4 px           8.4 px     <- the floor
-       0.53       18.0 px           7.4 px     (the reported zoom)
-       0.50       17.0 px           7.0 px
+       1.00       40.0 px          14.0 px
+       0.80       32.0 px          11.2 px
+       0.70       28.0 px           9.8 px
+       0.60       24.0 px           8.4 px     <- the floor
+       0.53       21.2 px           7.4 px     (the reported zoom)
+       0.50       20.0 px           7.0 px
 
    Below 8.4px neither Archivo nor IBM Plex Mono resolves — the cells
    are grey texture, and six complete registers' worth of that texture
@@ -46,8 +46,10 @@ export const PLATE_ZOOM_IN = 0.6
 export const PLATE_ZOOM_OUT = 0.66
 
 /** Kept next to the thresholds so the tests and the notes above can
- *  be checked against the same numbers the grid is built from. */
-export const LOD_ROW_H = 34
+ *  be checked against the same numbers the grid is built from. Moved
+ *  with `ROW_H` when the 34/40 disagreement between the maths and the
+ *  paint was measured and closed — see `helpers.ts`. */
+export const LOD_ROW_H = 40
 export const LOD_TYPE_PX = 14
 
 type Band = 'plate' | 'grid' | 'hold'

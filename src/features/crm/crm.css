@@ -54,6 +54,29 @@
       `.cx-one-head` were consistent with each other and with nothing
       else in the application; both screens take `PageHead`.
 
+   8. AND THEN THE SCREEN GOT A WIDTH. Above 1180px this file had no
+      opinion at all: the list was a block that grew with the well and
+      kept growing, so at 2560 a name sat at one end of a 2250px row
+      and the count of what they have been quoted at the other.
+      `response.css` publishes the names for that — `--measure`,
+      `--gutter`, `--section-gap`, and every type step as a clamp from
+      the tuned 1440 figure — and a co-located stylesheet like this
+      one SPENDS them. Two blocks here spend `--measure` under a
+      1900px ceiling, the record's two panes ramp with their container
+      rather than sitting at a flat 340, and the row's own folds ask
+      the WELL rather than the window. Nothing below 1440 moves: the
+      fluid layer only ever adds headroom upward, so every figure
+      measured above is still the figure at the width it was measured.
+
+   IT IS BUILT FROM THE SAME PARTS AS THE MODULE INDEX, deliberately.
+   A dealer moving between Modules and Customers must not feel they
+   have crossed into a second application, so the well, the header,
+   the find box, the empty card and the row measurements are the ones
+   the rest of the application already settled on — the shared
+   `--measure`, the `--s` space scale, the `--t-*` type steps, and
+   `--page-gutter` for the one inset. Every value below is a token;
+   there is not a literal colour in this file.
+
    THE ONE ACCENT, roughly four times: the primary button, the
    focused control, the open row's rail, and the money column. That
    is the whole budget and it is not spent anywhere else. Severity,
@@ -73,7 +96,30 @@
 /* THE WELL NO LONGER SCROLLS; THE PAGE INSIDE IT DOES. It has to:
    the aurora is `position:absolute; inset:0`, and inside a scroller
    that resolves against the scrolled CONTENT rather than the frame,
-   so a 3,000px page would have stretched it. One frame, one page. */
+   so a 3,000px page would have stretched it. One frame, one page.
+
+   AND THE WELL IS THE QUERY CONTAINER, NOT THE VIEWPORT.
+
+   DESIGN rule 5: components respond to their CONTAINER, pages to the
+   viewport — and this register is not a page. It is mounted inside
+   `.shell-module-well`, which is itself inside a stage that a left
+   panel and an inspector rail can both take width from, so the window
+   being 1920px wide is not the same fact as this list HAVING 1920px.
+   `cx` is that width, and both of the row's folds ask it.
+
+   THREE NAMED CONTAINERS AND NO ANONYMOUS ONE. `cx` is the well; the
+   record page nests `crm-page` and `crm-pane` inside it. An anonymous
+   query binds to the nearest of the three, which is exactly the bug
+   that makes a row's fold silently query the pane it sits in, so
+   every query in this file names the container it means.
+
+   THE GUTTER IS NOT ON THIS BOX. The responsive pass padded the well
+   with `--gutter` (16→56px); this structure gives the well no
+   horizontal inset at all and lets every block under the header take
+   `--page-gutter` once instead — which is what puts the rows' left
+   edge on the page title's, and the arithmetic for that is on
+   `.cx-scroll` below. One gutter, one name, and it is the
+   application's rather than this feature's. */
 .cx-root {
   position: relative;
   isolation: isolate;
@@ -82,6 +128,9 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--paper);
+  /* named, because two more containers nest inside this one on a
+     customer's own page — see `.cx-rec` */
+  container: cx / inline-size;
 }
 
 .cx-sky {
@@ -199,6 +248,18 @@
    for: the Remove control and the sentence that says what removing
    costs, handed to it as `acts`.
    ============================================================ */
+
+/* AND WHAT THAT HEADER ASKED FOR IS STILL ASKED. The responsive pass
+   had trimmed `.cx-head-name` from the `display-m` step to
+   `display-s` — 26→30px down to 22→25 — on the ground that a
+   register is not a marketing page and every pixel its title takes is
+   taken from the only thing anybody opened the screen to read. The
+   header it argued about is gone; `PageHead` draws the title now, and
+   `.ph-name` is `clamp(26px, 2.4vw, 34px)`. The argument did not go
+   with the markup: if a page title on a data screen is ever measured
+   too large, it is measured in `page.css`, once, for every page —
+   not re-fought here, which is how the two headers drifted apart in
+   the first place. */
 
 /* ============================================================
    THE ONE HEADLINE LEFT ON THIS FEATURE TAKES THE DISPLAY FACE.
@@ -630,11 +691,27 @@
    press rather than scaling: neighbours must not appear to move.
    ============================================================ */
 
-/* THE ROWS BEGIN WHERE THE TITLE BEGINS. They were a 1180px block
-   centred in the scroller, which put their left edge 46px to the
-   right of the page title naming them — see the note on `.cx-scroll`
-   for the three-gutter arithmetic that produced it. */
+/* THE ROWS BEGIN WHERE THE TITLE BEGINS, AND THEY STOP. They were a
+   1180px block centred in the scroller, which put their left edge
+   46px to the right of the page title naming them — see the note on
+   `.cx-scroll` for the three-gutter arithmetic that produced it.
+
+   THE CEILING IS THE RESPONSIVE PASS'S, AND IT IS DELIBERATE.
+   `--measure` opens to 2600px, and a register row carries five
+   things: a name, a contact, a date, what they are worth and a count.
+   Rule 4 says a narrow element in a wide window gets a COLUMN beside
+   it, not a stretch — and past ~1900px the row stops being a row you
+   can scan and becomes a name at one end of the desk and a number at
+   the other. Measured at 2560 before the cap, that row was 2250px
+   wide.
+
+   IT IS LEFT-ALIGNED AT THE CAP, NOT CENTRED, and that is the one
+   place this file departs from `--measure`'s usual `margin: 0 auto`.
+   The title above it does not move when the list stops growing, so
+   the list must not move either: `--page-gutter` on the left, and
+   whatever is left over stays margin. */
 .cx-rows {
+  max-width: min(var(--measure), 1900px);
   margin: 0 var(--page-gutter);
   padding: 0;
   list-style: none;
@@ -735,17 +812,6 @@
   color: var(--ink-soft);
 }
 
-@media (max-width: 720px) {
-  /* nothing truncates: the two figures drop under the name rather
-     than being cut off the end of the row */
-  .cx-row-open {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .cx-row-contact {
-    grid-column: 1 / -1;
-  }
-}
-
 /* ============================================================
    ONE CUSTOMER — their details on one side, the history on the
    other.
@@ -781,25 +847,52 @@
    ============================================================ */
 
 .cx-rec {
-  /* NAMED, because there are two nested containers here and an
-     anonymous query binds to the nearest one — which is exactly the
-     bug that would make the row's own fold silently query the page
-     instead of the pane it is in. `dashboard.css` names `dsh` for
-     the same reason. */
+  /* NAMED, because there are three nested containers on this screen
+     — `cx` is the well — and an anonymous query binds to the nearest
+     one, which is exactly the bug that would make the row's own fold
+     silently query the page instead of the pane it is in.
+     `dashboard.css` names `dsh` for the same reason. */
   container: crm-page / inline-size;
+  /* the register's ceiling, on the register's twin screen and for
+     the register's reason: past ~1900px a two-pane record becomes
+     two things at opposite ends of the desk. The gutter is inside
+     the cap because `box-sizing` is border-box everywhere. */
+  max-width: min(var(--measure), 1900px);
   padding: 0 var(--page-gutter);
 }
 
+/* THE GAP BETWEEN THE PANES RAMPS, AND CANNOT SHRINK. `--s-8`
+   (32px) is the tuned figure and `max()` makes it the floor:
+   `--section-gap` opens to 44px on a wide screen and can never take
+   this under 32, which is the fluid layer's whole contract —
+   headroom upward, nothing that was already right moved.
+
+   THE `0px` FALLBACK IS THAT CONTRACT, WRITTEN OUT. `response.css`
+   is one import in `main.tsx` and removing it must return the tuned
+   design exactly; an unresolved `var()` inside `max()` would take
+   the whole declaration with it and leave two panes touching. With
+   the fallback the pair collapses to `--s-8`, which is what the
+   design was tuned at. */
 .cx-rec-cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--s-8);
+  gap: max(var(--s-8), var(--section-gap, 0px));
   align-items: start;
 }
 
+/* THE DETAILS TRACK RAMPS RATHER THAN SITTING AT 340. A flat 340
+   spends every pixel a wide screen adds on the history and none on
+   the boxes a name and an address are typed into. `30cqi` of the
+   page container resolves to 340 at the fold, 394 in the 1376px well
+   measured above (30% of its 1312px content box) and 520 from a
+   1797px window up. It is `cqi` and not `vw`, so a record page in a
+   half-width window gets the width it actually has rather than the
+   window's. The gap ramps with it and stays wider than the gap
+   between two fields inside either pane (rule 2, at page scale). */
 @container crm-page (min-width: 720px) {
   .cx-rec-cols {
-    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, clamp(340px, 30cqi, 520px)) minmax(0, 1fr);
+    gap: clamp(var(--s-8), 3cqi, 64px);
   }
 }
 
@@ -892,7 +985,8 @@
 
    WHAT "THE PANE'S WIDTH" IS, MEASURED, because it is not one
    number. Above the 720px container fold the grid track supplies
-   it and every field is 340. Below the fold there is no track and
+   it, and the track ramps: 340 at the fold, 394 in a 1376px well and
+   520 at the ceiling. Below the fold there is no track and
    nothing here caps the measure, so a field is the whole column:
    660 at a 900px window, 552 at 760. That is wider than the 340
    this pass argued a phone number into, and it was left that way
@@ -1009,7 +1103,9 @@
 
 /* THE HISTORY IS A CARD, the same one the register's rows are. Two
    lists of the same kind of thing — documents you can open — in one
-   feature, drawn one way. */
+   feature, drawn one way. The rows are flush to the card's inner
+   edge, so none of them copies its radius: the card's
+   `overflow: hidden` draws the two corners at each end. */
 .cx-hist-list {
   margin: 0;
   padding: 0;
@@ -1176,6 +1272,50 @@
   color: var(--blue);
 }
 
+/* ============================================================
+   THE ROW'S OWN FOLD, ASKED OF THE WELL AND NOT THE WINDOW.
+
+   These two rules were `@media (max-width: 720px)`, so a register in
+   a 700px well got the desktop row because the WINDOW was 1600px
+   wide. They ask `cx` now (rule 5), and the fold happens when the
+   LIST is narrow, which is the only width it was ever about.
+
+   NOTHING TRUNCATES: the contact drops under the name rather than
+   being cut off the end of the row. The money goes one fold earlier
+   — see the 900px block at the foot of this file, which asks the
+   same container so that the two folds cannot disagree about how
+   wide the list is.
+   ============================================================ */
+
+@container cx (max-width: 720px) {
+  .cx-row-open {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .cx-row-contact {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ============================================================
+   THE WIDE WINDOW — a column beside the list, not a longer row.
+
+   MEASURED FAULT, at 2560: the register's fields were spread across
+   the whole width of the well, so a name sat at one end of a 2250px
+   row and its quote count at the other. Rule 4 is explicit that the
+   answer to a narrow element in a wide window is a SECOND COLUMN,
+   not a stretch.
+
+   THIS FILE ANSWERS IT IN TWO PLACES AND ADDS NO NEW BREAKPOINT FOR
+   EITHER. The register caps at `min(var(--measure), 1900px)` and
+   leaves the rest of the width as margin. One customer's record is
+   already two columns — their details beside their history — and
+   above the 720px fold the details track now RAMPS with the
+   container instead of sitting at a flat 340, so the width a wide
+   screen adds is shared between the boxes an address is actually
+   typed into and the history beside them, which is the part of the
+   screen anybody opened it for.
+   ============================================================ */
+
 /* THE PANE IS THE THING THAT GOT NARROW, not the window, so the
    fold is a container query. Below 340 of pane the arrow goes: it
    is an affordance for a row that is already a button, and the
@@ -1190,6 +1330,27 @@
   .cx-hist-go {
     display: none;
   }
+}
+
+/* ============================================================
+   FIGURES LINE UP, AND PROSE WRAPS EVENLY.
+
+   A column of dates only reads as a column when the digits are one
+   width. Both mono stamps on these screens — `.cx-row-when` and
+   `.cx-hist-when` — carry `font-variant-numeric: tabular-nums` where
+   they are declared, so the ruling is not restated here; what was
+   missing was the other half of the pair.
+   ============================================================ */
+
+/* RULE 10 IS FREE, and it is what stops a two-line refusal breaking
+   with one word on the second line. `.cx-empty-say` and
+   `.cx-group-say` carry it at their own declarations; these are the
+   prose this feature draws that did not. */
+.cx-void,
+.cx-empty-why,
+.cx-hist-none,
+.cx-field-stub-say {
+  text-wrap: pretty;
 }
 
 /* ============================================================
@@ -1269,7 +1430,7 @@
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) auto auto auto;
 }
 
-@media (max-width: 900px) {
+@container cx (max-width: 900px) {
   /* the money goes before the contact does: a phone number is how
      you act on the row, and the figure is on their page */
   .cx-row-worth {
@@ -1278,4 +1439,68 @@
   .cx-row-open {
     grid-template-columns: minmax(0, 1fr) auto;
   }
+}
+
+/* ============================================================
+   `.cx-page` AND `.cx-main`, PUT BACK.
+
+   `check-styles` failed the merge with two new orphans: this
+   file's copy of the customer register writes `cx-page` and
+   `cx-main` and no stylesheet declared either. The merge had kept
+   the responsive pass's TSX and dropped the CSS that TSX was
+   written for, which is the exact failure mode a class-usage
+   guard exists to catch — the screen would have rendered as an
+   unstyled column.
+
+   Restored verbatim from `redesign`, comments included, because
+   the reasoning in them is the measurement that chose the values.
+   ============================================================ */
+
+/* THE PAGE WELL — the one place the measure is spent on these two
+   screens. It was on five separate boxes (head, rows, one-head, form,
+   hist), which is how five things drift apart; now they are tracks of
+   one grid and cannot.
+
+   THE CEILING UNDER --measure IS DELIBERATE. `--measure` opens to
+   2600px, and a register row carries four things — a name, a contact,
+   a date and a count. Rule 4 says a narrow element in a wide window
+   gets a COLUMN beside it, not a stretch: past ~1900px the row stops
+   being a row you can scan and becomes a name at one end of the desk
+   and a number at the other. So the assembly caps, and the wide
+   window gets the split below instead. */
+.cx-page {
+  display: grid;
+  gap: var(--section-gap);
+  align-content: start;
+  max-width: min(var(--measure), 1900px);
+  margin: 0 auto;
+}
+
+/* ONE CUSTOMER IS ONE COLUMN OF SECTIONS, always. The split on this
+   screen is inside .cx-body, one level down, so the header stays a
+   header at every width. */
+.cx-page--one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ============================================================
+   THE WIDE WINDOW — a column beside the list, not a longer row
+
+   MEASURED FAULT: at 2560 the register's four fields were spread
+   across the full measure, so a name sat at one end of a 2250px row
+   and its quote count at the other. Rule 4 is explicit that the
+   answer to a narrow element in a wide window is a SECOND COLUMN,
+   not a stretch — so the head stops being a banner across the top
+   and becomes what it always was in content terms: the register's
+   identity, its count, its find box and its one primary action.
+
+   THE BREAKPOINT IS THE CONTENT'S, NOT A DEVICE'S (rule 6). The
+   aside needs ~280px (the find box is 240 plus its padding) and the
+   list stops being comfortable under ~760px. 1120 = 280 + 40 + 760
+   with the gap, and it is asked of the CONTAINER, so a register in a
+   half-width window keeps the stacked head that fits it.
+   ============================================================ */
+
+.cx-main {
+  min-width: 0;
 }

@@ -65,6 +65,29 @@
   height: 100%;
   overflow: hidden;
   background: var(--bg);
+  /* THE PAGE IS THE CONTAINER ITS OWN GRID ANSWERS TO. The stage is
+     not the window — the dock, and anything the shell puts beside it,
+     come out of this box first — so "how many cards fit" is asked of
+     the room that actually exists rather than of the window.
+
+     THE WIDE PASS ASKED IT OF A TWO-COLUMN PAGE: a 260-340px rail
+     carrying the business's name, the New module button and the
+     arranging row, split off at 1120px of container width, with the
+     card grid in a second container beside it. There is no rail on
+     this page any more — the name, the eyebrow and the one action
+     are `PageHead`'s, above the filter row — so the container is
+     declared once, here, and spent on the grid at the foot of this
+     block. Nothing else on the page has a width to answer to.
+
+     THE HORIZONTAL INSET IS `--page-gutter`, NOT `--gutter`. The
+     wide pass gave this page the fluid 16→56px gutter for itself,
+     which was right when the page owned its own left edge. The
+     header component owns it now, and two insets on one page is
+     exactly how a grid ends up further in than the title above it
+     (features/page/page.css says so at length). The fluid ramp is
+     spent on the grid's GAP, where nothing has to line up with it. */
+  container-type: inline-size;
+  container-name: md-dash;
 }
 .md-dash-sky {
   z-index: 0;
@@ -98,10 +121,23 @@
   color: var(--fg-tertiary);
 }
 /* `.ds-hero` carries the whole step — size, weight, leading and
-   tracking together. Nothing here reaches in for one of them. */
+   tracking together. Nothing here reaches in for one of them.
+
+   A TITLE ON A REGISTER HAS A CEILING, and the wide pass measured
+   where it is. Ramped without one, the old `--display-l-size` title
+   reached 38px at 1440 and 46px at 2560 — a marketing hero over a
+   list of data cards, and on a wide screen the largest thing on the
+   page by a factor of two. Established practice caps a dashboard's
+   page title around 28px, on the ground that an oversized heading
+   steals the room the data wanted. The hero step is the header
+   component's now, so the cap is enforced where the size is set:
+   `.md-idx-name` and `.md-set` below both take `min(…, 28px)`, and
+   `.ds-hero` answers for this one. `balance` is free and stops a
+   two-word business name breaking one word onto a second line. */
 .md-dash-org {
   margin: 0;
   max-width: 20ch;
+  text-wrap: balance;
 }
 
 .md-dash-acts {
@@ -114,17 +150,25 @@
    shared foundation stamps its text uppercase and every one of these
    is an action, so they are corrected here beside the class rather
    than by re-cutting `.btn`, which ~200 controls this pass has not
-   reached still depend on. */
+   reached still depend on.
+
+   `.md-mark-addr .btn` JOINS THE LIST, from the pass that swept the
+   settings page: it shipped as "USE IT", and "ADD ROLE" beside it
+   wrapped onto two lines inside its own pill because an uppercase
+   run is wider than the sentence it is made from. Hence `nowrap` —
+   every name here is one or two words and none of them may break. */
 .md-order,
 .md-access,
 .md-acc-leave,
 .md-empty-do,
+.md-mark-addr .btn,
 .md-role-new .btn {
   font-family: var(--font-sans);
   font-size: var(--t-small-size);
   font-weight: 520;
   letter-spacing: -0.003em;
   text-transform: none;
+  white-space: nowrap;
 }
 .md-order.is-on {
   color: var(--fg);
@@ -234,6 +278,7 @@
   font-size: var(--t-small-size);
   line-height: 1.6;
   color: var(--fg-secondary);
+  text-wrap: pretty;
 }
 .md-empty-why em {
   font-style: normal;
@@ -252,7 +297,16 @@
    module card; at a 1600 window the stage is ~1290 wide, the 190px
    minimum resolves to six columns and twenty-seven cards is five
    rows — which fits the height without scrolling. At 1280 it is
-   five columns and six rows and the grid scrolls inside itself. */
+   five columns and six rows and the grid scrolls inside itself.
+
+   AND IT ASKS THE STAGE, NOT THE WINDOW. `auto-fill` already does
+   that for the column count; the GAP did not, and the wide pass
+   found the same thing on the card grid it replaced: a card is a
+   component drawn at whatever width its column happens to have —
+   the stage here is ~1290 at 1600 and ~1908 at 2560, because the
+   dock and anything the shell puts beside it come out first — so
+   a `vw` gap would open air this page never had. `@container` on
+   `.md-dash` asks the box that actually holds the cards. */
 
 .md-grid {
   position: relative;
@@ -277,6 +331,18 @@
      title's left edge. See features/page/page.css. */
   padding: 0 var(--page-gutter) var(--s-6);
   list-style: none;
+}
+
+/* THE AIR BETWEEN CARDS GROWS, THE CARD'S FLOOR DOES NOT. Above
+   1180px of stage the gap opens from 16px to 24px, which is the
+   ramp the wide pass measured on the grid this one replaced: at a
+   flat 16px a 1,908px stage draws six columns crowded together and
+   the grid stops reading as a set of separate objects. The floor is
+   the tuned figure, so nothing below 1180 moves at all. */
+@container md-dash (min-width: 1180px) {
+  .md-grid {
+    gap: clamp(var(--s-4), 1.2vw, var(--s-6));
+  }
 }
 
 /* THE SLOT, not the card. Two controls stand here — the card itself
@@ -315,6 +381,10 @@
   border-radius: var(--r-card);
   box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
   cursor: pointer;
+  /* EVERY PROPERTY THAT MOVES IS NAMED. This list was `--press-fx`
+     plus two colours, and a bundled shorthand is how a card ends up
+     transitioning something nobody chose; the three signals here are
+     the edge, the depth and the lift, each with its own curve. */
   transition:
     border-color var(--d-fast) var(--ease),
     box-shadow var(--d-med) var(--ease),
@@ -329,9 +399,13 @@
 .md-place:hover {
   transform: translateY(-2px);
 }
-/* A CARD PRESSES AT 0.994 AND LOSES ITS LIFT — 0.97 on a 200px card
-   is a 6px shrink and reads as a glitch. Press lands on
-   pointer-down, which is what `:active` is. */
+/* A CARD PRESSES AT 0.994 AND LOSES ITS LIFT, and the press deepens
+   the hover rather than reversing it: the shadow drops back to the
+   resting step and the surface settles by a hair. 0.994 and not
+   0.97 — 0.97 is a 6px shrink on a 200px card and a 10px shrink on
+   the 349px one the wide layout draws, and at either size it reads
+   as a glitch. Press lands on pointer-down, which is what `:active`
+   is. */
 .md-place:active {
   transform: translateY(0) scale(0.994);
   box-shadow: var(--e1);
@@ -496,7 +570,9 @@
   min-width: 0;
 }
 /* NOTHING TRUNCATES MID-WORD. Two lines, then a clamp, with the
-   full name still in the DOM and on the card's accessible name. */
+   full name still in the DOM and on the card's accessible name. And
+   the two lines are BALANCED: an unbalanced "Parts &" / "Accessories"
+   makes a whole row of the grid look ragged, and it costs nothing. */
 .md-place-name {
   font-size: var(--t-heading-size);
   font-weight: var(--t-heading-weight);
@@ -510,6 +586,7 @@
   line-clamp: 2;
   overflow: hidden;
   overflow-wrap: break-word;
+  text-wrap: balance;
 }
 .md-place-fact {
   display: flex;
@@ -652,17 +729,32 @@
   background: var(--surface-3);
   color: var(--fg);
 }
-.md-place-move:active {
+/* PRESS IS SCOPED AWAY FROM THE REFUSAL rather than cancelled on it.
+   `:active { transform: none }` is the pattern the redesign removed —
+   three controls that cancelled their own feedback — so the arrow at
+   the end of the list simply never claims the press in the first
+   place. */
+.md-place-move:not([aria-disabled='true']):active {
   transform: scale(0.97);
   transition-duration: var(--d-press);
 }
+/* THE END OF THE LIST. It says no by going quiet, by answering
+   neither hover nor press, and by carrying the sentence that explains
+   it — never by leaving the tab order.
+
+   IT STEPS DOWN TO `--fg-tertiary`, NOT TO `--fg-quaternary`. The
+   quaternary tier is 2.8:1 and ds.css's own line on it is that it is
+   barred from carrying meaning; a refused arrow carries WHICH WAY is
+   refused, which is meaning. Tertiary is the floor that clears 4.5:1
+   and it is still a visible step down from the live arrow's
+   `--fg-secondary`. */
 .md-place-move[aria-disabled='true'] {
-  color: var(--fg-quaternary);
+  color: var(--fg-tertiary);
   cursor: default;
 }
 .md-place-move[aria-disabled='true']:hover {
   background: none;
-  color: var(--fg-quaternary);
+  color: var(--fg-tertiary);
 }
 
 /* -- the one figure the cards cannot carry -------------------- */
@@ -722,7 +814,9 @@
   .md-place:hover,
   .md-place:active,
   .md-filter:active,
-  .md-place-move:active {
+  /* the arrow's press is scoped away from the refused end of the
+     list, so this has to carry the same `:not()` to outweigh it */
+  .md-place-move:not([aria-disabled='true']):active {
     transform: none;
   }
   .md-place:hover .md-place-shot,
@@ -832,7 +926,7 @@
   color: var(--ink-faint);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     color var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -894,7 +988,7 @@
   background: transparent;
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -1047,7 +1141,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--sp-5);
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-5);
   padding-bottom: var(--sp-3);
   border-bottom: 1px solid var(--hairline);
@@ -1057,30 +1151,40 @@
   min-width: 0;
 }
 
+/* CAPPED AT 28px, THE SAME CEILING THE DASHBOARD'S OWN TITLE TAKES.
+   The step ramps to 30px at 2560 and a register's page title should
+   not pass 28 — the room a bigger heading takes comes out of the
+   catalogue under it, which is what a person came here to read. */
 .md-idx-name {
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--display-weight);
-  font-size: var(--display-m-size);
+  font-size: min(var(--display-m-size), 28px);
   letter-spacing: var(--display-m-track);
   line-height: var(--display-m-lead);
   color: var(--ink);
+  text-wrap: balance;
 }
 
 /* THE CENSUS SENTENCE. `.mono-label` gives it the mono stamp; these
    two declarations take the uppercase back off it, because it is a
    sentence about somebody's stock ("40 boats in 3 series") and not a
-   caption. */
+   caption — and it is tabular, because it is a figure.
+
+   THE MODULE'S DESCRIPTION IS NOT DRAWN HERE ANY MORE. `.md-idx-desc`
+   stood between the name and this line and carried the 76ch measure
+   the wide pass gave it; the sentence is the header component's now,
+   and the measure went with it. */
 .md-idx-facts {
   margin: 6px 0 0;
   letter-spacing: 0;
   text-transform: none;
-  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .md-idx-note {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-4);
   font-size: var(--ui-s-size);
   letter-spacing: var(--ui-s-track);
@@ -1091,7 +1195,7 @@
    nothing has gone wrong — but readable rather than decorative: the
    person reading it is asking where a trailer went. */
 .md-held {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-4);
   padding: var(--sp-2) var(--sp-3);
   border-left: 2px solid var(--hairline-strong);
@@ -1124,7 +1228,7 @@
 /* -- one table's run ---------------------------------------- */
 
 .md-sec {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-5);
 }
 
@@ -1214,6 +1318,8 @@
   border-radius: var(--radius);
   box-shadow: var(--ec1);
   cursor: pointer;
+  /* every property that moves is named — this list was `--press-fx`
+     and two colours, and `transform` is the lift and the press both */
   transition:
     border-color var(--t-fast) var(--ease-draft),
     box-shadow var(--t-med) var(--ease-draft),
@@ -1302,7 +1408,7 @@
   border-bottom: 1px solid var(--hairline);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft);
 }
 .md-row:hover {
@@ -1330,7 +1436,7 @@
 /* -- what the page says when it is not drawing --------------- */
 
 .md-none {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: var(--sp-6) auto;
   text-align: center;
   font-size: var(--ui-m-size);
@@ -1357,7 +1463,7 @@
    property that is wrong here, and open the tracking back up so
    lowercase mono does not read tight. */
 .md-more {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: var(--sp-4) auto 0;
   padding-top: var(--sp-3);
   border-top: 1px solid var(--hairline);
@@ -1372,13 +1478,15 @@
 /* The name and the description used to be drawn over the catalogue,
    as the fields they came from, while the gear was on. They are the
    settings page's first panel now — `.md-set-desc` at the foot of
-   this file — so a module has one place its words are written. */
+   this file — so a module has one place its words are written. The
+   gear itself is gone with the strip it opened: a module's set-up is
+   a TAB inside it, so there is no control here to draw. */
 
 .md-design {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-5);
   animation: fade-in var(--t-fast) var(--ease-draft) both;
 }
@@ -1404,12 +1512,23 @@
   color: var(--ink-soft);
 }
 
+/* A MEASURE, BECAUSE A SENTENCE IS NOT A LAYOUT.
+
+   These sentences had no cap at all, so on a 2560px window the
+   panel's help text ran the full 1,700px of the page — around 200
+   characters to the line, where a reader loses their place returning
+   to the left edge. 68ch is the top of the usual band and it only
+   ever binds on a wide screen: at 1280 the panel is narrower than the
+   measure and nothing here changes. `pretty` is free and stops the
+   one-word last line. */
 .md-panel-say {
   margin: 0;
+  max-width: 68ch;
   font-size: var(--ui-s-size);
   letter-spacing: var(--ui-s-track);
   line-height: var(--ui-s-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 /* NAMING ANOTHER PANEL IS EMPHASIS, NOT ITALIC. A panel heading is
    uppercase on screen and quoting it in a sentence would be a second
@@ -1450,7 +1569,7 @@
   color: var(--ink-faint);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     color var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -1654,7 +1773,7 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     border-color var(--t-fast) var(--ease-draft);
 }
 .md-shape-btn:hover {
@@ -2435,7 +2554,7 @@
    designer strip rather than sitting beside it.
 
    IT IS THE INDEX'S TWIN, DELIBERATELY. Same well, same header, same
-   panel column, same 1180px measure — pressing SETTINGS and pressing
+   panel column, same `--measure` — pressing SETTINGS and pressing
    CATALOGUE must not feel like moving between two applications, and
    the header is the one thing on screen that does not move between
    them.
@@ -2445,8 +2564,22 @@
   height: 100%;
   overflow: auto;
   background: var(--paper);
-  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 2);
+  padding: var(--sp-5) var(--gutter) calc(var(--sp-6) * 2);
   animation: fade-in var(--t-fast) var(--ease-draft) both;
+  /* the page's own split asks this box how wide it is, not the window */
+  container-type: inline-size;
+  container-name: md-set;
+}
+
+/* THE SETTINGS HEADER IS A STACK, NOT A SPREAD. The index's own head
+   is a title on the left and a search field on the right, and that is
+   right there because the field is a second thing you came to use.
+   This page's only companion control is the way out, and a way out
+   belongs above the name rather than 2,000px across from it. */
+.md-set-head {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
 }
 
 .md-set-eyebrow {
@@ -2475,7 +2608,7 @@
   color: var(--ink-soft);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft),
     color var(--t-fast) var(--ease-draft);
@@ -2497,13 +2630,79 @@
    designer keeps its own file and its own four panels, and gives up
    only its margin and its measure to the page that now holds it. */
 .md-set-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--section-gap);
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+/* THE WIDTH THE SPLIT STARTS AT, READ OFF THE CONTENT.
+
+   The right column holds the role grid, whose own rule refuses to
+   squeeze: a 220px role column plus nine verb columns at 44px is
+   616px before it starts scrolling sideways, and the capability strip
+   under it wants 3 × 280px = 840px to stay three across. 840 is the
+   figure that matters. The left column is 340px and the air between
+   is 40px, so the page is worth splitting at 1220 and not before —
+   under that the grid would scroll sideways to buy a column that only
+   holds a name field.
+
+   MEASURED AT 1220 AND MOVED TO 1180. At a 1280px window this page is
+   1,218.6px inside its gutters, which missed 1220 by under two pixels
+   and left the whole surface stacked — a 1,145px-wide text box for a
+   module called "Boats". At 1180 the same window splits into a 300px
+   left and an 852px right, and 852 still carries the capability strip
+   two across and the role grid without scrolling it.
+
+   THE SPLIT ASKS THE MARKUP WHETHER THERE IS ONE. `:has(>
+   .md-set-aside)` rather than a bare `.md-set-body`, because the two
+   columns are two wrappers the page either draws or does not: without
+   them the panels are direct children and a two-column grid would
+   deal them out left, right, left, right in the order they happen to
+   be written. Where the wrappers are there the page splits; where
+   they are not it stays the one stack it already was. */
+@container md-set (min-width: 1180px) {
+  .md-set-body:has(> .md-set-aside) {
+    grid-template-columns: clamp(300px, 24%, 380px) minmax(0, 1fr);
+    gap: clamp(28px, 2.2vw, 52px);
+    align-items: start;
+  }
+
+  /* WHAT IT IS AND WHAT IT LOOKS LIKE STAY IN VIEW while somebody
+     works down the roles and the switches on the right, because every
+     one of those decisions is about the module named in this column.
+     The left is much the shorter of the two — 9 roles is 700px of
+     grid — so it never has to scroll inside itself. */
+  .md-set-aside {
+    position: sticky;
+    top: 0;
+  }
+}
+
+.md-set-aside,
+.md-set-main {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  max-width: 1180px;
-  margin: 0 auto;
+  min-width: 0;
 }
-.md-set-body > .md-design {
+
+/* A FIELD IS AS WIDE AS WHAT GOES IN IT, and the widest thing that
+   goes in either of these is a one-line description of about ninety
+   characters. The column caps them at 300px once the page splits;
+   this is what caps them under 1180, where the page is one stack and
+   a name field would otherwise run the full measure. */
+.md-set .md-field {
+  max-width: 52ch;
+}
+
+/* BOTH PARENTS, BECAUSE THE PAGE HAS HAD TWO. The designer panel is a
+   child of the right column where the settings page splits, and a
+   direct child of the body where it does not; it gives up its margin
+   and its measure to whichever is holding it. */
+.md-set-body > .md-design,
+.md-set-main > .md-design {
   max-width: none;
   margin: 0;
   animation: none;
@@ -2521,10 +2720,12 @@
    4.26:1 and fails. */
 .md-set-note {
   margin: 0;
+  max-width: 68ch;
   font-size: var(--ui-s-size);
   letter-spacing: var(--ui-s-track);
   line-height: 1.6;
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 .md-set-note em {
   font-style: normal;
@@ -2599,7 +2800,7 @@
   color: var(--ink-soft);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     border-color var(--t-fast) var(--ease-draft),
     color var(--t-fast) var(--ease-draft);
 }
@@ -2654,6 +2855,8 @@
    wondering whether they have locked everybody out. */
 .md-set-state {
   margin: 0;
+  max-width: 84ch;
+  text-wrap: pretty;
   padding: var(--sp-3);
   border: 1px solid var(--hairline);
   border-left: 2px solid var(--ink);
@@ -2677,11 +2880,15 @@
 
 /* The empty state, in the panel. Four parts, in the dashboard's own
    order: eyebrow, what it IS, what you already have, one action. */
+/* IT DOES NOT GROW TO FILL THE PANEL. An empty state is a sentence,
+   a count and one control — around 500px of content — and stretching
+   its box to 1,840px only makes the emptiness bigger. */
 .md-set-void {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-3);
+  max-width: 640px;
   padding: var(--sp-4);
   background: var(--paper-high);
   border: 1px solid var(--hairline);
@@ -2815,7 +3022,7 @@
   background: var(--paper-high);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -2854,6 +3061,10 @@
   gap: var(--sp-2);
   width: 100%;
   max-width: 420px;
+}
+.md-role-new .btn,
+.md-mark-addr .btn {
+  flex: 0 0 auto;
 }
 .md-role-new .field-input {
   min-width: 0;
@@ -4978,4 +5189,60 @@
   line-height: var(--t-small-lead);
   letter-spacing: var(--t-small-track);
   color: var(--fg-primary);
+}
+
+/* ============================================================
+   THE WINDOW, RESTORED — what the merge dropped and why it is
+   being put back HERE rather than in the rules above.
+
+   The responsive pass set `--measure`, `--gutter` and
+   `--section-gap` on this file's page-level surfaces. Resolving
+   1,900 lines of conflict against 52 commits of rewrite lost
+   eleven of those values — caught by counting them against
+   `redesign`'s own copy of this file, not by reading the diff.
+
+   TWO OF THE DROPS WERE CORRECT AND ARE NOT RESTORED.
+   `.md-dash-page` and `.md-cards` are the old modules grid and no
+   TSX writes either any more; giving a measure to a class nobody
+   renders is how a stylesheet grows a second dead layout.
+
+   THE REST ARE RESTATED AT THE END OF THE FILE, which is the same
+   arrangement `response.css` is built on — it publishes the names,
+   the co-located sheet spends them, and a spend has to be able to
+   reach the rule it is spending on. Restating eleven properties
+   here is safer the night before a demo than reopening eleven
+   rules inside 127KB, and it is the convention this file already
+   documents at the head of every appended block.
+   ============================================================ */
+
+/* THE GUTTER, NOT A HARD PADDING. `--gutter` runs 16px to 56px with
+   the window, so a page keeps proportionally the same air off the
+   edge at 1280 that it does at 2560, rather than pinning one figure
+   and letting the empty band on either side do the work. */
+.md-dash,
+.md-set {
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+
+/* THE MEASURE. Every page-level surface in this feature is centred
+   on the one width the whole app answers to, so the catalogue, the
+   settings page and the overview cannot disagree about how wide a
+   page is. */
+.md-idx-head,
+.md-idx-note,
+.md-held,
+.md-sec,
+.md-none,
+.md-more,
+.md-design,
+.md-over,
+.md-set-body {
+  max-width: var(--measure);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.md-set-body {
+  gap: var(--section-gap);
 }
