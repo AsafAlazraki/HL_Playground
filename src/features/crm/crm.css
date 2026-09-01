@@ -10,7 +10,7 @@
    A dealer moving between Modules and Customers must not feel they
    have crossed into a second application, so the page well, the
    head, the find box, the empty card and the row measurements are
-   the ones `modules.css` already settled on — 1180px measure, the
+   the ones `modules.css` already settled on — the shared `--measure`, the
    `--sp` scale, the `--ui`/`--data`/`--micro` ramps, `--ec1` at rest
    and `--ec3` on hover. Every value below is a token; there is not a
    literal colour in this file.
@@ -27,11 +27,42 @@
    THE WELL
    ============================================================ */
 
+/* THE WELL IS THE QUERY CONTAINER, not the viewport.
+
+   DESIGN rule 5: components respond to their CONTAINER, pages to the
+   viewport — and this register is not a page. It is mounted inside
+   `.shell-module-well`, which is itself inside a stage that a left
+   panel and an inspector rail can both take width from, so the window
+   being 1920px wide is not the same fact as this list HAVING 1920px.
+   Every width rule below therefore asks `cx`, and the answers are
+   right in a window, in a stage and in a split. */
 .cx-root {
   height: 100%;
   overflow: auto;
   background: var(--paper);
-  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 2);
+  padding: var(--sp-5) var(--gutter) calc(var(--sp-6) * 2);
+  container-type: inline-size;
+  container-name: cx;
+}
+
+/* THE PAGE WELL — the one place the measure is spent on these two
+   screens. It was on five separate boxes (head, rows, one-head, form,
+   hist), which is how five things drift apart; now they are tracks of
+   one grid and cannot.
+
+   THE CEILING UNDER --measure IS DELIBERATE. `--measure` opens to
+   2600px, and a register row carries four things — a name, a contact,
+   a date and a count. Rule 4 says a narrow element in a wide window
+   gets a COLUMN beside it, not a stretch: past ~1900px the row stops
+   being a row you can scan and becomes a name at one end of the desk
+   and a number at the other. So the assembly caps, and the wide
+   window gets the split below instead. */
+.cx-page {
+  display: grid;
+  gap: var(--section-gap);
+  align-content: start;
+  max-width: min(var(--measure), 1900px);
+  margin: 0 auto;
 }
 
 /* the prose form of an absent answer — 44ch, the house measure */
@@ -45,8 +76,7 @@
 }
 
 .cx-none {
-  max-width: 1180px;
-  margin: var(--sp-5) auto 0;
+  margin: var(--sp-5) 0 0;
   font-size: var(--ui-size);
   letter-spacing: var(--ui-track);
   color: var(--ink-faint);
@@ -84,8 +114,6 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--sp-5);
-  max-width: 1180px;
-  margin: 0 auto var(--sp-5);
   padding-bottom: var(--sp-3);
   border-bottom: 1px solid var(--hairline);
 }
@@ -94,14 +122,25 @@
   min-width: 0;
 }
 
+/* A REGISTER IS NOT A MARKETING PAGE. This was the `display-m` step,
+   which now ramps to 30px on a wide screen — over the ~28px an
+   established practice caps a data-screen page title at, and room
+   stolen from the only thing anybody opened this screen to read. The
+   `display-s` step tops out at 25px and is taken WHOLE (rule 6): size,
+   weight, leading and tracking together, tracking negative as size
+   grows (rule 7).
+
+   The stage bar above already says "Customers"; this line says which
+   TABLE is the register, which is a smaller fact. */
 .cx-head-name {
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--display-weight);
-  font-size: var(--display-m-size);
-  letter-spacing: var(--display-m-track);
-  line-height: var(--display-m-lead);
+  font-size: var(--display-s-size);
+  letter-spacing: var(--display-s-track);
+  line-height: var(--display-s-lead);
   color: var(--ink);
+  text-wrap: balance;
 }
 
 .cx-head-desc {
@@ -111,6 +150,7 @@
   letter-spacing: var(--ui-m-track);
   line-height: var(--ui-m-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 
 .cx-head-facts {
@@ -238,15 +278,26 @@
    press rather than scaling: neighbours must not appear to move.
    ============================================================ */
 
-.cx-rows {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0;
-  list-style: none;
+/* THE CARD IS NOW THE TABLE, NOT THE LIST, because the list gained a
+   header row and a <ul> may only hold <li>. The border, the radius and
+   the clip move up one box; the <ul> is a list and nothing else.
+
+   NESTED RADIUS (rule 1): the rows are FLUSH to the card's inner edge
+   — zero padding between them and it — so their own radius is
+   10px − 0px, and the card's `overflow: hidden` is what draws the two
+   corners at each end. Nothing inside copies the 10px. */
+.cx-table {
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
   background: var(--paper-high);
   overflow: hidden;
+  box-shadow: var(--e1);
+}
+
+.cx-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .cx-row + .cx-row {
@@ -337,17 +388,6 @@
   color: var(--ink-soft);
 }
 
-@media (max-width: 720px) {
-  /* nothing truncates: the two figures drop under the name rather
-     than being cut off the end of the row */
-  .cx-row-open {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .cx-row-contact {
-    grid-column: 1 / -1;
-  }
-}
-
 /* ============================================================
    ONE CUSTOMER
    ============================================================ */
@@ -357,8 +397,6 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--sp-5);
-  max-width: 1180px;
-  margin: 0 auto var(--sp-5);
   padding-bottom: var(--sp-3);
   border-bottom: 1px solid var(--hairline);
 }
@@ -367,15 +405,19 @@
   min-width: 0;
 }
 
+/* the same step as the register's own head, for the same reason —
+   see .cx-head-name. A person's name is the subject of this screen,
+   not a banner across it. */
 .cx-one-name {
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--display-weight);
-  font-size: var(--display-m-size);
-  letter-spacing: var(--display-m-track);
-  line-height: var(--display-m-lead);
+  font-size: var(--display-s-size);
+  letter-spacing: var(--display-s-track);
+  line-height: var(--display-s-lead);
   color: var(--ink);
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .cx-one-contact {
@@ -398,12 +440,34 @@
 
 /* -- their details ------------------------------------------- */
 
+/* THREE SPACING TIERS, WHICH IS WHAT MAKES THIS READ AS ONE GROUP
+   (rule 2): the panel's own padding is --sp-5 (24px), the gap between
+   two fields is --sp-4 (16px), and a label sits 5px off its control.
+   24 > 16 > 5. Flat 16px everywhere was the old arrangement and it is
+   why the details never read as a card of details.
+
+   The panel is white on the page's paper, which is already "above"
+   (rule 7) — so it takes --e1, the smallest step, and no more. */
 .cx-form {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   gap: var(--sp-4);
-  max-width: 1180px;
-  margin: 0 auto var(--sp-6);
+  padding: var(--sp-5);
+  background: var(--paper-high);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--e1);
+}
+
+/* what the group IS, said once at the top of it — the same caption
+   treatment `.cx-hist-head` gives the history, so the two groups on
+   this screen are labelled the same way */
+.cx-form-head {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-soft);
 }
 
 .cx-field {
@@ -467,8 +531,7 @@
 /* -- the history with them ----------------------------------- */
 
 .cx-hist {
-  max-width: 1180px;
-  margin: 0 auto;
+  min-width: 0;
 }
 
 .cx-hist-head {
@@ -492,10 +555,18 @@
   color: var(--ink);
 }
 
+/* the same card the register is drawn in, for the same reason: this
+   is a table of documents and it should read as one thing. Rows are
+   flush, so no row copies the card's 10px (rule 1). */
 .cx-hist-list {
   margin: 0;
   padding: 0;
   list-style: none;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  overflow: hidden;
+  box-shadow: var(--e1);
 }
 
 .cx-hist-row + .cx-hist-row {
@@ -508,7 +579,7 @@
   align-items: center;
   gap: var(--sp-3);
   width: 100%;
-  padding: 9px 6px;
+  padding: 9px var(--sp-4);
   text-align: left;
   background: transparent;
   border: 0;
@@ -572,7 +643,195 @@
   color: var(--ink-soft);
 }
 
-@media (max-width: 720px) {
+
+/* ============================================================
+   THE COLUMN CAPTIONS — the register admits it is a table
+
+   Rule 9: a register is a table, so it says what its columns ARE.
+   Two of the four things in a row were unlabelled — a bare date and
+   a bare count sitting at the right-hand end — and the only way to
+   learn that "12 Mar 2026" meant the LAST quote rather than the day
+   the person was entered was to open one and compare.
+
+   THE DATA STAYS THE LOUD THING. The caption is the 11px label step
+   (`mono-label`, the one sanctioned uppercase) at --ink-faint; the
+   value under it is --ink at 560. Label recedes, data reads — never
+   the other way round, which is the failure this rule exists for.
+
+   THE TWO TRAILING TRACKS ARE FIXED-FLOOR, not `auto`, and that is
+   the whole reason a caption can sit over a value at all: two
+   separate grids (the caption row is a <div>, the values are <li>s
+   inside a <ul>) only line up if neither is allowed to size itself
+   from its own content. 112px clears "12 Mar 2026" at the mono step
+   and clears "Last quote" at the label step, so both grids resolve
+   the same number and the column is straight.
+   ============================================================ */
+
+.cx-cols,
+.cx-row-open {
+  grid-template-columns:
+    minmax(0, 1.1fr)
+    minmax(0, 1.4fr)
+    minmax(112px, auto)
+    minmax(112px, auto);
+}
+
+.cx-cols {
+  display: grid;
+  align-items: end;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) 7px;
+  /* the rows carry a 3px rail for the open one; the caption row
+     carries the same 3px so the two grids start at one x */
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper-sunken);
+  /* --ink-soft, NOT --ink-faint, AND FOR THE REASON THIS FILE ALREADY
+     MEASURED 130 lines up: --paper-sunken is a TINT, and --ink-faint
+     composites to 4.22:1 over it, which fails 4.5. --ink-soft gives
+     6.84:1 on the same bed. The caption still recedes — it is the
+     11px uppercase label step against a 14px/560 name — but it
+     recedes by TYPE, not by dropping under the floor. */
+  color: var(--ink-soft);
+}
+
+.cx-col {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* the name column is the one that gives way last, so its caption is
+   the one that never wraps out of line with it */
+.cx-col--name,
+.cx-col--contact {
+  justify-self: start;
+}
+
+.cx-col--when,
+.cx-col--count {
+  justify-self: end;
+}
+
+/* ONE CUSTOMER IS ONE COLUMN OF SECTIONS, always. The split on this
+   screen is inside .cx-body, one level down, so the header stays a
+   header at every width. */
+.cx-page--one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ============================================================
+   THE WIDE WINDOW — a column beside the list, not a longer row
+
+   MEASURED FAULT: at 2560 the register's four fields were spread
+   across the full measure, so a name sat at one end of a 2250px row
+   and its quote count at the other. Rule 4 is explicit that the
+   answer to a narrow element in a wide window is a SECOND COLUMN,
+   not a stretch — so the head stops being a banner across the top
+   and becomes what it always was in content terms: the register's
+   identity, its count, its find box and its one primary action.
+
+   THE BREAKPOINT IS THE CONTENT'S, NOT A DEVICE'S (rule 6). The
+   aside needs ~280px (the find box is 240 plus its padding) and the
+   list stops being comfortable under ~760px. 1120 = 280 + 40 + 760
+   with the gap, and it is asked of the CONTAINER, so a register in a
+   half-width window keeps the stacked head that fits it.
+   ============================================================ */
+
+.cx-main {
+  min-width: 0;
+}
+
+@container cx (min-width: 1120px) {
+  .cx-page--register {
+    grid-template-columns: clamp(280px, 22cqi, 380px) minmax(0, 1fr);
+    /* the gap BETWEEN the two columns is wider than any gap inside
+       either of them — rule 2, at page scale */
+    gap: clamp(28px, 3cqi, 64px);
+    align-items: start;
+  }
+
+  /* the head is now a panel, not a rule across the page: one white
+     card on the paper field, which reads as "above" without a shadow
+     doing the work (rule 7), so it takes only --e1 */
+  .cx-head {
+    position: sticky;
+    top: var(--sp-5);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-4);
+    padding: var(--sp-5);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--paper-high);
+    box-shadow: var(--e1);
+  }
+
+  .cx-head-acts {
+    flex-direction: column;
+    align-items: stretch;
+    /* 24px around the group, 12px inside it (rule 2) */
+    gap: var(--sp-3);
+  }
+
+  .cx-find {
+    width: 100%;
+  }
+
+  .cx-new {
+    justify-content: center;
+  }
+
+  /* -- one customer: their details beside their history -------
+     The form was `auto-fill, minmax(260px, 1fr)`, which on a wide
+     window drew SEVEN 260px text boxes across the screen for a
+     register that ships five columns. Five fields do not want seven
+     columns; they want one column of their own, at a width a name
+     and an address are actually typed at, with the history — the
+     part of this screen anybody opened it for — beside them. */
+  .cx-body {
+    grid-template-columns: clamp(320px, 30cqi, 520px) minmax(0, 1fr);
+    gap: clamp(28px, 3cqi, 64px);
+    align-items: start;
+  }
+
+  .cx-form {
+    grid-template-columns: minmax(0, 1fr);
+    position: sticky;
+    top: var(--sp-5);
+  }
+
+  .cx-field--name {
+    max-width: none;
+  }
+}
+
+.cx-body {
+  display: grid;
+  gap: var(--section-gap);
+  min-width: 0;
+}
+
+/* ============================================================
+   NARROW — the same two rules that were @media, asked of the
+   container instead (rule 5). A register inside a 700px window was
+   getting the desktop row because the WINDOW was 1600px wide.
+   ============================================================ */
+
+@container cx (max-width: 720px) {
+  /* nothing truncates: the two figures drop under the name rather
+     than being cut off the end of the row */
+  .cx-cols,
+  .cx-row-open {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .cx-col--contact,
+  .cx-row-contact {
+    grid-column: 1 / -1;
+  }
+  .cx-col--when {
+    display: none;
+  }
+
   .cx-hist-open {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
@@ -583,4 +842,27 @@
   .cx-hist-go {
     display: none;
   }
+}
+
+/* ============================================================
+   FIGURES LINE UP, AND PROSE WRAPS EVENLY
+   ============================================================ */
+
+/* a column of dates only reads as a column when the digits are one
+   width — the same ruling `.cx-num` already carried, applied to the
+   two mono stamps that had been left out of it */
+.cx-row-when,
+.cx-hist-when {
+  font-variant-numeric: tabular-nums;
+}
+
+/* rule 10 — free, and it is what stops a two-line refusal breaking
+   with one word on the second line */
+.cx-void,
+.cx-empty-say,
+.cx-empty-why,
+.cx-hist-none,
+.cx-field-say,
+.cx-field-stub-say {
+  text-wrap: pretty;
 }

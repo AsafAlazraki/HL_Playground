@@ -37,7 +37,7 @@
 }
 
 .cur--page {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-4);
   padding: var(--sp-3) 0;
 }

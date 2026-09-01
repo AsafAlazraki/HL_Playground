@@ -122,6 +122,21 @@ export interface Figures {
   /** what the share is a share OF, and what that makes it */
   leavesSay: string
   standing: Standing
+  /* -- THE SAME TWO FACTS AS NUMBERS, SO THEY CAN BE DRAWN --------
+     `holds` and `leaves` are sentences, and a sentence cannot be
+     compared at a glance across nine cards. These are the identical
+     readings as fractions of one, and nothing else in this file may
+     compute them a second time: a bar that disagreed with the words
+     beside it would be worse than no bar. */
+  /** 0–1. How often the pattern is true on the file's own pairings. */
+  rate: number
+  /** 0–1, or null where the shape narrows nothing. Mean share of the
+   *  catalogue still standing after the rule has spoken. SMALL IS
+   *  GOOD — this is the axis a floor fails on at a perfect rate. */
+  left: number | null
+  /** the narrowest and widest that share got, for the range mark */
+  leastLeft: number | null
+  mostLeft: number | null
 }
 
 /**
@@ -142,6 +157,16 @@ export function figuresFor(c: Candidate): Figures {
       : `pairings your price file writes agree · ${pct(c.rate)}, so ${n(c.tested - c.hits)} disagree`
 
   const d = c.discrimination
+  /* the numeric half of every return below, written once. A bar that
+     disagreed with the sentence beside it would be worse than no bar,
+     so both halves come out of the same reading. */
+  const nums = {
+    rate: c.rate,
+    left: d ? d.meanLeft : null,
+    leastLeft: d ? d.leastLeft : null,
+    mostLeft: d ? d.mostLeft : null,
+  }
+
   if (!d) {
     return {
       holds,
@@ -150,6 +175,7 @@ export function figuresFor(c: Candidate): Figures {
       leavesSay:
         'This shape does not narrow a list, so there is nothing left standing to count.',
       standing: 'not-measured',
+      ...nums,
     }
   }
 
@@ -163,6 +189,7 @@ export function figuresFor(c: Candidate): Figures {
          ever violate is arithmetic, not a rule". */
       leavesSay: `${of}. Not one of them could break it, so it is arithmetic about two ranges rather than a rule.`,
       standing: 'arithmetic',
+      ...nums,
     }
   }
   if (d.floor) {
@@ -172,6 +199,7 @@ export function figuresFor(c: Candidate): Figures {
       leaves: pct(d.meanLeft),
       leavesSay: `${of}. It rejects almost nothing, so it is a floor and not a selector.`,
       standing: 'floor',
+      ...nums,
     }
   }
   return {
@@ -180,6 +208,7 @@ export function figuresFor(c: Candidate): Figures {
     leaves: pct(d.meanLeft),
     leavesSay: `${of} — narrowest ${pct(d.leastLeft)}, widest ${pct(d.mostLeft)}.`,
     standing: 'selects',
+    ...nums,
   }
 }
 

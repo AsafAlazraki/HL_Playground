@@ -157,14 +157,81 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
 
   return (
     <div className="md-dash">
-      <header className="md-dash-head">
-        <div className="md-dash-id">
-          <span className="mono-label md-dash-eyebrow">Organisation</span>
-          <h1 className="md-dash-org">{name}</h1>
-        </div>
-        {cards.length > 0 ? newButton : null}
-      </header>
+      {/* THE PAGE IS TWO COLUMNS WHERE THERE IS ROOM FOR TWO, and one
+          where there is not — see `.md-dash-page` in modules.css.
 
+          WHY THE HEADER MOVED INTO A RAIL. The organisation's name, the
+          count beneath it and the two things you may do to this page —
+          make a module, put the cards in an order — were a full-width
+          banner over a 1080px column of cards, which on a 2560px window
+          left half the screen empty and still gave the cards three
+          columns. They are one narrow group of related facts, so they
+          take a narrow column suited to their content and the cards
+          take the rest. Nothing here is stretched to fill: the rail
+          stops at 340px however wide the window gets. */}
+      <div className="md-dash-page">
+        <div className="md-dash-rail">
+          <header className="md-dash-head">
+            <div className="md-dash-id">
+              <span className="mono-label md-dash-eyebrow">Organisation</span>
+              <h1 className="md-dash-org">{name}</h1>
+              {/* WHAT THIS PAGE IS A LIST OF, counted off the store. The
+                  banner said the organisation's name and nothing else;
+                  in a column the size of this one there is room for the
+                  one fact that tells an admin the sheet is all still
+                  here, and it is the same figure the empty state prints
+                  when there are no modules at all. */}
+              {cards.length > 0 ? (
+                <p className="md-dash-line mono-label">
+                  {cards.length} {cards.length === 1 ? 'module' : 'modules'} · {tableCount}{' '}
+                  {tableCount === 1 ? 'table' : 'tables'}
+                </p>
+              ) : null}
+            </div>
+          </header>
+          {cards.length > 0 ? newButton : null}
+
+          {/* ARRANGING THEM, AND WHY IT IS A ROW AND NOT A DASHED BOX.
+              This was a disabled stub reading "Dragging them into your
+              own order arrives with the module designer" — a promise
+              made to a surface that has since become the settings
+              page, which does not order the dashboard either. The
+              order is one integer per module and the dashboard already
+              reads it, so the honest answer was to build the two
+              arrows rather than to re-word the excuse.
+
+              IT SITS WITH THE OTHER THING YOU MAY DO TO THIS PAGE. It
+              was a rule and a sentence stranded under the last row of
+              cards, which on a nine-card grid is a long way from the
+              control that puts you in the mode. */}
+          {cards.length > 0 ? (
+            <div className="md-dash-order">
+              <button
+                type="button"
+                className={`btn${ordering ? ' is-on' : ''}`}
+                aria-pressed={ordering}
+                /* ONE MODULE CANNOT BE ARRANGED, and the sentence beside
+                   this says so rather than leaving a dead control. */
+                aria-disabled={cards.length < 2 ? true : undefined}
+                onClick={() => {
+                  if (cards.length < 2) return
+                  setOrdering((v) => !v)
+                }}
+              >
+                {ordering ? 'Done' : 'Reorder cards'}
+              </button>
+              <p className="md-stub-say">
+                {cards.length < 2
+                  ? 'There is one module, so there is no order to put it in yet.'
+                  : ordering
+                    ? 'Move a card earlier or later. The order is part of this sheet, so everybody who opens it sees the same one.'
+                    : 'Cards sit in the order you put them in. This is where you change it.'}
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="md-dash-main">
       {cards.length === 0 ? (
         <div className="md-empty">
           <span className="mono-label md-empty-eyebrow">Nothing here yet</span>
@@ -193,7 +260,6 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
           )}
         </div>
       ) : (
-        <>
           <ul className="md-cards">
             {cards.map((m, i) => (
               <Card
@@ -227,40 +293,9 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
               />
             ))}
           </ul>
-
-          {/* ARRANGING THEM, AND WHY IT IS A ROW AND NOT A DASHED BOX.
-              This was a disabled stub reading "Dragging them into your
-              own order arrives with the module designer" — a promise
-              made to a surface that has since become the settings
-              page, which does not order the dashboard either. The
-              order is one integer per module and the dashboard already
-              reads it, so the honest answer was to build the two
-              arrows rather than to re-word the excuse. */}
-          <div className="md-dash-order">
-            <button
-              type="button"
-              className={`btn${ordering ? ' is-on' : ''}`}
-              aria-pressed={ordering}
-              /* ONE MODULE CANNOT BE ARRANGED, and the sentence beside
-                 this says so rather than leaving a dead control. */
-              aria-disabled={cards.length < 2 ? true : undefined}
-              onClick={() => {
-                if (cards.length < 2) return
-                setOrdering((v) => !v)
-              }}
-            >
-              {ordering ? 'Done' : 'Reorder cards'}
-            </button>
-            <p className="md-stub-say">
-              {cards.length < 2
-                ? 'There is one module, so there is no order to put it in yet.'
-                : ordering
-                  ? 'Move a card earlier or later. The order is part of this sheet, so everybody who opens it sees the same one.'
-                  : 'Cards sit in the order you put them in. This is where you change it.'}
-            </p>
-          </div>
-        </>
       )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -344,13 +379,26 @@ function Card({
         aria-label={label}
         onClick={() => onOpen(module.id)}
       >
-        <span className="md-card-top">
-          <span className="md-card-mark">
-            <CardMark logo={module.logo} name={module.name} master={master} />
-          </span>
-        </span>
+        {/* THE MARK AND THE NAME ARE ONE ROW, NOT TWO.
 
-        <span className="md-card-name">{module.name}</span>
+            They were stacked: a 22px glyph alone on a line, then the
+            name on the next. A row whose only occupant is a glyph is
+            28px of card height carrying one fact, and it left the
+            module's name — the thing a person is actually scanning
+            for — starting a third of the way down. They are the same
+            fact about the place and they read as one thing beside
+            each other. The plate is a well rather than a bare glyph
+            so a dealer's own logo and a kind symbol occupy the same
+            square, and a card with a mark is the same height as a
+            card without. */}
+        <span className="md-card-head">
+          <span className="md-card-plate">
+            <span className="md-card-mark">
+              <CardMark logo={module.logo} name={module.name} master={master} />
+            </span>
+          </span>
+          <span className="md-card-name">{module.name}</span>
+        </span>
 
         {module.description === '' ? null : (
           <span className="md-card-desc">{module.description}</span>

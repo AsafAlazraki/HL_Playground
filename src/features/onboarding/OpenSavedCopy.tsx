@@ -113,124 +113,141 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
 
   return (
     <section className="ob-screen">
-      <div className="ob-card">
+      {/* THE SAME SPLIT AS THE NAME SCREEN, for the same reason and by
+          the same container query: what is being asked on the left,
+          what you do about it on the right. A door that looked like a
+          different product from the screen one press behind it is not a
+          door, it is a detour. */}
+      <div className="ob-card ob-card--split">
         <span className="ob-tick ob-tick--tl" aria-hidden="true" />
         <span className="ob-tick ob-tick--tr" aria-hidden="true" />
         <span className="ob-tick ob-tick--bl" aria-hidden="true" />
         <span className="ob-tick ob-tick--br" aria-hidden="true" />
 
-        <div className="ob-mark">
-          <HelmMark />
-          <span className="ob-mark-word block-heading">HelmLogic</span>
-        </div>
-        <div className="ob-rule" aria-hidden="true" />
-
-        <h1 className="ob-ask">Open a saved copy</h1>
-        <p className="ob-note">
-          A .json file this app saved earlier puts its tables, rows, modules and
-          pages back on the sheet, exactly as they were.
-        </p>
-
-        {summary && pending ? (
-          <>
-            <div className="ob-plate">
-              <div className="ob-plate-head">
-                <span className="ob-plate-name">{summary.name}</span>
-                <span className="ob-plate-rev">REV {pad2(summary.rev)}</span>
-              </div>
-              <div className="ob-plate-grid">
-                <div className="ob-stat">
-                  <span className="ob-stat-num">{summary.tables}</span>
-                  <span className="ob-stat-lbl">Tables</span>
-                </div>
-                <div className="ob-stat">
-                  <span className="ob-stat-num">{summary.columns}</span>
-                  <span className="ob-stat-lbl">Columns</span>
-                </div>
-                <div className="ob-stat">
-                  <span className="ob-stat-num">{summary.rows}</span>
-                  <span className="ob-stat-lbl">Rows</span>
-                </div>
-              </div>
-              {/* SENTENCE CASE, IN THE MARKUP. These two read "ALSO —"
-                  and "SOURCE —" as literal capitals, which no
-                  `text-transform` pass could have caught — and the
-                  second one names the FILE the person just chose, so
-                  their `Boats-Feb.json` came back as `BOATS-FEB.JSON`.
-                  A file name is a value. The io panel's own copy of
-                  this plate (`.io-plate-also`, `.io-plate-src`) was
-                  corrected to "Also —" / "Source —" by the pass at
-                  io.css:770 and this one was missed, so the same plate
-                  was drawn two ways one screen apart. */}
-              {also.length > 0 && <div className="ob-plate-also">Also — {also.join(' · ')}</div>}
-              <div className="ob-plate-also">Source — {pending.fileName}</div>
+        {/* see Onboarding.tsx — the container is the card, the grid is
+            one step inside it */}
+        <div className="ob-card-body">
+          <div className="ob-card-say">
+            <div className="ob-mark">
+              <HelmMark />
+              <span className="ob-mark-word block-heading">HelmLogic</span>
             </div>
+            <div className="ob-rule" aria-hidden="true" />
 
-            <button
-              type="button"
-              className="ob-primary"
-              onClick={() => {
-                applyReplace(pending.data)
-              }}
-            >
-              Put it on the sheet
-            </button>
-            <button
-              type="button"
-              className="ob-alt"
-              onClick={() => {
-                setPending(null)
-                setError(null)
-              }}
-            >
-              Choose a different file
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              type="button"
-              className={`ob-drop${dragOver ? ' is-over' : ''}`}
-              onClick={() => fileRef.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault()
-                setDragOver(true)
-              }}
-              onDragLeave={(e) => {
-                if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
-                setDragOver(false)
-              }}
-              onDrop={onDrop}
-            >
-              <GlyphDrop />
-              <span className="ob-drop-main">Choose a file</span>
-              <span className="ob-drop-sub">or drop one here</span>
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".json,application/json"
-              className="ob-file"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) void take(file)
-                e.target.value = ''
-              }}
-            />
-            {/* THE REFUSAL SAYS WHY, WHERE IT WAS REFUSED — never a
-                toast, never a tooltip, and never silence. */}
-            {error && (
-              <p className="ob-refuse" role="alert">
-                <strong>REJECTED</strong> — {error}
-              </p>
+            <h1 className="ob-ask">Open a saved copy</h1>
+            <p className="ob-note">
+              A .json file this app saved earlier puts its tables, rows, modules and pages
+              back on the sheet, exactly as they were.
+            </p>
+          </div>
+
+          <div className="ob-card-do">
+            {summary && pending ? (
+              <>
+                <span className="ob-field-label">This file holds</span>
+                <div className="ob-plate">
+                  <div className="ob-plate-head">
+                    <span className="ob-plate-name">{summary.name}</span>
+                    <span className="ob-plate-rev">REV {pad2(summary.rev)}</span>
+                  </div>
+                  <div className="ob-plate-grid">
+                    <div className="ob-stat">
+                      <span className="ob-stat-num">{summary.tables}</span>
+                      <span className="ob-stat-lbl">Tables</span>
+                    </div>
+                    <div className="ob-stat">
+                      <span className="ob-stat-num">{summary.columns}</span>
+                      <span className="ob-stat-lbl">Columns</span>
+                    </div>
+                    <div className="ob-stat">
+                      <span className="ob-stat-num">{summary.rows}</span>
+                      <span className="ob-stat-lbl">Rows</span>
+                    </div>
+                  </div>
+                  {/* SENTENCE CASE, IN THE MARKUP. These two read "ALSO —"
+                    and "SOURCE —" as literal capitals, which no
+                    `text-transform` pass could have caught — and the
+                    second one names the FILE the person just chose, so
+                    their `Boats-Feb.json` came back as `BOATS-FEB.JSON`.
+                    A file name is a value. The io panel's own copy of
+                    this plate (`.io-plate-also`, `.io-plate-src`) was
+                    corrected to "Also —" / "Source —" by the pass at
+                    io.css:770 and this one was missed, so the same plate
+                    was drawn two ways one screen apart. */}
+                  {also.length > 0 && (
+                    <div className="ob-plate-also">Also — {also.join(' · ')}</div>
+                  )}
+                  <div className="ob-plate-also">Source — {pending.fileName}</div>
+                </div>
+
+                <button
+                  type="button"
+                  className="ob-primary"
+                  onClick={() => {
+                    applyReplace(pending.data)
+                  }}
+                >
+                  Put it on the sheet
+                </button>
+                <button
+                  type="button"
+                  className="ob-alt"
+                  onClick={() => {
+                    setPending(null)
+                    setError(null)
+                  }}
+                >
+                  Choose a different file
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="ob-field-label">The file</span>
+                <button
+                  type="button"
+                  className={`ob-drop${dragOver ? ' is-over' : ''}`}
+                  onClick={() => fileRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setDragOver(true)
+                  }}
+                  onDragLeave={(e) => {
+                    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+                    setDragOver(false)
+                  }}
+                  onDrop={onDrop}
+                >
+                  <GlyphDrop />
+                  <span className="ob-drop-main">Choose a file</span>
+                  <span className="ob-drop-sub">or drop one here</span>
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".json,application/json"
+                  className="ob-file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) void take(file)
+                    e.target.value = ''
+                  }}
+                />
+                {/* THE REFUSAL SAYS WHY, WHERE IT WAS REFUSED — never a
+                  toast, never a tooltip, and never silence. */}
+                {error && (
+                  <p className="ob-refuse" role="alert">
+                    <strong>Rejected</strong> {error}
+                  </p>
+                )}
+              </>
             )}
-          </>
-        )}
 
-        <button type="button" className="ob-alt ob-alt--back" onClick={onBack}>
-          <BackArrow />
-          Back
-        </button>
+            <button type="button" className="ob-alt ob-alt--back" onClick={onBack}>
+              <BackArrow />
+              Back
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   )

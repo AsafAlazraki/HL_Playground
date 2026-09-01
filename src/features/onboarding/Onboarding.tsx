@@ -68,8 +68,20 @@ function NameStep({
 
   return (
     <section className="ob-screen">
+      {/* ONE CARD, TWO COLUMNS — NOT ONE CARD MADE WIDER.
+
+          At 1728 this drew 345px of card in the middle of a window
+          eight times that area, because the whole first screen was a
+          phone layout that had never been given a desktop opinion.
+          The answer is not to stretch a 460px column to 1000px: a
+          question and a field both have a measure, and past it they
+          stop being easier to read. So the card SPLITS — what is being
+          asked on the left, what you do about it on the right — and it
+          splits on its OWN width through a container query, so the same
+          card is one column inside a narrow window and two inside a
+          wide one without a device breakpoint anywhere. */}
       <form
-        className="ob-card"
+        className="ob-card ob-card--split"
         onSubmit={(e) => {
           e.preventDefault()
           if (ready) onNext()
@@ -77,39 +89,65 @@ function NameStep({
       >
         <Ticks />
 
-        <div className="ob-mark">
-          <HelmMark />
-          <span className="ob-mark-word block-heading">HelmLogic</span>
+        {/* THE GRID IS ONE STEP INSIDE THE CONTAINER. An element cannot
+            answer a `@container` query about ITSELF — the query is
+            resolved against the nearest ANCESTOR container — so the
+            card holds the containment and this holds the columns. */}
+        <div className="ob-card-body">
+          <div className="ob-card-say">
+            <div className="ob-mark">
+              <HelmMark />
+              <span className="ob-mark-word block-heading">HelmLogic</span>
+            </div>
+            <div className="ob-rule" aria-hidden="true" />
+
+            <h1 className="ob-ask">What&rsquo;s the name of your business?</h1>
+          </div>
+
+          <div className="ob-card-do">
+            {/* A REAL LABEL, NOT AN aria-label. The field carried its
+              name only in the accessibility tree, so the right-hand
+              column began with an unheaded line. 11px mono uppercase is
+              the one sanctioned use of capitals — a group caption — and
+              it is what gives the two columns a shared top edge. */}
+            <label className="ob-field-label" htmlFor="ob-org-name">
+              Business name
+            </label>
+            <input
+              id="ob-org-name"
+              className="ob-input"
+              type="text"
+              value={name}
+              onChange={(e) => onName(e.target.value)}
+              placeholder="Northside Marine"
+              autoComplete="organization"
+              autoFocus
+              maxLength={60}
+              spellCheck={false}
+            />
+
+            <button type="submit" className="ob-primary" disabled={!ready}>
+              Continue
+            </button>
+            {/* RULE 10 — a control that cannot be pressed says why, where
+              it is, rather than sitting grey and silent. */}
+            {!ready && (
+              <p className="ob-why" id="ob-why-name">
+                Type a name and Continue lights up. It goes on every quote you send, and you
+                can change it later.
+              </p>
+            )}
+
+            {/* THE OTHER HONEST ANSWER, kept quiet. Naming the business is
+              what almost everybody does here, so this is a text button
+              under the primary rather than a second card competing with
+              it — but it is on screen, because after CLEAR SHEET this is
+              the only import door there is. */}
+            <button type="button" className="ob-alt" onClick={onOpenFile}>
+              Open a saved copy instead
+            </button>
+          </div>
         </div>
-        <div className="ob-rule" aria-hidden="true" />
-
-        <h1 className="ob-ask">What&rsquo;s the name of your business?</h1>
-
-        <input
-          className="ob-input"
-          type="text"
-          value={name}
-          onChange={(e) => onName(e.target.value)}
-          placeholder="Northside Marine"
-          aria-label="Business name"
-          autoComplete="organization"
-          autoFocus
-          maxLength={60}
-          spellCheck={false}
-        />
-
-        <button type="submit" className="ob-primary" disabled={!ready}>
-          Continue
-        </button>
-
-        {/* THE OTHER HONEST ANSWER, kept quiet. Naming the business is
-            what almost everybody does here, so this is a text button
-            under the primary rather than a second card competing with
-            it — but it is on screen, because after CLEAR SHEET this is
-            the only import door there is. */}
-        <button type="button" className="ob-alt" onClick={onOpenFile}>
-          Open a saved copy instead
-        </button>
       </form>
     </section>
   )
@@ -146,8 +184,7 @@ function NameStep({
 const STARTS_BLANK: ReadonlySet<IndustryKey> = new Set<IndustryKey>(['other'])
 
 /** Can this answer be picked today? */
-const isReady = (k: IndustryKey): boolean =>
-  INDUSTRIES[k].available || STARTS_BLANK.has(k)
+const isReady = (k: IndustryKey): boolean => INDUSTRIES[k].available || STARTS_BLANK.has(k)
 
 function IndustryCard({
   industry,
@@ -193,6 +230,11 @@ function IndustryStep({
   return (
     <section className="ob-screen">
       <div className="ob-col">
+        {/* BACK USED TO FLOAT. The nav sat above a centred header over a
+            grid on a different measure, so the one control on the rail
+            had nothing to line up with. Rail, header and grid now share
+            one left edge — which is what makes this read as a page and
+            not as three things dropped on a field. */}
         <div className="ob-nav">
           <button type="button" className="ob-back" onClick={onBack}>
             <BackArrow />
@@ -211,19 +253,14 @@ function IndustryStep({
               answer lands on the same sheet; what Marine gets you is
               table presets already drawn for boats, motors and trailers. */}
           <p className="ob-sub">
-            Marine is the one the table presets are drawn for. Other starts you on a
-            blank sheet. The rest are still on the drawing board.
+            Marine is the one the table presets are drawn for. Other starts you on a blank
+            sheet. The rest are still on the drawing board.
           </p>
         </header>
 
         <div className="ob-grid" role="group" aria-label="Choose an industry">
           {INDUSTRY_ORDER.map((key, i) => (
-            <IndustryCard
-              key={key}
-              industry={key}
-              delay={120 + i * 70}
-              onPick={onPick}
-            />
+            <IndustryCard key={key} industry={key} delay={120 + i * 70} onPick={onPick} />
           ))}
         </div>
       </div>

@@ -19,6 +19,10 @@ import './styles/base.css'
    The app is 97.6% tokenised, which is what makes that possible.
    Delete this one line to put the old design back. */
 import './styles/bridge.css'
+/* THE FLUID LAYER — last, so it wins. It ramps the tuned design
+   upward instead of leaving it centred in a void above 1180px.
+   Delete this one line to put the fixed-width design back. */
+import './styles/response.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

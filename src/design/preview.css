@@ -91,7 +91,7 @@
 }
 
 .pv-wrap {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto;
   padding: 0 var(--s-8);
 }

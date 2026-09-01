@@ -56,22 +56,11 @@
   color: var(--ink-faint);
 }
 
-/* THE LINE THAT MAY NOT BE CROSSED, said first and in prose. Set off
-   by a rule rather than by a colour, because it is the frame for
-   everything below it and not a warning about any one card. */
-.dx-line {
-  margin: var(--sp-3) 0 0;
-  padding-left: var(--sp-3);
-  max-width: 62ch;
-  border-left: 2px solid var(--hairline-strong);
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-.dx-line b {
-  font-weight: 600;
-  color: var(--ink);
-}
+/* THE LINE THAT MAY NOT BE CROSSED is now `.cn-evidence.is-observed`
+   in `constraints.css` — the same element the asserted ledger carries
+   in its other state, so one device tells the two bands apart instead
+   of two paragraphs a reader has to hold in their head. `.dx-line`
+   was that paragraph and it is gone with it. */
 
 /* ============================================================
    WHILE IT IS WORKING
@@ -725,4 +714,101 @@
   min-width: 0;
   flex: 1 1 100%;
   color: var(--ink-soft);
+}
+
+/* ============================================================
+   THE TWO FIGURES, DRAWN
+
+   WHY A BAR AND NOT ANOTHER SENTENCE. The pair above already says
+   both facts correctly, and it was still the hardest thing on the
+   page to use, because the judgement it asks for is a COMPARISON:
+   nine cards, each with a rate and a share, and the reader has to
+   work out which ones actually choose something. Two tracks on one
+   baseline turn that into a shape — a rule worth keeping is a LONG
+   top bar and a SHORT bottom one. F8 draws as 100 % over a sliver.
+   F9 draws as 100 % over a bar that is nearly full, and the eye
+   refuses it before the sentence has been read.
+
+   THERE IS NO COLOUR IN IT. Both fills are `--ink`. Nothing here is
+   coloured to mean anything, exactly as the band header promises,
+   and the meaning survives greyscale, both themes and a reader who
+   cannot separate two hues, because the meaning is LENGTH.
+
+   THE 2px FLOOR ON A FILL is in `DiscoveryPanel.barWidth`, and it is
+   the honest choice rather than the tidy one: the rule this band
+   exists to find leaves 0.92 % standing, and a bar that rounded that
+   to nothing would say "it rejects everything", which is not what
+   was measured.
+   ============================================================ */
+
+/* SPACING TIERS, so the figure and its bar read as one unit and the
+   two units read as two: 2px inside a figure's own label/number,
+   7px around its bar, --sp-3/--sp-4 between the figures themselves. */
+.dx-fig-track {
+  position: relative;
+  display: block;
+  height: 7px;
+  margin: 7px 0;
+  border-radius: 999px;
+  background: var(--paper-sunken);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  overflow: hidden;
+}
+
+.dx-fig-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--ink);
+  /* a width that moves when a report is re-run is a state change:
+     this element's box reflows nothing around it */
+  transition: width var(--t-med) var(--ease-settle);
+}
+
+/* NARROWEST TO WIDEST, because a mean on its own hides a rule that
+   picks hard for one hull and not at all for the next. It sits UNDER
+   the mean fill, so what shows is the reach above the mean. */
+.dx-fig-range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--hairline-strong);
+  transition:
+    left var(--t-med) var(--ease-settle),
+    width var(--t-med) var(--ease-settle);
+}
+
+/* THE VERDICT ON THE SECOND AXIS, in three words, spanning both
+   figures because it is a reading of the pair and not of either one.
+   The stamp is `.cn-rl-pill`'s geometry — one page may not hold two
+   opinions about what a stamp looks like. */
+.dx-standing {
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  margin: 0;
+  padding: 0 9px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--paper-high);
+  color: var(--ink-soft);
+}
+/* the one that chose something is the one that gets the ink */
+.dx-standing.is-selects {
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dx-fig-fill,
+  .dx-fig-range {
+    transition: none;
+  }
 }

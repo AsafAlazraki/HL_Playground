@@ -24,16 +24,83 @@
   height: 100%;
   overflow: auto;
   background: var(--paper);
-  padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) * 2);
+  /* THE GUTTER, NOT A HARD PADDING. `--gutter` runs 16px to 56px with
+     the window, so the page keeps proportionally the same air off the
+     edge at 1280 that it does at 2560 rather than pinning 24px there
+     and letting the empty band on either side do the work. */
+  padding: var(--sp-6) var(--gutter) calc(var(--sp-6) * 2);
+  /* THE PAGE IS THE CONTAINER ITS OWN SPLIT ANSWERS TO. The stage is
+     not the window — the dock, and anything the shell puts beside it,
+     come out of this box first — so the question "is there room for
+     two columns here" is asked of the room that actually exists. */
+  container-type: inline-size;
+  container-name: md-dash;
+}
+
+/* THE TWO COLUMNS, AND THE WIDTH THEY START AT.
+
+   MEASURED, NOT NAMED AFTER A DEVICE. The rail holds "Northside
+   Marine" at the display-s step and a 148px button; it stops being
+   worth a column of its own under 260px. The card grid's own minimum
+   is a 260px card, and three of them plus two gaps is 812px — below
+   that the grid drops to two columns and the page is better read as
+   one stack. 260 + 812 + the 40px between them is 1112, so the split
+   is offered at 1120 and not at any round number that happens to be
+   a laptop. */
+.md-dash-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--section-gap);
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+@container md-dash (min-width: 1120px) {
+  .md-dash-page {
+    grid-template-columns: clamp(260px, 20%, 340px) minmax(0, 1fr);
+    gap: clamp(28px, 2.4vw, 56px);
+    align-items: start;
+  }
+
+  /* THE RAIL STAYS WITH THE CARDS. Nine modules is one screen; a
+     dealership running twenty is three, and the button that makes the
+     next one should not be three screens up. `start` rather than a
+     computed offset — the rail is the shorter column, so it never
+     needs to scroll within itself. */
+  .md-dash-rail {
+    position: sticky;
+    top: 0;
+  }
+}
+
+/* THREE SPACING TIERS, AND THE OUTER ONE IS THE LARGEST. Inside the
+   rail: 4px inside the identity group, 20px between the identity and
+   the button, 28px before the arranging row. The group reads as a
+   group because the air around it is bigger than the air inside it. */
+.md-dash-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+/* THE COLUMN THE CARD GRID ANSWERS TO. It is 905px at 1280 and
+   1,908px at 2560 while the window only doubles, because the rail
+   comes out of it first — which is exactly why the grid asks this
+   box how wide it is rather than asking the window. */
+.md-dash-main {
+  min-width: 0;
+  container-type: inline-size;
+  container-name: md-main;
 }
 
 .md-dash-head {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--sp-5);
-  max-width: 1080px;
-  margin: 0 auto var(--sp-6);
+  flex-direction: column;
+  gap: var(--sp-4);
+  width: 100%;
+  min-width: 0;
   padding-bottom: var(--sp-4);
   border-bottom: 1px solid var(--hairline);
 }
@@ -41,7 +108,7 @@
 .md-dash-id {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-1);
   min-width: 0;
 }
 
@@ -49,20 +116,40 @@
   color: var(--ink-faint);
 }
 
-/* the one display moment on this screen — the top step of the ramp,
-   and the only thing here set in the serif */
+/* THE PAGE TITLE, CAPPED AT 28px BECAUSE THIS IS A REGISTER.
+
+   It was `--display-l-size`, which the fluid layer ramps to 38px at
+   1440 and 46px at 2560 — a marketing hero over a list of nine data
+   cards, and on a wide screen it was the largest thing on the page by
+   a factor of two. Established practice caps a dashboard's page title
+   around 28px on the ground that an oversized heading steals room
+   from the data; `min()` against the step keeps the whole set — face,
+   weight, leading, tracking — and only refuses the last few pixels of
+   growth. It still grows: 22px at 1280, 25px at 2560, capped at 28. */
 .md-dash-org {
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--display-weight);
-  font-size: var(--display-l-size);
-  letter-spacing: var(--display-l-track);
-  line-height: var(--display-l-lead);
+  font-size: min(var(--display-m-size), 28px);
+  letter-spacing: var(--display-m-track);
+  line-height: var(--display-m-lead);
   color: var(--ink);
+  text-wrap: balance;
+}
+
+/* WHAT THE PAGE IS A LIST OF. The banner carried the name and nothing
+   else; a column has room for the one figure that says the sheet is
+   all still here, and it is the same count the empty state prints. */
+.md-dash-line {
+  margin: var(--sp-1) 0 0;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .md-new {
   flex: 0 0 auto;
+  align-self: stretch;
+  justify-content: center;
 }
 
 /* -- the empty state ---------------------------------------- */
@@ -112,9 +199,10 @@
    button's name is a name, so weight and full ink, never italic. */
 .md-empty-why {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   line-height: 1.6;
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 .md-empty-why em {
   font-style: normal;
@@ -124,21 +212,50 @@
 
 /* -- the cards ---------------------------------------------- */
 
+/* THE GRID ANSWERS TO THE COLUMN IT IS IN, NOT TO THE WINDOW.
+
+   A card is a component and it is drawn in two places at two widths —
+   the full page here, and a 900px column at 1280 — so the question it
+   asks is how much room IT has, which is `@container` and not
+   `@media`. Two minimums, and both were read off the card rather than
+   picked: 276px is where "2,860 accessories across 179 categories and
+   25 sections" stops taking four lines, and 320px is the width the
+   nine seeded descriptions settle at three lines or fewer.
+
+   THE CARD DOES NOT GROW TO FILL, AND 300 IS THE NUMBER BECAUSE 320
+   MEASURED WRONG. At 320 the 1,342px column at 1920 came out one
+   column short — (1342 + 23) / (320 + 23) is 3.98 — and the three
+   cards it did fit were 432px each, which is the exact thing a card
+   max-width exists to prevent. At 300 the same column takes four at
+   318px, a hair off the 323px the 1440 layout draws, and the 1,908px
+   column at 2560 is unchanged at five of 362. */
 .md-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 276px), 1fr));
   gap: var(--sp-4);
-  max-width: 1080px;
-  margin: 0 auto;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
+@container md-main (min-width: 1180px) {
+  .md-cards {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: clamp(16px, 1.2vw, 24px);
+  }
+}
+
+/* THREE SPACING TIERS INSIDE THE CARD, AND THE OUTER IS THE LARGEST.
+   16px of padding around the whole; 12px between the groups (identity,
+   description, figures); 4px inside a group. It was a flat 8px gap
+   between every child and a 16px padding, so the name, the sentence,
+   the census and the provenance line were four things at the same
+   distance from each other and read as four unrelated strips. */
 .md-card {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
   width: 100%;
   height: 100%;
   padding: var(--sp-4);
@@ -149,10 +266,16 @@
      drawing, not a swatch */
   border-left: 2px solid var(--md-accent, var(--ink));
   border-radius: var(--radius);
+  /* the footer band runs to the card's own corners; the clip is what
+     makes the 9px inside that 10px corner exact rather than nearly */
+  overflow: hidden;
   box-shadow: var(--e1);
   cursor: pointer;
+  /* AT MOST TWO SIGNALS PER TRANSITION, one of colour and one of
+     depth. `transform` is here for the press only — the card never
+     moves on hover, so hovering a grid of nine does not ripple. */
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     border-color var(--t-fast) var(--ease-draft),
     box-shadow var(--t-fast) var(--ease-draft);
 }
@@ -161,16 +284,47 @@
   border-left-color: var(--md-accent, var(--ink));
   box-shadow: var(--e2);
 }
+/* THE PRESS DEEPENS THE HOVER RATHER THAN REVERSING IT — the shadow
+   drops back to the resting step and the surface settles by a hair.
+   0.994 and not 0.97: on a 349px card 0.97 is a 10px shrink and reads
+   as a glitch. */
+.md-card:active {
+  transform: scale(0.994);
+  box-shadow: var(--e1);
+}
 .md-card:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
 
-.md-card-top {
+/* -- the identity row ---------------------------------------- */
+
+.md-card-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
+  min-width: 0;
+  /* the door to this module's settings is absolutely placed in this
+     corner and is a sibling of the card, so the row keeps its seat */
+  padding-right: 30px;
+}
+
+/* THE WELL THE MARK SITS IN. Nested radius: the card is 10px and the
+   plate is inset 16px from it, so nothing of the card's curve reaches
+   the plate and it takes the control radius instead of a copy of its
+   parent's. 34px is the smallest square that holds the 24px kind
+   symbol with its own 5px of air — the inner tier of the same ladder
+   the card's padding sets. */
+.md-card-plate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+  background: var(--paper-sunken);
+  border-radius: var(--radius-sm);
 }
 
 .md-card-mark {
@@ -180,13 +334,26 @@
 
 .md-card-count {
   color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
+/* THE THING BEING SCANNED FOR, so it is the heaviest ink on the card
+   and it is not uppercased. Two lines at most, balanced — an
+   unbalanced "Parts &" / "Accessories" makes a whole grid row look
+   ragged, and it costs nothing to fix. */
 .md-card-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-width: 0;
   font-size: var(--ui-xl-size);
+  font-weight: 560;
   letter-spacing: var(--ui-xl-track);
   line-height: var(--ui-xl-lead);
   color: var(--ink);
+  text-wrap: balance;
 }
 
 /* CLAMPED AT THREE LINES so a grid of cards stays a grid. The
@@ -207,10 +374,20 @@
   -webkit-line-clamp: 4;
   line-clamp: 4;
   overflow: hidden;
+  margin-top: calc(var(--sp-3) * -1 + var(--sp-2));
   font-size: var(--ui-size);
   letter-spacing: var(--ui-track);
   line-height: var(--ui-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* THE CENSUS AND THE PROVENANCE ARE ONE GROUP — 4px apart, against
+   the 12px that separates them from the sentence above. They are two
+   readings of the same question, what is in here and where it came
+   from, and at a flat gap they read as two unrelated strips. */
+.md-card-count + .md-card-from {
+  margin-top: calc(var(--sp-3) * -1 + var(--sp-1));
 }
 
 .md-card-from {
@@ -219,19 +396,37 @@
   letter-spacing: 0.04em;
 }
 
+/* THE VERBS ARE A FOOTER BAND, FLUSH TO THE CARD'S OWN EDGE.
+
+   NESTED RADIUS, DONE PROPERLY. The band reaches the card's bottom
+   corners, so it may not keep a control radius of its own and it may
+   not copy the card's 10px either: the card's border is 1px, so the
+   inside of that corner is 10 - 1 = 9. The chips inside it are inset
+   16px and take the control radius, which is the third step of the
+   same ladder.
+
+   WHY A BAND AT ALL. The row was a hairline and nine words, at the
+   same 8px from the figures above it as everything else on the card,
+   so what may be DONE in this place — the one fact on the card that
+   is not obvious from its name — read as a footnote. On its own
+   ground it is a part of the card rather than the last line of it,
+   and the card stops being a stack of eight paragraphs. */
 .md-card-verbs {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-top: auto;
-  padding-top: var(--sp-2);
+  gap: var(--sp-1);
+  margin: auto calc(var(--sp-4) * -1) calc(var(--sp-4) * -1);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--paper-sunken);
   border-top: 1px solid var(--hairline);
+  border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px);
 }
 
 .md-verb {
   padding: 2px 6px;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
+  background: var(--paper-high);
   color: var(--ink-soft);
 }
 
@@ -349,7 +544,7 @@
   color: var(--ink-faint);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     color var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -411,7 +606,7 @@
   background: transparent;
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -564,7 +759,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--sp-5);
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-5);
   padding-bottom: var(--sp-3);
   border-bottom: 1px solid var(--hairline);
@@ -574,31 +769,39 @@
   min-width: 0;
 }
 
+/* CAPPED AT 28px, THE SAME CEILING THE DASHBOARD'S OWN TITLE TAKES.
+   The step ramps to 30px at 2560 and a register's page title should
+   not pass 28 — the room a bigger heading takes comes out of the
+   catalogue under it, which is what a person came here to read. */
 .md-idx-name {
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--display-weight);
-  font-size: var(--display-m-size);
+  font-size: min(var(--display-m-size), 28px);
   letter-spacing: var(--display-m-track);
   line-height: var(--display-m-lead);
   color: var(--ink);
+  text-wrap: balance;
 }
 
 .md-idx-desc {
   margin: 4px 0 0;
+  max-width: 76ch;
   font-size: var(--ui-m-size);
   letter-spacing: var(--ui-m-track);
   line-height: var(--ui-m-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 
 .md-idx-facts {
   margin: 6px 0 0;
   color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .md-idx-note {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-4);
   font-size: var(--ui-s-size);
   letter-spacing: var(--ui-s-track);
@@ -609,7 +812,7 @@
    nothing has gone wrong — but readable rather than decorative: the
    person reading it is asking where a trailer went. */
 .md-held {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-4);
   padding: var(--sp-2) var(--sp-3);
   border-left: 2px solid var(--hairline-strong);
@@ -642,7 +845,7 @@
 /* -- one table's run ---------------------------------------- */
 
 .md-sec {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-5);
 }
 
@@ -708,7 +911,7 @@
   border-radius: var(--radius);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     border-color var(--t-fast) var(--ease-draft),
     box-shadow var(--t-fast) var(--ease-draft);
 }
@@ -782,7 +985,7 @@
   border-bottom: 1px solid var(--hairline);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft);
 }
 .md-row:hover {
@@ -810,7 +1013,7 @@
 /* -- what the page says when it is not drawing --------------- */
 
 .md-none {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: var(--sp-6) auto;
   text-align: center;
   font-size: var(--ui-m-size);
@@ -837,7 +1040,7 @@
    property that is wrong here, and open the tracking back up so
    lowercase mono does not read tight. */
 .md-more {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: var(--sp-4) auto 0;
   padding-top: var(--sp-3);
   border-top: 1px solid var(--hairline);
@@ -877,7 +1080,7 @@
   color: var(--ink-soft);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft),
     color var(--t-fast) var(--ease-draft);
@@ -909,7 +1112,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-5);
   animation: fade-in var(--t-fast) var(--ease-draft) both;
 }
@@ -930,12 +1133,23 @@
   color: var(--ink-faint);
 }
 
+/* A MEASURE, BECAUSE A SENTENCE IS NOT A LAYOUT.
+
+   These sentences had no cap at all, so on a 2560px window the
+   panel's help text ran the full 1,700px of the page — around 200
+   characters to the line, where a reader loses their place returning
+   to the left edge. 68ch is the top of the usual band and it only
+   ever binds on a wide screen: at 1280 the panel is narrower than the
+   measure and nothing here changes. `pretty` is free and stops the
+   one-word last line. */
 .md-panel-say {
   margin: 0;
+  max-width: 68ch;
   font-size: var(--ui-s-size);
   letter-spacing: var(--ui-s-track);
   line-height: var(--ui-s-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 /* NAMING ANOTHER PANEL IS EMPHASIS, NOT ITALIC. A panel heading is
    uppercase on screen and quoting it in a sentence would be a second
@@ -976,7 +1190,7 @@
   color: var(--ink-faint);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     color var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -1137,7 +1351,7 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     border-color var(--t-fast) var(--ease-draft);
 }
 .md-shape-btn:hover {
@@ -1584,7 +1798,7 @@
    Appended in the same spirit as the block above it: nothing here
    changes an existing selector. It draws one card between the
    header and the catalogue, in the same geometry every other run
-   on this page uses (1180px, centred, --sp scale, 10px radius,
+   on this page uses (`--measure`, centred, --sp scale, 10px radius,
    --ec1 at rest), so a module reads as one page rather than as a
    header with a widget under it.
 
@@ -1600,7 +1814,7 @@
    ============================================================ */
 
 .md-over {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto var(--sp-5);
   padding: var(--sp-4);
   display: flex;
@@ -1934,13 +2148,22 @@
    +0.12em ≈ 79px; "New module" is 12.5px Inter ≈ 68px. Nothing in
    either bar had to move.
    ============================================================ */
+/* A BUTTON'S NAME IS A NAME. `.btn` stamps its label in uppercase
+   app-wide, and uppercase is a label style — never a name, a value or
+   a button. `.md-new` and `.md-gear` already opted out of it; the two
+   buttons on the settings page had not, so they shipped as "USE IT"
+   and "ADD ROLE", the second of them wrapping onto two lines inside a
+   pill because the uppercase run is wider than the sentence is. */
 .md-new,
-.md-gear {
+.md-gear,
+.md-mark-addr .btn,
+.md-role-new .btn {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--ui-s-size);
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+  white-space: nowrap;
 }
 
 /* ============================================================
@@ -2064,14 +2287,23 @@
    the transform has no visible effect and the mono stamp is the
    sanctioned use.
    ============================================================ */
+/* A COUNT IS A VALUE, AND UPPERCASE IS A LABEL STYLE. `mono-label`
+   stamps its text in caps, which is right for ORGANISATION and
+   SETTINGS — those are captions naming a section — and wrong for
+   "810 boats across 42 series", which is a reading off the dealer's
+   own sheet in the dealer's own noun. `.md-dash-line` joined this
+   group for the same reason: "9 MODULES · 53 TABLES" was a figure
+   shouting. */
 .md-card-count,
 .md-idx-facts,
+.md-dash-line,
 .md-grp-trail {
   letter-spacing: 0;
   text-transform: none;
 }
 .md-card-count,
-.md-idx-facts {
+.md-idx-facts,
+.md-dash-line {
   font-variant-numeric: tabular-nums;
 }
 .md-stub .btn {
@@ -2239,7 +2471,7 @@
   color: var(--ink);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -2346,7 +2578,7 @@
   color: var(--ink);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -2700,15 +2932,6 @@
 
 /* -- the mark ------------------------------------------------ */
 
-/* The top line carries the mark alone. The count moved under the
-   name, where the module's own page already puts it, and the corner
-   it used to crowd is where the door goes. */
-.md-card-top {
-  justify-content: flex-start;
-  min-height: 28px;
-  padding-right: 32px;
-}
-
 /* THE DEALER'S OWN LOGO, in the box the kind symbol was drawn in, so
    a list of cards does not change shape as logos are added one at a
    time. `contain` rather than `cover`: a mark is a drawing and
@@ -2741,20 +2964,28 @@
   margin-top: 0;
 }
 
+/* THE FIGURE IS DARKER AND HEAVIER THAN ITS LABEL, which is the one
+   rule a table of numbers keeps: the entered data first, the word for
+   it second. `--ink-faint` on the label is 4.7:1 on the card's white
+   and this is metadata beside the thing it describes.
+
+   BOTH STEPS ARE TOKENS NOW. They were `12px` and `14px` literals —
+   two of the 878 in the app that bypass the scale — so they were the
+   only two figures on this page that did not grow with the window. */
 .md-card-stat {
   display: inline-flex;
   align-items: baseline;
   gap: 5px;
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   letter-spacing: 0;
   line-height: 1.35;
   color: var(--ink-faint);
 }
 .md-card-stat b {
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: var(--data-l-size);
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--data-l-track);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
@@ -2775,12 +3006,15 @@
   border: 1px solid var(--hairline-strong);
   border-radius: 999px;
   font-family: var(--font-ui);
-  font-size: 11.5px;
+  /* was an 11.5px literal, which is under the label step and does not
+     grow with the window; the token clamps 11 to 12 and clears the
+     floor at every width */
+  font-size: var(--ui-xs-size);
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
   color: var(--ink-soft);
-  background: var(--paper-sunken);
+  background: var(--paper-high);
 }
 
 /* -- fifteen modules ----------------------------------------- */
@@ -2825,7 +3059,7 @@
    designer strip rather than sitting beside it.
 
    IT IS THE INDEX'S TWIN, DELIBERATELY. Same well, same header, same
-   panel column, same 1180px measure — pressing SETTINGS and pressing
+   panel column, same `--measure` — pressing SETTINGS and pressing
    CATALOGUE must not feel like moving between two applications, and
    the header is the one thing on screen that does not move between
    them.
@@ -2835,8 +3069,22 @@
   height: 100%;
   overflow: auto;
   background: var(--paper);
-  padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) * 2);
+  padding: var(--sp-5) var(--gutter) calc(var(--sp-6) * 2);
   animation: fade-in var(--t-fast) var(--ease-draft) both;
+  /* the page's own split asks this box how wide it is, not the window */
+  container-type: inline-size;
+  container-name: md-set;
+}
+
+/* THE SETTINGS HEADER IS A STACK, NOT A SPREAD. The index's own head
+   is a title on the left and a search field on the right, and that is
+   right there because the field is a second thing you came to use.
+   This page's only companion control is the way out, and a way out
+   belongs above the name rather than 2,000px across from it. */
+.md-set-head {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
 }
 
 .md-set-eyebrow {
@@ -2865,7 +3113,7 @@
   color: var(--ink-soft);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft),
     color var(--t-fast) var(--ease-draft);
@@ -2887,13 +3135,66 @@
    designer keeps its own file and its own four panels, and gives up
    only its margin and its measure to the page that now holds it. */
 .md-set-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--section-gap);
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+/* THE WIDTH THE SPLIT STARTS AT, READ OFF THE CONTENT.
+
+   The right column holds the role grid, whose own rule refuses to
+   squeeze: a 220px role column plus nine verb columns at 44px is
+   616px before it starts scrolling sideways, and the capability strip
+   under it wants 3 × 280px = 840px to stay three across. 840 is the
+   figure that matters. The left column is 340px and the air between
+   is 40px, so the page is worth splitting at 1220 and not before —
+   under that the grid would scroll sideways to buy a column that only
+   holds a name field.
+
+   MEASURED AT 1220 AND MOVED TO 1180. At a 1280px window this page is
+   1,218.6px inside its gutters, which missed 1220 by under two pixels
+   and left the whole surface stacked — a 1,145px-wide text box for a
+   module called "Boats". At 1180 the same window splits into a 300px
+   left and an 852px right, and 852 still carries the capability strip
+   two across and the role grid without scrolling it. */
+@container md-set (min-width: 1180px) {
+  .md-set-body {
+    grid-template-columns: clamp(300px, 24%, 380px) minmax(0, 1fr);
+    gap: clamp(28px, 2.2vw, 52px);
+    align-items: start;
+  }
+
+  /* WHAT IT IS AND WHAT IT LOOKS LIKE STAY IN VIEW while somebody
+     works down the roles and the switches on the right, because every
+     one of those decisions is about the module named in this column.
+     The left is much the shorter of the two — 9 roles is 700px of
+     grid — so it never has to scroll inside itself. */
+  .md-set-aside {
+    position: sticky;
+    top: 0;
+  }
+}
+
+.md-set-aside,
+.md-set-main {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  max-width: 1180px;
-  margin: 0 auto;
+  min-width: 0;
 }
-.md-set-body > .md-design {
+
+/* A FIELD IS AS WIDE AS WHAT GOES IN IT, and the widest thing that
+   goes in either of these is a one-line description of about ninety
+   characters. The column caps them at 300px once the page splits;
+   this is what caps them under 1180, where the page is one stack and
+   a name field would otherwise run the full measure. */
+.md-set .md-field {
+  max-width: 52ch;
+}
+
+.md-set-main > .md-design {
   max-width: none;
   margin: 0;
   animation: none;
@@ -2911,10 +3212,12 @@
    4.26:1 and fails. */
 .md-set-note {
   margin: 0;
+  max-width: 68ch;
   font-size: var(--ui-s-size);
   letter-spacing: var(--ui-s-track);
   line-height: 1.6;
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 .md-set-note em {
   font-style: normal;
@@ -2989,7 +3292,7 @@
   color: var(--ink-soft);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     border-color var(--t-fast) var(--ease-draft),
     color var(--t-fast) var(--ease-draft);
 }
@@ -3044,6 +3347,8 @@
    wondering whether they have locked everybody out. */
 .md-set-state {
   margin: 0;
+  max-width: 84ch;
+  text-wrap: pretty;
   padding: var(--sp-3);
   border: 1px solid var(--hairline);
   border-left: 2px solid var(--ink);
@@ -3067,11 +3372,15 @@
 
 /* The empty state, in the panel. Four parts, in the dashboard's own
    order: eyebrow, what it IS, what you already have, one action. */
+/* IT DOES NOT GROW TO FILL THE PANEL. An empty state is a sentence,
+   a count and one control — around 500px of content — and stretching
+   its box to 1,840px only makes the emptiness bigger. */
 .md-set-void {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-3);
+  max-width: 640px;
   padding: var(--sp-4);
   background: var(--paper-high);
   border: 1px solid var(--hairline);
@@ -3205,7 +3514,7 @@
   background: var(--paper-high);
   cursor: pointer;
   transition:
-    var(--press-fx),
+    transform var(--t-press) var(--ease-press),
     background var(--t-fast) var(--ease-draft),
     border-color var(--t-fast) var(--ease-draft);
 }
@@ -3244,6 +3553,10 @@
   gap: var(--sp-2);
   width: 100%;
   max-width: 420px;
+}
+.md-role-new .btn,
+.md-mark-addr .btn {
+  flex: 0 0 auto;
 }
 .md-role-new .field-input {
   min-width: 0;
@@ -3367,12 +3680,20 @@
    would be telling the same lie in the other direction.
    ============================================================ */
 
+/* IT IS A COLUMN IN THE RAIL NOW, not a rule under the last row of
+   cards. On nine modules that rule was 1,200px below the button that
+   makes the tenth — the two things you may do to this page were at
+   opposite ends of it — and it was the last hard 1080px cap on this
+   surface. Stacked rather than side by side because the rail is 244px
+   wide: a 128px button beside a two-line sentence in that column is
+   two ragged columns of nothing. */
 .md-dash-order {
   display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  max-width: 1080px;
-  margin: var(--sp-5) auto 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  width: 100%;
+  margin: 0;
   padding-top: var(--sp-4);
   border-top: 1px solid var(--hairline);
 }
@@ -3382,7 +3703,7 @@
 .md-dash-order .btn {
   flex: 0 0 auto;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--ui-s-size);
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;

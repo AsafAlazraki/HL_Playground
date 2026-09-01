@@ -50,6 +50,7 @@ redesign reported false catastrophes by skipping one of those.
 | doc | what it is |
 |---|---|
 | `docs/specs/DESIGN_PRINCIPLES.md` | how to build a screen. Start here |
+| `docs/specs/RESPONSIVE.md` | how a screen answers the window. The eleventh rule |
 | `docs/plan/MODULE_SYSTEM.md` | what the app is becoming — modules, capabilities |
 | `docs/plan/UX_PASS.md` | the process work: undo, search, import, refusals |
 | `docs/plan/REDESIGN_ROLLOUT.md` | how the re-skin was done, and what is left |

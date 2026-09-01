@@ -83,6 +83,7 @@ import {
   recommendationSay,
   uniquenessSay,
   verdictSay,
+  type Standing,
 } from './discoverSay'
 import { useDiscovery } from './useDiscovery'
 import './discovery.css'
@@ -92,6 +93,35 @@ import './discovery.css'
  *  that the page under it is still reachable — and the count of what
  *  is folded away is always printed beside the control. */
 const FIRST_FEW = 8
+
+/* ---------------------------------------------------------- */
+/* Drawing the two figures                                     */
+/* ---------------------------------------------------------- */
+
+/** A share of one, as a CSS width.
+ *
+ *  TWO PIXELS IS THE FLOOR, and it is not decoration. The rule this
+ *  whole band exists to find leaves between 0.9 % and 7.8 % of the
+ *  catalogue standing; at 0.9 % of a 200px track that is under two
+ *  device pixels, and a bar that rounds an honest small number away
+ *  to nothing tells the reader the opposite of what was measured. */
+function barWidth(share: number): string {
+  if (!Number.isFinite(share) || share <= 0) return '0px'
+  return `max(2px, ${Math.min(100, share * 100).toFixed(2)}%)`
+}
+
+/** THE DISCRIMINATION VERDICT, IN THREE WORDS, so it can be scanned
+ *  down a column of cards. The sentence under the bar states the same
+ *  finding at length; this is the half a person reads first, and it is
+ *  the distinction the band is for — a rule that holds 581 of 581
+ *  times and leaves 0.9 % standing is worth having, and one that holds
+ *  100 % of the time and leaves 97.7 % standing is a floor. */
+const STANDING_SAY: Record<Standing, string> = {
+  selects: 'Narrows the list',
+  floor: 'A floor, not a selector',
+  arithmetic: 'Arithmetic, not a rule',
+  'not-measured': 'Narrows nothing that can be counted',
+}
 
 export function DiscoveryPanel(): ReactElement | null {
   const entities = useProjectStore((s) => s.entities)
@@ -203,10 +233,16 @@ export function DiscoveryPanel(): ReactElement | null {
         holds, how much of your catalogue it still leaves standing, and which rows disagree,
         named, so you can check one rather than take it on trust.
       </p>
-      {/* THE LINE, FIRST AND IN PROSE. Everything below is OBSERVED. */}
-      <p className="dx-line">
-        A pattern is not a rule your business has stated. Everything here may <b>warn</b> you
-        about a row, and none of it may remove one from a list.
+      {/* THE LINE, FIRST AND IN PROSE. Everything below is OBSERVED.
+          The stamp is the same element the asserted ledger carries, in
+          its other state, so the two bands are told apart by one device
+          rather than by remembering which paragraph said what. */}
+      <p className="cn-evidence is-observed">
+        <span className="cn-evidence-k">Observed</span>
+        <span className="cn-evidence-say">
+          measured in your values, not stated by your business. Everything here may{' '}
+          <b>warn</b> about a row and none of it may remove one from a list.
+        </span>
       </p>
 
       {phase === 'working' && (
@@ -486,18 +522,49 @@ function CandidateCard({
       {/* THE TWO FIGURES, SIDE BY SIDE. This pair is the whole
           argument of the screen and it is drawn as a pair for that
           reason — one above the other, or one without the other, and
-          the F8-versus-F9 lesson is gone. */}
+          the F8-versus-F9 lesson is gone.
+
+          AND NOW THE PAIR IS DRAWN, not only written. The two
+          sentences are correct and they cannot be compared across nine
+          cards at a glance, which is exactly what a person has to do to
+          tell a rule from a floor. Two tracks on one baseline do it in
+          one look: a rule that is worth having has a LONG hold bar and
+          a SHORT leaves bar. A floor has two long bars. The bars carry
+          no colour and no meaning the words do not already carry —
+          they are the same reading out of `figuresFor`, so they cannot
+          drift from the sentence beside them. */}
       <div className="dx-figs">
         <div className="dx-fig">
           <span className="dx-fig-k">Holds</span>
           <b className="dx-fig-n">{f.holds}</b>
+          <span className="dx-fig-track" aria-hidden="true">
+            <span className="dx-fig-fill" style={{ width: barWidth(f.rate) }} />
+          </span>
           <span className="dx-fig-say">{f.holdsSay}</span>
         </div>
         <div className="dx-fig">
           <span className="dx-fig-k">Leaves standing</span>
           <b className="dx-fig-n">{f.leaves}</b>
+          <span className="dx-fig-track" aria-hidden="true">
+            {/* the span between the narrowest and the widest subject,
+                because a mean on its own hides a rule that picks hard
+                for one hull and not at all for the next */}
+            {f.leastLeft !== null && f.mostLeft !== null && (
+              <span
+                className="dx-fig-range"
+                style={{
+                  left: barWidth(f.leastLeft),
+                  width: barWidth(Math.max(0, f.mostLeft - f.leastLeft)),
+                }}
+              />
+            )}
+            {f.left !== null && (
+              <span className="dx-fig-fill" style={{ width: barWidth(f.left) }} />
+            )}
+          </span>
           <span className="dx-fig-say">{f.leavesSay}</span>
         </div>
+        <p className={`dx-standing is-${f.standing}`}>{STANDING_SAY[f.standing]}</p>
       </div>
 
       <p className="dx-because">

@@ -290,7 +290,15 @@ export function RulesPane(): ReactElement {
         {noColumns ? (
           <NoColumns />
         ) : (
-          <>
+          /* THE BANDS, IN ONE BOX SO THE HEAD CAN SIT BESIDE THEM.
+             Above `--cn-split` the sheet is two columns: the head —
+             title, lede, and the four measured figures — takes a rail
+             of its own and stays put, and every band scrolls past it.
+             That is DESIGN rule 4: a page with more room than it needs
+             SPLITS, it does not stretch a 62ch paragraph to 2000px.
+             Below the split this element is a plain block and the page
+             is exactly the single column it was. */
+          <div className="cn-bands">
             {/* 1 · WHAT THE PRICE FILE ASSERTS */}
             <RulesLedger liveIds={liveIds} live={live} />
 
@@ -395,7 +403,7 @@ export function RulesPane(): ReactElement {
                 cannot tell a decision from a gap, and both guesses cost
                 us. */}
             <LeftOutList />
-          </>
+          </div>
         )}
       </div>
     </section>

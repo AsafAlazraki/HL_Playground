@@ -959,9 +959,31 @@ export function Grid(props: GridProps): JSX.Element {
           setScrollLeft((prev) => (Math.abs(prev - l) < 1 ? prev : l))
         }}
       >
-        <div className="tb-sheet" style={{ width: sheetW }}>
+        {/* THE DEPTH LADDER, AND WHY IT IS TWO ATTRIBUTES AND NOT TWO
+            MORE STICKY ELEMENTS. A frozen header with no elevation
+            lets rows slice into it: at rest there is nothing under it
+            to lift off, and the moment the sheet moves there are 588.
+            So the lift is a fact about the SCROLL, and `scrollTop` /
+            `scrollLeft` are already state on this component for the
+            row and column windows — these two flags cost one class
+            recalculation on the frame the sheet leaves the top or the
+            left edge, and nothing on any frame after it.
+
+            They are set HERE, on the two elements that already exist
+            and are already sticky — the head stack (one per sheet)
+            and the sheet itself (one per sheet) — because a register
+            carries two `position: sticky` per RENDERED ROW already
+            (the row-number gutter and the frozen name column) and
+            that count, times the rows on screen, is what took a
+            canvas from 54 fps to 12. A third is not affordable and is
+            not needed: one flag on one ancestor styles every pin. */}
+        <div
+          className="tb-sheet"
+          style={{ width: sheetW }}
+          {...(scrollLeft > 0 ? { 'data-xscroll': '' } : {})}
+        >
           {/* -- frozen header: bands, then headings -------------- */}
-          <div className="tb-headstack">
+          <div className="tb-headstack" {...(scrollTop > 0 ? { 'data-lift': '' } : {})}>
             {banded && (
               <div
                 className="tb-bands"
@@ -1103,6 +1125,9 @@ export function Grid(props: GridProps): JSX.Element {
                       (dir ? ' tb-th-sorted' : '') +
                       (selectedCols.has(i) ? ' tb-th-selected' : '') +
                       (f.type === 'formula' ? ' tb-th-fx' : '') +
+                      /* a number column's name turns to face its own
+                         figures — see the note in table.css §3 */
+                      (f.type === 'number' ? ' tb-th-num' : '') +
                       (system ? ' tb-th-sys' : '') +
                       (slot.section ? ' tb-th-banded' : '') +
                       (pinned ? ' tb-th-pin' : '') +

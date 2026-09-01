@@ -137,6 +137,23 @@ export function RulesLedger({ liveIds, live }: RulesLedgerProps): ReactElement |
 
   return (
     <section className="cn-ledger" aria-label="What this price file asserts">
+      {/* WHAT KIND OF EVIDENCE EVERYTHING BELOW RESTS ON, said once and
+          in the same element the discovered band carries in its other
+          state. The distinction is the most valuable thing on this
+          page and it was only ever available in prose, three
+          paragraphs apart: ASSERTED rules are stated by a cell, a
+          formula, a header or a divider, and they may filter a list.
+          OBSERVED rules were measured in the values, and they may warn
+          and never prune. One device, two states, so a reader can tell
+          which band they are in without re-reading the lede. */}
+      <p className="cn-evidence is-asserted">
+        <span className="cn-evidence-k">Asserted</span>
+        <span className="cn-evidence-say">
+          a cell, a formula, a header or a divider in your price file states each one, and
+          the citation is printed under it. A rule stated this way may narrow a list.
+        </span>
+      </p>
+
       {grouped.rows.map(({ group, seeds }) => (
         <section key={group.id} className="cn-grp" aria-label={group.name}>
           <header className="cn-grp-head">

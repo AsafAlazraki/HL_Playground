@@ -6,7 +6,7 @@
    nothing: no rule here reaches outside `.fo-root`.
 
    THE GEOMETRY IS THE CONTRACT'S. Page padding
-   `--sp-5 --sp-6 --sp-6`, content capped at 1180px and centred,
+   `--sp-5 --sp-6 --sp-6`, content capped at `--measure` and centred,
    cards on `repeat(auto-fill, minmax(min(320px, 100%), 1fr))` with
    `--sp-4` between them, 10px radius, hairline border, a 3px kind
    rail on the left edge, `--ec1` at rest. Every figure is
@@ -28,7 +28,7 @@
 }
 
 .fo-page {
-  max-width: 1180px;
+  max-width: var(--measure);
   margin: 0 auto;
   padding: var(--sp-5) var(--sp-6) var(--sp-6);
 }
@@ -829,4 +829,163 @@
   font-size: 12px;
   line-height: 1.5;
   color: var(--ink-soft);
+}
+
+/* ============================================================
+   FITMENT AT WIDTH — what a 2560px window is actually for
+
+   WHAT WAS MEASURED BEFORE ANY OF THIS. There was not one width
+   breakpoint in this file. `.fo-page` was capped at a hard 1180px
+   (now `--measure`), and every block inside it was written for that
+   one width, so the page had exactly one opinion:
+
+     · the head stacked a 68ch lede over a four-figure ledger on
+       `repeat(auto-fit, minmax(190px, 1fr))`. On a 2304px page that
+       is four tracks of 570px each carrying a 22px number — the
+       summary of the whole screen, drawn as four lonely digits on a
+       line 570px apart.
+     · the fans were `column-width: 336px` at every width, so a
+       2304px page drew six 336px columns of cards whatever the
+       cards held.
+     · an open shortlist took the full row and `.fo-list-row` was a
+       wrapping flex, so a boat's name took 1800px and the heading
+       that PROVES the rule picked it trailed off to the right, out
+       of any column a reader could run their eye down.
+
+   WHAT IT DOES NOW. The head splits — the sentence keeps a
+   sentence's measure and the four figures take a block of their own
+   beside it. The fans get a card width that grows with the page
+   instead of a fixed 336. The shortlist becomes a real table, three
+   aligned columns, because it IS a table: a name, the cell the rule
+   read, and where that cell lives.
+
+   CONTAINER AND NOT MEDIA. `FanOut` is mounted by `FlowStage` and is
+   exported for a module page to draw too, so it answers to the box
+   it is in. Rule 5.
+   ============================================================ */
+
+.fo-root {
+  container-type: inline-size;
+  container-name: fopage;
+}
+
+/* THE CAP. `--measure` reaches 2304px on a 2560px window and this
+   page is a wall of cards, so most of that is usable — but not all
+   of it: past 2000px the fans draw a seventh column and the head's
+   lede is a ninth of the width of its own row. It stops there and
+   centres. Rule 4 — you do not have to fill the whole screen. */
+.fo-page {
+  max-width: min(var(--measure), 2000px);
+}
+
+@container fopage (min-width: 1180px) {
+  /* THE HEAD IS TWO THINGS AND THEY STOP QUEUEING.
+     Left: what this page is, at a sentence's measure. Right: the
+     four figures it is counted from, two by two, where they read as
+     one block instead of a stretched row. The hairline that ran
+     under the ledger turns ninety degrees and separates them. */
+  .fo-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 30cqw);
+    column-gap: var(--section-gap);
+    align-items: start;
+  }
+  .fo-eyebrow,
+  .fo-title,
+  .fo-lede {
+    grid-column: 1;
+  }
+  .fo-ledger {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    margin: 0;
+    padding: 0 0 0 var(--section-gap);
+    border-top: none;
+    border-left: 1px solid var(--hairline);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* SPACING TIERS: 2px inside a figure, --sp-4/--sp-5 between
+       them, --section-gap to the sentence beside. */
+    gap: var(--sp-5) var(--sp-4);
+  }
+
+  /* A CARD WIDTH THAT GROWS WITH THE PAGE. The biggest fan carries
+     five relationships and two of them split across two catalogues;
+     at 336px its longest line — "on 2,177 of 2,519 Motor pairings ·
+     52 of 622 Rigging Kits" — wraps to three. 22cqw hands that back
+     without ever letting a card become a page. */
+  .fo-fans {
+    column-width: clamp(336px, 22cqw, 460px);
+    column-gap: var(--sp-5);
+  }
+
+  /* auto-FIT, not auto-fill. There are five roles and this grid made
+     seven tracks, so five cards sat left with two columns of white
+     beside them and the block read as a mistake. */
+  .fo-roles {
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    gap: var(--sp-4);
+  }
+}
+
+/* THE SHORTLIST IS A TABLE, SO IT IS SET AS ONE.
+   Rule 9: text left, one column each, and the evidence column lines
+   up down the list so a reader can check ten verdicts by running
+   their eye down rather than by re-finding the heading in each row.
+   1000px is where three columns of the real values — a Highfield
+   variant name, a series banner, a trailer catalogue name — stop
+   crowding each other. */
+@container fopage (min-width: 1000px) {
+  .fo-list-row {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2.4fr) minmax(0, 1.6fr);
+    align-items: baseline;
+    gap: var(--sp-3);
+  }
+  .fo-list-name,
+  .fo-list-banner,
+  .fo-list-table {
+    flex: none;
+  }
+}
+
+/* ============================================================
+   TYPE — THE LITERALS BECOME STEPS
+
+   Three sizes on this page were px literals, which is how 79 % of
+   the app's font-size declarations were written and why the type
+   scale was largely bypassed. Each takes the step whose 1440px value
+   is the number that was there, so nothing moves at the tuned width
+   and all three grow together above it. Rule 6: the step travels as
+   a set, and the tracking is in `em` so it stays proportional.
+   ============================================================ */
+
+.fo-title {
+  /* 22px at 1440, 25px at 2560 — the page title on a data screen,
+     under the 28px cap established practice puts on one */
+  font-size: var(--display-s-size);
+  line-height: var(--display-s-lead);
+  letter-spacing: var(--display-s-track);
+  text-wrap: balance;
+}
+
+.fo-band-title {
+  /* 17px at 1440, 20px at 2560 */
+  font-size: var(--ui-xl-size);
+  text-wrap: balance;
+}
+
+.fo-stat-n {
+  /* 22px at 1440, 30px at 2560. This is DATA, not a heading — the
+     four figures the whole page is counted from — so it takes the
+     data ramp and keeps its tabular mono. */
+  font-size: var(--data-xl-size);
+}
+
+.fo-lede,
+.fo-band-lede,
+.fo-band-note,
+.fo-tail,
+.fo-role-say,
+.fo-row-say {
+  text-wrap: pretty;
 }

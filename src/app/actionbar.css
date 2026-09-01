@@ -59,7 +59,7 @@
   display: flex;
   align-items: center;
   gap: 0;
-  height: 40px;
+  height: var(--ab-height);
   max-width: calc(100vw - 24px);
   padding: 0 6px;
   border: 1px solid var(--hairline);
@@ -93,10 +93,18 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 28px;
+  /* 0.7 of the bar, which is the contract's 28-in-40 */
+  height: var(--ab-control);
   padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  /* CONCENTRIC, NOT GUESSED. A child radius inside a rounded parent
+     is the parent's radius minus the padding between them, or the
+     two curves do not share a centre and the control reads as a
+     sticker sitting on the bar rather than a part of it. The bar is
+     18px with a 28-in-40 control, so the gap is 6 and the control
+     is 12 — it was 7, which is neither the parent's radius nor
+     concentric with it. */
+  border-radius: calc(18px - (var(--ab-height) - var(--ab-control)) / 2);
   background: transparent;
   color: var(--ink-soft);
   font-family: var(--font-ui);
@@ -600,12 +608,19 @@
    says never.
    ============================================================ */
 .shell-root.has-acts .shell-stage {
-  /* 22 off the bottom + 60 of dock + 10 of gap + 40 of bar = 132, and
+  /* DERIVED NOW, NOT TYPED — see --acts-clear in styles/response.css.
+     Three of the four numbers below started moving when the dock
+     began answering the window, and a hard 132 would have put the
+     bar's bottom edge back over the register's horizontal
+     scrollbar on exactly the large screens this is demoed on.
+     The arithmetic still resolves to 132 at the tuned baseline.
+
+     22 off the bottom + 60 of dock + 10 of gap + 40 of bar = 132, and
      it is the WHOLE 132 rather than the dock's own 78-for-82. The
      dock's 4px of overlap lands on a page's bottom margin and has
      never cost anything; this bar's bottom edge would land on the
      register's horizontal scrollbar, which is a control. "It must not
      cover anything interactive" is a requirement, so the page stops
      exactly where the bar starts. */
-  inset: 0 0 132px 0;
+  inset: 0 0 var(--acts-clear, 132px) 0;
 }

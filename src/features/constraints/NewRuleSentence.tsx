@@ -348,36 +348,55 @@ export function NewRuleSentence({
         )
       )}
 
-      <RuleSentence
-        constraint={draft}
-        editable
-        big
-        onChange={setDraft}
-        conceptKeys={conceptKeys}
-      />
+      {/* THE SENTENCE AND WHAT IT WOULD DO, SIDE BY SIDE.
+          A rule is a claim about the whole catalogue, and until this
+          split the reading of that claim sat below the fold of a
+          2000px-wide column of form fields — you wrote the words, then
+          scrolled to find out what they cost. Above `--cn-split` the
+          words take a column suited to a sentence and the measurement
+          takes a rail beside them, so every dropdown you change moves a
+          bar you are already looking at.
 
-      <ColumnNotes concepts={preview.concepts} />
+          THE FOOT IS OUTSIDE THE SPLIT ON PURPOSE. Narrow, this reads
+          in exactly the order it always did — sentence, columns,
+          because, measurement, Add — and the button that commits stays
+          the last thing on the card at every width. */}
+      <div className="cn-new-split">
+        <div className="cn-new-work">
+          <RuleSentence
+            constraint={draft}
+            editable
+            big
+            onChange={setDraft}
+            conceptKeys={conceptKeys}
+          />
 
-      <p className="cn-because is-editing">
-        <label className="cn-because-kw" htmlFor="cn-new-because">
-          because
-        </label>
-        <input
-          id="cn-new-because"
-          className="cn-because-input"
-          value={draft.because}
-          placeholder={BECAUSE_PLACEHOLDER}
-          onChange={(e) => setDraft({ ...draft, because: e.target.value })}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              add()
-            }
-          }}
-        />
-      </p>
+          <ColumnNotes concepts={preview.concepts} />
 
-      <ConsequenceMeter preview={preview} />
+          <p className="cn-because is-editing">
+            <label className="cn-because-kw" htmlFor="cn-new-because">
+              because
+            </label>
+            <input
+              id="cn-new-because"
+              className="cn-because-input"
+              value={draft.because}
+              placeholder={BECAUSE_PLACEHOLDER}
+              onChange={(e) => setDraft({ ...draft, because: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  add()
+                }
+              }}
+            />
+          </p>
+        </div>
+
+        <aside className="cn-new-effect" aria-label="What this rule would do">
+          <ConsequenceMeter preview={preview} />
+        </aside>
+      </div>
 
       <div className="cn-new-foot">
         <button

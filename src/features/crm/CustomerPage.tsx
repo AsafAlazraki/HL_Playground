@@ -87,103 +87,119 @@ export function CustomerPage({
 
   return (
     <div className="cx-root">
-      <header className="cx-one-head">
-        <div className="cx-one-id">
-          <h1 className="cx-one-name">
-            {read.name === '' ? <span className="cx-blank">no name yet</span> : read.name}
-          </h1>
-          {read.contact.length > 0 ? (
-            <p className="cx-one-contact">{read.contact.join('  ·  ')}</p>
-          ) : null}
-          <p className="mono-label cx-one-facts">
-            {theirs.length === 0
-              ? 'No quotes yet'
-              : `${theirs.length} ${theirs.length === 1 ? 'quote' : 'quotes'}`}
-          </p>
+      <div className="cx-page cx-page--one">
+        <header className="cx-one-head">
+          <div className="cx-one-id">
+            <h1 className="cx-one-name">
+              {read.name === '' ? (
+                <span className="cx-blank">no name yet</span>
+              ) : (
+                read.name
+              )}
+            </h1>
+            {read.contact.length > 0 ? (
+              <p className="cx-one-contact">{read.contact.join('  ·  ')}</p>
+            ) : null}
+            <p className="mono-label cx-one-facts">
+              {theirs.length === 0
+                ? 'No quotes yet'
+                : `${theirs.length} ${theirs.length === 1 ? 'quote' : 'quotes'}`}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-ghost cx-one-drop"
+            onClick={() => {
+              removeCustomer(row.id)
+              onRemoved?.()
+            }}
+          >
+            <Trash size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+            Remove
+          </button>
+        </header>
+
+        {/* TWO GROUPS, SIDE BY SIDE WHEN THERE IS ROOM. What they are
+            is fixed — a form of the register's own columns, and the
+            documents written to this person — and the only thing the
+            width changes is whether the second sits below the first or
+            beside it. See `.cx-body` in crm.css. */}
+        <div className="cx-body">
+          {/* -- their details, from the table's own columns -------- */}
+          <section className="cx-form" aria-label="Details">
+            <p className="mono-label cx-form-head">Their details</p>
+            {customerFormFields(table).map((field) => (
+              <CustomerCell
+                key={field.id}
+                table={table}
+                row={row}
+                field={field}
+                isName={field.id === nameField?.id}
+              />
+            ))}
+          </section>
+
+          {/* -- the history with them ------------------------------ */}
+          <section className="cx-hist" aria-label="Quotes">
+            <p className="mono-label cx-hist-head">Quotes to them</p>
+
+            {theirs.length === 0 ? (
+              <p className="cx-hist-none">
+                Nothing has been quoted to them yet. A quote is written from the row you
+                are selling — open a table, press <em>Fitment</em>, pick the one you are
+                selling and press <em>Quote this one</em>, then choose this customer at
+                the top of the quote.
+              </p>
+            ) : (
+              <ul className="cx-hist-list">
+                {theirs.map((q) => {
+                  const totals = quoteTotals(q)
+                  /* THE NAME THE DOCUMENT REALLY CARRIES. Said only when
+                     it differs from the register today, because that is
+                     the only time it tells anybody anything — and when it
+                     does, it is the freeze working, not a fault. */
+                  const as = q.customer.name.trim()
+                  return (
+                    <li key={q.id} className="cx-hist-row">
+                      <button
+                        type="button"
+                        className="cx-hist-open"
+                        disabled={!onOpenQuote}
+                        onClick={() => onOpenQuote?.(q.id)}
+                        aria-label={`Quote ${q.reference} — ${q.subjectLabel}`}
+                      >
+                        <span className="mono-label cx-hist-when">
+                          {localDay(q.createdAt)}
+                        </span>
+                        <span className="cx-hist-what">
+                          {q.subjectLabel}
+                          {as !== '' && as !== read.name ? (
+                            <span className="cx-hist-as"> quoted as {as}</span>
+                          ) : null}
+                        </span>
+                        <span className="mono-label cx-hist-state">
+                          {q.state === 'issued' ? 'Given' : 'Draft'}
+                          {q.supersedesId ? ' · new version' : ''}
+                        </span>
+                        <span className="cx-num cx-hist-total">{money(totals.total)}</span>
+                        {onOpenQuote ? (
+                          <ArrowSquareOut
+                            size={ICON_SIZE.small}
+                            weight="light"
+                            aria-hidden="true"
+                            className="cx-hist-go"
+                          />
+                        ) : null}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </section>
         </div>
-
-        <button
-          type="button"
-          className="btn btn-ghost cx-one-drop"
-          onClick={() => {
-            removeCustomer(row.id)
-            onRemoved?.()
-          }}
-        >
-          <Trash size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-          Remove
-        </button>
-      </header>
-
-      {/* -- their details, from the table's own columns ---------- */}
-      <section className="cx-form" aria-label="Details">
-        {customerFormFields(table).map((field) => (
-          <CustomerCell
-            key={field.id}
-            table={table}
-            row={row}
-            field={field}
-            isName={field.id === nameField?.id}
-          />
-        ))}
-      </section>
-
-      {/* -- the history with them -------------------------------- */}
-      <section className="cx-hist" aria-label="Quotes">
-        <p className="mono-label cx-hist-head">Quotes to them</p>
-
-        {theirs.length === 0 ? (
-          <p className="cx-hist-none">
-            Nothing has been quoted to them yet. A quote is written from the row you are
-            selling — open a table, press <em>Fitment</em>, pick the one you are selling
-            and press <em>Quote this one</em>, then choose this customer at the top of
-            the quote.
-          </p>
-        ) : (
-          <ul className="cx-hist-list">
-            {theirs.map((q) => {
-              const totals = quoteTotals(q)
-              /* THE NAME THE DOCUMENT REALLY CARRIES. Said only when
-                 it differs from the register today, because that is
-                 the only time it tells anybody anything — and when it
-                 does, it is the freeze working, not a fault. */
-              const as = q.customer.name.trim()
-              return (
-                <li key={q.id} className="cx-hist-row">
-                  <button
-                    type="button"
-                    className="cx-hist-open"
-                    disabled={!onOpenQuote}
-                    onClick={() => onOpenQuote?.(q.id)}
-                    aria-label={`Quote ${q.reference} — ${q.subjectLabel}`}
-                  >
-                    <span className="mono-label cx-hist-when">{localDay(q.createdAt)}</span>
-                    <span className="cx-hist-what">
-                      {q.subjectLabel}
-                      {as !== '' && as !== read.name ? (
-                        <span className="cx-hist-as"> quoted as {as}</span>
-                      ) : null}
-                    </span>
-                    <span className="mono-label cx-hist-state">
-                      {q.state === 'issued' ? 'Given' : 'Draft'}
-                      {q.supersedesId ? ' · new version' : ''}
-                    </span>
-                    <span className="cx-num cx-hist-total">{money(totals.total)}</span>
-                    {onOpenQuote ? (
-                      <ArrowSquareOut
-                        size={ICON_SIZE.small}
-                        weight="light"
-                        aria-hidden="true"
-                        className="cx-hist-go"
-                      />
-                    ) : null}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
+      </div>
     </div>
   )
 }

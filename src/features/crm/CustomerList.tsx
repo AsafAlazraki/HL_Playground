@@ -145,95 +145,120 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
 
   return (
     <div className="cx-root">
-      <header className="cx-head">
-        <div className="cx-head-id">
-          <h1 className="cx-head-name">{table.name}</h1>
-          {table.description ? (
-            <p className="cx-head-desc">{table.description}</p>
-          ) : null}
-          <p className="mono-label cx-head-facts">
-            {people.length} {people.length === 1 ? 'customer' : 'customers'}
-            {people.length > 0 ? ` · ${withQuotes} quoted` : ''}
-          </p>
-        </div>
+      {/* THE PAGE IS A GRID OF TWO TRACKS, and on a wide screen the
+          head is the first of them rather than a banner over the
+          second — see `.cx-page--register` in crm.css for the
+          measurement and the reason. */}
+      <div className="cx-page cx-page--register">
+        <header className="cx-head">
+          <div className="cx-head-id">
+            <h1 className="cx-head-name">{table.name}</h1>
+            {table.description ? (
+              <p className="cx-head-desc">{table.description}</p>
+            ) : null}
+            <p className="mono-label cx-head-facts">
+              {people.length} {people.length === 1 ? 'customer' : 'customers'}
+              {people.length > 0 ? ` · ${withQuotes} quoted` : ''}
+            </p>
+          </div>
 
-        <div className="cx-head-acts">
-          {people.length > 0 ? (
-            <div className="cx-find">
-              <span className="cx-find-mark" aria-hidden="true">
-                <MagnifyingGlass size={ICON_SIZE.small} weight="light" />
-              </span>
-              <input
-                className="field-input cx-find-input"
-                value={find}
-                placeholder="Find a customer"
-                aria-label="Find a customer"
-                spellCheck={false}
-                onChange={(e) => setFind(e.target.value)}
-              />
+          <div className="cx-head-acts">
+            {people.length > 0 ? (
+              <div className="cx-find">
+                <span className="cx-find-mark" aria-hidden="true">
+                  <MagnifyingGlass size={ICON_SIZE.small} weight="light" />
+                </span>
+                <input
+                  className="field-input cx-find-input"
+                  value={find}
+                  placeholder="Find a customer"
+                  aria-label="Find a customer"
+                  spellCheck={false}
+                  onChange={(e) => setFind(e.target.value)}
+                />
+              </div>
+            ) : null}
+            <button
+              type="button"
+              className="btn btn-primary cx-new"
+              onClick={() => {
+                const row = addCustomer()
+                if (row) onOpen(row.id)
+              }}
+            >
+              <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+              New customer
+            </button>
+          </div>
+        </header>
+
+        <div className="cx-main">
+          {people.length === 0 ? (
+            <div className="cx-empty">
+              <span className="mono-label cx-empty-eyebrow">Nobody in it yet</span>
+              <p className="cx-empty-say">
+                The register is here and empty. Add somebody now, or address a quote to
+                a name and file them from the quote itself — either way lands in this
+                table.
+              </p>
+              <p className="cx-empty-count">
+                You have{' '}
+                <strong>
+                  {quotes.length} {quotes.length === 1 ? 'quote' : 'quotes'}
+                </strong>{' '}
+                and no customers.
+              </p>
             </div>
-          ) : null}
-          <button
-            type="button"
-            className="btn btn-primary cx-new"
-            onClick={() => {
-              const row = addCustomer()
-              if (row) onOpen(row.id)
-            }}
-          >
-            <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-            New customer
-          </button>
+          ) : shown.length === 0 ? (
+            <p className="cx-none">Nothing matches “{find.trim()}”.</p>
+          ) : (
+            /* THE CARD IS THE TABLE. The captions are a row of the same
+               grid the rows use, drawn once at the top — a <ul> may only
+               hold <li>, so they cannot live inside the list itself. */
+            <div className="cx-table">
+              <div className="cx-cols" aria-hidden="true">
+                <span className="mono-label cx-col cx-col--name">Customer</span>
+                <span className="mono-label cx-col cx-col--contact">Contact</span>
+                <span className="mono-label cx-col cx-col--when">Last quote</span>
+                <span className="mono-label cx-col cx-col--count">Quotes</span>
+              </div>
+              <ul className="cx-rows">
+                {shown.map((c) => {
+                  const act = activity.get(c.rowId)
+                  return (
+                    <li
+                      key={c.rowId}
+                      className={`cx-row${openId === c.rowId ? ' is-open' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        className="cx-row-open"
+                        onClick={() => onOpen(c.rowId)}
+                        aria-label={c.name === '' ? 'A customer with no name yet' : c.name}
+                      >
+                        <span className="cx-row-name">
+                          {c.name === '' ? (
+                            <span className="cx-blank">no name yet</span>
+                          ) : (
+                            c.name
+                          )}
+                        </span>
+                        <span className="cx-row-contact">{c.contact.join('  ·  ')}</span>
+                        <span className="mono-label cx-row-when">{act?.last ?? ''}</span>
+                        <span className="cx-num cx-row-count">
+                          {act
+                            ? `${act.quotes} ${act.quotes === 1 ? 'quote' : 'quotes'}`
+                            : '—'}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
         </div>
-      </header>
-
-      {people.length === 0 ? (
-        <div className="cx-empty">
-          <span className="mono-label cx-empty-eyebrow">Nobody in it yet</span>
-          <p className="cx-empty-say">
-            The register is here and empty. Add somebody now, or address a quote to a
-            name and file them from the quote itself — either way lands in this table.
-          </p>
-          <p className="cx-empty-count">
-            You have{' '}
-            <strong>
-              {quotes.length} {quotes.length === 1 ? 'quote' : 'quotes'}
-            </strong>{' '}
-            and no customers.
-          </p>
-        </div>
-      ) : shown.length === 0 ? (
-        <p className="cx-none">Nothing matches “{find.trim()}”.</p>
-      ) : (
-        <ul className="cx-rows">
-          {shown.map((c) => {
-            const act = activity.get(c.rowId)
-            return (
-              <li key={c.rowId} className={`cx-row${openId === c.rowId ? ' is-open' : ''}`}>
-                <button
-                  type="button"
-                  className="cx-row-open"
-                  onClick={() => onOpen(c.rowId)}
-                  aria-label={c.name === '' ? 'A customer with no name yet' : c.name}
-                >
-                  <span className="cx-row-name">
-                    {c.name === '' ? (
-                      <span className="cx-blank">no name yet</span>
-                    ) : (
-                      c.name
-                    )}
-                  </span>
-                  <span className="cx-row-contact">{c.contact.join('  ·  ')}</span>
-                  <span className="mono-label cx-row-when">{act?.last ?? ''}</span>
-                  <span className="cx-num cx-row-count">
-                    {act ? `${act.quotes} ${act.quotes === 1 ? 'quote' : 'quotes'}` : '—'}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+      </div>
     </div>
   )
 }

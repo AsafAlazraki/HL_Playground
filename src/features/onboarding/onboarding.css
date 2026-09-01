@@ -765,3 +765,419 @@
   text-transform: none;
   font-variant-numeric: tabular-nums;
 }
+
+/* ============================================================
+   THE FIRST SCREEN, ON A REAL MONITOR — added with the fluid layer.
+
+   Measured at 1728x1080: the name card drew 345px wide and sat
+   alone in the middle of the window, and the industry step put
+   four cards in a 840px column with `Back` floating far to their
+   left. It read as a phone layout that had been stretched onto a
+   desktop, which is exactly what it was.
+   ============================================================ */
+
+.ob-card {
+  width: min(100% - var(--sp-6, 24px) * 2, 460px);
+}
+
+.ob-col {
+  width: min(100% - var(--gutter) * 2, 1120px);
+  margin-inline: auto;
+}
+
+/* `repeat(3, 1fr)` below 1180px and `repeat(4, …)` above it meant
+   four industries drew as three columns with one orphan on every
+   window between 900px and 1180px. auto-fit lets the row decide,
+   and the min() keeps it from overflowing a phone. */
+.ob-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+}
+
+/* ============================================================
+   THE FIRST RUN, COMPOSED FOR A REAL MONITOR — the pass above
+   widened the card and let the industry grid decide its own
+   columns. This is the composition those two numbers were asking
+   for, and it is the whole of what a stakeholder sees first.
+
+   MEASURED BEFORE ANY OF IT: at 1707 CSS px the name card drew
+   460px and every other pixel of the window was navy. Widening
+   one column to fill a monitor is the wrong answer — a question
+   and a field both have a measure, and past it neither gets
+   easier to read. So the card SPLITS: what is being asked on the
+   left, what you do about it on the right.
+
+   AND IT SPLITS ON ITS OWN WIDTH, not the window's. .ob-card
+   takes container-type: inline-size and the split is a
+   @container rule, which is the difference between a component
+   that responds and a page that has been told about a phone.
+   There is no device breakpoint in this block; the one threshold
+   is 720px of CARD, which is the width at which the question and
+   the field each still have a measure worth having.
+
+   THE ONE SURFACE WHERE DISPLAY TYPE IS LEGITIMATE. response.css
+   says so in its own comment — it deliberately keeps the shared
+   display ramp shallow because those tokens are spent on dense
+   data screens, and it names onboarding as the exception that
+   should take its hero size in its own stylesheet. This is that
+   stylesheet. --ob-hero-* is a COMPLETE step (rule 6): size,
+   weight, leading and tracking move together, and the tracking
+   runs negative as the size grows (rule 7).
+
+   THREE SPACING TIERS AND A FOURTH, NAMED. Outer padding must
+   exceed the inner gap or the group does not read as a unit.
+     --ob-pad    28 -> 48   the card's own edge
+     --ob-block  20 -> 32   between one group and the next
+     --sp-4      16         inside a group
+     --sp-2       8         a label to the field it names
+   ============================================================ */
+
+.ob-root {
+  /* the hero step, whole */
+  --ob-hero-size: clamp(30px, 1.36rem + 1.05vw, 48px);
+  --ob-hero-lead: 1.04;
+  --ob-hero-track: -0.026em;
+  --ob-block: clamp(20px, 1.5vw, 32px);
+}
+
+.ob-screen {
+  padding: clamp(32px, 5vh, 72px) var(--gutter);
+}
+
+/* -- the card ------------------------------------------------ */
+
+.ob-card {
+  container-type: inline-size;
+  --ob-pad: clamp(28px, 2.2vw, 48px);
+  padding: var(--ob-pad);
+  /* a card that is not the split one still keeps a measure rather
+     than a phone width. `max-width` is released here because the
+     460px cap five rules above IS the fault this block is fixing —
+     a width that grows under a max-width that does not is a card
+     that never moves. */
+  width: min(100%, clamp(460px, 42vw, 640px));
+  max-width: none;
+}
+
+.ob-card--split {
+  width: min(100%, clamp(460px, 66vw, 1080px));
+}
+
+.ob-card-say,
+.ob-card-do {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ob-card-do {
+  margin-top: var(--ob-block);
+}
+
+/* the grid lives one step inside the container, because an element
+   cannot answer a @container query about itself */
+.ob-card-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+@container (min-width: 720px) {
+  .ob-card--split .ob-card-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  }
+  .ob-card-say {
+    padding-right: var(--ob-block);
+  }
+  /* the divider is the DO column's own left edge rather than a
+     third element, so it is exactly as tall as the taller column
+     and can never be one pixel out */
+  .ob-card-do {
+    margin-top: 0;
+    padding-left: var(--ob-block);
+    border-left: 1px solid var(--hairline);
+  }
+  /* the logbook rule bleeds to the card's left edge and stops at
+     the column, instead of running under the field */
+  .ob-rule {
+    margin-right: 0;
+  }
+}
+
+.ob-rule {
+  margin-top: var(--ob-block);
+}
+
+.ob-ask {
+  margin-top: var(--ob-block);
+  font-family: var(--font-ui);
+  font-size: var(--ob-hero-size);
+  font-weight: var(--display-weight);
+  line-height: var(--ob-hero-lead);
+  letter-spacing: var(--ob-hero-track);
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.ob-note {
+  margin-top: var(--sp-4);
+  font-size: var(--ui-m-size);
+  line-height: 1.6;
+  max-width: 46ch;
+  text-wrap: pretty;
+}
+
+/* -- the right-hand column ----------------------------------- */
+
+/* 11px mono uppercase is the ONE sanctioned use of capitals — a
+   group caption — and this is what gives the two columns a shared
+   top edge. It replaces an aria-label, so the field's name is on
+   the screen and not only in the accessibility tree.
+   --ink-soft measures 7.7:1 on the card's white. */
+.ob-field-label {
+  font-family: var(--font-mono);
+  font-size: var(--micro-size);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.ob-input {
+  /* the label-8-field tier, which is what makes the pair read as
+     one thing rather than two */
+  margin-top: var(--sp-2);
+  font-size: clamp(19px, 1.05rem + 0.32vw, 26px);
+  letter-spacing: -0.008em;
+  /* FOCUS IS NEVER ANIMATED. The ring was in the transition list, so
+     it faded in over --t-fast; a focus indicator that arrives late is
+     a focus indicator that is not there when the key was pressed. */
+  transition: border-color var(--t-fast) var(--ease-draft);
+}
+
+.ob-primary {
+  margin-top: var(--ob-block);
+  min-height: 48px;
+  /* NESTED RADIUS. A 10px control inset 28-48px inside a 10px card is
+     the parent's radius copied onto a child; the child's corner is not
+     concentric with it at that inset, and the control step is 6px. */
+  border-radius: var(--radius-sm);
+}
+
+/* RULE 10 — the disabled primary says why, where it is, rather than
+   sitting grey and silent. It is drawn in both states so the column
+   does not jump under the pointer when the first letter is typed;
+   what changes is the first sentence. */
+.ob-why {
+  margin-top: var(--sp-3);
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  max-width: 46ch;
+  text-wrap: pretty;
+}
+
+.ob-alt {
+  margin-top: var(--sp-3);
+  align-self: flex-start;
+}
+/* Back is the way out of the file screen, so it goes to the FOOT of
+   its column rather than trailing whichever control happens to be
+   above it. */
+.ob-alt--back {
+  margin-top: auto;
+  padding-top: var(--sp-4);
+}
+
+/* -- the refusal --------------------------------------------- */
+
+/* A REFUSAL IS A SENTENCE AND A SENTENCE IS NOT A STAMP. This was
+   11px mono with +0.1em of the label's tracking, drawn entirely in
+   --red over a red tint — three separate reasons it was the hardest
+   thing on the screen to read, on the one occasion a person is being
+   told something went wrong.
+
+   THE FLAG IS RED; THE REASON IS INK. --ink measures 18.9:1 on white
+   and stays far clear of the floor over a tint of this order, which
+   is the exact arithmetic DESIGN_PRINCIPLES records as having been
+   got wrong before. The red is spent on the rail and the stamp, where
+   it is a signal rather than a body colour. */
+.ob-refuse {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border-left: 2px solid var(--red);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--red-wash);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.ob-refuse strong {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: var(--micro-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+/* -- the drop zone and the plate ----------------------------- */
+
+/* both are inset a full --ob-pad inside a 10px card, so neither may
+   wear the card's radius — see the note on .ob-primary */
+.ob-drop {
+  margin-top: var(--sp-2);
+  padding: var(--sp-5) var(--sp-4);
+  border-radius: var(--radius-sm);
+}
+
+.ob-plate {
+  margin-top: var(--sp-2);
+  border-radius: var(--radius-sm);
+}
+
+/* THE STAT STRIP REFLOWS OR IT IS NOT A GRID. repeat(3, 1fr) is an
+   unconditional column count: at any width where three columns do not
+   fit it does not wrap, it overflows. auto-fit lets the strip decide —
+   and the dividers move from border-right (which needs a :last-child
+   exception that is wrong the moment a row wraps) to a 1px gap over
+   the hairline, which is correct in every arrangement. */
+.ob-plate-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(96px, 100%), 1fr));
+  gap: 1px;
+  background: var(--hairline);
+}
+.ob-stat {
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border-right: 0;
+  background: var(--paper-high);
+}
+/* the figure is the fact and it is drawn like one — heaviest and
+   darkest, with its caption a tier below it (rule 9) */
+.ob-stat-num {
+  font-size: clamp(18px, 1rem + 0.28vw, 24px);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   STEP 2 — the industry grid as a page, not three things dropped
+   on a field.
+
+   BACK USED TO FLOAT. The rail sat above a CENTRED header over a
+   grid on a different measure, so the only control on the rail had
+   nothing to line up with and read as abandoned to the left. Rail,
+   header and grid now share one left edge.
+   ============================================================ */
+
+.ob-col {
+  /* narrower than the app's --measure ON PURPOSE (rule 4): four
+     cards and one question do not want 2074px, they want a measure
+     that grows to about four comfortable cards and then stops */
+  width: min(100%, clamp(1120px, 74vw, 1560px));
+  max-width: none;
+  margin-inline: auto;
+}
+
+.ob-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.ob-head {
+  margin-top: var(--section-gap);
+  text-align: left;
+}
+
+.ob-title {
+  font-family: var(--font-ui);
+  font-size: var(--ob-hero-size);
+  font-weight: var(--display-weight);
+  line-height: var(--ob-hero-lead);
+  letter-spacing: var(--ob-hero-track);
+  text-wrap: balance;
+}
+
+.ob-sub {
+  margin-top: var(--sp-4);
+  font-size: var(--ui-m-size);
+  line-height: 1.6;
+  max-width: 72ch;
+  text-wrap: pretty;
+}
+
+.ob-grid {
+  margin-top: var(--section-gap);
+  gap: clamp(16px, 1.4vw, 28px);
+}
+
+/* -- one choice ---------------------------------------------- */
+
+.ob-kind {
+  container-type: inline-size;
+  --ob-kind-pad: clamp(20px, 1.3vw, 28px);
+  gap: var(--sp-2);
+  padding: var(--ob-kind-pad);
+  /* THE ACCENT RAIL WAS A SQUARE 2px BAR ON A 10px CORNER, so its two
+     top corners poked outside the card's radius. A border does the
+     same job and is mitred by the radius for free. */
+  border-top: 2px solid var(--accent-blue);
+  padding-top: calc(var(--ob-kind-pad) - 1px);
+}
+.ob-kind::before {
+  display: none;
+}
+.ob-kind--soon {
+  border-top-color: var(--hairline);
+}
+
+/* THE SYMBOL WAS BEING LETTERBOXED. .ob-kind-sym svg forced 96x59
+   onto a square Phosphor icon, which preserves its aspect ratio — so
+   it drew 59px wide with 18px of dead space either side and sat off
+   the card's own text edge. Square, and sized against the CARD (cqi)
+   rather than the window, because this component is reused at two,
+   three and four columns. */
+.ob-kind-sym {
+  margin-bottom: var(--sp-3);
+}
+.ob-kind-sym svg {
+  width: clamp(44px, 18cqi, 64px);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.ob-kind-label {
+  font-size: var(--ui-l-size);
+  text-wrap: balance;
+}
+.ob-kind-blurb {
+  font-size: var(--ui-size);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* HOVER PICKS TWO SIGNALS, NOT THREE. It was lift + shadow + border
+   colour; the border was the third change in one transition and the
+   first two already say "this rises". The border keeps its job on
+   focus, where it is the only signal there is. */
+.ob-kind:not(:disabled):hover {
+  border-color: var(--hairline-strong);
+  border-top-color: var(--accent-blue);
+}
+.ob-kind:not(:disabled):focus-visible {
+  border-color: var(--accent-blue);
+}
+.ob-kind:not(:disabled):active {
+  transform: translateY(-1px) scale(0.994);
+}

@@ -606,3 +606,103 @@
 .dg-row.dg-row-armed:hover .dg-cell {
   background: color-mix(in srgb, var(--red) 7%, var(--paper-high));
 }
+
+
+/* ============================================================
+   THE INSPECTOR'S GRID, HELD TO THE SAME TWO RULES THE REGISTER
+   IS.
+
+   This file is the register's smaller sibling — the table the
+   Inspector draws beside a selected entity — and it was written
+   before the redesign reached it. `table.css` corrected its own
+   copies of both faults at :3105 and :3155; the same corrections
+   never crossed the two files, so the Inspector kept shouting
+   column names and printing proportional figures.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1 · RULE 3 — UPPERCASE IS A LABEL STYLE, NEVER A NAME STYLE.
+
+   `.dg-th-name` was 11px / 640 / +0.05em / uppercase, so every
+   column a dealer named came back shouted: "Hull Only Pricing"
+   as HULL ONLY PRICING, and "PVC" indistinguishable from a value
+   typed "Pvc". Uppercasing content is lossy, and `table.css`
+   already made exactly this correction for `.tb-th-name` — the
+   same words, at the same size, in the same app.
+
+   `wdth` GOES WITH IT. The heading was set on Inter's 118 width
+   axis, which is a stamp's setting: it exists to make short
+   uppercase runs sit square. On mixed case at reading size it
+   just makes a name wider than the name beside it. */
+.dg-th-name {
+  font-family: var(--font-ui);
+  font-variation-settings: normal;
+  font-size: var(--ui-s-size);
+  font-weight: 540;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+/* AND THE ONE BUTTON IN THIS FILE THAT WAS STILL A STAMP. §3
+   names a button outright in the list of things uppercase may
+   never be, and this one says the dealer's own row noun. */
+.dg-addrow-btn {
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ------------------------------------------------------------
+   2 · RULE 9 — LEFT FOR TEXT, RIGHT FOR NUMBERS, NEVER CENTRE,
+   AND TABULAR FIGURES THROUGHOUT.
+
+   The row ordinal and its heading were the two centred things in
+   the grid, which meant "9" and "38" shared no edge down a
+   column whose whole job is to be an index. Both go right, on
+   the gutter's own hairline. */
+.dg-th-gutter,
+.dg-cell-gutter {
+  text-align: right;
+}
+.dg-rownum,
+.dg-gutter-label,
+.dg-input-num,
+.dg-fx,
+.dg-dim-label {
+  font-variant-numeric: tabular-nums;
+}
+/* the tick takes the same left edge every other value in the
+   row is set from */
+.dg-boolwrap {
+  justify-content: flex-start;
+  padding-left: var(--sp-3);
+}
+
+/* ------------------------------------------------------------
+   3 · RULE 9 — THE DATA OUTRANKS THE LABEL.
+
+   Same ladder as the register: the entered value keeps full ink,
+   the heading above it steps back to --ink-soft (7.7:1, clear of
+   the 4.5:1 floor over this grid's `--paper-high` ground), and
+   the placeholder tier is already `--ink-faint` on `.dg-fx-empty`
+   below. Only weight and colour move — geometry, hover, focus
+   ring and the invalid-number border are all untouched. */
+.dg-input {
+  font-size: clamp(12.5px, 0.701rem + 0.089vw, 13.5px);
+  font-weight: 480;
+  color: var(--ink);
+}
+.dg-fx,
+.dg-input-num {
+  font-size: var(--data-size);
+}
+.dg-input-date {
+  font-size: clamp(11.5px, 0.639rem + 0.089vw, 12.5px);
+}
+.dg-rownum,
+.dg-gutter-label {
+  font-size: var(--data-s-size);
+}

@@ -19,7 +19,7 @@
   height: 100%;
   overflow: auto;
   background: var(--paper);
-  padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) * 2);
+  padding: var(--sp-6) var(--gutter) calc(var(--sp-6) * 2);
 }
 
 /* the whole page answers a table drag, so a drop is never a
@@ -47,15 +47,32 @@
   color: var(--ink-faint);
 }
 
+/* THE SHEET IS A DOCUMENT, SO IT KEEPS A MEASURE — but 940px was a
+   literal, and on a 2560px window it left the page as a column in a
+   void with 800px of dead paper on either side.
+
+   IT GROWS, AND IT GROWS SLOWLY. 68vw against a 1560px ceiling: at
+   1440 that is 979px, four percent over the tuned figure and inside
+   the noise; at 1920 it is 1306; at 2560 it is 1560 and stops. Rule 4
+   is why it stops — past that a block row is not a row you scan, and
+   the answer to more width is the SECOND COLUMN below, not a wider
+   one.
+
+   IT IS ALSO THE QUERY CONTAINER (rule 5). A block is drawn on this
+   sheet, inside a nest three levels down, and one day in a split
+   window; what decides its layout is the width it actually has, which
+   is this box, not the browser. */
 .vw-sheet {
   position: relative;
-  max-width: 940px;
+  max-width: min(100%, clamp(940px, 68vw, 1560px));
   margin: 0 auto;
   padding: calc(var(--sp-6) + var(--sp-2)) var(--sp-6) var(--sp-6);
   background: var(--paper-high);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sheet);
+  container-type: inline-size;
+  container-name: vwsheet;
 }
 
 /* -- corner registration ticks ------------------------------ */
@@ -133,14 +150,24 @@
    The tracking is the change: +0.005em at 38px was +0.19px of air
    per letter, added in the direction a 38px serif least needs it.
    apple-design §15, "large display text wants negative tracking". */
+/* THE STEP CAME DOWN ONE, AND IT IS A RULE NOT A TASTE. --display-xl
+   now ramps 38px → 46px, and this is a page whose whole job is the
+   six tables of stock underneath it. Established practice caps a data
+   screen page title at about 28px on the ground that a bigger one is
+   simply room taken from the data; --display-m is 26px → 30px and
+   lands there. The step is taken whole — size, weight, leading and
+   tracking together (rule 6) — so the tracking stays negative as the
+   size grows (rule 7), and the 12px of vertical it gives back go to
+   the first block. */
 .vw-name {
   margin-top: var(--sp-2);
   font-family: var(--font-display);
-  font-size: var(--display-xl-size);
+  font-size: var(--display-m-size);
   font-weight: var(--display-weight);
-  line-height: var(--display-xl-lead);
-  letter-spacing: var(--display-xl-track);
+  line-height: var(--display-m-lead);
+  letter-spacing: var(--display-m-track);
   color: var(--ink);
+  text-wrap: balance;
 }
 
 /* THE SUBJECT'S PHOTOGRAPH — the first picture in its picture column.
@@ -183,7 +210,7 @@
      here and tabular was not, so `$8,227.50` and `$9,359.40` still
      drifted against each other by the width of a `1`. */
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: var(--data-l-size);
   color: var(--ink);
   white-space: nowrap;
 }
@@ -199,7 +226,7 @@
   border-radius: var(--radius);
   background: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -241,7 +268,7 @@
 }
 .vw-levels-note {
   margin-top: var(--sp-2);
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   color: var(--ink-faint);
 }
 
@@ -249,7 +276,7 @@
   width: auto;
   min-width: 200px;
   padding: 5px 8px;
-  font-size: 13px;
+  font-size: var(--ui-size);
   background: var(--paper-high);
 }
 
@@ -266,7 +293,7 @@
   border: 1px solid var(--red);
   border-radius: var(--radius-sm);
   background: var(--red-wash);
-  font-size: 13px;
+  font-size: var(--ui-size);
   color: var(--ink);
 }
 .vw-refusal-text {
@@ -278,10 +305,11 @@
    ============================================================ */
 
 .vw-blocks {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
   margin-top: var(--sp-5);
+  align-items: start;
 }
 
 .vw-block {
@@ -305,7 +333,7 @@
 }
 .vw-gone {
   margin-bottom: var(--sp-3);
-  font-size: 13px;
+  font-size: var(--ui-size);
   color: var(--ink-soft);
 }
 
@@ -332,13 +360,13 @@
 }
 
 .vw-block-name {
-  font-size: 12px;
+  font-size: var(--ui-m-size);
   color: var(--ink);
 }
 
 .vw-chip {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--data-s-size);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -368,7 +396,7 @@
   border-radius: var(--radius-sm);
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--ui-s-size);
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -401,7 +429,7 @@
 .vw-strip-note {
   overflow: hidden;
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--ui-xs-size);
   letter-spacing: 0;
   text-transform: none;
   color: var(--ink-faint);
@@ -425,7 +453,7 @@
   background: var(--red-wash);
 }
 .vw-confirm-ask {
-  font-size: 13px;
+  font-size: var(--ui-size);
   color: var(--ink);
 }
 .vw-confirm-acts {
@@ -588,7 +616,7 @@
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: 13.5px;
+  font-size: var(--ui-m-size);
   line-height: 1.3;
   color: var(--ink);
 }
@@ -599,7 +627,7 @@
   /* a column of prices only reads as a column when the digits are one
      width — DESIGN_CONTRACT §3 */
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: var(--data-size);
   color: var(--ink-soft);
   text-align: right;
   white-space: nowrap;
@@ -628,7 +656,7 @@
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--ui-xs-size);
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -706,7 +734,7 @@
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-4);
-  font-size: 13px;
+  font-size: var(--ui-size);
   color: var(--ink-faint);
 }
 
@@ -718,7 +746,7 @@
   padding: var(--sp-2) var(--sp-3);
   border-left: 2px solid var(--hairline-strong);
   background: var(--paper-sunken);
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   line-height: 1.5;
   color: var(--ink-soft);
 }
@@ -747,7 +775,7 @@
   border: 0;
   background: none;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   color: var(--blue);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -767,7 +795,7 @@
   background: transparent;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--data-s-size);
   /* a button ("3 removed") that opens the list and puts rows back —
      §3, and the count-line ruling from DESIGN_PRINCIPLES §6 besides */
   letter-spacing: 0.01em;
@@ -835,7 +863,7 @@
   padding: 2px 0;
   border: 0;
   background: transparent;
-  font-size: 13px;
+  font-size: var(--ui-size);
   color: var(--ink);
 }
 .vw-add-input:focus {
@@ -847,7 +875,7 @@
 
 .vw-add-none {
   padding: var(--sp-4);
-  font-size: 13px;
+  font-size: var(--ui-size);
   color: var(--ink-faint);
 }
 
@@ -889,7 +917,7 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--ui-m-size);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -900,7 +928,7 @@
 .vw-add-cell {
   min-width: 56px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--data-s-size);
   color: var(--ink-faint);
   text-align: right;
 }
@@ -938,7 +966,7 @@
   border: 1px solid var(--hairline-strong);
   border-radius: 999px;
   background: var(--paper-high);
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   color: var(--ink-soft);
   cursor: pointer;
   transition:
@@ -991,14 +1019,14 @@
 
 .vw-offer-ask {
   margin-top: var(--sp-4);
-  font-size: 17px;
+  font-size: var(--ui-xl-size);
   line-height: 1.35;
   color: var(--ink);
 }
 .vw-offer-why {
   margin-top: var(--sp-2);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--data-s-size);
   line-height: 1.5;
   color: var(--ink-faint);
 }
@@ -1099,7 +1127,7 @@
 }
 .vw-nothing-sub {
   margin-top: var(--sp-2);
-  font-size: 13px;
+  font-size: var(--ui-size);
   color: var(--ink-faint);
 }
 
@@ -1169,7 +1197,7 @@
 .vw-col-name,
 .vw-col {
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   font-weight: 580;
   letter-spacing: 0;
   text-transform: none;
@@ -1187,7 +1215,7 @@
 .vw-gear,
 .vw-strip-btn {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--ui-s-size);
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -1254,7 +1282,7 @@
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--ui-s-size);
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -1265,4 +1293,202 @@
   flex: 0 0 auto;
   margin-top: 1px;
   color: var(--warning);
+}
+
+/* ============================================================
+   A SET OF PLACES, NOT A DROPDOWN
+
+   "What else goes with a Boat?" is the question this page is FOR,
+   and the answer was a 260px scrolling strip of 22px rows with a
+   plus sign on each — the shape of a combo box, which is the shape
+   of a thing you are meant to close again quickly. A dealer setting
+   up a page is choosing WHERE the answer comes from: Engines,
+   Trailers, Covers, Electronics. Those are places, and places are
+   drawn as a set you look over, not a menu you pick from.
+
+   SO THE PICKZONE — and ONLY the pickzone — becomes a grid of
+   tiles. `.vw-add` is still the row picker it always was inside a
+   block (`AddPanel`), where a list IS right: those are rows of one
+   table and a list is how you read a table. One class apart, two
+   jobs, and neither is bent to fit the other.
+
+   NESTED RADIUS (rule 1), the whole reason a tile does not simply
+   copy `--radius`: the panel is --radius (10px) and the tiles are
+   inset from it by --sp-3 (12px), so the tile's own corner is
+   computed — `calc(var(--radius) - var(--sp-3))`, clamped at zero by
+   `max()` because a negative radius is not a radius. The tile is far
+   enough in that its corner is square, and that is the correct
+   answer, not an oversight.
+   ============================================================ */
+
+/* the panel is the SUNKEN paper and the tiles on it are the raised
+   one — one light source, from above, and the depth reads without a
+   shadow on anything (rule 7) */
+.vw-pickzone {
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.vw-pickzone > .vw-add-bar {
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.vw-pickzone > .vw-add-list {
+  display: grid;
+  /* CONTENT DECIDES THE COLUMN (rule 6): the longest real table name
+     in the Northside price file is "Highfield Inflatables" at 21
+     characters, which sets ~186px at the --ui-m step. 210px holds it
+     on one line with the mark beside it, and anything longer wraps
+     to two rather than being cut. */
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  /* the panel's padding (16) is greater than the gap between two
+     tiles (12), which is greater than the gap inside one (8) — three
+     tiers, rule 2 */
+  gap: var(--sp-3);
+  max-height: none;
+  padding: var(--sp-4);
+  overflow: visible;
+}
+
+.vw-pickzone .vw-add-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: max(0px, calc(var(--radius) - var(--sp-3)));
+  background: var(--paper-high);
+  /* one colour signal and one spatial (rule 8), 120ms ease-out */
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.vw-pickzone .vw-add-row:hover {
+  background: var(--blue-wash);
+  transform: translateY(-1px);
+}
+/* press DEEPENS what hover started and reverses the lift, so it can
+   never read as a glitch */
+.vw-pickzone .vw-add-row:active {
+  background: var(--blue-wash);
+  transform: translateY(0);
+}
+.vw-pickzone .vw-add-row:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.vw-pickzone .vw-add-name {
+  flex: 0 0 auto;
+  width: 100%;
+  overflow: visible;
+  white-space: normal;
+  font-weight: 560;
+  line-height: var(--ui-m-lead);
+  letter-spacing: var(--ui-m-track);
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* the figure is the DATA and the word under it is the label, so the
+   figure is darkest and heaviest and the word recedes (rule 9) */
+.vw-place-count {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: auto;
+}
+.vw-place-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-l-size);
+  letter-spacing: var(--data-l-track);
+  font-weight: 500;
+  color: var(--ink);
+}
+/* --ink-soft, because the bed MOVES. A tile is --paper-high at rest,
+   where --ink-faint clears the floor, and --blue-wash on hover, where
+   it composites to 4.16:1 and does not — the trap DESIGN_PRINCIPLES
+   names outright and this repo has measured twice. A word that is
+   legible until you point at it is worse than one tier of hierarchy. */
+.vw-place-noun {
+  color: var(--ink-soft);
+}
+
+/* the same correction for the row picker inside a block: .vw-add-row
+   paints --blue-wash on hover and these figures sat at --ink-faint */
+.vw-add-cell {
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   THE WIDE SHEET — a second column of blocks, not a wider one
+   ============================================================ */
+
+@container vwsheet (min-width: 1380px) {
+  /* Rule 4, applied where it is measured: a block is a name and up
+     to three figures. Given 1494px it does not want to BE 1494px
+     wide — the name ends up at one side of the sheet and the price
+     at the other. Two tracks of ~728px is the width a block was
+     drawn at (876) less its own margins, so nothing inside it has to
+     give way. Nested blocks are untouched: they live in `.vw-nest`,
+     which is not a child of `.vw-blocks`. */
+  .vw-blocks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--section-gap) clamp(24px, 2.4cqi, 44px);
+  }
+}
+
+@container vwsheet (min-width: 1100px) {
+  /* the subject's photograph earns its keep once the words beside it
+     have stopped setting the header's height on their own */
+  .vw-portrait {
+    width: 160px;
+    height: 120px;
+  }
+  .vw-specs {
+    gap: var(--sp-5) var(--sp-6);
+  }
+}
+
+/* ============================================================
+   THE ACCENT DOES NOT CROSS THE CORNER
+
+   `.vw-block-head::before` is the 2px accent at the head of a block
+   and it was pinned at `top: 0; left: 0` on a box with a 10px
+   radius and no clipping — so the first pixels of every accent on
+   every block sat OUTSIDE the rounded corner, on the paper. Rule 1
+   is the general form of this: a child does not get to ignore the
+   geometry of the box it is in. Starting the bar where the corner
+   finishes is the fix, and it costs nothing.
+   ============================================================ */
+
+.vw-block-head::before {
+  left: var(--radius);
+}
+
+/* rule 10 — the prose on this page is refusals, held-back notes and
+   empty states, which are exactly the sentences that break badly */
+.vw-gone,
+.vw-refusal-text,
+.vw-confirm-ask,
+.vw-held,
+.vw-add-none,
+.vw-offer-ask,
+.vw-warn,
+.vw-nothing-sub {
+  text-wrap: pretty;
+}
+.vw-nothing-line,
+.vw-block-name {
+  text-wrap: balance;
+}
+
+/* the card title is a step it was never given: 12px is a caption,
+   and this is the NAME of the table the block draws. The step is
+   taken whole (rule 6) — the size moved above, the leading and the
+   tracking follow it here. */
+.vw-block-name {
+  line-height: var(--ui-m-lead);
 }

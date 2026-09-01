@@ -144,14 +144,17 @@ export function ModuleSettings({
 
   return (
     <section className="md-set" style={style} aria-label={`Settings for ${module.name}`}>
-      <header className="md-idx-head">
-        <div className="md-idx-id">
-          <span className="mono-label md-set-eyebrow">Settings</span>
-          <h2 className="md-idx-name">{module.name}</h2>
-          <p className="md-idx-facts mono-label">{censusLine(census)}</p>
-        </div>
+      <header className="md-idx-head md-set-head">
+        {/* THE WAY BACK LEADS, IT DOES NOT TRAIL.
 
-        {/* SENTENCE CASE, NOT THE GEAR'S MONO STAMP. This is a button
+            It was pinned to the far right of the header, which at 1440
+            was a reasonable 700px from the title and at 2560 was 2,000
+            — a lone 100px control at the opposite end of an empty
+            rule, and the first thing a person looks for on a settings
+            page they opened by accident. Above the name it reads as
+            what it is: the step back up, then where you are.
+
+            SENTENCE CASE, NOT THE GEAR'S MONO STAMP. This is a button
             and a button is one of the four things uppercase is never
             for. `Catalogue` is a noun naming what is on the screen you
             land on, which is the same rule the dock's own items keep. */}
@@ -159,15 +162,43 @@ export function ModuleSettings({
           <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
           <span>Catalogue</span>
         </button>
+
+        <div className="md-idx-id">
+          <span className="mono-label md-set-eyebrow">Settings</span>
+          <h2 className="md-idx-name">{module.name}</h2>
+          <p className="md-idx-facts mono-label">{censusLine(census)}</p>
+        </div>
       </header>
 
+      {/* TWO COLUMNS, AND THE SPLIT IS THE SENTENCE THE PAGE MAKES.
+
+          WHAT IT WAS. Five panels stacked full width. On a 2560px
+          window that is a 1,700px-wide text box holding the word
+          "Boats", a one-line description field the width of a
+          billboard, and help sentences running seventy-five words to
+          the line — three times a readable measure. Nothing was
+          broken and everything was stretched.
+
+          WHAT DECIDES WHICH SIDE. The left is what this module IS —
+          its name, its sentence, its mark. Those are short fields and
+          a 96px plate, and they are done being read at 340px, so they
+          take a column suited to them and stop. The right is what
+          this module ALLOWS and what HANGS OFF it — the role grid,
+          the nine capability switches, the list of what is attached.
+          Those are the things that genuinely want a wide table, and
+          they now get the whole of the width the left column is no
+          longer wasting. */}
       <div className="md-set-body">
-        <Identity module={module} />
-        <Mark module={module} primaryKind={primary?.kind} />
-        <Access module={module} />
-        {/* 4 · the four panels that were the strip */}
-        <ModuleDesigner module={module} />
-        <Attached module={module} />
+        <div className="md-set-aside">
+          <Identity module={module} />
+          <Mark module={module} primaryKind={primary?.kind} />
+        </div>
+        <div className="md-set-main">
+          <Access module={module} />
+          {/* 4 · the four panels that were the strip */}
+          <ModuleDesigner module={module} />
+          <Attached module={module} />
+        </div>
       </div>
     </section>
   )

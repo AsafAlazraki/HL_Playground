@@ -77,9 +77,21 @@
    The rail — same 340px geometry as the inspector
    ============================================================ */
 
+/* A RAIL TAKES THE WIDTH ITS CONTENT WANTS (rule 4), and 340px was a
+   literal that had never been asked what the content was. What is in
+   here is prose — every card carries a sentence explaining the mark —
+   and 340px less the card and body padding leaves a 268px measure,
+   about 42 characters, which is under half a comfortable line and is
+   why every "why" in this rail wrapped four times.
+
+   It grows to 440px on a wide screen (a ~58-character measure) and
+   NEVER past it: this is a margin note beside a sheet, and a margin
+   note that takes a quarter of a 2560px window has stopped being one.
+   It never shrinks below 340 either, so nothing that fitted before
+   stops fitting. */
 .rv-rail {
-  flex: 0 0 340px;
-  width: 340px;
+  flex: 0 0 clamp(340px, 22vw, 440px);
+  width: clamp(340px, 22vw, 440px);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -109,7 +121,7 @@
 
 .rv-eyebrow {
   flex: 0 0 auto;
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   letter-spacing: 0.24em;
   color: var(--ink-faint);
 }
@@ -159,12 +171,16 @@
   background: var(--paper-high);
 }
 /* rubber-stamp double rule */
+/* NESTED RADIUS (rule 1): the second stroke of the rubber stamp is
+   inset 3px inside a --radius (10px) box, so its own corner is
+   10 − 3 = 7px. It was 1px — a square rule inside a rounded plate,
+   which is the exact mistake the rule names. */
 .rv-stamp::after {
   content: '';
   position: absolute;
   inset: 3px;
   border: 1px solid currentColor;
-  border-radius: 1px;
+  border-radius: calc(var(--radius) - 3px);
   opacity: 0.24;
   pointer-events: none;
 }
@@ -181,7 +197,7 @@
   font-family: var(--font-ui);
   font-variation-settings: 'wdth' 118;
   font-weight: 700;
-  font-size: 17px;
+  font-size: var(--ui-xl-size);
   line-height: 1.1;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -194,7 +210,7 @@
   align-items: center;
   gap: var(--sp-2);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -248,7 +264,7 @@
 .rv-group-name {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 11.5px;
+  font-size: var(--ui-xs-size);
   line-height: 1.2;
   letter-spacing: 0.09em;
   color: var(--ink);
@@ -262,7 +278,8 @@
   min-width: 14px;
   text-align: right;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-s-size);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--red);
@@ -291,14 +308,19 @@
     box-shadow var(--t-fast) var(--ease-draft);
 }
 /* the pencil rule down the margin: solid for blockers, dashed for advisories */
+/* THE PENCIL RULE DOWN THE MARGIN, and it no longer copies the
+   card's corner onto a 2px sliver (rule 1). A 10px radius on a 2px
+   width is not a 10px corner — the browser clamps it to 1px and the
+   mark reads as a rounded pill hanging off the card. It runs between
+   the two corners instead, which is what a pencil line down a margin
+   actually looks like. */
 .rv-card::before {
   content: '';
   position: absolute;
-  top: -1px;
-  bottom: -1px;
+  top: var(--radius);
+  bottom: var(--radius);
   left: -1px;
   width: 2px;
-  border-radius: var(--radius) 0 0 var(--radius);
   background: var(--red);
 }
 .rv-card[data-severity='advisory']::before {
@@ -357,7 +379,7 @@
   flex: 1 1 auto;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -376,7 +398,7 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -403,7 +425,7 @@
   flex: 1 1 auto;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--data-s-size);
   letter-spacing: 0.03em;
   color: var(--ink-soft);
   overflow: hidden;
@@ -422,7 +444,7 @@
 .rv-why {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--ui-size);
   line-height: 1.62;
   letter-spacing: 0.004em;
   color: var(--ink-soft);
@@ -441,7 +463,7 @@
   flex: 1 1 auto;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--data-s-size);
   letter-spacing: 0.03em;
   color: var(--ink-faint);
   overflow: hidden;
@@ -459,7 +481,7 @@
   border-radius: var(--radius-sm);
   background: var(--paper-high);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -512,7 +534,7 @@
   flex: 1 1 auto;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -524,7 +546,7 @@
 .rv-ghost-note {
   display: block;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -556,7 +578,7 @@
   font-family: var(--font-ui);
   font-variation-settings: 'wdth' 118;
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--ui-l-size);
   line-height: 1.1;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -569,7 +591,7 @@
 }
 .rv-clean-prose {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--ui-s-size);
   line-height: 1.62;
   color: var(--ink-soft);
   text-wrap: pretty;
@@ -593,7 +615,8 @@
   background: var(--red-wash);
   color: var(--red);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--data-s-size);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -665,7 +688,7 @@
   flex: 0 1 auto;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -677,7 +700,7 @@
 .rv-fm-more {
   flex: 0 0 auto;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--data-s-size);
   font-weight: 500;
   color: var(--ink-faint);
 }
@@ -725,7 +748,7 @@
 }
 .rv-fm-item-title {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -734,21 +757,21 @@
 .rv-fm-why {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--ui-s-size);
   line-height: 1.58;
   color: var(--ink-soft);
   text-wrap: pretty;
 }
 .rv-apply-sm {
   padding: 3px 7px;
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   letter-spacing: 0.14em;
 }
 
 .rv-fm-flash {
   align-self: flex-start;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--stamp-s-size);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;

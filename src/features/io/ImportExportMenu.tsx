@@ -522,7 +522,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                     </button>
                   </div>
                   {blank && (
-                    <p className="io-blank-note">NOTHING ON THE SHEET TO SAVE YET</p>
+                    <p className="io-blank-note">Nothing on the sheet to save yet</p>
                   )}
                   {/* the one sentence that makes 52 and 50 the same
                       answer. Derived from the store, so it disappears on
@@ -591,7 +591,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                   />
                   {error && (
                     <p className="io-error" role="alert">
-                      <strong>REJECTED</strong> — {error}
+                      <strong>Rejected</strong> {error}
                     </p>
                   )}
                 </section>
@@ -613,7 +613,7 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
               Clear Sheet
             </button>
             {blank ? (
-              <span className="io-foot-sig io-foot-why">SHEET IS ALREADY EMPTY</span>
+              <span className="io-foot-sig io-foot-why">The sheet is already empty</span>
             ) : (
               <span className="io-foot-sig">HELMLOGIC · DOC CTRL</span>
             )}

@@ -289,27 +289,46 @@ export function QuoteBuild({
     <>
       <div className="qb-scroll">
         <div className="qb-page">
-          <RigPlate
-            quote={quote}
-            totals={totals.total}
-            unpriced={totals.unpricedCount}
-            delta={delta}
-            saved={savedNote(saveProblem)}
-            saveFailed={saveProblem !== null}
-          />
+          {/* THE RAIL — the boat, and how far the build has got.
 
-          {subjectNote !== '' ? (
-            <p className="qb-alert" role="status">
-              <Warning size={ICON_SIZE.small} weight="light" aria-hidden="true" />
-              {subjectNote}
-            </p>
-          ) : null}
+              WHY THESE TWO THINGS ARE ONE COLUMN. Above 1040px of
+              stage the page splits (build.css), and what goes on the
+              left is everything that is TRUE OF THE WHOLE BUILD
+              rather than of the step you happen to be on: what is
+              being configured, and which decisions are made. It is
+              sticky, so a person four hundred pixels down a wall of
+              motors still has the hull, the reference and the
+              running package on screen. Below 1040px the same two
+              plates stack and the page is exactly what it was. */}
+          <aside className="qb-rail">
+            <RigPlate
+              quote={quote}
+              totals={totals.total}
+              unpriced={totals.unpricedCount}
+              delta={delta}
+              saved={savedNote(saveProblem)}
+              saveFailed={saveProblem !== null}
+            />
 
-          <nav className="qb-stops" aria-label="The steps of this build">
-            <p className="qb-stops-count mono-label">
-              {doneCount} of {stopCount} decided
-            </p>
-            <ul className="qb-stops-list">
+            <nav className="qb-stops" aria-label="The steps of this build">
+              <div className="qb-stops-head">
+                <p className="qb-stops-count mono-label">
+                  {doneCount} of {stopCount} decided
+                </p>
+                {/* PROGRESS AS A LENGTH, and it is decoration in the
+                    strict sense: the sentence above it already says
+                    the same thing in words and is what a screen
+                    reader gets. `scaleX` and not `width`, so the
+                    arrival of a decision never reflows the list under
+                    it — build.css carries the reasoning. */}
+                <div className="qb-stops-bar" aria-hidden="true">
+                  <span
+                    className="qb-stops-bar-fill"
+                    style={{ transform: `scaleX(${stopCount > 0 ? doneCount / stopCount : 0})` }}
+                  />
+                </div>
+              </div>
+              <ul className="qb-stops-list">
               {steps.map((s) => (
                 <li key={s.id}>
                   <button
@@ -360,128 +379,142 @@ export function QuoteBuild({
                   </span>
                 </button>
               </li>
-            </ul>
-          </nav>
+              </ul>
+            </nav>
+          </aside>
 
-          {onHandover ? (
-            <Handover
-              quote={quote}
-              steps={steps}
-              stopCount={stopCount}
-              total={totals.total}
-              refusals={refusals}
-              onOpenCustomer={onOpenCustomer}
-              onBack={() => setAt(steps[steps.length - 1]?.id ?? HANDOVER)}
-              backTitle={steps[steps.length - 1]?.title ?? 'The start'}
-            />
-          ) : step ? (
-            <section className="qb-step" aria-label={step.title}>
-              <header className="qb-step-head">
-                <p className="qb-step-n mono-label">
-                  Step {step.index} of {stopCount}
-                </p>
-                <h2 className="qb-step-name">{step.title}</h2>
-              </header>
+          {/* THE MAIN COLUMN — the step you are on, and nothing else.
+              The subject's warning travels with it rather than with
+              the rail: it is a sentence about work to do, and it
+              belongs beside the work. */}
+          <div className="qb-main">
+            {subjectNote !== '' ? (
+              <p className="qb-alert" role="status">
+                <Warning size={ICON_SIZE.small} weight="light" aria-hidden="true" />
+                {subjectNote}
+              </p>
+            ) : null}
 
-              {step.subject ? (
-                <SubjectStep quote={quote} step={step} />
-              ) : (
-                <>
-                  {reading ? (
-                    <CurationNote
-                      reading={reading}
-                      tone="page"
-                      showingAll={all}
-                      onShowAll={setAll}
-                      /* RULE 10 — a control that cannot act says why,
-                         where it is. There is nothing past the
-                         narrowing on a table that is history, and a
-                         switch that simply greyed out would take its
-                         own explanation with it. */
-                      refusal={
-                        offer.historic === 'table'
-                          ? retiredTableSentence(step.title)
-                          : offer.historic === 'pairs'
-                            ? retiredPairsSentence(step.title, 'The list it was picked from')
-                            : undefined
-                      }
-                      search={{
-                        value: query,
-                        onChange: setQuery,
-                        label: `Find a ${step.title} by name, past the narrowing`,
-                        placeholder: `Find a ${step.title} by name…`,
-                      }}
-                    />
-                  ) : null}
+            {onHandover ? (
+              <Handover
+                quote={quote}
+                steps={steps}
+                stopCount={stopCount}
+                total={totals.total}
+                refusals={refusals}
+                onOpenCustomer={onOpenCustomer}
+                onBack={() => setAt(steps[steps.length - 1]?.id ?? HANDOVER)}
+                backTitle={steps[steps.length - 1]?.title ?? 'The start'}
+              />
+            ) : step ? (
+              <section className="qb-step" aria-label={step.title}>
+                <header className="qb-step-head">
+                  <p className="qb-step-n mono-label">
+                    Step {step.index} of {stopCount}
+                  </p>
+                  <h2 className="qb-step-name">{step.title}</h2>
+                </header>
 
-                  <MeasuredPlate why={why} />
+                {step.subject ? (
+                  <SubjectStep quote={quote} step={step} />
+                ) : (
+                  <>
+                    {reading ? (
+                      <CurationNote
+                        reading={reading}
+                        tone="page"
+                        showingAll={all}
+                        onShowAll={setAll}
+                        /* RULE 10 — a control that cannot act says why,
+                           where it is. There is nothing past the
+                           narrowing on a table that is history, and a
+                           switch that simply greyed out would take its
+                           own explanation with it. */
+                        refusal={
+                          offer.historic === 'table'
+                            ? retiredTableSentence(step.title)
+                            : offer.historic === 'pairs'
+                              ? retiredPairsSentence(step.title, 'The list it was picked from')
+                              : undefined
+                        }
+                        search={{
+                          value: query,
+                          onChange: setQuery,
+                          label: `Find a ${step.title} by name, past the narrowing`,
+                          placeholder: `Find a ${step.title} by name…`,
+                        }}
+                      />
+                    ) : null}
 
-                  {step.lines.length > 0 ? (
-                    <ul className="qb-picked" aria-label={`On the quote from ${step.title}`}>
-                      {step.lines.map((line) => (
-                        <PickedLine key={line.id} quoteId={quote.id} line={line} removable />
-                      ))}
-                    </ul>
-                  ) : null}
+                    <MeasuredPlate why={why} />
 
-                  {offer.candidates.length > 0 ? (
-                    <ul className="qb-cards">
-                      {offer.candidates.map((c) => (
-                        <li key={c.line.id}>
-                          <OfferCard
-                            candidate={c}
-                            onPick={() => addLine(quote.id, step.section.blockId, c.line)}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <NothingOffered
-                      step={step}
-                      offer={offer}
-                      why={why}
-                      query={query}
-                      all={all}
-                      onSeeAll={() => {
-                        setQuery('')
-                        setAll(true)
-                      }}
-                    />
-                  )}
+                    {step.lines.length > 0 ? (
+                      <ul className="qb-picked" aria-label={`On the quote from ${step.title}`}>
+                        {step.lines.map((line) => (
+                          <PickedLine key={line.id} quoteId={quote.id} line={line} removable />
+                        ))}
+                      </ul>
+                    ) : null}
 
-                  {offer.capped ? (
-                    <p className="qb-note">
-                      The first {OFFER_CAP} of {offer.matched} are drawn. Type a word above to reach
-                      the rest — the search runs over the whole table.
-                    </p>
-                  ) : null}
-                </>
-              )}
+                    {offer.candidates.length > 0 ? (
+                      <ul className="qb-cards">
+                        {offer.candidates.map((c) => (
+                          <li key={c.line.id}>
+                            <OfferCard
+                              candidate={c}
+                              onPick={() => addLine(quote.id, step.section.blockId, c.line)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <NothingOffered
+                        step={step}
+                        offer={offer}
+                        why={why}
+                        query={query}
+                        all={all}
+                        onSeeAll={() => {
+                          setQuery('')
+                          setAll(true)
+                        }}
+                      />
+                    )}
 
-              <footer className="qb-move">
-                <button
-                  type="button"
-                  className="qb-move-btn"
-                  disabled={before === null}
-                  onClick={() => before && setAt(before)}
-                >
-                  <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                  <span>{beforeStep ? beforeStep.title : 'The start'}</span>
-                </button>
-                {/* THE WALK ENDS ON THE HANDOVER, never on a dead
-                    control. The last section's "next" is the customer,
-                    which is the one question left. */}
-                <button
-                  type="button"
-                  className="qb-move-btn qb-move-btn--next"
-                  onClick={() => setAt(after ?? HANDOVER)}
-                >
-                  <span>{afterStep ? afterStep.title : 'Who it is for'}</span>
-                  <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                </button>
-              </footer>
-            </section>
-          ) : null}
+                    {offer.capped ? (
+                      <p className="qb-note">
+                        The first {OFFER_CAP} of {offer.matched} are drawn. Type a word above to reach
+                        the rest — the search runs over the whole table.
+                      </p>
+                    ) : null}
+                  </>
+                )}
+
+                <footer className="qb-move">
+                  <button
+                    type="button"
+                    className="qb-move-btn"
+                    disabled={before === null}
+                    onClick={() => before && setAt(before)}
+                  >
+                    <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                    <span>{beforeStep ? beforeStep.title : 'The start'}</span>
+                  </button>
+                  {/* THE WALK ENDS ON THE HANDOVER, never on a dead
+                      control. The last section's "next" is the customer,
+                      which is the one question left. */}
+                  <button
+                    type="button"
+                    className="qb-move-btn qb-move-btn--next"
+                    onClick={() => setAt(after ?? HANDOVER)}
+                  >
+                    <span>{afterStep ? afterStep.title : 'Who it is for'}</span>
+                    <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                  </button>
+                </footer>
+              </section>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -490,7 +523,13 @@ export function QuoteBuild({
           is floored by its scroll container's content box, so it ends up
           painted across the middle of its own document. This is a
           SIBLING of the scrollport. DESIGN_CONTRACT §8.7. */}
-      <div className="qt-foot">
+      {/* `qb-foot` is the ONE thing this screen changes about the
+          shared bar: the draft sheet ends an 880px document and this
+          page runs to `--measure`, so the bar takes the page's width
+          and the total takes the app's largest number step. Two
+          classes in build.css, so neither stylesheet re-declares the
+          other's rules. */}
+      <div className="qt-foot qb-foot">
         <div className="qt-foot-line">
           <div className="qt-foot-sum">
             <span className="mono-label">Total</span>
