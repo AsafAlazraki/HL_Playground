@@ -138,6 +138,10 @@ export type { QuoteBuildProps } from './QuoteBuild'
 /* -- making, reading and changing one ------------------------ */
 export {
   createQuoteFromView,
+  /* the draft already standing for a row — so a second door into
+     the same boat hands back the build in progress rather than
+     minting a rival draft beside it */
+  unaddressedDraftFor,
   quoteLikeThisOne,
   useQuote,
   useQuotes,

@@ -1564,6 +1564,13 @@
    A DASHBOARD WITH NOTHING ON IT — a choice, kept
    ============================================================ */
 
+/* THE ONE THING ON AN OTHERWISE EMPTY PAGE should not be in its
+   bottom-left corner. It sat under the collapsed grid with 700px of
+   blank page above it, because the grid still occupied its row even
+   with nothing in it. `margin: auto` centres it in the space it
+   actually has, and the text stays left-aligned inside its own
+   measure — a centred paragraph is harder to read and this one is
+   an explanation, not a title. */
 .dsh-bare {
   display: flex;
   flex-direction: column;
@@ -1571,6 +1578,7 @@
   gap: var(--s-4);
   padding: var(--s-10) 0;
   max-width: 56ch;
+  margin: auto;
 }
 
 .dsh-bare-say {
@@ -2289,4 +2297,40 @@
     height: max(100%, 44px);
     transform: translate(-50%, -50%);
   }
+}
+
+/* ============================================================
+   A SCROLLER NOBODY CAN SEE IS A SCROLLER NOBODY USES.
+
+   Measured at 1280x800 with seven cards on: `.dsh-grid` demands
+   1248px against 992px of room, so 256px — a whole card column —
+   sat outside the window. `offsetHeight - clientHeight` was 0:
+   this platform paints an OVERLAY scrollbar, which appears while
+   you are already scrolling and is invisible until then. A page
+   with more to the right looked exactly like a page that ended.
+
+   `scrollbar-width: thin` with a colour takes the classic
+   scrollbar back, which occupies layout and is therefore always
+   visible while there is something to reach — the same pair of
+   declarations `shell.css` already uses on the view stage.
+
+   THE COLOUR IS A PAGE TOKEN AND NOT A CHROME ONE. `shell.css`
+   spends `--chrome-wash-on` there, which is 13% of #f2f7fc — it
+   is mixed from the RAIL's near-white ink for use on navy. On the
+   dashboard's light ground that thumb is very nearly the surface
+   it sits on. `--line-strong` is the page side of the same idea.
+   ============================================================ */
+.dsh-grid {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.dsh-grid::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.dsh-grid::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 5px;
+  background: var(--line-strong);
+  background-clip: content-box;
 }

@@ -520,12 +520,16 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
 
         {arrangement.cards.length === 0 && !arranging ? (
           <div className="dsh-bare">
+            {/* THE CONTROL IS CALLED EDIT, so this says Edit. The
+                header's button was renamed and these two were not,
+                so the one screen with nothing on it told a person to
+                press a word that appears nowhere on it. */}
             <p className="dsh-bare-say ds-body">
               Your dashboard has no cards on it. That is a choice this app will
-              keep — press Arrange to put some back.
+              keep — press Edit to put some back.
             </p>
             <button type="button" className="dsh-act" onClick={() => setArranging(true)}>
-              Arrange
+              Edit
             </button>
           </div>
         ) : null}

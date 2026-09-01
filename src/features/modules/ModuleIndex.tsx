@@ -202,6 +202,8 @@ export interface ModuleStockProps {
   openAt?: string
   /** clicking an item — the table it belongs to and the row itself */
   onOpen: (tableId: string, rowId: string) => void
+  /** raise a quote for one item, standing here. See `FaceProps`. */
+  onQuote?: ((tableId: string, rowId: string) => void) | undefined
 }
 
 export function ModuleStock({
@@ -209,6 +211,7 @@ export function ModuleStock({
   place,
   openAt,
   onOpen,
+  onQuote,
 }: ModuleStockProps): ReactElement {
   /* THE PLACE, NOT THE BAG IT IS FILED IN. Every reader below takes a
      `ModuleDef`, so narrowing the module to one of its tables narrows
@@ -710,6 +713,7 @@ export function ModuleStock({
       ) : (
         sections.map((section) => (
           <Section
+            {...(onQuote ? { onQuote } : {})}
             key={section.tableId}
             /* the anchor a member chip scrolls to. Keyed on the MODULE
                too: two modules sharing a table would otherwise write
@@ -755,6 +759,8 @@ interface SectionProps {
   mode: ModuleDef['index']
   canOpen: boolean
   onOpen: (tableId: string, rowId: string) => void
+  /** raise a quote for one item, handed down to every face. */
+  onQuote?: ((tableId: string, rowId: string) => void) | undefined
 }
 
 function Section({
@@ -764,6 +770,7 @@ function Section({
   mode,
   canOpen,
   onOpen,
+  onQuote,
 }: SectionProps): ReactElement {
   return (
     <section className="md-sec" id={domId} aria-label={section.name}>
@@ -789,6 +796,7 @@ function Section({
                   kind={section.kind}
                   tableName={section.name}
                   canOpen={canOpen}
+                  {...(onQuote ? { onQuote } : {})}
                   onOpen={onOpen}
                 />
               ))}
@@ -796,7 +804,13 @@ function Section({
           ) : (
             <ul className="md-rows">
               {group.entries.map((e) => (
-                <Row key={e.rowId} entry={e} canOpen={canOpen} onOpen={onOpen} />
+                <Row
+                  key={e.rowId}
+                  entry={e}
+                  canOpen={canOpen}
+                  onOpen={onOpen}
+                  {...(onQuote ? { onQuote } : {})}
+                />
               ))}
             </ul>
           )}
@@ -894,6 +908,21 @@ interface FaceProps {
   entry: IndexEntry
   canOpen: boolean
   onOpen: (tableId: string, rowId: string) => void
+  /* ============================================================
+     QUOTE THIS ONE, FROM WHERE YOU ARE STANDING.
+
+     WHAT IT COST NOT TO HAVE. A salesperson in Highfield's
+     catalogue, looking at the boat they intend to sell, could do
+     exactly one thing with it: open the row. To quote it they left
+     the catalogue, pressed New quote, chose Highfield again out of
+     twenty-five places, and found the same boat a second time in a
+     list of 588. Three screens and two searches to get back to the
+     thing already under the cursor.
+
+     THE CATALOGUE IS WHERE THE CHOOSING HAPPENS, so it is where the
+     act belongs. Absent = the host cannot open a quote, and then no
+     button is drawn rather than one that goes nowhere. */
+  onQuote?: ((tableId: string, rowId: string) => void) | undefined
 }
 
 /* ============================================================
@@ -927,6 +956,7 @@ function Tile({
   tableName,
   canOpen,
   onOpen,
+  onQuote,
 }: FaceProps & { kind: TableKind; tableName: string }): ReactElement {
   const facts = entry.facts ?? []
   const body = (
@@ -963,7 +993,7 @@ function Tile({
     .filter((w) => w !== '')
     .join(', ')
   return (
-    <li>
+    <li className="md-tile-slot">
       {canOpen ? (
         <button
           type="button"
@@ -976,6 +1006,19 @@ function Tile({
       ) : (
         <div className="md-tile is-flat">{body}</div>
       )}
+      {/* A SIBLING, NOT A CHILD. The tile is itself a button and a
+          button inside a button is not a control — it is markup a
+          browser is entitled to reject. It is laid over the tile's
+          corner and appears on approach. */}
+      {onQuote ? (
+        <button
+          type="button"
+          className="md-quote-it"
+          onClick={() => onQuote(entry.tableId, entry.rowId)}
+        >
+          Quote it
+        </button>
+      ) : null}
     </li>
   )
 }
@@ -985,7 +1028,7 @@ function Tile({
  *  and printing that again on all fourteen rows underneath is a
  *  column of noise where the eye is trying to compare names and
  *  numbers. Drawn and seen; the trail is on the heading, once. */
-function Row({ entry, canOpen, onOpen }: FaceProps): ReactElement {
+function Row({ entry, canOpen, onOpen, onQuote }: FaceProps): ReactElement {
   const body = (
     <>
       <span className="md-row-name">{entry.label}</span>
@@ -993,7 +1036,7 @@ function Row({ entry, canOpen, onOpen }: FaceProps): ReactElement {
     </>
   )
   return (
-    <li>
+    <li className="md-row-slot">
       {canOpen ? (
         <button
           type="button"
@@ -1006,6 +1049,15 @@ function Row({ entry, canOpen, onOpen }: FaceProps): ReactElement {
       ) : (
         <div className="md-row is-flat">{body}</div>
       )}
+      {onQuote ? (
+        <button
+          type="button"
+          className="md-quote-it is-inline"
+          onClick={() => onQuote(entry.tableId, entry.rowId)}
+        >
+          Quote it
+        </button>
+      ) : null}
     </li>
   )
 }

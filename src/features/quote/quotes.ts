@@ -34,6 +34,7 @@ import { newId, nowIso } from '@/lib/id'
    file is already downstream of `freeze.ts`, which is the single
    place in this feature that may see the live sheet. */
 import { say } from '@/store/notes'
+import { currentUser } from '@/features/auth'
 import { localDay, localDayOf } from './day'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
 import { priceAtLevel, repricedAt } from './pricing'
@@ -310,11 +311,36 @@ export function createQuoteFromView(
   preparedBy?: string,
 ): QuoteDef | null {
   loadQuotes()
+  /* ============================================================
+     WHOSE QUOTE THIS IS, STAMPED HERE AND NOT BY THE CALLER.
+
+     THE MEASUREMENT. Home's quotes card offers three lenses —
+     Drafts, All, Mine — and Mine was permanently 0. Not filtered
+     wrongly: EMPTY, on a sheet where the signed-in person had just
+     raised the quote sitting on the screen above it. `preparedBy`
+     is what `rollQuotes` matches on and nothing ever wrote it:
+     this function has taken the argument since the day it was
+     written and all three of its callers omitted it — the subject
+     chooser, the catalogue and the module workspace.
+
+     A CALLER IS THE WRONG PLACE TO DECIDE IT. "This quote was
+     prepared by whoever is signed in" is a fact about the
+     dealership, not about which button was pressed, and three
+     buttons agreeing about it by hand is three chances to forget —
+     which is exactly what happened. The argument stays, because a
+     caller minting on somebody else's behalf is a real thing and
+     an explicit name must win; absent, the session answers.
+
+     A NAME AND NOT AN ID, because that is what a quote prints and
+     what `rollQuotes` compares. The document freezes it, so a
+     salesperson who leaves is still the person who wrote it. */
   const quote = mintQuoteFromView({
     viewId,
     rowId,
     reference: referenceForNow(),
-    ...(preparedBy ? { preparedBy } : {}),
+    ...(preparedBy ?? currentUser()?.name
+      ? { preparedBy: preparedBy ?? (currentUser()?.name as string) }
+      : {}),
   })
   if (!quote) return null
   put(quote)

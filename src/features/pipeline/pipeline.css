@@ -86,10 +86,33 @@
   display: flex;
   flex-direction: column;
   /* EQUAL AND NEVER NARROWER THAN A CARD — the floor exists so no
-     column can collapse to a sliver a card cannot be dropped into. */
+     column can collapse to a sliver a card cannot be dropped into.
+
+     THE FLOOR WAS 248 AND IT HID A WHOLE STAGE. Measured on the
+     five default stages at 1280x800: five 248px columns plus four
+     16px gaps plus the well's padding is 1368px of demand against
+     1056px of room, so `.pb-cols` scrolled 312px — and it is an
+     overlay scrollbar, `offsetHeight - clientHeight === 0`, so
+     nothing on screen said so. LOST began at x=1312, thirty-two
+     pixels past the right edge of a 1280 window: not clipped,
+     absent. At 1440 it was still 120px past the edge and its line
+     read "Deals that went so…". A dealer demonstrating a pipeline
+     on a laptop had four stages and no way to know.
+
+     168 IS THE CARD, NOT A GUESS. A deal card carries a reference,
+     a customer, what is being sold and a total; the longest of
+     those at the card's own type step is the reference and the
+     money, and both hold above 160px. At 1280 the five stages take
+     185px each and all five are on screen; at 1440, 217px.
+
+     AND IT IS STILL A FLOOR, so a dealership that adds a sixth and
+     seventh stage scrolls rather than shredding every column — the
+     board keeps working past the point where the window stops
+     being able to show it, which is the behaviour the scroller was
+     always for. */
   flex: 1 1 0;
   min-height: 0;
-  min-width: 248px;
+  min-width: 168px;
   padding: var(--s-3);
   border: 1px solid var(--line-subtle);
   border-radius: var(--r-card);
@@ -2491,4 +2514,76 @@
     height: max(100%, 44px);
     transform: translate(-50%, -50%);
   }
+}
+
+/* ============================================================
+   AND WHEN IT DOES SCROLL, SAY SO.
+
+   `.pb-cols` is an overlay scroller on this platform — it lays out
+   no scrollbar at all (`offsetHeight - clientHeight === 0`), so a
+   board wider than its window looked exactly like a board that
+   ended where the window did. With the floor lowered this is rare,
+   but rare is not never: a dealership running eight stages will
+   still overflow, and that is the case where a person most needs
+   to know there is more.
+
+   A FADE ON THE RIGHT EDGE, and only while there is something
+   under it. `animation-timeline: scroll()` drives it from the
+   scroll position itself, so it is gone the moment you reach the
+   end and gone entirely when there is nothing to scroll. Where the
+   timeline is not supported nothing is drawn, which is exactly the
+   behaviour of today. It is decoration over a control, so it never
+   takes a press.
+   ============================================================ */
+
+@supports (animation-timeline: scroll()) {
+  .pb-floor {
+    position: relative;
+  }
+  .pb-floor::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 48px;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, var(--bg-canvas));
+    animation: pb-edge linear both;
+    animation-timeline: scroll(nearest inline);
+    animation-range: contain;
+  }
+  @keyframes pb-edge {
+    0%,
+    90% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-floor::after {
+    animation: none;
+  }
+}
+
+/* THE SAME AFFORDANCE THE DASHBOARD GRID TAKES — see the note
+   beside `.dsh-grid`. A board with an eighth stage scrolls, and a
+   person has to be able to tell. */
+.pb-cols {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.pb-cols::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.pb-cols::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 5px;
+  background: var(--line-strong);
+  background-clip: content-box;
 }

@@ -249,7 +249,7 @@ export function QuickLinks({
 
         {!arranging && links.length === 0 ? (
           <p className="dsh-fast-empty ds-small">
-            No fast actions yet. Press Arrange to put the places you use most up here.
+            No fast actions yet. Press Edit to put the places you use most up here.
           </p>
         ) : null}
       </div>

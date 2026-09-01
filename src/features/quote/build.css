@@ -246,7 +246,7 @@
      `#000` here is an ALPHA CHANNEL and not an ink — a mask reads
      only the luminance of its own gradient, so no theme colour can
      be substituted for it and rule 1 has nothing to say about it. */
-  mask-image: linear-gradient(to right, #000 82%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 94%, transparent 100%);
 }
 
 /* AND WHEN THERE IS NO CAPTION, THE PICTURE TAKES THE STRIP BACK.
@@ -689,10 +689,24 @@
 .qb-band-fact {
   font-size: var(--t-small-size);
   color: var(--fg-secondary);
+  /* THE FADE IS NARROWER THAN IT WAS, and the reason is a
+     measurement. It began at 84%, so the last SIXTH of every
+     summary was ramped to transparent whether or not there was
+     anything past the edge to hide — measured at 1280 and 1440 the
+     tail of a shut band, which is where the trailer's part number
+     and half the rigging kit are written, sat between 1.0 and
+     2.5:1 against its own ground. That is not a hint that there is
+     more; it is text a person cannot read with nothing to say it
+     was cut.
+
+     94% keeps the signal and stops eating the words: roughly eight
+     pixels of ramp on a 130px cell rather than twenty. The
+     principle is unchanged — §3 still says nothing truncates
+     mid-word, so it is still a fade and never an ellipsis. */
   white-space: nowrap;
   overflow: hidden;
   min-width: 0;
-  mask-image: linear-gradient(to right, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 94%, transparent 100%);
 }
 
 .qb-band-fig {
@@ -1925,7 +1939,7 @@
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
-  mask-image: linear-gradient(to right, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 94%, transparent 100%);
 }
 
 .qb-led-amount {

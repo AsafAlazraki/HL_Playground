@@ -44,6 +44,8 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { currentUser } from '@/features/auth'
 import { PlaceMark } from './PlaceMark'
 import { markFor } from './brandLogos'
+import { createViewFor } from '@/features/views/viewDefs'
+import { createQuoteFromView, unaddressedDraftFor } from '@/features/quote'
 import { accentVar, type ImageRef, type ModuleDef } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
@@ -169,6 +171,35 @@ export function ModuleIndex({
     setTab(wanted.key)
     bar.current?.querySelector<HTMLButtonElement>(`#md-tab-${wanted.key}`)?.focus()
   }, [])
+
+  /* ============================================================
+     QUOTING THE THING YOU ARE LOOKING AT.
+
+     THE SAME THREE LINES `QuoteStart` RUNS, and deliberately not a
+     fourth interpretation of them: an unaddressed draft for this
+     row is handed back rather than a second one minted, then
+     `createViewFor` (idempotent — it makes no table, no column and
+     no join, so nothing about the sheet changes because somebody
+     pressed a button on a catalogue) and `createQuoteFromView`.
+
+     WITHOUT `onOpenQuote` THERE IS NO BUTTON. Only the shell can
+     put a document on screen; a host that cannot do that gets a
+     catalogue with no quote action rather than one that mints a
+     document nobody is taken to. */
+  const quoteIt = useCallback(
+    (tableId: string, rowId: string) => {
+      if (!onOpenQuote) return
+      const standing = unaddressedDraftFor(tableId, rowId)
+      if (standing) {
+        onOpenQuote(standing.id)
+        return
+      }
+      const view = createViewFor(tableId)
+      const made = createQuoteFromView(view.id, rowId)
+      if (made) onOpenQuote(made.id)
+    },
+    [onOpenQuote],
+  )
 
   const style = { '--md-accent': accentVar(owner.accent) } as CSSProperties
   const name = table ? table.name : owner.name
@@ -306,6 +337,7 @@ export function ModuleIndex({
              rather than the same page re-pointed: the find box and
              the drawer that is open both belong to the place. */
           <ModuleStock
+            {...(onOpenQuote ? { onQuote: quoteIt } : {})}
             /* KEYED ON THE DRAWER TOO, so pressing a second series
                from the dashboard is a fresh page at that series
                rather than the same page keeping the first one. */

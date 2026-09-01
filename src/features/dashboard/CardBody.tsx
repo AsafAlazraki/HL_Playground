@@ -84,6 +84,7 @@ import { useConstraints } from '@/features/constraints/constraintDefs'
    sheet all ask it for the same glyph, so a dashboard that drew
    its own would be the eighth drawing of a boat in this build. */
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
+import { TABLE_KINDS } from '@/types/model'
 import type { TableKind } from '@/types/model'
 import { money } from '@/lib/money'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
@@ -694,9 +695,19 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
                   you what sort of thing this brand sells, which the
                   wordmark cannot. The colour key above the grid maps
                   the hue; this names it on the tile. */}
+              {/* AND IT SAYS THE MODULE ONLY WHEN THAT IS NOT THE
+                  NAME ABOVE IT. Five of the twenty-five places are
+                  their own module — Yamaha Outboards, Parts &
+                  Accessories — so the pill printed the tile's own
+                  name a second time, sixty pixels under the first.
+                  Where they agree it says the KIND instead, which
+                  is the one thing the wordmark above cannot tell
+                  you and the thing the colour key teaches. */}
               <span className="dsh-tile-kind" data-kind={kindOf(p.kind)}>
                 <TableKindSymbol kind={kindOf(p.kind)} size={12} />
-                {p.moduleName}
+                {p.moduleName === p.name
+                  ? TABLE_KINDS[kindOf(p.kind)].label
+                  : p.moduleName}
               </span>
               <span className="dsh-tile-figs">
                 <span className="dsh-tile-sum ds-mono">
