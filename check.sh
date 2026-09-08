@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 # One command that proves the app. Run from the worktree root.
+
+# Without this, a pipeline reports the exit status of its LAST command, so
+# `vitest run | tail -12 || FAIL=1` read tail's status (always 0) and the two
+# piped guards below could never set FAIL. check.sh printed ALL GREEN over a
+# red suite. Verified: `false | tail -1 || F=1` leaves F=0 without pipefail.
+set -o pipefail
 cd "$(dirname "$0")"
 line(){ printf '\n\033[1m== %s ==\033[0m\n' "$1"; }
 FAIL=0

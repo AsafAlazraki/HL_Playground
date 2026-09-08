@@ -28,6 +28,21 @@ import {
 /** entity-plural — advisory — plural entity name → rename-entity singular. */
 export function ruleEntityPlural(ctx: RuleContext): LintFinding[] {
   const { entity } = ctx
+  /* A KINDED table is named for the brand whose price file it holds, not for
+     the record it stores. README: "One table per brand… `TableKind` says what
+     a table *holds*; it is not the table's identity." The kind already answers
+     "what is one row here", so the name is free to be plural — and telling
+     somebody to rename 'Highfield Inflatables' to 'Highfield Inflatable' is
+     advice about a brand's own name, which is not ours to give.
+
+     Measured on the seed: 22 of 25 kinded tables have plural names, and 19 of
+     them are a concrete kind. This rule was firing on every one.
+
+     'custom' is deliberately NOT excluded. It declares nothing about the row,
+     so the name still has to carry the record type — 'Labour Rates' →
+     'Labour Rate' stays a fair note. */
+  if (entity.kind && entity.kind !== 'custom') return []
+
   const info = pluralInfo(entity.name)
   if (!info.isPlural) return []
   const name = entity.name.trim()

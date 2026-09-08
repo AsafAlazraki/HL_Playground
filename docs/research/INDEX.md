@@ -8,3 +8,5 @@ docs are where research goes.
 | date | file | question it answers | status |
 |---|---|---|---|
 | 2026-09-08 | [ui-ux-world-class-2026.md](ui-ux-world-class-2026.md) | What do the best configurators and dense professional tools do, and are we doing it? | **incomplete** — grounding half only; re-run to finish |
+| 2026-09-08 | [stack-and-practice.md](stack-and-practice.md) | Is the stack genuinely current, and where does engineering practice have gaps? | complete — stack current to the patch; 10 adoptions ranked, `check.sh` pipefail first |
+| 2026-09-08 | [configurator-teardowns-2026.md](configurator-teardowns-2026.md) | When a combination does not work, what does a shipping configurator actually say? | complete |

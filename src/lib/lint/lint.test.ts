@@ -25,7 +25,12 @@ const field = (
   extra: Partial<FieldDef> = {},
 ): FieldDef => ({ id, name, type, ...extra })
 
-const table = (id: string, name: string, fields: FieldDef[]): EntityDef => ({
+const table = (
+  id: string,
+  name: string,
+  fields: FieldDef[],
+  extra: Partial<EntityDef> = {},
+): EntityDef => ({
   id,
   name,
   accent: 'blue',
@@ -33,6 +38,7 @@ const table = (id: string, name: string, fields: FieldDef[]): EntityDef => ({
   position: { x: 0, y: 0 },
   createdAt: '2020-01-01T00:00:00.000Z',
   updatedAt: '2020-01-01T00:00:00.000Z',
+  ...extra,
 })
 
 const lint = (
@@ -99,6 +105,31 @@ describe('advisories — the findings that mean a model will not read', () => {
     expect(unsafe.fix).toBeUndefined()
   })
 
+  it('leaves a brand table alone — its kind already says what one row is', () => {
+    // One table per brand. 'Highfield Inflatables' is a brand, not a mis-named
+    // record type, so renaming it to 'Highfield Inflatable' is advice about
+    // somebody else's trademark. 19 of the 25 kinded tables in the seed were
+    // getting this advisory.
+    for (const kind of ['boat', 'trailer', 'motor', 'package', 'accessory'] as const) {
+      const ids = ruleIds([
+        table('t1', 'Highfield Inflatables', [field('f1', 'Column 1', 'text')], { kind }),
+      ])
+      expect(ids).not.toContain('entity-plural')
+    }
+
+    // 'custom' declares nothing about the row, so the name still has to carry
+    // the record type — this one is a fair note and must survive.
+    expect(
+      ruleIds([
+        table('t1', 'Labour Rates', [field('f1', 'Column 1', 'text')], { kind: 'custom' }),
+      ]),
+    ).toContain('entity-plural')
+
+    // and a table with no kind at all is unchanged
+    expect(ruleIds([table('t1', 'Widgets', [field('f1', 'Column 1', 'text')])])).toContain(
+      'entity-plural',
+    )
+  })
   it('never calls a singular word ending in s plural', () => {
     for (const name of ['Status', 'Address', 'Analysis', 'Class']) {
       expect(ruleIds([table('t1', name, [field('f1', 'Column 1', 'text')])])).not.toContain(
