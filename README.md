@@ -9,16 +9,18 @@ Marine is the first industry built. Nothing in the frame is marine — the
 vocabulary is a drawing office, so the same product arrives in another industry
 without a rename.
 
-This is **part one** of a larger application. It ends where quoting begins.
+It no longer ends where quoting begins — the quote flow is built, and so is the
+sign-in, tenancy and pipeline around it. See **Status**.
 
 ---
 
 ## ⚠️ Read this before you fork
 
 **This repository is public and the seed data is real.** `src/demos/northside.ts`
-carries 651 rows extracted from Northside Marine's Master Price File, and the
-columns include `Base Cost`, `Freight`, `Landed Hull Cost`, `Dealer List Price`,
-`Cash` and `Trade`. That is a live business's cost structure and margins.
+carries **15,691 rows across 53 tables** extracted from Northside Marine's Master
+Price File, and the columns include `Base Cost`, `Freight`, `Landed Hull Cost`,
+`Dealer List Price`, `Cash` and `Trade`. That is a live business's cost structure
+and margins.
 
 Treat it accordingly. Do not redistribute it, and do not assume it is
 illustrative — every number in it came out of a real workbook.
@@ -27,8 +29,9 @@ illustrative — every number in it came out of a real workbook.
 
 ## Running it
 
-Requires **Node 20+** (built on 22.22). No backend, no accounts, no environment
-variables — everything lives in your browser's IndexedDB.
+Requires **Node 22+** — declared in `package.json` `engines`, and enforced by CI
+on 22 and 24. Node 20 reached end of life in April 2026. No backend and no
+environment variables; everything lives in your browser's IndexedDB.
 
 ```bash
 npm install
@@ -41,17 +44,17 @@ npm run dev
 The dev server binds **port 5090**, not Vite's default — `.claude/launch.json`
 is committed so agent tooling starts it on the right one.
 
-### You will land on an empty screen, and that is correct
+### You will land on a sign-in screen, then an empty one
 
 This app is **local-first**: everything lives in your browser's IndexedDB, so
 nothing about a project travels in the repository. A fresh clone opens on
-onboarding with nothing drawn. Three clicks gets you to the same 21 tables the
-screenshots show:
+**sign-in** — which signs you in locally and sends nothing anywhere — and then on
+an empty sheet. Getting to the same 53 tables the screenshots show:
 
-1. type a business name → **Continue**
-2. pick **Marine**
-3. the second door — **Load Northside Marine's Master Price File — a worked
-   example**, tagged EXAMPLE DATA
+1. press **Use the demo account**. It *fills* the form; it does not submit.
+2. press **Sign in**
+3. the first door — **Load your Master Price File**, which states its size:
+   53 tables, 15,691 rows
 
    That door names the business whose file it is, because the file is
    Northside Marine's and they are the first real customer rather than a
@@ -66,9 +69,21 @@ testing onboarding, surprising the first time. And the sheet you build is not
 in git: use **I/O** in the masthead to export a project file if you want to hand
 one to somebody.
 
-Verified end to end: clone → `npm install` → `npx tsc --noEmit -p tsconfig.app.json`
-→ `npm run build` → `python tools/seed/gen_all.py`, all green, working tree
-still clean, and the seed byte-identical to the committed one.
+`npm test` runs five guards in order: **typecheck**, **lint** (oxlint, ratcheted
+so the count can only fall), **vitest** (two projects — `logic` in node,
+`ui` in happy-dom), **reachability**, and the **style contract**. CI runs all of
+them plus the build, on Node 22 and 24.
+
+A sixth is deliberately outside `npm test` because it needs a running server:
+
+```bash
+npm run dev            # one terminal
+npm run check:contrast # another
+```
+
+It drives the system Chrome and measures every text node against the ground it is
+actually drawn on. `tools/seed/gen_all.py` needs Python, which is not required to
+run or develop the app — only to regenerate the seed.
 
 ```bash
 npx tsc --noEmit -p tsconfig.app.json
@@ -99,7 +114,11 @@ honours the project's `noEmit`).
 | `src/lib/formula/` | Calculated columns — a Pratt parser and evaluator. |
 | `src/lib/configure/` | The constraint solver: arc-consistency propagation, with the reason recorded at the moment an option is removed. |
 | `src/lib/lint/` | The 15 data-management rules the product enforces. |
-| `src/demos/northside.ts` | **Generated.** 21 tables, 651 rows, from the real workbooks. |
+| `src/features/quote/` | Choose · Configure · Address, level pricing, overrides, issue-and-freeze, the A4 document. |
+| `src/features/modules/` | Modules — what a person is given, with nine capability verbs. |
+| `src/features/pipeline/` `crm/` | The sales board and the customer register. |
+| `src/features/auth/` `tenancy/` `session/` | Sign-in, the org, and who is looking. |
+| `src/demos/northside.ts` | **Generated.** 53 tables, 15,691 rows, from the real workbooks. |
 | `docs/specs/` | Architecture, art direction, and the per-feature specs. |
 | `docs/screens/` | Verification screenshots, in the order they were taken. |
 
@@ -150,9 +169,18 @@ number, it came out of a workbook.
 ## Status
 
 Working: the blueprint, the tables, sections and grouping, the view pages, the
-sentence rules, the constraint solver, formulas, the linter, import/export, and
-local persistence.
+sentence rules, the constraint solver, formulas, the linter, import/export, local
+persistence — **and the quote flow**, which this file described as unbuilt for
+longer than it was true. `src/features/quote/` is 20+ files: Choose · Configure ·
+Address over a persistent price bar, level pricing, overrides with a reason
+gate, issue-and-freeze, and an A4 document. There is also sign-in, tenancy,
+roles, a sales pipeline and a CRM, none of which this file mentioned.
 
-Not built yet: the quote flow, and automated tests. `docs/specs/CLUELESS_USER_TESTS.md`
-is the running acceptance log — findings are listed there with what was tried,
-what was expected and what happened.
+**Read `docs/BACKLOG.md` before planning anything.** 227 claims from the planning
+docs were checked against the code on 2026-09-08: 102 were already built, 37 were
+stale. The docs under `docs/plan` systematically under-report what exists.
+
+Not built yet: the conflict sheet's option channel (`optionConflict` has no
+callers), URL state — there is no router — and component coverage beyond the
+first two suites. `docs/specs/CLUELESS_USER_TESTS.md` is the running acceptance
+log; `docs/research/` holds the design research, indexed in `INDEX.md`.
