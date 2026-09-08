@@ -130,6 +130,44 @@ describe('advisories — the findings that mean a model will not read', () => {
       'entity-plural',
     )
   })
+  it('asks for an identifier only where the rows do not already have one', () => {
+    // THE RULE USED TO JUDGE THE SCHEMA ALONE and the seed sets `required`
+    // on nothing, so it fired on all 53 tables of the real price file — 53 of
+    // 192 findings, every one the same sentence. Measured after: 3, and those
+    // three are real (Mackay Trailers 3 of 125, Rigging Kits 3 of 650, Parts &
+    // Accessories 4 of 2,937).
+    const t = table('t1', 'Table A', [field('f1', 'Name', 'text')])
+    const row = (id: string, v: unknown): RowData => ({
+      id,
+      entityId: 't1',
+      values: { f1: v as never },
+    })
+
+    // no rows at all: nothing to go on but the schema, so the old judgement holds
+    expect(ruleIds([t])).toContain('no-identifier')
+
+    // every row names itself — the worry the rule exists for cannot happen here
+    expect(
+      lint([t], { t1: [row('r1', 'Alpha'), row('r2', 'Beta')] }).map((f) => f.ruleId),
+    ).not.toContain('no-identifier')
+
+    // one row does not, so it is asked for — and it says how many
+    const gappy = lint([t], { t1: [row('r1', 'Alpha'), row('r2', ''), row('r3', 'Gamma')] })
+    const found = gappy.find((f) => f.ruleId === 'no-identifier')
+    expect(found).toBeDefined()
+    expect(found?.why).toContain('1 of 3 rows')
+    expect(found?.why).toContain("'Name'")
+
+    // null and undefined are gaps too, not just empty string
+    expect(
+      lint([t], { t1: [row('r1', null), row('r2', undefined)] }).map((f) => f.ruleId),
+    ).toContain('no-identifier')
+  })
+
+  it('never asks for an identifier when a field is already required', () => {
+    const t = table('t1', 'Table A', [field('f1', 'Name', 'text', { required: true })])
+    expect(ruleIds([t])).not.toContain('no-identifier')
+  })
   it('never calls a singular word ending in s plural', () => {
     for (const name of ['Status', 'Address', 'Analysis', 'Class']) {
       expect(ruleIds([table('t1', name, [field('f1', 'Column 1', 'text')])])).not.toContain(

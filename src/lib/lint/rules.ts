@@ -21,6 +21,11 @@ import {
   wordsOf,
 } from './heuristics'
 
+/** A count, grouped, because "4 of 2937" reads as a part number and
+ *  "4 of 2,937" reads as a proportion. Local rather than imported:
+ *  this module is pure and has no dependency beyond the model. */
+const fig = (n: number): string => n.toLocaleString('en-AU')
+
 /* ---------------------------------------------------------- */
 /* Identity & naming                                          */
 /* ---------------------------------------------------------- */
@@ -163,9 +168,31 @@ export function ruleFieldDupName(ctx: RuleContext): LintFinding[] {
   return out
 }
 
-/** no-identifier — advisory — no required non-formula field → make-required. */
+/** no-identifier — advisory — no required non-formula field → make-required.
+ *
+ *  AND IT READS THE ROWS, WHICH IT DID NOT. This rule judged the schema
+ *  alone: no field carries `required`, therefore complain. The seed
+ *  generator sets `required` on nothing, so it fired on **all 53 tables
+ *  of the real price file** — 53 of the review pane's 192 findings,
+ *  every one of them the same sentence. A rule that flags a hundred per
+ *  cent of the data tells a person nothing, and it is worse than
+ *  useless here: it is 53 rows of noise hiding the findings that matter.
+ *
+ *  The complaint is hypothetical — "two totally blank rows COULD sit
+ *  side by side" — and the rows are right there to settle it. Measured
+ *  on the real file: the identifying field is filled on every row of
+ *  **50 of the 53**. Three have real gaps, and they are small and
+ *  specific: Mackay Trailers 3 of 125, Rigging Kits 3 of 650, Parts &
+ *  Accessories 4 of 2,937.
+ *
+ *  So where rows exist they decide it. A table whose identifier is
+ *  filled on every row has demonstrated the thing the rule was worried
+ *  about, and is left alone. A table with gaps is still flagged — and
+ *  can now say how many, which is the difference between a worry and a
+ *  job. A table with NO rows keeps the old schema-only judgement,
+ *  because there is nothing else to go on. 53 findings become 3. */
 export function ruleNoIdentifier(ctx: RuleContext): LintFinding[] {
-  const { entity } = ctx
+  const { entity, rows } = ctx
   const nonFormula = entity.fields.filter((f) => f.type !== 'formula')
   // zero stored fields is no-fields territory — one mark, not two
   if (nonFormula.length === 0) return []
@@ -174,13 +201,29 @@ export function ruleNoIdentifier(ctx: RuleContext): LintFinding[] {
   if (!target || target.type === 'formula') {
     target = entity.fields.find((f) => f.type === 'text')
   }
+
+  /* The evidence, where there is any. */
+  let blank = 0
+  if (rows.length > 0 && target) {
+    const id = target.id
+    for (const r of rows) {
+      const v = r.values[id]
+      if (v === null || v === undefined || v === '') blank += 1
+    }
+    if (blank === 0) return []
+  }
+
+  const named = target ? `'${target.name.trim()}'` : 'the identifying field'
   const finding: LintFinding = {
     id: findingId('no-identifier', entity.id, target ? [target.id] : undefined),
     ruleId: 'no-identifier',
     severity: 'advisory',
     entityId: entity.id,
     title: 'NO REQUIRED IDENTIFIER',
-    why: 'Every field here is optional, so two totally blank rows could sit side by side with nothing to tell them apart — make the identifying field required.',
+    why:
+      blank > 0
+        ? `${fig(blank)} of ${fig(rows.length)} rows have nothing in ${named}, so those rows have nothing to tell them apart — make it required and fill the gaps.`
+        : 'Every field here is optional, so two totally blank rows could sit side by side with nothing to tell them apart — make the identifying field required.',
   }
   if (target) {
     finding.fieldIds = [target.id]
