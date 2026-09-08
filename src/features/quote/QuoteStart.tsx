@@ -65,6 +65,27 @@
    with a blank page. Choose the place, then the one." is 25 words
    explaining a grid of nine labelled cards.
 
+   ── THE CHOICE SURFACE — CONFIGURATOR_PLAYBOOK §3 ────────────
+
+   Both layers are BANDS with a caption and a count, in one grammar.
+
+   LAYER ONE. Eighteen cards in one undifferentiated grid is what §3
+   asks against; `bandsOf` cuts the dealer's own order into runs of
+   one kind — Boats 7 · Motors 2 · Packages 2 · Trailers 7 on the
+   real sheet — and never moves a card. The caption sits in a left
+   gutter, so four headings cost no vertical space.
+
+   LAYER TWO. `OFFERED n of m` over the list, `HELD BACK n` under it
+   where the catalogue really refused rows. The count that used to
+   sit BELOW fifty rows is above them, phrased as the thing to do.
+
+   SELECTION IS AN OUTLINE. Outlines take no part in layout, so
+   nothing reflows when the highlight moves down 50 rows; hover is
+   the same ring at `--accent-line` alpha, so hovering previews
+   selection. That is Porsche's move and §3 calls it the cheapest
+   legibility win in the corpus. The ring is the only thing that
+   moves, and it does not move on the keyboard — see below.
+
    ── MOTION: THERE IS NONE ON OPEN, AND THAT IS THE RULE ──────
 
    The budget's one absolute is that a keyboard-initiated act is
@@ -73,6 +94,13 @@
    keyboard. It does not fade, rise or scale, and neither does the
    scrim: a scrim that fades IS the dialog animating on open under
    another name.
+
+   AND THE SELECTION RING LANDS ON THE FRAME THE ARROW KEY DOES.
+   §6 budgets 120ms for a selection ring arriving, and §1 says
+   nothing keyboard-initiated animates; both are right, because they
+   are about two different inputs. picker.css declares the transition
+   on `:hover` alone, so a pointer gets the 120ms preview and a person
+   holding ArrowDown through fifty rows gets no smear at all.
 
    ── WHAT IT MAY NOT DO ───────────────────────────────────────
 
@@ -95,6 +123,12 @@ import { TABLE_KINDS } from '@/types/model'
 import type { EntityDef, ModuleDef, RowData } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
 import { TableKindSymbol } from '@/features/tablekit'
+/* THE DEALER'S OWN WORD FOR ONE HEADING — "series", "category",
+   "section". Read rather than named so a group whose banner cell is
+   empty can say what is missing in the dealer's own noun. Deep path,
+   the same convention `HomeStage`, `TableStage` and `fitment` already
+   use for this file. */
+import { branchNoun } from '@/features/table/grouping'
 import { useConstraints } from '@/features/constraints/constraintDefs'
 import { createViewFor, useViewDefs } from '@/features/views/viewDefs'
 import type { IndexEntry } from '@/features/modules/read'
@@ -107,6 +141,7 @@ import {
   subjectsIn,
   type FlowPreview,
   type QuoteDoor,
+  type SubjectList,
 } from './start'
 import { placeRules, subjectVerdict, type SubjectVerdict } from './subjectRules'
 import { unsellableSubject } from './freeze'
@@ -163,6 +198,7 @@ export function QuoteStart({
   )
   const open = useMemo(() => doors.filter((d) => d.refusal === ''), [doors])
   const shut = useMemo(() => doors.filter((d) => d.refusal !== ''), [doors])
+  const bands = useMemo(() => bandsOf(open), [open])
 
   /* NOTHING IS CHOSEN WHEN IT OPENS, and that is the change. The
      two-pane picker had to land on a place because the right-hand
@@ -357,6 +393,22 @@ export function QuoteStart({
       }
       if (event.metaKey || event.ctrlKey || event.altKey) return
 
+      /* ── `/` PUTS THE CARET IN THE SEARCH, FROM ANYWHERE ─────────
+         §1's first line about a dealer: speed over ceremony, and
+         "every picker is type-ahead". Arrowing 50 rows to reach a
+         hull whose model code they already know is the ceremony.
+         Guarded on the field itself so typing a slash INTO the search
+         is a slash, and nothing here animates — the caret lands on
+         the frame the key does. */
+      if (event.key === '/' && event.target !== findRef.current) {
+        const el = findRef.current
+        if (!el) return
+        event.preventDefault()
+        el.focus()
+        el.select()
+        return
+      }
+
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         if (shown.length === 0) return
         event.preventDefault()
@@ -457,10 +509,39 @@ export function QuoteStart({
               </p>
             ) : (
               <>
+                {/* ── FOUR BANDS, IN THE SHEET'S OWN ORDER ──────────
+                    §3 asks a choice surface for group headings, and
+                    eighteen ungrouped cards is the thing it asks
+                    against: a dealer looking for a trailer reads all
+                    eighteen. Measured on the real sheet — Boats 7,
+                    Motors 2, Packages 2, Trailers 7 — and every kind
+                    already arrives as one consecutive run, so
+                    `bandsOf` CUTS the order rather than sorting it.
+                    start.ts:186's rule holds untouched: nothing moves.
+
+                    The caption lives in a LEFT GUTTER rather than on a
+                    line of its own, so four headings cost no vertical
+                    space at all. Measured at 1280: the grid was 4 rows
+                    of 5, it is 6 rows of 4 in the gutter layout, and
+                    the shut band still lands above the fold. */}
                 <ul className="qs-grid" aria-label="The places you can quote from">
-                  {open.map((d) => (
-                    <li key={d.key} className="qs-cell">
-                      <ModuleCard door={d} onPick={() => setPlaceId(d.key)} />
+                  {bands.map((b) => (
+                    <li key={b.key} className="qs-band" role="presentation">
+                      <p className="qs-band-cap" role="presentation">
+                        <span className="mono-label qs-band-word">{b.label}</span>
+                        <span className="qs-band-n">{b.doors.length}</span>
+                      </p>
+                      <ul className="qs-band-grid" aria-label={b.label}>
+                        {b.doors.map((d) => (
+                          <li key={d.key} className="qs-cell">
+                            <ModuleCard
+                              door={d}
+                              band={b.label}
+                              onPick={() => setPlaceId(d.key)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
                     </li>
                   ))}
                 </ul>
@@ -531,7 +612,70 @@ export function QuoteStart({
                 value={query}
                 onChange={(e) => setQuery(e.currentTarget.value)}
               />
+              {/* THE SHORTCUT IS RENDERED, WHICH IS HOW IT IS LEARNED.
+                  `dense-tables-and-selection.md` marks it "adopt —
+                  cheap": Superhuman prints the key beside the thing it
+                  reaches, and a shortcut nobody can see is not a
+                  feature. One glyph, and it goes when the field is
+                  already the thing being typed into. */}
+              <kbd className="qs-find-key" aria-hidden="true">
+                /
+              </kbd>
             </div>
+
+            {/* ── THE BANDS, AND THE COUNT THAT WAS AT THE BOTTOM ────
+                §3 wants the count on the band header, over the list.
+                It was under it: "The first 50 of 588 are drawn. The
+                search reaches every one of them." — 50 rows and one
+                scroll away from the moment a person decides whether
+                to scroll or to type, and phrased as a fact about the
+                renderer rather than as something to do. §1's dealer
+                knows the model number; this is the line that tells
+                them typing it is the fast way, before they scroll. */}
+            {list ? (
+              <div className="qs-bands">
+                <p className="qs-band-cap qs-band-cap--row" role="presentation">
+                  <span className="mono-label qs-band-word">Offered</span>
+                  <span className="qs-band-n">{offeredSay(list)}</span>
+                  {list.hidden > 0 ? (
+                    <span className="qs-band-say">
+                      The first {SUBJECT_CAP} are drawn — type a model or a series to reach the
+                      other {list.hidden.toLocaleString()}.
+                    </span>
+                  ) : null}
+                </p>
+
+                {/* ── AND WHAT THE CATALOGUE HELD BACK ───────────────
+                    `buildEntries` refuses a discontinued row and every
+                    row of a retired table, and until now it did it in
+                    silence — the one thing §5 forbids outright ("never
+                    hide; count and attribute the removal"). The census
+                    already counted them. On the Northside sheet this
+                    is 0 for all eighteen open places, so it draws on
+                    none of them; a sheet that retires a hull gets the
+                    number rather than a shorter list. */}
+                {door.census.held > 0 ? (
+                  <p className="qs-band-cap qs-band-cap--row" role="presentation">
+                    <span className="mono-label qs-band-word">Held back</span>
+                    <span className="qs-band-n">{door.census.held.toLocaleString()}</span>
+                    <span className="qs-band-say">
+                      No longer sold. They stay on the sheet so the quotes already written against
+                      them still open, and none of them is drawn here.
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* THE COUNT, FOR A READER WHO CANNOT SEE THE BAND. §3:
+                "Result count announced in an sr-only live region." The
+                visible form is two figures and a rule between them,
+                which is a shape rather than a sentence. */}
+            <p className="qs-said" role="status" aria-live="polite">
+              {list && !list.waiting && query.trim() !== ''
+                ? `${list.matched.length.toLocaleString()} of ${list.all.length.toLocaleString()} in ${door.name} match “${query.trim()}”.`
+                : ''}
+            </p>
 
             {list && list.waiting ? (
               <p className="qs-note">
@@ -550,51 +694,93 @@ export function QuoteStart({
               {/* A LISTBOX MAY ONLY CONTAIN OPTIONS AND GROUPS. The
                   table is a `group` with its own name; everything
                   between it and a row is presentational. */}
-              {list?.sections.map((sec) => (
-                <div className="qs-sec" key={sec.tableId} role="group" aria-label={sec.name}>
-                  <div className="qs-sec-head" role="presentation">
-                    <span className="qs-sec-name">{sec.name}</span>
-                    <span className="qs-sec-count">{sec.count}</span>
+              {list?.sections.map((sec) => {
+                /* ── THE TABLE'S NAME IS ALREADY THE HEADING ────────
+                   Measured on the real sheet: every one of the
+                   eighteen open places holds exactly ONE table, so
+                   this sticky bar printed the same string as the 30px
+                   `<h2>` forty pixels above it — the duplicated eyebrow
+                   `5d00103` was written to end, in a second place. It
+                   is drawn only where a place really spans two tables
+                   and the bar is telling you which one you are in. */
+                const named = (list?.sections.length ?? 0) > 1
+                const word = branchNoun(entities[sec.tableId])
+                return (
+                  <div
+                    className={`qs-sec${named ? ' qs-sec--named' : ''}`}
+                    key={sec.tableId}
+                    role="group"
+                    aria-label={sec.name}
+                  >
+                    {named ? (
+                      <div className="qs-sec-head" role="presentation">
+                        <span className="qs-sec-name">{sec.name}</span>
+                        <span className="qs-sec-count">{sec.count}</span>
+                      </div>
+                    ) : null}
+                    {sec.groups.map((grp) => {
+                      /* A HEADING THE FILE DOES NOT CARRY IS A FACT,
+                         not an absence. Stabicraft ships one live
+                         model whose banner cell is empty and it
+                         floated, unheaded, above "Fisher Series" —
+                         indistinguishable from a table that declares
+                         no grouping at all. §3's third band is exactly
+                         this state, and the word is the dealer's own
+                         column heading rather than one chosen here. */
+                      const head =
+                        grp.trail !== ''
+                          ? grp.trail
+                          : sec.groups.length > 1 && word
+                            ? `Not filed under a ${word.one}`
+                            : ''
+                      return (
+                        <div className="qs-grp" key={grp.key} role="presentation">
+                          {head === '' ? null : (
+                            <p className="qs-grp-head" role="presentation">
+                              {/* THE HEADING KEEPS ITS OWN CASE. It was
+                                  `.mono-label`, which uppercases, and
+                                  the string is a NAME off the price
+                                  file — "Classic ▸ CL260" came out
+                                  "CLASSIC ▸ CL260". Rule 3 and
+                                  DESIGN_CONTRACT §11: uppercase is a
+                                  label style, never a name style, and
+                                  it is lossy — some of these headings
+                                  ("ASSAULT PROS") really are shouted
+                                  on the sheet and some are not, and
+                                  after the transform a dealer cannot
+                                  tell which. */}
+                              <span className="qs-grp-trail">{head}</span>
+                              <span className="qs-grp-n">{grp.entries.length}</span>
+                            </p>
+                          )}
+                          <ul className="qs-rows" role="presentation">
+                            {grp.entries.map((entry) => {
+                              const at = shown.indexOf(entry)
+                              return (
+                                <SubjectRow
+                                  key={`${entry.tableId}::${entry.rowId}`}
+                                  entry={entry}
+                                  entity={entities[entry.tableId]}
+                                  at={at}
+                                  on={at === hi}
+                                  titled={grp.trail !== ''}
+                                  pictured={door.census.pictured > 0}
+                                  onPick={() => setHi(at)}
+                                  onTake={() => {
+                                    setHi(at)
+                                    start(false)
+                                  }}
+                                />
+                              )
+                            })}
+                          </ul>
+                        </div>
+                      )
+                    })}
                   </div>
-                  {sec.groups.map((grp) => (
-                    <div className="qs-grp" key={grp.key} role="presentation">
-                      {grp.trail === '' ? null : (
-                        <p className="mono-label qs-grp-head" role="presentation">
-                          {grp.trail}
-                        </p>
-                      )}
-                      <ul className="qs-rows" role="presentation">
-                        {grp.entries.map((entry) => {
-                          const at = shown.indexOf(entry)
-                          return (
-                            <SubjectRow
-                              key={`${entry.tableId}::${entry.rowId}`}
-                              entry={entry}
-                              entity={entities[entry.tableId]}
-                              at={at}
-                              on={at === hi}
-                              titled={grp.trail !== ''}
-                              onPick={() => setHi(at)}
-                              onTake={() => {
-                                setHi(at)
-                                start(false)
-                              }}
-                            />
-                          )
-                        })}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              ))}
+                )
+              })}
             </div>
-
-            {list && list.hidden > 0 ? (
-              <p className="qs-note qs-note--cap">
-                The first {SUBJECT_CAP} of {list.matched.length} are drawn. The search reaches every
-                one of them.
-              </p>
-            ) : null}
           </div>
         )}
 
@@ -606,24 +792,29 @@ export function QuoteStart({
                 <p className="qs-foot-hint">Highlight one to see what its quote will hold.</p>
               ) : (
                 <>
-                  {/* THE PRICE CAME OFF THIS STRIP. It was on the right
-                      of the name, at `--t-mono-lg-size` — and 60px
-                      lower, the moment the quote existed, the same
-                      number was on the build screen's bar at
-                      clamp(22px, 1.9vw, 30px) on the LEFT. One figure,
-                      two sizes, two places, and a person watching it
-                      lost it at the one moment they pressed a button.
-                      It is on the bar below now, in the slot the total
-                      will occupy for the rest of the flow. */}
-                  <div className="qs-picked">
-                    <span className="qs-picked-say">
-                      {chosen.trail === '' ? null : (
-                        <span className="qs-picked-trail">{chosen.trail}</span>
-                      )}
-                      <span className="qs-picked-name">{chosen.label}</span>
-                    </span>
-                  </div>
+                  {/* THE PRICE CAME OFF THIS STRIP, AND THEN SO DID
+                      THE NAME.
 
+                      The price went first, and the note is worth
+                      keeping: it sat on the right of the name at
+                      `--t-mono-lg-size`, and 60px lower — the moment
+                      the quote existed — the same number was on the
+                      build screen's bar at clamp(22px, 1.9vw, 30px)
+                      on the LEFT. One figure, two sizes, two places.
+
+                      THE NAME IS THE SAME FAULT ONE STEP ON. It was a
+                      20px title, and `FlowLine at="choose"` fifty
+                      pixels under it already prints the chosen row's
+                      label — the flow's own permanent statement of the
+                      answer, in the identical slot on the two screens
+                      that follow. Three statements of one string on
+                      one screen (the outlined row, this, the flow
+                      line) is the duplicated-eyebrow fault `5d00103`
+                      was written to end, and this one cost 56px of
+                      the list: measured at 1280x800, the list showed
+                      five of 588 boats with this block in and eight
+                      without it. A choice surface that can show five
+                      rows is not a choice surface. */}
                   <Walk preview={preview} />
 
                   {verdict === null || verdict.problems.length === 0 ? null : (
@@ -679,7 +870,17 @@ export function QuoteStart({
                              one goes quiet rather than saying the same
                              thing a second time. */
                           ''
-                        : 'the boat, before anything is added'
+                        : /* NOT "THE BOAT". Measured on the sheet: this
+                             line sat under $1,999 on ePropulsion
+                             Outboards and called an electric outboard
+                             a boat, and it would call a trailer one
+                             too. §6 asks for the dealer's own noun,
+                             and the honest answer where the noun
+                             changes per place is to use none — the
+                             figure above it is already the row's, and
+                             the clause that carries the meaning is the
+                             second half. */
+                          'before anything is added'
                   }
                   nil="nothing highlighted yet"
                 />
@@ -729,6 +930,45 @@ const countSay = (door: QuoteDoor): string =>
   `${door.census.items.toLocaleString()} ${door.census.noun}`
 
 /* ============================================================
+   THE BANDS OF LAYER ONE — a CUT of the order, never a sort.
+
+   `quoteDoors` hands back the dealer's own dashboard order and
+   start.ts:186 is explicit that re-ranking it would be "a second
+   opinion about where a dealer's own places live". So this walks
+   that order once and closes a band whenever the kind changes: on
+   the Northside sheet that yields Boats 7 · Motors 2 · Packages 2 ·
+   Trailers 7, because each module is one kind and every kind
+   already arrives as one run. A sheet that interleaves kinds gets
+   more bands — never a moved card.
+   ============================================================ */
+
+interface DoorBand {
+  key: string
+  /** the kind's own label — "Boats", "Trailers" */
+  label: string
+  doors: QuoteDoor[]
+}
+
+function bandsOf(open: readonly QuoteDoor[]): DoorBand[] {
+  const bands: DoorBand[] = []
+  for (const door of open) {
+    const label = TABLE_KINDS[door.kind].label
+    const last = bands[bands.length - 1]
+    if (last && last.label === label) last.doors.push(door)
+    else bands.push({ key: `${door.kind}-${bands.length}`, label, doors: [door] })
+  }
+  return bands
+}
+
+/** §3's group-heading figure: what survives narrowing over what the
+ *  place holds. One number when nothing is narrowing it, because
+ *  "588 of 588" is a fraction pretending to be news. */
+const offeredSay = (list: SubjectList): string =>
+  list.matched.length === list.all.length
+    ? list.all.length.toLocaleString()
+    : `${list.matched.length.toLocaleString()} of ${list.all.length.toLocaleString()}`
+
+/* ============================================================
    ONE MODULE — a small card: the logo, the name, the count.
 
    The logo is `ModuleDef.logo`, which `features/modules/logo.ts`
@@ -738,7 +978,34 @@ const countSay = (door: QuoteDoor): string =>
    fallback rather than a broken glyph.
    ============================================================ */
 
-function ModuleCard({ door, onPick }: { door: QuoteDoor; onPick: () => void }): ReactElement {
+function ModuleCard({
+  door,
+  band,
+  onPick,
+}: {
+  door: QuoteDoor
+  /** the caption of the band this card sits under, so the card never
+   *  repeats it */
+  band: string
+  onPick: () => void
+}): ReactElement {
+  /* ── THE EYEBROW, AND IT IS USUALLY NOTHING NOW ────────────────
+     §1a asks a card for "a name and ONE fact", and this had two —
+     the count, and a category that the band caption above it now
+     states once for every card under it. Measured on the real
+     sheet: sixteen of eighteen cards printed a word already on
+     screen ("Boats", "Motors", "Trailers"); the two Jeanneau and
+     Haines factory-package cards keep theirs, because the module is
+     called Factory Packages and the band is called Packages, and
+     that difference is a real fact about the dealer's sheet.
+
+     The second test is the one the dashboard tile already makes
+     (CardBody.tsx:704) and this card never did: where the place IS
+     the module, the eyebrow would print the heading a second time
+     sixty pixels under the first. picker.test.tsx:240 records that
+     fault against the fixture's `Road Gear` and says the fix
+     belongs here. It is here. */
+  const cat = door.moduleName === band || door.moduleName === door.name ? '' : door.moduleName
   return (
     <button
       type="button"
@@ -767,24 +1034,14 @@ function ModuleCard({ door, onPick }: { door: QuoteDoor; onPick: () => void }): 
         />
         <span className="qs-card-name">{door.name}</span>
       </span>
+      {/* THE COUNT IS FIRST NOW, so the figure lands at the same x on
+          every card in the band whether or not that card carries a
+          second word. A column of counts that jogs sideways on two
+          cards out of eighteen is the sort of thing nobody names and
+          everybody feels. */}
       <span className="qs-card-foot">
-        {/* THE EYEBROW MUST NOT REPEAT THE HEADING. Where a module is
-            one door it stands for everything it holds, so places.ts
-            sets `name` and `moduleName` to the SAME string
-            (start.ts via places.ts:152,171) — and this card printed
-            it twice, the second time in small grey type directly
-            under the first.
-
-            The dashboard tile hit this and solved it
-            (CardBody.tsx:704-709): where the two agree, say the KIND
-            instead — "Motors", "Accessories" — which is the one thing
-            the name above cannot tell you and the thing the colour
-            key teaches. Same rule here, so the two surfaces onto the
-            same places cannot disagree about what a card says. */}
-        <span className="qs-card-cat">
-          {door.moduleName === door.name ? TABLE_KINDS[door.kind].label : door.moduleName}
-        </span>
         <span className="qs-card-n">{countSay(door)}</span>
+        {cat === '' ? null : <span className="qs-card-cat">{cat}</span>}
       </span>
     </button>
   )
@@ -860,6 +1117,7 @@ function SubjectRow({
   at,
   on,
   titled,
+  pictured,
   onPick,
   onTake,
 }: {
@@ -870,6 +1128,14 @@ function SubjectRow({
   /** Does the group above this row already print its trail? When it
    *  does, the row must not print it again — see below. */
   titled: boolean
+  /** DOES THIS PLACE HOLD A PICTURE AT ALL? Read off the census, not
+   *  off this row: a well drawn for a row whose neighbours have
+   *  photographs is a fallback, and a well drawn on a table where
+   *  nothing has one is 32 identical grey squares down the left of a
+   *  list. Measured — ePropulsion Outboards is the one place on the
+   *  sheet with `pictured: 0`, and its rows go from 54px to 40px
+   *  with the column gone. */
+  pictured: boolean
   onPick: () => void
   onTake: () => void
 }): ReactElement {
@@ -881,29 +1147,44 @@ function SubjectRow({
         data-at={at}
         role="option"
         aria-selected={on}
-        className={`qs-row${on ? ' is-on' : ''}`}
+        /* §3: "The accessible name carries the price." One utterance
+           with the name, where it sits and what it costs, instead of
+           three nodes read in DOM order.
+
+           THE TRAIL DROPS OUT ON THE SAME TEST THE VISIBLE ONE DOES.
+           Measured in the accessibility tree: under a titled group
+           every option read "Adventure ▸ ADV7. Highfield - ADV7 (HYP)
+           B-G-B. $105,930" — the heading's own words, again, on all
+           seven rows beneath it. What the eye is spared the ear
+           should be spared too. */
+        aria-label={[titled ? '' : entry.trail, entry.label, entry.price]
+          .filter((s) => s !== '')
+          .join('. ')}
+        className={`qs-row${pictured ? '' : ' qs-row--flat'}${on ? ' is-on' : ''}`}
         onClick={onPick}
         onDoubleClick={onTake}
       >
-        <span className="qs-row-pic" aria-hidden="true">
-          {/* `FrozenPhoto` draws NOTHING when the address cannot be
-              painted, so the well falls back to the kind's own mark. */}
-          <TableKindSymbol kind={entity?.kind ?? 'custom'} size={16} />
-          {entry.img ? (
-            <FrozenPhoto
-              img={entry.img}
-              fallbackAlt={entry.label}
-              className="qs-row-img"
-              /* THE PICTURE IS THE IDENTIFIER, so it is worth room.
-                 44x30 was a favicon of a boat on the screen where
-                 somebody picks between a $2,770 Roll-Up and a
-                 $129,830 Sport, and the label alone —
-                 "CL400 (PVC) DG-G-DG" — does not tell them apart. */
-              w={72}
-              h={48}
-            />
-          ) : null}
-        </span>
+        {pictured ? (
+          <span className="qs-row-pic" aria-hidden="true">
+            {/* `FrozenPhoto` draws NOTHING when the address cannot be
+                painted, so the well falls back to the kind's own mark. */}
+            <TableKindSymbol kind={entity?.kind ?? 'custom'} size={16} />
+            {entry.img ? (
+              <FrozenPhoto
+                img={entry.img}
+                fallbackAlt={entry.label}
+                className="qs-row-img"
+                /* THE PICTURE IS THE IDENTIFIER, so it is worth room.
+                   44x30 was a favicon of a boat on the screen where
+                   somebody picks between a $2,770 Roll-Up and a
+                   $129,830 Sport, and the label alone —
+                   "CL400 (PVC) DG-G-DG" — does not tell them apart. */
+                w={72}
+                h={48}
+              />
+            ) : null}
+          </span>
+        ) : null}
         <span className="qs-row-say">
           <span className="qs-row-name">{entry.label}</span>
           {/* THE TRAIL, AND ONLY WHERE IT HAS NOT JUST BEEN SAID.

@@ -188,10 +188,26 @@ function acts() {
    split-vs-single-table rule above is exactly the part worth
    exercising. `setState` is zustand's own door and merges, so the
    rest of the store keeps its defaults. */
-function install(opts: { empty?: boolean } = {}): void {
+function install(opts: { empty?: boolean; noModules?: boolean } = {}): void {
+  const tables = {
+    entities: { 'e-a': A, 'e-b': B, 'e-t': T },
+    rowsByEntity: {
+      'e-a': rows('e-a', 3),
+      'e-b': rows('e-b', 12),
+      'e-t': rows('e-t', 7),
+    },
+  }
+  /* THREE STATES, NOT TWO, AND THE THIRD IS THE COMMON ONE.
+     `empty` is a project with nothing in it at all; `noModules` is
+     a person who has just loaded a price file and not yet made a
+     place out of it — which is the state DESIGN_CONTRACT §6 is
+     written about ("You have 21 tables and no modules") and the
+     one the empty state's counted line only exists for. */
   useProjectStore.setState(
     opts.empty
       ? { modules: {}, entities: {}, rowsByEntity: {} }
+      : opts.noModules
+      ? { modules: {}, ...tables }
       : {
           modules: {
             'm-hulls': place('m-hulls', 'Hull Range', ['e-a', 'e-b'], 0),
@@ -341,6 +357,43 @@ describe('the module tiles — nothing to draw', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Modules' }))
     expect(a.onOpenModules).toHaveBeenCalledTimes(1)
+  })
+
+  /* AND ON A PROJECT THAT HAS DATA, IT SAYS WHAT THE DATA IS.
+     DESIGN_CONTRACT §6 gives the reason out loud: "An admin
+     arriving here has drawn 21 tables and loaded 651 rows; a blank
+     screen saying 'nothing here' would read as though the app had
+     lost them." §11 checklists it. This dashboard drew two of the
+     four parts, and this is the guard on the two that were added —
+     asserted by TEXT, so it survives every rename of the classes
+     that draw it and fails the day the count goes back to being
+     absent. */
+  it('draws all four parts, and the count is the real one', async () => {
+    install({ noModules: true })
+    const a = draw()
+
+    /* one — the state, as its own line */
+    expect(screen.getByText('No modules yet')).toBeVisible()
+    /* two — what a module IS, and it does not restate the state */
+    expect(screen.getByText(/A module is a place in the business/)).toBeVisible()
+    /* three — what this person already has, counted from the store
+       and not from the fixture: three tables are installed above */
+    expect(screen.getByText(/You have/)).toHaveTextContent(
+      'You have 3 tables and no modules.',
+    )
+    /* four — exactly one action */
+    await userEvent.click(screen.getByRole('button', { name: 'Modules' }))
+    expect(a.onOpenModules).toHaveBeenCalledTimes(1)
+  })
+
+  /* AND IT NEVER PRINTS A FIGURE TO FILL A HOLE. A project with no
+     tables has nothing to count, so the card draws three parts and
+     says so — "You have 0 tables and no modules" would be the
+     dashboard inventing a fact about an empty project. */
+  it('draws no count on a project that has nothing to count', () => {
+    install({ empty: true })
+    draw()
+    expect(screen.queryByText(/You have/)).toBeNull()
   })
 })
 

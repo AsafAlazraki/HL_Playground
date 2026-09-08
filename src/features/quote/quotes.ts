@@ -875,3 +875,29 @@ export function registerQuote(quote: QuoteDef): void {
   loadQuotes()
   put(quote)
 }
+
+/** Put this module back to how it was at import — the registry, the
+ *  published list, the sticky persist note and the one-shot `loaded`
+ *  latch (:169) that stops `loadQuotes` reading twice.
+ *
+ *  FOR TESTS, and not a product feature: nothing in the app calls it,
+ *  the same way nothing calls `forgetTileOrder` (dashboard/tileOrder.ts:107).
+ *  Vitest gives one process's module state to every case in a file, so
+ *  a quote seeded through `registerQuote` is in for the rest of it —
+ *  which is why `tiles.test.tsx:347` had to put its count assertion
+ *  last and write a comment explaining that anything asserting "no
+ *  quotes" must run above it.
+ *
+ *  The pending write-behind goes too: a 400 ms timer that outlives
+ *  the reset fires into whatever case is running next. `hookedTabClose`
+ *  deliberately STAYS set — it guards one `addEventListener` per
+ *  window, and a window this function does not replace would collect a
+ *  second `pagehide` listener per call. */
+export function forgetQuotes(): void {
+  if (writeTimer !== undefined) clearTimeout(writeTimer)
+  writeTimer = undefined
+  registry.clear()
+  persistProblem = null
+  loaded = false
+  republish()
+}

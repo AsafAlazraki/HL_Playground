@@ -1,0 +1,12 @@
+{
+  "unreachable": [
+    "src/app/CheckStamp.tsx",
+    "src/app/Inspector.tsx",
+    "src/app/LeftPanel.tsx",
+    "src/app/MenuBar.tsx",
+    "src/app/Rails.tsx",
+    "src/app/TopBar.tsx",
+    "src/app/ViewSwitch.tsx",
+    "src/app/view.ts"
+  ]
+}

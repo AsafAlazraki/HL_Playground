@@ -43,8 +43,8 @@
    trailers or tractors.
    ============================================================ */
 
-import { useMemo, useState } from 'react'
-import type { ReactElement } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react'
 import { MagnifyingGlass, Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
@@ -61,6 +61,59 @@ export interface CustomerListProps {
   onOpen: (rowId: string) => void
   /** the row that is already open, if the stage has one */
   openId?: string | null
+}
+
+/* ============================================================
+   THE LETTER KEYS, AND THE ONE WCAG CLAUSE NOBODY IN THE COHORT
+   MEETS.
+
+   `J`, `K` and `X` are SINGLE-CHARACTER SHORTCUTS, and WCAG 2.1.4
+   is a **Level A** success criterion: a single-character shortcut
+   must be turn-off-able, remappable, OR active only while the
+   component that owns it has focus. `dense-tables-and-selection.md`
+   records that Linear and Superhuman both ship large single-key
+   vocabularies and NEITHER documents a way to disable or remap
+   them — "adopt — free differentiator and a real liability".
+
+   THIS SCREEN TAKES TWO OF THE THREE REMEDIES, not one.
+
+     1. SCOPE. Every key below is handled on the list's own
+        `onKeyDown`, so a letter only means anything while focus is
+        already inside the register. Type a `j` into the find box —
+        which is a sibling, in the page header — and it is a `j`.
+        That alone satisfies 2.1.4.
+
+     2. AN OFF SWITCH, said out loud, in the list's own foot. Off,
+        `J`/`K`/`X` are ordinary letters again and every function
+        they carried is still on the keyboard: arrows move,
+        `Shift`+arrows extend, `Ctrl`/`Cmd`+`A` takes all of them,
+        `Escape` clears, `Enter` opens. Not one of those is a
+        single-character shortcut — 2.1.4 exempts a key pressed with
+        a modifier and exempts the non-printable keys — so turning
+        the letters off costs the keyboard nothing at all.
+
+   IT IS THE DEVICE'S PREFERENCE, NOT THE BUSINESS'S, which is why
+   it is stored the way the dashboard stores a person's tile order
+   and not in the project. A browser that refuses storage answers
+   `true`, because the shortcut being ON is the behaviour the rest
+   of this file was written for.
+   ============================================================ */
+const LETTER_KEYS = 'hl.crm.letters.v1'
+
+function readLetterKeys(): boolean {
+  try {
+    return globalThis.localStorage?.getItem(LETTER_KEYS) !== 'off'
+  } catch {
+    return true
+  }
+}
+
+function writeLetterKeys(on: boolean): void {
+  try {
+    globalThis.localStorage?.setItem(LETTER_KEYS, on ? 'on' : 'off')
+  } catch {
+    /* a browser that will not store it still honours it this session */
+  }
 }
 
 /** What the list knows about one person beyond their own cells. */
@@ -164,6 +217,170 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
   const withQuotes = useMemo(
     () => people.filter((c) => activity.has(c.rowId)).length,
     [people, activity],
+  )
+
+  /* ============================================================
+     WALKING THE BOOK WITHOUT A MOUSE, AND MARKING PEOPLE IN IT.
+
+     MEASURED BEFORE THIS: on a register of twelve, ArrowDown did
+     nothing, `J` did nothing, `X` did nothing, and the list held
+     TWELVE tab stops — one per row — so the only keyboard route to
+     the ninth person was Tab pressed nine times. There was no
+     selection model of any kind: zero checkboxes, zero
+     `aria-selected`, `tabIndex` 0 on every row.
+
+     THE MODEL IS THE ONE `dense-tables-and-selection.md` RECORDS,
+     and every part of it is somebody's published behaviour rather
+     than an invention:
+
+       ↑ ↓ / J K            move            Linear
+       Shift + ↑ ↓ / J K    extend          Superhuman — "same axis
+                                            as movement"
+       Shift + click        extend          Linear
+       X                    mark one        Linear
+       Ctrl / Cmd + A       all of them     the ARIA grid baseline
+       Escape               clear           Linear
+       Home / End           the ends        the ARIA grid baseline
+
+     ONE TAB STOP, NOT TWELVE. A roving tabindex — the APG's own
+     alternative to `aria-activedescendant`, and the pattern the
+     quote shelf already uses in this repo — puts the cursor's row
+     at 0 and every other row at −1, so Tab enters the register and
+     Tab leaves it.
+
+     THE CHECKBOX IS A REAL CHECKBOX and it is the selection state,
+     announced natively, rather than a role this list invented. It
+     is `tabIndex={-1}` so it does not put a second stop on every
+     row: the keyboard reaches it through `X` and through
+     Shift+arrow, both of which are listed in the foot.
+
+     WHAT SELECTING IS FOR, and it is deliberately not a bulk
+     action. Nothing in this feature acts on many people at once,
+     and a checkbox wired to nothing is a control that does nothing.
+     What a selection does here is COUNT — the same two figures the
+     rows already carry, summed for the set you picked, which is the
+     question a register is opened with: who is worth calling back.
+     Figma's lesson from the same study, one size down: a set of
+     things is something you enumerate and read, not an error state.
+     ============================================================ */
+  const [cursor, setCursor] = useState(0)
+  const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set<string>())
+  const [letters, setLetters] = useState(readLetterKeys)
+  const anchor = useRef(0)
+  const rowRefs = useRef<Array<HTMLButtonElement | null>>([])
+
+  /* THE CURSOR IS CLAMPED WHERE IT IS READ, not corrected in an
+     effect. Searching and re-sorting both change the list under it,
+     and a stored index that outlives its list is how a register
+     scrolls to a row that is no longer there. */
+  const at = shown.length === 0 ? -1 : Math.min(cursor, shown.length - 1)
+
+  const move = useCallback(
+    (to: number, extend: boolean) => {
+      const n = shown.length
+      if (n === 0) return
+      const next = Math.max(0, Math.min(to, n - 1))
+      setCursor(next)
+      if (extend) {
+        const lo = Math.min(anchor.current, next)
+        const hi = Math.max(anchor.current, next)
+        const set = new Set<string>()
+        for (let i = lo; i <= hi; i++) {
+          const c = shown[i]
+          if (c) set.add(c.rowId)
+        }
+        setPicked(set)
+      } else {
+        anchor.current = next
+      }
+      /* `.focus()` scrolls the row into view on its own, and it does
+         it instantly — DESIGN_PRINCIPLES §4: nothing a keyboard
+         starts is allowed to animate. */
+      rowRefs.current[next]?.focus()
+    },
+    [shown],
+  )
+
+  const mark = useCallback((rowId: string) => {
+    setPicked((held) => {
+      const set = new Set(held)
+      if (set.has(rowId)) set.delete(rowId)
+      else set.add(rowId)
+      return set
+    })
+  }, [])
+
+  /* WHAT THE SET IS WORTH. Read from the same `activity` map the
+     rows draw from, so the tally and the column can never disagree,
+     and never written anywhere. */
+  const tally = useMemo(() => {
+    let given = 0
+    let worth = 0
+    for (const rowId of picked) {
+      const act = activity.get(rowId)
+      if (!act) continue
+      given += act.quotes
+      worth += act.worth
+    }
+    return { given, worth }
+  }, [picked, activity])
+
+  /* THE KEYS HANG ON THE ROW, NOT ON THE LIST, and that is the
+     scoping WCAG 2.1.4 asks for made structural rather than
+     promised: the handler is on the one element that can hold the
+     focus, so a letter cannot mean anything unless a customer is
+     already under the cursor. A `<ul>` is not an interactive
+     element and does not get to listen for keys. */
+  const onKeys = useCallback(
+    (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+      /* A LETTER HELD WITH A COMMAND KEY IS SOMEBODY ELSE'S. The
+         window switcher owns Ctrl/Cmd + W, M and the digits; the
+         finder owns Ctrl/Cmd + K. None of them may be shadowed. */
+      const cmd = e.metaKey || e.ctrlKey || e.altKey
+      const key = e.key
+      const down = key === 'ArrowDown' || (letters && !cmd && (key === 'j' || key === 'J'))
+      const up = key === 'ArrowUp' || (letters && !cmd && (key === 'k' || key === 'K'))
+
+      if ((down || up) && !cmd) {
+        e.preventDefault()
+        move(at + (down ? 1 : -1), e.shiftKey)
+        return
+      }
+      if (key === 'Home' && !cmd) {
+        e.preventDefault()
+        move(0, e.shiftKey)
+        return
+      }
+      if (key === 'End' && !cmd) {
+        e.preventDefault()
+        move(shown.length - 1, e.shiftKey)
+        return
+      }
+      if (letters && !cmd && (key === 'x' || key === 'X')) {
+        const c = shown[at]
+        if (c) {
+          e.preventDefault()
+          mark(c.rowId)
+        }
+        return
+      }
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && (key === 'a' || key === 'A')) {
+        e.preventDefault()
+        setPicked(new Set(shown.map((c) => c.rowId)))
+        return
+      }
+      /* ESCAPE IS ONLY OURS WHILE THERE IS A SELECTION TO CLEAR.
+         With nothing marked it keeps bubbling, because Escape on a
+         stage is the stage's own way back — see `app/stageKeys.ts`,
+         which is explicit that a widget only takes the key when it
+         genuinely owns it. */
+      if (key === 'Escape' && picked.size > 0) {
+        e.preventDefault()
+        e.stopPropagation()
+        setPicked(new Set<string>())
+      }
+    },
+    [at, letters, mark, move, picked, shown],
   )
 
   /* ============================================================
@@ -356,7 +573,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                 in their contact details.
               </p>
             ) : (
-              <ul className="cx-rows">
+              <ul className={`cx-rows${withQuotes > 0 ? ' cx-rows--quoted' : ''}`}>
                 {/* ── THE FIND BOX ANSWERED SILENTLY ────────────────────
                     Typing in it removed rows from the list and said
                     nothing at all, so a register of two hundred that
@@ -378,18 +595,65 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                     “{find.trim()}”.
                   </li>
                 ) : null}
-                {shown.map((c) => {
+                {shown.map((c, i) => {
                   const act = activity.get(c.rowId)
+                  const who = c.name === '' ? 'A customer with no name yet' : c.name
+                  const on = picked.has(c.rowId)
                   return (
                     <li
                       key={c.rowId}
-                      className={`cx-row${openId === c.rowId ? ' is-open' : ''}`}
+                      className={`cx-row${openId === c.rowId ? ' is-open' : ''}${
+                        on ? ' is-picked' : ''
+                      }`}
                     >
+                      {/* THE MARK, AND IT COSTS THE ROW NO COLUMN.
+                          Linear reveals the checkbox on hover so it
+                          never takes width from the data; this one
+                          lives in the gutter the row already had, is
+                          drawn only on hover, on focus, or when it is
+                          ticked, and is the same 14px box whether it
+                          is visible or not — so nothing on the row
+                          moves when the pointer arrives. */}
+                      <input
+                        type="checkbox"
+                        className="cx-pick"
+                        tabIndex={-1}
+                        checked={on}
+                        aria-label={`Select ${who}`}
+                        onChange={() => {
+                          setCursor(i)
+                          anchor.current = i
+                          mark(c.rowId)
+                          /* THE CURSOR FOLLOWS THE TICK. Focus is
+                             left on the row rather than on the box,
+                             so the next ArrowDown continues from the
+                             person just marked — and so the list
+                             keeps its one tab stop. */
+                          rowRefs.current[i]?.focus()
+                        }}
+                      />
                       <button
                         type="button"
                         className="cx-row-open"
-                        onClick={() => onOpen(c.rowId)}
-                        aria-label={c.name === '' ? 'A customer with no name yet' : c.name}
+                        ref={(n) => {
+                          rowRefs.current[i] = n
+                        }}
+                        tabIndex={i === Math.max(at, 0) ? 0 : -1}
+                        onKeyDown={onKeys}
+                        onClick={(e) => {
+                          /* SHIFT+CLICK EXTENDS RATHER THAN OPENS —
+                             the pointer half of Shift+↑↓, and the
+                             same key on the same act as Linear's. */
+                          if (e.shiftKey) {
+                            e.preventDefault()
+                            move(i, true)
+                            return
+                          }
+                          setCursor(i)
+                          anchor.current = i
+                          onOpen(c.rowId)
+                        }}
+                        aria-label={who}
                       >
                         <span className="cx-row-name">
                           {c.name === '' ? (
@@ -418,6 +682,87 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                 })}
               </ul>
             )}
+
+            {/* ── THE FOOT: WHAT IS MARKED, AND WHAT THE KEYS ARE ──
+                ONE BAR, TWO STATES, AND IT NEVER CHANGES HEIGHT, so
+                the row under the cursor cannot move because the bar
+                changed its mind. With nothing marked it teaches the
+                keyboard — Superhuman's habit of rendering the
+                shortcut beside the act it performs, which the study
+                marks "adopt — cheap". With something marked it says
+                what the set is worth.
+
+                IT IS STICKY TO THE SCROLLER, not to the list, so a
+                register of three hundred still shows the tally while
+                you are three hundred rows into marking it up.
+
+                THE FIGURES ARE MONO AND THEY DO NOT MOVE. Money
+                never animates — §4 — and this is money. */}
+            {shown.length > 0 ? (
+              <div className="cx-foot">
+                {picked.size > 0 ? (
+                  <p className="cx-foot-say">
+                    {/* A SET WITH NOTHING IN IT IS SAID IN WORDS, NOT
+                        IN ZEROES. "0 quotes, $0 between them" is a
+                        figure printed where the file holds none, and
+                        the row beside it already declines to draw an
+                        empty money column for the same reason. */}
+                    <span className="cx-num">{picked.size}</span> marked
+                    {tally.given === 0 ? (
+                      ' — none of them quoted yet.'
+                    ) : (
+                      <>
+                        {' — '}
+                        <span className="cx-num">{tally.given}</span>{' '}
+                        {tally.given === 1 ? 'quote' : 'quotes'},{' '}
+                        <span className="cx-num">{money(tally.worth)}</span> between them.
+                      </>
+                    )}
+                  </p>
+                ) : (
+                  <p className="cx-foot-say">
+                    <kbd className="cx-key">↑</kbd>
+                    <kbd className="cx-key">↓</kbd> move ·{' '}
+                    {letters ? (
+                      <kbd className="cx-key">X</kbd>
+                    ) : (
+                      <>
+                        <kbd className="cx-key">Shift</kbd>
+                        <kbd className="cx-key">↑</kbd>
+                      </>
+                    )}{' '}
+                    mark · <kbd className="cx-key">Enter</kbd> open
+                  </p>
+                )}
+                <div className="cx-foot-acts">
+                  {picked.size > 0 ? (
+                    <button
+                      type="button"
+                      className="cx-foot-act"
+                      onClick={() => setPicked(new Set<string>())}
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                  {/* THE 2.1.4 SWITCH. It says which state it is in
+                      rather than which state it would move to, so it
+                      reads the same as the thing it controls. */}
+                  <button
+                    type="button"
+                    className="cx-foot-act"
+                    aria-pressed={letters}
+                    onClick={() => {
+                      setLetters((on) => {
+                        writeLetterKeys(!on)
+                        return !on
+                      })
+                    }}
+                  >
+                    {letters ? 'Letter keys on' : 'Letter keys off'}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

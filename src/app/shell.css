@@ -3313,59 +3313,17 @@
   border-color: var(--blue);
 }
 
-/* THE PHOTOGRAPH, AND THE PLATE THAT STANDS IN ITS PLACE. The two
-   are the same box on purpose: a table whose own rows carry a
-   picture we may draw and a table whose rows do not are the same
-   card, the same height, in the same grid row. Full-bleed, so the
-   card's own `overflow: hidden` gives it the card's corner and no
-   radius is written twice. */
-.hm-card-shot,
-.hm-card-plate {
+/* THE PHOTOGRAPH. Full-bleed, so the card's own `overflow: hidden`
+   gives it the card's corner and no radius is written twice. */
+.hm-card-shot {
   display: block;
   flex: none;
   width: 100%;
   height: var(--hm-shot);
   border-bottom: 1px solid var(--hairline);
   background: var(--paper);
-}
-.hm-card-shot {
   object-fit: cover;
   object-position: center;
-}
-/* A WHISPER OF THE KIND HUE BEHIND A GLYPH — which is what §1
-   allows the kind hues for, and never a fill behind text. 7% keeps
-   it a ground rather than a colour, so a page mixing plates and
-   photographs still reads as one drawing. */
-.hm-card-plate {
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--tbn-accent, var(--ink-faint)) 7%, var(--paper));
-  color: var(--tbn-accent, var(--ink-faint));
-}
-
-.hm-card-body {
-  position: relative;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  /* THE INNER TIER: 12/14 of padding against 6 of gap, so the three
-     lines read as one block inside the card rather than as three
-     things evenly spaced down it. */
-  padding: 12px 14px 12px 17px;
-}
-/* the kind rail, on the body rather than the whole card so it does
-   not draw a stripe across the photograph */
-.hm-card-body::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--tbn-accent, var(--ink-faint));
 }
 
 .hm-card-kind {
@@ -3460,178 +3418,13 @@
   background: var(--hairline-strong);
 }
 
-/* ------------------------------------------------------------
-   THE RELATIONSHIPS SHELF.
-
-   IT WAS 27 OF THE 51 CARDS and took more vertical space than
-   every product group put together — a derived join table being
-   the largest thing on the front door. It is one bar now, at the
-   foot of the board, spanning it. Shut, it states its own count;
-   open, every one of the 27 is listed under the table it joins,
-   still a control that opens that table. Nothing was deleted and
-   no count is hidden.
-   ------------------------------------------------------------ */
-
-.hm-sec--rel {
-  grid-column: 1 / -1;
-}
-.hm-rel-h {
-  margin: 0;
-}
-
-.hm-rel-head {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  padding: 11px 14px;
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  background: var(--paper-high);
-  text-align: left;
-  cursor: pointer;
-  box-shadow: var(--e1);
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft);
-}
-.hm-rel-head:hover {
-  border-color: var(--hairline-strong);
-}
-.hm-rel-head:active {
-  background: var(--press-wash);
-}
-.hm-rel-head:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
-  border-color: var(--blue);
-}
-.hm-rel-mark {
-  display: flex;
-  flex: none;
-  color: var(--ink-faint);
-}
-.hm-rel-name {
-  font-family: var(--font-ui);
-  font-size: var(--ui-l-size);
-  font-weight: 600;
-  letter-spacing: -0.012em;
-  color: var(--ink);
-}
-.hm-rel-say {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  min-width: 0;
-  font-size: var(--micro-l-size);
-  color: var(--ink-faint);
-}
-.hm-rel-say b {
-  font-family: var(--font-mono);
-  font-size: var(--data-size);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-soft);
-}
-.hm-rel-caret {
-  flex: none;
-  margin-left: auto;
-  color: var(--ink-faint);
-  transition: transform var(--t-med) var(--ease-draft);
-}
-.hm-rel-head[aria-expanded='true'] .hm-rel-caret {
-  transform: rotate(90deg);
-}
-
-/* the open list is content on the page rather than a second box
-   under the first — one border where one border is meant */
-.hm-rel-body {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
-  gap: var(--sp-5) var(--sp-5);
-  align-items: start;
-  margin-top: var(--sp-4);
-}
-.hm-rel-fam {
-  min-width: 0;
-}
-.hm-rel-owner {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  margin: 0 0 6px;
-  padding: 0 8px 6px;
-  border-bottom: 1px solid var(--hairline);
-  font-family: var(--font-ui);
-  font-size: var(--ui-s-size);
-  font-weight: 600;
-  letter-spacing: -0.004em;
-  color: var(--ink);
-}
-.hm-rel-owner-n {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: var(--data-s-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-}
-.hm-rel-list {
-  display: grid;
-  gap: 1px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-/* A ROW DARKENS RATHER THAN MOVING, so its neighbours do not look
-   like they shifted. */
-.hm-rel-item {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-3);
-  width: 100%;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: var(--ui-s-size);
-  color: var(--ink-soft);
-  transition: background var(--t-fast) var(--ease-draft);
-}
-.hm-rel-item:hover {
-  background: var(--paper-high);
-  color: var(--ink);
-}
-.hm-rel-item:active {
-  background: var(--press-wash);
-}
-.hm-rel-item:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -1px;
-}
-/* NOTHING TRUNCATES MID-WORD — a name that does not fit wraps, and
-   the whole of it is on the control's `title` either way. */
-.hm-rel-item-name {
-  min-width: 0;
-}
-.hm-rel-item-n {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: var(--data-s-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-}
-
 /* WHEN THE WINDOW IS NARROWER THAN TWO CARDS. Every shelf gives up
    its width and takes the whole column; the cards inside fall back
    to `auto-fill`, which is the right rule when there is only one
    column to fill. Named for the content — two cards plus the gap
    plus the page's own gutters — and not for a device. */
 @media (max-width: 600px) {
-  .hm-sec,
-  .hm-sec--rel {
+  .hm-sec {
     grid-column: 1 / -1;
   }
   .hm-cells {
@@ -5714,126 +5507,6 @@
   color: var(--chrome-fg);
 }
 
-/* ---- the one section, and it collapses ---------------------- */
-.sn-sec {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  height: 26px;
-  padding: 0 var(--s-2);
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-}
-.sn-sec-name {
-  flex: 1;
-  color: var(--chrome-fg-faint);
-  transition: color var(--d-fast) var(--ease);
-}
-.sn-sec:hover .sn-sec-name,
-.sn-sec:hover .sn-sec-count {
-  color: var(--chrome-fg-soft);
-}
-.sn-sec:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: -2px;
-  border-radius: var(--r-control);
-}
-/* HOW MANY ARE INSIDE WHEN IT IS SHUT — fault 6. Drawn only while
-   shut; open, it would be a count of rows you can see. */
-.sn-sec-count {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--chrome-fg-faint);
-}
-/* a wedge that turns rather than two glyphs that swap */
-.sn-sec-wedge {
-  width: 0;
-  height: 0;
-  flex: none;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--chrome-fg-faint);
-  transform: rotate(-90deg);
-  transition: transform var(--d-fast) var(--ease-out-expo);
-}
-.sn-sec.is-open .sn-sec-wedge {
-  transform: rotate(0deg);
-}
-.sn-sec-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin-top: 2px;
-}
-
-/* ---- a module you have been in ------------------------------ */
-/* THE ONE PLACE COLOUR ENTERS THE RAIL. A full-height rail in the
-   kind's own hue — which is what phase one had before the navy
-   arrived and demoted it to a 7px dot — and the count in the same
-   hue as ink, measured 5.3–8.4:1 above. §1b, amended: a hue may
-   carry a surface, and a hue only ever appears on something that
-   HAS that kind. */
-.sn-mod {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  min-height: 30px;
-  padding: 4px var(--s-2) 4px 9px;
-  border: 0;
-  border-left: 3px solid var(--kind);
-  border-radius: 0 var(--r-control) var(--r-control) 0;
-  background: transparent;
-  color: var(--chrome-fg-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.sn-mod:hover {
-  background: color-mix(in srgb, var(--kind) 14%, transparent);
-  color: var(--chrome-fg);
-}
-.sn-mod:active {
-  background: color-mix(in srgb, var(--kind) 22%, transparent);
-  transition-duration: var(--d-press);
-}
-.sn-mod:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: -2px;
-}
-.sn-mod.is-on {
-  background: color-mix(in srgb, var(--kind) 20%, transparent);
-  color: var(--chrome-fg);
-  font-weight: 600;
-}
-/* NOTHING TRUNCATES MID-WORD (§3): a brand name that does not fit
-   wraps to two lines rather than losing its word-shape. */
-.sn-mod-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.3;
-}
-.sn-mod-count {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--kind);
-}
-
 /* ---- the foot ----------------------------------------------- */
 .sn-foot {
   display: flex;
@@ -5992,8 +5665,7 @@
 .sn.is-tight .sn-kbd,
 .sn.is-tight .sn-row-name,
 .sn.is-tight .sn-new-say,
-.sn.is-tight .sn-admin-say,
-.sn.is-tight .sn-grp-recent {
+.sn.is-tight .sn-admin-say {
   display: none;
 }
 .sn.is-tight .sn-find {
@@ -6028,13 +5700,11 @@
   padding: 0;
 }
 
-/* MOVEMENT GOES; LIGHT AND COLOUR STAY (§4). The rail's WIDTH and
-   the wedge's ROTATION are movement and they go — the column snaps
-   to 64px and the wedge swaps. Every ink transition on every row
-   is not movement and is kept. */
+/* MOVEMENT GOES; LIGHT AND COLOUR STAY (§4). The rail's WIDTH is
+   movement and it goes — the column snaps to 64px. Every ink
+   transition on every row is not movement and is kept. */
 @media (prefers-reduced-motion: reduce) {
-  .sn,
-  .sn-sec-wedge {
+  .sn {
     transition: none;
   }
 }
@@ -6177,8 +5847,7 @@
   .sn .sn-kbd,
   .sn .sn-row-name,
   .sn .sn-new-say,
-  .sn .sn-admin-say,
-  .sn .sn-grp-recent {
+  .sn .sn-admin-say {
     display: none;
   }
   .sn .sn-find {
@@ -6253,8 +5922,7 @@
      above it. */
   padding: 0 0 var(--sp-6);
 }
-.ad-band,
-.ad-well > .ad-empty {
+.ad-band {
   padding-left: var(--page-gutter);
   padding-right: var(--page-gutter);
 }
@@ -6266,10 +5934,6 @@
   max-width: 1080px;
 }
 
-.ad-eyebrow {
-  margin: 0 0 var(--s-2);
-  color: var(--fg-tertiary);
-}
 /* `ds-hero` carries the face, the clamp and the tracking; the only
    thing said here is the colour and that it does not wrap into the
    grid below it. */
@@ -6540,15 +6204,6 @@
   /* it floats over the sheet — it may never be wider than the
      window it floats over */
   max-width: calc(100vw - var(--sp-4, 16px) * 2);
-}
-
-.dk-item {
-  width: var(--dock-item);
-  height: var(--dock-item);
-}
-
-.dk-sep {
-  margin: 0 var(--dock-gap);
 }
 
 /* Below the tablet edge ten destinations do not fit at any target

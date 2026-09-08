@@ -97,6 +97,7 @@ import {
   biggestTables,
   byCustomer,
   countLenses,
+  emptyCount,
   fileTally,
   plural,
   quotesUnder,
@@ -137,27 +138,121 @@ export function CardMark({ id }: { id: CardId }): JSX.Element {
 /* The shared pieces                                          */
 /* ---------------------------------------------------------- */
 
-/** WHAT A CARD SAYS WHEN IT HAS NOTHING TO SAY: the sentence,
- *  and the one act that would change that. Never two acts — a
- *  card is a glance, and a glance holds one decision. */
+/** WHAT A CARD SAYS WHEN IT HAS NOTHING TO SAY, AND IT IS FOUR
+ *  THINGS RATHER THAN TWO.
+ *
+ *  DESIGN_CONTRACT §6 fixes the shape and §11 checklists it:
+ *  **eyebrow, what-it-is, what-you-already-have, one action.**
+ *  This drew the sentence and the button — parts two and four —
+ *  and the two it dropped are the two the contract calls
+ *  load-bearing: *"Read the real count from the store. Never write
+ *  a blank screen at a person who has data."*
+ *
+ *  MEASURED, WHICH IS WHY IT MATTERS HERE RATHER THAN IN A
+ *  CHECKLIST. On the real seed at 1280x800 the quotes card's body
+ *  is 261.8px, 111.5px of it empty — 42.6% — and at 1920x1080 it
+ *  is 174.7px of 389.1px, 44.9%. That air is what a person sees
+ *  one second after loading 15,691 rows across 53 tables into 25
+ *  places, over the words "No quotes have been raised here yet."
+ *
+ *  THE COUNT IS READ HERE AND NOWHERE ELSE. `emptyCount` is pure
+ *  and takes figures; this is the one place that fetches them, so
+ *  seven cards cannot drift into seven readings of the store. It
+ *  is a component and not a hook at the card level because the
+ *  figures are only wanted when a card is empty, which on a
+ *  working project is never.
+ *
+ *  ONE CARD HAS TWO ABSENCES AND THEY ARE DIFFERENT FACTS, which
+ *  is what `state` and `say` override: "Rules that warn" is empty
+ *  when no rule is switched on at all, and empty again when rules
+ *  are on and none of them warns. `CardMeta` carries the second,
+ *  because that is the card's own subject; the first is a
+ *  different sentence and says so where it is drawn. The COUNT
+ *  needs no override — `emptyCount` returns null at zero rules on
+ *  its own, so the two states cannot disagree about the figure.
+ *
+ *  STILL NEVER TWO ACTS — a card is a glance, and a glance holds
+ *  one decision. */
 function Nothing({
+  id,
+  state,
   say,
   act,
   onAct,
 }: {
-  say: string
+  id: CardId
+  state?: string
+  say?: string
   act?: string
   onAct?: () => void
 }): JSX.Element {
+  const entities = useProjectStore((s) => s.entities)
+  const modules = useProjectStore((s) => s.modules)
+  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const constraints = useConstraints()
+  const meta = CARDS[id]
+
+  const have = useMemo(
+    () =>
+      emptyCount(id, {
+        places: placesOf(modules, entities, rowsByEntity).length,
+        tables: fileTally(entities, rowsByEntity).tables,
+        rules: rollRules(constraints).enabled,
+      }),
+    [id, modules, entities, rowsByEntity, constraints],
+  )
+
   return (
     <div className="dsh-empty">
-      <p className="dsh-empty-say ds-small">{say}</p>
+      <p className="dsh-empty-state ds-label">{state ?? meta.state}</p>
+      <p className="dsh-empty-say ds-small">{say ?? meta.empty}</p>
+      {/* THE FIGURE IS MONO AND THE WORDS AROUND IT ARE NOT — the
+          same rule every other number on this page keeps (§2), and
+          the reason a count reads as a fact rather than as more
+          prose. `<strong>` because the contract's model sets it
+          that way and because the figure is the point of the
+          line. */}
+      {have ? <p className="dsh-empty-have ds-small">{splitCount(have)}</p> : null}
       {act && onAct ? (
         <button type="button" className="dsh-act" onClick={onAct}>
           {act}
         </button>
       ) : null}
     </div>
+  )
+}
+
+/** SET THE FIGURE IN MONO WITHOUT WRITING THE SENTENCE TWICE.
+ *
+ *  `emptyCount` returns one string because a sentence is one
+ *  thing to read and one thing to test; the drawing of it needs
+ *  the number in `--font-mono` and the words in Inter. So the
+ *  string is cut on its first run of digits — the only run any of
+ *  those sentences has — rather than being handed over as three
+ *  fields a caller could reassemble in the wrong order.
+ *
+ *  A sentence with no digits in it comes back whole, which is
+ *  what makes this safe for a line nobody has written yet. */
+function splitCount(say: string): ReactNode {
+  const at = say.search(/\d/)
+  if (at < 0) return say
+  /* A GROUPING COMMA OR A DECIMAL POINT IS PART OF THE FIGURE; A
+     FULL STOP IS NOT. "15,691 rows." must not end with the stop
+     inside the mono span, so a separator only continues the run
+     when a digit follows it. */
+  let end = at
+  while (
+    end < say.length &&
+    (/\d/.test(say[end] ?? '') || (/[,.]/.test(say[end] ?? '') && /\d/.test(say[end + 1] ?? '')))
+  ) {
+    end += 1
+  }
+  return (
+    <>
+      {say.slice(0, at)}
+      <strong className="dsh-empty-n ds-mono">{say.slice(at, end)}</strong>
+      {say.slice(end)}
+    </>
   )
 }
 
@@ -304,7 +399,7 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
   )
 
   if (quotes.length === 0) {
-    return <Nothing say={CARDS['my-quotes'].empty} act="New quote" onAct={acts.onNewQuote} />
+    return <Nothing id="my-quotes" act="New quote" onAct={acts.onNewQuote} />
   }
 
   /* THE SUBJECT'S OWN KIND. A quote is raised FROM a row on a
@@ -461,9 +556,7 @@ function RecentlyOpened({ acts }: { acts: DashboardActs }): JSX.Element {
   )
 
   if (rows.length === 0) {
-    return (
-      <Nothing say={CARDS['recently-opened'].empty} act="Find anything" onAct={acts.onFind} />
-    )
+    return <Nothing id="recently-opened" act="Find anything" onAct={acts.onFind} />
   }
 
   return (
@@ -557,7 +650,7 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
   )
 
   if (places.length === 0) {
-    return <Nothing say={CARDS['my-modules'].empty} act="Modules" onAct={acts.onOpenModules} />
+    return <Nothing id="my-modules" act="Modules" onAct={acts.onOpenModules} />
   }
 
   /* THE KEY, WHICH IS WHAT PAID FOR TAKING THE SYMBOLS OFF.
@@ -769,7 +862,7 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
  *  button here would have to point at something unrelated. */
 function Activity({ orgSlug }: { orgSlug: string }): JSX.Element {
   const rows = useActivity(orgSlug)
-  if (rows.length === 0) return <Nothing say={CARDS.activity.empty} />
+  if (rows.length === 0) return <Nothing id="activity" />
 
   /* NO LIMIT AND NO "SEE ALL" LINK. The store keeps a fortnight of
      heavy use and hands back the lot; the card scrolls. A link
@@ -796,7 +889,7 @@ function ThePriceFile({ acts }: { acts: DashboardActs }): JSX.Element {
 
   if (tally.tables === 0) {
     return (
-      <Nothing say={CARDS['the-price-file'].empty} act="Data model" onAct={acts.onOpenDataModel} />
+      <Nothing id="the-price-file" act="Data model" onAct={acts.onOpenDataModel} />
     )
   }
 
@@ -842,7 +935,7 @@ function WorthFixing({ acts }: { acts: DashboardActs }): JSX.Element {
   const roll = useMemo(() => rollFindings(findings, FINDING_ROWS), [findings])
 
   if (findings.length === 0) {
-    return <Nothing say={CARDS['data-quality'].empty} />
+    return <Nothing id="data-quality" />
   }
 
   return (
@@ -903,7 +996,9 @@ function RulesThatWarn({ acts }: { acts: DashboardActs }): JSX.Element {
   if (roll.enabled === 0) {
     return (
       <Nothing
-        say="No rules are switched on here yet. A rule is a sentence about what must always be true."
+        id="rules-warning"
+        state="No rules yet"
+        say="A rule is a sentence about what must always be true."
         act="Business rules"
         onAct={acts.onOpenRules}
       />
@@ -911,7 +1006,7 @@ function RulesThatWarn({ acts }: { acts: DashboardActs }): JSX.Element {
   }
 
   if (roll.warning.length === 0) {
-    return <Nothing say={CARDS['rules-warning'].empty} act="Business rules" onAct={acts.onOpenRules} />
+    return <Nothing id="rules-warning" act="Business rules" onAct={acts.onOpenRules} />
   }
 
   return (

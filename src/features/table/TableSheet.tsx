@@ -974,7 +974,13 @@ export function TableSheet({
              lets the grid draw them as filing rather than as data. */
           levelIds={levelIds}
           noun={noun}
-          search={viewActive ? search : ''}
+          /* THE SEARCH THE ROWS WERE FILTERED BY, not the one in the
+             box. They differ for a render while the deferred view
+             catches up (see `useTableData`), and the grid marks
+             matches INSIDE these rows — so reading the box here
+             would underline a word the visible set was not narrowed
+             by yet. */
+          search={viewActive ? data.searchApplied : ''}
           sort={sort}
           filters={filters}
           marks={cmd.marks}

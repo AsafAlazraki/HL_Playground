@@ -1,0 +1,15 @@
+# THE ROOT .gitignore's `*.png` RULE DOES NOT APPLY IN HERE, and that
+# rule is the whole reason this directory exists.
+#
+# `.gitignore:29` ignores `*.png` repo-wide — "agent screenshots — never
+# committed; they belong in the scratchpad". Commit 92791d6 ("The brands
+# get their own marks") wrote an eight-entry table pointing at
+# `/logos/*.png` and `git add` silently dropped all eight files. The
+# code shipped, the artwork did not, and every one of those addresses
+# has resolved to Vite's index.html fallback ever since — measured
+# 2026-09-09: 8 requests, 8 × `200 text/html`, 0 pixels.
+#
+# Negating it here rather than editing the root rule keeps the
+# screenshot rule intact everywhere else. A mark dropped in this
+# directory is committed; a screenshot anywhere else still is not.
+!*.png

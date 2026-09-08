@@ -323,9 +323,18 @@
   border-color: var(--line);
 }
 
-.qb-plate:active {
+/* The same (0,4,0) as the card and for the same reason — see the
+   note above `.qb-card:active`. A 144px plate at 0.97 travels
+   2.2px an edge; the 0.994 this rule always asked for travels
+   0.4px, which is what a plate this size is meant to do. */
+.qb-plate:not(:disabled):not([aria-disabled='true']):active {
   transform: scale(0.994);
-  background: var(--surface-4);
+  /* background-COLOR, not the shorthand: the shorthand resets
+     background-image, and background-image is where base.css puts
+     its press wash. At (0,2,0) the reset lost and the wash showed;
+     raised to (0,4,0) it would start winning and the press would
+     quietly lose a channel it has always had. */
+  background-color: var(--surface-4);
 }
 
 /* §4: reduced motion is GENTLER feedback, not none — the movement
@@ -336,7 +345,7 @@
       border-color var(--d-fast) var(--ease),
       background var(--d-fast) var(--ease);
   }
-  .qb-plate:active {
+  .qb-plate:not(:disabled):not([aria-disabled='true']):active {
     transform: none;
   }
 }
@@ -621,8 +630,21 @@
   filter: brightness(0.985);
 }
 
-.qb-band-head:active {
+/* A ROW DARKENS; IT DOES NOT SCALE. §6: "A row never scales — its
+   neighbours would look like they moved." This head is 773.9px at
+   1440 and the base press was moving each edge 11.61px, so opening
+   a band jumped the whole bar 23px narrower and back.
+
+   IT DARKENS WITH `filter` AND NOT A BACKGROUND, because `.k-band`
+   in ds.css paints this surface in the band's own kind hue and a
+   background here would race it on stylesheet order — the note at
+   the top of `.qb-band-head` says so. brightness() is paint-only:
+   no layout, no reflow, and the neighbours stay where they are.
+   base.css's press wash lands on top of it either way, so the press
+   keeps two channels and loses only the one that moved the row. */
+.qb-band-head:not(:disabled):not([aria-disabled='true']):active {
   filter: brightness(0.96);
+  transform: none;
 }
 
 .qb-band-head:focus-visible {
@@ -763,20 +785,82 @@
   text-align: left;
   cursor: pointer;
   box-shadow: var(--e1);
+
+  /* THE SELECTION RING IS DECLARED AT REST, TRANSPARENT.
+     CONFIGURATOR_PLAYBOOK §3: "Outline, never border. Outlines take
+     no part in layout, so nothing reflows when selection moves."
+     §6 then gives the ring a duration — outline transparent →
+     --blue over 120ms — and that is only possible if there IS an
+     outline whose colour can change. A rule that first appears
+     with `.is-on` has nothing to transition FROM, so it snaps. */
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   transition:
+    outline-color var(--d-fast) var(--ease),
     border-color var(--d-fast) var(--ease),
     box-shadow var(--d-fast) var(--ease),
     transform var(--d-press) var(--ease);
 }
 
-.qb-card:hover {
-  border-color: var(--line-strong);
-  box-shadow: var(--e2);
+/* HOVER PREVIEWS SELECTION, AT REDUCED ALPHA — Porsche's move, and
+   the playbook's "cheapest legibility win in the corpus" (§3, and
+   mechanic 17 of the twenty). The hovered card wears the ring it
+   would wear if you pressed it, at 36%, so the preview cannot be
+   read as the commitment.
+
+   GATED ON A REAL POINTER. A touch device fires hover on tap, so an
+   ungated `:hover` leaves the ring, the raised shadow and the
+   photograph's zoom stuck on the last card a finger touched. All
+   four hover effects on this card are inside this one query for
+   that reason. */
+@media (hover: hover) and (pointer: fine) {
+  .qb-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--e2);
+    outline-color: color-mix(in srgb, var(--accent) 36%, transparent);
+  }
 }
 
-/* 0.994, NOT 0.97. §4: a 0.97 press on a 236px card is a 7px shrink
-   and reads as a glitch. */
-.qb-card:active {
+/* -- THE PRESS HAD TO BE SAID LOUDER THAN base.css SAYS IT -------
+
+   MEASURED, in Chrome, on this tree before this change: every
+   button on this screen pressed at scale(0.97), including the ones
+   whose own rule said otherwise.
+
+     .qb-band-head   773.9px wide  ->  11.61px of edge travel
+     .qb-card        239.3px wide  ->   3.59px of edge travel
+     .qb-price-fig   197.1px wide  ->   2.96px, carrying the total
+
+   `base.css:431` presses every `<button>` at
+   `scale(var(--press-scale))` from
+   `button:not(:disabled):not([aria-disabled='true']):active`,
+   which computes to (0,3,1) — and its own comment says that is deliberate:
+   "Specificity is the enforcement mechanism, so the four dead rules
+   cannot fight this one." It names four `:active` rules at (0,2,0)
+   that it overrules on purpose. All four of them CANCELLED their
+   own feedback, which is the thing DESIGN_CONTRACT §8.12 removed.
+
+   These are not those. `.qb-card:active { scale(0.994) }` was
+   written BY the contract — §11: "Cards scale 0.994, controls 0.97"
+   — and the playbook gives the number a reason: "0.97 on a 236px
+   card is a 7px shrink and reads as a glitch." The card is 239.3px
+   here and the shrink measured 7.18px. The rule was right and it
+   was losing.
+
+   `src/styles/**` may not be edited, and it should not be: the
+   base press is correct for the 132px button it was calibrated on.
+   So the fix is co-location — the feature states its own press in
+   the feature's own sheet, in base.css's own selector shape, which
+   computes to (0,4,0) and wins on class count rather than on source
+   order. Nothing below cancels a press: base.css presses in TWO
+   channels ("the wash covers the small end, the scale covers the
+   large end") and the wash is untouched everywhere. */
+/* 0.994, NOT 0.97. §6: a 0.97 press on a 236px card is a 7px shrink
+   and reads as a glitch — measured at 7.18px on this shelf. The
+   hover lift goes with it, which is the other half of the same row
+   in the motion table: on a big surface the press is SEEN, not
+   felt. */
+.qb-card:not(:disabled):not([aria-disabled='true']):active {
   transform: scale(0.994);
   box-shadow: var(--e1);
 }
@@ -786,23 +870,41 @@
   outline-offset: 2px;
 }
 
+/* Movement goes, colour stays: the ring still arrives, the press
+   still lands, nothing travels. */
 @media (prefers-reduced-motion: reduce) {
   .qb-card {
-    transition: border-color var(--d-fast) var(--ease);
+    transition:
+      outline-color var(--d-fast) var(--ease),
+      border-color var(--d-fast) var(--ease);
   }
-  .qb-card:active {
+  .qb-card:not(:disabled):not([aria-disabled='true']):active {
     transform: none;
   }
 }
 
+/* ON THE QUOTE — the ring at full strength, and the hairline the
+   card already had kept beside it, so SELECTED and FOCUSED are two
+   readings rather than one: focus draws the outline alone, this
+   draws the outline with an accent border inside it.
+
+   IT WAS `box-shadow: 0 0 0 1px var(--accent), var(--e2)` — a
+   hand-rolled ring, which DESIGN_CONTRACT §11 forbids in as many
+   words ("Elevation is --ec1 / --ec3 / --e1. No hand-rolled
+   box-shadow"), and a ring with no reduced-alpha sibling: a shadow
+   cannot be previewed on hover the way an outline colour can. */
 .qb-card.is-on {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), var(--e2);
+  outline-color: var(--accent);
 }
 
+/* WHERE THE KEYBOARD IS. Focus follows the highlight (`land()` in
+   QuoteBuild), so this and `:focus-visible` are the same ring on
+   the same card; it is written as a colour change now rather than
+   a second outline so all four ring states cascade against one
+   declaration. */
 .qb-card.is-lit {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-color: var(--accent);
 }
 
 .qb-card.is-outside {
@@ -825,8 +927,10 @@
   transition: transform var(--d-slow) var(--ease);
 }
 
-.qb-card:hover .qb-well-img {
-  transform: scale(1.03);
+@media (hover: hover) and (pointer: fine) {
+  .qb-card:hover .qb-well-img {
+    transform: scale(1.03);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -991,10 +1095,15 @@
   transition: opacity var(--d-fast) var(--ease);
 }
 
-.qb-card:hover .qb-card-act,
 .qb-card:focus-visible .qb-card-act,
 .qb-card.is-lit .qb-card-act {
   opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qb-card:hover .qb-card-act {
+    opacity: 1;
+  }
 }
 
 .qb-card.is-on .qb-card-act {
@@ -1073,6 +1182,26 @@
   color: var(--fg);
 }
 
+/* THE SHARE, NOT JUST THE COUNT. §3 heads a group with the name and
+   its share — "12 of 434" — and §5 answers why the big half of that
+   pair is not something to hide: "422 of 434 is not a failure to be
+   embarrassed by. It is the number a dealer quotes down the phone."
+   A count with no denominator is a number a person cannot place.
+
+   Mono and tabular so the two figures sit on one baseline grid, and
+   `--fg-secondary` rather than the ramp floor because this head
+   takes `--surface-3` on hover and `--surface-4` on press:
+   measured on those grounds `--fg-tertiary` falls to 4.9:1 and
+   4.46:1, and the second of those is under the floor. `--fg-secondary`
+   is 8.1:1 on white and 6.6:1 on the pressed ground. */
+.qb-refused-of {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  font-weight: 450;
+  color: var(--fg-secondary);
+}
+
 .qb-refused-list {
   display: flex;
   flex-direction: column;
@@ -1091,8 +1220,14 @@
   border-radius: 0 var(--r-control) var(--r-control) 0;
 }
 
+/* THE ROW IS THE CARD, REFUSED — so it is set at the card's own
+   steps. The name was 13px against a 14px reason, which put an
+   option's explanation a step ABOVE the option. Name and figure now
+   match `.qb-card-name` (14px) and `.qb-card-price` (13px mono),
+   and the hierarchy is carried by weight and ink instead: 550 at
+   `--fg` over 400 at `--fg-secondary`. */
 .qb-ref-name {
-  font-size: var(--t-small-size);
+  font-size: var(--t-body-size);
   font-weight: 550;
   color: var(--fg);
   min-width: 0;
@@ -1102,15 +1237,37 @@
 .qb-ref-fig {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: var(--t-mono-sm-size);
+  font-size: var(--t-mono-size);
   white-space: nowrap;
 }
 
-/* THE RESERVED SUB-LINE. It spans both columns so a long reason
-   never squeezes the figure, and a short one never collapses the
-   row under its neighbour. */
-.qb-ref-why {
+/* ── THE RESERVED SUB-LINE ──────────────────────────────────────
+   §3: "Every row reserves its 16px second line whether or not it
+   has a reason. A short reason must not collapse the row and a long
+   one must not shift the row below it."
+
+   It spanned both columns already, so a long reason never squeezed
+   the figure — but `outsideWhy` is OPTIONAL (`freeze.ts:587`), and
+   a row without one drew no second line at all. Eight rows of two
+   heights each is a ragged list, and a row that GAINS its sentence
+   pushes every row under it down as it arrives, which is the one
+   thing §6 says a refusal may never do: "the state and its sentence
+   land in the same frame".
+
+   So the slot is always drawn (QuoteBuild `RefusedRow`) and always
+   reserves one line of it. `min-height` rather than a fixed height,
+   because a two-line reason must still be allowed to be two lines.
+
+   §5 sets the type: "in the row, on its second line, body step,
+   14px, --ink-soft". `.s-say` from ds.css is the 13px small step,
+   so the size is stated here, and at `.qb-ref-row .qb-ref-why` so
+   it outranks `.s-say` whatever order the two sheets load in. */
+.qb-ref-row .qb-ref-why {
   grid-column: 1 / -1;
+  font-size: var(--t-body-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+  min-height: 1.45em;
 }
 
 .qb-refused-none {
@@ -1442,8 +1599,30 @@
   border-color: var(--line);
 }
 
-.qb-price-fig:active {
-  background: var(--surface-4);
+/* THE TOTAL DOES NOT MOVE, AND A PRESS IS NOT AN EXCEPTION TO IT.
+
+   §4 is one line and it carries no qualifier: "The money never
+   animates… Motion on money reads as a slot machine. A dealer reads
+   a price aloud." Everything in this file has kept that for the
+   value changing — `.qb-price-now` has no transition and no
+   animation, and the figure is replaced on the frame it changes. It
+   was not kept for the press: this control is a button whose entire
+   content is the total, so base.css scaled 84,310 by 3% for 110ms
+   every time somebody opened the ledger. Measured at 197.1px wide,
+   2.96px of travel per edge.
+
+   THIS IS NOT §8.12's CANCELLED PRESS. That was a rule leaving a
+   control with no feedback at all. Here the press keeps BOTH of the
+   background channels base.css describes — its own press wash, and
+   the `--surface-4` below — and gives up only the channel that
+   moves the number. The press is still seen; the money still does
+   not move. */
+.qb-price-fig:not(:disabled):not([aria-disabled='true']):active {
+  /* background-COLOR so base.css's press wash survives the raise —
+     see the note on .qb-plate:active. It is the second of the two
+     channels this rule claims above. */
+  background-color: var(--surface-4);
+  transform: none;
 }
 
 .qb-price-fig:focus-visible {
@@ -1511,13 +1690,44 @@
   white-space: nowrap;
 }
 
+/* ── THE DELTA APPEARS AND FADES; THE TOTAL DOES NOT ─────────────
+
+   §4 is two sentences and they are not the same sentence. "The
+   money never animates" — the figure to the left of this chip is
+   replaced on the frame it changes, and nothing in this file gives
+   `.qb-price-now` a transition. "Deltas appear and fade" — this
+   chip is a report of an act, and an act's report is a toast.
+
+   IT HAD NO EXIT. It rose in over 180ms, held, and then vanished on
+   the frame `useTotalDelta` cleared it: an entrance with a cut for
+   an ending, which is the one thing §6 has a row for — toast out,
+   translateY 0 → 4, fade, 120ms, --ease-in-out. Enter and exit
+   along the same path (apple-design §7): it came up 6px, it leaves
+   4px back down the way it came.
+
+   THE 2480ms IS THE 2600ms IN `useTotalDelta` MINUS THIS 120ms.
+   The two numbers are one number and each says so. If the life
+   changes there, this delay changes with it.
+
+   `forwards` AND NOT `both` ON THE SECOND: with backwards fill the
+   out animation would hold its own opacity:1 from frame zero and,
+   being later in the list, would win the property outright — the
+   entrance would never be seen. `forwards` takes no effect until
+   its delay elapses.
+
+   AND THE ELEMENT IS KEYED (`delta.at`), because a second pick
+   inside 2.6s reuses this span otherwise: same class, same
+   animation-name, so the browser does not restart it and the new
+   figure would arrive part-way through the OLD one's fade-out. */
 .qb-delta {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: var(--t-mono-sm-size);
   font-weight: 600;
   color: var(--success);
-  animation: qb-delta-in var(--d-med) var(--ease) both;
+  animation:
+    qb-delta-in var(--d-med) var(--ease) both,
+    qb-delta-out var(--d-fast) var(--ease-in-out) 2480ms forwards;
 }
 
 .qb-delta.is-down {
@@ -1535,9 +1745,36 @@
   }
 }
 
+@keyframes qb-delta-out {
+  to {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Reduced motion is gentler feedback, not none: the travel goes,
+   the fade stays, so the chip still arrives and still leaves rather
+   than blinking on and off beside a price. */
+@keyframes qb-delta-lit {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes qb-delta-gone {
+  to {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .qb-delta {
-    animation: none;
+    animation:
+      qb-delta-lit var(--d-fast) var(--ease) both,
+      qb-delta-gone var(--d-fast) var(--ease) 2480ms forwards;
   }
 }
 
@@ -1552,10 +1789,14 @@
    point: `--fg-secondary` against the total's `--fg`, no elevation,
    no accent. The committed figure is the fact; this is a question.
 
-   NO ANIMATION ON IT. `qb-delta` rises in because it reports
-   something that happened; this tracks a pointer and a 200ms
-   entrance on every card a mouse crosses is a strip that flickers.
-   Only the ink transitions.  */
+   NOTHING ON IT MOVES AND NOTHING ON IT TRANSITIONS. `qb-delta`
+   rises in because it reports something that happened; this tracks
+   a pointer, and a 200ms entrance on every card a mouse crosses is
+   a strip that flickers. It carried `transition: color` and never
+   changed colour — a declaration that did nothing, on a chip whose
+   whole content is a would-be TOTAL. §4 says money never animates,
+   and the safest way to keep a rule is to leave nothing standing
+   that looks like an exception to it. */
 .qb-weigh {
   display: inline-flex;
   align-items: baseline;
@@ -1564,7 +1805,6 @@
   border: 1px dashed var(--line-strong);
   border-radius: var(--r-full);
   background: var(--surface-2);
-  transition: color var(--d-fast) var(--ease);
 }
 
 .qb-weigh-lab {

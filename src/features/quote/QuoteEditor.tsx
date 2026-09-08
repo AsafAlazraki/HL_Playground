@@ -530,10 +530,19 @@ export function QuoteEditor({
                       {c.gone ? (
                         <span className="qt-nil">that row is no longer on the sheet</span>
                       ) : (
+                        /* A DIFF READ ALOUD IS TWO FIGURES AND NO VERB.
+                           The strike-through carries "this is the old
+                           one" for a sighted reader and for nobody
+                           else — see the note on `.qt-aloud` in
+                           quote.css and commit ce85394. The two words
+                           make it a sentence: "Yamaha F90XB was
+                           $18,240, now $18,940." */
                         <span className="qt-num">
+                          <span className="qt-aloud">was </span>
                           <span className="qt-was">
                             {c.from === null ? 'not priced' : money(c.from)}
                           </span>
+                          <span className="qt-aloud">, now </span>
                           {c.to === null ? 'not priced' : money(c.to)}
                         </span>
                       )}
@@ -1087,21 +1096,83 @@ function SectionCard({
                   0 survivors. See the note on `Candidate.key`. */}
               {candidates.map((c) => (
                 <li key={c.key}>
+                  {/* `aria-disabled` PLUS A LIVE GUARD, NEVER `disabled`.
+                      CONFIGURATOR_PLAYBOOK §5 says it outright — "never
+                      the `disabled` attribute" — and mechanic #3 makes it
+                      the rule for the whole configurator: the row keeps
+                      its tab stop, keeps its price, keeps its reason, and
+                      the act is stopped in the handler instead. This is a
+                      `<button>`, whose role supports the attribute; the
+                      trap ce85394 fixed was the same attribute on an
+                      `<li>`, where `listitem` ignores it. The guard is
+                      what actually refuses, so the two cannot disagree.
+
+                      AND THE DIMMING GOES, WHICH IS THE OTHER HALF.
+                      `.qt-pick:disabled { opacity: .55 }` folded the whole
+                      row — name, price and the sentence explaining it —
+                      below the legibility floor. Composited over the
+                      picker's own ground (233,239,246) and measured:
+                      name and price 3.77:1, the pair facts 2.13:1, "on
+                      the quote" 2.53:1, against a 4.5:1 floor
+                      (DESIGN_PRINCIPLES §4). At full ink the same four
+                      measure 15.04, 4.74 and 6.99. Playbook §5: "the
+                      reason nobody notices a greyed option is precisely
+                      that it is greyed below the legibility threshold, so
+                      the accessibility fix and the usability fix are the
+                      same fix." */}
                   <button
                     type="button"
                     className="qt-pick"
-                    disabled={c.alreadyLineId !== undefined}
+                    aria-disabled={c.alreadyLineId !== undefined || undefined}
                     onClick={() => {
+                      if (c.alreadyLineId !== undefined) return
                       addLine(quote.id, section.blockId, c.line)
                       setPicking(false)
                     }}
                   >
-                    {c.line.recommended ? (
-                      <span className="qt-star" title="Recommended">
-                        <Star size={11} weight="fill" />
-                      </span>
-                    ) : null}
-                    <span className="qt-pick-name">{c.line.label}</span>
+                    {/* ALWAYS THE CELL, CONDITIONALLY THE STAR — the same
+                        fix `.qt-star` in quote.css records for
+                        `.qt-line-main`, which this row never got. Measured
+                        at 1100px of window on two candidates: with the
+                        cell dropped on the un-starred row its price sat
+                        298px left of the starred row's, because the name
+                        fell into the star's track and every track after it
+                        shifted. */}
+                    <span
+                      className="qt-star"
+                      title={c.line.recommended ? 'Recommended' : undefined}
+                    >
+                      {c.line.recommended ? <Star size={11} weight="fill" /> : null}
+                    </span>
+                    {/* THE TWO MARKS TRAVEL WITH THE NAME, and that is
+                        what holds the money column still. Each `.qt-pick`
+                        is its own grid, so a mark drawn as a fifth CELL
+                        took width out of the two `fr` tracks before it and
+                        moved that row's price alone: measured, 731px
+                        against 818px on the row beside it, 87px apart in
+                        one list. They are facts about the candidate, so
+                        they belong beside its name — which is also where
+                        the playbook puts a reason (§5, "in the row") —
+                        and the row is then four cells wide whatever it
+                        says. `.qt-pick-on` also loses `mono-label`: it is
+                        a phrase, and DESIGN_CONTRACT §3 names a sentence
+                        as one of the things uppercase may never be. Its
+                        neighbour below already carried that argument. */}
+                    <span className="qt-pick-name">
+                      {c.line.label}
+                      {c.alreadyLineId !== undefined ? (
+                        <span className="qt-pick-on">on the quote</span>
+                      ) : null}
+                      {/* REACHED PAST THE NARROWING, AND SAYING SO. A row
+                          the search or the switch fetched from the rest of
+                          the table is pickable — that is the whole point,
+                          and it is what production's trailer step cannot
+                          do at all — but it must never look like a pairing
+                          the price file actually made. */}
+                      {c.outside ? (
+                        <span className="qt-pick-outside">outside the narrowing</span>
+                      ) : null}
+                    </span>
                     <span className="qt-pick-facts">
                       {(c.line.pairFacts ?? [])
                         .slice(0, 2)
@@ -1115,18 +1186,6 @@ function SectionCard({
                         money(c.line.unitPrice)
                       )}
                     </span>
-                    {c.alreadyLineId !== undefined ? (
-                      <span className="mono-label qt-pick-on">on the quote</span>
-                    ) : null}
-                    {/* REACHED PAST THE NARROWING, AND SAYING SO. A row
-                        the search or the switch fetched from the rest of
-                        the table is pickable — that is the whole point,
-                        and it is what production's trailer step cannot
-                        do at all — but it must never look like a pairing
-                        the price file actually made. */}
-                    {c.outside ? (
-                      <span className="qt-pick-outside">outside the narrowing</span>
-                    ) : null}
                   </button>
                 </li>
               ))}
@@ -1310,8 +1369,16 @@ function LineRow({
             <span className="qt-nil">not priced here</span>
           ) : (
             <>
+              {/* the same two words the document prints — see
+                  `DocLine` in QuoteDocument.tsx. One override, three
+                  readings of it, and all three now say which figure
+                  is being charged. */}
               {overridden && line.unitPrice !== null ? (
-                <span className="qt-was">{money(line.unitPrice * (line.qty || 1))}</span>
+                <>
+                  <span className="qt-aloud">Price file </span>
+                  <span className="qt-was">{money(line.unitPrice * (line.qty || 1))}</span>
+                  <span className="qt-aloud">, charged </span>
+                </>
               ) : null}
               {money(amount)}
             </>

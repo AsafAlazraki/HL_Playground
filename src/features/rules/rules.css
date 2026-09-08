@@ -1548,6 +1548,33 @@
   background: var(--blue-wash);
 }
 
+/* HOW BIG THE ANSWER IS, UNDER THE ANSWER. Outside `.rl-table-wrap`
+   so it never scrolls out of reach — the whole point of the line is
+   that a person cannot miss it (RuleResultsRail.tsx, VIEW_ROW_CAP).
+   A sentence, full stop and all, like `.rl-applied`. */
+.rl-rowcap {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.rl-rowcap-why {
+  color: var(--ink-faint);
+}
+/* the count is a figure and takes the figure face */
+.rl-rowcap-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--ink);
+}
+
 /* -- effects -------------------------------------------------- */
 .rl-effects,
 .rl-warnings {
@@ -2266,6 +2293,14 @@
 .rl-th--gutter,
 .rl-td--gutter {
   color: var(--fg-tertiary);
+}
+
+/* only the scale changes — bridge.css:49-62 already maps --ink-soft
+   to --fg-secondary and --hairline to --line, so the base rule's
+   colours are the redesign's colours */
+.rl-rowcap {
+  font-size: var(--t-small-size);
+  line-height: 1.55;
 }
 
 /* -- what it wants to write ---------------------------------- */

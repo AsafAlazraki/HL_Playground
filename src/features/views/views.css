@@ -1222,12 +1222,80 @@
 .vw-add-row:hover {
   background: var(--blue-wash);
 }
-.vw-add-row:disabled {
-  cursor: default;
-  opacity: 0.55;
+/* ── PRESS AND FOCUS, WHICH THIS ROW HAD NEITHER OF ─────────────
+   `.vw-add-row` had hover and stopped there — DESIGN_CONTRACT §11
+   wants all three on every pressable thing, and only the pickzone
+   variant 1,100 lines down had ever had them.
+
+   IT BECAME URGENT WITH `aria-disabled`. A native `disabled` button
+   is not in the tab order, so a missing focus ring cost nothing on
+   the refused rows; now that they are reachable — which is the
+   entire point of the swap — a row a keyboard can land on and not
+   see is a worse failure than the one being fixed. So the ring
+   lands here, not on some later pass.
+
+   IT DARKENS, IT DOES NOT SCALE. §4: a list row darkens so its
+   neighbours do not look like they moved. Press deepens what hover
+   started, on pointer-down, at `--t-press`. */
+.vw-add-row:active {
+  background: var(--blue-wash-strong);
+  transition-duration: var(--t-press);
 }
-.vw-add-row:disabled:hover {
+.vw-add-row:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+/* ── A REFUSED ROW IS LEGIBLE, AND `opacity` IS NOT HOW ─────────
+   This was `opacity: 0.55` on the whole row, which
+   CONFIGURATOR_PLAYBOOK §5 names outright: not Porsche's
+   `opacity: 0.4`, not `--fg-quaternary`, not `--ink-faint` over a
+   tint. Its finding is that the reason nobody notices a greyed
+   option is precisely that it is greyed below the legibility
+   threshold — so the accessibility fix and the usability fix are
+   one fix. 0.55 over `--ink` (17.4:1 on white) lands at roughly
+   5.6:1 for the name and drags the `--ink-faint` cells (5.5:1) to
+   about 2.5:1, which is `--fg-quaternary` territory and may never
+   carry meaning.
+
+   So nothing is dimmed. The row states what it is in words, the
+   `--red` tag carries the kind, and the only thing that changes is
+   that the ACTION recedes: the `+` stops being accent, because it
+   is the one part of the row that is no longer an offer. The
+   selector is `[aria-disabled]` because the attribute is now
+   `aria-disabled` — see AddPanel.tsx for why. */
+.vw-add-row[aria-disabled='true'] {
+  cursor: default;
+}
+/* NO HOVER AND NO PRESS — but the FOCUS RING STAYS, because the row
+   is still in the tab order and a person can still land on it to
+   hear the reason. That asymmetry is the whole difference between
+   `aria-disabled` and `disabled`. */
+.vw-add-row[aria-disabled='true']:hover,
+.vw-add-row[aria-disabled='true']:active {
   background: transparent;
+}
+.vw-add-row[aria-disabled='true'] .vw-add-plus {
+  color: var(--fg-quaternary);
+}
+
+/* THE REFUSAL SENTENCE — §5's place for it: in the row, on its own
+   line, on the untinted ground, at `--ink-soft` (7.7:1). Never the
+   `title` it used to be: a tooltip is invisible to touch, invisible
+   to the keyboard, and a second late to the mouse. */
+.vw-add-why {
+  margin: 0;
+  padding: 0 var(--sp-3) var(--sp-2) calc(var(--sp-3) + 12px + var(--sp-3));
+  border-bottom: 1px solid var(--hairline);
+  font-size: var(--ui-s-size);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* Five kinds, five words, and the word is never a grey pill. */
+.vw-add-word {
+  font-weight: 600;
+  color: var(--ink);
 }
 .vw-add-plus {
   display: inline-flex;

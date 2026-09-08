@@ -14,8 +14,9 @@
 
    So this asks it, on every `npm test`, in two ways:
 
-     ORPHANED  no file outside the directory imports anything in it.
-               The feature is an island.
+     ORPHANED  nothing imports it from outside — no file outside the
+               directory, or, for a src/app file, no non-test file
+               anywhere. The feature is an island.
 
      UNREACHED it is imported, but only by other unreached code.
                This is the 7,448-line case: three features importing
@@ -26,6 +27,29 @@
    — the same file index.html loads — so "reachable" means what a
    person means by it.
 
+   WHAT IT COVERS, AND THE UNIT IN EACH TREE. Two trees, asked the
+   same question with a different unit, because they are shaped
+   differently:
+
+     src/features   per DIRECTORY. A feature IS a directory here,
+                    so reaching one file of it reaches the feature.
+
+     src/app        per FILE. src/app is flat — one directory
+                    holding the whole shell, no subdirectories — so
+                    a directory check there asks a single question
+                    about all of it and the answer is always yes.
+                    A question with a fixed answer is not a guard,
+                    which is why src/app went unasked entirely: the
+                    walk was rooted at `join(SRC, 'features')` and
+                    stopped there.
+
+   The first run over src/app found 8 files, 1,926 lines, that
+   `src/main.tsx` cannot reach — including the 340px right rail and
+   its inspector, already named in the DORMANT entry below as the
+   reason src/features/data is dark. They are recorded in
+   tools/reachability-baseline.json, not forgiven; see the comment
+   on BASELINE.
+
    WHAT IT DELIBERATELY DOES NOT DO. It does not check that a feature
    is reachable by CLICKING: a component imported by a stage that is
    never mounted, or behind a route nobody links to, still passes.
@@ -34,14 +58,16 @@
 
    Run:  node tools/check-reachability.mjs      (also: npm test)
    ============================================================ */
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = join(ROOT, 'src')
 const FEATURES = join(SRC, 'features')
+const APP = join(SRC, 'app')
 const ENTRY = join(SRC, 'main.tsx')
+const BASELINE = join(ROOT, 'tools', 'reachability-baseline.json')
 
 /* ------------------------------------------------------------
    DORMANT — the explicit opt-out.
@@ -82,6 +108,41 @@ const DORMANT = [
      stopped guarding, and this is the kind of entry the list was
      written to distrust. */
 ]
+
+/* ------------------------------------------------------------
+   THE BASELINE — the other opt-out, and a different kind.
+
+   DORMANT is forward-looking: "this is not wired up YET, and here
+   is why." A person wrote it, with a reason, on purpose.
+
+   This is backward-looking: "this was already dark when the guard
+   first looked here." Extending the walk to src/app found 8 files
+   and 1,926 lines at once. Failing on them would leave `npm test`
+   red on day one for work nobody in this change is doing, and a
+   red suite gets switched off inside a week — which is how the
+   guard stops guarding, the same failure DORMANT is written to
+   distrust. Same answer as tools/style-baseline.json: freeze the
+   known set, fail only on what is NEW.
+
+   IT MAY ONLY SHRINK, and that is mechanical, not a convention:
+   `--update-baseline` writes the entries that are STILL dark and
+   REFUSES to run while any fresh one exists. There is no way to
+   bank a newly-unreachable file. Wire it up, or declare the
+   directory dormant with a reason.
+
+   The list is src/app FILES only. A feature directory that goes
+   dark still has to answer to DORMANT, which demands a sentence.
+   ------------------------------------------------------------ */
+function loadBaseline() {
+  try {
+    return new Set(JSON.parse(readFileSync(BASELINE, 'utf8')).unreachable ?? [])
+  } catch {
+    return new Set() // absent on first run; --update-baseline seeds it
+  }
+}
+/* existsFile is a hoisted function declaration, defined below. */
+const baselineExists = existsFile(BASELINE)
+const baseline = loadBaseline()
 
 /* ---------------------------------------------------------- */
 /* reading the tree                                           */
@@ -300,6 +361,52 @@ for (const dir of featureDirs(FEATURES)) {
   }
 }
 
+/* ---------------------------------------------------------- */
+/* the same question, per FILE, in src/app                     */
+/* ---------------------------------------------------------- */
+
+/** Every non-test file src/app is made of. `.css` counts the same
+ *  as `.ts`/`.tsx`: a stylesheet nobody imports is the identical
+ *  failure, and src/app holds the two biggest in the repo
+ *  (shell.css 219KB, actionbar.css 36KB). Both are reached today. */
+const appFiles = walk(APP).filter((f) => COUNTED.test(f) && !TEST.test(f))
+
+for (const file of appFiles) {
+  const key = slash(file)
+  if (reachable?.has(key)) continue
+  const rel = relative(file)
+  const lines = readFileSync(file, 'utf8').split('\n').length
+  const importers = importedBy.get(key) ?? []
+
+  if (importers.length === 0) {
+    problems.push({
+      rel,
+      area: 'app',
+      kind: 'ORPHANED',
+      detail: 'no non-test file under src/ imports it',
+      lines,
+      count: 1,
+    })
+    continue
+  }
+
+  /* No entry file means the walk never ran; the importer count
+     above is then the whole of what can honestly be asked. */
+  if (!reachable) continue
+
+  const chain = deadChain(importers).map(relative)
+  problems.push({
+    rel,
+    area: 'app',
+    kind: 'UNREACHED',
+    detail:
+      `imported only by code the app never loads:\n` +
+      `            ${rel} ← ${chain.join(' ← ')} ← nothing`,
+    lines,
+    count: 1,
+  })
+}
+
 for (const entry of DORMANT) {
   if (!dormantSeen.has(entry.dir)) {
     problems.push({
@@ -316,21 +423,67 @@ for (const entry of DORMANT) {
 
 const checked = featureDirs(FEATURES).length - dormantSeen.size
 
+/** Only src/app files may be baselined — see the BASELINE comment. */
+const baselineable = (p) => p.area === 'app'
+const carried = problems.filter((p) => baselineable(p) && baseline.has(p.rel))
+const fresh = problems.filter((p) => !carried.includes(p))
+const carriedLines = carried.reduce((n, p) => n + p.lines, 0)
+/** Baselined, and dark no longer — or gone. Reported, never fatal:
+ *  the suite must not go red because somebody FIXED one. */
+const stillDark = new Set(carried.map((p) => p.rel))
+const cleared = [...baseline].filter((rel) => !stillDark.has(rel)).sort()
+
+if (process.argv.includes('--update-baseline')) {
+  if (baselineExists && fresh.length) {
+    console.error(
+      `\nRefusing to write ${relative(BASELINE)}: ${fresh.length} unreachable ` +
+        `entr${fresh.length === 1 ? 'y is' : 'ies are'} not in it.\n` +
+        'The baseline records what was already dark; it may only shrink. Wire the\n' +
+        'new one up, or declare its directory dormant with a reason.\n',
+    )
+    process.exit(1)
+  }
+  /* Seeding (no file yet) records everything dark right now.
+     Every run after that writes only what is STILL dark, which is
+     what makes the file monotonically shrinking. */
+  const next = (baselineExists ? carried : problems.filter(baselineable)).map((p) => p.rel).sort()
+  writeFileSync(BASELINE, JSON.stringify({ unreachable: next }, null, 2) + '\n')
+  console.log(`\nBaseline written: ${next.length} recorded unreachable files.\n`)
+  process.exit(0)
+}
+
 if (!existsFile(ENTRY)) {
   console.log(`reachability: ${relative(ENTRY)} is missing — only the importer check ran.`)
 }
 
-if (problems.length === 0) {
+if (fresh.length === 0) {
+  const scope =
+    `${checked} director${checked === 1 ? 'y' : 'ies'} under src/features, ` +
+    `${appFiles.length} file${appFiles.length === 1 ? '' : 's'} in src/app`
   console.log(
-    `reachability: ${checked} director${checked === 1 ? 'y' : 'ies'} under src/features, ` +
-      `every one reachable from ${relative(ENTRY)}.` +
-      (DORMANT.length ? ` ${DORMANT.length} dormant by declaration.` : ''),
+    carried.length === 0
+      ? `reachability: ${scope} — every one reachable from ${relative(ENTRY)}.` +
+          (DORMANT.length ? ` ${DORMANT.length} dormant by declaration.` : '')
+      : `reachability: ${scope} — nothing NEWLY unreachable.` +
+          (DORMANT.length ? ` ${DORMANT.length} dormant by declaration.` : '') +
+          ` ${carried.length} recorded in ${relative(BASELINE)}, ${carriedLines} lines.`,
   )
+  for (const p of carried) {
+    console.log(`  recorded  ${p.kind}  ${p.rel} — ${p.lines} lines`)
+  }
+  if (cleared.length) {
+    console.log(
+      `\n${cleared.length} baselined entr${cleared.length === 1 ? 'y is' : 'ies are'} ` +
+        'reachable now or gone — run `node tools/check-reachability.mjs --update-baseline`:',
+    )
+    for (const rel of cleared) console.log(`  ${rel}`)
+    console.log('')
+  }
   process.exit(0)
 }
 
 console.error('\nREACHABILITY — a feature nobody can get to:\n')
-for (const p of problems) {
+for (const p of fresh) {
   const size =
     p.lines === undefined ? '' : ` — ${p.lines} lines in ${p.count} file${p.count === 1 ? '' : 's'}`
   console.error(`  ${p.kind}  ${p.rel}${size}`)

@@ -24,6 +24,30 @@ export function targetLine(finding: LintFinding, entity: EntityDef | undefined):
 }
 
 /* ============================================================
+   THE SAME ADDRESS, WITH THE HALF THE GROUP ALREADY SAID TAKEN
+   OFF THE FRONT.
+
+   Inside the rail every card sits under a group head carrying its
+   table's name, so `targetLine` printed that name a second time
+   forty pixels below it — the failure `5d00103` fixed on the quote
+   picker ("a picker card said the brand's name twice, sixty pixels
+   apart") and the same one, in the same shape, one screen over.
+
+   The columns are what the card adds. A finding that names no
+   column has only the table to give, and then the table is not a
+   repetition — it is the whole address, so it is drawn.
+   ============================================================ */
+
+/** 'Customer Email, Customer Phone' — the columns, for a card that
+ *  already sits under its table's name. */
+export function columnsLine(finding: LintFinding, entity: EntityDef | undefined): string {
+  const fields = fieldNamesOf(finding, entity)
+  if (fields.length === 0) return entity?.name ?? 'Deleted entity'
+  if (fields.length <= 3) return fields.join(', ')
+  return `${fields.slice(0, 2).join(', ')} +${fields.length - 2} more`
+}
+
+/* ============================================================
    THE RULE'S NAME, SET AS A NAME.
 
    `src/lib/lint/rules.ts` writes every title in capitals —

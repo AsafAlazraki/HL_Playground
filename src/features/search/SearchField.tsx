@@ -263,7 +263,17 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
      15,691, so the wanted keys go into a set and the index is walked
      once — and only while nothing is typed, because a recall list is
      the answer to a question nobody is asking once they start
-     spelling a name. */
+     spelling a name.
+
+     THE COMPOSITE KEY JOINS ON \0, NOT ON ':'. Both halves are
+     plain `string` (RecentPick, recent.ts:49-51), so a colon would
+     fuse ("a:b","c") and ("a","b:c") into one key and hand back
+     the other row's label. NUL is the one byte an id cannot carry.
+     Note the `key:` fields below are colon-joined on purpose —
+     those are React keys, not lookups. Written `\0` as an escape
+     and never typed raw: three raw NUL bytes here used to make the
+     whole file binary to grep and to git's `text=auto`, which is
+     how it held CRLF while all 8 siblings were LF. */
   const [forgot, setForgot] = useState(0)
   const recalls = useMemo<RecallLine[]>(() => {
     if (!open || !browsing) return []
@@ -271,11 +281,11 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
     if (picks.length === 0) return []
 
     const wanted = new Set<string>()
-    for (const p of picks) if (p.rowId) wanted.add(`${p.entityId} ${p.rowId}`)
+    for (const p of picks) if (p.rowId) wanted.add(`${p.entityId}\0${p.rowId}`)
     const labels = new Map<string, string>()
     if (wanted.size > 0) {
       for (const r of index.rows) {
-        const k = `${r.entityId} ${r.rowId}`
+        const k = `${r.entityId}\0${r.rowId}`
         if (wanted.has(k) && !labels.has(k)) labels.set(k, r.label)
       }
     }
@@ -292,7 +302,7 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
         out.push({ key: `t:${p.entityId}`, entityId: p.entityId, label: table.name, table })
         continue
       }
-      const label = labels.get(`${p.entityId} ${p.rowId}`)
+      const label = labels.get(`${p.entityId}\0${p.rowId}`)
       if (label === undefined || label === '') continue
       out.push({
         key: `r:${p.entityId}:${p.rowId}`,

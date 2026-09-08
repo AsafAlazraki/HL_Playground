@@ -609,11 +609,19 @@
   text-align: left;
   cursor: pointer;
 }
-.qt-pick:hover:not(:disabled) {
+.qt-pick:hover:not([aria-disabled='true']) {
   background: var(--blue-wash);
 }
-.qt-pick:disabled {
-  opacity: 0.55;
+/* NO OPACITY, AND THE SELECTOR IS THE ATTRIBUTE. This was
+   `.qt-pick:disabled { opacity: 0.55 }`; the row is `aria-disabled`
+   now (see the note in QuoteEditor.tsx) and the dimming is gone
+   because it put the row's own explanation at 2.53:1. The state is
+   carried by the words in the row, the cursor, and the absence of
+   hover and press — base.css's global press already excludes
+   `[aria-disabled='true']`. Rewritten rather than appended: a dead
+   `:disabled` rule holding an `opacity` is an invitation to put the
+   attribute back. */
+.qt-pick[aria-disabled='true'] {
   cursor: default;
 }
 .qt-pick-facts {
@@ -2921,5 +2929,163 @@
   .qt-doc {
     orphans: 3;
     widows: 3;
+  }
+}
+
+/* ============================================================
+   WHAT THE PAGE SAYS WHEN NOBODY IS LOOKING AT IT — and the
+   picker row that could not be read at all.
+
+   Appended, and this block obeys the rule the two above it set:
+   the screen values first, then ONE print block at the very foot
+   of the file restating every one of them that paper had already
+   chosen a different answer for. Nothing may be appended after
+   that block without doing the same.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   SAID, NOT DRAWN.
+
+   A strike-through is a picture of a fact. `.qt-was` draws it on
+   three surfaces — the document, the line row and the re-read diff
+   — and every reading that is not a sighted reading got two bare
+   figures in one cell: "$310, $240", with nothing to say which one
+   is being charged. On a quotation that is two prices.
+
+   Commit ce85394 answered the identical failure one screen over
+   ("The refusal was invisible to anyone who could not see the
+   strike-through") and this is the same remedy in the same shape:
+   the words go in the row, clipped off-screen by the standard clip
+   rather than `display:none` or `visibility:hidden`, both of which
+   would take them out of the accessibility tree — the one place
+   they have to be. Sighted readers lose nothing; the strike, the
+   ink tier and the layout are untouched, because the span is out of
+   flow and one pixel wide.
+
+   It is also what a copy-paste into an email carries, which on this
+   feature is not a hypothetical audience.
+   ------------------------------------------------------------ */
+.qt-aloud {
+  position: absolute;
+  /* AND IT IS PINNED, WHICH THE STANDARD CLIP IS NOT. Left at its
+     static position the box sits where the words would have been —
+     which for these three sites is the right edge of a right-aligned
+     money column at the right edge of the sheet. Measured under print
+     emulation, where `.qt-doc` is itself `position: absolute` and is
+     therefore the containing block: `scrollWidth` went 688 → 717
+     against a 688px page, at 420, 688, 880 and 1280 of window alike —
+     29px of a customer's document hanging off the side of the paper,
+     from two spans nobody can see. On screen it measured 0 at all four
+     widths, which is exactly why it would have shipped. `left: 0`
+     keeps the vertical static position and takes the horizontal one
+     to the sheet's own edge. */
+  left: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   THE TITLE BLOCK'S FIGURES WERE THE ONLY ONES ON THE DOCUMENT
+   THAT WERE NOT TABULAR.
+
+   Measured under print emulation at A4 less its margins:
+   `.qt-plate-val` computed `font-variant-numeric: normal`. Every
+   other figure on the page carries `tabular-nums` — `.qt-num` and
+   `.qt-total` from the base, `.qt-col-amt`, `.qt-col-qty` and
+   `.qt-doc-spec-val` from the first appearance pass — and the two
+   values in the plate, a date and a quote number, are the pair the
+   reader's eye runs down first. DESIGN_CONTRACT §11: every figure
+   is `var(--font-mono)` with `tabular-nums`. It already had the
+   face; it did not have the figures.
+
+   AND THE PLATE PRINTED AT THE WRONG SIZE, by the trap this file
+   has now paid for three times. The print block chose 9pt for
+   `.qt-plate-val`; the appearance pass that followed it wrote
+   `font-size: var(--t-mono-size)` at equal specificity and later in
+   source, so on paper the plate set at 13px — 9.75pt — beside a 9pt
+   line table. Restated in the print block at the foot of this file,
+   where nothing can come after it.
+   ------------------------------------------------------------ */
+.qt-plate-val {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------
+   THE PICKER'S MONEY COLUMN DID NOT HOLD ITS PLACE.
+
+   `.qt-pick` is a five-track grid drawn once per candidate, and two
+   of its cells were conditional: the star, and the mark on a row
+   that is already on the quote or was reached past the narrowing.
+   Every row therefore sized its own tracks from its own content.
+
+   MEASURED at 1100px of window, two candidates in one list:
+   with a mark on one row and not the other, the two prices sat at
+   x 731 and x 818 — 87px apart in a column of money. With the star
+   cell dropped on an un-starred row, the name fell into the star's
+   own track and that row's price moved 298px, to x 520. The
+   stylesheet already carries the argument, on `.qt-star`, for the
+   sibling grid `.qt-line-main`: "Money that does not line up is the
+   one thing mono type is here to prevent (DESIGN_PRINCIPLES §2)."
+
+   THE FIX IS THAT EVERY ROW IS NOW FOUR CELLS WIDE. The star cell
+   is always drawn at its icon's own 11px and the star inside it is
+   what is conditional; the two marks moved into the name's cell,
+   where they belong anyway — they are facts about the candidate,
+   and CONFIGURATOR_PLAYBOOK §5 puts a reason in the row beside the
+   thing it is about. The two `fr` tracks then resolve from the same
+   free space on every row, so the prices line up whatever a row has
+   to say.
+   ------------------------------------------------------------ */
+.qt-pick {
+  grid-template-columns: 11px minmax(140px, 1fr) minmax(0, 1.2fr) 110px;
+}
+
+/* both are shrinkable children of a grid track that will not grow
+   for them — DESIGN_CONTRACT §11, "every shrinkable child carrying
+   `min-width: 0`". Without it a long model name overflows its own
+   cell and paints across the facts beside it. */
+.qt-pick-name,
+.qt-pick-facts {
+  min-width: 0;
+}
+
+/* IT IS A SENTENCE, so it is sentence case and Inter — the argument
+   `.qt-pick-outside` above already makes for its neighbour, and
+   this tag was wearing `mono-label` and being stamped
+   "ON THE QUOTE". DESIGN_CONTRACT §3 names a sentence as one of the
+   four things uppercase may never be.
+
+   `--ink-soft` rather than the faint tier, because this is the
+   sentence that explains why the row will not act, and
+   CONFIGURATOR_PLAYBOOK §5 puts a refusal's reason at `--ink-soft`
+   on the plain surface. Measured over the picker's own composited
+   ground (233,239,246): 6.99:1. */
+.qt-pick-on {
+  margin-left: var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   A4 — RESTATED, AND THIS BLOCK IS NOW THE LAST ONE.
+
+   One value: the plate, which paper had already measured at 9pt
+   and which the appearance pass above the print blocks had taken
+   back to 13px. Nothing here sets a colour.
+   ============================================================ */
+@media print {
+  .qt-plate-val {
+    font-size: 9pt;
   }
 }

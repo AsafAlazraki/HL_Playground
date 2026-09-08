@@ -35,6 +35,7 @@ import {
   biggestTables,
   byCustomer,
   countLenses,
+  emptyCount,
   quotesUnder,
   fileTally,
   firstName,
@@ -139,6 +140,7 @@ describe('the catalogue', () => {
       expect(meta.name.length).toBeGreaterThan(0)
       expect(meta.says.length).toBeGreaterThan(0)
       expect(meta.empty.length).toBeGreaterThan(0)
+      expect(meta.state.length).toBeGreaterThan(0)
       /* §2 rule 3: a name is a name, never a label style */
       expect(meta.name).not.toBe(meta.name.toUpperCase())
       /* the grid reads this to decide a span; an undefined here
@@ -203,6 +205,83 @@ describe('the catalogue', () => {
      leave a hole under the first of them. */
   it('exactly one card asks for both rows', () => {
     expect(CARD_IDS.filter((id) => CARDS[id].tall)).toEqual(['my-modules'])
+  })
+})
+
+/* ---------------------------------------------------------- */
+
+/* THE FOUR PARTS AN EMPTY STATE OWES, AND THE ONE THAT WAS
+   MISSING.
+
+   DESIGN_CONTRACT §6: "Four parts, in that order: eyebrow,
+   what-it-is, what-you-already-have, one action", and §11 makes it
+   a checklist item over every new surface. The dashboard drew two
+   of them. These cases fix the two that were added so they cannot
+   quietly come apart again:
+
+     · the eyebrow is a STATE and the sentence is a DEFINITION, and
+       neither may be the other — a card that said "No modules yet"
+       twice, twenty pixels apart, is the fault `5d00103` removed
+       from the quote picker
+     · the count is a PRECONDITION read from the store, never a
+       schema strip: PHASE_TWO §1 deletes "9 Places · 6,074 Things ·
+       24 Tables in use" and the rule that replaces it is "a count
+       belongs on the thing it counts"
+     · and a card with no precondition to count draws three parts
+       rather than inventing a fourth */
+describe('the four parts of an empty state', () => {
+  it('sets the state apart from the sentence, and never repeats it', () => {
+    for (const id of CARD_IDS) {
+      const meta = CARDS[id]
+      /* §2 rule 3 in reverse: the eyebrow is set uppercase by
+         `.ds-label`, so the STRING must not be — a value that
+         arrives already shouted cannot be un-shouted. */
+      expect(meta.state).not.toBe(meta.state.toUpperCase())
+      /* a label is not a sentence */
+      expect(meta.state.endsWith('.')).toBe(false)
+      /* and the sentence must not restate it */
+      expect(meta.empty.toLowerCase()).not.toContain(meta.state.toLowerCase())
+    }
+  })
+
+  const some = { places: 25, tables: 53, rules: 12 }
+  const none = { places: 0, tables: 0, rules: 0 }
+
+  it('counts the precondition of the card it is on, and nothing else', () => {
+    expect(emptyCount('my-quotes', some)).toBe('You have 25 places to quote from.')
+    expect(emptyCount('my-modules', some)).toBe('You have 53 tables and no modules.')
+    expect(emptyCount('recently-opened', some)).toBe('You have 53 tables on the sheet.')
+    expect(emptyCount('data-quality', some)).toBe('Checked across 53 tables.')
+    expect(emptyCount('rules-warning', some)).toBe('You have 12 rules switched on.')
+  })
+
+  /* THE FIGURE IS THE ONE THING A PERSON READS OFF THIS LINE, so
+     "1 place" must not print as "1 places". `plural` is the
+     dashboard's one place for that and this is the guard that it
+     is actually reached. */
+  it('says one of a thing in the singular', () => {
+    expect(emptyCount('my-quotes', { places: 1, tables: 1, rules: 1 })).toBe(
+      'You have 1 place to quote from.',
+    )
+    expect(emptyCount('my-modules', { places: 1, tables: 1, rules: 1 })).toBe(
+      'You have 1 table and no modules.',
+    )
+  })
+
+  /* NOTHING IS INVENTED, WHICH IS THIS FEATURE'S FIRST RULE. A
+     project with no tables has no rows, no modules and nothing to
+     count, and the empty state draws three parts and says so
+     rather than printing "You have 0 tables". */
+  it('draws no count where there is no precondition to count', () => {
+    for (const id of CARD_IDS) expect(emptyCount(id, none)).toBeNull()
+  })
+
+  /* THE TWO CARDS THAT NEVER COUNT, AND THEY ARE DIFFERENT
+     ABSENCES. `the-price-file` is empty only when the project is;
+     `activity` fills with time rather than with a precondition. */
+  it('the price file and the activity log count nothing even on a full project', () => {
+    expect(emptyCount('the-price-file', some)).toBeNull()
+    expect(emptyCount('activity', some)).toBeNull()
   })
 })
 

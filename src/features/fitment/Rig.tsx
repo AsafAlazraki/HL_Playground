@@ -796,13 +796,46 @@ function Catalogue({
                         ) : null}
                         <span className="rg-row-name">{candidate.label}</span>
                       </span>
-                      {candidate.price === null ? (
-                        <span className="rg-row-noprice">no price on this table</span>
-                      ) : (
+                      {/* MONEY IS ITS OWN REFUSAL KIND AND IT WAS
+                          SAYING THE WRONG ONE. This read "no price on
+                          this table" for both of the two ways a figure
+                          can be missing, and on the Northside seed 26
+                          rows are the second way — Parts & Accessories
+                          25 of 2,238, Mackay Trailers 1 of 125 — where
+                          the table HAS a price column and the row's own
+                          cell is empty. Naming the column is what turns
+                          it into something a person can go and check,
+                          and the two fixes are different: set a column,
+                          or fill a cell. */}
+                      {candidate.price !== null ? (
                         <span className="rg-row-price">{money(candidate.price)}</span>
+                      ) : catalogue.priced ? (
+                        <span className="rg-row-noprice">
+                          No price — {catalogue.priceColumn} is empty here
+                        </span>
+                      ) : (
+                        <span className="rg-row-noprice">
+                          No price — {catalogue.tableName} has no price column
+                        </span>
                       )}
                       {candidate.reasons.length === 0 ? null : (
                         <span className="rg-row-why">
+                          {/* THE KIND'S OWN WORD, AND IT WAS MISSING
+                              HERE. The option chips above already open
+                              "Not offered on this rig" / "Offered, and
+                              something disagrees"; these rows are the
+                              same two verdicts out of the same solve and
+                              opened straight into the evidence, so one
+                              screen said a Rule refusal two different
+                              ways. §5's whole claim is five kinds that
+                              never share a word — which only holds if
+                              one kind never carries two. */}
+                          <b className="rg-row-word">
+                            {candidate.verdict === 'refused'
+                              ? 'Not offered'
+                              : 'Offered, and something disagrees'}
+                          </b>{' '}
+                          ·{' '}
                           {/* THE CELL THE RULE READ, VERBATIM, so a
                               reader can check the verdict against their
                               own file rather than take it. */}

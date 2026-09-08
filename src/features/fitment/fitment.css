@@ -774,13 +774,22 @@
   flex-direction: column;
 }
 
+/* THE RAIL IS ALWAYS THERE AND USUALLY TRANSPARENT. A verdict must
+   never change a row's geometry: with the narrowing switched off,
+   422 of the 434 rows take a rail, and if the rail added width the
+   whole list would step sideways as the switch flipped. §6's own
+   entry — "option rows when availability changes: no reorder, no
+   reflow theatre". 3px because that is the width `ds.css` gives
+   `.s-refused` and `.s-unchecked`; reserving a different one is how
+   the reflow comes back. */
 .fo-list-row {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--sp-1) var(--sp-3);
-  padding: 6px 0;
+  padding: 6px 0 6px var(--sp-2);
   border-bottom: 1px solid var(--hairline);
+  border-left: 3px solid transparent;
 }
 
 .fo-list-row:last-child {
@@ -822,8 +831,53 @@
   color: var(--ink-faint);
 }
 
+/* ── THE REFUSAL SENTENCE, ON THE ROW'S SECOND LINE ──────────────
+   CONFIGURATOR_PLAYBOOK §5: in the row, on its second line, on the
+   untinted ground, never a tooltip. `--ink-soft` measures 7.7:1 on
+   the page ground, which is the point — §5's own finding is that the
+   reason nobody notices a greyed option is that it was greyed below
+   the legibility threshold, so the accessibility fix and the
+   usability fix are the same fix. It is NOT `--ink-faint` (5.2:1,
+   the floor, and it sits over a tint here) and NOT `opacity`.
+
+   THE NAME IS NOT STRUCK AND NOT DIMMED. A dealer standing in front
+   of a customer has to be able to read the thing they cannot have —
+   the same rule `.rg-row` keeps two hundred lines down, where the
+   PRICE is struck and the name is not. */
+.fo-list-why {
+  flex: 1 1 100%;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* THE KIND'S OWN WORD. Five kinds, five words, and they never share
+   one (§5) — so the word carries the weight and the rail carries the
+   hue, and neither is a grey pill. */
+.fo-list-word {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* THE RAIL ITSELF IS `ds.css`'s — `.s-refused` (3px solid
+   `--danger`) and `.s-unchecked` (3px DASHED `--line-strong`), the
+   same two `constraints.css` takes for the same two verdicts. This
+   file declares no colour for either: the whole point of a system
+   state is that a refusal does not get a second appearance per
+   feature. All that is left here is the gap between the rail and the
+   name, which is this list's own spacing. */
+.fo-list-row.s-refused,
+.fo-list-row.s-unchecked {
+  padding-left: var(--sp-2);
+}
+
 .fo-list-more,
-.fo-pick-none {
+.fo-pick-none,
+.fo-pick-off {
   margin: var(--sp-2) 0 0;
   font-family: var(--font-ui);
   font-size: 12px;
@@ -1082,11 +1136,19 @@
     display: grid;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2.4fr) minmax(0, 1.6fr);
     align-items: baseline;
-    gap: var(--sp-3);
+    gap: var(--sp-1) var(--sp-3);
   }
   .fo-list-name,
   .fo-list-banner,
   .fo-list-table {
+    flex: none;
+  }
+  /* THE SECOND LINE IS A SECOND LINE at every width — three columns
+     above it, the sentence under all three. `1 / -1` rather than a
+     span count, so adding a fourth cell can never leave the reason
+     boxed into two of them. */
+  .fo-list-why {
+    grid-column: 1 / -1;
     flex: none;
   }
 }
@@ -1854,11 +1916,19 @@
   overflow-wrap: anywhere;
 }
 
+/* THE MONEY REFUSAL. `nowrap` went with the two-word version; the
+   sentence now names a column or a table, and rule 3.4 is that
+   nothing truncates mid-word — so it wraps rather than runs off the
+   end of a row it shares with a 2,238-row list. `--ink-soft` (7.7:1)
+   rather than `--ink-faint`, because it is a reason a person acts on
+   and §5 does not let a reason sit at the floor. */
 .rg-row-noprice {
   font-family: var(--font-ui);
   font-size: 11px;
-  color: var(--ink-faint);
-  white-space: nowrap;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .rg-row-why {
@@ -1867,6 +1937,15 @@
   font-size: 11.5px;
   line-height: 1.5;
   color: var(--ink-soft);
+}
+
+/* THE KIND'S OWN WORD — five kinds, five words, never one grey pill
+   (CONFIGURATOR_PLAYBOOK §5). Weight carries it; the hue is already
+   on the row's left rail and the glyph, so this is ink. */
+.rg-row-word {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--ink);
 }
 
 /* THE CELL THE RULE READ, in the figure face, so a reader can find

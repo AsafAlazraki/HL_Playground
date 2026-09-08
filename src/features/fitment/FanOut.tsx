@@ -130,6 +130,52 @@ const F8_RATE = F8?.measure
  *  the narrowing switched OFF, which is when it should be met. */
 const LIST_CAP = 60
 
+/* ── F8'S VERDICT ON ONE ROW, FOR ONE SHORTLIST ───────────────────
+   THE FAILURE THIS ANSWERS, MEASURED ON THE NORTHSIDE SEED. The
+   shortlist has a switch that turns the rule off and draws the whole
+   live catalogue — property 3, the one that lets somebody who does
+   not believe F8 check it. On Highfield it drew 434 rows: the 12 the
+   banner admits, 131 built for another brand, and 291 whose banner
+   names none, all three in the same ink with the same three cells.
+   So the one surface built for checking a rule was the one surface
+   that said nothing about what the rule had done — 422 of 434 rows
+   stated as unavailable by being silently identical to the available
+   ones, which is Shopify's `"{{ option_value }} - Unavailable"` with
+   the word taken off as well (docs/research/explaining-a-refusal.md,
+   cop-out 4).
+
+   THE VERDICT IS NOT RE-DERIVED HERE. `bannerMarque` is already
+   `marqueOfBanner(bannerOf(row))` — literally the two calls
+   `selectPartners` makes, in the same order, against the same
+   vocabulary, carried on `PartnerRowReading` for exactly this. A
+   second implementation of F8 on a screen is the thing
+   trailerFitment.ts's header refuses, and comparing a string this
+   file already holds is not one. */
+type PickVerdict = 'admitted' | 'another' | 'unnamed'
+
+const verdictOf = (row: PartnerRowReading, marque: string): PickVerdict => {
+  if (row.bannerMarque === marque) return 'admitted'
+  return row.bannerMarque === null ? 'unnamed' : 'another'
+}
+
+/* THE RAIL COMES FROM `ds.css`, NOT FROM THIS FILE. `.s-refused`,
+   `.s-warned`, `.s-held` and `.s-unchecked` are the four state rails
+   the design system already ships — and `.s-unchecked` is DASHED,
+   which is the distinction this surface most needed and would have
+   been the last thing invented here. Steam's fourth grade is the
+   argument for it: "Unknown" is honest about absence rather than
+   implying a verdict, and a solid rail in any colour implies one.
+   `constraints.css` takes them the same way, so one verdict looks
+   the same in both features.
+
+   WRITTEN OUT, NEVER INTERPOLATED — `check-styles` trusts a string
+   literal inside a className and nothing else. */
+const listRowClass = (verdict: PickVerdict): string => {
+  if (verdict === 'another') return 'fo-list-row s-refused'
+  if (verdict === 'unnamed') return 'fo-list-row s-unchecked'
+  return 'fo-list-row'
+}
+
 export interface FanOutProps {
   /** open the relationship table behind a figure. A count nobody can
    *  get to the rows of is a claim rather than a reading. */
@@ -270,6 +316,16 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
     return {
       marque,
       admitted,
+      /* THE TWO REFUSAL KINDS, COUNTED — the band header states the
+         removal and names the choice that caused it (playbook §5,
+         "never hide"). With the rule IN force `CurationNote` says it;
+         with the rule off `CurationNote` deliberately says nothing
+         about a narrowing that is not running, and these are the
+         numbers that keep the page from going quiet at exactly the
+         moment somebody is checking it. */
+      refused: live.filter((x) => verdictOf(x, picked) === 'another').length,
+      unchecked: live.filter((x) => verdictOf(x, picked) === 'unnamed').length,
+      pool: live.length,
       shown: (found.active ? found.within : admitted).slice(0, LIST_CAP),
       drawn: found.active ? found.within.length : admitted.length,
       searching: found.active,
@@ -528,6 +584,24 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                             placeholder: `Find a ${selector.noun.one}…`,
                           }}
                         />
+                        {/* THE COUNT, AND THE CHOICE THAT CAUSED IT —
+                            playbook mechanic 4, the inverse of Sea
+                            Ray's seven silent hides. `CurationNote`
+                            above states it while the rule is running
+                            and rightly says nothing about a narrowing
+                            that is switched off; this is the same
+                            sentence for the other half of the switch,
+                            so the band is never quiet about 422 rows.
+                            Both figures counted on render. */}
+                        {pickAll ? (
+                          <p className="fo-pick-off">
+                            The narrowing is off, so all {n(pick.pool)} {selector.noun.many}{' '}
+                            are drawn. <b>{n(pick.refused)}</b> are built for another{' '}
+                            {noun.one} brand and <b>{n(pick.unchecked)}</b> sit under a{' '}
+                            {selector.heading} that names none — each says which, on its own
+                            row.
+                          </p>
+                        ) : null}
                         {pick.shown.length === 0 ? (
                           <p className="fo-pick-none">
                             {pick.searching
@@ -536,18 +610,51 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                           </p>
                         ) : (
                           <ul className="fo-list">
-                            {pick.shown.map((row) => (
-                              <li className="fo-list-row" key={row.rowId}>
-                                <span className="fo-list-name">{row.label}</span>
-                                {/* THE EVIDENCE, NOT A TICK. The
-                                    heading is the cell the rule read,
-                                    verbatim, so a reader can check the
-                                    verdict against their own file
-                                    rather than take it. */}
-                                <span className="fo-list-banner">{row.banner}</span>
-                                <span className="fo-list-table">{row.tableName}</span>
-                              </li>
-                            ))}
+                            {pick.shown.map((row) => {
+                              const verdict = verdictOf(row, r.marque.name)
+                              return (
+                                <li className={listRowClass(verdict)} key={row.rowId}>
+                                  <span className="fo-list-name">{row.label}</span>
+                                  {/* THE EVIDENCE, NOT A TICK. The
+                                      heading is the cell the rule read,
+                                      verbatim, so a reader can check the
+                                      verdict against their own file
+                                      rather than take it. */}
+                                  <span className="fo-list-banner">{row.banner}</span>
+                                  <span className="fo-list-table">{row.tableName}</span>
+                                  {/* THE REFUSAL SENTENCE, PLAYBOOK §5's
+                                      FORM — "Not offered — [the file's
+                                      fact about this option], [the
+                                      file's fact about this rig]." Both
+                                      measurements, both sides, composed
+                                      from the row's own verdict at
+                                      render and never stored, which is
+                                      why it cannot go stale the way
+                                      Boston Whaler's `data-include`
+                                      does. Drawn only where there is
+                                      something to say: with the rule in
+                                      force every row here is admitted,
+                                      and a page of identical sentences
+                                      is furniture. */}
+                                  {verdict === 'another' ? (
+                                    <span className="fo-list-why">
+                                      <b className="fo-list-word">Not offered</b> — this{' '}
+                                      {selector.noun.one}&rsquo;s {selector.heading} is built
+                                      for {row.bannerMarque}. This shortlist is{' '}
+                                      {r.marque.name}.
+                                    </span>
+                                  ) : null}
+                                  {verdict === 'unnamed' ? (
+                                    <span className="fo-list-why">
+                                      <b className="fo-list-word">Unchecked</b> — the price
+                                      file does not say which {noun.one} brand this{' '}
+                                      {selector.heading} is built for, so the rule never ran
+                                      on it.
+                                    </span>
+                                  ) : null}
+                                </li>
+                              )
+                            })}
                           </ul>
                         )}
                         {pick.drawn > pick.shown.length ? (

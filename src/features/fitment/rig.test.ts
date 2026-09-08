@@ -266,6 +266,56 @@ describe('changing the hull re-propagates', () => {
   })
 })
 
+/* ============================================================
+   "NO PRICE" IS TWO FACTS AND THE ROW USED TO SAY ONE.
+
+   Every row without a figure printed "no price on this table". On
+   the Northside seed that sentence is FALSE for 26 rows — Parts &
+   Accessories 25 of 2,238 and Mackay Trailers 1 of 125 — where the
+   table carries a price column and this row's own cell is empty.
+   Seven live tables carry no price column at all (2,351 live rows).
+
+   The two are the Money refusal kind's two remedies: set a column,
+   or fill a cell. `priceColumn` is what lets the row say which, and
+   it is named so the reader can go and find it. This test is here
+   because the defect was invisible to every other guard — the sheet
+   was right, the type was right, and the sentence was wrong.
+   ============================================================ */
+describe('a missing price says WHICH missing price', () => {
+  it('carries the price column’s own name exactly when the table has one', () => {
+    const rig = rigWith([])
+    expect(rig.catalogues.length).toBeGreaterThan(0)
+    for (const catalogue of rig.catalogues) {
+      expect(catalogue.priced).toBe(catalogue.priceColumn !== null)
+      if (catalogue.priceColumn === null) continue
+      /* the name is the field's own, so the sentence points at a
+         column heading a person can find on their own sheet */
+      const table = project.entities[catalogue.tableId]
+      expect(table.fields.some((f) => f.name === catalogue.priceColumn)).toBe(true)
+    }
+  })
+
+  it('finds both kinds of missing price in the seed, so neither sentence is dead code', () => {
+    /* Counted across every catalogue the rig can open, not just the
+       one hull's — a fact about the file, stated as the file's. */
+    let noColumn = 0
+    let blankCell = 0
+    for (const starter of starters) {
+      const rig = rigWith([], starter)
+      for (const catalogue of rig.catalogues) {
+        for (const candidate of catalogue.candidates) {
+          if (candidate.price !== null) continue
+          if (catalogue.priced) blankCell += 1
+          else noColumn += 1
+        }
+      }
+      if (noColumn > 0 && blankCell > 0) break
+    }
+    expect(noColumn).toBeGreaterThan(0)
+    expect(blankCell).toBeGreaterThan(0)
+  })
+})
+
 describe('nothing throws, for any input', () => {
   it('answers an empty project, an unknown hull and a broken rule', () => {
     const empty = readRig({

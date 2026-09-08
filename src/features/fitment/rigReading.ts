@@ -209,6 +209,20 @@ export interface RigCatalogue {
   /** at least one rule in force reads a column on this table */
   narrowed: boolean
   priced: boolean
+  /* ── THE PRICE COLUMN'S OWN NAME, WHERE THERE IS ONE ────────────
+     "No price" is TWO different facts and the screen was printing
+     one sentence for both. Measured on the Northside seed: 7 live
+     tables carry no price column at all (2,351 live rows — Rigging
+     Kits, Dealer Fit Packages, three custom rate tables and two
+     package tables), and 17 tables DO carry one with 26 rows whose
+     own cell is empty (Parts & Accessories 25 of 2,238, Mackay
+     Trailers 1 of 125). On those 26 the row read "no price on this
+     table", which is a false statement about the file — the table
+     has a price column and this row is blank in it — and the fix
+     for the two is different: one is a column to set, the other is
+     a cell to fill. Naming the column is what makes the second
+     sentence checkable, so the name travels with the reading. */
+  priceColumn: string | null
 }
 
 export interface RigHull {
@@ -744,6 +758,8 @@ export function readRig(input: RigInput): RigReading {
       candidates: [...offered, ...flagged, ...refused],
       narrowed: columns.some((c) => named.has(c.fieldId)),
       priced: priceField !== undefined,
+      priceColumn:
+        (priceField ? table.fields.find((f) => f.id === priceField)?.name : undefined) ?? null,
     })
   }
 

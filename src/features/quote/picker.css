@@ -215,10 +215,15 @@
   padding: var(--s-6) var(--s-8);
 }
 
+/* THE LIST GETS EVERY PIXEL THE FURNITURE DOES NOT NEED. Measured
+   at 1280x800: `gap: --s-3` between five children and 24px of bottom
+   padding is 60px of air over a list that had 588 rows to show, and
+   half a row is half a boat. */
 .qs-body--rows {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--s-2);
+  padding-bottom: var(--s-4);
 }
 
 .qs-void {
@@ -229,7 +234,82 @@
   color: var(--fg-secondary);
 }
 
+/* ============================================================
+   THE BANDS, AND THE GUTTER THEY ARE CAPTIONED IN
+
+   §3 asks a choice surface for group headings. Eighteen cards in
+   one grid had none, and a dealer looking for a trailer read all
+   eighteen. The bands come from the sheet — Boats 7 · Motors 2 ·
+   Packages 2 · Trailers 7 — and `bandsOf` cuts the dealer's own
+   order rather than sorting it.
+
+   THE CAPTION IS IN A GUTTER, NOT ON A LINE OF ITS OWN. Four
+   headings on their own lines is four line-boxes plus four gaps of
+   vertical space on a screen that has to fit in one at 1280x800; in
+   a gutter they cost nothing, and they line up into a single left
+   edge a person can run an eye down.
+
+   AND THE GUTTER IS 72px BECAUSE 104 COST A COLUMN. Measured on the
+   real stage at 1280: at 104 the card grid fell from four columns
+   to three, the eighteen cards grew from four rows to six, and the
+   shut band went below the fold at y=818. At 72 it is four columns
+   again, the body does not scroll (720 of 720) and the shut band
+   sits at y=687. A heading that pushes the thing it labels off the
+   screen has cost more than it bought.
+
+   It collapses below 900px, where 72px of gutter is 8% of the
+   window, and the caption goes back above its own cards.
+   ============================================================ */
+
 .qs-grid {
+  --qs-gutter: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qs-band {
+  display: grid;
+  grid-template-columns: var(--qs-gutter) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
+  min-width: 0;
+}
+
+/* THE CAPTION AND ITS COUNT, one under the other in the gutter. It
+   is `align-items: start`, so it sits against the top of the first
+   row of cards rather than floating in the middle of a two-row
+   band. */
+.qs-band-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+  /* the cards' own top padding, so the word and the first card name
+     share a baseline instead of missing it by four pixels */
+  padding-top: var(--s-3);
+}
+
+.qs-band-word {
+  margin: 0;
+  color: var(--fg-secondary);
+  overflow-wrap: break-word;
+}
+
+/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
+.qs-band-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+.qs-band-grid {
   display: grid;
   /* THIS IS A PAGE NOW, so the grid gets the room a page has. At
      168px a 1300px stage drew seven narrow cards a row and the
@@ -241,6 +321,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  min-width: 0;
 }
 
 .qs-cell {
@@ -266,15 +347,24 @@
   cursor: pointer;
   overflow: hidden;
   box-shadow: var(--e1);
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
+  transition: transform var(--d-press) var(--ease);
 }
 
-.qs-card:hover {
-  border-color: var(--line-strong);
-  border-left-color: var(--kind);
+/* HOVER IS GATED, because a touch device fires it on tap and then
+   leaves the card sitting in its hover state after the finger has
+   gone. The transition is declared ON the hover rule so the lift
+   arrives over 120ms and leaves on the frame the pointer does —
+   §6's asymmetry, and the reason a grid of eighteen cards does not
+   shimmer as a cursor crosses it. */
+@media (hover: hover) and (pointer: fine) {
+  .qs-card:hover {
+    border-color: var(--line-strong);
+    border-left-color: var(--kind);
+    transition:
+      border-color var(--d-fast) var(--ease),
+      box-shadow var(--d-fast) var(--ease),
+      transform var(--d-press) var(--ease);
+  }
 }
 
 /* 0.994 on a card, not 0.97 — §4: a 7px shrink reads as a glitch. */
@@ -288,11 +378,22 @@
   outline-offset: 2px;
 }
 
+/* REDUCED MOTION IS GENTLER FEEDBACK, NOT NO FEEDBACK — §4 and
+   apple-design §14. Movement goes; colour stays, because colour is
+   what tells a person the interface heard them. */
 @media (prefers-reduced-motion: reduce) {
   .qs-card {
     transition: border-color var(--d-fast) var(--ease);
   }
   .qs-card:active {
+    transform: none;
+  }
+  .qs-back:active,
+  .qs-close:active,
+  .qs-shut-go:active,
+  .qs-refusal-go:active,
+  .qs-go:active,
+  .qs-again:active {
     transform: none;
   }
 }
@@ -342,23 +443,34 @@
 
 /* ---- the card's foot: what sort, and how many -------------- */
 
+/* IT WRAPS, so the category drops to its own line rather than
+   setting itself two words wide against the card's right edge.
+   Measured: "Factory Packages" on a 214px card broke to two
+   right-ragged lines and made those two cards 20px taller than the
+   sixteen beside them. */
 .qs-card-foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--s-2);
+  gap: var(--s-1) var(--s-2);
   padding: var(--s-2) var(--s-4) var(--s-3);
 }
 
-/* THE CATEGORY, which the mark cannot carry: Highfield's wordmark
-   says Highfield and not that it is a boat. */
+/* THE CATEGORY, AND IT IS DRAWN ON TWO CARDS OUT OF EIGHTEEN. The
+   band caption above says "Packages" and the module is called
+   "Factory Packages"; that difference is the only thing this line
+   is still for. It hangs right, out of the count's way.
+
+   IT NO LONGER ELLIPSISES. `Factory Packa…` is the truncation §3
+   forbids, and at 12px in the ~130px this leaves it has never
+   needed to — a longer word wraps. */
 .qs-card-cat {
   min-width: 0;
+  text-align: right;
   font-size: var(--t-caption-size);
   color: var(--fg-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
 }
 
 /* A FIGURE IS NEVER A HUE. */
@@ -451,8 +563,14 @@
   min-width: 0;
 }
 
+/* A 27px CONTROL WAS THE SMALLEST PRESSABLE THING ON THE SCREEN.
+   `5px` of padding on a 12px caption is what that measured; the
+   door out of a refusal is not the place to make somebody aim. */
 .qs-shut-go {
-  padding: 5px var(--s-3);
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--s-3);
   border: 1px solid var(--line);
   border-radius: var(--r-control);
   background: var(--surface-1);
@@ -572,6 +690,83 @@
   color: var(--fg-tertiary);
 }
 
+/* THE KEY, PRINTED. It is `aria-hidden` because a reader driving
+   with a keyboard is already in the field; this is for the eye that
+   has to learn the shortcut exists. */
+.qs-find-key {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  line-height: 1;
+  color: var(--fg-tertiary);
+}
+
+.qs-find:focus-within .qs-find-key {
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------
+   THE BANDS — a caption, a count, and the sentence that used to
+   be fifty rows lower
+   ------------------------------------------------------------ */
+
+.qs-bands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+/* THE SAME CAPTION BLOCK AS LAYER ONE, LAID ON A ROW. Layer one
+   stacks it in a gutter; here the list is full width and the band
+   is one line above it, so the word, the figure and the sentence
+   share a baseline. */
+.qs-band-cap--row {
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding-top: 0;
+}
+
+.qs-band-cap--row .qs-band-n {
+  color: var(--fg);
+  font-weight: 550;
+}
+
+/* THE SENTENCE THAT TELLS A DEALER TO TYPE. `--fg-secondary`, 7.7:1
+   on this ground — never `--fg-tertiary`, which is the floor and
+   fails over a tint. */
+.qs-band-say {
+  min-width: 0;
+  font-size: var(--t-caption-size);
+  line-height: 1.5;
+  color: var(--fg-secondary);
+}
+
+/* THE COUNT, SAID ONCE MORE FOR A READER WHO CANNOT SEE THE ROW.
+   Off-screen rather than `display: none`, which is not announced. */
+.qs-said {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .qs-note {
   margin: 0;
   max-width: 78ch;
@@ -580,12 +775,14 @@
   color: var(--fg-secondary);
 }
 
-.qs-note--cap {
-  padding-top: var(--s-2);
-  border-top: 1px solid var(--line-subtle);
-}
-
 .qs-list {
+  /* HOW FAR THE STICKY HEADINGS REACH DOWN THE LIST, written once.
+     A group heading sits under a section heading when a place spans
+     two tables and at the top of the list when it does not, and the
+     keyboard's `scrollIntoView` has to clear whichever is there —
+     otherwise ArrowDown parks the highlighted row underneath the
+     heading it belongs to. Two rules read this; nothing computes it. */
+  --qs-stick: 0px;
   flex: 1;
   min-height: 120px;
   overflow: auto;
@@ -594,14 +791,29 @@
   background: var(--surface-2);
 }
 
+/* A SEARCH THAT FINDS NOTHING DRAWS NO BOX. Measured on Stabicraft
+   with "sp660" typed: the refusal sentence, and then 420px of empty
+   bordered white under it. The sentence IS the whole answer; an
+   empty container under it is a list pretending it might fill. */
+.qs-list:empty {
+  display: none;
+}
+
 .qs-sec + .qs-sec {
   border-top: 1px solid var(--line-subtle);
+}
+
+/* ONLY DRAWN WHERE A PLACE REALLY SPANS TWO TABLES. On the real
+   sheet every one of the eighteen holds exactly one, and this bar
+   printed the same words as the `<h2>` forty pixels above it. */
+.qs-sec--named {
+  --qs-stick: 31px;
 }
 
 .qs-sec-head {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -625,30 +837,100 @@
 }
 
 .qs-grp {
-  padding: var(--s-2) 0;
+  padding: var(--s-2) 0 var(--s-3);
 }
 
+/* ── THE GROUP HEADING KEEPS ITS OWN CASE, AND IT STICKS ────────
+   It was `.mono-label`, which uppercases — and the string is a NAME
+   off the dealer's price file. "Classic ▸ CL260" came out "CLASSIC ▸
+   CL260". Rule 3 and DESIGN_CONTRACT §11 both say uppercase is a
+   label style and never a name style, and the loss is real: some of
+   these headings ("ASSAULT PROS", "ALLOY CENTRE-LINE SERIES") are
+   genuinely shouted on the sheet and some are not, and after the
+   transform nobody can tell which.
+
+   IT STICKS because Highfield draws fifty rows over seven series
+   and Dunbier fifty over seven, and a person four screens into
+   "REDCO - Formosa" had nothing on screen saying so. §3: the
+   heading is the name, in its own case, plus the count. */
 .qs-grp-head {
+  position: sticky;
+  top: var(--qs-stick);
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
   margin: 0;
-  padding: 0 var(--s-3) 4px;
+  padding: 4px var(--s-3) 5px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.qs-grp-trail {
+  min-width: 0;
+  font-size: var(--t-caption-size);
+  font-weight: 620;
+  line-height: 1.35;
+  color: var(--fg);
+  overflow-wrap: break-word;
+}
+
+.qs-grp-n {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
   color: var(--fg-tertiary);
 }
 
 .qs-rows {
   display: flex;
   flex-direction: column;
+  /* THE GAP IS WHAT THE SELECTION RING SITS IN. `outline-offset: 0`
+     puts a 2px ring immediately outside the row's own box, so 4px
+     between rows is exactly enough for the ring to be a ring rather
+     than a line shared with the neighbour — and it is a gap, not a
+     margin on the selected row, so nothing moves when the highlight
+     does. */
+  gap: 4px;
   margin: 0;
-  padding: 0;
+  padding: 4px var(--s-2) 0;
   list-style: none;
 }
 
 .qs-row-slot {
   display: flex;
   min-width: 0;
+  /* ArrowDown lands the row clear of whatever heading is stuck
+     above it, plus the ring's own 2px. */
+  scroll-margin-top: calc(var(--qs-stick) + 30px);
+  scroll-margin-bottom: 6px;
 }
 
-/* A LIST ROW DARKENS RATHER THAN SCALING, so its neighbours never
-   look like they moved. §4. */
+/* ============================================================
+   THE ROW — and selection is an OUTLINE.
+
+   §3: "Outline, never border. Outlines take no part in layout, so
+   nothing reflows when selection moves. Hover uses the same
+   treatment at reduced alpha, so hovering previews selection —
+   Porsche's move, and the cheapest legibility win in the corpus."
+
+   WHAT IT REPLACED: `background: --accent-wash` plus `box-shadow:
+   inset 3px 0 0 --accent`, which is a rail, not a ring — it marks
+   one edge of the row and leaves the other three reading exactly
+   like an unselected row, and it shares its whole vocabulary with
+   `--kind`'s 3px rail on the cards one screen back.
+
+   A ROW STILL DARKENS RATHER THAN SCALING on press, so its
+   neighbours never look like they moved. §4.
+
+   AND THE RING DOES NOT ANIMATE ON THE KEYBOARD. The transition is
+   declared on `:hover` only, so a pointer gets §6's 120ms preview
+   and ArrowDown held through fifty rows gets none — §1's "nothing
+   keyboard-initiated animates", kept without giving up the hover
+   affordance that makes the outline legible in the first place.
+   ============================================================ */
 .qs-row {
   /* THE PICTURE'S SIZE IS WRITTEN ONCE. The column was `44px` here
      and the well was `44px` forty lines down, and growing one
@@ -661,30 +943,55 @@
   align-items: center;
   gap: var(--s-3);
   width: 100%;
-  padding: 5px var(--s-3);
+  padding: 3px var(--s-3);
   border: 0;
+  border-radius: var(--r-control);
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
+  /* THE RING IS ALWAYS THERE AND IS USUALLY INVISIBLE, so no
+     property that participates in layout ever changes. */
+  outline: 2px solid transparent;
+  outline-offset: 0;
 }
 
-.qs-row:hover {
-  background: var(--surface-3);
+/* WHERE NOTHING IN THE PLACE CARRIES A PHOTOGRAPH. A well drawn
+   beside a row whose neighbours have pictures is a fallback; drawn
+   on all 32 rows of ePropulsion Outboards — the one place on the
+   sheet with `pictured: 0` — it is thirty-two identical grey
+   squares, which is wallpaper. The column goes and the row lands at
+   40px, which is what §3 asks a row to be. */
+.qs-row--flat {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .qs-row:hover {
+    outline-color: var(--accent-line);
+    background: color-mix(in srgb, var(--accent-wash) 55%, transparent);
+    transition:
+      outline-color var(--d-fast) var(--ease),
+      background var(--d-fast) var(--ease);
+  }
+}
+
+/* PRESS LANDS ON POINTER-DOWN and beats the recompute to the
+   screen. 90ms, colour only. */
 .qs-row:active {
-  background: var(--surface-4);
+  background: var(--accent-wash-strong);
 }
 
+/* THE OUTLINE IS SPOKEN FOR BY SELECTION, so focus takes the ring
+   the system keeps for exactly that case — DESIGN_PRINCIPLES §4:
+   "`box-shadow: var(--focus)` where the ring has to read against
+   its own accent ground." */
 .qs-row:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  box-shadow: var(--focus);
 }
 
 .qs-row.is-on {
+  outline-color: var(--accent);
   background: var(--accent-wash);
-  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 /* THE PICTURE IS THE IDENTIFIER on this screen and is sized like
@@ -711,22 +1018,35 @@
   object-fit: cover;
 }
 
+/* THE SECOND LINE IS RESERVED WHETHER OR NOT IT IS USED. §3: "Every
+   row reserves its 16px second line... a short reason must not
+   collapse the row and a long one must not shift the row below it."
+   Here the second line is the trail, and it is drawn only where the
+   heading above has not already said it — so without this the rows
+   under a named series were 17px shorter than the rows of a flat
+   table, in the same scroll. 34px is one 13px name at 1.3 plus one
+   12px trail at 1.3 plus the gap; with 3px of row padding either
+   side that is the 40px row. */
 .qs-row-say {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 1px;
   min-width: 0;
+  min-height: 34px;
 }
 
 .qs-row-name {
   font-size: var(--t-small-size);
   font-weight: 550;
+  line-height: 1.3;
   color: var(--fg);
   overflow-wrap: break-word;
 }
 
 .qs-row-trail {
   font-size: var(--t-caption-size);
+  line-height: 1.3;
   color: var(--fg-tertiary);
   overflow-wrap: break-word;
 }
@@ -759,40 +1079,16 @@
   color: var(--fg-secondary);
 }
 
-.qs-picked {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-4);
-  min-width: 0;
-}
-
-.qs-picked-say {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.qs-picked-trail {
-  font-size: var(--t-caption-size);
-  color: var(--fg-tertiary);
-}
-
-.qs-picked-name {
-  font-size: var(--t-title-size);
-  font-weight: 620;
-  letter-spacing: var(--t-title-track);
-  color: var(--fg);
-  overflow-wrap: break-word;
-}
-
-/* THE PRICE IS NOT ON THIS STRIP ANY MORE. `.qs-picked-price` and
-   `.qs-picked-nil` were a 13px mono figure on the right of the name,
-   and the same number reappeared 60px lower and 17px larger the
-   instant the quote existed. It is on the flow's own bar now, in the
-   slot the total occupies for the rest of the flow — see flow.tsx.
-   The two rules are deleted rather than left dead. */
+/* NEITHER THE PRICE NOR THE NAME IS ON THIS STRIP ANY MORE.
+   `.qs-picked-price` and `.qs-picked-nil` were a 13px mono figure on
+   the right of the name, and the same number reappeared 60px lower
+   and 17px larger the instant the quote existed. `.qs-picked`,
+   `.qs-picked-say`, `.qs-picked-trail` and `.qs-picked-name` were the
+   name doing the same thing against `FlowLine at="choose"`, and the
+   block cost 56px of a list that had 588 rows to show and room for
+   five. Both figures live on the flow's own bar now, in the slots
+   they occupy for the rest of the flow — see flow.tsx. The six rules
+   are deleted rather than left dead. */
 
 /* THE STRIP WRAPS RATHER THAN BEING CUT.
 
@@ -989,31 +1285,37 @@
 }
 
 /* ============================================================
-   EVERY WIDTH. The dialog is already fluid; what changes is how
-   many cards fit and where the footer's two halves sit.
+   EVERY WIDTH. The page is already fluid; what changes is how many
+   cards fit, whether the band caption can afford a gutter, and
+   where the footer's two halves sit.
+
+   THE `.qs-overlay` AND `.qs-dialog` BLOCKS ARE GONE. They set the
+   padding, height and radius of a fixed overlay and a capped
+   dialog, and both were deleted from this stylesheet when the
+   picker stopped being a modal — three responsive rules addressing
+   two selectors that no element has carried since. A dead rule at
+   the bottom of a file is how a stylesheet stops being readable.
    ============================================================ */
 
-@media (max-width: 1023px) {
-  .qs-overlay {
-    padding: var(--s-4);
+@media (max-width: 900px) {
+  /* THE GUTTER GOES BEFORE THE CARDS DO. 104px out of 900 is 12% of
+     the width spent on four words; below this the caption goes back
+     above its own cards, which is the same information in the shape
+     that fits. */
+  .qs-band {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-2);
   }
-  .qs-dialog {
-    max-height: 94vh;
+  .qs-band-cap {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--s-2);
+    padding-top: 0;
   }
 }
 
 @media (max-width: 768px) {
-  .qs-overlay {
-    padding: 0;
-  }
-  .qs-dialog {
-    width: 100%;
-    max-height: 100vh;
-    height: 100%;
-    border-radius: 0;
-    border: 0;
-  }
-  .qs-grid {
+  .qs-band-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
   .qs-shut-row {
@@ -1026,24 +1328,25 @@
     padding-left: var(--s-4);
     padding-right: var(--s-4);
   }
-  .qs-picked {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--s-1);
-  }
 }
 
 @media (max-width: 600px) {
-  .qs-grid {
+  .qs-band-grid {
     grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
   }
   .qs-row {
     grid-template-columns: 44px minmax(0, 1fr);
     row-gap: 2px;
   }
+  .qs-row--flat {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .qs-row-price {
     grid-column: 2;
     justify-self: start;
+  }
+  .qs-row--flat .qs-row-price {
+    grid-column: 1;
   }
 }
 
@@ -1089,7 +1392,7 @@
    `:not(:has(img))`, so a card that gets a wordmark keeps every rule
    above it. */
 
-.qs-grid:not(:has(img)) {
+.qs-band-grid:not(:has(img)) {
   /* 240 bought height for a wordmark. Nothing here has one. */
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
 }

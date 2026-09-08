@@ -73,6 +73,7 @@
    place, with the boat still highlighted. See that file's `start`.
    ============================================================ */
 
+import { useLayoutEffect, useRef } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { CaretDown } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
@@ -82,6 +83,37 @@ import './flow.css'
 
 /** The three moments of raising a quote. */
 export type FlowStop = 'choose' | 'configure' | 'address'
+
+/* ============================================================
+   WHAT PRESSED IT, because the answer decides whether anything
+   moves.
+
+   DESIGN_PRINCIPLES §4 and CONFIGURATOR_PLAYBOOK §6 both put a
+   stop jump in the list of things that must not move, and the
+   reason both give is the same one: it is keyboard-initiated and
+   it happens a hundred times a day. Emil Kowalski's frequency
+   table is the general form — 100+/day is "no animation, ever" —
+   and the reason is that motion on a key press reads as latency
+   rather than as feedback.
+
+   A React `onClick` fires for a mouse press AND for Enter or Space
+   on a focused button, and by the time it reaches the handler the
+   two are the same event type. `MouseEvent.detail` is the click
+   count and it is **0** for a keyboard-synthesised click and for a
+   programmatic `.click()`, so a positive detail is the one signal
+   that positively means a pointer.
+
+   SO THE DEFAULT IS STILL. A caller that does not say gets
+   `undefined` and nothing animates — `QuoteBuild`'s own
+   `qb-give-fix` button calls `onGo('address')` with one argument
+   and cannot know what pressed it, and a guess there would be a
+   rule broken on a maybe. Only a press we KNOW came off a pointer
+   is allowed to move the surface. */
+export type FlowBy = 'pointer' | 'key'
+
+function pressedBy(detail: number): FlowBy {
+  return detail > 0 ? 'pointer' : 'key'
+}
 
 const ORDER: FlowStop[] = ['choose', 'configure', 'address']
 
@@ -99,8 +131,12 @@ export interface FlowLineProps {
    *  are already saying it. */
   facts: Partial<Record<FlowStop, string>>
   /** the stops that can be moved to from here. A stop that is not in
-   *  here is drawn as a stop, never as a control that does nothing. */
-  onGo?: (to: FlowStop) => void
+   *  here is drawn as a stop, never as a control that does nothing.
+   *
+   *  The second argument is what pressed it. A caller that ignores it
+   *  still typechecks — a one-parameter handler is assignable here —
+   *  and gets the still default. */
+  onGo?: (to: FlowStop, by: FlowBy) => void
   reach?: readonly FlowStop[]
 }
 
@@ -125,7 +161,11 @@ export function FlowLine({ at, facts, onGo, reach = [] }: FlowLineProps): ReactE
               className={`qf-stop${on ? ' is-here' : ''}${i < here ? ' is-done' : ''}`}
             >
               {can ? (
-                <button type="button" className="qf-go" onClick={() => onGo?.(id)}>
+                <button
+                  type="button"
+                  className="qf-go"
+                  onClick={(e) => onGo?.(id, pressedBy(e.detail))}
+                >
                   {body}
                 </button>
               ) : (
@@ -229,7 +269,12 @@ export function RunningTotal({
 /** The bar itself: the flow line, then whatever the screen puts on
  *  its own strip. A sibling of the scrollport on every one of the
  *  three, never a sticky child — build.css and quote.css each carry
- *  the measurement that rule came from. */
+ *  the measurement that rule came from.
+ *
+ *  `qf-fixed` is not a look. It is the name of the one object in
+ *  this column that does not move when the stop changes, and
+ *  flow.css spends a rule saying so out loud rather than relying on
+ *  the bar happening to be the second child. See `FlowSurface`. */
 export function FlowFoot({
   line,
   children,
@@ -238,9 +283,161 @@ export function FlowFoot({
   children: ReactNode
 }): ReactElement {
   return (
-    <footer className="qb-price">
+    <footer className="qb-price qf-fixed">
       {line}
       {children}
     </footer>
+  )
+}
+
+/* ============================================================
+   THE SEAM — ONE SURFACE, NOT THREE PAGES.
+
+   Configure and Address are two readings of one document and the
+   bar across the foot of both is one object in one place. What was
+   missing was any evidence of that at the moment a person moves:
+   the whole column was torn down and rebuilt in a single frame, so
+   the only thing distinguishing "the surface changed under a bar
+   that stayed" from "a different page loaded" was that the bar
+   happened to be drawn identically. A hard cut says nothing.
+
+   WHAT MOVES, AND WHAT MUST NOT.
+
+   The arriving stop's own content settles — 4px of translateY and
+   a fade up from 0.62, over `--d-med` (180ms) on `--ease`. Those
+   are CONFIGURATOR_PLAYBOOK §6's own numbers for a surface
+   arriving ("Compare bar / popover — translateY 4→0 + fade,
+   180ms"), not new ones, and they are the only two properties this
+   file animates here: transform and opacity, both compositor-only.
+
+   THE BAR DOES NOT MOVE, does not fade, and is not in the
+   selector. §4 of the playbook is the whole reason the bar exists
+   as one object across the three stops; a bar that slid between
+   them would undo it. flow.css states that as a rule on
+   `.qf-fixed` rather than leaving it to source order.
+
+   THE RAIL'S MARKER DOES NOT TRAVEL EITHER. Playbook §6 lists it
+   under "what must not move" — the accent rule under the current
+   name updates in place, it does not slide from one stop to the
+   next. That is why nothing here animates the flow line.
+
+   WHY A CSS TRANSITION AND NOT A SPRING.
+
+   apple-design is emphatic that springs belong to anything a
+   person can grab, because a spring starts from the presentation
+   value and inherits velocity. A stop change has neither: it is a
+   discrete commit off a button, there is no drag, no release and
+   no velocity to hand over. A spring here would be the costume of
+   physics with no physics under it.
+
+   What the skill's principle DOES bite on is interruptibility, and
+   a transition on a PERSISTENT wrapper is the way to keep it: this
+   element is never re-keyed, so pressing the other stop mid-flight
+   retargets the transition from wherever it actually is on screen
+   instead of restarting a keyframe from zero (Emil Kowalski's
+   transitions-over-keyframes rule, for exactly this reason), and
+   input is never locked out for a millisecond of it.
+
+   And the incoming stop is a large React tree mounting in the same
+   frame. A rAF-driven animation would be sharing the main thread
+   with that render; a compositor transition is not. That is the
+   Vercel dashboard finding in the same skill, and it is why
+   `motion` is the wrong tool for this particular seam even though
+   it is the right one for the conflict sheet forty lines away in
+   QuoteBuild.
+
+   WHAT DOES NOT ANIMATE AT ALL: a keyboard press, a press whose
+   modality the caller did not report, and the first paint of a
+   draft — arriving at a quote is not moving between its stops.
+   ============================================================ */
+
+export interface FlowSurfaceProps {
+  /** which of the three is on screen */
+  at: FlowStop
+  /** what pressed the control that got us here. Anything but
+   *  `'pointer'` — including nothing at all — is still. */
+  by?: FlowBy
+  /** the column's own classes. This is the same element, not a
+   *  wrapper around it: `.qt-root--edit` owns the flex column and a
+   *  second box in the middle of it would break the measurement
+   *  that took the total out of the scroll. */
+  className?: string
+  children: ReactNode
+}
+
+/** The attribute flow.css keys the settle off. Written to the node,
+ *  never held in state: it is a paint fact about one element, and
+ *  routing it through React would re-render the whole configurator
+ *  twice — a tree of thirty-odd components and a fitment solve —
+ *  to change four characters of markup. Emil Kowalski's rule for
+ *  the same shape of mistake is to write the transform on the
+ *  element rather than move a value that recalculates a subtree. */
+const ARRIVE = 'data-arrive'
+
+export function FlowSurface({ at, by, className = '', children }: FlowSurfaceProps): ReactElement {
+  const host = useRef<HTMLDivElement>(null)
+  const seen = useRef<FlowStop | null>(null)
+
+  useLayoutEffect(() => {
+    const before = seen.current
+    seen.current = at
+    /* the first paint is an arrival at the quote, not a move
+       between its stops */
+    if (before === null || before === at) return
+
+    /* WHERE THE FOCUS GOES, which is not a motion question and is
+       the other half of the seam. The control that was pressed has
+       just been unmounted, so focus was falling to `<body>` and a
+       keyboard user's next Tab restarted at the top of the window.
+       The playbook's rule for a stop jump is that focus moves and
+       nothing slides; this is the moving half.
+
+       It runs in a LAYOUT effect, before paint and before the new
+       stop's own passive effects, so Address's caret-in-the-name-
+       field still wins on that screen — it is a documented
+       behaviour of that file and this must not take it. */
+    host.current?.focus({ preventScroll: true })
+
+    if (by !== 'pointer') return
+
+    /* TWO FRAMES, AND THEY ARE NOT DECORATION. The offset has to be
+       painted once with transitions suppressed, or the surface
+       would animate OUT to the offset and back rather than in from
+       it. This effect runs after the new stop is in the DOM and
+       before the browser paints, so the first painted frame
+       carries the offset and the rAF clears it. (Measured, the
+       offset holds two to three frames rather than one, because
+       the incoming stop's own mount is in there too.)
+
+       PRESSING THE OTHER STOP MID-SETTLE lands here again: the
+       cleanup cancels the pending frame and the attribute is
+       re-set under `transition: none`. Measured at 1600x1000,
+       reversing five frames into a settle flipped the stop on the
+       NEXT frame — the press is never queued behind a running
+       animation, which a keyframe would have done — at a cost of
+       one frame carrying 0.247 of opacity and 2.6px as the
+       arriving state is re-applied. Small, real, and stated rather
+       than dressed up: a discrete press has no velocity to hand
+       over, so this is a fast reversal and not a spring. */
+    const el = host.current
+    if (!el) return
+    el.setAttribute(ARRIVE, 'set')
+    const frame = requestAnimationFrame(() => el.removeAttribute(ARRIVE))
+    return () => cancelAnimationFrame(frame)
+  }, [at, by])
+
+  return (
+    <div
+      ref={host}
+      className={`qf-swap ${className}`.trimEnd()}
+      /* a focus target, never a tab stop */
+      tabIndex={-1}
+      /* `aria-label` on a bare div is not exposed, so the role is
+         what makes the name reach a screen reader on that focus */
+      role="group"
+      aria-label={NAME[at]}
+    >
+      {children}
+    </div>
   )
 }

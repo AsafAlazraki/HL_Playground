@@ -143,3 +143,104 @@ button.qf-go:focus-visible {
     display: none;
   }
 }
+
+/* ============================================================
+   THE SEAM — the stop settles, the bar does not move.
+
+   `.qf-swap` is the draft's own column (it shares the element with
+   `.qt-root--edit`, it is not a box inside it), and its two
+   children are the stop's scrollport and the price bar. The whole
+   mechanism is one attribute on that element and two selectors
+   under it.
+
+   THE ARGUMENT is in flow.tsx. The numbers are
+   CONFIGURATOR_PLAYBOOK §6's own row for a surface arriving —
+   "translateY 4→0 + fade, 180ms, --ease" — reused rather than
+   invented, and `--d-med` is that 180ms. (`--t-med` is bridge.css's
+   alias for the same token; this feature's 26 other timing
+   declarations say `--d-*`, so this one does too.)
+
+   TWO PROPERTIES ANIMATE HERE AND BOTH ARE COMPOSITOR-ONLY:
+   `transform` and `opacity`. No height, no padding, no margin, no
+   `transition: all`, no `@keyframes`.
+
+   MEASURED IN CHROME AT 1600x1000, over the real seed, on a
+   Highfield ADV7 draft, sampling `getComputedStyle` every frame
+   across the press:
+
+     the settle      translateY 4px -> 0, opacity 0.62 -> 1,
+                     11 frames, transform back to `none` at rest
+     the price bar   y 847.17, height 152.83, transform `none`,
+                     opacity 1 — ONE distinct value each, all
+                     21 frames
+     the figure      $128,108 at (293.73, 941.14) — the same two
+                     numbers on every frame of the transition
+     keyboard press  no attribute, no transform, no opacity change,
+                     0 animated properties
+     reduced motion  transform never leaves `none`; the fade stays
+
+   The element this runs on is never re-keyed, so a press mid-
+   settle is taken on the NEXT FRAME rather than queued behind a
+   running keyframe: reversing five frames in flipped the stop on
+   frame six, at a cost of one frame carrying 0.247 of opacity and
+   2.6px as the arriving state is re-applied. That is the honest
+   figure — a transition makes the reversal instant, it does not
+   make it seamless, and nothing here pretends a spring's velocity
+   handoff is happening.
+   ============================================================ */
+
+/* The stop's own content is the first child; the bar is the
+   second. Only the first is offered the transition, so the bar has
+   nothing to inherit even before the rule below refuses it. */
+.qf-swap > :first-child {
+  transition:
+    opacity var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease);
+}
+
+/* THE ONE PAINTED FRAME. Transitions off, the offset applied, so
+   the settle runs inwards from here rather than outwards to it.
+   0.62 and not 0: the surface never leaves, its contents change —
+   a fade from nothing would flash the canvas ground through a
+   column that is supposed to be continuous. */
+.qf-swap[data-arrive='set'] > :first-child {
+  opacity: 0.62;
+  transform: translateY(4px);
+  transition: none;
+}
+
+/* THE ONE FIXED OBJECT, SAID OUT LOUD.
+
+   The price bar spans all three stops and CONFIGURATOR_PLAYBOOK §4
+   is the reason it exists as one object rather than three that
+   resemble each other — "the figure a person is watching does not
+   vanish when they move". A bar that slid, faded or lifted between
+   stops would spend exactly that.
+
+   It is already excluded by being the second child. This says it
+   anyway, at equal specificity and later in the file, so the rule
+   survives a screen that one day puts something else above its
+   scrollport — and so that the next person reading this file finds
+   the constraint stated rather than inferred. */
+.qf-swap[data-arrive='set'] > .qf-fixed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Focus lands here when the stop changes, so the ring is real.
+   Inset, because `.qt-root--edit` clips its overflow and an
+   outward ring on a full-height column would be cut off. */
+.qf-swap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+
+/* THE ESCAPE, IN THE SAME FILE AS THE THING IT ESCAPES.
+   DESIGN_PRINCIPLES §4: gentler feedback, not no feedback. The
+   4px of movement goes; the fade stays, because it is what says a
+   surface was replaced rather than edited. */
+@media (prefers-reduced-motion: reduce) {
+  .qf-swap[data-arrive='set'] > :first-child {
+    transform: none;
+  }
+}

@@ -1276,14 +1276,79 @@
   justify-content: center;
   flex: 1 1 auto;
   min-height: 0;
-  gap: var(--s-3);
+  /* ------------------------------------------------------------
+     FOUR PARTS, THREE OF WHICH ARE ONE PARAGRAPH.
+
+     DESIGN_CONTRACT §6 sets the order — eyebrow, what-it-is,
+     what-you-already-have, one action — and its own model gaps all
+     four equally, because there it is a 560px card alone on a
+     page. On a dashboard card it is four lines in a 262px body,
+     and an equal 12px between every one of them reads as four
+     unrelated things rather than as one statement with a button
+     under it.
+
+     So the gap is 4px and the ACT buys its own air back. The
+     eyebrow, the sentence and the count are one block; the button
+     is the other. That is the same two-part reading the card head
+     already has, and it is why the eyebrow can sit 4px off a
+     sentence without the two competing.
+     ------------------------------------------------------------ */
+  gap: var(--s-1);
   padding: var(--s-2) var(--s-3) var(--s-4);
+}
+
+/* PART ONE — THE STATE, IN THE ONE UPPERCASE STYLE.
+
+   §2 allows uppercase on a section caption and nothing else, and a
+   state is a caption: "No modules yet" is not a name and not a
+   value, so nothing is lost by setting it as a label. It takes
+   `.ds-label`'s own 11px step and its own colour — the floor, on
+   the page ground an empty card sits directly on, which is the
+   pair `--ink-faint` was measured at (5.2:1). */
+.dsh-empty-state {
+  margin: 0;
 }
 
 .dsh-empty-say {
   margin: 0;
   color: var(--fg-secondary);
   max-width: 44ch;
+}
+
+/* PART THREE — WHAT YOU ALREADY HAVE.
+
+   The contract calls this the load-bearing line and gives the
+   reason: *"a blank screen saying 'nothing here' would read as
+   though the app had lost them."* It is INK rather than
+   `--fg-secondary`, unlike the sentence above it, because it is
+   the only fact in the block — the sentence is a definition and
+   this is a measurement of the person's own project. */
+.dsh-empty-have {
+  margin: 0;
+  color: var(--fg);
+  max-width: 44ch;
+}
+
+/* AND THE FIGURE INSIDE IT IS MONO, like every other figure on
+   this page (§2: a number in a column is what mono is for).
+   `font-size: inherit` so it takes the 13px of the sentence it
+   sits in rather than `.ds-mono`'s own step — the figure is part
+   of the line, not a heading over it. */
+.dsh-empty-n {
+  font-size: inherit;
+  font-weight: 600;
+}
+
+/* THE ACT BUYS BACK THE AIR THE BLOCK ABOVE GAVE UP, and only
+   inside an empty state — `.dsh-act` is also the button on
+   `.dsh-bare`, where it stands alone and wants nothing.
+
+   4px of flex gap plus 8px of margin is 12px, which is exactly
+   what every gap in this block used to be: the distance between
+   the words and the button is unchanged, and only the distance
+   between the words themselves closed. */
+.dsh-empty > .dsh-act {
+  margin-top: var(--s-2);
 }
 
 .dsh-act {

@@ -43,8 +43,25 @@ export interface CardMeta {
   name: string
   /** one line in the tray: what you get by putting it on */
   says: string
-  /** the sentence it draws when it has nothing to show. A
-   *  statement of fact, never an apology and never a lecture. */
+  /** THE FIRST OF THE FOUR PARTS AN EMPTY STATE OWES.
+   *
+   *  DESIGN_CONTRACT §6 fixes the shape and §11 makes it a
+   *  checklist item: **eyebrow, what-it-is, what-you-already-have,
+   *  one action**, in that order. This dashboard drew two of the
+   *  four — a sentence and a button — and the two it dropped are
+   *  the two the contract calls load-bearing.
+   *
+   *  The eyebrow is the STATE, set as the 11px label (§2: the one
+   *  uppercase style, and a state is a caption rather than a name).
+   *  It is not new prose: six of the seven `empty` strings below
+   *  were already a state clause fused onto a what-it-is clause in
+   *  one paragraph — "No modules yet. A module is a place in the
+   *  business…" — so this field is the first clause, pulled out and
+   *  set in its own step, and `empty` below is the second. */
+  state: string
+  /** THE SECOND PART: what this card IS, in the dealer's words. A
+   *  statement of fact, never an apology and never a lecture, and
+   *  never a restatement of the state above it. */
   empty: string
   /** DOES THIS CARD ASK FOR A SECOND COLUMN?
    *
@@ -89,52 +106,142 @@ export const CARDS: Record<CardId, CardMeta> = {
   'my-quotes': {
     name: 'Quotes',
     says: 'Every quote raised here, filtered to drafts, mine or issued.',
-    empty: 'No quotes have been raised here yet.',
+    /* THE ONE CARD WHOSE `empty` WAS ONLY A STATE. The other six
+       already carried a what-it-is clause; this one said "No quotes
+       have been raised here yet." and stopped, which is why it was
+       also the one drawing the most air (measured 42.6% of its body
+       at 1280x800, 44.9% at 1920x1080). The sentence is the quote
+       document's own job, said in the dealer's nouns. */
+    state: 'No quotes yet',
+    empty: 'A quote is what a customer is handed — the boat, what goes with it, and the price.',
     wide: false,
     tall: false,
   },
   'activity': {
     name: 'Activity',
     says: 'What changed anywhere in the business, and who changed it.',
-    empty: ACTIVITY_EMPTY,
+    /* `ACTIVITY_EMPTY` is 'Nothing has changed yet.' — a state, so
+       it is the eyebrow, and the full stop goes because a label is
+       not a sentence. */
+    state: ACTIVITY_EMPTY.replace(/\.$/, ''),
+    empty: 'Every change in the business is written down here, with who made it.',
     wide: false,
     tall: false,
   },
   'my-modules': {
     name: 'My modules',
     says: 'Every place in the business, as a tile, in your own order.',
-    empty: 'No modules yet. A module is a place in the business — a brand, a workshop, a counter.',
+    state: 'No modules yet',
+    empty: 'A module is a place in the business — a brand, a workshop, a counter.',
     wide: false,
     tall: true,
   },
   'the-price-file': {
     name: 'The price file',
     says: 'What you sell, counted, and the biggest tables it is held in.',
-    empty: 'No tables yet. The price file is what everything else is built on.',
+    state: 'No tables yet',
+    empty: 'The price file is what everything else is built on.',
     wide: false,
     tall: false,
   },
   'recently-opened': {
     name: 'Where I have been',
     says: 'The tables and rows you opened last.',
-    empty: 'Nothing opened yet. What you open shows up here.',
+    state: 'Nothing opened yet',
+    empty: 'What you open shows up here.',
     wide: false,
     tall: false,
   },
   'data-quality': {
     name: 'Worth fixing',
     says: 'What the reviewer found in your tables that is still outstanding.',
-    empty: 'Nothing outstanding. Every table reads the way it should.',
+    /* NOT "nothing here yet". This card's empty state is a GOOD
+       state — the reviewer ran and found nothing — and an eyebrow
+       that read like an absence would turn a clean bill of health
+       into a screen that looks unfinished. */
+    state: 'Nothing outstanding',
+    empty: 'Every table reads the way it should.',
     wide: false,
     tall: false,
   },
   'rules-warning': {
     name: 'Rules that warn',
     says: 'Rules that annotate rather than remove — the ones worth reading.',
-    empty: 'No rule is set to warn. Every rule here removes what it disagrees with.',
+    state: 'No rule warns',
+    empty: 'Every rule here removes what it disagrees with.',
     wide: false,
     tall: false,
   },
+}
+
+/* ---------------------------------------------------------- */
+/* What you already have — the third part of an empty state   */
+/* ---------------------------------------------------------- */
+
+/** THE COUNT AN EMPTY CARD OWES, AND WHY IT IS THE LOAD-BEARING
+ *  LINE.
+ *
+ *  DESIGN_CONTRACT §6, on the state this one is modelled after:
+ *  *"An admin arriving here has drawn 21 tables and loaded 651
+ *  rows; a blank screen saying 'nothing here' would read as though
+ *  the app had lost them."* Measured on the real seed at
+ *  `530597d`: a person loads Northside Marine — 15,691 rows across
+ *  53 tables in 25 places — lands on the front door, and the
+ *  quotes card says "No quotes have been raised here yet." on
+ *  111.5px of nothing. The screen has lost them.
+ *
+ *  THE COUNT IS THE PRECONDITION, NEVER THE SCHEMA. PHASE_TWO §1
+ *  deletes the "9 Places · 6,074 Things · 24 Tables in use" strip
+ *  and states the rule that replaces it: *"A count belongs on the
+ *  thing it counts."* So each line below counts the one thing that
+ *  makes THIS card's act possible — the places a quote can start
+ *  from, the tables a module can be about — which is exactly the
+ *  form the contract's model takes ("You have 21 tables and no
+ *  modules"). A card that has no precondition to count returns
+ *  null and draws three parts, out loud, rather than inventing a
+ *  fourth.
+ *
+ *  Pure, and it takes the figures rather than reading them, for
+ *  the same reason everything else in this file does. */
+export interface EmptyTally {
+  /** places in the business — the doors a quote starts from */
+  places: number
+  /** stock tables on the sheet. Joins and retired are not stock,
+   *  the same rule `fileTally` keeps */
+  tables: number
+  /** rules switched on */
+  rules: number
+}
+
+export function emptyCount(id: CardId, t: EmptyTally): string | null {
+  switch (id) {
+    case 'my-quotes':
+      return t.places > 0 ? `You have ${plural(t.places, 'place', 'places')} to quote from.` : null
+    case 'my-modules':
+      /* THE CONTRACT'S OWN SENTENCE, kept word for word: the module
+         dashboard already draws it and two screens saying one fact
+         two ways is how a tool stops sounding like one voice. */
+      return t.tables > 0 ? `You have ${plural(t.tables, 'table', 'tables')} and no modules.` : null
+    case 'recently-opened':
+      return t.tables > 0 ? `You have ${plural(t.tables, 'table', 'tables')} on the sheet.` : null
+    case 'data-quality':
+      /* WHAT THE CLEAN BILL COVERS. "Nothing outstanding" over no
+         figure is indistinguishable from a reviewer that never ran;
+         the count is what makes it an answer. */
+      return t.tables > 0 ? `Checked across ${plural(t.tables, 'table', 'tables')}.` : null
+    case 'rules-warning':
+      return t.rules > 0 ? `You have ${plural(t.rules, 'rule', 'rules')} switched on.` : null
+    /* THE TWO THAT COUNT NOTHING, AND THEY ARE DIFFERENT ABSENCES.
+       `the-price-file` is empty only when the project itself is —
+       no tables means no rows, no modules and nothing to count, so
+       a third line would have to invent one. `activity` is the log
+       of a business that has not been used yet, and the thing that
+       fills it is time rather than a precondition; it is also the
+       one card that deliberately offers no action, argued where it
+       is drawn. */
+    default:
+      return null
+  }
 }
 
 /* ---------------------------------------------------------- */

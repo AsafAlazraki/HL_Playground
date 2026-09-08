@@ -161,6 +161,22 @@ export function DealFacts({
             <dd className="dp-fact-is">{stamp(quote.updatedAt)}</dd>
           </div>
         ) : null}
+        {/* THE UNIT IS NOT DECIDED HERE, AND MUST NOT BE. `s.value`
+            is frozen text — `freezeSpecs` in quote/freeze.ts:236 has
+            already split "Tube Dia. cm" with `splitUnit`
+            (views/columns.ts:37) and printed "36 cm". Where a spec
+            prints bare — measured on the seed: Highfield "OA Length
+            2.3" and "Beam 1.37", Surtees "Hull Length 4.95",
+            Stabicraft "Int. Beam 1.35", Jeanneau "Draft 1.03" — the
+            SEEDED COLUMN NAME carries no unit (demos/northside.ts:21181),
+            because tools/seed reads the unit out of the cell TEXT and
+            Boat!G holds a bare number (tools/seed/gen_lib.py:110-112).
+            The 'm' on TABLE_KINDS.boat (types/model.ts:299) belongs to a
+            table `createTable` builds, not to this one. Appending it
+            here would be a unit this app invented for a figure a
+            customer is read out loud, and reaching back to the register
+            for one is what the Contact row above refuses. The fix is in
+            the generator. */}
         {specs.map((s) => (
           <div className="dp-fact" key={s.label}>
             <dt className="dp-fact-say">{s.label}</dt>

@@ -726,6 +726,42 @@
   border-top: 1px solid var(--line-subtle);
 }
 
+/* ============================================================
+   THE ROW IS ITS OWN BOX, AND OFF-SCREEN IT IS NOT LAID OUT.
+
+   `dense-tables-and-selection.md` REJECTS JS row virtualisation
+   for this app and names the replacement: `content-visibility:
+   auto`, Baseline since September 2024, because "off-screen
+   content … remains in the document object model and the
+   accessibility tree". A virtualised list buys frame time and
+   pays for it with the whole accessibility contract — AG Grid's
+   own docs admit the server-side row model "cannot announce row
+   count at all". These two lines buy the frame time and pay
+   nothing: every customer stays focusable, findable by Ctrl+F,
+   and countable by a screen reader.
+
+   MEASURED, on this register cloned to 300 rows at 1280x800, as
+   the median of twelve forced layout+paint passes:
+
+     content-visibility: visible   47.8ms   (min 30.9, max 48.7)
+     content-visibility: auto      31.9ms   (min 30.7, max 32.4)
+
+   A third off the cost, and the spread collapses with it — the
+   worst pass goes 48.7 → 32.4, which is the number that decides
+   whether a scroll drops a frame.
+
+   `contain-intrinsic-size: auto 41px` is the row's own measured
+   height (40.25px drawn, 41.25px with its separator), and the
+   `auto` keyword means the browser keeps the REAL height once a
+   row has been rendered once, so the scrollbar settles instead of
+   guessing forever. `position: relative` is the mark's anchor,
+   below. */
+.cx-row {
+  position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 41px;
+}
+
 .cx-row-open {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) auto auto;
@@ -733,7 +769,7 @@
   gap: var(--s-3);
   width: 100%;
   min-height: var(--h-row);
-  padding: 10px var(--s-4);
+  padding: 10px var(--s-4) 10px 30px;
   text-align: left;
   background: transparent;
   border: 0;
@@ -1430,6 +1466,67 @@
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) auto auto auto;
 }
 
+/* ============================================================
+   FIVE COLUMNS IS UNDER TWELVE, SO THE LAYOUT IS FIXED.
+
+   Observable publishes the threshold and the reason, verbatim:
+   fixed layout by default "if there are twelve or fewer columns;
+   this improves performance and avoids reflow when scrolling",
+   because `auto` "can cause the columns to jump around as the user
+   scrolls". This register carries FIVE — name, contact, last
+   quoted, worth, count — so it is deep inside fixed-layout
+   territory, and until now every one of its three figure tracks
+   was `auto`.
+
+   AND THE CLAIM THREE COMMENTS ABOVE THIS ONE WAS NOT TRUE. It
+   says the three figures "line up down the register whatever is in
+   them". They do not, and could not: each row is its OWN grid, so
+   an `auto` track is sized by that row's own content and by
+   nothing else. MEASURED at 1280x800 on a register of twelve with
+   four of them quoted — which is the exact shape the page header
+   prints as "12 · 4 quoted":
+
+     .cx-row-contact  left edge   599.7 … 656.2   spread 56.5px
+     .cx-row-when     left edge  1008.4 … 1024.0  spread 15.6px
+     .cx-row-worth    left edge  1086.4 … 1102.0  spread 15.6px
+     .cx-row-count    left edge          1160.8   spread  0
+
+   The name track was 368.2px on a row with no quotes and 311.7px
+   on a row with one. Only the count held still, and only because
+   it already carried a `min-width` in `ch` — which is the fix,
+   arrived at once and never generalised.
+
+   SO ALL THREE FIGURES TAKE A WIDTH, IN THEIR OWN MONO CH. The
+   track is `auto` over a cell of fixed width, which resolves to
+   that width in every row, so the five columns are five columns.
+
+     when   10ch  `localDay` is YYYY-MM-DD — ten characters, always
+     worth  11ch  `money` — $ plus nine grouped digits and a comma,
+                  which is $99,999,999 and more than a boat yard
+                  quotes one customer in a lifetime
+     count  10ch  "144 quotes", one longer than the 9ch it held
+
+   AND IT IS ONLY ON A REGISTER THAT HAS SOMETHING TO PUT THERE.
+   The row's own comment argues that "a column of em dashes down a
+   new register is noise" and it is right, so the widths hang off
+   `.cx-rows--quoted` — a class the list wears only when at least
+   one person in it has ever been quoted. A brand-new register
+   collapses those three tracks to nothing exactly as it did
+   before; the moment there is a figure to align, the columns
+   exist. */
+.cx-rows--quoted .cx-row-when {
+  width: 10ch;
+}
+
+.cx-rows--quoted .cx-row-worth {
+  width: 11ch;
+}
+
+.cx-rows--quoted .cx-row-count {
+  width: 10ch;
+  min-width: 0;
+}
+
 @container cx (max-width: 900px) {
   /* the money goes before the contact does: a phone number is how
      you act on the row, and the figure is on their page */
@@ -1438,6 +1535,36 @@
   }
   .cx-row-open {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+  /* THE PLACEHOLDER FOLLOWS THE FOLD. `contain-intrinsic-size` is
+     the height the browser assumes for a row it has not drawn yet,
+     and a folded row is not 41px. MEASURED across the three bands
+     this row has, at 1280 / 1024 / 860 of window:
+
+       one grid row,   figures on the line     41.25px
+       two grid rows,  figures under the name  72.09px
+       three grid rows, contact on its own    102.94px
+
+     Left at 41 a register of three hundred would open at a narrow
+     width with a scrollbar claiming a third of the length it has,
+     and correct itself in jerks as rows came into view — which is
+     the scroll-jump `contain-intrinsic-size` exists to prevent. The
+     `auto` keyword still wins once a row has been drawn once; this
+     is only the first guess.
+
+     THE 720 CASE IS DECLARED HERE, NOT IN THE 720 BLOCK ABOVE IT,
+     because both queries match a 600px container and the two rules
+     have the same specificity — the later one would win and hand a
+     three-row fold a two-row placeholder. Order is the only thing
+     separating them, so they are kept next to each other. */
+  .cx-row {
+    contain-intrinsic-size: auto 72px;
+  }
+}
+
+@container cx (max-width: 720px) {
+  .cx-row {
+    contain-intrinsic-size: auto 103px;
   }
 }
 
@@ -1503,4 +1630,230 @@
 
 .cx-main {
   min-width: 0;
+}
+
+/* ============================================================
+   MARKING PEOPLE, AND THE KEYBOARD THAT DOES IT.
+
+   MEASURED BEFORE THIS SECTION EXISTED, at 1280x800 on a register
+   of twelve: zero checkboxes, zero `aria-selected` nodes, twelve
+   tab stops in the list, and ArrowDown, `J` and `X` each moved
+   focus nowhere. There was no selection model to critique.
+
+   THE MARK COSTS THE DATA NO WIDTH. Linear reveals its checkbox on
+   hover for exactly this reason, and this one lives in the gutter
+   the row already had: `.cx-row-open` gave up 14px of its left
+   padding (16 → 30, over a 3px rail) and the box sits in it. The
+   box occupies that space whether it is drawn or not, so a row
+   does not shuffle sideways when the pointer arrives — the failure
+   the reveal is supposed to avoid.
+   ============================================================ */
+
+.cx-pick {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  transform: translateY(-50%);
+  accent-color: var(--accent);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--d-fast) var(--ease);
+}
+
+/* IT IS DRAWN WHEN IT MEANS SOMETHING: while the pointer is on the
+   row, while anything in the row holds focus, and always once it is
+   ticked. A ticked box that faded out would be a selection with no
+   evidence. */
+.cx-row:focus-within .cx-pick,
+.cx-row.is-picked .cx-pick,
+.cx-pick:focus-visible {
+  opacity: 1;
+}
+
+/* Emil's rule, and it is a real bug on a touch screen: a hover
+   reveal without this fires on the tap that opens the customer, so
+   the box flashes on the way out of the screen. */
+@media (hover: hover) and (pointer: fine) {
+  .cx-row:hover .cx-pick {
+    opacity: 1;
+  }
+}
+
+/* A MARKED ROW IS TINTED ONE STEP HARDER THAN A FOCUSED ONE.
+   `--blue-wash` IS `--accent-wash` — bridge.css aliases them, so
+   the two states cannot be told apart by that token, and the
+   register has three states that can all be true at once (open,
+   focused, marked). `--accent-wash-strong` is the one rung above
+   it that already exists, and the ticked box carries the meaning
+   in any case: this is the reinforcement, not the signal. */
+.cx-row.is-picked > .cx-row-open {
+  background: var(--accent-wash-strong);
+}
+
+/* ============================================================
+   THE FOOT — what is marked, and what the keys are.
+
+   IT IS STICKY TO `.cx-scroll`, which is the only thing on this
+   screen that scrolls, so the tally is still there three hundred
+   rows down. It is NOT inside `.cx-rows`: that box carries
+   `overflow: hidden` for its own radius, which makes it a scroll
+   container, and a sticky child of a box that does not scroll
+   sticks to nothing.
+
+   IT IS ONE HEIGHT IN BOTH ITS STATES. The row under the cursor
+   may not move because the bar changed what it was saying.
+
+   NO BLUR. DESIGN_PRINCIPLES §5 gives glass to the dock and the
+   masthead and to nothing else, so this is paint — and it has to
+   be opaque anyway, because rows scroll under it.
+   ============================================================ */
+
+/* THE CARD ENDS AT THE FOOT, NOT ABOVE IT. The list draws
+   `--r-card` on all four corners and the bar sits directly under
+   it, so without this the two meet as a rounded edge against a
+   square one — a 10px notch on each side of a seam that is
+   supposed to be invisible. The list only ever renders WITH the
+   foot (an empty result draws `.cx-none` instead of the `<ul>`), so
+   there is no state in which this squares a corner that is on
+   show. */
+.cx-rows {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.cx-foot {
+  position: sticky;
+  /* NOT `bottom: 0`, AND THE 48 IS NOT A GUESS. `.cx-scroll` carries
+     `padding: 0 0 var(--s-12)` so the last row is not jammed against
+     the bottom of the stage, and a sticky bottom offset is measured
+     from the scrollport's PADDING edge — so `bottom: 0` pinned the
+     bar 48px up, MEASURED at scrollTop 4000: the bar's bottom at
+     752 against a scroller ending at 800, with rows still visible in
+     the strip underneath it. A bar with list showing below it is not
+     a bar. This cancels exactly that padding, using the same token
+     the padding is written with so the two cannot drift apart. */
+  bottom: calc(-1 * var(--s-12));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 30px;
+  margin: 0 var(--page-gutter);
+  max-width: min(var(--measure), 1900px);
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-4);
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 var(--r-card) var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e1);
+}
+
+/* --ink-soft, not --ink-faint, and for the reason this file already
+   records once: the floor is measured on white and the bar is drawn
+   on `--surface-1` with a card shadow under it. Metadata that a
+   person is expected to READ takes the soft step. */
+.cx-foot-say {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-foot-say .cx-num {
+  font-size: var(--t-mono-sm-size);
+}
+
+/* A KEY IS THE ONE PLACE A CAPITAL IS NOT A NAME. `X` here is the
+   key on the keyboard, not a word, so the letter is the value —
+   §2's rule about uppercase is about names and values in the
+   data, and a keycap is neither. 11px is the floor and this sits
+   on it. */
+.cx-key {
+  display: inline-block;
+  min-width: 16px;
+  margin-right: 3px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper-sunken);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  line-height: 16px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.cx-foot-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  flex: 0 0 auto;
+}
+
+/* A TEXT CONTROL, NOT A `.cx-act`. `.cx-act` is 32px tall and this
+   bar is 30, and a bar that has to grow to hold its own buttons is
+   a bar that pushes the list around. Hover, press and focus are
+   all here — §4 allows no exception. */
+.cx-foot-act {
+  height: 22px;
+  padding: 0 var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  font-weight: 540;
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+
+.cx-foot-act:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.cx-foot-act:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+
+.cx-foot-act:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* WITH THE LETTERS TURNED OFF THE SWITCH SAYS SO IN INK, not only
+   in words — `aria-pressed` carries it to a screen reader and this
+   carries it to everybody else. */
+.cx-foot-act[aria-pressed='false'] {
+  color: var(--ink-faint);
+}
+
+/* MOTION GOES, FEEDBACK STAYS — the second half of the escape this
+   file already keeps for `.cx-act`, for the two surfaces added
+   here. The mark's opacity stays: §4 is explicit that reduced
+   motion means gentler feedback, not none, and an opacity change
+   is not movement. */
+@media (prefers-reduced-motion: reduce) {
+  .cx-foot-act:active {
+    transform: none;
+  }
 }

@@ -7,7 +7,7 @@
    Every empty state says WHY it is empty.
    ============================================================ */
 
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar, rowLabel } from '@/types/model'
@@ -68,6 +68,53 @@ function cellText(
   return formatCell(raw ?? null)
 }
 
+/* ============================================================
+   THE TABLE DRAWS A WINDOW, AND SAYS HOW BIG THE RESULT IS.
+
+   MEASURED, seeded rule "Motor fitment — Highfield", one view:
+   32,000 rows x 7 columns = 224,000 cells, every one of them
+   rendered. Nine elements to a row — one <tr> and eight <td>,
+   the gutter included — is 288,041 elements. Rendering that
+   through this component in the ui suite exhausted a 4 GB heap
+   in 58s and killed the vitest worker. The way up, same
+   component, same machine:
+
+       rows      elements    render
+        100           941      35 ms
+        500         4,541     113 ms
+      2,000        18,041     305 ms
+      8,000        72,041   1,352 ms
+     32,000       288,041   out of memory
+
+   WHY NOT `content-visibility: auto`, which
+   docs/research/dense-tables-and-selection.md prefers over
+   virtualisation and which table-node.css:328 already uses:
+   IT DOES NOT APPLY TO TABLE ROWS. Measured in Chrome 152 — of
+   600 <tr>s carrying `content-visibility: auto`, all 600 fired
+   `contentvisibilityautostatechange` and NOT ONE reported
+   skipped=true, and `contain-intrinsic-size: auto 30px` was
+   ignored (the rows kept their natural 26px). The same 600 rows
+   as <div>s were skipped 560 of 600 and did take the 30px. CSS
+   containment does not apply to internal table boxes, so the
+   technique costs a real <table> and buys nothing here. The
+   research doc's own instruction is "Measure before
+   virtualising", and its case for content-visibility rests on
+   "a single view is hundreds to low thousands of rows" — 32,000
+   is not that.
+
+   SO: A CAP, SAID OUT LOUD, which is what search already does
+   (rowSearch.ts:495, `perTable: 8, total: 40`). 500 is where raw
+   DOM construction in Chrome 152 costs 32ms of the 100ms RAIL
+   budget for a user-initiated transition, leaving the rest of it
+   to React; 1,000 costs 71ms and leaves 29ms, which is not
+   enough for the React pass measured above.
+
+   The figure a person reads is never the capped one. They are
+   told the size of what the rule PRODUCED, and then how much of
+   it is on the screen.
+   ============================================================ */
+const VIEW_ROW_CAP = 500
+
 function ViewTable({
   columns,
   rows,
@@ -80,6 +127,7 @@ function ViewTable({
   entities: EntityMap
 }) {
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const noteId = useId()
 
   if (columns.length === 0) {
     return (
@@ -93,75 +141,105 @@ function ViewTable({
     )
   }
 
+  const drawn = rows.length > VIEW_ROW_CAP ? rows.slice(0, VIEW_ROW_CAP) : rows
+  const capped = drawn.length < rows.length
+
   return (
-    <div className="rl-table-wrap">
-      <table className="rl-table">
-        <thead>
-          <tr>
-            <th className="rl-th rl-th--gutter" scope="col">
-              #
-            </th>
-            {/* THE STAMP IS SAID ONCE PER RUN OF COLUMNS. Repeating
-                "HIGHFIELD INFLATABLES" over three consecutive columns
-                sets a 146px floor under each of them — the eight
-                columns of the seeded motor rule came to 1,081px, and
-                the one a person ran the rule to see, Motor, was off
-                the right-hand edge. Said once where the row it reads
-                from CHANGES, it is the same information in a third of
-                the width. */}
-            {columns.map((c, i) => {
-              const entity = scopeEntity(c.scope, rule, entities)
-              const head = columnHeader(c, rule, entities)
-              const opensRun =
-                i === 0 || columnHeader(columns[i - 1], rule, entities).stamp !== head.stamp
-              return (
-                <th
-                  className={`rl-th${opensRun ? ' is-runhead' : ''}`}
-                  scope="col"
-                  key={`${cellKey(c)}-${i}`}
-                >
-                  {opensRun ? (
-                    <span
-                      className="rl-stamp rl-stamp--sm"
-                      style={
-                        {
-                          '--rl-stamp-ink': entity
-                            ? accentVar(entity.accent)
-                            : 'var(--ink-faint)',
-                        } as CSSProperties
-                      }
-                    >
-                      {head.stamp}
-                    </span>
-                  ) : (
-                    /* the same box, empty: the labels stay on one line */
-                    <span className="rl-stamp rl-stamp--sm rl-stamp--ditto" aria-hidden="true" />
-                  )}
-                  <span className="rl-th-label" title={`${head.stamp} · ${head.label}`}>
-                    {head.label}
-                  </span>
-                </th>
-              )
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, ri) => (
-            <tr key={`${row.sourceRowId}-${row.matchRowId ?? ''}-${ri}`}>
-              <td className="rl-td rl-td--gutter">{String(ri + 1).padStart(2, '0')}</td>
+    <>
+      <div className="rl-table-wrap">
+        <table className="rl-table" aria-describedby={noteId}>
+          <thead>
+            <tr>
+              <th className="rl-th rl-th--gutter" scope="col">
+                #
+              </th>
+              {/* THE STAMP IS SAID ONCE PER RUN OF COLUMNS. Repeating
+                  "HIGHFIELD INFLATABLES" over three consecutive columns
+                  sets a 146px floor under each of them — the eight
+                  columns of the seeded motor rule came to 1,081px, and
+                  the one a person ran the rule to see, Motor, was off
+                  the right-hand edge. Said once where the row it reads
+                  from CHANGES, it is the same information in a third of
+                  the width. */}
               {columns.map((c, i) => {
-                const value = cellText(row.cells[cellKey(c)], c, rule, entities, rowsByEntity)
+                const entity = scopeEntity(c.scope, rule, entities)
+                const head = columnHeader(c, rule, entities)
+                const opensRun =
+                  i === 0 || columnHeader(columns[i - 1], rule, entities).stamp !== head.stamp
                 return (
-                  <td className="rl-td" key={`${cellKey(c)}-${i}`} title={value}>
-                    {value}
-                  </td>
+                  <th
+                    className={`rl-th${opensRun ? ' is-runhead' : ''}`}
+                    scope="col"
+                    key={`${cellKey(c)}-${i}`}
+                  >
+                    {opensRun ? (
+                      <span
+                        className="rl-stamp rl-stamp--sm"
+                        style={
+                          {
+                            '--rl-stamp-ink': entity
+                              ? accentVar(entity.accent)
+                              : 'var(--ink-faint)',
+                          } as CSSProperties
+                        }
+                      >
+                        {head.stamp}
+                      </span>
+                    ) : (
+                      /* the same box, empty: the labels stay on one line */
+                      <span className="rl-stamp rl-stamp--sm rl-stamp--ditto" aria-hidden="true" />
+                    )}
+                    <span className="rl-th-label" title={`${head.stamp} · ${head.label}`}>
+                      {head.label}
+                    </span>
+                  </th>
                 )
               })}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {drawn.map((row, ri) => (
+              <tr key={`${row.sourceRowId}-${row.matchRowId ?? ''}-${ri}`}>
+                <td className="rl-td rl-td--gutter">{String(ri + 1).padStart(2, '0')}</td>
+                {columns.map((c, i) => {
+                  const value = cellText(row.cells[cellKey(c)], c, rule, entities, rowsByEntity)
+                  return (
+                    <td className="rl-td" key={`${cellKey(c)}-${i}`} title={value}>
+                      {value}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* OUTSIDE the scroller on purpose. Inside it, the one line
+          that says the table is a window would be 500 rows below
+          the fold — which is a silent truncation with a footnote,
+          not an honest one. */}
+      <p className="rl-rowcap" id={noteId}>
+        {capped ? (
+          <>
+            <span>
+              Showing <b className="rl-rowcap-n">{VIEW_ROW_CAP.toLocaleString()}</b> of{' '}
+              <b className="rl-rowcap-n">{rows.length.toLocaleString()}</b> rows.
+            </span>
+            <span className="rl-rowcap-why">
+              All {rows.length.toLocaleString()} would be{' '}
+              {(rows.length * columns.length).toLocaleString()} cells, which this rail will not
+              draw. Narrow the rule to change which rows come out of it.
+            </span>
+          </>
+        ) : (
+          <span>
+            <b className="rl-rowcap-n">{rows.length.toLocaleString()}</b>{' '}
+            {rows.length === 1 ? 'row' : 'rows'}.
+          </span>
+        )}
+      </p>
+    </>
   )
 }
 

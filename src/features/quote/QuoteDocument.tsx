@@ -383,8 +383,29 @@ function DocLine({ line }: { line: QuoteLine }): ReactElement {
           <span className="qt-nil">not priced here</span>
         ) : (
           <>
+            {/* THE STRIKE-THROUGH IS A DRAWING, AND THIS PAGE IS ALSO
+                READ ALOUD AND PASTED INTO EMAIL. An overridden line put
+                two bare figures in one cell — `$310` struck, `$240`
+                plain — and every reading that is not a sighted reading
+                got "three hundred and ten dollars, two hundred and
+                forty dollars" with nothing to say which one is being
+                charged. On the one artefact that leaves the building
+                that is not a nicety: it is two prices on a quotation.
+
+                This is the same defect commit ce85394 fixed one screen
+                over ("The refusal was invisible to anyone who could not
+                see the strike-through"), and the same remedy: the fact
+                goes into the row's own WORDS, clipped off-screen rather
+                than `display:none`, which would take it out of the
+                accessibility tree — the one place it has to be. The
+                override's reason already prints under the name; what
+                was missing was the label on the two numbers. */}
             {overridden && line.unitPrice !== null ? (
-              <span className="qt-was">{money(line.unitPrice * (line.qty || 1))}</span>
+              <>
+                <span className="qt-aloud">Price file </span>
+                <span className="qt-was">{money(line.unitPrice * (line.qty || 1))}</span>
+                <span className="qt-aloud">, charged </span>
+              </>
             ) : null}
             <span>{money(amount)}</span>
             {line.qty > 1 && unit !== null ? (

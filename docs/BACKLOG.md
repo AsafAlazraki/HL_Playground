@@ -8,6 +8,13 @@
 > 44 genuinely OPEN, and **37 STALE** —
 > the doc's premise no longer holds. Plus 34 gaps found in code that no
 > document had captured, and 92 recorded corrections.
+>
+> **Fourteen items closed on 2026-09-08 and 09** — six of the 34 gaps, half of
+> ranked row 74, the whole open thread on the discovery engine, and six defects
+> found and fixed after this doc was reconciled. None is deleted: they are
+> moved to **Closed 2026-09-08/09** at the foot of this file, each naming the
+> commit subject that closed it, because a backlog that forgets what it stopped
+> asking for is how a thing gets built twice.
 
 ## How this was built, and why it had to be
 
@@ -20,16 +27,29 @@ have rebuilt working features and left the real gaps untouched.
 The rule that follows, now in `CLAUDE.md`: verify a claim against the tree
 before acting on it.
 
-## Guard baseline, measured today
+## Guard baseline
 
-| guard | result |
-|---|---|
-| `npx tsc --noEmit -p tsconfig.app.json` | clean |
-| `npm test` | green — 1770 tests in 112 files, + reachability + styles |
-| `npm run build` | green, 1.17s |
-| `npm run check:contrast` | clean — 272 text nodes over 5 screens |
-| style debt | 19 baselined orphans, **174 dead CSS rules** |
-| bundle | one chunk at **3,291.80 kB** (gzip 459.32 kB) |
+Two columns, because the point of a baseline is the delta. The left is the
+reconciliation of 2026-09-08 at `7c56419`; the right is re-measured on
+2026-09-09 at `530597d`, the last commit, from a clean checkout of it — not
+from a working tree with other people's edits in it.
+
+| guard | 2026-09-08 (`7c56419`) | 2026-09-09 |
+|---|---|---|
+| `npx tsc --noEmit -p tsconfig.app.json` | clean | clean |
+| `vitest run` | 1,770 in 112 files | **1,913 passing + 1 `it.fails`, 119 files** |
+| — of which render | none | **35, in 4 `.test.tsx` files** (`ui` project, happy-dom) |
+| `npm run lint` | did not exist | **399 warnings against a ratchet of 400** (411 at `31d1265`, 400 at `f853666`) |
+| `npm test` | 3 guards | **5** — types, lint, vitest, reachability, styles |
+| `npm run check:reachable` | pass | pass — 28 feature dirs, 1 dormant by declaration |
+| `npm run check:contrast` | clean — 272 text nodes over 5 screens | not re-run; it needs a running server |
+| style debt | 19 baselined orphans, **174 dead CSS rules** | 19 orphans, **177 dead rules** |
+| `npm run build` | green, 1.17s | not re-run |
+| bundle | one chunk at **3,291.80 kB** (gzip 459.32 kB) | not re-measured |
+
+The dead-rule count is the one figure `check-styles` prints without failing
+on, and it is the one that moved the wrong way: 174 → 177 over eight commits.
+A number nothing enforces drifts.
 
 ## The backlog — ranked by effort, cheapest first
 
@@ -110,7 +130,7 @@ before acting on it.
 | 71 | PARTIAL | CONFIG_FINDINGS+QUOTE_FINDINGS QUOTE §4 (7 rows) | What Part 1 must therefore provide — the 13-slot menu editable, two-tier fitment, one line model, no string joins, prices that are data, provenance, l | ~2 days | Six of seven verified DONE above (join tables with columns on the join, model.ts:464/:966-969; two-tier, views/pairs.ts:318; one l |
 | 72 | OPEN | MODULE_SYSTEM+TENANCY MODULE_SYSTEM §10 Phas | §10 Phase 3 — "the `quotes` slice replacing the localStorage registry; the `constraints` slice with it, since… `resetProject` is currently broken by i | ~3 days | src/features/quote/quotes.ts:48 `const STORE_KEY = 'helmlogic.quotes.v1'`; src/features/constraints/constraintDefs.ts:93 `helmlogi |
 | 73 | OPEN | MODULE_SYSTEM+TENANCY TENANCY §4.3 | TENANCY §4.3 — "The five unscoped localStorage stores: quotes, module rule capability, build place, finder recents, and the seed stamp" | ~3 days | All five unchanged: quotes.ts:48, modules/ruleCapability.ts:82, quote/place.ts:49, search/recent.ts:62, demos/seedStamp.ts:52 — no |
-| 74 | OPEN | CONFIG_FINDINGS+QUOTE_FINDINGS RESPONSIVE §What is st | "No visual regression tooling, still. Contrast is still measured by hand." | ~3 days | package.json devDependencies are @types/react, @types/react-dom, @vitejs/plugin-react, typescript, vite, vitest — no Playwright, P |
+| 74 | OPEN | CONFIG_FINDINGS+QUOTE_FINDINGS RESPONSIVE §What is st | "No visual regression tooling, still." — HALF CLOSED: the contrast half is DONE (Closed 2026-09-08/09, #4). What is left is the picture half. | ~3 days | `playwright-core` is a devDependency now and `tools/check-contrast.mjs` drives a real Chrome — but it measures COLOUR only. Nothing compares a screen against an image of itself, and the four `.test.tsx` suites assert role, structure and text, never pixels |
 | 75 | OPEN | CONFIG_FINDINGS+QUOTE_FINDINGS QUOTE §2 #9 | Adopt 9 — Deposit stages are data in the business's words: Pending Security · Confirmed Deal · Leaving Factory · Notice of Arrival · On Handover. | ~3 days | Declined by decision: src/features/quote/index.ts:107-113 — "WHAT IS DELIBERATELY NOT BUILT (QUOTE_SPEC §7)… payment schedules and |
 | 76 | PARTIAL | MODULE_SYSTEM+TENANCY MODULE_SYSTEM §4 (the  | §4 block vocabulary — six kinds: Index, Detail, Related, Pictures, Price, Note, each a typed `LayoutBlock` on a `ModuleLayout` | ~3 days | `grep -rn "ModuleMaster|ModuleLayout|LayoutBlock|LayoutSurface" src/` → no hits. Only `related` exists as data (`ViewBlock`, model |
 | 77 | OPEN | PHASE_TWO §6 #7 | Phase 7 — "URL state". Deep-linkable builds. New: the app has no router. Risk: Medium. | week+ | `grep -rn "pushState\|popstate\|hashchange\|URLSearchParams\|window.history\|react-router" src/` returns ZERO hits. package.json h |
@@ -128,14 +148,12 @@ before acting on it.
 
 ## Gaps the documents never captured
 
-Found by reading code, independent of any plan. 11 high, 17 medium, 6 low.
+Found by reading code, independent of any plan. Was 11 high, 17 medium, 6 low;
+**28 remain** — 7 high, 16 medium, 5 low — after the six closed at the foot of
+this file.
 
 | severity | area | gap | evidence |
 |---|---|---|---|
-| high | src/features/quote/pricing | parseAmount — the only path from a typed number into a quote's money — has zero tests and silently mis-reads a | src/features/quote/pricing.ts:622-627. Grepped all 112 test files (`grep -rn parseAmount $(find src -name '*.test.ts')`) |
-| high | src/lib/configure | The constraint solver's contradiction signal has never been asserted to fire — every test asserts it is empty | src/lib/configure/solve.ts is 666 lines. The only test file in the directory is warn.test.ts (305 lines, 15 cases) whose |
-| high | src/lib/formula | 13 of the 19 formula builtins have no behavioural test, including every date function | src/lib/formula/functions.ts:162-179 declares 19 builtins. src/lib/formula/formula.test.ts is the only formula test (29  |
-| high | vitest.config.ts / whole U | No test renders anything: 158 components, 67,459 LOC of TSX and 68,713 lines of CSS have no automated guard of | vitest.config.ts sets `environment: 'node'` and `include: ['src/**/*.test.ts']`. No jsdom, happy-dom, testing-library, p |
 | high | accessibility / navigation | No stage transition moves focus, names the page, or announces itself — A4/A11 are entirely unfixed and now spa | 10 stage roots bind Escape via `useStageEscape` (AdminStage:201, CustomerStage:86, DataStage:137, DesignStage:56, FlowSt |
 | high | accessibility / modals (sr | The Saved-configurations modal claims `aria-modal` but traps nothing — and Escape over it closes the page behi | src/app/Shell.tsx:728-737 renders `<div className="cfg-scrim" role="dialog" aria-modal="true" aria-label="Saved configur |
 | high | build / bundle size | The entry chunk has grown back past its own pre-optimisation size, and nothing guards it | `npm run build` today emits `dist/assets/index-*.js` at **2,081.98 kB / 610.10 kB gzip** (verified independently: `gzip  |
@@ -156,7 +174,6 @@ Found by reading code, independent of any plan. 11 high, 17 medium, 6 low.
 | medium | build / config | vite.config.ts has no `build` section, so the chunk-size warning has become permanent noise | `vite.config.ts` declares only `plugins`, `cacheDir`, `resolve` and `server` — `grep -c "build" vite.config.ts` returns  |
 | medium | CSS guard accuracy | The 174 dead-CSS-rule number is understated by roughly 59%, because dead components keep dead rules alive, and | tools/check-styles.mjs counts a class as "written" if it appears in ANY .tsx under src/, including the 8 unimported comp |
 | medium | CSS guard / unstyled eleme | All 19 baselined style orphans are still orphans — the baseline has never shrunk in 102 commits — and the guar | `node tools/check-styles.mjs` prints no "CLEARED since the baseline" section, meaning `cleared.length === 0`: not one of |
-| medium | developer tooling | 14 eslint-disable directives suppress nothing: there is no linter or formatter of any kind in the repo | No `.eslintrc*`, `eslint.config.*`, `.prettierrc*`, `biome.json*`, `.oxlintrc*` or `.editorconfig` exists anywhere outsi |
 | medium | environment / onboarding | `engines: node >=22` admits Node versions on which Vite refuses to run, and nothing enforces even that | package.json:40-42 declares `"engines": {"node": ">=22"}` (added today in e12be5c). node_modules/vite/package.json (vite |
 | medium | repo hygiene | .gitignore says PNGs are "never committed"; 416 of them, 67.1 MB, are committed | .gitignore:28-29 reads "# agent screenshots — never committed; they belong in the scratchpad" followed by `*.png`. Measu |
 | medium | repo hygiene | `scratchpad/` is a tracked directory full of another machine's paths — and .gitignore points agents at "the sc | `git ls-files scratchpad` returns 7 tracked files, 254 KB: study-freight.md, study-mpf-brands.md, study-pricematrix.md,  |
@@ -164,7 +181,6 @@ Found by reading code, independent of any plan. 11 high, 17 medium, 6 low.
 | low | maintainability / tools | Nothing in the toolchain enforces any accessibility finding, which is why A8 propagated into every post-audit  | `ls tools/` -> check-reachability.mjs, check-styles.mjs, seed/, style-baseline.json. package.json's `test` script runs ` |
 | low | tooling | Committed probe config points at a temp path on a different machine | `.probe.vitest.config.ts` is tracked (`git ls-files --error-unmatch .probe.vitest.config.ts` succeeds) and its `test.inc |
 | low | design system / build entr | /design.html — the page every doc calls the reference — never loads Archivo, and its entry's header comment ab | src/main.tsx:23 imports `@fontsource-variable/archivo/wdth.css`; src/design/main.tsx imports only inter/opsz.css and thr |
-| low | test tooling | Vitest collects only `src/**/*.test.ts`, so any component test written as .test.tsx is silently never run | vitest.config.ts:24 is `include: ['src/**/*.test.ts']`. `find src -name '*.test.ts*'` = 112 files; `find src -name '*.te |
 | low | local guard script | check.sh runs the typechecker twice per invocation, and the temp file it names is not gitignored | check.sh:17-19 invokes `npx tsc --noEmit -p tsconfig.app.json --tsBuildInfoFile .tsb-check` once piped through grep for  |
 
 ## Corrections — claims that are no longer true
@@ -259,42 +275,185 @@ attachments and links, and the five `CONFIGURATOR.md` faults.
 3. **§1 deletes the counted strip and §2.1 asks for it back.** Today neither
    exists. Both sections cannot be satisfied without a decision.
 
-## Open thread — the discovery engine is still non-deterministic
+## Closed 2026-09-08/09
 
-> Added 2026-09-09, measured, not inferred.
+> Moved here, not deleted. Fourteen items: **six** were rows in the gaps table,
+> **one** was half of ranked row 74, **one** was the open thread on the
+> discovery engine, and **six** were found and fixed after this doc was
+> reconciled and were never in it. Each names the commit subject that closed it
+> and what is now true, because "it was fixed" without the sentence that
+> replaced it is how the same bug gets rediscovered a fourth time.
+>
+> Verified on 2026-09-09 by re-running each guard at `530597d`, not by reading
+> the commit message: `tsc` clean, `vitest run` 1,913 passing + 1 `it.fails` over 119
+> files, `oxlint` 399 against a ratchet of 400, `check-styles` green at 19
+> baselined orphans, `check-reachable` green.
 
-`src/features/constraints/discoverNorthside.test.ts` — *"DISAGREES about
-'Boat Size (Mtr)'"* — **fails about one full-suite run in three**, and passes
-4 of 4 when that file is run alone. The assertion is `expected undefined to be
-defined`: the candidate is not produced at all, not produced with wrong numbers.
+**1. The plural-name lint rule told 19 of 25 tables to rename a brand.**
+`ruleEntityPlural` asserted "an entity names one kind of record, so it takes the
+singular form" and fired on 22 of the 25 kinded seed tables — Highfield
+Inflatables → Highfield Inflatable, Yamaha Outboards → Yamaha Outboard.
+Closed by **`e12be5c` "The linter told 19 of 25 tables to rename somebody else's
+brand"**. The rule returns early when `entity.kind` is a concrete kind, because
+the kind already answers "what is one row here", so the name is free to be a
+brand. `custom` is deliberately excluded and three tables stay flagged,
+correctly — "Labour Rates" → "Labour Rate" is still fair.
+`src/lib/lint/rules.ts`.
 
-**This is already a known bug that has already been fixed once.** `discover.ts`
-`rank()` carries a long note saying exactly this: *"measured, the categorical
-selector over 'Boat Size (Mtr)' was inside the cap on some runs and outside it
-on others, which is the whole of the `discoverNorthside` flake that three passes
-have now recorded as 'fails about one run in four' without fixing it."* The fix
-was to give `rank` a total order on `statement`.
+**2. `no-identifier` never looked at the rows.** It fired on all 53 tables of
+the real price file — 53 of the review pane's 192 findings, the same sentence
+every time. A rule that flags a hundred per cent of the data says nothing, and
+it judged the schema alone while `RuleContext` was carrying the rows.
+Closed by **`6c22d2b` "A data-quality rule that never looked at the data"**.
+Measured against the real 15,691 rows: the identifying field is filled on every
+row of 50 of the 53 tables, so those are left alone. The three with gaps now say
+how many — "4 of 2,937 rows have nothing in 'Product'" — which is the difference
+between a worry and a job. A table with no rows keeps the schema-only judgement.
 
-**That fix is in the tree and the flake survives it**, which rules out the
-diagnosis it was built on. What is now known:
+**3. `parseAmount` read a comma as a tenfold error, silently.**
+Was: gaps table, high, `src/features/quote/pricing` — "the only path from a
+typed number into a quote's money — has zero tests". Measured before:
+`'25,5'` → 255, `'12,34'` → 1234, `'1e3'` → 1000, each one a wrong figure on a
+customer's quote rather than an error.
+Closed by **`7c2a62b` "A comma in a price field was a tenfold error,
+silently"**. Grouping is now checked rather than stripped: `'1,234,567.89'` is
+thousands and reads as written; a trailing group of one or two digits is a
+comma decimal in half the world and a slip in the other half, so it is
+**refused** — 25.5 and 255 are both defensible and one is wrong by a factor of
+ten. Scientific notation goes with it. `src/features/quote/parseAmount.test.ts`,
+14 cases in three groups: read as written, refused outright, and the properties
+that must hold.
 
-- the per-shape cap (`maxPerShape: 12`, `discover.ts:2158-2170`) is applied
-  **after** `proposals.sort(rank)` (`:2155`), so ordering at the cap is
-  deterministic if `rank` is total — and `rank` appears total
-- `discoverSteps` has no time budget: `started` (`:2033`) is used only to report
-  `ms` (`:2200`)
-- entity iteration order was already fixed by `inOrder()`
-- so the variation is **upstream of ranking** — in what gets measured, not in
-  how it is sorted
+**4. Contrast was measured by hand.**
+Was: row 74's first half, and `CLAUDE.md` said the same.
+Closed by **`7c56419` "Contrast is automated now, and two files stop pointing at
+a dead machine"**. `tools/check-contrast.mjs` drives the system Chrome through
+`playwright-core`, signs in, loads the real seed and measures every text-bearing
+leaf against the ground it is actually drawn on, over five screens. Baseline
+272 text nodes, all clear. It is not in `npm test` because it needs a server.
+**Row 74's other half is still open** and stays in the table above: nothing
+compares a screen against an image of itself.
 
-Worth checking next, in order: whether `tested`/`rate` themselves vary run to
-run; whether `--no-file-parallelism` makes it stable (the vitest config records
-that trick working for the earlier wall-clock flakes, which would point at
-shared module state across test files rather than at discovery itself); and
-`discover.ts:1241`, `directions.sort((x, y) => y.hits / y.tally.tested - …)`,
-which returns **NaN** when `tested` is 0 and leaves that sort's order undefined.
+**5. Twenty-five dashboard tiles were a name floating on a field of kind
+colour.** The tile was drawn for a logo and not one of the 25 seeded modules
+has one, so four fifths of a 112px tile was spent on nothing — and
+DESIGN_CONTRACT §11 forbids that ground outright: "Kind hue is a rail, a dot or
+a glyph — never a fill behind text, never chrome."
+Closed by **`92725c0` "Twenty-five pastel plates, none of which had a logo to
+show"**. Measured at 1280×800: tile 147px → 65px, one column → two, 3.47 of 25
+modules visible → 14, 3,862px of scroll → 977px. Scoped entirely behind
+`:not(:has(img))`, so one uploaded logo restores every rule above it.
 
-**Why this outranks its size.** The product's claim is that nothing is invented
-and every reason is recorded. A discovery engine that proposes a different set
-of rules on different runs over identical data contradicts that directly — and
-the guard that would catch it is the one test people have learned to re-run.
+**6. The quote picker had the same empty plate, eighteen times.** Eighteen cards
+on "What are you quoting?" and zero images among them; the same §11 breach, and
+`.qs-card` already carried the `border-left: 3px solid var(--kind)` rail the
+contract asks for, so the plate was a second and larger statement of the same
+fact, sitting behind the one piece of text that had to stay legible.
+Closed by **`e9ee026` "The quote picker had the same empty plate, and 18 of
+them"**. Card 132px → 71px, 3 columns → 4; all 18 places and the "NO QUOTING
+HERE YET 7" band on one screen at 1280×800 with nothing scrolling.
+
+**7. A picker card said the brand's name twice, sixty pixels apart.** Where a
+module is one door it stands for everything it holds, so `places.ts:152,171`
+sets `name` and `moduleName` to the same string, and the picker drew
+`qs-card-name` with `qs-card-cat` under it — "Yamaha Outboards" as the heading
+and again as the small grey eyebrow that is supposed to say what kind of thing
+it is.
+Closed by **`5d00103` "A picker card said the brand's name twice, sixty pixels
+apart"**. Where the two agree the eyebrow prints the KIND — "Motors" — the rule
+`CardBody.tsx:704-709` had already settled for the dashboard tile, so two
+surfaces onto the same places cannot disagree about what a card says. Measured:
+18 cards, 0 duplicated eyebrows. **Found by the first component test ever
+written for that screen**, which failed with "found multiple elements" — the
+defect stating itself.
+
+**8. The refusal was invisible to anyone who could not see the strike-through.**
+`aria-disabled`, never `disabled`, is the house rule, and on `RefusedRow` it did
+nothing: an `<li>`'s implicit role is `listitem`, which does not support
+`aria-disabled`, so every assistive technology ignored the attribute. A refused
+motor reached a screen reader as a name and a price, indistinguishable from one
+you can buy — and that refusal is what CONFIGURATOR_PLAYBOOK §5 claims as the
+differentiator.
+Closed by **`ce85394` "The refusal was invisible to anyone who could not see the
+strike-through"**. The state goes into the row's own words, flag first, clipped
+off-screen rather than `display:none` or `visibility:hidden` — both of which
+would remove it from the accessibility tree, the one place it has to be.
+**Found by oxlint** (`jsx-a11y/role-supports-aria-props`) the first time a
+linter was ever run in this repo, which is a fair argument for having one.
+
+**9. The discovery engine proposed a different set of rules on different runs
+over identical data.** Was: the "Open thread" section added 2026-09-09, and
+before that a flake three passes had recorded as "fails about one run in four"
+without fixing.
+Closed by **`530597d` "The discovery engine sorted the file by a random
+number"**. Root cause, and it was inside the previous fix: `inOrder` sorted
+entities by id to make "the same file give the same answer whichever door it
+came through", but `newId()` mints a fresh nanoid on every
+`buildNorthsideProject()` (`northside.ts:22767`), so the same workbook was
+walked in a different order in every process. Sorting by that is sorting by
+noise. Now ordered by NAME — the business's own word for the table, identical on
+every load — with the id only as a final tiebreak.
+The determinism test could not see it: `report` and `again` ran twice over ONE
+project object and so shared one set of ids, which proves `discover` is a pure
+function of its input and says nothing about the input being the same twice. A
+second test now builds the seed twice and compares on **statement**, never on
+id. With the fix reverted it fails 2 of 3 runs; restored, 3 of 3 pass and three
+consecutive full-suite runs are green.
+This supersedes **`04ca233` "The discovery flake is real, and the fix that was
+supposed to kill it did not"**, which recorded the measurement and ruled out the
+per-shape cap, the time budget and `rank`. Its "worth checking next" list —
+`--no-file-parallelism`, and `discover.ts:1241` dividing by `tally.tested` — was
+not the answer. `discover.ts:1241` still returns NaN at zero tested and leaves
+that sort undefined by specification; that is worth fixing on its own merits and
+is not this bug.
+
+**10. No test rendered anything.** Was: gaps table, high, `vitest.config.ts` —
+"158 components, 67,459 LOC of TSX and 68,713 lines of CSS have no automated
+guard of any kind".
+Closed by **`f853666` "The foundation this app never had: 128 tests, a linter,
+and a third of the bundle"**. `vitest.config.ts` runs two projects and the split
+is by file extension so neither can quietly become the other: `.test.ts` is
+logic in `node`, `.test.tsx` renders in `happy-dom`. **4 files, 35 rendering
+tests**, queried by role and by text and never by class name — a test that
+asserts on a class fails when the class is renamed and passes when the screen is
+broken. The logic project kept every constraint it had.
+**What this does not close, and `CLAUDE.md` now says so:** no visual regression,
+no E2E, and 158 non-test `.tsx` files against 4 suites.
+
+**11. Vitest collected logic tests only.** Its `include` was
+`src/**/*.test.ts`, so any component test written as `.test.tsx` was
+silently never run. Was: gaps table, low.
+Closed by **`f853666`**, by the same two-project split — the `ui` project's
+`include` is `src/**/*.test.tsx`.
+
+**12. There was no linter or formatter of any kind in the repo.** Was: gaps
+table, medium.
+Closed by **`31d1265` "Correction: Porsche does announce the cascade, and this
+repo knew"** (oxlint 1.82, `.oxlintrc.json`, ceiling 411) and by **`f853666`**
+(ceiling down to 400, and `npm test` runs `lint` and `check:types` rather than
+assuming both). The ratchet has come down once and must not go up.
+The row's other half is neither closed nor verified: 16 `eslint-disable`
+directives remain in `src/`, and whether oxlint honours an `eslint-`prefixed
+directive was not checked here.
+
+**13. The solver's contradiction signal had never been asserted to fire.** Was:
+gaps table, high, `src/lib/configure` — `warn.test.ts` asserts that `problems`
+is EMPTY, four times over, and nothing anywhere asserted that it ever fires.
+Closed by **`f853666`**. `src/lib/configure/contradiction.test.ts`, 31 cases,
+covering three of the four places a problem is raised (`solve.ts:280`, `:393`,
+`:424`), with messages asserted as whole strings because they are the sentence a
+dealer reads when a boat cannot be built. Two things are still uncovered and the
+file says both out loud: the `MAX_ROUNDS` runaway (`solve.ts:578`), and one
+known defect held as `it.fails` at `:652` with the full-strength assertion
+inside it rather than a weakened one. That is the suite's only expected failure.
+
+**14. 13 of the formula builtins had no behavioural test,** including every date
+function. Was: gaps table, high, `src/lib/formula`.
+Closed by **`31d1265`** (`builtins.test.ts` created) and **`f853666`** (61
+cases). The brief's own count was wrong and the commit records it: 18 builtins,
+not 19. AND/OR/NOT are now exercised through both the infix and the call
+spelling, which are different paths in `evaluate.ts`. YEAR/MONTH/DAY/DATEDIFF
+are proved clock- and zone-independent across system times 1999 and 2050 and
+zones 14h apart; `TODAY()` is proved **dependent** on both — at one instant it
+returns 2024-03-14 in New York and 2024-03-15 in Kolkata — so both of its tests
+fake the clock.

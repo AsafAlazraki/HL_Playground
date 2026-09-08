@@ -260,6 +260,209 @@
   color: var(--ink-soft);
 }
 
+/* -- the ledger: the rules that fired ------------------------ */
+
+/* WHY THERE IS A REGION HERE AT ALL. Measured against the real
+   price file the engine returns 142 findings and 108 of them are
+   ONE rule, on 50 of the 53 tables. Grouped strictly by table that
+   fact was unsayable — it was shattered across fifty group heads —
+   and the rail drew 195 blocks to not say it. This region says it
+   in seven rows: each rule, its count, how many tables it touched.
+   ReviewPanel.tsx and rollup.ts carry the argument and the sources.
+
+   IT TAKES NO ACCENT, and that is deliberate rather than shy. This
+   rail spends its accent exactly three times — the focus ring, the
+   hovered address, the hovered Apply — and a fourth standing
+   permanently on whichever row is open would make the accent the
+   loudest thing on a panel whose subject is two severity hues. The
+   open row is a PLATE: a ground, a heavier margin rule and the
+   name in ink. Severity stays where it is on every other surface
+   here, in the margin rule's hue AND in whether it is solid. */
+.rv-ledger {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-height: 38vh;
+  overflow-y: auto;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--paper-high);
+}
+
+.rv-ledger-say {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-soft);
+}
+
+.rv-led-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-led-item {
+  display: block;
+  min-width: 0;
+}
+
+.rv-led {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  width: 100%;
+  min-width: 0;
+  padding: 5px var(--s-2) 5px var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+/* the same two channels the cards use — hue AND shape — so which
+   rule stops work survives a reader who cannot separate the hues */
+.rv-led::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--danger);
+}
+.rv-led[data-severity='advisory']::before {
+  background: repeating-linear-gradient(var(--warning) 0 4px, transparent 4px 7px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rv-led:hover {
+    background: var(--chip-bg);
+  }
+}
+/* A LIST ROW DARKENS — §4. Scaling a full-width row slides both its
+   edges and reads as its neighbours having moved. */
+.rv-led:active {
+  background: var(--bg-sunken);
+  transition-duration: var(--d-press);
+}
+.rv-led:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.rv-led[aria-pressed='true'] {
+  background: var(--surface-3);
+  border-color: var(--hairline);
+}
+.rv-led[aria-pressed='true']::before {
+  width: 3px;
+}
+
+/* a count is a figure: mono, tabular, and wide enough that three
+   digits and one digit line up down the column */
+.rv-led-fig {
+  flex: 0 0 auto;
+  min-width: 2.4em;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--ink);
+}
+
+.rv-led-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rv-led[aria-pressed='true'] .rv-led-name {
+  font-weight: 580;
+}
+
+/* where it fired — the figure that says "systemic" rather than
+   "one bad column". `--ink-faint` is the floor on the card ground;
+   over the open row's tint it steps up, which is the rule this
+   file's header states rather than a local exception. */
+.rv-led-where {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.rv-led[aria-pressed='true'] .rv-led-where {
+  color: var(--ink-soft);
+}
+
+/* THE ESCAPE HATCH, AND IT STATES ITS OWN COST. npm's ERESOLVE
+   offers `--force` and `--legacy-peer-deps` without saying which is
+   safer, which the research marks as moving a decision without
+   informing it. This one prints the number of marks it is about to
+   put on the rail, and it sits last because it is the wall this
+   whole region exists to stop being the default. */
+.rv-led-all {
+  align-self: flex-start;
+  margin: 0;
+  padding: 3px var(--s-2) 3px 0;
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  letter-spacing: var(--t-caption-track);
+  text-transform: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .rv-led-all:hover {
+    color: var(--ink);
+  }
+}
+/* RULE 8 — hover, press AND focus, on everything pressable. It is a
+   small control rather than a full-width row, so it takes the 0.97
+   the system gives a control, on pointer-down. */
+.rv-led-all:active {
+  transform: scale(0.97);
+  color: var(--ink);
+  transition-duration: var(--d-press);
+}
+.rv-led-all:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.rv-led-all[aria-pressed='true'] {
+  font-weight: 580;
+  color: var(--ink);
+}
+
 /* -- body ---------------------------------------------------- */
 
 .rv-body {
@@ -274,10 +477,20 @@
 
 /* -- one table's marks --------------------------------------- */
 
+/* FIFTY GROUPS IS A WORK QUEUE, NOT A WALL — but it is still fifty
+   subtrees to lay out on every keystroke that re-lints. The answer
+   is the one `dense-tables-and-selection.md` already adjudicated
+   for this repo: `content-visibility: auto` rather than JS
+   virtualisation, because it keeps every row in the accessibility
+   tree and in find-in-page, which virtualisation takes away. The
+   intrinsic size is `auto`, so a group that has been drawn once
+   remembers its own height and the scrollbar stops guessing. */
 .rv-group {
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
 }
 
 .rv-group-head {
@@ -624,6 +837,66 @@
   box-shadow: var(--glow-sm);
 }
 
+/* -- one rule, one table, however many columns ---------------- */
+
+/* Eight free-text findings on one table were eight cards: eight
+   heads, eight margin rules, eight severity words, eight Apply
+   buttons and eight copies of one lesson. They are one card, and
+   the eight columns are eight lines inside it. The chrome is drawn
+   once; the addresses stay. */
+.rv-roll {
+  gap: var(--s-2);
+}
+
+.rv-roll-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line-subtle);
+  list-style: none;
+}
+
+.rv-roll-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: 5px 0;
+}
+.rv-roll-item + .rv-roll-item {
+  border-top: 1px solid var(--line-subtle);
+}
+
+/* a column name is an ADDRESS — the same face the card's own
+   address line is set in, for the same reason */
+.rv-roll-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0.01em;
+  line-height: var(--t-mono-lead);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* only drawn when the roll has NO shared stem — see collapseWhy.
+   Two unlike findings get two sentences, which is honest. */
+.rv-roll-why {
+  flex: 1 1 100%;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
+  letter-spacing: var(--t-caption-track);
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
 /* -- a mark that has just been cleared ------------------------ */
 
 /* doubled class keeps this ahead of the [data-severity] card rules */
@@ -936,6 +1209,7 @@
   }
   .rv-close:active,
   .rv-apply:active,
+  .rv-led-all:active,
   .rv-fm-trigger:active {
     transform: none;
   }
@@ -950,6 +1224,12 @@
   .rv-group-count,
   .rv-fm-trigger {
     border: 1px solid currentColor;
+  }
+  /* the open ledger row is a tint, and a tint is not a signal here —
+     it takes a defined edge, and the margin rule keeps carrying the
+     severity in its shape */
+  .rv-led[aria-pressed='true'] {
+    border-color: var(--ink);
   }
   .rv-card[data-severity='blocker'] {
     border-color: var(--danger);

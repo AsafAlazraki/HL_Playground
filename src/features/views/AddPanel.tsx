@@ -128,15 +128,24 @@ export function AddPanel({
                 <button
                   type="button"
                   className="vw-add-row"
-                  disabled={here || gone}
-                  onClick={() => onPick(row.id)}
-                  title={
-                    gone
-                      ? `${rowLabel(entity, row)} is no longer sold, so it cannot be put on a page a customer sees. Clear its Discontinued box on the sheet to bring it back.`
-                      : here
-                        ? 'Already on this page'
-                        : `Add ${rowLabel(entity, row)}`
-                  }
+                  /* ── `aria-disabled`, NEVER THE `disabled` ATTRIBUTE
+                     CONFIGURATOR_PLAYBOOK §5, verbatim: the row keeps
+                     its place in tab order, keeps its cells, and
+                     activating it re-announces the reason. Baymard's
+                     finding is that users seldom notice a disabled
+                     element or grasp the concept at all, and a native
+                     `disabled` button is also unreachable by keyboard
+                     and unreadable by a screen reader — so the one
+                     person who most needs the reason is the one who
+                     cannot get to it. The guard moves into the
+                     handler, where it is the same guard. */
+                  aria-disabled={here || gone}
+                  aria-describedby={gone ? `${row.id}-why` : undefined}
+                  onClick={() => {
+                    if (here || gone) return
+                    onPick(row.id)
+                  }}
+                  title={here ? 'Already on this page' : `Add ${rowLabel(entity, row)}`}
                 >
                   <span className="vw-add-plus" aria-hidden="true">
                     <Plus size={12} weight="bold" />
@@ -150,13 +159,37 @@ export function AddPanel({
                     ))}
                   </span>
                   {gone ? (
-                    <span className="vw-tag vw-tag--out">no longer sold</span>
+                    <span className="vw-tag vw-tag--out">Discontinued</span>
                   ) : here ? (
                     <span className="vw-tag vw-tag--quiet">already here</span>
                   ) : inRule ? null : (
                     <span className="vw-tag vw-tag--out">outside the rule</span>
                   )}
                 </button>
+                {/* ── THE REASON IS ON THE ROW, NOT IN THE TOOLTIP ──
+                    It was a `title`, which is DESIGN_CONTRACT §11's
+                    "every refusal says why, WHERE IT IS refused"
+                    failing on all three counts a tooltip fails on: it
+                    never appears on touch, it never appears on
+                    keyboard focus, and it takes a second of hover
+                    before it appears to a mouse. What was visible was
+                    the words "no longer sold" beside a dead control —
+                    which is Shopify Dawn's `"{{ option_value }} -
+                    Unavailable"`, the closest thing in e-commerce to
+                    what we do and the exact sentence this app exists
+                    to beat (explaining-a-refusal.md, cop-out 4).
+
+                    The form is §5's: the kind's own word, the file's
+                    fact about this option, the file's fact about
+                    where it is going — and then the fix, which is one
+                    box on a sheet the reader owns. */}
+                {gone ? (
+                  <p className="vw-add-why" id={`${row.id}-why`}>
+                    <b className="vw-add-word">Discontinued</b> — {entity.name} marks this
+                    one as no longer sold. A block is a page a customer reads. Clear its
+                    Discontinued box on the sheet to offer it again.
+                  </p>
+                ) : null}
               </li>
             )
           })}

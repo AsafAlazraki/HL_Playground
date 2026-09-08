@@ -197,6 +197,36 @@ const MIN_READABLE = 0.4
 const OPEN_FRAME_PAD = 24
 
 /* ============================================================
+   THE CAMERA IS MOTION, AND JS MOTION HAS TO ASK FOR ITSELF.
+
+   base.css:623 takes every CSS animation and transition in the app to
+   0.01ms under `prefers-reduced-motion` — a universal `*` rule with
+   `!important`, and it does reach this file. What it cannot reach is
+   the camera: all three animated viewport moves here are d3-zoom
+   transitions driven from JS, so no CSS rule touches them. A person
+   who asked for less movement still got the whole sheet sliding under
+   them for 480ms — and the widest of those moves is reachable from
+   the keyboard, through the search field, which selects a table from
+   outside the canvas.
+
+   The frame still lands exactly where it landed before. It simply
+   stops taking the reader along for the ride, which is the same
+   distinction `prefers-reduced-motion` is drawn on everywhere else in
+   this file: movement goes, the answer stays.
+
+   `duration: 0` is a value this camera already passes (the restore
+   path below), so this adds no new behaviour — only a new reason to
+   take it. Read at call time rather than at module load, so a setting
+   toggled mid-session is honoured on the next move. The same check,
+   spelled the same way, as `LeftPanel.tsx` and `FieldRow.tsx`.
+   ============================================================ */
+const cameraMs = (ms: number): number =>
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ? 0
+    : ms
+
+/* ============================================================
    THE RESERVE MAY NOT DEPEND ON WHAT THE FRAME DECIDES.
 
    The legend gains one sentence — "Opened close enough to read. Fit …
@@ -836,7 +866,7 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
     if (x >= minX && y >= minY && x + w <= maxX && y + h <= maxY) return
 
     void rf.setCenter(x + w / 2, y + h / 2, {
-      duration: 480,
+      duration: cameraMs(480),
       zoom: viewport.zoom,
     })
   }, [selection, rf])
@@ -1155,7 +1185,7 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
        the seeded sheet fitted at 0.1386, where the plate's own name
        drew at 4.7px. What the frame did NOT hold is not left to be
        guessed at — it is handed to the legend, which says it. */
-    setFramedPart(frameTables(420, true))
+    setFramedPart(frameTables(cameraMs(420), true))
   }, [
     frameTables,
     nodesInitialized,
@@ -1173,7 +1203,7 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
        the note on `minZoom` below is the same lesson, learned the hard
        way. Once it has run, every table IS in the frame, so the legend's
        line about the rest of them stops being true and goes. */
-    frameTables(420)
+    frameTables(cameraMs(420))
     setFramedPart(false)
   }, [frameTables])
 

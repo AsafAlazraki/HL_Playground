@@ -386,7 +386,15 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
      set the price bar goes on showing the total the document actually
      carries — Porsche's rule, and the difference between a sheet a
      person decides and a notification they acknowledge. */
-  const [proposal, setProposal] = useState<{ conflict: Conflict; levelKey: string } | null>(null)
+  const [proposal, setProposal] = useState<{
+    conflict: Conflict
+    levelKey: string
+    /* whether a KEY opened it — the same `event.detail` reading the
+       band head takes, carried this far because the sheet is drawn
+       here and the press happened on the price bar. §6: nothing
+       keyboard-initiated animates. */
+    quiet: boolean
+  } | null>(null)
 
   const levels = useMemo(() => quoteLevelChoices(quote.lines), [quote.lines])
 
@@ -395,13 +403,13 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
      to decide. `levelConflict` returns null when nothing moves, and
      then the change simply happens. */
   const askLevel = useCallback(
-    (key: string, label: string) => {
+    (key: string, label: string, quiet: boolean) => {
       const conflict = levelConflict(quote, key, label)
       if (conflict === null) {
         setLevel(quote.id, key)
         return
       }
-      setProposal({ conflict, levelKey: key })
+      setProposal({ conflict, levelKey: key, quiet })
     },
     [quote],
   )
@@ -468,7 +476,7 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
           <ConflictSheet
             key={proposal.conflict.id}
             conflict={proposal.conflict}
-            still={still}
+            still={still || proposal.quiet}
             onAccept={() => {
               setLevel(quote.id, proposal.levelKey)
               setProposal(null)
@@ -775,6 +783,30 @@ function BandBlock({
      out on the keyboard, so the shortlist has to be able to reach
      it — see `Shortlist`'s key handling. */
   const headRef = useRef<HTMLButtonElement>(null)
+
+  /* ── WHETHER A KEY OPENED THIS BAND, AND WHY THAT DECIDES THE
+     MOTION ──────────────────────────────────────────────────────
+
+     §6's budget ends "never on a keyboard-initiated or 100+/day
+     action", and emil-design-eng's frequency table puts list
+     navigation — tens of times a day — at "remove or drastically
+     reduce". A salesperson does this forty times a day, and the
+     keyboard is how they do it fast: Tab to the head, Enter, Tab
+     into the shelf. A spring under that is 300ms of nothing to
+     look at, every time.
+
+     `event.detail` IS THE MODALITY, AND IT IS THE BROWSER'S OWN
+     ANSWER rather than a guess: a click synthesised from Enter or
+     Space carries `detail: 0`, a real pointer click carries the
+     click count. So no key listener is added, nothing is tracked
+     across renders, and a mouse still gets the spring.
+
+     IT TRAVELS DOWN AS `still`, which is the flag `stillness.tsx`
+     already publishes for "the page must not move" — it is what
+     prefers-reduced-motion resolves to, and what a caret in a text
+     field resolves to. One boolean, three reasons, one behaviour. */
+  const [quiet, setQuiet] = useState(false)
+  const hushed = still || quiet
   return (
     <section className="qb-band" data-kind={band.kind}>
       <h2 className="qb-band-h">
@@ -783,7 +815,10 @@ function BandBlock({
           className="qb-band-head k-band"
           ref={headRef}
           aria-expanded={open}
-          onClick={onToggle}
+          onClick={(e) => {
+            setQuiet(e.detail === 0)
+            onToggle()
+          }}
         >
           <span className={`qb-band-mark${open ? ' is-open' : ''}`} aria-hidden="true">
             <CaretDown size={ICON_SIZE.tiny} weight="bold" />
@@ -802,7 +837,7 @@ function BandBlock({
         <motion.div
           className="qb-band-body"
           initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0, transition: transitionFor(still, SPRING) }}
+          animate={{ opacity: 1, y: 0, transition: transitionFor(hushed, SPRING) }}
         >
           {band.subject ? (
             <ul className="qb-picked" aria-label={step.title}>
@@ -814,7 +849,7 @@ function BandBlock({
             <Shortlist
               quote={quote}
               step={step}
-              still={still}
+              still={hushed}
               bandId={band.id}
               headRef={headRef}
               onWeigh={onWeigh}
@@ -908,8 +943,13 @@ function Shortlist({
   )
   const why: StepReason | null = useMemo(
     () => (step.subject ? null : stepReason(quote, step.section)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `stepReason`
-    // reads the same hull and the same section, and no line at all.
+    // `stepReason` reads the same hull and the same section, and no
+    // line at all. THE DIRECTIVE IS THE LAST COMMENT LINE ON PURPOSE:
+    // oxlint's `disable-next-line` reaches the line after it, so with
+    // prose under it the suppression landed on a comment and the hook
+    // went on warning. Same for `refused` below; `offer` above always
+    // had it in the right place, which is why only two of three fired.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [rootTableId, rootRowId, viewId, step.section, step.subject],
   )
 
@@ -922,8 +962,9 @@ function Shortlist({
     return stepOffer(quote, step.section, { all: true, query }).candidates.filter(
       (c) => c.outside === true,
     )
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the same five
-    // fields of the quote `stepOffer` reads; see the note on `offer`.
+    // the same five fields of the quote `stepOffer` reads; see the
+    // note on `offer`, and the placement note on `why`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showRefused, rootTableId, rootRowId, viewId, levelKey, onQuote, step.section, step.subject, query])
 
   const searching = query.trim() !== ''
@@ -1135,8 +1176,20 @@ function Shortlist({
      therefore always takes the sentence branch instead. */
   const door = candidates.length === 0 && !searching && !all && offer.catalogue > 0
 
-  /* eslint-disable-next-line jsx-a11y/no-static-element-interactions */
+  /* ── THE KEYS ARE CAUGHT WHERE THEY BUBBLE TO ────────────────────
+     This `<div>` takes no focus and carries no role because it is not
+     a widget: `onKeyDown` only reads keystrokes on their way up from
+     the three things that ARE focusable inside it — the search box
+     (`CurationNote` owns it), the shelf's one tab stop, and whatever
+     the band head handed over. Giving the wrapper a role to quiet the
+     rule would be a claim about an element that draws nothing.
+
+     THE DIRECTIVE MOVED ONE LINE DOWN, which is the whole of the fix.
+     It sat above `return (`, so it suppressed the return statement's
+     line and nothing else; oxlint anchors this diagnostic on the
+     `<div>`, one line further on, and went on reporting it. */
   return (
+    /* eslint-disable-next-line jsx-a11y/no-static-element-interactions */
     <div onKeyDown={onKeyDown}>
       {reading ? (
         <CurationNote
@@ -1167,10 +1220,61 @@ function Shortlist({
            reaches it, the arrows move inside it, Tab leaves it. Every
            card carried `tabindex=0` before, so walking past a motor
            band on the way to the customer box was nine presses and
-           past a rigging band was ten. */
+           past a rigging band was ten.
+
+           AND NOW IT SAYS SO TO SOMETHING OTHER THAN A SIGHTED MOUSE.
+           The paragraph above was true of the keyboard and inaudible
+           to everything else: a `<ul>` with no role and no tabindex is
+           a plain list, so the arrow model was a house rule no
+           assistive technology was told about, and `onFocus`/`onBlur`
+           on it was oxlint's `no-noninteractive-element-interactions`.
+
+           `listbox` IS THE PATTERN, and it is checkable rather than a
+           pick between two that sound close. The APG's grid wants two
+           axes and rows to move between; the cards are one flat
+           sequence — ArrowDown, ArrowUp, Home, End and nothing else in
+           `onKeyDown` — and the DOM has no rows to be a grid's rows:
+           `.qb-shelf` is `grid-template-columns: auto-fill`, so the
+           column count is the viewport's answer (build.css:742), not a
+           structure anything could name.
+
+           MULTI-SELECTABLE, because a band holds more than one line —
+           `step.lines` is a list and `take` toggles — so selection does
+           NOT follow focus: the arrows move the place, Enter and Space
+           change the selection. That is the APG's multi-select
+           listbox, and `land` already implemented its focus half as a
+           roving tabindex, which the APG names as the alternative to
+           `aria-activedescendant`. There is therefore no
+           active-descendant to add; adding one beside real focus would
+           be the two-places bug `land` exists to have ended.
+
+           THE ONE SUPPRESSION IS A CONFIG GAP, NOT A CONCESSION.
+           `no-noninteractive-element-to-interactive-role` fires on
+           `<ul role="listbox">`, and `<ul role="listbox">` is what the
+           APG's own listbox examples are made of — ARIA in HTML lists
+           `listbox` among the roles a `<ul>` may take, and
+           eslint-plugin-jsx-a11y's shared `recommended` config allows
+           exactly `ul: ['listbox', 'menu', 'menubar', 'radiogroup',
+           'tablist', 'tree', 'treegrid']`. Those allowances live in
+           the shared config, not in the rule's own defaults, so a
+           linter running the rule bare flags the blessed markup. The
+           fix belongs in `.oxlintrc.json` beside the `ignoreNonDOM`
+           note it already carries for `jsx-a11y/aria-role`; this file
+           does not own that file, so the exemption is written here
+           instead of the `<ul>` being turned into a `<div>` to dodge a
+           rule that is wrong about it.
+
+           NOT VERIFIED: how NVDA or VoiceOver actually announce this
+           shelf. No screen reader was run here. What is verified is
+           the markup — role, selection state, one tab stop, focus on
+           the option that Enter will take. */
         <ul
           className="qb-shelf"
           ref={shelfRef}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- see above: jsx-a11y ships ul->listbox as allowed
+          role="listbox"
+          aria-multiselectable="true"
+          aria-label={`Offered from ${step.title}`}
           onFocus={() => setKbdHere(true)}
           onBlur={(e) => {
             if (!e.currentTarget.contains(e.relatedTarget)) setKbdHere(false)
@@ -1195,7 +1299,14 @@ function Shortlist({
               were still keyed on the minted id could be fixed without
               a third copy of the reasoning. */}
           {candidates.map((c, i) => (
-            <li key={c.key} className="qb-shelf-slot">
+            /* `role="none"` — A LISTBOX MAY OWN ONLY `option` AND
+               `group`, and a `<ul>` may contain only `<li>`. The slot
+               stays for the grid's sizing (build.css:749) and leaves
+               the accessibility tree, which makes the buttons inside
+               it the listbox's own options — and is what lets the
+               browser count posinset/setsize instead of this file
+               counting cards by hand. */
+            <li key={c.key} className="qb-shelf-slot" role="none">
               <OfferCard
                 candidate={c}
                 index={i}
@@ -1261,7 +1372,23 @@ function Shortlist({
             onClick={() => setShowRefused((v) => !v)}
           >
             <span className="mono-label qb-refused-lab">Not offered</span>
+            {/* THE SHARE, NOT THE BARE COUNT. §3 heads a group with the
+                name and its share and §5 spells out why the big half is
+                not something to be shy about: "422 of 434 is not a
+                failure to be embarrassed by. It is the number a dealer
+                quotes down the phone."
+
+                422 alone is a number with nothing to measure it
+                against — 422 out of 434 is a table that does not fit
+                this hull, 422 out of 40,000 would be a rounding error.
+                The denominator is `offer.pool`, which is the same
+                figure the curation chip above divides by, so the two
+                lines cannot disagree.
+
+                It is inside the button, so the accessible name reads
+                "Not offered 422 of 434" in one utterance. */}
             <span className="qb-refused-count">{notOffered.toLocaleString()}</span>
+            <span className="qb-refused-of">of {offer.pool.toLocaleString()}</span>
             <span className={`qb-band-mark${showRefused ? ' is-open' : ''}`} aria-hidden="true">
               <CaretDown size={ICON_SIZE.tiny} weight="bold" />
             </span>
@@ -1340,9 +1467,21 @@ function RefusedRow({ candidate }: { candidate: Candidate }): ReactElement {
       <span className="qb-ref-fig s-figure">
         {line.unitPrice === null ? <span className="qb-nil">not priced here</span> : money(line.unitPrice)}
       </span>
-      {candidate.outsideWhy ? (
-        <span className="qb-ref-why s-say">{candidate.outsideWhy}</span>
-      ) : null}
+      {/* THE SUB-LINE IS DRAWN WHETHER OR NOT THERE IS A SENTENCE.
+
+          §3: "Every row reserves its 16px second line whether or not it
+          has a reason. A short reason must not collapse the row and a
+          long one must not shift the row below it." `outsideWhy` is
+          optional (`freeze.ts:587`, and `:1149` omits the key when
+          the reason is empty), so a conditional slot gave this list two
+          row heights and, worse, made a row GROW at the moment its
+          reason arrived — pushing every row under it down. §6 is
+          explicit that a refusal is the one thing that may not do that:
+          "the state and its sentence land in the same frame".
+
+          The empty span costs nothing to a screen reader and one line
+          of reserved height to the layout (build.css `min-height`). */}
+      <span className="qb-ref-why s-say">{candidate.outsideWhy ?? ''}</span>
     </li>
   )
 }
@@ -1449,13 +1588,13 @@ function PriceBar({
   quote: QuoteDef
   steps: readonly BuildStep[]
   totals: ReturnType<typeof quoteTotals>
-  delta: number | null
+  delta: TotalDelta | null
   /** the choice under the pointer or the keyboard, and what it would
    *  do — never what the document carries */
   weighing: Weigh | null
   refusals: readonly string[]
   levels: ReturnType<typeof quoteLevelChoices>
-  onLevel: (key: string, label: string) => void
+  onLevel: (key: string, label: string, quiet: boolean) => void
   /** move to another moment of the flow — Address is the only one
    *  this screen can reach; see flow.tsx for why Choose is not. */
   onGo: (to: FlowStop) => void
@@ -1566,8 +1705,15 @@ function PriceBar({
             on this screen nothing else says. */}
         <span className="qb-weigh-slot">
           {delta !== null ? (
-            <span className={`qb-delta${delta < 0 ? ' is-down' : ''}`} role="status">
-              {deltaSay(delta)}
+            /* KEYED ON THE STAMP — see `useTotalDelta`. Without it a
+               second pick inside the chip's 2.6s life reuses this node
+               and inherits the first report's fade-out. */
+            <span
+              key={delta.at}
+              className={`qb-delta${delta.amount < 0 ? ' is-down' : ''}`}
+              role="status"
+            >
+              {deltaSay(delta.amount)}
             </span>
           ) : weighing !== null ? (
             <span className="qb-weigh">
@@ -1596,7 +1742,7 @@ function PriceBar({
                 type="button"
                 className={`qb-level${quote.levelKey === l.key ? ' is-on' : ''}`}
                 aria-pressed={quote.levelKey === l.key}
-                onClick={() => onLevel(l.key, l.label)}
+                onClick={(e) => onLevel(l.key, l.label, e.detail === 0)}
               >
                 {l.label}
               </button>
@@ -1937,16 +2083,36 @@ function ConflictSheet({
    itself, so it is never a stale claim, and `null` — not 0 — is
    "nothing has moved".
    ============================================================ */
-function useTotalDelta(total: number): number | null {
+/** How long a delta chip is on screen. build.css delays its fade-out
+ *  to 120ms before this, so the chip is already gone when React takes
+ *  it away rather than being cut off mid-sentence. The two numbers
+ *  are one number; each says so. */
+const DELTA_LIFE_MS = 2600
+
+/** What moved, and WHICH move it was. The stamp is not decoration:
+ *  the chip is drawn in a slot it shares with the proposal, so React
+ *  reconciles a second delta onto the same `<span>` — same class,
+ *  same animation-name, no restart. A second pick inside 2.6s would
+ *  then arrive part-way through the FIRST one's fade-out and vanish
+ *  early. Keyed on the stamp, each report is its own element and its
+ *  own animation. */
+interface TotalDelta {
+  amount: number
+  at: number
+}
+
+function useTotalDelta(total: number): TotalDelta | null {
   const seen = useRef<number | null>(null)
-  const [delta, setDelta] = useState<number | null>(null)
+  const stamp = useRef(0)
+  const [delta, setDelta] = useState<TotalDelta | null>(null)
 
   useEffect(() => {
     const was = seen.current
     seen.current = total
     if (was === null || was === total) return
-    setDelta(total - was)
-    const t = window.setTimeout(() => setDelta(null), 2600)
+    stamp.current += 1
+    setDelta({ amount: total - was, at: stamp.current })
+    const t = window.setTimeout(() => setDelta(null), DELTA_LIFE_MS)
     return () => window.clearTimeout(t)
   }, [total])
 
@@ -2039,6 +2205,20 @@ function NothingOffered({
    likely to press it — they have just realised they picked the
    wrong motor — and a disabled control drops out of the tab order
    and takes its own explanation with it.
+
+   AND IT IS AN `option`, WHICH IS THE SHELF'S DOING: a `listbox` owns
+   `option`s, so the role goes on the element the listbox owns. ARIA in
+   HTML lists `option` among the roles `<button>` may take, and the
+   role does not touch the element's own activation behaviour — the
+   browser still fires `click` on Enter-down and Space-up, which is
+   the whole of the keyboard note in `Shortlist`.
+
+   `aria-selected`, NOT `aria-pressed`. `aria-pressed` is supported on
+   role `button` only; left on an `option` it would be exactly the dead
+   attribute `aria-disabled` was on the `<li>` below — written, ignored,
+   and believed for months. Nothing is lost in the swap: "on the quote"
+   IS the selection this listbox exists to collect, and `option`
+   requires `aria-selected` anyway.
    ============================================================ */
 
 function OfferCard({
@@ -2078,8 +2258,9 @@ function OfferCard({
       }${lit ? ' is-lit' : ''}`}
       style={{ ['--i' as string]: index } as CSSProperties}
       ref={cardRef}
+      role="option"
       tabIndex={tabbable ? 0 : -1}
-      aria-pressed={on}
+      aria-selected={on}
       aria-label={
         on
           ? `Take ${line.label} back off this quote`

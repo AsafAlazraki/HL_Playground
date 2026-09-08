@@ -262,6 +262,13 @@ built the database, not for the person selling out of it.
 Where a total genuinely matters it is the **price** — and that has its own
 permanent home at the foot of the configurator.
 
+**And this section beats §2.1's "quiet strip", decided 2026-09-09 on the
+dashboard's own measurements.** The argument and the numbers are under §2.1;
+the short form is that "a count belongs on the thing it counts" is already how
+the front door works, so a strip has nothing left to say. The figures §2.1 was
+protecting live in the empty states now, which is where a person who has just
+loaded 15,691 rows actually needs to be told they still have them.
+
 ---
 
 ## 1a · THE APP TALKS INSTEAD OF SHOWING — measured
@@ -450,7 +457,56 @@ everything else. One card that works beats three that announce.
 - **The catalogue, entered by kind.** Four large photographic doors — Boats,
   Motors, Trailers, Parts — each showing what is in it, counted.
 - **Recent and pinned.** What this person actually opens.
-- The counted figures stay, but as a quiet strip, not as the subject.
+- ~~The counted figures stay, but as a quiet strip, not as the subject.~~
+  **SETTLED 2026-09-09 IN FAVOUR OF §1: there is no strip.** See below.
+
+#### The strip: §1 said delete, §2.1 said keep it quiet, and the decision is §1
+
+`docs/BACKLOG.md` recorded this as one of the questions only a person could
+answer — *"§1 deletes the counted strip and §2.1 asks for it back. Today neither
+exists."* It is settled here so two sections of one document stop disagreeing.
+
+**§1 wins, and it wins on its own replacement rule rather than on seniority.**
+§1 does not merely delete the strip; it states what takes its place — *"A count
+belongs **on the thing it counts**."* Measured on the dashboard at `530597d`,
+that rule is already how this screen works and there is nothing left for a strip
+to carry:
+
+| figure a strip would print | where it already is |
+|---|---|
+| 25 places | 25 tiles on the modules card, each one a door |
+| 15,691 things in them | on each tile — `588` on Highfield, `209` on Yamaha |
+| 53 tables | the rail's own Data row, `53` |
+| quotes out | on the tile they were raised against |
+
+A strip would be a fourth, weaker copy of figures a person can already read on
+the objects they belong to — and it would sit in the one position on the page
+that has nothing else in it, which is precisely the "strongest position"
+objection §1 raises.
+
+**What §2.1 was protecting is kept, and it is kept where it is load-bearing.**
+The clause exists so a person who has just loaded a real price file does not
+land on a screen that looks empty. That is a real risk and it was real here:
+measured at 1280x800 one second after loading Northside Marine — 15,691 rows
+across 53 tables in 25 places — the quotes card said *"No quotes have been
+raised here yet."* over 111.5px of nothing, 42.6% of its body, and 174.7px
+(44.9%) at 1920x1080.
+
+So the figures went into the **empty states**, where DESIGN_CONTRACT §6 was
+already asking for them and this dashboard was not drawing them: *"Read the
+real count from the store. Never write a blank screen at a person who has
+data."* The quotes card now reads
+
+> NO QUOTES YET
+> A quote is what a customer is handed — the boat, what goes with it, and the price.
+> You have **25** places to quote from.
+> [ New quote ]
+
+— which is §1's rule (the count is on the card whose act it makes possible),
+§2.1's intent (the figures did not vanish), and §6's four-part shape, satisfied
+by one change instead of three. `cards.ts:emptyCount` is the whole of it and it
+returns **null** where a card has no precondition to count, so no card ever
+prints a figure to fill a hole.
 
 ### 2.2 · The catalogue — browse what you sell
 

@@ -35,7 +35,8 @@ import { localDay } from './day'
 import { QuoteBuild } from './QuoteBuild'
 import { QuoteDocument } from './QuoteDocument'
 import { QuoteEditor } from './QuoteEditor'
-import type { FlowStop } from './flow'
+import { FlowSurface } from './flow'
+import type { FlowBy, FlowStop } from './flow'
 import { makeNewVersion, useQuote } from './quotes'
 import type { QuoteDef } from './types'
 import './quote.css'
@@ -199,6 +200,15 @@ export function QuotePage({
    line now says in the bar itself, in the place a person is already
    reading the total. QuoteBuild's own note records why one bar at
    the foot of this column is the limit.
+
+   THE COLUMN IS NOW ONE ELEMENT ACROSS BOTH MOMENTS, and that is
+   the whole change here. Each branch used to open its own
+   `<div className="qt-root qt-root--edit">`, so moving between them
+   destroyed the column and built a second one that happened to look
+   the same — a hard cut with nothing in it to say the bar had
+   stayed put. `FlowSurface` IS that div, mounted once, with the stop
+   swapping inside it; flow.tsx and flow.css carry the argument, the
+   numbers and the reason the bar is excluded from every one of them.
    ============================================================ */
 
 function QuoteDraft({
@@ -210,27 +220,33 @@ function QuoteDraft({
 }): ReactElement {
   const [at, setAt] = useState<FlowStop>('configure')
 
+  /* WHAT PRESSED IT TRAVELS WITH WHERE IT WENT, in one state update,
+     so the effect that decides whether anything moves reads both
+     from the same render. `undefined` is a caller that did not say,
+     and a caller that did not say is still — see `pressedBy` in
+     flow.tsx for why that is the safe default rather than the timid
+     one. */
+  const [by, setBy] = useState<FlowBy | undefined>(undefined)
+
   /* CHOOSE IS NOT REACHABLE FROM HERE and `FlowLine` will not draw a
      control for it — the picker is a stage the shell mounts and this
      feature may not import it without closing the cycle `quote/index
      → QuoteStart → start.ts → modules/read → quote/index`. The way
      back to it is the stage's own Back, which lands there because
      `QuoteStart` no longer closes itself when it mints. See flow.tsx. */
-  const go = (to: FlowStop): void => {
-    if (to === 'configure' || to === 'address') setAt(to)
-  }
-
-  if (at === 'address') {
-    return (
-      <div className="qt-root qt-root--edit">
-        <QuoteEditor quote={quote} onOpenCustomer={onOpenCustomer} onGo={go} />
-      </div>
-    )
+  const go = (to: FlowStop, how?: FlowBy): void => {
+    if (to !== 'configure' && to !== 'address') return
+    setAt(to)
+    setBy(how)
   }
 
   return (
-    <div className="qt-root qt-root--edit">
-      <QuoteBuild quote={quote} onGo={go} />
-    </div>
+    <FlowSurface at={at} by={by} className="qt-root qt-root--edit">
+      {at === 'address' ? (
+        <QuoteEditor quote={quote} onOpenCustomer={onOpenCustomer} onGo={go} />
+      ) : (
+        <QuoteBuild quote={quote} onGo={go} />
+      )}
+    </FlowSurface>
   )
 }

@@ -79,7 +79,7 @@ import { say } from '@/store/notes'
 import { accentVar, type ModuleDef, type TableKind } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
-import { useImageDisplay } from '@/lib/imageSources'
+import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
 import { useConstraints, useSentenceCtx } from '@/features/constraints'
 import { useQuotes } from '@/features/quote'
 import { AccessGrid } from './AccessGrid'
@@ -282,7 +282,13 @@ function Mark({
 }): ReactElement {
   const updateModule = useProjectStore((s) => s.updateModule)
   /* WHAT THIS MODULE IS DRAWN WITH WHEN IT HAS NO LOGO OF ITS OWN.
-     Eight brands ship with a mark; see `brandLogos.ts`. */
+     `brandLogos.ts` matches the module's name against the marks that
+     are really in `modules/marks/`, and TODAY THAT DIRECTORY IS
+     EMPTY, so this is undefined for every module in the Northside
+     seed. It stays here because the moment a mark is dropped in, this
+     panel has to show it rather than tell the admin they have none.
+     Eight brands are declared there; none of their files were ever
+     committed — see that file's header. */
   const bundled = brandLogoFor(module.name)
   const [address, setAddress] = useState('')
   const [refusal, setRefusal] = useState<string | null>(null)
@@ -336,14 +342,22 @@ function Mark({
             <MarkPicture src={module.logo.src} alt={`${module.name} mark`} />
           ) : bundled ? (
             /* THE PLATE MUST SHOW WHAT THE APP IS ACTUALLY DRAWING.
-               Eight brands ship with a mark (`brandLogos.ts`), so a
-               module with no `logo` of its own is not markless — the
+               A module with a bundled mark (`brandLogos.ts`) is not
+               markless, and a plate showing the kind symbol here
+               would be this screen disagreeing with every other
+               screen about what this module looks like — the person
+               would replace a mark they never knew they had. It is
+               labelled as supplied, below.
+
+               THIS BRANCH HAS NEVER RUN, and that is the finding
+               rather than the design. It reads `bundled`, which is
+               now the marks that are really on disk, and none are:
+               the previous version of this comment claimed "the
                dashboard and the modules grid have been showing
-               Highfield's wordmark all along. A plate showing the
-               kind symbol here would be this screen disagreeing with
-               every other screen about what this module looks like,
-               and the person would replace a mark they never knew
-               they had. It is labelled as supplied, below. */
+               Highfield's wordmark all along", which was measured
+               false on 2026-09-09 — those addresses returned
+               `200 text/html` and drew nothing. Drop a file in
+               `modules/marks/` and this is the branch that lights. */
             <MarkPicture src={bundled.src} alt={`${module.name} mark`} />
           ) : (
             <span className="md-mark-fall">
@@ -445,7 +459,29 @@ function MarkPicture({ src, alt }: { src: string; alt: string }): ReactElement {
   if (!display.paint) {
     return <span className="md-mark-held mono-label">Held as a link</span>
   }
-  return <img className="md-mark-img" src={display.at} alt={alt} />
+  return (
+    <img
+      className="md-mark-img"
+      src={display.at}
+      alt={alt}
+      /* THE VERDICT IS REPORTED FROM HERE TOO, and it was not before.
+         `useImageDisplay` only knows an address is dead because
+         something TOLD it, and this plate was the one picture in the
+         app that asked the question without ever answering it: an
+         address that fails here stayed `paint: true` for as long as
+         the page was open, so the panel showed the browser's broken
+         glyph — beside a paragraph telling the admin they already
+         had a mark — while `PlaceMark` drew the same address
+         cleanly two screens away. Found on 2026-09-09 chasing eight
+         bundled marks whose files were never committed; the plate
+         only looked right because the modules screen had already
+         condemned those addresses on its way past. Same two calls
+         `PlaceMark` makes, so one surface cannot believe a mark that
+         another has buried. */
+      onLoad={() => noteImageLoaded(src)}
+      onError={() => noteImageFailed(src)}
+    />
+  )
 }
 
 /* ============================================================
