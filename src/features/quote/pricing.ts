@@ -618,10 +618,55 @@ export { money } from '@/lib/money'
 export const signedMoney = (n: number): string => (n > 0 ? `+${money(n)}` : money(n))
 
 /** A typed amount, read back from an input. Blank is not zero — a
- *  field a person has not filled in must never become a number. */
+ *  field a person has not filled in must never become a number.
+ *
+ *  AND A COMMA IS NOT ALWAYS NOTHING. This used to strip every comma
+ *  before reading the number, so `25,5` became **255** and `12,34`
+ *  became **1234** — a silent tenfold error on a customer's quote,
+ *  from a keystroke, with nothing on screen to say it happened. It
+ *  also accepted `1,2,3` as 123 and `1e3` as 1000.
+ *
+ *  So the grouping is now checked rather than discarded. `1,234` and
+ *  `1,234,567.89` are thousands and read as written. A trailing group
+ *  of one or two digits — `25,5` — is a comma DECIMAL in half the
+ *  world and a slip in the other half, and there is no way to tell
+ *  which from inside this function.
+ *
+ *  It refuses rather than guesses. 25.5 and 255 are both defensible
+ *  readings and one of them is wrong by a factor of ten, so the field
+ *  stays empty and the person types it again. That is the same rule
+ *  the rest of this file already keeps: nothing is rounded, nothing is
+ *  invented, and a figure the app is not sure of is not a figure. */
 export function parseAmount(text: string): number | null {
-  const t = text.replace(/[$,\s]/g, '').replace(/[−–]/g, '-')
-  if (t === '' || t === '-') return null
-  const n = Number(t)
-  return Number.isFinite(n) ? n : null
+  /* Currency marks, ordinary and non-breaking spaces, and a unicode
+     minus are all things that arrive by paste and none of them change
+     the number. */
+  const t = text.replace(/[$\s ]/g, '').replace(/[−–—]/g, '-')
+  if (t === '' || t === '-' || t === '+') return null
+
+  const sign = t.startsWith('-') ? -1 : 1
+  const body = t.replace(/^[+-]/, '')
+  if (body === '') return null
+
+  /* Scientific notation is not how a price file writes money, and
+     reading `1e3` as 1000 turns a typo into a four-figure charge. */
+  if (/[eE]/.test(body)) return null
+
+  const dots = (body.match(/\./g) ?? []).length
+  const commas = (body.match(/,/g) ?? []).length
+
+  let plain: string | null
+  if (commas === 0) {
+    plain = dots <= 1 && /^\d*\.?\d*$/.test(body) ? body : null
+  } else if (dots === 0) {
+    plain = /^\d{1,3}(,\d{3})+$/.test(body) ? body.replace(/,/g, '') : null
+  } else {
+    /* Both marks present: the dot is the decimal and the commas group
+       the whole part, which must still group correctly. */
+    plain = /^\d{1,3}(,\d{3})+\.\d+$/.test(body) ? body.replace(/,/g, '') : null
+  }
+
+  if (plain === null || plain === '' || plain === '.') return null
+  const n = Number(plain)
+  return Number.isFinite(n) ? sign * n : null
 }
