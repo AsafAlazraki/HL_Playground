@@ -11,3 +11,5 @@ docs are where research goes.
 | 2026-09-08 | [stack-and-practice.md](stack-and-practice.md) | Is the stack genuinely current, and where does engineering practice have gaps? | complete — stack current to the patch; 10 adoptions ranked, `check.sh` pipefail first |
 | 2026-09-08 | [configurator-teardowns-2026.md](configurator-teardowns-2026.md) | When a combination does not work, what does a shipping configurator actually say? | complete |
 | 2026-09-08 | [explaining-a-refusal.md](explaining-a-refusal.md) | How do mature constraint systems tell a person why nothing fits — and what do consumer products do instead? | complete |
+| 2026-09-08 | [dense-tables-and-selection.md](dense-tables-and-selection.md) | What are the published numbers for row height, column limits, selection and peek in dense professional tools? | complete |
+| 2026-09-08 | [price-framing-and-bundles.md](price-framing-and-bundles.md) | When a purchase has components, a bundle discount and a recurring cost, what number goes on screen? | complete |
