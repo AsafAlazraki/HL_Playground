@@ -1,9 +1,14 @@
-import { createRequire } from 'module'
-const require = createRequire('C:/Users/AsafA/AppData/Roaming/npm/node_modules/@playwright/test/')
-const { chromium } = require('playwright-core')
+/* playwright-core is a devDependency now (see tools/check-contrast.mjs),
+   so this imports normally. It used to reach through createRequire into
+   a global npm install on a machine that no longer exists, and pointed
+   at port 5411 rather than the 5090 .claude/launch.json commits to —
+   two reasons this harness could not run for anybody but its author. */
+import { chromium } from 'playwright-core'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
-export const PROFILE = 'C:/Users/AsafA/AppData/Local/Temp/claude/a11y-profile'
-export const URL = 'http://localhost:5411'
+export const PROFILE = join(tmpdir(), 'helmlogic-a11y-profile')
+export const URL = process.env.PROBE_URL || 'http://localhost:5090'
 
 export async function open(opts = {}) {
   const ctx = await chromium.launchPersistentContext(PROFILE, {
@@ -21,11 +26,17 @@ export async function open(opts = {}) {
   return { ctx, page, errs }
 }
 
+/* The demo button FILLS the form; it does not submit. Clicking it alone
+   leaves you on the sign-in screen, which is why this used to appear to
+   hang. Both presses are the app's actual behaviour. */
 export async function signIn(page) {
   await page.waitForTimeout(900)
   const demo = page.locator('button', { hasText: /demo/i }).first()
   if (await demo.count()) {
-    try { await demo.click({ timeout: 3000 }); } catch {}
+    try {
+      await demo.click({ timeout: 3000 })
+      await page.locator('button', { hasText: /^Sign in$/ }).first().click({ timeout: 3000 })
+    } catch {}
   }
   await page.waitForTimeout(1600)
 }

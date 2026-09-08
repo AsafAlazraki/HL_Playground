@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "check:reachable": "node tools/check-reachability.mjs",
     "check:styles": "node tools/check-styles.mjs",
-    "check:types": "tsc --noEmit -p tsconfig.app.json"
+    "check:types": "tsc --noEmit -p tsconfig.app.json",
+    "check:contrast": "node tools/check-contrast.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
@@ -31,6 +32,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
+    "playwright-core": "^1.63.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.0",
     "vitest": "^4.1.10"

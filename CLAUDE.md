@@ -38,13 +38,32 @@ It was 35 before the prose pass cleared sixteen of them.
 
 ## What the guards cannot see
 
-Stated so nobody assumes coverage: **contrast** is not automated, there is **no
-visual regression tooling**, and whether a screen makes sense is a person's job.
-If you add a surface, measure its contrast in the browser.
+Stated so nobody assumes coverage: there is **no visual regression tooling**,
+there are **no component tests** (112 test files, zero `.tsx`), and whether a
+screen makes sense is a person's job.
 
-If you write a contrast sweep: parse `color(srgb …)`, composite the full
-ancestor chain, and composite translucent text over it. Three sweeps during the
-redesign reported false catastrophes by skipping one of those.
+**Contrast is now automated**, on five screens:
+
+```bash
+npm run dev            # in one terminal
+npm run check:contrast # in another
+```
+
+`tools/check-contrast.mjs` drives the system Chrome through `playwright-core`,
+signs in, loads the real seed, and measures every text-bearing leaf against the
+ground it is actually drawn on. It is not in `npm test` because it needs a
+server; run it when you add or re-colour a surface.
+
+It embodies the three mistakes that made the earlier sweeps lie — parse
+`color(srgb …)` as well as `rgb()`, composite the **full** ancestor chain, and
+composite translucent text over that ground before measuring. Three sweeps
+during the redesign reported false catastrophes by skipping one of those, so the
+parser returns null rather than guessing and each screen prints the heading it
+actually found. A guard that silently measures the wrong screen reports clean
+and means nothing.
+
+Baseline at the time of writing: **272 text nodes across five screens, all
+clear.**
 
 ## Plans worth knowing about
 
