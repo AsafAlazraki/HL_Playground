@@ -491,6 +491,47 @@ describe('the invariants hold over all 400-odd candidates', () => {
     expect(again.notProposed.map(strip)).toEqual(report.notProposed.map(strip))
   })
 
+  it('is deterministic across LOADS, not just across calls — different ids, same answer', () => {
+    /* THE TEST ABOVE PROVES THE WRONG THING, AND THIS IS THE ONE THAT
+       WAS MISSING. `report` and `again` are two runs over ONE project
+       object, so they share one set of ids; that pair proves `discover`
+       is a pure function of its input and says nothing about the input
+       being the same twice.
+
+       It is not the same twice. `buildNorthsideProject` mints every
+       entity, field and row id with `newId()` (nanoid,
+       northside.ts:22767), so a second load of the identical workbook
+       carries entirely different ids — which is also what an
+       IndexedDB reload gives you. `inOrder` used to sort on that id,
+       so the same file was walked in a different order in every
+       process, and the "Boat Size (Mtr)" assertion below failed about
+       one full-suite run in three with "expected undefined to be
+       defined".
+
+       Compared on STATEMENT, never on id: the ids are supposed to
+       differ here. That is the whole point. */
+    const seedB = buildNorthsideProject()
+    const projectB: FitmentProject = {
+      entities: Object.fromEntries(seedB.entities.map((e) => [e.id, e])),
+      rowsByEntity: seedB.rowsByEntity,
+    }
+    const b = discover(projectB, { maxPerShape: 5000 })
+
+    const say = (c: Candidate): string =>
+      `${c.shape}|${c.statement}|${c.hits}/${c.tested}|${c.verdict}|${c.admitted}`
+
+    expect(b.proposals.map(say)).toEqual(report.proposals.map(say))
+    expect(b.notProposed.map(say)).toEqual(report.notProposed.map(say))
+
+    /* and the candidate that actually flaked is in both */
+    const sizeIn = (r: DiscoveryReport): boolean =>
+      [...r.proposals, ...r.notProposed].some(
+        (c) => c.shape === 'categorical-selector' && c.statement.includes('“Boat Size (Mtr)”'),
+      )
+    expect(sizeIn(b)).toBe(true)
+    expect(sizeIn(report)).toBe(true)
+  })
+
   it('keeps a readable report at its default caps', () => {
     const capped = discover(project)
     expect(capped.proposals.length).toBeLessThanOrEqual(5 * capped.bounds.maxPerShape)

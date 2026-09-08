@@ -1973,13 +1973,41 @@ function rank(a: Candidate, b: Candidate): number {
    below order the project the same way, in one place, because two
    doors that ordered it differently would be exactly the fault that
    note was written about. */
+/* AND IT SORTED BY THE ONE PROPERTY THAT IS NOISE. This sorted on the
+   entity ID, which fixed the fault it was written for — insertion
+   order differing between a fresh seed load and an IndexedDB reload —
+   and left a second one standing, because an id is not stable either.
+   `newId()` mints them with nanoid, so `buildNorthsideProject()`
+   (northside.ts:22767) gives every entity a DIFFERENT id on every
+   call. Sorting by that is sorting by a random number: the same file
+   was walked in a different order in every process.
+
+   Measured: `discoverNorthside.test.ts`'s "DISAGREES about 'Boat Size
+   (Mtr)'" failed about one FULL-SUITE run in three and passed 4 of 4
+   alone, with `expected undefined to be defined` — the candidate was
+   not produced at all. It is not the per-shape cap, which that test
+   raises to 5000, and it is not `rank`, whose own note blames the cap.
+
+   The file's determinism test could not see it and still cannot:
+   `report` and `again` are two runs over ONE project object, so they
+   share one set of ids. It proves `discover` is a pure function of its
+   input. It says nothing about the input being the same twice, which
+   is the property that was actually broken.
+
+   So it orders by NAME, which is the business's own word for the table
+   and is identical on every load, with the id only as a final
+   tiebreak for two tables genuinely sharing a name. */
 function inOrder(project: DiscoveryProject): DiscoveryProject {
   return {
     ...project,
     entities: Object.fromEntries(
-      Object.keys(project.entities)
-        .sort()
-        .map((id) => [id, project.entities[id]]),
+      Object.entries(project.entities)
+        .sort(([idA, a], [idB, b]) => {
+          const byName = a.name.localeCompare(b.name)
+          if (byName !== 0) return byName
+          return idA < idB ? -1 : idA > idB ? 1 : 0
+        })
+        .map(([id, e]) => [id, e]),
     ),
   }
 }
