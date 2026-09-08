@@ -133,6 +133,74 @@ containing a price. The total lives one click away, behind Review.
 Selection"` — rather than resolved or enforced. Discontinued options are shown
 rather than hidden, labelled inline `| No longer available`.
 
+### The German OEMs — and the sentence that explains the whole industry
+
+Driven in a real browser; where a fetch-only pass disagreed with direct
+observation, the browser wins and the disagreement is recorded.
+
+**BMW disclaims validity at the door.** Verbatim, on the USA picker:
+
+> "This is a configurator. While we strive to provide accurate configuration
+> options, **not every configuration can be guaranteed**."
+
+That single sentence explains the behaviour measured everywhere else in this
+study. BMW's cascade is silent — reverting a package dropped **$4,000 with no
+dialog** — because BMW never claimed to enforce validity. The dealer is the
+backstop. Ford says the same thing (*"Not all Options or Option Packages are
+available on all vehicles. See your local dealer"*), and so does John Deere
+(*"All items listed below are optional"*). **Three industries, one identical
+retreat.**
+
+This is the behaviour a dealer-facing tool cannot copy, because here there is no
+dealer downstream to catch it. We *are* the dealer.
+
+**Mercedes shows a total and excludes the fees from it.** `MSRP as Built:
+$45,350` on a CLA 220 (56 options in 13 groups; GLE 350 is 71 in 10), with —
+verbatim — *"The Total Build Price excludes destination and delivery charges and
+government mandated fees"*, *"The Total Build Price displayed is an estimate"*,
+*"Dealer sets the final price."* Monthly payment sits alongside the total with
+disclosed defaults (lease 36mo/7% down/10k miles; finance 72mo/24% down).
+
+**Conflict copy across the whole Mercedes builder, after two keyword sweeps of
+CLA and GLE, is one sentence:** *"Some items may require other options or
+packages at additional cost."* That is the entire constraint vocabulary.
+
+**The `aria-disabled` finding, which is the one that matters most to us.**
+Across eight configurators, exactly one exposes unavailability programmatically:
+
+| product | shareable build state | programmatic unavailable state |
+|---|---|---|
+| **Audi** | yes — readable `?pr=` URL param | **yes — `aria-disabled="true"`** |
+| Mercedes | yes — `Copy Link to Build` + `Download Build PDF` | none |
+| BMW | no — opaque rotating server id behind a hash route | 22 native `disabled`, **empty accessible names** |
+| Brunswick | **broken** — shared links soft-404 with HTTP 200 | none |
+| Tesla / Lucid | not verified / local only | none / 18 present but all `false` |
+
+`CONFIGURATOR_PLAYBOOK.md` §5 already requires `aria-disabled` never `disabled`.
+**One product in eight does it, and BMW's 22 native `disabled` controls carry
+empty accessible names** — a screen reader is told something is unavailable and
+not what it is. The rule was right and the field is worse than assumed.
+
+Also worth knowing: **`configure.bmw.co.uk` renders as an entirely shadow-DOM
+document** — a real deep-link and assistive-technology risk — and BMW runs
+*buy-online* as a **separate product** (Build Your Deal → Credit Application →
+Finalize, "available at select dealers"), so design and transaction have a visible
+seam between them. Mercedes' `Copy Link to Build` + PDF is the dealer leave-behind
+artefact we do not have.
+
+**Recorded as unverified rather than repeated:** whether Audi filters incompatible
+options at all (its empty state — *"Sorry, there are no items matching your filter
+criteria"* — most likely fires from its own user-facing `Filter by 18"/19"` chips,
+not from compatibility); per-selection round-trips for Audi and Mercedes; whether
+any of the three throws a modal on an actually conflicting click. A fetch-only
+pass reported Audi rendering a `Total price` label with no value and a `Step 2
+from 6` localisation bug; direct observation showed **$54,790** and `Step 1 of 6`,
+so both are treated as proxy artefacts and are **not** repeated as findings.
+
+**And one hypothesis is now closed negative:** the brief expected to find "your
+build will be adjusted" copy somewhere in this cohort. After eight teardowns, it
+does not exist. **Nobody announces a cascade.**
+
 ## The map — practice against this repo
 
 | practice | who does it | do we? | evidence here | verdict |
