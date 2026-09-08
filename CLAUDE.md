@@ -56,6 +56,8 @@ redesign reported false catastrophes by skipping one of those.
 | `docs/plan/UX_PASS.md` | the process work: undo, search, import, refusals |
 | `docs/plan/REDESIGN_ROLLOUT.md` | how the re-skin was done, and what is left |
 | `docs/audit/UX_AUDIT.md` | the evidence everything above is answering |
+| `docs/BACKLOG.md` | the reconciled backlog. What is actually open, ranked |
+| `docs/research/INDEX.md` | every `/subtask` research run, and what it decided |
 
 ## Conventions that already exist and should be kept
 
@@ -65,3 +67,19 @@ redesign reported false catastrophes by skipping one of those.
 - **Commit messages explain the decision**, not the diff. Say what was measured
   and why the change is what it is.
 - **`main` is the safe branch.** Design work lands on `redesign`.
+
+## Where learnings go
+
+**A learning that lives only in a chat session is a learning that gets lost.**
+This project lost a set of sessions once. The docs are what survived, which is
+why the docs are where research goes — not the conversation.
+
+- Researching how to build something? Run **`/subtask <the thing>`**. It grounds
+  in what this repo already decided, researches the best in the world, maps the
+  two against each other, and writes `docs/research/<slug>.md`. Add the row to
+  `docs/research/INDEX.md`.
+- Learned something mid-build that changes a plan? **Amend the plan doc**, and
+  say so in the commit. Do not leave two documents disagreeing.
+- **The docs lag the tree.** Verify a claim against code before acting on it —
+  `README.md` claimed the quote flow was unbuilt while `src/features/quote/` had
+  twenty files. `docs/BACKLOG.md` is the reconciled view; keep it that way.

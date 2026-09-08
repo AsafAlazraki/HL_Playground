@@ -1,0 +1,50 @@
+# The guards CLAUDE.md says must pass before a commit, enforced where they
+# cannot be skipped. They were documented and green locally; nothing ran them
+# on a push, so "npm test must pass" was an honour system.
+#
+# Node 20 reached end-of-life in April 2026, so the matrix is 22 (what the app
+# was built on, per README) and 24 (what a fresh install gets today). If it
+# breaks on one and not the other, that is worth knowing before a release.
+
+name: CI
+
+on:
+  push:
+    branches: [main, redesign, stunning]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      # --noEmit is not optional. A bare `tsc` in this repo emits .js beside its
+      # .ts sources, Vite then resolves the stale .js first, and the app boots to
+      # a blank page. README records this happening.
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      # vitest + check-reachability + check-styles, the three guards in one.
+      - name: Guards
+        run: npm test
+
+      - name: Build
+        run: npm run build

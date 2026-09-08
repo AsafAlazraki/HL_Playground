@@ -2,6 +2,11 @@
 node_modules
 dist
 
+# Vite's dependency-optimiser cache. vite.config.ts sets cacheDir here on
+# purpose, so it sits in the repo rather than node_modules — but the contents
+# are regenerated on every dev boot, and were committed by accident in 12172a6.
+.vite-cache/
+
 # TypeScript incremental build state — machine-specific, never shared
 *.tsbuildinfo
 
