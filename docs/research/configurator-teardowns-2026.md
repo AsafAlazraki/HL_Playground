@@ -197,9 +197,33 @@ pass reported Audi rendering a `Total price` label with no value and a `Step 2
 from 6` localisation bug; direct observation showed **$54,790** and `Step 1 of 6`,
 so both are treated as proxy artefacts and are **not** repeated as findings.
 
-**And one hypothesis is now closed negative:** the brief expected to find "your
-build will be adjusted" copy somewhere in this cohort. After eight teardowns, it
-does not exist. **Nobody announces a cascade.**
+### CORRECTION — 2026-09-08, later the same day
+
+An earlier version of this file ended: *"the brief expected to find 'your build
+will be adjusted' copy somewhere in this cohort. After eight teardowns, it does
+not exist. Nobody announces a cascade."*
+
+**That was wrong, and this repo already knew it.**
+`CONFIGURATOR_PLAYBOOK.md` line 297 records Porsche doing exactly this, with the
+phrase verbatim:
+
+> **Porsche** — A routed flyout: *"Your build will be adjusted."* → the option
+> you wanted with its price → **Required selection** with the cheapest fix
+> pre-selected and every alternative priced → footer: `Total price change
+> +$2,480`. Committed total never moves until Accept. — **The one to beat.**
+
+The teardowns in this file studied BMW, Audi, Mercedes, Tesla, Lucid, Brunswick,
+PCPartPicker and Dell. **Porsche was not among them**, because the playbook had
+already done it. Concluding "nobody" from a cohort that deliberately excluded the
+one product that does it is the exact failure this whole reconciliation exists to
+stop: trusting a fresh pass over what the project already established.
+
+**What is actually true, and it is stronger:** Porsche announces the cascade and
+prices every alternative. Eight further configurators — including three premium
+German OEMs sharing a segment with Porsche — do **not**. Dell rewrites two
+modules in silence. BMW disclaims validity at the door. So the pattern is not
+unknown; it is known, singular, and unimitated. The playbook's verdict — "the one
+to beat" — stands, and the design to beat it is already written down.
 
 ## The map — practice against this repo
 
@@ -212,7 +236,7 @@ does not exist. **Nobody announces a cascade.**
 | State what the checker does **not** check | PCPartPicker, in the UI | **no** | no equivalent surface | **adopt** |
 | A conditional refusal — "works *if* X is true" | PCPartPicker BIOS notes | **no** | our five kinds are all verdicts | **adapt** |
 | Running total always on screen | neither | planned | PHASE_TWO: price bar always on screen | **adopt** |
-| Announce a cascading auto-change | **nobody** | **no** | — | **adopt — the biggest open goal** |
+| Announce a cascading auto-change | **Porsche, alone** (playbook l.297) | **no** | `optionConflict` exists, has zero callers | **adopt — the design is already specified** |
 | Severity carried by the copy, not colour | PCPartPicker | partly | five kinds exist; wording not graded | **adapt** |
 | Compatibility filter that browse can bypass | PCPartPicker | n/a | — | **reject** |
 | All groups expanded, 237 controls at once | Dell | no | playbook §1 already rejects it | **reject** |
@@ -220,12 +244,18 @@ does not exist. **Nobody announces a cascade.**
 
 ## What we adopt, and in what order
 
-1. **Announce the cascade.** Neither system does this, and Dell's failure to is
-   the most damaging behaviour observed anywhere in this study. When picking one
-   option changes another, say which, name both, and offer the way back. Our
-   solver already holds the reason at the moment of removal — the object needed
-   to write that sentence exists; nothing renders it as a *change* rather than a
-   *state*. Cheapest genuine differentiator on the list.
+1. **Announce the cascade — to the shape the playbook already specifies.**
+   Neither system here does it and Dell's silence is the worst behaviour
+   observed anywhere in this study, but Porsche does: a routed flyout saying
+   *"Your build will be adjusted"*, the option you wanted with its price, a
+   **Required selection** with the cheapest fix pre-selected and every
+   alternative priced, and the committed total frozen until Accept.
+
+   That is not a gap in the research — it is a finished design sitting in
+   `CONFIGURATOR_PLAYBOOK.md` §5 waiting to be built, and our solver already
+   holds the reason at the moment of removal, which is the one thing Porsche
+   reconstructs server-side. What is missing is code, not knowledge: `Conflict`
+   has no `alternatives` field and `optionConflict` has no callers.
 2. **A conditional refusal kind.** PCPartPicker's BIOS note is a sixth shape our
    five do not cover: not "removed", but "available if a fact we cannot see is
    true". `Unchecked` is the nearest existing kind and it is not the same thing.

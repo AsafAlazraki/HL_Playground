@@ -13,16 +13,33 @@
    depends on, and a browser/e2e runner is a separate decision.
    ============================================================ */
 import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
 import { fileURLToPath } from 'node:url'
 
-export default defineConfig({
-  resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
-  },
-  test: {
-    /* beside their subjects, so a file and its test move together */
-    include: ['src/**/*.test.ts'],
-    environment: 'node',
+const alias = { '@': fileURLToPath(new URL('./src', import.meta.url)) }
+
+/* TWO PROJECTS, BECAUSE THE NOTE ABOVE IS STILL RIGHT AND WAS ALSO
+   THE REASON NOTHING WAS TESTED.
+
+   "No React plugin: every test here is pure logic, and nothing under
+   test renders" was a true description of the suite and a correct
+   argument for keeping this file small. It was not an argument for
+   never rendering anything — and the consequence, measured, was 158
+   components, 67,459 lines of TSX and 68,713 lines of CSS with no
+   automated guard of any kind. A design system cannot be rebuilt on
+   that.
+
+   So the logic project keeps every constraint it had, unchanged and
+   for the reasons given below — 'node', no jsx machinery, the same
+   ceilings. Components get a SECOND project, and the split is by file
+   extension so neither can quietly become the other: `.test.ts` is
+   logic and runs in node; `.test.tsx` renders and runs in happy-dom.
+   A logic test cannot reach for a DOM by accident, which is what the
+   original note was protecting. */
+
+const shared = {
+  /* beside their subjects, so a file and its test move together.
+     include + environment are set per project below. */
 
     /* THE SEED IS 23,000 LINES AND EVERY SUITE THAT TOUCHES THE REAL
        DATA PAYS FOR IT AT IMPORT, BEFORE A SINGLE ASSERTION RUNS.
@@ -62,6 +79,37 @@ export default defineConfig({
        contention bounded. This is a cap on CONCURRENCY, not on what
        any test measures — nothing is skipped and no ceiling is
        loosened to accommodate it. */
-    maxWorkers: 8,
+  maxWorkers: 8,
+}
+
+export default defineConfig({
+  resolve: { alias },
+  test: {
+    projects: [
+      {
+        resolve: { alias },
+        test: {
+          ...shared,
+          name: 'logic',
+          include: ['src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        plugins: [react()],
+        resolve: { alias },
+        test: {
+          ...shared,
+          name: 'ui',
+          include: ['src/**/*.test.tsx'],
+          /* happy-dom rather than jsdom: measurably faster to boot, and
+             every assertion here is about structure, role and text —
+             not layout. Anything that needs real layout belongs in
+             tools/check-contrast.mjs, which drives a real browser. */
+          environment: 'happy-dom',
+          setupFiles: ['./src/test/setup.ts'],
+        },
+      },
+    ],
   },
 })

@@ -7,12 +7,14 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "npm run check:types && vitest run && npm run check:reachable && npm run check:styles",
+    "test": "npm run check:types && npm run lint && vitest run && npm run check:reachable && npm run check:styles",
     "test:watch": "vitest",
     "check:reachable": "node tools/check-reachability.mjs",
     "check:styles": "node tools/check-styles.mjs",
     "check:types": "tsc --noEmit -p tsconfig.app.json",
-    "check:contrast": "node tools/check-contrast.mjs"
+    "check:contrast": "node tools/check-contrast.mjs",
+    "lint": "oxlint src tools --max-warnings 411 --deny-warnings=false",
+    "lint:fix": "oxlint src tools --fix"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
@@ -29,9 +31,14 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
+    "happy-dom": "^20.14.0",
+    "oxlint": "1.82",
     "playwright-core": "^1.63.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.0",
