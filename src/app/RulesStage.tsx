@@ -17,6 +17,7 @@ import { ArrowLeft } from '@phosphor-icons/react'
 import { RulesPane } from '@/features/constraints'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 export interface RulesStageProps {
   onClose: () => void
@@ -25,12 +26,17 @@ export interface RulesStageProps {
 export function RulesStage({ onClose }: RulesStageProps): ReactElement {
   /* Escape is the control in track 1 of the bar, on the keyboard */
   useStageEscape(onClose)
+  /* AND THIS IS WHERE THE KEYBOARD ARRIVES. The name that was written
+     on the root by hand comes out of this call now — the same string
+     is the page's `aria-label` and the thing that is announced when it
+     takes the focus. See stageEntry.ts. */
+  const stage = useStageEntry('Business rules')
 
   return (
     <div
       className="shell-viewstage"
       role="region"
-      aria-label="Business rules"
+      {...stage}
       /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line the design
          and flow stages carry: the whiteboard underneath still deletes
          the SELECTED TABLE on either one, and it only skips

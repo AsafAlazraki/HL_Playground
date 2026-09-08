@@ -18,7 +18,6 @@ import { MarkerType } from '@xyflow/react'
 import type { Edge, EdgeMarker, Node } from '@xyflow/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { AccentKey, EntityDef, GroupDef, RowData } from '@/types/model'
-import { LABEL_PX } from './sheetZoom'
 import { buildPreview, defaultCardMode } from './cardModes'
 import type { CardMode, DataPreview } from './cardModes'
 

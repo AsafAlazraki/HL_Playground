@@ -29,7 +29,6 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { type EntityDef, type ModuleDef } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
-import { coverPhoto } from '@/features/table/coverPhoto'
 import { localDay, priceLevelsFor, quoteTotals, useQuotes } from '@/features/quote'
 import { ACTIVITY_EMPTY_HERE, ActivityList, useModuleActivity } from '@/features/activity'
 import { money } from '@/lib/money'
@@ -42,8 +41,6 @@ import {
   priceReadOf,
   relatedTables,
 } from './read'
-import { capabilityStates } from './designer'
-import { useModuleConfiguresRules } from './ruleCapability'
 import { ModuleRulesPanel } from './ModuleRulesPanel'
 import './modules.css'
 
@@ -113,24 +110,9 @@ export function ModuleHome({
     [module, entities, rowsByEntity],
   )
   const master = listed[0]
-  const cover = useMemo(
-    () => (master ? coverPhoto(master, rowsByEntity[master.id]) : null),
-    [master, rowsByEntity],
-  )
 
   /* WHAT IS REACHABLE FROM HERE through a join somebody declared. */
   const related = useMemo(() => relatedTables(module, entities), [module, entities])
-
-  /* THE VERBS THAT ARE ON, in the contract's own order — the same
-     reader the designer strip uses, so the two cannot disagree. */
-  const configures = useModuleConfiguresRules(owner.id)
-  const verbs = useMemo(
-    () =>
-      capabilityStates(module, moduleTables(module, entities), configures)
-        .filter((s) => s.on)
-        .map((s) => s.label),
-    [module, entities, configures],
-  )
 
   /* HOW MANY QUOTES CAME OUT OF HERE. A set membership on the quote's
      own `rootTableId`, never a guess — and exactly zero on a freshly

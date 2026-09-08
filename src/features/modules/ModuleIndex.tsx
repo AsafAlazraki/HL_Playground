@@ -118,10 +118,9 @@
    argument, including what moved and where it went.
    ============================================================ */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import {
-  CaretRight,
   LinkSimple,
   ListBullets,
   MagnifyingGlass,
@@ -131,7 +130,6 @@ import { useProjectStore } from '@/store/useProjectStore'
 import {
   accentVar,
   isRetired,
-  rowLabel,
   TABLE_KINDS,
   type ImageRef,
   type ModuleDef,
@@ -162,7 +160,6 @@ import {
   buildEntries,
   capEntries,
   categoryDrawers,
-  censusLine,
   DRAWER_FLOOR,
   drawerKey,
   groupEntries,
@@ -220,7 +217,6 @@ export function ModuleStock({
   const module = useMemo(() => moduleAt(owner, place), [owner, place])
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
-  const updateModule = useProjectStore((s) => s.updateModule)
   const [query, setQuery] = useState('')
   /* WHICH DRAWER IS OPEN, or none. A position inside this page and
      nowhere else: it is not stored on the module, because which

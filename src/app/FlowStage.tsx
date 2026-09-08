@@ -119,6 +119,7 @@ import { ICON_SIZE } from '@/lib/icons'
 import { useActionBar } from '@/lib/actions'
 import type { ActionGroup } from '@/lib/actions'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 /* The sheet's grid, so plates and tables sit on the same paper. */
 const GRID = 16
@@ -173,6 +174,10 @@ export function FlowStage({ onClose, onOpenTable }: FlowStageProps): ReactElemen
      to the plate a person has selected, and this stage root lets nothing
      of the sort travel. */
   useStageEscape(onClose)
+  /* and where the keyboard arrives — see stageEntry.ts. "Fitment" is
+     the name on the door that opens this and on the bar it draws;
+     the two must not disagree. */
+  const stage = useStageEntry('Fitment')
 
   /* the plate the inspector is open on — canvas-local, because a
      selection is a thing you are doing here, not a thing the project
@@ -248,7 +253,7 @@ export function FlowStage({ onClose, onOpenTable }: FlowStageProps): ReactElemen
     <div
       className="shell-viewstage shell-flowstage"
       role="region"
-      aria-label="Fitment"
+      {...stage}
       /* see the header note — the sheet's Delete handler would take a
          whole table with it. Escape travels, so the shell can close this
          page with it; see stageKeys.ts for the whole order. */

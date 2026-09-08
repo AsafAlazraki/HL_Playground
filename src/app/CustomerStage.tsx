@@ -49,6 +49,7 @@ import { CaretLeft } from '@phosphor-icons/react'
 import { CustomerList, CustomerPage } from '@/features/crm'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 export interface CustomerStageProps {
   /** the person being looked at, or null for the register of them */
@@ -84,12 +85,16 @@ export function CustomerStage({
   const openId = customerId
 
   useStageEscape(onClose)
+  /* Opening one customer out of the list is a page change with no
+     unmount, so the name changing here is the whole announcement of
+     it. See stageEntry.ts. */
+  const stage = useStageEntry(openId ? 'Customer' : 'Customers')
 
   return (
     <div
       className="shell-viewstage"
       role="region"
-      aria-label={openId ? 'Customer' : 'Customers'}
+      {...stage}
       /* DELETE AND BACKSPACE STOP AT THIS ROOT, the line every other
          stage carries: the sheet's window-level handler offers to
          delete the whole SELECTED TABLE on either key, and a

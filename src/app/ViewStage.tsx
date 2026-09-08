@@ -46,6 +46,7 @@ import { useActionBar } from '@/lib/actions'
 import type { ActionGroup } from '@/lib/actions'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 /** How many rows the rail draws before it asks you to narrow. */
 const RAIL_CAP = 120
@@ -174,6 +175,21 @@ export function ViewStage({
      goes back to that module's list, because both are `onClose`. */
   useStageEscape(onClose)
 
+  /* NEITHER ROOT BELOW CARRIED A ROLE OR A NAME — this and DataStage
+     were the two stages of the ten with no `aria-label` at all, so a
+     screen reader had nothing to read even after the focus was put
+     somewhere useful by hand.
+
+     THE NAME IS THE PAGE'S OWN TWO SPANS, in the order the bar draws
+     them: the table's name, then "fitment for this one". It has to
+     carry the second half, because the TABLE stage over the same
+     table is named `entity.name` on its own (TableStage.tsx:117) and
+     two pages that answer different questions must not announce
+     themselves with one word. See stageEntry.ts. */
+  const stage = useStageEntry(
+    entity ? `${entity.name}, fitment for this one` : 'Fitment',
+  )
+
   /* ============================================================
      THE SECOND STAGE ON THE ACTION BAR, and it is here to prove the
      mechanism is not a table-only hack.
@@ -238,7 +254,7 @@ export function ViewStage({
 
   if (!entity) {
     return (
-      <div className="shell-viewstage">
+      <div className="shell-viewstage" role="region" {...stage} onKeyDown={stageKeys}>
         <div className="shell-view-bar">{back}</div>
         <p className="shell-view-void">That table is no longer on the sheet.</p>
       </div>
@@ -248,6 +264,8 @@ export function ViewStage({
   return (
     <div
       className="shell-viewstage"
+      role="region"
+      {...stage}
       style={{ '--view-accent': accentVar(entity.accent) } as CSSProperties}
       /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line the design
          and flow stages carry. The sheet's window-level handler offers to

@@ -95,34 +95,6 @@ function readStoredFrames(): Record<string, StoredFrame> {
   }
 }
 
-function readStoredFramesLegacy(): Record<string, StoredFrame> {
-  try {
-    const raw = window.localStorage.getItem(EXPAND_KEY)
-    if (!raw) return {}
-    const parsed: unknown = JSON.parse(raw)
-    if (typeof parsed !== 'object' || parsed === null) return {}
-    const out: Record<string, StoredFrame> = {}
-    for (const [id, v] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof v !== 'object' || v === null) continue
-      const f = v as Record<string, unknown>
-      if (
-        typeof f.w !== 'number' ||
-        typeof f.h !== 'number' ||
-        typeof f.pw !== 'number' ||
-        typeof f.ph !== 'number'
-      ) {
-        continue
-      }
-      out[id] = { w: f.w, h: f.h, pw: f.pw, ph: f.ph }
-    }
-    return out
-  } catch {
-    /* private mode, a quota wall, a corrupt value — the sheet still
-       draws, every card simply opens at its ordinary size */
-    return {}
-  }
-}
-
 /** Rebuilt from state on every write: the store is the truth, the
  *  key is only its echo. */
 function writeStoredFrames(next: TableCanvasState): void {

@@ -152,7 +152,7 @@ export function ModuleDesigner({ module }: ModuleDesignerProps): ReactElement {
     <div className="md-design" role="group" aria-label={`Set up ${module.name}`}>
       <Capabilities module={module} states={caps} onSet={setCapability} />
       <IndexPanel module={module} bindings={bindings} />
-      <DetailPanel module={module} tables={tables} />
+      <DetailPanel tables={tables} />
 
       {/* 4 · THE RULES IT GOES BY — present exactly when the verb that
           promises it is on. A capability that is ON is an affordance
@@ -574,10 +574,8 @@ function Bound({
    ============================================================ */
 
 function DetailPanel({
-  module,
   tables,
 }: {
-  module: ModuleDef
   tables: EntityDef[]
 }): ReactElement {
   const [wanted, setWanted] = useState<string | null>(null)

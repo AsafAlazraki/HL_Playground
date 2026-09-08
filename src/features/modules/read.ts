@@ -34,7 +34,6 @@ import {
   type FieldDef,
   type ImageRef,
   type ModuleDef,
-  type ModuleIndexMode,
   type RowData,
   type TableKind,
 } from '@/types/model'

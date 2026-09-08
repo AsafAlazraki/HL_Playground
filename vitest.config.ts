@@ -14,7 +14,7 @@
    ============================================================ */
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, URL } from 'node:url'
 
 const alias = { '@': fileURLToPath(new URL('./src', import.meta.url)) }
 

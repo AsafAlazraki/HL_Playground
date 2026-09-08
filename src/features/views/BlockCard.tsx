@@ -21,7 +21,6 @@ import {
   Check,
   DotsSixVertical,
   Funnel,
-  MagnifyingGlass,
   Plus,
   Sliders,
   Star,
@@ -848,8 +847,6 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
           read={readRelated}
           onSearch={setSearch}
           onFilters={(next) => setBlockFilters(viewId, block.id, next)}
-          onTypingStart={beginTyping}
-          onTypingEnd={endTyping}
         />
       ) : null}
 
@@ -1242,8 +1239,6 @@ interface FilterBarProps {
   read: (r: RelatedRow, fieldId: string) => CellValue
   onSearch: (v: string) => void
   onFilters: (next: ColumnFilter[]) => void
-  onTypingStart: () => void
-  onTypingEnd: () => void
 }
 
 function FilterBar({
@@ -1254,8 +1249,6 @@ function FilterBar({
   read,
   onSearch,
   onFilters,
-  onTypingStart,
-  onTypingEnd,
 }: FilterBarProps): ReactElement {
   const cols = filterableColumns(entity)
   const byId = new Map(entity.fields.map((f) => [f.id, f]))

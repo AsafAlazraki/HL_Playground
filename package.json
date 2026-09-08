@@ -13,7 +13,7 @@
     "check:styles": "node tools/check-styles.mjs",
     "check:types": "tsc --noEmit -p tsconfig.app.json",
     "check:contrast": "node tools/check-contrast.mjs",
-    "lint": "oxlint src tools --max-warnings 411 --deny-warnings=false",
+    "lint": "oxlint src tools --max-warnings 400",
     "lint:fix": "oxlint src tools --fix"
   },
   "dependencies": {

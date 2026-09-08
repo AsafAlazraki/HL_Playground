@@ -76,19 +76,6 @@ interface Activity {
   worth: number
 }
 
-/** One counted figure with its term under it — the same drawing
- *  Home's masthead uses, so the two pages read as one app. Every
- *  value handed to this has been counted; nothing is estimated and
- *  nothing is a placeholder. */
-function Fig({ n, of }: { n: number; of: string }): ReactElement {
-  return (
-    <div className="cx-fig">
-      <dt className="cx-fig-word">{of}</dt>
-      <dd className="cx-fig-n">{n.toLocaleString()}</dd>
-    </div>
-  )
-}
-
 export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)

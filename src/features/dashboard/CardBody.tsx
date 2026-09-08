@@ -98,7 +98,6 @@ import {
   byCustomer,
   countLenses,
   fileTally,
-  moduleRows,
   plural,
   quotesUnder,
   resolveRecent,

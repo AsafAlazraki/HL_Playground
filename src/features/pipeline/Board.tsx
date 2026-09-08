@@ -71,7 +71,7 @@ import {
   useStages,
   type StageId,
 } from './stages'
-import { useStageDefs, type StageDef } from './stageStore'
+import { useStageDefs } from './stageStore'
 
 export interface BoardProps {
   orgSlug: string

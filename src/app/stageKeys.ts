@@ -121,8 +121,14 @@ export function closesStage(k: StageKey): boolean {
 
 /** Rung 2's other half. Lifted from the sheet's own window-level
  *  handler, so a stage and the canvas underneath it agree about what a
- *  field is. */
-function isField(target: EventTarget | null): boolean {
+ *  field is.
+ *
+ *  EXPORTED FOR `stageEntry.ts`, which asks the same question about a
+ *  different event: a stage arriving must not take the focus out of a
+ *  control somebody is typing into, and "typing into" had better mean
+ *  here what it means to Escape three rungs above. Two definitions of
+ *  a field is two answers to the same question. */
+export function isField(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
   const tag = target.tagName
   return (

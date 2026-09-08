@@ -622,7 +622,7 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
         ) : null}
 
         {/* ---- held back ---- */}
-        <HeldBack reading={reading} noun={noun.many} />
+        <HeldBack reading={reading} />
 
         {/* NAME THE OTHER FACE. This page COUNTS what the price file
             already states; the canvas behind `Rule builder` DERIVES a
@@ -924,10 +924,8 @@ function Derived({
 
 function HeldBack({
   reading,
-  noun,
 }: {
   reading: FanReading
-  noun: string
 }): ReactElement | null {
   const gaps = reading.fans
     .flatMap((fan) =>

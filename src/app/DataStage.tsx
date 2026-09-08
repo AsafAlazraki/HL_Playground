@@ -35,6 +35,7 @@ import { WORKBOOK_RULES } from '@/features/constraints'
 import { PageHead } from '@/features/page'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 const MARK = ICON_SIZE.medium
 const MARK_WEIGHT = weightFor(MARK)
@@ -136,13 +137,20 @@ export function DataStage({
 
   useStageEscape(onClose)
 
+  /* THIS ROOT HAD NO NAME AND NO ROLE AT ALL — the only stage of the
+     ten that did not (`<div className="shell-viewstage ad">` and
+     nothing else), so even a person who found their way onto it was
+     told nothing about where they were. "Data" is the word `PageHead`
+     below prints as the page's own `h1`. See stageEntry.ts. */
+  const stage = useStageEntry('Data')
+
   /* `ad`, THE SAME ROOT CLASS ADMIN'S STAGE CARRIES. This was written
      as `ad-root`, which no stylesheet declares — so the screen was
      missing whatever `.ad` sets, and `check-styles` was right to fail
      it. The two screens are siblings and share the stage, the well,
      the band and the door. */
   return (
-    <div className="shell-viewstage ad" onKeyDown={stageKeys}>
+    <div className="shell-viewstage ad" role="region" {...stage} onKeyDown={stageKeys}>
       <div className="shell-view-bar" />
 
       <div className="ad-well">

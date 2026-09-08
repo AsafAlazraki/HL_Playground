@@ -55,6 +55,7 @@ import { currentUser } from '@/features/auth'
 import { PageHead } from '@/features/page'
 import { Board } from '@/features/pipeline'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 /** WHICH VIEW OF THE QUOTES, remembered. A person who prefers the
  *  list should not be handed the board every morning. */
@@ -168,12 +169,22 @@ export function QuoteStage({
      "back to all quotes", which is a lateral move inside this window
      and sits in track 3 — Escape is the way OUT, everywhere. */
   useStageEscape(onClose)
+  /* AND THIS IS WHERE THE KEYBOARD ARRIVES — see stageEntry.ts. The
+     name is the reference, so opening a document out of the list says
+     WHICH document; the list and the document share one root, so
+     nothing else would have said it.
+
+     The guard in that hook earns its keep here more than anywhere:
+     this surface is fields, and it must never take the focus out of
+     one — including when a quote is opened while the focus is still
+     in the list's search box. */
+  const stage = useStageEntry(quote ? `Quote ${quote.reference}` : 'Quotes we have made')
 
   return (
     <div
       className="shell-viewstage"
       role="region"
-      aria-label={quote ? `Quote ${quote.reference}` : 'Quotes we have made'}
+      {...stage}
       /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line every
          other stage carries: the sheet's window-level handler offers to
          delete the whole SELECTED TABLE on either one, and it only skips

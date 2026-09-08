@@ -186,7 +186,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactElement, RefObject } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { CaretDown, Check, Rows, Star, Warning, X } from '@phosphor-icons/react'
+import { CaretDown, Check, Star, Warning, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { useActionBar } from '@/lib/actions'
 import { HELD_AS_LINK, heldAsLinkNote, useImageDisplay } from '@/lib/imageSources'

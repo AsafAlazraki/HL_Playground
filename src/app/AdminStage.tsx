@@ -76,6 +76,7 @@ import { PageHead } from '@/features/page'
 import { atLeast, ROLE_NAME } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 const MARK = ICON_SIZE.medium
 const MARK_WEIGHT = weightFor(MARK)
@@ -200,6 +201,15 @@ export function AdminStage({
      somebody halfway through granting a capability. */
   useStageEscape(showing === 'index' ? onClose : () => setShowing('index'))
 
+  /* AND THE NAME CHANGES WITH `showing`, which is the only reason this
+     stage's two screens are audible at all. The access screen replaces
+     the whole well below (line ~281) and draws its own `h1` reading
+     "Access & roles" — see the note above the bar — so the name here
+     is that same h1's words. Without it, going in and out of a screen
+     Escape treats as a page of its own would announce nothing.
+     See stageEntry.ts. */
+  const stage = useStageEntry(showing === 'access' ? 'Access & roles' : 'Admin')
+
   const facts = useMemo(() => {
     const live = Object.values(entities).filter((e) => !isRetired(e))
     const tables = live.filter((e) => e.role !== 'join')
@@ -226,7 +236,7 @@ export function AdminStage({
     <div
       className="shell-viewstage ad"
       role="region"
-      aria-label="Admin"
+      {...stage}
       /* Delete and Backspace stop at this root, the same line every
          other stage carries: the sheet's window-level handler offers
          to strike the SELECTED TABLE on either one. Escape travels —

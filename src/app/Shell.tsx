@@ -118,6 +118,17 @@ import { useViewPersistence } from './viewPersistence'
 import { rememberModule } from './moduleRecent'
 import './shell.css'
 
+/* THE SAME SELECTOR THE APP'S OTHER THREE MODALS USE, character for
+   character: ConfirmSheet.tsx:55, NewTableDialog.tsx:78,
+   NewModuleDialog.tsx:72. A fourth spelling of "what can be tabbed
+   to" would be a fourth answer to one question. Copied rather than
+   imported because none of the three exports it — each declares its
+   own module-private copy — and this pass owns none of those files.
+   If a fifth is ever wanted, that is the moment to lift one of them
+   into `@/lib` and delete the other four. */
+const FOCUSABLE =
+  'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+
 /** Everything that can cover the sheet. Two of them name a table, two
  *  are about the whole drawing, the fifth names a document and the
  *  sixth names a place in the business. There is never more than one.
@@ -417,23 +428,132 @@ export function Shell({ user, onSignOut }: ShellProps) {
      to "find me a row" and the wrong first thing to put in front of
      somebody who has just said they are making a sale. */
   const [configuring, setConfiguring] = useState(false)
+  /* the sheet itself, which is the dialog and the trap's boundary */
+  const cfgSheet = useRef<HTMLDivElement | null>(null)
+  /* WHAT WAS FOCUSED WHEN IT OPENED. Read at the press rather than in
+     an effect, because by the time an effect runs the dialog is
+     already up and `document.activeElement` may be inside it. */
+  const cfgOpener = useRef<HTMLElement | null>(null)
+  const openConfigurations = useCallback(() => {
+    cfgOpener.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setConfiguring(true)
+  }, [])
 
-  /* ESCAPE SHUTS THE CONFIGURATIONS SHEET. It had a scrim you could
-     press and no key at all — a modal you can only leave with a
-     mouse. Caught by driving it, not by reading it.
+  /* ============================================================
+     THE CONFIGURATIONS SHEET OWNS THE KEYBOARD WHILE IT IS UP.
 
-     It stops there rather than bubbling: a stage binds Escape to
-     its own way out (stageKeys.ts), and one press should not both
-     shut a dialog and leave the page underneath it. */
+     It said `role="dialog" aria-modal="true"` and trapped nothing.
+     Read off the markup: the only focusable things inside it are its
+     own close button and whatever `ConfigurationsPanel` draws, and
+     nothing stopped Tab walking straight out of them into the rail,
+     the action bar and the page underneath — all of which the sheet
+     had just told assistive technology were not there. Escape had a
+     handler, but only that one key, so the modal was a modal by
+     assertion.
+
+     THE HANDLER IS ConfirmSheet.tsx:102-140, in the same order and
+     the same phase, because that sheet is this app's worked example
+     of a correct modal and two shapes of focus trap is one too many.
+     Window, CAPTURE — the same reason given there and in stageKeys.ts
+     lines 67-73: React 19 dispatches its whole synthetic tree from
+     one root listener, and `useStageEscape` listens at window in the
+     BUBBLE phase. Window appears once at each end of the propagation
+     path, so `stopPropagation()` here means the event never reaches
+     the bubbling end at all — which is exactly the requirement that
+     one Escape shuts the DIALOG and does not also close the page
+     behind it.
+
+     ONE ADDITION TO ConfirmSheet's Tab arithmetic, and it is needed
+     because of what takes the focus first below: `active === root`.
+     That sheet lands on its Cancel button, so its wrap only ever has
+     to deal with the first and last items; this one lands on the
+     dialog box itself, and from there a plain Tab would have gone to
+     the close button (right) while Shift+Tab walked out the top of
+     the dialog into the page (wrong). Both directions are answered
+     from the container now, along with focus that has escaped by any
+     other route.
+     ============================================================ */
   useEffect(() => {
     if (!configuring) return
-    const key = (e: KeyboardEvent): void => {
-      if (e.key !== 'Escape') return
-      e.stopPropagation()
-      setConfiguring(false)
+    /* read now, so the cleanup restores the element that was focused
+       at the press even if this effect re-runs */
+    const opener = cfgOpener.current
+    const onKeyDown = (event: KeyboardEvent): void => {
+      const root = cfgSheet.current
+      if (!root) return
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        setConfiguring(false)
+        return
+      }
+
+      if (event.key === 'Tab') {
+        const items = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE))
+        if (items.length === 0) return
+        const first = items[0]
+        const last = items[items.length - 1]
+        const active = document.activeElement as HTMLElement | null
+        if (!active || active === root || !root.contains(active)) {
+          event.preventDefault()
+          ;(event.shiftKey ? last : first).focus()
+        } else if (event.shiftKey && active === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault()
+          first.focus()
+        }
+        event.stopPropagation()
+        return
+      }
+
+      /* the sheet's window-level handler offers to strike the SELECTED
+         table on either of these, and it only skips fields — the same
+         line every stage root carries. See stageKeys.ts. */
+      if (event.key === 'Delete' || event.key === 'Backspace') event.stopPropagation()
     }
-    document.addEventListener('keydown', key, true)
-    return () => document.removeEventListener('keydown', key, true)
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true)
+      /* AND THE TRIGGER GETS THE FOCUS BACK — the half of a modal
+         none of the app's other three do. Every way out lands here:
+         Escape, the close button, a press on the scrim, and the
+         shell unmounting.
+
+         `isConnected` because focusing a detached node does not
+         throw, it silently drops the focus on `body` — which is
+         worse than leaving it where it is, since `body` is where Tab
+         starts over. ONE OF THE TWO DOORS IS DETACHED BY THE TIME WE
+         GET HERE and this is honest about it rather than pretending
+         otherwise: Admin's door (AdminStage.tsx:339) stays mounted
+         under the sheet and gets the focus back, but the rail's
+         person chip opens this from a MENU, and WhoChip.tsx:160-161
+         closes that menu in the same handler — so the item that was
+         pressed is gone, and the chip it hung off never took the
+         focus back. Fixing that belongs in WhoChip, which this pass
+         does not own: a menu that returns focus to its own button is
+         the behaviour stageKeys.ts:40-41 already claims every menu in
+         this app has. */
+      if (opener?.isConnected) opener.focus()
+    }
+  }, [configuring])
+
+  /* THE DIALOG BOX TAKES THE FOCUS, not its close button.
+     ConfirmSheet.tsx:42 lands on Cancel and gives its reason —
+     "every path through here ends in a lot of data moving at once,
+     and a person who presses Enter out of habit must land on the one
+     answer that costs nothing". Nothing here destroys anything: this
+     is a panel of saved configurations, and the answer to "what am I
+     looking at" is worth more than a safe Enter. A focused
+     `role="dialog"` with a name is announced as that name; landing on
+     the × would have announced "Close, button" and named nothing.
+     Tab from the box reaches the × first, which is where ConfirmSheet
+     starts. */
+  useEffect(() => {
+    if (configuring) cfgSheet.current?.focus({ preventScroll: true })
   }, [configuring])
 
   /* THE ONE KEY THE SHELL BINDS, AND IT IS MODIFIED. The header above
@@ -524,7 +644,7 @@ export function Shell({ user, onSignOut }: ShellProps) {
           onOpenData={() => setStage({ kind: 'data' })}
           user={user}
           onSignOut={onSignOut}
-          onOpenConfigurations={() => setConfiguring(true)}
+          onOpenConfigurations={openConfigurations}
           onSearch={() => setFinding(true)}
           /* A QUOTE IS MINTED FROM THE ROW BEING SOLD —
              `createQuoteFromView(viewId, rowId)` — so there is no
@@ -625,7 +745,10 @@ export function Shell({ user, onSignOut }: ShellProps) {
                    stage — so reaching it empties the window stack, and
                    only the shell can do that. Admin's first door. */
                 openSheet: () => setStage(null),
-                openConfigurations: () => setConfiguring(true),
+                /* both doors go through the one callback, because it
+                   is where the control to hand the focus back to is
+                   remembered — see `openConfigurations` above */
+                openConfigurations,
                 user,
               })}
             </div>
@@ -726,14 +849,29 @@ export function Shell({ user, onSignOut }: ShellProps) {
       {configuring ? (
         <div
           className="cfg-scrim"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Saved configurations"
+          /* `role="dialog"` MOVED OFF THE SCRIM AND ONTO THE SHEET.
+              The scrim is the full window — it is the backdrop and the
+              press-to-dismiss target — so a dialog declared on it had
+              the whole screen for its bounds, and the trap below would
+              have had the backdrop inside the trap. ConfirmSheet draws
+              the same two layers the same way: an overlay that catches
+              the press, an `aria-hidden` scrim, and the SHEET carrying
+              role, `aria-modal` and the name. */
           onPointerDown={(e) => {
             if (e.target === e.currentTarget) setConfiguring(false)
           }}
         >
-          <div className="cfg-sheet">
+          <div
+            className="cfg-sheet"
+            ref={cfgSheet}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Saved configurations"
+            /* focusable, not tabbable: the effect above puts the focus
+               here on the way in so the dialog announces its own name,
+               and `-1` keeps it out of the Tab ring the trap walks */
+            tabIndex={-1}
+          >
             <button
               type="button"
               className="cfg-shut"

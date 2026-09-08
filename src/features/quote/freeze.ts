@@ -63,7 +63,7 @@ import {
 /* DEEP, for the same reason `crm/customers` is deep below: `describe`
    is the pure half of the view feature — no store, no React — and the
    barrel does not export the two word-benders a sentence needs. */
-import { describeRule, plural, ruleReason, thisOne } from '@/features/views/describe'
+import { plural, ruleReason, thisOne } from '@/features/views/describe'
 /* THE MEASUREMENTS, READ AND NEVER TYPED. `ruleLedger` imports only
    `@/types/model` and one table name; it touches no store and no React,
    so reading it here closes no cycle. Every figure in it is asserted

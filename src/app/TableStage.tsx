@@ -74,6 +74,7 @@ import { countLabel, leafNoun } from '@/features/table/grouping'
 import type { ActionItem } from '@/lib/actions'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 export interface TableStageProps {
   entityId: string
@@ -115,6 +116,13 @@ export function TableStage({
      subject check, so the page that says the table is gone can be shut
      the same way as the page that shows it. */
   useStageEscape(onClose)
+  /* Bound before the subject check for the same reason, and one call
+     for both roots: the page that says the table is gone is still a
+     page. The register is made of editable cells, so the hook's field
+     guard is what keeps a rename typed into the table's own name from
+     pulling the focus out of it on the keystroke that changes the
+     name. See stageEntry.ts. */
+  const stage = useStageEntry(entity ? entity.name : 'Table')
 
   /* THE DOORS, AS ACTIONS. Rank 50 puts them between the register's
      "see all of it" group and its row commands — you look at the
@@ -167,7 +175,7 @@ export function TableStage({
   /* A STAGE MUST NEVER OUTLIVE ITS SUBJECT. */
   if (!entity) {
     return (
-      <div className="shell-viewstage" role="region" aria-label="Table">
+      <div className="shell-viewstage" role="region" {...stage} onKeyDown={stageKeys}>
         <div className="shell-view-bar">{back}</div>
         <p className="shell-view-void">That table is no longer on the sheet.</p>
       </div>
@@ -189,7 +197,7 @@ export function TableStage({
     <div
       className="shell-viewstage shell-tablestage"
       role="region"
-      aria-label={entity.name}
+      {...stage}
       style={{ '--view-accent': accentVar(entity.accent) } as CSSProperties}
       /* Delete and Backspace stop here — the sheet's own handler aims
          them at this very table. Escape travels, so the shell can close

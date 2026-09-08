@@ -56,6 +56,24 @@
 
    FOCUS stays, one step quieter, for the job it is genuinely better
    at — hours of data entry in the full window, with the search box.
+
+   ------------------------------------------------------------
+   WHAT THE PARAGRAPHS ABOVE STILL DESCRIBE, AND THE CODE NO LONGER
+   DOES. The EXPAND button below calls `setFocusedTableEntity`, not a
+   node resize: the card does not grow, `app/Shell.tsx:377` reads the
+   focused id and draws the full window. The two callbacks that grew
+   and restored the node were deleted in this pass because nothing
+   called them; `tableCanvasState.ts:78` had already recorded that
+   nothing creates an expanded frame any more and that the stored
+   frame key is read once and cleared.
+
+   The consequence, NOT FIXED HERE because it is a decision about the
+   control rather than about dead code: `useTableNodeExpanded` can no
+   longer return true — `expandTableNode` has no caller anywhere in
+   src or tools — so the button's Collapse label, its
+   `ArrowsInSimple` icon and its `aria-pressed={true}` state are
+   unreachable. Whoever owns this control should either restore the
+   grow gesture or drop the two-state button.
    ============================================================ */
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import type { ComponentType, CSSProperties, JSX } from 'react'
@@ -79,7 +97,6 @@ import { Grid } from './Grid'
 import { SheetPlate } from './SheetPlate'
 import { PLATE_ZOOM_OUT, useSheetPlate } from './tableLod'
 import { Toasts, useToasts } from './Toasts'
-import { TableFocusOverlay } from './TableFocusOverlay'
 import { BandStrip } from './BandStrip'
 import { DimensionReadout, WholeTableControls } from './WholeTableControls'
 import { ICON_SIZE, TABLE_KIND_ICON, weightFor } from '@/lib/icons'
@@ -99,8 +116,6 @@ import {
   DEFAULT_TABLE_NODE_SIZE,
   MIN_TABLE_NODE_H,
   MIN_TABLE_NODE_W,
-  collapseTableNode,
-  expandTableNode,
   setFocusedTableEntity,
   setTableNodeColumnWidth,
   setTableNodeSizeByHand,
@@ -108,32 +123,12 @@ import {
   useTableNodeColumnWidths,
   useTableNodeExpanded,
 } from './tableCanvasState'
-import type { TableNodeSize } from './tableCanvasState'
-import { clearFitWidths, releaseFitColumn, useFitWidths } from './tableFitState'
+import { releaseFitColumn, useFitWidths } from './tableFitState'
 import { useBoxWidth, useNameColumnWidth } from './nameColumnWidth'
 import { plural } from './helpers'
 import { CAM_MS, cameraMs, useStillness } from '@/features/views/stillness'
 import './table.css'
 import './table-node.css'
-
-/* ---------------------------------------------------------- */
-/* how big "expanded" is                                      */
-/* ---------------------------------------------------------- */
-
-/** Clear sheet left around an expanded card, in flow units. The card
- *  claims the viewport MINUS this — it is still an object on a sheet,
- *  and the navy has to show on all four sides or it reads as a screen
- *  rather than as a card that grew. */
-const EXPAND_INSET = 28
-
-/** Framing an expanded card: enough padding that the navy still shows
- *  on all four sides — an object ON a sheet, never a screen — and a
- *  short move. Spent exactly once, on the press itself.
- *
- *  The duration is `CAM_MS`, shared with every other walk-to-an-object
- *  in the app. It used to be a local 320 that happened to agree with
- *  the other local 320 twelve lines down, and with nothing else. */
-const EXPAND_FRAME_PAD = 0.06
 
 /* ---------------------------------------------------------- */
 /* opening a plate                                            */
@@ -346,52 +341,20 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
     setFilters([])
   }, [])
 
-  /* ============================================================
-     THE EXPAND GESTURE
-
-     One press: the card takes the sheet's window (minus a margin of
-     navy on every side), and the camera is framed on it — once. The
-     frame it had is remembered so COLLAPSE can put back that exact
-     rectangle rather than a freshly computed guess.
-     ============================================================ */
-
+  /* THE CAMERA HANDLES. `onExpand`/`onCollapse` stood here and had no
+     caller; see the note at the head of this file for where the EXPAND
+     button actually goes. What is left is read by `onOpenPlate` alone. */
   const rf = useReactFlow()
   const flowStore = useStoreApi()
 
-  /* THE TWO CAMERA WALKS BELOW ASK BEFORE THEY MOVE. Both translated
-     the entire blueprint under the reader at full length no matter
+  /* THE CAMERA WALK BELOW ASKS BEFORE IT MOVES. It translated the
+     entire blueprint under the reader at full length no matter
      what their operating system had been told — the full-viewport
      vestibular case apple-design §14 names outright. At `duration: 0`
      React Flow jumps straight to the framing, which is the static
      transition §14 asks for: the reader still arrives, they are just
      not carried there. */
   const { still } = useStillness()
-
-  const onExpand = useCallback(() => {
-    const node = rf.getNode(entityId)
-    const prev: TableNodeSize = {
-      w: node?.width ?? DEFAULT_TABLE_NODE_SIZE.w,
-      h: node?.height ?? DEFAULT_TABLE_NODE_SIZE.h,
-    }
-    /* the pane's own pixels, so an expanded card is the sheet's window
-       at zoom 1 — the framing below then lands the camera at ~1 and
-       the register is read at its designed size */
-    const { width, height } = flowStore.getState()
-    const next: TableNodeSize = {
-      w: Math.max(MIN_TABLE_NODE_W, Math.round(width) - EXPAND_INSET * 2),
-      h: Math.max(MIN_TABLE_NODE_H, Math.round(height) - EXPAND_INSET * 2),
-    }
-    expandTableNode(entityId, prev, next)
-
-    /* THE ONE LICENCE TO MOVE THE CAMERA. An explicit gesture, framed
-       on the object it acted on, and never again afterwards. */
-    const x = node?.position.x ?? 0
-    const y = node?.position.y ?? 0
-    void rf.fitBounds(
-      { x, y, width: next.w, height: next.h },
-      { padding: EXPAND_FRAME_PAD, duration: cameraMs(still, CAM_MS) },
-    )
-  }, [entityId, rf, flowStore, still])
 
   /* ============================================================
      OPENING A PLATE — the press that gets a reader from a sheet of
@@ -429,14 +392,6 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
       { zoom, duration: cameraMs(still, CAM_MS) },
     )
   }, [entityId, rf, flowStore, still])
-
-  const onCollapse = useCallback(() => {
-    /* a fit was worked out for the expanded window; at a fifth of the
-       width it would leave columns the reader never chose. Their own
-       widths are underneath, untouched — hand them back. */
-    clearFitWidths(entityId)
-    collapseTableNode(entityId)
-  }, [entityId])
 
   const style = {
     '--tbn-accent': entity ? accentVar(entity.accent) : 'var(--ink-faint)',

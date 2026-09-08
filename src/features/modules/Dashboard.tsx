@@ -70,15 +70,8 @@ import {
   canBeModuleMaster,
   isRetired,
   type EntityDef,
-  type ImageRef,
   type ModuleDef,
 } from '@/types/model'
-import { TableKindSymbol, kindOf } from '@/features/tablekit'
-/* THE ONE ANSWER ABOUT WHETHER A PICTURE MAY BE PAINTED. A module's
-   logo is an address like every other picture in the app, and this is
-   the module that decides — per host, once — whether an address may
-   be requested at all. */
-import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
 /* THE SAME PICTURE RESOLVER THE FRONT DOOR USES. It answers only for
    addresses this repository ships a copy of, and returns null rather
    than substituting anything. */

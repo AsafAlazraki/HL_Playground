@@ -41,6 +41,7 @@ import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { EntityDesigner } from '@/features/designer/EntityDesigner'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 
 export interface DesignStageProps {
   entityId: string
@@ -54,6 +55,12 @@ export function DesignStage({ entityId, onClose }: DesignStageProps): ReactEleme
      subject check, so the page that says the table is gone can be shut
      the same way as the page that shows it. */
   useStageEscape(onClose)
+  /* Bound before the subject check for the same reason Escape is: the
+     page that says the table is gone is a page, and it needs a name
+     and the focus as much as the one that shows it. One call, spread
+     on both roots below — the name follows the subject.
+     See stageEntry.ts. */
+  const stage = useStageEntry(entity ? `Columns of ${entity.name}` : 'Columns')
 
   /* `shell-view-back`, NO `btn`, LABELLED "Back" — TableStage is the
      calibration and DESIGN_CONTRACT §4 names this file as one of the
@@ -71,7 +78,7 @@ export function DesignStage({ entityId, onClose }: DesignStageProps): ReactEleme
 
   if (!entity) {
     return (
-      <div className="shell-viewstage" role="region" aria-label="Columns">
+      <div className="shell-viewstage" role="region" {...stage} onKeyDown={stageKeys}>
         <div className="shell-view-bar">{back}</div>
         <p className="shell-view-void">That table is no longer on the sheet.</p>
       </div>
@@ -82,7 +89,7 @@ export function DesignStage({ entityId, onClose }: DesignStageProps): ReactEleme
     <div
       className="shell-viewstage shell-designstage"
       role="region"
-      aria-label={`Columns of ${entity.name}`}
+      {...stage}
       style={{ '--view-accent': accentVar(entity.accent) } as CSSProperties}
       /* Delete and Backspace stop here — the sheet's own handler aims
          them at this very table. Escape travels, so the shell can close

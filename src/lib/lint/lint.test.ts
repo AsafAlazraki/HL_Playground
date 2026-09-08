@@ -141,6 +141,8 @@ describe('advisories — the findings that mean a model will not read', () => {
       id,
       entityId: 't1',
       values: { f1: v as never },
+      createdAt: '2020-01-01T00:00:00.000Z',
+      updatedAt: '2020-01-01T00:00:00.000Z',
     })
 
     // no rows at all: nothing to go on but the schema, so the old judgement holds

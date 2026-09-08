@@ -87,6 +87,7 @@ import {
 } from '@/features/modules'
 import { ICON_SIZE } from '@/lib/icons'
 import { stageKeys, useStageEscape } from './stageKeys'
+import { useStageEntry } from './stageEntry'
 import { ViewStage } from './ViewStage'
 import type { ModuleTab } from './winKit'
 
@@ -235,6 +236,25 @@ export function ModuleStage({
   }, [setup, onClose])
   useStageEscape(item ? null : escape)
 
+  /* WHAT THE BAR IS ABOUT. The module that is open, or — when a
+     dashboard card's gear opened a set-up page over the list — the
+     module that page is about. The crumb names the place whose panels
+     are on screen; a bar reading "Modules · how this place is set up"
+     names no place at all.
+
+     IT STANDS ABOVE THE EARLY RETURN NOW because the entry hook below
+     needs it, and a hook cannot be called after a `return`. */
+  const subject = setup && setupModule ? setupModule : open
+
+  /* AND WHERE THE KEYBOARD ARRIVES — see stageEntry.ts. This stage has
+     three pages behind one root (the list, a module, a module's
+     set-up) and only the name tells them apart, so the name changing
+     is the whole announcement that one of them replaced another.
+     While an ITEM is open the root below is not drawn at all: the box
+     belongs to a `ViewStage`, which names and focuses itself, exactly
+     as the `null` handed to `useStageEscape` above says. */
+  const stage = useStageEntry(subject ? subject.name : 'Modules')
+
   /* THE DETAIL, AND NOTHING OF OURS AROUND IT. Keyed on the row so a
      different item is a different page rather than the same page
      re-pointed: the rail's find box and the row it is showing both
@@ -258,13 +278,6 @@ export function ModuleStage({
     )
   }
 
-  /* WHAT THE BAR IS ABOUT. The module that is open, or — when a
-     dashboard card's gear opened a set-up page over the list — the
-     module that page is about. The crumb names the place whose panels
-     are on screen; a bar reading "Modules · how this place is set up"
-     names no place at all. */
-  const subject = setup && setupModule ? setupModule : open
-
   /* `primary` STOOD HERE — the primary table, read only so the view
      bar could draw its kind mark. The bar no longer names the page at
      all (see the note in it), and both surfaces below already carry
@@ -278,7 +291,7 @@ export function ModuleStage({
     <div
       className="shell-viewstage"
       role="region"
-      aria-label={subject ? subject.name : 'Modules'}
+      {...stage}
       style={style}
       /* DELETE AND BACKSPACE STOP AT THIS ROOT, the same line every
          other stage carries: the sheet's window-level handler offers to
