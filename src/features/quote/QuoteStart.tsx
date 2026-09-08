@@ -91,6 +91,7 @@ import {
   Warning,
   X,
 } from '@phosphor-icons/react'
+import { TABLE_KINDS } from '@/types/model'
 import type { EntityDef, ModuleDef, RowData } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
 import { TableKindSymbol } from '@/features/tablekit'
@@ -767,7 +768,22 @@ function ModuleCard({ door, onPick }: { door: QuoteDoor; onPick: () => void }): 
         <span className="qs-card-name">{door.name}</span>
       </span>
       <span className="qs-card-foot">
-        <span className="qs-card-cat">{door.moduleName}</span>
+        {/* THE EYEBROW MUST NOT REPEAT THE HEADING. Where a module is
+            one door it stands for everything it holds, so places.ts
+            sets `name` and `moduleName` to the SAME string
+            (start.ts via places.ts:152,171) — and this card printed
+            it twice, the second time in small grey type directly
+            under the first.
+
+            The dashboard tile hit this and solved it
+            (CardBody.tsx:704-709): where the two agree, say the KIND
+            instead — "Motors", "Accessories" — which is the one thing
+            the name above cannot tell you and the thing the colour
+            key teaches. Same rule here, so the two surfaces onto the
+            same places cannot disagree about what a card says. */}
+        <span className="qs-card-cat">
+          {door.moduleName === door.name ? TABLE_KINDS[door.kind].label : door.moduleName}
+        </span>
         <span className="qs-card-n">{countSay(door)}</span>
       </span>
     </button>
