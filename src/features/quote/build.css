@@ -2457,3 +2457,27 @@
     padding-top: var(--s-4);
   }
 }
+
+/* THE REFUSAL, SAID RATHER THAN DRAWN.
+
+   `.s-refused` gives a sighted reader a --danger rail and a
+   strike-through on the figure. A screen reader got neither, and the
+   `aria-disabled` that was supposed to cover it sat on an `<li>`,
+   whose `listitem` role ignores it — so a refused motor was announced
+   exactly like one you can buy.
+
+   This is the sentence that carries it instead. Off-screen by the
+   standard clip, not `display:none` and not `visibility:hidden`,
+   because both of those remove it from the accessibility tree, which
+   is the one place it needs to be. */
+.qb-ref-flag {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

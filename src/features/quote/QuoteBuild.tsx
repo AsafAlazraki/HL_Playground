@@ -1307,14 +1307,35 @@ function Shortlist({
    precondition copy in the corpus, and the opposite of Ford's four
    dedicated disabled tokens.
 
-   `aria-disabled`, never `disabled`: the row keeps its place in tab
-   order and keeps its explanation with it.
+   `aria-disabled`, never `disabled` — the intent, and for four months
+   it did nothing. This row is an `<li>`, whose implicit role is
+   `listitem`, and **`listitem` does not support `aria-disabled`**. The
+   attribute was ignored by every assistive technology that read it, and
+   the claim above it about tab order was wrong twice over: an `<li>` is
+   not focusable, so the row was never in the tab order to keep a place
+   in. oxlint found it the first time it was ever run here
+   (`jsx-a11y/role-supports-aria-props`).
+
+   What that cost is the whole differentiator. A refused row reached a
+   screen reader as a name and a price — indistinguishable from one you
+   can buy — and `outsideWhy` is OPTIONAL (`freeze.ts:587`, and
+   `:1149` omits the key when the reason is empty), so there was not
+   even reliably a sentence to give it away.
+
+   So the state goes where it cannot be ignored: into the row's own
+   words. The flag is the first thing read, before the name, because
+   "Not offered — Yamaha F70" is a different sentence from "Yamaha F70,
+   not offered" when you are hearing it rather than seeing the strike.
+   Sighted readers keep exactly what they had: `.s-refused` draws the
+   rail and the strike-through, and nothing in any stylesheet keyed on
+   the attribute that has gone.
    ============================================================ */
 
 function RefusedRow({ candidate }: { candidate: Candidate }): ReactElement {
   const line = candidate.line
   return (
-    <li className="qb-ref-row s-refused" aria-disabled="true">
+    <li className="qb-ref-row s-refused">
+      <span className="qb-ref-flag">Not offered — </span>
       <span className="qb-ref-name">{line.label}</span>
       <span className="qb-ref-fig s-figure">
         {line.unitPrice === null ? <span className="qb-nil">not priced here</span> : money(line.unitPrice)}
