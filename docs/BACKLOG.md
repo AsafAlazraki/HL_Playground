@@ -258,3 +258,43 @@ attachments and links, and the five `CONFIGURATOR.md` faults.
    question it could not answer.
 3. **§1 deletes the counted strip and §2.1 asks for it back.** Today neither
    exists. Both sections cannot be satisfied without a decision.
+
+## Open thread — the discovery engine is still non-deterministic
+
+> Added 2026-09-09, measured, not inferred.
+
+`src/features/constraints/discoverNorthside.test.ts` — *"DISAGREES about
+'Boat Size (Mtr)'"* — **fails about one full-suite run in three**, and passes
+4 of 4 when that file is run alone. The assertion is `expected undefined to be
+defined`: the candidate is not produced at all, not produced with wrong numbers.
+
+**This is already a known bug that has already been fixed once.** `discover.ts`
+`rank()` carries a long note saying exactly this: *"measured, the categorical
+selector over 'Boat Size (Mtr)' was inside the cap on some runs and outside it
+on others, which is the whole of the `discoverNorthside` flake that three passes
+have now recorded as 'fails about one run in four' without fixing it."* The fix
+was to give `rank` a total order on `statement`.
+
+**That fix is in the tree and the flake survives it**, which rules out the
+diagnosis it was built on. What is now known:
+
+- the per-shape cap (`maxPerShape: 12`, `discover.ts:2158-2170`) is applied
+  **after** `proposals.sort(rank)` (`:2155`), so ordering at the cap is
+  deterministic if `rank` is total — and `rank` appears total
+- `discoverSteps` has no time budget: `started` (`:2033`) is used only to report
+  `ms` (`:2200`)
+- entity iteration order was already fixed by `inOrder()`
+- so the variation is **upstream of ranking** — in what gets measured, not in
+  how it is sorted
+
+Worth checking next, in order: whether `tested`/`rate` themselves vary run to
+run; whether `--no-file-parallelism` makes it stable (the vitest config records
+that trick working for the earlier wall-clock flakes, which would point at
+shared module state across test files rather than at discovery itself); and
+`discover.ts:1241`, `directions.sort((x, y) => y.hits / y.tally.tested - …)`,
+which returns **NaN** when `tested` is 0 and leaves that sort's order undefined.
+
+**Why this outranks its size.** The product's claim is that nothing is invented
+and every reason is recorded. A discovery engine that proposes a different set
+of rules on different runs over identical data contradicts that directly — and
+the guard that would catch it is the one test people have learned to re-run.
