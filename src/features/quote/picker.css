@@ -1065,3 +1065,44 @@
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------- */
+/* THE CARD WITHOUT A MARK                                     */
+/* ---------------------------------------------------------- */
+
+/* SAME FAULT AS THE DASHBOARD TILE, SAME CAUSE. `.qs-card-mark` says
+   it plainly — "a wordmark IS the brand's name, so it is the heading,
+   and the kind's colour is the ground behind it". Correct, for a
+   wordmark. Measured on the real sheet: 18 cards on this screen and
+   ZERO images among them, so all 18 fall back to a name centred on a
+   92px field of kind colour.
+
+   DESIGN_CONTRACT §11 forbids that ground: "Kind hue is a rail, a dot
+   or a glyph — never a fill behind text, never chrome." And this card
+   does not even need the plate to carry its hue: `.qs-card` already
+   has `border-left: 3px solid var(--kind)`. The rail the contract
+   asks for is on the card already; the plate was a second, larger
+   statement of the same fact, behind the one piece of text that had
+   to stay legible on top of it.
+
+   So with no mark to show, the heading is a heading. Scoped behind
+   `:not(:has(img))`, so a card that gets a wordmark keeps every rule
+   above it. */
+
+.qs-grid:not(:has(img)) {
+  /* 240 bought height for a wordmark. Nothing here has one. */
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+.qs-card:not(:has(img)) .qs-card-mark {
+  min-height: 0;
+  justify-content: flex-start;
+  padding: var(--s-3) var(--s-4) 0;
+  background: transparent;
+  border-bottom: 0;
+}
+
+.qs-card:not(:has(img)) .qs-card-name {
+  text-align: left;
+  text-wrap: pretty;
+}
