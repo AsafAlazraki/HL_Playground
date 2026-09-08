@@ -2334,3 +2334,74 @@
   background: var(--line-strong);
   background-clip: content-box;
 }
+
+/* ---------------------------------------------------------- */
+/* THE TILE WITHOUT A MARK                                     */
+/* ---------------------------------------------------------- */
+
+/* EVERY RULE ABOVE IS DRAWN FOR A LOGO, AND NO MODULE HAS ONE.
+   `.dsh-tile-panel:has(img)` hides the name because the mark is the
+   face; the panel is 112px because a mark needs room; the grid is
+   `minmax(240px, …)` because at 190px "the wordmarks came out
+   seventeen pixels tall". All correct — and none of it applies to
+   the 25 seeded modules, not one of which carries a logo. What they
+   get instead is a name floating in the middle of a 112px field of
+   kind colour, four fifths of the tile spent on nothing, and 3.47 of
+   25 modules visible at 1280x800.
+
+   It is also against the contract. DESIGN_CONTRACT §11: "Kind hue is
+   a rail, a dot or a glyph — never a fill behind text, never chrome."
+   The panel is `color-mix(--kind 14%, --surface-1)` with the name
+   centred on top of it, and `.dsh-tile`'s own comment says the quiet
+   part out loud: "THE KIND IS THE GROUND, NOT A RAIL."
+
+   So when there is no mark, the tile stops pretending to be a
+   showpiece and becomes what it actually is: a name, its kind and its
+   count. The hue moves to the rail the contract asks for. Upload a
+   logo and every rule above takes over again untouched — this whole
+   block is scoped behind `:not(:has(img))` and disappears. */
+
+.dsh-tiles:not(:has(img)) {
+  /* 240 bought height for a wordmark. With no wordmark to size for,
+     200 fits a second column in the same card. */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+/* NO `overflow: hidden` HERE. It was added to clip the rail and it
+   collapsed the tile to 31px — the foot, which carries the kind and
+   the row count, laid out below the box and was cut off. Measured:
+   65px with `overflow: visible`, 31px with it hidden. The rail
+   carries its own `border-radius`, so there was nothing to clip. */
+.dsh-tile:not(:has(img)) {
+  background: var(--surface-1);
+}
+
+/* The rail the contract asks for, in the hue the plate used to be. */
+.dsh-tile:not(:has(img))::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--kind);
+  border-radius: var(--r-control) 0 0 var(--r-control);
+}
+
+.dsh-tile:not(:has(img)) .dsh-tile-panel {
+  min-height: 0;
+  justify-content: flex-start;
+  padding: var(--s-3) var(--s-3) 0 calc(var(--s-3) + 3px);
+  background: transparent;
+  border-bottom: 0;
+}
+
+.dsh-tile:not(:has(img)) .dsh-tile-name {
+  text-align: left;
+  /* two lines, not three: "Dunbier / Haines BMT Trailers" is the
+     longest name in the seed and it sets on two at this width. */
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.dsh-tile:not(:has(img)) .dsh-tile-foot {
+  padding-left: calc(var(--s-3) + 3px);
+}

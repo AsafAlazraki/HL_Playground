@@ -13,3 +13,4 @@ docs are where research goes.
 | 2026-09-08 | [explaining-a-refusal.md](explaining-a-refusal.md) | How do mature constraint systems tell a person why nothing fits — and what do consumer products do instead? | complete |
 | 2026-09-08 | [dense-tables-and-selection.md](dense-tables-and-selection.md) | What are the published numbers for row height, column limits, selection and peek in dense professional tools? | complete |
 | 2026-09-08 | [price-framing-and-bundles.md](price-framing-and-bundles.md) | When a purchase has components, a bundle discount and a recurring cost, what number goes on screen? | complete |
+| 2026-09-08 | [cascade-announcement-spec.md](cascade-announcement-spec.md) | When a pick changes or removes something already chosen, what does the app draw — and what in the code would have to fire it? | complete — spec; one open decision (the undo contradiction) left for a person |
