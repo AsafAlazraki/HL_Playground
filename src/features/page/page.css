@@ -67,41 +67,98 @@
   flex-wrap: wrap;
 }
 
-/* ONE SIZE FOR EVERY PAGE TITLE, and it is not the hero face.
-   Archivo at 64px is right for a landing surface and wrong for the
-   fifth screen of a working day — it was drawing the eye to the
-   word "Modules" on a page whose subject is twenty-five brands.
-   34px is display-face territory (§ the 26px floor) and still
-   sits below the dashboard's greeting, which is the one place in
-   the app that earns a bigger voice. */
-/* THE UNIT IS THE VIEWPORT, AND IT SAYS SO NOW. This clamp was
-   written in `cqi`, and nothing in the chain above a `.ph` declares
-   `container-type` — so `cqi` was resolving against the small
-   viewport, which is what `vw` means, on every page in the app.
+/* THE STAGE TITLE RANKS BELOW THE PAGE'S SUBJECT, AND THAT IS THE
+   WHOLE POINT OF THIS RULE.
 
-   That is not a distinction without a difference. Five rules in
-   this codebase already open a container — `.dsh`
-   (dashboard.css:79), `.cx-rec` and `.cx-pane` (crm.css:789, 807),
-   `.qb-product` (build.css:82) and `.vw-root` (views.css:32) — and
-   the day a `PageHead` renders inside one of them, that page's
-   title silently sizes off a different box and stops matching every
-   other page's. The unit is now written as what it actually
-   resolves to, so it cannot be re-parented by a rule in another
-   feature's stylesheet.
+   WHAT WAS WRONG, MEASURED. `visual-qa-2026-09-09` finding 7:
 
-   MEASURED before and after, `.ph-name` computed font-size on the
-   Modules, Quotes, Customers and Admin headers:
-   1920 34 · 1600 34 · 1440 34 · 1280 30.72 · 1024 26 · 900 26 ·
-   768 26 — identical, both ways, at all seven. Nothing on screen
-   moved; a trap was taken out. */
+     .ph-name   clamp(26px, 2.4vw, 34px) / 660 / 1.08 / -0.028em
+
+   is a display step nothing declares — a size lifted off
+   `--t-display-lg`'s neighbourhood with its own weight, its own
+   leading and a hand-written tracking value beside it. Rule 6 says
+   type steps are SETS; four loose numbers in a feature stylesheet
+   are not a set, they are a fifth step that no other surface can
+   take and no guard can check.
+
+   And the size it invented outranked its own subject. At 1280 on
+   the modules index, `modules.css:652` records it:
+
+     .ph-name          30.72px   the word "Modules"
+     .md-place-name    26.88px   the twenty-five brands, x25
+
+   The page chrome was 3.84px ABOVE the twenty-five names it heads,
+   on a screen whose entire purpose is those names. It was the
+   largest glyph on FIVE of the twelve screens the sweep measured —
+   modules, data, catalogue, the register and quotes — every one of
+   them a screen where the biggest word was the rail row the person
+   had just clicked. That is what makes a screen feel like a
+   template: the application talking about itself, louder than the
+   business's own data.
+
+   WHY IT LEAVES THE DISPLAY FACE, WHICH IS FORCED AND ALSO RIGHT.
+   `--t-display-lg` is the display tier's LOWEST step and the tier
+   has a 26px floor under it (§2: "the display face is barred below
+   26px"). So there is no display step below the subject's step, and
+   ranking below it means leaving the face. Both display candidates
+   were checked against the subject rather than assumed:
+
+     step            @1024   @1280   against .md-place-name
+     --t-display-lg  26.00   26.88   EQUAL. A tie is not below
+     --t-display     28.00   28.00   +2.00 / +1.12 — still above
+
+   `--t-display` looks like the step down from "display-lg" and is
+   not; ds.css's own THE ONE OVERLAP note measures the crossing at
+   both widths this repo quotes. Taking it would have kept the
+   inversion while sounding like a fix.
+
+   SO IT TAKES `--t-title-*`, THE WHOLE SET, WITH NOTHING WRITTEN BY
+   HAND. Its own note in ds.css reads "panel headers, dialog titles,
+   section leads", and a stage title is the section lead for a whole
+   page: it names a KIND of page — Modules, Data, Quotes — and the
+   kind is never the thing the person came for. §2 gives Archivo
+   "headlines and nothing else", and a word that is also a nav label
+   is not a headline. Spending the display face on seven pages of
+   chrome is what left it meaning nothing where it IS the subject.
+
+   RESOLVED, AND CHECKED THE WAY ds.css's ORDERING RULE ASKS —
+   `--t-title-size` is ramped by response.css:75, so both sides move:
+
+     window   .ph-name   --t-display-lg   .ph-name / subject
+       600     20.00        26.00          below
+      1024     20.00        26.00          below
+      1280     20.00        26.88          below, 1.34x
+      1440     20.01        30.24          below
+      1920     23.01        34.00          below
+      2560     27.00        34.00          below
+      3000     27.00        34.00          below
+
+   Strictly smaller than `--t-display-lg` and `--t-display` at every
+   width from 600 to 3000, and strictly larger than `--t-heading`
+   (15 -> 17.5px) at every one of them, so the header keeps its
+   place in the chrome ladder and only stops competing with the
+   page. On the modules index the subject now outranks its own
+   header by 6.88px instead of losing to it by 3.84.
+
+   WHAT IS DELIBERATELY UNCHANGED. `overflow-wrap: anywhere` stays —
+   `CustomerPage.tsx:199` passes a person's name through `name`, and
+   the sweep records zero horizontal overflow anywhere in the app,
+   which is a property to keep rather than retest. `--fg` stays: this
+   is still an `<h1>` and §1's ramp puts anything read at full ink.
+   The face is stated rather than inherited, because the rule it
+   replaces stated `--font-hero` and a silent revert to the body's
+   family is invisible to the next reader. It is `--font-sans` and
+   not `--font-ui`: tokens.css:124 defines `--font-ui` as Archivo and
+   bridge.css:140 overrides it to the sans, and a face that depends
+   on import order is the trap §2 already cost an hour on. */
 .ph-name {
   margin: 0;
   min-width: 0;
-  font-family: var(--font-hero);
-  font-size: clamp(26px, 2.4vw, 34px);
-  font-weight: 660;
-  line-height: 1.08;
-  letter-spacing: -0.028em;
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
   color: var(--fg);
   overflow-wrap: anywhere;
 }

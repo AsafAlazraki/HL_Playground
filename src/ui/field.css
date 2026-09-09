@@ -1,0 +1,151 @@
+/* ============================================================
+   FIELD — a labelled control, and the sentence when it refuses.
+
+   THE MEASUREMENT. 33 distinct root classes sit on an <input>,
+   <select> or <textarea> in this repo and draw their own ground
+   and their own box, across 19 stylesheets. Eleven of them have
+   no `:focus` rule of any kind — a text field a keyboard user
+   cannot see themselves land in.
+
+   A FIELD HAS NO PRESS, AND THAT IS NOT A GAP. Rule 8 covers
+   every PRESSABLE thing. A text input is not pressed, it is
+   focused; a press state on it would be feedback for an event
+   that does not happen. So this file draws hover and focus, and
+   says out loud that the third state is deliberately absent
+   rather than leaving a reader to wonder. Button, Card and Row
+   all press, each at its own scale.
+
+   THE LABEL IS NOT UPPERCASE. Rule 3 allows uppercase on section
+   captions, group captions and mono stamps — that is the whole
+   list, and a field label is on none of it. SectionHead owns the
+   one uppercase style in this layer; this one is sentence case at
+   the caption step.
+
+   THE GROUND IS --surface-3, following ds.css's own `.ds-input`.
+   A white input on a white card is only its border; a well one
+   step down from the surface reads as a place to type against
+   both `--bg` and `--surface-1`. Measured on it: `--fg` is about
+   16:1, and the placeholder at `--fg-tertiary` is 4.91:1 — which
+   clears the floor, and is why the placeholder is not
+   `--fg-quaternary` (2.6:1, and §1 says it may never carry
+   meaning).
+
+   NAMESPACE and the "no override layer" answer: see button.css.
+   ============================================================ */
+
+.ui-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.ui-field-label {
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+}
+
+.ui-field-input {
+  width: 100%;
+  min-width: 0;
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+
+/* Every figure, code, SKU and identifier is mono (§2), and
+   tabular so a column of them lines up on the decimal. That is
+   not decoration — it is the whole reason mono is in the system. */
+.ui-field-input--mono {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-field-input::placeholder {
+  color: var(--fg-tertiary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-field-input:hover {
+    border-color: var(--line-strong);
+  }
+}
+
+/* `:focus-visible` would not fire for a pointer click into a text
+   field in every engine, and a field a person clicked into must
+   show where the caret went. So a field rings on `:focus`, which
+   is the one control type where that is right. */
+.ui-field-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+  background: var(--surface-1);
+}
+
+/* Refused, drawn from `aria-invalid` rather than a class of our
+   own — the red border cannot exist without the announcement that
+   goes with it. */
+.ui-field-input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.ui-field-input[aria-invalid='true']:focus {
+  outline-color: var(--danger);
+  border-color: var(--danger);
+}
+
+.ui-field-input[readonly] {
+  background: var(--bg-sunken);
+  color: var(--fg-secondary);
+  cursor: default;
+}
+
+/* The hint and the refusal are the same shape and differ only in
+   ink, because they occupy the same line and a person should not
+   have to re-find it. */
+.ui-field-note {
+  margin: 0;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  text-wrap: pretty;
+}
+
+/* --danger measures 6.53:1 on white and 6.19:1 on the page
+   ground, so the refusal is legible as text and not only as a
+   colour — §1's floor is 4.5 and a red that only works as an
+   alarm is a red nobody can read. */
+.ui-field-why {
+  margin: 0;
+  color: var(--danger);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  text-wrap: pretty;
+}
+
+@media (prefers-contrast: more) {
+  .ui-field-input {
+    border-color: var(--line-strong);
+  }
+}

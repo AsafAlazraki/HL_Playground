@@ -1,0 +1,184 @@
+/* ============================================================
+   CARD — the surface a thing sits on.
+
+   THE MEASUREMENT. 662 distinct classes in this repo declare a
+   border-radius AND a background AND at least one of padding,
+   border or box-shadow — the definition of a self-drawn enclosed
+   surface — spread across 41 stylesheets. In the app proper it is
+   612 across 36. Every one of them is somebody deciding, again,
+   what a card is made of. A re-skin has to find all 612.
+
+   WHAT A CARD IS HERE. Paint, not glass. DESIGN_PRINCIPLES §5
+   retired glass with exactly two exceptions — the floating dock
+   and the masthead — so there is no `backdrop-filter` in this
+   file and adding one wants an argument, not a commit. Radius is
+   `--r-card` (10px), which §3 fixes for cards the way
+   `--r-control` (6px) is fixed for controls.
+
+   THE PRESS IS NOT THE BUTTON'S PRESS, AND THAT IS THE POINT OF
+   HAVING BOTH FILES. §4: "scale the press to the surface". 0.97
+   on a 236px card is a 7px shrink and reads as a glitch, so an
+   action card settles by 0.994 and loses its hover lift instead.
+   A layer that pressed every surface the same way would be a
+   worse answer than the 612, not a better one.
+
+   ONE COMPONENT, TWO ELEMENTS. A card the person can activate is
+   a real <button> (Card.tsx renders one when `onActivate` is
+   given), never a div with an onClick — that gets the role, the
+   tab stop, the Enter and Space handling and the focus ring for
+   free, and there is no way to build the pressable look without
+   also building the pressable behaviour.
+
+   THE KIND HUE arrives through the mechanism ds.css:2163 already
+   defines: a `data-kind` attribute sets `--kind`. The tint below
+   is not invented — it is the construction dashboard.css:2350
+   already uses on the module tile, 6% of the hue over the surface
+   with a 14% border, which is the mix that keeps a name at 4.5:1
+   over it. A hue may carry a surface (§1); it may never sit
+   behind reading text at strength, and 6% is why this one is a
+   ground rather than an ink.
+
+   NAMESPACE: `ui-` appears in none of the 47 existing stylesheets
+   — see the four-part note in button.css for why that makes this
+   a primitives layer and not the override layer CLAUDE.md forbids.
+   ============================================================ */
+
+.ui-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  color: var(--fg);
+  text-align: left;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-med) var(--ease),
+    transform var(--d-med) var(--ease);
+}
+
+/* -- tones ---------------------------------------------------- */
+/* Raised is the default a card wants: the shadow does the lifting
+   on light, the surface step does it on dark, and both are
+   already defined — §3 says never hand-roll a box-shadow. */
+.ui-card--raised {
+  box-shadow: var(--e1);
+}
+/* Flat is for a card inside another card, where a second shadow
+   is noise. It keeps the border and drops the lift. */
+.ui-card--flat {
+  box-shadow: none;
+}
+/* Sunken is a well — an empty slot, a drop target, a placeholder.
+   It reads as recessed because it is darker than its ground and
+   carries no shadow at all. */
+.ui-card--sunken {
+  border-color: var(--line);
+  background: var(--bg-sunken);
+  box-shadow: none;
+}
+
+/* -- padding · from the scale, never a literal (§3) ----------- */
+.ui-card--pad-none {
+  padding: 0;
+}
+.ui-card--pad-sm {
+  padding: var(--s-3);
+}
+.ui-card--pad-md {
+  padding: var(--s-4);
+}
+.ui-card--pad-lg {
+  padding: var(--s-6);
+}
+
+/* -- the kind hue, when the host declares one ----------------- */
+.ui-card[data-kind] {
+  background: color-mix(in srgb, var(--kind) 6%, var(--surface-1));
+  border-color: color-mix(in srgb, var(--kind) 14%, var(--line-subtle));
+}
+
+/* -- the activating card -------------------------------------- */
+/* A <button> does not inherit its font, so `font: inherit` is the
+   one reset an action card needs — the ground, the ink, the
+   radius and the text alignment all come from `.ui-card` above,
+   which matches this element too. */
+.ui-card--action {
+  appearance: none;
+  width: 100%;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-card--action:hover {
+    border-color: var(--line);
+    box-shadow: var(--e2);
+    transform: translateY(-1px);
+  }
+}
+
+/* THE PRESS: the lift drops away and the surface settles by a
+   hair. `translateY(0)` is written explicitly so the press beats
+   the hover lift rather than composing with it.
+
+   (0,4,0), and the long-form note is in button.css. In short:
+   base.css:431 presses every <button> in the app at (0,3,1) with
+   `scale(--press-scale)` — 0.97 — and an opaque wash, and a card
+   is the surface DESIGN_PRINCIPLES §4 names as the one that must
+   NOT take 0.97: "0.97 on a 236px card is a 7px shrink and reads
+   as a glitch". A rule written `.ui-card--action:active` computes
+   to (0,2,0) and would lose to it silently; measured in Chrome
+   before this selector was widened, an action card pressed at
+   exactly 0.97 and turned pale grey. So this borrows base.css's
+   own idiom to outrank it, for this surface only. */
+.ui-card--action:not(:disabled):not([aria-disabled='true']):active {
+  box-shadow: var(--e1);
+  transform: translateY(0) scale(0.994);
+  background-image: none;
+  transition:
+    transform var(--d-press) var(--ease),
+    box-shadow var(--d-press) var(--ease);
+}
+
+.ui-card--action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Selected is drawn from `aria-current`, not from a class of our
+   own, so the look and the announced state cannot drift apart:
+   there is no way to draw a selected card without announcing it.
+   The accent line plus the wash is the accent appearing once, on
+   the thing that is current (rule 5). */
+.ui-card[aria-current] {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-card {
+    transition:
+      background var(--d-fast) var(--ease),
+      border-color var(--d-fast) var(--ease),
+      box-shadow var(--d-med) var(--ease);
+  }
+  /* Movement goes; the shadow and the colour stay, so the press
+     is still felt. The press arm repeats its (0,4,0) selector
+     because a media query adds no specificity of its own. */
+  .ui-card--action:hover {
+    transform: none;
+  }
+  .ui-card--action:not(:disabled):not([aria-disabled='true']):active {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .ui-card {
+    border-color: var(--line);
+  }
+}

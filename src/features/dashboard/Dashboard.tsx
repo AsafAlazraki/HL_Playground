@@ -346,10 +346,19 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
                 the whole of what they ever said.
 
                 WHAT TOOK THE DISPLAY STEP IS THE SUBJECT: the doors
-                downstairs (`.dsh-door-name`, --t-display-lg) and the
+                downstairs (`.dsh-door-name`, --t-display-xl) and the
                 pipeline figure on the quotes card (`.dsh-worth-n`,
                 --t-figure-xl). Both are counted from the store, and
-                neither is a courtesy. */}
+                neither is a courtesy.
+
+                AND THE DOORS ARE NOW THE LARGER OF THE TWO, which
+                they were not when the tier landed. At 1280 the door
+                name is 34.00px against the figure's 33.43px, so the
+                front door reads at 3.09x whether or not a quote has
+                been raised — it was 2.44x on an empty book and 3.04x
+                on a drafted one, because the only display-tier step
+                on the screen was the one an empty book does not
+                draw. */}
             <h1 className="dsh-hail">
               {greeting(now)}, {firstName(user.name)}
             </h1>

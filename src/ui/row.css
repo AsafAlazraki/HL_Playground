@@ -1,0 +1,197 @@
+/* ============================================================
+   ROW — a line in a list.
+
+   THE MEASUREMENT. 220 classes in this repo declare `display:
+   flex` or `grid` plus `align-items` plus a box (a padding, a
+   height or a min-height) and carry a `:hover` rule — the
+   definition of a list line that answers the pointer. 36
+   stylesheets; 207 across 31 in the app proper.
+
+   40px, FROM §3. "Rows are 40px. The grid was tighter than a
+   spreadsheet while claiming to be easier than one." `--h-row` is
+   that number and `--h-row-dense` (34px) is the one exception the
+   system already names.
+
+   IT IS A min-height, NOT A height, AND THAT IS FINDING 5. §3
+   also says "nothing truncates mid-word — if a name does not fit
+   it wraps or clamps to two lines with the full text still in the
+   DOM", and the visual QA of 2026-09-09 found the app's only
+   mid-word truncation on a row exactly like this one:
+   `.pb-card-by` cutting "Asaf Alazraki" into "Alazr | aki"
+   because a fixed height left `text-overflow: ellipsis` as the
+   only way out. A row here grows instead. A proper noun is the
+   one kind of string a truncation cannot be read through.
+
+   THE PRESS DARKENS, IT DOES NOT SCALE. §4: "a list row darkens
+   instead of scaling, so its neighbours do not look like they
+   moved." This is the third press in three files — 0.97 on a
+   control, 0.994 and a lost lift on a card, a colour step on a
+   row — and having three is the reason a single primitives layer
+   is worth more than 220 hand-written ones, not an argument
+   against it.
+
+   NAMESPACE and the "no override layer" answer: see button.css.
+   ============================================================ */
+
+.ui-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-width: 0;
+  /* min-height, so a long name wraps rather than being cut. */
+  min-height: var(--h-row);
+  padding: var(--s-1) var(--s-3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: var(--t-body-weight);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
+  text-align: left;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+
+.ui-row--dense {
+  min-height: var(--h-row-dense);
+  font-size: var(--t-small-size);
+}
+
+/* A glyph, a dot, a checkbox — whatever marks the line. It never
+   shrinks, so names of different lengths still line up. */
+.ui-row-lead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-row-main {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* The thing being scanned for. `--t-heading` is the step §2 calls
+   "card names, row heads — the thing you scan for", taken whole. */
+.ui-row-name {
+  min-width: 0;
+  /* No `color` here on purpose. The name inherits the row's ink,
+     so when the row is current the name follows it without a
+     descendant selector — nothing in this layer reaches down into
+     another element to repaint it. */
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
+  /* wraps, never cuts. No `text-overflow: ellipsis` anywhere in
+     this file, deliberately. */
+  overflow-wrap: break-word;
+}
+
+/* Metadata beside the thing it describes — the caption step, at
+   --fg-tertiary, which is --ink-faint: 5.5:1 on white and 5.2:1
+   on the page ground, the floor for anything a person must read.
+   Not --fg-quaternary; §1 says that may never carry meaning. */
+.ui-row-meta {
+  min-width: 0;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  overflow-wrap: break-word;
+}
+
+.ui-row-trail {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-2);
+  margin-left: auto;
+}
+
+/* -- the activating row --------------------------------------- */
+/* NO `font: inherit` HERE, and that is the opposite of what
+   card.css does two files over. The `font` shorthand resets
+   family, size, weight and leading in one go, and at equal
+   specificity it lands AFTER `.ui-row`'s own `--t-body-*` set and
+   wipes it — an action row would silently draw at the inherited
+   size while a still row drew at the token's. `.ui-card` declares
+   no type at all, so there the shorthand is the right reset and
+   here it is a bug. `.ui-row` above already states every font
+   property the UA sets on a <button>, so there is nothing left to
+   reset. Measured: an action row and a still row both render
+   14px / 400. */
+.ui-row--action {
+  appearance: none;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-row--action:hover {
+    background: var(--surface-3);
+  }
+}
+
+/* THE PRESS IS ONE SURFACE STEP DARKER THAN HOVER, AND NOTHING
+   MOVES. §4: "a list row darkens instead of scaling, so its
+   neighbours do not look like they moved."
+
+   `transform: none` is written out rather than omitted, and the
+   selector is (0,4,0) rather than the obvious (0,2,0), because
+   base.css:431 presses every <button> in the app at (0,3,1) with
+   `scale(--press-scale)`. Omitting the transform would not mean
+   "no transform"; it would mean 0.97, and measured in Chrome
+   before this selector was widened that is exactly what a row
+   did. The long-form note is in button.css. */
+.ui-row--action:not(:disabled):not([aria-disabled='true']):active {
+  transform: none;
+  background-color: var(--surface-4);
+  /* base.css's wash is opaque in this tree (bridge.css:194) and
+     would paint over the colour step above — see button.css. */
+  background-image: none;
+  transition: background-color var(--d-press) var(--ease);
+}
+
+.ui-row--action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Current is drawn from `aria-current`, not a class of our own —
+   the look and the announced state cannot drift apart. The accent
+   appears once, on the row that is current (rule 5). */
+/* Measured, because §1 says the tint counts: --accent (#0a5fc2)
+   over --accent-wash composited on white is 5.36:1, and
+   --fg-tertiary on the same ground is 4.80:1. Both clear 4.5. */
+.ui-row[aria-current] {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-row--action[aria-current]:hover {
+    background: var(--accent-wash-strong);
+  }
+}
+
+/* Nothing in this file moves — the press rule above says
+   `transform: none` outright — so reduced motion has nothing to
+   remove here. The colour feedback is already what §4 asks to
+   keep. Stated rather than left silent: the absence is the
+   answer, not an oversight. */
+
+@media (prefers-contrast: more) {
+  .ui-row[aria-current] {
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+}

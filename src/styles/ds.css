@@ -1158,37 +1158,150 @@
    as it grows (§2, and the reason the old system was wrong).
    ============================================================ */
 :root {
+  /* ------------------------------------------------------------
+     THE TRACKING SPLIT, SETTLED 2026-09-09.
+
+     These two tokens read -0.033em and -0.026em, while .ds-hero and
+     .ds-display-lg — the utilities for the same two steps, redefined
+     280 lines down in THE DISPLAY FACE — hard-wrote -0.036em and
+     -0.028em over them. Two ways to take one step, drawing two
+     different letter-spacings, and DESIGN_CONTRACT §3's table
+     carried the utility's numbers while this file carried the
+     token's.
+
+     That is the root cause under visual-qa-2026-09-09 finding 7.
+     Six feature rules take the four tokens and then restate the
+     contract's tracking by hand — crm.css:330, onboarding.css:248,
+     views.css:1896, build.css:645, build.css:654 (-0.036em) and
+     views.css:2244 (-0.028em) — because taking the token alone did
+     not match the class. Each carries a comment justifying itself;
+     none of them says it is restating a number the token was
+     supposed to hold.
+
+     THE UTILITY'S NUMBER WINS, IN BOTH DIRECTIONS. It is what the
+     app actually draws, it is what the contract documents, and it
+     is what those six literals already say — so settling here turns
+     six overrides into no-ops instead of turning them into errors.
+     The override in THE DISPLAY FACE is deleted in the same pass,
+     so each step is declared once. Archivo runs optically larger
+     than Inter at a given size and its counters are tighter, which
+     is why these sit further negative than the Inter-era numbers
+     they were first written with.
+
+     NOTHING GETS WIDER. -0.036em is tighter than -0.033em and
+     -0.028em is tighter than -0.026em, so no surface that fitted
+     before this change can overflow after it.
+     ------------------------------------------------------------ */
+
   /* hero · the first line of a stage that IS the page */
   --t-hero-size: clamp(34px, 3.4vw, 52px);
   --t-hero-weight: 680;
   --t-hero-lead: 1.03;
-  --t-hero-track: -0.033em;
+  --t-hero-track: -0.036em;
 
   /* display-lg · a stage title with a page behind it */
   --t-display-lg-size: clamp(26px, 2.1vw, 34px);
   --t-display-lg-weight: 650;
   --t-display-lg-lead: 1.1;
-  --t-display-lg-track: -0.026em;
+  --t-display-lg-track: -0.028em;
 
   /* ============================================================
      THE DISPLAY TIER — READ THIS BEFORE YOU WRITE A font-size.
 
-     WHAT IS NEW AND WHAT IT IS FOR
+     THE WHOLE LADDER, RESOLVED. 1rem = 16px — no rule in this app
+     overrides the root font-size, so every rem term below is exact.
+     Sizes are what the browser computes at that window width.
 
-       --t-marque-*    72 → 110px   THE NAME OF THE THING BEING SOLD.
+                       @1024   @1280   @1440   @1920   face
+       --t-marque-*    72.00   82.86   89.65  110.00   Archivo
+       --t-hero-*      34.82   43.52   48.96   52.00   Archivo
+       --t-display-xl- 30.00   34.00   36.50   44.00   Archivo  <- NEW
+       --t-figure-xl-  30.00   33.43   35.57   42.00   Archivo
+       --t-display-lg- 26.00   26.88   30.24   34.00   Archivo
+       --t-display-*   28.00   28.00   28.00   33.14   Inter
+
+     WHAT EACH ONE IS FOR
+
+       --t-marque-*    72 → 110px  THE NAME OF THE THING BEING SOLD.
                                     One per screen, and only where the
                                     subject IS a product — the
                                     configurator's identity column
                                     (PHASE_TWO §2.3, QUOTE_GROUND_UP §3).
                                     NOT a stage title; that is --t-hero.
-       --t-figure-xl-* 30 → 42px    THE COMMITTED TOTAL. The one figure a
+       --t-hero-*      34 → 52px   the first line of a stage that IS
+                                    the page. ONE per stage.
+       --t-display-xl- 30 → 44px   A NAME THAT IS ONE OF SEVERAL and
+                                    is the point of the screen — a
+                                    door, a place, a band head, a page
+                                    header. Four to a screen is normal.
+                                    Its own note is below its tokens.
+       --t-figure-xl-  30 → 42px   THE COMMITTED TOTAL. The one figure a
                                     price bar exists to state. Tabular,
                                     and NOT mono — see below, it was
                                     measured.
+       --t-display-lg- 26 → 34px   a stage title with a page behind it,
+                                    and the lowest floor in the tier.
+       --t-display-*   28 → 40px   NOT IN THIS TIER. Inter, and the top
+                                    of the chrome scale. See THE ONE
+                                    OVERLAP below before you reach for
+                                    it expecting a headline.
 
-     Utilities: .ds-marque and .ds-figure-xl. Take the class, not the
-     four tokens, unless you are writing a feature rule that already
-     owns the element.
+     Utilities: .ds-marque, .ds-hero, .ds-display-xl, .ds-figure-xl,
+     .ds-display-lg. Take the class, not the four tokens, unless you
+     are writing a feature rule that already owns the element.
+
+     THE ORDERING RULE, WHICH IS THE ONE THIS TIER KEPT BREAKING.
+     Two steps may share a pixel RANGE — a ladder whose rungs grow at
+     different rates cannot avoid it. Two steps may never SWAP ORDER
+     at a width. A reader who takes the larger-sounding name and gets
+     the smaller size has been lied to, and six hand-written tracking
+     values are what that lie already cost.
+
+     --t-display-xl was checked against every neighbour at every
+     width from 600px to 3000px: strictly LARGER than --t-display and
+     --t-display-lg at all of them, strictly SMALLER than --t-hero
+     and --t-marque at all of them, and equal to --t-figure-xl only
+     at or below 1024px, where both sit on the tier's shared 30px
+     floor. Check the next step the same way before you add it.
+
+     THE ONE OVERLAP, AND WHY IT STAYS. --t-display-* is Inter and it
+     is not part of this tier: DESIGN_CONTRACT §3 fixes it as a
+     panel/stage step and response.css:74 ramps it 28 → 40px. It
+     crosses --t-display-lg TWICE. --t-display-lg passes it at
+     1333px; it passes --t-display-lg back at 2001px. So at 1280 and
+     at 1024 — the two widths every measurement in this repo is
+     quoted at — the step called "display-lg" renders SMALLER than
+     the step called "display": 26.88 against 28.00, and 26.00
+     against 28.00.
+
+     AND IT IS ON A SCREEN, NOT IN THE ABSTRACT. Onboarding draws
+     both. onboarding.css:261 steps DOWN to --t-display-lg for a
+     long business name, and onboarding.css:422 takes --t-display
+     under a comment that reads "display (28px, Inter) is the step
+     BELOW the one the left-hand line takes". At 1280 the step
+     below is 28.00px and the step above is 26.88px. That comment
+     is not careless; it is what the names promise.
+
+     NEITHER END CAN MOVE, WHICH IS WHY IT STAYS. --t-display's ramp
+     lives in response.css, which is imported last and owns it, and
+     the contract fixes that step in Inter on purpose — "an oversized
+     heading on a DATA surface steals room from the data". And
+     --t-display-lg cannot rise: thirteen surfaces took it BECAUSE it
+     bottoms at 26px. picker.css:112 calls it "the lowest of the
+     four"; tablekit.css:154, views.css:2235 and onboarding.css:258
+     all step DOWN to it when a name runs long. Raising its floor
+     would overflow the surfaces that chose it for that floor, and it
+     would still not close the 2001px crossing, which needs a 40px
+     ceiling this step must not have.
+
+     WHAT IS FIXED INSTEAD IS THE HARM. The reason "-lg" had to
+     pretend to be a step above "display" is that there was no honest
+     one. --t-display-xl is that step: strictly larger than
+     --t-display at every width, in the display face, with a set of
+     its own. An author who wants "bigger than display" now has a
+     token that is actually bigger. Read "-lg" as "the large end of
+     the CHROME range, drawn in the display face", never as "one
+     above --t-display".
 
      WHY THEY EXIST. PHASE_TWO §3's scale-contrast row asks for a
      "72–110px product name against 12px labels". The ceiling in this
@@ -1273,6 +1386,122 @@
   --t-figure-xl-weight: 600;
   --t-figure-xl-lead: 1.05;
   --t-figure-xl-track: -0.03em;
+
+  /* ============================================================
+     --t-display-xl-* · A NAME THAT IS ONE OF SEVERAL, AND IS THE
+     POINT OF THE SCREEN. The step that closes the 56px hole.
+
+     WHY IT EXISTS, MEASURED. At 1280 this tier ran from 26.88px
+     (--t-display-lg) to 82.86px (--t-marque) — 56px — with exactly
+     one step inside it. That step is --t-hero, and its own
+     definition scopes it to "the first line of a stage that IS the
+     page": ONE per stage. The visual sweep of 2026-09-09 found
+     --t-hero on two of the twelve screens it measured, and eleven
+     of those twelve sat between 2.44x and 3.96x where PHASE_TWO §3
+     asks for about 7x.
+
+     The names this app is actually made of arrive in FOURS — four
+     kind doors on the home stage, a grid of module places, a
+     register's band heads. Four heroes on one screen is not a
+     hierarchy, so there was no step a PLURAL name could take, and
+     three rules wrote their own rather than go without
+     (visual-qa-2026-09-09 finding 7):
+
+       page.css:101   clamp(26px, 2.4vw, 34px)  660   1.08  -0.028em
+       picker.css:80  clamp(26px, 2.6vw, 40px)  680   1.04  -0.03em
+       quote.css:1870 flat 32px                 none  1.1   -0.028em
+
+     30.72px, 33.28px and 32.00px at 1280. Three authors who had not
+     read each other reached into the same 31-33px band. That is the
+     strongest evidence a design system can be handed that a step is
+     missing, and page.css:101 is the largest text on five distinct
+     screens. This is that step, owned, so they can be pointed at it.
+
+     THE SIZE IS THE CELL, AND THE CELL WAS MEASURED. Handed over by
+     the surface pass at dashboard.css:3186-3213: at 1280x800 on the
+     real seed the home doors card is 488px, .dsh-doors 463px, a door
+     225px and .dsh-door-name 199px. Archivo at 640 through canvas,
+     the longest of the four kind labels a marine dealer has:
+
+       "Accessories"  --t-display-lg  26.88px  150.0px  fits (199)
+       "Accessories"  --t-figure-xl   33.43px  186.5px  fits
+       "Accessories"  --t-hero        43.52px  240.6px  OVERFLOWS
+       "Accessories"  --t-marque      82.86px  445.7px  OVERFLOWS
+
+     "Accessories" is ONE WORD. A step it does not fit cannot wrap,
+     and overflow-wrap: break-word would cut it mid-word, which
+     DESIGN_PRINCIPLES §3 forbids outright. The cell therefore holds
+     35.5px and not a pixel more.
+
+     34.00px at 1280 fits with 9px over and puts the front door at
+     34.00 / 11 = 3.09x — above the 2.97x the display tier was built
+     to fix, and which the tier's own landing took DOWN to 2.44x by
+     capping the door at --t-display-lg.
+
+     34px is also, independently, the geometric mean of the two steps
+     it sits between: sqrt(26.88 x 43.52) = 34.2. The cell and the
+     ladder agree, which is the only reason to trust either.
+
+     THE CLAMP. 0.875rem + 1.5625vw is exactly 14px + W/64: 30px at
+     1024, 34.00px at 1280, 36.50px at 1440, 44px at 1920 — the same
+     1024 → 1920 anchors --t-marque and --t-figure-xl already ramp
+     between, so the tier grows as one thing rather than three.
+     rem + vw and NOT bare vw: response.css:38-42 settled that a
+     pure-vw font-size does not respond to browser zoom, which turns
+     a readability aid into a trap. --t-hero and --t-display-lg
+     predate that rule and still use bare vw; this does not repeat
+     it.
+
+     WHAT THE NEXT PHASE MUST KNOW BEFORE IT WEARS THIS. THE CELL
+     SHRINKS AS THE WINDOW GROWS. The doors grid answers a wider
+     window with MORE COLUMNS, so the door measures 225px at 1280 and
+     165px at 1920. This step passes the 35.5px cell budget at
+     1376px. Both facts point the same way and neither is this
+     token's to fix: a surface that wears --t-display-xl must either
+     stop its grid adding columns past the width where the name stops
+     fitting, or swap a WHOLE STEP down the way --t-marque does below
+     ~360px. Rule 6 permits swapping steps; it never permits reaching
+     in for one value. DO NOT solve it by shrinking this token —
+     shrinking a step you did not own is how the three hand-written
+     ones above happened.
+
+     THE SET, DERIVED RATHER THAN CHOSEN (rule 6, and rule 7).
+
+     WEIGHT 660. --t-display-lg is 650 at 26.9px and --t-hero is 680
+     at 43.5px, and 34px sits almost exactly at the log-midpoint of
+     those two sizes: log(34/26.88) = 0.235, log(43.52/34) = 0.247.
+     660 is also what page.css:101 arrived at by hand for this exact
+     job, so the widest-deployed of the three inventions does not
+     change weight on the day it is pointed here.
+
+     LEADING 1.06, AND IT IS A MEASUREMENT. Archivo's ink at this
+     tier, from canvas actualBoundingBox: 0.736em ascender plus
+     0.193em descender = 0.929em. The tier does not hold a constant
+     multiplier, it holds a constant OPTICAL GAP — marque 0.98 leaves
+     4.23px, hero 1.03 leaves 4.40px, display-lg 1.1 leaves 4.60px.
+     0.929 + 4.4/34 = 1.058, so 1.06, which leaves 4.45px and lands
+     inside that band. The stacked-accent caveat above applies here
+     too and is accepted for the same reason.
+
+     TRACKING -0.032em. Rule 7 runs it further negative as the step
+     grows, and the tier now reads -0.028 at 26.9px, -0.032 at 34px,
+     -0.036 at 43.5px, -0.042 at 82.9px — log-interpolated between
+     its two neighbours rather than picked. --t-figure-xl is -0.03em
+     at 33.4px, a hair LOOSER at nearly the same size, and that is
+     deliberate: it is tabular and its digits may not crowd. A name
+     carries no such duty.
+
+     WIDTH 100, stated on .ds-display-xl — see THE WIDTH LADDER
+     below. This step's host is a CELL, which is the least room any
+     display step gets. 100 is also Archivo's own default, so a
+     surface that forgets to state it still gets the right thing, and
+     the prefers-contrast rule at the end of this file has nothing to
+     walk back for it, exactly as with .ds-marque.
+     ============================================================ */
+  --t-display-xl-size: clamp(30px, 0.875rem + 1.5625vw, 44px);
+  --t-display-xl-weight: 660;
+  --t-display-xl-lead: 1.06;
+  --t-display-xl-track: -0.032em;
 
   /* -- motion, extended ---------------------------------------
      The four above stay. These are for ENTRANCES, which the old
@@ -1363,8 +1592,17 @@
    EXPRESSIVE UTILITIES
    ============================================================ */
 
+/* THESE TWO DECLARE NO FAMILY, AND THAT IS NOT AN OMISSION. Both
+   are re-declared in THE DISPLAY FACE below, at the same (0,1,0)
+   and later in source order, where they are pointed at
+   --font-hero and given their width axis. The font-family that
+   used to sit here read var(--font-sans) and was overridden 280
+   lines later every single time — a reader who grepped .ds-hero,
+   found this block and concluded the hero was Inter would have
+   been wrong, and that class of confusion is what produced three
+   invented display steps. Removed rather than corrected, so the
+   face is stated in exactly one place. */
 .ds-hero {
-  font-family: var(--font-sans);
   font-size: var(--t-hero-size);
   font-weight: var(--t-hero-weight);
   line-height: var(--t-hero-lead);
@@ -1372,7 +1610,6 @@
   color: var(--fg);
 }
 .ds-display-lg {
-  font-family: var(--font-sans);
   font-size: var(--t-display-lg-size);
   font-weight: var(--t-display-lg-weight);
   line-height: var(--t-display-lg-lead);
@@ -1424,6 +1661,39 @@
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
   color: var(--fg);
+}
+
+/* THE PLURAL NAME — the step between --t-display-lg and --t-hero,
+   and the one a screen may wear four times. The reasoning, the cell
+   it was measured against and the derivation of the set are at its
+   tokens above.
+
+   IT CARRIES THE DISPLAY FACE AND ITS WIDTH AXIS HERE, at its own
+   definition, the way .ds-marque and .ds-figure-xl do — rather than
+   being declared in Inter and re-pointed at Archivo 280 lines down
+   the way .ds-hero and .ds-display-lg are. A step defined in two
+   places is exactly the split that put -0.033em in a token and
+   -0.036em in a class and cost six feature rules a hand-written
+   letter-spacing each.
+
+   text-wrap: balance, because these arrive in a grid of cells and a
+   one-word orphan on the second line at 34px is visible from across
+   the room.
+
+   NO overflow-wrap. "Nothing truncates mid-word" holds at every size
+   (DESIGN_PRINCIPLES §3), and break-word breaks precisely that
+   promise on a one-word name like "Accessories". A name too long for
+   its cell is the SURFACE's problem: give it room, or swap a whole
+   step down. */
+.ds-display-xl {
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 100;
+  font-size: var(--t-display-xl-size);
+  font-weight: var(--t-display-xl-weight);
+  line-height: var(--t-display-xl-lead);
+  letter-spacing: var(--t-display-xl-track);
+  color: var(--fg);
+  text-wrap: balance;
 }
 
 /* GRADIENT TEXT IS A HEADLINE TREATMENT AND NOTHING ELSE.
@@ -1616,10 +1886,16 @@
    width axis. Importing the wdth cut brings both back to life.
 
    THE GUARD AGAINST REPEATING THE FAILURE is a floor, not a
-   promise. Archivo is reachable through exactly two type steps,
-   --t-hero and --t-display-lg, whose clamps bottom out at 34px
-   and 26px. There is no path by which this face renders below
-   26px, so it cannot be set at 9px the way its predecessor was.
+   promise. Archivo is reachable through exactly FIVE type steps —
+   --t-marque, --t-hero, --t-display-xl, --t-figure-xl and
+   --t-display-lg — whose clamps bottom out at 72, 34, 30, 30 and
+   26px. The lowest floor in the tier is 26px, so there is no path
+   by which this face renders below it and it cannot be set at 9px
+   the way its predecessor was. A SIXTH STEP MUST CARRY A FLOOR AT
+   OR ABOVE 26px; nothing else keeps this promise. Nor may a surface
+   inherit --font-hero and then write a bare font-size over it —
+   picker.css:88 does, and walks under the floor at every width this
+   app is used at, with no guard to catch it.
 
    WHAT STAYS. Everything a person READS is Inter — body, small,
    caption, label, every name, every sentence. Every FIGURE is IBM
@@ -1644,30 +1920,52 @@
     -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
+/* THE TWO INTER-ERA UTILITIES, RE-POINTED AT THE DISPLAY FACE. The
+   letter-spacing overrides that used to sit here — -0.036em and
+   -0.028em, written over the -0.033em and -0.026em the tokens
+   carried — are GONE, because the tokens carry those numbers now.
+   See THE TRACKING SPLIT, SETTLED at the head of the tier.
+
+   Nothing on screen moves for these two classes: they drew -0.036em
+   and -0.028em before and they draw them now. What moves is every
+   feature rule that took the four TOKENS instead of the class — it
+   finally draws what the class draws, which is what six rules were
+   restating by hand. */
 .ds-hero {
   font-family: var(--font-hero);
   font-variation-settings: 'wdth' 105;
-  /* Archivo runs optically larger than Inter at the same size and
-     its counters are tighter, so the hero step's tracking is
-     pulled a little further negative than the -0.033em the step
-     declares. Tracking still runs NEGATIVE as size grows (§2). */
-  letter-spacing: -0.036em;
 }
 .ds-display-lg {
   font-family: var(--font-hero);
   font-variation-settings: 'wdth' 103;
-  letter-spacing: -0.028em;
 }
 
-/* THE WIDTH LADDER, AND WHY IT DESCENDS. 105 at hero, 103 at
-   display-lg, 100 at marque. The extension is a voice, and a voice is
-   affordable where there is room: hero runs across a stage. The marque
-   runs down a 400px identity column beside a photograph, where every
-   percent of width costs a line of wrap on a name like "Highfield
-   CL260". At 83px the SIZE is the voice and the width should not spend
-   the column. .ds-marque therefore states 'wdth' 100 at its own
-   definition above, which also means the prefers-contrast rule below
-   has nothing to walk back for it. */
+/* THE WIDTH LADDER IS ABOUT ROOM, NOT SIZE. It was written here as
+   "descends as the size grows: 105 -> 103 -> 100", and that is not
+   what the numbers do: 105 is at hero (43.5px) and 100 is at marque
+   (82.9px), but 103 is at display-lg (26.9px), which is the SMALLEST
+   of the three. The gloss underneath was always the real rule, so it
+   is the rule now — an extension is a VOICE, and a voice is
+   affordable where there is ROOM.
+
+     105  --t-hero        a stage's own first line, across the whole
+                          page. The most room any step gets.
+     103  --t-display-lg  a stage title with a page behind it.
+     100  --t-display-xl  a name in a CELL, four to a screen. The
+                          least room any display step gets, and the
+                          3% of advance that 103 would spend is about
+                          5px of a 199px door — derived from the
+                          150.0px measurement above, not separately
+                          measured.
+     100  --t-marque      a name down a ~400px identity column beside
+                          a photograph, where every percent of width
+                          costs a line of wrap on "Highfield CL260".
+                          At 83px the SIZE is the voice and the width
+                          must not spend the column.
+
+   .ds-marque, .ds-figure-xl and .ds-display-xl state 'wdth' 100 at
+   their own definitions, which also means the prefers-contrast rule
+   below has nothing to walk back for them. */
 
 /* Archivo has no optical-size axis. Leaving `font-optical-sizing:
    auto` inherited from .ds-root is harmless, but the synthesis

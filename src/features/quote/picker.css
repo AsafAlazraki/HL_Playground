@@ -72,56 +72,107 @@
   border-bottom: 1px solid var(--line-subtle);
 }
 
+/* ============================================================
+   THE HEAD HAS TWO STATES AND NEITHER OWNS A SIZE ANY MORE
+
+   This one element is the whole first screen of the sale. On layer
+   one it asks the question; on layer two it IS the brand, standing
+   where the question was. Both states used to write their own type,
+   and both were wrong in the two different ways the tier exists to
+   stop.
+
+   ── STATE ONE WROTE A FIFTH DISPLAY STEP ─────────────────────
+   It read `--font-hero` / `clamp(26px, 2.6vw, 40px)` / 680 / 1.04 /
+   -0.03em — 33.28px at 1280 and 26.62px at 1024, measured. That is
+   `visual-qa-2026-09-09` finding 7, and `ds.css` names this exact
+   line beside the two others that did the same thing:
+
+     page.css:101   clamp(26px, 2.4vw, 34px)  660  1.08  -0.028em
+     picker.css:80  clamp(26px, 2.6vw, 40px)  680  1.04  -0.03em
+     quote.css:1870 flat 32px                 none  1.1   -0.028em
+
+   30.72px, 33.28px and 32.00px at 1280 — three authors who had not
+   read each other reaching into one 31-33px band, which is the
+   strongest evidence a system can be handed that a step is missing.
+
+   ── STATE TWO WALKED UNDER THE FLOOR ─────────────────────────
+   `.qs-q--here` read `clamp(22px, 2vw, 30px)` and overrode nothing
+   but the size, so it inherited Archivo from the rule above and drew
+   the display face at 25.6px @1280 and 22px @1024 and @900 — finding
+   6. DESIGN_CONTRACT §8.11 retired the previous display face because
+   "it was being set at 9px, where a serif is blur", and what replaced
+   it is "a floor, not a promise": every step in the tier bottoms at
+   26px so it cannot recur. A hand-written clamp beside the tokens is
+   the one path that promise did not account for. `4ab7226` closed it
+   by taking `--t-display-lg-*`; the modifier is now GONE rather than
+   re-pointed, because a class whose only job is to overwrite a size
+   is how the fault happened, and there is nothing left to modify once
+   both states take a whole step.
+
+   ── SO EACH STATE TAKES THE STEP THAT DESCRIBES IT ───────────
+   `.ds-hero` is "the first line of a stage that IS the page. ONE per
+   stage." The block at the top of this file argues at length that
+   this stopped being a dialog and became a page; the question is that
+   page's first line and has the row to itself.
+
+   `.ds-display-xl` is, in the contract's own words, "a name that is
+   one of SEVERAL and is the point of the screen — a kind door, A
+   MODULE PLACE, a band head". State two is a module place, picked out
+   of eighteen. It is the first surface in the app to wear the step —
+   `DESIGN_CONTRACT` §3 records that applying it "is the next phase's
+   work" — and the ladder is what keeps the old comment's judgement
+   that the name must sit BELOW the question: it shares its line with
+   a back arrow, a mark and a count where the question does not, so it
+   takes the rung below, not a shrink of the rung above.
+
+   MEASURED IN CHROME AT deviceScaleFactor 1 ON THE REAL SEED:
+
+     window   the question        the place
+     1280     33.28px -> 43.52    25.60 -> 26.88 (4ab7226) -> 34.00
+     1024     26.62px -> 34.82    22.00 -> 26.00 (4ab7226) -> 30.00
+
+   Against the app's 11px floor that moves this screen from 3.03x to
+   3.96x at 1280 and from 2.42x to 3.17x at 1024 — the ratio
+   `visual-qa-2026-09-09` measured second-lowest of twelve.
+
+   THE ROOM WAS MEASURED, NOT ASSUMED. The contract asks a surface
+   wearing `--t-display-xl` to own its cell — "give it room, or swap a
+   whole step down" — because the step was sized against a 225px door.
+   This host is not a cell: the head row is 950px at 1280 and 718px at
+   1024, of which the name's own box gets 769px and 537px after the
+   arrow, the mark and the count. "Highfield Inflatables", the longest
+   module name on the Northside sheet, measures 294.78px of ink at
+   34px and 260.11px at 30px — one line, with 474px and 277px spare.
+   There is no width this app is used at where it needs a swap-down
+   arm, so none is written.
+
+   AND THE GRID DID NOT MOVE FOR IT. The question is 10.24px taller at
+   1280, which is the only thing on this screen the change costs. The
+   body was measured before and after: `.qs-body` is 720/720 and then
+   710/710 — it still does not scroll, the four card columns are still
+   four 214px columns, and the shut band's foot went 737.6 -> 747.8,
+   which is inside the body either way. That mattered enough to check:
+   the gutter note further down rejected 104px precisely because it
+   "pushed the shut band below the fold at y=818", and a bigger
+   headline is the same trade. At 1024 the body already scrolled — 693
+   of 851 before, 687 of 851 now — so the depth grew by six pixels and
+   nothing that fitted stopped fitting.
+
+   ── AND THE TYPE COMES FROM THE CLASS, NOT THE FOUR TOKENS ───
+   `ds.css`: "Take the class, not the four tokens, unless you are
+   writing a feature rule that already owns the element." The class is
+   also the only place that states the FACE and the WIDTH AXIS —
+   `wdth` 105 at hero, 100 at display-xl — so taking tokens here would
+   mean hand-writing `font-variation-settings` beside them, which is
+   the same restating that left six hand-written letter-spacings in
+   this app. What is left below is what a feature rule should own: the
+   margin, the flex and the `min-width: 0` that lets the row shrink.
+   Same shape as `.hm-mast-name`, which does this already.
+   ============================================================ */
 .qs-q {
   margin: 0;
   flex: 1;
   min-width: 0;
-  font-family: var(--font-hero);
-  font-size: clamp(26px, 2.6vw, 40px);
-  font-weight: 680;
-  line-height: 1.04;
-  letter-spacing: -0.03em;
-  color: var(--fg);
-}
-
-/* THE MODULE'S NAME IS SMALLER THAN THE QUESTION, because it shares
-   its line with a back arrow, a logo and a count where the question
-   had the row to itself. That was right; the size it reached for was
-   not.
-
-   IT WAS `clamp(22px, 2vw, 30px)`, AND THAT WALKED UNDER THE FLOOR.
-   `.qs-q` above sets `--font-hero` (Archivo) and this modifier
-   inherited it while overriding only the size, so the display face
-   rendered below the 26px it is barred from. Measured in Chrome,
-   Archivo Variable at 680:
-
-     window    was        now
-     1280      25.6px     26.88px
-     1024      22px       26px
-      900      22px       26px
-
-   DESIGN_CONTRACT §8.11 retired the previous display face because
-   "it was being set at 9px, where a serif is blur", and what replaced
-   it is "a floor, not a promise — Archivo is reachable through
-   exactly the four steps below, the lowest of which bottoms out at
-   26px, so no display face can render at 9px again." A hand-written
-   clamp beside the token is exactly the path that promise did not
-   account for: nothing enforces the floor, so the only thing that
-   keeps it is taking a real step.
-
-   SO IT TAKES ONE — `--t-display-lg-*`, the lowest of the four, whose
-   clamp bottoms at 26px by construction. THE WHOLE SET (rule 6):
-   size, weight, leading and tracking travel together, which is why
-   the three lines below the size are here and not left inherited
-   from `.qs-q`'s 680 / 1.04 / -0.03em. The tracking is the TOKEN and
-   not the contract's hand-written -0.028em — this file is not going
-   to become the seventh rule restating a number the token was
-   supposed to hold. */
-.qs-q--here {
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
 }
 
 .qs-here {

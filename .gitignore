@@ -32,3 +32,6 @@ __pycache__/
 # different size costs nobody else's bandwidth. 17 MB, machine-local; the
 # DOWNSCALED copies under public/seed-images are the ones that are committed.
 tools/seed/.imgcache/
+
+# screenshot baselines for tools/check-shots.mjs — the one place PNGs are source
+!tools/shots/*.png

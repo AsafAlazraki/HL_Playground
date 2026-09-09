@@ -2949,8 +2949,9 @@
 
    The subject of the front door is the drafts and the doors. The
    drafts live on the card above and carry `--t-figure-xl`; these
-   carry `--t-display-lg` — see `.dsh-door-name` for why not the
-   marque and why not the hero.
+   carry `--t-display-xl` — see `.dsh-door-name` for why not the
+   marque, why not the hero, and what the cell does at the two
+   widths where it cannot hold that step.
 
    THE PICTURES CAME WITH IT, and they are the half that was
    costing this card its whole reason. Measured at 1280x800 on the
@@ -3020,6 +3021,16 @@
   text-align: left;
   cursor: pointer;
   border-radius: var(--r-control);
+  /* THE DOOR IS A CONTAINER, AND ITS OWN WIDTH IS THE ONLY HONEST
+     QUESTION THE NAME CAN ASK. `--t-display-xl` fits or does not fit
+     according to the room THIS cell has, and that is not a function
+     of the window: measured on the real seed, a 950px window draws a
+     336px door (the dashboard is one column of cards there) and a
+     960px window draws a 157px one (it has just become two). A
+     `@media` rule would step the name DOWN at the width where the
+     cell more than doubles. The ladder under `.dsh-door-name` reads
+     the cell instead. */
+  container: dsh-door / inline-size;
   /* THE SAME GROUND A TILE OF THIS KIND WEARS. 6% is a tint the
      name still clears 4.5:1 against, and it is what makes the
      doors read as four families rather than four boxes. */
@@ -3115,6 +3126,9 @@
      gap is read relative to the type above it, not absolutely. */
   gap: 2px;
   min-width: 0;
+  /* the side padding is the second half of the name's ladder and
+     steps to 8px with it — the rung is stated under
+     `.dsh-door-name`, where the 10 pixels it buys are counted */
   padding: var(--s-2) var(--s-3) var(--s-3);
 }
 
@@ -3127,115 +3141,198 @@
    screen. Four kinds of thing a marine dealership sells, set at
    the size the app uses for the word "Quotes".
 
-   `--t-display-lg-*` IS THE RIGHT STEP AND `--t-marque-*` IS NOT.
+   `--t-display-xl-*` IS THE STEP, AND `--t-marque-*` IS NOT.
    ds.css scopes the marque to "the name of the thing being sold,
    ONE per screen, and only where the subject IS a product — the
    configurator's identity column". Four doors are four names, and
    a door is a way IN to a kind rather than a product with a
    price. `--t-hero` is the other one ruled out: it is "the first
-   line of a stage", and there are four of these. `--t-display-lg`
-   is what is left and it is what it is for — a title with a page
-   behind it, which is exactly what a door is.
+   line of a stage", and there are four of these. What was left
+   until 2026-09-09 was `--t-display-lg`, and this is what taking
+   it cost:
 
-   THE FOUR TOKENS RATHER THAN `.ds-display-lg`. ds.css's note
+     before the tier   32.7px greeting    ÷ 11px  =  2.97x
+     after the tier    26.88px door name  ÷ 11px  =  2.44x  <- down
+     with this step    34.00px door name  ÷ 11px  =  3.09x
+
+   The middle row is `visual-qa-2026-09-09` finding 1, ranked the
+   worst of ten: the front door was the one stage in the app whose
+   largest glyph went DOWN when the display tier landed, and on a
+   fresh sheet — no drafts, so no `.dsh-worth-n` — 2.44x was the
+   whole screen. `--t-display-xl` is the step written to close it,
+   "A NAME THAT IS ONE OF SEVERAL AND IS THE POINT OF THE SCREEN",
+   and ds.css:1420 sized it against THIS cell, from this file's own
+   handover. The front door is what it was written for.
+
+   THE FOUR TOKENS RATHER THAN `.ds-display-xl`. ds.css's note
    says take the class "unless you are writing a feature rule that
    already owns the element", and this rule owns it. Two classes
    on one element, both at (0,1,0), with this file loaded after
    ds.css, is a cascade nobody can see: the utility would set the
    size and this rule would set the colour, and the day somebody
    adds a size here the utility silently loses. One rule, four
-   tokens, one place to look.
-
-   IT FITS, AND THAT WAS MEASURED RATHER THAN HOPED. Archivo at
-   640 through canvas, against a door 224px wide with 24px of
-   padding — 200px of room — at 1280x800:
-
-     Boats         74px      Trailers      94px
-     Motors        89px      Accessories  157px
-
-   at the 26.88px this clamp resolves to. The longest kind label a
-   marine dealer has clears the column by 43px. At 34px — the
-   clamp's ceiling, reached above 1620px — "Accessories" is 199px
-   in a door that is 396px wide there, so it never gets tighter as
-   the window grows.
-
-   A KIND'S NAME IS STILL A NAME — rule 3, so it is not uppercase
-   and not tracked out, and `break-word` keeps §3's promise that
-   nothing truncates mid-word: a business whose kinds are longer
-   than a marine dealer's wraps to two lines rather than clipping.
-   `balance` because a two-line name at this step with one word on
-   the second line is visible from across the room.
+   tokens, one place to look — and the class's own two extras come
+   with them: `text-wrap: balance`, and NO `overflow-wrap`.
 
    ------------------------------------------------------------
-   AND HERE IS THE CONSEQUENCE THE ARGUMENT ABOVE DID NOT WRITE
-   DOWN, WHICH THE 2026-09-09 VISUAL SWEEP MEASURED AND RANKED AS
-   ITS WORST FINDING.
+   THE CELL, RE-MEASURED — AND TWO THINGS EVERY EARLIER NOTE SAID
+   ABOUT IT ARE WRONG.
 
-   Ruling out the marque and ruling out the hero leaves this step,
-   and this step is FIVE PIXELS BELOW the greeting it replaced:
+   In Chrome on the real seed, through the live element rather than
+   through canvas, so tracking and the width axis are in the
+   figure. The widest of the four kind labels a marine dealer has:
 
-     before the tier   32.7px greeting   ÷ 11px  =  2.97x
-     after the tier    26.88px door name ÷ 11px  =  2.44x
+     window   door   room   "Accessories" wants    verdict
+       1024    173    147    166.0 at 30.00px      OVER by 19
+       1280    225    199    188.1 at 34.00px      fits, 10.9 over
+       1440    265    239    202.0 at 36.50px      fits, 37.0 over
+       1920    385    359    243.5 at 44.00px      fits, 115.5 over
 
-   So the front door is the one stage in the app whose largest
-   glyph went DOWN when the display tier landed, and on a fresh
-   sheet — no drafts, so no `.dsh-worth-n` — 2.44x is the whole
-   screen. PHASE_TWO §2.3 asks for about 7x.
+   FIRST: THE CELL GETS WIDER AS THE WINDOW GROWS, not narrower.
+   `.dsh-doors` is `repeat(2, minmax(0, 1fr))` and has been since
+   the two-track argument above was settled. The sentence that said
+   "the grid answers a wider window with MORE columns, so the door
+   measures 225px at 1280 and 165px at 1920" was describing the
+   `auto-fill` template that rule replaced; ds.css:1455 carries the
+   same stale sentence forward from this file's handover, and 1920
+   is in fact the width with the MOST room of any measured here.
 
-   THE CEILING IS THE CELL, AND IT IS MEASURED. At 1280x800 on the
-   real seed the doors card is 488px wide, `.dsh-doors` 463, a door
-   225, and this element 199. Archivo at each candidate step, the
-   longest of the four kind labels:
+   SECOND: 1024 IS WHERE THIS CELL IS TIGHT, AND IT WAS ALREADY
+   BROKEN THERE. `--t-display-lg` bottoms at 26px, where
+   "Accessories" wants 149.3px, and the 1024 cell has 147. So the
+   step this rule carried until today DID NOT FIT at 1024 either,
+   and `overflow-wrap: break-word` was breaking the word across two
+   lines — measured on the shipping tree, before this change. §3
+   forbids that outright. The sweep missed it because its mid-word
+   test only walked elements with `text-overflow: ellipsis`.
 
-     "Accessories"  --t-display-lg  26.88px  150.0px   fits (199)
-     "Accessories"  --t-figure-xl   33.43px  186.5px   fits
-     "Accessories"  --t-hero        43.52px  240.6px   OVERFLOWS
-     "Accessories"  --t-marque      82.86px  445.7px   OVERFLOWS
+   SO THE NAME STEPS DOWN A WHOLE SET WHEN ITS CELL CANNOT HOLD
+   ONE, which is what ds.css:1455 asks of any surface wearing this
+   step and what `build.css:649` already does for the marque.
+   "Accessories" costs 5.533x the font-size at `--t-display-xl`
+   (wdth 100, -0.032em) and 5.740x at `--t-display-lg` (wdth 103,
+   -0.028em) — straight-line to the pixel across three sizes each —
+   so every rung is a division rather than a guess:
 
-   and "Accessories" is ONE WORD, so a step it does not fit on
-   cannot wrap — `break-word` would cut it mid-word, which §3
-   forbids outright. The cell never gets wider either: the grid
-   answers a wider window with MORE columns, so the door measures
-   225px at 1280 and 165px at 1920.
+     rung          cell       size there      clears by
+     display-xl    >= 220px   34.0px @1280    8 to 116px
+     display-lg    >= 168px   26.0px @1024    1 to 48px
+     title         <  168px   20px, in Inter  27 to 37px
 
-   WHICH LEAVES A HOLE IN THE LADDER RATHER THAN A FAULT IN THIS
-   RULE. `--t-figure-xl` fits and is not available: ds.css scopes
-   it to "THE COMMITTED TOTAL... one step, for one figure, at
-   display size. Do not read this as permission", and the one
-   figure it is for is already on this screen (`.dsh-worth-n`) —
-   a door name taking it would put the kind and the pipeline at the
-   same step and flatten the hierarchy this card was built to make.
-   The next step up that a NAME may take is `--t-hero`, and it does
-   not fit by 41.6px.
+   THE THIRD RUNG LEAVES THE DISPLAY FACE, ON PURPOSE. Between a
+   955px window and a 1002px one the dashboard has just become two
+   columns of cards, and the door is at its narrowest of any width
+   this app is used at: 157px, 139px of room. The smallest
+   "Accessories" the display face may draw is 26px and it wants
+   149.3px there, so NO display step fits, and §2's floor — no
+   display face below 26px — is a floor rather than something to
+   shave. `--t-title-*` whole, in the sans, is what a name in a
+   cell that cannot hold display type is: a panel header. That
+   47px band is the one place where this screen's ratio and §3's
+   promise disagree, and the promise wins.
 
-   SO THE FIX IS NOT HERE. It is a display step between 26.88px and
-   43.52px in `src/styles/ds.css`, which is not this feature's file
-   to write. The measured budget for whoever writes it: this cell
-   holds up to 35.5px before "Accessories" breaks, so a step landing
-   at 34px at 1280 fits with 9px over and would put the front door
-   at 3.09x — above the 2.97x the tier was built to fix. Anything
-   larger needs the doors card to be a different shape, and the two
-   shapes that give it one were measured and rejected: spanning two
-   grid columns puts a third column on a 1280 stage that has room
-   for two and turns the front door into a sideways scroller, and a
-   single column of four bands cuts the photograph from 24,084px2 to
-   18,040 — undoing, for 16px of type, the plate this same pass
-   doubled because §1b asks the photographs to BE the palette.
+   THE PADDING STEPS WITH THE TYPE, and it is worth 8 of the 10
+   pixels the second rung needs. `.dsh-door-say` spends 12px a side
+   at full size and 8 at the narrow rungs — the same decision as
+   the type, one line further out: less room, less of everything.
+
+   AND THE THRESHOLDS ARE MEASURED AGAINST "Accessories", this
+   business's longest kind. A dealership whose kinds are longer
+   steps down one rung earlier than it strictly needs to, which is
+   the safe direction to be wrong in; one whose kinds are all short
+   never sees the third rung.
+
+   WHAT IS STILL NOT HERE. 3.09x is not the 7x PHASE_TWO §2.3 asks
+   for. 199px of room divided by 5.533 is 35.97px, so 3.27x is this
+   COMPOSITION's ceiling at 1280, and the two shapes that would
+   lift it were measured and rejected: a door spanning two grid
+   columns puts a third column on a 1280 stage that has room for
+   two and turns the front door into a sideways scroller, and a
+   single column of four bands cuts the photograph from 24,084px2
+   to 18,040 — undoing, for 16px of type, the plate this same pass
+   doubled because §1b asks the photographs to BE the palette. The
+   next pixel of scale on this screen is paid for in photograph.
    ------------------------------------------------------------ */
 .dsh-door-name {
   color: var(--fg);
   min-width: 0;
   font-family: var(--font-hero);
-  /* the same width ladder ds.css keeps: 103 at display-lg. Stated
-     rather than inherited, so a door dropped inside an extended
-     host cannot pick the host's width axis up. */
-  font-variation-settings: 'wdth' 103;
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
-  overflow-wrap: break-word;
+  /* 100 at display-xl — ds.css's width ladder gives this step the
+     least room of any, because "a name in a CELL, four to a
+     screen" is the least room a display step gets. Stated rather
+     than inherited, so a door dropped inside an extended host
+     cannot pick the host's width axis up. */
+  font-variation-settings: 'wdth' 100;
+  font-size: var(--t-display-xl-size);
+  font-weight: var(--t-display-xl-weight);
+  line-height: var(--t-display-xl-lead);
+  letter-spacing: var(--t-display-xl-track);
+  /* A KIND'S NAME IS STILL A NAME — rule 3, so it is not uppercase
+     and not tracked out. `balance` because a two-line name at this
+     step with one word on the second line is visible from across
+     the room. */
   text-wrap: balance;
+}
+
+/* RUNG 2 — the cell cannot hold `--t-display-xl`, so it takes the
+   whole of the step below. 219px is the last door at which
+   "Accessories" does NOT clear by 8px at the size that width
+   resolves to; 1280 draws a 225px door and clears by 10.9. */
+@container dsh-door (max-width: 219px) {
+  .dsh-door-name {
+    /* 103 is the width ladder's own figure for display-lg */
+    font-variation-settings: 'wdth' 103;
+    font-size: var(--t-display-lg-size);
+    font-weight: var(--t-display-lg-weight);
+    line-height: var(--t-display-lg-lead);
+    letter-spacing: var(--t-display-lg-track);
+  }
+  .dsh-door-say {
+    padding-inline: var(--s-2);
+  }
+}
+
+/* AND THE SECOND RUNG OWES WHAT `.ds-display-lg` OWES. ds.css:1976
+   returns that step to `wdth` 100 under `prefers-contrast: more` —
+   "an extended width costs a little counter at high contrast" — and
+   it does it on the CLASS, which this rule deliberately does not
+   take. Without this the one door in the app wearing display-lg
+   would keep its extension where every other surface gave it up.
+   Rung 1 needs no arm: it states 100 already, exactly as
+   `.ds-display-xl` does. Written BEFORE rung 3 so the sans keeps
+   `normal` rather than being handed a width axis it does not have. */
+@media (prefers-contrast: more) {
+  @container dsh-door (max-width: 219px) {
+    .dsh-door-name {
+      font-variation-settings: 'wdth' 100;
+    }
+  }
+}
+
+/* RUNG 3 — no display step fits, so the name is not display type.
+   167px is the widest door where 26px overflows even with the
+   caption at 8px a side, and it exists for about 47px of window
+   width either side of the dashboard becoming two columns.
+
+   `break-word` IS BACK HERE AND ONLY HERE. The rungs above step
+   down instead of breaking, which is the whole ladder; this rung
+   has nothing below it, so the choice for a name longer than
+   "Accessories" is a wrap or a silent clip against
+   `.dsh-door { overflow: hidden }`. §3 asks for the full text in
+   the DOM, and a clip is the one thing that does not give it. */
+@container dsh-door (max-width: 167px) {
+  .dsh-door-name {
+    font-family: var(--font-sans);
+    /* Inter has no width axis; 'wdth' 103 would resolve against it
+       and do nothing, which is the dead-declaration trap
+       DESIGN_PRINCIPLES §2 records sixteen of */
+    font-variation-settings: normal;
+    font-size: var(--t-title-size);
+    font-weight: var(--t-title-weight);
+    line-height: var(--t-title-lead);
+    letter-spacing: var(--t-title-track);
+    overflow-wrap: break-word;
+  }
 }
 
 /* THE FIGURE IS INK AND MONO, NEVER THE HUE. §1: a price is not

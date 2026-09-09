@@ -1154,11 +1154,13 @@ function DoorPlate({ door, onOpen }: { door: Door; onOpen: () => void }): JSX.El
       </span>
       <span className="dsh-door-say">
         {/* NO `.ds-heading`, AND IT USED TO CARRY ONE. A door's name
-            is the display step now — `--t-display-lg` through
+            is the display step now — `--t-display-xl` through
             `.dsh-door-name`, which is the feature rule that owns
             this element. Two classes both at (0,1,0) with this
             feature's sheet loaded after ds.css is a cascade nobody
-            can see; the argument is beside the rule. */}
+            can see; the argument is beside the rule, along with the
+            two rungs the name steps down to when the cell it is in
+            cannot hold that step. */}
         <span className="dsh-door-name">{door.label}</span>
         {/* THE COUNT IS THE DEALER'S OWN NOUN — "810 variants",
             "2,860 parts" — and the figure inside it is mono, which

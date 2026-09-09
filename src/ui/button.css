@@ -1,0 +1,395 @@
+/* ============================================================
+   BUTTON — the first primitive, and the measurement that argues
+   for it.
+
+   Surveyed across the tree the day this was written: 303 distinct
+   root class names sit on a <button> element in src/, of which
+   295 draw their own ground AND their own box — a background, a
+   border or a shadow, plus a padding, a height or a radius. They
+   are spread over 39 stylesheets. Restricted to the app the
+   dealer actually opens (src/app + src/features, dropping the
+   /design.html reference page) it is 278 across 34.
+
+   137 of those 295 are missing at least one of hover, press and
+   focus, which DESIGN_PRINCIPLES rule 8 says every pressable
+   thing has. 90 have no `:active` rule of any kind. That is not
+   90 authors being careless; it is 90 authors each deciding the
+   press of a button from scratch, and a third of them deciding
+   nothing.
+
+   THERE IS ALREADY A BUTTON IN ds.css AND IT IS NOT REACHABLE.
+   `.ds-btn` is complete — four tones, three sizes, a press. Its
+   press is `.ds-root :is(.ds-btn, …):active` (ds.css:669) and its
+   focus ring is `.ds-root :focus-visible` (ds.css:715), and
+   `.ds-root` is written by exactly two components in this repo:
+   DesignPreview.tsx (the /design.html reference) and
+   EntityDesigner.tsx. The eight places the running app writes
+   `.ds-btn` — FitResult, CustomerHistory, QuoteHistory x2,
+   SetPanel x4 — are outside `.ds-root`, so they draw no press and
+   no focus ring at all. Three of its four tones have no `:active`
+   colour either; only `--primary` does.
+
+   So the system's button exists, is good, and reaches the app
+   through none of its response layer. Nothing here is scoped to
+   an ancestor for that reason: every rule in this file matches on
+   the element's own class or its own ARIA state.
+
+   WHY THIS IS NOT THE SHARED OVERRIDE LAYER CLAUDE.md FORBIDS.
+   The rule is "do not create a shared override layer — two
+   stylesheets fighting over one screen is worse than the problem
+   it solves." Four things keep that true here, by construction:
+
+     1. The `ui-` namespace appears in 0 of the 47 existing
+        stylesheets and 0 of the 166 existing components. No
+        selector in this file can match an element any feature
+        rule also matches, so there is nothing to fight.
+     2. Every selector is one class, or one class plus one of its
+        own ARIA states. No descendant selectors, no element
+        selectors, no `*`, no `!important`, no resets.
+     3. This file is imported by Button.tsx, not by main.tsx. A
+        screen that has not adopted the primitive does not load a
+        byte of it. An override layer is global by definition.
+     4. Button.tsx accepts no `className` and no `style`. A
+        feature cannot keep its old paint and layer this on top —
+        adopting the component means DELETING the local rule,
+        because there is no way to half-adopt it. If a screen
+        needs a look this file does not have, the answer is a new
+        tone here, argued once, for every screen.
+
+   COLOURS: tokens only, none written by hand. STATES: hover,
+   press and focus on every tone, press on pointer-down, which is
+   what `:active` already does.
+   ============================================================ */
+
+.ui-btn {
+  /* shape and behaviour only. Every ground, every metric and
+     every state colour belongs to a modifier, so a button with
+     no tone is visibly unfinished rather than quietly grey. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  font-family: var(--font-sans);
+  /* THE SYSTEM HAS NO CONTROL STEP, AND THIS IS WHAT THAT COSTS.
+     §2 defines six text steps — display, title, heading, body,
+     small, caption — plus the label. A button label is none of
+     them: it is not a paragraph (400 is limp on a filled ground)
+     and it is not the 11px uppercase label. `.ds-btn` answered
+     that by writing `font-weight: 520; letter-spacing: -0.003em`
+     by hand, and the visual QA of 2026-09-09 finding 7 is a whole
+     section about what hand-written type values cost — six rules
+     restating a tracking their own token already carried, and
+     nobody noticing the token and the contract disagreed.
+
+     So this takes the two nearest real tokens instead of writing
+     the two nearest numbers: the caption step's weight (500,
+     the lightest weight in the system that is not a paragraph
+     weight) and the body step's tracking (-0.002em, which is
+     rule 7's "about zero at reading size"). No leading, because
+     a button is one line in a centred flex box and a leading
+     there would be a value with no effect.
+
+     If ds.css ever grows a control step, this is a two-line
+     change here and nowhere else — which is the whole reason the
+     numbers should not be spread over 34 stylesheets. */
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-body-track);
+  white-space: nowrap;
+  cursor: pointer;
+  /* Named properties, never `all` — a transition on `all` catches
+     width and height and animates layout. */
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+
+/* -- sizes · the metrics live here, not on the base ----------- */
+.ui-btn--sm {
+  height: var(--h-sm);
+  padding: 0 var(--s-2);
+  font-size: var(--t-caption-size);
+}
+.ui-btn--md {
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  font-size: var(--t-small-size);
+}
+.ui-btn--lg {
+  height: var(--h-lg);
+  padding: 0 var(--s-4);
+  font-size: var(--t-body-size);
+}
+
+.ui-btn--block {
+  display: flex;
+  width: 100%;
+}
+
+/* -- tones ---------------------------------------------------- */
+/* One accent, four times a screen (rule 5). `primary` is that
+   accent and a screen should carry one. */
+.ui-btn--primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--e1);
+}
+/* Hover is gated: a touch device fires hover on tap and then keeps
+   it, so an ungated hover state is a state that never leaves. */
+@media (hover: hover) and (pointer: fine) {
+  .ui-btn--primary:hover {
+    background: var(--accent-hover);
+  }
+}
+.ui-btn--primary:active {
+  background: var(--accent-press);
+}
+
+.ui-btn--neutral {
+  background: var(--surface-3);
+  border-color: var(--line);
+  color: var(--fg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ui-btn--neutral:hover {
+    background: var(--surface-4);
+    border-color: var(--line-strong);
+  }
+}
+.ui-btn--neutral:active {
+  background: var(--surface-4);
+  border-color: var(--line-strong);
+}
+
+/* --fg-secondary, not --fg-tertiary: a ghost button is still a
+   control a person is meant to read and press. The ramp's floor
+   for anything read is --ink-faint / --fg-tertiary, and a label
+   that is also a target sits above it. */
+.ui-btn--ghost {
+  color: var(--fg-secondary);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ui-btn--ghost:hover {
+    background: var(--surface-3);
+    color: var(--fg);
+  }
+}
+.ui-btn--ghost:active {
+  background: var(--surface-4);
+  color: var(--fg);
+}
+
+/* Destructive reads as an outline, not a red fill. A red fill is
+   the loudest thing on a screen and the act is usually undoable
+   (rule 9 — it gets a toast, not a dialog), so the control does
+   not need to shout. */
+.ui-btn--danger {
+  border-color: var(--line);
+  color: var(--danger);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ui-btn--danger:hover {
+    background: var(--danger-wash);
+    border-color: var(--danger);
+  }
+}
+.ui-btn--danger:active {
+  background: var(--danger-wash);
+  border-color: var(--danger);
+}
+
+/* -- focus ---------------------------------------------------- */
+/* `outline: 2px solid var(--focus)` is invalid — --focus expands
+   to two box-shadow rings, not a colour, and the whole
+   declaration is thrown away at computed-value time.
+   DESIGN_PRINCIPLES §4 records 21 declarations written that way
+   which drew no ring at all. So: an outline in the accent, offset
+   so it lands on the ground beside the button rather than on the
+   button's own edge. */
+.ui-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* The primary tone IS the accent, so an accent ring against it
+   has nothing to read against, and a 2px offset is not enough
+   separation when the button sits inside an accent wash. This is
+   the case `--focus` exists for: its inner ring is the page
+   ground and it separates the outer accent ring from the fill. */
+.ui-btn--primary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* -- refused -------------------------------------------------- */
+/* Styled from `aria-disabled`, not from a class of our own, so
+   the look and the accessible state cannot drift apart: there is
+   no way to draw this and not announce it.
+
+   It is `aria-disabled` and NOT `disabled` on purpose. A
+   `disabled` button cannot be focused, cannot be hovered and is
+   skipped by a screen reader — so the sentence explaining why it
+   cannot be done is unreachable by exactly the person who needs
+   it. Rule 10 says a thing that cannot be done says why, WHERE IT
+   IS. Button.tsx keeps the control in the tab order, blocks the
+   click, and draws the reason beneath it. */
+.ui-btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  /* --fg-tertiary is --ink-faint, the floor for anything a person
+     must read (5.5:1 on white, 5.2:1 on the page ground). A
+     refused control still has to be legible; --fg-quaternary is
+     2.6:1 and may never carry meaning. */
+  color: var(--fg-tertiary);
+  background: var(--surface-3);
+  border-color: var(--line-subtle);
+  box-shadow: none;
+}
+
+.ui-btn-slot {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+}
+
+/* The refusal itself. A sentence with a reason, in the place the
+   thing is refused (§6). Not uppercase — rule 3 allows uppercase
+   on section captions, group captions and mono stamps, and a
+   sentence is none of those. */
+.ui-btn-why {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  text-wrap: pretty;
+}
+
+/* A leading glyph is decoration beside a word that already says
+   the thing; it never carries the meaning on its own. */
+.ui-btn-glyph {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   THE PRESS, AND THE ONE RULE IN THIS APP THAT OUTRANKS IT.
+   This note is the shared one; card.css and row.css point here.
+
+   `:active` fires on pointer-down, not on release. That is what
+   rule 8 asks for and it needs no JavaScript.
+
+   THERE IS ALREADY A GLOBAL PRESS, and it is not optional.
+   base.css:431 presses every button in the app:
+
+     button:not(:disabled):not([aria-disabled='true']):active,
+     [role='button']:not([aria-disabled='true']):active,
+     summary:active { transform: scale(var(--press-scale));
+                      background-image: linear-gradient(
+                        var(--press-wash), var(--press-wash)); }
+
+   It computes to (0,3,1) and its own note says why: "specificity
+   is the enforcement mechanism", chosen so component `:active`
+   rules at (0,2,0) cannot fight it. A press rule here written the
+   obvious way — `.ui-btn:active` — would lose, silently, and this
+   file would ship a press it does not draw.
+
+   TWO THINGS ABOUT IT WERE MEASURED IN CHROME, BOTH OF THEM
+   DEFECTS IN THE TREE RATHER THAN IN THAT RULE:
+
+   Measured in Chrome on a BARE <button>, with base.css alone and
+   then with bridge.css after it, which is what the app loads:
+
+                    base.css alone        + bridge.css
+     --press-fx     transform 110ms       #eef3f8
+                    cubic-bezier(...)
+     --press-wash   rgba(18,40,63,.07)    #eef3f8
+     :active
+       transition   transform .11s ...    all          <- dropped
+       bg-image     7% tint               opaque grey
+       transform    mid-ease at press     0.97 at once
+
+     · bridge.css:193 redefines `--press-fx` from base.css's
+       `transform var(--t-press) var(--ease-press)` to
+       `var(--surface-3)` — a COLOUR, dropped into a `transition`
+       shorthand, which makes the whole declaration invalid. It
+       falls back to the initial value, `all` at 0s. base.css's
+       note says "the press ALWAYS eases in at 110ms"; in the
+       running app it snaps.
+
+     · bridge.css:194 redefines `--press-wash` from
+       `rgba(18,40,63,.07)` — a 7% tint — to `var(--surface-3)`,
+       which is OPAQUE. So the wash is a solid pale grey that
+       completely covers `--accent-press`. Every button in the app
+       that is not `.btn-primary`, `[draggable]` or
+       `[data-press='none']` turns pale grey on pointer-down.
+
+   Both are one line each in bridge.css and both belong to
+   whoever owns that file — this layer does not reach into
+   src/styles. What it does instead is decline to inherit the
+   consequence for the surfaces it draws itself: the rules below
+   restore the easing and neutralise the opaque wash, for
+   `ui-` elements only.
+
+   THE SELECTOR SHAPE IS BORROWED ON PURPOSE. Writing
+   `:not(:disabled):not([aria-disabled='true']):active` here puts
+   this at (0,4,0), which beats (0,3,1) on the class column
+   deterministically rather than on source order — and it makes
+   the intent legible to anyone who has read base.css, because it
+   is that file's own idiom. It also repeats base.css's exclusion
+   of `[aria-disabled='true']`, so a refused button is not pressed
+   by either rule.
+
+   0.97 IS THE SAME NUMBER base.css USES (`--press-scale`), so
+   this rule and the global one agree about buttons and disagree
+   only about easing and the wash. Card and Row disagree about the
+   geometry too, and §4 is why: "scale the press to the surface —
+   0.97 on a control, 0.994 plus losing the hover lift on a card;
+   0.97 on a 236px card is a 7px shrink and reads as a glitch",
+   and "a list row darkens instead of scaling, so its neighbours
+   do not look like they moved." base.css's own note reasons about
+   a 132px button and a 17px checkbox; a card and a row are the
+   two surfaces outside the range it argued.
+   ============================================================ */
+.ui-btn:not(:disabled):not([aria-disabled='true']):active {
+  transform: scale(0.97);
+  /* the opaque wash, declined */
+  background-image: none;
+  /* the easing base.css intended and bridge.css dropped */
+  transition:
+    transform var(--d-press) var(--ease),
+    background-color var(--d-press) var(--ease);
+}
+
+/* Reduced motion is gentler feedback, not no feedback (§4): the
+   movement goes, the colour press above stays. Repeated at the
+   same (0,4,0) because a media query adds no specificity — at
+   (0,2,0) this would lose to the rule it is trying to soften. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-btn {
+    transition:
+      background var(--d-fast) var(--ease),
+      border-color var(--d-fast) var(--ease),
+      color var(--d-fast) var(--ease),
+      box-shadow var(--d-fast) var(--ease);
+  }
+  .ui-btn:not(:disabled):not([aria-disabled='true']):active {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .ui-btn--ghost,
+  .ui-btn--primary {
+    border-color: var(--line-strong);
+  }
+}

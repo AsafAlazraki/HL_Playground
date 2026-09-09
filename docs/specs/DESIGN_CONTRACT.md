@@ -154,29 +154,125 @@ correctly. New display work asks for `--font-hero`.
 
 **Instrument Serif stays out, and §8.11's reasoning is honoured rather than reversed.** §8.11
 retired the display serif because it was being set at 9px, where a serif is blur; what replaces it
-is a **floor, not a promise** — Archivo is reachable through exactly the four steps below, the
-lowest of which bottoms out at 26px, so no display face can render at 9px again.
+is a **floor, not a promise** — Archivo is reachable through exactly the five steps below, whose
+clamps bottom out at 72, 34, 30, 30 and 26px, so no display face can render at 9px again. **A
+sixth step must carry a floor at or above 26px**, and a surface that has inherited `--font-hero`
+may not write a bare `font-size` over it: `picker.css:88` does, and renders the display face at
+25.6px @1280 and 22px at 1024 and below, which is the floor being walked under at every width
+this app is used at (`visual-qa-2026-09-09` finding 6). Nothing enforces it; treat it as absolute.
 `@fontsource/instrument-serif` is still an installed dependency with zero references in any
 stylesheet and should be **removed from `package.json`** — a follow-up for the owner, not done
 here.
 
-### The display tier — four steps, and Archivo carries all of them
+### The display tier — five steps, and Archivo carries all of them
+
+> **AMENDED 2026-09-09, a second time.** `--t-display-xl-*` was added and the ladder was put in
+> size order. It closes the **56px hole** `visual-qa-2026-09-09` finding 1 ranked worst: at 1280
+> this tier ran 26.88px → 82.86px with exactly one step inside it, and that step — `--t-hero` — is
+> scoped to *one per stage*, so it appeared on **two of the twelve screens swept** while eleven of
+> those twelve measured between 2.44× and 3.96×. There was no step a **plural** name could take,
+> and three rules invented one rather than go without (finding 7).
 
 Take the **whole set**: size, weight, leading and tracking travel together (DESIGN_PRINCIPLES rule
 6). Tracking runs further negative as the step grows (rule 7). The sizes below are the browser's
-resolved values, measured in Chrome at the stated window widths.
+resolved values, measured in Chrome at the stated window widths. 1rem = 16px — no rule in this app
+overrides the root font-size, so every `rem` term resolves exactly as written.
 
 | set · utility | size | weight | leading | tracking | `wdth` | what it is for |
 |---|---|---|---|---|---|---|
-| `--t-marque-*` · `.ds-marque` | `clamp(72px, 1.786rem + 4.241vw, 110px)` → 72px @1024, **82.9px @1280**, 89.6 @1440, 110 @1920 | 640 | 0.98 | −0.042em | 100 | **the name of the thing being sold.** One per screen, and only where the subject IS a product: the configurator's identity column (`PHASE_TWO` §2.3, `QUOTE_GROUND_UP` §3). **Never a stage title** |
-| `--t-hero-*` · `.ds-hero` | `clamp(34px, 3.4vw, 52px)` → 43.5px @1280, 52 @1529+ | 680 | 1.03 | −0.036em | 105 | the first line of a stage that IS the page |
-| `--t-display-lg-*` · `.ds-display-lg` | `clamp(26px, 2.1vw, 34px)` → 26.9px @1280 | 650 | 1.1 | −0.028em | 103 | a stage title with a page behind it |
-| `--t-figure-xl-*` · `.ds-figure-xl` | `clamp(30px, 1.018rem + 1.339vw, 42px)` → 33.4px @1280, 42 @1920 | 600 | 1.05 | −0.03em | 100 | **the committed total.** The one figure a price bar exists to state. Tabular, and **not mono** — see below |
+| `--t-marque-*` · `.ds-marque` | `clamp(72px, 1.786rem + 4.241vw, 110px)` → **82.9px @1280**, 89.6 @1440, 110 @1920. The clamp bottoms at 72px but **the app never draws it there** — see the row's own note below | 640 | 0.98 | −0.042em | 100 | **the name of the thing being sold.** One per screen, and only where the subject IS a product: the configurator's identity column (`PHASE_TWO` §2.3, `QUOTE_GROUND_UP` §3). **Never a stage title** |
+| `--t-hero-*` · `.ds-hero` | `clamp(34px, 3.4vw, 52px)` → 34.8px @1024, 43.5px @1280, 49.0 @1440, 52 @1529+ | 680 | 1.03 | −0.036em | 105 | the first line of a stage that IS the page. **One per stage** |
+| **`--t-display-xl-*` · `.ds-display-xl`** | `clamp(30px, 0.875rem + 1.5625vw, 44px)` → 30px @1024, **34.0px @1280**, 36.5 @1440, 44 @1920 | 660 | 1.06 | −0.032em | 100 | **a name that is one of SEVERAL and is the point of the screen** — a kind door, a module place, a band head, a page header. Four to a screen is normal. This is the step a plural name takes when `--t-hero` is one-per-stage and `--t-marque` is one-per-screen |
+| `--t-figure-xl-*` · `.ds-figure-xl` | `clamp(30px, 1.018rem + 1.339vw, 42px)` → 30px @1024, 33.4px @1280, 42 @1920 | 600 | 1.05 | −0.03em | 100 | **the committed total.** The one figure a price bar exists to state. Tabular, and **not mono** — see below |
+| `--t-display-lg-*` · `.ds-display-lg` | `clamp(26px, 2.1vw, 34px)` → 26px @1024, 26.9px @1280, 30.2 @1440, 34 @1619+ | 650 | 1.1 | −0.028em | 103 | a stage title with a page behind it, and **the lowest floor in the tier** — the step a long name steps DOWN to |
 
-**The width ladder descends as the size grows: 105 → 103 → 100.** The extension is a voice, and a
-voice is affordable where there is room — a hero runs across a stage. A marque runs down a ~400px
-identity column beside a photograph, where every percent of width costs a line of wrap on a name
-like *Highfield CL260*. At 83px the size is the voice.
+**`--t-marque`'s 72px floor is a number in this document and not a size the app can draw.** The
+row used to read *"→ 72px @1024"*, and `visual-qa-2026-09-09` finding 8 measured **34.82px** at
+1024 instead. Both statements were true and they contradicted each other: the clamp does bottom at
+72px, but the identity column is 401px at 1280 and **313px at 1024**, and `build.css:649`
+`@container (max-width: 340px)` swaps the whole `--t-hero-*` set in — which is the whole-step swap
+the next paragraph asks for, working correctly. **82.9px is the smallest a marque is ever seen
+at.** The consequence for the 7.53× headline: the app's one 7× screen is 7× at **1280 and above**;
+at 1024 the configurator measures 3.17×, the same as customers and the module workspace.
+
+**The width ladder is about ROOM, not size.** It read *"descends as the size grows: 105 → 103 →
+100"*, and that is not what the numbers do — 105 is at hero (43.5px) and 100 is at marque
+(82.9px), but 103 is at display-lg (26.9px), the smallest of the three. The gloss underneath was
+always the real rule, so it is the rule: **an extension is a voice, and a voice is affordable
+where there is room.**
+
+| `wdth` | step | the room it gets |
+|---|---|---|
+| 105 | `--t-hero` | a stage's own first line, across the whole page. The most room any step gets |
+| 103 | `--t-display-lg` | a stage title with a page behind it |
+| 100 | `--t-display-xl` | a name in a **cell**, four to a screen — the least room any display step gets. The 3% of advance 103 would spend is about 5px of a 199px door |
+| 100 | `--t-marque` | a name down a ~400px identity column beside a photograph, where every percent costs a line of wrap on *Highfield CL260*. At 83px the size is the voice |
+
+**Two steps may share a pixel range; they may never swap order at a width.** A ladder whose rungs
+grow at different rates cannot avoid overlapping ranges, and that is harmless. What is not
+harmless is a reader taking the larger-sounding name and getting the smaller size — six
+hand-written tracking values are what that already cost. `--t-display-xl` was checked against
+every neighbour at every width from 600 to 3000px: strictly **larger** than `--t-display` and
+`--t-display-lg` at all of them, strictly **smaller** than `--t-hero` and `--t-marque` at all of
+them, and equal to `--t-figure-xl` only at or below 1024px where both sit on the tier's shared
+30px floor. **Check the next step the same way before adding it.**
+
+**The tracking disagreement between this document and `ds.css` is settled, in this document's
+favour.** `visual-qa-2026-09-09` finding 7 found `--t-hero-track` at `-0.033em` in `ds.css` and
+−0.036em here, and `--t-display-lg-track` at `-0.026em` against −0.028em. The cause was that
+`.ds-hero` and `.ds-display-lg` are declared **twice** in `ds.css` — once in Inter among the
+expressive utilities and again in THE DISPLAY FACE, where the second declaration hard-wrote
+−0.036em and −0.028em over the tokens. Two ways to take one step drew two different letter
+spacings, which is why six rules (`crm.css:330`, `onboarding.css:248`, `views.css:1896`,
+`build.css:645`, `build.css:654`, `views.css:2244`) take the four tokens and then restate this
+document's number by hand. **The tokens now carry −0.036em and −0.028em and the override is
+deleted.** Nothing on screen moved for `.ds-hero`/`.ds-display-lg`; what moved is every rule that
+took the tokens, which finally draws what the class draws — and those six literals are now no-ops
+a later pass can delete. Both changes make text *tighter*, so nothing that fitted can overflow.
+
+**The size of `--t-display-xl` is the cell, and the cell was measured.** Handed over by the
+surface pass at `dashboard.css:3186-3213`: at 1280×800 on the real seed the home doors card is
+488px, `.dsh-doors` 463px, a door 225px and `.dsh-door-name` **199px**. Archivo at 640 through
+canvas, the longest of the four kind labels a marine dealer has:
+
+| string | step | size | advance | verdict |
+|---|---|---|---|---|
+| Accessories | `--t-display-lg` | 26.88px | 150.0px | fits (199) |
+| Accessories | `--t-figure-xl` | 33.43px | 186.5px | fits, and is not available — that step is one figure, not a name |
+| Accessories | `--t-hero` | 43.52px | 240.6px | **overflows by 41.6px** |
+| Accessories | `--t-marque` | 82.86px | 445.7px | **overflows** |
+
+*Accessories* is **one word**, so a step it does not fit cannot wrap, and `overflow-wrap:
+break-word` would cut it mid-word, which DESIGN_PRINCIPLES §3 forbids outright. **The cell holds
+35.5px and not a pixel more.** 34.0px fits with 9px over and puts the front door at 34.0 ÷ 11 =
+**3.09×** — above the 2.97× the tier was built to fix and which the tier's own landing took *down*
+to 2.44×. 34px is also, independently, the geometric mean of the two steps it sits between:
+√(26.88 × 43.52) = 34.2. The cell and the ladder agree, which is the only reason to trust either.
+
+**The clamp is `0.875rem + 1.5625vw`, which is exactly 14px + W/64.** `rem + vw` and never bare
+`vw`: `response.css:38-42` settled that a pure-`vw` font-size ignores browser zoom, turning a
+readability aid into a trap. `--t-hero` and `--t-display-lg` predate that rule and still carry
+bare `vw`; the three newest steps do not repeat it, and all three ramp between the same **1024 →
+1920** anchors so the tier grows as one thing.
+
+**Weight, leading and tracking were derived, not chosen.** Weight **660** is the log-midpoint of
+display-lg's 650 at 26.9px and hero's 680 at 43.5px, and it is also what `page.css:101` reached by
+hand for this exact job, so the widest-deployed of the three inventions does not change weight the
+day it is pointed here. Leading **1.06** comes from the tier's constant *optical gap*, not a
+constant multiplier: Archivo's ink is 0.929em (0.736 ascender + 0.193 descender), and marque 0.98
+leaves 4.23px, hero 1.03 leaves 4.40px, display-lg 1.1 leaves 4.60px — 0.929 + 4.4/34 = 1.058, so
+1.06, which leaves 4.45px. Tracking **−0.032em** is log-interpolated between its neighbours, so
+the tier now reads −0.028 / −0.032 / −0.036 / −0.042 at 26.9 / 34 / 43.5 / 82.9px. `--t-figure-xl`
+is −0.03em at 33.4px, deliberately a hair *looser* at nearly the same size: it is tabular and its
+digits may not crowd. A name carries no such duty.
+
+**`--t-display-xl` is not yet worn by any surface, and applying it is the next phase's work.**
+Before it is, know what `ds.css` records beside the token: **the door cell shrinks as the window
+grows.** The doors grid answers a wider window with more columns, so the door measures 225px at
+1280 and **165px at 1920**, while this step passes the 35.5px budget at **1376px**. A surface that
+wears it must either stop its grid adding columns past that width, or swap a **whole step** down
+the way `--t-marque` already does. Do not solve it by shrinking the token — shrinking a step you
+do not own is exactly how `page.css:101`, `picker.css:80` and `quote.css:1870` happened.
 
 **`--t-marque` steps DOWN a whole step; it does not shrink.** Its clamp bottoms at 72px and holds
 there below 1024px. In a window under ~1000px, or a column narrower than ~360px, the surface takes
@@ -187,6 +283,31 @@ in for one value.
 panel/stage step in Inter and it stays that. `response.css` deliberately keeps the `--display-*`
 ramp shallow because an oversized heading on a **data** surface steals room from the data; the
 marque exists for the one surface that is not a data surface.
+
+**And it crosses `--t-display-lg` twice, which is the one overlap in the system.** Resolved:
+`--t-display` is 28.00px at every width up to 1440 and 33.14 @1920, 40 @2560; `--t-display-lg` is
+26.00 @1024, 26.88 @1280, 30.24 @1440, 34 @1619+. `--t-display-lg` passes `--t-display` at
+**1333px** and `--t-display` passes it back at **2001px**. So at 1280 and at 1024 — the two widths
+every measurement in this repo is quoted at — the step called *display-lg* renders **smaller**
+than the step called *display*: 26.88 against 28.00, and 26.00 against 28.00.
+
+**This is on a screen, not in the abstract.** Onboarding draws both. `.ob-brand-line.is-long`
+(`onboarding.css:261`) steps *down* to `--t-display-lg` for a long business name, and `.ob-ask`
+(`onboarding.css:422`) takes `--t-display` — whose comment reads *"`display` (28px, Inter) is the
+step **below** the one the left-hand line takes"*. At 1280 the step below is 28.00px and the step
+above is 26.88px. The comment is not careless; it is what the names promise.
+
+**It stays, because neither end can move, and what is fixed instead is the harm.**
+`--t-display`'s ramp lives in `response.css`, which is imported last and owns it, and this
+document fixes that step in Inter on purpose. `--t-display-lg` cannot rise either: **thirteen
+surfaces took it *because* it bottoms at 26px** — `picker.css:112` calls it *"the lowest of the
+four"*, and `tablekit.css:154`, `views.css:2235` and `onboarding.css:258` all step **down** to it
+when a name runs long. Raising its floor would overflow the surfaces that chose it for that floor,
+and it would still not close the 2001px crossing, which needs a 40px ceiling this step must not
+have. The reason `-lg` had to pretend to be a step above `display` was that there was no honest
+one; `--t-display-xl` is that step, it is strictly larger than `--t-display` at every width, and
+an author who wants *bigger than display* now has a token that actually is. **Read `-lg` as "the
+large end of the chrome range, drawn in the display face", never as "one above `--t-display`".**
 
 **Measured, not assumed.** At 1280×800 on the real seed the largest glyph on the home stage was
 **32.7px against an 11px label — 2.97×**. The marque makes that **82.9px against 11px — 7.53×**,

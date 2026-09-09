@@ -455,7 +455,12 @@ export function QuoteStart({
     <div className="qs-page" ref={rootRef}>
         <header className="qs-head">
           {door === null ? (
-            <h2 className="qs-q" id="qs-q">
+            /* THE STAGE'S OWN FIRST LINE, so it takes the step whose
+               definition is exactly that — `.ds-hero`, "the first line
+               of a stage that IS the page. ONE per stage." It wrote its
+               own clamp until now (visual-qa finding 7); picker.css
+               carries the measurement and the reasoning. */
+            <h2 className="qs-q ds-hero" id="qs-q">
               What are you quoting?
             </h2>
           ) : (
@@ -481,7 +486,16 @@ export function QuoteStart({
                   <TableKindSymbol kind={door.kind} size={20} />
                 )}
               </span>
-              <h2 className="qs-q qs-q--here" id="qs-q">
+              {/* THE PLACE IS THE SUBJECT OF THIS LAYER, and
+                  `.ds-display-xl` is the step the contract writes for
+                  it — "a name that is one of SEVERAL and is the point
+                  of the screen — a kind door, A MODULE PLACE, a band
+                  head." One rung under the question it replaces,
+                  because it shares its line with the arrow, the mark
+                  and the count. It was `.qs-q--here`, a size-only
+                  modifier that drew Archivo at 22px — the floor fault
+                  §8.11 exists to prevent. */}
+              <h2 className="qs-q ds-display-xl" id="qs-q">
                 {door.name}
               </h2>
               <span className="qs-here-n">{countSay(door)}</span>
