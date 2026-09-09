@@ -635,9 +635,35 @@
    value. `wdth` is restated at 105 because `.ds-marque` states 100 at
    its own definition and hero is the extended cut.
 
-   The letter-spacing is −0.036em rather than the step's declared
-   −0.033em, for the reason ds.css's own `.ds-hero` gives: Archivo
-   runs optically larger than Inter and its counters are tighter. */
+   THE TRACKING IS THE ONE VALUE OF THE FOUR THAT IS NOT A TOKEN, AND
+   THAT IS A HOLE IN ds.css RATHER THAN A CHOICE HERE. Archivo's hero
+   tracking is −0.036em, not the −0.033em `--t-hero-track` declares:
+   Archivo runs optically larger than Inter at the same size and its
+   counters are tighter. ds.css agrees — it just states −0.036em
+   INSIDE `.ds-hero`'s body (ds.css:1647-1655) instead of on a token,
+   so the only way to take the Archivo hero step whole is to WEAR THE
+   CLASS.
+
+   THESE TWO ARMS CANNOT WEAR IT. A class cannot be applied from a
+   `@container` query, and the swap is by container WIDTH as much as
+   by content — the same swap, the other axis (see the measurement
+   block above `.qb-name`). Moving the `.is-long` arm into TSX and
+   leaving the width arm here would split one rule across two
+   mechanisms and make that sentence false. So the number is restated,
+   twice, and this comment is the protest.
+
+   THE REQUEST, WRITTEN DOWN SO THE NEXT READER DOES NOT RE-DERIVE IT.
+   ds.css owns the display tier and it is not this file's to edit.
+   `DESIGN_CONTRACT.md:172-173` prints −0.036em and −0.028em as the
+   hero and display-lg tracking while `ds.css:1165` and `:1171` hold
+   −0.033em and −0.026em; two documents disagreeing is the state
+   DECISIONS.md exists to end. Settle it in ds.css — either
+   `--t-hero-track: -0.036em` with `.ds-hero`'s override deleted, or a
+   named Archivo token beside it — and the two `letter-spacing` lines
+   below become `var(--t-hero-track)`, along with `onboarding.css:248`,
+   `views.css:1896` and `views.css:2244`. It is NOT settled by picking
+   a number here: a feature sheet inventing its own step is exactly how
+   the nine rules in the 2026-09-09 sweep's finding 7 appeared. */
 .qb-name.is-long .qb-name-model {
   font-size: var(--t-hero-size);
   font-weight: var(--t-hero-weight);

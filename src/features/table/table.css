@@ -641,6 +641,45 @@
   outline-offset: -3px;
 }
 
+/* THE NAME IS INK, NOT THE BAND'S HUE — the tint trap, measured.
+
+   This read `color: var(--tb-band-ink, var(--ink-soft))`, and the
+   fallback was the honest half: the hue only ever won because a host
+   sets `--tb-band-ink`, which `Grid.tsx:1350` always does. A money
+   band takes the `viridian` accent, `bridge.css:108` points that at
+   `--kind-green` #15803d, and the band row's ground is
+   `--paper-sunken` #e9eff6.
+
+   MEASURED IN CHROME, full ancestor chain composited, 51 tables of
+   the Northside seed — 215 band names, and every green one of them
+   sat at 4.33:1 against a 4.5 floor:
+
+     36  #15803d  on #e9eff6  ->  4.33:1   FAIL   money bands
+     16  #be1250  on #e9eff6  ->  5.35:1
+    163  #475569  on #e9eff6  ->  6.55:1
+
+   `designer.css:126` records the number this was built on —
+   "#15803d is 5.02:1 ON WHITE — legal". It is not on white. That is
+   DESIGN_PRINCIPLES §1 exactly: the tint counts, and a colour cleared
+   against white is not cleared against the strip it is drawn on.
+   Green is not alone; `--kind-amber` measures 4.25:1 and
+   `--kind-orange` 4.34:1 on the same ground, so a section an admin
+   recolours would have failed too. Moving the NAME to the ink ramp
+   retires all eight at once instead of darkening one hue.
+
+   THE HUE DOES NOT LEAVE THE BAND. It still draws the bracket
+   (`.tb-band-rule`), the hover wash, the focus ring and the folded
+   chip's fill and inset ring — a rail and a mark, which is where §1
+   puts a kind hue, and never the thing you read. This is the reading
+   `:440` already argued for the strip chip and `table-node.css:557`
+   for the plate; the sheet's own band header was the one drawing of
+   the three still wearing the hue as text.
+
+   `--ink-soft` and not `--ink-faint`: `.tb-strip-name` (:4091) and
+   `.tb-lod-band` (table-node.css:559) are the same section name in
+   the map and on the plate, and both are `--ink-soft` already. The
+   same word printed three ways was the fault :4060 was written to
+   end. Measured after: 6.99:1 on #e9eff6. */
 .tb-band-name {
   min-width: 0;
   font-family: var(--font-mono);
@@ -648,7 +687,7 @@
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--tb-band-ink, var(--ink-soft));
+  color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -688,9 +727,15 @@
 .tb-band-shut .tb-band-btn:hover {
   background: color-mix(in srgb, var(--tb-band-ink, var(--ink)) 18%, var(--paper-high));
 }
+/* and the folded chip goes to full ink, the way the strip's folded
+   chip does at :4110. It was 4.39:1 — the same green over its own 10%
+   wash (#e8f2ec), measured with two bands folded on Yamaha Outboards
+   — which is the one state this file calls "the loudest thing in the
+   row". 15.2:1 now. */
 .tb-band-shut .tb-band-name {
   font-weight: 600;
   letter-spacing: 0.12em;
+  color: var(--ink);
 }
 
 /* the heading row and the rows beneath keep the chip's width, so the
@@ -3363,9 +3408,13 @@ body.tb-resizing {
    returns to ~0 at reading size, and only the 11px uppercase label
    takes it positive. These are no longer that.
 
-   COLOURS UNTOUCHED. Every one of these was measured against its
-   ground during the redesign (see the notes above each) and case does
-   not move a contrast ratio.
+   COLOURS UNTOUCHED HERE, AND ONE OF THEM WAS WRONG — this sentence
+   read "every one of these was measured against its ground during the
+   redesign", and `.tb-band-name` had not been: it was a kind hue at
+   4.33:1 on `--paper-sunken`, on 36 bands across the seed. Corrected
+   at the rule itself (:683), where the measurement is. What is true
+   is the narrower claim this block needs: case does not move a
+   contrast ratio, so nothing above changed one.
    ============================================================ */
 .tb-band-name {
   letter-spacing: 0.01em;

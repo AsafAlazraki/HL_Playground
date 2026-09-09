@@ -320,8 +320,22 @@
   overflow: hidden;
 }
 
+/* THE FOOT WRAPS, so the name gets a measure instead of a sliver.
+   Once `.pb-card-by` stopped truncating (see its rule) a long name
+   had to go somewhere, and on a flex row against the money it went
+   into whatever the figure left over. Measured at the 168px column
+   floor, "Bartholomew Featherstonehaugh-Wolseley" in a 48.8px track:
+   SIX lines. Nothing was cut — §3 was kept — but a name in a ribbon
+   is not a name anybody reads.
+
+   `flex-wrap: wrap` costs nothing in the ordinary case: a figure and
+   a name that fit still sit at opposite ends of one line, which is
+   what `space-between` is doing here. When they do not fit, the name
+   drops to a row of its own with the full card width under it — the
+   same six-line name becomes two lines at 144px. */
 .pb-card-foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s-2);
@@ -332,12 +346,44 @@
   font-variant-numeric: tabular-nums;
   color: var(--fg);
 }
+/* IT WRAPS, AND IT USED TO CUT A NAME IN HALF. This rule was
+   `nowrap` + `overflow: hidden` + `text-overflow: ellipsis`, and the
+   visual QA of 2026-09-09 found it was the ONLY mid-word truncation
+   left anywhere in the app. Measured in Chrome on the real seed, the
+   cut located by a Range walk:
+
+     1280 x 800   "Asaf Alazraki"  ->  Alazr | aki
+     1024 x 768   "Asaf Alazraki"  ->  Asaf Al | azraki
+
+   DESIGN_PRINCIPLES §3: "Nothing truncates mid-word ... if a name
+   does not fit, it wraps or clamps to two lines with the full text
+   still in the DOM." A person's name is the one string a truncation
+   cannot be read through — you cannot infer "Alazraki" from
+   "Alazr...", the way you can read "Retail Pric..." as a heading.
+
+   AND A FADE WOULD NOT HAVE FIXED IT EITHER. `build.css:998` records
+   that exact attempt and its reversal on `.qb-band-state`: a 94% mask
+   was narrowed from 84% once on the argument that "a fade is still a
+   fade and never an ellipsis", and a measurement killed it — "a fade
+   does not spare a word; it only makes the cut soft." The fade is
+   right for `.qb-led-qty` (a quantity, read as a magnitude) and wrong
+   for a proper noun.
+
+   SO IT DOES WHAT THE CUSTOMER'S NAME TWENTY RULES UP ALREADY DOES.
+   `.pb-card-who` has never truncated; it takes `overflow-wrap:
+   anywhere` and wraps. The foot is `align-items: baseline`, so a
+   second line hangs below the shared baseline and the money does not
+   move — the figure stays where a scanning eye left it.
+
+   `text-align: right` because the foot is a figure at the left and a
+   name at the right, and a wrapped name that went ragged-right would
+   stop reading as the right-hand half of that pair. */
 .pb-card-by {
   font-size: var(--t-caption-size);
   color: var(--fg-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 /* THE COLUMN'S COLOUR IS THE DEALERSHIP'S CHOICE NOW — see the
@@ -2629,12 +2675,18 @@
    this is is the answer to a question somebody is scanning for,
    and at 11px tertiary against a card ground it would be the
    faintest thing on the card. */
+/* AND IT WRAPS, for the reason `.pb-card-by` carries at length. This
+   rule held the identical `nowrap` + `overflow: hidden` + ellipsis on
+   the identical kind of string — a person's name. The QA sweep did
+   not catch it only because the one seeded card's owner was short
+   enough to fit beside the kind chip; the rule was one longer name
+   away from cutting "Alazr" out of somebody. §3 does not have a
+   clause for "not overflowing yet". */
 .pb-card-owner {
   font-size: var(--t-caption-size);
   color: var(--fg-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  overflow-wrap: anywhere;
   max-width: 100%;
 }
 

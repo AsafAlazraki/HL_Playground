@@ -263,24 +263,68 @@ export function ModuleIndex({
             `markFor` returns undefined for all 25 places and all 25
             workspaces. The fallback IS the screen.
 
-            So the name takes `--t-hero` — 43.5px at 1280, the step
-            ds.css defines as "the first line of a stage that IS the
-            page", which is exactly what a module workspace is. The
-            crest's wordmark is capped at `--t-hero-size` too now
-            (`.md-work-crest-img`), so the two headers are the same
-            43.5px of ink at every width and differ only in what that
-            ink is made of. Measured with a placeholder mark dropped
-            into `marks/` and then deleted: crest 433x69.5 holding a
-            9.17:1 wordmark at 399x43.5, against a name at 43.52px.
+            So the name took `--t-hero` — 43.5px at 1280 — and the
+            crest's wordmark was capped at `--t-hero-size` with it, so
+            the two headers were the same quantity of ink and differed
+            only in what that ink was made of. Measured with a
+            placeholder mark dropped into `marks/` and then deleted:
+            crest 433x69.5 holding a 9.17:1 wordmark at 399x43.5,
+            against a name at 43.52px.
 
-            AND IT IS NOT `--t-marque`, THOUGH THAT IS THE BIGGER
-            STEP. DESIGN_CONTRACT's display-tier table reserves the
-            marque for "the name of the thing being sold ... only
-            where the subject IS a product", and says of it in the
-            same row: **never a stage title**. Highfield Inflatables
-            is a place holding 588 boats, not one of them. The step
-            above this one belongs to the configurator's identity
-            column and this surface does not get to borrow it. */}
+            ── AND IT IS `--t-marque` NOW. THE PARAGRAPH THAT SAID IT
+            COULD NOT BE IS QUOTED BELOW, WITH WHAT IS WRONG WITH IT. ──
+
+            "DESIGN_CONTRACT's display-tier table reserves the marque
+            for 'the name of the thing being sold ... only where the
+            subject IS a product', and says of it in the same row:
+            never a stage title. Highfield Inflatables is a place
+            holding 588 boats, not one of them."
+
+            Every sentence in that is true and the conclusion does not
+            follow, for two reasons this header itself supplies.
+
+            ONE — THIS IS THE LOGOTYPE SLOT, AND A LOGOTYPE IS A
+            MARQUE. That is what the word means. Where artwork exists
+            this element is not type at all: it is `.md-work-crest`,
+            the brand's own wordmark, and the owner's instruction three
+            paragraphs up is "I want the logo to be the showpiece
+            thing". The typed name is that showpiece's stand-in, and a
+            stand-in set two steps below the thing it stands in for is
+            not standing in for it. Since `marks/` ships empty by
+            design, the stand-in is what all 25 workspaces actually
+            draw. The crest is retied to `--t-marque-size` in the same
+            commit (`.md-work-crest-img`), so the invariant the old
+            note won — the two forms carry the same ink — is kept
+            rather than broken.
+
+            TWO — "NEVER A STAGE TITLE" IS ABOUT `.ph-name`, AND THIS
+            IS NOT ONE. A stage title names a KIND of page: Modules,
+            Data, Quotes, Customers. Those are the application's words
+            for its own screens and nobody in the business says any of
+            them. "Highfield Inflatables" is not the app's word for
+            anything — it is the first noun of a sale, and the
+            configurator's marque ("Highfield CL260") is the second.
+            One marque, on the one screen that is that one place: the
+            same ladder the configurator is on, one rung out, not a
+            borrowing from it.
+
+            MEASURED BEFORE THIS, at 1280x800 on the real seed: the
+            largest glyph on this stage was 43.52px against an 11px
+            floor — 3.96x, where PHASE_TWO §2.3 asks for about 7x. The
+            marque resolves to 82.86px here, which is 7.53x, and
+            "Highfield Inflatables" sets in 695px of an 850px identity
+            column — one line, 155px to spare. The longest place in the
+            seed, "OBSOLETE Trailers — No Longer Available", takes two
+            balanced lines; no single word in it reaches the column's
+            width, so §3's "nothing truncates mid-word" holds with no
+            clamp and no ellipsis.
+
+            AND IT STEPS DOWN RATHER THAN SHRINKING. Under a header of
+            780px — about a 1000px window, which is the figure
+            DESIGN_CONTRACT gives — the whole `--t-hero-*` set comes
+            back, in modules.css, under a container query on the header
+            itself. Rule 6 permits swapping steps; it never permits
+            reaching in for one value. */}
         {crest ? (
           <span className="md-work-crest">
             <img className="md-work-crest-img" src={crest.src} alt="" />
@@ -305,7 +349,7 @@ export function ModuleIndex({
           {standing && owner.name !== name ? (
             <span className="mono-label md-work-of">{owner.name}</span>
           ) : null}
-          <h2 className={crest ? 'md-work-name is-quiet' : 'ds-hero md-work-name'}>{name}</h2>
+          <h2 className={crest ? 'md-work-name is-quiet' : 'ds-marque md-work-name'}>{name}</h2>
         </div>
         {/* ONE FACT, THE SAME ONE THE CARD CARRIED. A figure is never
             a hue and is always mono and tabular. */}

@@ -284,30 +284,41 @@
    face is barred under. Nothing else in this feature moves — every
    name, sentence and label stays Inter, every figure stays mono.
 
-   IT NOW MATCHES `.ds-hero`, AND IT HAD COME TO MATCH NEITHER SET.
+   IT TAKES `.ds-hero` AT THE CALL SITE AND DECLARES NO TYPE HERE.
    The paragraph below used to say the width and tracking matched
    `.ds-display-lg` exactly, and when it was written that was true:
    at f14ba04 this was a complete display-lg set — `wdth 103`,
    -0.028em, display-lg size, weight and leading. f99977a raised it
    to the hero step and moved four of those six lines, leaving the
-   width at 103 and setting tracking to the RAW `--t-hero-track`
-   (-0.033em). What was left was the hero step wearing
-   `.ds-display-lg`'s width and no face-specific tracking at all —
-   and a comment, still accurate about a rule that no longer
-   existed, sitting on top of it.
+   width at 103 and tracking on the RAW `--t-hero-track` (-0.033em).
+   The pass after that restated the whole set here by hand: face,
+   `wdth 105`, size, weight, leading, a literal -0.036em, and a
+   `prefers-contrast` arm to walk the width back. Every value was
+   right. It was still a step declared twice, and the literal
+   -0.036em is what the visual sweep of 2026-09-09 counted in
+   finding 7 — a rule that takes a token's size and then writes its
+   own tracking has broken the set, and drifts the moment either
+   moves.
 
-   `.ds-hero` overrides both of those for Archivo on purpose:
-   `wdth 105`, and -0.036em rather than the -0.033em the step
-   declares, because Archivo runs optically larger than Inter at
-   the same size and its counters are tighter. Those two lines are
-   the whole reason `.ds-hero` is more than an alias for the step.
-   Two sets crossed in one headline is what §2's "take the whole
-   step" forbids. It is the hero set now, matching `.ds-hero`.
+   SO THE CLASS CARRIES IT. `.ds-hero` is more than an alias for
+   the `--t-hero-*` tokens: it states `--font-hero`, `wdth 105` and
+   -0.036em rather than the -0.033em the step declares, because
+   Archivo runs optically larger than Inter at the same size and
+   its counters are tighter. Those three lines exist nowhere else —
+   the Archivo tracking in particular lives ONLY in that class body
+   and is not a token — so anything wanting the Archivo hero step
+   has to WEAR THE CLASS. Reaching in for the tokens gets Inter's
+   tracking; writing the number by hand is the same step declared
+   in two places. `CustomerList.tsx` wears it, the way
+   `ModuleWorkspace`, `SignIn`, `HomeStage` and `ViewPage` do.
 
-   RESTATED RATHER THAN INHERITED because a feature stylesheet is
-   imported after the system's and would otherwise fight the
-   utility class over the same properties, which is the override
-   layer this repo forbids.
+   NOTHING IS LEFT HERE BUT WHAT IS LOCAL, which is also why there
+   is no longer a cascade to fight: this rule and the utility now
+   share no property, so it does not matter that a feature sheet is
+   parsed after the system's. `color` goes with them — `.ds-hero`
+   sets `var(--fg)`, and `bridge.css:49` makes `--ink` an alias for
+   `--fg`, so the ink is identical and restating it only bought a
+   second place to change it.
 
    ONE BLOCK, NOT TWO. The margin and the wrap used to live in a
    second `.cx-empty-title` 330 lines down, beside the empty
@@ -319,28 +330,17 @@
    of which edited this very file. It is declared once now.
 
    The hero step clamps 34→52px, so nothing moves at 1024 and there
-   is a focal point at 1600.
+   is a focal point at 1600. Resolved at 1280, before and after:
+   Archivo Variable · 43.52px · 680 · 1.03 · -0.036em · `wdth` 105,
+   and `wdth` 100 under `prefers-contrast: more` — identical, which
+   is the point. Six declarations became a class name.
    ============================================================ */
 .cx-empty-title {
-  font-family: var(--font-hero);
-  font-variation-settings: 'wdth' 105;
-  font-size: var(--t-hero-size);
-  font-weight: var(--t-hero-weight);
-  line-height: var(--t-hero-lead);
-  letter-spacing: -0.036em;
-  color: var(--ink);
   /* the eyebrow above is an 11px label with its own leading; the
      hero's 1.03 leaves too much air under it unless the headline
      is pulled back up into it */
   margin: calc(var(--s-2) * -1) 0 0;
   text-wrap: balance;
-}
-@media (prefers-contrast: more) {
-  /* an extended width costs a little counter where a reader has
-     asked for legibility over voice — ds.css makes the same trade */
-  .cx-empty-title {
-    font-variation-settings: 'wdth' 100;
-  }
 }
 
 /* REMOVE, AND WHAT IT COSTS, IN ONE COLUMN — handed to `PageHead`

@@ -9,7 +9,7 @@
    screens, and measures every text-bearing leaf against the ground it
    is actually drawn on.
 
-   THE THREE THINGS THAT MADE THE EARLIER SWEEPS LIE. CLAUDE.md records
+   THE FOUR THINGS THAT MADE THE EARLIER SWEEPS LIE. CLAUDE.md records
    that three contrast sweeps during the redesign "reported false
    catastrophes by skipping one of those":
 
@@ -24,7 +24,47 @@
         design contract sets; measured uncomposited it looks worse than
         it is.
 
-   All three are handled below, and the parser returns null rather than
+   The fourth was found on 2026-09-09, by a sweep that wrote its own
+   walker (`docs/research/visual-qa-2026-09-09.md`, findings 3 and 4):
+
+     4. A LEAF IS NOT "an element with no element children". This
+        walked `document.querySelectorAll('*')` and skipped anything
+        with `childElementCount`, so `<p>Hull only <b>$20,900</b></p>`
+        measured the bold and never the sentence in front of it — and
+        a run of text wrapped in `<span>`s is how half this app is
+        written. The rule is now "an element that holds a text node of
+        its own", which is a SUPERSET: measured node for node on the
+        ten screens below, not one leaf the old test found is missing
+        from the new set, and it finds 124 the old test could not
+        reach. At 1280x800 on the real seed, 1,158 -> 1,282:
+
+          home          90 -> 128     catalogue     306 -> 306
+          modules      102 -> 110     register      223 -> 224
+          module        63 ->  71     quotes         35 ->  39
+          data          29 ->  29     customers      23 ->  25
+          new quote     64 ->  64     configurator  223 -> 286
+
+        AND THE FIVE SCREENS ARE TEN, which is the larger half of the
+        same finding and the reason it was found at all. The guard
+        covered home, modules, data, quotes and customers; on the real
+        seed two of those are empty states worth 22 leaves between
+        them, and BOTH failures the sweep found were on screens this
+        file never opened. 279 nodes over five screens is now 1,246
+        over ten. Coverage is not a ruler, and a ruler is not coverage.
+
+   AND ONE THING THAT WOULD HAVE MADE THIS SWEEP LIE THE OTHER WAY.
+   `aria-hidden="true"` text is set aside, and counted out loud rather
+   than swallowed. DESIGN_PRINCIPLES §1 permits `--fg-quaternary` —
+   2.6:1 — on "rules, ticks, disabled marks" provided it "may never
+   carry meaning", and the nine `·` separators on the configurator are
+   exactly that (finding 4). Widening the walk without this condition
+   turns nine correct nodes red and, in CLAUDE.md's words, "you will
+   spend an hour fixing an app that is fine". 36 nodes over the ten
+   screens are set aside this way and 9 of them are under the line;
+   every screen prints both figures, so the exemption is legible and
+   not a hiding place.
+
+   All of it is handled below, and the parser returns null rather than
    guessing, so an unknown colour format is a crash and not a silent
    pass.
 
@@ -91,18 +131,37 @@ function sweep() {
     return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)
   }
 
+  /* (4) WHAT THIS ELEMENT ITSELF SAYS — its own text nodes, not its
+     descendants'. `textContent` on a wrapper returns the whole
+     subtree, which would measure a paragraph's string against the
+     wrapper's colour and count the same glyphs once per ancestor. The
+     colour a text node is painted in is its PARENT's `color`, so the
+     element that owns the text node is the thing to measure. */
+  const ownText = (el) => {
+    let s = ''
+    for (const n of el.childNodes) if (n.nodeType === 3) s += n.data
+    return s.trim()
+  }
+
   const fails = []
   let measured = 0
   let unparsed = 0
+  let decorative = 0
+  let decorativeBelow = 0
 
   for (const el of document.querySelectorAll('*')) {
-    if (el.childElementCount) continue /* text-bearing leaves only */
-    const t = (el.textContent || '').trim()
+    const t = ownText(el)
     if (!t) continue
     const r = el.getBoundingClientRect()
     if (r.width < 2 || r.height < 2) continue
     const cs = getComputedStyle(el)
     if (cs.visibility === 'hidden' || cs.opacity === '0' || cs.display === 'none') continue
+    /* DECORATION IS NOT READING TEXT — and the skip is counted twice
+       over, once for how much was passed over and once for how much
+       of it was under the line, so that a screen quietly hiding real
+       text behind `aria-hidden` moves a number somebody can see. A
+       guard's exemption is only safe while it is legible. */
+    const decoration = !!el.closest('[aria-hidden="true"]')
 
     const fg = parse(cs.color)
     if (!fg) {
@@ -112,7 +171,6 @@ function sweep() {
     const ground = groundOf(el)
     const text = over(fg, ground) /* (3) composite translucent text */
     const cr = ratio(text, ground)
-    measured++
 
     const px = parseFloat(cs.fontSize)
     const weight = +cs.fontWeight || 400
@@ -120,10 +178,21 @@ function sweep() {
     const large = px >= 24 || (px >= 18.66 && weight >= 700)
     const need = large ? 3 : 4.5
 
+    if (decoration) {
+      decorative++
+      if (cr < need) decorativeBelow++
+      continue
+    }
+    measured++
+
     if (cr < need) {
       fails.push({
         text: t.slice(0, 48),
-        cls: (el.className || '').toString().slice(0, 40),
+        /* `className` on an SVG node is an SVGAnimatedString, which
+           stringifies to "[object SVGAnimatedString]" and names
+           nothing. The attribute is the same string on both. */
+        tag: el.tagName.toLowerCase(),
+        cls: (el.getAttribute('class') || '').slice(0, 40),
         px: +px.toFixed(1),
         weight,
         ratio: +cr.toFixed(2),
@@ -133,16 +202,82 @@ function sweep() {
     }
   }
   fails.sort((a, b) => a.ratio - b.ratio)
-  return { measured, unparsed, fails }
+  return { measured, unparsed, decorative, decorativeBelow, fails }
 }
 
-/* The screens worth walking. `open` runs after sign-in and data load. */
+/* A door in the rail, and only there. The module workspace has its own
+   "Quotes" tab and the picker its own "Close" — an unscoped
+   `getByRole` would eventually press one of those instead. */
+const door = (p, name) => p.locator('nav.sn').getByRole('button', { name }).first().click()
+
+/* The screens worth walking. `open` runs after sign-in and data load,
+   and each one continues from where the last finished — the order is
+   the route, and `at` is the proof it arrived (`src/app/url.ts`).
+
+   TEN, NOT FIVE. The five were home, modules, data, quotes and
+   customers; on the real seed two of those are empty states worth 22
+   leaves between them, and the module workspace, the catalogue, the
+   register, the picker and the configurator — where the app actually
+   spends its day, and where both failures of the 2026-09-09 sweep
+   were — were never opened. */
 const SCREENS = [
-  { name: 'home', open: async () => {} },
-  { name: 'modules', open: async (p) => p.getByRole('button', { name: /^Modules/ }).first().click() },
-  { name: 'data', open: async (p) => p.getByRole('button', { name: /^Data/ }).first().click() },
-  { name: 'quotes', open: async (p) => p.getByRole('button', { name: /^Quotes/ }).first().click() },
-  { name: 'customers', open: async (p) => p.getByRole('button', { name: /^Customers/ }).first().click() },
+  { name: 'home', at: '', open: async (p) => door(p, /^Home/) },
+  { name: 'modules', at: 'modules', open: async (p) => door(p, /^Modules/) },
+  {
+    /* one module, on its Dashboard tab — named, because the workspace
+       remembers the tab you left it on */
+    name: 'module',
+    at: 'module',
+    open: async (p) => {
+      await door(p, /^Modules/)
+      await p.getByRole('button', { name: /^Open .+ — / }).first().click()
+      await p.getByRole('tab', { name: 'Dashboard' }).first().click()
+    },
+  },
+  { name: 'data', at: 'data', open: async (p) => door(p, /^Data/) },
+  {
+    /* the front door of a table — the gallery, which is what a table
+       opens as (`catalogueLens.ts`) */
+    name: 'catalogue',
+    at: 'table',
+    sure: '.cat-gallery',
+    open: async (p) => {
+      await door(p, /^Data/)
+      await p.getByRole('button', { name: /^All tables/ }).first().click()
+      await p.getByRole('button', { name: /^Open .+ — / }).first().click()
+    },
+  },
+  {
+    /* and the same table at the other density — the register, the
+       screen a dealer is in all day, and the surface finding 2's 21
+       band names at 4.33:1 were measured on. The lens is session
+       state, not a place, so the address cannot tell the two apart
+       and `sure` does. */
+    name: 'register',
+    at: 'table',
+    sure: '.tb-scroll',
+    open: async (p) => p.getByRole('button', { name: /^List$/ }).first().click(),
+  },
+  { name: 'quotes', at: 'quotes', open: async (p) => door(p, /^Quotes/) },
+  { name: 'customers', at: 'customers', open: async (p) => door(p, /^Customers/) },
+  { name: 'new quote', at: 'new-quote', open: async (p) => door(p, /^New quote$/) },
+  {
+    /* and through the picker into the configurator, the one screen
+       wearing the display tier. A place, then a model, then the act —
+       the same three presses a dealer makes. */
+    name: 'configurator',
+    at: 'quote',
+    open: async (p) => {
+      await p
+        .getByRole('list', { name: /places you can quote from/i })
+        .getByRole('button')
+        .first()
+        .click()
+      await p.getByRole('option').first().click()
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).first().click()
+      await p.waitForTimeout(1200)
+    },
+  },
 ]
 
 const run = async () => {
@@ -183,35 +318,67 @@ const run = async () => {
 
   let total = 0
   let failed = 0
+  let skipped = 0
+  let skippedBelow = 0
+  let unreached = 0
   for (const s of SCREENS) {
     try {
       await s.open(page)
       await page.waitForTimeout(700)
     } catch {
-      console.log(`  ${s.name.padEnd(10)} — could not open, skipped`)
+      console.log(`  ${s.name.padEnd(12)} — COULD NOT OPEN, not measured`)
+      unreached++
       continue
     }
     /* PROVE WE ARE LOOKING AT THE SCREEN WE CLAIM. A sweep that
        silently measures the previous screen, or an empty one, reports
        clean and means nothing — the same failure check.sh had when a
        pipeline swallowed its own exit status. So each row prints the
-       heading it actually found, and a screen that yields almost
-       nothing is visible rather than reassuring. */
+       heading it actually found, a screen that yields almost nothing
+       is visible rather than reassuring, AND the address is checked
+       against the place this row is for: `src/app/url.ts` gives every
+       window a `?at=`, so "did the click land" is now a fact and not
+       an inference. A screen that cannot be reached is counted and
+       goes red — the guard reporting clean over a screen it never
+       opened is the defect this file was widened to close. */
+    const where = await page.evaluate(() => ({
+      at: new URLSearchParams(window.location.search).get('at') ?? '',
+      head:
+        (document.querySelector('h1, h2, [role="heading"]')?.textContent ?? '').trim().slice(0, 34) ||
+        '(no heading)',
+    }))
+    const wrongPlace = where.at !== s.at
+    const wrongState = s.sure ? !(await page.locator(s.sure).count()) : false
+    if (wrongPlace || wrongState) {
+      console.log(
+        `  ${s.name.padEnd(12)} — DID NOT ARRIVE (address "${where.at}", wanted "${s.at}"${
+          wrongState ? `; no ${s.sure}` : ''
+        }), not measured`,
+      )
+      unreached++
+      continue
+    }
+
     const r = await page.evaluate(sweep)
-    const head = await page.evaluate(() => {
-      const h = document.querySelector('h1, h2, [role="heading"]')
-      return (h && h.textContent.trim().slice(0, 34)) || '(no heading)'
-    })
     total += r.measured
     failed += r.fails.length
+    skipped += r.decorative
+    skippedBelow += r.decorativeBelow
     const note = r.unparsed ? ` (${r.unparsed} unparsed colours)` : ''
+    /* the second figure only when there is one — nine rows reading
+       "(0 under the line)" is how a number stops being read */
+    const deco = r.decorative
+      ? `, ${r.decorative} aria-hidden set aside${
+          r.decorativeBelow ? ` (${r.decorativeBelow} under the line)` : ''
+        }`
+      : ''
     const thin = r.measured < 20 ? '  ← thin, check this screen opened' : ''
     console.log(
-      `  ${s.name.padEnd(10)} ${String(r.measured).padStart(4)} measured, ${r.fails.length} below threshold${note}  [${head}]${thin}`,
+      `  ${s.name.padEnd(12)} ${String(r.measured).padStart(4)} measured, ${r.fails.length} below threshold${deco}${note}  [${where.head}]${thin}`,
     )
     for (const f of r.fails.slice(0, 10)) {
       console.log(
-        `      ${f.ratio}:1 (needs ${f.need})  ${f.px}px/${f.weight}  ${f.color}  .${f.cls}  "${f.text}"`,
+        `      ${f.ratio}:1 (needs ${f.need})  ${f.px}px/${f.weight}  ${f.color}  ${f.tag}.${f.cls}  "${f.text}"`,
       )
     }
   }
@@ -219,11 +386,23 @@ const run = async () => {
   await browser.close()
 
   console.log('')
+  const walked = SCREENS.length - unreached
+  const aside = skipped
+    ? `, ${skipped} aria-hidden nodes set aside (${skippedBelow} of them under the line)`
+    : ''
+  if (unreached) {
+    console.log(
+      `  FAILED — ${unreached} of ${SCREENS.length} screens could not be reached. ${total} text nodes measured on the other ${walked}${aside}; ${failed} below threshold`,
+    )
+    process.exit(1)
+  }
   if (failed === 0) {
-    console.log(`  clean — ${total} text nodes across ${SCREENS.length} screens, all clear their threshold`)
+    console.log(
+      `  clean — ${total} text nodes across ${SCREENS.length} screens, all clear their threshold${aside}`,
+    )
     process.exit(0)
   }
-  console.log(`  FAILED — ${failed} of ${total} text nodes below their contrast threshold`)
+  console.log(`  FAILED — ${failed} of ${total} text nodes below their contrast threshold${aside}`)
   process.exit(1)
 }
 

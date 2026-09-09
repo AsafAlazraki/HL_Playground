@@ -3165,6 +3165,62 @@
    than a marine dealer's wraps to two lines rather than clipping.
    `balance` because a two-line name at this step with one word on
    the second line is visible from across the room.
+
+   ------------------------------------------------------------
+   AND HERE IS THE CONSEQUENCE THE ARGUMENT ABOVE DID NOT WRITE
+   DOWN, WHICH THE 2026-09-09 VISUAL SWEEP MEASURED AND RANKED AS
+   ITS WORST FINDING.
+
+   Ruling out the marque and ruling out the hero leaves this step,
+   and this step is FIVE PIXELS BELOW the greeting it replaced:
+
+     before the tier   32.7px greeting   ÷ 11px  =  2.97x
+     after the tier    26.88px door name ÷ 11px  =  2.44x
+
+   So the front door is the one stage in the app whose largest
+   glyph went DOWN when the display tier landed, and on a fresh
+   sheet — no drafts, so no `.dsh-worth-n` — 2.44x is the whole
+   screen. PHASE_TWO §2.3 asks for about 7x.
+
+   THE CEILING IS THE CELL, AND IT IS MEASURED. At 1280x800 on the
+   real seed the doors card is 488px wide, `.dsh-doors` 463, a door
+   225, and this element 199. Archivo at each candidate step, the
+   longest of the four kind labels:
+
+     "Accessories"  --t-display-lg  26.88px  150.0px   fits (199)
+     "Accessories"  --t-figure-xl   33.43px  186.5px   fits
+     "Accessories"  --t-hero        43.52px  240.6px   OVERFLOWS
+     "Accessories"  --t-marque      82.86px  445.7px   OVERFLOWS
+
+   and "Accessories" is ONE WORD, so a step it does not fit on
+   cannot wrap — `break-word` would cut it mid-word, which §3
+   forbids outright. The cell never gets wider either: the grid
+   answers a wider window with MORE columns, so the door measures
+   225px at 1280 and 165px at 1920.
+
+   WHICH LEAVES A HOLE IN THE LADDER RATHER THAN A FAULT IN THIS
+   RULE. `--t-figure-xl` fits and is not available: ds.css scopes
+   it to "THE COMMITTED TOTAL... one step, for one figure, at
+   display size. Do not read this as permission", and the one
+   figure it is for is already on this screen (`.dsh-worth-n`) —
+   a door name taking it would put the kind and the pipeline at the
+   same step and flatten the hierarchy this card was built to make.
+   The next step up that a NAME may take is `--t-hero`, and it does
+   not fit by 41.6px.
+
+   SO THE FIX IS NOT HERE. It is a display step between 26.88px and
+   43.52px in `src/styles/ds.css`, which is not this feature's file
+   to write. The measured budget for whoever writes it: this cell
+   holds up to 35.5px before "Accessories" breaks, so a step landing
+   at 34px at 1280 fits with 9px over and would put the front door
+   at 3.09x — above the 2.97x the tier was built to fix. Anything
+   larger needs the doors card to be a different shape, and the two
+   shapes that give it one were measured and rejected: spanning two
+   grid columns puts a third column on a 1280 stage that has room
+   for two and turns the front door into a sideways scroller, and a
+   single column of four bands cuts the photograph from 24,084px2 to
+   18,040 — undoing, for 16px of type, the plate this same pass
+   doubled because §1b asks the photographs to BE the palette.
    ------------------------------------------------------------ */
 .dsh-door-name {
   color: var(--fg);

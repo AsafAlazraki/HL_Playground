@@ -84,8 +84,44 @@
   color: var(--fg);
 }
 
+/* THE MODULE'S NAME IS SMALLER THAN THE QUESTION, because it shares
+   its line with a back arrow, a logo and a count where the question
+   had the row to itself. That was right; the size it reached for was
+   not.
+
+   IT WAS `clamp(22px, 2vw, 30px)`, AND THAT WALKED UNDER THE FLOOR.
+   `.qs-q` above sets `--font-hero` (Archivo) and this modifier
+   inherited it while overriding only the size, so the display face
+   rendered below the 26px it is barred from. Measured in Chrome,
+   Archivo Variable at 680:
+
+     window    was        now
+     1280      25.6px     26.88px
+     1024      22px       26px
+      900      22px       26px
+
+   DESIGN_CONTRACT §8.11 retired the previous display face because
+   "it was being set at 9px, where a serif is blur", and what replaced
+   it is "a floor, not a promise — Archivo is reachable through
+   exactly the four steps below, the lowest of which bottoms out at
+   26px, so no display face can render at 9px again." A hand-written
+   clamp beside the token is exactly the path that promise did not
+   account for: nothing enforces the floor, so the only thing that
+   keeps it is taking a real step.
+
+   SO IT TAKES ONE — `--t-display-lg-*`, the lowest of the four, whose
+   clamp bottoms at 26px by construction. THE WHOLE SET (rule 6):
+   size, weight, leading and tracking travel together, which is why
+   the three lines below the size are here and not left inherited
+   from `.qs-q`'s 680 / 1.04 / -0.03em. The tracking is the TOKEN and
+   not the contract's hand-written -0.028em — this file is not going
+   to become the seventh rule restating a number the token was
+   supposed to hold. */
 .qs-q--here {
-  font-size: clamp(22px, 2vw, 30px);
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
 }
 
 .qs-here {

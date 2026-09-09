@@ -394,7 +394,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
         <div className="cx-scroll">
           <div className="cx-empty ds-rise">
             <span className="cx-empty-eyebrow">No customer register yet</span>
-            <h2 className="cx-empty-title">Everybody you sell to, in one book.</h2>
+            <h2 className="ds-hero cx-empty-title">Everybody you sell to, in one book.</h2>
             {/* AN EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT — one
                 sentence. This was three: what a customer is, where the
                 register lives, and what it saves you. The first two are
@@ -548,7 +548,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
             {people.length === 0 ? (
               <div className="cx-empty ds-rise">
                 <span className="cx-empty-eyebrow">Nobody in it yet</span>
-                <h2 className="cx-empty-title">The register is here and waiting.</h2>
+                <h2 className="ds-hero cx-empty-title">The register is here and waiting.</h2>
                 <p className="cx-empty-say">Add somebody, or file them from a quote.</p>
 
                 <button

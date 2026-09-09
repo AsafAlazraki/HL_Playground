@@ -615,7 +615,48 @@
    one-word place and a two-word place are the same card, which is
    what keeps a row of the grid level; the third line is the
    exception that stretches its own row rather than the budget every
-   card pays. */
+   card pays.
+
+   ------------------------------------------------------------
+   AND NO, THIS DOES NOT TAKE THE MARQUE. The 2026-09-09 visual
+   sweep measured this stage at 2.79x against the ~7x PHASE_TWO
+   §2.3 asks for, and the step above is the obvious-looking answer.
+   It is the wrong one twice over, and both refusals are measured
+   rather than felt.
+
+   ONE — THERE ARE TWENTY-FIVE OF THESE. ds.css scopes the marque to
+   "the name of the thing being sold. ONE per screen, and only where
+   the subject IS a product". A grid IS the plural case: the module
+   WORKSPACE is the screen that is one place, and that is where the
+   marque went (`.md-work-name`). A card here is a door to it.
+
+   TWO — THE CELL IS 258.5px AND THE NAMES DO NOT FIT. Measured at
+   1280x800 on the real seed, Archivo at each candidate step:
+
+     "Haines Signature Factory Packages"     26.9px   419px  2 lines
+                                             43.5px   678px  3 lines
+                                             82.9px  1255px  5 lines
+     "OBSOLETE Trailers — No Longer Avail…"  26.9px   504px  2 lines
+                                             43.5px   817px  4 lines
+
+   Four lines is past the three-line clamp above, so the hero step
+   would put an ellipsis on this grid — and the sweep records that
+   this app has exactly one truncation anywhere and that it is a
+   fault. The cell does not widen to rescue it either: the grid's
+   own note twelve rules up explains that 290px was measured so
+   1280 keeps THREE columns rather than inflating four cards to
+   457px, and a wider window answers with more columns, never with
+   wider cards.
+
+   WHAT IS ACTUALLY WRONG ON THIS STAGE IS NOT IN THIS FILE. Its
+   largest glyph is `.ph-name` at 30.72px — the shared page header,
+   `features/page/page.css:101` — which is 3.84px ABOVE the twenty
+   five names it heads. The chrome outranking its own subject is the
+   fault; the same sweep's finding 7 already records that rule as a
+   fifth, invented display step (`clamp(26px, 2.4vw, 34px)` / 660 /
+   1.08 / -0.028em, against display-lg's 2.1vw / 650 / 1.1 /
+   -0.026em). Settling it there settles it for the five stages that
+   share it, which is why it is not settled here. */
 .md-place-name {
   text-transform: none;
   color: var(--fg);
@@ -4215,6 +4256,22 @@
   align-items: center;
   gap: var(--s-4);
   padding: var(--s-5) var(--s-6) var(--s-4);
+  /* THE MARQUE'S FLOOR IS MEASURED AGAINST THIS BOX, NOT THE
+     WINDOW. DESIGN_CONTRACT: "in a window under ~1000px, or a
+     column narrower than ~360px, a surface drops to --t-hero-* —
+     the whole step — rather than half-shrinking this one." The
+     window is the wrong ruler for a stage that sits beside a rail
+     which collapses on its own schedule; the header's own width is
+     the fact that decides whether a name fits. Measured on the real
+     seed: 1056px at a 1280 window, 800px at 1024.
+
+     `inline-size` and not `size`: this box's WIDTH comes from the
+     column above it — `flex: none` in a column flex box still
+     stretches the cross axis — so containing it costs nothing,
+     while its HEIGHT must still follow a name that wraps to two
+     lines. */
+  container-type: inline-size;
+  container-name: md-work-head;
 }
 /* THE DEALER'S OWN MARK, at the size the component reserves — so a
    logo arriving late never moves the name beside it.
@@ -4273,18 +4330,79 @@
   margin-bottom: 2px;
   color: var(--fg-tertiary);
 }
-/* `.ds-hero` carries the whole step — size, weight, leading AND
+/* `.ds-marque` carries the whole step — size, weight, leading AND
    tracking (rule 6). Nothing here reaches in for one of its four
-   parts, which is why the step could be swapped from display-lg to
-   hero in the component with a one-word change and no arithmetic.
-   `text-wrap: balance` because at 43.5px a name like "Haines
-   Signature Factory Packages" wraps, and a one-word orphan on the
-   second line of a page header is visible from across the room. It
-   still does not break mid-word. */
+   parts, which is why the step has now been swapped twice in the
+   component with a one-word change and no arithmetic: display-lg to
+   hero, and hero to marque. The argument for the second swap is at
+   the call site in ModuleWorkspace.tsx and is not repeated here.
+
+   `text-wrap: balance` because at 82.86px a name like "Haines
+   Signature Factory Packages" wraps, and a one-word orphan at that
+   size is visible from across the room. It still does not break
+   mid-word, and that is measured rather than hoped: on the real
+   seed at 1280x800 the widest single WORD any of the 25 place names
+   contains sets in 446px against an 850px identity column, so
+   `break-word` is a promise this screen never has to keep rather
+   than a truncation waiting to happen. */
 .md-work-name {
   margin: 0;
   overflow-wrap: break-word;
   text-wrap: balance;
+}
+
+/* THE FLOOR, AND IT IS A WHOLE-STEP SWAP.
+
+   ds.css: "--t-marque bottoms at 72px and holds there below 1024px.
+   In a window under ~1000px, or a column narrower than ~360px, a
+   surface drops to --t-hero-* — the whole step — rather than
+   half-shrinking this one. Rule 6 permits swapping steps; it never
+   permits reaching in for one value."
+
+   780px OF HEADER IS THAT WINDOW, MEASURED RATHER THAN GUESSED. The
+   header is the stage and the stage is the window minus the rail:
+   1056px at a 1280 window, 800px at 1024. 780 therefore fires at
+   about a 1000px window, which is the number the contract states,
+   and it clears 1024 — where the marque still holds at its own 72px
+   floor and the identity column is wide enough for every place in
+   the seed on two balanced lines.
+
+   ALL FOUR VALUES OR NONE. A container query cannot swap a class,
+   so this restates the hero SET from its own tokens — which ds.css
+   permits in as many words: "take the class, not the four tokens,
+   unless you are writing a feature rule that already owns the
+   element", and this rule owns it. The one thing it does not
+   restate is ds.css's -0.036em: that literal exists because the
+   contract and `--t-hero-track` disagree by 0.003em (finding 7 of
+   the 2026-09-09 visual sweep, which asks for one number rather
+   than seven copies of it), and a seventh copy written here would
+   be the fault and not the fix. The token is what a token is for. */
+@container md-work-head (max-width: 780px) {
+  .md-work-name.ds-marque {
+    /* the width ladder runs the other way as the step falls: 100 at
+       marque, 105 at hero (ds.css, THE WIDTH LADDER). An extended
+       width is a voice and a voice is affordable where there is
+       room; at 43.5px the size has stopped being the voice. */
+    font-variation-settings: 'wdth' 105;
+    font-size: var(--t-hero-size);
+    font-weight: var(--t-hero-weight);
+    line-height: var(--t-hero-lead);
+    letter-spacing: var(--t-hero-track);
+  }
+}
+
+/* AND THE ESCAPE THAT COMES WITH THE STEP-DOWN. ds.css walks .ds-hero
+   and .ds-display-lg back to wdth 100 under prefers-contrast: more —
+   an extended width costs a little counter — and states that .ds-marque
+   needs no such arm because it is already at 100. The rule above puts a
+   marque-classed element at 105 for the first time, so it owes the
+   escape ds.css would otherwise have covered for it. */
+@media (prefers-contrast: more) {
+  @container md-work-head (max-width: 780px) {
+    .md-work-name.ds-marque {
+      font-variation-settings: 'wdth' 100;
+    }
+  }
 }
 .md-work-fact {
   display: flex;
@@ -5107,12 +5225,21 @@
      every width this app resolves to, which is the point — a
      wordmark that quietly shrinks as the window grows is the one
      thing this plate must not do. */
-  max-width: 480px;
-  /* TIED TO THE HERO STEP RATHER THAN TO A NUMBER, so the crest and
-     the name that stands in for it (`.md-work-name`, `.ds-hero`)
-     cannot drift apart at any width: both are `--t-hero-size` of ink
-     inside the same padding. */
-  min-height: calc(var(--t-hero-size) + 2 * var(--s-3));
+  /* AND 480 WENT UP WITH THE STEP, BY THE SAME ARITHMETIC. The cap
+     is `--t-marque-size` now, and at 9.17:1 a wordmark reaching
+     82.86px wants 760px of plate at 1280 and 1,008 at 1920. Written
+     as the ratio rather than as either number, so the HEIGHT stays
+     the binding constraint at every width — which is the whole point
+     of this line and was already the point when the number was 480. */
+  max-width: calc(var(--t-marque-size) * 9.2);
+  /* TIED TO THE NAME'S STEP RATHER THAN TO A NUMBER, so the crest
+     and the name that stands in for it (`.md-work-name`,
+     `.ds-marque`) cannot drift apart at any width: both are
+     `--t-marque-size` of ink inside the same padding. When the name
+     steps down to the hero so does this, in the same container query
+     and for the same reason — the two forms of this header are one
+     header. */
+  min-height: calc(var(--t-marque-size) + 2 * var(--s-3));
   padding: var(--s-3) var(--s-4);
   border: 1px solid color-mix(in srgb, var(--kind) 26%, var(--line));
   border-radius: var(--r-card);
@@ -5123,15 +5250,28 @@
 .md-work-crest-img {
   display: block;
   max-width: 100%;
-  /* THE SHOWPIECE SIZE, AND IT IS THE HERO STEP ITSELF. 32px was a
+  /* THE SHOWPIECE SIZE, AND IT IS THE MARQUE STEP ITSELF. 32px was a
      favicon of a wordmark; 44 read as the brand at arm's length and
-     was a number. `--t-hero-size` is the same 43.5px at 1280 and
-     grows with the window exactly as the name beside it does, so
-     "the mark IS the hero" and "the name IS the hero" resolve to the
-     same quantity of ink instead of to two constants somebody has to
-     keep in step by hand. */
-  max-height: var(--t-hero-size);
+     was a number; `--t-hero-size` was the step the name wore. The
+     name wears the marque now, and "the logo is the showpiece" — the
+     sentence this crest exists to keep — does not survive the
+     artwork being drawn two steps smaller than the type that stands
+     in for it. So the two still resolve to the same quantity of ink
+     at every width, one step up. */
+  max-height: var(--t-marque-size);
   object-fit: contain;
+}
+
+/* AND THE CREST STEPS DOWN WITH THE NAME. Same container, same
+   threshold, same reason — the argument is at `.md-work-name`. */
+@container md-work-head (max-width: 780px) {
+  .md-work-crest {
+    max-width: calc(var(--t-hero-size) * 9.2);
+    min-height: calc(var(--t-hero-size) + 2 * var(--s-3));
+  }
+  .md-work-crest-img {
+    max-height: var(--t-hero-size);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -5146,9 +5286,9 @@
 }
 
 /* THE NAME UNDER A CREST is the eyebrow's neighbour, not a
-   headline: the crest is already saying it at 44px. It stays in
-   the document — it is this panel's heading and its accessible
-   name — at the size of the label above it. */
+   headline: the crest is already saying it, at the marque step. It
+   stays in the document — it is this panel's heading and its
+   accessible name — at the size of the label above it. */
 .md-work-id.is-crested {
   align-self: center;
 }
