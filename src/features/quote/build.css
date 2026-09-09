@@ -698,13 +698,37 @@
 
 /* NO BACKGROUND IS DECLARED HERE. `.k-band` in ds.css paints this
    surface in the kind's own hue, and a background on this rule
-   would race it depending on stylesheet order. */
+   would race it depending on stylesheet order.
+
+   ── TWO ROWS NOW, AND THE HIERARCHY IS INVERTED ─────────────────
+
+   It was one row: a caret, the TABLE'S NAME at the 15px heading
+   step, one clause fading out beside it, and the figure. So the
+   loudest thing on a shut band was the name of a database table
+   and the quietest was the decision the band actually held.
+
+   The two rows are the eyebrow and the answer:
+
+     [▾]  01  THE HULL                              $5,010
+              chosen: Highfield - CL260 (PVC) B-G-DG
+
+   Row one is the 11px uppercase group label — the ONLY uppercase
+   DESIGN_CONTRACT §11 allows, and legitimate here because "The
+   hull" is a label this application writes rather than a name off
+   the dealer's price file. Row two is the 15px heading step, which
+   DESIGN_PRINCIPLES §2 defines as "the thing you scan for": on a
+   quote, that is what has been chosen.
+
+   The state starts in the NAME's column, not the number's, so the
+   numerals run as a clean column down the left edge of the rail. */
 .qb-band-head {
   width: 100%;
   display: grid;
-  grid-template-columns: 18px minmax(0, auto) minmax(0, 1fr) auto;
+  grid-template-columns: 18px auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
   align-items: center;
-  gap: var(--s-3);
+  column-gap: var(--s-3);
+  row-gap: 2px;
   padding: var(--s-3) var(--s-4);
   border: 0;
   text-align: left;
@@ -738,7 +762,12 @@
   outline-offset: -2px;
 }
 
+/* IT SPANS BOTH ROWS AND CENTRES OVER THEM. The caret opens the
+   BAND, not the label it happens to sit beside, so it belongs to the
+   whole head rather than to the eyebrow's row. */
 .qb-band-mark {
+  grid-row: 1 / 3;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -757,29 +786,62 @@
   }
 }
 
-/* NO MASK AND NO NOWRAP. A fade over a name that FITS reads as a
-   defect — measured: "Highfield Inflatables" lost its final letter
-   to a gradient with 400px of room to spare. A band head is 56px
-   and a two-line name inside it costs nothing, so the name simply
-   wraps. §3: nothing truncates mid-word. */
+/* THE READING ORDER, DRAWN. It is 11px mono and tabular so `01`
+   through `05` sit in a true column down the rail's edge — the same
+   reason every other figure in this app is mono.
+
+   `--fg-secondary` BECAUSE THE TINT COUNTS. See the measurement
+   under `.qb-band-state`: `--fg-tertiary` fails on four of the kind
+   heads in dark, and this ink sits on exactly those heads. */
+.qb-band-num {
+  grid-row: 1;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-mono-sm-size);
+  font-weight: 550;
+  letter-spacing: 0.02em;
+  line-height: var(--t-label-lead);
+  color: var(--fg-secondary);
+}
+
+/* THE ONE UPPERCASE STYLE, AND THE ONLY ONE §11 ALLOWS: an 11px
+   group label. It is legitimate here and it was not before — the
+   head used to carry the dealer's own table name at 15px, and
+   uppercasing THAT would have been rule 3's lossy transform on a
+   proper noun. `The hull` is a label this application wrote.
+
+   THE MARKUP KEEPS ITS OWN CASE and the stylesheet shouts it, so
+   what a screen reader speaks is "The hull" rather than a word it
+   has to guess is not an acronym.
+
+   NO MASK AND NO NOWRAP. A fade over a name that FITS reads as a
+   defect — measured on the old head: "Highfield Inflatables" lost
+   its final letter to a gradient with 400px of room to spare. These
+   five names are short and a two-line one costs nothing, so it
+   simply wraps. §3: nothing truncates mid-word. */
 .qb-band-name {
-  font-size: var(--t-heading-size);
-  font-weight: 620;
-  letter-spacing: var(--t-heading-track);
-  line-height: 1.25;
+  grid-row: 1;
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  line-height: var(--t-label-lead);
+  text-transform: uppercase;
   color: var(--fg);
   min-width: 0;
   overflow-wrap: break-word;
 }
 
-/* THE ONE FACT §1a's prose budget allows a card. It fades rather
-   than truncating, and the whole of it is on the `title`.
+/* WHERE THE DECISION STANDS — `chosen: Yamaha - F9.9SMHB`, or
+   `7 offered`. It is the whole reason a shut band is allowed to be
+   shut (QUOTE_GROUND_UP §1: "shut does not mean unknown"), so it
+   takes the 15px heading step, which DESIGN_PRINCIPLES §2 defines
+   as the thing a person scans for.
 
-   IT IS `--fg-secondary` BECAUSE THE TINT COUNTS, and this is the
-   mistake DESIGN_PRINCIPLES §1 records being "made and caught during
-   the redesign", made again here. At `--fg-tertiary` it was measured
-   on the band heads' own kind tints — composited chain, in the
-   browser, both themes:
+   IT IS `--fg` AND NOT A SECONDARY TIER, because it is now the
+   band's content rather than a note beside its name. The clause
+   that used to sit here was `--fg-secondary`, and that choice was a
+   measurement worth keeping in view: at `--fg-tertiary` it read, on
+   the band heads' own kind tints, composited chain, both themes —
 
      dark   3.86 : 1  on the accessory head   ← fails
      dark   3.96 : 1  on the trailer head     ← fails
@@ -787,16 +849,29 @@
      dark   4.18 : 1  on the paperwork head   ← fails
      light  4.79 : 1  on the motor head       ← clears, barely
 
-   `--fg-tertiary` is the ramp's floor and it is quoted at 5.5:1 on
-   white; a kind tint takes 1.3 points off it in dark. `Yamaha -
-   F60LC` and `3 offered` are the whole of what a shut band says, so
-   this is not decoration.
+   — because a kind tint takes about 1.3 points off the ramp's
+   floor in dark.
 
-   Re-measured on the same two heads after the change: 7.06 and 7.10
-   in light, 6.65 and 6.38 in dark. */
-.qb-band-fact {
-  font-size: var(--t-small-size);
-  color: var(--fg-secondary);
+   RE-MEASURED FOR THIS PASS, composited chain, in the browser, at
+   1280×800 on the four heads a Highfield CL260 draws: 21 text nodes
+   across `.qb-band-num`, `.qb-band-name`, `.qb-band-state`,
+   `.qb-band-fig` and `.qb-tab-head`, ZERO under 4.5:1 in either
+   theme. The worst is the `01` numeral at `--fg-secondary` on the
+   trailer head in dark — 6.38:1 — and the name and the state clear
+   10.93:1 there and 14.91:1 in light.
+
+   NO MONEY IN THE CLAUSE. `.qb-band-fig` beside it carries the
+   band's figure in mono with tabular numerals, which is §11's rule
+   for every figure — and on a band holding one line the two would
+   otherwise print the same number twice. */
+.qb-band-state {
+  grid-column: 3;
+  grid-row: 2;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  line-height: 1.3;
+  color: var(--fg);
   /* THE FADE IS NARROWER THAN IT WAS, and the reason is a
      measurement. It began at 84%, so the last SIXTH of every
      summary was ramped to transparent whether or not there was
@@ -807,17 +882,26 @@
      more; it is text a person cannot read with nothing to say it
      was cut.
 
-     94% keeps the signal and stops eating the words: roughly eight
-     pixels of ramp on a 130px cell rather than twenty. The
-     principle is unchanged — §3 still says nothing truncates
-     mid-word, so it is still a fade and never an ellipsis. */
+     94% keeps the signal and stops eating the words. The principle
+     is unchanged — §3 still says nothing truncates mid-word, so it
+     is still a fade and never an ellipsis, and the whole of the
+     clause is on the `title`. It bites far less often than it did:
+     this row now has the head's full width rather than a 130px
+     strip beside a 15px name. */
   white-space: nowrap;
   overflow: hidden;
   min-width: 0;
   mask-image: linear-gradient(to right, #000 94%, transparent 100%);
 }
 
+/* THE FIGURE SPANS BOTH ROWS, because it is the band's total and
+   not a property of either line. Money never animates and this is
+   plain text: the figure is replaced on the frame it changes. */
 .qb-band-fig {
+  grid-column: 4;
+  grid-row: 1 / 3;
+  align-self: center;
+  justify-self: end;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: var(--t-mono-size);
@@ -832,6 +916,62 @@
   gap: var(--s-4);
   padding: var(--s-4);
   border-top: 1px solid var(--line-subtle);
+}
+
+/* ============================================================
+   ONE TABLE INSIDE A BAND
+
+   A band is a DECISION and several tables can answer one — seven
+   trailer tables answer `03 TRAILER` on a sheet that carries seven.
+   Each of them is one of these: a heading, and the shelf under it.
+   ============================================================ */
+
+.qb-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+/* A SECOND TABLE UNDER THE FIRST NEEDS A LINE TO SAY SO, and this
+   is `.qs-sec + .qs-sec` in the picker, which is the surface that
+   proved the treatment. The rule is on the SECOND of a pair, so a
+   band holding one table draws nothing at all — the same discipline
+   as the heading itself. */
+.qb-tab + .qb-tab {
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line-subtle);
+}
+
+/* THE HEADING IS DRAWN ONLY WHERE A BAND REALLY HOLDS MORE THAN
+   ONE TABLE — `.qs-sec--named`'s rule, for `.qs-sec--named`'s
+   reason: where there is one, this heading would print the same
+   name and the same count as the curation chip forty pixels below
+   it, which is the duplicated eyebrow `5d00103` was written to end.
+
+   IT TAKES `.k-rail` IN ITS OWN TABLE'S KIND. `04 DEALER FIT` is
+   the one band that mixes two of them — a package table and two
+   accessory tables on the real seed — and this is what keeps
+   DESIGN_PRINCIPLES §1's "a hue only ever appears on something that
+   HAS that kind" true one level under the band's own hue.
+
+   THE NAME IS THE WHOLE OF IT, in the dealer's own case — rule 3:
+   uppercase is a label style and never a name style, and it is
+   lossy on strings like "REDCO / Tinka Trailers". No count and no
+   clause ride with it: the count is the chip's four lines below and
+   what was chosen is the band head's above, and `bands.ts`
+   `BandTable` records why saying either here would be the same fact
+   on two surfaces sixty pixels apart. */
+.qb-tab-head {
+  margin: 0;
+  padding-left: var(--s-3);
+  font-size: var(--t-heading-size);
+  font-weight: 620;
+  letter-spacing: var(--t-heading-track);
+  line-height: 1.3;
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 /* ============================================================
@@ -2720,16 +2860,15 @@
   .qb-band-body {
     padding: var(--s-3);
   }
-  .qb-band-head {
-    grid-template-columns: 18px minmax(0, 1fr) auto;
-    row-gap: 2px;
-  }
-  /* the one fact drops to its own row rather than being squeezed
-     into a strip too narrow to read — §3, a strip that does not fit
-     wraps or scrolls, never truncates */
-  .qb-band-fact {
-    grid-column: 2 / -1;
-    grid-row: 2;
+  /* THE STATE TAKES THE FIGURE'S WIDTH TOO. The head is already two
+     rows at every size, so nothing has to be moved onto a new one
+     here — what a 330px head needs is for the 15px clause not to be
+     racing a `$105,930` for the same line. The figure keeps its own
+     column on row one, where it sits beside an 11px label that is
+     never more than two words. §3: a strip that does not fit wraps
+     or scrolls, never truncates. */
+  .qb-band-state {
+    grid-column: 3 / -1;
   }
   .qb-line {
     grid-template-columns: auto minmax(0, 1fr) auto;

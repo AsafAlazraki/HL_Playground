@@ -66,7 +66,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar, type ModuleDef, type RoleDef } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
 import { AccessGrid } from './AccessGrid'
-import { ACCESS_NOT_ENFORCED, ROLE_IS } from './accessSay'
+import { ACCESS_ENFORCEMENT, ROLE_IS } from './accessSay'
 import {
   accessCensus,
   grantedTo,
@@ -191,11 +191,12 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
             </div>
           </header>
 
-          {/* WHAT IS NOT TRUE YET, AT THE TOP RATHER THAN IN A
+          {/* WHAT THESE TICKS DO, AT THE TOP RATHER THAN IN A
               FOOTNOTE. Everything below this line is a decision
               somebody is making about their business, and they are
-              entitled to know when it starts to bite. */}
-          <p className="md-acc-real">{ACCESS_NOT_ENFORCED}</p>
+              entitled to know exactly where it bites — which half of
+              the verbs is enforced today and which is not. */}
+          <p className="md-acc-real">{ACCESS_ENFORCEMENT}</p>
 
           {places.length === 0 ? (
             <div className="md-acc-void">

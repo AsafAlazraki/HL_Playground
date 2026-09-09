@@ -244,30 +244,61 @@ halves of one job — and it becomes three.
 "Configure at every level" (brand / range / model) belongs in **Stock**, beside
 the rows it writes to.
 
-### The counted strips go
+### The counted strips stop being the subject
 
 "9 Places · 6,074 Things in them · 24 Tables in use" sits top-right of the
 modules screen, and the same shape sits on Home and on Business rules.
 
-**Delete them.** This is not a data analytics system. Nobody selling a boat
-needs to know how many tables are in use, and putting three big figures in the
-strongest position on the page says the app is proud of its schema — which is
-exactly the impression phase two exists to remove.
+**AMENDED 2026-09-09 BY `docs/plan/DECISIONS.md` §3, WHICH THE OWNER SETTLED.**
+This section said *"Delete them"* while §2.1 asked for them back as a quiet
+strip. The owner read both and kept §2.1, on the ground that **§1's objection
+was to counts as the SUBJECT of the screen, not to counts existing**. The word
+here is therefore **"not as the subject"**, and it is no longer "go".
+
+**Take them out of the strongest position.** This is not a data analytics
+system. Putting three big figures top-right of a page says the app is proud of
+its schema — which is exactly the impression phase two exists to remove. What
+was wrong with that strip was its **size, its weight and its position**; none
+of those is the same objection as "a dealer must never be told what the file
+holds", and a dealer does want to know the file holds 15,691 rows across 53
+tables.
 
 A count belongs **on the thing it counts**: "810 boats across 42 series" on the
 Boats module card is useful, because it tells you what is behind that door. The
-same three numbers in a panel of their own are a dashboard for the person who
-built the database, not for the person selling out of it.
+same three numbers in a **panel of their own** are a dashboard for the person
+who built the database, not for the person selling out of it — and that word is
+the whole of the surviving rule. A panel is a surface, a heading and a claim on
+the page's attention. One caption line on the page ground, beside a greeting,
+is none of those.
 
 Where a total genuinely matters it is the **price** — and that has its own
 permanent home at the foot of the configurator.
 
-**And this section beats §2.1's "quiet strip", decided 2026-09-09 on the
-dashboard's own measurements.** The argument and the numbers are under §2.1;
-the short form is that "a count belongs on the thing it counts" is already how
-the front door works, so a strip has nothing left to say. The figures §2.1 was
-protecting live in the empty states now, which is where a person who has just
-loaded 15,691 rows actually needs to be told they still have them.
+**AND THE STRIP IS BUILT, SMALL.** An earlier pass wrote here that this section
+beat §2.1 and that "there is no strip". `DECISIONS.md` §3 overturns that: §2.1
+was written knowing §1 and is the later, narrower statement, so it wins. The
+dashboard header now carries one line —
+
+> 15,691 rows across 53 tables
+
+— at 12px caption, tertiary ink, on the page ground, with no surface, no
+elevation and nothing to press, beside a 33px greeting. It is the **load
+toast's own sentence, kept**: `demoLoad.ts:231` says it once when a price file
+lands and then it is gone, and this is where that fact lives afterwards. It is
+not a new claim and it counts nothing the app was not already counting —
+`DataStage.tsx:115-116` prints the same two figures through the same reader.
+
+**And it spends no height, which is the test it had to pass.** Measured at
+1280x800 on Northside Marine with the line hidden and shown: header 49.7px both
+ways, grid 638.3px both ways, and the modules card still running 975px of tiles
+through the same 509px window. Seven of eight sizes are identical to the pixel;
+only a 600px column pays, and pays 44px into a grid that already scrolls inside
+its own box at that width. See `src/features/dashboard/census.ts` and the
+`.dsh-strip` block in `dashboard.css`.
+
+**The empty-state counts stay.** `cards.ts:emptyCount` answers a different
+question — a card with nothing in it names the precondition its own act needs —
+and neither replaces the other.
 
 ---
 
@@ -457,34 +488,62 @@ everything else. One card that works beats three that announce.
 - **The catalogue, entered by kind.** Four large photographic doors — Boats,
   Motors, Trailers, Parts — each showing what is in it, counted.
 - **Recent and pinned.** What this person actually opens.
-- ~~The counted figures stay, but as a quiet strip, not as the subject.~~
-  **SETTLED 2026-09-09 IN FAVOUR OF §1: there is no strip.** See below.
+- **The counted figures stay, but as a quiet strip, not as the subject.**
+  **SETTLED 2026-09-09 BY THE OWNER IN FAVOUR OF THIS CLAUSE** — see
+  `DECISIONS.md` §3, and the correction below. **Built.**
 
-#### The strip: §1 said delete, §2.1 said keep it quiet, and the decision is §1
+#### The strip: §1 said delete, §2.1 said keep it quiet, and the owner chose §2.1
 
 `docs/BACKLOG.md` recorded this as one of the questions only a person could
 answer — *"§1 deletes the counted strip and §2.1 asks for it back. Today neither
-exists."* It is settled here so two sections of one document stop disagreeing.
+exists."* **A person has now answered it: `DECISIONS.md` §3, 2026-09-09.**
 
-**§1 wins, and it wins on its own replacement rule rather than on seniority.**
-§1 does not merely delete the strip; it states what takes its place — *"A count
-belongs **on the thing it counts**."* Measured on the dashboard at `530597d`,
-that rule is already how this screen works and there is nothing left for a strip
-to carry:
+**§2.1 wins.** It was written knowing §1 and is the later, narrower statement,
+and §1's objection was to counts as the *subject* of the screen rather than to
+counts existing. §1 is amended to say "not as the subject" rather than "go".
 
-| figure a strip would print | where it already is |
-|---|---|
-| 25 places | 25 tiles on the modules card, each one a door |
-| 15,691 things in them | on each tile — `588` on Highfield, `209` on Yamaha |
-| 53 tables | the rail's own Data row, `53` |
-| quotes out | on the tile they were raised against |
+##### The case an earlier pass made for §1, and why it does not hold
 
-A strip would be a fourth, weaker copy of figures a person can already read on
-the objects they belong to — and it would sit in the one position on the page
-that has nothing else in it, which is precisely the "strongest position"
-objection §1 raises.
+That pass argued the strip had nothing left to carry, and tabulated it:
 
-**What §2.1 was protecting is kept, and it is kept where it is load-bearing.**
+| figure a strip would print | where that pass said it already is | what is true |
+|---|---|---|
+| 25 places | 25 tiles on the modules card | true, and the strip does not print it |
+| 15,691 things in them | on each tile — `588`, `209` | **never summed anywhere on this screen**; a person reading 25 tiles is not told the total |
+| 53 tables | the rail's own Data row, `53` | a bare numeral in chrome with no noun beside it |
+| quotes out | on the tile they were raised against | true, and the strip does not print it |
+
+Two of the four rows were the argument's own answer to a figure the strip was
+never going to carry. Of the two that remain, one is a total the screen states
+nowhere and the other is a digit in the navigation.
+
+The second half of that argument was that the strip *"would sit in the one
+position on the page that has nothing else in it, which is precisely the
+strongest position"*. That conflates **empty** with **strong**. Measured at
+1280x800: the header band is 992px wide and holds a 290px greeting and a 90px
+button, and the ~600px between them is the quietest space on the page, not the
+loudest. The strip sits there, bottom-aligned on the greeting's line, at 12px
+against 33px.
+
+##### What was built
+
+The dashboard header carries one line — **15,691 rows across 53 tables** —
+tertiary ink on the page ground, no surface, no elevation, nothing pressable,
+counted at paint off the store (`src/features/dashboard/census.ts`). It is the
+**load toast's own sentence, kept**: `demoLoad.ts:231` says it once when a
+price file lands and then it is gone. It introduces no noun and no reader the
+app was not already using — `DataStage.tsx:115-116` prints the same two
+figures the same way.
+
+**It spends no height.** Measured at eight sizes with the line hidden and
+shown: at 1600x1000, 1440x900, 1280x800, 1600x760, 1024x768, 900x800 and
+768x900 the header, the grid and the modules card's tile window are identical
+to the pixel — at 1280x800, header 49.7px, grid 638.3px, tiles 975px of content
+through a 509px window, before and after. Only a 600px column pays, 44px, into
+a grid that already scrolls inside its own box at that width.
+
+**What §2.1 was protecting is ALSO kept, and it is kept where it is
+load-bearing.** The strip does not replace it and neither replaces the other.
 The clause exists so a person who has just loaded a real price file does not
 land on a screen that looks empty. That is a real risk and it was real here:
 measured at 1280x800 one second after loading Northside Marine — 15,691 rows
@@ -502,11 +561,14 @@ data."* The quotes card now reads
 > You have **25** places to quote from.
 > [ New quote ]
 
-— which is §1's rule (the count is on the card whose act it makes possible),
-§2.1's intent (the figures did not vanish), and §6's four-part shape, satisfied
-by one change instead of three. `cards.ts:emptyCount` is the whole of it and it
-returns **null** where a card has no precondition to count, so no card ever
-prints a figure to fill a hole.
+— which is §1's rule (the count is on the card whose act it makes possible) and
+§6's four-part shape. `cards.ts:emptyCount` is the whole of it and it returns
+**null** where a card has no precondition to count, so no card ever prints a
+figure to fill a hole.
+
+The strip and the empty states answer two different questions — *what does this
+file hold* and *what does this card need before it can do anything* — and the
+dashboard now answers both.
 
 ### 2.2 · The catalogue — browse what you sell
 

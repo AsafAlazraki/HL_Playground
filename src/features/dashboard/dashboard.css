@@ -235,6 +235,101 @@
   overflow-wrap: anywhere;
 }
 
+/* ------------------------------------------------------------
+   THE COUNTED FIGURES, AS A QUIET STRIP — DECISIONS.md §3.
+
+   IT SPENDS NO HEIGHT, AND THAT IS THE WHOLE OF WHY IT IS HERE.
+   Measured at 1280x800 on the real seed before this pass:
+
+     the header band        49.7px tall, 992px wide
+     the greeting in it     about 290px of that width
+     the Edit button        about 90px
+     what was between them  about 600px of nothing
+
+     the grid below         638.3px
+     the modules card       975px of tiles through a 509px window
+     the quotes card        80.9px of dead space under its last
+                            line — 30.9% of its body
+
+   A strip in a row of its own, above the grid or below it, takes
+   its height off `.dsh-grid` — which is `flex: 1 1 auto` — and so
+   comes out of the 509px window the 25 modules are already
+   scrolling through. Bottom-aligned inside the header it takes
+   nothing: `.dsh-head` is as tall as `.dsh-head-say`, which is a
+   stamp over a 33px greeting, and a 16px line cannot raise that.
+   The measurement after this pass is in the same shape, and the
+   grid is the number to watch.
+
+   IT MUST NOT OUTRANK THE DOORS OR THE DRAFTS. Caption size
+   against a display greeting is a 2.8:1 size ratio; the ink is
+   tertiary; there is no surface under it, no rule beside it, no
+   elevation and nothing to press. The two lit cards below stay
+   the only paper on the screen.
+
+   `--fg-tertiary` IS LEGAL HERE FOR THE REASON IT IS LEGAL ON
+   `.dsh-card:has(.dsh-empty) .dsh-card-mark`: the ground beneath
+   it is the page itself, which is the pair the ramp was measured
+   at — 5.2:1, clear of the 4.5 floor — and this line has no
+   hover state that could lighten it.
+
+   IT NEVER TRUNCATES, AND IT WRAPS RATHER THAN SCROLLS. §3 gives
+   a strip that does not fit two outs — scroll, or wrap — and this
+   one wraps: `flex: 0 0 auto` with `nowrap`, so the whole line
+   moves to the next row instead of showing a clipped word at
+   rest. A 16px caption with a horizontal scrollbar in it is a
+   control where nobody wants one.
+
+   MEASURED, THE SAME WAY, WITH THE STRIP HIDDEN AND SHOWN:
+
+     1600x1000 · 1440x900 · 1280x800 · 1600x760
+     1024x768  · 900x800  · 768x900        head, grid and the
+                                           tiles window identical
+                                           to the pixel. 0px cost.
+
+     600x800   header 46.9 → 90.9, grid 641.1 → 597.1, tiles
+               window 77 → 74. 44px, and it is the acts row being
+               pushed down rather than the caption itself.
+
+   That is the one width where it is not free, and it is a width
+   where `.dsh-grid` is already one column scrolling inside its
+   own box by design — so the cost is 44px of scroll length, not
+   a broken composition. `body` still does not scroll sideways at
+   any of the eight.
+   ------------------------------------------------------------ */
+.dsh-strip {
+  margin: 0;
+  /* hugs the greeting and pushes the acts to the far edge, rather
+     than floating in the middle of a `space-between` row */
+  margin-inline-end: auto;
+  flex: 0 0 auto;
+  /* ITS OWN ALIGNMENT, NOT THE ROW'S. `.dsh-head` flips to
+     `align-items: flex-start` under a 720px column so the greeting
+     and the Edit button can stack; without this the caption would
+     jump from the greeting's line up beside the date stamp. It
+     wants the greeting's baseline at every width. */
+  align-self: flex-end;
+  white-space: nowrap;
+  color: var(--fg-tertiary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+}
+
+/* EVERY FIGURE IS MONO AND TABULAR (DESIGN_CONTRACT §11), and it
+   is one step up the ramp from the words around it — the figure
+   is the fact, the noun is what the fact is about. Still secondary
+   ink: `--fg-secondary` is 7.7:1 on the page ground and is the
+   step this app gives a description, not the one it gives a
+   name. */
+.dsh-strip-n {
+  color: var(--fg-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
 .dsh-head-acts {
   display: flex;
   align-items: center;

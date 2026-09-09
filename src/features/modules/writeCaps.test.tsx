@@ -26,7 +26,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { EntityDef, ModuleCapability, ModuleDef, RowData } from '@/types/model'
+import type {
+  EntityDef,
+  ModuleAccess,
+  ModuleCapability,
+  ModuleDef,
+  RowData,
+} from '@/types/model'
 
 vi.mock('@/db/repository', () => ({
   defaultMeta: () => ({
@@ -76,7 +82,11 @@ const row = (entityId: string, id: string, name: string, price: number): RowData
   updatedAt: ISO,
 })
 
-function moduleOf(capabilities: ModuleCapability[], tableIds = ['t1']): ModuleDef {
+function moduleOf(
+  capabilities: ModuleCapability[],
+  tableIds = ['t1'],
+  access?: ModuleAccess[],
+): ModuleDef {
   return {
     id: 'm1',
     name: 'Boats',
@@ -91,6 +101,7 @@ function moduleOf(capabilities: ModuleCapability[], tableIds = ['t1']): ModuleDe
     order: 0,
     createdAt: ISO,
     updatedAt: ISO,
+    ...(access ? { access } : {}),
   }
 }
 
@@ -161,13 +172,41 @@ describe('add — a new button on the index, a blank row in the master table', (
     expect(opened).toEqual([`t1:${rows[2].id}`])
   })
 
-  it('is disabled, with the reason on the page, when every table is history', async () => {
+  it('is refused in the tab order, with its reason tied to it, when every table is history', async () => {
     seed([table('t1', 'OBSOLETE Boats', true)], [row('t1', 'r1', 'Sport 460', 42000)])
     render(<ModuleStock module={moduleOf([...READS, 'add'])} onOpen={() => {}} />)
-    expect(screen.getByRole('button', { name: 'Add one' })).toBeDisabled()
+    const button = screen.getByRole('button', { name: 'Add one' })
+
+    /* `aria-disabled`, NEVER `disabled`. This assertion is the guard
+       on rule 10, not a style preference: `disabled` takes the button
+       out of the tab order, so a person moving by keyboard never
+       reaches the refused control and never meets the sentence that
+       explains it. `toBeDisabled()` passes for BOTH attributes, which
+       is why this asserts the attribute itself and asserts that the
+       element is still enabled. */
+    expect(button).toHaveAttribute('aria-disabled', 'true')
+    expect(button).not.toHaveAttribute('disabled')
+    expect(button).toBeEnabled()
+
     /* rule 10: the reason is a sentence, in the place the act was
        refused — not a tooltip and not a spec */
-    expect(screen.getByText(/nothing new is written to it/)).toBeInTheDocument()
+    const why = screen.getByText(/nothing new is written to it/)
+    expect(why).toBeInTheDocument()
+    /* AND IT TRAVELS WITH THE CONTROL. A sentence somewhere on the
+       page is a sentence a screen reader announces only if somebody
+       goes looking; `aria-describedby` hands it over on arrival. */
+    expect(button).toHaveAttribute('aria-describedby', why.id)
+    expect(why.id).not.toBe('')
+  })
+
+  it('writes nothing when the refused button is pressed anyway', async () => {
+    /* THE COROLLARY OF KEEPING IT PRESSABLE. `aria-disabled` does not
+       stop a click, so the guard has to be in the handler — and this
+       is the test that says so out loud. */
+    seed([table('t1', 'OBSOLETE Boats', true)], [row('t1', 'r1', 'Sport 460', 42000)])
+    render(<ModuleStock module={moduleOf([...READS, 'add'])} onOpen={() => {}} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add one' }))
+    expect(rowsOf('t1')).toHaveLength(1)
   })
 })
 
@@ -213,5 +252,60 @@ describe('delete — taken out, then said, never asked first', () => {
     expect(rowsOf('t1').map((r) => r.values['t1-name'])).toEqual(['Ultralite 340'])
     /* rule 9 in the negative: nothing asked, nothing stood in the way */
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})
+
+/* ============================================================
+   AND THE HALF THE ACCESS GRID DECIDES.
+
+   The grid has had `add`, `edit` and `delete` columns since roles
+   landed and no screen read them, which `DECISIONS.md` §2 names as a
+   safety claim the app does not honour: it tells an administrator
+   they have restricted something they have not. These are the tests
+   that make the claim true, from the screen rather than from the
+   reader — a switch is only real if a person meets its consequence.
+   ============================================================ */
+describe('the access grid takes the affordance away, and says who may', () => {
+  const WRITES: ModuleCapability[] = [...READS, 'add', 'edit', 'delete']
+  const managerOnly = (): ModuleDef =>
+    moduleOf(WRITES, ['t1'], [{ roleId: 'r-manager', capabilities: ['add', 'edit', 'delete'] }])
+
+  it('draws every write for the job that was granted them', () => {
+    render(<ModuleStock module={managerOnly()} roleId="r-manager" onOpen={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Add a boat' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Rename Sport 460' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Take Sport 460 out of the catalogue' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/kept to named jobs/)).not.toBeInTheDocument()
+  })
+
+  it('draws none of them for a job that was not, and says why in one sentence', () => {
+    render(<ModuleStock module={managerOnly()} roleId="r-sales" onOpen={() => {}} />)
+    expect(screen.queryByRole('button', { name: /^Add a/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Rename/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Take/ })).not.toBeInTheDocument()
+    /* ONE sentence for three verbs — `accessSay.ts`'s lesson, and the
+       reason `withheld` is a list rather than a string per stance */
+    expect(screen.getAllByText(/kept to named jobs/)).toHaveLength(1)
+    expect(
+      screen.getByText(/add, edit and remove are kept to named jobs/),
+    ).toBeInTheDocument()
+  })
+
+  it('names only the verbs actually withheld', () => {
+    const partly = moduleOf(WRITES, ['t1'], [{ roleId: 'r-sales', capabilities: ['add'] }])
+    render(<ModuleStock module={partly} roleId="r-sales" onOpen={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Add a boat' })).toBeInTheDocument()
+    expect(screen.getByText(/edit and remove are kept to named jobs/)).toBeInTheDocument()
+  })
+
+  it('says nothing at all about a module nobody has restricted', () => {
+    /* THE REGRESSION THIS EXISTS TO CATCH. If consuming `mayDo` ever
+       starts refusing an open module, every catalogue in the app grows
+       an apology it has no business making. */
+    render(<ModuleStock module={moduleOf(WRITES)} roleId={null} onOpen={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Add a boat' })).toBeInTheDocument()
+    expect(screen.queryByText(/kept to named jobs/)).not.toBeInTheDocument()
   })
 })

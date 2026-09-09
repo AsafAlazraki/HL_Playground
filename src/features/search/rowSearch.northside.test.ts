@@ -229,6 +229,7 @@ describe('find anything, on the real file — a place is not a table', () => {
        brand tables and answered with ten rows out of two tables that
        merely carry the word, with no way to reach the place at all. */
     const withPlaces = buildSearchIndex(entities, rowsByEntity, {
+      moduleDoor: true,
       modules: {
         m: {
           id: 'm',

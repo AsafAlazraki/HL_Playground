@@ -1621,10 +1621,17 @@
    start to exist.
 
      1. the way in, on the view stage's bar;
-     2. the bar's right-hand group and the well the page sits in;
+     2. the bar's right-hand group — which the quote stage no longer
+        stands anything in, and Admin, Customer and Module still do —
+        and the well the page sits in;
      3. the print rules — which are only ever about the SHELL
         getting out of the way.
-   ============================================================ */
+
+   THE BAR ITSELF IS THREE STACKED ROWS NO LONGER. It carried "Back",
+   the quote's reference and "All quotes" on three lines totalling
+   80.375px at every width; the cause was a missing `display: grid`
+   on `.shell-view-bar` and it is fixed at that rule, at the foot of
+   this file. What is fixed HERE is the right-hand group's track. */
 
 /* "QUOTE THIS ONE" IS NOT ON THIS BAR ANY MORE. It was the whole of
    track 3 — the most consequential press on the page, drawn as a small
@@ -1635,13 +1642,20 @@
    `ViewStage.tsx` for the argument. */
 
 
-/* -- the bar's right-hand side ------------------------------- */
+/* -- the bar's right-hand side -------------------------------
+   TRACK 3, DECLARED, and not `margin-left: auto`. §4 rule 2: a
+   child that relies on auto-placement lands wrong the moment a
+   sibling is added or removed, and this cluster has three other
+   stages standing in it (Admin, Customer, Module). The auto margin
+   was doing the job while the bar was a block; it is a grid again
+   above, so the track is named. `min-width: 0` is rule 3. */
 .shell-quote-acts {
-  flex: 0 0 auto;
+  grid-column: 3;
+  justify-self: end;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  margin-left: auto;
 }
 
 /* BOARD OR LIST — a segmented pair, so it reads as ONE control with
@@ -1683,8 +1697,13 @@
   border-color: var(--accent);
   color: var(--accent);
 }
-/* "All quotes" — a button, so sentence case, on the same control
-   step as every other control on a page toolbar. */
+/* A button, so sentence case, on the same control step as every
+   other control on a page toolbar. It was named for "All quotes",
+   which is gone — the quote stage has ONE way back now and §11 says
+   a way back is `.shell-view-back` with no `btn`. What still writes
+   this class is the Board | List | History switcher below the page
+   title, and the right-hand cluster on the Admin, Customer and
+   Module stages. */
 .btn.shell-quote-act {
   padding: 6px 11px;
   font-family: var(--font-ui);
@@ -2756,6 +2775,10 @@
 .shell-view-back {
   grid-column: 1;
   justify-self: start;
+  /* §4 rule 3 — a grid child floors at its own content width unless
+     it is told otherwise, and this is one of the two clusters the
+     contract names as missing it. */
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -4242,7 +4265,14 @@
 /* THE TABLE PAGE KEEPS ITS BAR, and this rule used to hide it.
    Back, the table name and the two doors all live in that bar, so
    hiding it left a full-screen register with NO WAY OUT - the one
-   defect that makes a page unusable rather than ugly. */
+   defect that makes a page unusable rather than ugly.
+
+   IT IS A NO-OP NOW and it is kept as one. `.shell-view-bar` says
+   `display: grid` for every stage at the foot of this file. This
+   rule said it for one stage and said nothing about TRACKS, so the
+   register's bar was a single-column grid — which stacks exactly
+   like the block the other five stages got. Deleting the rule would
+   say the fault it answered never happened. */
 .surface .shell-tablestage .shell-view-bar {
   display: grid;
 }
@@ -4793,8 +4823,87 @@
    Declared on the BAR rather than on each stage, because a stage
    that has to remember to align itself is a stage that will
    eventually forget. */
+
+/* ============================================================
+   AND THE BAR IS A GRID AGAIN, WHICH IT HAD STOPPED BEING.
+
+   DESIGN_CONTRACT §4 specifies this bar as "a three-track grid,
+   `minmax(0, 1fr) auto minmax(0, 1fr)`, `align-items: center`",
+   with every child claiming its own track. The tracks were written
+   — `.shell-view-back` carries `grid-column: 1; justify-self:
+   start` at :2756 and `.shell-viewstage .shell-view-bar
+   .shell-view-what` carries `grid-column: 2; justify-self: center`
+   at :2734 — but the `display: grid` they resolve against was
+   declared only for `.win-body .shell-view-bar` and for
+   `.surface .shell-tablestage .shell-view-bar`, and neither of those
+   two ever named a TRACK. So on the `.surface` path five stages'
+   bars computed `display: block`, `grid-column` was ignored, and
+   every child took a line of its own; the sixth, the register, was
+   a one-column grid in which `grid-column: 2` opened an IMPLICIT
+   second column hard against the first. Six stages, one class, and
+   not one of them drawing the bar the contract describes.
+
+   MEASURED, on a quote document at 1280x800 and again at 1440x900:
+
+     .shell-view-bar    display: block   height 80.375px
+       .shell-view-back      y=0       28.00   "Back"
+       .shell-view-what      y=28      20.25   the reference and the rig
+       .shell-quote-acts     y=48.25   32.13   "All quotes"
+
+   Three rows, identical at both widths, because a block does not
+   respond to width. That is the "two back controls, stacked" the
+   owner reported, and it was one missing declaration.
+
+   THE HEIGHT IS ONE CONTROL TALL, and only when something stands on
+   it. §11 asks for a 52px toolbar; the bar this app actually ships
+   is content-height, and four of its stages — Modules, Data,
+   Customers and Home — render it with NO children at all and
+   measure 0. An unconditional height would put a 52px empty band on
+   every one of those, which is the opposite of the job. So:
+   `--h-lg` (40px), which is the tallest control step, centred, and
+   `:not(:empty)` so a bar with nothing on it still costs nothing.
+
+   MEASURED ACROSS EVERY STAGE THAT STANDS ANYTHING ON IT, at
+   1280x800 and again at 1440x900 — the same figures at both, since
+   a stacked bar does not respond to width and a 40px one does not
+   need to:
+
+     quote document   80.38 → 40      −40.38   three rows became one
+     quote list       20.25 →  0      −20.25   crumb went; :empty
+     module           32.13 → 40       +7.87   one row, given a band
+     admin            28.00 → 40      +12.00   one row, given a band
+     table page       28.00 → 40      +12.00   the title is CENTRED now
+     modules/data/customers/home  0 → 0        unchanged
+
+   THE THREE THAT GROW ARE PAYING FOR ONE BAR RATHER THAN SIX, which
+   is the whole reason this class is in the shell and not in six
+   feature stylesheets. The register's twelve buy the most: its
+   `.shell-view-what` was landing in an IMPLICIT column 2 beside the
+   back button, so "Highfield Inflatables · 588 variants" sat hard
+   against Back instead of in the middle of the window — §4 rule 1,
+   which the table stage's own comment believed it was getting.
+
+   40 AND NOT 32: the bar sits on the top edge of the window with no
+   masthead over it, and a 28px control in a 32px band is 2px from
+   the edge of the screen, which reads as broken rather than tight.
+   40 AND NOT §11's 52: a screen has a height too (RESPONSIVE.md),
+   and on the screen this was measured for, chrome was taking
+   254.08px of 800 before this change.
+
+   `min-width: 0` on the two clusters is §4 rule 3: a grid child
+   defaults to `min-width: auto`, will not shrink below its content,
+   and squeezes the `auto` centre track — the known cause of
+   "NORT… · 21…". Fix the constraint, not the max-width.
+   ============================================================ */
 .shell-view-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-3);
   padding-inline: var(--page-gutter);
+}
+.shell-view-bar:not(:empty) {
+  min-height: var(--h-lg);
 }
 
 /* A STAGE TITLE IS A NAME (§3: uppercase is never a name style).

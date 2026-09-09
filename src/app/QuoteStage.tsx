@@ -15,13 +15,17 @@
    places and they already disagree).
 
    WHAT THIS FILE IS, AND ALL IT IS:
-     1. a way back   — one control, top left, always there;
-     2. a crumb      — what is on screen, in the bar's own voice;
-     3. a box        — `<QuoteList>` or `<QuotePage>` fills it and
+     1. a way back   — ONE control, top left, drawn on a document and
+                       pointing at the list it was opened from;
+     2. a box        — `<QuoteList>` or `<QuotePage>` fills it and
                        scrolls itself;
-     4. one link     — "All quotes", from a document back to the
-                       diary, because the panel's door is behind the
-                       stage a person is standing on.
+     3. a page head  — `PageHead` on the list, and nothing above it.
+
+   THERE WAS A SECOND WAY BACK AND A CRUMB. Both are gone, and the
+   argument is at the bar below: the bar drew "Back", the quote's
+   reference and "All quotes" on three stacked rows totalling
+   80.38px, of which the reference and the rig name were already on
+   the page under it at four times the size.
 
    IT SITS OVER THE SHEET, like the view, rules and flow stages, so
    the blueprint keeps its zoom and node state underneath and
@@ -46,7 +50,7 @@
 
 import type { ReactElement } from 'react'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, CaretLeft, ClockCounterClockwise, Kanban, ListBullets } from '@phosphor-icons/react'
+import { ArrowLeft, ClockCounterClockwise, Kanban, ListBullets } from '@phosphor-icons/react'
 import { QuoteList, QuotePage, useQuote, useQuotes } from '@/features/quote'
 import { useProjectStore } from '@/store/useProjectStore'
 import { isRetired } from '@/types/model'
@@ -165,9 +169,12 @@ export function QuoteStage({
     }
   }, [view])
 
-  /* Escape is the control in track 1 of the bar, on the keyboard. Not
-     "back to all quotes", which is a lateral move inside this window
-     and sits in track 3 — Escape is the way OUT, everywhere. */
+  /* ESCAPE IS THE WAY OUT, EVERYWHERE, and it is the ONLY thing wired
+     to `onClose` on this stage. That is what leaves the bar's one
+     control free to do the move the keyboard does not offer — up one
+     level, to the list. Two controls for `onClose` and none for
+     "back to the list" was the arrangement this replaced; see the
+     bar below. */
   useStageEscape(onClose)
   /* AND THIS IS WHERE THE KEYBOARD ARRIVES — see stageEntry.ts. The
      name is the reference, so opening a document out of the list says
@@ -199,70 +206,102 @@ export function QuoteStage({
          they reached for Escape to undo a word. See stageKeys.ts. */
       onKeyDown={stageKeys}
     >
-      <div className="shell-view-bar">
-        {/* BACK ONLY FROM A DOCUMENT, never from the list.
-            Quotes is one of the rail's four doors — you do not
-            arrive at it FROM anywhere, so "Back" pointed at
-            whatever happened to be open before and read as a
-            control that had lost its place. On a document it is
-            real: the document was opened from the list.
+      {/* ============================================================
+          ONE BACK CONTROL, AND IT GOES TO THE LIST.
 
-            `shell-view-back`, no `btn` — TableStage is the
-            calibration. `.btn` stamped this "BACK TO THE SHEET" in
-            11px uppercase mono; uppercase is a label style and this
-            is a button. */}
+          MEASURED at 1280x800 on a Highfield ADV7 draft, before this:
+          the bar was 80.38px of three stacked rows —
+
+            .shell-view-back    x=256  y=0      28.00   "Back"
+            .shell-view-what    x=604  y=28     20.25   20260909-01 · Highfield - ADV7 …
+            .shell-quote-acts   x=256  y=48.25  32.13   "All quotes"
+
+          Two back controls at the same x, one under the other, and a
+          heading between them. Identical at 1440x900 — the bar does
+          not respond to width because it was not laid out at all: it
+          carried no `display`, so a grid of three tracks written for
+          it in shell.css (`grid-column: 1` on the back, `grid-column:
+          2; justify-self: center` on the crumb) resolved against a
+          BLOCK and every child took its own line. The grid is put
+          back in shell.css with this change; the rows that are gone
+          are gone from here.
+
+          AFTER, measured the same way: one row, 40px. The work area
+          (`.qb-scroll`) goes 545.92 → 586.30 at 1280x800 and
+          674.73 → 715.11 at 1440x900, so the chrome above and below
+          it goes 254.08 → 213.70 and 225.27 → 184.89.
+
+          WHICH CONTROL SURVIVES is settled by DESIGN_CONTRACT §11:
+          Back is `className="shell-view-back"`, no `btn`, labelled
+          "Back". `btn shell-quote-act` is a page-toolbar control, not
+          a back affordance, so it is the one that goes.
+
+          WHICH ACT IT KEEPS is the interesting half, and it is `onOpen
+          (null)` — the list — not `onClose`.
+
+            · Escape is ALREADY `onClose` (`useStageEscape` below), so
+              a Back wired to `onClose` would be the second control for
+              an act that has one, which is the fault this change is
+              here to end.
+            · §4's own words are "it returns to wherever you came
+              from", and a document is opened from the list. This is
+              the only stage in the app with two levels inside it —
+              its own header says so — and Back is drawn only on the
+              second one. On the list, the stage's top level, there is
+              still no Back at all, which is exactly what every
+              single-level stage does.
+            · Nothing is stranded. The rail's Quotes door sets
+              `quoteId: null` (Shell.tsx:634), so the list is one
+              press from anywhere, and Escape still leaves the stage.
+
+          AND MODULESTAGE MADE THE OPPOSITE CALL, which is worth
+          saying out loud rather than leaving two files to disagree.
+          It deleted the generic "Back" and kept `btn shell-quote-act`
+          "All modules" — "the vague one is the one to lose". The
+          reasoning is good and the outcome is out of contract:
+          DESIGN_CONTRACT §11 names ONE back affordance for the whole
+          app, `shell-view-back`, no `btn`, labelled "Back", and a
+          page-toolbar pill is not it. §11 is a hard constraint, so it
+          wins here. Where "All modules" goes is ModuleStage's
+          question and not this file's; what this file will not do is
+          copy a shape the contract has already ruled on.
+
+          THE CRUMB IS GONE BECAUSE THE PAGE UNDER IT SAYS THE SAME TWO
+          FACTS, BIGGER. It read `20260909-01 · Highfield - ADV7 (HYP)
+          B-G-B`; 79px below it `QuoteBuild` draws `.qb-ref`
+          (20260909-01) over `<h1 class="qb-name">` (Highfield - ADV7
+          (HYP) B-G-B), and `QuoteEditor` (`qt-edit-name`) and
+          `QuoteDocument` (`qt-doc-name`) each draw their own pair on
+          the other two stops. The bar's copy carried `role="heading"
+          aria-level={1}`, so every quote document shipped TWO level-1
+          headings naming one rig.
+
+          AND ON THE LIST IT WAS THE SAME MISTAKE THE NOTE THIS
+          REPLACED ALREADY DESCRIBED: "Quotes we have made · a rig, a
+          customer and a moment", centred, directly over `PageHead`'s
+          "SELLING / Quotes / 1 quote" — two titles, and the centred
+          one won the eye because it was first. That note stopped
+          drawing the crumb on the BOARD and left it on the list;
+          both are `PageHead`'s pages and neither needs a second
+          title. Measured: the list's bar was 20.25px and is 0, and
+          the page under it starts that much higher — 158.39 → 138.14
+          at 1280x800, 161.94 → 141.69 at 1440x900.
+
+          The stage is still named for a screen reader either way:
+          `useStageEntry` puts "Quote 20260909-01" / "Quotes we have
+          made" on the region itself.
+          ============================================================ */}
+      <div className="shell-view-bar">
         {quote ? (
-          <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
+          <button
+            type="button"
+            className="shell-view-back"
+            onClick={() => onOpen(null)}
+            aria-label="Back"
+          >
             <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
             <span>Back</span>
           </button>
-        ) : null}
-
-        {/* THE BAR STOPPED SAYING THE PAGE'S NAME.
-
-            It used to be the only heading these pages had, and it was
-            marked up as one. `PageHead` now draws the title, the
-            eyebrow, the counted fact and the acts — so the bar was
-            printing a second, worse copy of the same thing directly
-            above it: "Quotes we have made · a rig, a customer and a
-            moment" over "SELLING / Pipeline". Two titles, and the
-            centred one won the eye because it was first.
-
-            It is kept where the surface below has NO PageHead — a
-            quote document, one customer, the access grid — because
-            there it is still the only thing naming what is on screen.
-            Reported as "header of page is crap", and it was. */}
-        {quote || view === 'list' ? (
-          <p className="shell-view-what" role="heading" aria-level={1}>
-            <span className="shell-view-what-name">
-              {quote ? quote.reference : 'Quotes we have made'}
-            </span>
-            <span className="shell-view-what-sep" aria-hidden="true">
-              ·
-            </span>
-            <span className="shell-view-what-say">
-              {quote ? quote.subjectLabel : 'a rig, a customer and a moment'}
-            </span>
-          </p>
-        ) : null}
-
-        {/* THE WAY BACK TO THE DIARY. The panel's own door is behind
-            this stage, so without this the only route from a document
-            to the list is out to the sheet and in again. Drawn only
-            when a document is open, because on the list it would point
-            at itself. */}
-        {quote ? (
-          <div className="shell-quote-acts">
-            <button
-              type="button"
-              className="btn shell-quote-act"
-              aria-label="Back to the quotes we have made"
-              onClick={() => onOpen(null)}
-            >
-              <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-              All quotes
-            </button>
-          </div>
         ) : null}
       </div>
 

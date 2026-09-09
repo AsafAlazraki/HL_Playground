@@ -91,6 +91,21 @@
    KIND changed from one keystroke to the next would make Ctrl+K then
    Enter — the shortest path in the app — a lottery.
 
+   IT RESPECTS CAPABILITIES, AND BOTH HALVES OF THAT ARE NOW REAL.
+   §2's fourth rule is "a result a person cannot open does not appear
+   for them". The half that needs no person — a host with no door to
+   a module does not get modules — was always here. The half that
+   needs one was recorded as blocked, because `mayDo()` wants a role
+   id and nothing in the app produced one; `DECISIONS.md` §2 settled
+   that and `features/auth/role.ts` is the wiring. The filter runs on
+   the way IN: `useSessionRoleId()` says whose job this is,
+   `rowSearch.ts`'s `withinReach` drops every table under a place that
+   job may not browse, and the five kinds, the recall list and the
+   counts along the foot all inherit it, because every one of them is
+   read off the one index. Nothing is drawn and then refused. A quote
+   is deliberately outside it — see `SearchFieldProps`, which argues
+   why a document is not a price file.
+
    WCAG 2.1.4 IS LEVEL A, AND THIS SURFACE MEETS IT BY BINDING
    NOTHING. The criterion covers single-CHARACTER shortcuts and asks
    for a way to turn one off, remap it, or limit it to a focused
@@ -103,6 +118,17 @@
    one control on this surface is a text field where every character
    a person presses is content, so a letter shortcut would not merely
    be a compliance failure, it would eat the query.
+
+   AND THAT IS A TEST NOW, NOT A PROMISE. `palette.test.tsx` presses a
+   bare `k` at the window and asserts nothing opens, presses `j` and
+   `k` with the cursor parked on a result and asserts they arrive as
+   letters in the query, and presses the whole list vocabulary with
+   the keyboard elsewhere and asserts nothing moves. It is guarded
+   because the failure it guards against is a future edit — and
+   because it is a differentiator: `docs/research/dense-tables-and-
+   selection.md` records that Linear and Superhuman both ship large
+   single-key vocabularies and NEITHER documents a way to remap or
+   disable them. Nobody in the studied cohort meets this criterion.
 
    THE ROW UNDER THE CURSOR SHOWS THE KEY THAT ACTS ON IT — see
    `ENTER_KEY` below. That is Superhuman's teaching move and Raycast's
@@ -154,6 +180,7 @@ import { Columns, FileText, MagnifyingGlass, SquaresFour } from '@phosphor-icons
 import { useProjectStore } from '@/store/useProjectStore'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { coverPhoto, type CoverPhoto } from '@/features/table/coverPhoto'
+import { useSessionRoleId } from '@/features/auth'
 import { quoteTotals, useQuotes } from '@/features/quote'
 import { money } from '@/lib/money'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
@@ -337,8 +364,8 @@ export interface SearchFieldProps {
   onReveal?: (entityId: string, rowId?: string) => void
 
   /* ============================================================
-     THE OTHER TWO DOORS THIS FEATURE DOES NOT OWN — and the reason
-     they are what enforces §2's fourth rule today.
+     THE OTHER TWO DOORS THIS FEATURE DOES NOT OWN — and one half of
+     what enforces §2's fourth rule.
 
      §2 asks for one field over MODULES · ROWS · QUOTES · TABLES ·
      COLUMNS. Rows, tables and columns all end at a table, and
@@ -347,26 +374,37 @@ export interface SearchFieldProps {
      belong to the shell — `Stage` is `src/app/winKit.tsx` and this
      feature may not reach into it any more than `openPlace.ts` may.
 
-     SO THE PROP IS THE CAPABILITY. §2's rule 4 is "a result a person
-     cannot open does not appear for them", and the half of it that
-     is true and enforceable right now is this: a host that has not
+     SO THE PROP IS A CAPABILITY. §2's rule 4 is "a result a person
+     cannot open does not appear for them", and a host that has not
      given the palette a door to a module does not get modules in the
      index, so no press can land on nothing. It is checked once, when
      the index is built, rather than at paint — a result that cannot
      exist is better than a result that is drawn and then refused.
 
-     The half that is NOT enforceable is per-person filtering, and it
-     is not skipped quietly. `mayDo()` (features/modules/access.ts:131)
-     wants a `RoleDef` id. `AppUser` (features/auth/session.ts:32-76)
-     carries an APPLICATION TIER — sales / admin / super-admin — and
-     no role id, and nothing in the app resolves one; access.ts:126
-     says so itself, "`roleId` of null is nobody in particular, which
-     is every session today". So `mayDo` answers FALSE for every
-     restricted module for everybody (access.ts:138), and filtering
-     the palette on it would hide a place from the one seeded operator
-     who owns the tenancy. What IS checked is the module's own
-     contract, which needs no role — see `rowSearch.ts` beside
-     `ProjectExtras`.
+     THE OTHER HALF IS NOW BUILT, AND IT IS NOT THESE PROPS. Per-person
+     filtering was recorded here as blocked, because `mayDo()` wants a
+     `RoleDef` id and nothing produced one. `DECISIONS.md` §2 settled
+     that: roles are real, sign-in carries one, `mayDo` enforces. So
+     this component asks `useSessionRoleId()` itself and hands the
+     answer to the index, where `withinReach` drops every table under
+     a place this job may not browse. A HOST CANNOT FORGET TO PASS IT
+     and cannot pass it wrongly, which is the reason it is not a
+     seventh prop beside these two: a permission a caller can omit is
+     a permission that will be omitted. Both halves now meet in one
+     place, `rowSearch.ts` beside `ProjectExtras`, and neither is a
+     paint-time refusal.
+
+     A QUOTE IS NOT GATED BY EITHER, AND THAT IS A RULING. A quote
+     carries `rootTableId` (quote/types.ts:315), so it COULD be hidden
+     when its price file is closed — and must not be. A quote is a
+     photograph: "every word on it came from `customer` above", and it
+     is somebody's own issued document addressed to a customer. An
+     admin restricting the Trailers module on Tuesday would erase a
+     salesperson's Monday quote from their own palette, and the
+     document did not change. Nothing in the module system claims
+     authority over a document, so nothing here invents one. The door
+     prop below is the whole gate for quotes, said out loud rather
+     than left as a hole somebody has to rediscover.
      ============================================================ */
   /** open a place in the business. Unset = modules are not offered. */
   onOpenModule?: (moduleId: string) => void
@@ -442,12 +480,46 @@ export function SearchField({
     })
   }, [open, canQuote, quotes])
 
+  /* WHO IS ASKING — `mayDo`'s second argument, and the whole of §2
+     rule 4's per-person half on this side.
+     ASKED THROUGH `useSessionRoleId`, NEVER READ OFF THE USER.
+     `features/auth/role.ts` is explicit that `user.roleId` has one
+     reader and this is it: "a field read spread across thirty files
+     is thirty places that have to remember that `undefined` and
+     `null` mean the same thing, and one of them will not". It is a
+     LIVE read rather than a snapshot taken at opening, because an
+     assignment can change mid-session and a palette gating on a stale
+     job is the same class of fault pointed the other way; the hook
+     returns a string or null, so the value React compares is a
+     primitive and no read can loop it.
+
+     THE UNRESOLVED ID IS THE RIGHT ONE HERE, and `roleInForce` — the
+     variant resolved against the dealership's actual `RoleDef`s — is
+     deliberately not used. It exists for a screen that has to NAME
+     the job, which this one never does; and a role deleted mid-
+     session takes its grants out of every module in the same step
+     (`useProjectStore.ts:1541-1557`), so a stale id can only leave a
+     place UNRESTRICTED, never wrongly shut. Asking the resolved form
+     here would mean holding the user as well as the id for an answer
+     that cannot differ. */
+  const roleId = useSessionRoleId()
+
+  /* THE PLACES ARE ALWAYS HANDED IN NOW, AND THE DOOR IS A FLAG.
+     They were passed only when a module could be opened, which made
+     the permission statement conditional on an unrelated prop — and
+     `Shell.tsx:824-836`, the one host that ships, passes no module
+     door at all, so rule 4 would have been switched off in the only
+     surface a person actually uses. `moduleDoor` is what decides
+     whether a MODULE is a result; `modules` is what decides which
+     TABLES anybody may reach. See `ProjectExtras`. */
   const extras = useMemo<ProjectExtras>(
     () => ({
-      ...(canModule ? { modules } : {}),
+      modules,
+      moduleDoor: canModule,
+      roleId,
       ...(quoteFacts ? { quotes: quoteFacts } : {}),
     }),
-    [canModule, modules, quoteFacts],
+    [canModule, modules, roleId, quoteFacts],
   )
 
   const index = useMemo(

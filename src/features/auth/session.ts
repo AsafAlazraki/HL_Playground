@@ -27,6 +27,17 @@
    NOTHING IS INVENTED. There is exactly one seeded user because
    exactly one was asked for. The app does not pretend to have a
    team it does not have.
+
+   A FOURTH REASON ARRIVED, and it does not weaken the warning
+   above. `AppUser.roleId` is the dealership's own word for what
+   this person's job is, and `mayDo` reads it — so a role now
+   changes what the app OFFERS. That is a CONFIGURATION, not a
+   security boundary: it is the difference between a salesperson's
+   screen and a manager's, and anybody who wants past it can still
+   edit localStorage. Nothing on this seam should ever be described
+   to a user as protection. See `./role` for the one way to ask, and
+   the seeded operator below for why the default cannot lock the
+   owner out of his own app.
    ============================================================ */
 
 export interface AppUser {
@@ -69,6 +80,31 @@ export interface AppUser {
    *  ORDERED, so a check is `atLeast(user, 'admin')` and never a
    *  list of equalities somebody will forget to extend. */
   role: Role
+
+  /** THE DEALERSHIP'S OWN WORD FOR THIS PERSON'S JOB — a `RoleDef`
+   *  id (`types/model.ts:927`), or nothing.
+   *
+   *  THIS IS THE SECOND HALF OF THE QUESTION `role` ABOVE ANSWERS,
+   *  and the paragraph above is the reason the two are separate
+   *  fields rather than one: `role` says which of the APPLICATION a
+   *  person reaches, this says what they may do INSIDE A MODULE.
+   *  `mayDo(module, roleId, capability)`
+   *  (`features/modules/access.ts:131`) wants exactly this value and
+   *  had no source for it until now — it was handed `null` in every
+   *  real session, so the access grid told an administrator they had
+   *  restricted something they had not.
+   *
+   *  NEVER READ THIS FIELD. Ask `sessionRoleId(user)` (`./role`).
+   *  It is optional here because a stored session written before the
+   *  field existed is missing it, which is the exact failure
+   *  `currentUser` below already carries a paragraph about, and
+   *  because "no role written down yet" and "this session predates
+   *  roles" are the same answer to every caller — the same reasoning
+   *  `atLeast` uses for a null user.
+   *
+   *  IT DEFAULTS TO `null`, AND THAT DEFAULT CANNOT LOCK ANYBODY
+   *  OUT. See the seeded operator below for the whole argument. */
+  roleId?: string | null
 }
 
 /** The rungs, in order. `ORDER` is the only place the ladder's
@@ -114,11 +150,90 @@ const SEEDED: ReadonlyArray<{ user: AppUser; password: string }> = [
          There is one account in this build and it is the person
          who commissioned it. */
       role: 'super-admin',
+
+      /* ========================================================
+         NULL, AND THIS IS THE DEFAULT THE WHOLE ROLE SYSTEM
+         RESTS ON. Read this before changing it.
+
+         WHY NOT AN INVENTED ID. `RoleDef`s are DATA and NOTHING
+         SEEDS THEM — `useProjectStore.ts:380-387` says so in its
+         own words: "There are no roles until somebody writes one
+         down, because the app cannot know whether a yard runs on
+         one person or on nine." Any non-null value here would
+         name a role that does not exist. That is a dangling id —
+         the precise thing `deleteRole` goes out of its way to
+         prevent (`useProjectStore.ts:1541-1557`) — and it would
+         read on screen as an assignment while granting nothing.
+
+         WHY IT CANNOT LOCK ANYBODY OUT, structurally rather than
+         by luck. `mayDo` refuses a null role only when the module
+         is RESTRICTED (`access.ts:136-139`), and a module is
+         restricted only by carrying an access row that names an
+         existing `RoleDef` (`access.ts:233-258`; the grid offers
+         a row per role that exists, `AccessGrid.tsx:152`). With
+         no roles written down there is no row to write, so
+         `isUnrestricted` is true everywhere and `mayDo` answers
+         `module.capabilities.includes(capability)` for ANY
+         roleId, null included. Verified: neither the demo seed
+         nor `createModule` writes `access`. A single-person
+         business therefore behaves exactly as it did before this
+         field existed — see `role.test.ts`, which asserts that
+         equality rather than describing it.
+
+         WHAT IS STILL POSSIBLE, said plainly rather than
+         discovered later: once an administrator writes a role
+         down, assigns it to themselves, and then restricts a
+         module WITHOUT ticking that role, they are refused —
+         honestly, because that is what they asked for. Guarding
+         the person doing the restricting is the grid's job, not
+         this field's. Two things already blunt it: `deleteRole`
+         hands a module whose last role went back to unrestricted,
+         and the Admin door is gated on `atLeast` (the ladder),
+         which no `RoleDef` can take away. */
+      roleId: null,
     },
   },
 ]
 
 const KEY = 'hl.session.user'
+
+/* ============================================================
+   THE SESSION CHANGES WHILE THE APP IS OPEN, so it has to be
+   subscribable.
+
+   Until roles, the signed-in user was written once at sign-in and
+   read as a value: `App.tsx:26` holds it in `useState` and passes
+   it down. A role ASSIGNMENT is different — an administrator can
+   change it mid-session, and every surface asking `mayDo` has to
+   see the new answer without a reload.
+
+   `useSyncExternalStore` over a module-level listener set is the
+   house pattern for exactly this and is already used by four
+   files (`modules/ruleCapability.ts:88-106`,
+   `constraints/constraintDefs.ts`, `app/moduleRecent.ts`,
+   `activity/activity.ts`), so this grows no new mechanism. The
+   hook itself is `useSessionRoleId` in `./role`.
+   ============================================================ */
+const listeners = new Set<() => void>()
+
+/** Tell me when the signed-in identity changes — sign-in, sign-out,
+ *  or a role assignment. Returns the unsubscribe. */
+export function subscribeToSession(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+function publish(): void {
+  /* THE SET ITSELF, NOT A COPY OF IT. `ruleCapability.ts` spreads
+     here and pays a lint warning for it; the copy is not needed and
+     the ratchet is at its ceiling. A `Set` iterated with `for…of` is
+     defined against deletion mid-loop — a listener that unsubscribes
+     itself is simply not visited — which is the only mutation this
+     bus can see: nothing subscribes from inside a notification. */
+  for (const listener of listeners) listener()
+}
 
 /** Why a sign-in did not land, as a sentence, in the place it
  *  failed — never a bare "invalid credentials" (rule 10). */
@@ -172,7 +287,15 @@ function remember(user: AppUser): void {
     /* a browser refusing storage still gets a working session for
        as long as the tab is open */
   }
+  publish()
 }
+
+/** A stored `roleId`, cleaned. Storage is JSON somebody else's
+ *  session wrote, so it is parsed rather than trusted: anything that
+ *  is not a non-empty string is "no role", which is the same answer
+ *  as a session written before the field existed. */
+const storedRoleId = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() !== '' ? value.trim() : null
 
 export function currentUser(): AppUser | null {
   try {
@@ -194,10 +317,49 @@ export function currentUser(): AppUser | null {
        session and this function's job is to read it, not to judge
        it. */
     const seeded = SEEDED.find((a) => a.user.email === u.email)
-    return seeded ? { ...seeded.user } : u
+    if (!seeded) return u
+
+    /* AND `roleId` IS THE ONE EXCEPTION TO "THE SEED IS THE
+       ORIGINAL", because it is the one field that is not a fact
+       about the account. Name, email, org and rung are what this
+       build ships and a stored copy of them can only be stale. A
+       role ASSIGNMENT is something an administrator did at this
+       dealership, after sign-in, and refreshing it off the seed
+       would silently revoke it on every reload — which is the same
+       class of bug as the `admin` flag above, pointed the other
+       way. So: identity from the seed, assignment from the
+       session. */
+    return { ...seeded.user, roleId: storedRoleId(u.roleId) }
   } catch {
     return null
   }
+}
+
+/**
+ * ASSIGN THIS SESSION A JOB — the write half of `roleId`.
+ *
+ * `null` takes the assignment away, and the two are one call
+ * deliberately: an admin screen that could only grant would leave a
+ * person holding a role nobody can remove.
+ *
+ * IT DOES NOT VALIDATE THE ID AGAINST THE DEALERSHIP'S ROLES, and
+ * that is not an omission. This module knows nothing about the
+ * project store — importing it here would put the identity behind
+ * Dexie, and `configs.ts` already depends on the reverse. Resolving
+ * an id that no longer names a role is `roleInForce` in `./role`,
+ * which every reader goes through.
+ *
+ * Returns the identity as it now stands, so a caller holding the
+ * user in React state (`App.tsx:26`) can lift it without a second
+ * read — and every other subscriber hears it through
+ * `subscribeToSession`.
+ */
+export function setSessionRole(roleId: string | null): AppUser | null {
+  const user = currentUser()
+  if (!user) return null
+  const next: AppUser = { ...user, roleId: storedRoleId(roleId) }
+  remember(next)
+  return next
 }
 
 export function signOut(): void {
@@ -206,6 +368,7 @@ export function signOut(): void {
   } catch {
     /* nothing to forget */
   }
+  publish()
 }
 
 /** The one seeded account, so the sign-in screen can offer it

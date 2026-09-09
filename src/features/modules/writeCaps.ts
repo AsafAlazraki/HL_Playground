@@ -22,18 +22,22 @@
    note beside the switch are built from ONE reading rather than
    three opinions that drift.
 
-   THREE OUTCOMES PER VERB, NOT TWO. The middle one is the whole
+   FOUR OUTCOMES PER VERB, NOT TWO. The middle two are the whole
    point:
 
-     off         the switch is off. NOTHING is drawn, and nothing is
-                 said — a catalogue that cannot be written to is the
-                 normal state of every module ever made (the
-                 contract's own `DEFAULT_CAPABILITIES` is
-                 browse/search/open) and three apologies at the top of
-                 every screen would be noise where a person is trying
-                 to read a price list.
+     off         the module does not offer the verb at all. NOTHING
+                 is drawn, and nothing is said — a catalogue that
+                 cannot be written to is the normal state of every
+                 module ever made (the contract's own
+                 `DEFAULT_CAPABILITIES` is browse/search/open) and
+                 three apologies at the top of every screen would be
+                 noise where a person is trying to read a price list.
+     withheld    the module offers it and THIS PERSON is not granted
+                 it. That is not the normal state, it is a decision an
+                 administrator made about a job, so it IS said — see
+                 `withheldSay` and the note on it.
      on          the affordance is drawn and it works.
-     on, blocked the switch is on and the act still cannot be
+     on, blocked the verb is granted and the act still cannot be
                  performed — the tables went off the sheet, or nothing
                  here names its rows in a column a person can type
                  into. THAT is said, in a sentence, in the place the
@@ -41,25 +45,33 @@
                  is on and does nothing is the same lie in the other
                  direction.
 
-   WHY `roleId` IS NOWHERE IN THIS FILE, and this is the honest half.
-   `mayDo(module, roleId, capability)` is the question the app is
-   supposed to ask, and `access.ts` answers it correctly — but every
-   real session passes `roleId === null`, because sign-in exists and
-   is not wired to roles (`docs/BACKLOG.md`, "Questions only a person
-   can answer", Q2). `mayDo` with a null role answers FALSE for every
-   restricted module, so consuming it here would take the catalogue's
-   write affordances away from everybody the moment an admin granted
-   one role anything — the exact opposite of what the grid says it
-   did.
+   WHY `roleId` IS NOW A PARAMETER, and what it cost to leave it out.
+   This file shipped role-free for one session and said so in this
+   header: `mayDo` was handed `roleId === null` in every real session,
+   so consuming it looked like it would take the write affordances
+   away from everybody the moment an admin granted one role anything.
 
-   So this file reads the ONE half that is decidable today: the
-   capability list on the `ModuleDef` itself, which is module-wide,
-   which is what MODULE_SYSTEM §5 says capabilities ARE ("Capabilities
-   are module-wide. Everyone using this browser sees the same module
-   with the same verbs"), and which needs no identity to be true.
-   When a person decides who is signing in, the change here is one
-   line — `has` calls `mayDo(module, roleId, verb)` instead of reading
-   the list — and every sentence below still says the right thing.
+   `docs/plan/DECISIONS.md` §2 settled that the other way, and the
+   objection turns out to be answered by `mayDo` itself rather than
+   traded against: `isUnrestricted` is true for a module with no
+   access rows AT ALL — which is every module in the real seed and
+   every module ever made before an admin ticks a box — and an
+   unrestricted module answers TRUE for any `roleId`, null included.
+   So nothing moves until somebody restricts a place, and the instant
+   they do, the grid means what it says. That was the whole complaint
+   in DECISIONS §2: "it tells an administrator they have restricted
+   something they have not — a safety claim the app does not honour."
+
+   And the case the old header actually feared — a restricted module
+   and a session with no job — is not silent here. It is `withheld`,
+   and it carries a sentence naming who may and where that is set,
+   which is rule 10 rather than a control that quietly vanished.
+
+   MODULE_SYSTEM §5 LOSES, and DECISIONS §2 records that too: it says
+   "Capabilities are module-wide. Everyone using this browser sees the
+   same module with the same verbs." They are not, any more. The
+   module still declares the ceiling — access can never exceed it, and
+   `mayDo` intersects — but who is standing here decides the rest.
    ============================================================ */
 
 import {
@@ -70,13 +82,16 @@ import {
   type ModuleDef,
 } from '@/types/model'
 import { leafNoun } from '@/features/table/grouping'
+import { capabilityLabel, mayDo } from './access'
 
 /** The three verbs that WRITE a row. `relate`, `quote`, `export` and
  *  `configure` write other things and are answered elsewhere. */
 export type WriteVerb = 'add' | 'edit' | 'delete'
 
 export interface WriteStance {
-  /** the switch on the module. False = draw nothing, say nothing. */
+  /** may be done by whoever is standing here — the module offers the
+   *  verb AND this role holds it. False = draw nothing; whether
+   *  anything is SAID is `CatalogWrites.withheld`, not this. */
   on: boolean
   /**
    * Why the act cannot be performed even though the switch IS on, in
@@ -124,6 +139,21 @@ export interface CatalogWrites {
    * whether they are two facts (`accessSay.ts` learned this once).
    */
   unnameable: string[]
+  /**
+   * THE VERBS THIS PLACE OFFERS AND THIS PERSON IS NOT GRANTED, in the
+   * contract's order.
+   *
+   * A LIST AND NOT A SENTENCE PER VERB, for the reason `accessSay.ts`
+   * was written down: an administrator who keeps all three writes to
+   * one job would otherwise get three apologies stacked at the top of
+   * a price list, and a person reading three sentences starts working
+   * out whether they are three faults. `withheldSay` turns the list
+   * into one sentence.
+   *
+   * Empty is the ordinary case — it is empty for every unrestricted
+   * module, which is every module until an admin ticks a box.
+   */
+  withheld: WriteVerb[]
 }
 
 /**
@@ -161,16 +191,34 @@ export const article = (word: string): string => (/^[aeiou]/i.test(word) ? 'an' 
  *   have different fixes.
  * @param listed the tables this catalogue actually draws: `tables`
  *   minus the retired ones.
+ * @param roleId THE JOB THE PERSON STANDING HERE HOLDS, or null for
+ *   nobody in particular. REQUIRED, and deliberately not defaulted:
+ *   a caller who forgets identity would silently get whichever answer
+ *   the default happened to be, and this is the parameter that decides
+ *   whether somebody may write to a price file. A type error is the
+ *   cheapest place to find that out.
  */
 export function readWrites(
   module: ModuleDef,
   tables: readonly EntityDef[],
   listed: readonly EntityDef[],
+  roleId: string | null,
 ): CatalogWrites {
-  /* THE ONE LINE IDENTITY WILL CHANGE. See the header: today this is
-     the module's own list, because the only role a session can name
-     is nobody. */
-  const has = (v: WriteVerb): boolean => module.capabilities.includes(v)
+  /* THE ONE QUESTION, ASKED THE ONE WAY. `mayDo` intersects the grant
+     with the module's own capability list, so this cannot answer true
+     beyond what the module offers however the grid was filled in —
+     and it answers true for ANY role, null included, in a module
+     nobody has restricted. See the header for why that is what makes
+     consuming it safe. */
+  const granted = (v: WriteVerb): boolean => mayDo(module, roleId, v)
+
+  /* OFFERED BUT NOT HELD — the case that has to be told apart from
+     "off", because the two look identical to a person (no button) and
+     have opposite explanations: one is the normal state of every
+     catalogue, the other is a decision somebody made about their job. */
+  const withheld = (['add', 'edit', 'delete'] as const).filter(
+    (v) => module.capabilities.includes(v) && !granted(v),
+  )
 
   /* WHY THERE IS NOTHING TO WRITE TO, when there is nothing. Three
      different facts with three different fixes, and a catalogue that
@@ -209,7 +257,7 @@ export function readWrites(
         } in a column that can be typed into — a formula, a figure or a picked-from-a-list value is changed on the sheet, where it has the right editor.`
 
   const stance = (verb: WriteVerb, why?: string): WriteStance => {
-    if (!has(verb)) return { on: false }
+    if (!granted(verb)) return { on: false }
     const blocked = nowhere ?? why
     return blocked === undefined ? { on: true } : { on: true, blocked }
   }
@@ -221,12 +269,56 @@ export function readWrites(
     ...(into ? { into } : {}),
     renames,
     unnameable: renames.size > 0 ? unnameable : [],
+    withheld: [...withheld],
   }
 }
 
 /* ---------------------------------------------------------- */
 /* The words                                                   */
 /* ---------------------------------------------------------- */
+
+/** "add", "add and edit", "add, edit and remove". No serial comma,
+ *  which is the house pattern — `curation.ts`, `dependents.ts`,
+ *  `start.ts` and five others all join a list this way. */
+function andList(words: readonly string[]): string {
+  if (words.length <= 1) return words[0] ?? ''
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`
+}
+
+/**
+ * WHAT THIS PLACE OFFERS AND THIS PERSON MAY NOT DO, in one sentence.
+ *
+ * ONE SENTENCE FOR ALL THREE VERBS, deliberately. `accessSay.ts`
+ * records the lesson in full: two wordings of one fact is how a person
+ * starts wondering whether they are two facts, and three of them at
+ * the top of a price list is worse again. The verbs are named in the
+ * CONTRACT'S OWN LABELS (`capabilityLabel`) rather than in words
+ * invented here, so the sentence, the designer's switch and the access
+ * grid's column heading cannot drift into three names for one verb.
+ *
+ * IT NAMES WHERE THE DECISION LIVES. "A thing that cannot be done says
+ * why, where it is" (rule 10) is only half an answer if the reason has
+ * no fix attached, and the fix for this one is not on this screen —
+ * it is a tick in the access grid, which is on the Access & roles
+ * screen and on the module's own set-up. So the sentence sends a
+ * person there, and it does not pretend they can do it themselves:
+ * granting is an administrator's act.
+ *
+ * @param roleId null is "no job is signed in here", which is a
+ *   different fact from "your job does not have it" and has a
+ *   different fix — signing in, rather than being granted something.
+ */
+export function withheldSay(
+  moduleName: string,
+  verbs: readonly WriteVerb[],
+  roleId: string | null,
+): string {
+  const list = andList(verbs.map((v) => capabilityLabel(v).toLowerCase()))
+  const head = `In ${moduleName}, ${list} ${verbs.length === 1 ? 'is' : 'are'} kept to named jobs`
+  return roleId === null
+    ? `${head}, and no job is signed in here. An administrator says which jobs may, under Access & roles.`
+    : `${head}, and the job you are signed in as is not one of them. An administrator grants it under Access & roles.`
+}
 
 /**
  * WHAT THE NEW BUTTON SAYS, in the dealer's own noun.

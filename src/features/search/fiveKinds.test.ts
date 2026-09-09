@@ -222,19 +222,36 @@ describe('columns — one line per NAME, never one per declaration', () => {
 
 describe('modules — the place, which is never a table name', () => {
   it('is not in the index at all until the caller passes one', () => {
-    /* THE DOOR IS THE CAPABILITY. §2 rule 4: a result a person
-       cannot open does not appear for them. A host that has not
-       given the palette a way to open a module does not get modules
-       in the index, so no press can land on nothing. */
+    /* THE DOOR IS A CAPABILITY. §2 rule 4: a result a person cannot
+       open does not appear for them. A host that has not given the
+       palette a way to open a module does not get modules in the
+       index, so no press can land on nothing. The per-PERSON half of
+       the same rule is next door in `capabilities.test.ts`. */
     const { entities, rowsByEntity } = sheet()
     const index = buildSearchIndex(entities, rowsByEntity)
     expect(index.modules).toHaveLength(0)
     expect(search(index, 'boats').modules).toHaveLength(0)
   })
 
+  it('is not offered when the places are known but no door was given', () => {
+    /* THE TWO ARE NOW SEPARATE FACTS, and this is the one that used
+       to be impossible to state: the places are handed in — they are
+       the permission statement over every table — and a module is
+       still not a RESULT, because nothing can open one here. */
+    const { entities, rowsByEntity } = sheet()
+    const index = buildSearchIndex(entities, rowsByEntity, {
+      modules: { m1: module_('m1', 'Zeta Places', { tableIds: ['ta', 'tb'] }) },
+    })
+    expect(index.modules).toHaveLength(0)
+    /* and the tables under that place are untouched, because the
+       place is unrestricted and browsable */
+    expect(index.tables.map((t) => t.name)).toContain('Table A')
+  })
+
   it('answers the grouping word no table is called', () => {
     const { entities, rowsByEntity } = sheet()
     const index = buildSearchIndex(entities, rowsByEntity, {
+      moduleDoor: true,
       modules: { m1: module_('m1', 'Zeta Places', { tableIds: ['ta', 'tb'] }) },
     })
     const result = search(index, 'zeta')
@@ -253,6 +270,7 @@ describe('modules — the place, which is never a table name', () => {
        being drawn. */
     const { entities, rowsByEntity } = sheet()
     const index = buildSearchIndex(entities, rowsByEntity, {
+      moduleDoor: true,
       modules: {
         m1: module_('m1', 'Zeta Places', {
           description: 'the quiet ones, off the omega sheet',
@@ -269,6 +287,7 @@ describe('modules — the place, which is never a table name', () => {
   it('a name match always outranks a description match', () => {
     const { entities, rowsByEntity } = sheet()
     const index = buildSearchIndex(entities, rowsByEntity, {
+      moduleDoor: true,
       modules: {
         m1: module_('m1', 'Omega Talk', { description: '', tableIds: ['ta'], order: 0 }),
         m2: module_('m2', 'Zeta Places', {
@@ -284,11 +303,13 @@ describe('modules — the place, which is never a table name', () => {
 
   it('a module that cannot be browsed is not somewhere to be sent', () => {
     /* `MODULE_CAPABILITIES.browse` is "see everything in it", which
-       is exactly what a press on this line does. This is a fact
-       about the MODULE and needs no role to answer — which is why it
-       is enforced and the per-person half of §2 rule 4 is not. */
+       is exactly what a press on this line does. This is a fact about
+       the MODULE and needs no role to answer, and `mayDo` answers it
+       with the person's grant in the same call — see
+       `capabilities.test.ts` for the half that needs a role. */
     const { entities, rowsByEntity } = sheet()
     const index = buildSearchIndex(entities, rowsByEntity, {
+      moduleDoor: true,
       modules: {
         m1: module_('m1', 'Zeta Places', { capabilities: ['search'], tableIds: ['ta'] }),
       },
@@ -299,6 +320,7 @@ describe('modules — the place, which is never a table name', () => {
   it('drops a pointer to a table that is no longer there', () => {
     const { entities, rowsByEntity } = sheet()
     const index = buildSearchIndex(entities, rowsByEntity, {
+      moduleDoor: true,
       modules: { m1: module_('m1', 'Zeta Places', { tableIds: ['ta', 'gone'] }) },
     })
     expect(index.modules[0].facts.tableIds).toEqual(['ta'])
@@ -399,6 +421,7 @@ describe('one flat cursor, five kinds, one fixed order', () => {
       { tz: t },
       { tz: [row('tz', 'r1', { 'tz.name': 'Zeta Row' })] },
       {
+        moduleDoor: true,
         modules: { m1: module_('m1', 'Zeta Place', { tableIds: ['tz'] }) },
         quotes: [quote({ subject: 'Zeta Boat' })],
       },
@@ -424,6 +447,7 @@ describe('one flat cursor, five kinds, one fixed order', () => {
       { tz: t },
       { tz: [row('tz', 'r1', { 'tz.name': 'Zeta Row' })] },
       {
+        moduleDoor: true,
         modules: { m1: module_('m1', 'Zeta Place', { tableIds: ['tz'] }) },
         quotes: [quote({ subject: 'Zeta Boat' })],
       },
@@ -438,6 +462,7 @@ describe('one flat cursor, five kinds, one fixed order', () => {
        is that it is a menu. They are one keystroke away. */
     const { entities, rowsByEntity } = sheet()
     const index = buildSearchIndex(entities, rowsByEntity, {
+      moduleDoor: true,
       modules: { m1: module_('m1', 'Zeta Places', { tableIds: ['ta'] }) },
       quotes: [quote()],
     })

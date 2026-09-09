@@ -1679,8 +1679,25 @@
   text-align: left;
   cursor: pointer;
 }
-.md-switch:disabled {
+/* A VERB THAT CANNOT BE TURNED ON, AND THE REASON IS THE PARAGRAPH
+   UNDER IT. `[aria-disabled='true']` and not `:disabled`: the
+   attribute this used to carry took the switch out of the tab order,
+   so a person moving by keyboard never landed on the refused control
+   and never reached `.md-cap-why` below it — the sentence existed
+   only for somebody who could see that corner of the screen. */
+.md-switch[aria-disabled='true'] {
   cursor: default;
+}
+/* THE KNOB DIMS, THE WORDS DO NOT. `opacity: 0.5` sat on the whole
+   button and halved the contrast of the two lines a person has to
+   READ to know which verb was refused — `.md-cap-says` is
+   `--ink-faint`, the measured 5.5:1 floor, and half of that lands
+   near `--fg-quaternary`, which DESIGN_PRINCIPLES §1 says "may never
+   carry meaning". The refusal is already said three other ways: the
+   card's own ground (`.md-cap.is-refused`), the warning mark, and
+   the sentence. So only the track is dimmed, and it carries no
+   words. */
+.md-switch[aria-disabled='true'] .md-switch-track {
   opacity: 0.5;
 }
 
@@ -5574,25 +5591,37 @@
     color var(--d-fast) var(--ease),
     transform var(--d-press) var(--ease);
 }
-.md-idx-add:hover:not(:disabled) {
+.md-idx-add:hover:not([aria-disabled='true']) {
   background: var(--accent-wash);
   border-color: var(--accent-line);
   color: var(--accent);
 }
-.md-idx-add:active:not(:disabled) {
+.md-idx-add:active:not([aria-disabled='true']) {
   background: var(--accent-wash-strong);
   transform: scale(0.97);
 }
+/* THE FOCUS RING IS DRAWN WHETHER OR NOT THE ACT CAN BE PERFORMED,
+   and that is the point of `aria-disabled` over `disabled`: the
+   control keeps its place in the tab order, so a person moving by
+   keyboard lands on it, meets the refusal and is handed the reason
+   through `aria-describedby`. A ring only on the working state
+   would put the control back out of reach for the one person the
+   sentence was written for. */
 .md-idx-add:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* DISABLED, AND THE REASON IS UNDER THE HEADER. The switch is on
+/* REFUSED, AND THE REASON IS UNDER THE HEADER. The verb is granted
    and the act still cannot be performed — the tables went to
    history, or off the sheet — so the control stays where it is,
    greyed, and the sentence saying why sits in the notes below
-   rather than in a tooltip nobody opens (rule 10). */
-.md-idx-add:disabled {
+   rather than in a tooltip nobody opens (rule 10).
+
+   `[aria-disabled='true']` AND NOT `:disabled`. The attribute this
+   used to carry took the button out of the tab order, which took the
+   refusal away from everybody not using a mouse. Same paint, same
+   cursor, one less thing hidden. */
+.md-idx-add[aria-disabled='true'] {
   cursor: not-allowed;
   color: var(--ink-faint);
   border-color: var(--hairline);

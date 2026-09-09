@@ -1,20 +1,33 @@
 /* ============================================================
-   THE WRITE VERBS, AND THE THREE STATES EACH OF THEM HAS.
+   THE WRITE VERBS, AND THE FOUR STATES EACH OF THEM HAS.
 
    The claim every test below is aimed at, from one side or another:
-   A SWITCH THAT IS OFF TAKES THE AFFORDANCE AWAY, AND A SWITCH THAT
-   IS ON AND CANNOT WORK SAYS SO. Those are different outcomes and
-   the bug this file was written against is that the catalogue had
-   neither — `add`, `edit` and `delete` were three switches with no
-   consumer at all.
+   A VERB THAT IS NOT OFFERED TAKES THE AFFORDANCE AWAY SILENTLY, A
+   VERB KEPT FROM THIS JOB TAKES IT AWAY AND SAYS SO, AND A VERB THAT
+   IS GRANTED AND CANNOT WORK SAYS SO. Those are different outcomes
+   and the bug this file was written against is that the catalogue had
+   none of them — `add`, `edit` and `delete` were three switches with
+   no consumer at all.
 
-   The tests do NOT assert on a role. That is not an oversight and it
-   is written down here as well as in `writeCaps.ts`: `mayDo` is
-   handed `roleId === null` in every real session, so a per-role
-   answer cannot be exercised honestly yet.
+   THE ROLE HALF IS ASSERTED NOW, and the header this replaces said it
+   could not be. It said `mayDo` is handed `roleId === null` in every
+   real session so a per-role answer could not be exercised honestly.
+   `DECISIONS.md` §2 settled that the other way, and the tests below
+   pin the property that makes consuming `mayDo` safe rather than
+   merely decided: AN UNRESTRICTED MODULE ANSWERS THE SAME FOR EVERY
+   ROLE, NULL INCLUDED. Every test written before roles passes `null`
+   and none of them changed an expectation — that is the evidence, not
+   a claim, that nothing moves until an administrator restricts a
+   place.
    ============================================================ */
 import { describe, expect, it } from 'vitest'
-import type { EntityDef, FieldDef, ModuleCapability, ModuleDef } from '@/types/model'
+import type {
+  EntityDef,
+  FieldDef,
+  ModuleAccess,
+  ModuleCapability,
+  ModuleDef,
+} from '@/types/model'
 import {
   addLabel,
   addSays,
@@ -24,6 +37,7 @@ import {
   removedSay,
   renameFieldOf,
   renamedSay,
+  withheldSay,
 } from './writeCaps'
 
 const AT = '2026-09-09T00:00:00.000Z'
@@ -52,7 +66,11 @@ function table(
   }
 }
 
-function makeModule(capabilities: ModuleCapability[], tableIds = ['t1']): ModuleDef {
+function makeModule(
+  capabilities: ModuleCapability[],
+  tableIds = ['t1'],
+  access?: ModuleAccess[],
+): ModuleDef {
   return {
     id: 'm1',
     name: 'Boats',
@@ -64,13 +82,14 @@ function makeModule(capabilities: ModuleCapability[], tableIds = ['t1']): Module
     order: 0,
     createdAt: AT,
     updatedAt: AT,
+    ...(access ? { access } : {}),
   }
 }
 
 describe('readWrites — the switch decides whether anything is drawn', () => {
   it('a verb that is off is off, and says nothing', () => {
     const t = table('t1', 'Highfield Inflatables')
-    const w = readWrites(makeModule(['browse', 'search', 'open']), [t], [t])
+    const w = readWrites(makeModule(['browse', 'search', 'open']), [t], [t], null)
     for (const verb of ['add', 'edit', 'delete'] as const) {
       expect(w[verb].on).toBe(false)
       /* THE POINT OF THE WHOLE FILE: off is silent. Three apologies
@@ -83,7 +102,7 @@ describe('readWrites — the switch decides whether anything is drawn', () => {
 
   it('a verb that is on with somewhere to write is on, unblocked', () => {
     const t = table('t1', 'Highfield Inflatables')
-    const w = readWrites(makeModule(['browse', 'add', 'edit', 'delete']), [t], [t])
+    const w = readWrites(makeModule(['browse', 'add', 'edit', 'delete']), [t], [t], null)
     expect(w.add).toEqual({ on: true })
     expect(w.edit).toEqual({ on: true })
     expect(w.delete).toEqual({ on: true })
@@ -93,14 +112,14 @@ describe('readWrites — the switch decides whether anything is drawn', () => {
   it('the master table is the module’s primary, not merely the first drawn', () => {
     const a = table('t1', 'Highfield Inflatables')
     const b = table('t2', 'Yamaha Outboards')
-    const w = readWrites(makeModule(['add'], ['t2', 't1']), [a, b], [a, b])
+    const w = readWrites(makeModule(['add'], ['t2', 't1']), [a, b], [a, b], null)
     expect(w.into?.id).toBe('t2')
   })
 
   it('a retired primary falls back to a live table rather than refusing', () => {
     const dead = table('t1', 'OBSOLETE Trailers', [field('f1', 'Model')], { retired: true })
     const live = table('t2', 'NSM Custom Trailers')
-    const w = readWrites(makeModule(['add'], ['t1', 't2']), [dead, live], [live])
+    const w = readWrites(makeModule(['add'], ['t1', 't2']), [dead, live], [live], null)
     expect(w.add).toEqual({ on: true })
     expect(w.into?.id).toBe('t2')
   })
@@ -108,7 +127,7 @@ describe('readWrites — the switch decides whether anything is drawn', () => {
 
 describe('readWrites — a verb that is on and cannot work says why', () => {
   it('names the sheet when the tables are gone', () => {
-    const w = readWrites(makeModule(['add', 'edit', 'delete']), [], [])
+    const w = readWrites(makeModule(['add', 'edit', 'delete']), [], [], null)
     expect(w.into).toBeUndefined()
     for (const verb of ['add', 'edit', 'delete'] as const) {
       expect(w[verb].on).toBe(true)
@@ -118,7 +137,7 @@ describe('readWrites — a verb that is on and cannot work says why', () => {
 
   it('says HISTORY, not "gone", when every table is retired — a different fix', () => {
     const dead = table('t1', 'OBSOLETE Trailers', [field('f1', 'Model')], { retired: true })
-    const w = readWrites(makeModule(['add']), [dead], [])
+    const w = readWrites(makeModule(['add']), [dead], [], null)
     expect(w.add.blocked).toContain('history rather than stock')
     /* the fix is named, and it is on the sheet rather than on this
        module — the same shape as the `quote` refusal next door */
@@ -127,7 +146,7 @@ describe('readWrites — a verb that is on and cannot work says why', () => {
 
   it('refuses EDIT when no drawn table names its rows in a typeable column', () => {
     const t = table('t1', 'Rate Card', [field('f1', 'Amount', 'number')])
-    const w = readWrites(makeModule(['add', 'edit', 'delete']), [t], [t])
+    const w = readWrites(makeModule(['add', 'edit', 'delete']), [t], [t], null)
     expect(w.edit.on).toBe(true)
     expect(w.edit.blocked).toContain('Rate Card')
     expect(w.edit.blocked).toContain('typed into')
@@ -142,7 +161,7 @@ describe('readWrites — a verb that is on and cannot work says why', () => {
   it('does not refuse edit page-wide when SOME tables can be renamed', () => {
     const named = table('t1', 'Highfield Inflatables')
     const not = table('t2', 'Rate Card', [field('f1', 'Amount', 'number')])
-    const w = readWrites(makeModule(['edit'], ['t1', 't2']), [named, not], [named, not])
+    const w = readWrites(makeModule(['edit'], ['t1', 't2']), [named, not], [named, not], null)
     expect(w.edit).toEqual({ on: true })
     expect(w.renames.has('t1')).toBe(true)
     expect(w.renames.has('t2')).toBe(false)
@@ -153,7 +172,7 @@ describe('readWrites — a verb that is on and cannot work says why', () => {
 
   it('says the unnameable tables only when some ARE nameable', () => {
     const not = table('t1', 'Rate Card', [field('f1', 'Amount', 'number')])
-    const w = readWrites(makeModule(['edit']), [not], [not])
+    const w = readWrites(makeModule(['edit']), [not], [not], null)
     /* none can, so the page-wide refusal is the sentence and the list
        would be a second sentence about one fact */
     expect(w.unnameable).toEqual([])
@@ -161,10 +180,126 @@ describe('readWrites — a verb that is on and cannot work says why', () => {
   })
 
   it('a blocked verb that is OFF still says nothing', () => {
-    const w = readWrites(makeModule(['browse']), [], [])
+    const w = readWrites(makeModule(['browse']), [], [], null)
     expect(w.add).toEqual({ on: false })
     expect(w.edit).toEqual({ on: false })
     expect(w.delete).toEqual({ on: false })
+  })
+})
+
+describe('readWrites — the access grid decides it too', () => {
+  const t = table('t1', 'Highfield Inflatables')
+  const WRITES: ModuleCapability[] = ['browse', 'add', 'edit', 'delete']
+
+  it('answers the same for every job while nobody has restricted the place', () => {
+    /* THE PROPERTY THE WHOLE CHANGE RESTS ON. `isUnrestricted` is
+       true for a module with no access rows, which is every module in
+       the real seed, so consuming `mayDo` moves nothing until an
+       administrator ticks a box. If this ever fails, the catalogue
+       lost its write affordances for everybody. */
+    const open = makeModule(WRITES)
+    for (const who of [null, 'r-sales', 'r-manager']) {
+      const w = readWrites(open, [t], [t], who)
+      expect(w.add).toEqual({ on: true })
+      expect(w.edit).toEqual({ on: true })
+      expect(w.delete).toEqual({ on: true })
+      expect(w.withheld).toEqual([])
+    }
+  })
+
+  it('takes the verb away from a job that was not granted it', () => {
+    const closed = makeModule(WRITES, ['t1'], [
+      { roleId: 'r-manager', capabilities: ['add', 'edit', 'delete'] },
+    ])
+    const w = readWrites(closed, [t], [t], 'r-sales')
+    expect(w.add.on).toBe(false)
+    expect(w.edit.on).toBe(false)
+    expect(w.delete.on).toBe(false)
+    /* AND SAYS SO. This is the half that separates "withheld" from
+       "off": the module OFFERS all three, so a screen drawing nothing
+       and saying nothing would be a control that vanished. */
+    expect(w.withheld).toEqual(['add', 'edit', 'delete'])
+  })
+
+  it('grants exactly what the grid granted, and withholds exactly the rest', () => {
+    const closed = makeModule(WRITES, ['t1'], [
+      { roleId: 'r-sales', capabilities: ['add'] },
+    ])
+    const w = readWrites(closed, [t], [t], 'r-sales')
+    expect(w.add).toEqual({ on: true })
+    expect(w.edit.on).toBe(false)
+    expect(w.delete.on).toBe(false)
+    expect(w.withheld).toEqual(['edit', 'delete'])
+  })
+
+  it('a verb the module never offered is not "withheld" — it is absent', () => {
+    /* THE DISTINCTION, PINNED. Off is the normal state of every
+       catalogue ever made and is silent; withheld is a decision about
+       a job and is said. Granting a role a verb the module does not
+       offer cannot make it appear — `mayDo` intersects. */
+    const closed = makeModule(['browse', 'add'], ['t1'], [
+      { roleId: 'r-sales', capabilities: ['add', 'edit'] },
+    ])
+    const w = readWrites(closed, [t], [t], 'r-sales')
+    expect(w.add).toEqual({ on: true })
+    expect(w.edit).toEqual({ on: false })
+    expect(w.withheld).toEqual([])
+  })
+
+  it('withholds from a session with no job at all, in a restricted place', () => {
+    const closed = makeModule(WRITES, ['t1'], [
+      { roleId: 'r-manager', capabilities: ['add', 'edit', 'delete'] },
+    ])
+    const w = readWrites(closed, [t], [t], null)
+    expect(w.withheld).toEqual(['add', 'edit', 'delete'])
+    /* THE DIRECTION A PERMISSION CHECK FAILS IN. Not knowing who is
+       standing here withholds; it never grants. */
+    expect(w.add.on).toBe(false)
+  })
+
+  it('a withheld verb carries no blocked sentence — one refusal, not two', () => {
+    /* Nowhere to write AND not granted: the reason that applies to
+       this person is the permission, and printing the sheet's reason
+       as well would send them to fix a thing that is not the
+       problem. */
+    const closed = makeModule(WRITES, ['t1'], [
+      { roleId: 'r-manager', capabilities: ['add'] },
+    ])
+    const w = readWrites(closed, [], [], 'r-sales')
+    expect(w.add).toEqual({ on: false })
+    expect(w.add.blocked).toBeUndefined()
+    expect(w.withheld).toEqual(['add', 'edit', 'delete'])
+  })
+})
+
+describe('withheldSay — one sentence, the contract’s own verbs, a named fix', () => {
+  it('names all three verbs in one sentence rather than three', () => {
+    expect(withheldSay('Boats', ['add', 'edit', 'delete'], 'r-sales')).toBe(
+      'In Boats, add, edit and remove are kept to named jobs, and the job you are signed in as is not one of them. An administrator grants it under Access & roles.',
+    )
+  })
+
+  it('agrees its verb with one', () => {
+    expect(withheldSay('Boats', ['edit'], 'r-sales')).toContain('edit is kept to named jobs')
+  })
+
+  it('joins two without a comma', () => {
+    expect(withheldSay('Boats', ['add', 'delete'], 'r-sales')).toContain('add and remove are')
+  })
+
+  it('says a different thing, with a different fix, when no job is signed in', () => {
+    const said = withheldSay('Boats', ['add'], null)
+    expect(said).toContain('no job is signed in here')
+    /* rule 10: the reason carries a fix, and it is not one this
+       person performs on this screen */
+    expect(said).toContain('Access & roles')
+  })
+
+  it('uses the contract’s own label — "remove", never a word invented here', () => {
+    /* `MODULE_CAPABILITIES.delete.label` is "Remove". If this ever
+       reads "delete", a second name for one verb has been written and
+       the grid column and this sentence have started to drift. */
+    expect(withheldSay('Boats', ['delete'], null)).toContain('remove is kept')
   })
 })
 

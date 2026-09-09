@@ -53,7 +53,11 @@ A number nothing enforces drifts.
 
 ## The backlog — ranked by effort, cheapest first
 
-88 items. `state` is OPEN (not built) or PARTIAL (started; the row says what exists).
+88 items. `state` is OPEN (not built), PARTIAL (started; the row says what exists)
+or **CLOSED &lt;date&gt;** (done, and the row's evidence column is replaced by what
+is now true). A closed row stays where it is until the session's commits land
+and the foot section is re-banked with the commit subject — "it was fixed"
+without the sentence that replaced it is how the same bug gets rediscovered.
 
 | # | state | source | item | effort | evidence |
 |---|---|---|---|---|---|
@@ -110,7 +114,7 @@ A number nothing enforces drifts.
 | 51 | OPEN | REDESIGN_ROLLOUT §3 step 5 / status hea | Step 5b still open — **Jobs panel** (UX_PASS §12), source `sheet.css` / `SheetSurfaces`, *new* | ~2 days | It exists only as a proposal. `src/design/sheet.css:34-120` declares `.jobs`, `.jobs-head`, `.jobs-mark`, `.jobs-name`, `.jobs-sum |
 | 52 | OPEN | MODULE_SYSTEM+TENANCY MODULE_SYSTEM §2 (defe | §2 defect 3 — "`EntityDef.priceLevels` does not exist, so `pricing.ts` resolves prices from an exact-name allow-list per `TableKind`… This is the clea | ~2 days | `grep -n priceLevels src/types/model.ts` → no hits; `grep -n PriceLevel src/types/model.ts` → no hits. src/features/quote/pricing. |
 | 53 | OPEN | MODULE_SYSTEM+TENANCY MODULE_SYSTEM §6.2 | §6.2 — the QUOTE module "Quotes", whose master is `{ kind: 'documents' }` — a documents collection rather than a table | unknown | `ModuleDef.tableIds: string[]` (model.ts:882-884) is the only master; `grep -rn ModuleMaster src/` → no hits; `grep -n "documents" |
-| 54 | OPEN | MODULE_SYSTEM+TENANCY MODULE_SYSTEM §10 Phas | §10 Phase 2 — "`add`/`edit`/`delete` become real against the master table" | ~2 days | src/features/modules/designer.ts:88-99 `NOT_YET_SAYS`: add → "Adding an item from here is not built yet — the sheet is where rows  |
+| 54 | CLOSED 2026-09-09 | MODULE_SYSTEM+TENANCY MODULE_SYSTEM §10 Phas | §10 Phase 2 — "`add`/`edit`/`delete` become real against the master table" | ~2 days | Closed in two halves. The affordances: `ModuleIndex` draws a new button, a rename on each face and a take-out, all gated on the verbs, all undoable, refusals as sentences (`writeCaps.ts`, `writeCaps.test.ts` 37 tests + `writeCaps.test.tsx` 15 rendering tests). The identity half, per DECISIONS §2: `readWrites` asks `mayDo(module, roleId, verb)` with `useSessionRoleId()`, so the access grid's `add`/`edit`/`delete` columns now decide the catalogue. `NOT_YET_SAYS` no longer claims the three are unbuilt. Still module-wide, stated rather than assumed: `browse`/`search`/`open` do not ask who is standing there |
 | 55 | OPEN | MODULE_SYSTEM+TENANCY TENANCY §4.5 | TENANCY §4.5 — "The archive moves to the server. `setConfigArchive` is the swap. Nothing above that file changes." | ~2 days | The seam is exactly as described and unbuilt-past: src/features/tenancy/archive.ts:98-103 `ConfigArchive { list(orgSlug), read, wr |
 | 56 | OPEN | MODULE_SYSTEM+TENANCY TENANCY §2 | TENANCY §2 — "THE ONE THAT IS AMBIGUOUS: the manufacturers' data… Is a manufacturer catalogue per-org or global? Today it is per-org by construction,  | unknown | Still per-org by construction: the Yamaha and Stabicraft ranges are rows of ordinary tables inside the one project snapshot (src/d |
 | 57 | OPEN | CONFIG_FINDINGS+QUOTE_FINDINGS CONFIG §4 #8 | Adopt 8 — Import-time self-verification: recompute the landed-cost chain, store `landedComputed` / `landedDelta` / `landedVerified`, flag deviations o | ~2 days | Zero hits for `landedComputed`, `landedDelta` or `landedVerified` anywhere in src/ or tools/. `landed` appears only as a price-col |

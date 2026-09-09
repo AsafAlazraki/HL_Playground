@@ -21,25 +21,35 @@
    Pure strings. No React, no store.
    ============================================================ */
 
-/** WHAT IS NOT TRUE YET, said wherever access is set. The second
- *  sentence is the one that matters — a setting made today is not
- *  discarded, it is waiting.
+/** WHAT THESE GRANTS ACTUALLY DO, said wherever access is set.
  *
- *  THE REASON WAS OUT OF DATE, AND VISIBLY SO. It read "Nobody signs
- *  in to this build", on a screen with the signed-in person's name
- *  and role in the rail eight inches to its left — and the role
- *  ladder is enforced: `atLeast` decides whether the Data and Admin
- *  doors are drawn at all. A refusal a person can see is false is
- *  worse than no refusal, because it is the app telling them its own
- *  account of itself cannot be trusted.
+ *  IT HAS BEEN WRONG TWICE NOW, IN BOTH DIRECTIONS, and both times
+ *  the fault was the same: the sentence stated a fact about the CODE
+ *  and the code moved underneath it.
  *
- *  WHAT IS ACTUALLY TRUE is narrower and is still a refusal: signing
- *  in works and roles are real, but nothing reads `module.access` —
- *  no screen in this repository consults it — so a grant made here
- *  changes nothing today. That is the sentence, and rule 10 is kept:
- *  the thing that cannot be done says why, where it is. */
-export const ACCESS_NOT_ENFORCED =
-  'Nothing here is enforced yet: no screen checks these grants. What you set travels with the place and will be.'
+ *  It read "Nobody signs in to this build", on a screen with the
+ *  signed-in person's name in the rail eight inches to its left.
+ *  Then it read "no screen checks these grants" — true when it was
+ *  written, and false the day `writeCaps.ts` started asking `mayDo`.
+ *  A refusal a person can see is false is worse than no refusal:
+ *  it is the app telling them its own account of itself cannot be
+ *  trusted.
+ *
+ *  SO IT IS NAMED FOR WHAT IT SAYS, NOT FOR ITS OLD ANSWER — the
+ *  constant used to be `ACCESS_NOT_ENFORCED` and a name that carries
+ *  a verdict is a name that goes stale with the verdict.
+ *
+ *  WHAT IS TRUE AT THIS COMMIT, and it is deliberately narrow because
+ *  overclaiming here is the safety lie DECISIONS §2 was settled to
+ *  end. The three WRITE verbs are enforced on a module's catalogue: a
+ *  job not granted `add`, `edit` or `delete` is offered none of them
+ *  there and is told which jobs may (`writeCaps.ts` → `mayDo`). The
+ *  three READING verbs are still module-wide — the catalogue reads
+ *  `browse`, `search` and `open` off the module's own capability list
+ *  and does not ask who is standing there. Rule 10 is kept either
+ *  way: what is not yet enforced says so, where it is set. */
+export const ACCESS_ENFORCEMENT =
+  'Writing is enforced: a job without add, edit or remove in a place is not offered them there, and is told which jobs are. Browse, search and open are not checked against a job yet.'
 
 /** WHAT A ROLE IS. It was two sentences on both screens; the half a
  *  person cannot work out from the grid is that a role is inert

@@ -49,14 +49,30 @@
                    BUILD: pick a motor and the render crossfades to
                    it, 260ms, opacity only. §THE PRODUCT.
      THE BANDS     right, and THE ONLY SCROLLPORT ON THE SCREEN.
-                   Sections in a fixed order — the hull, motors,
-                   trailers, what the dealer fits — ALL OPEN, each
-                   head carrying its kind's own hue and a collapse
-                   for the person who wants less. `bands.ts` owns
-                   the order and the head's one fact.
+                   FIVE DECISIONS in a fixed order — 01 THE HULL,
+                   02 MOTOR, 03 TRAILER, 04 DEALER FIT,
+                   05 ADMINISTRATION — each head carrying its
+                   number, its name, WHERE THAT DECISION STANDS, its
+                   band hue and a collapse for the person who wants
+                   less. Where a decision is answerable from more
+                   than one table, the table is a heading INSIDE the
+                   band. `bands.ts` owns the order, the sorting and
+                   the head's one clause.
      THE PRICE     under both, a sibling of the scrollport so no
                    line can ever pass behind it. Inclusive and
                    exclusive, the rung, and the handover. §THE PRICE.
+
+   ── AND THE BANDS WERE NAMED FOR TABLES UNTIL 2026-09-09 ─────
+
+   Measured at 1280×800 on a fresh Highfield CL260 (PVC) B-G-DG:
+   SEVEN bands, six open, named *Highfield Inflatables*, *Yamaha
+   Outboards*, *NSM Custom Trailers*, *GFAB Trailers*, *Dealer Fit
+   Packages*, *Parts & Accessories*, *Rigging Kits* — every one of
+   them a table on the dealer's price file. The screen written to
+   cure "it feels like a database" was organised by the database,
+   which is the fault QUOTE_GROUND_UP was written to name. The
+   trailer question was two bands and the dealer-fit question was
+   three. It is four bands now and `bands.ts` carries the reasoning.
 
    ── THE PROSE BUDGET, WHICH IS MOSTLY DELETION ───────────────
 
@@ -217,9 +233,7 @@ import { addLine, issueQuote, persistNote, removeLine, setLevel, setQty } from '
 import { recallOpen, rememberOpen } from './place'
 import { buildSteps, savedNote, weighPick } from './steps'
 import type { BuildStep, Weighing } from './steps'
-/* `openByDefault` is NOT imported. It opened one band of seven and
-   this screen opens all of them — see the note above the open-state below. */
-import { orderBands, type Band } from './bands'
+import { orderBands, type Band, type BandTable } from './bands'
 import { deltaSay, levelConflict, type Conflict } from './conflict'
 import { FlowFoot, FlowLine, RunningTotal, type FlowStop } from './flow'
 import { FrozenPhoto } from './photo'
@@ -249,12 +263,18 @@ const NO_OFFER: StepOffer = {
  *  applies; this is what is drawn before asking. */
 const REFUSED_SHOWN = 8
 
-/** The proposal on the pointer, with the band that owns it. The
+/** The proposal on the pointer, with the SHELF that owns it. The
  *  arithmetic is `weighPick` in `steps.ts` — pure, and there rather
  *  than here so `steps.test.ts` can assert it without this screen's
  *  React, motion and icon graph coming with it (the runner takes
- *  `.ts` only, and its config says so on purpose). */
-type Weigh = Weighing & { bandId: string }
+ *  `.ts` only, and its config says so on purpose).
+ *
+ *  IT IS THE SHELF AND NOT THE BAND, and that is a consequence of
+ *  bands being decisions rather than tables: `04 DEALER FIT` holds
+ *  three shelves on the real seed, and keyed on the band they would
+ *  clear each other's proposal the moment any of the three
+ *  re-rendered. A shelf is one section, so `step.id` is the key. */
+type Weigh = Weighing & { shelfId: string }
 
 export interface QuoteBuildProps {
   quote: QuoteDef
@@ -300,58 +320,70 @@ export interface QuoteBuildProps {
 
 export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactElement {
   const steps = useMemo(() => buildSteps(quote), [quote])
-  /* ONE STORE READ FOR THE WHOLE DOCUMENT. The hue on a band head is
-     the kind of thing the band holds, read off the table rather than
-     chosen by this screen — DESIGN_PRINCIPLES §1's discipline: a hue
-     only ever appears on something that HAS that kind. */
+  /* ONE STORE READ FOR THE WHOLE DOCUMENT, AND IT DECIDES THE WHOLE
+     SHAPE OF THE PAGE. `EntityDef.kind` is what says a section is a
+     trailer section, so it is what sorts every section into one of
+     the five decisions — and it is also the hue, per
+     DESIGN_PRINCIPLES §1's discipline that a hue only ever appears
+     on something that HAS that kind. */
   const kinds = useMemo(() => sectionKinds(quote), [quote])
   const bands = useMemo(() => orderBands(steps, kinds), [steps, kinds])
   const totals = quoteTotals(quote)
   const refusals = issueBlockers(quote)
   const { still } = useStillness()
 
-  /* ── EVERY BAND OPENS, AND THE ACCORDION IS A TOOL RATHER THAN A
-     GATE ───────────────────────────────────────────────────────────
+  /* ── EVERY BAND THAT DECIDES SOMETHING OPENS, AND THE ACCORDION IS
+     A TOOL RATHER THAN A GATE ──────────────────────────────────────
 
-     MEASURED at 1280×800 on a fresh Highfield CL260 (PVC) B-G-DG:
-     seven bands, ONE of them open. Six of the seven questions this
-     page exists to ask were behind a shut door, and the answer to
-     "what am I configuring" was a press away six times over. On a
-     dealer's own view with more tables it is worse in exact
-     proportion — the shape is the defect, not the count.
+     MEASURED at 1280×800 on a fresh Highfield CL260 (PVC) B-G-DG,
+     twice. Before the bands were decisions: SEVEN bands — one per
+     table — six of them open, 2,763px of rail in a 546px port. The
+     trailer question was two of those bands and the dealer-fit
+     question was three, so "how many decisions are on this quote"
+     had no answer on the screen. After: FOUR bands, three open,
+     because a business that sells no custom lines gets no
+     `05 ADMINISTRATION`.
 
      CONFIGURATOR_PLAYBOOK §8 rejects "gates before the tool" and
      PHASE_TWO §2.3 asks for a SCROLLING OPTION RAIL — "bands are
      accordions in a fixed order; open several at once". A stack of
      collapsed drawers is neither.
 
-     `openByDefault` opened exactly one, and its own comment gives
-     the reason to go the other way: "a page that opens seven
-     accordions has an accordion for no reason." That is right about
-     the accordion and wrong about which end to fix. The accordion
-     earns its keep the moment a person has read past a band — a
-     73-row trailer shortlist is worth folding away — so the HEAD
-     keeps its collapse. What it may not do is decide, on a person's
-     behalf and before they have looked, which six of seven
-     questions they are not allowed to see.
+     An accordion earns its keep the moment a person has read past a
+     band — a 73-row trailer shortlist is worth folding away — so
+     the HEAD keeps its collapse. What it may not do is decide, on a
+     person's behalf and before they have looked, which questions
+     they are not allowed to see.
 
-     So the default is every band open, in the fixed order, and
-     collapsing is a deliberate act by somebody who wants less. It
-     is one scroll of sections, which is what §2.3 drew.
+     So the default is every band that decides something open, in
+     the fixed order, and collapsing is a deliberate act by somebody
+     who wants less. It is one scroll of sections, which is what
+     §2.3 drew.
 
-     WHAT SURVIVES A RELOAD is unchanged. `place.ts` hands back
-     whatever it stored and this is where it is CHECKED: a band id
-     that no longer names a band of this document is discarded here
-     rather than trusted. Every line the page has produced is already
+     AND SHUTTING ONE IS CHEAPER THAN IT WAS, which is the other
+     half of the bands-by-kind change. A shut head now states its
+     own decision (`bands.ts` `stateSay`), so folding `03 TRAILER`
+     away leaves "7 offered" on screen rather than a closed door
+     with a table's name on it. QUOTE_GROUND_UP §1: shut does not
+     mean unknown.
+
+     WHAT SURVIVES A RELOAD is unchanged in mechanism and changed in
+     what it stores. `place.ts` hands back whatever it kept and this
+     is where it is CHECKED: an id that no longer names a band of
+     this document is discarded here rather than trusted — which is
+     also the whole migration off the old per-table ids, since a
+     stored `ve-tQ8awws` matches no band and the page simply opens
+     with its default. Every line the page has produced is already
      on the document, so losing this loses a scroll position and
-     never a decision — and a person who shut six bands before lunch
-     gets them shut when they come back. */
+     never a decision. */
   const [open, setOpen] = useState<string[]>(() => {
     const back = recallOpen(quote.id).filter((id) => bands.some((b) => b.id === id))
-    /* THE SUBJECT IS NOT ONE OF THEM. It decides nothing — it is the
-       hull the whole document is about — and opening it would put a
-       read-only line where the first choice should be. */
-    return back.length > 0 ? back : bands.filter((b) => !b.subject).map((b) => b.id)
+    /* A BAND THAT DECIDES NOTHING IS NOT ONE OF THEM. On a quote
+       raised from a hull, `01 THE HULL` holds only the subject — the
+       thing the whole document is about — and opening it would put a
+       read-only line where the first choice should be. Its head
+       still says which hull, which is what it never did before. */
+    return back.length > 0 ? back : bands.filter((b) => b.decides).map((b) => b.id)
   })
   useEffect(() => {
     rememberOpen(quote.id, open)
@@ -398,22 +430,28 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
   const delta = useTotalDelta(totals.total)
   const saveProblem = persistNote()
 
-  /* ── THE PROPOSAL ON THE POINTER, AND WHY IT CARRIES A BAND ID ───
-     Several bands are open at once and each shortlist runs its own
-     effect, so when the document changes EVERY open band republishes
-     — the one with the highlight publishes its weighing and all the
-     others publish null. Last writer wins, and the last writer is
-     whichever band React commits last, not the one a person is
-     pointing at.
+  /* ── THE PROPOSAL ON THE POINTER, AND WHY IT CARRIES A SHELF ID ──
+     Several bands are open at once and each shelf runs its own
+     effect, so when the document changes EVERY open shelf
+     republishes — the one with the highlight publishes its weighing
+     and all the others publish null. Last writer wins, and the last
+     writer is whichever shelf React commits last, not the one a
+     person is pointing at.
 
-     So a band may only clear what it itself put there. Two lines,
+     So a shelf may only clear what it itself put there. Two lines,
      and without them the price bar's proposal blinks out the moment
-     any other band re-renders. */
+     any other shelf re-renders.
+
+     IT IS KEYED ON THE SHELF AND NOT THE BAND, and that is new with
+     bands-by-kind: `04 DEALER FIT` holds three shelves on the real
+     seed, so a band key would have let three siblings inside one
+     band do to each other exactly what the bands were doing to each
+     other before. A shelf is one section. */
   const [weighing, setWeighing] = useState<Weigh | null>(null)
-  const onWeigh = useCallback((bandId: string, w: Weigh | null) => {
+  const onWeigh = useCallback((shelfId: string, w: Weigh | null) => {
     setWeighing((was) => {
       if (w !== null) return w
-      return was === null || was.bandId !== bandId ? was : null
+      return was === null || was.shelfId !== shelfId ? was : null
     })
   }, [])
   const subjectNote = unsellableSubject(quote.rootTableId, quote.rootRowId)
@@ -849,20 +887,50 @@ function Plate({
 }
 
 /* ============================================================
-   §ONE BAND — a name, one fact, and a shortlist when it is open.
+   §ONE BAND — a decision, where it stands, and the tables that can
+   answer it.
 
-   THE HEAD CARRIES ITS KIND'S HUE (`.k-band`), which is
+   THE HEAD IS A NUMBER, A NAME AND A STATE, IN THAT ORDER OF SIZE
+   AND THE OPPOSITE ORDER OF WEIGHT. `01 THE HULL` is the 11px
+   uppercase group label — the only uppercase DESIGN_CONTRACT §11
+   allows, and it is a label this app writes rather than anything
+   off the dealer's file, so nothing is lost by shouting it. Under
+   it, at the 15px heading step, is the ANSWER: `chosen: Highfield -
+   CL260 (PVC) B-G-DG`, or `7 offered`.
+
+   That inverts what was here, and deliberately. The band used to
+   set the TABLE'S NAME at 15px with a clause fading out beside it,
+   which made the loudest thing on a shut band the name of a
+   database table and the quietest thing the decision it held.
+
+   THE HEAD CARRIES ITS BAND'S HUE (`.k-band`), which is
    DESIGN_PRINCIPLES §1 as amended for this phase: a kind hue may
-   carry a SURFACE. It is not decoration and it is not a palette
-   this screen chose — `bands.ts` reads it off the table's own
-   `kind`, so a motor band is the same colour as a motor anywhere
-   else in the application, always. A figure is never a hue: the
-   money on the head is ink.
+   carry a SURFACE. `bands.ts` declares one hue per band so
+   `04 DEALER FIT` is the same colour on every quote — and where a
+   band really mixes two kinds, each table heading inside it takes
+   its own, which is what keeps "a hue only ever appears on
+   something that HAS that kind" true one level down. A figure is
+   never a hue: the money on the head is ink.
+
+   THE TABLE HEADING IS DRAWN ONLY WHERE THERE IS MORE THAN ONE.
+   `QuoteStart` proved this and its reason applies unchanged: on
+   the real seed most bands hold exactly one table, and a heading
+   there prints the same string as the shelf's own curation chip
+   forty pixels below it — the duplicated eyebrow `5d00103` was
+   written to end.
+
+   WHAT THE HEADING SAYS IS THE TABLE'S OWN STATE, not its pool.
+   "NSM Custom Trailers · 73" over a chip reading "0 of 73 NSM
+   Custom Trailers · Highfield × NSM Custom — Trailer Fitment names
+   which ones go with this one" is one fact on two surfaces, which
+   is the exact defect this file's header records counting and
+   removing. The heading says where THAT table stands; the chip
+   under it keeps the pool, the rule and the measured rate.
 
    THE BODY IS A LIVE READ AND ONLY WHEN IT IS OPEN. `stepOffer`
-   runs the block's rule over the whole table; doing that for seven
-   shut bands on every redraw would be work nobody asked for. A shut
-   band costs one frozen count.
+   runs each block's rule over its whole table; doing that for shut
+   bands on every redraw would be work nobody asked for. A shut band
+   costs one frozen count.
    ============================================================ */
 
 function BandBlock({
@@ -878,13 +946,17 @@ function BandBlock({
   open: boolean
   still: boolean
   onToggle: () => void
-  onWeigh: (bandId: string, w: Weigh | null) => void
+  onWeigh: (shelfId: string, w: Weigh | null) => void
 }): ReactElement {
-  const step = band.step
   /* WHERE ESCAPE PUTS A PERSON BACK. The head is the band's own way
-     out on the keyboard, so the shortlist has to be able to reach
-     it — see `Shortlist`'s key handling. */
+     out on the keyboard, so every shelf in it has to be able to
+     reach it — see `Shortlist`'s key handling. One head for several
+     shelves is the right answer and not a compromise: Escape leaves
+     the DECISION, which is what the band is. */
   const headRef = useRef<HTMLButtonElement>(null)
+  /* SEE THE HEADER: a heading per table only where a band really
+     holds more than one, which is `.qs-sec--named`'s own rule. */
+  const named = band.tables.length > 1
 
   /* ── WHETHER A KEY OPENED THIS BAND, AND WHY THAT DECIDES THE
      MOTION ──────────────────────────────────────────────────────
@@ -925,12 +997,20 @@ function BandBlock({
           <span className={`qb-band-mark${open ? ' is-open' : ''}`} aria-hidden="true">
             <CaretDown size={ICON_SIZE.tiny} weight="bold" />
           </span>
-          <span className="qb-band-name">{step.title}</span>
-          {band.fact === '' ? null : (
-            <span className="qb-band-fact" title={band.fact}>
-              {band.fact}
-            </span>
-          )}
+          {/* THE NUMBER IS A READING ORDER, NOT A PROGRESS COUNT.
+              §2.3 and GOV.UK's own removal of a twelve-step
+              indicator: a document being read is not a form being
+              completed, so it never says "3 of 5" and there is no
+              meter under it. It is `aria-hidden` because "01" spoken
+              before "The hull" is noise to somebody who cannot see
+              that it is a column of numerals down the left edge. */}
+          <span className="qb-band-num" aria-hidden="true">
+            {band.num}
+          </span>
+          <span className="qb-band-name">{band.name}</span>
+          <span className="qb-band-state" title={band.fact}>
+            {band.fact}
+          </span>
           <span className="qb-band-fig">{band.amount === null ? '' : money(band.amount)}</span>
         </button>
       </h2>
@@ -941,25 +1021,91 @@ function BandBlock({
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0, transition: transitionFor(hushed, SPRING) }}
         >
-          {band.subject ? (
-            <ul className="qb-picked" aria-label={step.title}>
-              {step.lines.map((line) => (
-                <PickedLine key={line.id} quoteId={quote.id} line={line} removable={false} />
-              ))}
-            </ul>
-          ) : (
-            <Shortlist
+          {band.tables.map((table) => (
+            <BandTableBlock
+              key={table.step.id}
               quote={quote}
-              step={step}
+              table={table}
+              named={named}
               still={hushed}
-              bandId={band.id}
               headRef={headRef}
               onWeigh={onWeigh}
             />
-          )}
+          ))}
         </motion.div>
       ) : null}
     </section>
+  )
+}
+
+/* ============================================================
+   ONE TABLE INSIDE A BAND — the heading, and the shelf under it.
+
+   Seven trailer tables are seven of these inside `03 TRAILER`, and
+   that is the whole of what "bands are decisions" costs at the
+   drawing end. The heading is an `<h3>` under the band's `<h2>`, so
+   the document outline a screen reader walks is the decision and
+   then the tables that can answer it — which is the same structure
+   the eye is being given.
+   ============================================================ */
+
+function BandTableBlock({
+  quote,
+  table,
+  named,
+  still,
+  headRef,
+  onWeigh,
+}: {
+  quote: QuoteDef
+  table: BandTable
+  /** whether this band holds more than one table — see BandBlock */
+  named: boolean
+  still: boolean
+  headRef: RefObject<HTMLButtonElement | null>
+  onWeigh: (shelfId: string, w: Weigh | null) => void
+}): ReactElement {
+  const step = table.step
+  return (
+    <div className="qb-tab" data-kind={table.kind}>
+      {named ? (
+        /* THE NAME KEEPS ITS OWN CASE, AND IT IS THE WHOLE HEADING.
+           It is the dealer's own string off the price file — "Parts
+           & Accessories", "REDCO / Tinka Trailers" — and rule 3 is
+           explicit that uppercase is a label style and never a name
+           style. The uppercase on this screen is the band's own
+           label above it, which this application wrote.
+
+           NOTHING ELSE IS ON IT. `BandTable` in `bands.ts` carries
+           the reasoning: the count belongs to the chip four lines
+           below and the chosen line belongs to the band head above,
+           and this heading saying either would be one fact on two
+           surfaces sixty pixels apart. */
+        <h3 className="qb-tab-head k-rail">{step.title}</h3>
+      ) : null}
+      {step.subject ? (
+        /* THE SUBJECT DECIDES NOTHING. It is the thing being
+           configured, so its line is read-only and there is no shelf
+           under it — but it is ranked by its own kind like every
+           other table, which is why a quote raised on a motor finds
+           it inside `02 MOTOR` rather than pinned above the hull
+           decision it has not made yet. */
+        <ul className="qb-picked" aria-label={step.title}>
+          {step.lines.map((line) => (
+            <PickedLine key={line.id} quoteId={quote.id} line={line} removable={false} />
+          ))}
+        </ul>
+      ) : (
+        <Shortlist
+          quote={quote}
+          step={step}
+          still={still}
+          shelfId={step.id}
+          headRef={headRef}
+          onWeigh={onWeigh}
+        />
+      )}
+    </div>
   )
 }
 
@@ -987,17 +1133,21 @@ function Shortlist({
   quote,
   step,
   still,
-  bandId,
+  shelfId,
   headRef,
   onWeigh,
 }: {
   quote: QuoteDef
   step: BuildStep
   still: boolean
-  bandId: string
-  /** the band's own head — where Escape puts a person back */
+  /** this shelf's own section id — `Weigh` is keyed on it rather
+   *  than on the band, because one band holds several shelves */
+  shelfId: string
+  /** the BAND's head — where Escape puts a person back. Several
+   *  shelves in one band share it, which is right: Escape leaves the
+   *  decision. */
   headRef: RefObject<HTMLButtonElement | null>
-  onWeigh: (bandId: string, w: Weigh | null) => void
+  onWeigh: (shelfId: string, w: Weigh | null) => void
 }): ReactElement {
   const [query, setQuery] = useState('')
   const [all, setAll] = useState(false)
@@ -1143,11 +1293,11 @@ function Shortlist({
   useEffect(() => {
     const c = weighed === null ? undefined : candidates[weighed]
     onWeigh(
-      bandId,
-      c === undefined ? null : { bandId, ...weighPick(quote, c.line, c.alreadyLineId) },
+      shelfId,
+      c === undefined ? null : { shelfId, ...weighPick(quote, c.line, c.alreadyLineId) },
     )
-    return () => onWeigh(bandId, null)
-  }, [weighed, candidates, quote, bandId, onWeigh])
+    return () => onWeigh(shelfId, null)
+  }, [weighed, candidates, quote, shelfId, onWeigh])
 
   const take = useCallback(
     (c: Candidate) => {

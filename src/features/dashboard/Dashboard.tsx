@@ -79,6 +79,7 @@ import {
   type LinkTarget,
 } from './arrangement'
 import { CARDS, firstName, greeting } from './cards'
+import { censusLine, sheetCensus } from './census'
 import { linkOffers, resolveLinks } from './links'
 import { QuickLinks } from './QuickLinks'
 import { CardBody, CardMark } from './CardBody'
@@ -175,6 +176,17 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
   )
 
   const spare = useMemo(() => cardsNotPlaced(arrangement), [arrangement])
+
+  /* WHAT THE FILE HOLDS — DECISIONS.md §3, settled 2026-09-09.
+     Counted at paint off the two things this component already
+     subscribes to, so the strip costs one pass over the entity
+     keys and no extra render. `null` on an empty sheet, and the
+     header simply closes up. See census.ts for why this is the
+     sheet-wide reader and not `fileTally`. */
+  const census = useMemo(
+    () => censusLine(sheetCensus(entities, rowsByEntity)),
+    [entities, rowsByEntity],
+  )
 
   /* -- the acts ------------------------------------------- */
 
@@ -330,6 +342,55 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
               {greeting(now)}, {firstName(user.name)}
             </h1>
           </div>
+
+          {/* ============================================================
+              THE COUNTED FIGURES, BACK AS A QUIET STRIP.
+
+              DECISIONS.md §3, settled by the owner 2026-09-09: §1's
+              objection was to counts as the SUBJECT of a screen, not
+              to counts existing, and §2.1 — the later, narrower
+              statement — asks for them back "as a quiet strip, not as
+              the subject". PHASE_TWO §1 and §2.1 are amended to match.
+
+              IT IS IN THE HEADER BECAUSE THAT IS THE ONE PLACE IT
+              COSTS NOTHING. Measured at 1280x800 on the real seed
+              before this pass: the header band is 49.7px tall and
+              992px wide, of which the greeting uses 290 and the Edit
+              button 90 — about 600px of the page holding nothing at
+              all. Meanwhile the grid below it is 638.3px and the
+              modules card is already running 975px of tiles through a
+              509px window. A strip in its own row, above or below the
+              grid, is height taken straight off that window. Bottom-
+              aligned on the greeting's own line it takes none: the
+              header is as tall as `.dsh-head-say`, and 16px of
+              caption cannot raise that.
+
+              IT DOES NOT OUTRANK ANYTHING. 12px caption against a
+              33px display greeting, tertiary ink on the page ground,
+              no surface, no rule, no elevation, nothing pressable.
+              The two lit cards below it are still the only paper on
+              the screen.
+
+              IT IS NOT A CARD AND IT IS NOT ARRANGEABLE, which is
+              why Edit does not offer to take it off. It belongs to
+              the same class as the date stamp above the greeting —
+              the header's own caption, about the file rather than
+              about the day's work.
+
+              NOTHING ANIMATES. `.ds-rise` on the header is the
+              entrance the greeting already had and this rides it;
+              there is no count-up and no transition on the figures,
+              because a figure that moves is a figure a person waits
+              for before they can read it.
+              ============================================================ */}
+          {census ? (
+            <p className="dsh-strip">
+              <span className="dsh-strip-n">{census.rows.n}</span>
+              {` ${census.rows.noun} ${census.joiner} `}
+              <span className="dsh-strip-n">{census.tables.n}</span>
+              {` ${census.tables.noun}`}
+            </p>
+          ) : null}
 
           <div className="dsh-head-acts">
             {arranging ? (

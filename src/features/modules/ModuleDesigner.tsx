@@ -193,14 +193,41 @@ function Capabilities({
       <ul className="md-caps">
         {states.map((c) => (
           <li className={`md-cap${c.refused ? ' is-refused' : ''}`} key={c.key}>
+            {/* `aria-disabled`, NOT `disabled`, AND THE SENTENCE
+                BELOW IS THE REASON WHY. A refused verb carries
+                `.md-cap-why` under this switch — the reason written
+                at the moment of the decision, naming the column that
+                is missing. `disabled` took the switch out of the tab
+                order, so a person moving by keyboard skipped straight
+                past both the control and its explanation: the refusal
+                was drawn for people who could see that corner of the
+                screen and for nobody else. The attribute keeps it
+                reachable and `aria-describedby` hands the reason over
+                on arrival.
+
+                THE GUARD IS THE HANDLER, never the attribute —
+                `aria-disabled` does not stop a click. `onSet` is not
+                reached, so a refused verb cannot be switched on by
+                pressing Enter on it.
+
+                NOT ON THE `<li>`. Its `listitem` role does not
+                support `aria-disabled` and the attribute would be
+                dropped in silence; the refused card says so with its
+                own ground (`.md-cap.is-refused`) instead. That exact
+                mistake was made in `QuoteBuild.tsx` and found there
+                the day before this. */}
             <button
               type="button"
               className="md-switch"
               role="switch"
               aria-checked={c.on}
-              disabled={c.refused !== undefined}
+              aria-disabled={c.refused !== undefined}
+              {...(c.refused ? { 'aria-describedby': `md-cap-why-${c.key}` } : {})}
               aria-label={`${c.label} — ${c.says}`}
-              onClick={() => onSet(c.key, !c.on)}
+              onClick={() => {
+                if (c.refused !== undefined) return
+                onSet(c.key, !c.on)
+              }}
             >
               <span className="md-switch-track" aria-hidden="true">
                 <span className="md-switch-knob" />
@@ -216,7 +243,7 @@ function Capabilities({
                 for a setting on the module, and the fix is a column on
                 a table. */}
             {c.refused ? (
-              <p className="md-cap-why">
+              <p className="md-cap-why" id={`md-cap-why-${c.key}`}>
                 <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
                 {c.refused}
               </p>

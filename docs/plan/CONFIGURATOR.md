@@ -110,8 +110,52 @@ easy to do things"*.
   a choice shows what it does to the total; picking it commits.
 - **What is already decided stays visible.** A person deep in Dealer
   Fit needs to see the hull and the motor without scrolling up.
-- **Undo, by rule 9** — every pick is a toast with UNDO, never a
-  confirmation.
+- **Undo, by rule 9 — and it SPLITS ON WHETHER A CHOICE EXISTS.**
+
+  > **Amended 2026-09-09.** This bullet read *"every pick is a toast
+  > with UNDO, never a confirmation"*, and that absolute is wrong.
+  > `DECISIONS.md` §1 settles it against this document:
+  > `CONFIGURATOR_PLAYBOOK.md:344-346` already carried the threshold
+  > and this file, `DESIGN_PRINCIPLES` rule 9 as it was being read,
+  > and the code all missed it. The threshold replaces the absolute.
+
+  - **A sheet when priced alternatives survive.** The person is
+    *choosing*, not reversing, and **a toast cannot hold a priced
+    radio group**: `ToastAct` is ONE act, deliberately
+    (`Toasts.tsx:19-25` — *"a note is read at a glance and a glance
+    holds one decision"*). That is not a limitation to design
+    around; it is the reason the rule splits at all. Porsche's
+    flyout, stripped of the theatre, is the shape — what you asked
+    for, what changes, the cheapest fix pre-selected, priced.
+  - **A toast with UNDO when no alternative survives.** Nothing to
+    choose, only something to reverse. Rule 9 exactly as written,
+    and this is **every ordinary pick today**: no pick on this screen
+    can invalidate another line (`freeze.ts:1077-1086`),
+    `optionConflict` has no callers, and nothing on the seeded file
+    emits a runnable rule — so a pick removes nothing and offers no
+    alternative.
+  - **And the toast after Accept too**, so accepting a sheet is as
+    reversible as any other act.
+
+  Never a confirmation *before* the fact, in either half. That part
+  of the old bullet stands and is the whole of rule 9's objection to
+  dialogs.
+
+  **As built.** `quotes.ts` carries the toast half on all three acts
+  — `addLine`, `removeLine` and `setLevel`, which is the Accept the
+  third clause asks for. It does **not** go through
+  `sayUndoable`/`offerUndo`: those pin a `HistoryEntry` off
+  `useProjectStore().past`, and a quote is not in that stack — it is
+  in the `quotes.ts` registry and in localStorage, and `mutate` never
+  calls `record`. A toast built that way would offer to undo the pick
+  and undo the last unrelated *project* step instead, or draw no
+  button at all on an empty stack. **A toast with an UNDO that does
+  not undo is worse than no toast**, so each act carries its own
+  inverse, closed over the values it needs and applied through
+  `mutate` so the draft/issued line holds on the way back as well —
+  the mechanism `removeLine` already had, and the one
+  `Dashboard.tsx:48` and `Board.tsx:271` reach for on the same
+  grounds.
 
 ### D · The catalogue hands over
 

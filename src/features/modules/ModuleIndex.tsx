@@ -196,9 +196,15 @@ import { moduleAt } from './places'
    away, because there was nothing here to take.
 
    `writeCaps.ts` answers the three verbs and carries the sentences.
-   It is deliberately module-wide and role-free; the whole argument,
-   including exactly what stays blocked on identity, is in its
-   header. ============================================================ */
+   It asks `mayDo(module, roleId, verb)` — so the ACCESS GRID decides
+   this page as well as the designer's switches, which is
+   `DECISIONS.md` §2 — and `useSessionRoleId` (`features/auth/role.ts`)
+   is the only way the job standing here is produced. Never
+   `user.roleId`: that file's own rule 1, and it is right, because
+   `undefined` and `null` mean the same thing there and one of thirty
+   readers would forget.
+   ============================================================ */
+import { useSessionRoleId } from '@/features/auth'
 import {
   addLabel,
   addSays,
@@ -206,6 +212,7 @@ import {
   readWrites,
   removedSay,
   renamedSay,
+  withheldSay,
 } from './writeCaps'
 import './modules.css'
 
@@ -214,6 +221,13 @@ import './modules.css'
  *  that nobody meets the cap while browsing one brand, small
  *  enough that seven brands at once stay instant. */
 const INDEX_CAP = 240
+
+/** WHERE THE ADD BUTTON'S REASON IS, so `aria-describedby` can point
+ *  at it. One id and not one per verb: only `add` draws a control
+ *  that survives its own refusal — a rename and a take-out are absent
+ *  from a face rather than sitting on it greyed, because a control
+ *  repeated 174 times is a refusal repeated 174 times. */
+const ADD_WHY_ID = 'md-idx-add-why'
 
 export interface ModuleStockProps {
   module: ModuleDef
@@ -237,6 +251,12 @@ export interface ModuleStockProps {
   onOpen: (tableId: string, rowId: string) => void
   /** raise a quote for one item, standing here. See `FaceProps`. */
   onQuote?: ((tableId: string, rowId: string) => void) | undefined
+  /** WHICH JOB IS STANDING HERE, for `mayDo`. Absent = ask the
+   *  session, which is what the app does; a caller passes it only to
+   *  stand this page up as somebody in particular, which is what a
+   *  test does. `null` is a value and means "nobody in particular",
+   *  so it is NOT the same as leaving it off. */
+  roleId?: string | null
 }
 
 export function ModuleStock({
@@ -245,6 +265,7 @@ export function ModuleStock({
   openAt,
   onOpen,
   onQuote,
+  roleId,
 }: ModuleStockProps): ReactElement {
   /* THE PLACE, NOT THE BAG IT IS FILED IN. Every reader below takes a
      `ModuleDef`, so narrowing the module to one of its tables narrows
@@ -364,23 +385,52 @@ export function ModuleStock({
   const canSearch = module.capabilities.includes('search')
   const canOpen = module.capabilities.includes('open')
 
+  /* WHICH JOB IS STANDING HERE. Watched, not read once: an assignment
+     can change mid-session and `role.ts` carries the subscription for
+     exactly that reason — a catalogue still offering Take out to
+     somebody whose job lost it an hour ago is the failure this whole
+     wiring exists to stop, pointing the other way.
+
+     THE PROP WINS WHERE A CALLER NAMED A JOB, and `null` is a value:
+     "nobody in particular" is a job a test stands the page up as, and
+     it is not the same as leaving the prop off. */
+  const live = useSessionRoleId()
+  const who = roleId === undefined ? live : roleId
+
   /* ── WHAT MAY BE WRITTEN HERE ────────────────────────────────────
-     Off = nothing is drawn and nothing is said. On = the affordance
-     works. On and blocked = the sentence, below the header, in the
-     place the act would have been. See `writeCaps.ts`. */
-  const writes = useMemo(() => readWrites(module, tables, listed), [module, tables, listed])
+     Off = nothing is drawn and nothing is said. Withheld = nothing is
+     drawn and the reason IS said. On = the affordance works. On and
+     blocked = the sentence, below the header, in the place the act
+     would have been. See `writeCaps.ts`. */
+  const writes = useMemo(
+    () => readWrites(module, tables, listed, who),
+    [module, tables, listed, who],
+  )
 
   /* ONE WORDING PER FACT. With the tables off the sheet all three
      verbs are blocked by the same sentence, and printing it three
      times is how a person starts wondering whether they are three
-     faults — the lesson `accessSay.ts` was written to record. */
+     faults — the lesson `accessSay.ts` was written to record.
+
+     THE WITHHELD VERBS ARE ONE SENTENCE FOR THE SAME REASON, and it
+     comes FIRST: "you may not" is a different order of fact from "you
+     may and it cannot work here", and a person who has been refused
+     on account of their job does not need to read about the sheet. */
   const refusals = useMemo(() => {
     const out: string[] = []
+    if (writes.withheld.length > 0) out.push(withheldSay(module.name, writes.withheld, who))
     for (const stance of [writes.add, writes.edit, writes.delete]) {
       if (stance.blocked !== undefined && !out.includes(stance.blocked)) out.push(stance.blocked)
     }
     return out
-  }, [writes])
+  }, [writes, module.name, who])
+
+  /* THE ADD BUTTON IS DRAWN AND CANNOT BE PRESSED. Two ways in — the
+     verb is granted with nowhere to put a row, or granted with a
+     reason it cannot work — and one appearance, because to a person
+     they are the same fact: the control is here and the act is not
+     available. Which one it is, is the sentence. */
+  const refused = writes.into === undefined || writes.add.blocked !== undefined
 
   /* A NEW ONE, IN THE MASTER TABLE — MODULE_SYSTEM §5's own words for
      what this switch does. The row is blank, it is undoable, and the
@@ -388,9 +438,16 @@ export function ModuleStock({
      value and sorts to the end of its table, so it is in neither the
      drawer that was open nor the search that was typed, and a button
      that appeared to do nothing would be the worse bug. */
+  /* EVERY ONE OF THE THREE HANDLERS RE-ASKS `on`, and none of them
+     leans on the control not being drawn. That is not belt and braces
+     — the Add button is `aria-disabled` rather than `disabled`, so it
+     is deliberately still pressable and this IS its guard; and a
+     write gated only by a render is a write one conditional away from
+     being ungated. The store is the last line and it has no idea what
+     a capability is. */
   const startOne = useCallback(() => {
     const into = writes.into
-    if (into === undefined || writes.add.blocked !== undefined) return
+    if (into === undefined || writes.add.on !== true || writes.add.blocked !== undefined) return
     const row = addRow(into.id)
     if (row === null) return
     sayUndoable(addedSay(into, canOpen))
@@ -424,7 +481,9 @@ export function ModuleStock({
     (tableId: string, rowId: string, from: string, to: string) => {
       setRenaming(null)
       const field = writes.renames.get(tableId)
-      if (field === undefined || writes.edit.blocked !== undefined) return
+      if (field === undefined || writes.edit.on !== true || writes.edit.blocked !== undefined) {
+        return
+      }
       const next = to.trim()
       if (next === from) return
       /* AN EMPTY NAME IS REFUSED WHERE IT IS REFUSED, and the old one
@@ -710,14 +769,33 @@ export function ModuleStock({
           {/* THE NEW BUTTON — MODULE_SYSTEM §5's own consequence for
               switching `add` on, and the first thing on this page ever
               to consume a write verb. Switched off it is not here at
-              all; switched on with nowhere to put a row it is here,
-              disabled, and the sentence saying why is under the
-              header where the act was refused. */}
+              all; granted with nowhere to put a row it is here,
+              refused, and the sentence saying why is under the header
+              where the act was refused.
+
+              `aria-disabled`, NOT `disabled`, AND THE DIFFERENCE IS
+              THE WHOLE OF RULE 10. A `disabled` button leaves the tab
+              order: a person moving by keyboard never lands on it, so
+              they never meet the control that was refused and never
+              reach the sentence explaining it — the refusal exists
+              only for somebody who happened to be looking at that
+              corner of the screen. `aria-disabled` keeps the button
+              where it is, keeps it reachable, and `aria-describedby`
+              carries its reason with it, so the explanation arrives
+              with the refusal instead of near it. The guard against
+              the press is `startOne`, which returns before writing
+              anything — never the attribute.
+
+              This exact fault was found and fixed in `QuoteBuild.tsx`
+              a day before this was written. */}
           {writes.add.on ? (
             <button
               type="button"
               className="md-idx-add"
-              disabled={writes.into === undefined || writes.add.blocked !== undefined}
+              aria-disabled={refused}
+              {...(refused && writes.add.blocked !== undefined
+                ? { 'aria-describedby': ADD_WHY_ID }
+                : {})}
               {...(writes.into ? { title: addSays(writes.into) } : {})}
               onClick={startOne}
             >
@@ -756,15 +834,29 @@ export function ModuleStock({
         </p>
       ) : null}
 
-      {/* A WRITE VERB THAT IS ON AND CANNOT WORK SAYS SO, HERE.
-          Nothing is said for a verb that is OFF: browse/search/open is
-          the contract's own default, so every module ever made writes
-          nothing, and three apologies at the top of every catalogue
-          would be noise over a price list. What needs saying is the
-          other case — the switch is on, the affordance is missing, and
-          without a sentence that reads as the app being broken. */}
+      {/* A WRITE VERB THAT CANNOT BE USED SAYS SO, HERE.
+          Nothing is said for a verb the module does not OFFER:
+          browse/search/open is the contract's own default, so every
+          module ever made writes nothing, and three apologies at the
+          top of every catalogue would be noise over a price list.
+
+          Two cases DO need saying, and they are the two this list
+          holds. The verb is offered and kept from the job standing
+          here — a decision an administrator made, which is not the
+          normal state of anything. Or it is granted and the affordance
+          cannot work, which without a sentence reads as the app being
+          broken.
+
+          THE ADD SENTENCE CARRIES AN ID because a control survives its
+          own refusal — see the button. Nothing else here needs one:
+          the other refusals explain affordances that are absent, and
+          an absent control has nothing to describe. */}
       {refusals.map((why) => (
-        <p className="md-idx-note" key={why}>
+        <p
+          className="md-idx-note"
+          key={why}
+          {...(why === writes.add.blocked ? { id: ADD_WHY_ID } : {})}
+        >
           {why}
         </p>
       ))}

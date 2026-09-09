@@ -36,6 +36,11 @@ export {
   normalizeQuery,
   optionsOf,
   search,
+  /* §2 rule 4. Exported because it is the whole per-person half of
+     the rule in one function, and because a surface that wants to
+     know what a job can reach should ask THIS rather than grow a
+     second answer beside it. */
+  withinReach,
 } from './rowSearch'
 export type {
   ColumnEntry,

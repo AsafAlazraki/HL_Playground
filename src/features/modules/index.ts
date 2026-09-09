@@ -205,11 +205,20 @@ export type {
    surface that ever offers one of these three must reach the same
    answer and the same sentences rather than growing its own.
 
-   IT IS ROLE-FREE, DELIBERATELY, and the file's header says exactly
-   what that costs: `mayDo` is handed `roleId === null` in every real
-   session, so the only half of the question that can be answered
-   honestly today is the module's own capability list.
-   ============================================================ */
+   IT ASKS `mayDo`, AND THAT IS THE FOURTH ARGUMENT. `readWrites`
+   takes a `roleId` — required, never defaulted, because a caller who
+   forgets identity would otherwise silently get whichever answer the
+   default happened to be, on the question of who may write to a price
+   file. `useSessionRoleId` (`features/auth/role.ts`) is the only way
+   to produce it; nothing reads `user.roleId` itself.
+
+   A VERB CAN NOW BE ABSENT FOR TWO REASONS and they are not the same
+   fact: the module does not offer it (silent — the normal state of
+   every catalogue ever made) or this job is not granted it
+   (`withheld`, and `withheldSay` is the sentence). A second surface
+   offering one of these three must draw that distinction the same
+   way, which is why the sentence is exported rather than written
+   again next door. ============================================================ */
 export {
   addLabel,
   addSays,
@@ -219,6 +228,7 @@ export {
   removedSay,
   renameFieldOf,
   renamedSay,
+  withheldSay,
 } from './writeCaps'
 export type { CatalogWrites, WriteStance, WriteVerb } from './writeCaps'
 

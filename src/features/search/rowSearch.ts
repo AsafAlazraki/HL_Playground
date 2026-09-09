@@ -90,6 +90,17 @@
    silently unfindable. It is answered LAST, after everything live,
    and every line that carries it says it is history rather than
    stock. Nothing retired is ever ranked as though it were stock.
+
+   AND WHAT IS WITHHELD IS WITHHELD BEFORE ANYTHING IS FOLDED. §2's
+   fourth rule — "a result a person cannot open does not appear for
+   them" — is one call at the top of `buildSearchIndex`, and it is a
+   filter on the PROJECT rather than on the answer. `withinReach`
+   argues why at length; the short version is that every pass below
+   resolves ids through `entities`, so a filter anywhere else leaves a
+   pair list able to open itself, and a foot able to quote a row count
+   the reader cannot reach. History is offered because it is that
+   person's own maintenance surface; a place closed to their job is
+   not, and the two are different questions.
    ============================================================ */
 
 import {
@@ -104,6 +115,12 @@ import {
   type TableKind,
   type TableRole,
 } from '@/types/model'
+/* WHO MAY DO WHAT, IN ONE MODULE — the app's one answer to that
+   question, asked here rather than answered a second way. `access.ts`
+   reads nothing but its own two arguments, so importing it costs this
+   file nothing that matters: it stays a function of (project, places,
+   role) with no store, no DOM and no clock. */
+import { mayDo } from '@/features/modules/access'
 
 /* ------------------------------------------------------------ */
 /* The index                                                     */
@@ -359,21 +376,163 @@ function residueOf(hay: string, sides: string[]): string {
   return rest.trim().replace(/\s+/g, ' ')
 }
 
-/** The two kinds that do not live in the project's tables.
+/** WHAT THE PROJECT'S TABLES DO NOT SAY — the two extra kinds, and
+ *  the two facts that decide who may see any of the five.
  *
- *  BOTH ARE OPTIONAL, AND THE OMISSION IS THE CAPABILITY CHECK. §2's
- *  fourth rule is "a result a person cannot open does not appear for
- *  them", and the honest half of it that can be enforced today is
- *  this: a surface that has not been given a door to a module or to a
- *  quote does not put one in the index, so the palette cannot offer a
- *  press that goes nowhere. See `SearchFieldProps` for the props that
- *  are that door, and the report beside them for why the OTHER half —
- *  filtering per person — is blocked rather than skipped. */
+ *  §2 RULE 4 IS ANSWERED IN TWO HALVES AND BOTH ARE HERE NOW.
+ *  "A result a person cannot open does not appear for them."
+ *
+ *    · THE DOOR half. A surface that was never given a way to open a
+ *      module does not get modules in the index — `moduleDoor` below.
+ *      A press that could go nowhere is better prevented than drawn
+ *      and then refused.
+ *    · THE PERSON half, which this comment used to record as blocked.
+ *      `DECISIONS.md` §2 settled it: sign-in carries a `roleId` and
+ *      `mayDo()` actually enforces. So `roleId` is an input to the
+ *      index, and a table under a place this role may not browse is
+ *      not folded at all — see `withinReach`.
+ *
+ *  `modules` IS NO LONGER THE DOOR, and that separation is the whole
+ *  reason this shape changed. It was both at once: passed = offer
+ *  module results, absent = do not. But the places are ALSO the only
+ *  statement anybody has made about who may reach which table, so a
+ *  host with no module workspace to open — which is every host in
+ *  this build today, `Shell.tsx:824-836` passes neither door — would
+ *  have got no permission statement either, and rule 4 would have
+ *  been off in exactly the surface that ships. The places are
+ *  therefore always handed in; whether a module is OFFERED as a
+ *  result of its own is a separate flag. */
 export interface ProjectExtras {
-  /** the places in the business, straight off the store */
+  /** the places in the business, straight off the store. Pass them
+   *  whenever you have them: they are the permission statement over
+   *  every table, whether or not a module is itself offerable. */
   modules?: Record<string, ModuleDef>
+  /** is there a door to a module workspace? Unset means the places
+   *  still govern their tables and are simply not results. */
+  moduleDoor?: boolean
   /** the documents, adapted by the caller — see `QuoteFacts` */
   quotes?: readonly QuoteFacts[]
+  /**
+   * WHO IS ASKING, as `mayDo()` wants them — the id of a `RoleDef` the
+   * dealership wrote down, never an application tier. The two are
+   * different questions and `session.ts:44-76` argues why at length.
+   *
+   * `null` is "nobody in particular", which `access.ts:126-129`
+   * answers honestly: a RESTRICTED place is closed to them. An
+   * unrestricted place is open to everyone including them, and every
+   * place on the seeded file is unrestricted — 9 of 9, `access`
+   * absent — so a build with no roles written down yet loses not one
+   * row to this.
+   */
+  roleId?: string | null
+}
+
+/**
+ * THE TABLES THIS PERSON MAY ACTUALLY REACH — §2 rule 4, applied
+ * before a single label is folded.
+ *
+ * WHY IT FILTERS THE PROJECT RATHER THAN THE ANSWER. Every later pass
+ * in this file resolves ids through `entities`: `linkFieldsOf` asks
+ * whether a reference points at a real table, a pair list picks its
+ * subject from the sides that resolve, a column's destination is its
+ * declaring table's destination. Filter the OUTPUT and every one of
+ * those still sees the hidden table, and the worst case is not a name
+ * leaking — it is a pair list falling back to opening ITSELF because
+ * its subject vanished, which is the one destination this whole file
+ * exists to prevent. Filter the INPUT and all of them stay correct
+ * with no second rule to keep in step.
+ *
+ * THE CAPABILITY IS `browse`, AND `search` IS DELIBERATELY NOT A
+ * SECOND GATE. Rule 4's own word is "open", and `browse` is the verb
+ * whose sentence is "see everything in it" — which is what a press on
+ * any of these five kinds does. `search` ("find one by name") was
+ * considered and rejected as an extra condition: `designer.ts:184`
+ * already records that with browsing off "this list is not drawn and
+ * this verb has nothing to act on", so `search` without `browse` is
+ * not a state the designer produces, and gating on it as well would
+ * let this palette hide a register that the module index two clicks
+ * away still opens. A palette that disagrees with the app is a bug,
+ * not a permission.
+ *
+ * A TABLE NO PLACE CLAIMS IS UNRESTRICTED, which is the same spectrum
+ * `access.ts` already argues for a module with no access rows: absent
+ * means nobody has decided, and inventing a refusal out of silence is
+ * how an app grows a wall with no door on either side. Measured on
+ * the prepared file: 53 tables, 25 claimed by the nine seeded places
+ * and 28 unclaimed — and all 28 unclaimed are pair lists, which
+ * `ModuleDef.tableIds` excludes by contract ("never a join") and
+ * which this file never makes a destination anyway.
+ *
+ * ANY ONE OWNER IS ENOUGH. A table in two places is reachable if
+ * either may be browsed: taking it away because a SECOND place is
+ * closed would be an intersection nobody asked for, and a person who
+ * can already open that register from one door would watch the
+ * palette deny the thing they are looking at.
+ *
+ * THE SAME OBJECT COMES BACK WHEN NOTHING IS HIDDEN, so the common
+ * case — every place unrestricted, which is the whole seeded file —
+ * allocates nothing and changes no identity downstream.
+ */
+export function withinReach(
+  entities: Record<string, EntityDef>,
+  extras: ProjectExtras,
+): Record<string, EntityDef> {
+  const places = extras.modules
+  if (!places) return entities
+  const roleId = extras.roleId ?? null
+
+  const claimed = new Set<string>()
+  const reachable = new Set<string>()
+  for (const place of Object.values(places)) {
+    const may = mayDo(place, roleId, 'browse')
+    for (const id of place.tableIds) {
+      claimed.add(id)
+      if (may) reachable.add(id)
+    }
+  }
+
+  const hidden = new Set<string>()
+  for (const id of Object.keys(entities)) {
+    if (claimed.has(id) && !reachable.has(id)) hidden.add(id)
+  }
+  if (hidden.size === 0) return entities
+
+  /* A PAIR LIST GOES WITH EITHER SIDE, and this is not tidiness — it
+     is the one hole the first cut of this filter actually had, found
+     by its own test and then measured on the real file.
+     A pair row's name is TWO OTHER NAMES with a separator between
+     them, composed by the seed. So the moment a side is out of reach:
+
+       · `linkFieldsOf` stops resolving that reference, the list drops
+         below one link, `isPairList` turns FALSE, and the join stops
+         being searched THROUGH and starts being indexed AS a table —
+         with all of its composed labels, each carrying the hidden
+         side's name in full. Measured on the prepared file with the
+         boats place closed: `rowTotal` went from 7,002 to 14,871,
+         because 8,679 pair rows arrived as ordinary answers naming
+         registers the person may not open.
+       · and the columns declared only on that pair list — 153 of 228
+         on the real file — would resolve their destination to the
+         pair list itself, which is the one press this whole file
+         exists to prevent.
+
+     ANY side, not the subject side, because either name is on the
+     label. Nothing is lost by it: a pair list is never a destination,
+     so a person who may not reach one of its sides could not have
+     opened it in the first place. */
+  for (const entity of Object.values(entities)) {
+    if (entity.role !== 'join' || hidden.has(entity.id)) continue
+    const pairsWithHidden = entity.fields.some(
+      (f) => f.type === 'reference' && f.refEntityId !== undefined && hidden.has(f.refEntityId),
+    )
+    if (pairsWithHidden) hidden.add(entity.id)
+  }
+
+  const out: Record<string, EntityDef> = {}
+  for (const [id, entity] of Object.entries(entities)) {
+    if (!hidden.has(id)) out[id] = entity
+  }
+  return out
 }
 
 /** Fold the whole project into one flat scannable list.
@@ -382,10 +541,18 @@ export interface ProjectExtras {
  *  never per keystroke — see SearchField.tsx, which builds this only
  *  while the field is open. */
 export function buildSearchIndex(
-  entities: Record<string, EntityDef>,
+  project: Record<string, EntityDef>,
   rowsByEntity: Record<string, RowData[]>,
   extras: ProjectExtras = {},
 ): SearchIndex {
+  /* §2 RULE 4, ONCE, AT THE TOP. Everything below reads `entities`
+     and nothing below reads `project`, so no later pass can resolve
+     an id this person may not reach — and every figure this index
+     publishes is a figure about what they can actually get to, which
+     is the difference between a foot that reads "7,002 named rows"
+     and a foot that reads it to somebody who can open 900 of them. */
+  const entities = withinReach(project, extras)
+
   const rows: RowEntry[] = []
   const tables: TableEntry[] = []
   const facts: Record<string, TableFacts> = {}
@@ -561,14 +728,20 @@ export function buildSearchIndex(
 
   /* -- the places in the business ---------------------------- */
   const modules: ModuleEntry[] = []
-  for (const module of Object.values(extras.modules ?? {})) {
-    /* A MODULE THAT DOES NOT OFFER `browse` IS NOT SOMEWHERE TO BE
-       SENT. `MODULE_CAPABILITIES.browse` is "see everything in it",
-       which is exactly what a press on this line does; `open` is
-       looking at one item and is not what is being offered here.
-       This is a fact about the MODULE and needs no role to answer,
-       which is why it is checked and the per-person half is not. */
-    if (!module.capabilities.includes('browse')) continue
+  const offerable = extras.moduleDoor === true ? Object.values(extras.modules ?? {}) : []
+  for (const module of offerable) {
+    /* A PLACE THIS PERSON MAY NOT BROWSE IS NOT SOMEWHERE TO BE SENT.
+       `MODULE_CAPABILITIES.browse` is "see everything in it", which is
+       exactly what a press on this line does; `open` is looking at one
+       item and is not what is being offered here.
+
+       ONE CALL ANSWERS BOTH HALVES. `mayDo` refuses a capability the
+       module does not offer at all (access.ts:135) AND one this role
+       was never granted (access.ts:138) — so the module's own contract
+       and the person's grant are the same question asked once, and it
+       is the same question `withinReach` asked of this module's own
+       tables. Two checks that could drift apart are one that cannot. */
+    if (!mayDo(module, extras.roleId ?? null, 'browse')) continue
     const live = module.tableIds.filter((id) => facts[id] !== undefined)
     let rowCount = 0
     for (const id of live) rowCount += facts[id]?.rowCount ?? 0

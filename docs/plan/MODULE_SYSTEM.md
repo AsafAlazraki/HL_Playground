@@ -302,8 +302,8 @@ anything positioned. Each one is a door to the thing nobody can use.
 | `search` | A field over the index matching `displayFieldId`; every result opens | **on** |
 | `open` | A row opens its detail surface | **on** |
 | `add` | A NEW button on the index; a blank row in the master table | off |
-| `edit` | Detail cells accept typing; writes to `RowData` | off |
-| `delete` | A row can be removed, with the same confirm the sheet uses | off |
+| `edit` | The item's own name is typed on its face; writes to `RowData`. A figure, a date or a picked-from-a-list column is changed on the sheet, which has the right editor — see `renameFieldOf` | off |
+| `delete` | A row is taken out, then said — a toast with UNDO, **never a confirm**. This row said "with the same confirm the sheet uses" and the sheet stopped using one: rule 9, and `@/store/notes` calls `window.confirm` "the wrong instrument twice over" for an act the store can put back | off |
 | `relate` | Pin and unpin rows inside related blocks; writes `__origin` to the join (`model.ts:790-795`) | off |
 | `quote` | "Quote this one" on the detail surface; calls `createQuoteFromView` (`quote/index.ts:9`) | off |
 | `export` | The index's rows leave as a file | off |
@@ -330,22 +330,63 @@ consumers (`hl-navigation.md`, on `can_access_price_book`,
 
 ### How this interacts with roles
 
-**There are no roles.** A grep of `src/` for `permission|userRole|isAdmin|currentUser|auth`
-returns one hit, in a comment about a SharePoint URL (`lib/imageSources.ts:17`).
-So in this plan:
+> **AMENDED 2026-09-09. THIS SUBSECTION LOST.** `docs/plan/DECISIONS.md` §2
+> settled it: roles are real, sign-in carries a `roleId`, and `mayDo()` actually
+> enforces. What follows is what is true now; the original text is kept below it
+> because the forward-compatibility claim in its third bullet turned out to be
+> exactly right and is worth having on the record.
 
-- Capabilities are **module-wide**. Everyone using this browser sees the same
-  module with the same verbs.
-- "Admin" and "user" are **two modes of one person**: the gear is off (USE) or
-  on (DESIGN). That is honest about what exists, and it is what
-  `ViewPage.tsx:72` already is — a `useState`.
-- The forward compatibility is deliberate: because a capability is a per-module
-  verb, granting a role a subset later is `Record<roleId, ModuleCapability[]>`
-  and touches nothing built here. That is the exact thing HelmLogic cannot do —
-  its eleven flags are org-wide and role-keyed, never per-module, so *"Sam can
-  edit Yamaha but only read Highfield"* is unsayable (`hl-modules.md` §6.1).
+**Roles are real, and half the verbs are enforced against them.** A role is a
+`RoleDef` an administrator wrote in their own words; what it may do is
+`ModuleDef.access`, in the module's own capability vocabulary; and
+`mayDo(module, roleId, capability)` (`features/modules/access.ts:131`) is the one
+question a surface asks. `AppUser.roleId` is where the answer's second argument
+comes from, and `useSessionRoleId()` (`features/auth/role.ts`) is the only way to
+produce it.
 
-When roles arrive, the DESIGN gear becomes a capability like any other.
+- **The three WRITE verbs are enforced.** A job not granted `add`, `edit` or
+  `delete` in a place is offered none of them on that catalogue, and is told in
+  a sentence which jobs are — `writeCaps.ts`, consumed by `ModuleIndex`.
+- **The three READING verbs are still module-wide.** `browse`, `search` and
+  `open` are read off `ModuleDef.capabilities` and do not ask who is standing
+  there. That is said on screen rather than assumed: `accessSay.ts`'s
+  `ACCESS_ENFORCEMENT` prints which half bites, on both screens that grant.
+- **A verb absent for two different reasons says two different things.** The
+  module not offering it is silent — browse/search/open is the contract's own
+  default, so every module ever made writes nothing, and an apology at the top
+  of every price list would be noise. A job being *kept* from it is a decision
+  somebody made, so it carries a sentence naming who may and where that is set
+  (rule 10). Those are not the same fact and the screen must not draw them the
+  same way.
+- **Access can never exceed the module.** `mayDo` intersects the grant with
+  `ModuleDef.capabilities`, so a grant that was legal when it was made and is not
+  any more stops being in force the same instant — see `access.ts`'s header.
+
+The original text, which held until this commit:
+
+> **There are no roles.** A grep of `src/` for
+> `permission|userRole|isAdmin|currentUser|auth` returns one hit, in a comment
+> about a SharePoint URL (`lib/imageSources.ts:17`). So in this plan:
+>
+> - Capabilities are **module-wide**. Everyone using this browser sees the same
+>   module with the same verbs.
+> - "Admin" and "user" are **two modes of one person**: the gear is off (USE) or
+>   on (DESIGN). That is honest about what exists, and it is what
+>   `ViewPage.tsx:72` already is — a `useState`.
+> - The forward compatibility is deliberate: because a capability is a per-module
+>   verb, granting a role a subset later is `Record<roleId, ModuleCapability[]>`
+>   and touches nothing built here. That is the exact thing HelmLogic cannot do —
+>   its eleven flags are org-wide and role-keyed, never per-module, so *"Sam can
+>   edit Yamaha but only read Highfield"* is unsayable (`hl-modules.md` §6.1).
+
+That third bullet was paid off exactly as written: wiring the write verbs to
+roles changed **no** contract type and **no** stored shape. `ModuleAccess` was
+already `{ roleId, capabilities }` on the module.
+
+The DESIGN gear did **not** become a capability like any other. It is
+`AppUser.role` — a rung of the *application*, sales/admin/super-admin, decided by
+`atLeast` — and that is a different question from what a job may do inside a
+module. `session.ts` argues the split at length; the two must not be merged.
 
 ### `configure` — the rule verb, shipped ahead of the contract
 

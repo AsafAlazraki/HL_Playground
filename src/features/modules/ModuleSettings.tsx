@@ -83,7 +83,7 @@ import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSo
 import { useConstraints, useSentenceCtx } from '@/features/constraints'
 import { useQuotes } from '@/features/quote'
 import { AccessGrid } from './AccessGrid'
-import { ACCESS_NOT_ENFORCED, ROLE_IS } from './accessSay'
+import { ACCESS_ENFORCEMENT, ROLE_IS } from './accessSay'
 import { ModuleDesigner } from './ModuleDesigner'
 import { rulesPanelId } from './ModuleRulesPanel'
 import { useModuleConfiguresRules } from './ruleCapability'
@@ -533,11 +533,11 @@ function Access({ module }: { module: ModuleDef }): ReactElement {
         )}
       </p>
 
-      {/* WHAT IS NOT TRUE YET, SAID WHERE IT WOULD BE ASSUMED — and
-          in the same words Access & roles uses, from `accessSay.ts`.
-          It was two wordings of one fact on two screens that set the
-          same thing. */}
-      <p className="md-set-note">{ACCESS_NOT_ENFORCED}</p>
+      {/* WHERE THESE TICKS BITE AND WHERE THEY DO NOT, SAID WHERE IT
+          WOULD BE ASSUMED — and in the same words Access & roles
+          uses, from `accessSay.ts`. It was two wordings of one fact
+          on two screens that set the same thing. */}
+      <p className="md-set-note">{ACCESS_ENFORCEMENT}</p>
 
       {roles.length === 0 ? (
         <div className="md-set-void">

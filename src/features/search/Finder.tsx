@@ -68,8 +68,15 @@ export interface FinderProps {
      not drawn and then refused. §2's fourth rule is "a result a
      person cannot open does not appear for them", and a host with no
      door to a quote is a place where a quote result cannot be
-     opened. `SearchFieldProps` carries the full argument, including
-     which half of that rule is still blocked and why.
+     opened. `SearchFieldProps` carries the full argument.
+
+     THE PER-PERSON HALF OF THE SAME RULE NEEDS NOTHING FROM THIS
+     FILE. It used to be recorded here as blocked. It is not any more
+     (`DECISIONS.md` §2): the field reads the signed-in person itself
+     and the index drops every table under a place that job may not
+     browse, so a host cannot forget to ask and cannot ask wrongly.
+     These two props stay what they always were — doors, not
+     permissions.
 
      THE HOST'S SIDE IS TWO LINES, and the shell already has both
      handlers in hand — it passes `onOpenModule` and `onOpenQuote` to

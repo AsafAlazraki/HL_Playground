@@ -37,8 +37,8 @@ import { say } from '@/store/notes'
 import { currentUser } from '@/features/auth'
 import { localDay, localDayOf } from './day'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
-import { priceAtLevel, repricedAt } from './pricing'
-import { issueBlockers } from './totals'
+import { money, priceAtLevel, quoteLevelChoices, repricedAt } from './pricing'
+import { issueBlockers, lineAmount } from './totals'
 import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from './types'
 
 /* ---------------------------------------------------------- */
@@ -501,6 +501,72 @@ export function useCustomerQuotes(rowId: string): QuoteDef[] {
   )
 }
 
+/* ============================================================
+   THE WAY BACK FROM A QUOTE EDIT — what undo a quote line actually
+   has, established rather than assumed.
+
+   `sayUndoable` / `offerUndo` (`src/store/notes.ts`) are the app's
+   usual answer to rule 9, and NEITHER OF THEM WORKS HERE. Both pin
+   a `HistoryEntry` off `useProjectStore().past` and refuse if that
+   entry is no longer the top of the stack. A quote is not in that
+   stack: it lives in the registry above and in localStorage, and
+   `mutate` calls `put`, never `record`. So after `addLine` the top
+   of `past` is whatever the person last did to the PROJECT —
+   renamed a column, moved a step — and a toast built by
+   `sayUndoable` would offer to undo the pick and undo THAT instead.
+   With an empty stack it would draw the sentence and no button at
+   all, which is silence with extra words.
+
+   A TOAST WHOSE UNDO DOES NOT UNDO IS WORSE THAN NO TOAST, so
+   nothing in this file reaches for that helper. The mechanism a
+   quote line has is the one `removeLine` already built and the one
+   `Dashboard.tsx:48`, `Board.tsx:271` and `dealDesk.ts` reach for
+   on the same grounds: THE ACT CARRIES ITS OWN INVERSE, closed over
+   the values it needs, and the inverse is applied through `mutate`
+   so the draft/issued line holds on the way back as well.
+
+   The two helpers below are what the three acts share: the refusal
+   sentences, said once, and the amount a note names.
+   ============================================================ */
+
+/** The draft an UNDO is about, or `null` with the refusal already
+ *  said where it happened (rule 10).
+ *
+ *  AN ISSUED QUOTE TAKES NO EDITS — `mutate` is the line that makes
+ *  that true — and a button that silently did nothing would be worse
+ *  than no button. The only way to reach either sentence is to give
+ *  the quote to the customer with the note still up. */
+function draftForUndo(id: string): QuoteDef | null {
+  const now = registry.get(id)
+  if (!now) {
+    say({ text: 'That quote is no longer here.', tone: 'warn' })
+    return null
+  }
+  if (now.state !== 'draft') {
+    say({
+      text: 'This quote has been given to the customer, so nothing can go back on it. Make a new version to change it.',
+      tone: 'warn',
+    })
+    return null
+  }
+  return now
+}
+
+/** A note about a line NAMES THE AMOUNT — `CONFIGURATOR_PLAYBOOK.md`
+ *  §"Applying a fix": *"Toast with UNDO, naming the item and the
+ *  amount."* A line with no price says so in the screen's own words
+ *  rather than printing $0, which is the one thing `totals.ts`
+ *  exists to refuse.
+ *
+ *  IT IS STATIC TEXT. Rule: money never animates — this is a figure
+ *  in a sentence about something that has already happened, never a
+ *  total counting up, and the committed total on the price bar is
+ *  not touched by it. */
+function naming(line: QuoteLine, said: string): string {
+  const { amount } = lineAmount(line)
+  return amount === null ? `${said} · no price on it` : `${said} · ${money(amount)}`
+}
+
 /* -- the level ----------------------------------------------- */
 
 /* RE-PRICING ONE LINE IS `repricedAt` IN `pricing.ts` and is not
@@ -510,8 +576,91 @@ export function useCustomerQuotes(rowId: string): QuoteDef[] {
    disagree with the act it is previewing. One function, called by
    both. */
 
-export const setLevel = (id: string, levelKey: string): void =>
+/**
+ * MOVE THE WHOLE QUOTE TO A RUNG — and DECISIONS.md §1's third
+ * bullet: *"raise the toast after Accept too, so accepting a sheet
+ * is as reversible as any other act."*
+ *
+ * THE TOAST IS HERE AND NOT ON THE SHEET, because this is the act.
+ * `QuoteBuild` reaches it twice — straight through when
+ * `levelConflict` finds nothing to decide, and from the sheet's
+ * Accept — and `QuoteEditor`'s rung buttons reach it a third way.
+ * One act, one sentence, one way back; a toast raised at each of the
+ * three call sites is three chances to forget one, which is the
+ * shape of the `preparedBy` bug recorded above.
+ *
+ * WHAT THE UNDO PUTS BACK, and what it deliberately does not. A
+ * level change touches exactly the five `PricedAt` fields on each
+ * line, so the way back restores exactly those five FROM THE FROZEN
+ * COPY taken before the write — the same by-value discipline
+ * `removeLine` keeps, and the reason a rung with no column on some
+ * table lands back on the column it really used rather than on a
+ * recomputed guess.
+ *
+ * A line the person added while the note stood is NOT reverted and
+ * is not left at the wrong rung either: it was never in the frozen
+ * copy, so it is priced at the old rung through the same
+ * `repricedAt` the forward pass used. An undo that threw away work
+ * done after the act it undoes is the lie `notes.ts` was written to
+ * prevent; this one only ever moves the thing it moved.
+ *
+ * THE SENTENCE NAMES THE RUNG AND NOT A FIGURE. The item here is the
+ * rung, in the business's own word — the one printed on the control
+ * that was pressed. The amount is the whole total, it is already on
+ * the price bar, and a note restating it is a second running total
+ * that can disagree with the first.
+ */
+export function setLevel(id: string, levelKey: string): void {
+  const before = registry.get(id)
+  if (!before || before.state !== 'draft') return
+  /* NOTHING HAPPENED, SO NOTHING IS SAID. `levelConflict` already
+     returns null on this case; a note reporting a rung that was
+     already the rung is a full stop with no act behind it. */
+  if (before.levelKey === levelKey) return
+
+  const wasKey = before.levelKey
+  const was = new Map(before.lines.map((l) => [l.id, l]))
+  /* THE WORD ON THE CONTROL THAT WAS PRESSED. `quoteLevelChoices`
+     reads the quote's own frozen rungs — the same list the price bar
+     draws its buttons from — so the note says "Trade" where the
+     button said Trade. Read once, for both directions; a key the
+     model has no title for falls back to the key rather than to a
+     blank, because the business's vocabulary outranks ours. */
+  const rungs = quoteLevelChoices(before.lines)
+  const named = (key: string): string => rungs.find((c) => c.key === key)?.label ?? key
+
   mutate(id, (q) => ({ ...q, levelKey, lines: q.lines.map((l) => repricedAt(l, levelKey)) }))
+
+  say({
+    text: `Priced at ${named(levelKey)}`,
+    act: {
+      label: 'Undo',
+      onPick: () => {
+        const now = draftForUndo(id)
+        if (!now) return
+        if (now.levelKey !== levelKey) return
+
+        mutate(id, (q) => ({
+          ...q,
+          levelKey: wasKey,
+          lines: q.lines.map((l) => {
+            const then = was.get(l.id)
+            if (!then) return repricedAt(l, wasKey)
+            return {
+              ...l,
+              unitPrice: then.unitPrice,
+              priceFieldId: then.priceFieldId,
+              priceColumnName: then.priceColumnName,
+              levelKey: then.levelKey,
+              levelResolved: then.levelResolved,
+            }
+          }),
+        }))
+        say({ text: `Priced at ${named(wasKey)} again` })
+      },
+    },
+  })
+}
 
 /** One line's own rung — `Sell inc Install (if appl.)` on a part,
  *  `Warranty` on a hull. It SWITCHES which frozen number the line
@@ -527,9 +676,50 @@ export const setLineLevel = (id: string, lineId: string, levelKey: string): void
 
 /* -- lines ---------------------------------------------------- */
 
-/** Put a minted line on the quote, in its section. The line arrives
- *  already frozen from `mintLine`, so nothing is read here. */
-export const addLine = (id: string, blockId: string, line: QuoteLine): void =>
+/**
+ * Put a minted line on the quote, in its section — AND THE WAY BACK.
+ * The line arrives already frozen from `mintLine`, so nothing is
+ * read here.
+ *
+ * THE ASYMMETRY THIS CLOSES, AND WHY IT IS THE ORDINARY CASE.
+ * `removeLine` has toasted since it was written and this said
+ * nothing at all: taking a motor off announced itself and offered a
+ * way back, putting one on was silent. `DECISIONS.md` §1 names that
+ * a defect and settles the rule it was on the wrong side of —
+ * `CONFIGURATOR_PLAYBOOK.md:344-346`, which both `CONFIGURATOR.md`
+ * §C and this feature's own code had missed:
+ *
+ *   · **A sheet** when priced alternatives survive. The person is
+ *     choosing, and a toast cannot hold a priced radio group —
+ *     `ToastAct` is ONE act, deliberately (`Toasts.tsx:19-25`: "a
+ *     note is read at a glance and a glance holds one decision").
+ *     That is not a limitation to work around, it is the reason the
+ *     rule splits at all.
+ *   · **A toast with UNDO** when no alternative survives. There is
+ *     nothing to choose, only something to reverse.
+ *
+ * EVERY ORDINARY PICK IS THE SECOND CASE TODAY, and that is a
+ * measurement rather than a hope: no pick on this screen can
+ * invalidate another line (`freeze.ts:1077-1086`), `optionConflict`
+ * has no callers and nothing on the seeded file emits a runnable
+ * rule, so a pick removes nothing, offers no alternative, and has
+ * exactly one thing that can be done about it — take it back off.
+ * The day a dealer writes a rule that runs, the sheet is what that
+ * pick gets and this note is what the sheet's Accept raises.
+ *
+ * THE INVERSE IS EXACT AND IT IS NOT `removeLine`. Removing the line
+ * this call added restores the document as it stood, so the way back
+ * is the raw write and not the neighbouring function — `removeLine`
+ * would raise its own toast offering to undo the undo, and a note
+ * that answers a note is two events a person did not cause.
+ */
+export function addLine(id: string, blockId: string, line: QuoteLine): void {
+  const before = registry.get(id)
+  /* THE NOTE REPORTS A WRITE THAT HAPPENED. `mutate` refuses an
+     issued quote, so without this the sentence would announce a line
+     that is not on the document. */
+  if (!before || before.state !== 'draft') return
+
   mutate(id, (q) => ({
     ...q,
     lines: [...q.lines, line],
@@ -538,10 +728,44 @@ export const addLine = (id: string, blockId: string, line: QuoteLine): void =>
     ),
   }))
 
+  say({
+    text: naming(line, `${line.label} put on the quote`),
+    act: {
+      label: 'Undo',
+      onPick: () => {
+        const now = draftForUndo(id)
+        if (!now) return
+        /* ALREADY OFF — the person took it back by hand while the
+           note stood. Nothing to do and nothing to say: `removeLine`
+           has already said it. */
+        if (!now.lines.some((l) => l.id === line.id)) return
+
+        mutate(id, (q) => ({
+          ...q,
+          lines: q.lines.filter((l) => l.id !== line.id),
+          sections: q.sections.map((s) => ({
+            ...s,
+            lineIds: s.lineIds.filter((x) => x !== line.id),
+          })),
+        }))
+        say({ text: `${line.label} is off the quote again` })
+      },
+    },
+  })
+}
+
 /** A typed line — the workbook's own `Additional Dealer Options`
  *  (R136:Y151, eight of them). A label and an amount, and nothing
  *  computed: the workbook turns typed HOURS into money at MV!$D$2
- *  ($159/hr) and we do not have that rate, so we do not offer hours. */
+ *  ($159/hr) and we do not have that rate, so we do not offer hours.
+ *
+ *  NO TOAST, AND THE REASON IS THAT NOTHING CALLS IT. `addLine` above
+ *  is the pick DECISIONS.md §1 is about and it has three call sites;
+ *  this has none outside `index.ts`'s export list, so there is no act
+ *  on any screen for a note to report. It also mints a line from a
+ *  label a person is about to type, and the sentence "` ` put on the
+ *  quote · no price on it" is what a note fired here would say. When
+ *  a surface calls it, it gets the same treatment `addLine` has. */
 export function addFreeLine(id: string, label: string, amount: number | null): void {
   const current = registry.get(id)
   if (!current) return
@@ -581,6 +805,13 @@ export function addFreeLine(id: string, label: string, amount: number | null): v
  *
  * The bus drops the note when no host is mounted, which is why this
  * is safe to call from a store-level write. See `src/store/notes.ts`.
+ *
+ * IT NAMES THE AMOUNT NOW, because `addLine` does. The two notes are
+ * one act read in two directions and a salesperson who hears the
+ * figure going on should hear it coming off; the playbook asks for
+ * the item AND the amount on both. The refusal sentences moved to
+ * `draftForUndo` unchanged — three acts now share them, and one
+ * wording is the point of putting them in one place.
  */
 export function removeLine(id: string, lineId: string): void {
   const before = registry.get(id)
@@ -599,27 +830,12 @@ export function removeLine(id: string, lineId: string): void {
   }))
 
   say({
-    text: `${line.label} taken off the quote`,
+    text: naming(line, `${line.label} taken off the quote`),
     act: {
       label: 'Undo',
       onPick: () => {
-        /* THE REFUSAL IS SAID WHERE IT HAPPENS. An issued quote takes
-           no edits — `mutate` is the line that makes that true — and a
-           button that silently did nothing would be worse than no
-           button. The only way to reach this is to give the quote to
-           the customer with the note still up. */
-        const now = registry.get(id)
-        if (!now) {
-          say({ text: 'That quote is no longer here.', tone: 'warn' })
-          return
-        }
-        if (now.state !== 'draft') {
-          say({
-            text: 'This quote has been given to the customer, so nothing can go back on it. Make a new version to change it.',
-            tone: 'warn',
-          })
-          return
-        }
+        const now = draftForUndo(id)
+        if (!now) return
         if (now.lines.some((l) => l.id === lineId)) return
 
         mutate(id, (q) => ({
