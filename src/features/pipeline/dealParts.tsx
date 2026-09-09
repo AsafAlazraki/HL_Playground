@@ -38,6 +38,7 @@ import { quoteTotals, type QuoteDef } from '@/features/quote'
 import { notesFor, type NoteBag } from './dealNotes'
 import { linksFor, type DealLink, type LinkBag } from './dealLinks'
 import { isPicture, type DealFile } from './dealFiles'
+import { lockDemand } from './stageTrigger'
 import type { StageDef } from './stageStore'
 
 /** A stamp, or nothing — never "Invalid Date". Every date drawn
@@ -88,6 +89,12 @@ export function DealFacts({
   const specs =
     specLimit === undefined ? quote.subjectSpecs : quote.subjectSpecs.slice(0, specLimit)
   const moreSpecs = quote.subjectSpecs.length - specs.length
+  /* WHAT THE COLUMN THIS DEAL IS STANDING IN ASKS OF IT, or null
+     when it asks nothing. Computed here rather than passed in
+     because both containers would have to compute the same thing
+     from the same two arguments — see `stageTrigger.ts`, which is
+     pure and reads no store. */
+  const demand = lockDemand(stage, quote)
 
   return (
     <>
@@ -106,6 +113,34 @@ export function DealFacts({
               {arrived === null ? null : (
                 <span className="dp-stage-for">{waitedSay(arrived)}</span>
               )}
+              {/* WHAT THE COLUMN ASKED FOR AND HAS NOT GOT — the
+                  refusal, on the second line of the row it is about,
+                  which is where CONFIGURATOR_PLAYBOOK §5 puts one:
+                  never a tooltip, never a modal, never the top of
+                  the page. It belongs to the STAGE row rather than
+                  the Document row below it because it is the stage
+                  that is asking; the document is the thing being
+                  asked about, and it already says which it is.
+
+                  IT OFFERS NO BUTTON. Both surfaces that draw these
+                  facts already carry "Open the quote" in their own
+                  foot, so the sentence names that door instead of
+                  growing a second control for one act. */}
+              {demand ? (
+                <p className="dp-demand" role="status">
+                  <span className="dp-demand-word">{demand.word}</span>
+                  {` — ${demand.say} ${demand.next}`}
+                  {demand.why.length > 0 ? (
+                    <span className="dp-demand-whys">
+                      {demand.why.map((w) => (
+                        <span className="dp-demand-why" key={w}>
+                          {w}
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
+                </p>
+              ) : null}
             </dd>
           </div>
         ) : null}

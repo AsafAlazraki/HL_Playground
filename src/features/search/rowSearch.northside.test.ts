@@ -158,3 +158,99 @@ describe('find anything, on the real file — the row travels', () => {
     }
   })
 })
+
+/* ============================================================
+   THE THREE KINDS THAT WERE MISSING, AT FULL SCALE.
+
+   `fiveKinds.test.ts` proves the RULES on synthetic fixtures. These
+   are the measurements that made the rules necessary, asserted
+   against the file they were measured on — and stated as invariants
+   wherever a number would do, because the seed is a living document.
+   ============================================================ */
+
+describe('find anything, on the real file — columns are answers now', () => {
+  it('answers the queries UX_PASS §2 itself names, which used to come back empty', () => {
+    /* §2's worked example is an admin looking for the column
+       `Tare (kg)` who "does not know which of seven trailer tables
+       declares it", and its mock answers `Min HP` with "on 7 boat
+       tables". MEASURED BEFORE, on this exact file: both, and
+       `price` — which names 26 columns across fifteen tables — came
+       back "Nothing is called that". A search that is confidently
+       empty about something the file plainly contains teaches a
+       person the search does not work. */
+    for (const q of ['tare', 'min hp', 'price']) {
+      const result = search(index, q)
+      expect(result.columns.length).toBeGreaterThan(0)
+      for (const hit of result.columns) {
+        expect(hit.name.toLowerCase()).toContain(q)
+      }
+      /* and none of the three is a ROW or a TABLE name, which is why
+         the palette had nothing to say about them before */
+      expect(result.rowTotal).toBe(0)
+      expect(result.tables).toHaveLength(0)
+    }
+  })
+
+  it('folds far more declarations than it draws names', () => {
+    /* the whole design of the columns kind in one assertion: 826
+       declarations under ~205 distinct names on this file, so the
+       fold is what stops `price` being a wall of 26 identical lines */
+    expect(index.columnTotal).toBeGreaterThan(index.columns.length * 2)
+  })
+
+  it('never lands a column press on a live pair list', () => {
+    /* the file's central ruling, held for the third time — after a
+       pair ROW and a pair NAME, a pair's COLUMN. It matters here:
+       153 of the 228 columns declared on a pair list are declared
+       nowhere else, so they cannot simply be dropped. */
+    let readOnAPair = 0
+    for (const entry of index.columns) {
+      const facts = index.facts[entry.destId]
+      expect(facts).toBeDefined()
+      expect(facts.role === 'join' && !facts.retired).toBe(false)
+      if (entry.via !== undefined) readOnAPair += 1
+    }
+    /* and the fitment lists really are contributing columns, or the
+       assertion above would be passing vacuously */
+    expect(readOnAPair).toBeGreaterThan(0)
+  })
+
+  it('opens a table that is really on the sheet', () => {
+    for (const option of optionsOf(search(index, 'price'))) {
+      if (option.kind !== 'column') continue
+      expect(entities[option.entityId]).toBeDefined()
+    }
+  })
+})
+
+describe('find anything, on the real file — a place is not a table', () => {
+  it('answers the module name that no table is called', () => {
+    /* MEASURED BEFORE: `boats` is the name of a module holding seven
+       brand tables and answered with ten rows out of two tables that
+       merely carry the word, with no way to reach the place at all. */
+    const withPlaces = buildSearchIndex(entities, rowsByEntity, {
+      modules: {
+        m: {
+          id: 'm',
+          name: 'Boats',
+          description: 'Seven brand price files.',
+          tableIds: all.filter((e) => e.kind === 'boat').map((e) => e.id),
+          capabilities: ['browse', 'search', 'open'],
+          index: 'rows',
+          accent: 'blue',
+          order: 0,
+          createdAt: '2020-01-01T00:00:00.000Z',
+          updatedAt: '2020-01-01T00:00:00.000Z',
+        },
+      },
+    })
+    const result = search(withPlaces, 'boats')
+    expect(result.modules).toHaveLength(1)
+    expect(result.modules[0].module.name).toBe('Boats')
+    /* and it is not a table name — which is why the palette could
+       not reach it before */
+    expect(all.some((e) => e.name.toLowerCase() === 'boats')).toBe(false)
+    /* the place comes first, because it contains the rest */
+    expect(optionsOf(result)[0].kind).toBe('module')
+  })
+})

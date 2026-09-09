@@ -100,6 +100,13 @@ import {
 import { useProjectStore } from '@/store/useProjectStore'
 import { TableKindSymbol } from '@/features/tablekit'
 import { placeCount } from '@/features/modules'
+/* THE SHORTCUT THIS ROW ADVERTISES IS THE ONE THE FIELD BINDS, and
+   it was not. This row printed the literal string "Ctrl K" on every
+   machine, so a Mac was told to press a chord that does nothing —
+   the field itself has read the platform since it was written
+   (`SearchField.tsx`) and drew "⌘K" three inches away in its own
+   collar. One fact, one place. */
+import { SHORTCUT_HINT } from '@/features/search'
 import { atLeast } from '@/features/auth'
 import { WhoChip, type AppUser } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
@@ -297,7 +304,7 @@ export function SideNav({
           <MagnifyingGlass size={ICON_SIZE.small} weight={MARK_WEIGHT} />
         </span>
         <span className="sn-find-say">Find anything</span>
-        <kbd className="sn-kbd">Ctrl K</kbd>
+        <kbd className="sn-kbd">{SHORTCUT_HINT}</kbd>
       </button>
 
       <div className="sn-scroll">

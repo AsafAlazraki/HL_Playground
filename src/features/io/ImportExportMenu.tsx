@@ -34,7 +34,7 @@
    own (`features/onboarding`).
    ============================================================ */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, DragEvent } from 'react'
 import { isRetired } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -43,6 +43,7 @@ import { ConfirmFacts, ConfirmSheet } from '@/features/designer/ConfirmSheet'
 import { useQuotes } from '@/features/quote'
 import { useConfiguringCount } from '@/features/modules'
 import { applyMerge, applyReplace } from './apply'
+import { exampleNote, exampleOnSheet, removeExampleData, removeLabel } from './exampleData'
 /* the envelope this build reads and writes: ProjectExport plus the
    quotes, declared beside the validator that narrows them */
 import type { ProjectFile } from './envelope'
@@ -374,6 +375,34 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
     showStamp('Sheet cleared')
   }
 
+  /* -- remove the example data ------------------------------- */
+
+  /* WHAT THE PREPARED SET LEFT HERE, READ WHEN THE DRAWER OPENS and
+     not on every keystroke into the sheet behind it. This is a
+     document-control drawer: it reads the document at the moment it
+     is opened, states what it found, and the figures it prints are
+     the figures the press will act on a second later. Subscribing to
+     `rowsByEntity` instead would re-render a closed popover on every
+     cell edit in the app to keep a number nobody is looking at. */
+  const example = useMemo(() => (open ? exampleOnSheet() : null), [open])
+
+  /* NO CONFIRM, AND THAT IS RULE 9 RATHER THAN AN OMISSION. Every
+     other door in this footer asks first because clearing and
+     replacing genuinely cannot be got back — a project swap clears
+     both history stacks. This one is ONE recorded step: the toast it
+     raises carries UNDO and puts every table, row and place back. A
+     confirm sheet here would be a full stop in the middle of
+     somebody's work in exchange for nothing.
+
+     THE MENU CLOSES AND SAYS NOTHING OF ITS OWN. `showStamp` is this
+     panel's local confirmation; the note this raises goes through the
+     app's notes bus and is drawn at the root with UNDO on it. The
+     same event reported twice in two places reads as two events. */
+  const onRemoveExample = () => {
+    removeExampleData()
+    closeMenu()
+  }
+
   /* -- derived preview stats --------------------------------- */
   const preview = pending ? summariseEnvelope(pending.data) : null
   /* the design layer, named rather than counted into the grid:
@@ -679,26 +708,63 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
           </div>
 
           <footer className="io-foot">
-            {/* THE REFUSAL SITS WHERE THE ACT IS REFUSED. An enabled
-                CLEAR SHEET on an empty sheet is a control that does
-                nothing, and the reason is one line away in the same
-                footer rather than in a tooltip. */}
-            <button
-              type="button"
-              className="io-clear"
-              disabled={blank}
-              onClick={() => setAsking('clear')}
-            >
-              Clear sheet
-            </button>
-            {/* THE SIGNATURE SLOT IS GONE. "HELMLOGIC · DOC CTRL" said
-                nothing and stood between the most destructive button in
-                the app and the reason it is sometimes refused. The
-                reason has the slot to itself, and on a sheet with
-                something on it the footer is one button and air. */}
-            {blank ? (
-              <span className="io-foot-why">Nothing on it to clear.</span>
+            {/* ============================================================
+                TAKE THE EXAMPLE OFF, KEEPING EVERYTHING ELSE.
+
+                UX_PASS §4.2. The prepared set is a real dealership's real
+                price file, and a DIFFERENT dealership who loaded it to
+                look around had exactly one way to get it off their sheet:
+                CLEAR SHEET, below — which also takes their business name,
+                their industry, their own tables and every page they built,
+                lands them back at onboarding, and cannot be undone.
+
+                IT IS DRAWN ABOVE THE DESTRUCTIVE ONE, deliberately.
+                Somebody arriving here asking "how do I get this off my
+                sheet" should meet the answer that costs them nothing
+                before the one that costs them everything.
+
+                IT IS NOT DRAWN IN RED, for the same reason it asks no
+                question: it is undoable, and dressing a reversible act as
+                a dangerous one spends the danger colour where it does not
+                belong. `.io-clear` keeps the red hover it earned.
+
+                AND IT IS ABSENT, NOT DISABLED, WHEN THERE IS NO EXAMPLE
+                HERE. A disabled control owes a reason (rule 10), and the
+                honest reason — "this sheet did not come from the prepared
+                set" — is a sentence about a thing that never happened.
+                Nothing is refused; there is simply nothing to remove.
+                ============================================================ */}
+            {example ? (
+              <div className="io-example">
+                <button type="button" className="io-example-go" onClick={onRemoveExample}>
+                  {removeLabel(example)}
+                </button>
+                <span className="io-example-why">{exampleNote(example)}</span>
+              </div>
             ) : null}
+
+            <div className="io-foot-row">
+              {/* THE REFUSAL SITS WHERE THE ACT IS REFUSED. An enabled
+                  CLEAR SHEET on an empty sheet is a control that does
+                  nothing, and the reason is one line away in the same
+                  footer rather than in a tooltip. */}
+              <button
+                type="button"
+                className="io-clear"
+                disabled={blank}
+                onClick={() => setAsking('clear')}
+              >
+                Clear sheet
+              </button>
+              {/* THE SIGNATURE SLOT IS GONE. "HELMLOGIC · DOC CTRL" said
+                  nothing and stood between the most destructive button in
+                  the app and the reason it is sometimes refused. The
+                  reason has the slot to itself, and on a sheet with
+                  something on it the footer is one button and air. */}
+              {blank ? (
+                <span className="io-foot-why">Nothing on it to clear.</span>
+              ) : null}
+            </div>
           </footer>
         </div>
       )}

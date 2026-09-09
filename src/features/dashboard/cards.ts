@@ -117,6 +117,24 @@ export const CARDS: Record<CardId, CardMeta> = {
     wide: false,
     tall: false,
   },
+  'what-we-sell': {
+    /* THE DEALER'S OWN PHRASE, AND NOT "The catalogue". The
+       catalogue is what the app calls the screen; this card is the
+       question a person walks in with, which PHASE_TWO §2.1 writes
+       as "what are you selling today". It is also the one name that
+       does not have to choose between the app's two spellings of
+       catalogue/catalog — the module tab already owns one of them. */
+    name: 'What we sell',
+    says: 'The kinds you sell, as doors — press one and you are in it.',
+    state: 'Nothing to browse yet',
+    /* NO AD COPY. CONFIGURATOR_PLAYBOOK §8 rejects marketing prose
+       in a door caption by name — "the outgoing build wrote door
+       captions as ad copy and it read as a brochure, not a tool" —
+       so this says what a door IS and stops. */
+    empty: 'A door is one kind of thing you sell — boats, outboards, trailers, the parts that go on them.',
+    wide: false,
+    tall: false,
+  },
   'activity': {
     name: 'Activity',
     says: 'What changed anywhere in the business, and who changed it.',
@@ -222,6 +240,17 @@ export function emptyCount(id: CardId, t: EmptyTally): string | null {
          dashboard already draws it and two screens saying one fact
          two ways is how a tool stops sounding like one voice. */
       return t.tables > 0 ? `You have ${plural(t.tables, 'table', 'tables')} and no modules.` : null
+    case 'what-we-sell':
+      /* TWO ABSENCES, AND THEY ARE DIFFERENT FACTS — the same shape
+         'rules-warning' has. There are places and none of them has
+         earned a door (every kind is spread across two modules), or
+         there are tables and nobody has made a place out of them
+         yet. The second is the state DESIGN_CONTRACT §6 is written
+         about, and counting places there would print "0". */
+      if (t.places > 0) return `You have ${plural(t.places, 'place', 'places')} to browse.`
+      return t.tables > 0
+        ? `You have ${plural(t.tables, 'table', 'tables')} and no places yet.`
+        : null
     case 'recently-opened':
       return t.tables > 0 ? `You have ${plural(t.tables, 'table', 'tables')} on the sheet.` : null
     case 'data-quality':

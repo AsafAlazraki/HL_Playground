@@ -5287,81 +5287,322 @@
   position: relative;
 }
 
-.md-quote-it {
+
+/* ============================================================
+   THE ACTS ON ONE FACE — ONE CLUSTER, NOT THREE SIBLINGS.
+
+   WHAT CHANGED AND WHY. `Quote it` was a lone absolutely-positioned
+   button in the corner of a face, and that was right while it was
+   the only act a face had. `add`, `edit` and `delete` were three
+   capability switches this catalogue had never read — an
+   administrator could switch `edit` off for Boats and take nothing
+   away, because there was no edit affordance for the switch to
+   remove — and making them real puts a Rename and a Take out beside
+   the sale. Three absolutely-positioned siblings each doing their
+   own coordinate arithmetic is three chances to overlap, and on the
+   40px dense line there is exactly one free strip that all three
+   want.
+
+   So the CLUSTER is positioned and revealed; the buttons inside it
+   are ordinary buttons in a row. Quote it kept its paint, its press
+   and its place at the outer edge, and lost only its coordinates.
+
+   THE DESTRUCTIVE ONE DOES NOT LOOK LIKE THE PRIMARY ONE. Quote it
+   is the filled accent; the two writes are quiet outlines; there is
+   a full gap between the pair and the sale. Take out goes to
+   `--danger` on approach — a state colour from the system, never a
+   second accent, and never at rest.
+
+   IT APPEARS ON APPROACH and is always present for the keyboard —
+   `:focus-within` brings it back, so a person tabbing through the
+   catalogue is never offered a control they cannot see. On a touch
+   screen there is no hover to wait for, so it is simply always
+   drawn.
+   ============================================================ */
+
+.md-face-acts {
   position: absolute;
   top: var(--s-2);
   right: var(--s-2);
   z-index: 2;
-  padding: 5px var(--s-3);
-  border: 1px solid var(--accent);
-  border-radius: var(--r-control);
-  background: var(--accent);
-  color: var(--on-accent, #fff);
-  font-size: var(--t-caption-size);
-  font-weight: var(--t-caption-weight);
-  letter-spacing: var(--t-caption-track);
-  line-height: var(--t-caption-lead);
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  /* IT WRAPS RATHER THAN HANGING OFF THE TILE. Measured in the real
+     app at a 240px tile: Rename + Take out + Quote it is 231px inside
+     224px of usable width, and `.md-tiles` lays out at
+     `minmax(200px, 1fr)` — so at the narrow end of its own grid an
+     absolutely-positioned nowrap cluster runs out past the card's
+     left edge and over its neighbour. Right-anchored and wrapped, the
+     three become two lines on a small tile and one on a large one,
+     and nothing leaves the card. */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  /* THE BOUND IS THE CARD'S EDGE, NOT THE CARD'S INSET. Measured:
+     the three controls are 231px and a default tile is 241px, so
+     subtracting BOTH insets (225px) wrapped a cluster that fitted
+     perfectly well and put a second row of buttons over the
+     photograph for nothing. One inset leaves 233px — one line at the
+     default, two at the grid's 200px floor, and never past the
+     card. */
+  max-width: calc(100% - var(--s-2));
+  gap: var(--s-2);
   opacity: 0;
   transform: translateY(-2px);
   transition:
     opacity var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease);
+    transform var(--d-fast) var(--ease);
 }
 
-/* THE DENSE LINE PUTS IT AT THE END OF THE ROW, not over the top
-   of a 40px strip where it would cover the price. */
-.md-quote-it.is-inline {
+/* THE DENSE LINE PUTS IT AT THE END OF THE ROW, not over the top of a
+   40px strip where it would cover the price.
+
+   AND IT DOES NOT WRAP THERE. A row is 40px tall; a second line of
+   controls inside it would either be clipped or push the strip open
+   on hover, and a list whose rows change height under the cursor is
+   the worst kind of movement. The register runs to `--measure`, so
+   there is room for three controls on one line. */
+.md-face-acts.is-inline {
   top: 50%;
   right: var(--s-3);
+  flex-wrap: nowrap;
+  max-width: none;
   transform: translateY(-50%) translateX(2px);
 }
 
-.md-tile-slot:hover .md-quote-it,
-.md-row-slot:hover .md-quote-it,
-.md-tile-slot:focus-within .md-quote-it,
-.md-row-slot:focus-within .md-quote-it {
+.md-tile-slot:hover .md-face-acts,
+.md-row-slot:hover .md-face-acts,
+.md-tile-slot:focus-within .md-face-acts,
+.md-row-slot:focus-within .md-face-acts {
   opacity: 1;
   transform: translateY(0);
 }
-.md-row-slot:hover .md-quote-it.is-inline,
-.md-row-slot:focus-within .md-quote-it.is-inline {
+.md-row-slot:hover .md-face-acts.is-inline,
+.md-row-slot:focus-within .md-face-acts.is-inline {
   transform: translateY(-50%);
-}
-
-.md-quote-it:hover {
-  background: var(--accent-strong, var(--accent));
-}
-.md-quote-it:active {
-  transform: translateY(0) scale(0.97);
-}
-.md-row-slot .md-quote-it.is-inline:active {
-  transform: translateY(-50%) scale(0.97);
-}
-.md-quote-it:focus-visible {
-  outline: none;
-  opacity: 1;
-  box-shadow: var(--focus);
 }
 
 /* NO HOVER TO WAIT FOR ON GLASS. */
 @media (hover: none) {
-  .md-quote-it {
+  .md-face-acts {
     opacity: 1;
     transform: none;
   }
-  .md-quote-it.is-inline {
+  .md-face-acts.is-inline {
     transform: translateY(-50%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .md-quote-it {
+  .md-face-acts {
     transition: opacity var(--d-fast) var(--ease);
     transform: none;
   }
-  .md-quote-it.is-inline {
+  .md-face-acts.is-inline {
     transform: translateY(-50%);
+  }
+}
+
+/* -- the sale ------------------------------------------------ */
+
+.md-quote-it {
+  padding: 5px var(--s-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-caption-track);
+  line-height: var(--t-caption-lead);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+
+/* THE HOVER AND THE PRESS WERE BOTH DEAD. `--accent-strong` is
+   defined nowhere in this repository, so `var(--accent-strong,
+   var(--accent))` resolved to the resting colour and hovering this
+   button changed nothing — rule 8 says every pressable thing has
+   all three states and this one had focus only. `--accent-hover`
+   and `--accent-press` are the system's own two rungs and have
+   been there the whole time. */
+.md-quote-it:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.md-quote-it:active {
+  background: var(--accent-press);
+  border-color: var(--accent-press);
+  transform: scale(0.97);
+}
+.md-quote-it:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* -- the two writes ------------------------------------------ */
+
+/* QUIET AT REST. These are structural acts on somebody's price
+   file and they are not what a person came to the catalogue to do,
+   so they carry the surface's own ink and the surface's own line
+   until they are approached. */
+/* TIGHTER THAN THE SALE, ON PURPOSE AND BY MEASUREMENT. At the same
+   padding as Quote it the three controls came to 235px on a 241px
+   tile — six pixels of clearance, and a wrap onto a second line over
+   the photograph as soon as anything grew. At `--s-2` they come to
+   219px, which is one line on a default tile and still wraps at the
+   grid's 200px floor where two lines is the honest answer. It also
+   reads correctly: the primary act is the larger one. */
+.md-face-act {
+  padding: 5px var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--ink-soft);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-caption-track);
+  line-height: var(--t-caption-lead);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+/* `--surface-3` AND NOT `--surface-2`: in the light theme
+   `--surface-1` and `--surface-2` are both `#ffffff`, so a hover
+   painted with the second one changes nothing and rule 8 is only
+   two-thirds kept. `--surface-3` is the system's own "hover on
+   surface-2" rung and moves in both themes. */
+.md-face-act:hover {
+  background: var(--surface-3);
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+.md-face-act:active {
+  transform: scale(0.97);
+}
+.md-face-act:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* TAKING A BOAT OUT OF SOMEBODY'S PRICE FILE SAYS SO ON APPROACH,
+   and not before: a red control at rest in a catalogue of 174
+   tiles would be the loudest thing on the page and the least
+   often wanted. The act is undoable and the toast carries UNDO —
+   see `@/store/notes` — which is why this is a button and not a
+   dialog. */
+.md-face-act.is-take-out:hover {
+  background: var(--danger-wash);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.md-face-act.is-take-out:focus-visible {
+  outline-color: var(--danger);
+}
+
+/* -- the name, open for typing -------------------------------- */
+
+/* IT SITS EXACTLY WHERE THE NAME SAT. The box takes the face's own
+   name class as well as this one, so it inherits that face's size,
+   leading and colour and the tile does not change height when the
+   span becomes an input. Nothing here transitions: this is opened
+   by a press and left by a keystroke, both repeated, and the motion
+   budget bars an animation on either. */
+/* IT SETS ONLY WHAT IT HAS TO. `field-input` already owns the size,
+   the tracking and the ground, and the face's own name class owns the
+   ink — a third opinion about any of those is a place they can drift
+   apart. What is left is the well's shape and the accent edge that
+   says this one is open. */
+.md-rename {
+  width: 100%;
+  min-width: 0;
+  padding: 1px var(--s-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-control);
+}
+.md-rename:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* ============================================================
+   THE HEADER'S TRAILING GROUP — the density switch, and the act
+   that makes `add` a real switch rather than a decorative one.
+
+   `add` had been in `MODULE_CAPABILITIES` since the module system
+   landed and nothing on this page read it: an administrator could
+   switch it on and off and the catalogue was identical either way.
+   MODULE_SYSTEM §5 says what the switch does — "a NEW button on the
+   index; a blank row in the master table" — and this is where the
+   button goes, because the header is where the other two things a
+   person does to the whole list already are.
+   ============================================================ */
+
+.md-idx-tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.md-idx-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 520;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.md-idx-add:hover:not(:disabled) {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+.md-idx-add:active:not(:disabled) {
+  background: var(--accent-wash-strong);
+  transform: scale(0.97);
+}
+.md-idx-add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* DISABLED, AND THE REASON IS UNDER THE HEADER. The switch is on
+   and the act still cannot be performed — the tables went to
+   history, or off the sheet — so the control stays where it is,
+   greyed, and the sentence saying why sits in the notes below
+   rather than in a tooltip nobody opens (rule 10). */
+.md-idx-add:disabled {
+  cursor: not-allowed;
+  color: var(--ink-faint);
+  border-color: var(--hairline);
+  background: transparent;
+}
+
+/* NARROW: the trailing group is the second line of a stacked
+   header, and it wraps rather than pushing the find box off. */
+@media (max-width: 760px) {
+  .md-idx-tools {
+    flex-wrap: wrap;
   }
 }

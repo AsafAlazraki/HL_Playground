@@ -81,6 +81,34 @@
         and why nothing stored is ever drawn without being resolved
         against the sheet as it is now.
 
+   FIVE KINDS NOW, AND THE ORDER OF THEM IS FIXED. UX_PASS §2 asks
+   for one field over MODULES · ROWS · QUOTES · TABLES · COLUMNS; it
+   reached two of the five. The sections are painted places, tables,
+   rows, quotes, columns — biggest container first, smallest and most
+   administrative last — and `optionsOf` walks the cursor's flat list
+   in that same order. It is fixed rather than ranked ACROSS kinds
+   because the first option is what Enter takes: a first option whose
+   KIND changed from one keystroke to the next would make Ctrl+K then
+   Enter — the shortest path in the app — a lottery.
+
+   WCAG 2.1.4 IS LEVEL A, AND THIS SURFACE MEETS IT BY BINDING
+   NOTHING. The criterion covers single-CHARACTER shortcuts and asks
+   for a way to turn one off, remap it, or limit it to a focused
+   component. The only key this feature binds globally is Ctrl+K /
+   ⌘K, which carries a modifier and is therefore outside the
+   criterion entirely; everything else — the arrows, Home/End,
+   Page Up/Down, Enter, Escape — is handled ON THE INPUT and only
+   while it has focus, which is the criterion's own third exception.
+   Nothing here binds a bare letter, and it must stay that way: the
+   one control on this surface is a text field where every character
+   a person presses is content, so a letter shortcut would not merely
+   be a compliance failure, it would eat the query.
+
+   THE ROW UNDER THE CURSOR SHOWS THE KEY THAT ACTS ON IT — see
+   `ENTER_KEY` below. That is Superhuman's teaching move and Raycast's
+   one-key rule read together: one key, meaning "act on what is under
+   the cursor", drawn on the thing it will act on.
+
    AND IT DOES NOT ANIMATE ON OPEN. That is a ruling and it is
    argued at length in `search.css` beside `.fx-panel`: the motion
    budget's one hard line is that a keyboard-initiated action opens
@@ -89,12 +117,45 @@
    entrance you give it.
    ============================================================ */
 
+/* ============================================================
+   TWO LINT RULES ARE OFF IN THIS FILE, AND HERE IS THE ARGUMENT.
+
+   `jsx-a11y/no-noninteractive-element-to-interactive-role` and
+   `jsx-a11y/click-events-have-key-events` both fire on every
+   `<li role="option">` in the list below — thirteen times as of the
+   five kinds landing, eight before them.
+
+   THEY ARE FALSE HERE, AND THE ARIA PATTERN THEY ARE FLAGGING IS
+   THE CORRECT ONE. This surface is a combobox: the `<input>` carries
+   `role="combobox"`, `aria-controls`, `aria-autocomplete="list"` and
+   `aria-activedescendant`, and the `<ul>` it controls carries
+   `role="listbox"`. In that pattern the OPTIONS ARE NOT FOCUSABLE
+   and must not be — focus stays in the input the whole time, which
+   is the only way a person can keep typing while walking the
+   answers. So an option cannot carry a key handler (it never has the
+   keyboard) and cannot be a `<button>` (it would take it). Every key
+   this list answers to is bound on the input, in `onKeyDown`.
+
+   THE RULES CANNOT SEE THAT, because they read one element at a time
+   and the relationship is between three. Turning them off for this
+   file rather than annotating thirteen lines is the honest shape:
+   it is ONE decision about ONE pattern, and it is written down here
+   instead of thirteen times in the markup.
+
+   NOTHING ELSE IS SUPPRESSED. Anything this file does wrong that
+   these two rules do not own still fails the lint ceiling.
+   ============================================================ */
+/* eslint-disable jsx-a11y/no-noninteractive-element-to-interactive-role */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, JSX, KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { MagnifyingGlass } from '@phosphor-icons/react'
+import { Columns, FileText, MagnifyingGlass, SquaresFour } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { coverPhoto, type CoverPhoto } from '@/features/table/coverPhoto'
+import { quoteTotals, useQuotes } from '@/features/quote'
+import { money } from '@/lib/money'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { accentVar } from '@/types/model'
 import {
@@ -108,6 +169,9 @@ import {
   optionsOf,
   search,
   type Option,
+  type ProjectExtras,
+  type QuoteFacts,
+  type QuoteHit,
   type TableFacts,
 } from './rowSearch'
 import { clearRecent, readRecent, rememberPick } from './recent'
@@ -121,7 +185,12 @@ import './search.css'
 const MAC = /mac|iphone|ipad|ipod/i.test(
   typeof navigator === 'undefined' ? '' : navigator.userAgent,
 )
-const SHORTCUT_HINT = MAC ? '⌘K' : 'Ctrl K'
+/** EXPORTED BECAUSE THE RAIL SAYS IT TOO, and said it wrong: the
+ *  "Find anything" row printed the literal string `Ctrl K` on every
+ *  machine, so a Mac was told to press a key that does not open this.
+ *  One fact, one place — a shortcut a surface advertises has to be
+ *  the shortcut that surface binds. */
+export const SHORTCUT_HINT = MAC ? '⌘K' : 'Ctrl K'
 
 /** How far Page Up / Page Down move the cursor. Eight is one
  *  table's worth of rows (`DEFAULT_LIMITS.perTable`), so a page
@@ -155,8 +224,29 @@ function tableCaption(t: TableFacts): string {
   if (t.retired) return 'History, not stock'
   if (t.role === 'join') return 'Relationship'
   if (t.role === 'view') return 'Combination'
-  return `${t.rowCount} row${t.rowCount === 1 ? '' : 's'}`
+  /* THE COLUMN COUNT IS ON IT NOW, and it is not decoration: this
+     palette answers column names as of today, and the fact a reader
+     needs in order to believe that is how many columns a table has.
+     §2's own mock prints "30 columns · 40 rows" on this line. */
+  return `${t.fieldCount} col${t.fieldCount === 1 ? '' : 's'} · ${t.rowCount} row${
+    t.rowCount === 1 ? '' : 's'
+  }`
 }
+
+/** What a place holds, in one phrase — the same shape `tableCaption`
+ *  answers with, so a module line and a table line under it read as
+ *  one list rather than two designs. */
+const moduleCaption = (rowCount: number, tables: number): string =>
+  `${rowCount.toLocaleString()} row${rowCount === 1 ? '' : 's'} in ${tables} table${
+    tables === 1 ? '' : 's'
+  }`
+
+/** How many tables declare a column of this name. Always drawn, even
+ *  at one, because "this column is on seven tables" and "this column
+ *  is on one" are different facts about the sheet and the reader is
+ *  looking at the answer to exactly that. */
+const columnCaption = (tables: number): string =>
+  `${tables} table${tables === 1 ? '' : 's'}`
 
 /** Where the query was actually read, when it was not read in the
  *  name being drawn: one pair list by name, or a count of them. */
@@ -165,6 +255,49 @@ const viaSays = (name: string, count: number): string =>
 
 const inkStyle = (accent: TableFacts['accent']): CSSProperties =>
   ({ '--hs-ink': accentVar(accent) }) as CSSProperties
+
+/** THE PALETTE TEACHES THE KEYBOARD ON THE ROW, NOT ONLY IN THE FOOT.
+ *
+ *  Superhuman's move, and the research doc marks it "adopt — cheap":
+ *  render the shortcut inline in the row so a person learns the key
+ *  from the thing it acts on rather than from a legend under fifty
+ *  lines. The foot's `↵ open` is a legend; this is the answer to
+ *  "what happens if I press Enter NOW", drawn on the one row where
+ *  the answer is true.
+ *
+ *  IT IS DRAWN ON EVERY ROW AND INKED ON ONE. The space is reserved
+ *  the whole way down the list, so the cursor moving does not shift a
+ *  single label sideways — the same reason the cursor bar rides in
+ *  the left inset rather than adding a border.
+ *
+ *  IT IS NOT A NEW BINDING. Enter is the key this list already
+ *  answers to; nothing here binds a character, which is why WCAG
+ *  2.1.4 has nothing to disable — see the header of this file.
+ *
+ *  One element, shared: a React element is an immutable description,
+ *  so fifty rows drawing the same `↵` allocate it once. */
+const ENTER_KEY = (
+  <kbd className="hs-opt-key" aria-hidden="true">
+    ↵
+  </kbd>
+)
+
+/** A quote's second line: what it is called, and who it was for.
+ *  Marked on whichever of the two the query actually landed in, so a
+ *  person who typed a reference sees the reference lit and a person
+ *  who typed a name sees the name. */
+function quoteNote(h: QuoteHit): JSX.Element {
+  const ref =
+    h.where === 'reference' ? marked(h.quote.reference, h.at, h.length) : h.quote.reference
+  const who =
+    h.where === 'customer' ? marked(h.quote.customer, h.at, h.length) : h.quote.customer
+  return (
+    <>
+      {h.quote.issued ? 'Issued' : 'Draft'} · {ref}
+      {h.quote.customer === '' ? null : <> · {who}</>}
+    </>
+  )
+}
 
 /** One remembered destination, RESOLVED — a name that is on the
  *  sheet right now, not the id that was written down. `recent.ts`
@@ -202,12 +335,59 @@ export interface SearchFieldProps {
    *  had it in hand. `rowId` is absent only when what was chosen was
    *  a TABLE and there is no row to land on. */
   onReveal?: (entityId: string, rowId?: string) => void
+
+  /* ============================================================
+     THE OTHER TWO DOORS THIS FEATURE DOES NOT OWN — and the reason
+     they are what enforces §2's fourth rule today.
+
+     §2 asks for one field over MODULES · ROWS · QUOTES · TABLES ·
+     COLUMNS. Rows, tables and columns all end at a table, and
+     `onReveal` above is already that door. A MODULE opens a module
+     workspace and a QUOTE opens a document, and both of those stages
+     belong to the shell — `Stage` is `src/app/winKit.tsx` and this
+     feature may not reach into it any more than `openPlace.ts` may.
+
+     SO THE PROP IS THE CAPABILITY. §2's rule 4 is "a result a person
+     cannot open does not appear for them", and the half of it that
+     is true and enforceable right now is this: a host that has not
+     given the palette a door to a module does not get modules in the
+     index, so no press can land on nothing. It is checked once, when
+     the index is built, rather than at paint — a result that cannot
+     exist is better than a result that is drawn and then refused.
+
+     The half that is NOT enforceable is per-person filtering, and it
+     is not skipped quietly. `mayDo()` (features/modules/access.ts:131)
+     wants a `RoleDef` id. `AppUser` (features/auth/session.ts:32-76)
+     carries an APPLICATION TIER — sales / admin / super-admin — and
+     no role id, and nothing in the app resolves one; access.ts:126
+     says so itself, "`roleId` of null is nobody in particular, which
+     is every session today". So `mayDo` answers FALSE for every
+     restricted module for everybody (access.ts:138), and filtering
+     the palette on it would hide a place from the one seeded operator
+     who owns the tenancy. What IS checked is the module's own
+     contract, which needs no role — see `rowSearch.ts` beside
+     `ProjectExtras`.
+     ============================================================ */
+  /** open a place in the business. Unset = modules are not offered. */
+  onOpenModule?: (moduleId: string) => void
+  /** open a document. Unset = quotes are not offered. */
+  onOpenQuote?: (quoteId: string) => void
 }
 
-export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX.Element {
+export function SearchField({
+  autoFocus,
+  onReveal,
+  onOpenModule,
+  onOpenQuote,
+}: SearchFieldProps = {}): JSX.Element {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const modules = useProjectStore((s) => s.modules)
   const select = useProjectStore((s) => s.select)
+  /* THE DOCUMENTS LIVE OUTSIDE THE PROJECT STORE. `quotes.ts` keeps
+     them in localStorage with their own subscription, so this is the
+     one read in this file that is not a store selector. */
+  const quotes = useQuotes()
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -229,9 +409,50 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
      keyed on them alone would re-fold all 651 labels on every cell
      edit, for a popover nobody has opened. Closed, this is one
      comparison. */
+  /* THE DOCUMENTS, ADAPTED ONCE — and only when there is a door.
+     `quoteTotals` walks a quote's lines and adjustments, so this is
+     paid per quote per opening rather than per keystroke, exactly
+     like the row fold below it.
+
+     THE TOTAL IS WITHHELD RATHER THAN ROUNDED. A quote with a line
+     that carries no price has no total yet; printing the sum of the
+     ones that do would put a number on a search result that the
+     document itself refuses to print. Money is never guessed. */
+  /* THE DEPENDENCY IS WHETHER THERE IS A DOOR, NEVER THE DOOR
+     ITSELF. A host almost always passes these as inline arrows, so
+     their identity changes on every one of its renders; keying the
+     index on the function would re-fold 7,002 labels and 826 column
+     names every time anything above this component moved. What the
+     index actually depends on is the yes/no. */
+  const canModule = onOpenModule !== undefined
+  const canQuote = onOpenQuote !== undefined
+
+  const quoteFacts = useMemo<QuoteFacts[] | undefined>(() => {
+    if (!open || !canQuote) return undefined
+    return quotes.map((q) => {
+      const t = quoteTotals(q)
+      return {
+        id: q.id,
+        reference: q.reference,
+        subject: q.subjectLabel,
+        customer: q.customer.name,
+        issued: q.state === 'issued',
+        total: q.lines.length > 0 && t.unpricedCount === 0 ? t.total : null,
+      }
+    })
+  }, [open, canQuote, quotes])
+
+  const extras = useMemo<ProjectExtras>(
+    () => ({
+      ...(canModule ? { modules } : {}),
+      ...(quoteFacts ? { quotes: quoteFacts } : {}),
+    }),
+    [canModule, modules, quoteFacts],
+  )
+
   const index = useMemo(
-    () => (open ? buildSearchIndex(entities, rowsByEntity) : EMPTY_INDEX),
-    [open, entities, rowsByEntity],
+    () => (open ? buildSearchIndex(entities, rowsByEntity, extras) : EMPTY_INDEX),
+    [open, entities, rowsByEntity, extras],
   )
 
   /* NOTHING TYPED IS STILL A QUESTION, and it has an answer: the
@@ -443,6 +664,42 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
     [select, onReveal, close],
   )
 
+  /** ONE KEY, ACTING ON WHAT IS UNDER THE CURSOR — at every level of
+   *  the list and whatever kind the thing under it happens to be.
+   *  Raycast's rule, and the reason the cursor walks one flat list
+   *  rather than five: Enter never means a different act depending
+   *  on which section you have arrived in.
+   *
+   *  A MODULE AND A QUOTE ARE NOT REMEMBERED, and that is not an
+   *  oversight. `recent.ts` stores `{ entityId, rowId? }` and
+   *  resolves every remembered pick against the live sheet before
+   *  drawing it; a module id and a quote id resolve against two other
+   *  registries entirely, and half a recall list that cannot be
+   *  checked is worse than one that is only about the sheet. */
+  const take = useCallback(
+    (picked: Option) => {
+      switch (picked.kind) {
+        case 'module':
+          onOpenModule?.(picked.moduleId)
+          close(false)
+          return
+        case 'quote':
+          onOpenQuote?.(picked.quoteId)
+          close(false)
+          return
+        case 'row':
+          choose(picked.entityId, picked.rowId)
+          return
+        default:
+          /* a table, and a column — which opens the table declaring
+             it, because a column is a fact about a table and the
+             sheet is where a person reads one */
+          choose(picked.entityId)
+      }
+    },
+    [choose, onOpenModule, onOpenQuote, close],
+  )
+
   const onKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Escape') {
       /* the grid's own Escape means "revert this cell"; ours is
@@ -494,7 +751,7 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
         const picked = options[cursor]
         if (!picked) return
         e.preventDefault()
-        choose(picked.entityId, picked.kind === 'row' ? picked.rowId : undefined)
+        take(picked)
         return
       }
       default:
@@ -534,7 +791,12 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
      state and the keys stay put, so the bar never jumps. */
   const footSay = browsing
     ? index.tableTotal > 0
-      ? `${index.rowTotal.toLocaleString()} named rows · ${index.tableTotal} tables`
+      ? /* THE COLUMN COUNT IS PART OF THE ACCOUNTING NOW, because it
+           is the one of the five kinds a person would never guess is
+           searchable. 205 distinct names over 826 declarations on the
+           prepared file — the folded figure, since that is what a
+           query can actually land on. */
+        `${index.rowTotal.toLocaleString()} named rows · ${index.tableTotal} tables · ${index.columns.length} columns`
       : ''
     : hidden > 0
       ? `Showing ${result.rowShown} of ${result.rowTotal} — keep typing to narrow it`
@@ -691,6 +953,85 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                         <span className="hs-opt-where">
                           {isRow ? r.table.name : tableCaption(r.table)}
                         </span>
+                        {ENTER_KEY}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </li>
+            ) : null}
+
+            {/* ── THE PLACES IN THE BUSINESS ───────────────────────
+                FIRST, BECAUSE A MODULE CONTAINS THE REST. Boats holds
+                seven brand tables, each of which holds its rows; a
+                person who typed "boats" wants the place, and before
+                this the palette answered them with ten rows out of
+                two tables that merely carry the word.
+
+                The order of the five kinds is fixed — places, tables,
+                rows, quotes, columns — and `optionsOf` paints the
+                cursor's flat list in exactly this order. It is fixed
+                rather than ranked across kinds on purpose: the first
+                option is what Enter takes, and a first option that
+                changed KIND from one keystroke to the next would make
+                Ctrl+K–Enter unusable. */}
+            {result.modules.length > 0 ? (
+              <li className="hs-section" role="presentation">
+                <p className="hs-head hs-head--plain" id={`${baseId}-h-modules`}>
+                  Modules
+                </p>
+                <ul
+                  className="hs-group"
+                  role="group"
+                  aria-labelledby={`${baseId}-h-modules`}
+                >
+                  {result.modules.map((m) => {
+                    painted += 1
+                    const i = painted
+                    /* the words were found in the admin's own
+                       description rather than in the name — so the
+                       line says so, in the same slot a pair-list
+                       reading uses, and the name carries no
+                       highlight because nothing in it matched */
+                    const bySays = m.at < 0
+                    return (
+                      <li
+                        key={m.module.id}
+                        id={optionId(i)}
+                        role="option"
+                        aria-selected={i === cursor}
+                        className={`hs-opt hs-opt--place hs-opt--module${
+                          i === cursor ? ' is-active' : ''
+                        }`}
+                        style={inkStyle(m.module.accent)}
+                        aria-label={`${m.module.name} — a place, ${moduleCaption(
+                          m.module.rowCount,
+                          m.module.tableIds.length,
+                        )}${bySays ? ', matched on its description' : ''}`}
+                        onPointerDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          onOpenModule?.(m.module.id)
+                          close(false)
+                        }}
+                        onPointerEnter={() => setActive(i)}
+                      >
+                        <span className="hs-opt-mark" aria-hidden="true">
+                          <SquaresFour
+                            size={ICON_SIZE.small}
+                            weight={weightFor(ICON_SIZE.small)}
+                          />
+                        </span>
+                        <span className="hs-opt-label">
+                          {marked(m.module.name, m.at, m.length)}
+                        </span>
+                        {bySays ? (
+                          <span className="hs-opt-note">{m.module.description}</span>
+                        ) : (
+                          <span className="hs-opt-where">
+                            {moduleCaption(m.module.rowCount, m.module.tableIds.length)}
+                          </span>
+                        )}
+                        {ENTER_KEY}
                       </li>
                     )
                   })}
@@ -776,6 +1117,7 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                             {tableCaption(t.table)}
                           </span>
                         )}
+                        {ENTER_KEY}
                       </li>
                     )
                   })}
@@ -881,6 +1223,7 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                           {h.via ? (
                             <span className="hs-opt-note">{viaSays(h.via, 1)}</span>
                           ) : null}
+                          {ENTER_KEY}
                         </li>
                       )
                     })}
@@ -893,6 +1236,160 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
                 </li>
               )
             })}
+
+            {/* ── THE DOCUMENTS ───────────────────────────────────
+                THREE WAYS IN, AND THE LINE SAYS WHICH ONE WAS USED.
+                A quote is reached by the reference off a printed
+                page, by the customer it was written for, or by what
+                it sold; `rowSearch.ts` keeps the best of the three
+                readings and names it, so the mark lands on the run a
+                person actually typed rather than on the first
+                occurrence anywhere in the record.
+
+                THE MONEY IS THE DOCUMENT'S OWN AND IS NEVER
+                RECOMPUTED HERE — `quoteTotals` is the one place a
+                quote is added up, and it is called where the facts
+                are adapted, once per opening. It is mono with
+                tabular figures because it is a figure in a column,
+                and it does not animate, because money never does. */}
+            {result.quotes.length > 0 ? (
+              <li className="hs-section" role="presentation">
+                <p className="hs-head hs-head--plain" id={`${baseId}-h-quotes`}>
+                  Quotes
+                </p>
+                <ul
+                  className="hs-group"
+                  role="group"
+                  aria-labelledby={`${baseId}-h-quotes`}
+                >
+                  {result.quotes.map((h) => {
+                    painted += 1
+                    const i = painted
+                    return (
+                      <li
+                        key={h.quote.id}
+                        id={optionId(i)}
+                        role="option"
+                        aria-selected={i === cursor}
+                        className={`hs-opt hs-opt--quote${i === cursor ? ' is-active' : ''}`}
+                        aria-label={
+                          `${h.quote.subject} — ${h.quote.issued ? 'issued' : 'draft'} quote ` +
+                          `${h.quote.reference}` +
+                          (h.quote.customer ? ` for ${h.quote.customer}` : '') +
+                          (h.quote.total === null ? '' : `, ${money(h.quote.total)}`)
+                        }
+                        onPointerDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          onOpenQuote?.(h.quote.id)
+                          close(false)
+                        }}
+                        onPointerEnter={() => setActive(i)}
+                      >
+                        <span className="hs-opt-mark" aria-hidden="true">
+                          <FileText
+                            size={ICON_SIZE.tiny}
+                            weight={weightFor(ICON_SIZE.tiny)}
+                          />
+                        </span>
+                        <span className="hs-opt-label">
+                          {h.where === 'subject'
+                            ? marked(h.quote.subject, h.at, h.length)
+                            : h.quote.subject}
+                        </span>
+                        <span className="hs-opt-note">{quoteNote(h)}</span>
+                        {/* A DOCUMENT WITH AN UNPRICED LINE HAS NO
+                            TOTAL YET, and this draws nothing rather
+                            than a partial sum. The slot stays, so
+                            the figures that ARE drawn line up down
+                            the column on the decimal. */}
+                        <span className="hs-opt-sum">
+                          {h.quote.total === null ? '' : money(h.quote.total)}
+                        </span>
+                        {ENTER_KEY}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </li>
+            ) : null}
+
+            {/* ── THE COLUMNS ─────────────────────────────────────
+                LAST, AND FOLDED. §2's example of the question this
+                answers is an admin looking for `Tare (kg)` who does
+                not know which of seven trailer tables declares it —
+                so the answer is one line per distinct NAME with the
+                count of tables on it, not one line per declaration.
+                Measured: `price` is 26 declarations and six names.
+
+                IT IS LAST BECAUSE IT IS THE MOST ADMINISTRATIVE OF
+                THE FIVE. A dealer looking for a boat should never
+                have to walk past the shape of the file to reach it. */}
+            {result.columns.length > 0 ? (
+              <li className="hs-section" role="presentation">
+                <p className="hs-head hs-head--plain" id={`${baseId}-h-columns`}>
+                  Columns
+                </p>
+                <ul
+                  className="hs-group"
+                  role="group"
+                  aria-labelledby={`${baseId}-h-columns`}
+                >
+                  {result.columns.map((c) => {
+                    painted += 1
+                    const i = painted
+                    return (
+                      <li
+                        key={`${c.table.id}:${c.name}`}
+                        id={optionId(i)}
+                        role="option"
+                        aria-selected={i === cursor}
+                        className={`hs-opt hs-opt--column${i === cursor ? ' is-active' : ''}`}
+                        style={inkStyle(c.table.accent)}
+                        /* THE PRESS LANDS ON A TABLE AND THE LINE
+                           SAYS WHICH. A column is a fact about a
+                           table, so opening the table is opening the
+                           column; and when the column was read on a
+                           pair list the accessible name says that
+                           too, because the place it opens is not the
+                           place the words were found. */
+                        aria-label={
+                          c.via
+                            ? `${c.name} — a column on ${c.via}, which opens ${c.table.name}` +
+                              (c.tables > 1 ? `; declared on ${c.tables} tables` : '')
+                            : `${c.name} — a column in ${c.table.name}` +
+                              (c.tables > 1 ? `, declared on ${c.tables} tables` : '')
+                        }
+                        onPointerDown={(e) => e.preventDefault()}
+                        onClick={() => choose(c.table.id)}
+                        onPointerEnter={() => setActive(i)}
+                      >
+                        <span className="hs-opt-mark" aria-hidden="true">
+                          <Columns
+                            size={ICON_SIZE.tiny}
+                            weight={weightFor(ICON_SIZE.tiny)}
+                          />
+                        </span>
+                        <span className="hs-opt-label">
+                          {marked(c.name, c.at, c.length)}
+                        </span>
+                        <span className="hs-opt-note">
+                          in {c.via ?? c.table.name}
+                        </span>
+                        <span className="hs-opt-where">{columnCaption(c.tables)}</span>
+                        {ENTER_KEY}
+                      </li>
+                    )
+                  })}
+                  {/* what the cap left out, measured before it */}
+                  {result.columnTotal > result.columns.length ? (
+                    <li className="hs-more" role="presentation">
+                      +{result.columnTotal - result.columns.length} more column names —
+                      keep typing to narrow it
+                    </li>
+                  ) : null}
+                </ul>
+              </li>
+            ) : null}
           </ul>
 
           {/* -- the states that have to say what to do next ------
@@ -909,10 +1406,17 @@ export function SearchField({ autoFocus, onReveal }: SearchFieldProps = {}): JSX
             /* A REFUSAL KEEPS ITS SENTENCE, AND ITS REASON. What is
                searched is the one thing a person cannot deduce from an
                empty list, so the scope stays; the two suggestions after
-               it were the reason said twice. */
+               it were the reason said twice.
+
+               AND THE SENTENCE WAS OUT OF DATE THE MOMENT COLUMNS
+               BECAME SEARCHABLE. It read "not their other columns",
+               which is now the opposite of what happens — a column
+               name is a result. What is still NOT searched is the
+               VALUE in a cell, which is the honest remaining limit
+               and the one worth saying. */
             <p className="hs-say">
-              Nothing is called “{query.trim()}”. Row and table names are searched, not
-              their other columns.
+              Nothing is called “{query.trim()}”. Names are searched — places, tables,
+              rows, columns and quotes — never the values inside cells.
             </p>
           ) : null}
 

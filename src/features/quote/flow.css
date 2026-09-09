@@ -19,12 +19,80 @@
    ground is opaque `--surface-1` — no tint under any of the three,
    so these are the ramp's own figures rather than a second reading
    of them.
+
+   ── THE STOP IS ONE LINE, AND THAT IS A HEIGHT DECISION ──────
+
+   RESPONSIVE.md is the eleventh rule and its first sentence is that
+   a screen has a width and the design has to have an opinion about
+   it. It has a HEIGHT too, and this strip did not have an opinion
+   about that one. Measured in Chrome at 1280x800 on a Highfield
+   ADV7 draft over the real seed:
+
+     the window                                        800.00
+     the stage's own bar above (three wrapped rows)      80.38
+     THIS STRIP                                          55.64
+     the unaddressed strip under it                      36.39
+     the price bar under that                           102.47
+     ─────────────────────────────────────────────────────────
+     what was left for the work                         524.13
+
+   275.88 of 800 — 34.5% — spent on furniture, and both panes of
+   the configurator scrolling because of it (`.qb-scroll` 524 tall
+   over 1,378 of content).
+
+   47.64 of this strip's 55.64 was `.qf-go` drawing its two children
+   STACKED: the name at 18.84 over the fact at 16.8. Three stops
+   were two lines tall so that ONE of them — Choose, carrying the
+   hull — could put its answer under its label. The strip is 1,056
+   wide at 1280 and the three stops used 376.3 of it, so the second
+   line was being bought with height in a window that had none, out
+   of width that was going spare either way.
+
+   So the fact sits BESIDE the name on one baseline. That is also
+   the shape the playbook cites GOV.UK's check-answers page for —
+   "label / value / Change", a value beside its label rather than a
+   subtitle under a tab — and it is what the strip reads as now:
+   `Choose  Highfield - ADV7 (HYP) B-G-B  │  Configure  │  Address
+   nobody yet`.
+
+     `.qf-line`   55.64 -> 33.84   at 1280x800 AND 1440x900
+     `.qb-scroll` 524.13 -> 545.92 at 1280x800 (+4.16%)
+
+   The saving is on the height axis, so it is the same 21.8px at
+   both sizes rather than a figure that thins out as the window
+   grows. Nothing about the strip's contrast, its accent rule, its
+   press states or its 899px escape moved.
+
+   WHY NOT TIGHTER. `.qf-go` is 29.84 tall after this, which is the
+   `.shell-view-back` control's own 28 plus its two borders. Taking
+   the 4px of vertical padding out as well would buy 8 more and
+   leave a 21.84px tab, which is under every pressable thing in this
+   app and would make hover and press read as a flicker on a
+   hairline. The height came out of a line that was not earning it,
+   not out of the target.
+
+   AND THERE IS NO HEIGHT BREAKPOINT HERE, deliberately. A
+   `@media (max-height: …)` that dropped the second line only on a
+   short window would have left 21.8px of the same waste on every
+   tall one, and would have made the strip a different object at two
+   sizes for a fact that was never worth a line at either. The
+   eleventh rule asks the design to have an opinion about height;
+   the opinion is that this strip costs one line, always. A
+   breakpoint is what you reach for when the content genuinely needs
+   the room somewhere — the 899px rule below is one of those and it
+   stays.
+
+   WHAT IS STILL WRONG AND IS NOT IN THIS FILE is measured at the
+   very foot of it, under WHAT THIS PASS COULD NOT REACH.
    ============================================================ */
 
 .qf-line {
   display: flex;
   align-items: center;
-  padding: var(--s-2) var(--s-5) 0;
+  /* 4px, not 8. The bar's own `border-top` already draws the seam
+     the strip used to need clearing, and at 800px tall the top of a
+     tab is not where the window's last 4px should go. */
+  padding: var(--s-1) var(--s-5) 0;
 }
 
 .qf-stops {
@@ -54,10 +122,16 @@
   padding-left: calc(var(--s-2) + var(--s-1));
 }
 
+/* ONE LINE. The name, then its answer beside it, on one baseline —
+   see the height measurement in this file's header for what the
+   second line was costing and why it was the wrong place to spend
+   it. `baseline` and not `center`: the two are different type
+   steps, and a 13px label centred against a 12px value sits a
+   fraction high against every other pairing in the app. */
 .qf-go {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: baseline;
+  gap: var(--s-2);
   min-width: 0;
   padding: var(--s-1) var(--s-2);
   border: 1px solid transparent;
@@ -106,8 +180,22 @@ button.qf-go:focus-visible {
 
 /* NOTHING TRUNCATES MID-WORD. A hull's name is long and the picker
    draws it here — it wraps to a second line and the stop grows,
-   which is the rule §3 sets for a strip that does not fit. */
+   which is the rule §3 sets for a strip that does not fit. There is
+   no ellipsis and no `nowrap` here for exactly that reason.
+
+   `min-width: 0` is what lets it shrink and wrap INSIDE its stop
+   rather than forcing the stop wide enough to hold it: a flex item's
+   floor is `auto`, which is its longest word, and without this a
+   21-word rigging-kit label would push the strip's own `flex-wrap`
+   and put Address on a second line of the strip.
+
+   The worst case is now the height this strip had UNCONDITIONALLY
+   before — two lines — and it arrives only when a name genuinely
+   does not fit. Measured on the seed's longest `subjectLabel` at
+   1280 it does not arrive: the three stops come to 492.1 of the
+   1,016 available. */
 .qf-stop-fact {
+  min-width: 0;
   font-size: var(--t-caption-size);
   line-height: 1.4;
   color: var(--fg-tertiary);
@@ -128,16 +216,22 @@ button.qf-go:focus-visible {
 }
 
 /* ============================================================
-   EVERY WIDTH. Three stops of two lines each is 300px of the strip
-   at 1600 and it is the first thing that has to give: below 900 the
-   facts go and the names stay, because knowing WHICH of the three
-   you are on is the whole job and the hull is on the page twice
-   over anyway.
+   EVERY WIDTH. The facts are inline now, so what they cost is
+   WIDTH rather than height: 490.1 of the strip's 1,016 at 1280, of
+   which 213.8 is Choose's hull. Below 900 they go and the names
+   stay, because knowing WHICH of the three you are on is the whole
+   job and the hull is on the page twice over anyway.
+
+   That cut-off did not move. It was chosen against the content and
+   the content did not change — only where it sits. What DID change
+   is which axis it protects: it used to stop the strip growing
+   wide, and it now stops it wrapping to the two lines this pass
+   just took out of it.
    ============================================================ */
 
 @media (max-width: 899px) {
   .qf-line {
-    padding: var(--s-2) var(--s-4) 0;
+    padding: var(--s-1) var(--s-4) 0;
   }
   .qf-stop-fact {
     display: none;
@@ -244,3 +338,109 @@ button.qf-go:focus-visible {
     transform: none;
   }
 }
+
+/* ============================================================
+   WHAT THIS PASS COULD NOT REACH — measured, so the next person
+   does not have to measure it again.
+
+   Everything below was taken in Chrome over the real seed, on a
+   Highfield ADV7 draft, at 1280x800 and 1440x900. None of it lives
+   in this file and none of it was touched.
+
+   ── 1 · THE UNADDRESSED STRIP (36.39px, every width) ─────────
+
+   `.qb-give-why`, drawn by QuoteBuild between this strip and the
+   price bar whenever `issueBlockers` returns anything. On a fresh
+   draft the first blocker is always the same one, so what a person
+   sees the moment a quote is minted is:
+
+     Choose  Highfield - ADV7 …  │  Configure  │  Address  nobody yet
+     ⚠  This quote is addressed to nobody.   [ Name the customer ]
+
+   Sixteen pixels apart: the same fact twice, and two controls for
+   one act — the Address stop is a button that goes to Address, and
+   so is `Name the customer`.
+
+   IT IS NOT A REFUSAL, WHICH IS WHY IT IS IN THE WRONG PLACE.
+   DESIGN_PRINCIPLES rule 10 and CONFIGURATOR_PLAYBOOK §5 both put a
+   refusal IN THE PLACE THE THING IS REFUSED, and the thing refused
+   here is ISSUING. That refusal is already stated twice where it
+   belongs: `aria-disabled` on `Give it to the customer`, and the
+   ledger under the total, which lists every blocker in full. A
+   customer name that has not been typed on a document nobody has
+   asked to issue is not a refusal at all — it is an unfilled field,
+   and §5's own five kinds have no row for it.
+
+   WHERE IT BELONGS IS THE ADDRESS STOP, and it is already there:
+   QuoteBuild passes `facts={{ address: named === '' ? 'nobody yet'
+   : named }}` into this strip, so the fact, its label and its door
+   are one object on the line above. The strip is the duplicate.
+
+   THE EDIT IS QuoteBuild's, not this file's: drop the
+   `.qb-give-why` block. Nothing is lost — the fact stays on the
+   Address stop, the door stays on the Address stop, the sentence
+   stays in the ledger, and the act stays refused at the button. It
+   is worth 36.39px on the state every new draft opens in, at every
+   width, and it is the third instance of the pattern that file's
+   own header has already deleted twice ("TWO controls doing one
+   act", "ONE DOOR PAST THE NARROWING, NOT TWO").
+
+   AND IT IS WORSE ON ADDRESS, where QuoteEditor draws the same
+   blockers again as `.qt-foot-whys` (19.5px at both sizes). On that
+   screen the sentence is on the page three times: `CustomerField`
+   prints the freeze clause against the box, which is a refusal in
+   the place the thing is refused and is the one that should stay;
+   the flow line says `Address  nobody yet` 16px below the strip;
+   and the strip repeats what both already said, over a field that
+   is on screen with a caret in it. The same reasoning applies and
+   the same deletion is available.
+
+   ── 2 · THE STAGE BAR (80.38px, three rows, every width) ─────
+
+   `.shell-view-bar` in QuoteStage. Three stacked rows doing one
+   job:
+
+     .shell-view-back    28.00   "Back"
+     .shell-view-what    20.25   20260909-01 · Highfield - ADV7 …
+     .shell-quote-acts   32.13   "All quotes"
+
+   Two back controls and a heading. One row of 32.13 holds all
+   three at 1280 — `Back` is 70.5 wide, the heading 296.7, `All
+   quotes` ~104: 471 of the 1,152 the bar has. Worth ~48px.
+
+   ── 3 · THE PRICE BAR WRAPS AT 1280 (28.81px) ────────────────
+
+   `.qb-price-bar` is 73.66 at 1440x900 and 102.47 at 1280x800 —
+   the same contents, wrapped. `.qb-price-fig` alone is 47.47 and
+   the strip's `flex-wrap: wrap` puts the rest on a second row. That
+   is build.css's measurement to make, not this file's; it is noted
+   because it is the largest single row in the foot and it is only
+   large on the smaller window, which is backwards.
+
+   ── WHAT THAT WOULD COME TO ──────────────────────────────────
+
+   The first two columns are measured. The third is arithmetic on
+   measured parts — 32.13 of one stage-bar row, this strip's 33.84,
+   the price bar's own 1px top border and its unwrapped 73.66 — and
+   it is a projection, not a reading.
+
+                          before    after this pass    all three
+     1280x800 chrome      275.88         254.08          140.63
+     1280x800 for work    524.13         545.92          659.37
+     1440x900 chrome      247.07         225.27          140.63
+     1440x900 for work    652.94         674.73          759.37
+
+   ── AND ONE THING THAT IS NOT AVAILABLE ──────────────────────
+
+   apple-design's answer to a fixed strip is to float it and let
+   content scroll under: "build nav/toolbars/sheets as translucent
+   layers … not opaque bars that consume a fixed strip." That loses
+   here, and it should. DESIGN_PRINCIPLES §5 retires glass with
+   exactly two exceptions — the dock and the masthead — and says a
+   third "wants an argument, not a commit". The price bar is also a
+   sibling of the scrollport rather than a sticky child precisely so
+   no line of the quote can pass behind it (`.qt-root--edit`, and
+   the note on `.qt-root` in quote.css records the 96px measurement
+   that rule came from). The house rules win, and the height comes
+   out of rows that were not earning it instead.
+   ============================================================ */

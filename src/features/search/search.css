@@ -467,6 +467,100 @@
   color: var(--ink-soft);
 }
 
+/* ============================================================
+   THE THREE KINDS THAT WERE MISSING — modules, quotes, columns.
+
+   NOT THREE NEW ROW DESIGNS. Every one of them is `.hs-opt` with the
+   same mark gutter, the same label, the same right-hand caption and
+   the same cursor; what follows is the two or three declarations
+   each one genuinely needs. Five kinds of thing in one list only
+   reads as one list if they are drawn as one thing.
+   ============================================================ */
+
+/* A PLACE IS A PLACE, so a module takes the table row's bigger target
+   and its heading-sized name — but not its photograph box. A module
+   carries a glyph, and `--place`'s 34×26 picture frame around a 16px
+   mark is a hole with an icon floating in it. */
+.hs-opt--module .hs-opt-mark {
+  width: var(--s-4);
+  height: auto;
+  border-radius: 0;
+  opacity: 0.85;
+}
+
+/* THE DOCUMENT'S OWN FIGURE, and the only money on this surface.
+   Mono with tabular figures because it is a figure in a column —
+   §2 of the principles, and the reason the totals down a list of
+   quotes line up on the decimal instead of drifting.
+
+   IT IS A FIXED SLOT, EMPTY OR NOT. A quote whose lines are not all
+   priced draws nothing here rather than a partial sum, and the space
+   stays so the priced ones stay in one column.
+
+   IT DOES NOT ANIMATE, EVER. Not on the cursor arriving, not on
+   hover: money never animates, and this is money. */
+.hs-opt-sum {
+  flex: none;
+  min-width: 76px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A COLUMN'S NAME IS A NAME and keeps its own case — it is what the
+   dealer typed at the top of their spreadsheet. The mark is the
+   quieter tiny size, the same as a row's, because a column is inside
+   a table the way a row is. */
+.hs-opt--column .hs-opt-mark,
+.hs-opt--quote .hs-opt-mark {
+  opacity: 0.7;
+}
+
+/* ============================================================
+   THE KEY ON THE ROW — Superhuman's teaching move.
+
+   `SearchField.tsx` argues why it is here rather than only in the
+   foot. What matters in CSS is the two properties that keep it from
+   costing anything:
+
+     · IT IS ALWAYS IN THE LAYOUT and only ever changes OPACITY, so
+       the cursor moving down fifty rows never shifts a label by a
+       pixel. `display: none` here would make every arrow press a
+       re-layout of the row under it.
+     · IT DOES NOT TRANSITION. The cursor moves on every arrow press
+       — hundreds of times a day — and a fade on a keyboard-initiated
+       action is the one thing the motion budget rules out outright.
+       There is nothing here for `prefers-reduced-motion` to turn
+       off, because nothing here moves.
+   ============================================================ */
+.hs-opt-key {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink-soft);
+  opacity: 0;
+}
+.hs-opt.is-active .hs-opt-key {
+  opacity: 1;
+}
+
 /* THE MATCHED RUN. <mark>'s user-agent style is a yellow highlight
    from a different century. This is a WASH of the accent behind full
    ink: the fragment is found instantly, the ink stays at 17.4:1, and
@@ -569,9 +663,13 @@
   margin-right: 0;
 }
 
-/* the keys are the first thing to go when there is no room for them */
+/* the keys are the first thing to go when there is no room for them —
+   the foot's legend and the one drawn on the row itself, together,
+   because they are the same fact said twice and the row needs its
+   width for the name */
 @media (max-width: 560px) {
-  .hs-keys {
+  .hs-keys,
+  .hs-opt-key {
     display: none;
   }
 }

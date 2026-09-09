@@ -65,6 +65,7 @@ import {
   Scales,
   SealWarning,
   SquaresFour,
+  Storefront,
   Table,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
@@ -84,8 +85,13 @@ import { useConstraints } from '@/features/constraints/constraintDefs'
    sheet all ask it for the same glyph, so a dashboard that drew
    its own would be the eighth drawing of a boat in this build. */
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
+/* THE SAME VERDICT EVERY OTHER PICTURE TAKES. Whether to paint,
+   where to paint it from, and which one carries the host's probe
+   is decided in one place — so a photograph that is a plate in the
+   catalogue is never a broken glyph on the front door. */
+import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
 import { TABLE_KINDS } from '@/types/model'
-import type { TableKind } from '@/types/model'
+import type { ImageRef, TableKind } from '@/types/model'
 import { money } from '@/lib/money'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import type { CardId } from './arrangement'
@@ -107,11 +113,13 @@ import {
   quotesPerPlace,
 } from './cards'
 import type { QuoteLens } from './cards'
+import { doorsOf, type Door } from './doors'
 import type { DashboardActs } from './acts'
 import { useRecentPicks } from './useRecentPicks'
+import { usePlaces } from './usePlaces'
 import { useReorder } from './reorder'
 import { applyOrder, useTileOrder, type TileWho } from './tileOrder'
-import { PlaceMark, placeFilters, placesOf, rememberPlace } from '@/features/modules'
+import { PlaceMark, placeFilters, rememberPlace } from '@/features/modules'
 import { ActivityList, useActivity } from '@/features/activity'
 
 const MARK = ICON_SIZE.small
@@ -122,6 +130,12 @@ const MARK_WEIGHT = weightFor(MARK)
 export const CARD_ICON: Record<CardId, Icon> = {
   'my-quotes': FileText,
   'my-modules': SquaresFour,
+  /* THE STOREROOM, NOT A BOAT. The card holds every kind at once,
+     so a boat on its header would be the boat door's own glyph
+     promoted to stand for the trailers and the parts as well —
+     and the kind symbols inside the card are the vocabulary this
+     header must not pre-empt. */
+  'what-we-sell': Storefront,
   activity: Pulse,
   'the-price-file': Table,
   'recently-opened': ClockCounterClockwise,
@@ -187,19 +201,19 @@ function Nothing({
   onAct?: () => void
 }): JSX.Element {
   const entities = useProjectStore((s) => s.entities)
-  const modules = useProjectStore((s) => s.modules)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const constraints = useConstraints()
+  const places = usePlaces()
   const meta = CARDS[id]
 
   const have = useMemo(
     () =>
       emptyCount(id, {
-        places: placesOf(modules, entities, rowsByEntity).length,
+        places: places.length,
         tables: fileTally(entities, rowsByEntity).tables,
         rules: rollRules(constraints).enabled,
       }),
-    [id, modules, entities, rowsByEntity, constraints],
+    [id, places, entities, rowsByEntity, constraints],
   )
 
   return (
@@ -616,12 +630,12 @@ function RecentlyOpened({ acts }: { acts: DashboardActs }): JSX.Element {
 function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.Element {
   const modules = useProjectStore((s) => s.modules)
   const entities = useProjectStore((s) => s.entities)
-  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const { order, set } = useTileOrder(who)
+  const everyPlace = usePlaces()
 
   const places = useMemo(
-    () => applyOrder(placesOf(modules, entities, rowsByEntity), (p) => p.key, order),
-    [modules, entities, rowsByEntity, order],
+    () => applyOrder(everyPlace, (p) => p.key, order),
+    [everyPlace, order],
   )
 
   /* THE PERSON'S OWN ORDER, NOT THE BUSINESS'S. Dragging a tile
@@ -837,6 +851,145 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
       })}
     </div>
     </>
+  )
+}
+
+/* ---------------------------------------------------------- */
+/* What we sell — the catalogue, entered by kind              */
+/* ---------------------------------------------------------- */
+
+/* THE FOUR DOORS PHASE_TWO §2.1 ASKS FOR, AND WHAT THEY ARE FOR.
+
+   Every route from this dashboard into the catalogue went through
+   a BRAND: a tile on the modules card opens Highfield, or Yamaha,
+   or Stacer. There was no way to say "show me the boats" — the
+   one thing a person standing at a counter says most.
+
+   A DOOR IS A KIND, AND IT OPENS THE MODULE THAT HOLDS IT WHOLE.
+   `rememberPlace(moduleId, undefined)` is the difference between
+   this and a tile: the tile records the table it was pressed at
+   and the workspace stands there, and this one clears it, so the
+   workspace opens on every brand of that kind at once. Which kind
+   earns a door, and why a kind behind two modules earns none, is
+   argued in `doors.ts`.
+
+   THE PHOTOGRAPH IS A REAL ROW OF THAT KIND — the seed ships 220
+   of them under `public/seed-images` — and a kind whose rows carry
+   none draws its own symbol on its own tint instead. Nothing is
+   substituted, which is the rule `northsideImages.ts` states for
+   itself and the reason there is no stock photography anywhere in
+   this application. */
+
+function WhatWeSell({ acts }: { acts: DashboardActs }): JSX.Element {
+  const modules = useProjectStore((s) => s.modules)
+  const entities = useProjectStore((s) => s.entities)
+  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const places = usePlaces()
+
+  const doors = useMemo(
+    () => doorsOf(places, modules, entities, rowsByEntity),
+    [places, modules, entities, rowsByEntity],
+  )
+
+  /* THE ACT THE EMPTY STATE OFFERS IS THE ONE THAT WOULD MAKE A
+     DOOR: a door is a kind behind a module, so the thing to go and
+     do is make a module. */
+  if (doors.length === 0) {
+    return <Nothing id="what-we-sell" act="Modules" onAct={acts.onOpenModules} />
+  }
+
+  return (
+    <div className="dsh-doors">
+      {doors.map((door) => (
+        <DoorPlate
+          key={door.kind}
+          door={door}
+          onOpen={() => {
+            rememberPlace(door.moduleId, door.tableId)
+            acts.onOpenModule(door.moduleId)
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** ONE DOOR. The photograph, the kind's name, and what is behind
+ *  it, counted.
+ *
+ *  THE CAPTION IS NOT OVER THE PICTURE. Rule 4 asks every
+ *  text/background pair to clear 4.5:1 MEASURED, and a photograph
+ *  has no ground that can be measured — a white hull and a sunset
+ *  are two different backgrounds under one line of type. So the
+ *  words sit on the card's own surface underneath, where the ratio
+ *  is the one the ink ramp was measured at.
+ *
+ *  AND THE FIGURE IS NOT THE HUE. §1: a price is not decorative,
+ *  and neither is a count. The kind's colour is the plate behind
+ *  the picture and the tint of the door; the number is ink. */
+function DoorPlate({ door, onOpen }: { door: Door; onOpen: () => void }): JSX.Element {
+  return (
+    <button type="button" className="dsh-door" data-kind={door.kind} onClick={onOpen}>
+      {/* THE MARK IS DRAWN AND CSS HIDES IT WHERE A PHOTOGRAPH
+          LANDED, which is the arrangement the module tiles already
+          keep and for the same reason: whether a picture paints is
+          decided inside `Shot` — it needs an address the app is
+          allowed to request — and a ternary here would be a second
+          copy of that decision that could disagree with it. */}
+      <span className="dsh-door-plate">
+        {door.picture ? <Shot img={door.picture} /> : null}
+        {/* `large`, WHICH `icons.tsx` NAMES "the industry choice,
+            empty states" — because that is what this is. A plate
+            with no photograph in it is an empty state, and a 22px
+            glyph in a 264x140 plate is a mark somebody mislaid
+            rather than a mark standing in for a picture. */}
+        <span className="dsh-door-mark" aria-hidden="true">
+          <TableKindSymbol kind={door.kind} size={ICON_SIZE.large} />
+        </span>
+      </span>
+      <span className="dsh-door-say">
+        <span className="dsh-door-name ds-heading">{door.label}</span>
+        {/* THE COUNT IS THE DEALER'S OWN NOUN — "810 variants",
+            "2,860 parts" — and the figure inside it is mono, which
+            is the rule every other number on this page keeps. */}
+        <span className="dsh-door-n ds-caption">
+          {splitCount(`${door.items.toLocaleString()} ${door.noun}`)}
+        </span>
+      </span>
+    </button>
+  )
+}
+
+/** The picture on a door, or nothing at all.
+ *
+ *  `alt` IS EMPTY ON PURPOSE, and this is the one place in the app
+ *  where that is right. In the catalogue the photograph IS the row
+ *  and carries the row's name; here it illustrates a kind, and the
+ *  row it came from is not where the door leads. Giving it the
+ *  row's label would make the button announce itself as "Stacer
+ *  4.29 Proline — Boats — 810 variants", which names a boat this
+ *  door does not open. The button's own words are its name. */
+function Shot({ img }: { img: ImageRef }): JSX.Element | null {
+  const { paint, probe, at } = useImageDisplay(img.src)
+  if (!paint) return null
+  return (
+    <img
+      className="dsh-door-img"
+      /* `at`, not `img.src` — the repository ships a copy of most
+         of these and paints it from our own origin. The RECORD
+         still holds the manufacturer's address. */
+      src={at}
+      alt=""
+      /* the box is reserved before the bytes arrive, so a picture
+         landing late never reflows the card under a reader */
+      width={240}
+      height={120}
+      loading={probe ? 'eager' : 'lazy'}
+      decoding="async"
+      draggable={false}
+      onLoad={() => noteImageLoaded(img.src)}
+      onError={() => noteImageFailed(img.src)}
+    />
   )
 }
 
@@ -1060,6 +1213,8 @@ export function CardBody({ id, me, userId, orgSlug, acts }: CardBodyProps): JSX.
       return <RecentlyOpened acts={acts} />
     case 'my-modules':
       return <MyModules acts={acts} who={{ userId, orgSlug }} />
+    case 'what-we-sell':
+      return <WhatWeSell acts={acts} />
     case 'activity':
       return <Activity orgSlug={orgSlug} />
     case 'the-price-file':

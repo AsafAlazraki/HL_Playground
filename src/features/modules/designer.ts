@@ -77,24 +77,39 @@ export const DESIGNER_CAPABILITIES: DesignerCapability[] = (() => {
   return out
 })()
 
-/** What a capability that is SWITCHED ON but not yet performed will
- *  do when it is. Shared with the index's own stub strip, so the
- *  promise made on the switch and the promise made on the disabled
- *  control are the same sentence and can never drift apart.
+/** WHAT A SWITCHED-ON VERB ACTUALLY DOES, said beside the switch.
+ *  Shared with the index's own stub strip, so the promise made on the
+ *  switch and the promise made on the disabled control are the same
+ *  sentence and can never drift apart.
+ *
+ *  THREE OF THESE WERE FALSE THE MOMENT THE CATALOGUE GREW THE ACTS.
+ *  `add`, `edit` and `delete` read "not built yet — the sheet is
+ *  where rows are made today", which was true for as long as
+ *  `ModuleIndex` read `browse`, `search` and `open` and stopped. It
+ *  no longer does: the Catalog tab carries a new button, a rename on
+ *  each face and a take-out, all three gated on these switches, all
+ *  three undoable (`writeCaps.ts`). A note claiming a verb is unbuilt
+ *  while the verb works is the same class of lie as a switch that
+ *  changes nothing, pointing the other way.
+ *
+ *  So they follow the shape `relate` and `quote` already set: WHERE
+ *  THE VERB WORKS, NOT HOW TO WORK IT. Both of those closed with a
+ *  route — "happens on the item's own page today", "open one and
+ *  press 'Quote this one'" — which is a step-by-step for a control on
+ *  a page this note is not on. The fact a person needs is which page
+ *  owns the verb; finding the button on it is that page's job.
  *
  *  `configure` IS ABSENT FROM THIS RECORD ON PURPOSE — it is
  *  performed, in the designer's fourth panel, which is the whole
  *  point of the wave that added it. */
 export const NOT_YET_SAYS: Partial<Record<DesignerCapability, string>> = {
-  add: 'Adding an item from here is not built yet — the sheet is where rows are made today.',
-  edit: 'Editing from here is not built yet — the sheet is where data changes today.',
-  delete: 'Removing an item from here is not built yet.',
-  /* WHERE THE VERB WORKS, NOT HOW TO WORK IT. Both of these closed
-     with a route — "happens on the item's own page today", "open one
-     and press 'Quote this one'" — which is a step-by-step for a
-     control on a page this note is not on. The fact a person needs is
-     which page owns the verb; finding the button on it is that page's
-     job, and it has one. */
+  add: 'A new one is started from the Catalog tab, empty, in this module’s first table.',
+  /* NAMES THE HALF THAT IS TRUE AND THE HALF THAT IS NOT. A
+     catalogue face carries one editable fact — the item's own name —
+     and a note promising more than that would send somebody looking
+     for a price box that is not there. */
+  edit: 'A name is typed on its own face in the Catalog; every other column changes on the sheet.',
+  delete: 'Taking one out is done from its face in the Catalog, and it is undoable.',
   relate: 'Ticked on an item’s own page today.',
   quote: 'Quoting starts from an item’s own page today.',
   export: 'Taking a copy of this list out is not built yet.',

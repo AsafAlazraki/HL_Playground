@@ -42,16 +42,17 @@
 
    ── THE THREE BANDS OF THE SCREEN ────────────────────────────
 
-     THE PRODUCT   left, never scrolling, full height. The
-                   photograph, WHAT HAS BEEN DECIDED, the name at
-                   display scale, the specs as hairlines. IT CHANGES
-                   WITH THE BUILD: pick a motor and the render
-                   crossfades to it, 260ms, opacity only. §THE
-                   PRODUCT.
-     THE BANDS     right, scrolling. Accordions in a fixed order —
-                   the hull, motors, trailers, what the dealer fits,
-                   then the paperwork — several open at once, each
-                   head carrying its kind's own hue. `bands.ts` owns
+     THE PRODUCT   left, never scrolling — not its own scrollbar
+                   either — full height. The reference, THE NAME,
+                   the specs as hairlines, the photograph, then what
+                   has been put on the quote. IT CHANGES WITH THE
+                   BUILD: pick a motor and the render crossfades to
+                   it, 260ms, opacity only. §THE PRODUCT.
+     THE BANDS     right, and THE ONLY SCROLLPORT ON THE SCREEN.
+                   Sections in a fixed order — the hull, motors,
+                   trailers, what the dealer fits — ALL OPEN, each
+                   head carrying its kind's own hue and a collapse
+                   for the person who wants less. `bands.ts` owns
                    the order and the head's one fact.
      THE PRICE     under both, a sibling of the scrollport so no
                    line can ever pass behind it. Inclusive and
@@ -216,7 +217,9 @@ import { addLine, issueQuote, persistNote, removeLine, setLevel, setQty } from '
 import { recallOpen, rememberOpen } from './place'
 import { buildSteps, savedNote, weighPick } from './steps'
 import type { BuildStep, Weighing } from './steps'
-import { openByDefault, orderBands, type Band } from './bands'
+/* `openByDefault` is NOT imported. It opened one band of seven and
+   this screen opens all of them — see the note above the open-state below. */
+import { orderBands, type Band } from './bands'
 import { deltaSay, levelConflict, type Conflict } from './conflict'
 import { FlowFoot, FlowLine, RunningTotal, type FlowStop } from './flow'
 import { FrozenPhoto } from './photo'
@@ -266,9 +269,9 @@ export interface QuoteBuildProps {
      CL360 at 1600x1000, with every band open, `.qb-scroll` ran to
      3,762px against an 805px viewport and that band's head sat at
      3,277px — 87% of the way down a page four screens tall, SHUT,
-     because `openByDefault` opens the first band with something to
-     decide. Shut and unopened it still sat at 942px, below the fold
-     on a 1,019px scroll.
+     because the default of the day opened the first band with
+     something to decide and nothing else. Shut and unopened it still
+     sat at 942px, below the fold on a 1,019px scroll.
 
      CONFIGURATOR.md §A: "Nobody does *address*, and it is a step,
      not a footnote." A shut accordion at 3,277px is a footnote. And
@@ -307,15 +310,48 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
   const refusals = issueBlockers(quote)
   const { still } = useStillness()
 
-  /* WHICH BANDS ARE OPEN, AND WHY IT SURVIVES A RELOAD. Every line
-     the page has produced is already on the document, so losing this
-     loses a scroll position and never a decision. `place.ts` hands
-     back whatever it stored and this is where it is CHECKED: a band
-     id that no longer names a band of this document is discarded
-     here rather than trusted. */
+  /* ── EVERY BAND OPENS, AND THE ACCORDION IS A TOOL RATHER THAN A
+     GATE ───────────────────────────────────────────────────────────
+
+     MEASURED at 1280×800 on a fresh Highfield CL260 (PVC) B-G-DG:
+     seven bands, ONE of them open. Six of the seven questions this
+     page exists to ask were behind a shut door, and the answer to
+     "what am I configuring" was a press away six times over. On a
+     dealer's own view with more tables it is worse in exact
+     proportion — the shape is the defect, not the count.
+
+     CONFIGURATOR_PLAYBOOK §8 rejects "gates before the tool" and
+     PHASE_TWO §2.3 asks for a SCROLLING OPTION RAIL — "bands are
+     accordions in a fixed order; open several at once". A stack of
+     collapsed drawers is neither.
+
+     `openByDefault` opened exactly one, and its own comment gives
+     the reason to go the other way: "a page that opens seven
+     accordions has an accordion for no reason." That is right about
+     the accordion and wrong about which end to fix. The accordion
+     earns its keep the moment a person has read past a band — a
+     73-row trailer shortlist is worth folding away — so the HEAD
+     keeps its collapse. What it may not do is decide, on a person's
+     behalf and before they have looked, which six of seven
+     questions they are not allowed to see.
+
+     So the default is every band open, in the fixed order, and
+     collapsing is a deliberate act by somebody who wants less. It
+     is one scroll of sections, which is what §2.3 drew.
+
+     WHAT SURVIVES A RELOAD is unchanged. `place.ts` hands back
+     whatever it stored and this is where it is CHECKED: a band id
+     that no longer names a band of this document is discarded here
+     rather than trusted. Every line the page has produced is already
+     on the document, so losing this loses a scroll position and
+     never a decision — and a person who shut six bands before lunch
+     gets them shut when they come back. */
   const [open, setOpen] = useState<string[]>(() => {
     const back = recallOpen(quote.id).filter((id) => bands.some((b) => b.id === id))
-    return back.length > 0 ? back : openByDefault(bands)
+    /* THE SUBJECT IS NOT ONE OF THEM. It decides nothing — it is the
+       hull the whole document is about — and opening it would put a
+       read-only line where the first choice should be. */
+    return back.length > 0 ? back : bands.filter((b) => !b.subject).map((b) => b.id)
   })
   useEffect(() => {
     rememberOpen(quote.id, open)
@@ -501,12 +537,27 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
    dashboard was larger than 34px across seven sizes, which is not
    a hierarchy — it is the absence of one.
 
-   IT IS NOT STICKY, IT IS OUTSIDE THE SCROLL. `position: sticky`
-   inside a scrollport is floored by that scrollport's content box
-   and has to be told a height it cannot know. This pane is a flex
-   SIBLING of the scrolling column, so it is full height by
-   construction at every size, and at 1024 and below the two stack
-   and the whole page scrolls instead.
+   IT IS STICKY BY BEING OUTSIDE THE SCROLL, WHICH IS THE STRONGER
+   FORM OF IT. `position: sticky` inside a scrollport is floored by
+   that scrollport's content box and has to be told a height it
+   cannot know — and if it is ever told wrong, its own tail becomes
+   unreachable. This pane is a flex SIBLING of the scrolling column,
+   so it is full height by construction at every size, it never
+   moves, and at 1024 and below the two stack and the whole page
+   scrolls instead.
+
+   AND IT NO LONGER SCROLLS ITSELF. It carried `overflow-y: auto`,
+   which put a second scrollport beside the first: measured at
+   1280×800, this pane held 713px in 524 and the option rail held
+   654px in the same 524, so the screen had two scrollbars and the
+   answer to "which one moves" was the pointer's x. PHASE_TWO §2.3
+   asks for one. It fits instead — see `.qb-product` in build.css
+   for which block gives when it cannot.
+
+   THE ORDER IS A DOCUMENT'S: the reference, the name, the specs,
+   the photograph, then what has been put on the quote. It ran
+   photograph → decided lines → reference → name, so the heading sat
+   UNDER the list it heads, at y=541 in a pane that ended at 604.
 
    WHAT THE RAIL WAS, AND WHICH HALF OF IT SURVIVED. The responsive
    pass split this page into a `qb-rail` and a `qb-main` above
@@ -566,9 +617,13 @@ function ProductPane({
      THIS IS THE PLATES ROW, GIVEN NAMES. It drew the same lines as
      56×42 thumbnails with the name in a `title` attribute — so the
      one surface that already knew what had been decided could only
-     be read by hovering it, and a line with no photograph was not in
-     it at all. Same control, same act (press it and the render
-     becomes that thing), one fact added.
+     be read by hovering it. Same control, same act (press it and the
+     render becomes that thing), one fact added.
+
+     THAT PASS ALSO GAVE A ROW TO A LINE WITH NO PHOTOGRAPH, and
+     that half is withdrawn below: a plate is a picture to switch
+     to, and a plate with no picture is a control with no act. The
+     naming is what was worth keeping and it is kept.
 
      AND IT DREW THE HULL TWICE. `quote.lines` holds the subject as a
      line of its own, so a plate was drawn for `quote.subjectImage`
@@ -581,47 +636,52 @@ function ProductPane({
      a second ledger that can disagree with the first. The money is
      on the price bar and its arithmetic is one press away there. */
   const subjectLineId = steps.find((s) => s.subject)?.lines[0]?.id
-  const decided = steps.filter((s) => !s.subject).flatMap((s) => s.lines)
+  /* ── A PLATE IS A PHOTOGRAPH TO SWITCH TO, SO A LINE WITHOUT ONE
+     GETS NO PLATE ──────────────────────────────────────────────────
+
+     This drew a row for every decided line, and a line the price
+     file carries no photograph for drew a grey rectangle: a control
+     whose whole act is "put this picture in the render above" and
+     which, pressed, puts a placeholder there instead. Measured on a
+     fresh CL260 the hull pick mints four lines and TWO of them —
+     Fuel Tank, Tube Covers — are that. Two dead controls of four,
+     104px of a 524px pane.
+
+     It is also what made this list unbounded, and an unbounded list
+     is what made the pane a second scrollport. A dealer-fit build
+     of nine lines drew nine rows at 52px whatever the window had.
+     Photographed lines are hull, motor, trailer and the odd package
+     — two or three on a real rig — so the list is bounded by the
+     data rather than by a cap this file invented.
+
+     NOTHING TRUE IS LOST. Every decided line is on its own band
+     head as that band's one fact, in the ledger behind the total,
+     and on the quote document itself. What is gone is a button that
+     did nothing when pressed. */
+  const decided = steps
+    .filter((s) => !s.subject)
+    .flatMap((s) => s.lines)
+    .filter((l) => l.image)
 
   return (
     <aside className="qb-product" aria-label="What this quote is about">
-      {/* THE CAPTION IS DRAWN ONLY WHEN IT IS NEWS. Measured: the
-          strip under the photograph read "Highfield - SP420 (HYP)
-          I-B-C" and the heading below it read the same five words.
-          The test is NOT "is a line showing" — the hull is minted as
-          a line too, and it is the newest photographed one on a fresh
-          quote, so that test caught nothing. It is whether the name
-          differs from the one the heading is about to print. The
-          caption exists for the moment a person presses a plate and
-          the picture becomes a motor; on the hull the heading is the
-          caption, and the photograph takes the 26px back. */}
-      <Render
-        img={img}
-        name={name}
-        say={name === quote.subjectLabel ? '' : name}
-        still={still}
-      />
+      {/* ── THE NAME READS FIRST, BECAUSE IT NAMES EVERYTHING UNDER IT
+          ────────────────────────────────────────────────────────────
 
-      {decided.length > 0 ? (
-        <ul className="qb-plates" aria-label="What is decided so far">
-          <Plate
-            img={quote.subjectImage}
-            name={quote.subjectLabel}
-            on={showing === null || showing === subjectLineId}
-            onPick={() => onShow(null)}
-          />
-          {decided.map((line) => (
-            <Plate
-              key={line.id}
-              img={line.image}
-              name={line.label}
-              on={showing === line.id}
-              onPick={() => onShow(line.id)}
-            />
-          ))}
-        </ul>
-      ) : null}
+          MEASURED at 1280×800 on a Highfield CL260 (PVC) B-G-DG: the
+          pane ran photograph (y=100) · four decided lines (y=296) ·
+          the reference stamp (y=518) · the `h1` (y=541) — and the
+          pane's own floor was y=604, so the heading of the page was
+          BELOW the list it heads and half of it was under the fold.
+          A person had to scroll a 401px column to find out which
+          boat they were quoting.
 
+          The order is a document's now: the stamp, the name, the
+          facts about it, then the photograph of it, then what has
+          been put on it. That is also the anatomy `PageHead` uses on
+          every other screen in this app — eyebrow, name, facts —
+          which is why the reference keeps the mono-label step it
+          already had rather than gaining a treatment of its own. */}
       <div className="qb-ident">
         <p className="qb-ref mono-label">{quote.reference}</p>
         <h1 className="qb-name">{quote.subjectLabel}</h1>
@@ -658,6 +718,48 @@ function ProductPane({
           </p>
         ) : null}
       </div>
+
+      {/* THE CAPTION IS DRAWN ONLY WHEN IT IS NEWS. Measured: the
+          strip under the photograph read "Highfield - SP420 (HYP)
+          I-B-C" and the heading above it read the same five words.
+          The test is NOT "is a line showing" — the hull is minted as
+          a line too, and it is the newest photographed one on a fresh
+          quote, so that test caught nothing. It is whether the name
+          differs from the one the heading printed. The caption exists
+          for the moment a person presses a plate and the picture
+          becomes a motor; on the hull the heading is the caption, and
+          the photograph takes the 26px back. */}
+      <Render
+        img={img}
+        name={name}
+        say={name === quote.subjectLabel ? '' : name}
+        still={still}
+      />
+
+      {/* THE NAME OF THE LIST SAYS WHAT IS IN IT. It read "What is
+          decided so far" while it drew every line; it draws the
+          photographed ones, so it says so. A list that names itself
+          after a set it does not hold is the kind of small lie a
+          screen reader has no way to check. */}
+      {decided.length > 0 ? (
+        <ul className="qb-plates" aria-label="What is on this quote, in pictures">
+          <Plate
+            img={quote.subjectImage}
+            name={quote.subjectLabel}
+            on={showing === null || showing === subjectLineId}
+            onPick={() => onShow(null)}
+          />
+          {decided.map((line) => (
+            <Plate
+              key={line.id}
+              img={line.image}
+              name={line.label}
+              on={showing === line.id}
+              onPick={() => onShow(line.id)}
+            />
+          ))}
+        </ul>
+      ) : null}
     </aside>
   )
 }

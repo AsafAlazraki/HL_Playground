@@ -116,21 +116,34 @@
    surface where every change to a module is made, and this page is
    what that surface is about. See ModuleSettings.tsx for the whole
    argument, including what moved and where it went.
+
+   AND THE ONE THING THAT CAME BACK, WHICH IS NOT THE DESIGNER. The
+   designer stayed on the settings page; three WRITE VERBS did not,
+   because they were never a design surface — `add`, `edit` and
+   `delete` are things a person does to a boat while standing in front
+   of it, and they had been switches with no consumer since the module
+   system landed. They are drawn here exactly while their switch is on,
+   and every one of them is undoable. `writeCaps.ts` carries the
+   reading and the sentences, and says precisely what is still blocked
+   on somebody deciding who signs in.
    ============================================================ */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import {
   LinkSimple,
   ListBullets,
   MagnifyingGlass,
+  Plus,
   SquaresFour,
 } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { say, sayUndoable } from '@/store/notes'
 import {
   accentVar,
   isRetired,
   TABLE_KINDS,
+  type FieldDef,
   type ImageRef,
   type ModuleDef,
   type TableKind,
@@ -171,6 +184,29 @@ import {
   type IndexSection,
 } from './read'
 import { moduleAt } from './places'
+/* ============================================================
+   THE THREE WRITE VERBS, AND THE SWITCH THAT USED TO CHANGE
+   NOTHING.
+
+   This page read `browse`, `search` and `open` and stopped. `add`,
+   `edit` and `delete` were in the contract, on the designer's
+   switches and in the access grid's columns, and a grep of every
+   `.tsx` in this feature found none of them outside a test — so an
+   administrator could switch `edit` off for Boats and take nothing
+   away, because there was nothing here to take.
+
+   `writeCaps.ts` answers the three verbs and carries the sentences.
+   It is deliberately module-wide and role-free; the whole argument,
+   including exactly what stays blocked on identity, is in its
+   header. ============================================================ */
+import {
+  addLabel,
+  addSays,
+  addedSay,
+  readWrites,
+  removedSay,
+  renamedSay,
+} from './writeCaps'
 import './modules.css'
 
 /** How many items are drawn before the page asks you to narrow.
@@ -217,7 +253,17 @@ export function ModuleStock({
   const module = useMemo(() => moduleAt(owner, place), [owner, place])
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  /* THE THREE WRITES, TAKEN OFF THE STORE ONE AT A TIME rather than
+     as an object, so a catalogue nobody may write to subscribes to
+     three stable function references and re-renders for none of them. */
+  const addRow = useProjectStore((s) => s.addRow)
+  const deleteRow = useProjectStore((s) => s.deleteRow)
+  const updateCell = useProjectStore((s) => s.updateCell)
   const [query, setQuery] = useState('')
+  /* WHICH FACE IS BEING RENAMED — `${tableId}:${rowId}`, or none. A
+     position inside this page, like the open drawer and the density:
+     it is not a fact about the business and it is written nowhere. */
+  const [renaming, setRenaming] = useState<string | null>(null)
   /* WHICH DRAWER IS OPEN, or none. A position inside this page and
      nowhere else: it is not stored on the module, because which
      heading somebody is reading is not a fact about the place. */
@@ -318,6 +364,99 @@ export function ModuleStock({
   const canSearch = module.capabilities.includes('search')
   const canOpen = module.capabilities.includes('open')
 
+  /* ── WHAT MAY BE WRITTEN HERE ────────────────────────────────────
+     Off = nothing is drawn and nothing is said. On = the affordance
+     works. On and blocked = the sentence, below the header, in the
+     place the act would have been. See `writeCaps.ts`. */
+  const writes = useMemo(() => readWrites(module, tables, listed), [module, tables, listed])
+
+  /* ONE WORDING PER FACT. With the tables off the sheet all three
+     verbs are blocked by the same sentence, and printing it three
+     times is how a person starts wondering whether they are three
+     faults — the lesson `accessSay.ts` was written to record. */
+  const refusals = useMemo(() => {
+    const out: string[] = []
+    for (const stance of [writes.add, writes.edit, writes.delete]) {
+      if (stance.blocked !== undefined && !out.includes(stance.blocked)) out.push(stance.blocked)
+    }
+    return out
+  }, [writes])
+
+  /* A NEW ONE, IN THE MASTER TABLE — MODULE_SYSTEM §5's own words for
+     what this switch does. The row is blank, it is undoable, and the
+     app goes to it when opening is on: a blank row carries no banner
+     value and sorts to the end of its table, so it is in neither the
+     drawer that was open nor the search that was typed, and a button
+     that appeared to do nothing would be the worse bug. */
+  const startOne = useCallback(() => {
+    const into = writes.into
+    if (into === undefined || writes.add.blocked !== undefined) return
+    const row = addRow(into.id)
+    if (row === null) return
+    sayUndoable(addedSay(into, canOpen))
+    if (canOpen) onOpen(into.id, row.id)
+  }, [writes, addRow, canOpen, onOpen])
+
+  /* TAKEN OUT, THEN SAID — never asked first. Rule 9: an undoable act
+     gets a toast with UNDO, not a dialog. MODULE_SYSTEM §5 wrote
+     "with the same confirm the sheet uses", and the sheet no longer
+     uses one: `@/store/notes` records that `window.confirm` is "the
+     wrong instrument twice over" for an act the store can already put
+     back. The toast names the row and pins the step. */
+  const takeOut = useCallback(
+    (tableId: string, rowId: string, label: string) => {
+      const from = listed.find((t) => t.id === tableId)
+      if (from === undefined || writes.delete.on !== true || writes.delete.blocked !== undefined) {
+        return
+      }
+      deleteRow(tableId, rowId)
+      sayUndoable(removedSay(label, from))
+    },
+    [listed, deleteRow, writes],
+  )
+
+  /* THE ONE FACT A CATALOGUE FACE OWNS is the item's own name, so
+     that is what `edit` types into here. Every other column is the
+     sheet's, which has the right editor for a figure, a date and a
+     list — see `renameFieldOf` for why writing a free string into one
+     of those is corruption rather than an edit. */
+  const rename = useCallback(
+    (tableId: string, rowId: string, from: string, to: string) => {
+      setRenaming(null)
+      const field = writes.renames.get(tableId)
+      if (field === undefined || writes.edit.blocked !== undefined) return
+      const next = to.trim()
+      if (next === from) return
+      /* AN EMPTY NAME IS REFUSED WHERE IT IS REFUSED, and the old one
+         is still on screen behind the note — rather than a row
+         quietly becoming "(untitled highfield inflatables)" because
+         somebody selected all and pressed Enter. */
+      if (next === '') {
+        say({ text: `A name cannot be empty, so ${from} is unchanged.`, tone: 'warn' })
+        return
+      }
+      updateCell(tableId, rowId, field.id, next)
+      sayUndoable(renamedSay(from, next))
+    },
+    [writes, updateCell],
+  )
+
+  /* WHAT EVERY FACE IS HANDED, or nothing at all. Absent = this
+     catalogue writes nothing, and no face grows a control. */
+  const acts: FaceActs | undefined = useMemo(() => {
+    const canRename = writes.edit.on && writes.edit.blocked === undefined && writes.renames.size > 0
+    const canRemove = writes.delete.on && writes.delete.blocked === undefined
+    if (!canRename && !canRemove) return undefined
+    return {
+      renames: canRename ? writes.renames : new Map<string, FieldDef>(),
+      removing: canRemove,
+      renaming,
+      onRename: setRenaming,
+      onRenamed: rename,
+      onTakeOut: takeOut,
+    }
+  }, [writes, renaming, rename, takeOut])
+
   /* THE DRAWERS — the headings this register is banner'd under, built
      off the entries this page already made rather than off the rows a
      second time. Empty for a table that banners nothing. */
@@ -350,6 +489,10 @@ export function ModuleStock({
   useEffect(() => {
     setOpenKey(null)
     setShowAll(false)
+    /* AND NEITHER IS A HALF-TYPED NAME. A rename key points at a row
+       on the table we have just left; carrying it across would open a
+       box over whichever row happens to share the position. */
+    setRenaming(null)
   }, [module.id])
 
   /* ── WHAT THE RULE ADMITS, COUNTED BEFORE ANYBODY TYPES ──────────
@@ -491,8 +634,16 @@ export function ModuleStock({
 
   return (
     <section className="md-index" style={style} aria-label={module.name}>
-      {/* THE BAR OF THE STOCK TAB — the find box and the density
-          switch, and nothing else.
+      {/* THE BAR OF THE STOCK TAB — the find box, the density switch,
+          and the one act that is about the WHOLE list rather than
+          about an item on it.
+
+          "AND NOTHING ELSE" IS WHAT THIS SAID, and it was true until
+          `add` became a real switch. A new one belongs here for the
+          same reason the density switch does: it is a decision about
+          the list, not about a boat. Everything a person does to ONE
+          item — open it, rename it, take it out, quote it — is on that
+          item's own face, and the two never mix.
 
           WHAT LEFT THIS HEADER, AND WHERE IT WENT. The module's name,
           its description and its census stood here; they are now the
@@ -534,25 +685,46 @@ export function ModuleStock({
             already decides which a place is BORN as; this is the
             person overruling it for as long as they are standing
             here, which is why it is not stored. */}
-        <div className="md-density" role="group" aria-label="How much of each item to show">
-          <button
-            type="button"
-            className="md-density-one"
-            aria-pressed={dense === 'tiles'}
-            onClick={() => setDense('tiles')}
-          >
-            <SquaresFour size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-            Gallery
-          </button>
-          <button
-            type="button"
-            className="md-density-one"
-            aria-pressed={dense === 'rows'}
-            onClick={() => setDense('rows')}
-          >
-            <ListBullets size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-            List
-          </button>
+        <div className="md-idx-tools">
+          <div className="md-density" role="group" aria-label="How much of each item to show">
+            <button
+              type="button"
+              className="md-density-one"
+              aria-pressed={dense === 'tiles'}
+              onClick={() => setDense('tiles')}
+            >
+              <SquaresFour size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+              Gallery
+            </button>
+            <button
+              type="button"
+              className="md-density-one"
+              aria-pressed={dense === 'rows'}
+              onClick={() => setDense('rows')}
+            >
+              <ListBullets size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+              List
+            </button>
+          </div>
+
+          {/* THE NEW BUTTON — MODULE_SYSTEM §5's own consequence for
+              switching `add` on, and the first thing on this page ever
+              to consume a write verb. Switched off it is not here at
+              all; switched on with nowhere to put a row it is here,
+              disabled, and the sentence saying why is under the
+              header where the act was refused. */}
+          {writes.add.on ? (
+            <button
+              type="button"
+              className="md-idx-add"
+              disabled={writes.into === undefined || writes.add.blocked !== undefined}
+              {...(writes.into ? { title: addSays(writes.into) } : {})}
+              onClick={startOne}
+            >
+              <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+              {writes.into ? addLabel(writes.into, listed.length > 1) : 'Add one'}
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -581,6 +753,34 @@ export function ModuleStock({
         <p className="md-idx-note">
           Opening one is switched off for this module, so these are a list to read
           rather than a way in.
+        </p>
+      ) : null}
+
+      {/* A WRITE VERB THAT IS ON AND CANNOT WORK SAYS SO, HERE.
+          Nothing is said for a verb that is OFF: browse/search/open is
+          the contract's own default, so every module ever made writes
+          nothing, and three apologies at the top of every catalogue
+          would be noise over a price list. What needs saying is the
+          other case — the switch is on, the affordance is missing, and
+          without a sentence that reads as the app being broken. */}
+      {refusals.map((why) => (
+        <p className="md-idx-note" key={why}>
+          {why}
+        </p>
+      ))}
+
+      {/* AND THE HALF-CASE: some tables here can be renamed and some
+          cannot, so the faces differ and the reason is a column rather
+          than a setting. Drawn only when both kinds are present —
+          with none renameable the refusal above is already the
+          sentence. */}
+      {writes.edit.on && writes.unnameable.length > 0 ? (
+        <p className="md-idx-note">
+          {writes.unnameable.join(', ')}{' '}
+          {writes.unnameable.length === 1 ? 'is' : 'are'} not renamed here:{' '}
+          {writes.unnameable.length === 1 ? 'its name' : 'their names'} sit in a formula, a
+          figure or a picked-from-a-list column, and the sheet has the right editor for
+          those.
         </p>
       ) : null}
 
@@ -710,6 +910,7 @@ export function ModuleStock({
         sections.map((section) => (
           <Section
             {...(onQuote ? { onQuote } : {})}
+            {...(acts ? { acts } : {})}
             key={section.tableId}
             /* the anchor a member chip scrolls to. Keyed on the MODULE
                too: two modules sharing a table would otherwise write
@@ -757,6 +958,10 @@ interface SectionProps {
   onOpen: (tableId: string, rowId: string) => void
   /** raise a quote for one item, handed down to every face. */
   onQuote?: ((tableId: string, rowId: string) => void) | undefined
+  /** what may be WRITTEN to one item, handed down to every face.
+   *  Absent = neither `edit` nor `delete` is in force here, and no
+   *  face grows a control. */
+  acts?: FaceActs | undefined
 }
 
 function Section({
@@ -767,6 +972,7 @@ function Section({
   canOpen,
   onOpen,
   onQuote,
+  acts,
 }: SectionProps): ReactElement {
   return (
     <section className="md-sec" id={domId} aria-label={section.name}>
@@ -793,6 +999,7 @@ function Section({
                   tableName={section.name}
                   canOpen={canOpen}
                   {...(onQuote ? { onQuote } : {})}
+                  {...(acts ? { acts } : {})}
                   onOpen={onOpen}
                 />
               ))}
@@ -806,6 +1013,7 @@ function Section({
                   canOpen={canOpen}
                   onOpen={onOpen}
                   {...(onQuote ? { onQuote } : {})}
+                  {...(acts ? { acts } : {})}
                 />
               ))}
             </ul>
@@ -919,6 +1127,185 @@ interface FaceProps {
      act belongs. Absent = the host cannot open a quote, and then no
      button is drawn rather than one that goes nowhere. */
   onQuote?: ((tableId: string, rowId: string) => void) | undefined
+  /** what may be WRITTEN to this one. Absent = nothing. */
+  acts?: FaceActs | undefined
+}
+
+/* ============================================================
+   WHAT A FACE MAY DO TO ITS OWN ROW.
+
+   ONE OBJECT RATHER THAN SIX PROPS, and not for tidiness: the
+   presence of the object is itself the answer. A catalogue where
+   neither `edit` nor `delete` is in force hands down nothing, so
+   every face below is the same markup it has always been and a
+   read-only catalogue cannot accidentally grow a control.
+
+   `renames` IS THE PER-TABLE ANSWER, not a boolean. Boats and Rate
+   Card can sit in one catalogue, and one of them names its rows in a
+   column a person may type into while the other names them with a
+   figure. A face asks the map about ITS OWN table; the tables that
+   answered no are named once, in a sentence under the header, rather
+   than silently drawing two kinds of face. See `writeCaps.ts`.
+   ============================================================ */
+interface FaceActs {
+  /** the column a rename types into, per table id. A face whose table
+   *  is absent from this map carries no rename. */
+  renames: Map<string, FieldDef>
+  /** `delete` is in force and can be performed */
+  removing: boolean
+  /** which face is open for renaming — `${tableId}:${rowId}` */
+  renaming: string | null
+  onRename: (key: string | null) => void
+  onRenamed: (tableId: string, rowId: string, from: string, to: string) => void
+  onTakeOut: (tableId: string, rowId: string, label: string) => void
+}
+
+/** The one key a face is known by on this page. */
+const faceKey = (entry: IndexEntry): string => `${entry.tableId}:${entry.rowId}`
+
+/* ============================================================
+   THE ACTS ON ONE FACE — one right-anchored cluster, revealed on
+   approach.
+
+   WHY QUOTE IT MOVED INSIDE. It was a lone absolutely-positioned
+   button in the corner, which was right while it was the only act a
+   face had. With a rename and a take-out beside it, three siblings
+   each doing their own positioning arithmetic is three chances to
+   overlap — and on the 40px dense line there is exactly one free
+   strip and all three want it. So the CLUSTER is positioned and
+   revealed, and the buttons inside it are ordinary buttons in a row.
+   Quote it keeps its paint, its place at the outer edge and its
+   press; nothing about it changed except who owns its coordinates.
+
+   THE DESTRUCTIVE ONE IS NOT THE PRIMARY ONE, and they do not look
+   alike: Quote it is the filled accent, the two writes are quiet
+   outlines, and there is a full gap between the pair and the sale.
+   ============================================================ */
+function FaceActs({
+  entry,
+  inline,
+  acts,
+  onQuote,
+}: {
+  entry: IndexEntry
+  /** the dense line, which reveals at the end of the row rather than
+   *  over the top of a 40px strip */
+  inline: boolean
+  acts?: FaceActs | undefined
+  onQuote?: ((tableId: string, rowId: string) => void) | undefined
+}): ReactElement | null {
+  const canRename = acts !== undefined && acts.renames.has(entry.tableId)
+  const canRemove = acts?.removing === true
+  if (!canRename && !canRemove && onQuote === undefined) return null
+  return (
+    <div className={inline ? 'md-face-acts is-inline' : 'md-face-acts'}>
+      {canRename && acts ? (
+        <button
+          type="button"
+          className="md-face-act"
+          aria-label={`Rename ${entry.label}`}
+          onClick={() => acts.onRename(faceKey(entry))}
+        >
+          Rename
+        </button>
+      ) : null}
+      {canRemove && acts ? (
+        <button
+          type="button"
+          className="md-face-act is-take-out"
+          aria-label={`Take ${entry.label} out of the catalogue`}
+          onClick={() => acts.onTakeOut(entry.tableId, entry.rowId, entry.label)}
+        >
+          Take out
+        </button>
+      ) : null}
+      {onQuote ? (
+        <button
+          type="button"
+          className="md-quote-it"
+          onClick={() => onQuote(entry.tableId, entry.rowId)}
+        >
+          Quote it
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+/* ============================================================
+   THE NAME, OPEN FOR TYPING.
+
+   THE FACE STOPS BEING A BUTTON WHILE THIS IS ON SCREEN. An input
+   inside a button is not a control — it is markup a browser is
+   entitled to reject, which is the same reason Quote it has always
+   been a sibling rather than a child. So the tile and the row render
+   their flat variant for as long as one of them is being renamed, and
+   the door comes back the moment it closes.
+
+   NOTHING HERE ANIMATES. This is reached by a press and left by a
+   keystroke, both of them repeated, and the motion budget bars a
+   transition on either.
+
+   THE FOCUS CALLBACK IS STABLE ON PURPOSE. An inline `ref={(el) =>
+   el?.select()}` is a new function every render, so React detaches
+   and re-attaches it on every keystroke and re-selects the whole
+   value under the cursor. One `useCallback` with no dependencies
+   runs it once, at mount, which is when a person wants their old
+   name selected and ready to be typed over.
+   ============================================================ */
+function RenameBox({
+  value,
+  className,
+  onDone,
+  onCancel,
+}: {
+  value: string
+  className: string
+  onDone: (next: string) => void
+  onCancel: () => void
+}): ReactElement {
+  const [text, setText] = useState(value)
+  const settled = useRef(false)
+  const focusOnce = useCallback((el: HTMLInputElement | null) => {
+    if (el) {
+      el.focus()
+      el.select()
+    }
+  }, [])
+  /* ONE COMMIT, NOT TWO. Enter writes and closes the box; a blur that
+     arrived after it would write the same value a second time and
+     raise a second toast offering to undo an act that already has
+     one. */
+  const settle = (next: string | null): void => {
+    if (settled.current) return
+    settled.current = true
+    if (next === null) onCancel()
+    else onDone(next)
+  }
+  return (
+    <input
+      ref={focusOnce}
+      className={`field-input md-rename ${className}`}
+      type="text"
+      value={text}
+      spellCheck={false}
+      aria-label={`Rename ${value}`}
+      onChange={(e) => setText(e.target.value)}
+      onKeyDown={(e) => {
+        /* the catalogue's own find box and the workspace's tabs both
+           listen above this; a name being typed is not a shortcut */
+        e.stopPropagation()
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          settle(text)
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          settle(null)
+        }
+      }}
+      onBlur={() => settle(text)}
+    />
+  )
 }
 
 /* ============================================================
@@ -953,8 +1340,10 @@ function Tile({
   canOpen,
   onOpen,
   onQuote,
+  acts,
 }: FaceProps & { kind: TableKind; tableName: string }): ReactElement {
   const facts = entry.facts ?? []
+  const naming = acts !== undefined && acts.renaming === faceKey(entry)
   const body = (
     <>
       <span className="md-tile-pic">
@@ -965,7 +1354,16 @@ function Tile({
           says={entry.branch === '' ? tableName : entry.branch}
         />
       </span>
-      <span className="md-tile-name">{entry.label}</span>
+      {naming && acts ? (
+        <RenameBox
+          value={entry.label}
+          className="md-tile-name"
+          onDone={(next) => acts.onRenamed(entry.tableId, entry.rowId, entry.label, next)}
+          onCancel={() => acts.onRename(null)}
+        />
+      ) : (
+        <span className="md-tile-name">{entry.label}</span>
+      )}
       {/* NO EMPTY PRICE SLOT. A table that prices nothing draws no
           line at all, rather than a dash a salesperson could read as
           "free" or "ask". */}
@@ -990,7 +1388,11 @@ function Tile({
     .join(', ')
   return (
     <li className="md-tile-slot">
-      {canOpen ? (
+      {/* THE DOOR STANDS DOWN WHILE THE NAME IS BEING TYPED — an
+          input inside a button is markup a browser may reject, and
+          pressing a tile you are renaming should not navigate away
+          from the half-typed word. */}
+      {canOpen && !naming ? (
         <button
           type="button"
           className="md-tile"
@@ -1002,19 +1404,17 @@ function Tile({
       ) : (
         <div className="md-tile is-flat">{body}</div>
       )}
-      {/* A SIBLING, NOT A CHILD. The tile is itself a button and a
-          button inside a button is not a control — it is markup a
-          browser is entitled to reject. It is laid over the tile's
-          corner and appears on approach. */}
-      {onQuote ? (
-        <button
-          type="button"
-          className="md-quote-it"
-          onClick={() => onQuote(entry.tableId, entry.rowId)}
-        >
-          Quote it
-        </button>
-      ) : null}
+      {/* SIBLINGS, NOT CHILDREN, for the same reason: the tile is
+          itself a button. The cluster is laid over the tile's corner
+          and appears on approach. */}
+      {naming ? null : (
+        <FaceActs
+          entry={entry}
+          inline={false}
+          {...(acts ? { acts } : {})}
+          {...(onQuote ? { onQuote } : {})}
+        />
+      )}
     </li>
   )
 }
@@ -1024,16 +1424,26 @@ function Tile({
  *  and printing that again on all fourteen rows underneath is a
  *  column of noise where the eye is trying to compare names and
  *  numbers. Drawn and seen; the trail is on the heading, once. */
-function Row({ entry, canOpen, onOpen, onQuote }: FaceProps): ReactElement {
+function Row({ entry, canOpen, onOpen, onQuote, acts }: FaceProps): ReactElement {
+  const naming = acts !== undefined && acts.renaming === faceKey(entry)
   const body = (
     <>
-      <span className="md-row-name">{entry.label}</span>
+      {naming && acts ? (
+        <RenameBox
+          value={entry.label}
+          className="md-row-name"
+          onDone={(next) => acts.onRenamed(entry.tableId, entry.rowId, entry.label, next)}
+          onCancel={() => acts.onRename(null)}
+        />
+      ) : (
+        <span className="md-row-name">{entry.label}</span>
+      )}
       {entry.price === '' ? null : <span className="md-row-price">{entry.price}</span>}
     </>
   )
   return (
     <li className="md-row-slot">
-      {canOpen ? (
+      {canOpen && !naming ? (
         <button
           type="button"
           className="md-row"
@@ -1045,15 +1455,14 @@ function Row({ entry, canOpen, onOpen, onQuote }: FaceProps): ReactElement {
       ) : (
         <div className="md-row is-flat">{body}</div>
       )}
-      {onQuote ? (
-        <button
-          type="button"
-          className="md-quote-it is-inline"
-          onClick={() => onQuote(entry.tableId, entry.rowId)}
-        >
-          Quote it
-        </button>
-      ) : null}
+      {naming ? null : (
+        <FaceActs
+          entry={entry}
+          inline
+          {...(acts ? { acts } : {})}
+          {...(onQuote ? { onQuote } : {})}
+        />
+      )}
     </li>
   )
 }

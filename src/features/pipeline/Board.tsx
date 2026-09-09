@@ -35,6 +35,7 @@ import {
   CaretDoubleLeft,
   CaretDoubleRight,
   ChatTeardropText,
+  LockSimpleOpen,
   MagnifyingGlass,
   Sliders,
 } from '@phosphor-icons/react'
@@ -62,6 +63,7 @@ import { DealPage } from './DealPage'
 import { waitedSay } from './dealParts'
 import { useCardFields, type CardFieldId } from './cardFields'
 import { countOf, useDealNotes } from './dealNotes'
+import { arrivalClause, locksButOpen } from './stageTrigger'
 import {
   arrivedAt,
   boardOf,
@@ -277,8 +279,16 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
          The sentence names both ends, so the audit log — which
          listens to this same bus — reads as a history rather than
          as a list of nudges. */
+      const landed = stages.find((s) => s.id === to)
+      /* WHAT THE COLUMN ASKS OF WHAT JUST LANDED IN IT, or '' when
+         it asks nothing — the one thing a stage change DOES in this
+         build. It is a REPORT and not an act: `stageTrigger.ts` gives
+         three reasons why entering a stage must not issue the
+         document, the first of which is that this Undo can put the
+         card back and could never put the document back. */
+      const clause = arrivalClause(landed, q)
       say({
-        text: `${q.reference} moved to ${stages.find((s) => s.id === to)?.name ?? to}.`,
+        text: `${q.reference} moved to ${landed?.name ?? to}.${clause ? ` ${clause}` : ''}`,
         act: { label: 'Undo', onPick: () => moveTo(orgSlug, q, from) },
       })
     },
@@ -683,6 +693,23 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                          about the ones that do. Same rule the
                          dashboard's own counts keep. */
                       const said = countOf(notes, q.id)
+                      /* IS THIS DEAL STANDING SOMEWHERE THAT ASKS
+                         FOR A LOCKED PRICE WITHOUT HAVING ONE? The
+                         board's own words for its job are "where is
+                         everything, and what is stuck", and this is
+                         the first fact it can draw that answers the
+                         second half.
+
+                         A GLYPH AND NOT A SENTENCE, and that is a
+                         width decision rather than a preference: a
+                         column is 250px at five columns and the
+                         refusal is three lines of prose. The
+                         sentence is one press away in the deal, and
+                         it is in the card's own label below for
+                         anybody who cannot see the mark. Same rule
+                         the note badge keeps — never drawn where it
+                         is not true. */
+                      const unlocked = locksButOpen(stage, q)
                       return (
                         <button
                           type="button"
@@ -713,6 +740,13 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                             said > 0
                               ? `, ${said} ${said === 1 ? 'note' : 'notes'}`
                               : ''
+                          }${
+                            /* THE MARK IN WORDS. A glyph is the
+                               whole of the fact on screen, so
+                               without this the demand is invisible
+                               to a screen reader — which is the
+                               half of a mark most boards skip. */
+                            unlocked ? ', prices not locked' : ''
                           }. Left and right arrows move it.`}
                         >
                           {/* THE METADATA ROW, drawn only when it has
@@ -722,10 +756,26 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                               empty row is a real state and an empty
                               flex row with a gap is a 4px hole above
                               every customer's name. */}
-                          {shows('reference') || said > 0 || shows('touched') ? (
+                          {shows('reference') || said > 0 || shows('touched') || unlocked ? (
                             <span className="pb-card-top">
                               {shows('reference') ? (
                                 <span className="pb-card-ref ds-mono">{q.reference}</span>
+                              ) : null}
+                              {/* WHAT THE COLUMN ASKED FOR AND HAS
+                                  NOT GOT. It sits with the note
+                                  badge because both are marks ABOUT
+                                  the card rather than facts on it,
+                                  and neither is one of the person's
+                                  four chosen fields: a demand the
+                                  dealership made is not a preference
+                                  a card can be asked to drop. */}
+                              {unlocked ? (
+                                <span className="pb-card-unlocked">
+                                  <LockSimpleOpen
+                                    size={ICON_SIZE.tiny}
+                                    aria-hidden="true"
+                                  />
+                                </span>
                               ) : null}
                               {/* THE COUNT SITS IN THE METADATA ROW, NOT
                                   THE MONEY ROW. It was measured in the

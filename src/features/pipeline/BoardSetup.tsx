@@ -116,7 +116,19 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
     const name = 'New stage'
     setStages(orgSlug, [
       ...stages,
-      { id: mintId(stages, name), name, about: '', tone: 'neutral', wash: 'none', closed: false },
+      {
+        id: mintId(stages, name),
+        name,
+        about: '',
+        tone: 'neutral',
+        wash: 'none',
+        closed: false,
+        /* A NEW COLUMN ASKS FOR NOTHING. A stage that demanded
+           something the moment it was made would put a mark on
+           the first deal dropped into it before anybody had
+           decided what the column was for. */
+        locks: false,
+      },
     ])
   }
 
@@ -179,6 +191,18 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
       </header>
 
       <h4 className="mono-label se-part">Columns</h4>
+      {/* WHAT THE SECOND TICK BOX DOES, SAID ONCE AND IN FULL. A
+          setting whose effect is invisible until it fires is a
+          setting nobody turns on deliberately — and "Prices
+          locked" alone does not say whether it stops a drop,
+          changes a document, or reports a fact. It reports a
+          fact. See `stageTrigger.ts` for why it is not allowed to
+          do more than that. */}
+      <p className="se-say">
+        <strong>Prices locked</strong> says a deal in that column should already have gone to
+        the customer. Nothing is changed for you and no drop is refused — the board marks the
+        deals that have not, and each one says what to do about it.
+      </p>
       <ul className="se-list">
         {stages.map((stage, i) => {
           const deals = quotes.filter((q) => stageOf(q, at, stages) === stage.id).length
@@ -268,6 +292,22 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
                     column holding won and lost, and it is drawn
                     quieter there for it. */}
                 <span>Finished work</span>
+              </label>
+
+              {/* WHAT ENTERING THIS COLUMN ASKS OF THE DOCUMENT —
+                  the only one of SALES_BOARD §4's four triggers
+                  this app has a concept for. The other three name
+                  an owner, a deposit and a notification, none of
+                  which exist; `stageTrigger.ts` lists what each
+                  would need rather than putting a tick box here
+                  that does nothing. */}
+              <label className="se-locks">
+                <input
+                  type="checkbox"
+                  checked={stage.locks}
+                  onChange={(e) => patch(stage.id, { locks: e.target.checked })}
+                />
+                <span>Prices locked</span>
               </label>
 
               <span className="se-n ds-mono">{deals}</span>

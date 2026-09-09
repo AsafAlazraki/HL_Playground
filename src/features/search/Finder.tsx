@@ -49,12 +49,49 @@ export interface FinderProps {
   /** a result was chosen — the shell opens that table and closes this.
    *  `rowId` is the row that was picked, absent when what was picked
    *  was a table; the shell hands it to the sheet so the register
-   *  opens ON the row rather than at the top of it. */
+   *  opens ON the row rather than at the top of it.
+   *
+   *  THREE OF THE FIVE KINDS END HERE: a table, a row, and a column,
+   *  which opens the table that declares it. */
   onReveal: (entityId: string, rowId?: string) => void
+
+  /* ============================================================
+     THE TWO DOORS THAT ARE NOT A TABLE — and passing them is what
+     turns those two kinds on.
+
+     UX_PASS §2 asks for one field over MODULES · ROWS · QUOTES ·
+     TABLES · COLUMNS. A module opens a module workspace and a quote
+     opens a document; both are `Stage`s, `Stage` is the shell's
+     (`src/app/winKit.tsx`), and this feature does not reach into it.
+
+     LEFT UNSET, THE KIND IS NOT OFFERED AT ALL — not drawn greyed,
+     not drawn and then refused. §2's fourth rule is "a result a
+     person cannot open does not appear for them", and a host with no
+     door to a quote is a place where a quote result cannot be
+     opened. `SearchFieldProps` carries the full argument, including
+     which half of that rule is still blocked and why.
+
+     THE HOST'S SIDE IS TWO LINES, and the shell already has both
+     handlers in hand — it passes `onOpenModule` and `onOpenQuote` to
+     `SideNav` on the same screen:
+
+         onOpenModule={(moduleId) => { setFinding(false); … }}
+         onOpenQuote={(quoteId) => { setFinding(false); … }}
+     ============================================================ */
+  /** open a place in the business. Unset = modules are not offered. */
+  onOpenModule?: (moduleId: string) => void
+  /** open a document. Unset = quotes are not offered. */
+  onOpenQuote?: (quoteId: string) => void
+
   onClose: () => void
 }
 
-export function Finder({ onReveal, onClose }: FinderProps): JSX.Element {
+export function Finder({
+  onReveal,
+  onOpenModule,
+  onOpenQuote,
+  onClose,
+}: FinderProps): JSX.Element {
   /* where the keyboard was standing before this opened, so dismissing
      it puts a person back rather than at the top of the document */
   const cameFrom = useRef<HTMLElement | null>(
@@ -149,7 +186,12 @@ export function Finder({ onReveal, onClose }: FinderProps): JSX.Element {
           behind the popover the moment somebody types. The field
           already says what it searches, in its own empty state. */}
       <div className="fx-panel">
-        <SearchField autoFocus onReveal={onReveal} />
+        <SearchField
+          autoFocus
+          onReveal={onReveal}
+          onOpenModule={onOpenModule}
+          onOpenQuote={onOpenQuote}
+        />
       </div>
     </div>
   )

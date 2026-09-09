@@ -138,6 +138,18 @@ export type {
   TableRow,
 } from './cards'
 
+/* -- the catalogue, entered by kind --------------------------
+   Which kinds earn a door, what is behind each one and which
+   photograph it wears. Exported for the same reason `placesOf`
+   is: a picker, an export or a review that has to list what a
+   dealer sells by kind must reach the answer this card draws
+   rather than growing a second opinion about it. */
+export { doorPicture, doorsOf } from './doors'
+export type { Door } from './doors'
+
+/* -- the places, counted once per paint ---------------------- */
+export { forgetPlacesHeld, usePlaces } from './usePlaces'
+
 /* -- resolving a stored link against the project as it stands - */
 export { BAND_NAME, linkOffers, resolveLink, resolveLinks } from './links'
 export type { LinkMark, LinkOffer, ResolvedLink, ResolvedLinks } from './links'

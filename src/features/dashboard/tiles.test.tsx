@@ -61,6 +61,12 @@ vi.mock('@/db/repository', () => ({
 
 const { useProjectStore } = await import('@/store/useProjectStore')
 const { forgetTileOrder } = await import('./tileOrder')
+const { forgetPlacesHeld } = await import('./usePlaces')
+/* WHICH DOOR SOMEBODY CAME THROUGH. A module-level map with no
+   reset between mounts (openPlace.ts:36), so it is cleared like
+   the tile order is — and read, because "the door stood at no one
+   brand" is the fact that separates a door from a tile. */
+const { forgetPlaces, placeFor } = await import('@/features/modules/openPlace')
 const { CardBody } = await import('./CardBody')
 const { TABLE_KINDS } = await import('@/types/model')
 const { registerQuote } = await import('@/features/quote')
@@ -245,6 +251,12 @@ beforeEach(() => {
      test inherits another's drag. */
   localStorage.clear()
   forgetTileOrder()
+  forgetPlaces()
+  /* the places are held beside the arguments that produced them
+     (usePlaces.ts), and `install()` hands the store new objects
+     each time — so this is belt and braces rather than a fix for a
+     failure, and it costs one line */
+  forgetPlacesHeld()
   install()
 })
 
@@ -427,3 +439,90 @@ describe('the quote count on a tile', () => {
   })
 })
 
+
+/* ============================================================
+   THE DOORS — the catalogue, entered by kind.
+
+   THE SAME FIXTURE, READ ONE LEVEL UP. `install()` builds two
+   modules over three tables: 'Hull Range' holds two BOAT tables
+   (3 + 12 rows) and 'Road Gear' holds one TRAILER table (7). The
+   modules card above draws three tiles out of that, one per
+   brand; this card draws two doors out of it, one per kind — and
+   that is the whole difference the doors exist for. Every route
+   from this dashboard into the catalogue went through a brand.
+
+   ASSERTED BY ROLE AND BY TEXT, like everything else in this
+   file. The one thing that is queried structurally is the `img`,
+   because "there is no photograph here" is a fact about the
+   markup and there is no role for its absence.
+   ============================================================ */
+
+function drawDoors(a = acts()) {
+  render(
+    <CardBody id="what-we-sell" me="Tester" userId={WHO.userId} orgSlug={WHO.orgSlug} acts={a} />,
+  )
+  return a
+}
+
+describe('the doors — one per kind, not one per brand', () => {
+  it('draws a door for each kind that sits behind one module', () => {
+    drawDoors()
+
+    /* Two modules, three places, TWO doors: the two boat brands are
+       one kind and the trailer brand is the other. */
+    expect(screen.getByRole('button', { name: /^Boats/ })).toBeVisible()
+    expect(screen.getByRole('button', { name: /^Trailers/ })).toBeVisible()
+    expect(screen.getAllByRole('button')).toHaveLength(2)
+  })
+
+  /* THE COUNT IS THE KIND'S, SUMMED. 3 + 12 across the two boat
+     brands, and the noun is the dealer's own word for a row —
+     which on this fixture falls back to the kind's, for the reason
+     `table()` above states. */
+  it('says what is behind it, counted across every brand of that kind', () => {
+    drawDoors()
+
+    expect(screen.getByRole('button', { name: /^Boats/ })).toHaveAccessibleName(
+      'Boats 15 boats',
+    )
+    expect(screen.getByRole('button', { name: /^Trailers/ })).toHaveAccessibleName(
+      'Trailers 7 trailers',
+    )
+  })
+
+  /* WHAT A DOOR OPENS, AND THE ONE FACT THAT SEPARATES IT FROM A
+     TILE. A tile records the table it was pressed at and the
+     workspace stands at that brand; a door clears it, so the
+     workspace opens on every brand of the kind at once. */
+  it('opens the module that holds the kind, standing at no one brand', async () => {
+    const a = drawDoors()
+
+    await userEvent.click(screen.getByRole('button', { name: /^Boats/ }))
+    expect(a.onOpenModule).toHaveBeenCalledTimes(1)
+    expect(a.onOpenModule).toHaveBeenCalledWith('m-hulls')
+    expect(placeFor('m-hulls')).toBeUndefined()
+  })
+
+  /* NOTHING IS SUBSTITUTED. No row in this fixture carries a
+     photograph, so no door draws one — never a stock image, never
+     another kind's boat. The kind's own symbol stands in, which is
+     `PlaceMark`'s rule for a place with no logo. */
+  it('draws no photograph where no row of that kind has one', () => {
+    const { container } = render(
+      <CardBody id="what-we-sell" me="Tester" userId={WHO.userId} orgSlug={WHO.orgSlug} acts={acts()} />,
+    )
+    expect(container.querySelectorAll('img')).toHaveLength(0)
+  })
+
+  /* THE EMPTY STATE COUNTS WHAT THE PERSON ACTUALLY HAS. A price
+     file with no places made out of it yet is the state
+     DESIGN_CONTRACT §6 is written about, and the doors card owes
+     the same four parts every other card owes. */
+  it('counts the tables a person has when no place has been made yet', () => {
+    install({ noModules: true })
+    drawDoors()
+
+    expect(screen.getByText(/You have/)).toHaveTextContent('You have 3 tables and no places yet.')
+    expect(screen.getByRole('button', { name: 'Modules' })).toBeVisible()
+  })
+})

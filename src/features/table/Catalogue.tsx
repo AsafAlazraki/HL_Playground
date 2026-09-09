@@ -55,8 +55,8 @@
    `onOpenRow` where pressing a boat should do something better than
    the default, which is to take you to that row in the register.
    ============================================================ */
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { CSSProperties, JSX } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties, FocusEvent, JSX } from 'react'
 import { ArrowRight, Rows, SquaresFour } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
@@ -397,6 +397,128 @@ export function Catalogue({
      `.ph-tools` is `flex: none`, so the row is now its content's
      height and the pills are round again.
      ------------------------------------------------------------ */
+  /* ------------------------------------------------------------
+     WHICH WAY THE RAIL STILL HAS FACETS IN IT.
+
+     THE ROW SCROLLS AND ALWAYS DID; WHAT IT NEVER DID WAS SAY SO.
+     Driven on Highfield Inflatables, which carries eight facets,
+     and measured at six widths:
+
+       width   hidden px   facets fully off-screen   scrollbar px
+       1440        0                 0                    0
+       1280       43                 1                    0
+       1100      137                 2                    0
+       1024      196                 3                    0
+        900      293                 4                    0
+        768      415             **5 of 8**               0
+
+     `scrollbar-width: thin` on an overlay-scrollbar platform draws
+     nothing until a gesture is already under way — measured as
+     `offsetHeight - clientHeight === 0` at every one of those
+     widths. So at 1024 three of the eight filters this table has
+     were off the screen with not one pixel saying they existed,
+     and the file's own note two sections down is the standard it
+     was failing: "a facet you cannot reach is a filter the app
+     does not have". Reachable it was; findable it was not. It is
+     also the thing CONFIGURATOR_PLAYBOOK §8 rejects by name — "a
+     horizontally scrolling strip … no indication".
+
+     THE SIGNAL IS MEASURED, NOT ASSUMED. The attribute is written
+     from the live `scrollWidth`, so it is absent at 1440 where
+     nothing is hidden and it names the side — a fade at the right
+     edge means there is more to the right, and it moves to the
+     left edge when you have scrolled to the end. A permanent fade
+     at both ends would be decoration that lies at 1440.
+
+     WRITTEN TO THE DOM RATHER THAN HELD IN STATE, which is
+     `useClipTitles`'s pattern in `src/app` and for its reason: a
+     scroll handler that re-rendered a gallery of 48 photographs
+     would be the most expensive thing on the screen, and React
+     does not own an attribute it never rendered. */
+  const railRO = useRef<ResizeObserver | null>(null)
+  const railEl = useRef<HTMLDivElement | null>(null)
+  const readRail = useCallback(() => {
+    const el = railEl.current
+    if (!el) return
+    const hidden = el.scrollWidth - el.clientWidth
+    /* one pixel of slack at each end: a scroller sitting at its
+       maximum reports a fractional `scrollLeft` on a fractional
+       layout, and a fade that flickers on the last pixel of a drag
+       is worse than no fade */
+    const side =
+      hidden < 2
+        ? 'none'
+        : el.scrollLeft < 2
+          ? 'end'
+          : el.scrollLeft > hidden - 2
+            ? 'start'
+            : 'both'
+    if (el.dataset.over !== side) el.dataset.over = side
+  }, [])
+  const attachRail = useCallback(
+    (el: HTMLDivElement | null) => {
+      railRO.current?.disconnect()
+      railRO.current = null
+      railEl.current = el
+      if (!el) return
+      readRail()
+      const obs = new ResizeObserver(readRail)
+      obs.observe(el)
+      railRO.current = obs
+    },
+    [readRail],
+  )
+  /* THE CONTENT CHANGES UNDER A ROW THAT DID NOT RESIZE — a table
+     with more facets, a Clear button arriving — and a
+     `ResizeObserver` on the row sees none of it, because the row's
+     own border box is the page's width either way. */
+  useLayoutEffect(readRail, [readRail, facets.length, viewActive, noun.one])
+  useEffect(() => () => railRO.current?.disconnect(), [])
+
+  /* ------------------------------------------------------------
+     AND TABBING TO A FACET BRINGS IT INTO THE ROW.
+
+     THIS IS THE HALF THE FADE UNCOVERED, AND IT PRE-DATES IT. Nine
+     Tab presses from the search box at 1280 on Highfield, reading
+     the live `scrollLeft` and the focused chip's gap to the row's
+     right edge after each one:
+
+       tab 5  Eng Configuration   scrollLeft 0   gap  198.4
+       tab 6  HP                  scrollLeft 0   gap  138.4
+       tab 7  OA Length           scrollLeft 0   gap   30.8
+       tab 8  Cash                scrollLeft 0   gap  **-43.2**
+       tab 9  leaves the row entirely
+
+     The row never scrolled. Cash — a price filter on a boat table —
+     took focus 43 pixels outside its own scroller, drew its ring
+     where nobody could see it, and the next Tab left the rail. So
+     the eighth facet was not reachable by keyboard at all, which is
+     this file's own standard ("a facet you cannot reach is a filter
+     the app does not have") failing on the keyboard rather than on
+     the pointer. The fade did not cause it; it is what made it
+     visible.
+
+     `behavior: 'instant'` IS THE POINT, NOT A DEFAULT. Focus moves
+     under a Tab and a Tab is keyboard-initiated, so nothing may
+     animate (§6, and the design-engineering skill's first rule).
+     `'auto'` would inherit a smooth `scroll-behavior` from any
+     ancestor that ever grows one and turn every Tab into a glide.
+
+     `block: 'nearest'` so a chip that is already vertically visible
+     — every one of them, the row is 41px tall — never moves the
+     page underneath it. `.cat-facet`'s `scroll-margin-inline` lands
+     it clear of the fade rather than under it.
+     ------------------------------------------------------------ */
+  const showInRail = useCallback(
+    (e: FocusEvent<HTMLDivElement>) => {
+      const el = e.target
+      if (!(el instanceof HTMLElement)) return
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
+      readRail()
+    },
+    [readRail],
+  )
+
   const tools = (
     /* ONE ROW THAT SCROLLS RATHER THAN WRAPPING (§3, and the note
        at the top of FacetRail). `.ph-tools` wraps, which is right
@@ -405,7 +527,7 @@ export function Catalogue({
        opened a wider table, and the gallery below it would start at
        a different height per table. Scrolling keeps the header two
        rows tall whatever the table holds. */
-    <div className="cat-rail">
+    <div className="cat-rail" ref={attachRail} onScroll={readRail} onFocus={showInRail}>
       <label className="cat-find">
         <input
           className="field-input"
@@ -695,11 +817,45 @@ function Gallery({
     return <NoMatchPlate total={rows.length} onClear={onClear} />
   }
 
-  let i = 0
   return (
     <div className="cat-gallery">
-      {bands.map((band) => (
-        <section key={band.key} className="cat-band">
+      {/* ============================================================
+          THE ENTRANCE IS THE BAND'S, AND IT USED TO BE EVERY TILE'S.
+
+          MEASURED, at 1280x800 on Highfield Inflatables with the
+          gallery settled: type `RU` into the search box and 0
+          animations run — the set only narrows, so nothing mounts.
+          Press backspace and **16 tiles ran `ds-rise`**, read off
+          `getAnimations()` 60ms after the keystroke. Every row that
+          re-enters a widened filter is a fresh `<li>`, and `.ds-rise`
+          on the `<li>` fires for each one.
+
+          That is CONFIGURATOR_PLAYBOOK §6 — motion is "never on a
+          keyboard-initiated or 100+/day action" — and the same rule
+          the design-engineering skill puts first. Search is the most
+          keyboard-initiated act on this screen.
+
+          THE FIX IS TO MOVE THE ENTRANCE UP ONE LEVEL, not to delete
+          it. A band is keyed by its series name, so a band that is
+          already on screen does NOT remount when the rows under it
+          change — the 16 tiles now land in the frame they are
+          computed in, with no motion at all, which is what §6 asks
+          for ("no reflow theatre"). What still animates is a SECTION
+          arriving: the gallery's first paint, and a series that a
+          filter has just admitted. Two elements on Formosa, seven on
+          Highfield, against forty-eight before.
+
+          `--i` IS THE BAND'S INDEX NOW. ds.css caps the stagger at
+          `min(--i, 14) * 26ms`, so a per-tile index was spending the
+          whole cap by the fifteenth photograph and every tile after
+          it arrived at the same moment anyway. Per band the ramp is
+          real for every band a table has. */}
+      {bands.map((band, bandIdx) => (
+        <section
+          key={band.key}
+          className="cat-band ds-rise"
+          style={{ '--i': bandIdx } as CSSProperties}
+        >
           {levelId && !sorted && band.name !== '' ? (
             <h2 className="cat-band-head k-band">
               <span className="mono-label cat-band-lab">{levelName}</span>
@@ -720,14 +876,8 @@ function Gallery({
                     bandOf(entity, priceField),
                   )
                 : ''
-              const idx = i
-              i += 1
               return (
-                <li
-                  key={row.id}
-                  className="cat-tile ds-rise"
-                  style={{ '--i': idx } as CSSProperties}
-                >
+                <li key={row.id} className="cat-tile">
                   <button
                     type="button"
                     className={`cat-card k-lift ${held ? 's-held' : 'k-rail'}`}

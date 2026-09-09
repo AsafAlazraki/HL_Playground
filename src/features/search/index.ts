@@ -7,13 +7,15 @@
    drawing a popover.
    ============================================================ */
 
-export { SearchField } from './SearchField'
+export { SearchField, SHORTCUT_HINT } from './SearchField'
 export type { SearchFieldProps } from './SearchField'
 
 /* the surface the field stands on now the masthead is gone — see
    Finder.tsx. Two things open it: Ctrl+K / Cmd+K from anywhere, and
    "Find anything" in the navy rail, which advertises that shortcut
-   beside itself. */
+   beside itself — and now advertises the RIGHT one, because
+   `SHORTCUT_HINT` is exported above rather than spelled a second
+   time in the rail as the literal string "Ctrl K". */
 export { Finder } from './Finder'
 export type { FinderProps } from './Finder'
 
@@ -36,7 +38,15 @@ export {
   search,
 } from './rowSearch'
 export type {
+  ColumnEntry,
+  ColumnHit,
+  ModuleFacts,
+  ModuleHit,
   Option,
+  ProjectExtras,
+  QuoteFacts,
+  QuoteHit,
+  QuoteMatch,
   Rank,
   RowEntry,
   RowGroup,

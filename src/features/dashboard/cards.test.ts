@@ -192,11 +192,28 @@ describe('the catalogue', () => {
 
      THE ORDER IS THE LAYOUT. The grid flows down a column before
      it moves right (dashboard.css), so this array reads: quotes
-     top left, activity directly under it, modules beside them over
-     both rows. Asserted because changing the array silently
-     changes the composition. */
+     top left, the catalogue's doors directly under it, modules
+     beside them over both rows. Asserted because changing the
+     array silently changes the composition.
+
+     'activity' CAME OFF THIS SET and 'what-we-sell' took its
+     place, measured: at 1280x800 on the real seed the activity
+     card was 176.8px of nothing in a 264.9px body — 66.7% — and
+     the doors are the one route into the catalogue by kind that
+     this dashboard never had. The argument is in full at
+     `DEFAULT_CARDS`. */
   it('the default set is three cards, in the order the grid lays out', () => {
-    expect(DEFAULT_CARDS).toEqual(['my-quotes', 'activity', 'my-modules'])
+    expect(DEFAULT_CARDS).toEqual(['my-quotes', 'what-we-sell', 'my-modules'])
+  })
+
+  /* AND NOTHING WAS DELETED TO MAKE ROOM. A card coming off the
+     default set is a decision about what a person STARTS with;
+     taking the capability away as well would be a different act
+     that nobody asked for. 'activity' is still drawn, still named
+     and still offered by the tray. */
+  it('the card that came off the default set is still in the catalogue', () => {
+    expect(CARD_IDS).toContain('activity')
+    expect(CARDS.activity.name).toBe('Activity')
   })
 
   /* EXACTLY ONE CARD IS TALL, and the grid depends on it: two
@@ -253,6 +270,19 @@ describe('the four parts of an empty state', () => {
     expect(emptyCount('recently-opened', some)).toBe('You have 53 tables on the sheet.')
     expect(emptyCount('data-quality', some)).toBe('Checked across 53 tables.')
     expect(emptyCount('rules-warning', some)).toBe('You have 12 rules switched on.')
+    expect(emptyCount('what-we-sell', some)).toBe('You have 25 places to browse.')
+  })
+
+  /* THE DOORS CARD HAS TWO ABSENCES AND THEY ARE DIFFERENT FACTS.
+     A person who has loaded a price file and made no place out of
+     it yet has 53 tables and no doors — counting PLACES there would
+     print "0 places", which is the one sentence DESIGN_CONTRACT §6
+     forbids: "never write a blank screen at a person who has
+     data". */
+  it('counts tables on the doors card where there is not a place yet', () => {
+    expect(emptyCount('what-we-sell', { places: 0, tables: 53, rules: 0 })).toBe(
+      'You have 53 tables and no places yet.',
+    )
   })
 
   /* THE FIGURE IS THE ONE THING A PERSON READS OFF THIS LINE, so

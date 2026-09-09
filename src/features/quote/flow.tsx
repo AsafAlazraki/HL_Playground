@@ -123,12 +123,33 @@ const NAME: Record<FlowStop, string> = {
   address: 'Address',
 }
 
+/* ── THE FACT SITS BESIDE THE NAME, NOT UNDER IT ─────────────
+   The markup below did not change for this and does not need to:
+   both children are still spans in source order, and which axis
+   they lay out on is flow.css's to decide. It is recorded here
+   because the two are read together and the reason is a number.
+
+   Stacked, every stop was two lines tall so that ONE of them —
+   Choose, carrying the hull — could put its answer under its label,
+   and the strip cost 55.64px of a 1280x800 window that had 524.13
+   left for the work. Beside, the strip costs 33.84 and the three
+   stops take 492.1 of the 1,016 the bar has. It bought height with
+   width that was going spare, which is RESPONSIVE.md's rule 3 read
+   on the axis that was actually short. flow.css carries the whole
+   measurement, including what is still wrong and is not in either
+   of these two files. */
+
 export interface FlowLineProps {
   /** which of the three is on screen */
   at: FlowStop
   /** the one fact each stop carries. '' draws no fact at all, which
    *  is what Configure gets: the bands and the figure under this line
-   *  are already saying it. */
+   *  are already saying it.
+   *
+   *  It is the stop's ANSWER, and on Address that is the customer's
+   *  name or `nobody yet` — which is where the unaddressed fact
+   *  belongs, beside its own label and its own door, rather than on
+   *  a full-width strip below repeating both. See flow.css. */
   facts: Partial<Record<FlowStop, string>>
   /** the stops that can be moved to from here. A stop that is not in
    *  here is drawn as a stop, never as a control that does nothing.

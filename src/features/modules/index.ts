@@ -193,6 +193,35 @@ export type {
   BlockBinding,
 } from './designer'
 
+/* ============================================================
+   THE THREE WRITE VERBS, MADE REAL.
+
+   `add`, `edit` and `delete` were contract verbs, designer switches
+   and access-grid columns with NO consumer: `ModuleIndex` read
+   `browse`, `search` and `open` and stopped, so switching `edit` off
+   for Boats took nothing away. `readWrites` is the catalogue's answer
+   to "may this be done here, and if not, why not", and it is exported
+   for the same reason every other reader in this file is — a second
+   surface that ever offers one of these three must reach the same
+   answer and the same sentences rather than growing its own.
+
+   IT IS ROLE-FREE, DELIBERATELY, and the file's header says exactly
+   what that costs: `mayDo` is handed `roleId === null` in every real
+   session, so the only half of the question that can be answered
+   honestly today is the module's own capability list.
+   ============================================================ */
+export {
+  addLabel,
+  addSays,
+  addedSay,
+  article,
+  readWrites,
+  removedSay,
+  renameFieldOf,
+  renamedSay,
+} from './writeCaps'
+export type { CatalogWrites, WriteStance, WriteVerb } from './writeCaps'
+
 /* THE TENTH VERB — `configure`, "set what must always be true here".
    It is not in `ModuleCapability` yet and `ruleCapability.ts` carries
    the exact line the contract needs, plus the registry holding it in

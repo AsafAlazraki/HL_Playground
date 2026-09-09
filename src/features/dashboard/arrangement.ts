@@ -53,6 +53,7 @@ import { newId } from '@/lib/id'
  *  — and nothing else, because the arrangement stores ids only. */
 export type CardId =
   | 'my-quotes'
+  | 'what-we-sell'
   | 'activity'
   | 'recently-opened'
   | 'my-modules'
@@ -63,6 +64,7 @@ export type CardId =
 export const CARD_IDS: readonly CardId[] = [
   'my-modules',
   'my-quotes',
+  'what-we-sell',
   'activity',
   'the-price-file',
   'recently-opened',
@@ -169,13 +171,36 @@ export interface Arrangement {
  *  changed it. On a shared dealership machine that is the
  *  question the front door was not answering at all.
  *
+ *  AND 'activity' HAS NOW COME OFF THE DEFAULT SET IN TURN, for
+ *  'what-we-sell'. The reason is measured rather than argued.
+ *  At 1280x800, one second after loading the real set — 15,691
+ *  rows across 53 tables in 25 places — the activity card's body
+ *  is 264.9px with 88.1px of content in it: **176.8px of nothing,
+ *  66.7% of the card**, in the bottom-left corner of the front
+ *  door. It is the emptiest thing on the screen and it fills with
+ *  time rather than with an act, so nothing a person does makes
+ *  it earn that space today.
+ *
+ *  What replaced it is the one thing PHASE_TWO §2.1 asks the
+ *  landing for and this build never drew: the catalogue, entered
+ *  by kind. Before it, every route from the front door into the
+ *  catalogue went through a BRAND — the modules card opens
+ *  Highfield, or Yamaha — and there was no way at all to say
+ *  "show me the boats".
+ *
+ *  NOTHING IS DELETED. 'activity' is still in `CARD_IDS`, still
+ *  drawn by `CardBody`, and the tray offers it under Edit — the
+ *  same standing 'the-price-file' and 'recently-opened' have.
+ *  This is a decision about what a person STARTS with, and the
+ *  whole point of this feature is that they can change it.
+ *
  *  THE THREE ARE A COMPOSITION, NOT A LIST, AND THE ORDER IS THE
  *  COMPOSITION. The grid flows down a column before it moves
  *  right (dashboard.css), so these three read: quotes at the top
- *  left, activity directly beneath it, and modules beside them
- *  taking the full height on its own — because a list of every
- *  brand in the business is the one thing here that is worth the
- *  whole column. See `CardMeta.tall`.
+ *  left, the four doors directly beneath it, and modules beside
+ *  them taking the full height on its own — because a list of
+ *  every brand in the business is the one thing here that is
+ *  worth the whole column. See `CardMeta.tall`.
  *
  *  A card with nothing in it yet does not disqualify itself from
  *  the default — it says so in a sentence and offers the act
@@ -183,7 +208,7 @@ export interface Arrangement {
  *  person than an absence they cannot see. */
 export const DEFAULT_CARDS: readonly CardId[] = [
   'my-quotes',
-  'activity',
+  'what-we-sell',
   'my-modules',
 ]
 

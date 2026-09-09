@@ -9,6 +9,24 @@
    tables that boat lives in. The one fact this app most assumes you
    know is the one fact it never taught.
 
+   FIVE KINDS, AND IT WAS TWO. UX_PASS §2 asks for one field over
+   MODULES · ROWS · QUOTES · TABLES · COLUMNS. This file answered
+   with `{ tables, groups }` and nothing else, so three of the five
+   were unreachable and two of those failed silently: on the prepared
+   file `price` names 26 columns and `horsepower` names 2, and the
+   palette answered both with "Nothing is called that". `boats` is
+   the name of a MODULE holding seven brands and answered with ten
+   rows in two unrelated tables. Measured, not inferred.
+
+   WHAT EACH NEW KIND COSTS, because the caps are the performance
+   story here and adding kinds is where that gets tested. Columns are
+   folded ONCE per opening into 205 distinct names over 826
+   declarations; modules are nine; quotes are however many a dealer
+   has raised. A keystroke scans 205 + 9 + N short pre-folded strings
+   on top of the 7,002 it already scanned, which is the same
+   arithmetic and the same conclusion: cap the PAINT, never debounce
+   the scan.
+
    SO THE ANSWER IS GROUPED BY TABLE, NOT FLATTENED. A flat hit list
    would find the row and still not say where it lives; grouping the
    hits under the table they came from makes every search a lesson in
@@ -81,6 +99,7 @@ import {
   type AccentKey,
   type EntityDef,
   type FieldDef,
+  type ModuleDef,
   type RowData,
   type TableKind,
   type TableRole,
@@ -135,12 +154,128 @@ export interface TableFacts {
   retired: boolean
   /** how many rows of this table are searchable at all */
   rowCount: number
+  /** how many columns it declares. §2's mock prints "30 columns · 40
+   *  rows" beside a table, and it is the fact the COLUMNS kind below
+   *  teaches — so it is counted once here rather than at paint. */
+  fieldCount: number
+}
+
+/* ------------------------------------------------------------ */
+/* The three kinds that were missing                             */
+/* ------------------------------------------------------------ */
+
+/** One searchable MODULE — the place in the business, not the table
+ *  underneath it.
+ *
+ *  WHY IT IS NOT A `Place`. `places.ts` splits a module of seven boat
+ *  tables into seven cards, each NAMED FOR ITS TABLE — so indexing
+ *  places would answer `highfield` twice, once as a table and once as
+ *  a card spelled identically. What a module adds that no table can
+ *  is the dealer's word for the GROUPING: Boats, Trailers, Parts &
+ *  Accessories, Labour Rates. Measured on the prepared file, none of
+ *  those nine names is a table name, and `boats` answered with ten
+ *  rows and no way to reach the module at all. */
+export interface ModuleFacts {
+  id: string
+  name: string
+  /** the admin's own line under the name. Searched as well as the
+   *  name: "the outboards themselves" is how somebody describes what
+   *  they are looking for when they cannot remember it is called
+   *  Motors. */
+  description: string
+  accent: AccentKey
+  /** its live tables, in the module's own order */
+  tableIds: string[]
+  /** rows across those tables — the figure §2's mock prints */
+  rowCount: number
+}
+
+/** One searchable QUOTE, as the palette needs it.
+ *
+ *  DELIBERATELY NOT `QuoteDef`. Everything in this file is a function
+ *  of (index, query) with no store, no DOM and no clock; a quote is
+ *  the one kind that lives outside the project store entirely
+ *  (`features/quote/quotes.ts` keeps them in localStorage), and
+ *  reaching into that feature's shape from the matcher would make the
+ *  matcher untestable without it. The caller adapts, once, and this
+ *  file stays arithmetic. */
+export interface QuoteFacts {
+  id: string
+  /** the document's own reference — what a person reads off a printed
+   *  quote and types back in */
+  reference: string
+  /** what is being sold, frozen on the document */
+  subject: string
+  /** who it was written for, as the document prints it. Never
+   *  resolved from a register: a quote is a photograph. */
+  customer: string
+  /** issued documents are not drafts, and the line says which */
+  issued: boolean
+  /** the document's own total, already computed by the quote feature.
+   *  `null` when it has no lines or any line carries no price — a
+   *  partial figure on a search result would be a lie about a
+   *  document, and a silent $0 is the fault stakeholders catch. */
+  total: number | null
+}
+
+interface ModuleEntry {
+  facts: ModuleFacts
+  hay: string
+  /** the description, folded — scanned second so a name match always
+   *  outranks a description match */
+  says: string
+}
+
+interface QuoteEntry {
+  facts: QuoteFacts
+  /** the three things a quote is findable BY, folded once each so the
+   *  answer can say which one matched and mark the right run */
+  refHay: string
+  subjectHay: string
+  customerHay: string
+}
+
+/** One searchable COLUMN, folded across every table that declares it.
+ *
+ *  FOLDED BY NAME, AND THAT IS THE WHOLE DESIGN. The prepared file
+ *  declares 826 columns under 205 distinct names: `price` alone
+ *  appears in 26 of them. Twenty-six lines that each say "Nett Price"
+ *  is a wall, and §2's own mock answers it in one — "Motor Envelope ›
+ *  Min HP · on 7 boat tables". So one line per distinct name, and the
+ *  count of tables is on it.
+ *
+ *  A COLUMN'S DESTINATION IS ITS TABLE'S DESTINATION, which means a
+ *  column read in a pair list opens the table the pair list is about —
+ *  the same ruling the file's header argues for pair rows and pair
+ *  names, applied once more rather than a second rule. It matters:
+ *  measured on the prepared file, 153 of the 228 columns declared on a
+ *  pair list are declared NOWHERE ELSE, so dropping them would make
+ *  "Prop Part No." and "Engine Hole" — dealer nouns an admin really
+ *  does search for — unfindable. */
+export interface ColumnEntry {
+  /** as the best-standing table that declares it spells it */
+  name: string
+  hay: string
+  /** where a press lands. Never a live pair list. */
+  destId: string
+  /** the pair list the column was read in, when the table that
+   *  declares it is one */
+  via?: string
+  /** how many tables declare a column of this name */
+  tables: number
 }
 
 export interface SearchIndex {
   rows: RowEntry[]
   tables: TableEntry[]
   facts: Record<string, TableFacts>
+  /** the places in the business. Empty unless the caller passed them
+   *  — see `ProjectExtras` and the door rule beside it. */
+  modules: ModuleEntry[]
+  /** the documents. Empty unless the caller passed them. */
+  quotes: QuoteEntry[]
+  /** every distinct column name on the sheet */
+  columns: ColumnEntry[]
   /** rows a search can land on, each carrying a usable name — the
    *  number the empty state quotes. Pair rows are not among them:
    *  they are searched through to the things they pair. */
@@ -156,17 +291,24 @@ export interface SearchIndex {
   viaRows: number
   /** tables held out of `tableTotal` because they are history */
   retiredTables: number
+  /** columns declared across the whole sheet, before the fold — the
+   *  figure the foot quotes, and never the folded length */
+  columnTotal: number
 }
 
 export const EMPTY_INDEX: SearchIndex = {
   rows: [],
   tables: [],
   facts: {},
+  modules: [],
+  quotes: [],
+  columns: [],
   rowTotal: 0,
   tableTotal: 0,
   pairRows: 0,
   viaRows: 0,
   retiredTables: 0,
+  columnTotal: 0,
 }
 
 /** A cell only counts as a NAME if it is text or a figure. An image
@@ -217,6 +359,23 @@ function residueOf(hay: string, sides: string[]): string {
   return rest.trim().replace(/\s+/g, ' ')
 }
 
+/** The two kinds that do not live in the project's tables.
+ *
+ *  BOTH ARE OPTIONAL, AND THE OMISSION IS THE CAPABILITY CHECK. §2's
+ *  fourth rule is "a result a person cannot open does not appear for
+ *  them", and the honest half of it that can be enforced today is
+ *  this: a surface that has not been given a door to a module or to a
+ *  quote does not put one in the index, so the palette cannot offer a
+ *  press that goes nowhere. See `SearchFieldProps` for the props that
+ *  are that door, and the report beside them for why the OTHER half —
+ *  filtering per person — is blocked rather than skipped. */
+export interface ProjectExtras {
+  /** the places in the business, straight off the store */
+  modules?: Record<string, ModuleDef>
+  /** the documents, adapted by the caller — see `QuoteFacts` */
+  quotes?: readonly QuoteFacts[]
+}
+
 /** Fold the whole project into one flat scannable list.
  *
  *  Cost is linear in rows and is paid ONCE per opening of the field,
@@ -225,6 +384,7 @@ function residueOf(hay: string, sides: string[]): string {
 export function buildSearchIndex(
   entities: Record<string, EntityDef>,
   rowsByEntity: Record<string, RowData[]>,
+  extras: ProjectExtras = {},
 ): SearchIndex {
   const rows: RowEntry[] = []
   const tables: TableEntry[] = []
@@ -280,6 +440,7 @@ export function buildSearchIndex(
       accent: entity.accent,
       retired,
       rowCount: counted,
+      fieldCount: entity.fields.length,
     }
   }
 
@@ -346,15 +507,109 @@ export function buildSearchIndex(
     }
   }
 
+  /* -- the columns, folded by name ---------------------------
+     One pass over 826 declarations, keyed on the folded name, and
+     the whole fold is paid once per opening like everything else
+     here. The destination is the DECLARING table's destination, so a
+     column read on a fitment list opens the boats it is a fact
+     about — see `ColumnEntry`. */
+  const entryOf = new Map(tables.map((t) => [t.entityId, t]))
+  const byName = new Map<
+    string,
+    { best: TableEntry; bestFacts: TableFacts; name: string; tables: number }
+  >()
+  let columnTotal = 0
+  for (const entity of all) {
+    const here = entryOf.get(entity.id)
+    const dest = here ? facts[here.destId] : undefined
+    if (!here || !dest) continue
+    for (const field of entity.fields) {
+      const key = field.name.trim().toLowerCase()
+      if (key === '') continue
+      columnTotal += 1
+      const held = byName.get(key)
+      if (!held) {
+        byName.set(key, { best: here, bestFacts: dest, name: field.name.trim(), tables: 1 })
+        continue
+      }
+      held.tables += 1
+      /* things you sell before combinations before relationships
+         before history, then the fullest table — so the one line
+         this name gets opens the place most likely to be meant */
+      const better =
+        standing(dest) - standing(held.bestFacts) ||
+        held.bestFacts.rowCount - dest.rowCount ||
+        (dest.name < held.bestFacts.name ? -1 : 1)
+      if (better < 0) {
+        held.best = here
+        held.bestFacts = dest
+        held.name = field.name.trim()
+      }
+    }
+  }
+  const columns: ColumnEntry[] = []
+  for (const [key, held] of byName) {
+    const via = held.best.destId === held.best.entityId ? undefined : held.best.name
+    columns.push({
+      name: held.name,
+      hay: key,
+      destId: held.best.destId,
+      tables: held.tables,
+      ...(via ? { via } : {}),
+    })
+  }
+
+  /* -- the places in the business ---------------------------- */
+  const modules: ModuleEntry[] = []
+  for (const module of Object.values(extras.modules ?? {})) {
+    /* A MODULE THAT DOES NOT OFFER `browse` IS NOT SOMEWHERE TO BE
+       SENT. `MODULE_CAPABILITIES.browse` is "see everything in it",
+       which is exactly what a press on this line does; `open` is
+       looking at one item and is not what is being offered here.
+       This is a fact about the MODULE and needs no role to answer,
+       which is why it is checked and the per-person half is not. */
+    if (!module.capabilities.includes('browse')) continue
+    const live = module.tableIds.filter((id) => facts[id] !== undefined)
+    let rowCount = 0
+    for (const id of live) rowCount += facts[id]?.rowCount ?? 0
+    modules.push({
+      facts: {
+        id: module.id,
+        name: module.name,
+        description: module.description,
+        accent: module.accent,
+        tableIds: live,
+        rowCount,
+      },
+      hay: module.name.toLowerCase(),
+      says: module.description.toLowerCase(),
+    })
+  }
+
+  /* -- the documents ------------------------------------------
+     Kept in the order handed in, which `quotes.ts` publishes newest
+     first: a list of quotes is a diary, and equal matches should
+     come back in the order the rest of the app lists them. */
+  const quotes: QuoteEntry[] = (extras.quotes ?? []).map((q) => ({
+    facts: q,
+    refHay: q.reference.toLowerCase(),
+    subjectHay: q.subject.toLowerCase(),
+    customerHay: q.customer.toLowerCase(),
+  }))
+
   return {
     rows,
     tables,
     facts,
+    modules,
+    quotes,
+    columns,
     rowTotal: rows.length,
     tableTotal: all.length - retiredTables,
     pairRows,
     viaRows,
     retiredTables,
+    columnTotal,
   }
 }
 
@@ -450,11 +705,58 @@ export interface RowGroup {
   total: number
 }
 
+/** A place in the business whose name or description matched. */
+export interface ModuleHit {
+  module: ModuleFacts
+  rank: Rank
+  /** where the run starts in the NAME. -1 when what matched was the
+   *  description, which carries no highlight and never outranks a
+   *  name — the same rule a pair-list reading follows. */
+  at: number
+  length: number
+}
+
+/** Which of a quote's three findable facts the query landed in. A
+ *  document is one line, so the line has to say why it is there. */
+export type QuoteMatch = 'reference' | 'subject' | 'customer'
+
+export interface QuoteHit {
+  quote: QuoteFacts
+  rank: Rank
+  where: QuoteMatch
+  /** the run inside whichever string `where` names */
+  at: number
+  length: number
+}
+
+/** One distinct column name, and the table a press opens. */
+export interface ColumnHit {
+  /** the table a press OPENS — never a live pair list */
+  table: TableFacts
+  name: string
+  rank: Rank
+  at: number
+  length: number
+  /** how many tables declare a column of this name */
+  tables: number
+  /** the pair list it was read in, when the declaring table is one */
+  via?: string
+}
+
 export interface SearchResult {
+  /** the places in the business — the grouping a dealer names, which
+   *  no table is called */
+  modules: ModuleHit[]
   /** tables whose own NAME matched — the "which of 21" answer */
   tables: TableHit[]
   /** row matches, grouped by the table they live in */
   groups: RowGroup[]
+  /** documents — a reference, who it was for, what it sold */
+  quotes: QuoteHit[]
+  /** distinct column names, and where each one is declared */
+  columns: ColumnHit[]
+  /** distinct column names that matched, before the cap */
+  columnTotal: number
   /** every row match found, before any cap */
   rowTotal: number
   /** rows actually listed */
@@ -466,8 +768,12 @@ export interface SearchResult {
 }
 
 export const NO_RESULT: SearchResult = {
+  modules: [],
   tables: [],
   groups: [],
+  quotes: [],
+  columns: [],
+  columnTotal: 0,
   rowTotal: 0,
   rowShown: 0,
 }
@@ -479,6 +785,15 @@ export interface SearchLimits {
   total: number
   /** tables listed in the tables group */
   tables: number
+  /** places listed. There are nine on the prepared file, so this is
+   *  a guard against another org's fifty rather than a real cap. */
+  modules: number
+  /** documents listed. A dealer's quote list grows without bound and
+   *  a palette is not the quotes screen. */
+  quotes: number
+  /** distinct column names listed. `price` folds 26 declarations into
+   *  six names, and six is what a person can read at a glance. */
+  columns: number
 }
 
 /** THE CAPS ARE THE PERFORMANCE STORY, not a debounce.
@@ -492,7 +807,14 @@ export interface SearchLimits {
  *
  *  8 per table shows a whole series without scrolling; 40 total keeps
  *  the popover a popover. */
-export const DEFAULT_LIMITS: SearchLimits = { perTable: 8, total: 40, tables: 6 }
+export const DEFAULT_LIMITS: SearchLimits = {
+  perTable: 8,
+  total: 40,
+  tables: 6,
+  modules: 4,
+  quotes: 5,
+  columns: 6,
+}
 
 /** The shortest query worth answering. One character matches almost
  *  everything and teaches nothing; two is where a name starts to
@@ -528,6 +850,30 @@ export function search(
 ): SearchResult {
   const q = normalizeQuery(rawQuery)
   if (q.length < MIN_QUERY) return NO_RESULT
+
+  /* -- the places in the business ----------------------------
+     A NAME MATCH ALWAYS BEATS A DESCRIPTION MATCH, and a description
+     match carries no highlight, because the run it was found in is
+     not the run being drawn. Identical to the pair-list reading rule
+     twenty lines down; written twice because the two lists are
+     different shapes, and stated once here so it is not read as a
+     coincidence. */
+  const moduleHits: ModuleHit[] = []
+  for (const m of index.modules) {
+    const at = m.hay.indexOf(q)
+    if (at >= 0) {
+      moduleHits.push({ module: m.facts, rank: rankOf(m.hay, at), at, length: q.length })
+      continue
+    }
+    if (m.says.indexOf(q) < 0) continue
+    moduleHits.push({ module: m.facts, rank: RANK.inside, at: -1, length: q.length })
+  }
+  moduleHits.sort(
+    (a, b) =>
+      a.rank - b.rank ||
+      a.module.name.length - b.module.name.length ||
+      (a.module.name < b.module.name ? -1 : 1),
+  )
 
   /* -- tables whose own name matched -------------------------
      ONE LINE PER PLACE, NEVER ONE PER PAIR LIST. Three of Stacer's
@@ -637,6 +983,64 @@ export function search(
       (a.table.name < b.table.name ? -1 : 1),
   )
 
+  /* -- the documents -----------------------------------------
+     THREE STRINGS, ONE LINE, AND THE LINE SAYS WHICH ONE. A quote is
+     reached by the reference off a printed page, by the customer it
+     was written for, or by what it sold — and which of the three a
+     person typed is the difference between "this is the document you
+     asked for" and "this is a document that mentions Ferguson". So
+     the best of the three readings is kept and named, in that order:
+     a reference is exact, a subject is the thing, a customer is the
+     name most likely to be shared by several documents. */
+  const quoteHits: QuoteHit[] = []
+  for (const entry of index.quotes) {
+    const readings: Array<{ where: QuoteMatch; hay: string }> = [
+      { where: 'reference', hay: entry.refHay },
+      { where: 'subject', hay: entry.subjectHay },
+      { where: 'customer', hay: entry.customerHay },
+    ]
+    let best: QuoteHit | undefined
+    for (const r of readings) {
+      const at = r.hay.indexOf(q)
+      if (at < 0) continue
+      const rank = rankOf(r.hay, at)
+      if (best && best.rank <= rank) continue
+      best = { quote: entry.facts, rank, where: r.where, at, length: q.length }
+    }
+    if (best) quoteHits.push(best)
+  }
+  /* rank, then the order they arrived in — which `quotes.ts`
+     publishes newest first, and a diary's newest is the one wanted */
+  quoteHits.sort((a, b) => a.rank - b.rank)
+
+  /* -- the columns -------------------------------------------- */
+  const columnHits: ColumnHit[] = []
+  for (const c of index.columns) {
+    const at = c.hay.indexOf(q)
+    if (at < 0) continue
+    const table = index.facts[c.destId]
+    if (!table) continue
+    columnHits.push({
+      table,
+      name: c.name,
+      rank: rankOf(c.hay, at),
+      at,
+      length: q.length,
+      tables: c.tables,
+      ...(c.via ? { via: c.via } : {}),
+    })
+  }
+  /* things you sell first and history last, exactly as the groups
+     order — then the strongest match, then the shortest name, so
+     "Hull" outranks "Hull Colour Code" for the query "hull" */
+  columnHits.sort(
+    (a, b) =>
+      standing(a.table) - standing(b.table) ||
+      a.rank - b.rank ||
+      a.name.length - b.name.length ||
+      (a.name < b.name ? -1 : 1),
+  )
+
   /* -- caps, applied last so `more` and `total` stay truthful -- */
   let budget = limits.total
   const capped: RowGroup[] = []
@@ -653,8 +1057,12 @@ export function search(
   }
 
   return {
+    modules: moduleHits.slice(0, limits.modules),
     tables: tableHits.slice(0, limits.tables),
     groups: capped,
+    quotes: quoteHits.slice(0, limits.quotes),
+    columns: columnHits.slice(0, limits.columns),
+    columnTotal: columnHits.length,
     rowTotal,
     rowShown: limits.total - budget,
   }
@@ -701,9 +1109,21 @@ export function browse(index: SearchIndex, limit: number = BROWSE_LIMIT): Search
       b.table.rowCount - a.table.rowCount ||
       (a.table.name < b.table.name ? -1 : 1),
   )
+  /* THE RESTING LIST IS STILL PLACES, AND ONLY PLACES. The three
+     kinds added beside it answer a query; none of them answers
+     "nothing typed yet". A resting list that also drew nine modules,
+     five quotes and six columns would be a wall of thirty lines
+     where the whole argument for this list is that it is a menu —
+     and the recall list above it is already the answer to "take me
+     back". They are one keystroke away, which is what typing is
+     for. */
   return {
+    modules: [],
     tables: places.slice(0, limit),
     groups: [],
+    quotes: [],
+    columns: [],
+    columnTotal: 0,
     rowTotal: 0,
     rowShown: 0,
     placeTotal: places.length,
@@ -720,11 +1140,28 @@ export function browse(index: SearchIndex, limit: number = BROWSE_LIMIT): Search
 export type Option =
   | { kind: 'table'; id: string; entityId: string }
   | { kind: 'row'; id: string; entityId: string; rowId: string }
+  | { kind: 'module'; id: string; moduleId: string }
+  | { kind: 'quote'; id: string; quoteId: string }
+  /** a column opens the table that declares it — so it carries an
+   *  `entityId` like a table does, and the column's name only so the
+   *  chooser can say what was picked */
+  | { kind: 'column'; id: string; entityId: string; column: string }
 
 /** The options in the exact order they are painted, so index N in
- *  this list is the Nth thing down the popover. */
+ *  this list is the Nth thing down the popover.
+ *
+ *  THE ORDER IS BY HOW MUCH OF THE BUSINESS EACH KIND CONTAINS, and
+ *  it is fixed rather than ranked across kinds. Modules are the
+ *  places; tables are inside them; rows are inside those; a quote is
+ *  a document about one row; a column is the smallest thing on the
+ *  sheet and the most administrative, so it is last. A cross-kind
+ *  ranking would move the first option under the cursor from one
+ *  keystroke to the next, and the first option is what Enter takes. */
 export function optionsOf(result: SearchResult): Option[] {
   const out: Option[] = []
+  for (const m of result.modules) {
+    out.push({ kind: 'module', id: `m:${m.module.id}`, moduleId: m.module.id })
+  }
   for (const t of result.tables) {
     out.push({ kind: 'table', id: `t:${t.table.id}`, entityId: t.table.id })
   }
@@ -737,6 +1174,17 @@ export function optionsOf(result: SearchResult): Option[] {
         rowId: h.rowId,
       })
     }
+  }
+  for (const q of result.quotes) {
+    out.push({ kind: 'quote', id: `q:${q.quote.id}`, quoteId: q.quote.id })
+  }
+  for (const c of result.columns) {
+    out.push({
+      kind: 'column',
+      id: `c:${c.table.id}:${c.name}`,
+      entityId: c.table.id,
+      column: c.name,
+    })
   }
   return out
 }

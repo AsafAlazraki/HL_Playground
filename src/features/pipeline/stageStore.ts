@@ -105,6 +105,29 @@ export interface StageDef {
    *  closed columns shout as loudly as the live ones draws the eye
    *  to work already done */
   closed: boolean
+  /** WHAT ENTERING THIS COLUMN ASKS OF THE DOCUMENT — the first
+   *  and, today, the only thing a stage change DOES.
+   *
+   *  SALES_BOARD §4 names four triggers: reassign the owner, lock
+   *  the pricing, require a deposit, notify somebody. Three of them
+   *  name a concept this app does not have (see `stageTrigger.ts`,
+   *  which lists what each would need). "Lock the pricing" is the
+   *  one that does: issuing a quote is exactly that act — "the
+   *  moment it is given to a customer. Everything that makes a
+   *  number becomes read-only" (quote/quotes.ts:788).
+   *
+   *  IT DOES NOT FIRE THE ACT, AND THAT IS ARGUED IN
+   *  `stageTrigger.ts`, not here. What this flag stores is the
+   *  dealership saying "a deal in this column should have gone to
+   *  the customer"; the board says so on any that has not.
+   *
+   *  A STORED BOARD THAT PREDATES THIS FIELD LOCKS NOTHING — same
+   *  reading `wash` is given one field up, and for the stronger
+   *  reason: a demand nobody typed is a demand this app invented on
+   *  a dealer's behalf. The shipped Won column below opts in,
+   *  because a deal we have won on prices that can still move is
+   *  the case the field exists for. */
+  locks: boolean
 }
 
 /** THE TWO THE DERIVATION NEEDS. See the header. */
@@ -123,6 +146,7 @@ export const DEFAULT_STAGES: readonly StageDef[] = [
     tone: 'neutral',
     wash: 'none',
     closed: false,
+    locks: false,
   },
   {
     id: 'issued',
@@ -131,6 +155,11 @@ export const DEFAULT_STAGES: readonly StageDef[] = [
     tone: 'blue',
     wash: 'none',
     closed: false,
+    /* A QUOTE REACHES THIS COLUMN BY BEING ISSUED — `derivedStage`
+       puts it here — so a demand on it would fire on the one deal
+       that has already met it. The flag is for a column somebody
+       drags a card INTO. */
+    locks: false,
   },
   {
     id: 'negotiating',
@@ -139,6 +168,8 @@ export const DEFAULT_STAGES: readonly StageDef[] = [
     tone: 'amber',
     wash: 'none',
     closed: false,
+    /* HAGGLING IS EXACTLY WHEN A PRICE SHOULD STILL MOVE. */
+    locks: false,
   },
   {
     id: 'won',
@@ -147,6 +178,10 @@ export const DEFAULT_STAGES: readonly StageDef[] = [
     tone: 'green',
     wash: 'none',
     closed: true,
+    /* THE ONE SHIPPED COLUMN THAT ASKS FOR ANYTHING. A deal we
+       have won, standing on prices anybody can still edit, is the
+       case SALES_BOARD §4 was written about. */
+    locks: true,
   },
   {
     id: 'lost',
@@ -155,6 +190,8 @@ export const DEFAULT_STAGES: readonly StageDef[] = [
     tone: 'red',
     wash: 'none',
     closed: true,
+    /* NOTHING IS OWED ON A DEAL THAT WENT SOMEWHERE ELSE. */
+    locks: false,
   },
 ]
 
@@ -193,6 +230,13 @@ function parse(raw: unknown): StageDef[] | null {
          column was drawn plain, so plain is what it meant. */
       wash: isWash(s['wash']) ? s['wash'] : 'none',
       closed: s['closed'] === true,
+      /* AND EVERY EXISTING BOARD ASKS FOR NOTHING — the same
+         reading `wash` gets one line up, held harder. A stage
+         stored before this field existed carried no demand, and
+         switching one on for a dealer who never asked would put
+         "Not locked" across deals they have been perfectly happy
+         with since August. */
+      locks: s['locks'] === true,
     })
   }
   /* the anchors must be there, or a quote nobody has moved has

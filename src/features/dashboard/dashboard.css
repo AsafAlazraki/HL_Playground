@@ -1456,8 +1456,16 @@
 }
 
 /* 0.994 ON A CARD, NOT 0.97. §4: 0.97 on a 236px card is a 7px
-   shrink and reads as a glitch. */
-.dsh-add:active {
+   shrink and reads as a glitch.
+
+   AND IT WAS LOSING. Measured in Chrome: this button pressed at
+   0.97 anyway, because `base.css:432` presses every button from a
+   (0,3,1) selector and `.dsh-add:active` is (0,2,0). At 488px
+   wide that is a 14.6px shrink on the biggest control on the
+   screen — the glitch §4 names, four times over. Restated in
+   base.css's own selector shape, which is (0,4,0) and wins on
+   class count; `build.css:949` is the worked example. */
+.dsh-add:not(:disabled):not([aria-disabled='true']):active {
   transform: scale(0.994);
   background: var(--accent-wash-strong);
 }
@@ -1697,6 +1705,19 @@
   .dsh-act:active,
   .dsh-add:active,
   .dsh-tray-item:active {
+    transform: none;
+  }
+
+  /* AND THE ADD CARD'S PRESS IS STATED AT (0,4,0) NOW, so it has
+     to be un-stated at the same weight or the rule above cannot
+     reach it. `base.css:623` only shortens the transition; the
+     scale itself is a transform, and §4 is explicit that under
+     reduced motion movement goes and colour stays.
+
+     The doors' own escape is at the foot of this file rather than
+     here, because a rule of equal weight is decided by source
+     order and their press is written below this block. */
+  .dsh-add:not(:disabled):not([aria-disabled='true']):active {
     transform: none;
   }
 }
@@ -2469,4 +2490,207 @@
 
 .dsh-tile:not(:has(img)) .dsh-tile-foot {
   padding-left: calc(var(--s-3) + 3px);
+}
+
+/* ============================================================
+   THE DOORS — the catalogue, entered by kind.
+
+   WHAT THEY REPLACED, MEASURED. At 1280x800 on the real set, the
+   bottom-left card of the front door was the activity log: a
+   264.9px body with 88.1px of content in it, 176.8px of nothing,
+   66.7% of the card. It was the emptiest surface on the screen
+   and the only one that fills with time rather than with an act.
+   These four doors take that slot, and they are the only route
+   this dashboard has ever had from the front door into the
+   catalogue by KIND — every other route goes through a brand.
+
+   THE PHOTOGRAPH IS THE COLOUR (PHASE_TWO §1b: 220 real
+   photographs "reduced to card headers and 32px thumbnails; in a
+   catalogue they ARE the palette"), and the kind's hue is the
+   plate underneath it — the same 14% the module tile's panel
+   carries, so a boat is the same blue here, on the modules card,
+   in the rail and on its own page.
+
+   AND NO TYPE SITS ON A PHOTOGRAPH. Rule 4 wants every
+   text/background pair MEASURED at 4.5:1, and a photograph has
+   no ground that can be measured — a white hull and a sunset are
+   two different backgrounds under one line. So the name and the
+   count sit on the door's own surface beneath the picture, where
+   the ratio is the one the ink ramp was measured at.
+   ============================================================ */
+
+.dsh-doors {
+  display: grid;
+  /* TWO COLUMNS, FIXED, AND `auto-fill` WAS THE WRONG QUESTION.
+     With `repeat(auto-fill, minmax(200px, 1fr))` the card laid
+     three tracks at 1920 and four doors came out 3 + 1 — a ragged
+     row with a door-shaped hole beside the last one, which is the
+     fault `shelfFor` was written to remove from the table board.
+     Two tracks divide the four kinds a marine dealer has exactly,
+     and they divide any even set; an odd set leaves one hole
+     wherever the tracks are, so the tracks may as well be the
+     ones that make each door biggest. Measured across the four
+     sizes this app is used at: 396px wide at 1920, 264 at 1440,
+     225 at 1280, 173 at 1024. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* AN EQUAL SHARE OF THE CARD, WITH A FLOOR. Four doors take two
+     rows of whatever height the card has — 191px each at 1920,
+     124 at 1280. A business with six kinds behind one module each
+     gets three rows, the floor keeps every door tall enough for a
+     picture, and the CARD scrolls: a strip that does not fit
+     scrolls rather than being cut (§3). */
+  grid-auto-rows: minmax(104px, 1fr);
+  /* AND IT TAKES THE ROOM, so `1fr` has something to be a share
+     OF. `.dsh-card-body` is a column flex box, and a grid that
+     only asks for its content height leaves its rows at their
+     minimum: measured at 1920 the doors sat 116.6px tall in a
+     391px card with 145.1px of air under them, which is the same
+     emptiness this card was put here to replace. */
+  flex: 1 1 auto;
+  gap: var(--s-2);
+  min-height: 0;
+  overflow-y: auto;
+  /* a hair of inset so a focus ring is never cropped, and the
+     scrollbar's width given back on the right — the same two
+     lines `.dsh-tiles` keeps, for the same two reasons */
+  padding: 1px var(--s-1) var(--s-1) 1px;
+  margin: 0 calc(var(--s-2) * -1) 0 -1px;
+}
+
+.dsh-door {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--r-control);
+  /* THE SAME GROUND A TILE OF THIS KIND WEARS. 6% is a tint the
+     name still clears 4.5:1 against, and it is what makes the
+     doors read as four families rather than four boxes. */
+  background: color-mix(in srgb, var(--kind) 6%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--kind) 14%, var(--line-subtle));
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease),
+    transform var(--d-press) var(--ease);
+}
+.dsh-door:hover {
+  background: color-mix(in srgb, var(--kind) 11%, var(--surface-1));
+  border-color: color-mix(in srgb, var(--kind) 30%, transparent);
+  box-shadow: var(--e2);
+}
+/* PRESS IS A CARD'S PRESS, NOT A CONTROL'S — and it has to be
+   said in base.css's own selector shape to be heard.
+
+   MEASURED, in Chrome, before this: the door pressed at
+   `scale(0.97)` while its own rule said 0.994. `base.css:432`
+   presses every button at `scale(var(--press-scale))` from
+   `button:not(:disabled):not([aria-disabled='true']):active`,
+   which computes to (0,3,1) and beats a plain `.dsh-door:active`
+   at (0,2,0) — deliberately, and its own comment says so: the
+   four rules it overrules all CANCELLED their feedback.
+
+   This is not one of those. DESIGN_CONTRACT §11 asks a card for
+   0.994 and CONFIGURATOR_PLAYBOOK §6 gives the number its reason:
+   0.97 on a 225px door is a 6.75px shrink and reads as a glitch,
+   where 0.994 is 1.35px. `src/styles/**` is not this feature's to
+   edit, so the feature states its own press in its own sheet in
+   the same selector shape — (0,4,0), winning on class count
+   rather than on source order. `build.css:949` is the worked
+   example and the argument in full.
+
+   The hover lift goes with it, which is the other half of the
+   same row in the motion table: on a big surface the press is
+   SEEN, not felt. */
+.dsh-door:not(:disabled):not([aria-disabled='true']):active {
+  transform: scale(0.994);
+  box-shadow: none;
+}
+
+/* ---- the plate: the photograph, or the kind's own mark ----- */
+
+.dsh-door-plate {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* the picture takes the room the caption does not */
+  flex: 1 1 auto;
+  min-height: 56px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
+  border-bottom: 1px solid color-mix(in srgb, var(--kind) 20%, transparent);
+}
+
+.dsh-door-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* COVER, NOT CONTAIN — the same choice the catalogue tile makes.
+     These files run from 320x230 to 2560x1440; contained, the
+     narrow ones would sit in two bars of tint and the door would
+     stop reading as a photograph. */
+  object-fit: cover;
+  display: block;
+}
+
+/* THE MARK STANDS IN FOR A PHOTOGRAPH THAT IS NOT THERE, and goes
+   the moment one is really painted. `:has(img)` asks the element
+   that answered the question rather than re-deciding here — the
+   arrangement `.dsh-tile-panel` already keeps. */
+.dsh-door-mark {
+  display: inline-flex;
+  color: var(--kind);
+}
+.dsh-door-plate:has(img) .dsh-door-mark {
+  display: none;
+}
+
+/* ---- the caption: the kind, and what is behind it ---------- */
+
+.dsh-door-say {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: var(--s-2) var(--s-3);
+}
+
+/* A KIND'S NAME IS A NAME — rule 3, so it is not uppercase and
+   not tracked out. It wraps rather than ellipsing: nothing on
+   this screen truncates mid-word (§3). */
+.dsh-door-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* THE FIGURE IS INK AND MONO, NEVER THE HUE. §1: a price is not
+   decorative and neither is a count. `.dsh-empty-n` inside it is
+   the mono span `splitCount` writes. */
+.dsh-door-n {
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* MOVEMENT GOES, COLOUR AND LIGHT STAY — §4's own words, and the
+   whole of the escape this file owes for the transform above.
+
+   IT IS HERE AND NOT IN THE BLOCK ABOVE because the press is
+   stated at (0,4,0) to be heard over base.css, and two rules of
+   equal weight are decided by source order: written up there it
+   loses to the press written down here, which is a reduced-motion
+   escape that silently does nothing. Measured both ways. */
+@media (prefers-reduced-motion: reduce) {
+  .dsh-door {
+    transition-property: background, border-color, box-shadow;
+  }
+  .dsh-door:not(:disabled):not([aria-disabled='true']):active {
+    transform: none;
+  }
 }

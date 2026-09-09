@@ -147,13 +147,34 @@
   padding: var(--s-6);
   border-right: 1px solid var(--line);
   background: var(--surface-1);
-  /* A SHORT WINDOW SCROLLS THE PANE, NOT THE PAGE. Measured at
-     1024x768 the pane has 513px and its own contents want 551 — the
-     photograph, the plates, a 47px name and five hairline specs — so
-     the last spec was clipped by the price bar. The pane scrolls
-     inside itself: the page is still one screen, the boat is still
-     beside the bands, and nothing is cut. */
-  overflow-y: auto;
+  /* ── ONE SCROLL REGION ON THIS SCREEN, AND IT IS THE OPTION RAIL
+     ───────────────────────────────────────────────────────────────
+
+     THIS PANE USED TO SCROLL ITSELF. `overflow-y: auto` here, and
+     `overflow: auto` on `.qb-scroll` beside it, made two independent
+     scrollports side by side: measured at 1280×800 on a Highfield
+     CL260, this pane held 713px of content in 524px and the option
+     rail held 654px in the same 524px. Two scrollbars, two wheels,
+     and no way for a person to know which one their gesture was
+     about to move — the answer changes with the pointer's x.
+
+     PHASE_TWO §2.3 asks for "sticky product left, scrolling option
+     rail right", which is ONE scrollport. This pane is a flex
+     SIBLING of that scrollport, so it is full height by
+     construction at every size and needs no sticky offset it cannot
+     know — and it never scrolls, so the rail's scrollbar is the only
+     one on the screen.
+
+     WHICH MEANS IT MUST FIT, and the layout below is what makes it:
+     the identity and the specs are `flex: none` (they are the
+     answer to "what is this", and they may never be the thing that
+     is given up), the render is `flex: 1 1 auto` and takes whatever
+     is left, and the plate list is `flex: 0 1 auto` — so if a build
+     ever outruns the pane it is the tail of a list of photographs
+     that gives, and every line in it is still on its band head, in
+     the ledger and on the document. `overflow: hidden` is the
+     backstop under that, not the mechanism. */
+  overflow: hidden;
 }
 
 /* ---- the render, crossfading -------------------------------- */
@@ -180,8 +201,30 @@
    product shot on white is not dead, it is the shot. */
 .qb-render {
   position: relative;
+  /* THE ONE BLOCK THAT GIVES, and the floor is what says how far.
+
+     Everything else in this pane is a fact that has to be readable
+     at every window; a photograph is the same photograph at 180px
+     as at 100px, and it is the only thing here a person can lose a
+     little of without losing anything they came for.
+
+     THE FLOOR CAME DOWN FROM 180 TO 100, IN TWO STEPS AND FOR ONE
+     REASON: a floor that cannot be met is a scrollbar with extra
+     steps, and this pane may not have one.
+
+     Measured at 1280×800. The pane is 546px and 474 of it is
+     spendable once its padding and its two gaps are paid. The name
+     and the specs take 191.5 and may not give, so 282.5 is what the
+     photograph and the list of what is decided divide. At a floor
+     of 140 with the plate row still 50px, a rig of hull, motor and
+     trailer wanted 154px of list and had 142 — it clipped the third
+     row, on the ORDINARY build. At a floor of 100 with a 46px row
+     pitch the render measures 192.4 on two photographed lines,
+     146.4 on three and 100.4 on four, and nothing clips until the
+     fifth. The picture is 178×100 on the build where the floor is
+     reached, which is a boat you can still recognise. */
   flex: 1 1 auto;
-  min-height: 180px;
+  min-height: 100px;
   border: 1px solid var(--line-subtle);
   border-radius: var(--r-card);
   background: var(--surface-1);
@@ -279,20 +322,39 @@
    list that is never not on screen. The act is unchanged — press it
    and the render above becomes that thing.
 
-   IT IS `flex: none` UNDER A `flex: 1 1 auto` RENDER, so a short
-   window takes the height out of the photograph and never out of
-   this. Measured at 1024×768, where the pane has 513px: the render
-   floors at its own 180px and the rig keeps all five of its rows.
+   AND IT IS THE LAST BLOCK IN THE PANE NOW, under the photograph
+   it switches. It used to sit between the photograph and the name,
+   which is what put the heading of this page under the list it
+   heads — see the note on `.qb-product`. Under the render it is
+   also beside the thing it acts on, which is where a control
+   belongs.
+
+   IT DRAWS A ROW ONLY FOR A LINE THAT HAS A PHOTOGRAPH. A plate's
+   whole act is "put this picture in the render"; a line the price
+   file carries no picture for drew a grey rectangle that, pressed,
+   put a placeholder up there. Measured on a fresh CL260 two of the
+   four rows were that. It is also what bounds the list, which is
+   what lets this pane stop scrolling itself.
    ---------------------------------------------------------------- */
 
 .qb-plates {
-  flex: none;
+  /* `0 1 auto`, NOT `none`. It was `flex: none` under a `flex: 1 1
+     auto` render so that a short window took the height out of the
+     photograph and never out of this — which is right until the list
+     itself is what does not fit, and then a `none` list is the whole
+     reason the pane grew a scrollbar. It is the last block in the
+     pane and the only one whose content is repeated elsewhere in
+     full (every line is on its band head and in the ledger), so it
+     is the one that gives. `min-height: 0` is what lets it. */
+  flex: 0 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
+  overflow: hidden;
 }
 
 .qb-plate-slot {
@@ -372,13 +434,26 @@
   border-color: var(--accent);
 }
 
-/* the picture keeps the size it always had; only its surroundings
-   changed */
+/* 56×42 CAME DOWN TO 48×36, AND IT BOUGHT A WHOLE ROW.
+
+   The plate was a 50px row — 42 of picture and 8 of padding and
+   border — against DESIGN_PRINCIPLES §3's 40px. Measured at
+   1280×800 with the pane's blocks laid out as they are now, a rig
+   with three photographed lines wanted 154px of plate list and had
+   142: it clipped by twelve pixels, on the ORDINARY build of hull,
+   motor and trailer. At 48×36 the row is 44px and the pitch 46 with
+   its gap, so two rows measure 90, three 136 and four 182 — and the
+   pane holds four.
+
+   The ratio is the same 4:3 and the picture is still a picture —
+   it is a thumbnail either way, and the name beside it is what a
+   person reads. Nothing here was ever sized to be looked at; the
+   render above is. */
 .qb-plate-shot {
   flex: none;
   display: block;
-  width: 56px;
-  height: 42px;
+  width: 48px;
+  height: 36px;
   border: 1px solid var(--line);
   border-radius: var(--r-control);
   background: var(--surface-3);
@@ -479,10 +554,21 @@
    to be full-height, not a card header. Two columns halves it and
    the strip still reads as an instrument panel rather than as a
    paragraph of pairs. `auto-fit` means it is one column the moment
-   the pane is narrow, with no second breakpoint to keep in sync. */
+   the pane is narrow, with no second breakpoint to keep in sync.
+
+   THE FLOOR WAS 184px AND IT NEVER BOUGHT THE SECOND COLUMN. At
+   1280×800 the pane is 401px and its content box 361; two 184px
+   tracks with the `--s-5` gutter between them want 388, so
+   `auto-fit` resolved to ONE column at the width this app is tuned
+   at and the specs took 167px of a 546px pane — a rule that had
+   been paying for itself only above 1440. At 160 the pair wants
+   340 and fits, and the specs came to 84px on the same boat, which
+   is 83px the photograph now has. A label and a mono value still
+   have 160px between them; the two longest in the seed —
+   "Length overall" against "2.60 m" — set on one line at 12px. */
 .qb-specs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(184px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   column-gap: var(--s-5);
   margin: var(--s-2) 0 0;
   padding: 0;
@@ -2576,6 +2662,10 @@
     border-right: 0;
     border-bottom: 1px solid var(--line);
     padding: var(--s-5);
+    /* THE FIT RULE IS A SPLIT-LAYOUT RULE. Stacked, this pane's
+       height is its content's, so there is nothing to fit inside
+       and nothing to clip — and the page's own scroll carries it. */
+    overflow: visible;
   }
   .qb-render {
     flex: none;
@@ -2593,10 +2683,18 @@
      the base rule now tops out at 34px, and a stacked pane 768px wide
      resolves 6.4cqi to 49px and takes that ceiling — the same title
      size as every other page in the app, at every width. */
-  .qb-specs {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
+  /* THE SPECS OVERRIDE THAT SAT HERE IS GONE. It dropped the track
+     floor to 160px so a stacked pane kept two columns; the base rule
+     is 160px now — it had to be, for the second column to exist at
+     1280 at all — so this was the same declaration written twice. */
   .qb-scroll {
+    flex: none;
+    overflow: visible;
+  }
+  /* THE PANE IS THE PAGE'S FIRST BLOCK HERE, NOT A COLUMN BESIDE
+     IT, so nothing is competing with it for height and the list of
+     what is decided may run to its full length. */
+  .qb-plates {
     flex: none;
     overflow: visible;
   }

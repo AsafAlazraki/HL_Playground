@@ -202,6 +202,60 @@
   padding: 4px 0;
 }
 
+/* ------------------------------------------------------------
+   AND THE ROW SAYS WHICH WAY IT STILL HAS FACETS IN IT.
+
+   The measurement is in Catalogue.tsx beside the code that takes
+   it: on an eight-facet table the row hides 43px at 1280 and
+   415px at 768 — five of the eight filters entirely off-screen —
+   and `scrollbar-width: thin` contributed **0px** of scrollbar at
+   every width tested, because an overlay scrollbar draws nothing
+   until a gesture is already under way. Reachable is not findable.
+
+   `#000` HERE IS AN ALPHA CHANNEL AND NOT AN INK, which is the
+   ruling `build.css` already made for the same construction: a
+   mask reads only its own gradient, no theme colour can be
+   substituted for it, and rule 1 has nothing to say about it.
+
+   THE FADE IS 24px, ONE CHIP'S LEADING EDGE. Wide enough to read
+   as a fade rather than as a rendering fault, narrow enough that
+   the chip under it is still the chip you can see and press. And
+   there is no `transition` on it: the state changes while a
+   person is dragging the row, which is the definition of a
+   high-frequency action (§6).
+
+   `[data-over]` IS WRITTEN ONLY WHEN IT IS TRUE, so at 1440 —
+   where the eight facets fit — this file draws nothing at all.
+   ------------------------------------------------------------ */
+.cat-rail[data-over='end'] {
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+}
+.cat-rail[data-over='start'] {
+  mask-image: linear-gradient(to right, transparent, #000 24px);
+}
+.cat-rail[data-over='both'] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent
+  );
+}
+
+/* WHERE A TABBED-TO CONTROL LANDS. `Catalogue.tsx` scrolls the
+   focused child into the row; without this it would land exactly
+   ON the edge, which is where the fade is, and the ring would
+   arrive dimmed. 28 is the 24px fade plus the 3px a chip's own
+   outline reaches (2px of outline, 1px of offset) and one to
+   spare. It moves with the fade above it, not with the spacing
+   scale — the same reasoning as the ring clearance in `.cat-rail`. */
+.cat-find,
+.cat-facet,
+.cat-clear {
+  scroll-margin-inline: 28px;
+}
+
 .cat-find {
   flex: none;
   display: block;
@@ -349,6 +403,17 @@
   padding: var(--s-4) var(--page-gutter) var(--s-10);
 }
 
+/* THE ENTRANCE IS THE SECTION'S. `.ds-rise` moved off the tile and
+   onto the band — the long note in Catalogue.tsx has the measurement
+   (16 tiles animating on one backspace, against 0 now), and the
+   travel the author chose for this screen moves with it. `--rise` is
+   `12px` at the root; 8 is the value a photographic grid was tuned to
+   and there is no reason for it to change because the animated
+   element got bigger. */
+.cat-band {
+  --rise: 8px;
+}
+
 .cat-band + .cat-band {
   margin-top: var(--s-5);
 }
@@ -403,7 +468,6 @@
 
 .cat-tile {
   min-width: 0;
-  --rise: 8px;
   /* the anchor for the hand-over pill, which is a SIBLING of the
      card rather than a child of it — a button inside a button is
      invalid HTML, and browsers repair it by un-nesting */

@@ -677,16 +677,80 @@
 
 /* -- footer ------------------------------------------------- */
 
+/* THE FOOT IS A COLUMN OF ROWS NOW, and the clear row is unchanged
+   inside it — same padding, same ground, same space-between. What
+   made it a column is that a second way off the sheet arrived above
+   it (REMOVE THE EXAMPLE DATA), and its note is a sentence rather
+   than the four words that fit beside a button. */
 .io-foot {
   flex: none;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-2);
   padding: var(--s-2) var(--s-4);
   border-top: 1px solid var(--line-subtle);
   background: var(--surface-3);
   border-radius: 0 0 var(--r-panel) var(--r-panel);
+}
+.io-foot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+/* -- remove the example data -------------------------------- */
+
+/* The reversible way off the sheet, drawn above the irreversible one.
+   It is NOT in the danger colour: this act is one step back, and the
+   red pencil belongs to the acts that are not. */
+/* The gap is `--s-1` and not the `gap: 2px` eight other pairings in
+   this file sit on: DESIGN_PRINCIPLES §3 is explicit that spacing
+   comes from the scale and never from a literal, the scale's bottom
+   rung is 4px, and 4px reads here. The neighbours are older than the
+   rule. */
+.io-example {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.io-example-go {
+  padding: var(--s-1) var(--s-2);
+  margin-left: calc(-1 * var(--s-2));
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  color: var(--fg);
+  cursor: pointer;
+  transition:
+    color var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+.io-example-go:hover {
+  color: var(--accent);
+  background: var(--accent-wash);
+}
+.io-example-go:active {
+  transform: scale(0.97);
+  transition-duration: var(--d-press);
+}
+/* the ring itself is declared with CLEAR SHEET's at the foot of this
+   file — the two controls sit in one footer and must ring alike */
+.io-example-why {
+  font-size: var(--t-caption-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
 }
 .io-clear {
   padding: var(--s-1) var(--s-2);
@@ -1084,6 +1148,7 @@
   .io-trigger:active,
   .io-drop:active,
   .io-clear:not(:disabled):active,
+  .io-example-go:active,
   .io-fresh-go:active,
   .io-fresh-keep:active,
   .io-plate-actions .btn:active {
@@ -1361,10 +1426,12 @@
 .io-drop:active {
   transform: scale(0.994);
 }
-.io-clear:focus-visible {
+.io-clear:focus-visible,
+.io-example-go:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--blue-wash);
 }
-.io-clear:not(:disabled):active {
+.io-clear:not(:disabled):active,
+.io-example-go:active {
   transform: scale(0.97);
 }

@@ -102,6 +102,16 @@ export {
   type StageTone,
   type StageWash,
 } from './stageStore'
+/* WHAT A STAGE CHANGE DOES — and, at length, what it does not and
+   what each of SALES_BOARD §4's other three triggers would need
+   before it could. See the file's own header. */
+export {
+  NOT_LOCKED,
+  arrivalClause,
+  lockDemand,
+  locksButOpen,
+  type StageDemand,
+} from './stageTrigger'
 export {
   arrivedAt,
   boardOf,

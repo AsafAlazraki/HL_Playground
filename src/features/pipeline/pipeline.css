@@ -279,6 +279,27 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* WHAT THE COLUMN ASKED FOR AND HAS NOT GOT — see `stageTrigger.ts`.
+   Drawn only where it is true, like the note badge above it.
+
+   `--fg-secondary` AND NOT `--fg-tertiary`, which is what every
+   other mark in this row wears. This one carries meaning and the
+   metadata ink is the floor for anything a person must read; a
+   demand nobody notices is a demand that may as well not be made.
+   It sits on `.pb-card`'s own `--surface-1`, untinted, so the
+   measured ramp holds without a second reading — a card in a
+   washed column keeps its own ground.
+
+   NO HUE. A kind hue says what a thing IS (rule 5) and "the
+   dealership asked for a locked price" is not a kind; a red mark
+   here would also be the board's only piece of alarm, on a screen
+   whose six colours are the dealer's own. */
+.pb-card-unlocked {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg-secondary);
+}
+
 /* THE CUSTOMER IS THE HEADING. A deal is a person waiting on an
    answer, and the reference is an index number. */
 .pb-card-who {
@@ -880,8 +901,16 @@
      are two controls now (see the wash block above), so the row is
      move, name, colour, tint, finished, count, remove and the
      slack — and the sentence saying what belongs in the column
-     goes on a second line under the name field it belongs with. */
-  grid-template-columns: auto minmax(140px, 320px) auto auto auto auto auto minmax(0, 1fr);
+     goes on a second line under the name field it belongs with.
+
+     A NINTH ARRIVED WITH WHAT THE COLUMN ASKS FOR. "Prices locked"
+     stands beside "Finished work" because they are the same kind
+     of decision — two facts a dealer declares about a column — and
+     the track is `auto` for the same reason theirs is: a tick box
+     and two words are as wide as they are, and the slack stays in
+     the last track where the row can still breathe. */
+  grid-template-columns:
+    auto minmax(140px, 320px) auto auto auto auto auto auto minmax(0, 1fr);
   align-items: center;
   gap: var(--s-2) var(--s-3);
   padding: var(--s-2) 0;
@@ -972,7 +1001,13 @@
   outline-offset: 3px;
 }
 
-.se-closed {
+/* TWO FLAGS, ONE ANATOMY. "Finished work" is how a column is
+   DRAWN; "Prices locked" is what entering it ASKS. They are
+   different questions and they are the same shape of answer, so
+   they are the same control — a dealer scanning the panel should
+   not have to learn two tick boxes. */
+.se-closed,
+.se-locks {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
@@ -1123,6 +1158,7 @@
   }
   .se-tones,
   .se-closed,
+  .se-locks,
   .se-n {
     grid-column: 2 / -1;
   }
@@ -1995,6 +2031,53 @@
   margin-left: var(--s-2);
   font-size: var(--t-caption-size);
   color: var(--fg-tertiary);
+}
+
+/* WHAT THE COLUMN ASKS OF THIS DEAL — the refusal, on the second
+   line of the row it is about (CONFIGURATOR_PLAYBOOK §5), inside
+   the Stage row's own `<dd>` so nothing can separate the two.
+
+   NO WASH UNDER IT, and that is the rule-4 decision. `.se-why` in
+   the panel above sits on `--warning-wash` and it earns it: it
+   answers a press, once, and is gone. This one stands on a deal
+   for as long as the deal stands in the column, and a tinted band
+   living permanently behind three lines of prose is the surface
+   this board refuses everywhere else. The colour is carried by a
+   3px rule, which is the eighth-note the tint would have been —
+   and the ink is `--fg-secondary` on the pane's own untinted
+   ground, where the measured 8.1:1 holds with no second reading.
+
+   NOTHING MOVES. It is not an event; it is a condition that was
+   already true when the pane opened, and a sentence that fades in
+   arrives after you have already looked (§6). */
+.dp-demand {
+  margin: var(--s-2) 0 0;
+  padding: 0 0 0 var(--s-3);
+  border-left: 3px solid var(--warning);
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+}
+/* THE WORD, IN SENTENCE CASE. Uppercase is a label style and never
+   a name (rule 3); the emphasis is weight and ink, which is what
+   the type scale offers for exactly this. */
+.dp-demand-word {
+  font-weight: 600;
+  color: var(--fg);
+}
+/* THE DOCUMENT'S OWN REASONS, one per line and verbatim from
+   `issueBlockers`. A list because they are separate problems with
+   separate remedies — run together they read as one long excuse. */
+.dp-demand-whys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+}
+.dp-demand-why {
+  font-size: var(--t-caption-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
 }
 
 .dp-thread-part,
