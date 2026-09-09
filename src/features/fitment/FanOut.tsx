@@ -104,6 +104,7 @@ import { heldBackSentence, retiredTableSentence } from '@/features/views/sellabl
    rate — was the worst possible surface to have been stating it
    without letting anybody check it. */
 import { CurationNote, measuredRate, readCuration, searchReach } from '@/features/curation'
+import { Button, Card, Row, SectionHead } from '@/ui'
 import { readFanOut, readRoles, type Fan, type FanReading, type StrandGroup } from './reading'
 import { Rig } from './Rig'
 import './fitment.css'
@@ -171,9 +172,9 @@ const verdictOf = (row: PartnerRowReading, marque: string): PickVerdict => {
    WRITTEN OUT, NEVER INTERPOLATED — `check-styles` trusts a string
    literal inside a className and nothing else. */
 const listRowClass = (verdict: PickVerdict): string => {
-  if (verdict === 'another') return 'fo-list-row s-refused'
-  if (verdict === 'unnamed') return 'fo-list-row s-unchecked'
-  return 'fo-list-row'
+  if (verdict === 'another') return 'fo-list-item s-refused'
+  if (verdict === 'unnamed') return 'fo-list-item s-unchecked'
+  return 'fo-list-item'
 }
 
 export interface FanOutProps {
@@ -371,7 +372,10 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
     <section className="fo-root" aria-label="What fits what">
       <div className="fo-page">
         <header className="fo-head">
-          <p className="fo-eyebrow">From your price file</p>
+          <div className="fo-head-say">
+          <SectionHead level="none">From your price file</SectionHead>
+          {/* THE SUBJECT, on the middle step — `--t-display-xl`, set in
+              fitment.css where the rule owns the element */}
           <h2 className="fo-title">What one {noun.one} can be sold with</h2>
           {/* THE SECOND SENTENCE DESCRIBED THE PAGE. "Every figure
               below is counted off the sheet as it stands right now" is
@@ -387,19 +391,27 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
           <p className="fo-lede">
             What may go with what, in {reading.roles.length} kinds of pairing.
           </p>
+          </div>
 
-          <ul className="fo-ledger">
-            <Stat figure={n(reading.subjects)} word={noun.many} />
-            <Stat figure={n(reading.pairs)} word="pairings between them" />
-            <Stat
-              figure={n(reading.partnerTables)}
-              word={`catalogues they draw from, across ${n(reading.joinTables)} relationship tables`}
-            />
-            <Stat
-              figure={n(derived)}
-              word={`of those pairings a formula worked out — ${pct(derivedShare)}`}
-            />
-          </ul>
+          {/* THE LEDGER, AS A PANEL: four figures counted off the sheet
+              are the evidence the whole page rests on, so they get a
+              surface — a raised Card, the same one Home gives its tally */}
+          <div className="fo-ledger-slot">
+            <Card tone="raised" pad="md">
+              <ul className="fo-ledger">
+                <Stat figure={n(reading.subjects)} word={noun.many} />
+                <Stat figure={n(reading.pairs)} word="pairings between them" />
+                <Stat
+                  figure={n(reading.partnerTables)}
+                  word={`catalogues they draw from, across ${n(reading.joinTables)} relationship tables`}
+                />
+                <Stat
+                  figure={n(derived)}
+                  word={`of those pairings a formula worked out — ${pct(derivedShare)}`}
+                />
+              </ul>
+            </Card>
+          </div>
         </header>
 
         {/* ---- one rig, solved ---- */}
@@ -423,7 +435,8 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
 
         {/* ---- decided or looked up ---- */}
         <section className="fo-band" aria-label="What a person decided">
-          <p className="fo-band-eyebrow">How each pairing got there</p>
+          <Card tone="raised" pad="lg">
+          <SectionHead level="none">How each pairing got there</SectionHead>
           <h3 className="fo-band-title">
             {n(typed)} of these {n(reading.pairs)} pairings were typed by a person
           </h3>
@@ -457,11 +470,13 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
             Read from the Origin column every relationship table carries · 352 of 61,854
             live fan-out cells are formulas
           </p>
+          </Card>
         </section>
 
         {/* ---- the asymmetry ---- */}
         <section className="fo-band" aria-label="What differs between them">
-          <p className="fo-band-eyebrow">Where they differ</p>
+          <Card tone="raised" pad="lg">
+          <SectionHead level="none">Where they differ</SectionHead>
           <h3 className="fo-band-title">Not every {noun.one} has every relationship</h3>
           {/* NO LEDE. "The tables are not variations on one shape — an
               absence is a business decision" is this app's reading of
@@ -471,10 +486,12 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
           <ul className="fo-roles">
             {roles.map((role) => (
               <li className="fo-role" key={role.role}>
-                <p className="fo-role-head">
-                  <span className="fo-role-name">{role.role}</span>
-                  <b className="fo-role-n">{n(role.pairs)}</b>
-                </p>
+                <Card tone="flat" pad="sm">
+                {/* the role is a group caption; the count is drawn as a
+                    value, in the dealer's noun */}
+                <SectionHead level="h4" count={`${n(role.pairs)} pairings`} rule>
+                  {role.role}
+                </SectionHead>
                 <p className="fo-role-say">
                   {/* "7 of 7 tables carry it" is a true sentence that
                       makes a reader stop and do arithmetic to find out
@@ -506,15 +523,18 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                     </>
                   ) : null}
                 </p>
+                </Card>
               </li>
             ))}
           </ul>
+          </Card>
         </section>
 
         {/* ---- the rule that picks ---- */}
         {selector && selector.readings.length > 0 ? (
           <section className="fo-band" aria-label="The rule that picks">
-            <p className="fo-band-eyebrow">The one rule that picks</p>
+            <Card tone="raised" pad="lg">
+            <SectionHead level="none">The one rule that picks</SectionHead>
             <h3 className="fo-band-title">
               A {selector.noun.one}&rsquo;s {selector.heading} says which {noun.one} it is
               built for
@@ -546,11 +566,13 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                         shows you the rows the figure is about. A
                         measured claim with nothing behind it was the
                         defect; see the `pick` memo. */}
-                    <button
-                      type="button"
-                      className="fo-pick-door"
-                      aria-expanded={open}
-                      onClick={() => {
+                    {/* a pressable Card: the open one is the CURRENT one
+                        of the set, drawn from `aria-current` */}
+                    <Card
+                      tone="raised"
+                      pad="sm"
+                      current={open}
+                      onActivate={() => {
                         setPicked(open ? null : r.marque.name)
                         /* a new brand starts with the rule IN force
                            and nothing typed — otherwise a shortlist
@@ -569,7 +591,7 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                       <span className="fo-pick-say">
                         {pct(r.share)} of the catalogue · {r.marque.banners.join(' · ')}
                       </span>
-                    </button>
+                    </Card>
 
                     {open && pick ? (
                       <div className="fo-pick-open">
@@ -613,45 +635,52 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
                             {pick.shown.map((row) => {
                               const verdict = verdictOf(row, r.marque.name)
                               return (
+                                /* the list item carries ds.css's verdict
+                                   rail; the line itself is a Row — the
+                                   name, then the evidence and the reason
+                                   beneath it */
                                 <li className={listRowClass(verdict)} key={row.rowId}>
-                                  <span className="fo-list-name">{row.label}</span>
-                                  {/* THE EVIDENCE, NOT A TICK. The
-                                      heading is the cell the rule read,
-                                      verbatim, so a reader can check the
-                                      verdict against their own file
-                                      rather than take it. */}
-                                  <span className="fo-list-banner">{row.banner}</span>
-                                  <span className="fo-list-table">{row.tableName}</span>
-                                  {/* THE REFUSAL SENTENCE, PLAYBOOK §5's
-                                      FORM — "Not offered — [the file's
-                                      fact about this option], [the
-                                      file's fact about this rig]." Both
-                                      measurements, both sides, composed
-                                      from the row's own verdict at
-                                      render and never stored, which is
-                                      why it cannot go stale the way
-                                      Boston Whaler's `data-include`
-                                      does. Drawn only where there is
-                                      something to say: with the rule in
-                                      force every row here is admitted,
-                                      and a page of identical sentences
-                                      is furniture. */}
-                                  {verdict === 'another' ? (
-                                    <span className="fo-list-why">
-                                      <b className="fo-list-word">Not offered</b> — this{' '}
-                                      {selector.noun.one}&rsquo;s {selector.heading} is built
-                                      for {row.bannerMarque}. This shortlist is{' '}
-                                      {r.marque.name}.
-                                    </span>
-                                  ) : null}
-                                  {verdict === 'unnamed' ? (
-                                    <span className="fo-list-why">
-                                      <b className="fo-list-word">Unchecked</b> — the price
-                                      file does not say which {noun.one} brand this{' '}
-                                      {selector.heading} is built for, so the rule never ran
-                                      on it.
-                                    </span>
-                                  ) : null}
+                                  <Row
+                                    dense
+                                    name={row.label}
+                                    meta={
+                                      <>
+                                        {/* THE EVIDENCE, NOT A TICK. The
+                                            heading is the cell the rule
+                                            read, verbatim, so a reader
+                                            can check the verdict against
+                                            their own file. */}
+                                        <span className="fo-list-banner">{row.banner}</span>
+                                        {' · '}
+                                        <span className="fo-list-table">{row.tableName}</span>
+                                        {/* THE REFUSAL SENTENCE, PLAYBOOK
+                                            §5's FORM — "Not offered —
+                                            [the file's fact about this
+                                            option], [the file's fact
+                                            about this rig]." Composed from
+                                            the row's own verdict at render
+                                            and never stored. Drawn only
+                                            where there is something to
+                                            say. */}
+                                        {verdict === 'another' ? (
+                                          <span className="fo-list-why">
+                                            <b className="fo-list-word">Not offered</b> — this{' '}
+                                            {selector.noun.one}&rsquo;s {selector.heading} is
+                                            built for {row.bannerMarque}. This shortlist is{' '}
+                                            {r.marque.name}.
+                                          </span>
+                                        ) : null}
+                                        {verdict === 'unnamed' ? (
+                                          <span className="fo-list-why">
+                                            <b className="fo-list-word">Unchecked</b> — the
+                                            price file does not say which {noun.one} brand
+                                            this {selector.heading} is built for, so the rule
+                                            never ran on it.
+                                          </span>
+                                        ) : null}
+                                      </>
+                                    }
+                                  />
                                 </li>
                               )
                             })}
@@ -725,6 +754,7 @@ export function FanOut({ onOpenTable }: FanOutProps): ReactElement {
               Trailer Module!A, eleven series banners naming a boat brand · ASSERTED · 581
               of 581 testable live pairings, 0 counter-examples
             </p>
+            </Card>
           </section>
         ) : null}
 
@@ -762,31 +792,31 @@ function FanCard({
 }): ReactElement {
   const noun = leafNoun(entity)
   return (
-    <li
-      className="fo-fan ds-rise"
-      style={
-        { '--fo-accent': accentVar(fan.subjectAccent), '--i': index } as CSSProperties
-      }
-    >
-      <p className="fo-fan-head">
-        <span className="fo-fan-mark">
-          <TableKindSymbol kind={fan.subjectKind} size={ICON_SIZE.small} />
-        </span>
-        <span className="fo-fan-name">{fan.subjectTableName}</span>
-        <span className="fo-fan-count">{countLabel(fan.subjects, noun)}</span>
-      </p>
+    <li className="fo-fan ds-rise" style={{ '--i': index } as CSSProperties}>
+      {/* A CARD OF ITS KIND. The Card takes `kind` and draws the hue as
+          its own ground, so the rail this file used to paint is gone:
+          the whole surface says which catalogue it is. */}
+      <Card tone="raised" pad="md" kind={fan.subjectKind}>
+        <p className="fo-fan-head">
+          <span className="fo-fan-mark">
+            <TableKindSymbol kind={fan.subjectKind} size={ICON_SIZE.small} />
+          </span>
+          <span className="fo-fan-name">{fan.subjectTableName}</span>
+          <span className="fo-fan-count">{countLabel(fan.subjects, noun)}</span>
+        </p>
 
-      <ul className="fo-rows">
-        {fan.groups.map((group) => (
-          <GroupRow
-            key={group.role}
-            group={group}
-            subjects={fan.subjects}
-            noun={noun}
-            onOpenTable={onOpenTable}
-          />
-        ))}
-      </ul>
+        <ul className="fo-rows">
+          {fan.groups.map((group) => (
+            <GroupRow
+              key={group.role}
+              group={group}
+              subjects={fan.subjects}
+              noun={noun}
+              onOpenTable={onOpenTable}
+            />
+          ))}
+        </ul>
+      </Card>
     </li>
   )
 }
@@ -821,48 +851,56 @@ function GroupRow({
 
   return (
     <li className="fo-row">
-      <p className="fo-row-head">
-        <span className="fo-row-role">{group.role}</span>
-        <b className="fo-row-n">{n(group.pairs)}</b>
-      </p>
-
-      <Bar share={share} accent={live[0]?.partnerAccent ?? 'slate'} />
-
-      <p className="fo-row-say">
-        {group.via === 'column' ? (
-          group.pairs === 0 ? (
-            <>
-              on none of the {n(offered)} {carriedOn} pairings
-            </>
-          ) : (
-            <>
-              on {n(group.pairs)} of {n(offered)} {carriedOn} pairings
-            </>
-          )
-        ) : group.missing === 0 ? (
-          <>every {noun.one}</>
-        ) : (
+      {/* ONE RELATIONSHIP IS ONE ROW: the role and its count on the
+          name line, the bar and the sentence as the row's meta */}
+      <Row
+        name={
+          <span className="fo-row-head">
+            <span>{group.role}</span>
+            <b className="fo-row-n">{n(group.pairs)}</b>
+          </span>
+        }
+        meta={
           <>
-            {n(group.reached)} of {n(subjects)} {noun.many}
+            <Bar share={share} accent={live[0]?.partnerAccent ?? 'slate'} />
+            <span className="fo-row-say">
+              {group.via === 'column' ? (
+                group.pairs === 0 ? (
+                  <>
+                    on none of the {n(offered)} {carriedOn} pairings
+                  </>
+                ) : (
+                  <>
+                    on {n(group.pairs)} of {n(offered)} {carriedOn} pairings
+                  </>
+                )
+              ) : group.missing === 0 ? (
+                <>every {noun.one}</>
+              ) : (
+                <>
+                  {n(group.reached)} of {n(subjects)} {noun.many}
+                </>
+              )}
+              {only && only.pairs > 0 ? (
+                <>
+                  {' · '}
+                  <PartnerName
+                    name={only.partnerTableName}
+                    used={only.partnersUsed}
+                    of={only.partnerCatalogue}
+                  />
+                </>
+              ) : null}
+              {group.provenance.derived > 0 ? (
+                <>
+                  {' · '}
+                  <span className="fo-row-derived">{n(group.provenance.derived)} derived</span>
+                </>
+              ) : null}
+            </span>
           </>
-        )}
-        {only && only.pairs > 0 ? (
-          <>
-            {' · '}
-            <PartnerName
-              name={only.partnerTableName}
-              used={only.partnersUsed}
-              of={only.partnerCatalogue}
-            />
-          </>
-        ) : null}
-        {group.provenance.derived > 0 ? (
-          <>
-            {' · '}
-            <span className="fo-row-derived">{n(group.provenance.derived)} derived</span>
-          </>
-        ) : null}
-      </p>
+        }
+      />
 
       {only === null && live.length > 0 ? (
         <ul className="fo-strands">
@@ -961,15 +999,15 @@ function TableDoor({
 }): ReactElement {
   if (!onOpenTable) return <span className="fo-door-flat">{label}</span>
   return (
-    <button
-      type="button"
-      className="fo-door"
-      onClick={() => onOpenTable(entityId)}
+    <Button
+      tone="ghost"
+      size="sm"
+      glyph={<ArrowSquareOut size={ICON_SIZE.tiny} weight="bold" />}
       aria-label={`Open ${name}`}
+      onClick={() => onOpenTable(entityId)}
     >
-      <span className="fo-door-name">{label}</span>
-      <ArrowSquareOut size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-    </button>
+      {label}
+    </Button>
   )
 }
 
@@ -1052,7 +1090,8 @@ function HeldBack({
 
   return (
     <section className="fo-band" aria-label="What does not resolve">
-      <p className="fo-band-eyebrow">What is not there</p>
+      <Card tone="raised" pad="lg">
+      <SectionHead level="none">What is not there</SectionHead>
       <h3 className="fo-band-title">The gaps, counted rather than hidden</h3>
       {/* THE FRAME IS SAID ONCE, HERE, and the rows below are a table.
           Each `fo-gap-say` used to close "are paired with no {role}
@@ -1092,6 +1131,7 @@ function HeldBack({
           </li>
         ) : null}
       </ul>
+      </Card>
     </section>
   )
 }
@@ -1102,7 +1142,10 @@ function NothingYet(): ReactElement {
     <section className="fo-root" aria-label="What fits what">
       <div className="fo-page">
         <div className="fo-void">
-          <p className="fo-void-eyebrow">Nothing fits anything yet</p>
+          <Card tone="raised" pad="lg">
+          {/* the absence IS the subject here, so it takes the middle
+              step — a sentence in its own case, never uppercased */}
+          <h2 className="ds-display-xl fo-void-title">Nothing fits anything yet</h2>
           <p className="fo-void-say">
             Fitment counts the pairings your price file already records — what may be sold
             with what, and how much of each catalogue that leaves standing. It reads them
@@ -1116,6 +1159,7 @@ function NothingYet(): ReactElement {
             A relationship is made by adding a Link column to a table, on{' '}
             <b>What goes with each one</b>.
           </p>
+          </Card>
         </div>
       </div>
     </section>

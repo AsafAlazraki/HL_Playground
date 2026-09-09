@@ -36,15 +36,17 @@
 
 import { useMemo, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
-import { ArrowLeft, MagnifyingGlass, Receipt } from '@phosphor-icons/react'
+import { ArrowLeft, Receipt } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar, readCell, rowLabel, type EntityDef, type RowData } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
+import { leafNoun } from '@/features/table/grouping'
 import { ViewPage, createViewFor, bestAnsweredRow, LANDING_SCAN } from '@/features/views'
 import { createQuoteFromView } from '@/features/quote'
 import { useActionBar } from '@/lib/actions'
 import type { ActionGroup } from '@/lib/actions'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button, Field, Row } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -241,15 +243,11 @@ export function ViewStage({
      the place it came from, which is uppercase on a NAME as well as on
      a button. `.shell-view-back` carries the whole control. */
   const back = (
-    <button
-      type="button"
-      className="shell-view-back"
-      onClick={onClose}
-      aria-label={backLabel}
-    >
-      <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-      <span>{backLabel}</span>
-    </button>
+    <div className="shell-view-lead">
+      <Button tone="ghost" size="sm" glyph={<ArrowLeft size={ICON_SIZE.small} />} onClick={onClose}>
+        {backLabel}
+      </Button>
+    </div>
   )
 
   if (!entity) {
@@ -285,7 +283,11 @@ export function ViewStage({
           <span className="shell-view-what-mark">
             <TableKindSymbol kind={kindOf(entity.kind)} size={ICON_SIZE.small} />
           </span>
-          <span className="shell-view-what-name">{entity.name}</span>
+          <span
+            className={`ds-display-lg shell-view-what-name${entity.name.length > 28 ? ' is-long' : ''}`}
+          >
+            {entity.name}
+          </span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>
@@ -312,21 +314,17 @@ export function ViewStage({
 
       <div className="shell-view-split">
         <aside className="shell-view-rail" aria-label={`${entity.name} rows`}>
+          {/* THE FIND BOX IS THE FIELD PRIMITIVE — a real label, the
+              system's well, hover and focus drawn once. The label is
+              visible now rather than a placeholder standing in for
+              one, which is the primitive's rule and the right one. */}
           <div className="shell-view-find">
-            <MagnifyingGlass
-              size={ICON_SIZE.tiny}
-              weight="light"
-              aria-hidden="true"
-              className="shell-view-find-mark"
-            />
-            <input
-              className="field-input shell-view-find-input"
+            <Field
+              label={`Find a ${leafNoun(entity)}`}
               type="search"
               value={query}
-              spellCheck={false}
-              placeholder="Find one"
-              aria-label={`Find a row of ${entity.name}`}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={setQuery}
+              autoComplete="off"
             />
           </div>
 
@@ -342,28 +340,20 @@ export function ViewStage({
                 const isOpen = openRow?.id === e.id
                 return (
                   <li key={e.id}>
-                    <button
-                      type="button"
-                      className={`shell-view-row${isOpen ? ' is-open' : ''}`}
-                      aria-current={isOpen || undefined}
-                      /* THE WHOLE OF IT, WHEREVER IT IS CUT. The name
-                         wraps to two lines and the trail keeps one, so
-                         a long enough row is still clamped — and this
-                         list exists to tell two variants apart, which
-                         is a promise that cannot rest on the visible
-                         part alone. */
-                      title={e.trail === '' ? e.name : `${e.trail} ▸ ${e.name}`}
-                      onClick={() => setWanted(e.id)}
-                    >
-                      {/* NOT `mono-label` on the trail. It is the dealer's
-                          own group path, read off their sheet — a value —
-                          and `.mono-label` uppercases what it is stamped
-                          on. Its type lives on the class itself now. */}
-                      {e.trail === '' ? null : (
-                        <span className="shell-view-row-trail">{e.trail}</span>
-                      )}
-                      <span className="shell-view-row-name">{e.name}</span>
-                    </button>
+                    {/* A ROW IS THE PRIMITIVE'S. The name is what the list is
+                        scanned for; the trail — the dealer's own group path,
+                        a value, never uppercased — is its `meta`. The primitive
+                        WRAPS rather than clamps, so the whole of a long name
+                        is on the page and the `title` that used to carry the
+                        cut-off part is not needed. Current is drawn from
+                        `aria-current`, so the look cannot exist without the
+                        announcement. */}
+                    <Row
+                      name={e.name}
+                      meta={e.trail === '' ? undefined : e.trail}
+                      current={isOpen}
+                      onActivate={() => setWanted(e.id)}
+                    />
                   </li>
                 )
               })}

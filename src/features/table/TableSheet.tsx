@@ -140,11 +140,19 @@ import { clearRowReveal, useRowReveal } from './rowRevealState'
    file WROTE is a handle this file is allowed to hold. */
 export const SEARCH_LABEL = 'Search every column of this table, including calculated ones'
 
+/** THE SAME BOX WHEN THE CATALOGUE DRAWS IT. There it is a `Field`
+ *  from src/ui — a real `<label for>`, which is not an `aria-label`
+ *  and would never match the selector below — so the catalogue gives
+ *  it this id and the '/' key tries the id first. One id, exported
+ *  from here for the same reason the label is: a handle this file
+ *  wrote is a handle this file may hold. */
+export const SEARCH_ID = 'tb-row-search'
+
 /** Put the caret in the row search, wherever the bar has drawn it. */
 function focusRowSearch(): void {
-  const box = document.querySelector<HTMLInputElement>(
-    `input[aria-label="${SEARCH_LABEL}"]`,
-  )
+  const box =
+    (document.getElementById(SEARCH_ID) as HTMLInputElement | null) ??
+    document.querySelector<HTMLInputElement>(`input[aria-label="${SEARCH_LABEL}"]`)
   if (!box) return
   box.focus()
   box.select()

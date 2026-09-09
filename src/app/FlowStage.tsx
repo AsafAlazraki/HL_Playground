@@ -116,6 +116,7 @@ import {
 } from '@/features/rules'
 import { FanOut } from '@/features/fitment'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button } from '@/ui'
 import { useActionBar } from '@/lib/actions'
 import type { ActionGroup } from '@/lib/actions'
 import { stageKeys, useStageEscape } from './stageKeys'
@@ -263,16 +264,17 @@ export function FlowStage({ onClose, onOpenTable }: FlowStageProps): ReactElemen
         {/* `shell-view-back`, no `btn`, labelled "Back" — TableStage is
             the calibration and `.btn` would stamp this in 11px uppercase
             mono instead of the 12.5px control label the bar uses. */}
-        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
-          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-          <span>Back</span>
-        </button>
+        <div className="shell-view-lead">
+          <Button tone="ghost" size="sm" glyph={<ArrowLeft size={ICON_SIZE.small} />} onClick={onClose}>
+            Back
+          </Button>
+        </div>
         <p className="shell-view-what">
           {/* Fitment, not "What fits what" — commit 4c4a3e2's rule: a
               place is a noun naming what is on the screen, never a
               question. The bar was renamed and the stages it opens
               were not, so the two disagreed. */}
-          <span className="shell-view-what-name">Fitment</span>
+          <span className="ds-display-lg shell-view-what-name">Fitment</span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>

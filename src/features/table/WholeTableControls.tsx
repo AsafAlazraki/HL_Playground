@@ -28,6 +28,7 @@ import {
   FrameCorners,
 } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
+import { Button } from '@/ui'
 
 /* ---------------------------------------------------------- */
 /* seeing all of it                                           */
@@ -129,14 +130,14 @@ export function DimensionReadout({
             <span className="tb-count-num">{shown}</span>
             <span className="tb-count-sep">/</span>
             <span className="tb-count-tot">{total}</span>
-            <button
-              type="button"
-              className="tb-count-clear"
+            <Button
+              tone="ghost"
+              size="sm"
               title="Clear search, filters and sort"
               onClick={onClearView}
             >
               Clear
-            </button>
+            </Button>
           </>
         ) : (
           <>

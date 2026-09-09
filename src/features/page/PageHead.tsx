@@ -33,6 +33,7 @@
    ============================================================ */
 
 import type { JSX, ReactNode } from 'react'
+import { SectionHead } from '@/ui'
 
 export interface PageHeadProps {
   /** what kind of page this is — "YOUR BUSINESS", "SELLING".
@@ -69,7 +70,12 @@ export function PageHead({
     <>
       <header className={`ph${tight ? ' is-tight' : ''}`}>
         <div className="ph-say">
-          {eyebrow ? <span className="mono-label ph-eyebrow">{eyebrow}</span> : null}
+          {/* THE EYEBROW IS THE SYSTEM'S ONE UPPERCASE STYLE, drawn by the
+              primitive that owns it. It is `level="none"`: the `h1` two
+              lines down is the heading here, and a second heading naming
+              the KIND of page above the one naming the page would be the
+              outline this header exists to stop. */}
+          {eyebrow ? <SectionHead level="none">{eyebrow}</SectionHead> : null}
           <div className="ph-line-1">
             <h1 className="ph-name">{name}</h1>
             {count !== undefined ? <span className="ph-count ds-mono">{count}</span> : null}

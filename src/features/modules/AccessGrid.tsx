@@ -37,6 +37,15 @@
    through `access.ts`, which refuses a capability the module does not
    offer and turns "no rows left" back into unrestricted rather than
    into a wall nobody is on the right side of.
+
+   THE WELL AROUND THE TABLE IS `<Card>` AND EVERY ACT IS `<Button>`
+   from src/ui; `.md-grid-wrap`'s ground and `.md-icon-btn` are
+   deleted from modules.css. Two things stay local and are reported:
+   the tick itself (`.md-grant` — a checkbox, which the layer has no
+   primitive for) and the two name fields in the row header, which
+   are labelled for a screen reader and not on screen — `<Field>`
+   always draws its label, and nine visible "Rename X" labels down a
+   table would be nine captions over one column.
    ============================================================ */
 
 import { useRef } from 'react'
@@ -46,6 +55,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { say, sayUndoable } from '@/store/notes'
 import type { ModuleAccess, ModuleCapability, ModuleDef, RoleDef } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button, Card } from '@/ui'
 import {
   accessRows,
   capabilityLabel,
@@ -184,127 +194,131 @@ export function AccessGrid({
           a narrow window is wider than the panel, and a column of ticks
           that overlapped its neighbour would be a permission read
           wrong. */}
-      <div className="md-grid-wrap">
-        <table className="md-grid">
-          <thead>
-            <tr>
-              <th scope="col" className="md-grid-corner">
-                <span className="mono-label">Role</span>
-              </th>
-              {verbs.map((v) => (
-                <th scope="col" key={v} className="md-grid-head">
-                  <span className="md-grid-verb">{capabilityLabel(v)}</span>
-                  {/* WHAT A TICK IN THIS COLUMN ACTUALLY HANDS OVER,
-                      in the contract's own words. */}
-                  <span className="md-grid-says">{capabilitySays(v)}</span>
+      <Card tone="flat" pad="none">
+        <div className="md-grid-wrap">
+          <table className="md-grid">
+            <thead>
+              <tr>
+                <th scope="col" className="md-grid-corner">
+                  <span className="mono-label">Role</span>
                 </th>
-              ))}
-              <th scope="col" className="md-grid-corner">
-                <span className="mono-label">Off</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.role.id}>
-                <th scope="row" className="md-grid-role">
-                  <span className="md-role-id">
-                    <input
-                      className="field-input md-role-name"
-                      type="text"
-                      value={row.role.name}
-                      spellCheck={false}
-                      /* NAMED BY THE ROLE IT IS. Every row's field
-                         would otherwise announce the same four words,
-                         and this field is the row header — it is what a
-                         reader hears before each tick in the row. */
-                      aria-label={`Rename ${row.role.name}`}
-                      onChange={(e) => updateRole(row.role.id, { name: e.target.value })}
-                      /* THE LAST NAME THAT WAS ACTUALLY A NAME — the
-                         same guard the module's own name field carries,
-                         for the same reason: clearing the field to
-                         retype it writes an empty string, and a job
-                         nobody can point at is not a job. Nothing is
-                         invented; the name it had a keystroke ago comes
-                         back. */
-                      onBlur={(e) => {
-                        if (e.target.value.trim() !== '') return
-                        const last = named.current.get(row.role.id)
-                        if (last) updateRole(row.role.id, { name: last })
-                      }}
-                    />
-                    {/* WHO THIS IS, IN THE OWNER'S WORDS — optional, and
-                        never generated. It starts empty with an
-                        instruction in it rather than a plausible
-                        sentence somebody could mistake for their own. */}
-                    <input
-                      className="field-input md-role-desc"
-                      type="text"
-                      value={row.role.description ?? ''}
-                      spellCheck={false}
-                      placeholder="Who this is, in one line"
-                      aria-label={`Who ${row.role.name} is, in one line`}
-                      onChange={(e) =>
-                        updateRole(row.role.id, {
-                          description:
-                            e.target.value.trim() === '' ? undefined : e.target.value,
-                        })
-                      }
-                    />
-                  </span>
-                  <button
-                    type="button"
-                    className="md-icon-btn md-icon-btn--drop"
-                    title={`Delete ${row.role.name} from this dealership`}
-                    aria-label={`Delete the role ${row.role.name}`}
-                    onClick={() => removeRole(row.role)}
-                  >
-                    <Trash size={ICON_SIZE.tiny} weight="bold" />
-                  </button>
+                {verbs.map((v) => (
+                  <th scope="col" key={v} className="md-grid-head">
+                    <span className="md-grid-verb">{capabilityLabel(v)}</span>
+                    {/* WHAT A TICK IN THIS COLUMN ACTUALLY HANDS OVER,
+                        in the contract's own words. */}
+                    <span className="md-grid-says">{capabilitySays(v)}</span>
+                  </th>
+                ))}
+                <th scope="col" className="md-grid-corner">
+                  <span className="mono-label">Off</span>
                 </th>
-
-                {verbs.map((v) => {
-                  const on = row.granted.includes(v)
-                  return (
-                    <td key={v} className="md-grid-cell">
-                      <button
-                        type="button"
-                        className={`md-grant${on ? ' is-on' : ''}`}
-                        role="checkbox"
-                        aria-checked={on}
-                        aria-label={`${row.role.name} may ${capabilityLabel(
-                          v,
-                        ).toLowerCase()} in ${module.name}`}
-                        onClick={() => toggle(row.role, v, !on)}
-                      >
-                        <span className="md-grant-tick" aria-hidden="true" />
-                      </button>
-                    </td>
-                  )
-                })}
-
-                <td className="md-grid-cell">
-                  <button
-                    type="button"
-                    className="md-icon-btn"
-                    /* LIVE WHENEVER THE ROLE IS ON THE LIST AT ALL, not
-                       just when it holds something in force. A role left
-                       holding only LAPSED verbs draws no ticks, and
-                       disabling this on the tick count would be the one
-                       state with no control that clears it. */
-                    disabled={!module.access?.some((a) => a.roleId === row.role.id)}
-                    title={`Take ${row.role.name} out of ${module.name}`}
-                    aria-label={`Take ${row.role.name} out of ${module.name}`}
-                    onClick={() => dropRow(row.role)}
-                  >
-                    <X size={ICON_SIZE.tiny} weight="bold" />
-                  </button>
-                </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.role.id}>
+                  <th scope="row" className="md-grid-role">
+                    <span className="md-role-id">
+                      <input
+                        className="field-input md-role-name"
+                        type="text"
+                        value={row.role.name}
+                        spellCheck={false}
+                        /* NAMED BY THE ROLE IT IS. Every row's field
+                           would otherwise announce the same four words,
+                           and this field is the row header — it is what a
+                           reader hears before each tick in the row. */
+                        aria-label={`Rename ${row.role.name}`}
+                        onChange={(e) => updateRole(row.role.id, { name: e.target.value })}
+                        /* THE LAST NAME THAT WAS ACTUALLY A NAME — the
+                           same guard the module's own name field carries,
+                           for the same reason: clearing the field to
+                           retype it writes an empty string, and a job
+                           nobody can point at is not a job. Nothing is
+                           invented; the name it had a keystroke ago comes
+                           back. */
+                        onBlur={(e) => {
+                          if (e.target.value.trim() !== '') return
+                          const last = named.current.get(row.role.id)
+                          if (last) updateRole(row.role.id, { name: last })
+                        }}
+                      />
+                      {/* WHO THIS IS, IN THE OWNER'S WORDS — optional, and
+                          never generated. It starts empty with an
+                          instruction in it rather than a plausible
+                          sentence somebody could mistake for their own. */}
+                      <input
+                        className="field-input md-role-desc"
+                        type="text"
+                        value={row.role.description ?? ''}
+                        spellCheck={false}
+                        placeholder="Who this is, in one line"
+                        aria-label={`Who ${row.role.name} is, in one line`}
+                        onChange={(e) =>
+                          updateRole(row.role.id, {
+                            description:
+                              e.target.value.trim() === '' ? undefined : e.target.value,
+                          })
+                        }
+                      />
+                    </span>
+                    <Button
+                      tone="danger"
+                      size="sm"
+                      title={`Delete ${row.role.name} from this dealership`}
+                      aria-label={`Delete the role ${row.role.name}`}
+                      onClick={() => removeRole(row.role)}
+                    >
+                      <Trash size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                    </Button>
+                  </th>
+
+                  {verbs.map((v) => {
+                    const on = row.granted.includes(v)
+                    return (
+                      <td key={v} className="md-grid-cell">
+                        <button
+                          type="button"
+                          className={`md-grant${on ? ' is-on' : ''}`}
+                          role="checkbox"
+                          aria-checked={on}
+                          aria-label={`${row.role.name} may ${capabilityLabel(
+                            v,
+                          ).toLowerCase()} in ${module.name}`}
+                          onClick={() => toggle(row.role, v, !on)}
+                        >
+                          <span className="md-grant-tick" aria-hidden="true" />
+                        </button>
+                      </td>
+                    )
+                  })}
+
+                  <td className="md-grid-cell">
+                    {/* DRAWN WHENEVER THE ROLE IS ON THE LIST AT ALL, not
+                        only when it holds something in force: a role left
+                        holding only LAPSED verbs draws no ticks, and this
+                        is the one control that clears it. A role that is
+                        not on the list has nothing to take out, so no
+                        control is drawn — there is no act to refuse. */}
+                    {module.access?.some((a) => a.roleId === row.role.id) ? (
+                      <Button
+                        tone="ghost"
+                        size="sm"
+                        title={`Take ${row.role.name} out of ${module.name}`}
+                        aria-label={`Take ${row.role.name} out of ${module.name}`}
+                        onClick={() => dropRow(row.role)}
+                      >
+                        <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                      </Button>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       {/* THE COLUMNS ARE THIS MODULE'S OWN VERBS, AND THAT IS THE WHOLE
           POINT — not the nine the contract carries. Said, because a
@@ -357,11 +371,11 @@ export function AccessGrid({
             somewhere else, where the jobs were written down and the roles did not travel
             with it.
           </p>
-          <button type="button" className="md-linkbtn" onClick={clearOrphans}>
+          <Button tone="neutral" size="sm" onClick={clearOrphans}>
             {orphan.opensUp
               ? `Clear them — ${module.name} goes back to open to everyone`
               : 'Clear them'}
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

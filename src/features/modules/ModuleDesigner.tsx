@@ -104,6 +104,18 @@ import {
    as a rule the app can apply to a module an admin builds tomorrow,
    rather than as a one-off tidy of the demo's own list. */
 import { splitReading } from './split'
+/* THE PRIMITIVES. Every panel, every option card, every binding and
+   every block is `<Card>`, every panel head is `<SectionHead>`, the
+   add-list lines are `<Row>`s and every act is `<Button>`, all from
+   src/ui. The local rules that drew them — `.md-panel`,
+   `.md-panel-name`, `.md-cap`, `.md-shape-btn`, `.md-bind`,
+   `.md-block`, `.md-add`, `.md-add-row`, `.md-add-btn`,
+   `.md-icon-btn`, `.md-linkbtn`, `.md-stub` and their states — are
+   deleted from modules.css. Three things stay local and are
+   reported as gaps: the switch (`.md-switch`), the item-page tabs
+   (`.md-tab`) and the column tick list (`.md-col`), which is a
+   multi-select and not a `current`-of-a-set. */
+import { Button, Card, Row, SectionHead } from '@/ui'
 import {
   blockBindings,
   capabilityStates,
@@ -177,8 +189,9 @@ function Capabilities({
   onSet: (key: DesignerCapability, on: boolean) => void
 }): ReactElement {
   return (
+    <Card tone="flat" pad="md">
     <section className="md-panel">
-      <h3 className="md-panel-name mono-label">What may be done here</h3>
+      <SectionHead level="h3">What may be done here</SectionHead>
       {/* THE MIDDLE SENTENCE DESCRIBED THE LIST UNDER IT. "What is
           switched on here is the whole of what this module can do —
           and it is the column list of Who may do what above" is a
@@ -192,7 +205,12 @@ function Capabilities({
 
       <ul className="md-caps">
         {states.map((c) => (
-          <li className={`md-cap${c.refused ? ' is-refused' : ''}`} key={c.key}>
+          /* ONE `<Card>` PER VERB. A refused verb takes the sunken tone
+             — the well the primitive draws for a slot that holds
+             nothing live — and says why beneath its switch. */
+          <li key={c.key}>
+          <Card tone={c.refused ? 'sunken' : 'flat'} pad="sm">
+          <div className="md-stack">
             {/* `aria-disabled`, NOT `disabled`, AND THE SENTENCE
                 BELOW IS THE REASON WHY. A refused verb carries
                 `.md-cap-why` under this switch — the reason written
@@ -250,6 +268,8 @@ function Capabilities({
             ) : c.note ? (
               <p className="md-cap-note">{c.note}</p>
             ) : null}
+          </div>
+          </Card>
           </li>
         ))}
       </ul>
@@ -261,6 +281,7 @@ function Capabilities({
         </p>
       )}
     </section>
+    </Card>
   )
 }
 
@@ -335,8 +356,9 @@ function IndexPanel({
   }
 
   return (
+    <Card tone="flat" pad="md">
     <section className="md-panel">
-      <h3 className="md-panel-name mono-label">What this place lists</h3>
+      <SectionHead level="h3">What this place lists</SectionHead>
 
       {/* -- is this one place? --------------------------------- */}
       {reading.coherent ? null : (
@@ -348,21 +370,27 @@ function IndexPanel({
       )}
 
       {/* -- the shape ------------------------------------------ */}
+      {/* TWO `<Card>`s, ONE OF THEM `current`. The primitive draws
+          the chosen one from `aria-current` — the accent line and the
+          wash — so the look cannot exist without the announcement. */}
       <div className="md-shape" role="group" aria-label="How the list is drawn">
         {SHAPES.map((s) => (
-          <button
+          <Card
             key={s.key}
-            type="button"
-            className={`md-shape-btn${module.index === s.key ? ' is-on' : ''}`}
-            aria-pressed={module.index === s.key}
-            onClick={() => updateModule(module.id, { index: s.key })}
+            tone="flat"
+            pad="sm"
+            current={module.index === s.key}
+            label={`${s.label} — ${s.says}`}
+            onActivate={() => updateModule(module.id, { index: s.key })}
           >
-            {module.index === s.key ? (
-              <Check size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-            ) : null}
-            <span className="md-shape-word">{s.label}</span>
+            <span className="md-shape-word">
+              {module.index === s.key ? (
+                <Check size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+              ) : null}{' '}
+              {s.label}
+            </span>
             <span className="md-shape-say">{s.says}</span>
-          </button>
+          </Card>
         ))}
       </div>
 
@@ -404,7 +432,11 @@ function IndexPanel({
       {/* -- the sections, one per table ------------------------ */}
       <ul className="md-binds">
         {bindings.map((b, i) => (
-          <li className={`md-bind${b.entity ? '' : ' is-gone'}`} key={b.tableId}>
+          /* A TABLE THAT HAS GONE takes the sunken tone: the slot is
+             empty, and the sentence beneath says so. */
+          <li key={b.tableId}>
+          <Card tone={b.entity ? 'flat' : 'sunken'} pad="sm">
+          <div className="md-stack">
             <div className="md-bind-top">
               <span className="md-bind-mark">
                 <TableKindSymbol kind={kindOf(b.entity?.kind)} size={ICON_SIZE.small} />
@@ -413,46 +445,52 @@ function IndexPanel({
               <span className="md-bind-count mono-label">
                 {b.rows} {b.rows === 1 ? 'row' : 'rows'}
               </span>
+              {/* THE ENDS OF THE LIST DRAW NO ARROW: there is nothing
+                  to move to, so there is no act to refuse. Taking the
+                  last table out IS an act somebody may want, so that
+                  one stays and says why it cannot be done. */}
               <span className="md-bind-acts">
-                <button
-                  type="button"
-                  className="md-icon-btn"
-                  title="Move it up the list"
-                  aria-label={`Move ${b.entity?.name ?? 'this table'} up`}
-                  disabled={i === 0}
-                  onClick={() => setTables(moveId(module.tableIds, b.tableId, -1))}
-                >
-                  <ArrowUp size={ICON_SIZE.tiny} weight="bold" />
-                </button>
-                <button
-                  type="button"
-                  className="md-icon-btn"
-                  title="Move it down the list"
-                  aria-label={`Move ${b.entity?.name ?? 'this table'} down`}
-                  disabled={i === bindings.length - 1}
-                  onClick={() => setTables(moveId(module.tableIds, b.tableId, 1))}
-                >
-                  <ArrowDown size={ICON_SIZE.tiny} weight="bold" />
-                </button>
-                <button
-                  type="button"
-                  className="md-icon-btn md-icon-btn--drop"
+                {i === 0 ? null : (
+                  <Button
+                    tone="ghost"
+                    size="sm"
+                    title="Move it up the list"
+                    aria-label={`Move ${b.entity?.name ?? 'this table'} up`}
+                    onClick={() => setTables(moveId(module.tableIds, b.tableId, -1))}
+                  >
+                    <ArrowUp size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                  </Button>
+                )}
+                {i === bindings.length - 1 ? null : (
+                  <Button
+                    tone="ghost"
+                    size="sm"
+                    title="Move it down the list"
+                    aria-label={`Move ${b.entity?.name ?? 'this table'} down`}
+                    onClick={() => setTables(moveId(module.tableIds, b.tableId, 1))}
+                  >
+                    <ArrowDown size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                  </Button>
+                )}
+                <Button
+                  tone="danger"
+                  size="sm"
                   /* A MODULE MUST KEEP ONE TABLE. Emptying it would
                      leave a card on the dashboard that opens onto
                      nothing, which is indistinguishable from a fault. */
-                  title={
-                    only
-                      ? 'A module is about at least one table — add another before taking this one out'
-                      : 'Take it out of this module'
-                  }
+                  title="Take it out of this module"
                   aria-label={`Take ${b.entity?.name ?? 'this table'} out of ${module.name}`}
-                  disabled={only}
+                  refusedBecause={
+                    only
+                      ? 'A module is about at least one table — add another before taking this one out.'
+                      : undefined
+                  }
                   onClick={() =>
                     setTables(module.tableIds.filter((id) => id !== b.tableId))
                   }
                 >
-                  <X size={ICON_SIZE.tiny} weight="bold" />
-                </button>
+                  <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                </Button>
               </span>
             </div>
 
@@ -490,88 +528,78 @@ function IndexPanel({
                 This table is no longer on the sheet, so this module lists nothing from it.
               </p>
             )}
+          </div>
+          </Card>
           </li>
         ))}
       </ul>
 
       {/* -- add a table ---------------------------------------- */}
       {adding ? (
-        <div className="md-add" role="group" aria-label={`Add a table to ${module.name}`}>
-          <div className="md-add-bar">
-            <span className="mono-label">
-              {primary?.kind
-                ? `Which table also belongs here? These are your ${kindPlural(kindOf(primary.kind))} first.`
-                : 'Which table also belongs here?'}
-            </span>
-            <button
-              type="button"
-              className="md-icon-btn"
-              title="Close"
-              onClick={() => setAdding(false)}
+        <Card tone="sunken" pad="sm">
+          <div className="md-stack" role="group" aria-label={`Add a table to ${module.name}`}>
+            <SectionHead
+              level="none"
+              action={
+                <Button tone="ghost" size="sm" aria-label="Close" onClick={() => setAdding(false)}>
+                  <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                </Button>
+              }
             >
-              <X size={ICON_SIZE.tiny} weight="bold" />
-            </button>
+              {primary?.kind
+                ? `Which table also belongs here? Your ${kindPlural(kindOf(primary.kind))} first.`
+                : 'Which table also belongs here?'}
+            </SectionHead>
+            {addable.length === 0 ? (
+              <p className="md-panel-say">
+                Every other table on the sheet is already in this module.
+              </p>
+            ) : (
+              <ul className="md-add-list">
+                {addable.map((e) => (
+                  <li key={e.id}>
+                    <Row
+                      dense
+                      lead={<TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.small} />}
+                      name={e.name}
+                      meta={<span className="md-figure">{(rowsByEntity[e.id] ?? []).length}</span>}
+                      onActivate={() => {
+                        setAdding(false)
+                        setTables([...module.tableIds, e.id])
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          {addable.length === 0 ? (
-            <p className="md-panel-say">
-              Every other table on the sheet is already in this module.
-            </p>
-          ) : (
-            <ul className="md-add-list">
-              {addable.map((e) => (
-                <li key={e.id}>
-                  <button
-                    type="button"
-                    className="md-add-row"
-                    onClick={() => {
-                      setAdding(false)
-                      setTables([...module.tableIds, e.id])
-                    }}
-                  >
-                    <span className="md-bind-mark">
-                      <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.small} />
-                    </span>
-                    <span className="md-bind-name">{e.name}</span>
-                    <span className="md-bind-count mono-label">
-                      {(rowsByEntity[e.id] ?? []).length}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        </Card>
       ) : (
-        <button type="button" className="btn btn-ghost md-add-btn" onClick={() => setAdding(true)}>
-          <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+        <Button
+          tone="ghost"
+          glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
+          onClick={() => setAdding(true)}
+        >
           Add a table to this list
-        </button>
+        </Button>
       )}
 
       {/* A VISIBLE STUB, NOT A SILENT GAP. The face of a row or a tile
           is the name, the picture and the price; pointing a module at a
           DIFFERENT picture or price column, or putting extra columns on
           the face, needs a field on the module to remember the choice
-          and the contract has none. Drawn disabled and said out loud,
-          with the thing an admin can actually do today. */}
-      <div className="md-stub">
-        <button type="button" className="btn" disabled>
-          Choose the face
-        </button>
-        {/* A DISABLED CONTROL OWES A REASON AND A WAY ROUND, and it
-            does not owe a description of what the face draws — the
-            faces are on the screen above this button. The last clause
-            is neither: it is the one fact on this screen that is
-            stated nowhere else, and the prose pass took it out with
-            the description. Searched the whole rendered Settings
-            screen — "every module" appeared once before and zero
-            times after. */}
-        <p className="md-stub-say">
-          Not built yet. Column order and prices are set on the table itself, and every
-          module follows.
-        </p>
-      </div>
+          and the contract has none. Drawn refused and said out loud,
+          with the thing an admin can actually do today — which is
+          exactly the shape `<Button refusedBecause>` exists for: the
+          control stays reachable and the reason is beneath it. */}
+      <Button
+        tone="neutral"
+        refusedBecause="Not built yet. Column order and prices are set on the table itself, and every module follows."
+      >
+        Choose the face
+      </Button>
     </section>
+    </Card>
   )
 }
 
@@ -615,8 +643,9 @@ function DetailPanel({
   const chosen = tables.find((t) => t.id === wanted) ?? tables[0]
 
   return (
+    <Card tone="flat" pad="md">
     <section className="md-panel">
-      <h3 className="md-panel-name mono-label">What one item shows</h3>
+      <SectionHead level="h3">What one item shows</SectionHead>
 
       {tables.length === 0 ? (
         <p className="md-panel-say">
@@ -649,6 +678,7 @@ function DetailPanel({
         </>
       )}
     </section>
+    </Card>
   )
 }
 
@@ -699,62 +729,66 @@ function ItemPage({ entity }: { entity: EntityDef }): ReactElement {
       ) : null}
 
       {adding ? (
-        <div className="md-add" role="group" aria-label={`Add a list to the ${entity.name} item page`}>
-          <div className="md-add-bar">
-            <span className="mono-label">What else goes with one of these?</span>
-            <button
-              type="button"
-              className="md-icon-btn"
-              title="Close"
-              onClick={() => setAdding(false)}
+        <Card tone="sunken" pad="sm">
+          <div
+            className="md-stack"
+            role="group"
+            aria-label={`Add a list to the ${entity.name} item page`}
+          >
+            <SectionHead
+              level="none"
+              action={
+                <Button tone="ghost" size="sm" aria-label="Close" onClick={() => setAdding(false)}>
+                  <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                </Button>
+              }
             >
-              <X size={ICON_SIZE.tiny} weight="bold" />
-            </button>
+              What else goes with one of these?
+            </SectionHead>
+            {addable.length === 0 ? (
+              <p className="md-panel-say">Every other table is already on this page.</p>
+            ) : (
+              <ul className="md-add-list">
+                {addable.map((e) => (
+                  <li key={e.id}>
+                    <Row
+                      dense
+                      lead={<TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.small} />}
+                      name={e.name}
+                      onActivate={() => {
+                        setAdding(false)
+                        /* NO RULE IS INVENTED HERE. An existing join is
+                           adopted, and the block arrives curated — showing
+                           only what somebody picks on an item's own page.
+                           Guessing a rule from column shapes is what
+                           `suggest.ts` deliberately only OFFERS, on the
+                           page, with the sentence and the three buttons. */
+                        const join = findJoinTable(entities, entity.id, e.id)
+                        addBlock(view.id, null, {
+                          tableId: e.id,
+                          ...(join ? { joinTableId: join.entityId } : {}),
+                          rule: curatedOnly(),
+                        })
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="md-panel-say">
+              It arrives empty and curated: nothing is shown until somebody picks it on an
+              item’s own page, where the rule can be offered against the two tables.
+            </p>
           </div>
-          {addable.length === 0 ? (
-            <p className="md-panel-say">Every other table is already on this page.</p>
-          ) : (
-            <ul className="md-add-list">
-              {addable.map((e) => (
-                <li key={e.id}>
-                  <button
-                    type="button"
-                    className="md-add-row"
-                    onClick={() => {
-                      setAdding(false)
-                      /* NO RULE IS INVENTED HERE. An existing join is
-                         adopted, and the block arrives curated — showing
-                         only what somebody picks on an item's own page.
-                         Guessing a rule from column shapes is what
-                         `suggest.ts` deliberately only OFFERS, on the
-                         page, with the sentence and the three buttons. */
-                      const join = findJoinTable(entities, entity.id, e.id)
-                      addBlock(view.id, null, {
-                        tableId: e.id,
-                        ...(join ? { joinTableId: join.entityId } : {}),
-                        rule: curatedOnly(),
-                      })
-                    }}
-                  >
-                    <span className="md-bind-mark">
-                      <TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.small} />
-                    </span>
-                    <span className="md-bind-name">{e.name}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="md-panel-say">
-            It arrives empty and curated: nothing is shown until somebody picks it on an
-            item’s own page, where the rule can be offered against the two tables.
-          </p>
-        </div>
+        </Card>
       ) : (
-        <button type="button" className="btn btn-ghost md-add-btn" onClick={() => setAdding(true)}>
-          <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+        <Button
+          tone="ghost"
+          glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
+          onClick={() => setAdding(true)}
+        >
           Add a list to this page
-        </button>
+        </Button>
       )}
     </>
   )
@@ -786,36 +820,40 @@ function BlockRow({
   }
 
   return (
-    <li className={`md-block${target ? '' : ' is-gone'}`}>
+    <li>
+    <Card tone={target ? 'flat' : 'sunken'} pad="sm">
+    <div className="md-stack">
       <div className="md-bind-top">
         <span className="md-bind-mark">
           <TableKindSymbol kind={kindOf(target?.kind)} size={ICON_SIZE.small} />
         </span>
         <span className="md-bind-name">{target?.name ?? 'A table that has gone'}</span>
         <span className="md-bind-acts">
-          <button
-            type="button"
-            className="md-icon-btn"
-            title="Move it up the page"
-            aria-label={`Move ${target?.name ?? 'this list'} up`}
-            disabled={first}
-            onClick={() => moveViewBlock(view, block.id, -1)}
-          >
-            <ArrowUp size={ICON_SIZE.tiny} weight="bold" />
-          </button>
-          <button
-            type="button"
-            className="md-icon-btn"
-            title="Move it down the page"
-            aria-label={`Move ${target?.name ?? 'this list'} down`}
-            disabled={last}
-            onClick={() => moveViewBlock(view, block.id, 1)}
-          >
-            <ArrowDown size={ICON_SIZE.tiny} weight="bold" />
-          </button>
-          <button
-            type="button"
-            className="md-icon-btn md-icon-btn--drop"
+          {first ? null : (
+            <Button
+              tone="ghost"
+              size="sm"
+              title="Move it up the page"
+              aria-label={`Move ${target?.name ?? 'this list'} up`}
+              onClick={() => moveViewBlock(view, block.id, -1)}
+            >
+              <ArrowUp size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+            </Button>
+          )}
+          {last ? null : (
+            <Button
+              tone="ghost"
+              size="sm"
+              title="Move it down the page"
+              aria-label={`Move ${target?.name ?? 'this list'} down`}
+              onClick={() => moveViewBlock(view, block.id, 1)}
+            >
+              <ArrowDown size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+            </Button>
+          )}
+          <Button
+            tone="danger"
+            size="sm"
             /* Nothing is deleted: the join and every pair on it stay
                where they are, so putting the list back brings all of
                it with it. Same promise `BlockCard` already makes. */
@@ -823,8 +861,8 @@ function BlockRow({
             aria-label={`Take ${target?.name ?? 'this list'} off the page`}
             onClick={() => removeBlock(viewId, block.id)}
           >
-            <X size={ICON_SIZE.tiny} weight="bold" />
-          </button>
+            <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+          </Button>
         </span>
       </div>
 
@@ -859,9 +897,9 @@ function BlockRow({
                 ? 'One column this list shows was deleted from '
                 : `${missing.length} columns this list shows were deleted from `}
               {target.name}.
-              <button
-                type="button"
-                className="md-linkbtn"
+              <Button
+                tone="ghost"
+                size="sm"
                 onClick={() =>
                   updateBlock(viewId, block.id, {
                     columns: columns.filter((c) => !missing.includes(c)),
@@ -869,18 +907,13 @@ function BlockRow({
                 }
               >
                 Drop {missing.length === 1 ? 'it' : 'them'}
-              </button>
+              </Button>
             </p>
           ) : null}
 
-          <button
-            type="button"
-            className="md-linkbtn"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
+          <Button tone="ghost" size="sm" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
             {open ? 'Done with columns' : 'Which columns it shows'}
-          </button>
+          </Button>
 
           {/* THE VOCABULARY IS THE TABLE'S OWN COLUMNS, read from
               FieldDef with its type. Nothing here is a literal list,
@@ -917,6 +950,8 @@ function BlockRow({
           ) : null}
         </>
       )}
+    </div>
+    </Card>
     </li>
   )
 }

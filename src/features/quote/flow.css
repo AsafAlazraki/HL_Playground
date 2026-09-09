@@ -11,6 +11,15 @@
    stop you are on is ONE 2px accent rule under the name, which is
    the same signal the app's own tab strips use.
 
+   REBUILT ON THE PRIMITIVES, 2026-09-09. A stop a person can move to
+   is a <Button tone="ghost" size="sm"> now, and the local
+   `button.qf-go` rule — its own hover, its own press, its own focus
+   ring — is gone with the `.qf-go` box it sat on. A stop nothing can
+   reach is a span in a box of the same height (`.qf-still`), and the
+   two share one type step so the strip reads as one line whichever
+   of its stops are controls. The stop you are on is always a still
+   one, so the accent rule lives on `.qf-still` alone.
+
    MEASURED, on a Highfield CL360 at 1600x1000, light:
      the stop you are on   `--fg` on `--surface-1`        17.4 : 1
      the stops you are not `--fg-secondary` on the same    8.1 : 1
@@ -24,9 +33,9 @@
 
    RESPONSIVE.md is the eleventh rule and its first sentence is that
    a screen has a width and the design has to have an opinion about
-   it. It has a HEIGHT too, and this strip did not have an opinion
-   about that one. Measured in Chrome at 1280x800 on a Highfield
-   ADV7 draft over the real seed:
+   it. It has a HEIGHT too. Measured in Chrome at 1280x800 on a
+   Highfield ADV7 draft over the real seed, before the fact was put
+   beside the name:
 
      the window                                        800.00
      the stage's own bar above (three wrapped rows)      80.38
@@ -36,51 +45,24 @@
      ─────────────────────────────────────────────────────────
      what was left for the work                         524.13
 
-   275.88 of 800 — 34.5% — spent on furniture, and both panes of
-   the configurator scrolling because of it (`.qb-scroll` 524 tall
-   over 1,378 of content).
-
-   47.64 of this strip's 55.64 was `.qf-go` drawing its two children
-   STACKED: the name at 18.84 over the fact at 16.8. Three stops
-   were two lines tall so that ONE of them — Choose, carrying the
-   hull — could put its answer under its label. The strip is 1,056
-   wide at 1280 and the three stops used 376.3 of it, so the second
-   line was being bought with height in a window that had none, out
-   of width that was going spare either way.
-
-   So the fact sits BESIDE the name on one baseline. That is also
-   the shape the playbook cites GOV.UK's check-answers page for —
-   "label / value / Change", a value beside its label rather than a
-   subtitle under a tab — and it is what the strip reads as now:
+   47.64 of this strip's 55.64 was the stop drawing its two children
+   STACKED: the name over the fact. Three stops were two lines tall
+   so that ONE of them — Choose, carrying the hull — could put its
+   answer under its label, out of width that was going spare either
+   way. So the fact sits BESIDE the name on one line, which is also
+   the shape GOV.UK's check-answers page takes — a value beside its
+   label, not a subtitle under a tab — and the strip reads
    `Choose  Highfield - ADV7 (HYP) B-G-B  │  Configure  │  Address
    nobody yet`.
 
      `.qf-line`   55.64 -> 33.84   at 1280x800 AND 1440x900
      `.qb-scroll` 524.13 -> 545.92 at 1280x800 (+4.16%)
 
-   The saving is on the height axis, so it is the same 21.8px at
-   both sizes rather than a figure that thins out as the window
-   grows. Nothing about the strip's contrast, its accent rule, its
-   press states or its 899px escape moved.
-
-   WHY NOT TIGHTER. `.qf-go` is 29.84 tall after this, which is the
-   `.shell-view-back` control's own 28 plus its two borders. Taking
-   the 4px of vertical padding out as well would buy 8 more and
-   leave a 21.84px tab, which is under every pressable thing in this
-   app and would make hover and press read as a flicker on a
-   hairline. The height came out of a line that was not earning it,
-   not out of the target.
-
-   AND THERE IS NO HEIGHT BREAKPOINT HERE, deliberately. A
-   `@media (max-height: …)` that dropped the second line only on a
-   short window would have left 21.8px of the same waste on every
-   tall one, and would have made the strip a different object at two
-   sizes for a fact that was never worth a line at either. The
-   eleventh rule asks the design to have an opinion about height;
-   the opinion is that this strip costs one line, always. A
-   breakpoint is what you reach for when the content genuinely needs
-   the room somewhere — the 899px rule below is one of those and it
-   stays.
+   The stop's box is `--h-sm` (28px) now, which is the small Button's
+   own height; the strip's 4px of top padding is still the only air
+   above it. There is no height breakpoint here, deliberately: the
+   strip costs one line, always. The 899px rule below is a WIDTH
+   decision and it stays.
 
    WHAT IS STILL WRONG AND IS NOT IN THIS FILE is measured at the
    very foot of it, under WHAT THIS PASS COULD NOT REACH.
@@ -122,111 +104,67 @@
   padding-left: calc(var(--s-2) + var(--s-1));
 }
 
-/* ONE LINE. The name, then its answer beside it, on one baseline —
-   see the height measurement in this file's header for what the
-   second line was costing and why it was the wrong place to spend
-   it. `baseline` and not `center`: the two are different type
-   steps, and a 13px label centred against a 12px value sits a
-   fraction high against every other pairing in the app. */
-.qf-go {
-  display: flex;
-  align-items: baseline;
+/* A STOP NOTHING CAN REACH IS NOT A CONTROL — no pointer, no hover,
+   no press; see flow.tsx for why Choose is one of these. It takes
+   the small Button's box so it sits level with the stops that are
+   controls: the same height, the same inset, the same type step. */
+.qf-still {
+  display: inline-flex;
+  align-items: center;
   gap: var(--s-2);
   min-width: 0;
-  padding: var(--s-1) var(--s-2);
-  border: 1px solid transparent;
-  border-bottom: 2px solid transparent;
-  border-radius: var(--r-control) var(--r-control) 0 0;
-  background: transparent;
-  text-align: left;
+  min-height: var(--h-sm);
+  padding: 0 var(--s-2);
   color: inherit;
-}
-
-/* A STOP NOTHING CAN REACH IS NOT A CONTROL. No pointer, no hover,
-   no press — see flow.tsx for why Choose is one of these. */
-.qf-go--flat {
   cursor: default;
 }
 
-button.qf-go {
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
+/* the stop you are on: one 2px accent rule under the name */
+.qf-stop.is-here .qf-still {
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
-button.qf-go:hover {
-  background: var(--surface-3);
-  border-color: var(--line);
-  border-bottom-color: var(--line-strong);
-}
-
-button.qf-go:active {
-  transform: scale(0.97);
-}
-
-button.qf-go:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
+/* THE NAME AND THE FACT TAKE THE CAPTION STEP WHOLE — which is also
+   the small Button's own label size, so a reachable stop and a still
+   one draw at one size. The name never wraps; the fact may. */
 .qf-stop-name {
-  font-size: var(--t-small-size);
-  font-weight: 550;
   color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
   white-space: nowrap;
 }
 
 /* NOTHING TRUNCATES MID-WORD. A hull's name is long and the picker
-   draws it here — it wraps to a second line and the stop grows,
-   which is the rule §3 sets for a strip that does not fit. There is
-   no ellipsis and no `nowrap` here for exactly that reason.
-
-   `min-width: 0` is what lets it shrink and wrap INSIDE its stop
-   rather than forcing the stop wide enough to hold it: a flex item's
-   floor is `auto`, which is its longest word, and without this a
-   21-word rigging-kit label would push the strip's own `flex-wrap`
-   and put Address on a second line of the strip.
-
-   The worst case is now the height this strip had UNCONDITIONALLY
-   before — two lines — and it arrives only when a name genuinely
-   does not fit. Measured on the seed's longest `subjectLabel` at
-   1280 it does not arrive: the three stops come to 492.1 of the
-   1,016 available. */
+   draws it here — it wraps and the stop grows, which is the rule §3
+   sets for a strip that does not fit. `white-space: normal` is
+   written out because a Button sets `nowrap` on itself and this has
+   to be allowed to break inside one; `min-width: 0` is what lets it
+   shrink and wrap INSIDE its stop rather than forcing the stop wide.
+   Measured on the seed's longest `subjectLabel` at 1280 it does not
+   wrap: the three stops come to 492.1 of the 1,016 available. */
 .qf-stop-fact {
   min-width: 0;
-  font-size: var(--t-caption-size);
-  line-height: 1.4;
   color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  white-space: normal;
   overflow-wrap: break-word;
-}
-
-.qf-stop.is-done .qf-stop-name {
-  color: var(--fg-secondary);
-}
-
-.qf-stop.is-here .qf-go {
-  border-bottom-color: var(--accent);
 }
 
 .qf-stop.is-here .qf-stop-name {
   color: var(--fg);
-  font-weight: 620;
 }
 
 /* ============================================================
-   EVERY WIDTH. The facts are inline now, so what they cost is
-   WIDTH rather than height: 490.1 of the strip's 1,016 at 1280, of
-   which 213.8 is Choose's hull. Below 900 they go and the names
-   stay, because knowing WHICH of the three you are on is the whole
-   job and the hull is on the page twice over anyway.
-
-   That cut-off did not move. It was chosen against the content and
-   the content did not change — only where it sits. What DID change
-   is which axis it protects: it used to stop the strip growing
-   wide, and it now stops it wrapping to the two lines this pass
-   just took out of it.
+   EVERY WIDTH. The facts are inline, so what they cost is WIDTH
+   rather than height: 490.1 of the strip's 1,016 at 1280, of which
+   213.8 is Choose's hull. Below 900 they go and the names stay,
+   because knowing WHICH of the three you are on is the whole job
+   and the hull is on the page twice over anyway.
    ============================================================ */
 
 @media (max-width: 899px) {
@@ -250,9 +188,7 @@ button.qf-go:focus-visible {
    THE ARGUMENT is in flow.tsx. The numbers are
    CONFIGURATOR_PLAYBOOK §6's own row for a surface arriving —
    "translateY 4→0 + fade, 180ms, --ease" — reused rather than
-   invented, and `--d-med` is that 180ms. (`--t-med` is bridge.css's
-   alias for the same token; this feature's 26 other timing
-   declarations say `--d-*`, so this one does too.)
+   invented, and `--d-med` is that 180ms.
 
    TWO PROPERTIES ANIMATE HERE AND BOTH ARE COMPOSITOR-ONLY:
    `transform` and `opacity`. No height, no padding, no margin, no
@@ -381,9 +317,7 @@ button.qf-go:focus-visible {
    Address stop, the door stays on the Address stop, the sentence
    stays in the ledger, and the act stays refused at the button. It
    is worth 36.39px on the state every new draft opens in, at every
-   width, and it is the third instance of the pattern that file's
-   own header has already deleted twice ("TWO controls doing one
-   act", "ONE DOOR PAST THE NARROWING, NOT TWO").
+   width.
 
    AND IT IS WORSE ON ADDRESS, where QuoteEditor draws the same
    blockers again as `.qt-foot-whys` (19.5px at both sizes). On that
@@ -392,8 +326,7 @@ button.qf-go:focus-visible {
    the place the thing is refused and is the one that should stay;
    the flow line says `Address  nobody yet` 16px below the strip;
    and the strip repeats what both already said, over a field that
-   is on screen with a caret in it. The same reasoning applies and
-   the same deletion is available.
+   is on screen with a caret in it.
 
    ── 2 · THE STAGE BAR (80.38px, three rows, every width) ─────
 
@@ -416,34 +349,6 @@ button.qf-go:focus-visible {
    is build.css's measurement to make, not this file's; it is noted
    because it is the largest single row in the foot and it is only
    large on the smaller window, which is backwards.
-
-   THOSE FOUR FIGURES WERE 73.66 / 102.47 / 47.47 / 28.81 UNTIL THE
-   TOTAL MOVED ONTO `--t-figure-xl`. The figure got bigger — 25.84px
-   to 33.43px at 1280 — and the strip got SMALLER, because the
-   display step's leading is 1.05 where the hand-written ramp it
-   replaced inherited 1.45. build.css carries the full before/after
-   on `.qb-price-now`. The wrap itself is untouched: at 1280 this
-   bar still goes to two rows, and it is still the largest row in
-   the foot.
-
-   ── WHAT THAT WOULD COME TO ──────────────────────────────────
-
-   The first two columns are measured. The third is arithmetic on
-   measured parts — 32.13 of one stage-bar row, this strip's 33.84,
-   the price bar's own 1px top border and its unwrapped 71.33 — and
-   it is a projection, not a reading.
-
-                          before    after this pass    all three
-     1280x800 chrome      273.49         251.69          138.30
-     1280x800 for work    526.51         548.31          661.70
-     1440x900 chrome      244.74         222.94          138.30
-     1440x900 for work    655.26         677.06          761.70
-
-   EVERY ROW IS 2.33–2.39px LIGHTER THAN IT WAS WRITTEN, and that is
-   the total's step change and nothing this pass planned: the price
-   bar came down 2.39 at 1280 and 2.33 at 1440. The columns are
-   otherwise untouched — none of the three deletions above has
-   happened, so "before" is still what the app draws today.
 
    ── AND ONE THING THAT IS NOT AVAILABLE ──────────────────────
 

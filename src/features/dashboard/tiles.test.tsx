@@ -476,8 +476,14 @@ describe('the modules a sheet implies', () => {
        with the two clicks a person would have made already made —
        visible, and still theirs to change. */
     const panel = screen.getByRole('dialog', { name: 'What is this module about?' })
+    /* `current`, not `pressed`: the picker's options are src/ui
+       Rows, and a Row announces the picked one through
+       `aria-current` (row.css — "drawn from aria-current, not a
+       class of our own, so the look and the announced state cannot
+       drift apart"). It was `pressed: true` while the option was a
+       hand-drawn toggle. */
     expect(
-      within(panel).getByRole('button', { name: 'Make a module about Boats', pressed: true }),
+      within(panel).getByRole('button', { name: 'Make a module about Boats', current: true }),
     ).toBeVisible()
     expect(within(panel).getByRole('checkbox', { name: 'Include Table A' })).toBeChecked()
     expect(within(panel).getByRole('textbox', { name: 'Module name' })).toHaveValue('Boats')

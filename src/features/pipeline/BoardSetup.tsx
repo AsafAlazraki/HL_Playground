@@ -46,6 +46,7 @@ import { useMemo, useState } from 'react'
 import type { JSX } from 'react'
 import { Plus, Trash, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button, Card, Field, SectionHead } from '@/ui'
 import { say } from '@/store/notes'
 import { currentUser } from '@/features/auth'
 import { useQuotes } from '@/features/quote'
@@ -178,19 +179,26 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
   }
 
   return (
+    /* THE PANEL IS THE SYSTEM'S CARD; the section around it is only
+       where it sits — over the board, in the page's gutter — because
+       `Card` takes no class and a section is what a labelled region
+       is. */
     <section className="se" aria-label="How this board is drawn">
+      <Card tone="raised" pad="lg">
       <header className="se-head">
         <h3 className="se-name">This board</h3>
         <p className="se-say">
           Your columns are the dealership&rsquo;s and everybody sees them. What a card shows is
           yours alone.
         </p>
-        <button type="button" className="se-shut" onClick={onClose} aria-label="Done">
+        <Button tone="ghost" size="sm" onClick={onClose} aria-label="Done">
           <X size={ICON_SIZE.small} aria-hidden="true" />
-        </button>
+        </Button>
       </header>
 
-      <h4 className="mono-label se-part">Columns</h4>
+      <SectionHead level="h4" rule>
+        Columns
+      </SectionHead>
       {/* WHAT THE SECOND TICK BOX DOES, SAID ONCE AND IN FULL. A
           setting whose effect is invisible until it fires is a
           setting nobody turns on deliberately — and "Prices
@@ -230,19 +238,24 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
                 </button>
               </span>
 
-              <input
-                className="se-in"
-                value={stage.name}
-                aria-label={`What ${stage.name} is called`}
-                onChange={(e) => patch(stage.id, { name: e.target.value })}
-                /* A STAGE WITH NO NAME IS A COLUMN NOBODY CAN AIM
-                   AT. Emptying the field is allowed while typing —
-                   fighting the caret is worse — and it is put back on
-                   the way out. */
-                onBlur={(e) => {
-                  if (e.target.value.trim() === '') patch(stage.id, { name: 'Stage' })
+              {/* A STAGE WITH NO NAME IS A COLUMN NOBODY CAN AIM AT.
+                  Emptying the field is allowed while typing — fighting
+                  the caret is worse — and it is put back on the way
+                  out. `Field` has no blur of its own, so the box around
+                  it listens: React's onBlur is focusout, which
+                  bubbles. */}
+              <div
+                className="se-namebox"
+                onBlur={() => {
+                  if (stage.name.trim() === '') patch(stage.id, { name: 'Stage' })
                 }}
-              />
+              >
+                <Field
+                  label="Name"
+                  value={stage.name}
+                  onChange={(v) => patch(stage.id, { name: v })}
+                />
+              </div>
 
               {/* COLOUR FROM A NAMED SET, not a picker. A free colour
                   well invites a choice that fails 4.5:1 against the
@@ -312,26 +325,26 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
 
               <span className="se-n ds-mono">{deals}</span>
 
-              <button
-                type="button"
-                className="se-drop"
+              <Button
+                tone="ghost"
+                size="sm"
                 aria-label={`Remove ${stage.name}`}
                 onClick={() => remove(stage)}
               >
                 <Trash size={ICON_SIZE.tiny} aria-hidden="true" />
-              </button>
+              </Button>
 
               {/* WHAT BELONGS IN THIS COLUMN, in one line. Drawn
                   under the head when the column has cards and in the
                   body when it has none — one field, because the
                   words do not change when the last card arrives. */}
-              <input
-                className="se-about"
-                value={stage.about}
-                placeholder="What belongs here"
-                aria-label={`What belongs in ${stage.name}`}
-                onChange={(e) => patch(stage.id, { about: e.target.value })}
-              />
+              <div className="se-aboutbox">
+                <Field
+                  label="What belongs here"
+                  value={stage.about}
+                  onChange={(v) => patch(stage.id, { about: v })}
+                />
+              </div>
 
               {/* THE REFUSAL, IN THE PLACE IT HAPPENED. Not a
                   disabled button with no explanation, and not a
@@ -346,7 +359,9 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
         })}
       </ul>
 
-      <h4 className="mono-label se-part">What each card shows</h4>
+      <SectionHead level="h4" rule>
+        What each card shows
+      </SectionHead>
       {/* THE SPINE IS SAID RATHER THAN LEFT TO BE HUNTED FOR. A
           person looking for "customer" in this list and not finding
           it would conclude the board had lost it. */}
@@ -383,13 +398,12 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
       ) : null}
 
       <footer className="se-foot">
-        <button type="button" className="se-add" onClick={add}>
-          <Plus size={ICON_SIZE.tiny} aria-hidden="true" />
+        <Button glyph={<Plus size={ICON_SIZE.tiny} aria-hidden="true" />} onClick={add}>
           Add a stage
-        </button>
-        <button
-          type="button"
-          className="se-reset"
+        </Button>
+        <Button
+          tone="ghost"
+          size="sm"
           onClick={() => {
             const before = [...stages]
             resetStages(orgSlug)
@@ -400,8 +414,9 @@ export function BoardSetup({ orgSlug, onClose }: BoardSetupProps): JSX.Element {
           }}
         >
           Start again
-        </button>
+        </Button>
       </footer>
+      </Card>
     </section>
   )
 }

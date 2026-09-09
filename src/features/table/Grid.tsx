@@ -1126,6 +1126,10 @@ export function Grid(props: GridProps): JSX.Element {
            carries only what a taller row makes ROOM for — a thumbnail
            that can be looked at, a gutter figure at the reading step. */
         (metrics && metrics.rowH > ROW_H ? ' tb-grid-roomy' : '') +
+        /* and what a SHORTER row takes away: the drawer head's display
+           step does not fit a 36px line past 1300px wide, so compact
+           is named here and table.css swaps the step whole. */
+        (metrics && metrics.rowH < ROW_H ? ' tb-grid-compact' : '') +
         /* the status rail is a FLOOR, not an overlay: the scroller
            gives up 30px to it rather than having a strip drawn over
            its last row. So the grid becomes a column when it has one. */
@@ -1683,11 +1687,7 @@ export function Grid(props: GridProps): JSX.Element {
                       ) : (
                         <button
                           type="button"
-                          className={
-                            'tb-grp-name' +
-                            (node.level === 0 ? ' tb-grp-name-top' : '') +
-                            (named ? '' : ' tb-grp-name-none')
-                          }
+                          className={'tb-grp-name' + (named ? '' : ' tb-grp-name-none')}
                           title={
                             named
                               ? `${node.value} — click to rename every ${noun.one} filed here`

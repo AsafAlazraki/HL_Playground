@@ -54,6 +54,13 @@ import { hasPictures, hasPrices, kindPlural } from './read'
    exact bag `split.ts` exists to complain about, offered back with a
    tick. One predicate now serves both surfaces. */
 import { siblingOffer } from './split'
+/* THE PRIMITIVES. The pick list is `<Row>`s, the two fields are
+   `<Field>`, the sibling group is a `<Card>`, the captions are
+   `<SectionHead>` and every act is `<Button>`; the local rules that
+   drew them are deleted from modules.css. The dialog shell itself —
+   overlay, scrim, panel — stays local: the layer has no dialog, and
+   that is reported. */
+import { Button, Card, Field, Row, SectionHead } from '@/ui'
 import './modules.css'
 
 /* The panel groups tables exactly as the left panel does — products
@@ -136,7 +143,6 @@ export function NewModuleDialog({
 
   const rootRef = useRef<HTMLDivElement | null>(null)
   const overlayRef = useRef<HTMLDivElement | null>(null)
-  const firstRowRef = useRef<HTMLButtonElement | null>(null)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
 
@@ -175,9 +181,12 @@ export function NewModuleDialog({
     setAlsoIds([])
   }, [open, seed])
 
+  /* FOCUS LANDS ON THE FIRST TABLE. `<Row>` takes no ref, so the first
+     row is found from the panel's own root — the list is this panel's
+     markup and the pick group is the first thing in it. */
   useEffect(() => {
     if (!open) return
-    firstRowRef.current?.focus()
+    rootRef.current?.querySelector<HTMLButtonElement>('.md-pick button')?.focus()
   }, [open])
 
   /* focus goes into the panel and comes back out to whatever opened it */
@@ -348,16 +357,16 @@ export function NewModuleDialog({
       >
         <header className="md-dlg-head">
           <div className="md-dlg-head-top">
-            <span className="mono-label md-dlg-eyebrow">New module</span>
-            <button
-              type="button"
-              className="md-dlg-close"
+            <SectionHead level="none">New module</SectionHead>
+            <Button
+              tone="ghost"
+              size="sm"
               onClick={() => closeRef.current()}
               aria-label="Close without making a module"
               title="Close (Esc)"
             >
               <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-            </button>
+            </Button>
           </div>
           <h2 className="block-heading md-dlg-q" id="md-dlg-q">
             What is this module about?
@@ -381,51 +390,37 @@ export function NewModuleDialog({
             ) : (
               groups.map((group) => (
                 <div className="md-pick-grp" key={group.kind}>
-                  <div className="md-pick-grp-head">
-                    <span className="mono-label">{group.label}</span>
-                    <span className="md-pick-grp-count mono-label">
-                      {group.items.length}
-                    </span>
-                  </div>
+                  <SectionHead level="none" count={group.items.length} rule>
+                    {group.label}
+                  </SectionHead>
                   <ul className="md-pick-list">
-                    {group.items.map((e, i) => {
+                    {group.items.map((e) => {
                       const rows = rowsByEntity[e.id]?.length ?? 0
                       const isPicked = pickedId === e.id
                       return (
                         <li key={e.id}>
-                          <button
-                            type="button"
-                            ref={
-                              group.kind === groups[0].kind && i === 0
-                                ? firstRowRef
-                                : undefined
-                            }
-                            className={`md-pick-row${isPicked ? ' is-picked' : ''}`}
-                            style={{ '--row-accent': accentVar(e.accent) } as CSSProperties}
-                            /* NAMED AND PRESSED EXPLICITLY, the same
-                               line the left panel's rows carry: the
-                               label is two spans, one of them a 10px
-                               aside, and a reader announcing them run
-                               together is not a name. */
-                            aria-label={`Make a module about ${e.name}`}
-                            aria-pressed={isPicked}
-                            onClick={() => pick(e)}
-                          >
-                            <span className="md-pick-glyph">
-                              <TableKindSymbol kind={kindOf(e.kind)} size={17} />
-                            </span>
-                            <span className="md-pick-name">{e.name}</span>
-                            {/* WHAT THIS TABLE BRINGS, in words. Pictures
+                          {/* A `<Row>`, NAMED EXPLICITLY: the line is a
+                              name and a mono aside, and a reader
+                              announcing them run together is not a name.
+                              The picked one is `current`, which the
+                              primitive draws from `aria-current` so the
+                              look and the announcement cannot drift. */}
+                          <Row
+                            dense
+                            lead={<TableKindSymbol kind={kindOf(e.kind)} size={ICON_SIZE.small} />}
+                            name={e.name}
+                            /* WHAT THIS TABLE BRINGS, in words. Pictures
                                 decide whether the index draws tiles or
                                 rows, and prices decide whether a face can
                                 carry a number — so both are stated before
-                                the choice, not discovered after it. */}
-                            <span className="md-pick-facts mono-label">
-                              {rows} {rows === 1 ? 'row' : 'rows'}
-                              {hasPictures(e) ? ' · pictures' : ''}
-                              {hasPrices(e) ? ' · prices' : ''}
-                            </span>
-                          </button>
+                                the choice, not discovered after it. */
+                            meta={`${rows} ${rows === 1 ? 'row' : 'rows'}${
+                              hasPictures(e) ? ' · pictures' : ''
+                            }${hasPrices(e) ? ' · prices' : ''}`}
+                            label={`Make a module about ${e.name}`}
+                            current={isPicked}
+                            onActivate={() => pick(e)}
+                          />
                         </li>
                       )
                     })}
@@ -469,28 +464,15 @@ export function NewModuleDialog({
               </p>
             ) : (
               <>
-                <label className="md-field">
-                  <span className="mono-label">Module name</span>
-                  <input
-                    className="field-input"
-                    value={name}
-                    spellCheck={false}
-                    autoComplete="off"
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </label>
+                <Field label="Module name" value={name} onChange={setName} autoComplete="off" />
 
-                <label className="md-field">
-                  <span className="mono-label">One line about it</span>
-                  <input
-                    className="field-input"
-                    value={description}
-                    spellCheck={false}
-                    autoComplete="off"
-                    placeholder="What people will find in here"
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </label>
+                <Field
+                  label="One line about it"
+                  value={description}
+                  onChange={setDescription}
+                  autoComplete="off"
+                  placeholder="What people will find in here"
+                />
 
                 {/* WHY NOTHING IS OFFERED, WHERE IT WOULD HAVE BEEN.
                     DESIGN_CONTRACT §10: a thing that cannot be done
@@ -507,35 +489,48 @@ export function NewModuleDialog({
                 ) : null}
 
                 {siblings.length > 0 && picked.kind ? (
-                  <div className="md-sibs" role="group" aria-label="Tables of the same kind">
-                    <p className="md-sibs-say">
-                      These are also {kindPlural(picked.kind)}. Tick any that belong in
-                      the same module and people will browse them together, brand first.
-                    </p>
-                    <ul className="md-sib-list">
-                      {siblings.map((s) => {
-                        const rows = rowsByEntity[s.id]?.length ?? 0
-                        return (
-                          <li key={s.id}>
-                            <label className="md-sib">
-                              <input
-                                type="checkbox"
-                                /* the row count beside the name is a
-                                   mono aside, so the box states which
-                                   table it is rather than reading
-                                   "ePropulsion Outboards 14" */
-                                aria-label={`Include ${s.name}`}
-                                checked={alsoIds.includes(s.id)}
-                                onChange={() => toggleSibling(s.id)}
+                  <Card tone="sunken" pad="sm">
+                    <div
+                      className="md-stack"
+                      role="group"
+                      aria-label="Tables of the same kind"
+                    >
+                      <p className="md-sibs-say">
+                        These are also {kindPlural(picked.kind)}. Tick any that belong in
+                        the same module and people will browse them together, brand first.
+                      </p>
+                      <ul className="md-sib-list">
+                        {siblings.map((s) => {
+                          const rows = rowsByEntity[s.id]?.length ?? 0
+                          const boxId = `md-sib-${s.id}`
+                          return (
+                            <li key={s.id}>
+                              {/* A STILL `<Row>` WITH THE BOX AS ITS LEAD.
+                                  The name is a real <label for>, so the
+                                  whole line still toggles the box; the
+                                  row count is a mono aside in `meta`, so
+                                  the box states which table it is rather
+                                  than reading "ePropulsion Outboards 14". */}
+                              <Row
+                                dense
+                                lead={
+                                  <input
+                                    type="checkbox"
+                                    id={boxId}
+                                    aria-label={`Include ${s.name}`}
+                                    checked={alsoIds.includes(s.id)}
+                                    onChange={() => toggleSibling(s.id)}
+                                  />
+                                }
+                                name={<label htmlFor={boxId}>{s.name}</label>}
+                                meta={<span className="md-figure">{rows}</span>}
                               />
-                              <span className="md-sib-name">{s.name}</span>
-                              <span className="md-sib-rows mono-label">{rows}</span>
-                            </label>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                  </Card>
                 ) : null}
               </>
             )}
@@ -546,9 +541,15 @@ export function NewModuleDialog({
                   ? 'Nothing else to configure — the list, the grouping, the pictures and the price all come from the table.'
                   : ''}
               </p>
-              <button type="submit" className="btn btn-primary" disabled={!picked}>
+              {/* REFUSED, WITH THE REASON, until a table is picked —
+                  never greyed out with nothing said (rule 10). */}
+              <Button
+                type="submit"
+                tone="primary"
+                refusedBecause={picked ? undefined : 'Pick a table on the left first.'}
+              >
                 Create module
-              </button>
+              </Button>
             </footer>
           </div>
         </form>

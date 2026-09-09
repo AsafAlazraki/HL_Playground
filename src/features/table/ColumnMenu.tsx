@@ -38,6 +38,7 @@ import { useMemo, useState } from 'react'
 import type { JSX } from 'react'
 import { isSystemFieldId, type FieldDef } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
+import { Button, Row } from '@/ui'
 import { columnFacts } from '@/features/designer/columnFacts'
 import { formulaReaders, nameList, ruleBreakage } from '@/features/designer/dependents'
 import type { SortDir } from '@/features/table/core'
@@ -158,12 +159,12 @@ export function ColumnMenu({
             </p>
           </div>
           <footer className="tb-menu-foot">
-            <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
+            <Button tone="ghost" size="sm" onClick={() => setEditing(false)}>
               Back
-            </button>
-            <button type="button" className="btn btn-primary" onClick={commitOptions}>
+            </Button>
+            <Button tone="primary" size="sm" onClick={commitOptions}>
               Save choices
-            </button>
+            </Button>
           </footer>
         </>
       ) : confirming ? (
@@ -204,63 +205,51 @@ export function ColumnMenu({
               cancel — so this is bringing one surface into line with the
               other, not inventing a policy. */}
           <footer className="tb-menu-foot">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              autoFocus
-              onClick={() => setConfirming(false)}
-            >
+            <Button tone="ghost" size="sm" autoFocus onClick={() => setConfirming(false)}>
               Keep it
-            </button>
-            <button type="button" className="btn btn-danger tb-confirm-go" onClick={act(onRemove)}>
+            </Button>
+            <Button tone="danger" size="sm" onClick={act(onRemove)}>
               Remove
-            </button>
+            </Button>
           </footer>
         </>
       ) : (
+        /* THE ACTS ARE ROWS — the src/ui line, activating, dense. The
+           one in force (this sort, a narrowing) is `current`, which
+           is drawn from aria-current so the look and the announcement
+           cannot part. The destructive act is a Button in the danger
+           tone rather than a row painted red: it is the one act here
+           that asks a question before it does anything. */
         <div className="tb-acts">
-          <button
-            type="button"
-            className={'tb-act' + (sortDir === 'asc' ? ' tb-act-on' : '')}
-            onClick={act(() => onSort(sortDir === 'asc' ? null : 'asc'))}
-          >
-            Sort first to last
-          </button>
-          <button
-            type="button"
-            className={'tb-act' + (sortDir === 'desc' ? ' tb-act-on' : '')}
-            onClick={act(() => onSort(sortDir === 'desc' ? null : 'desc'))}
-          >
-            Sort last to first
-          </button>
-          <button
-            type="button"
-            className={'tb-act' + (filtered ? ' tb-act-on' : '')}
-            onClick={act(onFilter)}
-          >
-            {filtered ? 'Change what shows…' : 'Show only some…'}
-          </button>
+          <Row
+            dense
+            current={sortDir === 'asc'}
+            onActivate={act(() => onSort(sortDir === 'asc' ? null : 'asc'))}
+            name="Sort first to last"
+          />
+          <Row
+            dense
+            current={sortDir === 'desc'}
+            onActivate={act(() => onSort(sortDir === 'desc' ? null : 'desc'))}
+            name="Sort last to first"
+          />
+          <Row
+            dense
+            current={filtered}
+            onActivate={act(onFilter)}
+            name={filtered ? 'Change what shows…' : 'Show only some…'}
+          />
 
           {!system && (
             <>
               <span className="tb-act-rule" aria-hidden="true" />
-              {onRename && (
-                <button type="button" className="tb-act" onClick={act(onRename)}>
-                  Rename column…
-                </button>
-              )}
+              {onRename && <Row dense onActivate={act(onRename)} name="Rename column…" />}
               {field.type === 'select' && (
-                <button type="button" className="tb-act" onClick={() => setEditing(true)}>
-                  Edit the choices…
-                </button>
+                <Row dense onActivate={() => setEditing(true)} name="Edit the choices…" />
               )}
-              <button
-                type="button"
-                className="tb-act tb-act-danger"
-                onClick={() => setConfirming(true)}
-              >
+              <Button tone="danger" size="sm" block onClick={() => setConfirming(true)}>
                 Remove column
-              </button>
+              </Button>
             </>
           )}
         </div>

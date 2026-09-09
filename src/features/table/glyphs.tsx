@@ -205,15 +205,3 @@ export function PlateGlyph(): JSX.Element {
     </svg>
   )
 }
-
-/** Corner registration ticks — the drafting-plate frame. */
-export function PlateTicks(): JSX.Element {
-  return (
-    <>
-      <span className="tb-tick tb-tick-tl" aria-hidden="true" />
-      <span className="tb-tick tb-tick-tr" aria-hidden="true" />
-      <span className="tb-tick tb-tick-bl" aria-hidden="true" />
-      <span className="tb-tick tb-tick-br" aria-hidden="true" />
-    </>
-  )
-}

@@ -20,11 +20,23 @@
    NOTHING IS INVENTED IN ANY OF THEM. A place that prices nothing
    says so; a place nobody has quoted from says so; a rule nobody
    wrote does not appear.
+
+   ── THE PRIMITIVES PASS ──────────────────────────────────────
+   Every card here is `<Card>`, every list line is `<Row>`, every
+   button is `<Button>` and every caption is `<SectionHead>`, all
+   from src/ui. The local rules that drew them — `.md-hcard`,
+   `.md-hq`, `.md-stock`, `.md-series`, `.md-q`, `.md-price-one`,
+   `.md-price-level`, `.md-hcard-all`, `.md-hcard-go` and their
+   states — are deleted from modules.css, not layered under. The
+   one thing the layer cannot yet say is a trailing FIGURE on an
+   activating row (a button may not hold a button, so `trail` is
+   only offered on a still row), so a total, a price or a day sits
+   in `meta`, in mono and in full ink. That gap is reported, once,
+   rather than worked around with a sixth internal layout.
    ============================================================ */
 
 import type { ReactElement } from 'react'
 import { useMemo } from 'react'
-import { CaretRight } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { type EntityDef, type ModuleDef } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
@@ -32,6 +44,7 @@ import { ICON_SIZE } from '@/lib/icons'
 import { localDay, priceLevelsFor, quoteTotals, useQuotes } from '@/features/quote'
 import { ACTIVITY_EMPTY_HERE, ActivityList, useModuleActivity } from '@/features/activity'
 import { money } from '@/lib/money'
+import { Button, Card, Row, SectionHead } from '@/ui'
 import {
   buildEntries,
   categoryDrawers,
@@ -69,7 +82,6 @@ export interface ModuleHomeProps {
   onOpenQuote?: ((quoteId: string) => void) | undefined
   /** stand at another of the module's places, without leaving it */
   onPlace: (tableId: string) => void
-  /** the door into the stock — the catalogue tab, by another route */
   /** Open the catalogue. `at` is a drawer key (`categoryDrawers`)
    *  when a particular series was pressed, and absent when the card's
    *  own "Open catalog" was — the catalogue lands on that series where
@@ -152,26 +164,12 @@ export function ModuleHome({
   const preview = useMemo(() => entries.slice(0, PREVIEW_ROWS), [entries])
 
   /* THE SHAPE OF THE BRAND, which is what this card should have been
-     saying all along.
-
-     WHAT IT SAID BEFORE. "588 priced · 7 series", then six of those
-     588 rows — Highfield RU230KAM (PVC) WH, RU230KAM (HYP) WH,
-     RU230KAM (PVC) LG, RU230KAM (HYP) LG… four near-identical
-     variant codes of the SAME model, because the first six rows of a
-     sheet ordered by series are six variants of one boat. Six rows
-     chosen by their position in a spreadsheet is not a range.
-
-     WHAT IT SAYS NOW. The seven series, each with what it holds and
-     what it costs: `Sport · 40 models · $8,400–$24,900`. That is the
-     whole 588 accounted for in seven lines, and it is the shape a
-     dealer actually thinks in — a customer asks for a Sport, not for
-     an RU230KAM.
-
-     `categoryDrawers` IS ALREADY THIS READER and is already tested.
-     It cuts entries by their banner, counts each, and finds the
-     cheapest and dearest REAL ROW under it — never an average and
-     never a guess. It was written for the catalogue's drawers; the
-     question it answers is the same one. */
+     saying all along: the seven series, each with what it holds and
+     what it costs — the whole 588 accounted for in seven lines, and
+     the shape a dealer actually thinks in. `categoryDrawers` is
+     already this reader and is already tested: it cuts entries by
+     their banner, counts each, and finds the cheapest and dearest
+     REAL ROW under it — never an average and never a guess. */
   const series = useMemo(() => categoryDrawers(entries, listed), [entries, listed])
 
   /* THE FIGURES THIS PLACE CAN STATE ABOUT ITSELF, and each one only
@@ -187,12 +185,10 @@ export function ModuleHome({
   if (raised > 0) cells.push({ term: raised === 1 ? 'quote raised' : 'quotes raised', figure: raised })
   /* THE BRANCH COUNT IS ONLY A FACT WHERE THE BRANCHES ARE NOT
      DRAWN. "7 series" printed above a list of exactly seven series
-     is the same reading twice, which is the fault the row strip was
-     built to fix — reintroduced by the thing that fixed it. */
+     is the same reading twice. */
   if (series.length <= 1) {
     for (const b of census.branches) cells.push({ term: b.noun, figure: b.count })
   }
-
 
   /* THE FEW MOST RECENT, for the card. The full list is the Quotes
      tab eighteen pixels above; this is a glance. */
@@ -208,219 +204,180 @@ export function ModuleHome({
 
   return (
     <div className="md-home">
-      {/* ============================================================
-          WHAT THIS PAGE USED TO BE, AND WHY IT IS NOT ANY MORE.
-
-          A 300px desaturated top-down photograph of ONE row, drawn
-          as a door labelled "Catalog" — directly beneath a tab bar
-          whose second tab is Catalog. Two doors to one place and the
-          big one was the worse one, because it was a picture of a
-          single boat standing in for a brand of 588.
-
-          Under it: "534 photographed", which is a fact about how
-          complete our data is and not about anything a dealer sells.
-          Under that, "What you can do here — Browse · Search · Open
-          one · Relate · Quote": the application listing its own
-          capabilities back at the person using them.
-
-          What a place in a business should answer is what is
-          HAPPENING in it and what to do next. So: the quotes raised
-          from here, the record of what changed here, and the range
-          itself as doors. ============================================ */}
-
+      {/* THE RANGE LEADS, AND THE TWO CARDS THAT ARE USUALLY EMPTY DO
+          NOT. Measured on a freshly loaded price file: "Recent quotes
+          — Nothing quoted from here yet" and "Activity — Nothing has
+          changed in here yet", side by side, the first thing on a page
+          about a brand with 588 boats. So the range is the tall card
+          on the left because it is the only one that is never empty,
+          and the deals and the log are a narrow rail beside it. */}
       <div className="md-home-grid">
-      {/* ============================================================
-          THE RANGE LEADS, AND THE TWO CARDS THAT ARE USUALLY EMPTY
-          DO NOT.
+        {/* ---- the range, as doors ----------------------------- */}
+        {cells.length > 0 || census.branches.length > 0 ? (
+          <section aria-label="The range">
+            <Card tone="raised" pad="md">
+              <div className="md-stack">
+                <SectionHead
+                  level="h3"
+                  action={
+                    <Button tone="ghost" size="sm" onClick={() => onStock()}>
+                      Open catalog
+                    </Button>
+                  }
+                >
+                  The range
+                </SectionHead>
 
-          MEASURED ON A FRESHLY LOADED PRICE FILE, which is the state
-          every module is in until somebody quotes from it: "Recent
-          quotes — Nothing quoted from here yet" and "Activity —
-          Nothing has changed in here yet", side by side, 145px tall,
-          the first thing on a page about a brand with 588 boats.
-          Two empty boxes were the headline and the 588 were third.
+                {cells.length > 0 ? (
+                  <dl className="md-home-figs">
+                    {cells.map((c) => (
+                      <div className="md-home-fig" key={c.term}>
+                        <dd>{grouped(c.figure)}</dd>
+                        <dt>{c.term}</dt>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
 
-          So the grid is inverted. The range is the tall card on the
-          left because it is the only one that is never empty — a
-          module with no stock has no page. The deals and the log
-          become a narrow rail beside it: still first-class, still
-          the same cards, but sized to what they usually hold rather
-          than to what they hold on the best day of the year.
-          ============================================================ */}
-      {/* ---- the range, as doors ----------------------------- */}
-      {cells.length > 0 || census.branches.length > 0 ? (
-        <section className="md-hcard md-hcard--wide" aria-labelledby="md-home-r">
-          <header className="md-hcard-head">
-            <h3 className="md-hcard-name" id="md-home-r">
-              The range
-            </h3>
-            <button type="button" className="md-hcard-all" onClick={() => onStock()}>
-              Open catalog
-            </button>
-          </header>
-
-          {cells.length > 0 ? (
-            <dl className="md-home-figs">
-              {cells.map((c) => (
-                <div className="md-home-fig" key={c.term}>
-                  <dd>{grouped(c.figure)}</dd>
-                  <dt>{c.term}</dt>
-                </div>
-              ))}
-            </dl>
-          ) : null}
-
-          {/* WHAT IS ACTUALLY IN HERE.
-
-              THE SIX ROWS THIS DREW. Highfield's first six, in sheet
-              order: RU230KAM (PVC) WH, RU230KAM (HYP) WH, RU230KAM
-              (PVC) LG, RU230KAM (HYP) LG, RU250KAM (PVC) WH,
-              RU250KAM (HYP) WH. Two models in two tube materials and
-              two colours — six lines that are really two boats, all
-              of them Roll-Up, chosen for nothing but being at the top
-              of a spreadsheet. It told you nothing about the other
-              582 and it named the same boat four times.
-
-              THE SEVEN THIS DRAWS. Every series, what it holds and
-              what it costs, biggest first — which accounts for all
-              588 in seven lines and is the shape a dealer thinks in.
-              Nobody asks for an RU230KAM; they ask for a Roll-Up.
-
-              A SERIES OPENS THE CATALOGUE. Where a table carries
-              twelve headings or more the catalogue files itself into
-              drawers and lands on this one; below that it is a
-              grouped list and the press simply opens it. Both are
-              honest and neither pretends to a filter that is not
-              there. */}
-          {series.length > 1 ? (
-            <ul className="md-home-series">
-              {series.map((d) => (
-                <li key={d.key}>
-                  <button
-                    type="button"
-                    className="md-series"
-                    onClick={() => onStock(d.key)}
-                  >
-                    <span className="md-series-name">{d.name || `No ${d.of}`}</span>
-                    <span className="md-series-n ds-mono">{grouped(d.count)}</span>
-                    {/* THE TWO ENDS ARE REAL ROWS, never an average:
-                        the cheapest and the dearest line the drawer
-                        holds. A series that prices nothing draws no
-                        empty cell. */}
-                    {d.low ? (
-                      <span className="md-series-band ds-mono">
-                        {d.low === d.high ? d.low : `${d.low}–${d.high}`}
-                      </span>
-                    ) : (
-                      <span className="md-series-band" />
-                    )}
-                    <CaretRight
-                      size={ICON_SIZE.small}
-                      className="md-series-go"
-                      aria-hidden="true"
-                    />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : preview.length > 0 ? (
-            /* A FLAT TABLE HAS NO SERIES TO SHOW — Formosa declares no
-               grouping at all — so it keeps the row strip, which is
-               the right answer for a range that is simply a list. */
-            <ul className="md-home-stock">
-              {preview.map((e) => (
-                <li key={`${e.tableId}:${e.rowId}`}>
-                  <button
-                    type="button"
-                    className="md-stock"
-                    onClick={() => onOpen(e.tableId, e.rowId)}
-                  >
-                    <span className="md-stock-say">
-                      <span className="md-stock-name">{e.label}</span>
-                      {e.branch ? (
-                        <span className="md-stock-branch">{e.branch}</span>
-                      ) : null}
-                    </span>
-                    {e.price ? (
-                      <span className="md-stock-price ds-mono">{e.price}</span>
-                    ) : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
+                {/* A SERIES OPENS THE CATALOGUE. Where a table carries
+                    twelve headings or more the catalogue files itself
+                    into drawers and lands on this one; below that it
+                    is a grouped list and the press simply opens it.
+                    Both are honest and neither pretends to a filter
+                    that is not there. The two ends of the band are
+                    REAL ROWS, never an average. */}
+                {series.length > 1 ? (
+                  <ul className="md-home-series">
+                    {series.map((d) => (
+                      <li key={d.key}>
+                        <Row
+                          dense
+                          name={d.name || `No ${d.of}`}
+                          meta={
+                            <span className="md-meta">
+                              <span className="md-figure">{grouped(d.count)}</span>
+                              {d.low ? (
+                                <span className="md-figure">
+                                  {d.low === d.high ? d.low : `${d.low}–${d.high}`}
+                                </span>
+                              ) : null}
+                            </span>
+                          }
+                          onActivate={() => onStock(d.key)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ) : preview.length > 0 ? (
+                  /* A FLAT TABLE HAS NO SERIES TO SHOW — Formosa declares
+                     no grouping at all — so it keeps the row strip, which
+                     is the right answer for a range that is simply a
+                     list. */
+                  <ul className="md-home-stock">
+                    {preview.map((e) => (
+                      <li key={`${e.tableId}:${e.rowId}`}>
+                        <Row
+                          dense
+                          name={e.label}
+                          meta={
+                            <span className="md-meta">
+                              {e.branch ? <span>{e.branch}</span> : null}
+                              {e.price ? <span className="md-figure">{e.price}</span> : null}
+                            </span>
+                          }
+                          onActivate={() => onOpen(e.tableId, e.rowId)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </Card>
+          </section>
+        ) : null}
 
         {/* ---- the rail: what has happened here ------------- */}
         <div className="md-home-rail">
           {/* ---- the deals ------------------------------------- */}
-          <section className="md-hcard" aria-labelledby="md-home-q">
-            <header className="md-hcard-head">
-              <h3 className="md-hcard-name" id="md-home-q">
-                Recent quotes
-              </h3>
-              {recent.length > 0 && onQuotes ? (
-                <button type="button" className="md-hcard-all" onClick={onQuotes}>
-                  All {raised}
-                </button>
-              ) : null}
-            </header>
+          <section aria-label="Recent quotes">
+            <Card tone="raised" pad="md">
+              <div className="md-stack">
+                <SectionHead
+                  level="h3"
+                  action={
+                    recent.length > 0 && onQuotes ? (
+                      <Button tone="ghost" size="sm" onClick={onQuotes}>
+                        All {raised}
+                      </Button>
+                    ) : undefined
+                  }
+                >
+                  Recent quotes
+                </SectionHead>
 
-            {recent.length === 0 ? (
-              /* THE EMPTY STATE OFFERS THE ACT rather than narrating a
-                 route to it. The old one on the Quotes tab spends two
-                 sentences explaining where quotes come from. */
-              <div className="md-hcard-none">
-                <p className="md-hcard-none-say">Nothing quoted from here yet.</p>
-                {onNewQuote ? (
-                  <button type="button" className="md-hcard-go" onClick={onNewQuote}>
-                    Start a quote
-                  </button>
-                ) : null}
+                {recent.length === 0 ? (
+                  /* THE EMPTY STATE OFFERS THE ACT rather than narrating
+                     a route to it. */
+                  <div className="md-hcard-none">
+                    <p className="md-hcard-none-say">Nothing quoted from here yet.</p>
+                    {onNewQuote ? (
+                      <Button tone="primary" onClick={onNewQuote}>
+                        Start a quote
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <ul className="md-hq-list">
+                    {recent.map((q) => {
+                      /* THE SUBJECT AS THE QUOTE FROZE IT — never
+                         re-read from the sheet. A boat renamed since
+                         is still the boat this was written for. */
+                      const meta = (
+                        <span className="md-meta">
+                          <span>{q.customer.name.trim() || 'No customer yet'}</span>
+                          <span className="md-figure">{money(quoteTotals(q).total)}</span>
+                          <span className="md-figure">{localDay(q.createdAt)}</span>
+                        </span>
+                      )
+                      return (
+                        <li key={q.id}>
+                          {onOpenQuote ? (
+                            <Row
+                              dense
+                              name={q.subjectLabel}
+                              meta={meta}
+                              onActivate={() => onOpenQuote(q.id)}
+                            />
+                          ) : (
+                            <Row dense name={q.subjectLabel} meta={meta} />
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
               </div>
-            ) : (
-              <ul className="md-hq-list">
-                {recent.map((q) => (
-                  <li key={q.id}>
-                    <button
-                      type="button"
-                      className="md-hq"
-                      disabled={!onOpenQuote}
-                      onClick={() => onOpenQuote?.(q.id)}
-                    >
-                      {/* THE SUBJECT AS THE QUOTE FROZE IT — never
-                          re-read from the sheet. A boat renamed since
-                          is still the boat this was written for. */}
-                      <span className="md-hq-what">{q.subjectLabel}</span>
-                      <span className="md-hq-who">
-                        {q.customer.name.trim() || 'No customer yet'}
-                      </span>
-                      <span className="md-hq-sum ds-mono">{money(quoteTotals(q).total)}</span>
-                      <span className="md-hq-when ds-mono">{localDay(q.createdAt)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            </Card>
           </section>
 
           {/* ---- what changed here ----------------------------- */}
-          <section className="md-hcard" aria-labelledby="md-home-a">
-            <header className="md-hcard-head">
-              <h3 className="md-hcard-name" id="md-home-a">
-                Activity
-              </h3>
-            </header>
-            {/* SCOPED TO THIS PLACE. Until today `Entry.moduleId` was
-                written by nothing at all, so this card could only ever
-                have been empty — see the note in activity.ts about
-                what the stamp claims and what it does not. */}
-            {here.length === 0 ? (
-              <p className="md-hcard-none-say">{ACTIVITY_EMPTY_HERE}</p>
-            ) : (
-              <ActivityList orgSlug={orgSlug} moduleId={owner.id} limit={ACTIVITY_ROWS} />
-            )}
+          <section aria-label="Activity">
+            <Card tone="raised" pad="md">
+              <div className="md-stack">
+                <SectionHead level="h3">Activity</SectionHead>
+                {/* SCOPED TO THIS PLACE. Until today `Entry.moduleId` was
+                    written by nothing at all, so this card could only
+                    ever have been empty — see the note in activity.ts
+                    about what the stamp claims and what it does not. */}
+                {here.length === 0 ? (
+                  <p className="md-hcard-none-say">{ACTIVITY_EMPTY_HERE}</p>
+                ) : (
+                  <div className="md-home-log">
+                    <ActivityList orgSlug={orgSlug} moduleId={owner.id} limit={ACTIVITY_ROWS} />
+                  </div>
+                )}
+              </div>
+            </Card>
           </section>
         </div>
       </div>
@@ -430,7 +387,7 @@ export function ModuleHome({
         <div className="md-home-foot">
           {siblings.length > 1 ? (
             <section className="md-home-strip">
-              <h3 className="mono-label md-home-cap">Also in {owner.name}</h3>
+              <SectionHead level="h3">Also in {owner.name}</SectionHead>
               <ul className="md-home-chips">
                 {siblings.map((t) => {
                   const at = t.id === (place ?? master?.id)
@@ -440,7 +397,12 @@ export function ModuleHome({
                           you are standing in — pressing it changes
                           nothing, which is honest, and a chip that
                           stopped being pressable the moment it became
-                          current would move under the pointer. */}
+                          current would move under the pointer.
+
+                          A CHIP, NOT A BUTTON. The layer has no chip
+                          yet — a pill carrying a kind hue with an
+                          `aria-current` — so this one stays local,
+                          and is reported as the gap it is. */}
                       <button
                         type="button"
                         className={`md-home-chip${at ? ' is-here' : ''}`}
@@ -460,7 +422,7 @@ export function ModuleHome({
 
           {related.length > 0 ? (
             <section className="md-home-strip">
-              <h3 className="mono-label md-home-cap">Goes with these</h3>
+              <SectionHead level="h3">Goes with these</SectionHead>
               <ul className="md-home-links">
                 {related.map((r) => (
                   <li className="md-home-link" key={r.tableId}>
@@ -468,8 +430,7 @@ export function ModuleHome({
                     <span className="md-home-link-name">{r.name}</span>
                     {/* "on 3 of 7" IS THE FACT, and it was drawn even
                         when it read "on 1 of 1" — a share of one is
-                        not a share, it is a yes, and a row of them
-                        told a salesperson nothing five times. */}
+                        not a share, it is a yes. */}
                     {r.of > 1 ? (
                       <span className="md-home-link-share">
                         on {r.on} of {r.of}
@@ -545,45 +506,38 @@ export function ModuleQuotes({ module, owner, onOpenQuote }: ModuleQuotesProps):
         </span>
       </li>
       {raised.map((q) => {
-        const body = (
-          <>
-            {/* THE SUBJECT AS THE QUOTE FROZE IT. Never re-read from
-                the sheet: a quote prints what it froze, and a boat
-                renamed since is still the boat this was written for. */}
-            <span className="md-q-what">{q.subjectLabel}</span>
-            <span className="md-q-state mono-label">
-              {q.state === 'issued' ? 'Given' : 'Draft'}
-            </span>
-            {/* MONO BECAUSE THEY ARE FIGURES, and not `mono-label`,
-                because a reference and a date are values a person
-                reads back to somebody on the phone. */}
-            <span className="md-q-ref">{q.reference}</span>
-            {/* WHAT IT IS WORTH. The row carried the subject, the
-                state, the reference and the day — everything about a
-                quote except the number a dealer actually asks about.
-                `quoteTotals` is the same reader the dashboard card
-                and the board's cards take, so three surfaces cannot
-                disagree about what a deal comes to. */}
-            <span className="md-q-sum ds-mono">{money(quoteTotals(q).total)}</span>
-            <span className="md-q-when">{localDay(q.createdAt)}</span>
-          </>
+        /* THE SUBJECT AS THE QUOTE FROZE IT. Never re-read from the
+           sheet: a quote prints what it froze, and a boat renamed
+           since is still the boat this was written for.
+
+           THE STATE IS THE ONE LABEL ON THE LINE; the reference and
+           the day are values a person reads back to somebody on the
+           phone, so they are figures, not stamps. `quoteTotals` is
+           the same reader the dashboard card and the board's cards
+           take, so three surfaces cannot disagree about what a deal
+           comes to. */
+        const meta = (
+          <span className="md-meta">
+            <span className="mono-label">{q.state === 'issued' ? 'Given' : 'Draft'}</span>
+            <span className="md-figure">{q.reference}</span>
+            <span className="md-figure">{money(quoteTotals(q).total)}</span>
+            <span className="md-figure">{localDay(q.createdAt)}</span>
+          </span>
         )
         return (
           <li key={q.id}>
             {onOpenQuote ? (
-              <button
-                type="button"
-                className="md-q"
-                aria-label={`Open the quote for ${q.subjectLabel}, ${q.reference}`}
-                onClick={() => onOpenQuote(q.id)}
-              >
-                {body}
-              </button>
+              <Row
+                name={q.subjectLabel}
+                meta={meta}
+                label={`Open the quote for ${q.subjectLabel}, ${q.reference}`}
+                onActivate={() => onOpenQuote(q.id)}
+              />
             ) : (
               /* A FACT THAT CANNOT BE OPENED IS BETTER THAN A CONTROL
                  THAT DOES NOTHING — the same shape the item rows take
                  when this place cannot open one. */
-              <div className="md-q is-flat">{body}</div>
+              <Row name={q.subjectLabel} meta={meta} />
             )}
           </li>
         )
@@ -627,40 +581,57 @@ export function ModulePricing({ module, tables }: ModulePricingProps): ReactElem
   return (
     <div className="md-price">
       {read.map(({ table, levels, face }) => (
-        <section className="md-price-one" key={table.id} data-kind={kindOf(table.kind)}>
-          <h3 className="md-price-name">
-            <TableKindSymbol kind={kindOf(table.kind)} size={ICON_SIZE.tiny} />
-            {table.name}
-          </h3>
+        /* ONE CARD PER TABLE, IN THE TABLE'S OWN KIND. `<Card kind>`
+           is the primitive's kind ground — the rail this card wore is
+           the hue under the whole card now, at the mix card.css
+           measured for a name on it.
 
-          {levels.length === 0 ? (
-            /* A THING THAT CANNOT BE DONE SAYS WHY, WHERE IT IS. */
-            <p className="md-price-none">
-              No column on {table.name} is marked as a price, so nothing here can be
-              quoted. Mark one in Settings.
-            </p>
-          ) : (
-            <ul className="md-price-levels">
-              {levels.map((l) => {
-                const column = table.fields.find((f) => f.id === l.fieldId)
-                return (
-                  <li className="md-price-level" key={l.key}>
-                    <span className="md-price-level-name">{l.label}</span>
-                    {/* THE COLUMN IT IS, in the business's own words,
-                        so a number can always be traced back. */}
-                    <span className="md-price-col">{column?.name ?? l.fieldId}</span>
-                    <span className="md-price-scope mono-label">
-                      {l.scope === 'quote' ? 'whole quote' : 'per line'}
-                    </span>
-                    {face && face.field.id === l.fieldId ? (
-                      <span className="k-chip md-price-shown">On the face</span>
-                    ) : null}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
+           THE TABLE'S NAME IS NOT A CAPTION. It keeps its own case
+           and the heading step, so it is not `<SectionHead>`, whose
+           one style is the uppercase label — rule 3. */
+        <Card tone="flat" pad="md" kind={kindOf(table.kind)} key={table.id}>
+          <section className="md-stack" aria-label={table.name}>
+            <h3 className="md-price-name">
+              <TableKindSymbol kind={kindOf(table.kind)} size={ICON_SIZE.tiny} />
+              {table.name}
+            </h3>
+
+            {levels.length === 0 ? (
+              /* A THING THAT CANNOT BE DONE SAYS WHY, WHERE IT IS. */
+              <p className="md-price-none">
+                No column on {table.name} is marked as a price, so nothing here can be
+                quoted. Mark one in Settings.
+              </p>
+            ) : (
+              <ul className="md-price-levels">
+                {levels.map((l) => {
+                  const column = table.fields.find((f) => f.id === l.fieldId)
+                  return (
+                    <li key={l.key}>
+                      <Row
+                        name={l.label}
+                        /* THE COLUMN IT IS, in the business's own words,
+                           so a number can always be traced back. Mono,
+                           because it is an identifier. */
+                        meta={<span className="md-price-col">{column?.name ?? l.fieldId}</span>}
+                        trail={
+                          <>
+                            <span className="md-price-scope mono-label">
+                              {l.scope === 'quote' ? 'whole quote' : 'per line'}
+                            </span>
+                            {face && face.field.id === l.fieldId ? (
+                              <span className="k-chip">On the face</span>
+                            ) : null}
+                          </>
+                        }
+                      />
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </section>
+        </Card>
       ))}
 
       {/* THE RULES THAT GOVERN IT — the same panel the designer

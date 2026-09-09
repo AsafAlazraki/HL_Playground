@@ -1,61 +1,37 @@
 /* ============================================================
-   THE DASHBOARD (dsh-) — the front door.
+   THE DASHBOARD (dsh-) — the front door, rebuilt on src/ui.
 
-   WRITTEN IN THE SYSTEM'S OWN TOKEN NAMES — --s-*, --fg*,
-   --surface-*, --line*, --r-*, --e* — and never in the app's
-   original bridged names, because this file also reaches for the
-   expressive layer (--grad-surface, --edge-light, --e-card,
-   --e-float, --glow-sm) which has no bridged aliases. Either
-   vocabulary is legal in this repo; mixing them inside one rule
-   is not. There is not a literal colour in this file and there
-   never may be.
+   WHAT THIS FILE NO LONGER DRAWS. Until 2026-09-09 it ran to 3,361
+   lines, and counted before a line was touched: sixteen rule
+   blocks painted a <button> — ground, box, hover, press — nine
+   painted an enclosed card, three painted a list row, two painted
+   a text field and seven painted a section head. Thirty-seven
+   local answers to the five questions src/ui answers once. Every
+   one of them is deleted, not layered: the TSX renders Button,
+   Card, Row, Field and SectionHead, and nothing in this sheet
+   matches a `ui-` class or reaches into one. The one rule that
+   used to — `.dsh :is(button, input):focus-visible`, which would
+   have outranked the primitives' own rings at (0,2,1) — is the
+   first thing that went.
 
-   ------------------------------------------------------------
-   THE CONTRAST DECISION THIS FILE IS BUILT AROUND, because it is
-   the one thing the guards cannot check and the one thing a
-   dashboard of tinted rows gets wrong.
+   WHAT IS LEFT is layout and the subject. The page column, the
+   header line, the grid's two-row composition, and the two things
+   this screen is about: the door names at `--t-display-xl` and
+   the pipeline figure at `--t-figure-xl`. Plus the pieces no
+   primitive has a slot for — a kind mark, a state dot, the colour
+   key, a photograph plate — and two controls that stay local
+   because Button cannot take `touch-action: none` and a drag
+   handle must (`.dsh-grip`, `.dsh-tile-grip`; each says so).
 
-   --fg-tertiary is the FLOOR, and it was measured against the
-   ground it sits on: 5.5:1 on white and 4.7:1 on --surface-1 in
-   dark. It has almost no headroom in dark — so the moment a row
-   under it lightens, it fails. Measured here, in dark:
+   TOKENS ONLY, in the system's own names (--s-*, --fg*,
+   --surface-*, --line*, --r-*, --e*). Not one literal colour, and
+   not one hand-written size, weight, leading or tracking: every
+   type declaration below is a whole `--t-*` set (§2 rule 6).
 
-       --fg-tertiary on --surface-3   4.23 : 1   FAILS
-       --fg-secondary on --surface-3  6.81 : 1   clears
-
-   And in light, --fg-tertiary on --surface-4 measures 4.45:1,
-   which also fails. So the rule this file keeps is one sentence:
-
-     INSIDE A CARD, SECONDARY TEXT IS --fg-secondary. --fg-tertiary
-     is used only where the ground is the page or the resting card
-     surface and can never lighten under it.
-
-   That is why every row's second line, every figure's caption and
-   every note below is --fg-secondary, and why a hovered row is
-   --surface-3 rather than --surface-4.
-   ------------------------------------------------------------
-
-   ONE ACCENT, AND WHERE IT IS SPENT. The primary fast action,
-   the focus ring, the Arrange control while it is on, and hover.
-   Nothing else on this page is accent — the large figures lead by
-   SIZE. A page of five cards each carrying an accent number has
-   no primary at all.
-
-   THE KIND HUES ARE NOT THE ACCENT AND DO NOT COMPETE WITH IT.
-   They appear in exactly one form here — `.dsh-row-mark`, the
-   kind's own glyph in the kind's own hue, on the three cards that
-   list things which have a kind. §1: a rail, a dot or a glyph,
-   never a fill behind text and never on chrome. Measured against
-   every ground a row wears (rest, hover, press, both themes) the
-   worst of them is 4.09:1, against a 3:1 floor for a graphical
-   object; most clear 4.5.
-
-   MOTION. Everything here is a CSS transition on colour, opacity
-   and a small transform, at --d-press / --d-fast. The one spring
-   in this feature is the reorder, and it is owned by
-   motion/react in reorder.ts — nothing in this file animates
-   layout, and nothing here animates a card's transform, because
-   the layout spring is already writing that property.
+   THE CONTRAST RULE this file keeps: inside a card, secondary
+   text is --fg-secondary; --fg-tertiary only where the ground is
+   the page or the resting surface and cannot lighten under it —
+   measured, --fg-tertiary on --surface-3 is 4.23:1 in dark.
    ============================================================ */
 
 /* ============================================================
@@ -69,52 +45,22 @@
   overflow: hidden;
   background: var(--bg);
   color: var(--fg);
-  /* THE QUERY IS ON THE COLUMN, NOT ON THE WINDOW, and that is
-     the whole reason it is a container query. The rail collapses
-     (`.sn.is-tight`), so one viewport width is two different
-     dashboard widths — a 1280px window with the rail folded away
-     has more room for cards than a 1440px window without. Asking
-     the element how wide IT is, is the only question with one
-     answer. */
+  /* THE QUERY IS ON THE COLUMN, NOT THE WINDOW: the rail folds, so
+     one viewport width is two dashboard widths. */
   container-type: inline-size;
   container-name: dsh;
 }
 
-/* The atmosphere is a sibling of the SCROLLER, not a child of the
-   content, so it holds still while the cards move past it. Every
-   stop in it is under 6% alpha, so no ratio measured above
-   changes because it is there. */
+/* atmosphere; a sibling of the scroller, under 6% alpha */
 .dsh-sky {
   z-index: 0;
 }
 
-/* ------------------------------------------------------------
-   IT MUST NOT SCROLL, AND BEFORE THIS PASS IT ALWAYS DID.
-
-   Measured in the browser on the real project, resting state,
-   `.dsh-in` overflowed its box by:
-
-       1600x1000     0px
-       1600x760    180px
-       1440x900     51px
-       1280x800    469px
-       1024x768    799px
-        768x900    750px
-
-   The cause was a fixed-height grid stacked into a scroller: the
-   cards were as tall as their content and the page absorbed the
-   difference. So the column is a FLEX COLUMN now — the greeting
+/* THE RESTING DASHBOARD DOES NOT SCROLL. A flex column: the header
    and the fast actions take what they need, the grid takes the
-   rest, and the cards size to the space they are given rather
-   than the space they would like.
-
-   WHAT SCROLLS INSTEAD, and it is never the page: a card's BODY,
-   inside its own box, when its list is longer than the room the
-   row has. And if the viewport is too short even for the row
-   minimum, the GRID scrolls inside its own box — the same
-   discipline the modules grid keeps. `body` never scrolls
-   horizontally at any width.
-   ------------------------------------------------------------ */
+   rest, and the cards size to the room rather than to their lists.
+   The inline inset is the application's `--page-gutter`, never a
+   value it happens to equal at one width. */
 .dsh-in {
   position: relative;
   z-index: 1;
@@ -123,150 +69,50 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* ------------------------------------------------------------
-     THE HORIZONTAL INSET IS THE APPLICATION'S, NOT THIS PAGE'S.
-
-     It was `--s-8` written out. That is the same 32px as
-     `--page-gutter` at a laptop and above, and it is NOT the same
-     below it: measured at 1024x768, `:root` resolves
-     `--page-gutter` to 20px (page.css steps it down under 1100)
-     while this padding stayed at 32 — so the greeting began at
-     x=232 and the modules page begins its title at x=220. Twelve
-     pixels is exactly the size of misalignment that reads as a
-     different application rather than as a decision.
-
-     Writing the value a token happens to equal at one width is
-     how five pages ended up with five gutters in the first place.
-     The vertical stays `--s-6`, which is what `.ph` pads above
-     its eyebrow.
-     ------------------------------------------------------------ */
   padding: var(--s-6) var(--page-gutter);
 }
 
-/* ARRANGE MODE IS A MODE, NOT THE SCREEN. It adds a tray holding
-   every card and every link this build has; squeezing that into a
-   fixed box would hand somebody a 40px list to pick from. It is
-   entered deliberately and left the same way, and the no-scroll
-   promise is about the dashboard a person lands on. */
+/* arrange mode is a mode, not the screen: it adds a tray of every
+   card and link this build has, and may scroll */
 .dsh-in.is-arranging {
   overflow-y: auto;
 }
 
 /* ============================================================
-   WHO IS HERE, AND WHAT DAY IT IS
+   WHO IS HERE, WHAT DAY IT IS, WHAT THE FILE HOLDS
    ============================================================ */
 
 .dsh-head {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  /* THE SAME THREE MEASURES `.ph` USES, and they were three
-     different ones. Measured on the modules page at 1600x1000:
-     `.ph` gaps 20px between its title block and its acts, pads
-     16px beneath itself, and `.ph-say` gaps 2px between the
-     eyebrow and the name. This header gapped 24, 20 and 4.
-
-     THE GREETING IS NO LONGER THE ONE BIG THING, and this rule is
-     what makes that cheap. `.dsh-head-say` is a row of two
-     captions now rather than an eyebrow over a display line, so
-     the band is as tall as the Edit button and nothing else —
-     measured 49.7px before, 32px after, and the 17.7px goes
-     straight into `.dsh-grid`, which is the only `flex: 1 1 auto`
-     on the page. The subject took the display step downstairs; see
-     `.dsh-hail`. */
   gap: var(--s-5);
   flex-wrap: wrap;
   margin-bottom: var(--s-4);
 }
 
-/* ------------------------------------------------------------
-   ONE LINE, AND IT WAS A STACK — because the thing on top of the
-   stack was the wrong hero.
-
-   It was an 11px uppercase stamp OVER a display-size greeting: an
-   eyebrow and a title, which is the shape `.ph-say` keeps on every
-   other page. That shape is right when the title IS the subject.
-   Here the title was "Good afternoon, Asaf", and a greeting is not
-   the subject of anything — measured at 1280x800 it was 32.7px
-   against a 15px second place, so the one element this screen set
-   at display size was a courtesy.
-
-   Both are the same KIND of fact — who is here, and what day it
-   is — so they are one line at one step, and the line is a
-   caption. `baseline` rather than `center` because the two steps
-   differ by a pixel and their x-heights do not; `wrap` because at
-   600px the header is already stacking and this must stack with
-   it rather than clip.
-   ------------------------------------------------------------ */
+/* ONE LINE, AT THE CAPTION STEP. The greeting was a 32.7px display
+   line and the subject of this screen was set at 15px; measured at
+   1280x800 the largest glyph on the front door was a hello. The
+   greeting and the stamp are two halves of one caption now, and
+   the display tier is downstairs on the doors and the drafts. */
 .dsh-head-say {
   display: flex;
   flex-direction: row;
   align-items: baseline;
   flex-wrap: wrap;
-  /* 12px, AND 8 WAS TOO CLOSE. Measured on the real seed: at 8 the
-     three phrases in this band — the greeting, the stamp and the
-     census strip — read as one run-on sentence, because the strip
-     is 20px away and the stamp was 8. Twelve puts the two halves of
-     the caption nearer each other than either is to the strip, so
-     the band reads as two groups rather than three loose phrases. */
   gap: var(--s-3);
   min-width: 0;
 }
 
-/* The date, off the clock the person is sitting in front of.
-   Uppercase is legal here and only here on this screen: §2 allows
-   it on a section caption, a group caption and a stamp.
-
-   IT IS SECOND NOW, AND IT WAS THE EYEBROW. An eyebrow sits above
-   the thing it qualifies; there is nothing above any more, so the
-   date is simply the other half of the line. The person's name
-   reads first because a shared dealership machine is the case this
-   line exists for. */
+/* the date — a stamp, which is one of the three things §2 lets
+   wear the uppercase label */
 .dsh-stamp {
   margin: 0;
   color: var(--fg-tertiary);
 }
 
-/* ------------------------------------------------------------
-   THE GREETING, AND IT IS NO LONGER THE BIG THING.
-
-   WHAT IT WAS. `clamp(30px, min(3.1cqi, 5vh), 44px)` at weight
-   680 in Archivo — a whole display step, declared here because
-   `--t-display-lg` topped out at 34px and this wanted more. Its
-   own note said "it is still the first thing read, because
-   nothing else on the page is display type at all". That sentence
-   was the diagnosis and nobody read it as one: the reason the
-   greeting led was that it had no competition, and the reason it
-   had no competition is that the subject of this screen was set
-   at 15px.
-
-   MEASURED AT 1280x800 ON THE REAL SEED, BEFORE:
-
-     the greeting                     32.7px   Archivo 680
-     everything else, joint second      15px   card names, door
-                                               names, headings
-     the labels under them           11–12px
-
-   32.7 against 11 is 2.97x, and PHASE_TWO §2.3's scale-contrast
-   row wants about 7x. Worse than the ratio: the 32.7 was spent on
-   a hello. A greeting is not the subject of a dashboard — the
-   drafts and the doors are — so this steps down to the header's
-   own caption and the display tier goes to them.
-
-   IT IS THE CAPTION STEP WHOLE (§2 rule 6), not a shrunken
-   display step: size, weight, leading and tracking taken together
-   from `--t-caption-*`, in the sans, because at 12px Archivo is
-   not a display face doing display work — it is a second sans
-   arguing with the first. The display face is barred below 26px
-   and this is well under it, which is the rule being kept rather
-   than dodged.
-
-   `--fg-secondary` AND NOT `--fg-tertiary`. The stamp beside it
-   is tertiary, and the name of the person signed in is the more
-   load-bearing of the two on a shared machine — 7.7:1 on the page
-   ground against the stamp's 5.2. Both clear rule 4; the
-   difference is rank, not legibility.
-   ------------------------------------------------------------ */
+/* still the page's h1 — heading level is structure, not size */
 .dsh-hail {
   margin: 0;
   color: var(--fg-secondary);
@@ -278,86 +124,14 @@
   overflow-wrap: anywhere;
 }
 
-/* ------------------------------------------------------------
-   THE COUNTED FIGURES, AS A QUIET STRIP — DECISIONS.md §3.
-
-   IT SPENDS NO HEIGHT, AND THAT IS THE WHOLE OF WHY IT IS HERE.
-   Measured at 1280x800 on the real seed before this pass:
-
-     the header band        49.7px tall, 992px wide
-     the greeting in it     about 290px of that width
-     the Edit button        about 90px
-     what was between them  about 600px of nothing
-
-     the grid below         638.3px
-     the modules card       975px of tiles through a 509px window
-     the quotes card        80.9px of dead space under its last
-                            line — 30.9% of its body
-
-   A strip in a row of its own, above the grid or below it, takes
-   its height off `.dsh-grid` — which is `flex: 1 1 auto` — and so
-   comes out of the window the 25 modules are already scrolling
-   through. On the header's own line it takes nothing.
-
-   THAT STILL HOLDS SINCE THE DISPLAY TIER LANDED, and the reason
-   changed. It used to be that `.dsh-head` was as tall as a stamp
-   over a 33px greeting and a 16px caption could not raise it. The
-   greeting is a 12px caption now, so the header is bounded by the
-   Edit button instead — `--h-md`, 32px — and the greeting, the
-   stamp and this strip are three 16px lines inside it. Measured at
-   1280x800: the header band is 32px with the strip and 32px
-   without.
-
-   IT MUST NOT OUTRANK THE DOORS OR THE DRAFTS, AND THAT IS NOW
-   MEASURED AGAINST THEM RATHER THAN AGAINST THE GREETING. 12px
-   here against 26.9px on a door name and 33.4px on the pipeline
-   figure, at 1280 — 1:2.24 and 1:2.79. The ink is tertiary, there
-   is no surface under it, no rule beside it, no elevation and
-   nothing to press. The lit cards below stay the only paper on
-   the screen.
-
-   `--fg-tertiary` IS LEGAL HERE FOR THE REASON IT IS LEGAL ON
-   `.dsh-card:has(.dsh-empty) .dsh-card-mark`: the ground beneath
-   it is the page itself, which is the pair the ramp was measured
-   at — 5.2:1, clear of the 4.5 floor — and this line has no
-   hover state that could lighten it.
-
-   IT NEVER TRUNCATES, AND IT WRAPS RATHER THAN SCROLLS. §3 gives
-   a strip that does not fit two outs — scroll, or wrap — and this
-   one wraps: `flex: 0 0 auto` with `nowrap`, so the whole line
-   moves to the next row instead of showing a clipped word at
-   rest. A 16px caption with a horizontal scrollbar in it is a
-   control where nobody wants one.
-
-   MEASURED, THE SAME WAY, WITH THE STRIP HIDDEN AND SHOWN:
-
-     1600x1000 · 1440x900 · 1280x800 · 1600x760
-     1024x768  · 900x800  · 768x900        head, grid and the
-                                           tiles window identical
-                                           to the pixel. 0px cost.
-
-     600x800   header 46.9 → 90.9, grid 641.1 → 597.1, tiles
-               window 77 → 74. 44px, and it is the acts row being
-               pushed down rather than the caption itself.
-
-   That is the one width where it is not free, and it is a width
-   where `.dsh-grid` is already one column scrolling inside its
-   own box by design — so the cost is 44px of scroll length, not
-   a broken composition. `body` still does not scroll sideways at
-   any of the eight.
-   ------------------------------------------------------------ */
+/* THE COUNTED FIGURES AS A QUIET STRIP (DECISIONS.md §3). On the
+   header's own line it costs no height; tertiary ink on the page
+   ground, no surface, nothing pressable. It wraps whole rather
+   than clipping a word. */
 .dsh-strip {
   margin: 0;
-  /* hugs the greeting and pushes the acts to the far edge, rather
-     than floating in the middle of a `space-between` row */
   margin-inline-end: auto;
   flex: 0 0 auto;
-  /* ITS OWN ALIGNMENT, NOT THE ROW'S. `.dsh-head` flips to
-     `align-items: flex-start` under a 720px column so the caption
-     and the Edit button can stack; without this the strip would
-     rise off the caption's line and sit against the top of the
-     header. It wants the greeting's line at every width, and now
-     the greeting and the stamp are that one line. */
   align-self: flex-end;
   white-space: nowrap;
   color: var(--fg-tertiary);
@@ -368,17 +142,11 @@
   letter-spacing: var(--t-caption-track);
 }
 
-/* EVERY FIGURE IS MONO AND TABULAR (DESIGN_CONTRACT §11), and it
-   is one step up the ramp from the words around it — the figure
-   is the fact, the noun is what the fact is about. Still secondary
-   ink: `--fg-secondary` is 7.7:1 on the page ground and is the
-   step this app gives a description, not the one it gives a
-   name. */
 .dsh-strip-n {
   color: var(--fg-secondary);
   font-family: var(--font-mono);
+  font-weight: var(--t-mono-weight);
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
 }
 
 .dsh-head-acts {
@@ -387,63 +155,12 @@
   gap: var(--s-2);
 }
 
-.dsh-arrange,
-.dsh-restart {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  line-height: var(--t-small-lead);
-  letter-spacing: var(--t-small-track);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.dsh-arrange:hover,
-.dsh-restart:hover {
-  background: var(--surface-3);
-  border-color: var(--line-strong);
-  color: var(--fg);
-}
-
-/* PRESS LANDS ON POINTER-DOWN, and 0.97 is the control scale. */
-.dsh-arrange:active,
-.dsh-restart:active {
-  transform: scale(0.97);
-  background: var(--surface-4);
-}
-
-.dsh-arrange.is-on {
-  background: var(--accent-wash);
-  border-color: var(--accent-line);
-  color: var(--accent);
-}
-
-.dsh-arrange-mark {
-  display: inline-flex;
-  align-items: center;
-}
-
 /* ============================================================
-   THE FAST ACTIONS
+   THE FAST ACTIONS — Buttons at rest, a sunken Card while
+   arranging. Nothing here paints a control.
    ============================================================ */
 
 .dsh-fast {
-  /* THE FAST ACTIONS ARE THIS PAGE'S `.ph-tools` — a row of the
-     page's own controls under the header — so they close the same
-     16px `.ph-tools` pads beneath itself, not 20. */
   margin-bottom: var(--s-4);
 }
 
@@ -460,198 +177,28 @@
   min-width: 0;
 }
 
-/* WHILE ARRANGING it is a grip, a mark, a name field and a
-   remove — a strip rather than a button, so there is nothing on
-   it that looks pressable and is not (rule 10). */
-.dsh-fast-item.is-arranging {
+/* while arranging: a grip, a mark, the name Field and a remove, in
+   one line inside the Card */
+.dsh-fast-strip {
+  display: flex;
   align-items: center;
-  gap: var(--s-1);
-  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-1);
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--r-card);
-  background: var(--surface-1);
-}
-
-.dsh-fast-item.is-held {
-  border-style: solid;
-  border-color: var(--accent-line);
-  box-shadow: var(--e-float), var(--glow-sm);
-}
-
-.dsh-fast-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-3);
-  min-height: var(--h-lg);
-  padding: var(--s-2) var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  box-shadow: inset 0 1px 0 var(--edge-light), var(--e1);
-  color: var(--fg);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.dsh-fast-btn:hover {
-  border-color: var(--accent-line);
-  box-shadow: inset 0 1px 0 var(--edge-light), var(--e-card-hover);
-}
-
-.dsh-fast-btn:active {
-  transform: scale(0.97);
-}
-
-/* ============================================================
-   THE ONE PRIMARY ACT — AND WHY IT IS NOT A BLUE SLAB.
-
-   The obvious primary is the system's own `.ds-btn--primary`:
-   `background: var(--accent); color: var(--accent-fg)`. That is
-   what this rule was, and it was measured on this page in both
-   themes:
-
-     white on --accent, light  (#0a5fc2)   6.10 : 1   clears
-     white on --accent, dark   (#58a6ff)   2.52 : 1   FAILS
-
-   --accent-fg is #ffffff in BOTH themes, and the dark accent is a
-   light blue — so a white label on it is the one pair on this
-   screen that could not clear rule 4. (It is a property of the
-   system rather than of this screen: every `.ds-btn--primary` in
-   the app measures the same in dark. That is reported rather than
-   patched here — a token in ds.css changes every screen at once
-   and wants an argument, not a commit from one feature.)
-
-   So the primary is drawn the way Quiet Precision draws a primary
-   anyway: the one control on the page carrying the accent, as ink
-   and a rail on a tint, rather than a slab of it. Measured, over
-   the page ground:
-
-     --accent on --accent-wash          light 5.16 : 1 · dark 5.81 : 1
-     --accent on --accent-wash-strong   light 4.71 : 1 · dark 4.96 : 1
-     --fg-secondary on --accent-wash    light 6.72 : 1 · dark 7.52 : 1
-
-   ds.css states the same thing from the other end: the dark accent
-   was chosen at 5.9:1 on --surface-1 specifically so it is legal
-   AS TEXT and not only as a fill.
-   ============================================================ */
-.dsh-fast-btn.is-primary {
-  background: var(--accent-wash);
-  border-color: var(--accent-line);
-  color: var(--accent);
-  box-shadow: var(--e1);
-}
-
-.dsh-fast-btn.is-primary:hover {
-  background: var(--accent-wash-strong);
-  border-color: var(--accent);
-  box-shadow: var(--e2), var(--glow-md);
-}
-
-.dsh-fast-btn.is-primary:active {
-  background: var(--accent-wash-strong);
-  border-color: var(--accent);
+  gap: var(--s-2);
 }
 
 .dsh-fast-mark {
   display: inline-flex;
   align-items: center;
-  color: var(--fg-secondary);
   flex: none;
-}
-
-.dsh-fast-btn.is-primary .dsh-fast-mark {
-  color: var(--accent);
-}
-
-.dsh-fast-say {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.dsh-fast-name {
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  line-height: var(--t-small-lead);
-  letter-spacing: var(--t-small-track);
-  /* NOTHING TRUNCATES MID-WORD (§3): a long name wraps to two
-     lines and the whole of it stays in the DOM. */
-  overflow-wrap: anywhere;
-}
-
-.dsh-fast-note {
-  color: var(--fg-secondary);
-  overflow-wrap: anywhere;
-}
-
-/* NO OPACITY ON IT. This was `--accent-fg` at 0.86, which is a
-   second way of writing a colour nobody measured: composited, it
-   came out at 2.24:1 in dark. The note keeps the same ink every
-   other note on the page has, and that ink was measured over this
-   tint — see the block above. */
-.dsh-fast-btn.is-primary .dsh-fast-note {
   color: var(--fg-secondary);
 }
 
-.dsh-fast-edit {
-  width: 15ch;
+.dsh-fast-field {
+  display: block;
+  width: 22ch;
   max-width: 100%;
-  padding: 2px var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-chip);
-  background: var(--surface-1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  line-height: var(--t-small-lead);
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease);
 }
 
-.dsh-fast-edit:hover {
-  border-color: var(--line-strong);
-}
-
-.dsh-fast-add {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  min-height: var(--h-lg);
-  padding: 0 var(--s-4);
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--r-card);
-  background: transparent;
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.dsh-fast-add:hover {
-  border-color: var(--accent-line);
-  color: var(--accent);
-  background: var(--accent-wash);
-}
-
-.dsh-fast-add:active {
-  transform: scale(0.97);
-}
-
-/* The refusal, as a sentence, in the place the control would be. */
+/* the refusal, as a sentence, where the Add control would be */
 .dsh-fast-full {
   margin: 0;
   align-self: center;
@@ -670,438 +217,213 @@
 }
 
 /* ============================================================
-   THE GRID OF CARDS
+   THE GRID — a composition, not a flow. Two rows; the flow goes
+   DOWN a column before it moves right, so a tall card takes a
+   column to itself and two half-height cards stack beside it.
    ============================================================ */
 
-/* ------------------------------------------------------------
-   THE GRID, AND WHAT CHANGED IN IT.
-
-   IT TAKES THE ROOM THAT IS LEFT AND DIVIDES IT. `grid-auto-rows:
-   minmax(176px, 1fr)` is the whole of "the cards size to the
-   space rather than a fixed grid overflowing": every row is an
-   equal share of what the column has after the greeting and the
-   fast actions, and 176px is the floor below which a card is a
-   header and a scrollbar. When even that does not fit — a 600px
-   window with three rows in it — the GRID scrolls inside its own
-   box and the page still does not.
-
-   `align-items` is gone with it. `start` was right when a card
-   was as tall as its content and the page absorbed the
-   difference; now the row IS the height and every card fills it,
-   which is what puts the three cards of the default set on one
-   line with their feet aligned at 1600.
-
-   340, NOT 320, and that decision stands. The two numbers pick
-   different column counts on every width this app is used at, and
-   340 is the one that keeps a card wide enough to hold a boat's
-   name on one line:
-
-     column        340                320
-     1280 window   2 cols  x 466px    2 cols x 466px
-     1440 window   3 cols  x 357px    3 cols x 357px
-     1600 window   3 cols  x 432px    4 cols x 314px
-     1920 window   4 cols  x 345px    4 cols x 345px
-
-   `auto-fill` rather than `auto-fit` on purpose: with two cards
-   on the page, auto-fit would stretch them across the whole 1440
-   and a dashboard of two cards would draw as two billboards.
-   ------------------------------------------------------------ */
-/* ============================================================
-   THE COMPOSITION — and it is a composition now, not a flow.
-
-   WHAT WAS HERE. `repeat(auto-fill, minmax(340px, 1fr))` with
-   sixty lines of span arithmetic underneath it, deciding which
-   card took two tracks at which width and which one stretched to
-   close the hole at the end of a row. It was a lot of machinery
-   for a page with three cards on it, and what it produced was
-   three equal boxes in a row: a quotes card with four quotes in
-   it and three hundred pixels of nothing underneath, beside a
-   modules card that could show eight of fourteen brands.
-
-   WHAT IT IS INSTEAD. Two rows, and the flow goes DOWN a column
-   before it moves right. That single change is the whole layout:
-
-     Quotes      Modules
-     Activity    (the same card, both rows)
-
-   Quotes and activity are each half the height, which is the
-   height each of them actually has content for. Modules asks for
-   both rows (`data-tall`), so it takes a column to itself and can
-   draw every brand in the business at once.
-
-   IT IS STILL GENERAL. A fourth card starts a third column at the
-   top and a fifth sits under it; nothing is positioned by name and
-   no card knows where it is. `grid-auto-columns` is the only thing
-   deciding how wide a column gets, so the set stays as wide as the
-   space and never wider.
-
-   AND IT DOES NOT SCROLL. Two rows of an equal share of the height
-   the page has left is a page that fits by construction, which is
-   the rule this dashboard was asked to keep.
-   ============================================================ */
 .dsh-grid {
   display: grid;
   gap: var(--s-5);
   flex: 1 1 auto;
   min-height: 0;
-  /* NARROW: one column, cards in the order they are arranged, and
-     the GRID scrolls rather than the page. A phone-width dashboard
-     is a list and pretending otherwise gives you two columns of
-     170px cards. */
+  /* narrow: one column and the GRID scrolls, never the page */
   grid-template-columns: minmax(0, 1fr);
   grid-auto-rows: minmax(200px, auto);
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
 }
 
-/* ------------------------------------------------------------
-   880 WAS 56 PIXELS TOO HIGH, AND IT WAS THE LAST THING ON THIS
-   SCREEN THAT SCROLLED.
+/* a scroller nobody can see is a scroller nobody uses: this
+   platform paints an overlay scrollbar, so the classic one is
+   taken back while there is something to reach */
+.dsh-grid::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.dsh-grid::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 5px;
+  background: var(--line-strong);
+  background-clip: content-box;
+}
 
-   Measured at 1024x768 with the rail at its full 200px: the
-   column is 824px, which fell under 880, so the dashboard drew
-   ONE column of three 784px cards at their 200px row minimum —
-   632px of cards in 607px of room, and the grid scrolled by 25px.
-   That is the one size of the four this pass was asked to hold
-   where the page did not fit.
-
-   THE THRESHOLD IS NOW DERIVED FROM THE GRID'S OWN MINIMUM
-   instead of guessed. `grid-auto-columns` declares a column may
-   be as narrow as 300px; two of those plus the 20px gap plus two
-   20px gutters is 660px of column, so anything from about 680 up
-   can honestly hold two. 760 is that figure with room, and it is
-   deliberately clear of the 720px narrow query below — an overlap
-   band would have both rules setting `grid-template-columns` and
-   the later one winning by position, which is not a decision
-   anybody made.
-
-   THE JUSTIFICATION FOR 880 STILL HOLDS WHERE IT MEANT SOMETHING.
-   The note beneath the narrow branch says two columns at phone
-   width gives "two columns of 170px cards". True at 400. At 824
-   it gives two columns of 382px — within ten pixels of the 371px
-   this file already measures at 1440, and wider than the 350px
-   the new threshold allows at its own floor. The rule was
-   protecting against a width it had stopped being.
-
-   AND IT FIXES IT BY CONSTRUCTION, not by shaving. Two rows of
-   `minmax(0, 1fr)` are an equal share of whatever height is left,
-   so the cards get shorter rather than the page getting longer —
-   which is the whole reason this branch exists. The alternative
-   was to drop the one-column row minimum from 200px to 190 and
-   buy 30px, and that is shrinking every card on the screen to
-   solve a problem at one width.
-   ------------------------------------------------------------ */
+/* 760: two 300px columns plus the gap and two gutters is 660, so
+   anything from about 680 up can honestly hold two, and 760 is
+   clear of the 720 narrow query below. */
 @container dsh (min-width: 760px) {
   .dsh-grid {
     grid-template-columns: none;
-    /* ------------------------------------------------------------
-       THE TWO ROWS WERE EQUAL HALVES, AND THE MEASUREMENT SAYS
-       THEY SHOULD NOT BE.
-
-       `repeat(2, minmax(0, 1fr))` gives every row the same share of
-       whatever height the page has left. That is right when both
-       rows hold something that can use it. Measured at 1280x800 on
-       the real seed, they did not:
-
-         row 1 · Quotes        311.2px box, 261.8px body,
-                               81px of it empty — 30.9%. On a file
-                               with no quotes raised yet it is an
-                               empty state: four short lines and a
-                               button, centred in a box twice their
-                               height.
-         row 2 · What we sell  311.2px box, and four doors whose
-                               photographs were 223x61 — the
-                               palette PHASE_TWO §1b asks for,
-                               drawn as a letterbox.
-         both   · My modules   638.3px, spanning the two, running
-                               975px of tiles through a 509px
-                               window.
-
-       So one row was holding air while the two things beside and
-       below it were starved. `fit-content(45%)` is the whole fix
-       and it is one line: the top row takes what its cards
-       actually need, and every pixel it does not need falls
-       through to the row underneath.
-
-       WHY 45 AND NOT `auto`. `auto` would let a full quotes card —
-       eight rows, four filter chips and the pipeline figure, about
-       480px — take three quarters of the front door and leave the
-       doors a strip. 45% is the point at which the row below is
-       still the larger of the two, whatever the row above holds.
-       So the rule reads: A CARD MAY TAKE WHAT IT NEEDS UP TO
-       ALMOST HALF, AND MAY NEVER TAKE MORE THAN THE ROW BENEATH
-       IT.
-
-       IT NAMES NO CARD. The top row is not "the quotes card"; it
-       is whichever cards a person has arranged there, and a person
-       who fills the top row gets the 45% cap rather than a broken
-       composition. `fit-content()` resolves its percentage against
-       this grid's own height, which is definite — it is a flex
-       item with `min-height: 0` in a fixed-height column. Measured
-       in Chrome at 1280x800: rows went 311.2 / 311.2 to 205.2 /
-       417.1, with the modules card unchanged at 638.3.
-
-       `minmax(0, 1fr)` on the second rather than `1fr` so a card
-       whose content is taller than its share shrinks and scrolls
-       inside itself instead of pushing the row open — `1fr` alone
-       means `minmax(auto, 1fr)`, and `auto` is content height.
-       ------------------------------------------------------------ */
+    /* THE TOP ROW TAKES WHAT ITS CARDS NEED, UP TO ALMOST HALF,
+       and every pixel it does not need falls through to the row
+       beneath. Measured at 1280x800 the rows went 311/311 to
+       205/417 and the doors' photographs stopped being a
+       letterbox. `minmax(0, 1fr)` on the second so a card taller
+       than its share shrinks and scrolls inside itself. */
     grid-template-rows: fit-content(45%) minmax(0, 1fr);
     grid-auto-flow: column;
     grid-auto-columns: minmax(300px, 1fr);
     grid-auto-rows: auto;
     overflow-y: hidden;
-    /* a person who has added six cards gets a fifth and sixth
-       column and may scroll sideways to them. The default set
-       cannot reach this. */
+    /* a sixth card starts a third column; the default set cannot
+       reach this */
     overflow-x: auto;
   }
 
-  /* THE ONE CARD THAT ASKS FOR BOTH ROWS. Written as `span 2`
-     rather than `1 / -1` so it is still correct the day somebody
-     wants three rows. */
   .dsh-card[data-tall] {
     grid-row: span 2;
   }
 
-  /* A CARD THAT ASKS FOR TWO COLUMNS gets them only while it has
-     something in it — a 620px rectangle saying "no quotes have been
-     raised here yet" is the opposite of what the width was for.
-     Nothing in the default set asks; the tray offers cards that
-     do. */
+  /* two columns only while there is something in it — a 620px
+     rectangle saying "no quotes yet" is the opposite of the point */
   .dsh-card[data-wide]:not(:has(.dsh-empty)) {
     grid-column: span 2;
   }
 }
 
-.dsh-card {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  /* THE CARD IS AS TALL AS ITS ROW, NOT AS TALL AS ITS LIST. The
-     row is a share of the space the page has left; `min-height: 0`
-     is what lets the body inside it be shorter than its content
-     and scroll, rather than pushing the grid past the bottom of
-     the viewport. */
-  min-height: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  /* the lit top edge and the elevation in ONE declaration — see
-     the note in Dashboard.tsx about not stacking `.ds-lit` here */
-  box-shadow: inset 0 1px 0 var(--edge-light), var(--e-card);
-  overflow: hidden;
-}
-
 /* ------------------------------------------------------------
-   A CARD WITH NOTHING IN IT YET IS PAPER THAT HAS NOT BEEN
-   WRITTEN ON.
-
-   THE FIRST RUN IS THE COMMON CASE. A person who has just loaded
-   their price file has no quotes, has opened nothing, and lands
-   on five cards of which three say "nothing yet" — and every one
-   of those three was drawn as a lifted white card with a gradient
-   and a shadow, identical in weight to the two that were full.
-   Five equally loud boxes, three of them empty, reads as a screen
-   that failed to load.
-
-   So an empty card LOSES the paper: no gradient, no elevation, no
-   lit top edge, and a hairline instead of an edge. What is left
-   is an outline waiting to be filled, which is what it is. The
-   two cards that DO have something in them are then the only lit
-   surfaces on the page and lead it without being told to.
-
-   NOTHING IS INVENTED TO ACHIEVE THIS. No figure is faked, no
-   skeleton is drawn and no illustration is added; the card keeps
-   the sentence and the one act it already had, and the act is
-   what turns it into paper.
-
-   `:has()` is used rather than a class from React because the
-   emptiness is decided inside `CardBody` (each card counts its
-   own subject) and lifting a boolean back up through the grid
-   would be a second copy of that decision, free to disagree.
+   THE CARD SHELL. `.dsh-card` is the motion.section the layout
+   spring writes its transform on; the surface inside it is a
+   <Card>. A one-cell grid rather than a flex column, because
+   `minmax(0, 1fr)` makes the child's automatic minimum size zero
+   — so the Card fills its row and shrinks with it without this
+   file writing a single property on the primitive's element.
+   Nothing here paints: no ground, no border, no shadow.
    ------------------------------------------------------------ */
-.dsh-card:has(.dsh-empty) {
-  background: none;
-  box-shadow: none;
-  border-color: var(--line);
-  /* AND IT NO LONGER NEEDS `align-self: stretch`. It had it
-     because the grid was `align-items: start` and an empty card
-     fell short of the row it was in, leaving the loudest hole on
-     the page. The grid's rows are now an equal share of the
-     column's height and every card fills its own, so the notch
-     that rule existed to close cannot open. */
-}
-
-/* the mark on an unwritten card steps back with the ground it
-   sits on. --fg-tertiary is legal HERE and only here: the ground
-   under it is the page itself, which is the pair it was measured
-   at (5.2:1), and it can never lighten because this card has no
-   hover state of its own. */
-.dsh-card:has(.dsh-empty) .dsh-card-mark {
-  color: var(--fg-tertiary);
-}
-
-.dsh-card.is-arranging {
-  border-style: dashed;
-  border-color: var(--line-strong);
-}
-
-/* ARRANGING SUPERSEDES IT. While the person is moving cards
-   about, an empty card is a thing they are moving and has to look
-   like one — the dashed edge is the affordance, and a card that
-   faded out of the set would be the one they could not find. */
-.dsh-card.is-arranging:has(.dsh-empty) {
-  border-color: var(--line-strong);
-}
-
-.dsh-card.is-held {
-  border-style: solid;
-  border-color: var(--accent-line);
-  box-shadow: inset 0 1px 0 var(--edge-light), var(--e-float), var(--glow-sm);
+.dsh-card {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
 }
 
 .dsh-card-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-4) var(--s-4) var(--s-2);
   flex: none;
+  padding: var(--s-3) var(--s-4) 0;
 }
 
-.dsh-card-mark {
-  display: inline-flex;
-  align-items: center;
-  color: var(--fg-secondary);
-  flex: none;
-}
-
-.dsh-card-name {
-  margin: 0;
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--fg);
-  overflow-wrap: anywhere;
-}
-
+/* THE BODY IS THE THING THAT SHRINKS. `min-height: 0` is what lets
+   a list inside it be shorter than its content and scroll, rather
+   than pushing the grid past the bottom of the viewport. Same
+   gutter as the head, so lists, tiles and the colour key begin
+   under the caption rather than eight pixels left of it. */
 .dsh-card-body {
   display: flex;
   flex-direction: column;
-  /* THE SAME GUTTER AS THE HEAD, and it was eight pixels narrower.
-     The head pads 16 and the body padded 8, so every list, every
-     tile and the colour key all began eight pixels to the LEFT of
-     the mark and the heading above them — a misalignment small
-     enough to look like a mistake rather than a choice, which is
-     exactly what it was. */
-  padding: 0 var(--s-4) var(--s-3);
+  padding: var(--s-2) var(--s-4) var(--s-3);
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+}
+
+/* the word goes under a laptop; the arrow is the control and keeps
+   its name through aria-label */
+@container dsh (max-width: 1000px) {
+  .dsh-open-say {
+    display: none;
+  }
+}
+
+/* activity.css draws .ac-list for the module page; inside a card
+   it takes the scroll behaviour and nothing else */
+.dsh-card-body > .ac-list {
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* ============================================================
    THE PIECES A CARD IS MADE OF
    ============================================================ */
 
-/* -- a large counted figure ----------------------------------
-   A WHOLE TYPE STEP, not a size bolted onto another one (§2
-   rule 6). The system has no mono step above 15px and every
-   figure on this page is mono, so the step is declared here:
-   size, weight, leading and tracking together, with the tracking
-   negative because the size is large (rule 7). */
+/* -- the counted figures -------------------------------------- */
 
 .dsh-figures {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-5);
-  padding: var(--s-2) var(--s-3) var(--s-3);
+  padding: var(--s-2) 0 var(--s-3);
 }
 
 .dsh-fig {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--s-1);
   align-items: flex-start;
   min-width: 0;
-  border: 0;
-  background: none;
-  padding: 0;
-  text-align: left;
 }
 
+/* a second figure on a card: the largest mono step, whole */
 .dsh-fig-n {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  font-weight: 450;
-  line-height: 1.15;
-  letter-spacing: -0.012em;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1, 'zero' 1;
   color: var(--fg-secondary);
-  transition: color var(--d-fast) var(--ease);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-lg-size);
+  font-weight: var(--t-mono-weight);
+  line-height: var(--t-mono-lead);
+  font-variant-numeric: tabular-nums;
 }
 
-/* THE ONE A PERSON READS FIRST. It leads by SIZE and by INK, and
-   never by the accent — see the header. It was a flat 30px; it is
-   a clamp on the COLUMN now, because the card it sits in is one
-   of four tracks at 1600 and the whole width at 768, and a figure
-   that is the same size in both is the same "nothing is bigger
-   than anything else" this pass exists to fix. It floors at 30px,
-   which is where it was. */
-.dsh-fig-n.is-lead {
-  font-size: clamp(30px, 3.2cqi, 44px);
-  line-height: 1.06;
-  letter-spacing: -0.022em;
+/* ------------------------------------------------------------
+   THE ONE FIGURE A PERSON READS FIRST — THE DRAFTS, AT THE
+   DISPLAY STEP. `--t-figure-xl-*` is "the committed total, a
+   headline that happens to be a number" (ds.css), and it is not
+   mono because ds.css measured what fixed pitch costs at this
+   size: "$8,557" set as "$8 , 557". Archivo with tabular-nums
+   keeps the property money needs — it cannot jitter — and puts
+   the figure in the same voice as the door names downstairs. The
+   lead figure on the price-file, findings and rules cards is the
+   same step, for the same reason: one per card, read first. Every
+   other figure on this page is still mono. 'zero' is not set; a
+   slashed zero is a code affordance, not a price.
+   ------------------------------------------------------------ */
+.dsh-fig-n.is-lead,
+.dsh-worth-n {
   color: var(--fg);
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 100;
+  font-size: var(--t-figure-xl-size);
+  font-weight: var(--t-figure-xl-weight);
+  line-height: var(--t-figure-xl-lead);
+  letter-spacing: var(--t-figure-xl-track);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 .dsh-fig-say {
   color: var(--fg-secondary);
 }
 
-.dsh-fig-btn {
-  cursor: pointer;
-  border-radius: var(--r-control);
-  padding: var(--s-1) var(--s-2);
-  margin: calc(var(--s-1) * -1) calc(var(--s-2) * -1);
-  transition:
-    background var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
+/* what is in the pipeline under this filter — computed from the
+   filtered list, so the figure and the rows cannot disagree */
+.dsh-worth {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
 }
 
-.dsh-fig-btn:hover {
-  background: var(--surface-3);
+.dsh-worth-say {
+  color: var(--fg-secondary);
 }
 
-.dsh-fig-btn:hover .dsh-fig-n {
-  color: var(--accent);
+/* the warning INK, not the warning fill — this is text that
+   qualifies the figure. Measured on --surface-1: 5.1:1 light,
+   8.4:1 dark. */
+.dsh-worth-note {
+  color: var(--warning);
 }
 
-.dsh-fig-btn:active {
-  transform: scale(0.97);
-}
+/* -- a list of Rows ------------------------------------------- */
 
-/* -- a list of rows ------------------------------------------
-   A ROW DARKENS RATHER THAN SCALING (§4) so its neighbours never
-   look like they moved. */
-
-/* THE LIST IS THE THING THAT SCROLLS, AND IT IS THE ONLY THING.
-   It was the whole card body for one build, and the way out of the
-   card went with it: "All 9 modules" was scrolled off the bottom
-   of the modules card at 1600x1000 and clipped mid-word. The
-   filters above and the door below are chrome — they stay put, and
-   the rows move under them. */
+/* THE LIST IS THE THING THAT SCROLLS, and only the list. `0 1
+   auto`: it may shrink to what the row left it and may not grow —
+   a four-row list stretched down a card pushes the way out to the
+   foot and leaves the air in the middle. */
 .dsh-list {
   display: flex;
   flex-direction: column;
-  /* `0 1 auto`, NOT `1 1 auto`. It may SHRINK to whatever the row
-     left it — that is what makes it the thing that scrolls — but
-     it may not GROW: a four-row list stretched down a 780px card
-     pushed "All quotes" to the very foot and left 400px of white
-     between the last quote and the way out. The rows sit under the
-     filters, the door sits under the rows, and the space the card
-     did not need is at the bottom where it reads as room rather
-     than as a gap. */
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -1109,248 +431,32 @@
   scrollbar-width: thin;
 }
 
-/* THE RAIL GUTTER IS ALWAYS THERE, LIT OR NOT. `.k-rail` (ds.css)
-   sets a 3px left border in the kind's hue; a row without a kind
-   declares the same border transparent, so a list of mixed rows
-   keeps one left edge for its names instead of stepping in and
-   out by three pixels per row.
-
-   AND THE LIT ONE IS RE-STATED BELOW rather than left to ds.css.
-   `.dsh-row` and `.k-rail` are the same specificity and this file
-   is imported by the component, which puts it AFTER ds.css in the
-   cascade — so the transparent gutter silently won and the rails
-   did not draw at all on the first screen this pass rendered.
-   That is exactly the class of failure `check-styles` cannot see:
-   green build, green guard, colourless page. */
-.dsh-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-  min-height: var(--h-row);
-  padding: var(--s-2) var(--s-3);
-  border: 0;
-  border-left: 3px solid transparent;
-  border-radius: var(--r-control);
-  background: none;
-  color: var(--fg);
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-
-.dsh-row.k-rail {
-  border-left-color: var(--kind);
-}
-
-.dsh-row:hover {
-  background: var(--surface-3);
-}
-
-/* PRESS ON POINTER-DOWN. --accent-wash is a 9% tint; every ink
-   used inside a row clears 4.5:1 over it in both themes. */
-.dsh-row:active {
-  background: var(--accent-wash);
-}
-
-/* ------------------------------------------------------------
-   THE KIND CARRIES A SURFACE HERE, AND THAT IS THE AMENDMENT.
-
-   §1 read "an eighth-note: a 3px rail, a dot or a glyph, never a
-   fill". It now reads that a kind hue may carry a SURFACE — and
-   the surface it carries on this page is the row's own full-height
-   rail, which is what phase one demoted to a 7px dot when the navy
-   chrome arrived and the content area went white-on-white.
-
-   `data-kind` is on the ROW, so one `--kind` feeds both the rail
-   and the glyph and they can never disagree. The hue only ever
-   appears on something that HAS that kind: a module coloured by
-   what it sells, a table by what it holds, a quote by the table
-   its subject came off. Two things of one kind are one colour
-   everywhere in the app.
-
-   AND THE FIGURE IN THE TAIL IS NEVER THE HUE. `.dsh-sum` stays
-   ink and mono however loud the rail beside it is — a price is
-   not decorative, and a count that changed colour with its
-   subject would be the app decorating arithmetic.
-
-   THE HUE IS NEVER THE ONLY CARRIER. The glyph is a different
-   SHAPE per kind as well as a different colour, so the row reads
-   the same to somebody who cannot tell indigo from amber, which
-   is why this is a symbol and not the 5px dot it started as.
-   Measured on the real set, the marks clear 4.09:1 at worst
-   against every ground a row wears — rest, hover and press, in
-   both themes — against a 3:1 floor for a graphical object.
-   ------------------------------------------------------------ */
+/* THE KIND'S OWN MARK at the head of a Row. `data-kind` on the span
+   sets `--kind` (ds.css:2163), so one attribute feeds the hue and
+   the glyph is a different SHAPE per kind as well — the row reads
+   the same to somebody who cannot separate indigo from amber. §1:
+   a glyph is what a second hue may be. Measured on the real set
+   the marks clear 4.09:1 at worst against every ground a row
+   wears, against a 3:1 floor for a graphical object. */
 .dsh-row-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: none;
   color: var(--kind);
 }
 
-/* -- the filters inside the quotes card -----------------------
-   FOUR CHIPS AND A GROUPING, AND THEY ARE NOT KIND-COLOURED. A
-   quote's state is not a kind — it is not what the thing IS — so
-   the discipline that lets a boat be indigo everywhere is exactly
-   what bars a hue here. The one that is on takes the accent,
-   which is one of this screen's four appearances of it. */
-
-.dsh-lenses {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-1);
-  padding: var(--s-1) var(--s-3) var(--s-3);
-  flex: none;
-}
-
-.dsh-lens {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-sm);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-full);
-  background: var(--surface-1);
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-caption-size);
-  font-weight: 550;
-  line-height: var(--t-caption-lead);
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.dsh-lens:hover {
-  border-color: var(--line-strong);
-  color: var(--fg);
-}
-
-/* PRESS ON POINTER-DOWN, and 0.97 is the control scale. */
-.dsh-lens:active {
-  transform: scale(0.97);
-  background: var(--surface-4);
-}
-
-.dsh-lens[aria-pressed='true'] {
-  background: var(--accent-wash);
-  border-color: var(--accent-line);
-  color: var(--accent);
-}
-
-/* THE GROUPING IS NOT ONE OF THE FOUR. It does not narrow the
-   list, it re-gathers it — so it sits apart with a gap the eye
-   reads as "and also" rather than as a fifth thing you can be on.
-
-   IT WAS `margin-left: auto`, and that is wrong in a row that
-   wraps: at 1440 the chip went to the far right of a 371px card,
-   and at 1024 it took a line of its own and sat right-aligned
-   under four left-aligned chips, which reads as a mistake rather
-   than as a separation. A fixed gap separates it at every width
-   and wraps like anything else. */
-.dsh-lens-by {
-  margin-left: var(--s-3);
-}
-
-/* the count is mono because it is a figure, and it is ink rather
-   than the accent even inside the chip that is on — §1's rule
-   about a figure, kept in the one place it would be easy to break */
-.dsh-lens-n {
-  color: var(--fg-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.dsh-lens[aria-pressed='true'] .dsh-lens-n {
-  color: var(--accent);
-}
-
-/* -- a filter that holds nothing ------------------------------
-   A statement of fact in the place it is true (rule 10), not an
-   apology and not a lecture: there ARE quotes here, none under
-   this chip. */
-.dsh-none {
-  margin: 0;
-  padding: var(--s-2) var(--s-3) var(--s-4);
-  color: var(--fg-secondary);
-}
-
-/* -- the same rows, gathered under who they are for ----------- */
-.dsh-band {
-  display: flex;
-  flex-direction: column;
-}
-
-/* A GROUP CAPTION THAT IS ALSO SOMEBODY'S NAME, which is why it
-   does NOT take `.ds-label`. §2 allows uppercase on a group
-   caption and bars it on a name, and this is both — so the name
-   wins: uppercasing "T. Nguyen" is the lossy act rule 3 is about.
-   It takes the caption step whole rather than borrowing the label
-   step and then undoing the two properties that define it. */
-.dsh-band-name {
-  margin: 0;
-  padding: var(--s-3) var(--s-3) var(--s-1);
-  color: var(--fg-tertiary);
-  font-family: var(--font-sans);
-  font-size: var(--t-caption-size);
-  font-weight: 600;
-  line-height: var(--t-caption-lead);
-  letter-spacing: var(--t-caption-track);
-}
-
-.dsh-row-main {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.dsh-row-title {
-  color: var(--fg);
-  font-weight: 500;
-  /* two lines, and the whole name stays in the DOM (§3) */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-}
-
+/* the second line of a Row, when it holds more than one thing: the
+   subject, the state, and the figure pushed to the far edge */
 .dsh-row-under {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
   flex-wrap: wrap;
-  color: var(--fg-secondary);
+  gap: var(--s-2);
   min-width: 0;
 }
 
-.dsh-row-tail {
-  display: flex;
-  align-items: center;
-  flex: none;
-}
-
-.dsh-ref {
-  color: var(--fg-secondary);
-}
-
-/* A MODULE'S OWN LINE IS A SENTENCE THE ADMIN WROTE, and some of
-   Northside's run to forty words. Measured on the real set: the
-   modules card was 1,100px tall and pushed every card beside it
-   out of the row. Two lines, with the whole of it still in the
-   DOM — §3: nothing truncates mid-word, and a name that does not
-   fit clamps rather than disappearing. */
+/* two lines, and the whole of it stays in the DOM (§3) */
 .dsh-when {
-  color: var(--fg-secondary);
   overflow-wrap: anywhere;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -1359,15 +465,12 @@
   overflow: hidden;
 }
 
-/* A state, as a dotted word. NOT uppercase: 'Draft' and 'Issued'
-   are values on the document, and §2 keeps values in their own
-   case. The kind is carried by a 5px dot, which is what §1 allows
-   a second hue to be — never a fill behind the word. */
+/* a state, as a dotted word. NOT uppercase: 'Draft' and 'Issued'
+   are values on the document */
 .dsh-state {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: var(--fg-secondary);
+  gap: var(--s-1);
   white-space: nowrap;
 }
 
@@ -1387,24 +490,19 @@
   background: var(--success);
 }
 
+/* THE FIGURE IS INK, NEVER THE HUE, and it keeps the right edge of
+   the line however long the words before it run. */
 .dsh-sum {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 1px;
+  margin-left: auto;
   color: var(--fg);
   white-space: nowrap;
 }
 
-/* A QUOTE WITH AN UNPRICED LINE DOES NOT PRINT A CONFIDENT
-   TOTAL. The number is drawn quieter and the reason sits under
-   it, because a silent figure that is missing a line is the
-   fault the document itself refuses to commit. */
+/* a quote with an unpriced line does not print a confident total */
 .dsh-sum.is-partial {
-  color: var(--fg-secondary);
-}
-
-.dsh-sum-note {
   color: var(--fg-secondary);
 }
 
@@ -1424,83 +522,66 @@
   background: var(--warning);
 }
 
-/* -- the way out of a card ----------------------------------- */
+/* -- the filters inside the quotes card ----------------------- */
 
-.dsh-more {
-  align-self: flex-start;
-  margin: var(--s-1) 0 var(--s-1);
-  padding: var(--s-1) var(--s-3);
-  border: 0;
-  border-radius: var(--r-control);
-  background: none;
+/* four Buttons and a grouping; the one that is on takes the
+   primary tone, which is one of this screen's appearances of the
+   accent. A quote's state is not a kind, so no hue here. */
+.dsh-lenses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  padding: 0 0 var(--s-3);
+  flex: none;
+}
+
+/* a filter that holds nothing says so where it is (rule 10) */
+.dsh-none {
+  margin: 0;
+  padding: var(--s-2) 0 var(--s-4);
   color: var(--fg-secondary);
+}
+
+.dsh-band {
+  display: flex;
+  flex-direction: column;
+}
+
+/* A GROUP CAPTION THAT IS SOMEBODY'S NAME, so it is not a
+   SectionHead: rule 3 bars uppercasing "T. Nguyen". The caption
+   step whole instead. */
+.dsh-band-name {
+  margin: 0;
+  padding: var(--s-3) var(--s-3) var(--s-1);
+  color: var(--fg-tertiary);
   font-family: var(--font-sans);
   font-size: var(--t-caption-size);
-  font-weight: 500;
+  font-weight: var(--t-caption-weight);
   line-height: var(--t-caption-lead);
   letter-spacing: var(--t-caption-track);
-  cursor: pointer;
-  transition:
-    color var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease);
 }
 
-.dsh-more:hover {
-  color: var(--accent);
-  background: var(--accent-wash);
+/* the way out of a card — a ghost Button, placed */
+.dsh-more {
+  margin: var(--s-1) 0;
+  align-self: flex-start;
 }
 
-.dsh-more:active {
-  background: var(--accent-wash-strong);
-}
+/* -- a card with nothing in it -------------------------------- */
 
-/* -- a card with nothing in it ------------------------------- */
-
+/* Four parts (DESIGN_CONTRACT §6): the state as a SectionHead, the
+   sentence, what-you-already-have, one act. The first three are
+   one block at 4px; the act buys its own air back. Centred in the
+   card, so an absence does not read as a fault. */
 .dsh-empty {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  /* THE SENTENCE SITS IN THE MIDDLE OF THE CARD, not at the top of
-     it. The grid gives every card an equal share of the height, so
-     an empty one used to draw one line against its top edge and
-     three hundred pixels of nothing beneath — which reads as a
-     card that failed to load rather than one with nothing in it
-     yet. `justify-content: center` costs nothing and is the
-     difference between an absence and a fault. */
   justify-content: center;
   flex: 1 1 auto;
   min-height: 0;
-  /* ------------------------------------------------------------
-     FOUR PARTS, THREE OF WHICH ARE ONE PARAGRAPH.
-
-     DESIGN_CONTRACT §6 sets the order — eyebrow, what-it-is,
-     what-you-already-have, one action — and its own model gaps all
-     four equally, because there it is a 560px card alone on a
-     page. On a dashboard card it is four lines in a 262px body,
-     and an equal 12px between every one of them reads as four
-     unrelated things rather than as one statement with a button
-     under it.
-
-     So the gap is 4px and the ACT buys its own air back. The
-     eyebrow, the sentence and the count are one block; the button
-     is the other. That is the same two-part reading the card head
-     already has, and it is why the eyebrow can sit 4px off a
-     sentence without the two competing.
-     ------------------------------------------------------------ */
   gap: var(--s-1);
-  padding: var(--s-2) var(--s-3) var(--s-4);
-}
-
-/* PART ONE — THE STATE, IN THE ONE UPPERCASE STYLE.
-
-   §2 allows uppercase on a section caption and nothing else, and a
-   state is a caption: "No modules yet" is not a name and not a
-   value, so nothing is lost by setting it as a label. It takes
-   `.ds-label`'s own 11px step and its own colour — the floor, on
-   the page ground an empty card sits directly on, which is the
-   pair `--ink-faint` was measured at (5.2:1). */
-.dsh-empty-state {
-  margin: 0;
+  padding: var(--s-2) 0 var(--s-3);
 }
 
 .dsh-empty-say {
@@ -1509,92 +590,33 @@
   max-width: 44ch;
 }
 
-/* PART THREE — WHAT YOU ALREADY HAVE.
-
-   The contract calls this the load-bearing line and gives the
-   reason: *"a blank screen saying 'nothing here' would read as
-   though the app had lost them."* It is INK rather than
-   `--fg-secondary`, unlike the sentence above it, because it is
-   the only fact in the block — the sentence is a definition and
-   this is a measurement of the person's own project. */
+/* the load-bearing line: a measurement of the person's own
+   project, in ink */
 .dsh-empty-have {
   margin: 0;
   color: var(--fg);
   max-width: 44ch;
 }
 
-/* AND THE FIGURE INSIDE IT IS MONO, like every other figure on
-   this page (§2: a number in a column is what mono is for).
-   `font-size: inherit` so it takes the 13px of the sentence it
-   sits in rather than `.ds-mono`'s own step — the figure is part
-   of the line, not a heading over it. */
+/* the figure in it is mono at the sentence's own size */
 .dsh-empty-n {
   font-size: inherit;
-  font-weight: 600;
+  font-weight: var(--t-label-weight);
 }
 
-/* THE ACT BUYS BACK THE AIR THE BLOCK ABOVE GAVE UP, and only
-   inside an empty state — `.dsh-act` is also the button on
-   `.dsh-bare`, where it stands alone and wants nothing.
-
-   4px of flex gap plus 8px of margin is 12px, which is exactly
-   what every gap in this block used to be: the distance between
-   the words and the button is unchanged, and only the distance
-   between the words themselves closed. */
-.dsh-empty > .dsh-act {
-  margin-top: var(--s-2);
+.dsh-empty-act {
+  margin: var(--s-2) 0 0;
 }
 
-.dsh-act {
-  display: inline-flex;
-  align-items: center;
-  height: var(--h-sm);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
+/* an empty card with proposals to make starts at the top and
+   scrolls, with the scroller visible */
+.dsh-empty:has(.dsh-propose) {
+  justify-content: flex-start;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
-.dsh-act:hover {
-  background: var(--accent-wash);
-  border-color: var(--accent-line);
-}
-
-.dsh-act:active {
-  transform: scale(0.97);
-  background: var(--accent-wash-strong);
-}
-
-/* ============================================================
-   WHAT YOUR TABLES SUGGEST — the proposals on an empty card.
-
-   TWO HOSTS, ONE BLOCK. It sits inside `.dsh-empty` on a card with
-   no places on it, and under `.dsh-tiles` on a card that has a
-   place or two and tables still standing outside them. Same rows,
-   same press; only the label above them changes, and the footer
-   takes a rule the empty one does not need.
-
-   THE ROW IS A TILE'S GROUND AT A ROW'S HEIGHT. `.dsh-tile` is
-   `--kind` at 6% over `--surface-1` with a 14% edge, and these are
-   the same two mixes — a proposal for the boats and the tile it
-   would become are the same colour, which is the whole of §1's
-   rule about a hue only appearing on something that HAS that kind.
-
-   AND IT DARKENS RATHER THAN SCALING. DESIGN_CONTRACT §5: a list
-   row that shrinks under the finger makes its neighbours look like
-   they moved. Nothing in this block transforms, which is also why
-   it needs no reduced-motion escape — there is no motion in it to
-   escape from.
-   ============================================================ */
+/* -- what your tables suggest --------------------------------- */
 
 .dsh-propose {
   display: flex;
@@ -1606,136 +628,38 @@
   margin-top: var(--s-2);
 }
 
-/* AS A FOOTER IT IS A SECOND SECTION AND SAYS SO. The colour key
-   above the grid takes a rule under it for the same reason: a
-   strip of small text with no line between it and a grid of tiles
-   reads as the last row of the grid. */
+/* as a footer under the tiles it is a second section and says so;
+   it may shrink to what the card has left and may not grow */
 .dsh-tiles + .dsh-propose {
   margin-top: var(--s-3);
   padding-top: var(--s-3);
   border-top: 1px solid var(--line-subtle);
-  /* AND IT MAY NOT EAT THE GRID IT SITS UNDER — but it is not
-     capped either, because a footer clipped at two fifths of a
-     card with three fifths of room beneath it is worse than the
-     problem. `0 1 auto` is the same declaration `.dsh-list`
-     carries and for the same reason: it may SHRINK to whatever the
-     card had left and it may not GROW. Flex shrinks in proportion
-     to base size, so a 550px footer of six proposals gives up
-     nearly three times what a 200px grid of tiles does — which is
-     the right way round on a card whose subject is the places. */
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
 }
 
-/* THE CAPTION IS SECONDARY INK RATHER THAN `.ds-label`'s OWN.
-   The label step is coloured for the page ground an empty card
-   sits directly on; this same block also draws on the CARD, which
-   is a lighter surface, so it takes the one step up that is legal
-   on both rather than being right in one place and thin in the
-   other. */
-.dsh-propose-lead {
-  margin: 0;
-  color: var(--fg-secondary);
-}
-
 .dsh-propose-list {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
   list-style: none;
   margin: 0;
   padding: 0;
   min-width: 0;
 }
 
-.dsh-propose-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  min-width: 0;
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid color-mix(in srgb, var(--kind) 14%, var(--line-subtle));
-  border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--kind) 6%, var(--surface-1));
-  color: var(--fg);
-  font-family: var(--font-sans);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease);
+/* the count and the tables it would hold: two lines of the Row's
+   meta, and the second is the evidence — it wraps, never clamps */
+.dsh-propose-n,
+.dsh-propose-holds {
+  display: block;
+  overflow-wrap: anywhere;
 }
 
-.dsh-propose-row:hover {
-  background: color-mix(in srgb, var(--kind) 11%, var(--surface-1));
-  border-color: color-mix(in srgb, var(--kind) 30%, transparent);
-}
-
-/* PRESS LANDS ON POINTER-DOWN, and it is a darkening (§5). */
-.dsh-propose-row:active {
-  background: color-mix(in srgb, var(--kind) 18%, var(--surface-1));
-}
-
-.dsh-propose-top {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  min-width: 0;
-}
-
-.dsh-propose-mark {
-  display: inline-flex;
-  flex: none;
-  color: var(--kind);
-}
-
-.dsh-propose-name {
-  font-size: var(--t-small-size);
-  font-weight: 570;
-  color: var(--fg);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* THE COUNT KEEPS THE RIGHT EDGE however long the name is, which
-   is what lets three proposals be compared down a column rather
-   than read one at a time. */
-.dsh-propose-n {
-  margin-left: auto;
-  flex: none;
-  font-size: var(--t-caption-size);
-  color: var(--fg-secondary);
-  white-space: nowrap;
-}
-
-/* AND THE FIGURES INSIDE IT ARE MONO — the same rule every other
-   number on this page keeps. `font-size: inherit` so they take the
-   caption step of the line they are in rather than `.ds-mono`'s
-   own, which is the pattern `.dsh-empty-n` already sets. */
 .dsh-propose-fig {
   font-size: inherit;
-  font-weight: 600;
   color: var(--fg);
-}
-
-/* THE TABLES IT WOULD HOLD. It WRAPS and it is not clamped: this
-   line is the evidence a person checks the proposal against, and a
-   list of names cut off after two is the silently reduced count
-   DESIGN_CONTRACT §5 refuses. */
-.dsh-propose-holds {
-  width: 100%;
-  min-width: 0;
-  font-size: var(--t-caption-size);
-  line-height: 1.45;
-  color: var(--fg-secondary);
-  overflow-wrap: anywhere;
 }
 
 .dsh-propose-why {
@@ -1744,183 +668,84 @@
   max-width: 44ch;
 }
 
-/* AN EMPTY CARD THAT HAS SOMETHING TO PROPOSE STOPS CENTRING.
-   The sentence sits in the middle of a card with four lines in it;
-   a card holding four lines and five proposals has to start at the
-   top and scroll, or the first proposal is the one off the bottom
-   edge. */
-.dsh-empty:has(.dsh-propose) {
-  justify-content: flex-start;
-  overflow-y: auto;
-  /* AND THE SCROLLER IS VISIBLE, for the reason written at the
-     foot of this file: this platform paints an overlay scrollbar
-     that appears only once you are already scrolling, so a card
-     with a sixth proposal below the fold looks exactly like a card
-     with five. Measured at 1024x700 on the real sheet: 569px of
-     proposals in 498px of card. `.dsh-list` takes the same one
-     declaration for the same reason. */
-  scrollbar-width: thin;
-}
-
 /* ============================================================
-   THE TWO SMALL CONTROLS THAT ONLY EXIST WHILE ARRANGING
-   ============================================================ */
+   THE DRAG HANDLE — the one control that stays local, and why.
 
-.dsh-grip,
-.dsh-drop {
+   `touch-action: none` is what makes a touch drag a drag instead
+   of a scroll; without it the reorder never gets a pointermove.
+   Button accepts no `style` and no `className`, so it cannot
+   carry the declaration, and a handle that cannot be dragged on a
+   touch screen is not a handle. Reported as the gap it is. Its
+   three states are drawn here in full (rule 8).
+   ============================================================ */
+.dsh-grip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: var(--h-sm);
+  height: var(--h-sm);
   flex: none;
+  padding: 0;
   border: 0;
-  border-radius: var(--r-chip);
-  background: none;
+  border-radius: var(--r-control);
+  background: transparent;
   color: var(--fg-tertiary);
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
   transition:
     background var(--d-fast) var(--ease),
     color var(--d-fast) var(--ease);
 }
 
-.dsh-grip {
-  cursor: grab;
-  /* THE POINTER MUST NOT SCROLL THE PAGE WHILE IT IS DRAGGING A
-     CARD. Without this a touch drag is a scroll and the reorder
-     never gets a pointermove at all. */
-  touch-action: none;
+@media (hover: hover) and (pointer: fine) {
+  .dsh-grip:hover {
+    background: var(--surface-3);
+    color: var(--fg);
+  }
 }
 
 .dsh-grip:active {
   cursor: grabbing;
-}
-
-.dsh-grip:hover,
-.dsh-drop:hover {
-  background: var(--surface-3);
+  background: var(--surface-4);
   color: var(--fg);
 }
 
-.dsh-drop:hover {
-  color: var(--danger);
-  background: var(--danger-wash);
+.dsh-grip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ============================================================
-   THE ADD-A-CARD PLATE — a card-shaped hole in the grid
+   THE ADD-A-CARD PLATE — a sunken Card; this is what is in it
    ============================================================ */
 
-.dsh-add {
+.dsh-add-in {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  min-height: 148px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--r-card);
-  background: none;
-  box-shadow: none;
+  flex: 1 1 auto;
+  padding: var(--s-4);
   color: var(--fg-secondary);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.dsh-add:hover {
-  border-color: var(--accent-line);
-  background: var(--accent-wash);
-  color: var(--accent);
-}
-
-/* 0.994 ON A CARD, NOT 0.97. §4: 0.97 on a 236px card is a 7px
-   shrink and reads as a glitch.
-
-   AND IT WAS LOSING. Measured in Chrome: this button pressed at
-   0.97 anyway, because `base.css:432` presses every button from a
-   (0,3,1) selector and `.dsh-add:active` is (0,2,0). At 488px
-   wide that is a 14.6px shrink on the biggest control on the
-   screen — the glitch §4 names, four times over. Restated in
-   base.css's own selector shape, which is (0,4,0) and wins on
-   class count; `build.css:949` is the worked example. */
-.dsh-add:not(:disabled):not([aria-disabled='true']):active {
-  transform: scale(0.994);
-  background: var(--accent-wash-strong);
-}
-
-.dsh-add-mark {
-  display: inline-flex;
-}
-
-.dsh-add-say {
   text-align: center;
-  padding: 0 var(--s-4);
 }
 
 /* ============================================================
-   THE TRAY
+   THE TRAY — a raised Card; these are the spaces inside it
    ============================================================ */
 
 .dsh-tray {
-  margin-bottom: var(--s-6);
-  padding: var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  background: var(--surface-1);
-  box-shadow: inset 0 1px 0 var(--edge-light), var(--e2);
-}
-
-.dsh-tray-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  margin-bottom: var(--s-3);
-}
-
-.dsh-tray-name {
-  margin: 0;
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--fg);
+  margin-bottom: var(--s-4);
 }
 
 .dsh-tray-find {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-3);
-  color: var(--fg-secondary);
-  transition: border-color var(--d-fast) var(--ease);
+  margin-top: var(--s-3);
+  max-width: 36ch;
 }
 
-.dsh-tray-find:focus-within {
-  border-color: var(--accent-line);
-}
-
-.dsh-tray-input {
-  width: 18ch;
-  border: 0;
-  background: none;
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
-}
-
-.dsh-tray-input:focus {
-  outline: none;
-}
-
-.dsh-tray-input::placeholder {
-  color: var(--fg-secondary);
+.dsh-tray-body {
+  margin-top: var(--s-3);
 }
 
 .dsh-tray-bands {
@@ -1929,85 +754,20 @@
   gap: var(--s-4);
   max-height: 46vh;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .dsh-tray-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
   min-width: 0;
-}
-
-.dsh-tray-band-name {
-  margin: 0 0 var(--s-2);
 }
 
 .dsh-tray-items {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: var(--s-2);
-}
-
-.dsh-tray-item {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  min-height: var(--h-lg);
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.dsh-tray-item:hover {
-  border-color: var(--accent-line);
-  background: var(--accent-wash);
-}
-
-.dsh-tray-item:active {
-  transform: scale(0.97);
-  background: var(--accent-wash-strong);
-}
-
-.dsh-tray-mark {
-  display: inline-flex;
-  align-items: center;
-  color: var(--fg-secondary);
-  flex: none;
-}
-
-.dsh-tray-say {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.dsh-tray-item-name {
-  color: var(--fg);
-  font-weight: 500;
-  overflow-wrap: anywhere;
-}
-
-.dsh-tray-item-note {
-  color: var(--fg-secondary);
-  overflow-wrap: anywhere;
-}
-
-.dsh-tray-plus {
-  display: inline-flex;
-  align-items: center;
-  color: var(--fg-tertiary);
-  flex: none;
-}
-
-.dsh-tray-item:hover .dsh-tray-plus {
-  color: var(--accent);
+  gap: var(--s-1);
 }
 
 .dsh-tray-empty {
@@ -2016,16 +776,9 @@
 }
 
 /* ============================================================
-   A DASHBOARD WITH NOTHING ON IT — a choice, kept
+   A DASHBOARD WITH NOTHING ON IT — a choice, kept, and centred
    ============================================================ */
 
-/* THE ONE THING ON AN OTHERWISE EMPTY PAGE should not be in its
-   bottom-left corner. It sat under the collapsed grid with 700px of
-   blank page above it, because the grid still occupied its row even
-   with nothing in it. `margin: auto` centres it in the space it
-   actually has, and the text stays left-aligned inside its own
-   measure — a centred paragraph is harder to read and this one is
-   an explanation, not a title. */
 .dsh-bare {
   display: flex;
   flex-direction: column;
@@ -2042,115 +795,391 @@
 }
 
 /* ============================================================
-   FOCUS — every pressable thing on this page, one ring
+   THE MODULE TILES — every brand in the business, as Rows.
+
+   A tile is a Row: the brand's mark leads, the name is the thing
+   scanned for, and the kind, the count and the quotes out on it
+   are the meta line. The kind hue is the mark (a glyph, which is
+   what §1 allows) and is explained once in the key above the
+   grid. Two columns where the card is wide enough; the grid
+   scrolls rather than truncating.
    ============================================================ */
 
-.dsh :is(button, input):focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
+.dsh-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  list-style: none;
+  margin: 0 0 var(--s-3);
+  padding: 0 0 var(--s-3);
+  border-bottom: 1px solid var(--line-subtle);
+  flex: none;
+}
+
+.dsh-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  white-space: nowrap;
+}
+
+/* the swatch is the hue at full strength — a key drawn in the
+   tint is a key you cannot see */
+.dsh-key-dot {
+  width: var(--s-2);
+  height: var(--s-2);
+  border-radius: var(--r-chip);
+  background: var(--kind);
+}
+
+.dsh-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--s-1);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  /* the scrollbar's width given back on the right so the second
+     column is not clipped by it */
+  padding-inline-end: var(--s-1);
+  margin-inline-end: calc(var(--s-2) * -1);
+}
+
+/* the Row, and beside it the grip's column */
+.dsh-tile {
+  position: relative;
+  min-width: 0;
+  padding-inline-end: var(--s-6);
+}
+
+/* the brand's own logo where one was given, the kind's symbol
+   where none was — `PlaceMark` decides, in one place */
+.dsh-tile-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--s-6);
+  color: var(--kind);
+}
+
+.dsh-tile-mark .md-place-logo {
+  max-height: var(--s-5);
+  max-width: var(--s-6);
+}
+
+.dsh-tile-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.dsh-tile-kind {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* how much is in it — mono and tabular, because it is a figure */
+.dsh-tile-sum {
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* a place no longer sold is drawn, counted at nothing and said to
+   be held — never removed */
+.dsh-tile.is-held-back .dsh-tile-sum {
+  color: var(--fg-tertiary);
+}
+
+/* THE QUOTES OUT ON THIS BRAND. It takes the accent and it is the
+   only thing on the card that does: the one figure a person scans
+   twenty-five tiles for, and the kind hue is already saying
+   something else about the same tile. Drawn only when it is not
+   zero, so the colour never appears twenty-five times at once. */
+.dsh-tile-q {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 0 var(--s-2);
+  border-radius: var(--r-full);
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* THE TILE'S GRIP — the second local control, for the reason the
+   first gives: `touch-action: none`. Its own control and not the
+   Row, so a press that travels three pixels moves a brand instead
+   of opening it. Out of the way until the tile is under the
+   cursor, and always present to a keyboard. */
+.dsh-tile-grip {
+  position: absolute;
+  top: var(--s-2);
+  inset-inline-end: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--s-5);
+  height: var(--s-5);
+  padding: 0;
+  border: 0;
   border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  opacity: 0;
+  cursor: grab;
+  touch-action: none;
+  transition:
+    opacity var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.dsh-tile:hover .dsh-tile-grip,
+.dsh-tile-grip:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dsh-tile-grip:hover {
+    background: var(--surface-3);
+    color: var(--fg);
+  }
+}
+
+.dsh-tile-grip:active {
+  cursor: grabbing;
+  background: var(--surface-4);
+  color: var(--fg);
+}
+
+.dsh-tile-grip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* a touch screen has no hover, so the grip is simply there — and
+   it reaches 44px (the mechanism is beside `.k-filter` in ds.css) */
+@media (hover: none) {
+  .dsh-tile-grip {
+    opacity: 1;
+  }
+}
+
+@media (pointer: coarse) {
+  .dsh-tile-grip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
 }
 
 /* ============================================================
-   ACCESSIBILITY
+   THE DOORS — the catalogue, entered by kind. Each door is a
+   <Card kind> that activates; the photograph is the colour
+   (PHASE_TWO §1b) and no type sits on it, because a photograph
+   has no ground that can be measured (rule 4).
 
-   MOVEMENT GOES; COLOUR AND OPACITY STAY (§4). Every transform
-   above is a press or a hover lift; each one becomes a colour
-   change on its own, which is already declared beside it, so the
-   feedback survives the transform being removed.
-
-   The reorder's spring is handled where it is written —
-   `transitionFor(still)` in reorder.ts collapses it to a
-   duration of zero — and `.ds-fade` / `.ds-aurora` are covered
-   by ds.css's own block.
+   THIS IS WHERE THE DISPLAY TIER LANDS ON THE FRONT DOOR. The
+   subject of this screen is the drafts and the doors; the drafts
+   carry `--t-figure-xl` upstairs and these carry
+   `--t-display-xl`, the step ds.css sized against this very cell.
    ============================================================ */
 
-@media (prefers-reduced-motion: reduce) {
-  .dsh-arrange,
-  .dsh-restart,
-  .dsh-fast-btn,
-  .dsh-fast-add,
-  .dsh-fig-btn,
-  .dsh-lens,
-  .dsh-act,
-  .dsh-add,
-  .dsh-tray-item {
-    transition-property: background, border-color, color, box-shadow;
+.dsh-doors {
+  display: grid;
+  /* two tracks divide the four kinds a marine dealer has exactly,
+     and any even set; `auto-fill` laid 3 + 1 at 1920 */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* an equal share of the card with a floor: the caption at the
+     display step plus the plate's own minimum, which is the
+     smallest door that still keeps its promise */
+  grid-auto-rows: minmax(132px, 1fr);
+  flex: 1 1 auto;
+  gap: var(--s-2);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-inline-end: var(--s-1);
+  margin-inline-end: calc(var(--s-2) * -1);
+}
+
+/* the plate: the photograph, or the kind's own mark on the kind's
+   tint. Clipped at the Card's inner radius so the picture keeps
+   the card's corners. */
+.dsh-door-plate {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 56px;
+  overflow: hidden;
+  border-radius: calc(var(--r-card) - 1px) calc(var(--r-card) - 1px) 0 0;
+  background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
+  border-bottom: 1px solid color-mix(in srgb, var(--kind) 20%, transparent);
+}
+
+.dsh-door-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* cover, not contain — contained, the narrow files sit in two
+     bars of tint and stop reading as a photograph */
+  object-fit: cover;
+  display: block;
+}
+
+/* the mark stands in for a photograph that is not there, and goes
+   the moment one is really painted — `:has(img)` asks the element
+   that answered the question */
+.dsh-door-mark {
+  display: inline-flex;
+  color: var(--kind);
+}
+
+.dsh-door-plate:has(img) .dsh-door-mark {
+  display: none;
+}
+
+/* THE CAPTION IS THE CONTAINER THE NAME ASKS. `--t-display-xl`
+   fits or does not according to the room THIS cell has, which is
+   not a function of the window: a 950px window draws a 336px door
+   and a 960px one draws 157px. The caption's inline size is the
+   door's less the Card's two 1px borders, and the rungs below are
+   stated in that measure. */
+.dsh-door-say {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+  padding: var(--s-2) var(--s-3) var(--s-3);
+  container: dsh-door / inline-size;
+}
+
+/* ------------------------------------------------------------
+   THE DOOR'S NAME, AT `--t-display-xl`.
+
+   `--t-marque` is scoped to "the name of the thing being sold, ONE
+   per screen, only where the subject IS a product" — four doors
+   are four names, and a door is a way in. `--t-hero` is "the first
+   line of a stage", and there are four of these. `--t-display-xl`
+   is the step written for "a name that is one of several and is
+   the point of the screen", and ds.css sized it against this cell:
+
+     before the tier   32.7px greeting    ÷ 11px  =  2.97x
+     display-lg only   26.88px door name  ÷ 11px  =  2.44x
+     this step         34.00px door name  ÷ 11px  =  3.09x
+
+   THE FOUR TOKENS RATHER THAN `.ds-display-xl`, because this rule
+   owns the element and two classes at (0,1,0) on one element is a
+   cascade nobody can see.
+
+   THE CELL, MEASURED, "Accessories" being the widest kind label a
+   marine dealer has (5.533x the font-size at this step, 5.740x at
+   display-lg):
+
+     window   door   room   wants at this step   verdict
+       1024    173    147   166.0 at 30.00px     OVER — rung 2
+       1280    225    199   188.1 at 34.00px     fits, 10.9 over
+       1440    265    239   202.0 at 36.50px     fits
+       1920    385    359   243.5 at 44.00px     fits
+
+   So the name steps DOWN A WHOLE SET when its cell cannot hold
+   one (rule 6 permits swapping steps; it never permits reaching
+   in for one value), and never breaks a word (§3).
+   ------------------------------------------------------------ */
+.dsh-door-name {
+  color: var(--fg);
+  min-width: 0;
+  font-family: var(--font-hero);
+  /* 100: the width ladder gives this step the least room of any */
+  font-variation-settings: 'wdth' 100;
+  font-size: var(--t-display-xl-size);
+  font-weight: var(--t-display-xl-weight);
+  line-height: var(--t-display-xl-lead);
+  letter-spacing: var(--t-display-xl-track);
+  /* a kind's name is a name — rule 3, not uppercase, not tracked
+     out; balanced so a two-line name never leaves one word alone */
+  text-wrap: balance;
+}
+
+/* RUNG 2 — the cell cannot hold display-xl, so the whole of the
+   step below. 217px of caption is the 219px door at which
+   "Accessories" stops clearing by 8px. */
+@container dsh-door (max-width: 217px) {
+  .dsh-door-name {
+    font-variation-settings: 'wdth' 103;
+    font-size: var(--t-display-lg-size);
+    font-weight: var(--t-display-lg-weight);
+    line-height: var(--t-display-lg-lead);
+    letter-spacing: var(--t-display-lg-track);
   }
-
-  .dsh-arrange:active,
-  .dsh-restart:active,
-  .dsh-fast-btn:active,
-  .dsh-fast-add:active,
-  .dsh-fig-btn:active,
-  .dsh-lens:active,
-  .dsh-act:active,
-  .dsh-add:active,
-  .dsh-tray-item:active {
-    transform: none;
-  }
-
-  /* AND THE ADD CARD'S PRESS IS STATED AT (0,4,0) NOW, so it has
-     to be un-stated at the same weight or the rule above cannot
-     reach it. `base.css:623` only shortens the transition; the
-     scale itself is a transform, and §4 is explicit that under
-     reduced motion movement goes and colour stays.
-
-     The doors' own escape is at the foot of this file rather than
-     here, because a rule of equal weight is decided by source
-     order and their press is written below this block. */
-  .dsh-add:not(:disabled):not([aria-disabled='true']):active {
-    transform: none;
+  .dsh-door-say {
+    padding-inline: var(--s-2);
   }
 }
 
-/* prefers-contrast: more — the two dashed borders become solid,
-   because a dashed hairline at high contrast is a dotted line
-   rather than an edge. */
+/* what `.ds-display-lg` owes under high contrast, owed here too:
+   an extended width costs a little counter */
 @media (prefers-contrast: more) {
-  .dsh-fast-item.is-arranging,
-  .dsh-card.is-arranging,
-  .dsh-fast-add,
-  .dsh-add {
-    border-style: solid;
-    border-color: var(--line-strong);
+  @container dsh-door (max-width: 217px) {
+    .dsh-door-name {
+      font-variation-settings: 'wdth' 100;
+    }
   }
+}
+
+/* RUNG 3 — no display step fits (the display face is barred below
+   26px, and 26px overflows here), so the name is not display type:
+   `--t-title` whole, in the sans. About 47px of window width
+   either side of the dashboard becoming two columns. `break-word`
+   is back here and only here, because this rung has nothing below
+   it and a silent clip is the one thing §3 does not allow. */
+@container dsh-door (max-width: 165px) {
+  .dsh-door-name {
+    font-family: var(--font-sans);
+    font-variation-settings: normal;
+    font-size: var(--t-title-size);
+    font-weight: var(--t-title-weight);
+    line-height: var(--t-title-lead);
+    letter-spacing: var(--t-title-track);
+    overflow-wrap: break-word;
+  }
+}
+
+/* the count is ink and mono, never the hue — a count is not
+   decorative any more than a price is */
+.dsh-door-n {
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================
-   NARROW, AND IT ASKS THE COLUMN RATHER THAN THE WINDOW.
-
-   This was `@media (max-width: 760px)`, which is the wrong
-   question for the same reason the grid's container query is the
-   right one: the rail collapses, so a 1024px window with the rail
-   folded away has more room for cards than a 768px window
-   without. Measured at 1024x768 with the rail at its full 264px,
-   the dashboard column is 696px — a window query says "wide" and
-   the column says "one card across". The column is the one with
-   an answer.
+   NARROW — asked of the column, not the window. The rail folds,
+   so a 1024px window with it open is a 696px column.
    ============================================================ */
 
 @container dsh (max-width: 720px) {
-  /* ONLY THE VERTICAL GIVES WAY HERE. The inline inset is
-     `--page-gutter` at every width and this query may not fork
-     it: a container under 720px means a window under about 950,
-     where the token has already stepped itself down to 20px. The
-     16px that used to be written here was a THIRD value for one
-     edge, on the narrowest screens — where a page agreeing with
-     itself matters most, because there is no room to absorb a
-     disagreement. */
+  /* only the vertical gives way; the inline inset is the token's
+     at every width */
   .dsh-in {
     padding-block: var(--s-5);
   }
 
-  /* THE CAPTION LINE AND THE EDIT BUTTON STACK, so they stop being
-     a row and the gap becomes a vertical one. (It was "the
-     greeting and the Edit button" when the greeting was a display
-     line of its own; it is the greeting, the stamp and the census
-     strip on one line now, and they stack as one block.) The
-     `margin-bottom` that used to sit here is gone for the same
-     reason it left the short-window query: `--s-4` is now what
-     this header closes at every width. */
+  /* the caption line and the Edit button stack */
   .dsh-head {
     align-items: flex-start;
     gap: var(--s-3);
@@ -2165,26 +1194,10 @@
   }
 }
 
-/* A SHORT WINDOW, WHICH IS A DIFFERENT PROBLEM FROM A NARROW ONE
-   and is the one that decides whether this screen still fits. A
-   1600x760 laptop has all the width it needs and 240px less
-   height than the composition was drawn at, so the greeting and
-   the gutters give way before the cards do — the cards are the
-   screen. `vh` is legal here where `cqi` is not: the shortage is
-   the viewport's, not the column's. */
+/* A SHORT WINDOW is a different problem from a narrow one: a
+   1600x760 laptop has the width and 240px less height, so the
+   gutters give way before the cards do. */
 @media (max-height: 820px) {
-  /* THE VERTICAL ONLY, for the same reason as the narrow query:
-     the shortage is the window's HEIGHT and the gutter is not a
-     height. This rule used to restate `--s-8` on the inline axis
-     and so quietly overrode the token at 1024x768, which is a
-     short window as well as a narrow one — the one size where the
-     two disagreements landed on the same screen.
-
-     THE HEAD AND FAST-ACTION MARGINS ARE GONE FROM HERE and are
-     not a regression: they set `--s-4`, which is now what both
-     take at every height, because that is what `.ph` and
-     `.ph-tools` pad. A query that repeats the base is a rule
-     somebody will later change on one side only. */
   .dsh-in {
     padding-block: var(--s-5);
   }
@@ -2194,1168 +1207,8 @@
   }
 }
 
-/* ============================================================
-   THE DOOR OUT OF A CARD.
-
-   Every card is a glance at something with a page behind it, and
-   the way through used to be a "See all" link at the FOOT of the
-   list — which meant it moved as the list changed length, it was
-   worded differently on every card, and on a card whose list
-   scrolled you had to reach the bottom to find it. One control,
-   one place, one word: top right of every card that has somewhere
-   to go.
-
-   IT IS QUIET UNTIL THE CARD IS UNDER THE CURSOR. Six cards each
-   with a lit button in the corner is six things competing with
-   the content they are attached to. At rest it is tertiary ink;
-   it takes the accent when its card is hovered or when it is
-   focused, which is when it is about to be used. It is never
-   hidden — a control that only appears on hover is a control a
-   touch screen does not have.
-   ============================================================ */
-.dsh-open {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: auto;
-  padding: 3px var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-tertiary);
-  font-family: var(--font-sans);
-  font-size: var(--t-caption-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.dsh-card:hover .dsh-open {
-  color: var(--accent);
-  background: var(--accent-wash);
-}
-.dsh-open:hover {
-  color: var(--accent);
-  background: var(--accent-wash-strong);
-}
-.dsh-open:active {
-  transform: translateY(0.5px);
-  transition-duration: var(--d-press);
-}
-.dsh-open:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  color: var(--accent);
-}
-
-/* the word goes under a laptop; the arrow is the control, and it
-   keeps its name through aria-label */
-@container dsh (max-width: 1000px) {
-  .dsh-open-say {
-    display: none;
-  }
-}
-
-/* ============================================================
-   THE MODULE TILES — every brand in the business, in one card.
-
-   WHY TILES AND NOT ROWS. What these are is BRANDS: Highfield,
-   Yamaha, Stabicraft, Stacer, Dunbier. A brand is recognised by
-   its mark a good deal faster than its name is read, and a row of
-   text with a 3px colour rail beside it throws that recognition
-   away and makes you read fourteen names instead.
-
-   IT SCROLLS, AND THAT IS THE POINT. Fourteen places do not fit
-   in half a dashboard at any tile size worth drawing. What was
-   here — eight of them and an "All 14 modules" link — was the
-   front door of a business admitting it could not show you the
-   business.
-   ============================================================ */
-.dsh-tiles {
-  display: grid;
-  /* two columns wherever the card is wide enough, one where it is
-     not. 190px is the width at which "Parts & Accessories" sets on
-     two lines rather than three. */
-  /* 240, AND IT WAS 190. Three columns fitted at 190 and the
-     wordmarks came out seventeen pixels tall — Highfield's file is
-     nine to one, so the mark's height is the column's width
-     divided by nine, and a mark you have to lean in to read is not
-     a showpiece. Two wider columns give the same marks 33px and
-     the tile still holds "Parts & Accessories" on one line. */
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--s-2);
-  min-height: 0;
-  overflow-y: auto;
-  /* room for the scrollbar so the right column is not clipped by
-     it, and a hair of inset so a focus ring is never cropped */
-  /* a hair of inset so a focus ring is never cropped, and the
-     scrollbar's width given back on the right so the second column
-     is not clipped by it */
-  padding: 1px var(--s-1) var(--s-1) 1px;
-  margin: 0 calc(var(--s-2) * -1) 0 -1px;
-}
-
-.dsh-tile {
-  position: relative;
-  min-width: 0;
-  border-radius: var(--r-control);
-  /* THE KIND IS THE GROUND, NOT A RAIL. --kind comes from
-     data-kind (ds.css). At 6% it is a tint the name still clears
-     4.5:1 against, and it is what makes fourteen tiles read as
-     four families rather than fourteen boxes. */
-  background: color-mix(in srgb, var(--kind) 6%, var(--surface-1));
-  border: 1px solid color-mix(in srgb, var(--kind) 14%, var(--line-subtle));
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
-}
-.dsh-tile:hover {
-  background: color-mix(in srgb, var(--kind) 11%, var(--surface-1));
-  border-color: color-mix(in srgb, var(--kind) 30%, transparent);
-  box-shadow: var(--e2);
-}
-
-/* HELD: the tile being dragged. It lifts; the others are moved by
-   useReorder, so nothing here animates position. */
-.dsh-tile.is-held {
-  box-shadow: var(--e-float);
-  transform: scale(1.02);
-  z-index: 1;
-}
-
-/* A PLACE THAT IS NO LONGER SOLD is drawn, counted at nothing and
-   said to be held — never removed, or an old quote would open at
-   a brand the grid claims does not exist. */
-.dsh-tile.is-held-back {
-  background: var(--surface-2);
-  border-style: dashed;
-}
-
-
-/* THE MARK SITS ON A PLATE, and the plate is the paper colour
-   rather than the kind's tint, because a dealer's logo is usually
-   dark ink on transparent and would otherwise sit on a coloured
-   ground nobody designed it for. The kind symbol takes the kind's
-   colour; an uploaded logo keeps its own. */
-
-
-/* A BRAND'S NAME IS A NAME, so it is not uppercase and not
-   tracked out — rule 3. Two lines, then it ellipses. */
-
-/* the category, second and quieter: Highfield IS a boat, and that
-   is worth knowing after you know it is Highfield */
-
-/* HOW MUCH IS IN IT. Mono and tabular because it is a figure, and
-   figures in a grid that do not line up are a grid you cannot
-   read down. */
-
-/* THE GRIP IS A SECOND CONTROL, not the tile itself. Dragging the
-   face would mean a press that travels three pixels opens a brand
-   instead of moving it, which is the fault every draggable list
-   has. It is out of the way until the tile is under the cursor,
-   and always present to a keyboard. */
-.dsh-tile-grip {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-quaternary);
-  opacity: 0;
-  cursor: grab;
-  touch-action: none;
-  transition:
-    opacity var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease);
-}
-.dsh-tile:hover .dsh-tile-grip,
-.dsh-tile-grip:focus-visible {
-  opacity: 1;
-}
-.dsh-tile-grip:hover {
-  background: color-mix(in srgb, var(--kind) 16%, transparent);
-  color: var(--fg-secondary);
-}
-.dsh-tile-grip:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-.dsh-tile-grip:active {
-  cursor: grabbing;
-}
-
-/* a touch screen has no hover, so the grip is simply there */
-@media (hover: none) {
-  .dsh-tile-grip {
-    opacity: 1;
-  }
-}
-
-/* ============================================================
-   THE ACTIVITY ROWS, INSIDE A DASHBOARD CARD.
-
-   activity.css draws .ac-list for the module page, where it sits
-   in a box of its own. Here it is inside one already, so it takes
-   the scroll behaviour and nothing else — no second border, no
-   second background. The row rules are shared, which is the whole
-   point of splitting ActivityList out of ActivityCard.
-   ============================================================ */
-.dsh-card-body > .ac-list {
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/* ============================================================
-   THE TILES, SECOND PASS — the brand's mark IS the tile.
-
-   WHAT CHANGED AND WHY. Every tile carried a boat, a motor or a
-   trailer glyph: four pictures repeated twenty-five times, saying
-   a thing the tile's own colour already said. They are gone, and
-   the kind is said ONCE in a key above the grid.
-
-   What replaces them is the BRAND's own wordmark, and it is the
-   heading rather than an ornament beside one. A wordmark IS the
-   brand's name, set better than this application will ever set
-   it; drawing the mark and then the name is saying the same word
-   twice, once in Highfield's type and once in ours. Where a
-   dealer has no mark for a place, the name takes the panel and is
-   set large — so every tile is the same object, and the only
-   difference is whose type the name is in.
-   ============================================================ */
-
-/* ---- the key ---------------------------------------------- */
-.dsh-key {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-4);
-  list-style: none;
-  margin: 0 0 var(--s-3);
-  padding: 0 0 var(--s-3) 1px;
-  border-bottom: 1px solid var(--line-subtle);
-  flex: none;
-}
-.dsh-key-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--t-caption-size);
-  color: var(--fg-secondary);
-  white-space: nowrap;
-}
-/* the swatch is the tiles' own hue at full strength — a key drawn
-   in the tint is a key you cannot see */
-.dsh-key-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: var(--kind);
-}
-
-/* ---- the panel: the mark, or the name --------------------- */
-
-.dsh-tile-face {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-}
-
-/* THE KIND'S COLOUR LIVES HERE NOW, and at 14% rather than the 6%
-   the whole tile used to carry. It is a panel behind a mark rather
-   than a wash behind a paragraph, so it can be strong enough to
-   read as a colour — which is what makes twenty-five tiles group
-   into four families at a glance.
-
-   IT IS A TINT AND NOT THE HUE ITSELF. These wordmarks are the
-   brands' own ink — Highfield navy, Stabicraft red — and a
-   saturated ground under them would either clash or swallow them.
-   14% of the kind over paper keeps every mark legible and still
-   says boat, motor, trailer at arm's length. */
-.dsh-tile-panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* FOUR FIFTHS OF THE TILE. It was closer to half, and a strip of
-     small grey text taking half a tile competes with the mark the
-     tile exists to show. 96 over a 24px foot is 80/20. */
-  /* TALLER, because the mark is the tile's face and 96 was sized
-     around a 40px mark. */
-  min-height: 112px;
-  padding: var(--s-4) var(--s-5);
-  border-radius: var(--r-control) var(--r-control) 0 0;
-  background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
-  border-bottom: 1px solid color-mix(in srgb, var(--kind) 20%, transparent);
-  transition: background var(--d-fast) var(--ease);
-}
-.dsh-tile:hover .dsh-tile-panel {
-  background: color-mix(in srgb, var(--kind) 20%, var(--surface-1));
-}
-
-/* THE MARK. Contained rather than cropped, and capped in BOTH
-   directions: these files run from 9:1 (Highfield) to 3:1, and a
-   rule that only capped width would draw the squarer ones three
-   times the height of the wider ones. */
-.dsh-tile-panel .md-place-logo {
-  /* BIGGER. 40px was sized when the mark shared the tile with a
-     name; it is the tile's whole face now and was floating in it. */
-  max-height: 56px;
-  max-width: 100%;
-}
-
-/* THE PAPER PLATE IS A DARK-THEME REPAIR AND IT BELONGS ONLY
-   THERE. On dark the panel is `color-mix(kind 14%, #101f2f)` and
-   every logo this app ships is dark ink on transparent —
-   Highfield's wordmark measured 1.4:1 against its own tile, which
-   is not a contrast complaint, it was gone. On LIGHT the panel is
-   already a pale tint that dark ink reads on perfectly well, and
-   the plate did nothing there but paste a white sticker onto a
-   coloured card. Reported as exactly that.
-
-   `:root:not([data-theme='light'])` rather than a bare media
-   query, so an explicit light choice on a dark OS is still light —
-   the same three-state pattern every other themed rule here
-   keeps. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .dsh-tile-panel .md-place-logo {
-    padding: 6px var(--s-3);
-    border-radius: var(--r-control);
-    background: var(--mark-paper);
-  }
-}
-:root[data-theme='dark'] .dsh-tile-panel .md-place-logo {
-  padding: 6px var(--s-3);
-  border-radius: var(--r-control);
-  background: var(--mark-paper);
-}
-
-/* THE NAME, WHERE THERE IS NO MARK. Centred, because it is
-   standing in for one — and hidden the moment a mark was really
-   painted, which `:has(img)` asks of the element that answered it
-   rather than re-deciding here. */
-.dsh-tile-name {
-  font-size: var(--t-body-size);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  color: var(--fg);
-  text-align: center;
-  text-wrap: balance;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.dsh-tile-panel:has(img) .dsh-tile-name {
-  display: none;
-}
-
-/* ---- the foot: what it is, how much, and what to do ------- */
-
-/* THE ACTS SHARE THE ROW AND CROSS-FADE WITH IT. A row that
-   appeared by growing the tile would shove every tile below it
-   down the moment the pointer crossed one — the reason most
-   hover-action grids feel broken. Grid rather than absolute
-   positioning, so the foot reserves its own height and the tile is
-   the same size whether or not it is under the cursor. */
-.dsh-tile-foot {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--s-2);
-  min-height: 24px;
-  padding: 5px var(--s-3) var(--s-2);
-}
-
-/* WHERE THE PANEL IS ALREADY THE MODULE'S OWN NAME, this would
-   repeat the word directly above it. Two selectors rather than a
-   prop: the tile knows both strings and CSS cannot compare them,
-   so the case is narrowed to the one that matters — no mark, and
-   therefore a name in the panel. */
-
-.dsh-tile-sum {
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-secondary);
-  transition: opacity var(--d-fast) var(--ease);
-}
-.dsh-tile.is-held-back .dsh-tile-sum {
-  color: var(--fg-tertiary);
-}
-
-
-/* ---- the figures in the foot ------------------------------ */
-
-/* THE HOVER BUTTONS ARE GONE, and they worked. Quote and Catalog
-   appeared under the pointer on a card whose whole job is to get
-   you INTO a module — where both acts live anyway, with more room
-   and more context around them. A shortcut past a screen is not a
-   fix for that screen.
-
-   WHAT THE ROOM BOUGHT INSTEAD is the quote count: how many quotes
-   are out on this brand. It is the one fact on the tile that is
-   about the DAY rather than about the catalogue — 588 Highfield
-   variants is the size of the range; three quotes is three people
-   waiting on an answer. */
-.dsh-tile-figs {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-/* It takes the accent, and it is the only thing on this card that
-   does. Rule 5 gives the accent to action and this is not an
-   action — but it is the single figure a person is scanning
-   twenty-five tiles to find, and the kind hue cannot carry it
-   because the kind hue is already saying something else about the
-   same tile. Drawn only when it is not zero, so the colour never
-   appears twenty-five times at once and a column of "0" never
-   reads as a fault. */
-.dsh-tile-q {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 6px 1px 5px;
-  border-radius: var(--r-full);
-  background: var(--accent-wash);
-  color: var(--accent);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.4;
-}
-
-/* ============================================================
-   WHAT IS IN THE PIPELINE — the figure the quotes card lacked.
-
-   It listed three quotes and never said what they came to. That
-   is the one number a person opens a quotes card for, and the
-   only one that answers "how is the month going".
-
-   Computed from the FILTERED list, so the figure and the rows
-   under it can never disagree — a total drawn from every quote
-   while the rows showed drafts would be a lie that looked like a
-   rounding error.
-   ============================================================ */
-
-.dsh-worth {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-  margin: 0 0 var(--s-3);
-  padding: 0 var(--s-2);
-}
-
-/* ------------------------------------------------------------
-   THE PIPELINE FIGURE — THE DRAFTS, AT THE DISPLAY STEP.
-
-   It was 22px in IBM Plex Mono, and its own note said "it is the
-   largest figure on the dashboard". It was: 22px, on a screen
-   whose greeting was 32.7. The one number that answers "how is
-   the month going" was two thirds the size of a hello.
-
-   `--t-figure-xl-*` IS THE STEP AND ds.css ARGUES IT. "THE
-   COMMITTED TOTAL. The one figure a price bar exists to state...
-   a headline that happens to be a number." This is that figure on
-   this screen: one per card, computed from the filtered list so
-   it can never disagree with the rows under it, and read before
-   anything else on the card. 33.43px at 1280, 42 above 1920.
-
-   AND IT IS NOT MONO ANY MORE, WHICH IS THE PART THAT LOOKS LIKE
-   A BREACH AND IS NOT. §2's rule is "if it is a number IN A
-   COLUMN, it is mono" — mono is what lines a column up on the
-   decimal. This is not in a column. And ds.css measured what mono
-   costs at this size: IBM Plex Mono is fixed-pitch, so it gives
-   the thousands comma the same 20.05px cell as a digit and
-   "$8,557" sets as "$8 , 557"; no OpenType feature closes it,
-   because one advance is the point of a fixed-pitch family.
-   Archivo with `tabular-nums` gives every digit an identical
-   19.14px advance and the comma 9.61px — so the figure still
-   cannot jitter as the total changes, which is the property money
-   actually needs, and it is in the same voice as the door names
-   downstairs instead of a third face arguing with them.
-
-   EVERY OTHER FIGURE ON THIS PAGE IS STILL MONO. The chip counts,
-   the row totals, the tile counts, the census strip, the tail of
-   every list — all `--font-mono`, all tabular. This is one figure,
-   at display size, and ds.css says in as many words: do not read
-   it as permission.
-
-   'zero' IS NOT SET. A slashed zero is a code affordance and has
-   no business in a price. NEVER A HUE, either — money least of
-   all is decorative.
-   ------------------------------------------------------------ */
-.dsh-worth-n {
-  font-family: var(--font-hero);
-  font-variation-settings: 'wdth' 100;
-  font-size: var(--t-figure-xl-size);
-  font-weight: var(--t-figure-xl-weight);
-  line-height: var(--t-figure-xl-lead);
-  letter-spacing: var(--t-figure-xl-track);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-  color: var(--fg);
-}
-.dsh-worth-say {
-  font-size: var(--t-small-size);
-  color: var(--fg-secondary);
-}
-
-/* A TOTAL THAT ABSORBED AN UNPRICED LINE WOULD BE A CONFIDENT
-   NUMBER ABOUT AN INCOMPLETE ONE. Said beside the figure, in the
-   warning ink, because it qualifies it — the same rule a single
-   quote's own total keeps. */
-.dsh-worth-note {
-  font-size: var(--t-caption-size);
-  /* the warning ink, not the warning FILL — this is text, and a
-     fill behind three words on a card is a badge nobody asked
-     for. Measured on --surface-1: 5.1:1 light, 8.4:1 dark. */
-  color: var(--warning);
-}
-
-/* THE BOAT, UNDER THE PERSON WAITING FOR IT. The card's heading is
-   the customer now — as it already was on the board — so the
-   subject drops to the row's second line beside the state. */
-.dsh-subject {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* THE KIND, AS A PILL AT THE FOOT OF A TILE.
-
-   It was a bare word in the tertiary ink and the kind's own symbol
-   was nowhere on the tile: the glyph came off when the brand
-   wordmark became the face, because four glyphs repeated
-   twenty-five times at mark size is wallpaper rather than
-   identity.
-
-   At 12px beside the word it belongs to, it is not competing with
-   the wordmark above it — it says what sort of thing this brand
-   sells, which a wordmark cannot. The key above the grid maps the
-   hue to the word; this names it on the tile.
-
-   THE TINT IS THE KIND'S AND THE WORD IS NOT. A pill washed in the
-   kind's hue with the kind's hue as its text is the pairing rule 4
-   exists to catch — eight hues over eight tints of themselves, and
-   nothing in this repo can measure contrast for me. The word takes
-   the secondary ink, which clears 4.5:1 over every one of the eight
-   at 14%, and the MARK takes the full hue: a symbol is a drawing,
-   not text, and has no ratio to clear. Identity, not action, so no
-   accent (rule 5). */
-.dsh-tile-kind {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  /* IT HUGS ITS WORD. The foot is a grid whose first track is
-     `1fr`, so a stretch item filled the whole left half and drew a
-     200px grey bar with "Boats" at one end of it — a pill is a
-     shape around a word, and a pill the width of its container is
-     just a bar. `justify-self` rather than a narrower track,
-     because the track's job is to give the figures on the right a
-     fixed edge to sit against however long the word is. */
-  justify-self: start;
-  min-width: 0;
-  max-width: 100%;
-  padding: 2px var(--s-2) 2px 5px;
-  border-radius: var(--r-full);
-  background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
-  color: var(--fg-secondary);
-  font-size: var(--t-caption-size);
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: opacity var(--d-fast) var(--ease);
-}
-/* the mark keeps the kind's full strength — it is a symbol, not
-   text, and has no 4.5:1 to clear */
-.dsh-tile-kind svg {
-  flex: none;
-  color: var(--kind);
-}
-
-/* TOUCH TARGETS. The mechanism and the measurements are in
-   ds.css beside `.k-filter`; these are this screen's three. */
-@media (pointer: coarse) {
-  .dsh-open,
-  .dsh-act,
-  .dsh-tile-grip {
-    position: relative;
-  }
-  .dsh-open::after,
-  .dsh-act::after,
-  .dsh-tile-grip::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: max(100%, 44px);
-    height: max(100%, 44px);
-    transform: translate(-50%, -50%);
-  }
-}
-
-/* ============================================================
-   A SCROLLER NOBODY CAN SEE IS A SCROLLER NOBODY USES.
-
-   Measured at 1280x800 with seven cards on: `.dsh-grid` demands
-   1248px against 992px of room, so 256px — a whole card column —
-   sat outside the window. `offsetHeight - clientHeight` was 0:
-   this platform paints an OVERLAY scrollbar, which appears while
-   you are already scrolling and is invisible until then. A page
-   with more to the right looked exactly like a page that ended.
-
-   `scrollbar-width: thin` with a colour takes the classic
-   scrollbar back, which occupies layout and is therefore always
-   visible while there is something to reach — the same pair of
-   declarations `shell.css` already uses on the view stage.
-
-   THE COLOUR IS A PAGE TOKEN AND NOT A CHROME ONE. `shell.css`
-   spends `--chrome-wash-on` there, which is 13% of #f2f7fc — it
-   is mixed from the RAIL's near-white ink for use on navy. On the
-   dashboard's light ground that thumb is very nearly the surface
-   it sits on. `--line-strong` is the page side of the same idea.
-   ============================================================ */
-.dsh-grid {
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
-}
-.dsh-grid::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-.dsh-grid::-webkit-scrollbar-thumb {
-  border: 3px solid transparent;
-  border-radius: 5px;
-  background: var(--line-strong);
-  background-clip: content-box;
-}
-
-/* ---------------------------------------------------------- */
-/* THE TILE WITHOUT A MARK                                     */
-/* ---------------------------------------------------------- */
-
-/* EVERY RULE ABOVE IS DRAWN FOR A LOGO, AND NO MODULE HAS ONE.
-   `.dsh-tile-panel:has(img)` hides the name because the mark is the
-   face; the panel is 112px because a mark needs room; the grid is
-   `minmax(240px, …)` because at 190px "the wordmarks came out
-   seventeen pixels tall". All correct — and none of it applies to
-   the 25 seeded modules, not one of which carries a logo. What they
-   get instead is a name floating in the middle of a 112px field of
-   kind colour, four fifths of the tile spent on nothing, and 3.47 of
-   25 modules visible at 1280x800.
-
-   It is also against the contract. DESIGN_CONTRACT §11: "Kind hue is
-   a rail, a dot or a glyph — never a fill behind text, never chrome."
-   The panel is `color-mix(--kind 14%, --surface-1)` with the name
-   centred on top of it, and `.dsh-tile`'s own comment says the quiet
-   part out loud: "THE KIND IS THE GROUND, NOT A RAIL."
-
-   So when there is no mark, the tile stops pretending to be a
-   showpiece and becomes what it actually is: a name, its kind and its
-   count. The hue moves to the rail the contract asks for. Upload a
-   logo and every rule above takes over again untouched — this whole
-   block is scoped behind `:not(:has(img))` and disappears. */
-
-.dsh-tiles:not(:has(img)) {
-  /* 240 bought height for a wordmark. With no wordmark to size for,
-     200 fits a second column in the same card. */
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-}
-
-/* NO `overflow: hidden` HERE. It was added to clip the rail and it
-   collapsed the tile to 31px — the foot, which carries the kind and
-   the row count, laid out below the box and was cut off. Measured:
-   65px with `overflow: visible`, 31px with it hidden. The rail
-   carries its own `border-radius`, so there was nothing to clip. */
-.dsh-tile:not(:has(img)) {
-  background: var(--surface-1);
-}
-
-/* The rail the contract asks for, in the hue the plate used to be. */
-.dsh-tile:not(:has(img))::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--kind);
-  border-radius: var(--r-control) 0 0 var(--r-control);
-}
-
-.dsh-tile:not(:has(img)) .dsh-tile-panel {
-  min-height: 0;
-  justify-content: flex-start;
-  padding: var(--s-3) var(--s-3) 0 calc(var(--s-3) + 3px);
-  background: transparent;
-  border-bottom: 0;
-}
-
-.dsh-tile:not(:has(img)) .dsh-tile-name {
-  text-align: left;
-  /* two lines, not three: "Dunbier / Haines BMT Trailers" is the
-     longest name in the seed and it sets on two at this width. */
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-}
-
-.dsh-tile:not(:has(img)) .dsh-tile-foot {
-  padding-left: calc(var(--s-3) + 3px);
-}
-
-/* ============================================================
-   THE DOORS — the catalogue, entered by kind.
-
-   WHAT THEY REPLACED, MEASURED. At 1280x800 on the real set, the
-   bottom-left card of the front door was the activity log: a
-   264.9px body with 88.1px of content in it, 176.8px of nothing,
-   66.7% of the card. It was the emptiest surface on the screen
-   and the only one that fills with time rather than with an act.
-   These four doors take that slot, and they are the only route
-   this dashboard has ever had from the front door into the
-   catalogue by KIND — every other route goes through a brand.
-
-   THE PHOTOGRAPH IS THE COLOUR (PHASE_TWO §1b: 220 real
-   photographs "reduced to card headers and 32px thumbnails; in a
-   catalogue they ARE the palette"), and the kind's hue is the
-   plate underneath it — the same 14% the module tile's panel
-   carries, so a boat is the same blue here, on the modules card,
-   in the rail and on its own page.
-
-   AND NO TYPE SITS ON A PHOTOGRAPH. Rule 4 wants every
-   text/background pair MEASURED at 4.5:1, and a photograph has
-   no ground that can be measured — a white hull and a sunset are
-   two different backgrounds under one line. So the name and the
-   count sit on the door's own surface beneath the picture, where
-   the ratio is the one the ink ramp was measured at.
-
-   ------------------------------------------------------------
-   WHAT THE DISPLAY TIER PASS CHANGED HERE, AND WHY THE DOORS ARE
-   WHERE IT LANDED.
-
-   The subject of the front door is the drafts and the doors. The
-   drafts live on the card above and carry `--t-figure-xl`; these
-   carry `--t-display-xl` — see `.dsh-door-name` for why not the
-   marque, why not the hero, and what the cell does at the two
-   widths where it cannot hold that step.
-
-   THE PICTURES CAME WITH IT, and they are the half that was
-   costing this card its whole reason. Measured at 1280x800 on the
-   real seed:
-
-     the door's plate     60.8px tall  ->  108.3px
-     the door's name        15px      ->   26.9px
-     the card              311.2px    ->  434.8px
-
-   The 123.6px is not new space; it is the space the top row was
-   holding and could not use. §1b asks for the photographs to be
-   the palette; at 223x61 they were a letterbox, and doubling the
-   plate is the difference between a picture of a boat and a strip
-   of blue.
-   ------------------------------------------------------------ */
-
-.dsh-doors {
-  display: grid;
-  /* TWO COLUMNS, FIXED, AND `auto-fill` WAS THE WRONG QUESTION.
-     With `repeat(auto-fill, minmax(200px, 1fr))` the card laid
-     three tracks at 1920 and four doors came out 3 + 1 — a ragged
-     row with a door-shaped hole beside the last one, which is the
-     fault `shelfFor` was written to remove from the table board.
-     Two tracks divide the four kinds a marine dealer has exactly,
-     and they divide any even set; an odd set leaves one hole
-     wherever the tracks are, so the tracks may as well be the
-     ones that make each door biggest. Measured across the four
-     sizes this app is used at: 396px wide at 1920, 264 at 1440,
-     225 at 1280, 173 at 1024. */
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  /* AN EQUAL SHARE OF THE CARD, WITH A FLOOR — AND THE FLOOR WENT
-     UP WITH THE NAME. Four doors take two rows of whatever height
-     the card has. 104px was the floor when the caption was a 15px
-     heading over a 12px count, about 40px of words; the name is
-     the display step now and the caption is 68px, so 104 would
-     leave 34px of photograph — a colour swatch rather than a
-     picture. 132 is the caption plus the plate's own 56px minimum
-     plus the border, which is the smallest door that still keeps
-     its promise: a name at display size and a photograph under it.
-     A business with six kinds behind one module each gets three
-     rows, and the CARD scrolls — a strip that does not fit scrolls
-     rather than being cut (§3). */
-  grid-auto-rows: minmax(132px, 1fr);
-  /* AND IT TAKES THE ROOM, so `1fr` has something to be a share
-     OF. `.dsh-card-body` is a column flex box, and a grid that
-     only asks for its content height leaves its rows at their
-     minimum: measured at 1920 the doors sat 116.6px tall in a
-     391px card with 145.1px of air under them, which is the same
-     emptiness this card was put here to replace. */
-  flex: 1 1 auto;
-  gap: var(--s-2);
-  min-height: 0;
-  overflow-y: auto;
-  /* a hair of inset so a focus ring is never cropped, and the
-     scrollbar's width given back on the right — the same two
-     lines `.dsh-tiles` keeps, for the same two reasons */
-  padding: 1px var(--s-1) var(--s-1) 1px;
-  margin: 0 calc(var(--s-2) * -1) 0 -1px;
-}
-
-.dsh-door {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  text-align: left;
-  cursor: pointer;
-  border-radius: var(--r-control);
-  /* THE DOOR IS A CONTAINER, AND ITS OWN WIDTH IS THE ONLY HONEST
-     QUESTION THE NAME CAN ASK. `--t-display-xl` fits or does not fit
-     according to the room THIS cell has, and that is not a function
-     of the window: measured on the real seed, a 950px window draws a
-     336px door (the dashboard is one column of cards there) and a
-     960px window draws a 157px one (it has just become two). A
-     `@media` rule would step the name DOWN at the width where the
-     cell more than doubles. The ladder under `.dsh-door-name` reads
-     the cell instead. */
-  container: dsh-door / inline-size;
-  /* THE SAME GROUND A TILE OF THIS KIND WEARS. 6% is a tint the
-     name still clears 4.5:1 against, and it is what makes the
-     doors read as four families rather than four boxes. */
-  background: color-mix(in srgb, var(--kind) 6%, var(--surface-1));
-  border: 1px solid color-mix(in srgb, var(--kind) 14%, var(--line-subtle));
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.dsh-door:hover {
-  background: color-mix(in srgb, var(--kind) 11%, var(--surface-1));
-  border-color: color-mix(in srgb, var(--kind) 30%, transparent);
-  box-shadow: var(--e2);
-}
-/* PRESS IS A CARD'S PRESS, NOT A CONTROL'S — and it has to be
-   said in base.css's own selector shape to be heard.
-
-   MEASURED, in Chrome, before this: the door pressed at
-   `scale(0.97)` while its own rule said 0.994. `base.css:432`
-   presses every button at `scale(var(--press-scale))` from
-   `button:not(:disabled):not([aria-disabled='true']):active`,
-   which computes to (0,3,1) and beats a plain `.dsh-door:active`
-   at (0,2,0) — deliberately, and its own comment says so: the
-   four rules it overrules all CANCELLED their feedback.
-
-   This is not one of those. DESIGN_CONTRACT §11 asks a card for
-   0.994 and CONFIGURATOR_PLAYBOOK §6 gives the number its reason:
-   0.97 on a 225px door is a 6.75px shrink and reads as a glitch,
-   where 0.994 is 1.35px. `src/styles/**` is not this feature's to
-   edit, so the feature states its own press in its own sheet in
-   the same selector shape — (0,4,0), winning on class count
-   rather than on source order. `build.css:949` is the worked
-   example and the argument in full.
-
-   The hover lift goes with it, which is the other half of the
-   same row in the motion table: on a big surface the press is
-   SEEN, not felt. */
-.dsh-door:not(:disabled):not([aria-disabled='true']):active {
-  transform: scale(0.994);
-  box-shadow: none;
-}
-
-/* ---- the plate: the photograph, or the kind's own mark ----- */
-
-.dsh-door-plate {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* the picture takes the room the caption does not */
-  flex: 1 1 auto;
-  min-height: 56px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--kind) 14%, var(--surface-1));
-  border-bottom: 1px solid color-mix(in srgb, var(--kind) 20%, transparent);
-}
-
-.dsh-door-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  /* COVER, NOT CONTAIN — the same choice the catalogue tile makes.
-     These files run from 320x230 to 2560x1440; contained, the
-     narrow ones would sit in two bars of tint and the door would
-     stop reading as a photograph. */
-  object-fit: cover;
-  display: block;
-}
-
-/* THE MARK STANDS IN FOR A PHOTOGRAPH THAT IS NOT THERE, and goes
-   the moment one is really painted. `:has(img)` asks the element
-   that answered the question rather than re-deciding here — the
-   arrangement `.dsh-tile-panel` already keeps. */
-.dsh-door-mark {
-  display: inline-flex;
-  color: var(--kind);
-}
-.dsh-door-plate:has(img) .dsh-door-mark {
-  display: none;
-}
-
-/* ---- the caption: the kind, and what is behind it ---------- */
-
-.dsh-door-say {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  /* 2px, AND IT WAS 1. A 12px count under a 27px name wants a
-     little more air than a 12px count under a 15px name did — the
-     gap is read relative to the type above it, not absolutely. */
-  gap: 2px;
-  min-width: 0;
-  /* the side padding is the second half of the name's ladder and
-     steps to 8px with it — the rung is stated under
-     `.dsh-door-name`, where the 10 pixels it buys are counted */
-  padding: var(--s-2) var(--s-3) var(--s-3);
-}
-
-/* ------------------------------------------------------------
-   THE DOOR'S NAME IS THE DISPLAY STEP, AND THIS IS WHERE THE
-   DISPLAY TIER LANDS ON THE FRONT DOOR.
-
-   IT WAS `.ds-heading` — 15px, the same step as the card's own
-   title, the module tile's name and every other heading on the
-   screen. Four kinds of thing a marine dealership sells, set at
-   the size the app uses for the word "Quotes".
-
-   `--t-display-xl-*` IS THE STEP, AND `--t-marque-*` IS NOT.
-   ds.css scopes the marque to "the name of the thing being sold,
-   ONE per screen, and only where the subject IS a product — the
-   configurator's identity column". Four doors are four names, and
-   a door is a way IN to a kind rather than a product with a
-   price. `--t-hero` is the other one ruled out: it is "the first
-   line of a stage", and there are four of these. What was left
-   until 2026-09-09 was `--t-display-lg`, and this is what taking
-   it cost:
-
-     before the tier   32.7px greeting    ÷ 11px  =  2.97x
-     after the tier    26.88px door name  ÷ 11px  =  2.44x  <- down
-     with this step    34.00px door name  ÷ 11px  =  3.09x
-
-   The middle row is `visual-qa-2026-09-09` finding 1, ranked the
-   worst of ten: the front door was the one stage in the app whose
-   largest glyph went DOWN when the display tier landed, and on a
-   fresh sheet — no drafts, so no `.dsh-worth-n` — 2.44x was the
-   whole screen. `--t-display-xl` is the step written to close it,
-   "A NAME THAT IS ONE OF SEVERAL AND IS THE POINT OF THE SCREEN",
-   and ds.css:1420 sized it against THIS cell, from this file's own
-   handover. The front door is what it was written for.
-
-   THE FOUR TOKENS RATHER THAN `.ds-display-xl`. ds.css's note
-   says take the class "unless you are writing a feature rule that
-   already owns the element", and this rule owns it. Two classes
-   on one element, both at (0,1,0), with this file loaded after
-   ds.css, is a cascade nobody can see: the utility would set the
-   size and this rule would set the colour, and the day somebody
-   adds a size here the utility silently loses. One rule, four
-   tokens, one place to look — and the class's own two extras come
-   with them: `text-wrap: balance`, and NO `overflow-wrap`.
-
-   ------------------------------------------------------------
-   THE CELL, RE-MEASURED — AND TWO THINGS EVERY EARLIER NOTE SAID
-   ABOUT IT ARE WRONG.
-
-   In Chrome on the real seed, through the live element rather than
-   through canvas, so tracking and the width axis are in the
-   figure. The widest of the four kind labels a marine dealer has:
-
-     window   door   room   "Accessories" wants    verdict
-       1024    173    147    166.0 at 30.00px      OVER by 19
-       1280    225    199    188.1 at 34.00px      fits, 10.9 over
-       1440    265    239    202.0 at 36.50px      fits, 37.0 over
-       1920    385    359    243.5 at 44.00px      fits, 115.5 over
-
-   FIRST: THE CELL GETS WIDER AS THE WINDOW GROWS, not narrower.
-   `.dsh-doors` is `repeat(2, minmax(0, 1fr))` and has been since
-   the two-track argument above was settled. The sentence that said
-   "the grid answers a wider window with MORE columns, so the door
-   measures 225px at 1280 and 165px at 1920" was describing the
-   `auto-fill` template that rule replaced; ds.css:1455 carries the
-   same stale sentence forward from this file's handover, and 1920
-   is in fact the width with the MOST room of any measured here.
-
-   SECOND: 1024 IS WHERE THIS CELL IS TIGHT, AND IT WAS ALREADY
-   BROKEN THERE. `--t-display-lg` bottoms at 26px, where
-   "Accessories" wants 149.3px, and the 1024 cell has 147. So the
-   step this rule carried until today DID NOT FIT at 1024 either,
-   and `overflow-wrap: break-word` was breaking the word across two
-   lines — measured on the shipping tree, before this change. §3
-   forbids that outright. The sweep missed it because its mid-word
-   test only walked elements with `text-overflow: ellipsis`.
-
-   SO THE NAME STEPS DOWN A WHOLE SET WHEN ITS CELL CANNOT HOLD
-   ONE, which is what ds.css:1455 asks of any surface wearing this
-   step and what `build.css:649` already does for the marque.
-   "Accessories" costs 5.533x the font-size at `--t-display-xl`
-   (wdth 100, -0.032em) and 5.740x at `--t-display-lg` (wdth 103,
-   -0.028em) — straight-line to the pixel across three sizes each —
-   so every rung is a division rather than a guess:
-
-     rung          cell       size there      clears by
-     display-xl    >= 220px   34.0px @1280    8 to 116px
-     display-lg    >= 168px   26.0px @1024    1 to 48px
-     title         <  168px   20px, in Inter  27 to 37px
-
-   THE THIRD RUNG LEAVES THE DISPLAY FACE, ON PURPOSE. Between a
-   955px window and a 1002px one the dashboard has just become two
-   columns of cards, and the door is at its narrowest of any width
-   this app is used at: 157px, 139px of room. The smallest
-   "Accessories" the display face may draw is 26px and it wants
-   149.3px there, so NO display step fits, and §2's floor — no
-   display face below 26px — is a floor rather than something to
-   shave. `--t-title-*` whole, in the sans, is what a name in a
-   cell that cannot hold display type is: a panel header. That
-   47px band is the one place where this screen's ratio and §3's
-   promise disagree, and the promise wins.
-
-   THE PADDING STEPS WITH THE TYPE, and it is worth 8 of the 10
-   pixels the second rung needs. `.dsh-door-say` spends 12px a side
-   at full size and 8 at the narrow rungs — the same decision as
-   the type, one line further out: less room, less of everything.
-
-   AND THE THRESHOLDS ARE MEASURED AGAINST "Accessories", this
-   business's longest kind. A dealership whose kinds are longer
-   steps down one rung earlier than it strictly needs to, which is
-   the safe direction to be wrong in; one whose kinds are all short
-   never sees the third rung.
-
-   WHAT IS STILL NOT HERE. 3.09x is not the 7x PHASE_TWO §2.3 asks
-   for. 199px of room divided by 5.533 is 35.97px, so 3.27x is this
-   COMPOSITION's ceiling at 1280, and the two shapes that would
-   lift it were measured and rejected: a door spanning two grid
-   columns puts a third column on a 1280 stage that has room for
-   two and turns the front door into a sideways scroller, and a
-   single column of four bands cuts the photograph from 24,084px2
-   to 18,040 — undoing, for 16px of type, the plate this same pass
-   doubled because §1b asks the photographs to BE the palette. The
-   next pixel of scale on this screen is paid for in photograph.
-   ------------------------------------------------------------ */
-.dsh-door-name {
-  color: var(--fg);
-  min-width: 0;
-  font-family: var(--font-hero);
-  /* 100 at display-xl — ds.css's width ladder gives this step the
-     least room of any, because "a name in a CELL, four to a
-     screen" is the least room a display step gets. Stated rather
-     than inherited, so a door dropped inside an extended host
-     cannot pick the host's width axis up. */
-  font-variation-settings: 'wdth' 100;
-  font-size: var(--t-display-xl-size);
-  font-weight: var(--t-display-xl-weight);
-  line-height: var(--t-display-xl-lead);
-  letter-spacing: var(--t-display-xl-track);
-  /* A KIND'S NAME IS STILL A NAME — rule 3, so it is not uppercase
-     and not tracked out. `balance` because a two-line name at this
-     step with one word on the second line is visible from across
-     the room. */
-  text-wrap: balance;
-}
-
-/* RUNG 2 — the cell cannot hold `--t-display-xl`, so it takes the
-   whole of the step below. 219px is the last door at which
-   "Accessories" does NOT clear by 8px at the size that width
-   resolves to; 1280 draws a 225px door and clears by 10.9. */
-@container dsh-door (max-width: 219px) {
-  .dsh-door-name {
-    /* 103 is the width ladder's own figure for display-lg */
-    font-variation-settings: 'wdth' 103;
-    font-size: var(--t-display-lg-size);
-    font-weight: var(--t-display-lg-weight);
-    line-height: var(--t-display-lg-lead);
-    letter-spacing: var(--t-display-lg-track);
-  }
-  .dsh-door-say {
-    padding-inline: var(--s-2);
-  }
-}
-
-/* AND THE SECOND RUNG OWES WHAT `.ds-display-lg` OWES. ds.css:1976
-   returns that step to `wdth` 100 under `prefers-contrast: more` —
-   "an extended width costs a little counter at high contrast" — and
-   it does it on the CLASS, which this rule deliberately does not
-   take. Without this the one door in the app wearing display-lg
-   would keep its extension where every other surface gave it up.
-   Rung 1 needs no arm: it states 100 already, exactly as
-   `.ds-display-xl` does. Written BEFORE rung 3 so the sans keeps
-   `normal` rather than being handed a width axis it does not have. */
-@media (prefers-contrast: more) {
-  @container dsh-door (max-width: 219px) {
-    .dsh-door-name {
-      font-variation-settings: 'wdth' 100;
-    }
-  }
-}
-
-/* RUNG 3 — no display step fits, so the name is not display type.
-   167px is the widest door where 26px overflows even with the
-   caption at 8px a side, and it exists for about 47px of window
-   width either side of the dashboard becoming two columns.
-
-   `break-word` IS BACK HERE AND ONLY HERE. The rungs above step
-   down instead of breaking, which is the whole ladder; this rung
-   has nothing below it, so the choice for a name longer than
-   "Accessories" is a wrap or a silent clip against
-   `.dsh-door { overflow: hidden }`. §3 asks for the full text in
-   the DOM, and a clip is the one thing that does not give it. */
-@container dsh-door (max-width: 167px) {
-  .dsh-door-name {
-    font-family: var(--font-sans);
-    /* Inter has no width axis; 'wdth' 103 would resolve against it
-       and do nothing, which is the dead-declaration trap
-       DESIGN_PRINCIPLES §2 records sixteen of */
-    font-variation-settings: normal;
-    font-size: var(--t-title-size);
-    font-weight: var(--t-title-weight);
-    line-height: var(--t-title-lead);
-    letter-spacing: var(--t-title-track);
-    overflow-wrap: break-word;
-  }
-}
-
-/* THE FIGURE IS INK AND MONO, NEVER THE HUE. §1: a price is not
-   decorative and neither is a count. `.dsh-empty-n` inside it is
-   the mono span `splitCount` writes. */
-.dsh-door-n {
-  color: var(--fg-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-/* MOVEMENT GOES, COLOUR AND LIGHT STAY — §4's own words, and the
-   whole of the escape this file owes for the transform above.
-
-   IT IS HERE AND NOT IN THE BLOCK ABOVE because the press is
-   stated at (0,4,0) to be heard over base.css, and two rules of
-   equal weight are decided by source order: written up there it
-   loses to the press written down here, which is a reduced-motion
-   escape that silently does nothing. Measured both ways. */
-@media (prefers-reduced-motion: reduce) {
-  .dsh-door {
-    transition-property: background, border-color, box-shadow;
-  }
-  .dsh-door:not(:disabled):not([aria-disabled='true']):active {
-    transform: none;
-  }
-}
+/* REDUCED MOTION. Nothing in this file moves: the two grips
+   transition colour and opacity only, and every press and hover
+   lift on this screen is drawn by src/ui, which carries its own
+   reduced-motion arm. Stated rather than left silent — the
+   absence is the answer, not an oversight. */

@@ -75,7 +75,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
-import { ArrowLeft, CaretLeft } from '@phosphor-icons/react'
+import { CaretLeft } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { nowIn } from '@/features/activity'
 import { accentVar } from '@/types/model'
@@ -86,6 +86,7 @@ import {
   NewModuleDialog,
 } from '@/features/modules'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 import { ViewStage } from './ViewStage'
@@ -343,15 +344,15 @@ export function ModuleStage({
             it would point at itself. */}
         {open ? (
           <div className="shell-quote-acts">
-            <button
-              type="button"
-              className="btn shell-quote-act"
+            <Button
+              tone="neutral"
+              size="sm"
               aria-label="Back to all modules"
+              glyph={<CaretLeft size={ICON_SIZE.tiny} weight="bold" />}
               onClick={() => onOpen(null)}
             >
-              <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
               All modules
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>

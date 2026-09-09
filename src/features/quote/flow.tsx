@@ -78,6 +78,7 @@ import type { ReactElement, ReactNode } from 'react'
 import { CaretDown } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from './pricing'
+import { Button } from '@/ui'
 import './build.css'
 import './flow.css'
 
@@ -162,11 +163,10 @@ export interface FlowLineProps {
 }
 
 export function FlowLine({ at, facts, onGo, reach = [] }: FlowLineProps): ReactElement {
-  const here = ORDER.indexOf(at)
   return (
     <nav className="qf-line" aria-label="Raising a quote">
       <ol className="qf-stops">
-        {ORDER.map((id, i) => {
+        {ORDER.map((id) => {
           const fact = facts[id] ?? ''
           const on = id === at
           const can = !on && reach.includes(id) && onGo !== undefined
@@ -176,21 +176,22 @@ export function FlowLine({ at, facts, onGo, reach = [] }: FlowLineProps): ReactE
               {fact === '' ? null : <span className="qf-stop-fact">{fact}</span>}
             </>
           )
+          /* A REACHABLE STOP IS A <Button>, the ghost tone at the small
+             size — hover, press and focus come with it, and the local
+             `.qf-go` button rule that drew its own went. A stop nothing
+             can reach is a span in the same box (`.qf-still`), so the
+             three sit on one line at one height. The stop you are on
+             is always a still one: `can` is false for it. `is-done` is
+             gone — a stop behind you never read differently from one
+             ahead, and a class with no rule is an orphan. */
           return (
-            <li
-              key={id}
-              className={`qf-stop${on ? ' is-here' : ''}${i < here ? ' is-done' : ''}`}
-            >
+            <li key={id} className={`qf-stop${on ? ' is-here' : ''}`}>
               {can ? (
-                <button
-                  type="button"
-                  className="qf-go"
-                  onClick={(e) => onGo?.(id, pressedBy(e.detail))}
-                >
+                <Button tone="ghost" size="sm" onClick={(e) => onGo?.(id, pressedBy(e.detail))}>
                   {body}
-                </button>
+                </Button>
               ) : (
-                <span className="qf-go qf-go--flat" aria-current={on ? 'step' : undefined}>
+                <span className="qf-still" aria-current={on ? 'step' : undefined}>
                   {body}
                 </span>
               )}

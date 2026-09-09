@@ -42,6 +42,7 @@
 import { useProjectStore } from '@/store/useProjectStore'
 import { realDemoSet, startingPointWords } from './demoLoad'
 import { useDemoLoad } from './useDemoLoad'
+import { Button } from '@/ui'
 
 export interface EmptyStateProps {
   onCreateTable: () => void
@@ -84,13 +85,11 @@ export function EmptyState({ onCreateTable }: EmptyStateProps) {
           <span className="shell-dimline-tick" />
         </div>
 
-        <button
-          type="button"
-          className="btn btn-primary shell-invite-go"
-          onClick={onCreateTable}
-        >
-          Create your first table
-        </button>
+        <div className="shell-invite-go">
+          <Button tone="primary" size="lg" onClick={onCreateTable}>
+            Create your first table
+          </Button>
+        </div>
 
         {real && words && (
           <button

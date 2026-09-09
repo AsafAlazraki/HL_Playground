@@ -14,16 +14,29 @@
    block it would land on is a page a customer reads, and a pin is not
    an argument that the business has resumed selling something.
 
-   Typing in here stops every animation on the page.
+   THE ROWS ARE `<Row>`. A row that can be pinned activates; a row
+   that cannot — already here, or no longer sold — is a STILL row,
+   with the reason under it in the words this file has always used.
+   The primitive has no refused state of its own (Button and Field
+   do), so the reason is not attached to a control the way it was
+   when this was an `aria-disabled` button; it is in the document,
+   directly under the row it is about, which is rule 10's "where it
+   is". What that loses — a keyboard stop on the refused row — is
+   reported where the primitives are, not patched here.
+
+   Typing in here stops every animation on the page: the stillness
+   provider derives that from focus itself, so the Field needs no
+   wiring to say so.
    ============================================================ */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
-import { MagnifyingGlass, Plus, X } from '@phosphor-icons/react'
+import { Plus, X } from '@phosphor-icons/react'
 import { isDiscontinued, rowLabel, type CellValue, type EntityDef, type RowData } from '@/types/model'
+import { ICON_SIZE } from '@/lib/icons'
+import { Button, Card, Field, Row } from '@/ui'
 import { bandOf, formatCell } from './columns'
 import { oneOf, singular } from './describe'
-import { useStillness } from './stillness'
 
 export interface AddPanelProps {
   entity: EntityDef
@@ -49,14 +62,15 @@ export function AddPanel({
   onPick,
   onClose,
 }: AddPanelProps): ReactElement {
-  const { beginTyping, endTyping } = useStillness()
   const [query, setQuery] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const searchId = useId()
   const byId = useMemo(() => new Map(entity.fields.map((f) => [f.id, f])), [entity])
 
+  /* the caret lands in the search the moment the panel opens — the
+     Field owns its input, so it is reached by the id it was given */
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+    document.getElementById(searchId)?.focus()
+  }, [searchId])
 
   const needle = query.trim().toLowerCase()
   const results = useMemo(() => {
@@ -83,7 +97,6 @@ export function AddPanel({
 
   return (
     <section
-      className="vw-add"
       aria-label={`Add ${oneOf(entity.name)}`}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
@@ -92,65 +105,40 @@ export function AddPanel({
         }
       }}
     >
-      <div className="vw-add-bar">
-        <MagnifyingGlass size={14} weight="light" aria-hidden="true" />
-        <input
-          ref={inputRef}
-          className="vw-add-input"
-          type="text"
-          value={query}
-          placeholder={`Search every ${one}…`}
-          aria-label={`Search ${entity.name}`}
-          spellCheck={false}
-          onFocus={beginTyping}
-          onBlur={endTyping}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button type="button" className="vw-icon-btn" onClick={onClose} title="Close">
-          <X size={13} weight="bold" />
-        </button>
-      </div>
+      <Card tone="flat" pad="none">
+        <div className="vw-add-bar">
+          <div className="vw-add-grow">
+            <Field
+              id={searchId}
+              label={`Search ${entity.name}`}
+              type="search"
+              value={query}
+              placeholder={`Search every ${one}…`}
+              onChange={setQuery}
+            />
+          </div>
+          <Button tone="ghost" size="md" aria-label="Close" title="Close" onClick={onClose}>
+            <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+          </Button>
+        </div>
 
-      {rows.length === 0 ? (
-        <p className="vw-add-none">
-          {entity.name} has no rows yet. Add some to the table and they will show up here.
-        </p>
-      ) : results.length === 0 ? (
-        <p className="vw-add-none">Nothing in {entity.name} matches “{query.trim()}”.</p>
-      ) : (
-        <ul className="vw-add-list">
-          {results.map((row) => {
-            const here = presentIds.has(row.id)
-            const inRule = fits(row)
-            const gone = isDiscontinued(row)
-            return (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  className="vw-add-row"
-                  /* ── `aria-disabled`, NEVER THE `disabled` ATTRIBUTE
-                     CONFIGURATOR_PLAYBOOK §5, verbatim: the row keeps
-                     its place in tab order, keeps its cells, and
-                     activating it re-announces the reason. Baymard's
-                     finding is that users seldom notice a disabled
-                     element or grasp the concept at all, and a native
-                     `disabled` button is also unreachable by keyboard
-                     and unreadable by a screen reader — so the one
-                     person who most needs the reason is the one who
-                     cannot get to it. The guard moves into the
-                     handler, where it is the same guard. */
-                  aria-disabled={here || gone}
-                  aria-describedby={gone ? `${row.id}-why` : undefined}
-                  onClick={() => {
-                    if (here || gone) return
-                    onPick(row.id)
-                  }}
-                  title={here ? 'Already on this page' : `Add ${rowLabel(entity, row)}`}
-                >
-                  <span className="vw-add-plus" aria-hidden="true">
-                    <Plus size={12} weight="bold" />
-                  </span>
-                  <span className="vw-add-name">{rowLabel(entity, row)}</span>
+        {rows.length === 0 ? (
+          <p className="vw-add-none">
+            {entity.name} has no rows yet. Add some to the table and they will show up here.
+          </p>
+        ) : results.length === 0 ? (
+          <p className="vw-add-none">Nothing in {entity.name} matches “{query.trim()}”.</p>
+        ) : (
+          <ul className="vw-add-list">
+            {results.map((row) => {
+              const here = presentIds.has(row.id)
+              const inRule = fits(row)
+              const gone = isDiscontinued(row)
+              const label = rowLabel(entity, row)
+              /* the cells beside the name, and the one chip that says
+                 what stands between this row and the page */
+              const meta = (
+                <>
                   <span className="vw-add-cells">
                     {columns.map((c) => (
                       <span key={c} className="vw-add-cell">
@@ -165,36 +153,42 @@ export function AddPanel({
                   ) : inRule ? null : (
                     <span className="vw-tag vw-tag--out">outside the rule</span>
                   )}
-                </button>
-                {/* ── THE REASON IS ON THE ROW, NOT IN THE TOOLTIP ──
-                    It was a `title`, which is DESIGN_CONTRACT §11's
-                    "every refusal says why, WHERE IT IS refused"
-                    failing on all three counts a tooltip fails on: it
-                    never appears on touch, it never appears on
-                    keyboard focus, and it takes a second of hover
-                    before it appears to a mouse. What was visible was
-                    the words "no longer sold" beside a dead control —
-                    which is Shopify Dawn's `"{{ option_value }} -
-                    Unavailable"`, the closest thing in e-commerce to
-                    what we do and the exact sentence this app exists
-                    to beat (explaining-a-refusal.md, cop-out 4).
-
-                    The form is §5's: the kind's own word, the file's
-                    fact about this option, the file's fact about
-                    where it is going — and then the fix, which is one
-                    box on a sheet the reader owns. */}
-                {gone ? (
-                  <p className="vw-add-why" id={`${row.id}-why`}>
-                    <b className="vw-add-word">Discontinued</b> — {entity.name} marks this
-                    one as no longer sold. A block is a page a customer reads. Clear its
-                    Discontinued box on the sheet to offer it again.
-                  </p>
-                ) : null}
-              </li>
-            )
-          })}
-        </ul>
-      )}
+                </>
+              )
+              return (
+                <li key={row.id}>
+                  {here || gone ? (
+                    <Row dense name={label} meta={meta} />
+                  ) : (
+                    <Row
+                      dense
+                      lead={<Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />}
+                      name={label}
+                      meta={meta}
+                      label={`Add ${label}`}
+                      onActivate={() => onPick(row.id)}
+                    />
+                  )}
+                  {/* ── THE REASON IS ON THE ROW, NOT IN THE TOOLTIP ──
+                      It was a `title` once, which fails on touch, on
+                      keyboard and for a second on a mouse. The form is
+                      §5's: the kind's own word, the file's fact about
+                      this option, the file's fact about where it is
+                      going — and then the fix, which is one box on a
+                      sheet the reader owns. */}
+                  {gone ? (
+                    <p className="vw-add-why">
+                      <b className="vw-add-word">Discontinued</b> — {entity.name} marks this
+                      one as no longer sold. A block is a page a customer reads. Clear its
+                      Discontinued box on the sheet to offer it again.
+                    </p>
+                  ) : null}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Card>
     </section>
   )
 }

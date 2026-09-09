@@ -45,6 +45,12 @@
    Section 3's every line traces to a cell in a workbook; sections 1
    and 2 draw what is in the project and say so plainly when that is
    nothing.
+
+   THE PANEL, ITS THREE WELLS AND EVERY ROW IN THEM ARE `<Card>`,
+   the captions are `<SectionHead>` and the disclosure is a ghost
+   `<Button>` — all from src/ui. The local rules that drew them
+   (`.md-panel`, `.md-rules-well`, `.md-rules-cap`, `.md-flow`,
+   `.md-linkbtn`) are deleted from modules.css.
    ============================================================ */
 
 import { useMemo, useState } from 'react'
@@ -62,6 +68,7 @@ import {
   useSentenceCtx,
 } from '@/features/constraints'
 import { kindLabel } from '@/features/constraints/columns'
+import { Button, Card, SectionHead } from '@/ui'
 import {
   constraintsFor,
   flowRulesFor,
@@ -151,139 +158,120 @@ export function ModuleRulesPanel({ module, tables }: ModuleRulesPanelProps): Rea
   const checked = seeds.filter((s) => liveIds.has(s.id) || s.enforcedIn).length
 
   return (
-    <section
-      className="md-panel"
-      id={rulesPanelId(module.id)}
-      aria-label={`The rules ${module.name} goes by`}
-    >
-      <h3 className="md-panel-name mono-label">The rules it goes by</h3>
-      {/* NO PARAGRAPH UNDER THE HEADING. It said every rule here
-          names a column on a table this module is about — which is
-          what the two captions below already say by naming them. */}
+    <Card tone="flat" pad="md" id={rulesPanelId(module.id)}>
+      <section className="md-panel" aria-label={`The rules ${module.name} goes by`}>
+        <SectionHead level="h3">The rules it goes by</SectionHead>
+        {/* NO PARAGRAPH UNDER THE HEADING. It said every rule here
+            names a column on a table this module is about — which is
+            what the two captions below already say by naming them. */}
 
-      {/* -- 1 · WHAT MUST ALWAYS BE TRUE ----------------------- */}
-      <div className="md-rules-well">
-        <p className="md-rules-cap mono-label">What must always be true</p>
-        <p className="md-rules-say">
-          {limits.length > 0 ? (
-            <>
-              {' '}
-              <span className="md-rules-count">
-                {limits.length} {limits.length === 1 ? 'rule' : 'rules'}
-                {conflicts > 0
-                  ? ` · ${conflicts} disagreeing with the rows`
-                  : ''}
-              </span>
-            </>
-          ) : null}
-        </p>
+        {/* -- 1 · WHAT MUST ALWAYS BE TRUE ----------------------- */}
+        <Card tone="flat" pad="md">
+          <div className="md-stack">
+            <SectionHead
+              level="none"
+              count={
+                limits.length > 0
+                  ? `${limits.length} ${limits.length === 1 ? 'rule' : 'rules'}${
+                      conflicts > 0 ? ` · ${conflicts} disagreeing with the rows` : ''
+                    }`
+                  : undefined
+              }
+            >
+              What must always be true
+            </SectionHead>
 
-        {limits.length === 0 ? (
-          <p className="md-rules-none">
-            No rule anyone has written names a column on {subject} yet.
-          </p>
-        ) : (
-          <ul className="md-rules-list">
-            {limits.map((constraint) => (
-              <li key={constraint.id}>
-                <RuleCard
-                  constraint={constraint}
-                  status={statuses[constraint.id]}
-                  open={openId === constraint.id}
-                  onOpen={(open) => setOpenId(open ? constraint.id : null)}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+            {limits.length === 0 ? (
+              <p className="md-rules-none">
+                No rule anyone has written names a column on {subject} yet.
+              </p>
+            ) : (
+              <ul className="md-rules-list">
+                {limits.map((constraint) => (
+                  <li key={constraint.id}>
+                    <RuleCard
+                      constraint={constraint}
+                      status={statuses[constraint.id]}
+                      open={openId === constraint.id}
+                      onOpen={(open) => setOpenId(open ? constraint.id : null)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
 
-        {/* THE PICKER IS NARROWED, THE RULE IS NOT — and the builder
-            already says how far it reaches, counted from the sheet,
-            before anybody presses Add. One column is one column
-            wherever it appears: a rule written here about Max HP
-            holds on every boat table that has the column, not only
-            the ones in this module. */}
-        <NewRuleSentence
-          title={`Write a rule for ${module.name}`}
-          conceptKeys={conceptKeys}
-          onAdded={setOpenId}
-        />
-      </div>
+            {/* THE PICKER IS NARROWED, THE RULE IS NOT — and the builder
+                already says how far it reaches, counted from the sheet,
+                before anybody presses Add. One column is one column
+                wherever it appears: a rule written here about Max HP
+                holds on every boat table that has the column, not only
+                the ones in this module. */}
+            <NewRuleSentence
+              title={`Write a rule for ${module.name}`}
+              conceptKeys={conceptKeys}
+              onAdded={setOpenId}
+            />
+          </div>
+        </Card>
 
-      {/* -- 2 · WHAT THIS PLACE WORKS OUT ---------------------- */}
-      <div className="md-rules-well">
-        <p className="md-rules-cap mono-label">What this place works out</p>
-        {/* The sentence that stood here explained what a derivation
-            is. The rows below name each one and carry its own switch,
-            which is the explanation. */}
+        {/* -- 2 · WHAT THIS PLACE WORKS OUT ---------------------- */}
+        <Card tone="flat" pad="md">
+          <div className="md-stack">
+            <SectionHead level="none">What this place works out</SectionHead>
+            {/* The sentence that stood here explained what a derivation
+                is. The rows below name each one and carry its own switch,
+                which is the explanation. */}
 
-        {flows.length === 0 ? (
-          <p className="md-rules-none">Nothing works out a list from {subject} yet — Fitment builds those.</p>
-        ) : (
-          <ul className="md-flows">
-            {flows.map((f) => (
-              <FlowRow
-                key={f.rule.id}
-                governing={f}
-                table={tables.find((t) => t.id === f.tableId)}
-                onSet={(enabled) => updateRule(f.rule.id, { enabled })}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
+            {flows.length === 0 ? (
+              <p className="md-rules-none">
+                Nothing works out a list from {subject} yet — Fitment builds those.
+              </p>
+            ) : (
+              <ul className="md-flows">
+                {flows.map((f) => (
+                  <FlowRow
+                    key={f.rule.id}
+                    governing={f}
+                    table={tables.find((t) => t.id === f.tableId)}
+                    onSet={(enabled) => updateRule(f.rule.id, { enabled })}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        </Card>
 
-      {/* -- 3 · WHAT THE PRICE FILE STATES --------------------- */}
-      {/* ============================================================
-          THE LIST CAME OFF THIS PANEL AND THE COUNT STAYED.
-
-          MEASURED, this tab: 1,868 visible words with 1,537 of them
-          (82.3 %) in runs of twelve or more, against a house budget
-          of 20 %. The single largest contributor was this section —
-          sixteen `cn-src-line` provenance narratives, nine rule
-          statements, six "what is missing" paragraphs and two ledes,
-          and thirteen of those sentences appear VERBATIM on Business
-          rules, which draws every one of the same seeds.
-
-          TWO COMPONENTS WERE DRAWING ONE DATASET. `RulesLedger` is
-          the better of the two by a distance — grouped by subject,
-          led by the measured rate, the reasoning behind a disclosure,
-          the live reading walked on render — and it is on the screen
-          a person goes to for rules. `WorkbookRuleList` was the
-          earlier drawing and is deleted rather than left dormant: two
-          renderings of one set of seeds is the drift this repo has
-          already merged three times elsewhere.
-
-          WHAT THIS PANEL KEEPS IS THE PART BUSINESS RULES CANNOT SAY:
-          the CUT. How many of the file's rules are about the tables
-          this module is standing in, and how many of those are
-          actually checked. That is a fact about this module; the
-          evidence behind each rule is a fact about the rule.
-
-          NO ACT WAS ON THE LIST. It was read-only — no switch, no
-          door, no control of any kind — so nothing became
-          unreachable, and the reasons it carried are drawn in full,
-          per rule, on Business rules.
-          ============================================================ */}
-      <div className="md-rules-well">
-        <p className="md-rules-cap mono-label">From your price file</p>
-        {seeds.length === 0 ? (
-          <p className="md-rules-none">
-            <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
-            Nothing adjudicated so far talks about {subject} — which is not the same as there
-            being none.
-          </p>
-        ) : (
-          <p className="md-rules-say">
-            <span className="md-rules-count">
-              {seeds.length} {seeds.length === 1 ? 'rule' : 'rules'} about {subject} ·{' '}
-              {checked} checked
-            </span>{' '}
-            In full on Business rules.
-          </p>
-        )}
-      </div>
-    </section>
+        {/* -- 3 · WHAT THE PRICE FILE STATES --------------------- */}
+        {/* THE LIST CAME OFF THIS PANEL AND THE COUNT STAYED. Measured,
+            this tab: 1,868 visible words with 82.3 % of them in runs of
+            twelve or more, and thirteen of those sentences appeared
+            VERBATIM on Business rules, which draws every one of the
+            same seeds through `RulesLedger`. What this panel keeps is
+            the part Business rules cannot say: the CUT — how many of
+            the file's rules are about the tables this module is
+            standing in, and how many of those are actually checked. */}
+        <Card tone="flat" pad="md">
+          <div className="md-stack">
+            <SectionHead level="none">From your price file</SectionHead>
+            {seeds.length === 0 ? (
+              <p className="md-rules-none">
+                <Warning size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
+                Nothing adjudicated so far talks about {subject} — which is not the same as
+                there being none.
+              </p>
+            ) : (
+              <p className="md-rules-say">
+                <span className="md-rules-count">
+                  {seeds.length} {seeds.length === 1 ? 'rule' : 'rules'} about {subject} ·{' '}
+                  {checked} checked
+                </span>{' '}
+                In full on Business rules.
+              </p>
+            )}
+          </div>
+        </Card>
+      </section>
+    </Card>
   )
 }
 
@@ -310,52 +298,51 @@ function FlowRow({
   const where = `${ROLE_SAYS[governing.role]} ${table?.name ?? 'a table in this module'}`
 
   return (
-    <li className="md-flow">
-      <button
-        type="button"
-        className="md-switch"
-        role="switch"
-        aria-checked={rule.enabled}
-        aria-label={`${rule.name} — ${where}`}
-        onClick={() => onSet(!rule.enabled)}
-      >
-        <span className="md-switch-track" aria-hidden="true">
-          <span className="md-switch-knob" />
-        </span>
-        <span className="md-cap-id">
-          <span className="md-cap-label">{rule.name}</span>
-          <span className="md-cap-says">{where}</span>
-        </span>
-      </button>
-
-      {/* THE REASON IS THE EVIDENCE, and on the seeded rules it is
-          several hundred words of measurement — which is exactly what
-          makes them trustworthy and exactly what cannot be dumped into
-          a panel.
-
-          IT IS SHUT NOW, AND IT WAS NOT SHUT BEFORE. The paragraph was
-          clamped rather than hidden, and the clamp never bit: measured
-          on this panel at 1600x1000, both descriptions render in a
-          37px box 1241px wide and pressing this button changed that
-          height by 0px — 0px at 1280x800 as well. So the control
-          promised a reason that was already fully on screen, and the
-          two of them were 118 of the Pricing tab's 314 visible words.
-          Not one word is cut: the same string, verbatim, one press
-          away, which is the shape `RulesLedger` already uses for the
-          same material and for the same reason. */}
-      {rule.description ? (
-        <>
+    <li>
+      <Card tone="flat" pad="sm">
+        <div className="md-stack">
+          {/* THE SWITCH STAYS LOCAL. The layer has no switch yet — a
+              two-state control whose state is the knob's position,
+              not a colour — so this one keeps `.md-switch` and is
+              reported as the gap it is. */}
           <button
             type="button"
-            className="md-linkbtn"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
+            className="md-switch"
+            role="switch"
+            aria-checked={rule.enabled}
+            aria-label={`${rule.name} — ${where}`}
+            onClick={() => onSet(!rule.enabled)}
           >
-            {open ? 'Less' : 'Why it is what it is'}
+            <span className="md-switch-track" aria-hidden="true">
+              <span className="md-switch-knob" />
+            </span>
+            <span className="md-cap-id">
+              <span className="md-cap-label">{rule.name}</span>
+              <span className="md-cap-says">{where}</span>
+            </span>
           </button>
-          {open ? <p className="md-flow-say">{rule.description}</p> : null}
-        </>
-      ) : null}
+
+          {/* THE REASON IS THE EVIDENCE, and on the seeded rules it is
+              several hundred words of measurement — which is exactly
+              what makes them trustworthy and exactly what cannot be
+              dumped into a panel. Shut by default: the same string,
+              verbatim, one press away, which is the shape `RulesLedger`
+              already uses for the same material. */}
+          {rule.description ? (
+            <>
+              <Button
+                tone="ghost"
+                size="sm"
+                aria-expanded={open}
+                onClick={() => setOpen((v) => !v)}
+              >
+                {open ? 'Less' : 'Why it is what it is'}
+              </Button>
+              {open ? <p className="md-flow-say">{rule.description}</p> : null}
+            </>
+          ) : null}
+        </div>
+      </Card>
     </li>
   )
 }

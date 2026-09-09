@@ -17,14 +17,24 @@
    A scroll of fifty-one names is the filing cabinet the rail
    already collapses; two letters is faster than reading. The
    filter narrows what is DRAWN and changes nothing about what
-   is offered — the same distinction the view page draws
-   between a rule and a filter.
+   is offered.
+
+   IT IS DRAWN BY THE PRIMITIVES. The tray is a raised <Card>;
+   its caption is a <SectionHead> with the Close Button as its
+   action; the filter is a <Field> with a real label rather than
+   a placeholder standing in for one; every offer is an
+   activating <Row> — the mark leads, the name is the thing
+   scanned for, the one-line reason is its meta. The trailing
+   plus the old rows carried is gone: a Row that activates takes
+   no trail, and the caption above already says what pressing
+   does. dashboard.css keeps only the spaces between these.
    ============================================================ */
 
 import { useMemo, useState } from 'react'
 import type { JSX } from 'react'
-import { MagnifyingGlass, Plus, X } from '@phosphor-icons/react'
+import { X } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
+import { Button, Card, Field, Row, SectionHead } from '@/ui'
 import type { CardId, LinkTarget } from './arrangement'
 import { CARDS } from './cards'
 import { BAND_NAME, type LinkOffer } from './links'
@@ -73,93 +83,83 @@ export function Tray({
   }, [linkOffers, needle])
 
   const showFilter = kind === 'links' && linkOffers.length > FILTER_AT
+  const title = kind === 'cards' ? 'Cards you can add' : 'Fast actions you can add'
 
   return (
-    <div className="dsh-tray" role="group" aria-label={kind === 'cards' ? 'Cards you can add' : 'Fast actions you can add'}>
-      <div className="dsh-tray-head">
-        <p className="dsh-tray-name ds-heading">
-          {kind === 'cards' ? 'Cards you can add' : 'Fast actions you can add'}
-        </p>
-        {showFilter ? (
-          <label className="dsh-tray-find">
-            <MagnifyingGlass size={ICON_SIZE.tiny} weight={MARK_WEIGHT} aria-hidden="true" />
-            <input
-              className="dsh-tray-input"
-              value={q}
-              placeholder="Narrow this list"
-              aria-label="Narrow this list"
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </label>
-        ) : null}
-        <button type="button" className="dsh-drop" aria-label="Close" onClick={onClose}>
-          <X size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-        </button>
-      </div>
+    <div className="dsh-tray" role="group" aria-label={title}>
+      <Card tone="raised" pad="md">
+        <SectionHead
+          level="h3"
+          rule
+          action={
+            <Button tone="ghost" size="sm" aria-label="Close" onClick={onClose}>
+              <X size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+            </Button>
+          }
+        >
+          {title}
+        </SectionHead>
 
-      {kind === 'cards' ? (
-        cardOffers.length === 0 ? (
-          <p className="dsh-tray-empty ds-small">
-            Every card this build draws is already on your dashboard.
-          </p>
-        ) : (
-          <div className="dsh-tray-items">
-            {cardOffers.map((id) => (
-              <button
-                type="button"
-                key={id}
-                className="dsh-tray-item"
-                onClick={() => onAddCard(id)}
-              >
-                <span className="dsh-tray-mark" aria-hidden="true">
-                  <CardMark id={id} />
-                </span>
-                <span className="dsh-tray-say">
-                  <span className="dsh-tray-item-name ds-small">{CARDS[id].name}</span>
-                  <span className="dsh-tray-item-note ds-caption">{CARDS[id].says}</span>
-                </span>
-                <span className="dsh-tray-plus" aria-hidden="true">
-                  <Plus size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                </span>
-              </button>
-            ))}
+        {showFilter ? (
+          <div className="dsh-tray-find">
+            <Field type="search" label="Narrow this list" value={q} onChange={setQ} />
           </div>
-        )
-      ) : bands.length === 0 ? (
-        <p className="dsh-tray-empty ds-small">
-          {needle
-            ? `Nothing here is called “${q.trim()}”.`
-            : 'Everything there is to open is already a fast action.'}
-        </p>
-      ) : (
-        <div className="dsh-tray-bands">
-          {bands.map((b, i) => (
-            <div className="dsh-tray-band" key={`${b.band}-${i}`}>
-              <p className="ds-label dsh-tray-band-name">{BAND_NAME[b.band]}</p>
+        ) : null}
+
+        <div className="dsh-tray-body">
+          {kind === 'cards' ? (
+            cardOffers.length === 0 ? (
+              <p className="dsh-tray-empty ds-small">
+                Every card this build draws is already on your dashboard.
+              </p>
+            ) : (
               <div className="dsh-tray-items">
-                {b.items.map((o) => (
-                  <button
-                    type="button"
-                    key={`${o.target.kind}:${o.label}`}
-                    className="dsh-tray-item"
-                    onClick={() => onAddLink(o.target, o.label)}
-                  >
-                    <span className="dsh-tray-mark" aria-hidden="true">
-                      <LinkMarkGlyph mark={o.mark} />
-                    </span>
-                    <span className="dsh-tray-say">
-                      <span className="dsh-tray-item-name ds-small">{o.label}</span>
-                    </span>
-                    <span className="dsh-tray-plus" aria-hidden="true">
-                      <Plus size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                    </span>
-                  </button>
+                {cardOffers.map((id) => (
+                  <Row
+                    key={id}
+                    onActivate={() => onAddCard(id)}
+                    lead={
+                      <span aria-hidden="true">
+                        <CardMark id={id} />
+                      </span>
+                    }
+                    name={CARDS[id].name}
+                    meta={CARDS[id].says}
+                  />
                 ))}
               </div>
+            )
+          ) : bands.length === 0 ? (
+            <p className="dsh-tray-empty ds-small">
+              {needle
+                ? `Nothing here is called “${q.trim()}”.`
+                : 'Everything there is to open is already a fast action.'}
+            </p>
+          ) : (
+            <div className="dsh-tray-bands">
+              {bands.map((b, i) => (
+                <div className="dsh-tray-band" key={`${b.band}-${i}`}>
+                  <SectionHead level="h4">{BAND_NAME[b.band]}</SectionHead>
+                  <div className="dsh-tray-items">
+                    {b.items.map((o) => (
+                      <Row
+                        key={`${o.target.kind}:${o.label}`}
+                        onActivate={() => onAddLink(o.target, o.label)}
+                        lead={
+                          <span aria-hidden="true">
+                            <LinkMarkGlyph mark={o.mark} />
+                          </span>
+                        }
+                        name={o.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      )}
+      </Card>
     </div>
   )
 }

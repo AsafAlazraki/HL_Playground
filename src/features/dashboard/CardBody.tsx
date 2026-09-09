@@ -19,14 +19,23 @@
         blank rectangle and never a spinner over an answer that
         is already known to be zero.
 
-     3. EVERY FIGURE IS MONO AND TABULAR. `.ds-mono` and
-        `.ds-mono-sm` for figures inside a row; `.dsh-fig-n` for
-        the large counted ones, which is a whole type step — size,
-        weight, leading and tracking together (§2 rule 6) —
-        declared in dashboard.css because the system has no mono
-        step above 15px. DESIGN_PRINCIPLES §2: a number in a
-        column is what mono is for, and money lines up on the
+     3. EVERY FIGURE IS MONO AND TABULAR, BUT ONE PER CARD.
+        `.ds-mono` and `.ds-mono-sm` for figures inside a row; the
+        one figure a card is read for — the pipeline total, the
+        rows you sell from, the blockers — takes `--t-figure-xl`
+        whole, which ds.css argues is Archivo and tabular rather
+        than mono because at display size a fixed pitch sets
+        "$8,557" as "$8 , 557". DESIGN_PRINCIPLES §2: a number in
+        a column is what mono is for, and money lines up on the
         decimal because of it.
+
+   AND IT IS DRAWN BY src/ui. Every row is a <Row>, every act a
+   <Button>, every caption a <SectionHead>, every door a <Card>.
+   dashboard.css paints none of them; it keeps the layout, the
+   subject's display step and the pieces no primitive has a slot
+   for. Where a primitive cannot hold something this card needs,
+   the note beside the call site says what was not drawn and why
+   the primitive was not bent to fit.
 
    ONE ACCENT, AND IT IS NOT SPENT HERE. §1 asks for roughly four
    appearances a screen, and a page of cards each with an accent
@@ -38,8 +47,8 @@
 
    THE KIND HUES ARE A SEPARATE VOCABULARY AND THEY DO APPEAR —
    in one form, on the three cards that list things which HAVE a
-   kind. `Row` takes an optional `kind` and draws the kind's own
-   mark in the kind's own hue: a glyph, which is exactly what §1
+   kind. `KindMark` leads a Row with the kind's own mark in the
+   kind's own hue: a glyph, which is exactly what §1
    allows a second hue to be, beside a rail and a dot. It is
    never a tint behind a name, and never on a card's chrome — a
    dashboard of differently-tinted cards is still the theme
@@ -94,6 +103,7 @@ import { TABLE_KINDS } from '@/types/model'
 import type { ImageRef, TableKind } from '@/types/model'
 import { money } from '@/lib/money'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
+import { Button, Card, Row, SectionHead } from '@/ui'
 import type { CardId } from './arrangement'
 import {
   CARDS,
@@ -232,7 +242,9 @@ function Nothing({
 
   return (
     <div className="dsh-empty">
-      <p className="dsh-empty-state ds-label">{state ?? meta.state}</p>
+      {/* the state is a caption, not a heading in the outline: the
+          card's own h2 is directly above it */}
+      <SectionHead level="none">{state ?? meta.state}</SectionHead>
       <p className="dsh-empty-say ds-small">{say ?? meta.empty}</p>
       {/* THE FIGURE IS MONO AND THE WORDS AROUND IT ARE NOT — the
           same rule every other number on this page keeps (§2), and
@@ -243,9 +255,11 @@ function Nothing({
       {have ? <p className="dsh-empty-have ds-small">{splitCount(have)}</p> : null}
       {more}
       {act && onAct ? (
-        <button type="button" className="dsh-act" onClick={onAct}>
-          {act}
-        </button>
+        <p className="dsh-empty-act">
+          <Button tone="neutral" size="sm" onClick={onAct}>
+            {act}
+          </Button>
+        </p>
       ) : null}
     </div>
   )
@@ -286,99 +300,64 @@ function splitCount(say: string): ReactNode {
 }
 
 /** One large counted figure with the words that qualify it. The
- *  figure is mono because it is a figure; the words are not. */
+ *  lead figure is the card's display step; a second one is the
+ *  largest mono step. Never pressable: a figure is a fact, and
+ *  the way into the page behind it is the Open in the card head. */
 function Figure({
   n,
   say,
-  onPick,
   lead,
 }: {
   n: number
   say: string
-  onPick?: () => void
   /** the one figure on this card a person reads first */
   lead?: boolean
 }): JSX.Element {
-  const body = (
-    <>
-      <span className={`dsh-fig-n${lead ? ' is-lead' : ''}`}>
-        {n.toLocaleString()}
-      </span>
-      <span className="dsh-fig-say ds-caption">{say}</span>
-    </>
-  )
-  if (!onPick) return <div className="dsh-fig">{body}</div>
   return (
-    <button type="button" className="dsh-fig dsh-fig-btn" onClick={onPick}>
-      {body}
-    </button>
+    <div className="dsh-fig">
+      <span className={`dsh-fig-n${lead ? ' is-lead' : ''}`}>{n.toLocaleString()}</span>
+      <span className="dsh-fig-say ds-caption">{say}</span>
+    </div>
   )
 }
 
-/** A row in a card's list. It DARKENS on press rather than
- *  scaling (§4) so its neighbours do not look like they moved.
+/** THE KIND'S OWN MARK, at the head of a Row.
  *
- *  AND WHEN IT HAS A KIND, THE KIND CARRIES A SURFACE. `data-kind`
- *  is set on the ROW, not on the mark, which is what lets `--kind`
- *  resolve for both the full-height rail (`.k-rail`, ds.css) and
- *  the glyph inside it. That is the amendment §1 now carries: a
- *  hue may carry a rail, and it only ever appears on something
- *  that HAS that kind. Two things of one kind are one colour
- *  everywhere in the app.
+ *  `data-kind` on the mark sets `--kind` (ds.css), so the glyph
+ *  draws in the kind's hue — a glyph, which is exactly what §1
+ *  allows a second hue to be. It only ever appears on something
+ *  that HAS that kind: a table by what it holds, a quote by the
+ *  table its subject came off. Two things of one kind are one
+ *  colour everywhere in the app.
  *
- *  THE FIGURE IN THE TAIL IS NEVER THE HUE. A price is not
- *  decorative, so `tail` stays ink and mono however loud the rail
- *  beside it is.
+ *  THE HUE IS NEVER THE ONLY CARRIER: the glyph is a different
+ *  SHAPE per kind, so the row reads the same to somebody who
+ *  cannot separate indigo from amber. Measured on the real set,
+ *  the marks clear 4.09:1 at worst against every ground a row
+ *  wears — rest, hover and press, both themes.
  *
- *  THE HUE IS NEVER THE ONLY CARRIER either: the glyph is a
- *  different SHAPE per kind, so the row reads the same to
- *  somebody who cannot separate indigo from amber. */
-function Row({
-  title,
-  under,
-  tail,
-  kind,
-  label,
-  onPick,
-}: {
-  title: string
-  under?: ReactNode
-  tail?: ReactNode
-  /** WHAT THIS ROW IS. `EntityDef.kind` is a fact the dealer set,
-   *  and it is why "Rigging Kits" and "Highfield Inflatables" stop
-   *  reading as two lines of the same thing. */
-  kind?: TableKind
-  label: string
-  onPick: () => void
-}): JSX.Element {
+ *  THE ROW ITSELF IS src/ui's. The rail, the hover, the press and
+ *  the two type steps that used to be drawn here are Row's own;
+ *  the one thing Row has no slot for is a FIGURE at the end of an
+ *  activating line (its `trail` is controls, on a still row only),
+ *  so the sum on a quote and the count on a table sit at the far
+ *  edge of the meta line instead. Reported as the gap it is. */
+function KindMark({ kind }: { kind: TableKind }): JSX.Element {
   return (
-    <button
-      type="button"
-      className={`dsh-row${kind ? ' k-rail' : ''}`}
-      data-kind={kind}
-      onClick={onPick}
-      aria-label={label}
-    >
-      {kind ? (
-        <span className="dsh-row-mark" aria-hidden="true">
-          <TableKindSymbol kind={kind} size={ICON_SIZE.small} />
-        </span>
-      ) : null}
-      <span className="dsh-row-main">
-        <span className="dsh-row-title ds-small">{title}</span>
-        {under ? <span className="dsh-row-under ds-caption">{under}</span> : null}
-      </span>
-      {tail ? <span className="dsh-row-tail">{tail}</span> : null}
-    </button>
+    <span className="dsh-row-mark" data-kind={kind} aria-hidden="true">
+      <TableKindSymbol kind={kind} size={ICON_SIZE.small} />
+    </span>
   )
 }
 
 /** The last line of a card: where the whole list lives. */
 function More({ say, onPick }: { say: string; onPick: () => void }): JSX.Element {
   return (
-    <button type="button" className="dsh-more" onClick={onPick}>
-      {say}
-    </button>
+    <p className="dsh-more">
+      <Button tone="ghost" size="sm" onClick={onPick}>
+        {say}
+      </Button>
+    </p>
   )
 }
 
@@ -444,10 +423,11 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
   const line = (q: QuoteDef): JSX.Element => {
     const totals = quoteTotals(q)
     const customer = q.customer.name.trim()
+    const kind = kindFor(q)
     return (
       <Row
         key={q.id}
-        kind={kindFor(q)}
+        lead={kind ? <KindMark kind={kind} /> : undefined}
         /* THE CUSTOMER IS THE HEADING, and the subject was. A deal
            is a person waiting on an answer; the boat is what they
            are waiting on. The board's cards were already drawn this
@@ -457,33 +437,31 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
            A quote addressed to nobody says so rather than drawing
            an empty line — it is a real state and the most common
            one on a fresh sheet. */
-        title={customer || 'No customer yet'}
-        under={
-          <>
-            <span className="dsh-subject">{q.subjectLabel}</span>
+        name={customer || 'No customer yet'}
+        meta={
+          <span className="dsh-row-under">
+            <span>{q.subjectLabel}</span>
             <span className={`dsh-state${q.state === 'issued' ? ' is-issued' : ' is-draft'}`}>
               {q.state === 'issued' ? 'Issued' : 'Draft'}
             </span>
-          </>
-        }
-        tail={
-          /* A QUOTE WITH AN UNPRICED LINE DOES NOT PRINT A
-             CONFIDENT TOTAL. The document itself says so out loud;
-             a dashboard that rounded it into one number would be
-             the quieter version of the same fault. */
-          totals.unpricedCount > 0 ? (
-            <span className="dsh-sum is-partial ds-mono">
-              {money(totals.total)}
-              <span className="dsh-sum-note ds-caption">
-                {plural(totals.unpricedCount, 'line unpriced', 'lines unpriced')}
+            {/* A QUOTE WITH AN UNPRICED LINE DOES NOT PRINT A
+                CONFIDENT TOTAL. The document itself says so out
+                loud; a dashboard that rounded it into one number
+                would be the quieter version of the same fault. */}
+            {totals.unpricedCount > 0 ? (
+              <span className="dsh-sum is-partial ds-mono">
+                {money(totals.total)}
+                <span className="ds-caption">
+                  {plural(totals.unpricedCount, 'line unpriced', 'lines unpriced')}
+                </span>
               </span>
-            </span>
-          ) : (
-            <span className="dsh-sum ds-mono">{money(totals.total)}</span>
-          )
+            ) : (
+              <span className="dsh-sum ds-mono">{money(totals.total)}</span>
+            )}
+          </span>
         }
         label={`Open quote ${q.reference} \u2014 ${q.subjectLabel}`}
-        onPick={() => acts.onOpenQuote(q.id)}
+        onActivate={() => acts.onOpenQuote(q.id)}
       />
     )
   }
@@ -504,27 +482,33 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
 
   return (
     <>
+      {/* THE FILTERS ARE BUTTONS, AND THE ONE THAT IS ON IS THE
+          PRIMARY TONE. Button draws no look for `aria-pressed`
+          (reported), so the tone carries the state and the
+          attribute announces it — both set from the same
+          expression, so they cannot disagree. The count inside is
+          mono because it is a figure. */}
       <div className="dsh-lenses" role="group" aria-label="Which quotes">
         {QUOTE_LENSES.map((l) => (
-          <button
+          <Button
             key={l}
-            type="button"
-            className="dsh-lens"
+            size="sm"
+            tone={l === lens ? 'primary' : 'neutral'}
             aria-pressed={l === lens}
             onClick={() => setPicked(l)}
           >
             {LENS_NAME[l]}
-            <span className="dsh-lens-n ds-mono-sm">{counts[l].toLocaleString()}</span>
-          </button>
+            <span className="ds-mono-sm">{counts[l].toLocaleString()}</span>
+          </Button>
         ))}
-        <button
-          type="button"
-          className="dsh-lens dsh-lens-by"
+        <Button
+          size="sm"
+          tone={grouped ? 'primary' : 'neutral'}
           aria-pressed={grouped}
           onClick={() => setGrouped((v) => !v)}
         >
           By customer
-        </button>
+        </Button>
       </div>
 
       {list.length > 0 ? (
@@ -538,11 +522,11 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
               total still cannot jitter as it changes. The argument
               in full is beside the rule in dashboard.css. */}
           <b className="dsh-worth-n">{money(worth)}</b>
-          <span className="dsh-worth-say">
+          <span className="dsh-worth-say ds-small">
             across {plural(list.length, 'quote', 'quotes')}
           </span>
           {partial > 0 ? (
-            <span className="dsh-worth-note">
+            <span className="dsh-worth-note ds-caption">
               {partial === list.length && list.length === 1
                 ? 'one has a line with no price'
                 : `${partial} with a line not priced`}
@@ -601,15 +585,19 @@ function RecentlyOpened({ acts }: { acts: DashboardActs }): JSX.Element {
       {rows.map((r) => (
         <Row
           key={r.key}
-          title={r.title}
+          name={r.title}
           /* THE TABLE'S OWN KIND, resolved here rather than
              remembered: `resolveRecent` already dropped any pick
              whose subject is gone, so an entity that survives that
              is present and its kind is a fact. */
-          kind={entities[r.entityId] ? kindOf(entities[r.entityId].kind) : undefined}
-          under={r.under ? <span className="dsh-when">{r.under}</span> : undefined}
+          lead={
+            entities[r.entityId] ? (
+              <KindMark kind={kindOf(entities[r.entityId].kind)} />
+            ) : undefined
+          }
+          meta={r.under ? <span className="dsh-when">{r.under}</span> : undefined}
           label={`Open ${r.under || r.title}`}
-          onPick={() => acts.onOpenTable(r.entityId)}
+          onActivate={() => acts.onOpenTable(r.entityId)}
         />
       ))}
     </div>
@@ -678,55 +666,51 @@ function Proposals({
 
   return (
     <div className="dsh-propose">
-      <p className="dsh-propose-lead ds-label">{lead}</p>
+      <SectionHead level="h3">{lead}</SectionHead>
       <ul className="dsh-propose-list">
         {reading.proposals.map((p) => {
           const tables = plural(p.tables.length, 'table', 'tables')
           const rows = plural(p.rows, 'row', 'rows')
           const held = p.tables.map((t) => t.name)
           return (
-            /* THE KIND CARRIES THE ROW, as it carries a tile and a
-               chip — `data-kind` sets `--kind` (ds.css) and this is
-               a thing that HAS that kind, which is the whole of the
-               rule in §1. */
-            <li key={p.kind} data-kind={p.kind}>
+            <li key={p.kind}>
               {/* EVERYTHING IT WOULD DO IS IN THE LABEL, because a
                   proposal a person cannot check before pressing is
                   a guess with a button on it — and a reader who
                   cannot see the second line has to be able to check
-                  it too. */}
-              <button
-                type="button"
-                className="dsh-propose-row"
-                onClick={() => setAsked(p)}
-                aria-label={`Make ${p.name} from ${tables} — ${rows}: ${held.join(', ')}`}
-              >
-                <span className="dsh-propose-top">
-                  <span className="dsh-propose-mark" aria-hidden="true">
-                    <TableKindSymbol kind={p.kind} size={12} />
-                  </span>
-                  <span className="dsh-propose-name">{p.name}</span>
-                  {/* THE FIGURES ARE MONO AND THE NOUNS ARE NOT —
-                      the rule every other count on this page keeps */}
-                  <span className="dsh-propose-n" aria-hidden="true">
-                    <b className="dsh-propose-fig ds-mono">{p.tables.length}</b>{' '}
-                    {p.tables.length === 1 ? 'table' : 'tables'}
-                    {' · '}
-                    <b className="dsh-propose-fig ds-mono">{p.rows.toLocaleString()}</b>{' '}
-                    {p.rows === 1 ? 'row' : 'rows'}
-                  </span>
-                </span>
-                {/* THE TABLES IT WOULD HOLD, BY NAME. This line is
-                    the reason the proposal is allowed to exist:
-                    nothing is invented, and a person can read what
-                    they are about to agree to before they agree to
-                    it. It wraps rather than truncating — a list cut
-                    short with an ellipsis is the reduced count
-                    DESIGN_CONTRACT §5 refuses. */}
-                <span className="dsh-propose-holds" aria-hidden="true">
-                  {held.join(' · ')}
-                </span>
-              </button>
+                  it too. The kind's mark leads the Row, in the
+                  kind's hue: this is a thing that HAS that kind,
+                  which is the whole of the rule in §1. */}
+              <Row
+                onActivate={() => setAsked(p)}
+                label={`Make ${p.name} from ${tables} — ${rows}: ${held.join(', ')}`}
+                lead={<KindMark kind={p.kind} />}
+                name={p.name}
+                meta={
+                  <>
+                    {/* THE FIGURES ARE MONO AND THE NOUNS ARE NOT —
+                        the rule every other count on this page keeps */}
+                    <span className="dsh-propose-n" aria-hidden="true">
+                      <b className="dsh-propose-fig ds-mono">{p.tables.length}</b>{' '}
+                      {p.tables.length === 1 ? 'table' : 'tables'}
+                      {' · '}
+                      <b className="dsh-propose-fig ds-mono">{p.rows.toLocaleString()}</b>{' '}
+                      {p.rows === 1 ? 'row' : 'rows'}
+                    </span>
+                    {/* THE TABLES IT WOULD HOLD, BY NAME. This line
+                        is the reason the proposal is allowed to
+                        exist: nothing is invented, and a person can
+                        read what they are about to agree to before
+                        they agree to it. It wraps rather than
+                        truncating — a list cut short with an
+                        ellipsis is the reduced count
+                        DESIGN_CONTRACT §5 refuses. */}
+                    <span className="dsh-propose-holds" aria-hidden="true">
+                      {held.join(' · ')}
+                    </span>
+                  </>
+                }
+              />
             </li>
           )
         })}
@@ -882,149 +866,86 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
         ))}
       </ul>
 
+    {/* A TILE IS A ROW. The brand's mark leads — its own wordmark
+        where a dealer has given one, the kind's symbol where not,
+        and `PlaceMark` makes that call in one place — the name is
+        the thing scanned for, and the meta line is the kind, the
+        count and the quotes out on it. The kind's hue is on the
+        mark and nowhere else: a fill behind a name was the thing
+        DESIGN_CONTRACT §11 refuses, and Row has no kind ground to
+        refuse it with. */}
     <div className="dsh-tiles" ref={reorder.containerRef}>
-      {reorder.order.map((original, slot) => {
+      {reorder.order.map((original) => {
         const p = places[original]
         if (!p) return null
         const master = p.tableId !== undefined ? entities[p.tableId] : undefined
+        const kind = kindOf(p.kind)
         return (
           <div
             key={p.key}
             data-dsh-tile=""
-            /* THE KIND CARRIES THE TILE. `data-kind` sets `--kind`
-               (ds.css); the tile draws its mark plate from it, so
+            /* `data-kind` sets `--kind` (ds.css) for the mark, so
                the same brand is the same colour here, in the rail
                and on its own page. */
-            data-kind={kindOf(p.kind)}
-            className={`dsh-tile${reorder.held === slot ? ' is-held' : ''}${
-              p.retired ? ' is-held-back' : ''
-            }`}
+            data-kind={kind}
+            className={`dsh-tile${p.retired ? ' is-held-back' : ''}`}
           >
-            <button
-              type="button"
-              className="dsh-tile-face"
-              /* THE DOOR REMEMBERS WHICH BRAND WAS PRESSED.
-                 A module workspace opened at "Boats" above a card
-                 that said "Highfield" is the fault `openPlace.ts`
-                 exists to prevent: the grid records the table, the
-                 workspace stands there. The dashboard is a second
-                 grid onto the same places and owes the same fact. */
-              onClick={() => {
+            <Row
+              /* THE DOOR REMEMBERS WHICH BRAND WAS PRESSED. A module
+                 workspace opened at "Boats" above a card that said
+                 "Highfield" is the fault `openPlace.ts` exists to
+                 prevent: the grid records the table, the workspace
+                 stands there. */
+              onActivate={() => {
                 rememberPlace(p.moduleId, p.tableId)
                 acts.onOpenModule(p.moduleId)
               }}
-            >
-              {/* THE MARK IS THE HEADING WHERE THERE IS ONE.
-                  A brand's wordmark IS its name, set better than
-                  this application will ever set it, so drawing
-                  both is saying the same word twice — once in
-                  Highfield's own type and once in ours. The name
-                  is still here, underneath, and CSS hides it when
-                  a mark was actually painted.
-
-                  WHY CSS AND NOT A TERNARY. Whether a mark is
-                  drawn is decided inside `PlaceMark`: it needs a
-                  logo AND the app's permission to paint that
-                  address. A ternary here would be a second copy of
-                  that decision, and the day it disagreed the tile
-                  would be blank — no mark, and no name either.
-                  `:has(img)` cannot disagree, because it is asking
-                  the question of the thing that answered it. */}
-              <span className="dsh-tile-panel">
-                <PlaceMark
-                  logo={modules[p.moduleId]?.logo}
-                  name={p.name}
-                  master={master}
-                  size={ICON_SIZE.small}
-                  fallback="none"
-                />
-                <span className="dsh-tile-name">{p.name}</span>
-              </span>
-            </button>
-
-            {/* THE FOOT IS THE COUNT, AND UNDER THE CURSOR IT IS THE
-                TWO THINGS YOU CAME TO DO.
-
-                They occupy the SAME cell and cross-fade, so nothing
-                moves: a row of actions that appears by growing the
-                tile would shove every tile below it down the moment
-                the pointer crossed one, which is the reason most
-                hover-action grids feel broken. The count is what
-                you read; the actions are what you press; you are
-                never doing both in the same instant.
-
-                They are real buttons and not links-in-a-button:
-                nesting them inside the face would be invalid and
-                would make the whole tile ambiguous to a keyboard.
-                Reached by tabbing, and `:focus-within` on the tile
-                keeps them up while they are. */}
-            {/* THE FOOT IS A FIFTH OF THE TILE, and the mark is the
-                other four. It was closer to half and half, which
-                made the strip of small grey text compete with the
-                thing the tile exists to show.
-
-                THE HOVER BUTTONS ARE GONE. Quote and Catalog were
-                real, they worked, and they were the wrong answer:
-                two grey pills that appeared under the pointer, on a
-                card whose job is to get you INTO a module — where
-                both acts live anyway, with more room and more
-                context. The right fix is a fast module page, not a
-                shortcut past it.
-
-                WHAT THE ROOM BOUGHT INSTEAD IS THE QUOTE COUNT. How
-                many quotes are out on this brand is the one fact a
-                salesperson wants off a dashboard that a row count
-                cannot give them — 588 Highfield variants is the
-                catalogue's size and says nothing about the day. */}
-            <div className="dsh-tile-foot">
-              {/* THE KIND, AS A PILL WITH ITS OWN MARK.
-                  The category was a bare word here and the kind's
-                  symbol was nowhere on the tile at all — it came off
-                  when the brand wordmark became the face, on the
-                  reasoning that four glyphs repeated twenty-five
-                  times is wallpaper rather than identity.
-
-                  That reasoning holds for a glyph drawn LARGE in
-                  place of a mark. It does not hold for one at 12px
-                  beside the word it belongs to: there it is not
-                  competing with the wordmark above, it is telling
-                  you what sort of thing this brand sells, which the
-                  wordmark cannot. The colour key above the grid maps
-                  the hue; this names it on the tile. */}
-              {/* AND IT SAYS THE MODULE ONLY WHEN THAT IS NOT THE
-                  NAME ABOVE IT. Five of the twenty-five places are
-                  their own module — Yamaha Outboards, Parts &
-                  Accessories — so the pill printed the tile's own
-                  name a second time, sixty pixels under the first.
-                  Where they agree it says the KIND instead, which
-                  is the one thing the wordmark above cannot tell
-                  you and the thing the colour key teaches. */}
-              <span className="dsh-tile-kind" data-kind={kindOf(p.kind)}>
-                <TableKindSymbol kind={kindOf(p.kind)} size={12} />
-                {p.moduleName === p.name
-                  ? TABLE_KINDS[kindOf(p.kind)].label
-                  : p.moduleName}
-              </span>
-              <span className="dsh-tile-figs">
-                <span className="dsh-tile-sum ds-mono">
-                  {p.retired ? 'held' : p.census.items.toLocaleString()}
+              /* the name alone, not the name and its meta line —
+                 "Highfield Inflatables Boats 588" is not what the
+                 door is called */
+              label={p.name}
+              lead={
+                <span className="dsh-tile-mark" aria-hidden="true">
+                  <PlaceMark
+                    logo={modules[p.moduleId]?.logo}
+                    name={p.name}
+                    master={master}
+                    size={ICON_SIZE.small}
+                  />
                 </span>
-                {/* DRAWN ONLY WHERE THERE ARE ANY. A column of "0"
-                    down a grid of twenty-five tiles is noise that
-                    reads as a fault; the tiles with quotes on them
-                    are the ones worth spotting, and they are the
-                    only ones that light up. */}
-                {quotesAt[p.key] ? (
-                  <span className="dsh-tile-q" title={`${quotesAt[p.key]} quotes`}>
-                    <FileText size={12} weight={MARK_WEIGHT} aria-hidden="true" />
-                    <span className="ds-mono">{quotesAt[p.key]}</span>
+              }
+              name={p.name}
+              meta={
+                <span className="dsh-tile-foot">
+                  {/* THE MODULE, OR THE KIND WHERE THEY AGREE. Five
+                      of the twenty-five places are their own module
+                      — Yamaha Outboards, Parts & Accessories — and
+                      printing the tile's own name a second time
+                      tells a person nothing; the kind is the one
+                      thing the name cannot. */}
+                  <span className="dsh-tile-kind">
+                    {p.moduleName === p.name ? TABLE_KINDS[kind].label : p.moduleName}
                   </span>
-                ) : null}
-              </span>
-            </div>
+                  <span className="dsh-tile-sum ds-mono">
+                    {p.retired ? 'held' : p.census.items.toLocaleString()}
+                  </span>
+                  {/* THE QUOTES OUT ON THIS BRAND — the one fact on
+                      the tile about the DAY rather than the
+                      catalogue. Drawn only where there are any: a
+                      column of "0" down twenty-five tiles is noise
+                      that reads as a fault. */}
+                  {quotesAt[p.key] ? (
+                    <span className="dsh-tile-q" title={`${quotesAt[p.key]} quotes`}>
+                      <FileText size={12} weight={MARK_WEIGHT} aria-hidden="true" />
+                      <span className="ds-mono">{quotesAt[p.key]}</span>
+                    </span>
+                  ) : null}
+                </span>
+              }
+            />
 
-            {/* THE GRIP IS ITS OWN CONTROL, NOT THE TILE. Dragging
-                the face would mean a press that travels three pixels
+            {/* THE GRIP IS ITS OWN CONTROL, NOT THE ROW. Dragging
+                the row would mean a press that travels three pixels
                 opens a brand instead of moving it, which is the
                 fault every draggable list has. Keyboard-operable
                 for the same reason the card grips are. */}
@@ -1133,8 +1054,11 @@ function WhatWeSell({ acts }: { acts: DashboardActs }): JSX.Element {
  *  and neither is a count. The kind's colour is the plate behind
  *  the picture and the tint of the door; the number is ink. */
 function DoorPlate({ door, onOpen }: { door: Door; onOpen: () => void }): JSX.Element {
+  /* A CARD THAT ACTIVATES, in the door's kind: card.css draws the
+     6% ground, the hover lift, the 0.994 press and the focus ring —
+     the whole of what `.dsh-door` used to draw for itself. */
   return (
-    <button type="button" className="dsh-door" data-kind={door.kind} onClick={onOpen}>
+    <Card kind={door.kind} pad="none" onActivate={onOpen}>
       {/* THE MARK IS DRAWN AND CSS HIDES IT WHERE A PHOTOGRAPH
           LANDED, which is the arrangement the module tiles already
           keep and for the same reason: whether a picture paints is
@@ -1169,7 +1093,7 @@ function DoorPlate({ door, onOpen }: { door: Door; onOpen: () => void }): JSX.El
           {splitCount(`${door.items.toLocaleString()} ${door.noun}`)}
         </span>
       </span>
-    </button>
+    </Card>
   )
 }
 
@@ -1276,11 +1200,15 @@ function ThePriceFile({ acts }: { acts: DashboardActs }): JSX.Element {
         {big.map((t) => (
           <Row
             key={t.entity.id}
-            title={t.entity.name}
-            kind={kindOf(t.entity.kind)}
-            tail={<span className="dsh-sum ds-mono">{t.rows.toLocaleString()}</span>}
+            name={t.entity.name}
+            lead={<KindMark kind={kindOf(t.entity.kind)} />}
+            meta={
+              <span className="dsh-row-under">
+                <span className="dsh-sum ds-mono">{t.rows.toLocaleString()}</span>
+              </span>
+            }
             label={`Open ${t.entity.name}`}
-            onPick={() => acts.onOpenTable(t.entity.id)}
+            onActivate={() => acts.onOpenTable(t.entity.id)}
           />
         ))}
       </div>
@@ -1330,18 +1258,18 @@ function WorthFixing({ acts }: { acts: DashboardActs }): JSX.Element {
         {roll.head.map((f) => (
           <Row
             key={f.id}
-            title={entities[f.entityId]?.name ?? 'A table since removed'}
-            under={
-              <>
+            name={entities[f.entityId]?.name ?? 'A table since removed'}
+            meta={
+              <span className="dsh-row-under">
                 <span
                   className={`dsh-dot${f.severity === 'blocker' ? ' is-blocker' : ' is-advisory'}`}
                   aria-hidden="true"
                 />
                 <span className="dsh-when">{f.title}</span>
-              </>
+              </span>
             }
             label={`Open ${entities[f.entityId]?.name ?? 'the table'} — ${f.title}`}
-            onPick={() => acts.onOpenTable(f.entityId)}
+            onActivate={() => acts.onOpenTable(f.entityId)}
           />
         ))}
       </div>
@@ -1385,10 +1313,10 @@ function RulesThatWarn({ acts }: { acts: DashboardActs }): JSX.Element {
         {roll.warning.slice(0, RULE_ROWS).map((c) => (
           <Row
             key={c.id}
-            title={c.because}
-            under={<span className="dsh-when">Annotates the row; removes nothing</span>}
+            name={c.because}
+            meta={<span className="dsh-when">Annotates the row; removes nothing</span>}
             label={`Open business rules — ${c.because}`}
-            onPick={acts.onOpenRules}
+            onActivate={acts.onOpenRules}
           />
         ))}
       </div>

@@ -105,10 +105,43 @@
 
    Nothing here is under 11px, and nothing truncates mid-word. A
    NAME wraps — a band head is 56px and a two-line name inside it
-   costs nothing. Only a one-line FACT beside a name fades, because
-   a fact has a figure to its right that must not move, and a fade
-   is the one way to run out of room without inventing a cut point
-   inside a word. The full text is in the DOM and on the `title`.
+   costs nothing. There is no `mask-image` left in this file: the
+   two fades it carried (the render caption, the ledger's column
+   name) were mid-word cuts with a soft edge, and both went in the
+   primitives pass below.
+
+   ── THE PRIMITIVES PASS, 2026-09-09 ──────────────────────────
+
+   src/ui landed Button, Card, Row, Field and SectionHead, and the
+   rule for adopting one is deletion: none takes a className, so a
+   feature cannot keep its own rule pointing at the same element.
+   What this file no longer draws, because a primitive does:
+
+     the band's surface            → Card, flat, in its kind
+     the plates                    → Row, current from aria-current
+     the picked lines              → Row + Field + ghost Button
+     the "Not offered" head        → SectionHead + ghost Button
+     the refused rows              → Row on an `.s-refused` li
+     the empty band's well + door  → Card sunken + neutral Button
+     the held-photograph plate     → Card sunken
+     the rung pills                → Buttons, neutral / ghost
+     the refusal strip + "N more"  → Button's own refusedBecause
+     the handover                  → Button primary lg
+     the sheet's rows and acts     → Row; Button neutral / primary
+     the ledger's lines and sums   → Row dense; Card flat
+
+   What it still draws, and the gap each one names for src/ui:
+
+     the shelf card   Card has no listbox-option mode (role,
+                      aria-selected, roving tabIndex), no ref, no
+                      pointer/focus handlers, no stagger index, no
+                      dashed `outside` tone and no `lit` state
+                      distinct from `current`.
+     the band head    Row has no trailing-figure slot on an action
+                      row and no eyebrow above the name.
+     the sheet        Card has no floating tone (--r-panel, --e-hero).
+     the total        `.qb-price-fig` is written by flow.tsx, not
+                      this screen — Button has no `figure` tone.
    ============================================================ */
 
 /* ============================================================
@@ -201,6 +234,15 @@
    product shot on white is not dead, it is the shot. */
 .qb-render {
   position: relative;
+  /* TWO ROWS: the picture, and the caption under it. Both crossfading
+     layers share the first cell (`grid-area: 1 / 1`), the caption is
+     the second row and WRAPS — it was an absolutely positioned 24px
+     strip with `nowrap` and a mask fade, which cut a long plate name
+     mid-word, softly. §3: nothing truncates mid-word. The picture
+     gives up the height the caption needs and not a fixed 26px. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   /* THE ONE BLOCK THAT GIVES, and the floor is what says how far.
 
      Everything else in this pane is a fact that has to be readable
@@ -222,8 +264,18 @@
      pitch the render measures 192.4 on two photographed lines,
      146.4 on three and 100.4 on four, and nothing clips until the
      fifth. The picture is 178×100 on the build where the floor is
-     reached, which is a boat you can still recognise. */
-  flex: 1 1 auto;
+     reached, which is a boat you can still recognise.
+
+     `flex-basis: 0`, NOT `auto`, and it was measured. While the two
+     layers were absolutely positioned this box had no content height
+     and `auto` meant zero: it grew into the leftover and shrank
+     nothing. As a grid the photograph gives it a content height, and
+     with `auto` that height became a shrink basis — the render and
+     the plate list then split the pane's shortfall in proportion, and
+     the second plate's name was cut by 3px at 1280×800. From zero it
+     is again the block that grows last and gives first, and the
+     100px floor is still the only thing it will not give. */
+  flex: 1 1 0;
   min-height: 100px;
   border: 1px solid var(--line-subtle);
   border-radius: var(--r-card);
@@ -233,11 +285,13 @@
 
 /* THE CAPTION SITS UNDER THE PICTURE, NOT ON IT. A word laid over a
    photograph has no measurable contrast — the ground is 220 different
-   photographs — so the layer stops 26px short and the name is drawn
-   on the pane's own surface where the ratio is known. */
+   photographs — so the picture stops where the caption row starts and
+   the name is drawn on the pane's own surface where the ratio is
+   known. `min-height: 0` is what lets a grid item be shorter than the
+   880×660 photograph inside it. */
 .qb-render-layer {
-  position: absolute;
-  inset: 0 0 26px;
+  grid-area: 1 / 1;
+  min-height: 0;
   display: grid;
   place-items: center;
   padding: var(--s-3);
@@ -250,56 +304,42 @@
   border-radius: var(--r-control);
 }
 
-/* A PICTURE WE CANNOT FETCH IS A PLATE, NOT A VOID. The field above
-   is the pane's own paint now, so the honest-absence state has to
-   bring its own ground or it reads as an empty pane rather than as a
-   photograph that is held elsewhere. */
+/* A PICTURE WE CANNOT FETCH IS A PLATE, NOT A VOID. The ground, the
+   radius and the padding are the sunken Card's (QuoteBuild `Render`);
+   what is left here is the column the two lines stack in. */
 .qb-render-held {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--s-1);
   text-align: center;
-  padding: var(--s-4);
-  border-radius: var(--r-card);
-  background: var(--surface-3);
 }
 
+/* THE CAPTION WRAPS. It was `nowrap` + `overflow: hidden` + a 94%
+   mask, on the argument that a fade "is never an ellipsis" — the
+   argument this file's own `.qb-band-state` note later measured and
+   withdrew: "a fade does not spare a word; it only makes the cut
+   soft." It is the second grid row now, so a two-line plate name
+   costs the photograph one line of height and never a letter.
+
+   ITS OWN GROUND AND ITS OWN HAIRLINE. A pale boat on a pale strip
+   reads as if the caption sat over it, so the strip says where it
+   starts. It is the one place `--surface-3` is still right in this
+   pane: the field around it is white, and a caption needs to look
+   like a caption and not like more picture. When there is no caption
+   (`ProductPane` draws it only for a plate) there is no second row,
+   and the picture has the whole box. */
 .qb-render-say {
-  position: absolute;
-  left: var(--s-2);
-  right: var(--s-2);
-  bottom: 0;
+  grid-row: 2;
   margin: 0;
-  height: 24px;
+  padding: 4px var(--s-3);
+  min-height: 24px;
   font-size: var(--t-caption-size);
-  line-height: 24px;
+  line-height: var(--t-caption-lead);
   color: var(--fg-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  /* ITS OWN GROUND AND ITS OWN HAIRLINE. The layer above stops 26px
-     short so the caption never sits over a photograph — but a pale
-     boat on a pale strip reads as though it does, so the strip says
-     where it starts. It is the one place `--surface-3` is still
-     right in this pane: the field around it is white now, and a
-     caption needs to look like a caption and not like more picture. */
   background: var(--surface-3);
   border-top: 1px solid var(--line-subtle);
-  /* A FADE, NEVER AN ELLIPSIS. §3: nothing truncates mid-word.
-     `#000` here is an ALPHA CHANNEL and not an ink — a mask reads
-     only the luminance of its own gradient, so no theme colour can
-     be substituted for it and rule 1 has nothing to say about it. */
-  mask-image: linear-gradient(to right, #000 94%, transparent 100%);
-}
-
-/* AND WHEN THERE IS NO CAPTION, THE PICTURE TAKES THE STRIP BACK.
-   On the hull — where this pane starts and where it returns when a
-   line comes off the quote — the caption read the same five words as
-   the heading 24px beneath it, so `ProductPane` draws it only for a
-   plate. The 26px of reserved space goes with it rather than being
-   left as a blank band under the photograph. */
-.qb-render.is-bare .qb-render-layer {
-  inset: 0;
+  overflow-wrap: break-word;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -362,57 +402,13 @@
   min-width: 0;
 }
 
-.qb-plate {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-  min-width: 0;
-  padding: 3px;
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    border-color var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
+/* THE PLATE IS A <Row> (QuoteBuild `Plate`): the hover, the darken on
+   press, the ring and the current state all come from row.css, and
+   `.qb-plate` with its five state rules is gone from here. What this
+   file still owns is the thumbnail the row leads with.
 
-.qb-plate:hover {
-  background: var(--surface-3);
-  border-color: var(--line);
-}
-
-/* The same (0,4,0) as the card and for the same reason — see the
-   note above `.qb-card:active`. A 144px plate at 0.97 travels
-   2.2px an edge; the 0.994 this rule always asked for travels
-   0.4px, which is what a plate this size is meant to do. */
-.qb-plate:not(:disabled):not([aria-disabled='true']):active {
-  transform: scale(0.994);
-  /* background-COLOR, not the shorthand: the shorthand resets
-     background-image, and background-image is where base.css puts
-     its press wash. At (0,2,0) the reset lost and the wash showed;
-     raised to (0,4,0) it would start winning and the press would
-     quietly lose a channel it has always had. */
-  background-color: var(--surface-4);
-}
-
-/* §4: reduced motion is GENTLER feedback, not none — the movement
-   goes and the tone stays, so the press is still felt. */
-@media (prefers-reduced-motion: reduce) {
-  .qb-plate {
-    transition:
-      border-color var(--d-fast) var(--ease),
-      background var(--d-fast) var(--ease);
-  }
-  .qb-plate:not(:disabled):not([aria-disabled='true']):active {
-    transform: none;
-  }
-}
-
-/* ── `var(--accent)`, NOT `var(--focus)` ───────────────────────────
+   ── `var(--accent)`, NOT `var(--focus)`, wherever a ring is drawn in
+   this file ──────────────────────────────────────────────────────
    `--focus` is a BOX-SHADOW value (`0 0 0 2px var(--bg), 0 0 0 4px
    var(--accent)`), so `outline: 2px solid var(--focus)` is invalid at
    computed-value time and the whole declaration is thrown away.
@@ -422,17 +418,9 @@
    global `.ds-root :focus-visible` never reaches the app (`.ds-root`
    is on the design preview and the entity designer, and nowhere
    else — 0 matches in the running app). 13 declarations in this file
-   and 8 in picker.css drew nothing; they draw the accent now, which
-   is what the other 45 outline rules in this app already say. */
-.qb-plate:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.qb-plate.is-on {
-  background: var(--surface-3);
-  border-color: var(--accent);
-}
+   and 8 in picker.css drew nothing; the ones that remain draw the
+   accent, which is what the other 45 outline rules in this app and
+   every `ui-` primitive already say. */
 
 /* 56×42 CAME DOWN TO 48×36, AND IT BOUGHT A WHOLE ROW.
 
@@ -474,25 +462,11 @@
   background: var(--surface-4);
 }
 
-/* NO CLAMP, for the reason `.qb-card-name` already records and this
-   rule was measured breaking: a two-line clamp cut "…TA800T-E…" and
-   "…6X6 Sng Ke…" at 1024, because `-webkit-line-clamp` ellipses at
-   the last position that fits and a rigging kit's name is 96
-   characters of pipe-separated parts. §3's one absolute. It wraps in
-   full and the row grows; a long name costs a ragged column and
-   never a lost word. */
-.qb-plate-name {
-  min-width: 0;
-  font-size: var(--t-small-size);
-  line-height: 1.35;
-  color: var(--fg-secondary);
-  overflow-wrap: break-word;
-}
-
-.qb-plate.is-on .qb-plate-name,
-.qb-plate:hover .qb-plate-name {
-  color: var(--fg);
-}
+/* THE NAME BESIDE THE THUMBNAIL is the row's own name — row.css sets
+   it at the heading step and wraps it whole (`overflow-wrap`, and no
+   `text-overflow` anywhere in that file), which is the same call the
+   `.qb-plate-name` rule this replaced had made after a two-line clamp
+   was measured cutting "…TA800T-E…" at 1024. */
 
 /* ---- the identity: the biggest thing on the screen ----------- */
 
@@ -827,16 +801,13 @@
   --qb-card-min: clamp(220px, 14cqi, 272px);
 }
 
-/* THE BAND CARRIES ITS KIND ON ITS LEADING EDGE — `.k-rail`'s
-   3px, written into the box's own border so the card keeps one
-   border rather than gaining a second element for the rail. */
-.qb-band {
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--kind);
-  border-radius: var(--r-card);
-  background: var(--surface-1);
-  overflow: hidden;
-}
+/* THE BAND IS A <Card tone="flat" pad="none" kind=…> (QuoteBuild
+   `BandBlock`). Its border, radius, ground and the 3px kind rail were
+   `.qb-band`; card.css draws the surface and mixes the band's kind
+   into it — 6% into the ground, 14% into the border — through the
+   `data-kind` → `--kind` mechanism ds.css already resolves, so the
+   whole band carries its kind as a tint and the head carries it
+   stronger. The rule is deleted with the rail. */
 
 .qb-band-h {
   margin: 0;
@@ -879,10 +850,28 @@
   row-gap: 2px;
   padding: var(--s-3) var(--s-4);
   border: 0;
+  /* THE CARD NO LONGER CLIPS. `.qb-band` carried `overflow: hidden`
+     so the tinted head stopped at the rounded corners; the Card it
+     became does not clip its children (a card that did would eat a
+     focus ring), so the head rounds its own corners — the card's
+     radius less the card's 1px border — and squares the bottom two
+     while the band is open and the body continues under it. */
+  border-radius: calc(var(--r-card) - 1px);
   text-align: left;
   cursor: pointer;
   transition: filter var(--d-fast) var(--ease);
 }
+
+.qb-band-head[aria-expanded='true'] {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* NOT A <Row>, AND THE GAP IS NAMED. Row is lead + name + meta +
+   trail, and an activating Row may carry no trail. This head is an
+   activating line that ENDS IN A FIGURE and puts its label ABOVE its
+   answer; Row has neither a trailing-figure slot on an action row nor
+   an eyebrow slot. Until it does, the head keeps this grid. */
 
 .qb-band-head:hover {
   filter: brightness(0.985);
@@ -1527,70 +1516,14 @@
    leaves the sentence at 8.1:1.
    ============================================================ */
 
+/* THE HEAD IS A <SectionHead> with the share in its count slot and a
+   ghost <Button> as its action (QuoteBuild `Shortlist`). The button
+   that drew the caption, both figures and a caret by hand — and its
+   three states, and the two mono rules under it — is gone; the
+   hairline that separated this from the shelf is the SectionHead's
+   own `rule`. */
 .qb-refused {
-  border-top: 1px solid var(--line-subtle);
   padding-top: var(--s-3);
-}
-
-.qb-refused-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-1) var(--s-2);
-  margin-left: calc(var(--s-2) * -1);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-  background: transparent;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease);
-}
-
-.qb-refused-head:hover {
-  background: var(--surface-3);
-  border-color: var(--line);
-}
-
-.qb-refused-head:active {
-  background: var(--surface-4);
-}
-
-.qb-refused-head:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.qb-refused-lab {
-  color: var(--fg-secondary);
-}
-
-.qb-refused-count {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--t-mono-sm-size);
-  font-weight: 550;
-  color: var(--fg);
-}
-
-/* THE SHARE, NOT JUST THE COUNT. §3 heads a group with the name and
-   its share — "12 of 434" — and §5 answers why the big half of that
-   pair is not something to hide: "422 of 434 is not a failure to be
-   embarrassed by. It is the number a dealer quotes down the phone."
-   A count with no denominator is a number a person cannot place.
-
-   Mono and tabular so the two figures sit on one baseline grid, and
-   `--fg-secondary` rather than the ramp floor because this head
-   takes `--surface-3` on hover and `--surface-4` on press:
-   measured on those grounds `--fg-tertiary` falls to 4.9:1 and
-   4.46:1, and the second of those is under the floor. `--fg-secondary`
-   is 8.1:1 on white and 6.6:1 on the pressed ground. */
-.qb-refused-of {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--t-mono-sm-size);
-  font-weight: 450;
-  color: var(--fg-secondary);
 }
 
 .qb-refused-list {
@@ -1602,29 +1535,11 @@
   list-style: none;
 }
 
-.qb-ref-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2px var(--s-3);
-  padding: var(--s-2) var(--s-3);
-  background: var(--surface-2);
-  border-radius: 0 var(--r-control) var(--r-control) 0;
-}
-
-/* THE ROW IS THE CARD, REFUSED — so it is set at the card's own
-   steps. The name was 13px against a 14px reason, which put an
-   option's explanation a step ABOVE the option. Name and figure now
-   match `.qb-card-name` (14px) and `.qb-card-price` (13px mono),
-   and the hierarchy is carried by weight and ink instead: 550 at
-   `--fg` over 400 at `--fg-secondary`. */
-.qb-ref-name {
-  font-size: var(--t-body-size);
-  font-weight: 550;
-  color: var(--fg);
-  min-width: 0;
-  overflow-wrap: break-word;
-}
-
+/* A REFUSED ROW IS A <Row> ON AN `.s-refused` <li> (QuoteBuild
+   `RefusedRow`): the line, the name step and the meta step are the
+   row's; the --danger rail and the strike on the figure are ds.css's
+   state, reaching the figure below through `.s-figure` exactly as
+   before. `.qb-ref-row` and `.qb-ref-name` are deleted. */
 .qb-ref-fig {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -1635,29 +1550,18 @@
 /* ── THE RESERVED SUB-LINE ──────────────────────────────────────
    §3: "Every row reserves its 16px second line whether or not it
    has a reason. A short reason must not collapse the row and a long
-   one must not shift the row below it."
+   one must not shift the row below it." `outsideWhy` is OPTIONAL
+   (`freeze.ts:587`), and a row that GAINS its sentence pushes every
+   row under it down as it arrives — the one thing §6 says a refusal
+   may never do: "the state and its sentence land in the same frame".
 
-   It spanned both columns already, so a long reason never squeezed
-   the figure — but `outsideWhy` is OPTIONAL (`freeze.ts:587`), and
-   a row without one drew no second line at all. Eight rows of two
-   heights each is a ragged list, and a row that GAINS its sentence
-   pushes every row under it down as it arrives, which is the one
-   thing §6 says a refusal may never do: "the state and its sentence
-   land in the same frame".
-
-   So the slot is always drawn (QuoteBuild `RefusedRow`) and always
-   reserves one line of it. `min-height` rather than a fixed height,
-   because a two-line reason must still be allowed to be two lines.
-
-   §5 sets the type: "in the row, on its second line, body step,
-   14px, --ink-soft". `.s-say` from ds.css is the 13px small step,
-   so the size is stated here, and at `.qb-ref-row .qb-ref-why` so
-   it outranks `.s-say` whatever order the two sheets load in. */
-.qb-ref-row .qb-ref-why {
-  grid-column: 1 / -1;
-  font-size: var(--t-body-size);
-  line-height: 1.45;
-  color: var(--fg-secondary);
+   Row draws its meta only when handed one, so the slot is always
+   handed (QuoteBuild `RefusedRow`) and this reserves one line of
+   it. `min-height` rather than a fixed height, because a two-line
+   reason must still be allowed to be two lines. The type is ds.css's
+   own `.s-say`, worn beside this class. */
+.qb-ref-why {
+  display: block;
   min-height: 1.45em;
 }
 
@@ -1683,16 +1587,16 @@
    and the door sit on one line where there is room for both.
    ============================================================ */
 
+/* THE WELL IS A <Card tone="sunken" pad="lg"> (QuoteBuild
+   `NothingOffered`) — its dashed border, ground, radius and padding
+   went with the four lines that drew them. This is the centring, and
+   only that. */
 .qb-none {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--s-3);
-  padding: var(--s-5) var(--s-4);
-  border: 1px dashed var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface-2);
   text-align: center;
 }
 
@@ -1704,54 +1608,12 @@
   color: var(--fg);
 }
 
-/* ── OUTLINED, NOT FILLED, AND THE REASON IS RULE 5 ──────────────
-   This was a solid `--accent` button. One of them is right; a person
-   who opens the trailer band, the second trailer band and the parts
-   band gets three, on a screen that already spends its accent on the
-   handover and the current nav row — and §1 allows the accent about
-   four appearances before nothing on the screen is primary any more.
-
-   Outlined keeps it unmistakably the act (accent ink measures 5.9:1
-   on white and 5.1:1 on the dark surface — ds.css records both, so
-   it is legal as text and not only as paint) and lets three of them
-   coexist without the page turning into a row of calls to action. */
-.qb-act {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: 7px var(--s-4);
-  border: 1px solid var(--accent);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--accent);
-  font-size: var(--t-small-size);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.qb-act:hover {
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-
-/* PRESS LANDS ON THE FILL AS WELL AS THE SCALE. An outlined control
-   that only shrinks on pointer-down is the weaker half of §4's
-   "every pressable thing has hover, press and focus". */
-.qb-act:active {
-  transform: scale(0.97);
-  background: var(--accent-press);
-  border-color: var(--accent-press);
-  color: var(--accent-fg);
-}
-
-.qb-act:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+/* THE DOOR IS A <Button tone="neutral">. It was an accent OUTLINE
+   drawn here with its own three states, for a reason that still
+   holds — three empty bands would be three accents, and rule 5
+   allows about four a screen — and Button has no outlined-accent
+   tone. Neutral is the honest answer to that reason: a secondary
+   act, unmistakably a button, and not one of the four. */
 
 /* ============================================================
    LINES ALREADY ON THE QUOTE
@@ -1772,58 +1634,32 @@
   list-style: none;
 }
 
-.qb-line {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-2);
-}
-
+/* A PICKED LINE IS A <Row> (QuoteBuild `PickedLine`): the mark leads,
+   the label is the name at the row's own step, the facts and the
+   source are the meta, and the three controls are the trail. The
+   five-column grid, its border and ground, the hand-set name step
+   and the `<label>` around a bare `field-input` are all gone. Rule 9
+   — the entered data is the darkest and heaviest thing in the row —
+   is what row.css's name step already is. */
 .qb-line-mark {
   display: inline-flex;
   color: var(--accent);
 }
 
-.qb-line-say {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-/* RULE 9 — the entered data is the darkest and heaviest thing in the
-   row. Its facts are one tier down, their labels one further. */
-.qb-line-name {
-  font-size: var(--t-small-size);
-  font-weight: 570;
-  color: var(--fg);
-  overflow-wrap: break-word;
-}
-
 .qb-line-src {
+  display: block;
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   color: var(--fg-tertiary);
   overflow-wrap: break-word;
 }
 
+/* THE QUANTITY IS A <Field>, and a Field fills whatever it is put in
+   — so this is the width it is put in. 72px is two digits, a caret
+   and the control's own padding at the mono step. */
 .qb-line-qty {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  color: var(--fg-tertiary);
-}
-
-.qb-line-qty-in {
-  width: 62px;
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--t-mono-sm-size);
+  flex: none;
+  width: 72px;
 }
 
 .qb-line-amount {
@@ -1842,100 +1678,11 @@
   color: var(--fg-tertiary);
 }
 
-.qb-line-drop {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-tertiary);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.qb-line-drop:hover {
-  background: var(--danger-wash);
-  color: var(--danger);
-}
-
-/* THE PRESS IS A TONE, NOT A SCALE — a control that shrinks inside a
-   row makes its neighbours look like they moved. This read
-   `transform: scale(0.94)`; the redesign pass replaced it with
-   colour, and the two token names it arrived under (`--blue-wash`,
-   `--ink`) are bridge.css aliases of the two below. Same paint, this
-   file's vocabulary. */
-.qb-line-drop:active {
-  background: var(--accent-wash);
-  color: var(--fg);
-}
-
-.qb-line-drop:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.qb-line-drop-none {
-  display: inline-block;
-  width: 26px;
-  height: 26px;
-}
-
-/* ============================================================
-   THE PAPERWORK BAND'S TALLY
-   ============================================================ */
-
-/* IT TAKES A MEASURE AND STOPS. This is the last thing read before a
-   document goes out; a 1900px row is not a better reading of it than
-   a 960px one, it is the same reading with a longer eye movement.
-   The column around it opens to `--measure` — this does not. */
-.qb-tally {
-  display: flex;
-  flex-direction: column;
-  width: min(100%, 960px);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid var(--line-subtle);
-}
-
-.qb-tally-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1.4fr) auto;
-  gap: var(--s-3);
-  align-items: baseline;
-  padding: var(--s-2) 0;
-  border-bottom: 1px solid var(--line-subtle);
-}
-
-.qb-tally-name {
-  font-size: var(--t-small-size);
-  font-weight: 570;
-  color: var(--fg);
-  min-width: 0;
-  overflow-wrap: break-word;
-}
-
-.qb-tally-say {
-  font-size: var(--t-caption-size);
-  color: var(--fg-secondary);
-  min-width: 0;
-  overflow-wrap: break-word;
-}
-
-.qb-tally-amount {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--t-mono-sm-size);
-  color: var(--fg);
-  text-align: right;
-  white-space: nowrap;
-}
+/* THE REMOVE IS A <Button tone="ghost" size="sm">; `.qb-line-drop`,
+   its three states and its 26px placeholder are gone. THE PAPERWORK
+   BAND'S TALLY that followed here — five `.qb-tally*` rules — went
+   with the band it drew, on 2026-09-09, and had been dead since;
+   deleted. */
 
 /* ============================================================
    §THE PRICE — always on screen, and it does not move.
@@ -2311,85 +2058,18 @@
   color: var(--danger);
 }
 
+/* THE RUNGS ARE <Button size="sm">s — `neutral` for the one the
+   quote is priced at, `ghost` for the rest — so `.qb-level` and its
+   four state rules are gone and this is the box they sit in. The
+   control radius, not the pill: the buttons inside are the system's
+   shape and a pill around square corners reads as two systems. */
 .qb-levels {
   display: inline-flex;
   gap: 2px;
   padding: 2px;
   border: 1px solid var(--line);
-  border-radius: var(--r-full);
-  background: var(--surface-2);
-}
-
-.qb-level {
-  padding: 5px var(--s-3);
-  border: 0;
-  border-radius: var(--r-full);
-  background: transparent;
-  font-size: var(--t-caption-size);
-  font-weight: 570;
-  color: var(--fg-secondary);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.qb-level:hover {
-  color: var(--fg);
-}
-
-.qb-level:active {
-  transform: scale(0.97);
-}
-
-.qb-level:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.qb-level.is-on {
-  background: var(--surface-1);
-  color: var(--fg);
-  box-shadow: var(--e1);
-}
-
-/* ONE SECONDARY BUTTON, WORN TWICE — the sheet door on the price bar
-   and the way to the rest of the reasons. It was worn three times;
-   the third was "Name the customer" on the refusal strip, and it went
-   with the strip it sat on (see `.qb-give-why`). Two separately-tuned
-   greys on one strip would be exactly the "uniformity" the owner
-   keeps asking about, so they are one rule. */
-.qb-give-more {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: 7px var(--s-3);
-  border: 1px solid var(--line);
   border-radius: var(--r-control);
-  background: var(--surface-1);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  color: var(--fg-secondary);
-  cursor: pointer;
-  transition:
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.qb-give-more:hover {
-  border-color: var(--line-strong);
-  color: var(--fg);
-}
-
-.qb-give-more:active {
-  transform: scale(0.97);
-}
-
-.qb-give-more:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  background: var(--surface-2);
 }
 
 /* ── THE LAST ACT ON THE BAR, WHICHEVER SCREEN IT IS ─────────────
@@ -2399,10 +2079,24 @@
    whatever the screen's own last act is: "Give it to the customer"
    on Configure and Address, "Start the quote" on Choose. It is a
    POSITION inside this bar, so it is declared with the bar rather
-   than three times in three stylesheets. */
+   than three times in three stylesheets.
+
+   `.qb-price-act` is worn by QuoteEditor's and QuoteStart's own
+   buttons and stays for them. The configurator's handover is a
+   <Button>, which takes no className, so its position is a wrapper:
+   `.qb-price-acts` holds the ghost "N more" door and the primary
+   handover (with the refusal Button draws beneath it) and pushes the
+   pair to the end. */
 .qb-price-act {
   margin-left: auto;
   align-self: center;
+}
+
+.qb-price-acts {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-left: auto;
 }
 
 /* ── THE SLOT, AND WHY IT IS A ROW OF ITS OWN BELOW 1440 ──────────
@@ -2464,87 +2158,17 @@
   }
 }
 
-/* RULE 10, ON ITS OWN LINE — FOR A REFUSAL NOTHING ELSE ON THE
-   SCREEN IS ALREADY MAKING.
+/* RULE 10 IS ON THE CONTROL NOW. The amber refusal strip that sat
+   here — `.qb-give-why`, its mark, its fact and the "N more" button
+   in two declarations — is deleted: the handover is a <Button> whose
+   `refusedBecause` draws the first reason's fact beneath the control
+   (button.css `.ui-btn-why`), and the rest of the reasons are a ghost
+   <Button> onto the ledger. See QuoteBuild `PriceBar` for the cost
+   that was weighed.
 
-   Not `disabled` — a disabled control drops out of the tab order and
-   takes its own explanation with it — and not squeezed in beside the
-   total either: measured at 1024×768 the sentence wrapped to four
-   lines inside the control row and the price bar took 150px of a
-   768px window. A `--warning` rail, the full width, one line at every
-   size.
-
-   WHAT CHANGED: IT NO LONGER DRAWS FOR THE ORDINARY DRAFT. Measured
-   at 1280×800 and 1920×1080 on a fresh quote, this strip was 36.4px
-   and 37.0px of amber saying "This quote is addressed to nobody",
-   with a "Name the customer" button beside it — and 16px above it the
-   flow line already read `Address  nobody yet`, which is the same
-   fact AND the same door. Every draft starts unaddressed, so the
-   alarm was permanent, and a warning that is on for the whole of the
-   normal case is furniture.
-
-   That is the pattern this file has now deleted four times ("TWO
-   controls doing one act", "ONE DOOR PAST THE NARROWING, NOT TWO",
-   "the sheet door … 240px apart on one 113px strip"). `PriceBar`
-   drops the first refusal when the flow line is already carrying it,
-   which is exactly when `named === ''` — `issueBlockers` pushes the
-   no-customer sentence first and only then. The full sentence is
-   still in the ledger under the total, still against the customer box
-   in `CustomerField`, and still on the handover's own `title`.
-
-   IT STILL DRAWS, UNCHANGED, FOR EVERY OTHER REFUSAL: nothing on the
-   quote to offer, a total of nought, a typed price with no reason.
-   Those are not the normal state of a draft and nothing else on the
-   screen states them.
-
-   Measured with the mark, the fact and the count control: 36.4px —
-   one line — at 1600, 1440, 1280, 1024, 900, 768 and 600, and 63.2px
-   — two lines — at 480 and below. That is why it wraps rather than
-   scrolls: a refusal that has to be dragged sideways to be read is
-   not a refusal, and §3 allows the wrap. */
-.qb-give-why {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-3);
-  margin: 0;
-  padding: 4px var(--s-5);
-  border-bottom: 1px solid var(--line-subtle);
-  border-left: 3px solid var(--warning);
-}
-
-/* The mark is the only thing on the strip carrying the warning hue,
-   and it carries no words — §1, a kind colour is never behind
-   reading text. */
-.qb-give-mark {
-  flex: none;
-  color: var(--warning);
-}
-
-.qb-give-fact {
-  min-width: 0;
-  font-size: var(--t-small-size);
-  line-height: 1.45;
-  color: var(--fg-secondary);
-  overflow-wrap: break-word;
-}
-
-/* SMALLER THAN THE SHEET DOOR, and deliberately: it sits inside a
-   strip, not on the control row. Measured at 1600×1000 — the strip
-   was 35.0px tall as a plain paragraph; with the control at the sheet
-   door's 7px it went to 44.4px; at 4px, with the strip's own padding
-   brought to 4px to match, it is 36.4px. The control is 27.4px tall,
-   which is the size `.qb-line-drop` has used since the redesign. */
-.qb-give-more {
-  flex: none;
-  padding: 4px var(--s-3);
-  font-size: var(--t-caption-size);
-}
-
-.qb-give-more {
-  font-variant-numeric: tabular-nums;
-}
-
+   `.qb-give` BELOW IS NOT WORN BY THIS SCREEN ANY MORE. QuoteEditor
+   still writes it on the Address screen's handover, so it stays
+   declared; the day that screen adopts <Button> these six rules go. */
 .qb-give {
   padding: 9px var(--s-5);
   border: 1px solid var(--accent);
@@ -2646,31 +2270,11 @@
   list-style: none;
 }
 
-.qb-led-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.6fr) auto;
-  gap: var(--s-3);
-  align-items: baseline;
-  padding: 4px 0;
-}
-
-.qb-led-name {
-  font-size: var(--t-caption-size);
-  color: var(--fg);
-  min-width: 0;
-  overflow-wrap: break-word;
-}
-
-.qb-led-qty,
-.qb-led-col {
-  font-size: var(--t-caption-size);
-  color: var(--fg-tertiary);
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  mask-image: linear-gradient(to right, #000 94%, transparent 100%);
-}
-
+/* A LEDGER LINE IS A DENSE <Row> (QuoteBuild `LedgerLine`). The
+   four-column grid, the name step and the two masked columns — the
+   quantity and the price column's name under a 94% fade, which was
+   a mid-word cut with a soft edge — are deleted; the quantity is in
+   the name, the column name is the meta and wraps. */
 .qb-led-amount {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -2685,15 +2289,13 @@
   color: var(--fg-tertiary);
 }
 
+/* THE SUMS SIT IN A <Card tone="flat" pad="md">; the border, radius,
+   ground and padding that were here are the card's. */
 .qb-sums {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
   margin: 0;
-  padding: var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface-1);
 }
 
 .qb-sum {
@@ -2800,11 +2402,13 @@
   opacity: 0.72;
 }
 
+/* NOT A <Card>, AND THE GAP IS NAMED: this is a dialog — `--r-panel`,
+   `--e-hero`, a scrim, a `role`, motion props — and Card has one
+   radius, one shadow and no floating tone. A sheet on `--e1` under a
+   scrim would sit flat on the page it is meant to be over. Until Card
+   has a tone for a surface that floats, the surface stays here. */
 .qb-sheet {
   position: relative;
-}
-
-.qb-sheet {
   width: min(560px, 100%);
   max-height: 78vh;
   overflow: auto;
@@ -2848,24 +2452,10 @@
   list-style: none;
 }
 
-.qb-sheet-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2px var(--s-3);
-  align-items: baseline;
-  padding: var(--s-2) var(--s-3);
-  border-radius: 0 var(--r-control) var(--r-control) 0;
-  background: var(--surface-2);
-}
-
-.qb-sheet-name {
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  color: var(--fg);
-  min-width: 0;
-  overflow-wrap: break-word;
-}
-
+/* EACH LINE IN THE SHEET IS A DENSE <Row> (QuoteBuild
+   `ConflictSheet`); `.qb-sheet-row`, `.qb-sheet-name` and
+   `.qb-sheet-why` — a grid, a name step and a caption step drawn by
+   hand — are deleted. The arithmetic below is the row's trail. */
 .qb-sheet-move {
   display: inline-flex;
   align-items: baseline;
@@ -2888,13 +2478,6 @@
 .qb-sheet-to {
   color: var(--fg);
   font-weight: 600;
-}
-
-.qb-sheet-why {
-  grid-column: 1 / -1;
-  font-size: var(--t-caption-size);
-  line-height: 1.45;
-  color: var(--fg-secondary);
 }
 
 .qb-sheet-foot {
@@ -2926,66 +2509,12 @@
   color: var(--fg);
 }
 
+/* The two acts are <Button>s — neutral and primary — so `.qb-sheet-no`
+   and `.qb-sheet-ok`, with three states each, are gone. */
 .qb-sheet-acts {
   display: flex;
   align-items: center;
   gap: var(--s-2);
-}
-
-.qb-sheet-no {
-  padding: 8px var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  color: var(--fg-secondary);
-  cursor: pointer;
-  transition:
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.qb-sheet-no:hover {
-  border-color: var(--line-strong);
-  color: var(--fg);
-}
-
-.qb-sheet-no:active {
-  transform: scale(0.97);
-}
-
-.qb-sheet-no:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.qb-sheet-ok {
-  padding: 8px var(--s-4);
-  border: 1px solid var(--accent);
-  border-radius: var(--r-control);
-  background: var(--accent);
-  color: var(--accent-fg);
-  font-size: var(--t-small-size);
-  font-weight: 620;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-.qb-sheet-ok:hover {
-  background: var(--accent-hover);
-}
-
-.qb-sheet-ok:active {
-  transform: scale(0.97);
-}
-
-.qb-sheet-ok:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 /* ============================================================
@@ -3039,15 +2568,6 @@
   .qb-price-bar {
     padding: var(--s-2) var(--s-4);
     gap: var(--s-3);
-  }
-  /* ONLY THE GUTTER CHANGES. This read `6px var(--s-4)`, which was a
-     reduction from the strip's old 8px and became an INCREASE the
-     moment the base came down to 4px — measured, it put the strip
-     back to 40px here while 1600 held 36.4px. The vertical padding
-     is the base's now, at every width. */
-  .qb-give-why {
-    padding-left: var(--s-4);
-    padding-right: var(--s-4);
   }
 }
 
@@ -3133,31 +2653,15 @@
   .qb-band-state {
     grid-column: 3 / -1;
   }
-  .qb-line {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    row-gap: var(--s-2);
-  }
-  .qb-line-amount,
-  .qb-line-drop {
-    grid-column: 2 / -1;
-    justify-self: end;
-  }
-  .qb-tally-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .qb-tally-say {
-    grid-column: 1 / -1;
-  }
+  /* A picked line is a <Row> now and wraps its name; the grid
+     re-flow that sat here for `.qb-line` went with the grid. */
   .qb-price-bar {
     padding: var(--s-3) var(--s-4);
     gap: var(--s-3);
   }
-  .qb-price-act {
+  .qb-price-act,
+  .qb-price-acts {
     margin-left: 0;
-  }
-  .qb-give-why {
-    padding-left: var(--s-4);
-    padding-right: var(--s-4);
   }
 }
 

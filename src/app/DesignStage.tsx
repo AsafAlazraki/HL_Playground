@@ -40,6 +40,7 @@ import { accentVar } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { EntityDesigner } from '@/features/designer/EntityDesigner'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -70,10 +71,11 @@ export function DesignStage({ entityId, onClose }: DesignStageProps): ReactEleme
      while the same control one stage away read "Back" in the 12.5px
      Inter the rest of the toolbar uses. */
   const back = (
-    <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
-      <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-      <span>Back</span>
-    </button>
+    <div className="shell-view-lead">
+      <Button tone="ghost" size="sm" glyph={<ArrowLeft size={ICON_SIZE.small} />} onClick={onClose}>
+        Back
+      </Button>
+    </div>
   )
 
   if (!entity) {
@@ -102,7 +104,11 @@ export function DesignStage({ entityId, onClose }: DesignStageProps): ReactEleme
           <span className="shell-view-what-mark">
             <TableKindSymbol kind={kindOf(entity.kind)} size={ICON_SIZE.small} />
           </span>
-          <span className="shell-view-what-name">{entity.name}</span>
+          <span
+            className={`ds-display-lg shell-view-what-name${entity.name.length > 28 ? ' is-long' : ''}`}
+          >
+            {entity.name}
+          </span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>

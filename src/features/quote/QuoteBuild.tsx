@@ -205,6 +205,13 @@ import type { CSSProperties, ReactElement, RefObject } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { CaretDown, Check, Star, Warning, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
+/* THE PRIMITIVES. Adopting one is deleting the local rule for that
+   thing (src/ui/index.ts, "adoption is deletion"): none of the five
+   takes a className, so there is no way to keep `.qb-plate` pointing
+   at a Row. build.css lost every rule that a primitive now draws.
+   What is NOT adopted, and why, is said at each site — the shelf
+   card and the band head are the two, and each names the gap. */
+import { Button, Card, Field, Row, SectionHead } from '@/ui'
 import { useActionBar } from '@/lib/actions'
 import { HELD_AS_LINK, heldAsLinkNote, useImageDisplay } from '@/lib/imageSources'
 import {
@@ -905,8 +912,18 @@ function Render({
   const { paint } = useImageDisplay(img?.src ?? '')
   const key = img && paint ? img.src : `held:${name}`
 
+  /* THE CAPTION IS A GRID ROW, NOT AN OVERLAY. It was absolutely
+     positioned in a 24px strip with `nowrap` and a mask fade, and the
+     layers stopped 26px short to leave it room — so a name longer
+     than the pane was cut mid-word, softly, which §3 forbids in as
+     many words ("nothing truncates mid-word"; a fade "does not spare
+     a word, it only makes the cut soft" — build.css on the band
+     state). The render is a two-row grid now: both crossfading layers
+     share the first cell, the caption is the second row, and it wraps.
+     The picture gives up exactly the height the caption needs and not
+     a fixed 26px. */
   return (
-    <div className={`qb-render${say === '' ? ' is-bare' : ''}`}>
+    <div className="qb-render">
       <AnimatePresence initial={false}>
         <motion.div
           key={key}
@@ -918,10 +935,14 @@ function Render({
           {img && paint ? (
             <FrozenPhoto img={img} fallbackAlt={name} className="qb-render-img" w={880} h={660} />
           ) : (
-            <span className="qb-render-held">
-              <span className="qb-well-held-word">{HELD_AS_LINK}</span>
-              {img ? <span className="qb-well-held-why">{heldAsLinkNote(img.src)}</span> : null}
-            </span>
+            /* A PICTURE WE CANNOT FETCH IS A WELL: Card's sunken tone is
+               "an empty slot, a placeholder" — which is what this is. */
+            <Card tone="sunken" pad="md">
+              <span className="qb-render-held">
+                <span className="qb-well-held-word">{HELD_AS_LINK}</span>
+                {img ? <span className="qb-well-held-why">{heldAsLinkNote(img.src)}</span> : null}
+              </span>
+            </Card>
           )}
         </motion.div>
       </AnimatePresence>
@@ -934,9 +955,16 @@ function Render({
 const FADE = { duration: 0.26, ease: [0.2, 0.8, 0.2, 1] } as const
 
 /** One decided thing: what it is, and the photograph of it. Pressing
- *  it puts that photograph in the render above — which is why it is
- *  still a pressed toggle rather than a list item, and why the name
- *  it carries is the label the act already announced. */
+ *  it puts that photograph in the render above.
+ *
+ *  IT IS A ROW, and the one that is showing is the CURRENT one of the
+ *  set — Row draws that from `aria-current`, so the accent wash and
+ *  the announcement cannot drift apart. It carried `aria-pressed`
+ *  before, which is a toggle's word; a set of pictures with one on
+ *  screen is a set with a current member, and that is the truer
+ *  claim. The thumbnail is the row's lead, the name its name, and the
+ *  hover, the darken-on-press and the ring all come from row.css —
+ *  `.qb-plate` and its five state rules are deleted from build.css. */
 function Plate({
   img,
   name,
@@ -951,22 +979,22 @@ function Plate({
   const { paint } = useImageDisplay(img?.src ?? '')
   return (
     <li className="qb-plate-slot">
-      <button
-        type="button"
-        className={`qb-plate${on ? ' is-on' : ''}`}
-        aria-pressed={on}
-        aria-label={`Show ${name}`}
-        onClick={onPick}
-      >
-        <span className="qb-plate-shot">
-          {img && paint ? (
-            <FrozenPhoto img={img} fallbackAlt={name} className="qb-plate-img" w={112} h={84} />
-          ) : (
-            <span className="qb-plate-mark" aria-hidden="true" />
-          )}
-        </span>
-        <span className="qb-plate-name">{name}</span>
-      </button>
+      <Row
+        dense
+        current={on}
+        onActivate={onPick}
+        label={`Show ${name}`}
+        lead={
+          <span className="qb-plate-shot">
+            {img && paint ? (
+              <FrozenPhoto img={img} fallbackAlt={name} className="qb-plate-img" w={112} h={84} />
+            ) : (
+              <span className="qb-plate-mark" aria-hidden="true" />
+            )}
+          </span>
+        }
+        name={name}
+      />
     </li>
   )
 }
@@ -1066,8 +1094,30 @@ function BandBlock({
      field resolves to. One boolean, three reasons, one behaviour. */
   const [quiet, setQuiet] = useState(false)
   const hushed = still || quiet
+  /* ── THE BAND IS A CARD, IN ITS KIND ─────────────────────────────
+     `.qb-band` drew its own border, radius, ground and a 3px kind rail
+     on the leading edge. Card draws the surface, and `kind` hands the
+     band's hue to the mechanism ds.css already resolves — `data-kind`
+     sets `--kind`, card.css mixes 6% of it into the ground and 14%
+     into the border, the same construction the module tile measured
+     at 4.5:1 for a name on it. So the whole band carries its kind as
+     a tint and the head above carries it stronger (`.k-band`, 10%),
+     which is §1 as amended: a hue may carry a SURFACE, on a thing
+     that HAS that kind. The rail went with the rule that drew it.
+
+     FLAT, NOT RAISED: a raised card is for a card on the page; a band
+     is a section of the page and a stack of four shadows is noise.
+
+     THE HEAD IS NOT A ROW, AND THAT IS A GAP TO REPORT, NOT ONE TO
+     WORK AROUND. Row is lead + name + meta + trail, and an activating
+     Row may not carry a trail (a button in a button). This head is
+     an activating line that ends in a FIGURE — the band's total —
+     and puts its label ABOVE its answer. Row has no trailing-figure
+     slot on an action row and no eyebrow slot at all. Smuggling the
+     grid inside `name` would be the override layer with extra steps,
+     so the head keeps its own rule and the report names the two slots. */
   return (
-    <section className="qb-band" data-kind={band.kind}>
+    <Card tone="flat" pad="none" kind={band.kind}>
       <h2 className="qb-band-h">
         <button
           type="button"
@@ -1119,7 +1169,7 @@ function BandBlock({
           ))}
         </motion.div>
       ) : null}
-    </section>
+    </Card>
   )
 }
 
@@ -1702,34 +1752,43 @@ function Shortlist({
           same `outsideWhy` this list would have shown. */}
       {!all && notOffered > 0 && candidates.length > 0 ? (
         <div className="qb-refused">
-          <button
-            type="button"
-            className="qb-refused-head"
-            aria-expanded={showRefused}
-            onClick={() => setShowRefused((v) => !v)}
+          {/* A GROUP CAPTION WITH ITS SHARE, AND THE ACT BESIDE IT.
+              It was one button wearing a `mono-label` — the caption, the
+              count and a caret drawn by hand, the fourth self-drawn
+              uppercase treatment on this screen. SectionHead is the one
+              uppercase style, and "Not offered" is exactly what it is
+              for: a group caption this application wrote, never a name
+              off the dealer's file.
+
+              THE SHARE, NOT THE BARE COUNT. §3 heads a group with the
+              name and its share and §5 says why the big half is not
+              something to be shy about: "422 of 434 is not a failure to
+              be embarrassed by. It is the number a dealer quotes down
+              the phone." The denominator is `offer.pool`, the same
+              figure the curation chip above divides by, so the two
+              lines cannot disagree. It goes in the count slot, which is
+              drawn as a value — tabular, not uppercased (rule 3).
+
+              `level="none"`: this band's h2 and, where the band holds
+              several tables, an h3 are the outline; a caption on a
+              disclosure inside them is not a heading in it. */}
+          <SectionHead
+            level="none"
+            count={`${notOffered.toLocaleString()} of ${offer.pool.toLocaleString()}`}
+            rule
+            action={
+              <Button
+                tone="ghost"
+                size="sm"
+                aria-expanded={showRefused}
+                onClick={() => setShowRefused((v) => !v)}
+              >
+                {showRefused ? 'Hide them' : 'Show them'}
+              </Button>
+            }
           >
-            <span className="mono-label qb-refused-lab">Not offered</span>
-            {/* THE SHARE, NOT THE BARE COUNT. §3 heads a group with the
-                name and its share and §5 spells out why the big half is
-                not something to be shy about: "422 of 434 is not a
-                failure to be embarrassed by. It is the number a dealer
-                quotes down the phone."
-
-                422 alone is a number with nothing to measure it
-                against — 422 out of 434 is a table that does not fit
-                this hull, 422 out of 40,000 would be a rounding error.
-                The denominator is `offer.pool`, which is the same
-                figure the curation chip above divides by, so the two
-                lines cannot disagree.
-
-                It is inside the button, so the accessible name reads
-                "Not offered 422 of 434" in one utterance. */}
-            <span className="qb-refused-count">{notOffered.toLocaleString()}</span>
-            <span className="qb-refused-of">of {offer.pool.toLocaleString()}</span>
-            <span className={`qb-band-mark${showRefused ? ' is-open' : ''}`} aria-hidden="true">
-              <CaretDown size={ICON_SIZE.tiny} weight="bold" />
-            </span>
-          </button>
+            Not offered
+          </SectionHead>
 
           {showRefused ? (
             <ul className="qb-refused-list">
@@ -1798,27 +1857,43 @@ function Shortlist({
 function RefusedRow({ candidate }: { candidate: Candidate }): ReactElement {
   const line = candidate.line
   return (
-    <li className="qb-ref-row s-refused">
-      <span className="qb-ref-flag">Not offered — </span>
-      <span className="qb-ref-name">{line.label}</span>
-      <span className="qb-ref-fig s-figure">
-        {line.unitPrice === null ? <span className="qb-nil">not priced here</span> : money(line.unitPrice)}
-      </span>
-      {/* THE SUB-LINE IS DRAWN WHETHER OR NOT THERE IS A SENTENCE.
-
-          §3: "Every row reserves its 16px second line whether or not it
-          has a reason. A short reason must not collapse the row and a
-          long one must not shift the row below it." `outsideWhy` is
-          optional (`freeze.ts:587`, and `:1149` omits the key when
-          the reason is empty), so a conditional slot gave this list two
-          row heights and, worse, made a row GROW at the moment its
-          reason arrived — pushing every row under it down. §6 is
-          explicit that a refusal is the one thing that may not do that:
-          "the state and its sentence land in the same frame".
-
-          The empty span costs nothing to a screen reader and one line
-          of reserved height to the layout (build.css `min-height`). */}
-      <span className="qb-ref-why s-say">{candidate.outsideWhy ?? ''}</span>
+    /* THE ROW IS A ROW. `.qb-ref-row` drew its own grid, ground, padding
+       and radius, and set the name and the figure at two hand-picked
+       steps to match the card's; Row draws the line and sets the name
+       at the step §2 calls "the thing you scan for". What stays on the
+       <li> is `.s-refused` — the STATE ds.css ships for exactly this,
+       a --danger rail with the figure struck rather than hidden — and
+       it reaches the figure through the same `.s-figure` it always
+       did, now inside the row's trail. */
+    <li className="s-refused">
+      <Row
+        name={
+          <>
+            <span className="qb-ref-flag">Not offered — </span>
+            {line.label}
+          </>
+        }
+        /* THE SUB-LINE IS DRAWN WHETHER OR NOT THERE IS A SENTENCE.
+           §3: "Every row reserves its 16px second line whether or not
+           it has a reason. A short reason must not collapse the row and
+           a long one must not shift the row below it." `outsideWhy` is
+           optional (`freeze.ts:587`), so an absent meta would give this
+           list two row heights and make a row GROW the moment its
+           reason arrived — §6: "the state and its sentence land in the
+           same frame". Row draws its meta only when given one, so the
+           reservation is the one local rule kept: `.qb-ref-why`, a
+           block with a one-line floor, wearing ds.css's `.s-say`. */
+        meta={<span className="qb-ref-why s-say">{candidate.outsideWhy ?? ''}</span>}
+        trail={
+          <span className="qb-ref-fig s-figure">
+            {line.unitPrice === null ? (
+              <span className="qb-nil">not priced here</span>
+            ) : (
+              money(line.unitPrice)
+            )}
+          </span>
+        }
+      />
     </li>
   )
 }
@@ -1940,26 +2015,32 @@ function PriceBar({
   const [ledger, setLedger] = useState(false)
   const named = quote.customer.name.trim()
 
-  /* ── THE REFUSAL THE FLOW LINE IS ALREADY MAKING ─────────────────
-     `issueBlockers` pushes "This quote is addressed to nobody" first,
-     and only when the name is blank (totals.ts:275) — so `named === ''`
-     identifies it structurally and no sentence has to be matched.
+  /* ── THE REFUSAL IS ON THE CONTROL, AND THE STRIP IS GONE ───────
+     Two surfaces carried the reasons a quote could not go out: an
+     amber strip above the bar for every refusal but the first, and a
+     `title` tooltip on the handover for the first. The strip was 36px
+     of its own rule, mark, fact and a hand-drawn "N more" button.
 
-     The strip below used to print it, in amber, with a "Name the
-     customer" button beside it. Sixteen pixels above, the flow line
-     already reads `Address  nobody yet`, and that stop is BOTH the
-     fact and the door. Every draft begins unaddressed, so the alarm
-     was on for the whole of the normal case, and a second door to the
-     same place is the duplicate this file has deleted three times.
+     Button's contract is rule 10 exactly: `refusedBecause` refuses
+     the control — click blocked, `aria-disabled`, still in the tab
+     order — and draws the reason BENEATH it, where the refusal is.
+     There is no way to refuse a Button without saying why, so the
+     first reason's fact now sits under the handover on every screen
+     that cannot hand over, and the strip that said the same thing a
+     bar's width away is deleted with its four rules.
 
-     Rule 10 is kept where it belongs: the Address stop states it in
-     the same 40px band as the handover, the ledger under the total
-     lists it in full, `CustomerField` prints it against the box a
-     person types into, and the handover itself carries the first
-     refusal on its `title`. What is gone is the fourth copy and the
-     36.4px row it cost. Every OTHER refusal still takes the strip. */
-  const said = named === '' ? 1 : 0
-  const unsaid = refusals.slice(said)
+     THE COST, STATED: on an unaddressed draft the fact under the
+     button — "This quote is addressed to nobody." — and the flow
+     line's `Address  nobody yet` sixteen pixels above it are one
+     fact twice. The earlier pass deleted that duplicate; this one
+     restores it, because a refused control that says nothing beside
+     itself is the thing rule 10 names, and a primitive that enforces
+     the rule is worth more than the 18px. The flow stop is still the
+     DOOR; the sentence under the button is the refusal.
+
+     `refusalFact` keeps the head of the sentence (see above) — the
+     whole of it is on the `title` and in the ledger, and a second
+     reason is a door onto the ledger rather than a number to hunt. */
 
   return (
     <FlowFoot
@@ -1979,39 +2060,6 @@ function PriceBar({
     >
       {ledger ? (
         <Ledger quote={quote} steps={steps} totals={totals} refusals={refusals} />
-      ) : null}
-
-      {/* RULE 10, AND IT GETS ITS OWN LINE — for a refusal nothing
-          else on the screen is already making. The reason a quote
-          cannot go out is stated beside the control it refuses; a
-          sentence squeezed into the strip beside a total, a rung
-          control and two buttons wrapped to four lines at 1024 and
-          took a fifth of the window. Across the width it is one line
-          at every size, and the control row stays a row.
-
-          IT IS THE FACT AND THE COUNT, and no longer a paragraph: see
-          `refusalFact` above. The rest of the sentence is beside the
-          box it is about and inside the ledger, and where a second
-          reason exists the count of them is a door onto that ledger
-          rather than a number a person has to go looking for.
-
-          `unsaid`, NOT `refusals` — see the note above it. On the
-          ordinary draft this strip does not draw at all. */}
-      {unsaid.length > 0 ? (
-        <div className="qb-give-why" role="status">
-          <Warning
-            className="qb-give-mark"
-            size={ICON_SIZE.tiny}
-            weight="fill"
-            aria-hidden="true"
-          />
-          <span className="qb-give-fact">{refusalFact(unsaid[0])}</span>
-          {unsaid.length > 1 ? (
-            <button type="button" className="qb-give-more" onClick={() => setLedger(true)}>
-              {unsaid.length - 1} more
-            </button>
-          ) : null}
-        </div>
       ) : null}
 
       <div className="qb-price-bar">
@@ -2091,19 +2139,29 @@ function PriceBar({
           <span className="qb-price-unpriced">{totals.unpricedCount} not priced</span>
         ) : null}
 
+        {/* THE RUNG IS A GROUP OF BUTTONS, and the one that is on is the
+            one drawn with a ground: `neutral` for the rung the quote is
+            priced at, `ghost` for the others. Button has no pressed
+            state of its own — a toggle group is not one of its four
+            tones — so the state is carried by the tone and announced
+            by `aria-pressed`, which passes through. `.qb-level` and its
+            four state rules are deleted; `.qb-levels` keeps the box. */}
         {levels.length > 1 ? (
           <div className="qb-levels" role="group" aria-label="Price level">
-            {levels.map((l) => (
-              <button
-                key={l.key}
-                type="button"
-                className={`qb-level${quote.levelKey === l.key ? ' is-on' : ''}`}
-                aria-pressed={quote.levelKey === l.key}
-                onClick={(e) => onLevel(l.key, l.label, e.detail === 0)}
-              >
-                {l.label}
-              </button>
-            ))}
+            {levels.map((l) => {
+              const on = quote.levelKey === l.key
+              return (
+                <Button
+                  key={l.key}
+                  size="sm"
+                  tone={on ? 'neutral' : 'ghost'}
+                  aria-pressed={on}
+                  onClick={(e) => onLevel(l.key, l.label, e.detail === 0)}
+                >
+                  {l.label}
+                </Button>
+              )
+            })}
           </div>
         ) : null}
 
@@ -2130,25 +2188,35 @@ function PriceBar({
             reason it cannot go is printed beside it and the rest are
             under the total.
 
-            THE `title` IS THE FOURTH PLACE THE REFUSAL LIVES, and it
-            carries the WHOLE first sentence rather than `refusalFact`'s
-            head of it — a tooltip has room and a strip does not. It is
-            a supplement to the Address stop and the ledger, never the
-            only statement: a hover is not a place a refusal may hide.
-            `refusals`, not `unsaid`, because the button is refused for
-            the reason the flow line is making too. */}
-        <button
-          type="button"
-          className="qb-give qb-price-act"
-          aria-disabled={refusals.length > 0 || undefined}
-          title={refusals.length > 0 ? refusals[0] : undefined}
-          onClick={() => {
-            if (refusals.length > 0) return
-            onIssue()
-          }}
-        >
-          Give it to the customer
-        </button>
+            THE `title` STILL CARRIES THE WHOLE first sentence where
+            `refusedBecause` draws `refusalFact`'s head of it — a
+            tooltip has room and a bar does not. It is a supplement to
+            the sentence under the button and the ledger, never the only
+            statement: a hover is not a place a refusal may hide.
+
+            THE PRIMARY TONE, ONCE. Rule 5 gives a screen about four
+            accents; this is the one act the bar exists for, and `lg`
+            because it is the last thing pressed on a quote. The ghost
+            "N more" beside it is the door onto the rest of the reasons
+            and takes no ground of its own. `.qb-give` stays declared in
+            build.css because QuoteEditor still wears it; nothing here
+            does. */}
+        <span className="qb-price-acts">
+          {refusals.length > 1 ? (
+            <Button tone="ghost" size="sm" onClick={() => setLedger(true)}>
+              {refusals.length - 1} more
+            </Button>
+          ) : null}
+          <Button
+            tone="primary"
+            size="lg"
+            refusedBecause={refusals.length > 0 ? refusalFact(refusals[0]) : undefined}
+            title={refusals.length > 0 ? refusals[0] : undefined}
+            onClick={onIssue}
+          >
+            Give it to the customer
+          </Button>
+        </span>
       </div>
     </FlowFoot>
   )
@@ -2224,6 +2292,10 @@ function Ledger({
         ) : null}
       </ul>
 
+      {/* THE SUMS ARE A CARD — flat, because the ledger they sit in is
+          already one step below the bar and a second shadow there is
+          noise. `.qb-sums` keeps only its column. */}
+      <Card tone="flat" pad="md">
       <dl className="qb-sums">
         <div className="qb-sum">
           <dt className="qb-sum-lab">The package</dt>
@@ -2276,6 +2348,7 @@ function Ledger({
           <dd className="qb-sum-fig">{money(totals.total)}</dd>
         </div>
       </dl>
+      </Card>
 
       {totals.unpricedCount > 0 ? (
         <p className="qb-ledger-say">
@@ -2307,24 +2380,36 @@ function Ledger({
 }
 
 /** One line in the breakdown. `ds-rise` fires on MOUNT and on nothing
- *  else, so the row that just arrived is the row that moves. */
+ *  else, so the row that just arrived is the row that moves.
+ *
+ *  A DENSE ROW. It was a four-column grid of its own, and two of the
+ *  four columns — the quantity and the price column's name — were
+ *  `nowrap` under a mask fade, which is a mid-word cut with a soft
+ *  edge and the thing §3 forbids. The quantity is now part of the
+ *  name ("2 × Fuel Tank", which is how a ledger line reads aloud),
+ *  the column name is the row's meta and wraps, and the amount is the
+ *  trail. `.qb-led-row`, `.qb-led-name` and the masked pair are gone. */
 function LedgerLine({ line, index }: { line: QuoteLine; index: number }): ReactElement {
   const { amount, overridden } = lineAmount(line)
   return (
-    <li className="qb-led-row ds-rise" style={{ ['--i' as string]: index }}>
-      <span className="qb-led-name">{line.label}</span>
-      <span className="qb-led-qty">{line.qty > 1 ? `${line.qty} ×` : ''}</span>
-      <span className="qb-led-col">{line.priceColumnName ?? ''}</span>
-      <span className="qb-led-amount">
-        {amount === null ? (
-          <span className="qb-nil">not priced here</span>
-        ) : (
-          <>
-            {money(amount)}
-            {overridden ? <span className="qb-led-typed mono-label">typed</span> : null}
-          </>
-        )}
-      </span>
+    <li className="ds-rise" style={{ ['--i' as string]: index }}>
+      <Row
+        dense
+        name={line.qty > 1 ? `${line.qty} × ${line.label}` : line.label}
+        meta={line.priceColumnName ?? undefined}
+        trail={
+          <span className="qb-led-amount">
+            {amount === null ? (
+              <span className="qb-nil">not priced here</span>
+            ) : (
+              <>
+                {money(amount)}
+                {overridden ? <span className="qb-led-typed mono-label">typed</span> : null}
+              </>
+            )}
+          </span>
+        }
+      />
     </li>
   )
 }
@@ -2356,9 +2441,15 @@ function ConflictSheet({
   onAccept: () => void
   onCancel: () => void
 }): ReactElement {
-  const okRef = useRef<HTMLButtonElement>(null)
+  /* Focus lands on the accept button. Button takes no ref (its props
+     are the native ones less `className` and `style`, and a ref is
+     not a prop on a function component's type here), so the sheet's
+     own action row is what is held and the button is found under it
+     by the `data-ok` it carries. `autoFocus` would do the same in one
+     word and trip the linter's ratchet. */
+  const actsRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    okRef.current?.focus()
+    actsRef.current?.querySelector<HTMLButtonElement>('[data-ok]')?.focus()
   }, [])
 
   return (
@@ -2380,23 +2471,35 @@ function ConflictSheet({
       >
         <p className="qb-sheet-title">{conflict.title}</p>
 
+        {/* EACH LINE THAT MOVES IS A ROW: the name, the column it moves
+            to as the meta, and the arithmetic — from, arrow, to — as the
+            trail. `.qb-sheet-row`, `.qb-sheet-name` and `.qb-sheet-why`
+            were a grid, a name step and a caption step drawn by hand
+            for a line in a list; the row draws them. What the list
+            keeps is `.s-held`, ds.css's state for a line that stays
+            where it is, on the <li>. */}
         {conflict.changed.length > 0 ? (
           <div className="qb-sheet-group">
             <p className="mono-label qb-sheet-cap">What changes</p>
             <ul className="qb-sheet-rows">
               {conflict.changed.map((row) => (
-                <li key={row.lineId} className="qb-sheet-row">
-                  <span className="qb-sheet-name">{row.label}</span>
-                  <span className="qb-sheet-move">
-                    <span className="qb-sheet-from">
-                      {row.from === null ? '—' : money(row.from)}
-                    </span>
-                    <span className="qb-sheet-arrow" aria-hidden="true">
-                      →
-                    </span>
-                    <span className="qb-sheet-to">{row.to === null ? '—' : money(row.to)}</span>
-                  </span>
-                  <span className="qb-sheet-why">{row.toColumn}</span>
+                <li key={row.lineId}>
+                  <Row
+                    dense
+                    name={row.label}
+                    meta={row.toColumn}
+                    trail={
+                      <span className="qb-sheet-move">
+                        <span className="qb-sheet-from">
+                          {row.from === null ? '—' : money(row.from)}
+                        </span>
+                        <span className="qb-sheet-arrow" aria-hidden="true">
+                          →
+                        </span>
+                        <span className="qb-sheet-to">{row.to === null ? '—' : money(row.to)}</span>
+                      </span>
+                    }
+                  />
                 </li>
               ))}
             </ul>
@@ -2408,12 +2511,17 @@ function ConflictSheet({
             <p className="mono-label qb-sheet-cap">What stays as it is</p>
             <ul className="qb-sheet-rows">
               {conflict.held.map((row) => (
-                <li key={row.lineId} className="qb-sheet-row s-held">
-                  <span className="qb-sheet-name">{row.label}</span>
-                  <span className="qb-sheet-move">
-                    <span className="qb-sheet-to">{row.to === null ? '—' : money(row.to)}</span>
-                  </span>
-                  <span className="qb-sheet-why s-say">{row.why}</span>
+                <li key={row.lineId} className="s-held">
+                  <Row
+                    dense
+                    name={row.label}
+                    meta={<span className="s-say">{row.why}</span>}
+                    trail={
+                      <span className="qb-sheet-move">
+                        <span className="qb-sheet-to">{row.to === null ? '—' : money(row.to)}</span>
+                      </span>
+                    }
+                  />
                 </li>
               ))}
             </ul>
@@ -2425,13 +2533,16 @@ function ConflictSheet({
             <span className="qb-sheet-delta-lab mono-label">Change to the total</span>
             <span className="qb-sheet-delta-fig">{deltaSay(conflict.delta)}</span>
           </p>
-          <div className="qb-sheet-acts">
-            <button type="button" className="qb-sheet-no" onClick={onCancel}>
+          {/* Neutral and primary — the sheet's two acts were two more
+              hand-drawn buttons, one grey and one accent, each with its
+              own three states. Eight rules, deleted. */}
+          <div className="qb-sheet-acts" ref={actsRef}>
+            <Button tone="neutral" onClick={onCancel}>
               Leave it
-            </button>
-            <button type="button" className="qb-sheet-ok" ref={okRef} onClick={onAccept}>
+            </Button>
+            <Button tone="primary" data-ok="true" onClick={onAccept}>
               {conflict.accept}
-            </button>
+            </Button>
           </div>
         </div>
       </motion.div>
@@ -2550,15 +2661,29 @@ function NothingOffered({
         ? `None of the ${offer.catalogue} still sold can be offered here.`
         : ''
 
+  /* A SUNKEN CARD — card.css: "a well: an empty slot, a drop target,
+     a placeholder. It reads as recessed because it is darker than its
+     ground and carries no shadow." That is the whole of what
+     `.qb-none`'s dashed border, ground, radius and padding were saying
+     by hand; the inner div keeps only the centring, which is the one
+     thing on this screen that IS centred and the reason it is.
+
+     THE DOOR IS A NEUTRAL BUTTON. It was outlined in the accent, a
+     tone Button does not have — and the reason it was outlined rather
+     than filled (three empty bands would be three accents) is the same
+     reason it is `neutral` now and not `primary`. One accent on this
+     screen, and it is the handover. */
   return (
-    <div className="qb-none">
-      {say === '' ? null : <p className="qb-none-say">{say}</p>}
-      {door ? (
-        <button type="button" className="qb-act" onClick={onSeeAll}>
-          Show all {offer.catalogue} {name}
-        </button>
-      ) : null}
-    </div>
+    <Card tone="sunken" pad="lg">
+      <div className="qb-none">
+        {say === '' ? null : <p className="qb-none-say">{say}</p>}
+        {door ? (
+          <Button tone="neutral" onClick={onSeeAll}>
+            Show all {offer.catalogue} {name}
+          </Button>
+        ) : null}
+      </div>
+    </Card>
   )
 }
 
@@ -2585,6 +2710,26 @@ function NothingOffered({
    and believed for months. Nothing is lost in the swap: "on the quote"
    IS the selection this listbox exists to collect, and `option`
    requires `aria-selected` anyway.
+
+   ── WHY THIS IS NOT A <Card>, AND WHAT Card WOULD NEED ───────────
+   Card is the surface this should wear, and it cannot yet, because a
+   Card is a <div> or a plain <button> and this is a listbox OPTION:
+   it needs `role="option"`, `aria-selected`, a roving `tabIndex` (one
+   tab stop per shelf, not thirty), a `ref` for `land()` to focus, the
+   pointer-move/leave and focus handlers the price bar's proposal
+   reads, a stagger index for `ds-rise`, a dashed `outside` tone and a
+   `lit` (keyboard place) state that is distinct from `current`. Card
+   exposes none of those and takes no className, so adopting it means
+   giving up the listbox — measured before this pass: one Tab per
+   shelf, with the arrows moving focus AND highlight together. That is
+   §C, and it is not for sale for a stylesheet. So this card keeps its
+   own rule and the report names the six things Card is missing, to be
+   added once. What DID change in the conversion is the thing the
+   owner saw: nothing on this card is cut mid-word by the card — the
+   probe found every clipped rect on the shelf was cut by the
+   scrollport's fold, which §3 permits — and the two mask fades this
+   stylesheet still owned (the render caption and the ledger's column
+   name) are gone.
    ============================================================ */
 
 function OfferCard({
@@ -2735,58 +2880,90 @@ function PickedLine({
 }): ReactElement {
   const { amount, overridden } = lineAmount(line)
   const facts = line.pairFacts ?? []
+  const hasMeta = facts.length > 0 || Boolean(line.sourceNote)
 
+  /* ── A ROW, WITH ITS CONTROLS IN THE TRAIL ───────────────────────
+     `.qb-line` was a five-column grid with its own border, ground and
+     radius, a name at a hand-picked 13px/570, a `<label>` wrapping a
+     bare `field-input` for the quantity, and a 26px icon button with
+     its own three states. Row draws the line: the mark is its lead,
+     the label its name, the pair facts and the source its meta, and
+     the trail holds the three controls a still row may carry.
+
+     THE QUANTITY IS A FIELD. There is no `type="number"` in Field, on
+     purpose — the wheel changes a focused number field silently and
+     a half-typed value reads back as "" — so this is a text control
+     with `mono` and a numeric keyboard, and `setQty` still floors
+     nonsense at one, exactly as it did for the number input's own
+     "" → 0. What Field cannot do is put the label BESIDE the control:
+     it is a labelled column, so a picked line is a little taller than
+     it was. Reported as a gap rather than worked around.
+
+     THE REMOVE IS A GHOST BUTTON wearing the glyph as its word and the
+     accessible name on `aria-label`; the non-removable subject line
+     simply has no button, since a trail is a flex line and needs no
+     spacer to keep the amount in place. `.qb-line-drop` and its
+     placeholder are deleted. */
   return (
-    <li className="qb-line">
-      <span className="qb-line-mark" aria-hidden="true">
-        {line.recommended ? <Star size={11} weight="fill" /> : <Check size={11} weight="bold" />}
-      </span>
-      <span className="qb-line-say">
-        <span className="qb-line-name">{line.label}</span>
-        {facts.length > 0 ? (
-          <span className="qb-line-facts">
-            {facts.map((f) => (
-              <span key={f.label} className="qb-card-fact">
-                <span className="qb-card-fact-lab">{f.label}</span> {f.value}
-              </span>
-            ))}
+    <li>
+      <Row
+        lead={
+          <span className="qb-line-mark" aria-hidden="true">
+            {line.recommended ? <Star size={11} weight="fill" /> : <Check size={11} weight="bold" />}
           </span>
-        ) : null}
-        {line.sourceNote ? <span className="qb-line-src">{line.sourceNote}</span> : null}
-      </span>
-      <label className="qb-line-qty">
-        <span className="mono-label">Qty</span>
-        <input
-          className="field-input qb-line-qty-in"
-          type="number"
-          min={1}
-          value={line.qty}
-          onChange={(e) => setQty(quoteId, line.id, Number(e.currentTarget.value))}
-        />
-      </label>
-      <span className="qb-line-amount">
-        {amount === null ? (
-          <span className="qb-nil">not priced here</span>
-        ) : (
+        }
+        name={line.label}
+        meta={
+          hasMeta ? (
+            <>
+              {facts.length > 0 ? (
+                <span className="qb-line-facts">
+                  {facts.map((f) => (
+                    <span key={f.label} className="qb-card-fact">
+                      <span className="qb-card-fact-lab">{f.label}</span> {f.value}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
+              {line.sourceNote ? <span className="qb-line-src">{line.sourceNote}</span> : null}
+            </>
+          ) : undefined
+        }
+        trail={
           <>
-            {money(amount)}
-            {overridden ? <span className="qb-line-over mono-label">typed</span> : null}
+            <span className="qb-line-qty">
+              <Field
+                label="Qty"
+                mono
+                inputMode="numeric"
+                value={String(line.qty)}
+                onChange={(v) => setQty(quoteId, line.id, Number(v))}
+              />
+            </span>
+            <span className="qb-line-amount">
+              {amount === null ? (
+                <span className="qb-nil">not priced here</span>
+              ) : (
+                <>
+                  {money(amount)}
+                  {overridden ? <span className="qb-line-over mono-label">typed</span> : null}
+                </>
+              )}
+            </span>
+            {removable ? (
+              <Button
+                tone="ghost"
+                size="sm"
+                aria-label={`Take ${line.label} off this quote`}
+                title="Take it off"
+                onClick={() => removeLine(quoteId, line.id)}
+              >
+                <X size={12} weight="bold" aria-hidden="true" />
+              </Button>
+            ) : null}
           </>
-        )}
-      </span>
-      {removable ? (
-        <button
-          type="button"
-          className="qb-line-drop"
-          aria-label={`Take ${line.label} off this quote`}
-          title="Take it off"
-          onClick={() => removeLine(quoteId, line.id)}
-        >
-          <X size={12} weight="bold" aria-hidden="true" />
-        </button>
-      ) : (
-        <span className="qb-line-drop-none" aria-hidden="true" />
-      )}
+        }
+      />
     </li>
   )
 }

@@ -82,6 +82,11 @@ import { AccessScreen } from './AccessScreen'
 import { reorderPlan } from './designer'
 import { placeFilters, placesOf, placesUnder, type Place } from './places'
 import { PageHead } from '@/features/page'
+/* THE PRIMITIVES. A card, a button and a caption are drawn by
+   src/ui now, and every local rule that used to draw them is gone
+   from modules.css — the primitives take no className, so there was
+   no way to keep one and layer the other. */
+import { Button, Card, SectionHead } from '@/ui'
 import { rememberPlace } from './openPlace'
 import { PlaceMark } from './PlaceMark'
 import './modules.css'
@@ -280,14 +285,13 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                 there are places: the screen behind it says honestly
                 that access is granted in a place when there are
                 none yet. */}
-            <button
-              type="button"
-              className="btn md-access"
+            <Button
+              tone="neutral"
+              glyph={<ShieldCheck size={ICON_SIZE.tiny} weight="light" />}
               onClick={() => setSurface('access')}
             >
-              <ShieldCheck size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
               Access &amp; roles
-            </button>
+            </Button>
 
             {/* REORDER STANDS WITH THE PAGE'S OTHER ACT, and it is
                 drawn only when there is an order to put things in.
@@ -302,15 +306,17 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                 dead. One module cannot be arranged, so there is no
                 control, which is the same refusal made in the place
                 it applies. */}
+            {/* WHILE IT IS ON IT IS THE PRIMARY ACT ON THE PAGE —
+                the accent, once, on the mode the person is in — and
+                the word on it says which way it goes. */}
             {moduleCount > 1 ? (
-              <button
-                type="button"
-                className={`btn md-order${ordering ? ' is-on' : ''}`}
+              <Button
+                tone={ordering ? 'primary' : 'neutral'}
                 aria-pressed={ordering}
                 onClick={() => setOrdering((v) => !v)}
               >
                 {ordering ? 'Done' : 'Reorder'}
-              </button>
+              </Button>
             ) : null}
           </>
         }
@@ -345,34 +351,38 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
         /* THE EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT â€” the one
            place on this screen prose earns its space. */
         <div className="md-empty">
-          <span className="mono-label md-empty-eyebrow">Nothing here yet</span>
-          <p className="md-empty-say">
-            A module is a place in your business â€” the boats you sell, the trailers, the
-            quotes you have raised. You pick the table it is about and give it a name.
-          </p>
-          <p className="md-empty-count">
-            You have{' '}
-            <strong>
-              {tableCount} {tableCount === 1 ? 'table' : 'tables'}
-            </strong>{' '}
-            and no modules.
-          </p>
-          <button
-            type="button"
-            className="btn btn-primary md-empty-do"
-            onClick={onNew}
-            disabled={!canMakeModule}
-            aria-describedby={canMakeModule ? undefined : 'md-dash-why'}
-          >
-            <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-            New module
-          </button>
-          {canMakeModule ? null : (
-            <p className="md-empty-why" id="md-dash-why">
-              A module is about a table, and there are none yet. Start one from{' '}
-              <em>New table</em> on the bar, or load your price file from <em>Home</em>.
-            </p>
-          )}
+          <Card tone="raised" pad="lg">
+            <div className="md-empty-in">
+              <SectionHead level="none">Nothing here yet</SectionHead>
+              <p className="md-empty-say">
+                A module is a place in your business — the boats you sell, the trailers, the
+                quotes you have raised. You pick the table it is about and give it a name.
+              </p>
+              <p className="md-empty-count">
+                You have{' '}
+                <strong>
+                  {tableCount} {tableCount === 1 ? 'table' : 'tables'}
+                </strong>{' '}
+                and no modules.
+              </p>
+              {/* REFUSED, NOT DISABLED. `<Button refusedBecause>` keeps
+                  the control in the tab order, blocks the press and
+                  draws the reason beneath it, tied by aria-describedby
+                  — rule 10, once, in the primitive. */}
+              <Button
+                tone="primary"
+                glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
+                onClick={onNew}
+                refusedBecause={
+                  canMakeModule
+                    ? undefined
+                    : 'A module is about a table, and there are none yet. Start one from New table on the bar, or load your price file from Home.'
+                }
+              >
+                New module
+              </Button>
+            </div>
+          </Card>
         </div>
       ) : (
         <>
@@ -397,28 +407,34 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
             ))}
 
             {/* NEW MODULE IS A CARD IN THE GRID. Creating a place and
-                opening one are the same gesture at the same size. */}
-            <li className="md-grid-slot">
-              <button
-                type="button"
-                className="md-place md-place--new"
-                style={{ '--i': deck.length } as CSSProperties}
-                onClick={() => {
-                  if (canMakeModule) onNew()
-                }}
-                aria-disabled={canMakeModule ? undefined : true}
-                aria-describedby={canMakeModule ? undefined : 'md-grid-why'}
-              >
-                <span className="md-place-face md-place-face--new">
-                  <Plus size={ICON_SIZE.medium} weight="light" aria-hidden="true" />
-                </span>
-                <span className="md-place-name">New module</span>
-                {canMakeModule ? null : (
-                  <span className="md-place-refused" id="md-grid-why">
-                    A module is about a table, and there are none yet.
+                opening one are the same gesture at the same size — a
+                sunken `<Card>`, the well the primitive draws for "an
+                empty slot", which is exactly what this is.
+
+                REFUSED IS NOT A BUTTON. `<Card>` is a button only
+                when it can be activated; with no table to be about,
+                it is a still card carrying the sentence, so there is
+                nothing to press and the reason is where the act would
+                have been (rule 10). */}
+            <li className="md-grid-slot ds-rise" style={{ '--i': deck.length } as CSSProperties}>
+              {canMakeModule ? (
+                <Card tone="sunken" pad="none" label="New module" onActivate={onNew}>
+                  <span className="md-place-new">
+                    <Plus size={ICON_SIZE.medium} weight="light" aria-hidden="true" />
+                    <span className="md-place-new-word">New module</span>
                   </span>
-                )}
-              </button>
+                </Card>
+              ) : (
+                <Card tone="sunken" pad="none">
+                  <span className="md-place-new">
+                    <Plus size={ICON_SIZE.medium} weight="light" aria-hidden="true" />
+                    <span className="md-place-new-word">New module</span>
+                    <span className="md-place-refused">
+                      A module is about a table, and there are none yet.
+                    </span>
+                  </span>
+                </Card>
+              )}
             </li>
           </ul>
 
@@ -489,18 +505,27 @@ function PlaceCard({
     : `Open ${place.name} — ${fact}`
 
   return (
-    <li className="md-grid-slot">
-      <button
-        type="button"
-        /* THE KIND CARRIES THE RAIL, unless the place is held back —
-           in which case the state does, because "no longer sold" is
-           the more important fact about it and two rails on one edge
-           is one rail too many. */
-        className={`md-place ds-rise${place.retired ? ' s-held' : ' k-rail-thick k-lift'}`}
-        data-kind={place.retired ? undefined : place.kind}
-        style={style}
-        aria-label={label}
-        onClick={() => {
+    /* THE ENTRANCE IS THE SLOT'S. `<Card>` takes no class and no
+       style, so the stagger (`--i`) and the rise sit on the slot
+       that holds it — the same movement, one element out. */
+    <li className="md-grid-slot ds-rise" style={style}>
+      {/* THE CARD IS `<Card>`, AND THE KIND IS ITS `kind`. The rail
+          this card wore is the primitive's kind ground now — 6% of
+          the hue under the whole card and 14% on its edge, the mix
+          card.css measured at 4.5:1 for a name on it. A place held
+          back carries no hue: "no longer sold" is the fact about it,
+          and it is printed in the body rather than hinted at the
+          edge.
+
+          `onActivate` makes it a real <button> with the role, the
+          tab stop, the press and the focus ring — none of which this
+          file has to draw any more. */}
+      <Card
+        tone="raised"
+        pad="none"
+        kind={place.retired ? undefined : place.kind}
+        label={label}
+        onActivate={() => {
           /* THE SEAM, BOTH WAYS. Told to the host, and remembered for
              a host that cannot carry it yet. */
           rememberPlace(place.moduleId, place.tableId)
@@ -554,32 +579,32 @@ function PlaceCard({
         </span>
 
         {/* ============================================================
-            THE NAME IS THE SUBJECT OF THE CARD, AND IT WAS 15px.
+            THE NAME IS THE SUBJECT OF THE CARD, AND IT WAS 15px, THEN
+            26.88px, AND IT IS 34px NOW.
 
             Measured at 1280x800 on the real seed: 25 places, and the
             largest glyph anywhere in the grid was `.md-place-name` at
-            **15px** — the same size as the count beside it, one step
-            off the 12px noun and four off the 11px label. 1.36x of
-            scale contrast inside a card, on a screen whose whole job
-            is to let somebody pick a brand. The face above it is
-            158.9px tall and, for the ten places with no photograph,
-            holds one glyph.
+            **15px** — the same size as the count beside it. The
+            display-lg pass took it to 26.88px and the 2026-09-09 sweep
+            then measured the whole stage at 2.79x, with the page
+            header's word "Modules" (`.ph-name`, 30.72px) still 3.84px
+            ABOVE the twenty-five names it heads. Chrome outranking
+            its own subject.
 
-            So the name takes `.ds-display-lg` — 26.88px at 1280, the
-            lowest of the four display steps and the one ds.css
-            describes as "a stage title with a page behind it". A door
-            to Highfield is exactly that: press it and Highfield is
-            the page. The utility carries the whole set (size, weight,
-            leading, tracking, face, width axis) and `.md-place-name`
-            keeps only the clamp and the wrap, so nothing here reaches
-            in for one of the four (rule 6).
+            So the name takes `.ds-display-xl` — 34.00px at 1280, the
+            step ds.css cut for "a name that is one of several and is
+            the point of the screen — a door, a place". Four to a
+            screen is normal; twenty-five is this screen. It is above
+            the chrome and below the marque, which stays one per
+            screen on the workspace this card opens. The utility
+            carries the whole set and `.md-place-name` keeps only the
+            clamp and the reserved box (rule 6); the cell arithmetic
+            is on that rule in modules.css.
 
-            NOT the marque, and not the hero: both are one-per-screen
-            steps and this is a grid of 25. And it steps back DOWN a
-            whole step under 1100px, where the track drops to 174px —
-            see the media query in modules.css. */}
+            And it steps back DOWN a whole step under 1100px, where
+            the track drops to 174px — see the media query there. */}
         <span className="md-place-body">
-          <span className="ds-display-lg md-place-name">{place.name}</span>
+          <span className="ds-display-xl md-place-name">{place.name}</span>
           <span className="md-place-fact">
             {place.retired ? (
               <span className="md-place-held">{fact}</span>
@@ -602,46 +627,46 @@ function PlaceCard({
             The foot is drawn only when something has to be said in
             it, which today means a place a dealer has closed. */}
         {restricted && access ? (
-        <span className="md-place-foot">
+          <span className="md-place-foot">
             <span className="md-place-shut" title={access.hint}>
               <Lock size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
               {access.say}
             </span>
-        </span>
+          </span>
         ) : null}
-      </button>
+      </Card>
 
       {/* REORDERING IS A FACT ABOUT MODULES, NOT ABOUT THE BRANDS
           INSIDE THEM — the seven Highfield-to-Haines cards are one
           module's run and move together. So the arrows are drawn once
           per run, on the card that leads it, and they name the module
-          they move rather than the card they sit on. */}
+          they move rather than the card they sit on.
+
+          THE END OF THE LIST IS REFUSED, NOT DISABLED. `<Button
+          refusedBecause>` keeps the arrow in the tab order, blocks the
+          press and draws the sentence under it — the same shape the
+          card's own refusal takes, in the primitive rather than in a
+          title attribute nobody hovers. */}
       {ordering && place.leads && module ? (
         <span className="md-place-order">
-          <button
-            type="button"
-            className="md-place-move"
+          <Button
+            tone="neutral"
+            size="sm"
             aria-label={`Move ${place.moduleName} earlier`}
-            title={first ? `${place.moduleName} is already first` : `Move ${place.moduleName} earlier`}
-            aria-disabled={first || undefined}
-            onClick={() => {
-              if (!first) onMove(place.moduleId, -1)
-            }}
+            refusedBecause={first ? `${place.moduleName} is already first` : undefined}
+            onClick={() => onMove(place.moduleId, -1)}
           >
             <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="md-place-move"
+          </Button>
+          <Button
+            tone="neutral"
+            size="sm"
             aria-label={`Move ${place.moduleName} later`}
-            title={last ? `${place.moduleName} is already last` : `Move ${place.moduleName} later`}
-            aria-disabled={last || undefined}
-            onClick={() => {
-              if (!last) onMove(place.moduleId, 1)
-            }}
+            refusedBecause={last ? `${place.moduleName} is already last` : undefined}
+            onClick={() => onMove(place.moduleId, 1)}
           >
             <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          </button>
+          </Button>
         </span>
       ) : null}
     </li>

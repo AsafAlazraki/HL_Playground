@@ -1,34 +1,50 @@
 /* ============================================================
-   FITMENT — the fan-out.
+   FITMENT — the fan-out, and the rig.
 
    Co-located with its feature, as every stylesheet in this tree is.
-   It owns the `fo-` prefix and nothing else, and it overrides
-   nothing: no rule here reaches outside `.fo-root`.
+   It owns the `fo-` and `rg-` prefixes and nothing else, and it
+   overrides nothing: no rule here reaches outside `.fo-root`.
 
-   THE GEOMETRY IS THE CONTRACT'S. Page padding
-   `--sp-5 --sp-6 --sp-6`, content capped at `--measure` and centred,
-   cards on `repeat(auto-fill, minmax(min(320px, 100%), 1fr))` with
-   `--sp-4` between them, 10px radius, hairline border, a 3px kind
-   rail on the left edge, `--ec1` at rest. Every figure is
-   `--font-mono`, tabular. Nothing is smaller than 11px.
+   THE REBUILD, 2026-09-09. Before this pass the file declared its
+   own button (7 treatments), card (13), row (8), field (2) and
+   section-head (8) — 38 self-drawn surfaces against the five
+   primitives in `src/ui` that draw each once. All 38 are gone from
+   here: every card is `<Card>`, every pressable line is `<Row>` or
+   `<Button>`, both search boxes are `<Field>`, every eyebrow is
+   `<SectionHead>`. None of the five takes a className, so nothing
+   below can reach the surface they draw. What is left is LAYOUT and
+   TEXT, on the `--sp` scale and the `--t-*` steps — not a hand-
+   written size, weight or tracking remains.
 
-   THE ONE NEW SHAPE IS THE BAR, and it is two elements: a recessed
-   track in `--paper-sunken` and a fill in the partner table's own
-   kind hue, handed in as `--fo-bar-accent`. See FanOut.tsx's header
-   for why that is in-system rather than a fill behind text.
+   THE ONE SHAPE THAT IS THIS FEATURE'S is the bar: a recessed track
+   in `--paper-sunken` and a fill in the partner table's own kind
+   hue. A kind hue may carry a surface with no text on it (§1), and
+   a proportion of a catalogue drawn in that catalogue's own colour
+   is the card rail laid on its side.
    ============================================================ */
 
+/* THE FIELD. `--canvas-bg` is the sheet ground and the wash over it
+   is ds.css's own atmosphere token under 6% alpha — under one
+   contrast point, so nothing measured here moves. Container-named,
+   because `FanOut` is mounted by `FlowStage` and exported for a
+   module page to draw too: it answers to the box it is in. */
 .fo-root {
   flex: 1;
   min-height: 0;
   min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--paper);
+  background:
+    radial-gradient(120% 50% at 50% -6%, var(--aurora-1) 0%, transparent 62%),
+    var(--canvas-bg);
+  container-type: inline-size;
+  container-name: fopage;
 }
 
+/* THE CAP. `--measure` reaches 2304px on a 2560px window; past
+   2000px the fans draw a seventh column, so it stops and centres. */
 .fo-page {
-  max-width: var(--measure);
+  max-width: min(var(--measure), 2000px);
   margin: 0 auto;
   padding: var(--sp-5) var(--sp-6) var(--sp-6);
 }
@@ -40,82 +56,89 @@
 .fo-head {
   min-width: 0;
 }
-
-.fo-eyebrow,
-.fo-band-eyebrow,
-.fo-void-eyebrow {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+.fo-head-say {
+  min-width: 0;
 }
 
+/* THE TITLE IS THE PAGE'S SUBJECT, and it wears the middle step:
+   `--t-display-xl`, "a name that is one of several and is the point
+   of the screen — a page header". Stated here rather than through
+   `.ds-display-xl` because this rule owns the element and the two
+   would be equal in specificity. Whole set (rule 6); the tracking is
+   -0.032em, further negative than the step below it (rule 7). */
 .fo-title {
   margin: var(--sp-2) 0 0;
-  font-family: var(--font-ui);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.014em;
-  line-height: 1.2;
+  max-width: 22ch;
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 100;
+  font-size: var(--t-display-xl-size);
+  font-weight: var(--t-display-xl-weight);
+  line-height: var(--t-display-xl-lead);
+  letter-spacing: var(--t-display-xl-track);
   color: var(--ink);
+  text-wrap: balance;
 }
 
 .fo-lede {
   margin: var(--sp-3) 0 0;
   max-width: 68ch;
   font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 
+/* THE LEDGER — four figures counted off the sheet, on a raised Card
+   (`.fo-ledger-slot` is where the Card sits in the head grid; the
+   list inside it is this). They are the evidence the page rests on. */
+.fo-ledger-slot {
+  margin: var(--sp-5) 0 0;
+}
 .fo-ledger {
   list-style: none;
-  margin: var(--sp-5) 0 0;
-  padding: var(--sp-4) 0 0;
-  border-top: 1px solid var(--hairline);
+  margin: 0;
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
-  gap: var(--sp-4);
+  gap: var(--sp-5);
 }
-
 .fo-stat {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
-
+.fo-stat + .fo-stat {
+  padding-left: var(--sp-5);
+  border-left: 1px solid var(--hairline);
+}
+/* the largest figures on the page after the title, because they are
+   what it is about — the data ramp's own top step, mono and tabular
+   like every figure in this app that is not the committed total */
 .fo-stat-n {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.016em;
+  font-size: var(--data-xl-size);
+  font-weight: var(--t-mono-weight);
+  letter-spacing: -0.02em;
   color: var(--ink);
 }
-
 .fo-stat-word {
   font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
   color: var(--ink-soft);
 }
 
 /* ---------------------------------------------------------- */
-/* The fans                                                    */
+/* The fans — one Card per subject table                        */
 /* ---------------------------------------------------------- */
 
-/* MULTI-COLUMN, NOT A GRID, AND THE REASON IS THE DATA. These cards
-   are wildly uneven — the biggest table carries five relationships and
-   two of them split across two catalogues, the smallest carries two —
-   and a grid row is as tall as its tallest cell, so a grid left a
-   hand's width of white under every short card. Columns let a short
-   card be short. Reading order stays "biggest first", down column one
-   and on to column two, which is the order they are sorted in. */
+/* MULTI-COLUMN, NOT A GRID: the cards are wildly uneven — five
+   relationships on the biggest, two on the smallest — and a grid row
+   is as tall as its tallest cell. Columns let a short card be short,
+   reading down column one and on to column two, largest first. */
 .fo-fans {
   list-style: none;
   margin: var(--sp-5) 0 0;
@@ -124,28 +147,12 @@
   column-gap: var(--sp-4);
 }
 
+/* the list item carries the stagger (`--i`, `ds-rise`) and the
+   column break; the Card inside carries the surface and the kind */
 .fo-fan {
-  position: relative;
   min-width: 0;
   break-inside: avoid;
   margin: 0 0 var(--sp-4);
-  padding: var(--sp-4) var(--sp-4) var(--sp-3) calc(var(--sp-4) + 3px);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec1);
-}
-
-/* the kind rail, inset top and bottom exactly as Home draws it */
-.fo-fan::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 11px;
-  bottom: 11px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--fo-accent, var(--accent-graphite));
 }
 
 .fo-fan-head {
@@ -155,50 +162,46 @@
   margin: 0;
   min-width: 0;
 }
-
+/* the Card sets `data-kind`, so `--kind` is already resolved here */
 .fo-fan-mark {
   display: inline-flex;
   align-self: center;
-  color: var(--fo-accent, var(--accent-graphite));
+  color: var(--kind, var(--ink-soft));
 }
-
+/* the table's name — a panel header, so the title step, whole */
 .fo-fan-name {
   flex: 1;
   min-width: 0;
   font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 570;
-  letter-spacing: -0.009em;
-  line-height: 1.25;
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
   color: var(--ink);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
-
 .fo-fan-count {
   flex: none;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   color: var(--ink-faint);
 }
 
-/* ---- one relationship ---- */
+/* ---- one relationship: a still Row, whose name line carries the
+        count and whose meta carries the bar and the sentence ---- */
 
 .fo-rows {
   list-style: none;
-  margin: var(--sp-3) 0 0;
+  margin: var(--sp-2) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
 }
-
 .fo-row {
   min-width: 0;
 }
-
 .fo-row + .fo-row {
-  padding-top: var(--sp-3);
   border-top: 1px solid var(--hairline);
 }
 
@@ -207,58 +210,39 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-2);
-  margin: 0 0 6px;
   min-width: 0;
 }
-
-.fo-row-role {
-  min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
 .fo-row-n {
   flex: none;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--t-mono-size);
+  font-weight: var(--t-mono-weight);
   letter-spacing: -0.01em;
   color: var(--ink);
 }
 
+/* the sentence under the bar is read, so it steps up from the row
+   meta's floor to `--ink-soft` */
 .fo-row-say {
+  display: block;
   margin: 6px 0 0;
   font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
-
 .fo-row-partner,
 .fo-row-derived {
-  font-family: var(--font-ui);
-  font-size: 12px;
   color: var(--ink-soft);
 }
-
-/* NOT THE ACCENT. Blue is the one accent and it appears about four
-   times on a screen (DESIGN_CONTRACT §1); "80 derived" occurs on
-   roughly a dozen rows here, and a dozen blue words is a screen with
-   no primary on it. The accent is spent on the block below, where
-   derivation is the subject rather than an aside. */
-.fo-row-derived {
-  color: var(--ink-soft);
-}
-
 .fo-row-held {
+  display: block;
   margin: var(--sp-2) 0 0;
   font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
   color: var(--ink-soft);
 }
 
@@ -267,19 +251,17 @@
 .fo-bar {
   display: block;
   height: 6px;
-  border-radius: 999px;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-full);
   background: var(--paper-sunken);
   overflow: hidden;
 }
-
 /* NO `min-width` HERE. The floor on a real reading is applied in
-   FanOut.tsx, where zero can be told from very small; a CSS floor
-   would paint a 3px mark for a relationship that has nothing in it,
-   which is the one thing the bar must never say. */
+   FanOut.tsx, where zero can be told from very small. */
 .fo-bar-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: var(--fo-bar-accent, var(--accent-graphite));
 }
 
@@ -293,140 +275,72 @@
   flex-direction: column;
   gap: 3px;
 }
-
 .fo-strand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--sp-2);
   min-width: 0;
 }
-
 .fo-strand-n {
   flex: none;
   margin-left: auto;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: var(--t-mono-size);
   color: var(--ink);
 }
-
 .fo-strand-of {
   flex: none;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-mono-sm-size);
   color: var(--ink-faint);
 }
-
-/* ---- the door onto the rows behind a figure ---- */
-
-.fo-door {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  padding: 2px 6px;
-  margin: 0 0 0 -6px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-soft);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-
-.fo-door > svg {
-  flex: none;
-  opacity: 0;
-  transition: opacity var(--t-fast) var(--ease-draft);
-}
-
-.fo-door-name {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.fo-door:hover {
-  background: var(--paper-sunken);
-  color: var(--ink);
-}
-
-.fo-door:hover > svg {
-  opacity: 1;
-}
-
-/* A ROW DARKENS, IT DOES NOT SCALE — DESIGN_CONTRACT §5, so its
-   neighbours do not look as though they moved. On pointer-down. */
-.fo-door:active {
-  background: var(--paper-sunken);
-  border-color: var(--hairline-strong);
-  color: var(--ink);
-}
-
-.fo-door:focus-visible {
-  outline: none;
-  color: var(--ink);
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
+/* the table's name where there is no door to open it through */
 .fo-door-flat {
   min-width: 0;
   font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
   color: var(--ink-soft);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* ---------------------------------------------------------- */
-/* The bands under the fans                                    */
+/* The bands under the fans — each a raised Card                */
 /* ---------------------------------------------------------- */
 
 .fo-band {
   margin: var(--sp-6) 0 0;
-  padding: var(--sp-5) 0 0;
-  border-top: 1px solid var(--hairline);
 }
 
 .fo-band-title {
   margin: var(--sp-2) 0 0;
   font-family: var(--font-ui);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.011em;
-  line-height: 1.25;
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
   color: var(--ink);
+  text-wrap: balance;
 }
-
 .fo-band-lede,
 .fo-band-note {
   margin: var(--sp-3) 0 0;
   max-width: 68ch;
   font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--t-small-size);
+  line-height: var(--t-body-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
-
-.fo-band-note {
-  font-size: 12.5px;
-}
-
 .fo-src {
   margin: var(--sp-4) 0 0;
   font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: var(--t-mono-sm-size);
+  line-height: var(--t-body-lead);
   color: var(--ink-faint);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* ---- derived versus typed ---- */
@@ -440,44 +354,39 @@
   gap: var(--sp-2);
   max-width: 640px;
 }
-
 .fo-derived-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 120px max-content;
   align-items: center;
   gap: var(--sp-3);
 }
-
 .fo-derived-bar {
   display: block;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: var(--paper-sunken);
   overflow: hidden;
 }
-
 .fo-derived-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: var(--blue);
 }
-
 .fo-derived-n {
   flex: none;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: var(--t-mono-size);
   color: var(--ink-faint);
   white-space: nowrap;
 }
-
 .fo-derived-n b {
-  font-weight: 500;
+  font-weight: var(--t-mono-weight);
   color: var(--ink);
 }
 
-/* ---- the asymmetry ---- */
+/* ---- the asymmetry: one flat Card per role ---- */
 
 .fo-roles {
   list-style: none;
@@ -487,56 +396,23 @@
   grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: var(--sp-3);
 }
-
 .fo-role {
   min-width: 0;
-  padding: var(--sp-3) var(--sp-4);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
 }
-
-.fo-role-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  margin: 0;
-}
-
-.fo-role-name {
-  min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.004em;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.fo-role-n {
-  flex: none;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-}
-
 .fo-role-say {
-  margin: 6px 0 0;
+  margin: var(--sp-2) 0 0;
   font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-small-lead);
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
-
 .fo-role-none {
   color: var(--ink-soft);
   font-style: italic;
 }
 
-/* ---- the selector ---- */
+/* ---- the selector: the bar is a door, and the door is a Card ---- */
 
 .fo-picks {
   list-style: none;
@@ -546,50 +422,124 @@
   grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   gap: var(--sp-4);
 }
-
 .fo-pick {
   min-width: 0;
 }
-
+/* an open shortlist takes the whole row of the grid: 260px is a bar
+   and a caption, and it is not a list of rows with a search box */
+.fo-pick.is-open {
+  grid-column: 1 / -1;
+}
 .fo-pick-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-2);
-  margin: 0 0 6px;
 }
-
 .fo-pick-name {
   min-width: 0;
   font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 570;
-  letter-spacing: -0.004em;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
   color: var(--ink);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
-
 .fo-pick-n {
   flex: none;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: var(--t-mono-sm-size);
   color: var(--ink-faint);
 }
-
 .fo-pick-n b {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--t-mono-size);
+  font-weight: var(--t-mono-weight);
+  color: var(--ink);
+}
+.fo-pick-say {
+  display: block;
+  margin: 6px 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  color: var(--ink-soft);
+  overflow-wrap: break-word;
+}
+
+.fo-pick-open {
+  margin: var(--sp-2) 0 0;
+  padding: 0 0 0 var(--sp-3);
+  border-left: 2px solid var(--hairline-strong);
+}
+
+/* THE SHORTLIST: a Row per trailer. THE RAIL IS `ds.css`'s —
+   `.s-refused` (3px solid `--danger`) and `.s-unchecked` (3px DASHED
+   `--line-strong`), the same two `constraints.css` takes for the same
+   two verdicts, on the list item so a verdict never changes a row's
+   geometry: every item reserves the rail's width and most draw it
+   transparent, which is what keeps the list from stepping sideways
+   as the narrowing is switched. */
+.fo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.fo-list-item {
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--hairline);
+}
+.fo-list-item:last-child {
+  border-bottom: 0;
+}
+
+/* THE EVIDENCE, VERBATIM. The heading is the cell the rule read, so
+   it is a VALUE and never a label — sentence case as the file wrote
+   it, mono because a reader checks it character by character. */
+.fo-list-banner,
+.fo-list-table {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0.01em;
+  overflow-wrap: break-word;
+}
+.fo-list-banner {
+  color: var(--ink-soft);
+}
+
+/* ── THE REFUSAL SENTENCE, ON THE ROW'S SECOND LINE ──────────────
+   CONFIGURATOR_PLAYBOOK §5: in the row, on its second line, on the
+   untinted ground, never a tooltip. `--ink-soft` measures 7.7:1 on
+   the page ground, which is the point — the reason nobody notices a
+   greyed option is that it was greyed below the legibility threshold.
+   It steps up from the row meta's `--ink-faint` floor for that
+   reason. THE NAME IS NOT STRUCK AND NOT DIMMED. */
+.fo-list-why {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-ui);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-small-lead);
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+/* THE KIND'S OWN WORD. Five kinds, five words, never one grey pill. */
+.fo-list-word {
+  font-weight: 600;
   color: var(--ink);
 }
 
-.fo-pick-say {
-  margin: 6px 0 0;
+.fo-list-more,
+.fo-pick-none,
+.fo-pick-off {
+  margin: var(--sp-2) 0 0;
   font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-small-lead);
   color: var(--ink-soft);
-  overflow-wrap: anywhere;
 }
 
 /* ---- the gaps ---- */
@@ -603,73 +553,63 @@
   gap: var(--sp-2);
   max-width: 720px;
 }
-
 .fo-gap {
   display: flex;
   align-items: baseline;
   gap: var(--sp-3);
   min-width: 0;
 }
-
 .fo-gap-n {
   flex: none;
   min-width: 56px;
   text-align: right;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--t-mono-size);
+  font-weight: var(--t-mono-weight);
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-
 .fo-gap-say {
   min-width: 0;
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.5;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
   color: var(--ink-soft);
 }
 
 /* ---------------------------------------------------------- */
-/* Nothing yet — the four parts, in order                      */
+/* Nothing yet — one raised Card, the absence at display size   */
 /* ---------------------------------------------------------- */
 
 .fo-void {
   max-width: 560px;
   margin: var(--sp-6) auto 0;
-  padding: var(--sp-6);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--e2);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
 }
-
-.fo-void-say {
+.fo-void-title {
   margin: 0;
-  font-family: var(--font-ui);
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--ink-soft);
 }
-
+.fo-void-say {
+  margin: var(--sp-3) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-body-weight);
+  line-height: var(--t-body-lead);
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
 .fo-void-count,
 .fo-void-note {
-  margin: 0;
+  margin: var(--sp-3) 0 0;
   font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
   color: var(--ink-soft);
 }
-
 .fo-void-n {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
+  font-weight: var(--t-mono-weight);
   color: var(--ink);
 }
 
@@ -683,317 +623,54 @@
   border-top: 1px solid var(--hairline);
   max-width: 68ch;
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--ink-soft);
-}
-
-/* ============================================================
-   THE RULE THAT PICKS, MADE PRESSABLE.
-
-   Appended, and nothing above changes meaning. Every bar in
-   `.fo-picks` already carried a measured count — "4 of 434 · 0.92%
-   of the catalogue" — and there was no way to see the four. The bar
-   is now the face of a door, and behind it are the rows, the
-   mechanism's own note, a search that reaches past the rule and a
-   switch that suspends it. See `FanOut.tsx`'s `pick` memo for the
-   argument.
-
-   NO NEW ACCENT IS SPENT. The whole panel is ink, hairline and the
-   page's own paper; the one accent inside it is the focus ring,
-   which is DESIGN_CONTRACT §1's own third permitted case, and the
-   `.cur-*` note brings its own sunken ground with it.
-
-   THE PANEL SITS ON PLAIN PAPER, DELIBERATELY. `--ink-faint` is
-   4.72:1 on paper and 4.26:1 over a tint, where it FAILS, and the
-   table name on each row is the faint tier. Tinting this panel
-   would have taken that line under the floor.
-   ============================================================ */
-
-/* an open shortlist takes the whole row of the grid: 260px is a bar
-   and a caption, and it is not a list of rows with a search box */
-.fo-pick.is-open {
-  grid-column: 1 / -1;
-}
-
-.fo-pick-door {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: var(--sp-2);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background-color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-
-.fo-pick-door:hover {
-  border-color: var(--hairline);
-  background: var(--paper-sunken);
-}
-
-/* press on POINTER-DOWN, which is what `:active` is */
-.fo-pick-door:active {
-  background: var(--paper-sunken);
-  border-color: var(--hairline-strong);
-}
-
-.fo-pick-door:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
-}
-
-/* the door is open — it sits in rather than taking a colour */
-.fo-pick-door[aria-expanded='true'] {
-  border-color: var(--hairline-strong);
-  background: var(--paper-sunken);
-}
-
-/* `.fo-pick-head` is already a flex row; `.fo-pick-say` was a
-   paragraph and is now a span inside the door, so it has to be told
-   to hold its own line and its own top margin again */
-.fo-pick-say {
-  display: block;
-}
-
-.fo-pick-open {
-  margin: var(--sp-2) 0 0;
-  padding: 0 0 0 var(--sp-3);
-  border-left: 2px solid var(--hairline-strong);
-}
-
-.fo-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* THE RAIL IS ALWAYS THERE AND USUALLY TRANSPARENT. A verdict must
-   never change a row's geometry: with the narrowing switched off,
-   422 of the 434 rows take a rail, and if the rail added width the
-   whole list would step sideways as the switch flipped. §6's own
-   entry — "option rows when availability changes: no reorder, no
-   reflow theatre". 3px because that is the width `ds.css` gives
-   `.s-refused` and `.s-unchecked`; reserving a different one is how
-   the reflow comes back. */
-.fo-list-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-1) var(--sp-3);
-  padding: 6px 0 6px var(--sp-2);
-  border-bottom: 1px solid var(--hairline);
-  border-left: 3px solid transparent;
-}
-
-.fo-list-row:last-child {
-  border-bottom: 0;
-}
-
-.fo-list-name {
-  flex: 1 1 16ch;
-  min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-/* THE EVIDENCE, VERBATIM. The heading is the cell the rule read, so
-   it is a VALUE and never a label — sentence case as the file wrote
-   it, mono because a reader is checking it character by character
-   against their own sheet. */
-.fo-list-banner {
-  flex: 0 1 auto;
-  min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.45;
-  letter-spacing: 0.01em;
-  color: var(--ink-soft);
-  overflow-wrap: anywhere;
-}
-
-.fo-list-table {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.45;
-  letter-spacing: 0.01em;
-  color: var(--ink-faint);
-}
-
-/* ── THE REFUSAL SENTENCE, ON THE ROW'S SECOND LINE ──────────────
-   CONFIGURATOR_PLAYBOOK §5: in the row, on its second line, on the
-   untinted ground, never a tooltip. `--ink-soft` measures 7.7:1 on
-   the page ground, which is the point — §5's own finding is that the
-   reason nobody notices a greyed option is that it was greyed below
-   the legibility threshold, so the accessibility fix and the
-   usability fix are the same fix. It is NOT `--ink-faint` (5.2:1,
-   the floor, and it sits over a tint here) and NOT `opacity`.
-
-   THE NAME IS NOT STRUCK AND NOT DIMMED. A dealer standing in front
-   of a customer has to be able to read the thing they cannot have —
-   the same rule `.rg-row` keeps two hundred lines down, where the
-   PRICE is struck and the name is not. */
-.fo-list-why {
-  flex: 1 1 100%;
-  min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.5;
-  letter-spacing: 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-body-lead);
   color: var(--ink-soft);
   text-wrap: pretty;
 }
 
-/* THE KIND'S OWN WORD. Five kinds, five words, and they never share
-   one (§5) — so the word carries the weight and the rail carries the
-   hue, and neither is a grey pill. */
-.fo-list-word {
-  font-weight: 600;
-  color: var(--ink);
-}
-
-/* THE RAIL ITSELF IS `ds.css`'s — `.s-refused` (3px solid
-   `--danger`) and `.s-unchecked` (3px DASHED `--line-strong`), the
-   same two `constraints.css` takes for the same two verdicts. This
-   file declares no colour for either: the whole point of a system
-   state is that a refusal does not get a second appearance per
-   feature. All that is left here is the gap between the rail and the
-   name, which is this list's own spacing. */
-.fo-list-row.s-refused,
-.fo-list-row.s-unchecked {
-  padding-left: var(--sp-2);
-}
-
-.fo-list-more,
-.fo-pick-none,
-.fo-pick-off {
-  margin: var(--sp-2) 0 0;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
 /* ============================================================
-   THE SURFACE PASS — the same light this app's front door got.
-
-   Nothing about what this page COUNTS moves here, and nothing about
-   what it says. What moves is that it was drawn as flat #ffffff
-   rectangles with a hairline on a flat ground, which is the finish
-   the whole redesign is replacing: a page carrying 8,649 counted
-   pairings off a real business's price file should look like it is
-   worth what it states.
-
-   Every value is a token and every ink below is unchanged, so no
-   measured ratio on this page moves. Appended rather than edited in
-   place because the rules above are the argument for the DRAWING —
-   which rail, which bar, which proportion — and this is only the
-   material it is drawn on.
+   FITMENT AT WIDTH — the head splits, the fans widen, the roles
+   fit. Container and not media: the page answers the box it is in.
    ============================================================ */
 
-/* THE FIELD. `--canvas-bg` is the sheet ground, a degree bluer than
-   `--paper`, and the wash over it is ds.css's own atmosphere token at
-   6% alpha — under one contrast point, so nothing measured moves. The
-   same ground the fitment page for ONE rig now stands on, so moving
-   between the two does not feel like moving between two apps. */
-.fo-root {
-  background:
-    radial-gradient(120% 50% at 50% -6%, var(--aurora-1) 0%, transparent 62%),
-    var(--canvas-bg);
-}
-
-/* THE TITLE IS THE PAGE. 22px was a panel header on a stage whose
-   whole content is one argument; `--t-display-lg-*` is the step the
-   system names for "a stage title with a page behind it", and its
-   tracking runs negative as it grows, which is rule 7. */
-.fo-title {
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
-  max-width: 22ch;
-}
-
-.fo-lede {
-  font-size: var(--t-body-size);
-  line-height: 1.6;
-}
-
-/* THE LEDGER, AS A PANEL. Four figures counted off the sheet on this
-   render were four numbers floating under a hairline. They are the
-   evidence the whole page rests on, so they get a surface — the same
-   one Home gives its tally, for the same reason. */
-.fo-ledger {
-  padding: var(--sp-4) var(--sp-5);
-  border: 1px solid var(--hairline);
-  border-top: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  gap: var(--sp-5);
-}
-.fo-stat + .fo-stat {
-  padding-left: var(--sp-5);
-  border-left: 1px solid var(--hairline);
-}
-/* the largest figures on the page, because they are what it is about */
-.fo-stat-n {
-  font-size: 26px;
-  letter-spacing: -0.02em;
-}
-
-/* THE FAN CARDS. Elevation and a lit top edge, so a card reads as an
-   object with a light on it rather than as a bordered rectangle. No
-   lift on hover: the card is not pressable — the doors INSIDE it are —
-   and a surface that rises under the pointer promises a press. What
-   answers the pointer is the kind rail, which is the card saying which
-   catalogue it is without changing colour anywhere else. */
-.fo-fan {
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-med) var(--ease-draft);
-}
-.fo-fan:hover {
-  border-color: var(--hairline-strong);
-  box-shadow: var(--e-card-hover), inset 0 1px 0 var(--edge-light);
-}
-.fo-fan::before {
-  transition:
-    top var(--t-med) var(--ease-draft),
-    bottom var(--t-med) var(--ease-draft),
-    width var(--t-med) var(--ease-draft);
-}
-.fo-fan:hover::before {
-  top: 0;
-  bottom: 0;
-  width: 4px;
-}
-
-/* the two bands under the fans take the same material, so the page
-   reads as one set of surfaces rather than cards and then prose */
-.fo-band {
-  padding: var(--sp-5);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-}
-.fo-band-title {
-  font-size: var(--t-title-size);
-  letter-spacing: -0.014em;
+@container fopage (min-width: 1180px) {
+  /* THE HEAD IS TWO THINGS AND THEY STOP QUEUEING: what the page is,
+     at a sentence's measure; and the four figures it is counted
+     from, two by two, in a block of their own beside it */
+  .fo-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 30cqw);
+    column-gap: var(--section-gap);
+    align-items: start;
+  }
+  .fo-ledger-slot {
+    margin: 0;
+  }
+  .fo-ledger {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-5) var(--sp-4);
+  }
+  /* two by two, only the right-hand figure of each row carries the
+     hairline — a rule at the start of a row is a misalignment */
+  .fo-stat + .fo-stat {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .fo-stat:nth-child(2n) {
+    padding-left: var(--sp-5);
+    border-left: 1px solid var(--hairline);
+  }
+  /* a card width that grows with the page, without becoming a page */
+  .fo-fans {
+    column-width: clamp(336px, 22cqw, 460px);
+    column-gap: var(--sp-5);
+  }
+  /* auto-FIT: five roles made seven tracks and read as a mistake */
+  .fo-roles {
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    gap: var(--sp-4);
+  }
 }
 
 @media (max-width: 720px) {
@@ -1004,323 +681,67 @@
 }
 
 /* ============================================================
-   FITMENT AT WIDTH — what a 2560px window is actually for
+   THE RIG — one hull, solved. Prefix `rg-`.
 
-   WHAT WAS MEASURED BEFORE ANY OF THIS. There was not one width
-   breakpoint in this file. `.fo-page` was capped at a hard 1180px
-   (now `--measure`), and every block inside it was written for that
-   one width, so the page had exactly one opinion:
-
-     · the head stacked a 68ch lede over a four-figure ledger on
-       `repeat(auto-fit, minmax(190px, 1fr))`. On a 2304px page that
-       is four tracks of 570px each carrying a 22px number — the
-       summary of the whole screen, drawn as four lonely digits on a
-       line 570px apart.
-     · the fans were `column-width: 336px` at every width, so a
-       2304px page drew six 336px columns of cards whatever the
-       cards held.
-     · an open shortlist took the full row and `.fo-list-row` was a
-       wrapping flex, so a boat's name took 1800px and the heading
-       that PROVES the rule picked it trailed off to the right, out
-       of any column a reader could run their eye down.
-
-   WHAT IT DOES NOW. The head splits — the sentence keeps a
-   sentence's measure and the four figures take a block of their own
-   beside it. The fans get a card width that grows with the page
-   instead of a fixed 336. The shortlist becomes a real table, three
-   aligned columns, because it IS a table: a name, the cell the rule
-   read, and where that cell lives.
-
-   CONTAINER AND NOT MEDIA. `FanOut` is mounted by `FlowStage` and is
-   exported for a module page to draw too, so it answers to the box
-   it is in. Rule 5.
-
-   WHERE THIS MEETS THE SURFACE PASS ABOVE. The ledger is no longer
-   four figures under a hairline: it is a panel, with its own border,
-   radius, gradient and lit top edge. So the hairline that was going
-   to turn ninety degrees between the sentence and the figures is
-   already drawn — the panel's own left edge does that work — and
-   `--section-gap` is spent as the column gap of the head grid rather
-   than as padding inside a borderless block. The layout below is
-   theirs; the material it is drawn on is the surface pass's, and
-   neither had to give anything up.
-   ============================================================ */
-
-.fo-root {
-  container-type: inline-size;
-  container-name: fopage;
-}
-
-/* THE CAP. `--measure` reaches 2304px on a 2560px window and this
-   page is a wall of cards, so most of that is usable — but not all
-   of it: past 2000px the fans draw a seventh column and the head's
-   lede is a ninth of the width of its own row. It stops there and
-   centres. Rule 4 — you do not have to fill the whole screen. */
-.fo-page {
-  max-width: min(var(--measure), 2000px);
-}
-
-@container fopage (min-width: 1180px) {
-  /* THE HEAD IS TWO THINGS AND THEY STOP QUEUEING.
-     Left: what this page is, at a sentence's measure. Right: the
-     four figures it is counted from, two by two, where they read as
-     one block instead of a stretched row. The hairline that ran
-     under the ledger turns ninety degrees and separates them — it
-     is the panel's own left edge that draws it now. */
-  .fo-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 30cqw);
-    column-gap: var(--section-gap);
-    align-items: start;
-  }
-  .fo-eyebrow,
-  .fo-title,
-  .fo-lede {
-    grid-column: 1;
-  }
-  .fo-ledger {
-    grid-column: 2;
-    grid-row: 1 / 4;
-    margin: 0;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    /* SPACING TIERS: 2px inside a figure, --sp-4/--sp-5 between
-       them, --section-gap to the sentence beside — which is the
-       head grid's own column gap now that the panel carries its
-       edge and its `--sp-4 --sp-5` padding with it. */
-    gap: var(--sp-5) var(--sp-4);
-  }
-
-  /* THE HAIRLINE BETWEEN FIGURES FOLLOWS THE COLUMNS. `.fo-stat +
-     .fo-stat` draws it before every figure but the first, which in
-     one row is right and in two columns puts a rule down the left
-     edge of the third figure — the START of a row, where it reads as
-     a misalignment rather than as a separator. Two by two, only the
-     right-hand figure of each row carries it. */
-  .fo-stat + .fo-stat {
-    padding-left: 0;
-    border-left: 0;
-  }
-  .fo-stat:nth-child(2n) {
-    padding-left: var(--sp-5);
-    border-left: 1px solid var(--hairline);
-  }
-
-  /* A CARD WIDTH THAT GROWS WITH THE PAGE. The biggest fan carries
-     five relationships and two of them split across two catalogues;
-     at 336px its longest line — "on 2,177 of 2,519 Motor pairings ·
-     52 of 622 Rigging Kits" — wraps to three. 22cqw hands that back
-     without ever letting a card become a page. */
-  .fo-fans {
-    column-width: clamp(336px, 22cqw, 460px);
-    column-gap: var(--sp-5);
-  }
-
-  /* auto-FIT, not auto-fill. There are five roles and this grid made
-     seven tracks, so five cards sat left with two columns of white
-     beside them and the block read as a mistake. */
-  .fo-roles {
-    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-    gap: var(--sp-4);
-  }
-}
-
-/* THE SHORTLIST IS A TABLE, SO IT IS SET AS ONE.
-   Rule 9: text left, one column each, and the evidence column lines
-   up down the list so a reader can check ten verdicts by running
-   their eye down rather than by re-finding the heading in each row.
-   1000px is where three columns of the real values — a Highfield
-   variant name, a series banner, a trailer catalogue name — stop
-   crowding each other. */
-@container fopage (min-width: 1000px) {
-  .fo-list-row {
-    display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2.4fr) minmax(0, 1.6fr);
-    align-items: baseline;
-    gap: var(--sp-1) var(--sp-3);
-  }
-  .fo-list-name,
-  .fo-list-banner,
-  .fo-list-table {
-    flex: none;
-  }
-  /* THE SECOND LINE IS A SECOND LINE at every width — three columns
-     above it, the sentence under all three. `1 / -1` rather than a
-     span count, so adding a fourth cell can never leave the reason
-     boxed into two of them. */
-  .fo-list-why {
-    grid-column: 1 / -1;
-    flex: none;
-  }
-}
-
-/* ============================================================
-   THE RIG — one hull, solved. Prefix `rg-`, and it overrides
-   nothing: no rule below reaches outside `.rg`.
-
-   THREE STATES, AND THE HUE IS AN EIGHTH-NOTE IN ALL THREE.
-   DESIGN_PRINCIPLES §1 allows a kind or status hue as a rail, a
-   dot or a glyph and never as a fill behind text, so a refused
-   option is a 2px `--red` rail and a `--red` glyph, and every word
-   of its reason is `--ink-soft` (8.1 : 1) on the ordinary surface.
-   Nothing here needed a tint measuring, because nothing here reads
-   over one.
+   THREE STATES, AND THE HUE IS AN EIGHTH-NOTE IN ALL THREE. A
+   refused option is a `--danger` glyph and every word of its reason
+   is `--ink-soft` on the ordinary surface; a flagged one is a
+   `--warning` glyph; a chosen one is the CURRENT one of its set,
+   drawn by card.css from `aria-current`. Nothing here reads over a
+   tint.
 
    WHAT IS STRUCK, AND WHAT IS NOT. The price of a refused row is
-   struck through and drops to `--ink-faint` — the floor, 5.5 : 1,
-   still readable, which is the point: a dealer has to be able to
-   read the price of the thing they cannot have. The NAME is never
-   struck. A struck proper noun is unreadable at 13px and the
-   refusal is already said twice beside it.
+   struck and drops to `--ink-faint` — the floor, still readable,
+   which is the point. The NAME is never struck.
 
-   MOTION IS CSS FOR STATE AND SPRINGS FOR ARRIVAL, the split §4
-   draws: hover, press and focus are transitions on colour and
-   transform here; anything that moves because the SOLVE moved is
-   `motion/react` in Rig.tsx, on `transitionFor(still, SPRING)`.
-
-   A LIST ROW DARKENS RATHER THAN SCALING, and a press lands on
-   pointer-down — `:active` fires on the down stroke, which is why
-   every press below is written there and not on a click handler.
+   MOTION IS CSS FOR STATE AND SPRINGS FOR ARRIVAL: the primitives
+   carry hover, press and focus; anything that moves because the
+   SOLVE moved is `motion/react` in Rig.tsx.
    ============================================================ */
 
 .rg {
   margin: var(--sp-5) 0 0;
-  padding: var(--sp-5);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card-hover), inset 0 1px 0 var(--edge-light);
 }
 
 .rg-head {
   min-width: 0;
 }
-
-.rg-eyebrow {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--blue);
-}
-
 .rg-title {
   margin: var(--sp-2) 0 0;
   font-family: var(--font-ui);
   font-size: var(--t-title-size);
-  font-weight: 600;
-  letter-spacing: -0.014em;
-  line-height: 1.22;
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
   color: var(--ink);
+  text-wrap: balance;
 }
-
 .rg-lede {
   margin: var(--sp-3) 0 0;
   max-width: 70ch;
   font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--t-small-size);
+  line-height: var(--t-body-lead);
   color: var(--ink-soft);
 }
 
 /* ---------------------------------------------------------- */
-/* The hull picker                                             */
+/* The hull picker — a sunken Card: a Field, a Button, Rows      */
 /* ---------------------------------------------------------- */
 
 .rg-pick {
   margin: var(--sp-4) 0 0;
-  padding: var(--sp-3);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper);
 }
-
 .rg-pick-bar {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: var(--sp-2);
   min-width: 0;
 }
-
-.rg-pick-search,
-.rg-cat-search {
-  flex: 1;
+.rg-pick-grow {
+  flex: 1 1 auto;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 0 var(--sp-3);
-  height: 34px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-  color: var(--ink-faint);
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft);
 }
-
-.rg-pick-search:focus-within,
-.rg-cat-search:focus-within {
-  border-color: var(--blue);
-  box-shadow: var(--glow-sm);
-}
-
-.rg-pick-input,
-.rg-cat-input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: none;
-  background: none;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  color: var(--ink);
-}
-
-.rg-pick-input::placeholder,
-.rg-cat-input::placeholder {
-  color: var(--ink-faint);
-}
-
-.rg-pick-cancel,
-.rg-quiet-door {
-  flex: none;
-  padding: 0 var(--sp-3);
-  height: 34px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-press) var(--ease-draft);
-}
-
-.rg-quiet-door {
-  height: auto;
-  padding: 2px var(--sp-2);
-}
-
-.rg-pick-cancel:hover,
-.rg-quiet-door:hover {
-  border-color: var(--hairline-strong);
-  background: var(--paper-sunken);
-  color: var(--ink);
-}
-
-.rg-pick-cancel:active,
-.rg-quiet-door:active {
-  transform: scale(0.97);
-}
-
 .rg-pick-list {
   list-style: none;
   margin: var(--sp-3) 0 0;
@@ -1330,68 +751,32 @@
   border-top: 1px solid var(--hairline);
 }
 
-.rg-pick-item {
-  min-width: 0;
+/* WHICH CATALOGUE A LINE CAME OUT OF, in that catalogue's own hue —
+   a dot, one of the three things §1 allows a kind colour to be. */
+.rg-dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--rg-accent, var(--ink-faint));
 }
 
-.rg-pick-row {
-  position: relative;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 3px 1fr auto auto;
-  align-items: center;
+/* a name and its figure share a Row's name slot; the figure is mono
+   and tabular and sits at the end of the line */
+.rg-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--sp-3);
-  padding: 0 var(--sp-2) 0 0;
-  height: 40px;
-  border: 0;
-  border-bottom: 1px solid var(--hairline);
-  border-radius: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--t-press) var(--ease-draft);
-}
-
-.rg-pick-row:hover {
-  background: var(--paper-sunken);
-}
-
-.rg-pick-row:active {
-  background: var(--surface-4);
-}
-
-.rg-pick-rail {
-  align-self: stretch;
-  width: 3px;
-  background: var(--rg-accent, var(--accent-graphite));
-  opacity: 0.75;
-}
-
-.rg-pick-name {
   min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
-
-.rg-pick-table {
-  font-family: var(--font-ui);
-  font-size: 11.5px;
-  color: var(--ink-faint);
-  white-space: nowrap;
-}
-
 .rg-pick-price,
 .rg-hull-price,
 .rg-row-price {
+  flex: none;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12.5px;
-  color: var(--ink);
+  font-size: var(--t-mono-size);
   white-space: nowrap;
 }
 
@@ -1400,53 +785,37 @@
 .rg-cat-quiet {
   margin: var(--sp-3) 0 0;
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.55;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
   color: var(--ink-soft);
 }
-
 .rg-pick-more,
 .rg-band-more {
   margin: var(--sp-2) 0 0;
   font-family: var(--font-ui);
-  font-size: 11.5px;
+  font-size: var(--t-caption-size);
   color: var(--ink-faint);
 }
 
 /* ---------------------------------------------------------- */
-/* The hull, once it is chosen                                 */
+/* The hull, once it is chosen — a flat Card of its kind         */
 /* ---------------------------------------------------------- */
 
 .rg-hull {
-  position: relative;
   margin: var(--sp-4) 0 0;
+}
+.rg-hull-line {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--sp-3);
   min-width: 0;
-  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  overflow: hidden;
 }
-
-.rg-hull::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--rg-accent, var(--accent-graphite));
-}
-
 .rg-hull-mark {
   flex: none;
   display: inline-flex;
-  color: var(--rg-accent, var(--ink-faint));
+  color: var(--kind, var(--ink-faint));
 }
-
 .rg-hull-said {
   flex: 1;
   min-width: 0;
@@ -1454,55 +823,24 @@
   flex-direction: column;
   gap: 1px;
 }
-
+/* the hull the rig is solved for — the panel's subject, title step */
 .rg-hull-name {
   font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.008em;
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
   color: var(--ink);
+  overflow-wrap: break-word;
 }
-
 .rg-hull-table {
   font-family: var(--font-ui);
-  font-size: 11.5px;
+  font-size: var(--t-caption-size);
   color: var(--ink-faint);
 }
-
 .rg-hull-price {
-  font-size: 15px;
-}
-
-.rg-hull-change {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  padding: 0 var(--sp-3);
-  height: 30px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper);
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft),
-    transform var(--t-press) var(--ease-draft);
-}
-
-.rg-hull-change:hover {
-  border-color: var(--hairline-strong);
-  background: var(--paper-sunken);
+  font-size: var(--t-mono-lg-size);
   color: var(--ink);
-}
-
-.rg-hull-change:active {
-  transform: scale(0.97);
 }
 
 /* ---------------------------------------------------------- */
@@ -1521,30 +859,28 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
-
+/* a fact is a chip: the column's NAME (its own case — rule 3) and
+   the cell, mono */
 .rg-fact {
   display: inline-flex;
   align-items: baseline;
   gap: var(--sp-2);
   padding: 3px var(--sp-3);
   border: 1px solid var(--hairline);
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: var(--paper);
 }
-
 .rg-fact-name {
   font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-caption-track);
   color: var(--ink-faint);
 }
-
 .rg-fact-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: var(--t-mono-size);
   color: var(--ink);
 }
 
@@ -1552,27 +888,25 @@
   margin: var(--sp-4) 0 0;
   max-width: 74ch;
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.6;
+  font-size: var(--t-small-size);
+  line-height: var(--t-body-lead);
   color: var(--ink-soft);
 }
 
-/* THE ENGINE'S OWN SENTENCE AFTER A CHOICE. `describeChange` is
-   the thing that makes a propagating solver feel helpful rather
-   than spooky, and it is the one part of the library that was
-   written for a surface that did not exist until now. */
+/* THE ENGINE'S OWN SENTENCE AFTER A CHOICE, on a sunken Card */
 .rg-note {
   margin: var(--sp-3) 0 0;
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 2px solid var(--blue);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background: var(--blue-wash);
+}
+.rg-note-say {
+  margin: 0;
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.55;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
   color: var(--ink);
 }
 
+/* a dead end, in the solver's own sentence: the mark carries the
+   hue, the words are ink */
 .rg-problems {
   list-style: none;
   margin: var(--sp-3) 0 0;
@@ -1581,25 +915,29 @@
   flex-direction: column;
   gap: var(--sp-2);
 }
-
 .rg-problem {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 2px solid var(--red);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background: var(--paper-sunken);
   font-family: var(--font-ui);
-  font-size: 12.5px;
-  line-height: 1.55;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
   color: var(--ink);
 }
 
-.rg-problem > svg {
+/* THE THREE VERDICT MARKS. §1: a kind or status hue is a glyph, never
+   a fill behind text. */
+.rg-mark-refused {
   flex: none;
-  margin-top: 1px;
-  color: var(--red);
+  color: var(--danger);
+}
+.rg-mark-flagged {
+  flex: none;
+  color: var(--warning);
+}
+.rg-mark-chosen {
+  flex: none;
+  color: var(--blue);
 }
 
 /* ---------------------------------------------------------- */
@@ -1614,17 +952,17 @@
   flex-direction: column;
   gap: var(--sp-4);
 }
-
 .rg-slot {
   min-width: 0;
   padding-top: var(--sp-3);
   border-top: 1px solid var(--hairline);
 }
-
 .rg-slot.is-narrowed {
   border-top-color: var(--accent-line);
 }
 
+/* the column's name is a NAME — never uppercased, never truncated:
+   a slot's table list wraps rather than being cut mid-word (§3) */
 .rg-slot-head {
   margin: 0;
   display: flex;
@@ -1633,39 +971,35 @@
   gap: var(--sp-2) var(--sp-3);
   min-width: 0;
 }
-
 .rg-slot-name {
   font-family: var(--font-ui);
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: -0.004em;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
   color: var(--ink);
 }
-
 .rg-slot-where {
   flex: 1;
   min-width: 0;
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--t-label-size);
   color: var(--ink-faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
-
 .rg-slot-count {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
+  font-size: var(--t-mono-sm-size);
   color: var(--ink-faint);
   white-space: nowrap;
 }
-
 .rg-slot-count b {
   font-weight: 600;
   color: var(--ink);
 }
 
+/* the option tiles: a pressable Card each, the chosen one current,
+   a refused one a still Card with its reason */
 .rg-opts {
   list-style: none;
   margin: var(--sp-3) 0 0;
@@ -1675,109 +1009,31 @@
   gap: var(--sp-2);
   align-items: start;
 }
-
 .rg-opt {
-  position: relative;
   min-width: 0;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-  overflow: hidden;
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft);
 }
-
-.rg-opt-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-width: 0;
-  padding: var(--sp-2) var(--sp-3);
-  border: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  color: var(--ink-soft);
-  transition:
-    background var(--t-press) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-
-.rg-opt-btn:hover {
-  background: var(--paper-sunken);
-}
-
-.rg-opt-btn:active {
-  background: var(--surface-4);
-}
-
 .rg-opt-said {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   min-width: 0;
-  padding: var(--sp-2) var(--sp-3);
 }
-
 .rg-opt-label {
   min-width: 0;
   font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--t-small-size);
+  font-weight: var(--t-caption-weight);
   color: var(--ink);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
-
 .rg-opt-why {
   display: block;
-  padding: 0 var(--sp-3) var(--sp-2);
+  margin-top: var(--sp-1);
   font-family: var(--font-ui);
-  font-size: 11.5px;
-  line-height: 1.5;
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-body-weight);
+  line-height: var(--t-small-lead);
   color: var(--ink-soft);
-}
-
-/* -- chosen -------------------------------------------------- */
-
-.rg-opt.is-chosen {
-  border-color: var(--blue);
-  background: var(--blue-wash);
-}
-
-.rg-opt.is-chosen .rg-opt-btn {
-  color: var(--blue);
-}
-
-.rg-opt.is-chosen .rg-opt-label {
-  font-weight: 600;
-}
-
-/* -- flagged: it is still offered, and something disagrees --- */
-
-.rg-opt.is-flagged {
-  border-left: 2px solid var(--warning);
-}
-
-.rg-opt.is-flagged .rg-opt-btn > svg {
-  color: var(--warning);
-}
-
-/* -- refused: it stays, and it says why ---------------------- */
-
-.rg-opt.is-refused {
-  border-left: 2px solid var(--red);
-  background: var(--paper);
-}
-
-.rg-opt.is-refused .rg-opt-said > svg {
-  flex: none;
-  color: var(--red);
-}
-
-.rg-opt.is-refused .rg-opt-label {
-  color: var(--ink-faint);
 }
 
 /* ---------------------------------------------------------- */
@@ -1788,13 +1044,13 @@
   margin: var(--sp-4) 0 0;
   max-width: 74ch;
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: var(--t-caption-size);
   line-height: 1.7;
   color: var(--ink-faint);
 }
 
 /* ---------------------------------------------------------- */
-/* The catalogues                                              */
+/* The catalogues — a flat Card of its kind, opened by a Row     */
 /* ---------------------------------------------------------- */
 
 .rg-cats {
@@ -1805,78 +1061,16 @@
   flex-direction: column;
   gap: var(--sp-2);
 }
-
 .rg-cat {
-  position: relative;
   min-width: 0;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  overflow: hidden;
-  transition: border-color var(--t-fast) var(--ease-draft);
 }
-
-.rg-cat.is-open {
-  border-color: var(--hairline-strong);
-}
-
-.rg-cat-door {
-  width: 100%;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--sp-3);
-  min-width: 0;
-  padding: var(--sp-3) var(--sp-4);
-  border: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--t-press) var(--ease-draft);
-}
-
-.rg-cat-door:hover {
-  background: var(--paper-sunken);
-}
-
-.rg-cat-door:active {
-  background: var(--surface-4);
-}
-
 .rg-cat-mark {
   display: inline-flex;
-  color: var(--rg-accent, var(--ink-faint));
+  color: var(--kind, var(--ink-faint));
 }
-
-.rg-cat-name {
-  min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: -0.004em;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rg-cat-n {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
-  color: var(--ink-faint);
-  white-space: nowrap;
-}
-
-.rg-cat-n b {
-  font-weight: 600;
-  color: var(--ink);
-}
-
 .rg-cat-body {
-  padding: 0 var(--sp-4) var(--sp-4);
+  padding: 0 var(--sp-3) var(--sp-3);
 }
-
 
 .rg-rows {
   list-style: none;
@@ -1885,165 +1079,54 @@
   display: flex;
   flex-direction: column;
 }
-
-.rg-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: baseline;
-  gap: var(--sp-1) var(--sp-3);
-  min-width: 0;
-  padding: var(--sp-2) 0 var(--sp-2) var(--sp-3);
+/* THE RAIL IS `ds.css`'s, on the list item — `.s-refused` and
+   `.s-warned` — so one verdict looks the same here, on the fan-out's
+   shortlist and in constraints. Every item reserves the width. */
+.rg-row-item {
+  border-left: 3px solid transparent;
   border-bottom: 1px solid var(--hairline);
-  border-left: 2px solid transparent;
+}
+.rg-row-item:last-child {
+  border-bottom: 0;
 }
 
-.rg-row-said {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-
-.rg-row-said > svg {
-  flex: none;
-}
-
-.rg-row-name {
-  min-width: 0;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-/* THE MONEY REFUSAL. `nowrap` went with the two-word version; the
-   sentence now names a column or a table, and rule 3.4 is that
-   nothing truncates mid-word — so it wraps rather than runs off the
-   end of a row it shares with a 2,238-row list. `--ink-soft` (7.7:1)
-   rather than `--ink-faint`, because it is a reason a person acts on
-   and §5 does not let a reason sit at the floor. */
+/* THE MONEY REFUSAL wraps rather than running off the end of a row —
+   rule 3.4. `--ink-soft` because it is a reason a person acts on. */
 .rg-row-noprice {
+  display: block;
   font-family: var(--font-ui);
-  font-size: 11px;
-  line-height: 1.45;
+  font-size: var(--t-label-size);
+  line-height: var(--t-small-lead);
   color: var(--ink-soft);
-  text-align: right;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
-
+/* the rule's own words, on the row's second line, read — so a step
+   up from the meta floor */
 .rg-row-why {
-  grid-column: 1 / -1;
+  display: block;
+  margin-top: 2px;
   font-family: var(--font-ui);
-  font-size: 11.5px;
-  line-height: 1.5;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-small-lead);
   color: var(--ink-soft);
 }
-
-/* THE KIND'S OWN WORD — five kinds, five words, never one grey pill
-   (CONFIGURATOR_PLAYBOOK §5). Weight carries it; the hue is already
-   on the row's left rail and the glyph, so this is ink. */
+/* THE KIND'S OWN WORD — five kinds, five words, never one grey pill */
 .rg-row-word {
   font-family: var(--font-ui);
   font-weight: 600;
   color: var(--ink);
 }
-
-/* THE CELL THE RULE READ, in the figure face, so a reader can find
-   it in their own sheet rather than take the verdict. */
+/* THE CELL THE RULE READ, in the figure face */
 .rg-row-cell {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--t-mono-sm-size);
   color: var(--ink);
 }
-
-.rg-row.is-flagged {
-  border-left-color: var(--warning);
-}
-
-.rg-row.is-flagged .rg-row-said > svg {
-  color: var(--warning);
-}
-
-.rg-row.is-refused {
-  border-left-color: var(--red);
-}
-
-.rg-row.is-refused .rg-row-said > svg {
-  color: var(--red);
-}
-
-/* THE PRICE IS STRUCK, THE NAME IS NOT — see the header of this
-   section. The struck figure stays at the readable floor, because
-   the whole argument of this surface is that a dealer can see the
-   thing they cannot have. */
-.rg-row.is-refused .rg-row-price {
+/* THE PRICE IS STRUCK, THE NAME IS NOT: the struck figure stays at
+   the readable floor, because a dealer has to be able to see the
+   price of the thing they cannot have */
+.rg-row-price.is-struck {
   color: var(--ink-faint);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
-}
-
-@media (max-width: 720px) {
-  .rg {
-    padding: var(--sp-4);
-  }
-  .rg-pick-row {
-    grid-template-columns: 3px 1fr auto;
-  }
-  .rg-pick-table {
-    display: none;
-  }
-}
-
-/* ============================================================
-   TYPE — THE LITERALS BECOME STEPS
-
-   Three sizes on this page were px literals, which is how 79 % of
-   the app's font-size declarations were written and why the type
-   scale was largely bypassed. Each takes the step whose 1440px value
-   is the number that was there, so nothing moves at the tuned width
-   and all three grow together above it. Rule 6: the step travels as
-   a set, and the tracking is in `em` so it stays proportional.
-
-   TWO OF THE THREE WERE ALREADY ANSWERED BY THE SURFACE PASS, and
-   this does not undo it. `.fo-title` took `--t-display-lg-*`, which
-   is 26px→34px — a ramp already, and a bigger resting figure than
-   the 22px step this pass was going to hand it — and `.fo-band-title`
-   took `--t-title-size`, which response.css ramps 20px→27px. Both
-   already grow with the window, on the steps the surface pass chose.
-   What they take from here is the WRAPPING, not the size.
-
-   `.fo-stat-n` is the one literal left. The surface pass raised it
-   from 22px to 26px because these four figures are what the page is
-   about, so it cannot simply take the 22px floor of the data ramp.
-   It keeps 26px through the tuned width and picks the ramp up where
-   the ramp passes it, landing on the ramp's own 30px at 2560. Data
-   and not a heading, exactly as this pass argued: tabular mono, the
-   data step, and the ramp's ceiling rather than a display one.
-   ============================================================ */
-
-.fo-title {
-  /* the size is the surface pass's `--t-display-lg-*`; what is added
-     here is that a title that takes two lines breaks near the middle
-     rather than leaving one word alone on the second */
-  text-wrap: balance;
-}
-
-.fo-band-title {
-  /* 20px at 1440, 27px at 2560 — `--t-title-size`, ramped by
-     response.css, set by the surface pass above */
-  text-wrap: balance;
-}
-
-.fo-stat-n {
-  /* 26px until ~2000px, then the data ramp on to 30px at 2560 */
-  font-size: max(26px, var(--data-xl-size));
-}
-
-.fo-lede,
-.fo-band-lede,
-.fo-band-note,
-.fo-tail,
-.fo-role-say,
-.fo-row-say {
-  text-wrap: pretty;
 }

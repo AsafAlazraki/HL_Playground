@@ -51,13 +51,9 @@
   min-width: 0;
 }
 
-/* WHAT KIND OF PAGE THIS IS. Uppercase is legal here and only here
-   — §3 allows it on a section caption, a group caption and a
-   stamp, and this is the first of those. `.mono-label` carries the
-   size, the tracking and the 11px floor. */
-.ph-eyebrow {
-  color: var(--fg-tertiary);
-}
+/* WHAT KIND OF PAGE THIS IS is the SectionHead primitive — the
+   system's one uppercase style, drawn once. Nothing here restates
+   it. */
 
 .ph-line-1 {
   display: flex;

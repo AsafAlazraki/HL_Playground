@@ -73,6 +73,7 @@ import { TableWorkspace } from '@/features/table'
 import { countLabel, leafNoun } from '@/features/table/grouping'
 import type { ActionItem } from '@/lib/actions'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -161,15 +162,11 @@ export function TableStage({
   }, [entityId, onOpenView, onOpenDesign])
 
   const back = (
-    <button
-      type="button"
-      className="shell-view-back"
-      onClick={onClose}
-      aria-label="Back"
-    >
-      <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-      <span>Back</span>
-    </button>
+    <div className="shell-view-lead">
+      <Button tone="ghost" size="sm" glyph={<ArrowLeft size={ICON_SIZE.small} />} onClick={onClose}>
+        Back
+      </Button>
+    </div>
   )
 
   /* A STAGE MUST NEVER OUTLIVE ITS SUBJECT. */
@@ -223,7 +220,18 @@ export function TableStage({
           <span className="shell-view-what-mark">
             <TableKindSymbol kind={kindOf(entity.kind)} size={ICON_SIZE.small} />
           </span>
-          <span className="shell-view-what-name">{entity.name}</span>
+          {/* THE SUBJECT WEARS THE DISPLAY FACE. `--t-display-lg` is the
+              step ds.css cut for "a stage title with a page behind it",
+              and this table is what the page is about — so it is the
+              largest thing on the register, above the 20px title any
+              catalogue head draws under it and every 11px label. A long
+              name steps DOWN a whole step rather than shrinking, and
+              wraps at a space — never mid-word (§3) — to two lines. */}
+          <span
+            className={`ds-display-lg shell-view-what-name${entity.name.length > 28 ? ' is-long' : ''}`}
+          >
+            {entity.name}
+          </span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>

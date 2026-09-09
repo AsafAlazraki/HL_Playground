@@ -13,8 +13,8 @@
    is a subtraction and never a surprise.
    ============================================================ */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, DragEvent as ReactDragEvent, ReactElement } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
+import type { DragEvent as ReactDragEvent, ReactElement } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   ArrowUUpLeft,
@@ -29,7 +29,6 @@ import {
   X,
 } from '@phosphor-icons/react'
 import {
-  accentVar,
   displayFieldOf,
   isDiscontinued,
   rowLabel,
@@ -41,6 +40,8 @@ import {
   type ViewBlock,
 } from '@/types/model'
 import type { RowRef, RuleEngine } from '@/lib/rules/evaluate'
+import { ICON_SIZE } from '@/lib/icons'
+import { Button, Card, Row } from '@/ui'
 import { sayUndoable } from '@/store/notes'
 import { useConstraints } from '@/features/constraints'
 import { CurationNote, readCuration, searchReach } from '@/features/curation'
@@ -202,15 +203,15 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
      Not a stored setting and not a modal: it is one sentence and two
      buttons, drawn on the block the press came from. */
   const [linkAsk, setLinkAsk] = useState<LinkAsk | null>(null)
-  const linkRef = useRef<HTMLButtonElement>(null)
+  const askId = useId()
 
   /* THE ASK TAKES THE FOCUS. A person who pressed a star with the
      keyboard has just had nothing happen; the answer to that must be
      under their hands, not somewhere down the page they have to go
-     and find. It is a press, so nothing about this animates. */
+     and find. Reached by id, because the Button owns its element. */
   useEffect(() => {
-    if (linkAsk) linkRef.current?.focus()
-  }, [linkAsk])
+    if (linkAsk) document.getElementById(askId)?.focus()
+  }, [linkAsk, askId])
 
   const target = ctx.entities[block.tableId]
 
@@ -430,13 +431,15 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
 
   if (!target) {
     return (
-      <section className="vw-block vw-block--gone">
-        <p className="vw-gone">The table this block showed is no longer here.</p>
-        {configuring ? (
-          <button type="button" className="btn btn-danger" onClick={() => removeBlock(viewId, block.id)}>
-            Take it off the page
-          </button>
-        ) : null}
+      <section className="vw-block">
+        <Card tone="sunken" pad="md">
+          <p className="vw-gone">The table this block showed is no longer here.</p>
+          {configuring ? (
+            <Button tone="danger" onClick={() => removeBlock(viewId, block.id)}>
+              Take it off the page
+            </Button>
+          ) : null}
+        </Card>
       </section>
     )
   }
@@ -772,16 +775,13 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
      ------------------------------------------------------------------
      DESIGN_PRINCIPLES §1, as amended: "a hue only ever appears on
      something that HAS that kind, and two things of one kind are one
-     colour everywhere in the app." A trailer block drawn in the
-     trailer table's own accent and a trailer tile drawn in
-     `--kind-trailer` are two amber-ish colours for one noun, which is
-     the difference between colour and colouring in.
-
-     A table with no kind at all — a join, a table somebody drew
-     themselves — keeps its accent, because `kindOf` would answer
-     'custom' for it and slate is a worse answer than the colour its
-     author chose. */
-  const accent = target.kind ? 'var(--kind)' : accentVar(target.accent)
+     colour everywhere in the app." The Card takes `kind` and draws it
+     as its own ground — card.css's 6% mix, the one the module tile
+     measured at 4.5:1 for the name on it — so a page of five blocks
+     is five catalogues rather than five identical white panels. A
+     table with no kind at all — a join, a table somebody drew
+     themselves — is a plain card, because `kindOf` would answer
+     'custom' for it and slate is a worse answer than none. */
   const children = block.children ?? []
 
   return (
@@ -790,17 +790,10 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       className={`vw-block${dragOver ? ' is-drop' : ''}${configuring ? ' is-config' : ''}${
         lit ? ' is-found' : ''
       }`}
-      /* the column tracks are declared once, here, so the header
-         hairline and every row underneath can never drift apart */
-      /* THE COLUMN TRACKS ARE GONE WITH THE TABLE. A block is a grid
-         of cards now, so there is no shared track declaration to keep
-         a header hairline and forty rows in line — each card carries
-         its own facts, labelled, and the grid sizes itself. What is
-         still declared here is the one thing every card in this block
-         shares: the kind hue its rail is drawn in. */
-      style={{ '--vw-accent': accent } as CSSProperties}
-      /* ds.css resolves this to the hue; see `accent` above */
-      data-kind={target.kind ?? undefined}
+      /* THE WRAPPER PAINTS NOTHING. It is what `motion` animates, what
+         a dragged table lands on and what the ledger scrolls to; the
+         surface, the border and the kind ground are the Card's, one
+         element in. */
       aria-label={`${target.name} for ${rowLabel(sourceEntity, sourceRow)}`}
       initial={still ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -827,13 +820,18 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       }}
       onDrop={onBlockDrop}
     >
+      <Card tone={depth > 2 ? 'flat' : 'raised'} pad="none" kind={target.kind}>
       {/* A BAND OF ONE KIND OF THING, which is what `.k-band` is
-          for — see the foot of ds.css. It is the surface the amended
-          §1 allows a hue to carry, and it is what stops a page of
-          five blocks reading as five identical white panels. */}
-      <header className="vw-block-head k-band">
+          for — see the foot of ds.css. The top-level head STAYS as
+          the block scrolls; a nested one sits inside a card inside its
+          parent's list and would stack under the parent's, so only the
+          outer head is pinned. */}
+      <header className={depth > 2 ? 'vw-block-head k-band' : 'vw-block-head vw-block-head--top k-band'}>
         <KindMark entity={target} />
-        <h2 className="vw-block-name block-heading">{target.name}</h2>
+        {/* THE NAME IS ONE OF SEVERAL AND IS THE POINT OF THE PAGE —
+            `.ds-display-xl`, the step ds.css names for a band head. A
+            NAME, so its own case: no uppercase primitive on it. */}
+        <h2 className="ds-display-xl vw-block-name">{target.name}</h2>
         <span
           className="vw-chip"
           title={
@@ -893,35 +891,40 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                a wait before the handles are usable. */
             transition={transitionFor(still, SPRING)}
           >
-            <button
-              type="button"
-              className={`vw-strip-btn${panel === 'rule' ? ' is-on' : ''}`}
+            {/* the open handle is the primary — the one accent on a
+                strip of three — and Remove reads as an outline in the
+                danger ink, never a red fill */}
+            <Button
+              size="sm"
+              tone={panel === 'rule' ? 'primary' : 'neutral'}
+              glyph={<Sliders size={ICON_SIZE.tiny} weight="bold" />}
               aria-pressed={panel === 'rule'}
               onClick={() => setPanel(panel === 'rule' ? 'none' : 'rule')}
             >
-              <Sliders size={13} weight="light" />
               Rule
               <span className="vw-strip-note">{summariseRule(block.rule, sourceEntity, target)}</span>
-            </button>
-            <button
-              type="button"
-              className={`vw-strip-btn${panel === 'filter' ? ' is-on' : ''}`}
+            </Button>
+            <Button
+              size="sm"
+              tone={panel === 'filter' ? 'primary' : 'neutral'}
+              glyph={<Funnel size={ICON_SIZE.tiny} weight="bold" />}
               aria-pressed={panel === 'filter'}
               onClick={() => setPanel(panel === 'filter' ? 'none' : 'filter')}
             >
-              <Funnel size={13} weight="light" />
               Filter
               {filtering ? <span className="vw-strip-dot" aria-hidden="true" /> : null}
-            </button>
-            <button
-              type="button"
-              className={`vw-strip-btn vw-strip-btn--end${panel === 'remove' ? ' is-on' : ''}`}
-              aria-pressed={panel === 'remove'}
-              onClick={() => setPanel(panel === 'remove' ? 'none' : 'remove')}
-            >
-              <Trash size={13} weight="light" />
-              Remove
-            </button>
+            </Button>
+            <span className="vw-strip-end">
+              <Button
+                size="sm"
+                tone={panel === 'remove' ? 'primary' : 'danger'}
+                glyph={<Trash size={ICON_SIZE.tiny} weight="bold" />}
+                aria-pressed={panel === 'remove'}
+                onClick={() => setPanel(panel === 'remove' ? 'none' : 'remove')}
+              >
+                Remove
+              </Button>
+            </span>
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -943,55 +946,55 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
           role="group"
           aria-label={`${sourceEntity.name} and ${target.name} have never been linked`}
         >
-          <p className="vw-link-say">
-            <WarningCircle
-              size={14}
-              weight="regular"
-              aria-hidden="true"
-              className="vw-link-mark"
-            />
-            <span>
-              <b className="vw-link-word">
-                {sourceEntity.name} and {target.name} have never been linked.
-              </b>{' '}
-              {linkAsk.doing} makes a table, {linkName}, to record it — {tableCount} tables
-              on the sheet becomes {tableCount + 1}. Nothing else changes, and one press of
-              UNDO takes it all back.
-            </span>
-          </p>
-          <div className="vw-link-acts">
-            <button ref={linkRef} type="button" className="btn btn-primary" onClick={acceptLink}>
-              Create it and {linkAsk.verb}
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={() => setLinkAsk(null)}>
-              Cancel
-            </button>
-          </div>
+          <Card tone="sunken" pad="sm">
+            <p className="vw-link-say">
+              <WarningCircle
+                size={ICON_SIZE.small}
+                weight="regular"
+                aria-hidden="true"
+                className="vw-link-mark"
+              />
+              <span>
+                <b className="vw-link-word">
+                  {sourceEntity.name} and {target.name} have never been linked.
+                </b>{' '}
+                {linkAsk.doing} makes a table, {linkName}, to record it — {tableCount} tables
+                on the sheet becomes {tableCount + 1}. Nothing else changes, and one press of
+                UNDO takes it all back.
+              </span>
+            </p>
+            <div className="vw-acts">
+              <Button id={askId} tone="primary" onClick={acceptLink}>
+                Create it and {linkAsk.verb}
+              </Button>
+              <Button tone="ghost" onClick={() => setLinkAsk(null)}>
+                Cancel
+              </Button>
+            </div>
+          </Card>
         </div>
       ) : null}
 
       {configuring && panel === 'remove' ? (
         <div className="vw-confirm" role="group">
-          <p className="vw-confirm-ask">
-            Take {target.name} off this page? Nothing is deleted — everything you picked, dropped
-            or starred is kept
-            {join && ctx.entities[join.entityId]
-              ? ` in ${ctx.entities[join.entityId].name}`
-              : ''}
-            , so putting {target.name} back brings it all with it.
-          </p>
-          <div className="vw-confirm-acts">
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={() => removeBlock(viewId, block.id)}
-            >
-              Take it off
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={() => setPanel('none')}>
-              Keep it
-            </button>
-          </div>
+          <Card tone="sunken" pad="sm">
+            <p className="vw-confirm-ask">
+              Take {target.name} off this page? Nothing is deleted — everything you picked,
+              dropped or starred is kept
+              {join && ctx.entities[join.entityId]
+                ? ` in ${ctx.entities[join.entityId].name}`
+                : ''}
+              , so putting {target.name} back brings it all with it.
+            </p>
+            <div className="vw-acts">
+              <Button tone="danger" onClick={() => removeBlock(viewId, block.id)}>
+                Take it off
+              </Button>
+              <Button tone="ghost" onClick={() => setPanel('none')}>
+                Keep it
+              </Button>
+            </div>
+          </Card>
         </div>
       ) : null}
 
@@ -1108,6 +1111,14 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                   if (from) moveRow(from, r.row.id)
                 }}
               >
+                {/* THE CARD IS THE PRIMITIVE'S. The recommended one is
+                    the CURRENT one of the set — `freeze.ts` mints a
+                    quote from the starred row, so it is the single most
+                    consequential fact on this page — and card.css draws
+                    that from `aria-current`: the accent line and the
+                    wash, the accent appearing once per block on the
+                    thing that is current (rule 5). */}
+                <Card tone="raised" pad="none" current={r.recommended}>
                 {/* THE PHOTOGRAPH FIRST, where the row holds one. A
                     motor with a picture is recognised before it is
                     read; one without simply starts at its name, and
@@ -1125,7 +1136,7 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                     title={configuring ? 'Drag to reorder' : undefined}
                     aria-hidden="true"
                   >
-                    {configuring ? <DotsSixVertical size={14} weight="light" /> : null}
+                    {configuring ? <DotsSixVertical size={ICON_SIZE.small} weight="bold" /> : null}
                   </span>
                   <span className="vw-row-name" title={rowLabel(target, r.row)}>
                     {rowLabel(target, r.row)}
@@ -1211,26 +1222,36 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                 <span className="vw-row-acts">
                   {configuring ? (
                     <>
-                      <button
-                        type="button"
-                        className={`vw-icon-btn${r.recommended ? ' is-on' : ''}`}
+                      {/* ONE STATE, ONE COLOUR: the chip on the card says
+                          Recommended in the accent, and the handle that
+                          sets it is primary while it is on */}
+                      <Button
+                        size="sm"
+                        tone={r.recommended ? 'primary' : 'neutral'}
                         aria-pressed={r.recommended}
+                        aria-label={r.recommended ? 'Not the recommended one' : 'Recommend this one'}
                         title={r.recommended ? 'Not the recommended one' : 'Recommend this one'}
                         onClick={() => toggleStar(r)}
                       >
-                        <Star size={13} weight={r.recommended ? 'fill' : 'light'} />
-                      </button>
-                      <button
-                        type="button"
-                        className="vw-icon-btn vw-icon-btn--drop"
+                        <Star
+                          size={ICON_SIZE.tiny}
+                          weight={r.recommended ? 'fill' : 'bold'}
+                          aria-hidden="true"
+                        />
+                      </Button>
+                      <Button
+                        size="sm"
+                        tone="danger"
+                        aria-label={`Do not show ${rowLabel(target, r.row)} here`}
                         title={`Do not show ${rowLabel(target, r.row)} here`}
                         onClick={() => removeRow(r.row)}
                       >
-                        <X size={13} weight="bold" />
-                      </button>
+                        <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                      </Button>
                     </>
                   ) : null}
                 </span>
+                </Card>
               </div>
 
               {/* THE WARNING GOES WHERE THE VALUE IS — rule 10, and the
@@ -1312,47 +1333,53 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
                 ? `No ${plural(target.name)} picked for this ${singular(sourceEntity.name)} yet.`
                 : `No ${plural(target.name)} fit this ${singular(sourceEntity.name)} yet.`}
           {filtering ? (
-            <button
-              type="button"
-              className="vw-linkbtn"
+            <Button
+              size="sm"
+              tone="ghost"
               onClick={() => {
                 setSearch('')
                 setBlockFilters(viewId, block.id, [])
               }}
             >
               Clear
-            </button>
+            </Button>
           ) : null}
         </p>
       ) : null}
 
       {/* the count chip in the head already SAYS "1 removed" on the clean
-          page; the chip that REOPENS them is a handle, so it is only here */}
+          page; the control that REOPENS them is a handle, so it is only here */}
       {configuring && result.removedCount > 0 ? (
         <div className="vw-removed">
-          <button
-            type="button"
-            className="vw-removed-chip"
+          <Button
+            size="sm"
+            tone="neutral"
             aria-expanded={openRemoved}
             onClick={() => setOpenRemoved((v) => !v)}
             title="Show what was taken off, and put any of it back"
           >
             {result.removedCount} removed
-          </button>
+          </Button>
           {openRemoved ? (
             <ul className="vw-removed-list">
               {result.removed.map(({ row }) => (
-                <li key={row.id} className="vw-removed-row">
-                  {/* the same `title` its sibling above carries: the name
-                      clamps to two lines and a long enough one is still
-                      cut, so the whole of it stays reachable */}
-                  <span className="vw-row-name" title={rowLabel(target, row)}>
-                    {rowLabel(target, row)}
-                  </span>
-                  <button type="button" className="btn btn-ghost" onClick={() => restoreRow(row)}>
-                    <ArrowUUpLeft size={13} weight="light" />
-                    Put it back
-                  </button>
+                <li key={row.id}>
+                  {/* struck, at the floor, and still whole in the DOM —
+                      a Row wraps rather than cuts (§3) */}
+                  <Row
+                    dense
+                    name={<span className="vw-struck">{rowLabel(target, row)}</span>}
+                    trail={
+                      <Button
+                        size="sm"
+                        tone="ghost"
+                        glyph={<ArrowUUpLeft size={ICON_SIZE.tiny} weight="bold" />}
+                        onClick={() => restoreRow(row)}
+                      >
+                        Put it back
+                      </Button>
+                    }
+                  />
                 </li>
               ))}
             </ul>
@@ -1387,13 +1414,19 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
               onClose={() => setPanel('none')}
             />
           ) : (
-            <button type="button" className="btn btn-ghost vw-add-btn" onClick={() => setPanel('add')}>
-              <Plus size={13} weight="bold" />
+            /* a button is not a label (rule 3): the dealer's own table
+               name, in its own case, on a ghost control */
+            <Button
+              tone="ghost"
+              glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
+              onClick={() => setPanel('add')}
+            >
               Add {oneOf(target.name)}
-            </button>
+            </Button>
           )}
         </div>
       ) : null}
+      </Card>
     </motion.section>
   )
 }
@@ -1440,53 +1473,60 @@ function FilterBar({
 
   return (
     <div className="vw-filter" role="group" aria-label={`Narrow what is shown from ${entity.name}`}>
-      {/* THE SEARCH BOX THAT WAS HERE IS NOW ON THE BLOCK ITSELF.
-          It was reachable only from inside this panel, which only
-          opens in configure mode, so the one control that lets a
-          person find a row by name was hidden from the person most
-          likely to want it. The curation note carries it in READ
-          mode, bound to this same state — and it searches the whole
-          table rather than only what the rule already admitted, which
-          is the half of the job this box never did. Two boxes on one
-          card writing one value would be a second, quieter search
-          result, so there is one. */}
-      {cols.map((fieldId) => {
-        const values = valuesInUse(rows, fieldId, read)
-        if (values.length < 2) return null
-        const selected = selectedFor(fieldId)
-        return (
-          <div key={fieldId} className="vw-filter-row">
-            <span className="mono-label">{byId.get(fieldId)?.name ?? ''}</span>
-            <span className="vw-filter-chips">
-              {values.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={`vw-fchip${selected.includes(v) ? ' is-on' : ''}`}
-                  aria-pressed={selected.includes(v)}
-                  onClick={() => toggle(fieldId, v)}
-                >
-                  {selected.includes(v) ? <Check size={11} weight="bold" /> : null}
-                  {v}
-                </button>
-              ))}
-            </span>
-          </div>
-        )
-      })}
+      <Card tone="flat" pad="sm">
+        {/* THE SEARCH BOX THAT WAS HERE IS NOW ON THE BLOCK ITSELF.
+            It was reachable only from inside this panel, which only
+            opens in configure mode, so the one control that lets a
+            person find a row by name was hidden from the person most
+            likely to want it. The curation note carries it in READ
+            mode, bound to this same state — and it searches the whole
+            table rather than only what the rule already admitted, which
+            is the half of the job this box never did. Two boxes on one
+            card writing one value would be a second, quieter search
+            result, so there is one. */}
+        {cols.map((fieldId) => {
+          const values = valuesInUse(rows, fieldId, read)
+          if (values.length < 2) return null
+          const selected = selectedFor(fieldId)
+          return (
+            <div key={fieldId} className="vw-filter-row">
+              {/* a column's name is a value, so it keeps its case */}
+              <span className="vw-fact-of">{byId.get(fieldId)?.name ?? ''}</span>
+              <span className="vw-filter-chips">
+                {values.map((v) => (
+                  <Button
+                    key={v}
+                    size="sm"
+                    tone={selected.includes(v) ? 'primary' : 'neutral'}
+                    glyph={
+                      selected.includes(v) ? <Check size={ICON_SIZE.tiny} weight="bold" /> : undefined
+                    }
+                    aria-pressed={selected.includes(v)}
+                    onClick={() => toggle(fieldId, v)}
+                  >
+                    {v}
+                  </Button>
+                ))}
+              </span>
+            </div>
+          )
+        })}
 
-      {filters.length > 0 || search !== '' ? (
-        <button
-          type="button"
-          className="vw-linkbtn"
-          onClick={() => {
-            onSearch('')
-            onFilters([])
-          }}
-        >
-          Clear all
-        </button>
-      ) : null}
+        {filters.length > 0 || search !== '' ? (
+          <div className="vw-acts">
+            <Button
+              size="sm"
+              tone="ghost"
+              onClick={() => {
+                onSearch('')
+                onFilters([])
+              }}
+            >
+              Clear all
+            </Button>
+          </div>
+        ) : null}
+      </Card>
     </div>
   )
 }

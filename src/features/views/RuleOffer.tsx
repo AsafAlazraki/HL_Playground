@@ -32,13 +32,20 @@
      · a guess is labelled a guess, in a line under the offer;
      · and a guess is not the primary. Nothing on the sheet is,
        because the app does not have a recommendation to make.
+
+   THE SURFACE IS A `<Card>` AND THE CONTROLS ARE `<Button>`s. What
+   this file decides is which one is primary; what a button looks
+   like, how it presses and where its focus ring falls is decided
+   once, in src/ui.
    ============================================================ */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import { motion } from 'motion/react'
 import { ArrowUUpLeft, Check } from '@phosphor-icons/react'
 import type { ClauseGroup, CompareOp, EntityDef, FieldDef } from '@/types/model'
+import { ICON_SIZE } from '@/lib/icons'
+import { Button, Card, SectionHead } from '@/ui'
 import { curatedOnly, describeRule, opWord, PICKABLE_OPS, plural, thisOne } from './describe'
 import { pickableColumns, pickedRule, suggestRule } from './suggest'
 import { KindMark } from './marks'
@@ -87,10 +94,13 @@ export function RuleOffer({
   const [op, setOp] = useState<CompareOp>('eq')
   const [rootFieldId, setRootFieldId] = useState(() => startColumn(root, rootCols))
 
-  const firstRef = useRef<HTMLButtonElement>(null)
+  /* the first control takes the focus the moment the offer lands, so
+     a keyboard user is already on it — reached by the id the Button
+     is given, since the primitive owns its element */
+  const firstId = useId()
   useEffect(() => {
-    firstRef.current?.focus()
-  }, [])
+    document.getElementById(firstId)?.focus()
+  }, [firstId])
 
   const many = plural(target.name)
   /* a guess with nothing to commit is not a guess, it is the empty
@@ -115,142 +125,156 @@ export function RuleOffer({
         }
       }}
     >
-      <header className="vw-offer-head">
-        <KindMark entity={target} />
-        <span className="mono-label">{changing ? 'Change what is shown' : `Relating ${target.name}`}</span>
-      </header>
+      <Card tone="raised" pad="md">
+        {/* the caption is a group caption; the table's NAME rides beside
+            it as a value, so the uppercase never touches it (rule 3) */}
+        <SectionHead
+          level="none"
+          rule
+          count={
+            <>
+              <KindMark entity={target} /> {target.name}
+            </>
+          }
+        >
+          {changing ? 'Change what is shown' : 'Relating'}
+        </SectionHead>
 
-      {!picking ? (
-        <>
-          {changing && current !== undefined ? (
-            <p className="vw-offer-now mono-label">Now: {describeRule(current, root, target)}</p>
-          ) : null}
-
-          <p className="vw-offer-ask">{suggestion.sentence}</p>
-          <p className="vw-offer-why">{suggestion.because}</p>
-
-          {/* THE GUESS SAYS IT IS ONE. Not a warning and not a
-              refusal — the rule may well be right, and the person
-              can read the list it produces in a second. What it must
-              not do is arrive in the same voice as a link column the
-              file actually declares. */}
-          {guessing ? (
-            <p className="vw-offer-guess">
-              <b className="vw-offer-guess-word">That is a guess</b>, from two column names
-              rather than anything the file declares. Use it and check what it brings in — or
-              show all {many} and pick them yourself.
-            </p>
-          ) : null}
-
-          <div className="vw-offer-acts">
-            {suggestion.group ? (
-              <button
-                ref={firstRef}
-                type="button"
-                /* NOT THE PRIMARY WHEN IT IS A GUESS. One primary per
-                   surface is rule §1's, and it belongs to the answer
-                   the app is sure of. Where it is sure of nothing,
-                   the sheet has no primary — which is the honest
-                   drawing of "you decide". */
-                className={guessing ? 'btn' : 'btn btn-primary'}
-                onClick={() => onUse(suggestion.group)}
-              >
-                <Check size={13} weight="bold" />
-                Use this
-              </button>
+        {!picking ? (
+          <>
+            {changing && current !== undefined ? (
+              <p className="vw-offer-now">Now: {describeRule(current, root, target)}</p>
             ) : null}
-            <button
-              ref={suggestion.group ? undefined : firstRef}
-              type="button"
-              className="btn"
-              onClick={() => onUse(undefined)}
-            >
-              Show all {many}
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => setPicking(true)}
-              disabled={!canPick}
-            >
-              Pick a different rule
-            </button>
-            <button type="button" className="btn btn-ghost vw-offer-cancel" onClick={onCancel}>
-              Cancel
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="vw-pick">
-            <label className="vw-pick-leg">
-              <span className="mono-label">Show {many} where their</span>
-              <select
-                className="field-input vw-select"
-                value={targetFieldId}
-                onChange={(e) => setTargetFieldId(e.target.value)}
+
+            <p className="vw-offer-ask">{suggestion.sentence}</p>
+            <p className="vw-offer-why">{suggestion.because}</p>
+
+            {/* THE GUESS SAYS IT IS ONE. Not a warning and not a
+                refusal — the rule may well be right, and the person
+                can read the list it produces in a second. What it must
+                not do is arrive in the same voice as a link column the
+                file actually declares. */}
+            {guessing ? (
+              <p className="vw-offer-guess">
+                <b className="vw-offer-guess-word">That is a guess</b>, from two column names
+                rather than anything the file declares. Use it and check what it brings in — or
+                show all {many} and pick them yourself.
+              </p>
+            ) : null}
+
+            <div className="vw-acts">
+              {suggestion.group ? (
+                <Button
+                  id={firstId}
+                  /* NOT THE PRIMARY WHEN IT IS A GUESS. One primary per
+                     surface is rule §1's, and it belongs to the answer
+                     the app is sure of. Where it is sure of nothing,
+                     the sheet has no primary — which is the honest
+                     drawing of "you decide". */
+                  tone={guessing ? 'neutral' : 'primary'}
+                  glyph={<Check size={ICON_SIZE.tiny} weight="bold" />}
+                  onClick={() => onUse(suggestion.group)}
+                >
+                  Use this
+                </Button>
+              ) : null}
+              <Button
+                id={suggestion.group ? undefined : firstId}
+                tone="neutral"
+                onClick={() => onUse(undefined)}
               >
-                {targetCols.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="vw-pick-leg">
-              <span className="mono-label">Comparison</span>
-              <select
-                className="field-input vw-select"
-                value={op}
-                onChange={(e) => setOp(e.target.value as CompareOp)}
+                Show all {many}
+              </Button>
+              <Button
+                tone="ghost"
+                onClick={() => setPicking(true)}
+                refusedBecause={
+                  canPick ? undefined : 'Neither table has a column a rule could compare.'
+                }
               >
-                {PICKABLE_OPS.map((o) => (
-                  <option key={o} value={o}>
-                    {opWord(o)}
-                  </option>
-                ))}
-              </select>
-            </label>
+                Pick a different rule
+              </Button>
+              <span className="vw-acts-end">
+                <Button tone="ghost" onClick={onCancel}>
+                  Cancel
+                </Button>
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="vw-pick">
+              <label className="vw-pick-leg">
+                <span className="mono-label">Show {many} where their</span>
+                <select
+                  className="field-input"
+                  value={targetFieldId}
+                  onChange={(e) => setTargetFieldId(e.target.value)}
+                >
+                  {targetCols.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="vw-pick-leg">
-              <span className="mono-label">{thisOne(root)}&rsquo;s</span>
-              <select
-                className="field-input vw-select"
-                value={rootFieldId}
-                onChange={(e) => setRootFieldId(e.target.value)}
+              <label className="vw-pick-leg">
+                <span className="mono-label">Comparison</span>
+                <select
+                  className="field-input"
+                  value={op}
+                  onChange={(e) => setOp(e.target.value as CompareOp)}
+                >
+                  {PICKABLE_OPS.map((o) => (
+                    <option key={o} value={o}>
+                      {opWord(o)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="vw-pick-leg">
+                <span className="mono-label">{thisOne(root)}&rsquo;s</span>
+                <select
+                  className="field-input"
+                  value={rootFieldId}
+                  onChange={(e) => setRootFieldId(e.target.value)}
+                >
+                  {rootCols.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <p className="vw-offer-ask">{describeRule(picked, root, target)}</p>
+
+            <div className="vw-acts">
+              <Button
+                tone="primary"
+                glyph={<Check size={ICON_SIZE.tiny} weight="bold" />}
+                refusedBecause={picked ? undefined : 'Pick a column on each side first.'}
+                onClick={() => picked && onUse(picked)}
               >
-                {rootCols.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <p className="vw-offer-ask">{describeRule(picked, root, target)}</p>
-
-          <div className="vw-offer-acts">
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={!picked}
-              onClick={() => picked && onUse(picked)}
-            >
-              <Check size={13} weight="bold" />
-              Use this rule
-            </button>
-            <button type="button" className="btn" onClick={() => onUse(curatedOnly())}>
-              Only the {many} I pick
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={() => setPicking(false)}>
-              <ArrowUUpLeft size={13} weight="light" />
-              Back
-            </button>
-          </div>
-        </>
-      )}
+                Use this rule
+              </Button>
+              <Button tone="neutral" onClick={() => onUse(curatedOnly())}>
+                Only the {many} I pick
+              </Button>
+              <Button
+                tone="ghost"
+                glyph={<ArrowUUpLeft size={ICON_SIZE.tiny} weight="bold" />}
+                onClick={() => setPicking(false)}
+              >
+                Back
+              </Button>
+            </div>
+          </>
+        )}
+      </Card>
     </motion.section>
   )
 }

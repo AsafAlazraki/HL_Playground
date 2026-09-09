@@ -58,6 +58,7 @@ import { ICON_SIZE } from '@/lib/icons'
 import { currentUser } from '@/features/auth'
 import { PageHead } from '@/features/page'
 import { Board } from '@/features/pipeline'
+import { Button } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -293,15 +294,16 @@ export function QuoteStage({
           ============================================================ */}
       <div className="shell-view-bar">
         {quote ? (
-          <button
-            type="button"
-            className="shell-view-back"
-            onClick={() => onOpen(null)}
-            aria-label="Back"
-          >
-            <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-            <span>Back</span>
-          </button>
+          <div className="shell-view-lead">
+            <Button
+              tone="ghost"
+              size="sm"
+              glyph={<ArrowLeft size={ICON_SIZE.small} />}
+              onClick={() => onOpen(null)}
+            >
+              Back
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -325,38 +327,44 @@ export function QuoteStage({
           count={`${quoteCount} ${quoteCount === 1 ? 'quote' : 'quotes'}`}
           tools={
             <div className="shell-quote-views" role="group" aria-label="How to show the quotes">
-              <button
-                type="button"
-                className={`btn shell-quote-act${view === 'board' ? ' is-on' : ''}`}
+              {/* BOARD OR LIST. Two primitives, and `aria-pressed` is the
+                  truth: the one that is on takes the neutral ground so
+                  the latch reads, the other is a ghost. `Button` has no
+                  pressed tone of its own — reported, not forked. */}
+              <Button
+                tone={view === 'board' ? 'neutral' : 'ghost'}
+                size="sm"
                 aria-pressed={view === 'board'}
+                glyph={<Kanban size={ICON_SIZE.tiny} />}
                 onClick={() => setView('board')}
               >
-                <Kanban size={ICON_SIZE.tiny} aria-hidden="true" />
                 Board
-              </button>
-              <button
-                type="button"
-                className={`btn shell-quote-act${view === 'list' ? ' is-on' : ''}`}
+              </Button>
+              <Button
+                tone={view === 'list' ? 'neutral' : 'ghost'}
+                size="sm"
                 aria-pressed={view === 'list'}
+                glyph={<ListBullets size={ICON_SIZE.tiny} />}
                 onClick={() => setView('list')}
               >
-                <ListBullets size={ICON_SIZE.tiny} aria-hidden="true" />
                 List
-              </button>
+              </Button>
               {/* THE DIARY IS A THIRD VIEW OF THE SAME QUOTES, so it
                   sits with the other two rather than alone on the bar
                   above the title. It is separated from them because
                   it LEAVES this page — the first two swap what is
                   under the header, this one opens another screen. */}
               {onOpenHistory ? (
-                <button
-                  type="button"
-                  className="btn shell-quote-act shell-quote-away"
-                  onClick={onOpenHistory}
-                >
-                  <ClockCounterClockwise size={ICON_SIZE.tiny} aria-hidden="true" />
-                  History
-                </button>
+                <span className="shell-quote-away">
+                  <Button
+                    tone="ghost"
+                    size="sm"
+                    glyph={<ClockCounterClockwise size={ICON_SIZE.tiny} />}
+                    onClick={onOpenHistory}
+                  >
+                    History
+                  </Button>
+                </span>
               ) : null}
             </div>
           }

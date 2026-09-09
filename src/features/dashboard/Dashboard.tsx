@@ -81,8 +81,9 @@ import {
 import { CARDS, firstName, greeting } from './cards'
 import { censusLine, sheetCensus } from './census'
 import { linkOffers, resolveLinks } from './links'
+import { Button, Card, SectionHead } from '@/ui'
 import { QuickLinks } from './QuickLinks'
-import { CardBody, CardMark } from './CardBody'
+import { CardBody } from './CardBody'
 import { Tray, type TrayKind } from './Tray'
 import { useReorder } from './reorder'
 import type { DashboardActs } from './acts'
@@ -219,7 +220,7 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
       const before = apply((a) => withCardRemoved(a, id))
       done(`${CARDS[id].name} taken off the dashboard`, before)
       requestAnimationFrame(() => {
-        document.querySelector<HTMLElement>('.dsh-add')?.focus()
+        document.getElementById('dsh-add')?.focus()
       })
     },
     [apply, done],
@@ -259,7 +260,7 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
       const before = apply((a) => withLinkRemoved(a, id))
       done(`${label} taken off the fast actions`, before)
       requestAnimationFrame(() => {
-        document.querySelector<HTMLElement>('.dsh-fast-add')?.focus()
+        document.getElementById('dsh-fast-add')?.focus()
       })
     },
     [apply, done],
@@ -428,34 +429,39 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
 
           <div className="dsh-head-acts">
             {arranging ? (
-              <button type="button" className="dsh-restart" onClick={startAgain}>
+              <Button tone="ghost" onClick={startAgain}>
                 Start again
-              </button>
+              </Button>
             ) : null}
-            <button
-              type="button"
-              className={`dsh-arrange${arranging ? ' is-on' : ''}`}
+            {/* "Edit", not "Arrange". Arranging is what the mode
+                DOES, and it was named for the mechanism rather
+                than for the person's intent — you press it
+                because you want to change your dashboard, and
+                every other application in the world calls that
+                Edit.
+
+                NEUTRAL IN BOTH STATES. Button draws no look for
+                `aria-pressed` (reported as the gap it is), so the
+                state is carried by the word and the glyph — Done
+                and an X while the mode is on — and the attribute
+                still announces it. */}
+            <Button
+              tone="neutral"
+              glyph={
+                arranging ? (
+                  <X size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                ) : (
+                  <Sliders size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                )
+              }
               aria-pressed={arranging}
               onClick={() => {
                 setArranging((v) => !v)
                 setTray(null)
               }}
             >
-              <span className="dsh-arrange-mark" aria-hidden="true">
-                {arranging ? (
-                  <X size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                ) : (
-                  <Sliders size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                )}
-              </span>
-              {/* "Edit", not "Arrange". Arranging is what the mode
-                  DOES, and it was named for the mechanism rather
-                  than for the person's intent — you press it
-                  because you want to change your dashboard, and
-                  every other application in the world calls that
-                  Edit. */}
               {arranging ? 'Done' : 'Edit'}
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -517,99 +523,108 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
                    spanning two rows takes a column to itself and
                    the two half-height cards stack beside it. */
                 data-tall={CARDS[id].tall ? '' : undefined}
-                /* NOT `.ds-lit`. That utility sets `box-shadow`
-                   outright, and this card's own rule sets
-                   `box-shadow` too — one of them would silently
-                   win. The lit top edge is written into
-                   `.dsh-card` beside its elevation instead, which
-                   is the same light and only one declaration. */
-                className={`dsh-card ds-fade${arranging ? ' is-arranging' : ''}${
-                  reorder.held === slot ? ' is-held' : ''
-                }`}
+                /* THE SECTION IS A SHELL, NOT A SURFACE. The layout
+                   spring writes its transform here, and the grid
+                   reads `data-tall` / `data-wide` here; the paper
+                   is the <Card> inside it, which this feature does
+                   not paint. `.dsh-card` is a one-cell grid so the
+                   Card fills its row without a property being set
+                   on the primitive's own element. */
+                className="dsh-card ds-fade"
                 style={{ ['--i' as string]: slot }}
                 aria-label={CARDS[id].name}
               >
-                <header className="dsh-card-head">
-                  {arranging ? (
-                    <button
-                      type="button"
-                      className="dsh-grip"
-                      aria-label={`Move ${CARDS[id].name}. Arrow keys move it.`}
-                      {...reorder.handleProps(original)}
+                {/* flat while arranging: a card being moved about
+                    has no business casting a shadow, and the grip
+                    in its head is the affordance. No held state is
+                    drawn — the card is visibly moving, which is the
+                    feedback, and `aria-current` would be a lie. */}
+                <Card tone={arranging ? 'flat' : 'raised'} pad="none">
+                  <div className="dsh-card-head">
+                    {/* THE CARD'S NAME IS A SECTION CAPTION — the one
+                        uppercase style, drawn by SectionHead, and
+                        still the h2 a screen reader navigates by.
+                        It is chrome: at the label step it cannot
+                        outrank the doors and the drafts, which is
+                        the whole point of the display tier below
+                        it. The mark that sat beside it is gone with
+                        the rule that drew it. */}
+                    <SectionHead
+                      level="h2"
+                      rule
+                      action={
+                        arranging ? (
+                          <>
+                            <button
+                              type="button"
+                              className="dsh-grip"
+                              aria-label={`Move ${CARDS[id].name}. Arrow keys move it.`}
+                              {...reorder.handleProps(original)}
+                            >
+                              <DotsSixVertical size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                            </button>
+                            <Button
+                              tone="danger"
+                              size="sm"
+                              aria-label={`Take ${CARDS[id].name} off the dashboard`}
+                              onClick={() => dropCard(id)}
+                            >
+                              <X size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                            </Button>
+                          </>
+                        ) : openFor(id, acts) ? (
+                          /* THE DOOR OUT OF THE CARD. One control,
+                             one position, one word — and only where
+                             there is somewhere to go: `openFor`
+                             returns nothing for the activity log,
+                             which is complete on the card. */
+                          <Button
+                            tone="ghost"
+                            size="sm"
+                            aria-label={`Open ${CARDS[id].name}`}
+                            onClick={openFor(id, acts)}
+                          >
+                            <span className="dsh-open-say">Open</span>
+                            <ArrowUpRight size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                          </Button>
+                        ) : undefined
+                      }
                     >
-                      <DotsSixVertical size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                    </button>
-                  ) : (
-                    <span className="dsh-card-mark" aria-hidden="true">
-                      <CardMark id={id} />
-                    </span>
-                  )}
-                  <h2 className="dsh-card-name ds-heading">{CARDS[id].name}</h2>
-                  {/* THE DOOR OUT OF THE CARD.
-                      A dashboard card is a glance at something that
-                      has a page of its own, and until now the only
-                      way through was a "See all" link buried under
-                      the list — different words on every card, in a
-                      different place on every card, and absent
-                      entirely on two of them. One control, one
-                      position, one word.
-
-                      IT IS DRAWN ONLY WHERE THERE IS SOMEWHERE TO
-                      GO. `openFor` returns nothing for the activity
-                      log, which is complete on the card and has no
-                      page behind it; a button that opened a screen
-                      invented to justify the button is worse than
-                      no button. */}
-                  {!arranging && openFor(id, acts) ? (
-                    <button
-                      type="button"
-                      className="dsh-open"
-                      onClick={openFor(id, acts)}
-                      aria-label={`Open ${CARDS[id].name}`}
-                    >
-                      <span className="dsh-open-say">Open</span>
-                      <ArrowUpRight size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                    </button>
-                  ) : null}
-                  {arranging ? (
-                    <button
-                      type="button"
-                      className="dsh-drop"
-                      aria-label={`Take ${CARDS[id].name} off the dashboard`}
-                      onClick={() => dropCard(id)}
-                    >
-                      <X size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                    </button>
-                  ) : null}
-                </header>
-                <div className="dsh-card-body">
-                  <CardBody
-                    id={id}
-                    me={user.name}
-                    userId={user.id}
-                    orgSlug={user.orgSlug}
-                    acts={acts}
-                  />
-                </div>
+                      {CARDS[id].name}
+                    </SectionHead>
+                  </div>
+                  <div className="dsh-card-body">
+                    <CardBody
+                      id={id}
+                      me={user.name}
+                      userId={user.id}
+                      orgSlug={user.orgSlug}
+                      acts={acts}
+                    />
+                  </div>
+                </Card>
               </motion.section>
             )
           })}
 
           {arranging ? (
-            <button
-              type="button"
-              className="dsh-card dsh-add"
-              onClick={() => setTray('cards')}
-            >
-              <span className="dsh-add-mark" aria-hidden="true">
-                <Plus size={ICON_SIZE.medium} weight={weightFor(ICON_SIZE.medium)} />
+            /* A SUNKEN CARD THAT ACTIVATES: card.css calls that tone
+               "an empty slot, a drop target, a placeholder", which
+               is exactly what a card-shaped hole in the grid is. The
+               id is where the keyboard lands after a card is taken
+               off — see `dropCard`. */
+            <Card tone="sunken" pad="none" id="dsh-add" onActivate={() => setTray('cards')}>
+              <span className="dsh-add-in">
+                <span aria-hidden="true">
+                  <Plus size={ICON_SIZE.medium} weight={weightFor(ICON_SIZE.medium)} />
+                </span>
+                <span className="ds-small">
+                  {spare.length > 0
+                    ? `Add a card — ${spare.length} left`
+                    : 'Every card is already on'}
+                </span>
               </span>
-              <span className="dsh-add-say ds-small">
-                {spare.length > 0
-                  ? `Add a card — ${spare.length} left`
-                  : 'Every card is already on'}
-              </span>
-            </button>
+            </Card>
           ) : null}
         </div>
 
@@ -623,9 +638,9 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
               Your dashboard has no cards on it. That is a choice this app will
               keep — press Edit to put some back.
             </p>
-            <button type="button" className="dsh-act" onClick={() => setArranging(true)}>
+            <Button tone="primary" onClick={() => setArranging(true)}>
               Edit
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>

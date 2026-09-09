@@ -31,6 +31,7 @@ import {
 } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
+import { Button, Card, Field, Row, SectionHead } from '@/ui'
 import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
 import { whenSay } from '@/features/activity'
 import { sizeSay } from '@/features/modules'
@@ -424,7 +425,7 @@ export function DealThread({
 
   return (
     <section className="dp-thread-part" aria-label={`Notes on ${quote.reference}`}>
-      <h3 className="mono-label dp-thread-say">Notes</h3>
+      <SectionHead>Notes</SectionHead>
       {all.length === 0 ? (
         /* A FACT, NOT AN INSTRUCTION. The box below is the
            instruction and it is right there. */
@@ -440,15 +441,20 @@ export function DealThread({
           ) : null}
           <ol className="dp-thread">
             {shown.map((n) => (
-              <li className="dp-note" key={n.id}>
-                <p className="dp-note-top">
-                  {/* NO NAME IS DRAWN WHERE THERE IS NO NAME. A note
-                      written with nobody signed in still has a time,
-                      and "System" would be an invention. */}
-                  {n.who ? <span className="dp-note-who">{n.who}</span> : null}
-                  <span className="dp-note-when ds-mono">{whenSay(n.at)}</span>
-                </p>
-                <p className="dp-note-text">{n.text}</p>
+              <li key={n.id}>
+                {/* A NOTE IS A CARD INSIDE A CARD, so it is the flat
+                    tone — card.css: "for a card inside another card,
+                    where a second shadow is noise". */}
+                <Card tone="flat" pad="sm">
+                  <p className="dp-note-top">
+                    {/* NO NAME IS DRAWN WHERE THERE IS NO NAME. A note
+                        written with nobody signed in still has a time,
+                        and "System" would be an invention. */}
+                    {n.who ? <span className="dp-note-who">{n.who}</span> : null}
+                    <span className="dp-note-when ds-mono">{whenSay(n.at)}</span>
+                  </p>
+                  <p className="dp-note-text">{n.text}</p>
+                </Card>
               </li>
             ))}
           </ol>
@@ -498,9 +504,13 @@ export function DealThread({
         ) : null}
         <div className="dp-say-foot">
           <span className="dp-say-hint">Ctrl + Enter</span>
-          <button type="submit" className="dp-say-go">
+          {/* THE PANE'S ONE PRIMARY ACT. Never refused: pressing it
+              with an empty box prints the reason under the box
+              (rule 10), which is why there is no `refusedBecause`
+              here. */}
+          <Button tone="primary" type="submit">
             Add note
-          </button>
+          </Button>
         </div>
       </form>
     </section>
@@ -546,7 +556,7 @@ export function DealHandovers({
 
   return (
     <section className="dp-part" aria-label={`Handovers on ${quote.reference}`}>
-      <h3 className="mono-label dp-part-say">Handovers</h3>
+      <SectionHead>Handovers</SectionHead>
       {older > 0 ? (
         <p className="dp-older">
           {older === 1
@@ -613,35 +623,45 @@ export function DealLinks({
 
   return (
     <section className="dp-part" aria-label={`Links on ${quote.reference}`}>
-      <h3 className="mono-label dp-part-say">Links</h3>
+      <SectionHead>Links</SectionHead>
       {list.length === 0 ? (
         <p className="dp-none">Nothing linked to this deal yet.</p>
       ) : (
         <ul className="dp-links">
+          {/* A LINK IS A ROW WITH A CONTROL AT THE END — the still
+              `Row`, whose trail is the one place a button may sit,
+              because the row itself is not a target: the link is. */}
           {list.map((l) => (
-            <li className="dp-link" key={l.id}>
-              {/* `noreferrer noopener` AND A NEW TAB. The scheme was
-                  already checked by `tidyUrl`; this is the other half
-                  — a deal's link is somebody else's page and it must
-                  not be handed a handle on this one. */}
-              <a
-                className="dp-link-go"
-                href={l.url}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                <LinkSimple size={ICON_SIZE.tiny} aria-hidden="true" />
-                <span className="dp-link-name">{l.label}</span>
-                <ArrowSquareOut size={ICON_SIZE.tiny} aria-hidden="true" />
-              </a>
-              <button
-                type="button"
-                className="dp-drop"
-                aria-label={`Remove the link ${l.label}`}
-                onClick={() => onDrop(l)}
-              >
-                <Trash size={ICON_SIZE.tiny} aria-hidden="true" />
-              </button>
+            <li key={l.id}>
+              <Row
+                dense
+                name={
+                  /* `noreferrer noopener` AND A NEW TAB. The scheme was
+                     already checked by `tidyUrl`; this is the other half
+                     — a deal's link is somebody else's page and it must
+                     not be handed a handle on this one. */
+                  <a
+                    className="dp-link-go"
+                    href={l.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    <LinkSimple size={ICON_SIZE.tiny} aria-hidden="true" />
+                    <span className="dp-link-name">{l.label}</span>
+                    <ArrowSquareOut size={ICON_SIZE.tiny} aria-hidden="true" />
+                  </a>
+                }
+                trail={
+                  <Button
+                    tone="ghost"
+                    size="sm"
+                    aria-label={`Remove the link ${l.label}`}
+                    onClick={() => onDrop(l)}
+                  >
+                    <Trash size={ICON_SIZE.tiny} aria-hidden="true" />
+                  </Button>
+                }
+              />
             </li>
           ))}
         </ul>
@@ -657,13 +677,11 @@ export function DealLinks({
           }
         }}
       >
-        <input
-          className="dp-add-in"
+        <Field
+          label="What it is"
           value={label}
-          placeholder="What it is"
-          aria-label="What this link is called"
-          onChange={(e) => {
-            setLabel(e.target.value)
+          onChange={(v) => {
+            setLabel(v)
             onTyping()
           }}
         />
@@ -676,21 +694,19 @@ export function DealLinks({
             typeface and metrics in the middle of a design system.
             The same fault the native `<select>` was replaced for.
             `inputMode` keeps the phone keyboard and refuses
-            nothing; the refusal below says why, in our words. */}
-        <input
-          className="dp-add-in dp-add-url"
+            nothing; the refusal below says why, in our words. An
+            address is an identifier, so it is mono (§2). */}
+        <Field
+          label="Address"
           value={url}
           inputMode="url"
-          placeholder="Address"
-          aria-label="The address"
-          onChange={(e) => {
-            setUrl(e.target.value)
+          mono
+          onChange={(v) => {
+            setUrl(v)
             onTyping()
           }}
         />
-        <button type="submit" className="dp-add-go">
-          Add
-        </button>
+        <Button type="submit">Add</Button>
         {why ? (
           <p className="dp-why" role="alert">
             {why}
@@ -731,26 +747,35 @@ export function DealFiles({
 
   return (
     <section className="dp-part" aria-label={`Files on ${quote.reference}`}>
-      <h3 className="mono-label dp-part-say">Files</h3>
+      <SectionHead>Files</SectionHead>
       {!ready ? (
         <p className="dp-none">Reading what is attached…</p>
       ) : files.length === 0 ? (
         <p className="dp-none">Nothing attached to this deal yet.</p>
       ) : (
         <ul className="dp-files">
+          {/* A FILE IS A ROW: the mark leads, the name is what is
+              scanned for, the size is metadata beside it, and the
+              remove control is the trail. A size is a figure and
+              stays mono inside the row's caption slot. */}
           {files.map((f) => (
-            <li className="dp-file" key={f.id}>
-              <FileMark file={f} />
-              <span className="dp-file-name">{f.name}</span>
-              <span className="dp-file-size ds-mono">{sizeSay(f.size)}</span>
-              <button
-                type="button"
-                className="dp-drop"
-                aria-label={`Remove ${f.name}`}
-                onClick={() => onDrop(f)}
-              >
-                <Trash size={ICON_SIZE.tiny} aria-hidden="true" />
-              </button>
+            <li key={f.id}>
+              <Row
+                dense
+                lead={<FileMark file={f} />}
+                name={f.name}
+                meta={<span className="ds-mono">{sizeSay(f.size)}</span>}
+                trail={
+                  <Button
+                    tone="ghost"
+                    size="sm"
+                    aria-label={`Remove ${f.name}`}
+                    onClick={() => onDrop(f)}
+                  >
+                    <Trash size={ICON_SIZE.tiny} aria-hidden="true" />
+                  </Button>
+                }
+              />
             </li>
           ))}
         </ul>
@@ -776,10 +801,14 @@ export function DealFiles({
           e.target.value = ''
         }}
       />
-      <button type="button" className="dp-add-go dp-attach" onClick={() => input.current?.click()}>
-        <Paperclip size={ICON_SIZE.tiny} aria-hidden="true" />
-        Attach a file
-      </button>
+      <div className="dp-attach">
+        <Button
+          glyph={<Paperclip size={ICON_SIZE.tiny} aria-hidden="true" />}
+          onClick={() => input.current?.click()}
+        >
+          Attach a file
+        </Button>
+      </div>
 
       {why ? (
         <p className="dp-why" role="alert">

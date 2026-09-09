@@ -85,7 +85,13 @@
    the height it stands in. */
 .ab {
   display: flex;
-  align-items: center;
+  /* BASELINE, NOT CENTRE. A refused control is the primitive's slot —
+     the button with its reason beneath — and centring would lift the
+     button off the line its neighbours stand on. Aligned on the
+     label's baseline, every word on the bar sits on one line and the
+     reason hangs below it, which is the honest height of a bar with
+     a refusal on it. */
+  align-items: baseline;
   gap: 0;
   /* 36 AT THE TUNED WIDTH, AND IT GROWS WITH THE TIER UNDER IT.
      The 4px this pass took off the bar is still taken off it — the
@@ -98,17 +104,17 @@
      instead of standing a 28px control in a slab. The control is
      `--ab-control`, 0.7 of the same figure, so its 4px of air holds
      at every width rather than only at the baseline. */
-  height: calc(var(--ab-height, 40px) - 4px);
+  min-height: calc(var(--ab-height, 40px) - 4px);
   /* against the rig, not against the window: see the note at the
      foot of this file. The shell owns the width cap now. */
   max-width: 100%;
-  padding: 0 6px;
+  padding: var(--s-1) 6px;
 }
 
 .ab-grp {
   display: flex;
-  align-items: center;
-  gap: 2px;
+  align-items: baseline;
+  gap: var(--s-1);
   min-width: 0;
 }
 
@@ -133,160 +139,25 @@
 }
 
 /* ------------------------------------------------------------
-   a control
+   EVERY CONTROL ON THE BAR IS THE BUTTON PRIMITIVE.
+
+   This file used to declare the bar's own button — ground, border,
+   a concentric radius, three tones, a latch, an inert state, hover,
+   press and focus — and then correct itself twice further down.
+   None of that is written here any more: `ActionBar.tsx` renders
+   `<Button size="sm">` and the tone says what the control is. What
+   survives below are the two words inside a map control, which are
+   this bar's own.
    ------------------------------------------------------------ */
-.ab-btn {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  /* 0.7 of the bar, which is the contract's 28-in-40 */
-  height: var(--ab-control);
-  padding: 0 10px;
-  border: 1px solid transparent;
-  /* CONCENTRIC, NOT GUESSED. A child radius inside a rounded parent
-     is the parent's radius minus the padding between them, or the
-     two curves do not share a centre and the control reads as a
-     sticker sitting on the bar rather than a part of it. The bar is
-     18px with a 28-in-40 control, so the gap is 6 and the control
-     is 12 — it was 7, which is neither the parent's radius nor
-     concentric with it. */
-  border-radius: calc(18px - (var(--ab-height) - var(--ab-control)) / 2);
-  background: transparent;
-  color: var(--fg-secondary);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.ab-btn:hover {
-  background: var(--surface-3);
-  color: var(--fg);
-}
-/* Rule 8 asks for hover, press AND focus on everything pressable.
-   The press is the app's own shared `:active` scale (base.css); the
-   focus ring is drawn here because a floating bar over a register has
-   no other edge to show it against. */
-.ab-btn:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
-}
-
-/* a latch, and an open panel. The 5.3:1 recorded here was measured
-   on the outgoing `--blue-wash` / `--blue` pair; the pair that
-   renders is `--accent-wash` / `--accent`, moved from `shell.css`
-   unchanged. NOT RE-MEASURED — this pass moved a value, it did not
-   choose one, and a ratio nobody measured is worse than none. */
-.ab-btn.is-on {
-  background: var(--accent-wash);
-  border-color: color-mix(in srgb, var(--blue) 24%, transparent);
-  color: var(--accent);
-}
-.ab-btn.is-on:hover {
-  background: var(--blue-wash-strong);
-  color: var(--blue);
-}
-
-/* THE PRIMARY TOOK THE ACCENT, and this rule is the record of both
-   readings. It was ink, because that is what this app's primary
-   button already was (`base.css .btn.btn-primary`) and the
-   register's `+ Row` had been drawn that way all along; the navy
-   pass then gave it `--accent` on the ground that it is the only
-   saturated thing on the bar, and that is what renders. The border
-   was never restated and so is still `--ink` — a fact this rule now
-   states out loud instead of leaving it to two files and source
-   order to settle. */
-.ab-btn--primary {
-  border-color: var(--ink);
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-.ab-btn--primary:hover {
-  border-color: var(--blue-deep);
-  background: var(--accent-hover);
-  color: var(--paper-high);
-}
-
-/* Danger is quiet until it is reached for — the same escalation
-   `.btn.btn-danger` already uses, WITHOUT its wash.
-
-   MEASURED, AND THE WASH IS WHY IT CHANGED. `--red` on `--red-wash`
-   over this bar is **4.49:1** — a hundredth under the floor, on the
-   one control in the app that deletes a dealer's rows. The wash was
-   buying almost nothing: the bar composites to near-white, so a 9%
-   red tint is barely a tint. The border says "destructive" on its own
-   and the label goes to `--red` on the paper ground, which measures
-   5.20:1. */
-.ab-btn--danger:hover {
-  border-color: var(--red);
-  background: var(--paper-high);
-  color: var(--red);
-}
-
-/* THE CONTROL THAT CANNOT ACT KEEPS ITS LABEL LEGIBLE. The obvious
-   move is to fade it, and it is wrong twice: `--fg-quaternary` is
-   2.8:1 and DESIGN_CONTRACT forbids it carrying meaning, and a label
-   is meaning even on a control that will not fire. So the LABEL does
-   not move — it stays `--ink-soft` at 7.6:1 — and what goes is the
-   affordance: no hover ground, no border, no pointer. The reason
-   appears above the bar the moment it is reached for. */
-.ab-btn.is-inert {
-  color: var(--ink-soft);
-  cursor: default;
-}
-.ab-btn.is-inert:hover {
-  background: transparent;
-  border-color: transparent;
-  color: var(--ink-soft);
-}
-.ab-btn.is-inert svg {
-  opacity: 0.55;
-}
-
-/* A CONTROL THAT OPENS SOMETHING IS SHAPED LIKE ONE. It carries two
-   words instead of one — the name and where you are — so it gets the
-   air to hold them without the pair reading as two controls that have
-   been squashed together. */
-.ab-btn--panel {
-  gap: 5px;
-  padding-right: 11px;
-}
-
-.ab-btn-label {
-  min-width: 0;
-}
-/* The same mark, in the same tier, as the title block's own separator
-   (`.shell-view-what-sep`, `--ink-faint`). It is `aria-hidden` and
-   carries nothing, but it is a GLYPH rather than a rule, so it is set
-   from the ink ramp and not from the hairline: `--hairline-strong`
-   measured 1.57:1 here and was a smudge. Measured at this size, on
-   this bar, over the page: see the sweep in the commit message. */
+/* the separator between a map control's name and where you are — a
+   glyph, so it is set from the ink ramp and not from the hairline */
 .ab-btn-sep {
-  color: var(--ink-faint);
+  color: var(--fg-tertiary);
 }
-/* the live half of a map control — "Sections · Capacity". A name, so
-   it is sentence case and never a stamp. */
+/* the live half of a map control — "Sections · Capacity". A name,
+   so it is sentence case, and never cut mid-word (§3). */
 .ab-btn-at {
-  max-width: 13ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--ink);
-}
-/* THE LIT STATE TAKES THE WHOLE CONTROL WITH IT, separator included.
-   Measured: `--ink-faint` over `--blue-wash` is 4.13:1 and fails,
-   while `--blue` on the same ground is 5.17:1 — the same figure the
-   name beside it measures. One state, one ink. */
-.ab-btn.is-on .ab-btn-at,
-.ab-btn.is-on .ab-btn-sep {
-  color: var(--blue);
+  color: var(--fg);
 }
 
 /* ------------------------------------------------------------
@@ -297,11 +168,11 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 28px;
+  height: var(--h-md);
   min-width: 0;
-  padding: 0 6px 0 9px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
+  padding: 0 var(--s-1) 0 var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
   background: var(--paper-sunken);
   color: var(--ink-soft);
   transition:
@@ -337,31 +208,6 @@
   color: var(--ink-soft);
   opacity: 1;
 }
-.ab-find-x {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.ab-find-x:hover {
-  background: var(--hairline);
-  color: var(--ink);
-}
-.ab-find-x:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
-}
 
 /* ------------------------------------------------------------
    what is narrowing the page, and how to stop it
@@ -375,58 +221,17 @@
   height: 0;
 }
 
-.ab-chip {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 22px;
-  max-width: 220px;
-  padding: 0 8px 0 9px;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  background: var(--paper-high);
-  color: var(--ink-soft);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.ab-chip:hover {
-  border-color: var(--red);
-  color: var(--red);
-}
-.ab-chip:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
-}
-/* the one uppercase style the contract allows — a group caption, at
-   its exact step. `--ink-soft` rather than `--ink-faint` because this
-   sits on a chip on a tint. */
+/* A CHIP IS THE BUTTON PRIMITIVE, neutral, removing itself when
+   pressed. The column is a caption beside the dealer's own words,
+   which are exactly as typed — and both are sentence case, because
+   rule 3 bars uppercase on a button. */
 .ab-chip-key {
   flex: none;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--fg-tertiary);
 }
-/* the dealer's own words, so: sentence case, exactly as typed */
 .ab-chip-val {
   min-width: 0;
-  overflow: hidden;
-  font-family: var(--font-ui);
-  font-size: 11.5px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  color: var(--ink);
-}
-.ab-chip:hover .ab-chip-val,
-.ab-chip:hover .ab-chip-key {
-  color: var(--red);
+  color: var(--fg);
 }
 
 /* ------------------------------------------------------------
@@ -437,15 +242,9 @@
   display: inline-flex;
 }
 
-/* ONE DECLARATION. The radius, the border colour, the lit top edge
-   and the entrance curve arrived in a later block at the foot of
-   this file — four properties re-opening a rule that was already
-   written — and they are folded in here, at the values that render:
-   the radius joins the band the rest of the floating chrome sits in,
-   the surface gets the top-edge highlight that makes a raised thing
-   read as lit, and the entrance takes the curve the shell's other
-   entrances take. The type is deliberately untouched; see
-   `.ab-panel-name` below for why a popover header stays small. */
+/* THE POPOVER IS THE CARD PRIMITIVE. This wrapper only places it —
+   above the control, centred on it — and brings it in; the ground,
+   the hairline, the radius and the lift are card.css's. */
 .ab-panel {
   position: absolute;
   bottom: calc(100% + 10px);
@@ -453,13 +252,6 @@
   z-index: 1;
   width: 340px;
   max-width: calc(100vw - 32px);
-  max-height: min(52vh, 440px);
-  overflow-y: auto;
-  padding: var(--sp-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  background: var(--paper-overlay);
-  box-shadow: var(--e3), inset 0 1px 0 var(--edge-light);
   transform: translateX(-50%);
   animation: ab-panel-in var(--t-med) var(--ease-out-expo);
 }
@@ -521,9 +313,12 @@
   line-height: 1.45;
   color: var(--ink-soft);
 }
+/* the body is what scrolls, so the card's own edge never does */
 .ab-panel-body {
   display: flex;
   flex-direction: column;
+  max-height: min(48vh, 400px);
+  overflow-y: auto;
 }
 
 /* ------------------------------------------------------------
@@ -593,60 +388,6 @@
   bottom: 5px;
 }
 
-/* ------------------------------------------------------------
-   WHY A CONTROL WILL NOT ACT — rule 10, and it is not a tooltip.
-
-   A rendered line, in the app's own type, with a live region, that
-   appears for a keyboard Tab exactly as it does for a pointer. It
-   hangs above THE CONTROL THAT REFUSED — not above the middle of the
-   bar, which is where it started and which made it a sentence about
-   the bar rather than about a button 360px away. The bar's height
-   never changes under it, and it takes no presses: a sentence that
-   intercepts a click on the page underneath is a worse bug than the
-   one it explains.
-   ------------------------------------------------------------ */
-.ab-why {
-  position: absolute;
-  /* the control is 28px inside a 40px bar, so 6px of that clears the
-     bar's own top edge and 8 is the air above it */
-  bottom: calc(100% + 14px);
-  left: 50%;
-  /* `max-content` because the containing block is now the CONTROL, and
-     an absolutely-positioned block shrink-fits to that: over a 90px
-     button the sentence drew as a nine-line ribbon. It takes the width
-     its own words want, and only wraps when it reaches the measure. */
-  width: max-content;
-  max-width: min(38ch, calc(100vw - 32px));
-  padding: 5px 12px;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  background: var(--paper-high);
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.35;
-  text-align: center;
-  box-shadow: var(--e1);
-  transform: translateX(-50%);
-  pointer-events: none;
-  animation: ab-why-in var(--t-fast) var(--ease-draft);
-}
-@keyframes ab-why-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ab-why {
-    animation: none;
-  }
-}
 
 /* THE FALLBACK MOVED WITH THE MATERIAL. This tier has no background
    and no blur of its own — `.dk-rig` carries both — so the rule that
@@ -813,8 +554,9 @@
   width: max-content;
   min-width: 200px;
   max-width: min(420px, calc(100vw - 32px));
-  padding: var(--sp-2);
 }
+/* in the menu a control is a full-width row — `Button`'s `block`,
+   set by the bar when it renders inside the fold */
 .ab-fold-grp {
   display: flex;
   flex-direction: column;
@@ -822,26 +564,11 @@
   gap: 2px;
 }
 /* a hairline between the bands, so "see all of it" and "the round
-   trip" stay legible as two different kinds of act -- the rule is
-   the divider, exactly as the bar uses .ab-sep horizontally */
+   trip" stay legible as two different kinds of act */
 .ab-fold-grp + .ab-fold-grp {
   margin-top: var(--sp-2);
   padding-top: var(--sp-2);
   border-top: 1px solid var(--line-subtle);
-}
-/* IN THE PANEL A CONTROL IS A ROW, NOT A CHIP. On the bar these
-   are icon-and-label buttons sized to sit in a 36px strip; in a
-   menu they are full-width rows that press by darkening, which is
-   the house behaviour for a list row (DESIGN_PRINCIPLES §4). */
-.ab-fold-grp .ab-btn {
-  width: 100%;
-  justify-content: flex-start;
-  height: 32px;
-  padding: 0 var(--sp-2);
-}
-.ab-fold-grp .ab-hold {
-  display: block;
-  width: 100%;
 }
 
 /* ============================================================
@@ -913,34 +640,6 @@
   }
 }
 
-/* ============================================================
-   AN INERT PRIMARY LOSES ITS FILL.
-
-   MEASURED ON SCREEN: 1.32:1. `.ab-btn.is-inert` sets the label
-   to --ink-soft, which is 8.1:1 on paper — and it was written for
-   a button whose ground IS paper. `.ab-btn--primary` keeps
-   `background: var(--accent)`, so the two rules combined put a
-   mid grey on saturated blue and the words disappeared.
-
-   It failed in the worst possible place. A refusal is the moment
-   the label matters MOST — "Give it to the customer" is what the
-   person is trying to do, and the bar's `refusal` sentence
-   explains why they cannot yet. Rule 10 asks the refusal to say
-   why; it is no use saying why on a control nobody can read.
-
-   So an inert primary stops pretending to be primary: the fill
-   goes, the words come back, and it no longer LOOKS pressable
-   while being inert — which is the honest reading of a control
-   that cannot act.
-   ============================================================ */
-.ab-btn--primary.is-inert,
-.ab-btn--primary.is-inert:hover {
-  background: var(--surface-3);
-  border-color: var(--line);
-  /* 7.6:1 on --surface-3, measured */
-  color: var(--fg-secondary);
-  box-shadow: none;
-}
 
 /* THE STAGE RESERVATION IS NOT DECLARED DOWN HERE. The responsive
    pass rewrote `.shell-root.has-acts .shell-stage` at the foot of

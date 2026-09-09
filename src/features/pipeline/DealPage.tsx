@@ -32,6 +32,7 @@ import { useEffect, useRef } from 'react'
 import type { JSX } from 'react'
 import { ArrowLeft, ArrowSquareOut } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button } from '@/ui'
 import type { QuoteDef } from '@/features/quote'
 import { useDealDesk } from './dealDesk'
 import {
@@ -84,15 +85,18 @@ export function DealPage({
       }}
     >
       <div className="dr-bar">
-        <button type="button" className="dr-back" onClick={onBack}>
-          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-          <span>The board</span>
-        </button>
+        <Button
+          tone="ghost"
+          glyph={<ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />}
+          onClick={onBack}
+        >
+          The board
+        </Button>
         <span className="dr-ref ds-mono">{quote.reference}</span>
-        <button type="button" className="dr-open" onClick={() => onOpenQuote(quote.id)}>
+        <Button onClick={() => onOpenQuote(quote.id)}>
           Open the quote
           <ArrowSquareOut size={ICON_SIZE.tiny} aria-hidden="true" />
-        </button>
+        </Button>
       </div>
 
       <div className="dr-well">

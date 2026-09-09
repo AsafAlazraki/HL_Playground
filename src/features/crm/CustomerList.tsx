@@ -45,10 +45,11 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react'
-import { MagnifyingGlass, Plus } from '@phosphor-icons/react'
+import { Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
+import { Button, Card, Field, SectionHead } from '@/ui'
 import { PageHead } from '@/features/page'
 import { Picker } from '@/features/picker'
 import { localDay, quoteTotals, useQuotes } from '@/features/quote'
@@ -392,39 +393,49 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
       <div className="cx-root">
         <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
         <div className="cx-scroll">
+          {/* THE EMPTY STATE IS THE SYSTEM'S CARD, raised, at the
+              large pad. The box around it is where it sits on the
+              page and the box inside it is the stack — the primitive
+              takes no class and has no gap of its own. */}
           <div className="cx-empty ds-rise">
-            <span className="cx-empty-eyebrow">No customer register yet</span>
-            <h2 className="ds-hero cx-empty-title">Everybody you sell to, in one book.</h2>
-            {/* AN EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT — one
-                sentence. This was three: what a customer is, where the
-                register lives, and what it saves you. The first two are
-                what the heading and the button say. */}
-            <p className="cx-empty-say">
-              So the second quote to somebody starts from what you know.
-            </p>
+            <Card tone="raised" pad="lg">
+              <div className="cx-empty-body">
+                {/* the eyebrow is the one uppercase style, drawn by
+                    the one component that draws it; `none` because it
+                    is not a heading — the line under it is */}
+                <SectionHead level="none">No customer register yet</SectionHead>
+                <h2 className="ds-hero cx-empty-title">Everybody you sell to, in one book.</h2>
+                {/* AN EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT — one
+                    sentence. This was three: what a customer is, where
+                    the register lives, and what it saves you. The first
+                    two are what the heading and the button say. */}
+                <p className="cx-empty-say">
+                  So the second quote to somebody starts from what you know.
+                </p>
 
-            {/* THE COUNTED STRIP GOES — PHASE_TWO §1, "a count belongs on
-                the thing it counts". Three big figures on an empty
-                state, one of them a count of TABLES, is the schema
-                announcing itself on the one screen whose whole job is a
-                sentence and a button. */}
-            <button
-              type="button"
-              className="cx-act cx-act--primary"
-              onClick={() => ensureCustomerRegister()}
-            >
-              <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-              Create the Customers table
-            </button>
-            {/* THIS SENTENCE IS NOT PROSE AND IT STAYS. DESIGN_PRINCIPLES
-                §7: structure is never a side effect — a table this button
-                creates is named before it is made, and it is undoable.
-                What was cut is the middle clause telling you a table is
-                a table. */}
-            <p className="cx-empty-why">
-              <em>Name</em>, <em>Phone</em>, <em>Email</em>, <em>Address</em>,{' '}
-              <em>Notes</em> — undo with Ctrl+Z.
-            </p>
+                {/* THE COUNTED STRIP GOES — PHASE_TWO §1, "a count
+                    belongs on the thing it counts". Three big figures
+                    on an empty state, one of them a count of TABLES,
+                    is the schema announcing itself on the one screen
+                    whose whole job is a sentence and a button. */}
+                <Button
+                  tone="primary"
+                  glyph={<Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />}
+                  onClick={() => ensureCustomerRegister()}
+                >
+                  Create the Customers table
+                </Button>
+                {/* THIS SENTENCE IS NOT PROSE AND IT STAYS.
+                    DESIGN_PRINCIPLES §7: structure is never a side
+                    effect — a table this button creates is named before
+                    it is made, and it is undoable. What was cut is the
+                    middle clause telling you a table is a table. */}
+                <p className="cx-empty-why">
+                  <em>Name</em>, <em>Phone</em>, <em>Email</em>, <em>Address</em>,{' '}
+                  <em>Notes</em> — undo with Ctrl+Z.
+                </p>
+              </div>
+            </Card>
           </div>
         </div>
       </div>
@@ -473,18 +484,34 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
             }
             {...(table.description ? { line: table.description } : {})}
             acts={
-              <>
+              <Button
+                tone="primary"
+                glyph={<Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />}
+                onClick={() => {
+                  const row = addCustomer()
+                  if (row) onOpen(row.id)
+                }}
+              >
+                New customer
+              </Button>
+            }
+            /* THE FIND BOX AND THE SORT ARE THE PAGE'S TOOLS, not its
+               acts. PageHead's own anatomy says so — "filters, search,
+               view switches — the page's own row beneath" — and the
+               board next door already keeps its search there. They sat
+               in `acts` because the old find box was a glyph and an
+               unlabelled input that could pass for a control; the
+               system's `Field` insists on a label, and a labelled box
+               belongs on the tools row, aligned on its input. */
+            tools={
+              <div className="cx-tools">
                 <div className="cx-find">
-                  <span className="cx-find-mark" aria-hidden="true">
-                    <MagnifyingGlass size={ICON_SIZE.small} weight="light" />
-                  </span>
-                  <input
-                    className="cx-find-input"
+                  <Field
                     type="search"
+                    label="Find a customer"
+                    placeholder="Name, contact or note"
                     value={find}
-                    placeholder="Find a customer"
-                    aria-label="Find a customer by name, contact or note"
-                    onChange={(e) => setFind(e.target.value)}
+                    onChange={setFind}
                   />
                 </div>
 
@@ -524,19 +551,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                     if (id !== 'match') setOrder(id)
                   }}
                 />
-
-                <button
-                  type="button"
-                  className="cx-act cx-act--primary"
-                  onClick={() => {
-                    const row = addCustomer()
-                    if (row) onOpen(row.id)
-                  }}
-                >
-                  <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                  New customer
-                </button>
-              </>
+              </div>
             }
           />
 
@@ -547,21 +562,24 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
           <div className="cx-main">
             {people.length === 0 ? (
               <div className="cx-empty ds-rise">
-                <span className="cx-empty-eyebrow">Nobody in it yet</span>
-                <h2 className="ds-hero cx-empty-title">The register is here and waiting.</h2>
-                <p className="cx-empty-say">Add somebody, or file them from a quote.</p>
+                <Card tone="raised" pad="lg">
+                  <div className="cx-empty-body">
+                    <SectionHead level="none">Nobody in it yet</SectionHead>
+                    <h2 className="ds-hero cx-empty-title">The register is here and waiting.</h2>
+                    <p className="cx-empty-say">Add somebody, or file them from a quote.</p>
 
-                <button
-                  type="button"
-                  className="cx-act cx-act--primary"
-                  onClick={() => {
-                    const row = addCustomer()
-                    if (row) onOpen(row.id)
-                  }}
-                >
-                  <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                  New customer
-                </button>
+                    <Button
+                      tone="primary"
+                      glyph={<Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />}
+                      onClick={() => {
+                        const row = addCustomer()
+                        if (row) onOpen(row.id)
+                      }}
+                    >
+                      New customer
+                    </Button>
+                  </div>
+                </Card>
               </div>
             ) : shown.length === 0 ? (
               /* A DEAD END SAYS WHAT ELSE IT WOULD HAVE ANSWERED TO. The
@@ -573,6 +591,23 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                 in their contact details.
               </p>
             ) : (
+              /* THE BOOK IS ONE CARD — the system's, raised, with no
+                 pad — holding the rows and the foot. The rows used to
+                 draw their own card (a border, a gradient ground, a
+                 shadow, and two bottom corners squared off to meet a
+                 foot drawing the same again); the foot is inside the
+                 card now and the corners are the card's. The box
+                 around it is only the page's gutter and the register's
+                 ceiling, because the primitive takes no class.
+
+                 THE ROW ITSELF IS STILL THIS FILE'S, and that is a
+                 report rather than a choice: `Row` renders a button
+                 with `onClick` and passes no `tabIndex`, no `onKeyDown`
+                 and no ref through, and the register's whole keyboard
+                 model — one tab stop, J/K/X, Shift+arrow — lives on
+                 exactly those three. See crm.css. */
+              <div className="cx-book">
+              <Card tone="raised" pad="none">
               <ul className={`cx-rows${withQuotes > 0 ? ' cx-rows--quoted' : ''}`}>
                 {/* ── THE FIND BOX ANSWERED SILENTLY ────────────────────
                     Typing in it removed rows from the list and said
@@ -681,7 +716,6 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                   )
                 })}
               </ul>
-            )}
 
             {/* ── THE FOOT: WHAT IS MARKED, AND WHAT THE KEYS ARE ──
                 ONE BAR, TWO STATES, AND IT NEVER CHANGES HEIGHT, so
@@ -694,11 +728,12 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
 
                 IT IS STICKY TO THE SCROLLER, not to the list, so a
                 register of three hundred still shows the tally while
-                you are three hundred rows into marking it up.
+                you are three hundred rows into marking it up. The
+                card it sits in does not scroll, so sticking to the
+                scroller still works from inside it.
 
                 THE FIGURES ARE MONO AND THEY DO NOT MOVE. Money
                 never animates — §4 — and this is money. */}
-            {shown.length > 0 ? (
               <div className="cx-foot">
                 {picked.size > 0 ? (
                   <p className="cx-foot-say">
@@ -736,20 +771,16 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                 )}
                 <div className="cx-foot-acts">
                   {picked.size > 0 ? (
-                    <button
-                      type="button"
-                      className="cx-foot-act"
-                      onClick={() => setPicked(new Set<string>())}
-                    >
+                    <Button tone="ghost" size="sm" onClick={() => setPicked(new Set<string>())}>
                       Clear
-                    </button>
+                    </Button>
                   ) : null}
                   {/* THE 2.1.4 SWITCH. It says which state it is in
                       rather than which state it would move to, so it
                       reads the same as the thing it controls. */}
-                  <button
-                    type="button"
-                    className="cx-foot-act"
+                  <Button
+                    tone="ghost"
+                    size="sm"
                     aria-pressed={letters}
                     onClick={() => {
                       setLetters((on) => {
@@ -759,10 +790,12 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                     }}
                   >
                     {letters ? 'Letter keys on' : 'Letter keys off'}
-                  </button>
+                  </Button>
                 </div>
               </div>
-            ) : null}
+              </Card>
+              </div>
+            )}
           </div>
         </div>
       </div>

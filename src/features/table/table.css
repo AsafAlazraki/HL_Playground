@@ -255,25 +255,6 @@
   font-size: 11px;
   color: var(--ink-soft);
 }
-/* a button with a word on it — §3's fourth prohibition. It sits
-   inside the readout, so it keeps the mono face and loses the shout. */
-.tb-count-clear {
-  align-self: center;
-  min-height: 24px;
-  padding: 2px 7px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.01em;
-  color: var(--blue);
-  cursor: pointer;
-  transition: background var(--t-fast) var(--ease-draft);
-}
-.tb-count-clear:hover {
-  background: var(--blue-wash);
-}
 
 /* ============================================================
    BAND STRIP — the map of the sheet, above the sheet
@@ -1302,14 +1283,6 @@
     border-color var(--t-fast) var(--ease-draft),
     background var(--t-fast) var(--ease-draft);
 }
-/* the outermost level is the one you navigate by — give it the ink */
-.tb-grp-name-top {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
 /* A level nobody has filled in yet is not a state to report — it is a
    FIELD WAITING. Drawn as one: a dashed well with the invitation
    inside it, so it reads as somewhere to type at a glance and not as
@@ -1885,17 +1858,11 @@
   gap: 2px;
   padding: var(--sp-2);
 }
-.tb-imgdoor {
-  gap: var(--sp-2);
-}
 .tb-imgdoor-mark {
   display: flex;
   flex: none;
   align-items: center;
   color: var(--ink-soft);
-}
-.tb-imgdoor:hover .tb-imgdoor-mark {
-  color: var(--blue-deep);
 }
 .tb-imgdoor-note {
   padding: 0 var(--sp-3);
@@ -2034,32 +2001,6 @@
   letter-spacing: 0.01em;
   color: var(--blue-deep);
   white-space: nowrap;
-}
-.tb-lightbox-promote {
-  flex: none;
-  padding: 3px var(--sp-2);
-  border: 1px dashed var(--hairline-strong);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--ink-soft);
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.tb-lightbox-promote:hover {
-  border-style: solid;
-  border-color: var(--blue);
-  color: var(--blue-deep);
-}
-.tb-lightbox-promote:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
 }
 
 .tb-lightbox-x {
@@ -2503,74 +2444,22 @@ body.tb-resizing {
 .tb-menu-dot {
   color: var(--ink-faint);
 }
-/* "All" and "None" — two buttons, §3. */
-.tb-menu-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 1px 8px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.01em;
-  color: var(--blue);
-  cursor: pointer;
-  transition: background var(--t-fast) var(--ease-draft);
-}
-.tb-menu-link:hover {
-  background: var(--blue-wash);
-}
 .tb-menu-list {
   flex: 1;
   min-height: 0;
   overflow: auto;
   padding: var(--sp-2) var(--sp-2);
 }
-.tb-menu-row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  width: 100%;
-  min-height: 24px;
-  padding: var(--sp-1) var(--sp-2);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--t-fast) var(--ease-draft);
-}
-.tb-menu-row:hover {
-  background: var(--blue-wash);
-}
-.tb-menu-box {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-  color: transparent;
-}
-.tb-menu-box-on {
-  color: var(--blue-deep);
-}
-.tb-menu-box .tb-tickglyph {
-  width: 10px;
-  height: 10px;
-}
-.tb-menu-val {
-  min-width: 0;
-  font-size: 12px;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* THE BOX IN A ROW IS THE BROWSER'S. A value in the filter sheet, a
+   facet's choice list and the + COLUMN kind picker are `Row`s from
+   src/ui with a native checkbox or radio at the head — the tick, the
+   tab stop, Space and the arrow keys come from the platform, and the
+   hand-drawn `.tb-menu-box` that stood in for one is gone with the
+   button that pretended to be it. The one thing stated is the
+   accent, so the mark is the app's blue and not the platform's. */
+.tb-menu-check {
+  margin: 0;
+  accent-color: var(--accent);
 }
 .tb-menu-empty {
   padding: var(--sp-2);
@@ -2641,38 +2530,6 @@ body.tb-resizing {
   padding: var(--sp-2);
 }
 
-.tb-act {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: var(--sp-2) var(--sp-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-size: 12.5px;
-  text-align: left;
-  color: var(--ink);
-  cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.tb-act:hover {
-  background: var(--blue-wash);
-  color: var(--blue-deep);
-}
-.tb-act:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-.tb-act-on {
-  color: var(--blue-deep);
-  font-weight: 600;
-}
-.tb-act-danger:hover {
-  background: var(--red-wash);
-  color: var(--red);
-}
 .tb-act-rule {
   display: block;
   height: 1px;
@@ -2733,45 +2590,6 @@ body.tb-resizing {
   color: var(--blue-deep);
 }
 
-.tb-kind {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  width: 100%;
-  padding: 6px var(--sp-3);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.tb-kind:hover {
-  background: var(--paper-sunken);
-}
-.tb-kind:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-.tb-kind-on,
-.tb-kind-on:hover {
-  border-color: var(--blue);
-  background: var(--blue-wash);
-}
-.tb-kind-label {
-  font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 112;
-  font-weight: 600;
-  font-size: 12.5px;
-  color: var(--ink);
-}
-.tb-kind-hint {
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--ink-soft);
-}
 
 /* ============================================================
    EMPTY-STATE PLATES
@@ -2784,130 +2602,12 @@ body.tb-resizing {
   padding: var(--sp-6) var(--sp-4);
   overflow: auto;
 }
-.tb-plate {
-  position: relative;
-  margin: auto;
-  width: 100%;
-  max-width: 380px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-6) var(--sp-5);
-  text-align: center;
-  border: 1px dashed var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  box-shadow: var(--shadow-sheet);
-  animation: sheet-in var(--t-med) var(--ease-draft);
-}
-.tb-plate-glyph {
-  width: 64px;
-  height: 40px;
-  margin-bottom: var(--sp-1);
-  color: var(--ink-faint);
-}
-.tb-plate-title {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-.tb-plate-sub {
-  max-width: 300px;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-.tb-plate-actions {
-  display: flex;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-}
 
-.tb-tick {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  pointer-events: none;
-}
-.tb-tick-tl {
-  top: -6px;
-  left: -6px;
-  border-top: 1.5px solid var(--hairline-strong);
-  border-left: 1.5px solid var(--hairline-strong);
-}
-.tb-tick-tr {
-  top: -6px;
-  right: -6px;
-  border-top: 1.5px solid var(--hairline-strong);
-  border-right: 1.5px solid var(--hairline-strong);
-}
-.tb-tick-bl {
-  bottom: -6px;
-  left: -6px;
-  border-bottom: 1.5px solid var(--hairline-strong);
-  border-left: 1.5px solid var(--hairline-strong);
-}
-.tb-tick-br {
-  bottom: -6px;
-  right: -6px;
-  border-bottom: 1.5px solid var(--hairline-strong);
-  border-right: 1.5px solid var(--hairline-strong);
-}
 
 /* ============================================================
    CONFIRM + TOASTS
    ============================================================ */
 
-/* THE DIM MATERIAL, third of four. apple-design §12: "dim to focus."
-   ONLY THE BLUR IS ADDED — the 26% ink wash stays exactly as it is.
-   This scrim is the odd one out of the four: it dims a table stage
-   standing on --paper, not the blueprint, so it is built from --ink
-   rather than --canvas-bg-deep and it is correct at 26% where the
-   two canvas scrims want 44%. Its alpha is already in the colour,
-   so it never had the fill-mode defect the other two had.
-
-   NO prefers-reduced-transparency OVERRIDE, and that is a decision.
-   A 26% wash with no blur is a wash, not a material — which is
-   precisely what this rule renders once --mat-dim-blur resolves to
-   `none` under that setting, i.e. exactly what shipped before this
-   pass. The dialog it dims for is opaque and carries every word.
-   There is nothing here for the setting to make legible. */
-.tb-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 45;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--sp-4);
-  background: color-mix(in srgb, var(--ink) 26%, transparent);
-  backdrop-filter: var(--mat-dim-blur);
-  animation: fade-in var(--t-fast) var(--ease-draft);
-}
-/* NOTHING IN THE REGISTER MOUNTS `.tb-scrim` / `.tb-confirm` ANY MORE.
-   The row strike was the last modal on this surface and it is now a
-   toast with UNDO (see the argument at the top of `TableSheet.tsx`).
-   The shell is left standing rather than deleted: it is the shape a
-   genuinely irreversible act would take on this surface, and three of
-   the four classes below (`-title`, `-sub`, `-go`) are still live in the
-   column menu's in-place confirm. */
-.tb-confirm {
-  width: 100%;
-  max-width: 340px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-5);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  box-shadow: var(--shadow-popover);
-  animation: sheet-in var(--t-med) var(--ease-draft);
-}
 /* THE TITLE OF A DESTRUCTIVE SHEET IS A SENTENCE, SO IT IS SET LIKE
    ONE. This rule was `--font-mono 11px/600, +0.14em, uppercase, --red`,
    which took "Remove “Matrix”?" and drew REMOVE “MATRIX”? — three
@@ -2922,7 +2622,7 @@ body.tb-resizing {
         the line it introduces.
      3. IT SPENT --red ON THE HEADING, so the sheet had two red things
         and no hierarchy between them. The danger belongs on the button
-        that does the thing (`.tb-confirm-go`, below) and nowhere else;
+        that does the thing (the danger-tone Button in the footer) and nowhere else;
         nothing in this app shouts.
 
    What replaces it is the contract's page-title step — 13px / 600 /
@@ -2939,16 +2639,6 @@ body.tb-resizing {
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--ink-soft);
-}
-.tb-confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-}
-.tb-confirm-go {
-  border-color: var(--red);
-  color: var(--red);
 }
 
 .tb-toasts {
@@ -3263,7 +2953,6 @@ body.tb-resizing {
    costs a real column its room */
 .tb-cell.tb-cell-lead,
 .tb-th.tb-th-lead,
-.tb-gutter,
 .tb-cell-sys,
 .tb-th-sys {
   min-width: 0;
@@ -3429,29 +3118,16 @@ body.tb-resizing {
   text-transform: none;
   font-variant-numeric: tabular-nums;
 }
-/* AND THE COLUMN MENU'S FOOTER, WHICH THIS LIST MISSED.
-
-   The three selectors above were written by naming the buttons that
-   were on screen at the time, and `.tb-menu-foot` was not one of them
-   — so the four buttons inside the column menu kept `.btn`'s old mono
-   stamp: 11px IBM Plex Mono, weight 600, +0.06em, UPPERCASE. Measured
-   on Yamaha Outboards: the remove-column confirm read "KEEP IT" and
-   "REMOVE", and the options panel beneath it reads "BACK" and "SAVE
-   CHOICES".
-
-   DESIGN_CONTRACT §3 names a button as one of the four things
-   uppercase may never touch, and the checklist repeats it. It matters
-   most here of all the places it could have survived: this is the
-   sheet that asks whether to destroy a column of the price file, and
-   a shouted REMOVE beside a shouted KEEP IT reads as a system alert
-   rather than as the app's own quiet question. The sentence above it
-   is 13px Inter and says "Ctrl+Z brings the column back" — the two
-   buttons should sound like the same voice that just said that.
-
-   Same declaration as the block below, not a new one, because these
-   are the same kind of thing: a button with a word on it. */
-.tb-whole-btn,
-.tb-menu-foot .btn {
+/* AND THE COLUMN MENU'S FOOTER — WHICH IS src/ui's NOW. The buttons
+   inside the column menu, the filter menu, the + COLUMN sheet and the
+   pictures sheet are `Button` (ghost, primary, danger), and a
+   primitive takes no class of ours — so the rule that once corrected
+   `.btn`'s mono stamp on them ("KEEP IT", "REMOVE", measured on
+   Yamaha Outboards) has nothing left to correct and went with the
+   stamp. What remains is the one `.btn` this file still dresses: the
+   whole-table pair, which latches on aria-pressed and is reported as
+   the toggle the layer does not yet have. */
+.tb-whole-btn {
   font-family: var(--font-ui);
   font-size: 12.5px;
   font-weight: 500;
@@ -3836,8 +3512,7 @@ body.tb-resizing {
 .tb-addbtn:active,
 .tb-th-add:active,
 .tb-imgthumb:active,
-.tb-imgadd:active,
-.tb-count-clear:active {
+.tb-imgadd:active {
   transform: scale(0.97);
 }
 .tb-grp-name:active {
@@ -3851,8 +3526,7 @@ body.tb-resizing {
   .tb-addbtn:active,
   .tb-th-add:active,
   .tb-imgthumb:active,
-  .tb-imgadd:active,
-  .tb-count-clear:active {
+  .tb-imgadd:active {
     transform: none;
     background: color-mix(in srgb, var(--ink) 9%, transparent);
   }
@@ -4013,10 +3687,65 @@ body.tb-resizing {
   font-family: var(--font-ui);
   letter-spacing: -0.004em;
 }
+/* THE DISPLAY TIER, ON THE REGISTER'S SUBJECT. A grouped register is
+   read by its drawers — which series, which model — and ds.css names
+   "a register's band heads" as what the tier's plural step is for.
+
+   THE CELL IS THE LINE, AND IT IS 42px COMFORTABLE / 36px COMPACT
+   (`tableReadState.ts`; helpers' `GROUP_H` of 44 is the card on the
+   blueprint). Comfortable holds `--t-display-lg` at every width:
+   26.9px × 1.1 at 1280 and 34px × 1.1 at 1920, plus the name's own
+   2px inset and 1px border, is 35.6px measured at 1280 and 43.4px
+   at the widest — a pixel over 42 at 1920, inside the leading, so
+   no ink is cut. `--t-display-xl` is 36px at 1280 and 46.6px at
+   1920, over the line above about 1400px, so the comfortable line
+   takes the step below it WHOLE — the tier's own floor rule ("swap
+   a whole step down; never reach in for one value"). The chrome
+   above never outranks it: a column heading is 12.5px, the page's
+   own name in `PageHead` sits one step up.
+
+   The tokens rather than the class because this rule already owns
+   the element, and because the bare `.tb-grp-name` ramp at the foot
+   of this file would beat a (0,1,0) class on size. The face and its
+   width axis travel with the set, exactly as `.ds-display-lg` states
+   them — 103, from ds.css's width ladder, which is about room. */
 .tb-grpline[data-level='0'] .tb-grp-name {
-  font-size: 14px;
-  font-weight: 620;
-  color: var(--ink);
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 103;
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  color: var(--fg);
+}
+/* COMPACT IS THE DEALER CHOOSING ROWS OVER CHROME, AND THE LINE IS
+   36px: display-lg's box is 35.6px at 1280 and 39.3px at 1440, so
+   above 1300px it would run past the line and the next row would
+   paint over its descenders. The whole step below the tier is the
+   title step (20px × 1.25 + 6 = 31px), taken whole — Inter, because
+   the display face is the tier's and this is not the tier. Keyed on
+   `.tb-grid-compact`, which Grid.tsx writes from the same metrics
+   that placed the line (`rowH < ROW_H`); `.tb-grid-roomy` is
+   `rowH > ROW_H` and is false in BOTH densities, so its absence
+   could not name compact. */
+.tb-grid-compact .tb-grpline[data-level='0'] .tb-grp-name {
+  font-family: var(--font-sans);
+  font-variation-settings: normal;
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+}
+/* a level nobody has filled in is a FIELD WAITING, not a name, and
+   the invitation does not wear the name's step */
+.tb-grpline[data-level='0'] .tb-grp-name-none {
+  font-family: var(--font-ui);
+  font-variation-settings: normal;
+  font-size: var(--data-s-size);
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
 }
 .tb-grpline[data-level='1'] .tb-grp-name,
 .tb-grpline[data-level='2'] .tb-grp-name {
@@ -4251,47 +3980,64 @@ body.tb-resizing {
 
 
 /* ------------------------------------------------------------
-   10 · THE EMPTY PLATES.
+   10 · THE EMPTY PLATES — A CARD FROM src/ui, WITH THE PLATE'S OWN
+   WORDS ON IT.
 
-   `.tb-plate-title` was 11px mono uppercase at +0.14em — "NO
-   COLUMNS YET" stamped like a system alert directly above a
-   12.5px sentence explaining it kindly. §3 forbids uppercase on a
-   sentence, and this is the app's own voice at the one moment a
-   person has nothing on screen at all. It takes the title step,
+   The plate used to draw itself — a dashed frame, four corner
+   ticks, its own shadow — and then a second rule 1,500 lines later
+   re-dressed all of it. Both are gone: `EmptyPlates.tsx` mounts
+   `Card` (raised, large inset) and `Button` (primary, because on an
+   empty surface it is the one thing there is to press). What is
+   left here is the plate's measure, the motif and the title step —
+   the parts that are this surface's own and not a card's.
+
+   THE TITLE IS THE TITLE STEP, WHOLE. It was 11px mono uppercase
+   ("NO COLUMNS YET" stamped like a system alert over a kind
+   sentence), then 20px written by hand; it is `--t-title-*` now,
    which is what §2 puts empty states at.
 
    THERE IS NO LOADING PLATE HERE AND THAT IS NOT AN OMISSION.
    This register never waits: the rows are in the store before the
    stage mounts, and a skeleton that flashes for one frame is a
-   thing invented to look busy. The one genuine wait on this
-   surface is a photograph decoding, and that has a ground of its
-   own above.
+   thing invented to look busy.
    ------------------------------------------------------------ */
 .tb-plate {
-  gap: var(--sp-3);
+  margin: auto;
+  width: 100%;
   max-width: 400px;
-  padding: var(--sp-7) var(--sp-6);
-  border-style: solid;
-  border-color: var(--hairline);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
+}
+.tb-plate-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  text-align: center;
 }
 .tb-plate-glyph {
+  width: 64px;
+  height: 40px;
   color: var(--fg-quaternary);
 }
 .tb-plate-title {
-  font-family: var(--font-ui);
-  font-size: 20px;
-  font-weight: 620;
-  letter-spacing: -0.016em;
-  line-height: 1.22;
-  text-transform: none;
-  color: var(--ink);
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  color: var(--fg);
 }
 .tb-plate-sub {
+  margin: 0;
   max-width: 34ch;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+}
+.tb-plate-actions {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
 }
 
 /* ============================================================
@@ -5530,9 +5276,10 @@ body.tb-resizing {
 .tb-th {
   font-size: var(--ui-s-size);
 }
-/* A DRAWER'S OWN VALUE IS DATA AND TAKES THE DATA RAMP, at each
-   step of the ladder §7 of the re-dress cut: 14px on a top-level
-   band, 12.5px on the two nested ones. The bare selector carries
+/* A NESTED DRAWER'S OWN VALUE IS DATA AND TAKES THE DATA RAMP:
+   12.5px on the two nested levels. The top level is not here any
+   more — it wears the display tier (§7 above, at (0,2,0), which
+   outranks this bare selector on size). The bare selector carries
    the nested figure so a fourth level — grouping puts no ceiling
    on the count — grows with the three above it instead of being
    left behind at the base 11px. */
@@ -5540,9 +5287,6 @@ body.tb-resizing {
 .tb-grpline[data-level='1'] .tb-grp-name,
 .tb-grpline[data-level='2'] .tb-grp-name {
   font-size: clamp(12.5px, 0.701rem + 0.089vw, 13.5px);
-}
-.tb-grpline[data-level='0'] .tb-grp-name {
-  font-size: clamp(14px, 0.795rem + 0.089vw, 15px);
 }
 /* the caption beside it is a label and takes the label one —
    which for these two is 11px, the floor, so `--data-s-size` is
@@ -5571,3 +5315,51 @@ body.tb-resizing {
 .tb-grp {
   max-width: min(100%, 1440px);
 }
+
+
+/* ============================================================
+   THE PRIMITIVES PASS — what this file stopped drawing, and why
+   the rest is still here.
+
+   src/ui landed five components that take no className, so a
+   feature that adopts one DELETES its rule for that thing rather
+   than layering under it (src/ui/index.ts, "adoption is deletion";
+   CLAUDE.md, "no shared override layer"). Gone from this file, with
+   the components that now mount the primitive:
+
+     `.tb-count-clear`          Button, ghost      WholeTableControls
+     `.tb-menu-link`            Button, ghost      FilterMenu (All · None)
+     `.tb-menu-foot .btn`       Button ×3 tones    Column / Filter / + Column /
+                                                   Pictures footers
+     `.tb-confirm-go`           Button, danger     ColumnMenu
+     `.tb-lightbox-promote`     Button, neutral    ImageCell
+     `.tb-imgdoor` + `.tb-act`  Button, block      ImageCell (the file door)
+     `.tb-act*`                 Row, activating    ColumnMenu
+     `.tb-menu-row/-box/-val`   Row + native box   FilterMenu, FacetRail
+     `.tb-kind*`                Row + native radio AddColumnPopover
+     `.tb-plate` ×2, `.tb-tick` Card, raised       EmptyPlates
+     `.tb-grp-name-top`         (the top drawer takes the display
+                                tier at §7; the class is gone)
+     `.tb-scrim`, `.tb-confirm`, `.tb-confirm-actions`, `.tb-gutter`
+                                dead — declared, written nowhere
+
+   WHAT STAYS LOCAL, AND WHAT THE LAYER IS MISSING FOR IT. Each of
+   these is a control the layer has no honest form for, kept on its
+   own rule rather than restyled through a `ui-` class:
+
+     · a TOGGLE. `.tb-whole-btn`, `.tb-rail-segbtn`, `.tb-rail-lens`,
+       `.tb-bandpick` and the catalogue's lens and facet chip all
+       latch on aria-pressed. Button has no pressed state.
+     · an ICON-ONLY SQUARE. `.tb-th-menu`, `.tb-grp-tw`, `.tb-open`,
+       `.tb-detail-nav/-x`, `.tb-lightbox-x`, `.tb-imgx`, `.tb-imgadd`
+       are 14–24px marks inside a ruled grid; Button's smallest size
+       is 28px high with a word's padding.
+     · the GRID ITSELF. `.tb-row` / `.tb-cell` / `.tb-th` are a
+       virtualised spreadsheet — N cells, aria-rowindex, a selection
+       model. Row is lead + name + meta + trail; a column heading is
+       not a section head.
+     · an INVERTED SURFACE. `.tb-toast-act` is a button on a dark
+       plate; no tone reads on it.
+     · a CHECKBOX / SELECT / TEXTAREA FIELD. `.tb-dv-in`, `.tb-dv-pick`,
+       `.tb-dv-tick`, `.tb-area` — Field is a text input.
+   ============================================================ */

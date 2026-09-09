@@ -130,13 +130,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
-import {
-  LinkSimple,
-  ListBullets,
-  MagnifyingGlass,
-  Plus,
-  SquaresFour,
-} from '@phosphor-icons/react'
+import { LinkSimple, ListBullets, Plus, SquaresFour } from '@phosphor-icons/react'
+/* THE PRIMITIVES. A tile and a drawer are `<Card>`, the dense line
+   is `<Row>`, every act is `<Button>` and the find box is `<Field>`.
+   The local rules that drew them — `.md-tile`, `.md-row`,
+   `.md-drawer`, `.md-quote-it`, `.md-face-act`, `.md-idx-add`,
+   `.md-idx-find-*` and every hover, press and focus arm under them —
+   are deleted from modules.css rather than layered under. */
+import { Button, Card, Field, Row } from '@/ui'
 import { useProjectStore } from '@/store/useProjectStore'
 import { say, sayUndoable } from '@/store/notes'
 import {
@@ -221,13 +222,6 @@ import './modules.css'
  *  that nobody meets the cap while browsing one brand, small
  *  enough that seven brands at once stay instant. */
 const INDEX_CAP = 240
-
-/** WHERE THE ADD BUTTON'S REASON IS, so `aria-describedby` can point
- *  at it. One id and not one per verb: only `add` draws a control
- *  that survives its own refusal — a rename and a take-out are absent
- *  from a face rather than sitting on it greyed, because a control
- *  repeated 174 times is a refusal repeated 174 times. */
-const ADD_WHY_ID = 'md-idx-add-why'
 
 export interface ModuleStockProps {
   module: ModuleDef
@@ -416,21 +410,27 @@ export function ModuleStock({
      comes FIRST: "you may not" is a different order of fact from "you
      may and it cannot work here", and a person who has been refused
      on account of their job does not need to read about the sheet. */
+  /* THE ADD BUTTON CARRIES ITS OWN REFUSAL. `<Button refusedBecause>`
+     draws the sentence beneath the control and ties it on with
+     aria-describedby, so the add sentence is NOT repeated in this
+     list — one wording per fact, in the place the act was refused.
+     The edit and delete refusals explain affordances that are
+     absent, so they stay here, under the header. */
   const refusals = useMemo(() => {
     const out: string[] = []
     if (writes.withheld.length > 0) out.push(withheldSay(module.name, writes.withheld, who))
-    for (const stance of [writes.add, writes.edit, writes.delete]) {
-      if (stance.blocked !== undefined && !out.includes(stance.blocked)) out.push(stance.blocked)
+    const carried = writes.add.on ? writes.add.blocked : undefined
+    for (const stance of [writes.edit, writes.delete]) {
+      if (
+        stance.blocked !== undefined &&
+        stance.blocked !== carried &&
+        !out.includes(stance.blocked)
+      ) {
+        out.push(stance.blocked)
+      }
     }
     return out
   }, [writes, module.name, who])
-
-  /* THE ADD BUTTON IS DRAWN AND CANNOT BE PRESSED. Two ways in — the
-     verb is granted with nowhere to put a row, or granted with a
-     reason it cannot work — and one appearance, because to a person
-     they are the same fact: the control is here and the act is not
-     available. Which one it is, is the sentence. */
-  const refused = writes.into === undefined || writes.add.blocked !== undefined
 
   /* A NEW ONE, IN THE MASTER TABLE — MODULE_SYSTEM §5's own words for
      what this switch does. The row is blank, it is undoable, and the
@@ -717,22 +717,19 @@ export function ModuleStock({
           in `read.ts`. And the gear is gone because Settings is a tab
           now, beside this one. */}
       <header className="md-idx-head">
+        {/* THE FIND BOX IS `<Field>`, WHICH DRAWS A REAL LABEL. It
+            used to be a placeholder standing in for one, which is
+            the fault field.css names: a placeholder disappears the
+            moment a person types. */}
         {canSearch ? (
           <div className="md-idx-find">
-            <MagnifyingGlass
-              size={ICON_SIZE.tiny}
-              weight="light"
-              aria-hidden="true"
-              className="md-idx-find-mark"
-            />
-            <input
-              className="field-input md-idx-find-input"
+            <Field
               type="search"
+              label={`Find one in ${module.name} by name`}
               value={query}
-              spellCheck={false}
-              placeholder="Find one by name"
-              aria-label={`Find one in ${module.name} by name`}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={setQuery}
+              placeholder="Type a name"
+              inputMode="search"
             />
           </div>
         ) : null}
@@ -770,38 +767,30 @@ export function ModuleStock({
               switching `add` on, and the first thing on this page ever
               to consume a write verb. Switched off it is not here at
               all; granted with nowhere to put a row it is here,
-              refused, and the sentence saying why is under the header
+              refused, and the sentence saying why is under the control
               where the act was refused.
 
-              `aria-disabled`, NOT `disabled`, AND THE DIFFERENCE IS
-              THE WHOLE OF RULE 10. A `disabled` button leaves the tab
-              order: a person moving by keyboard never lands on it, so
-              they never meet the control that was refused and never
-              reach the sentence explaining it — the refusal exists
-              only for somebody who happened to be looking at that
-              corner of the screen. `aria-disabled` keeps the button
-              where it is, keeps it reachable, and `aria-describedby`
-              carries its reason with it, so the explanation arrives
-              with the refusal instead of near it. The guard against
-              the press is `startOne`, which returns before writing
-              anything — never the attribute.
-
-              This exact fault was found and fixed in `QuoteBuild.tsx`
-              a day before this was written. */}
+              `refusedBecause`, WHICH IS `aria-disabled` AND NOT
+              `disabled`, AND THE DIFFERENCE IS THE WHOLE OF RULE 10.
+              A `disabled` button leaves the tab order: a person moving
+              by keyboard never lands on it, so they never meet the
+              control that was refused and never reach the sentence
+              explaining it. `<Button>` keeps the control where it is,
+              blocks the press, and ties the reason on with
+              `aria-describedby`, so the explanation arrives with the
+              refusal instead of near it. The guard against the press
+              is still `startOne`, which returns before writing
+              anything — never the attribute. */}
           {writes.add.on ? (
-            <button
-              type="button"
-              className="md-idx-add"
-              aria-disabled={refused}
-              {...(refused && writes.add.blocked !== undefined
-                ? { 'aria-describedby': ADD_WHY_ID }
-                : {})}
+            <Button
+              tone="neutral"
+              glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
+              refusedBecause={writes.add.blocked}
               {...(writes.into ? { title: addSays(writes.into) } : {})}
               onClick={startOne}
             >
-              <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
               {writes.into ? addLabel(writes.into, listed.length > 1) : 'Add one'}
-            </button>
+            </Button>
           ) : null}
         </div>
       </header>
@@ -852,11 +841,7 @@ export function ModuleStock({
           the other refusals explain affordances that are absent, and
           an absent control has nothing to describe. */}
       {refusals.map((why) => (
-        <p
-          className="md-idx-note"
-          key={why}
-          {...(why === writes.add.blocked ? { id: ADD_WHY_ID } : {})}
-        >
+        <p className="md-idx-note" key={why}>
           {why}
         </p>
       ))}
@@ -973,7 +958,7 @@ export function ModuleStock({
               aria-label={section.name}
             >
               {multiTable ? (
-                <SectionHead
+                <TableHead
                   name={section.name}
                   kind={section.kind && section.kind in TABLE_KINDS ? section.kind : 'custom'}
                   count={memberCounts.get(section.id) ?? 0}
@@ -1069,7 +1054,7 @@ function Section({
   return (
     <section className="md-sec" id={domId} aria-label={section.name}>
       {showHead ? (
-        <SectionHead name={section.name} kind={section.kind} count={section.count} />
+        <TableHead name={section.name} kind={section.kind} count={section.count} />
       ) : null}
 
       {section.groups.map((group) => (
@@ -1099,7 +1084,7 @@ function Section({
           ) : (
             <ul className="md-rows">
               {group.entries.map((e) => (
-                <Row
+                <Line
                   key={e.rowId}
                   entry={e}
                   canOpen={canOpen}
@@ -1125,11 +1110,18 @@ function Section({
  *  anchor so a member chip reaches it. Extracted rather than copied
  *  because two heads that could drift apart is two heads.
  *
+ *  NOT `<SectionHead>` FROM src/ui, AND THAT IS RULE 3. The
+ *  primitive's one style is the uppercase label, and this head is a
+ *  TABLE'S NAME — `PVC` uppercased cannot be told from a value the
+ *  dealer typed as `Pvc`. A section head whose caption is a name is
+ *  a shape the layer does not have yet; it is reported as missing
+ *  rather than forced through the caption step.
+ *
  *  IT CARRIES NO HANDLES ANY MORE. Moving a table up the module's
  *  list and taking one out are the designer's "What this place lists",
  *  on the settings page — one owner for `tableIds` rather than two
  *  surfaces writing it. See ModuleSettings.tsx. */
-function SectionHead({
+function TableHead({
   name,
   kind,
   count,
@@ -1171,27 +1163,32 @@ function DrawerFace({
      and 74 dealer-fit packages sit under a spacer — so the drawer that
      holds them says so rather than being given a name it never had. */
   const name = drawer.name === '' ? `Under no ${drawer.of}` : drawer.name
+  /* THE DRAWER IS `<Card onActivate>` — the same primitive the tile
+     takes, at the same press (0.994 and a lost lift), because it IS
+     the repeated object of DESIGN_CONTRACT §5 at register density. */
   return (
-    <li>
-      <button
-        type="button"
-        className="md-drawer"
-        aria-label={
+    <li className="md-drawer-slot">
+      <Card
+        tone="raised"
+        pad="sm"
+        label={
           range === ''
             ? `${name}, ${drawer.count} of ${drawer.count === 1 ? 'one' : 'them'}`
             : `${name}, ${drawer.count}, ${range}`
         }
-        onClick={onOpen}
+        onActivate={onOpen}
       >
-        <span className="md-drawer-top">
-          <span className="md-drawer-mark">
-            <TableKindSymbol kind={drawer.kind} size={ICON_SIZE.tiny} />
+        <span className="md-tile-in">
+          <span className="md-drawer-top">
+            <span className="md-drawer-mark">
+              <TableKindSymbol kind={drawer.kind} size={ICON_SIZE.tiny} />
+            </span>
+            <span className="md-drawer-n mono-label">{drawer.count.toLocaleString('en-AU')}</span>
           </span>
-          <span className="md-drawer-n mono-label">{drawer.count.toLocaleString('en-AU')}</span>
+          <span className="md-drawer-name">{name}</span>
+          {range === '' ? null : <span className="md-drawer-range">{range}</span>}
         </span>
-        <span className="md-drawer-name">{name}</span>
-        {range === '' ? null : <span className="md-drawer-range">{range}</span>}
-      </button>
+      </Card>
     </li>
   )
 }
@@ -1289,36 +1286,36 @@ function FaceActs({
   const canRename = acts !== undefined && acts.renames.has(entry.tableId)
   const canRemove = acts?.removing === true
   if (!canRename && !canRemove && onQuote === undefined) return null
+  /* THREE `<Button>`s IN THREE TONES: the sale is the accent, the
+     rename is neutral, and the take-out is the danger outline —
+     which button.css draws as an outline and not a red fill, because
+     the act is undoable and gets a toast, not a shout. */
   return (
     <div className={inline ? 'md-face-acts is-inline' : 'md-face-acts'}>
       {canRename && acts ? (
-        <button
-          type="button"
-          className="md-face-act"
+        <Button
+          tone="neutral"
+          size="sm"
           aria-label={`Rename ${entry.label}`}
           onClick={() => acts.onRename(faceKey(entry))}
         >
           Rename
-        </button>
+        </Button>
       ) : null}
       {canRemove && acts ? (
-        <button
-          type="button"
-          className="md-face-act is-take-out"
+        <Button
+          tone="danger"
+          size="sm"
           aria-label={`Take ${entry.label} out of the catalogue`}
           onClick={() => acts.onTakeOut(entry.tableId, entry.rowId, entry.label)}
         >
           Take out
-        </button>
+        </Button>
       ) : null}
       {onQuote ? (
-        <button
-          type="button"
-          className="md-quote-it"
-          onClick={() => onQuote(entry.tableId, entry.rowId)}
-        >
+        <Button tone="primary" size="sm" onClick={() => onQuote(entry.tableId, entry.rowId)}>
           Quote it
-        </button>
+        </Button>
       ) : null}
     </div>
   )
@@ -1347,12 +1344,15 @@ function FaceActs({
    ============================================================ */
 function RenameBox({
   value,
-  className,
+  className = '',
   onDone,
   onCancel,
 }: {
   value: string
-  className: string
+  /** the face's own name class, so the box inherits the face's step
+   *  and the tile does not change height when a span becomes an
+   *  input. The dense line's name step is `<Row>`'s and needs none. */
+  className?: string
   onDone: (next: string) => void
   onCancel: () => void
 }): ReactElement {
@@ -1437,7 +1437,7 @@ function Tile({
   const facts = entry.facts ?? []
   const naming = acts !== undefined && acts.renaming === faceKey(entry)
   const body = (
-    <>
+    <span className="md-tile-in">
       <span className="md-tile-pic">
         <TilePicture
           img={entry.img}
@@ -1470,7 +1470,7 @@ function Tile({
           ))}
         </span>
       )}
-    </>
+    </span>
   )
   /* ONE SENTENCE FOR A READER, in the order the tile draws it. The
      face is now up to six spans and a picture; announced run together
@@ -1480,21 +1480,25 @@ function Tile({
     .join(', ')
   return (
     <li className="md-tile-slot">
-      {/* THE DOOR STANDS DOWN WHILE THE NAME IS BEING TYPED — an
+      {/* THE TILE IS `<Card>`. With `onActivate` it is a real button
+          with the card's own press and focus ring; without, a still
+          card. THE DOOR STANDS DOWN WHILE THE NAME IS BEING TYPED — an
           input inside a button is markup a browser may reject, and
           pressing a tile you are renaming should not navigate away
           from the half-typed word. */}
       {canOpen && !naming ? (
-        <button
-          type="button"
-          className="md-tile"
-          aria-label={said}
-          onClick={() => onOpen(entry.tableId, entry.rowId)}
+        <Card
+          tone="raised"
+          pad="sm"
+          label={said}
+          onActivate={() => onOpen(entry.tableId, entry.rowId)}
         >
           {body}
-        </button>
+        </Card>
       ) : (
-        <div className="md-tile is-flat">{body}</div>
+        <Card tone="raised" pad="sm">
+          {body}
+        </Card>
       )}
       {/* SIBLINGS, NOT CHILDREN, for the same reason: the tile is
           itself a button. The cluster is laid over the tile's corner
@@ -1516,36 +1520,36 @@ function Tile({
  *  and printing that again on all fourteen rows underneath is a
  *  column of noise where the eye is trying to compare names and
  *  numbers. Drawn and seen; the trail is on the heading, once. */
-function Row({ entry, canOpen, onOpen, onQuote, acts }: FaceProps): ReactElement {
+function Line({ entry, canOpen, onOpen, onQuote, acts }: FaceProps): ReactElement {
   const naming = acts !== undefined && acts.renaming === faceKey(entry)
-  const body = (
-    <>
-      {naming && acts ? (
-        <RenameBox
-          value={entry.label}
-          className="md-row-name"
-          onDone={(next) => acts.onRenamed(entry.tableId, entry.rowId, entry.label, next)}
-          onCancel={() => acts.onRename(null)}
-        />
-      ) : (
-        <span className="md-row-name">{entry.label}</span>
-      )}
-      {entry.price === '' ? null : <span className="md-row-price">{entry.price}</span>}
-    </>
-  )
+  /* THE DENSE LINE IS `<Row dense>`. Its name slot holds the label,
+     or the rename box while one is open; the price sits in `meta` in
+     mono and in FULL ink, because a price is what the customer reads
+     over a shoulder and is not metadata — the layer has no trailing
+     figure slot on an activating row yet, and that is reported. */
+  const name =
+    naming && acts ? (
+      <RenameBox
+        value={entry.label}
+        onDone={(next) => acts.onRenamed(entry.tableId, entry.rowId, entry.label, next)}
+        onCancel={() => acts.onRename(null)}
+      />
+    ) : (
+      entry.label
+    )
+  const meta = entry.price === '' ? undefined : <span className="md-figure">{entry.price}</span>
   return (
     <li className="md-row-slot">
       {canOpen && !naming ? (
-        <button
-          type="button"
-          className="md-row"
-          aria-label={entry.price === '' ? entry.label : `${entry.label}, ${entry.price}`}
-          onClick={() => onOpen(entry.tableId, entry.rowId)}
-        >
-          {body}
-        </button>
+        <Row
+          dense
+          name={name}
+          meta={meta}
+          label={entry.price === '' ? entry.label : `${entry.label}, ${entry.price}`}
+          onActivate={() => onOpen(entry.tableId, entry.rowId)}
+        />
       ) : (
-        <div className="md-row is-flat">{body}</div>
+        <Row dense name={name} meta={meta} />
       )}
       {naming ? null : (
         <FaceActs

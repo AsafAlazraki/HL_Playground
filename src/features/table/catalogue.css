@@ -3,106 +3,87 @@
 
    Co-located with its feature, as DESIGN_PRINCIPLES §9 requires:
    nothing here reaches into table.css and table.css knows nothing
-   about this file. The register underneath keeps its own sheet
-   exactly as it was.
+   about this file. The register underneath keeps its own sheet.
 
    THE HEAD IS NOT HERE. It is `PageHead` (src/features/page), the
-   application's one page header, and the long note where this
-   file's own header used to be says what that cost and what it
-   bought. Anything this file insets sits on `--page-gutter`.
-
-   WHAT COLOUR IS SPENT ON, and it is the amendment in §1 being
-   used rather than argued about:
-
-     a band head     `.k-band`, the section of one kind of thing
-     a filter chip   `.k-filter`, on when it is narrowing
-     a tile          `.k-rail` down its left edge, `.k-lift` on
-                     hover — and `.s-held` INSTEAD of the rail when
-                     the row is no longer sold, because one edge
-                     carries one fact and never two
-     a figure        never a hue. `--fg` and mono, always.
-
-   THE PHOTOGRAPH IS THE REST OF THE COLOUR. 3:2, the ratio the
-   seed was shot at, and large enough that turquoise water is a
-   colour on the page rather than a 20px stamp in a cell.
+   application's one page header. Anything this file insets sits on
+   `--page-gutter`.
 
    ============================================================
-   THE DISPLAY TIER LANDED ON THIS SCREEN, AND WHERE IT LANDED
-   WAS DECIDED BY MEASURING THE DATA RATHER THAN BY TASTE.
+   THE REBUILD ON THE PRIMITIVES LAYER, AND WHAT IT DELETED.
 
-   WHAT WAS WRONG, at 1280x800 on Highfield Inflatables:
+   Every surface on this screen that src/ui draws is drawn by src/ui
+   now, and the local rule that used to draw it is GONE rather than
+   layered under it — the only way to adopt a primitive that accepts
+   no className (src/ui/index.ts: "adoption is deletion"):
 
-     largest type on the screen   30.7px  `.ph-name`, which this
-                                  file does not own
-     the catalogue's own largest  15px    `.cat-tile-name`
-     against an 11px label        **1.36x**
+     the tile             `Card` — flat, unpadded, the kind's 6% wash
+                          on the surface, a real button. `.cat-card`
+                          and its five hover / press / focus rules:
+                          deleted. The photograph earns the lift on
+                          hover from card.css, once, for every card.
+     the hand-over pill   `Button`, neutral, small, in a positioned
+                          slot. `.cat-go`'s ground, hover, press and
+                          focus: deleted; the slot keeps its place.
+     Clear · Show more    `Button`. `.cat-clear` ×4: deleted.
+     the search box       `Field`, labelled. The width rule stays on
+                          the slot around it.
+     a value in a sheet   `Row`, dense, with a real checkbox at its
+                          head and the count as its metadata.
+                          `.cat-pop-row` ×4, `-val`, `-count`,
+                          `-more` ×3: deleted.
+     the bound boxes      `Field`, mono, decimal. `.cat-pop-bound`
+                          keeps only its flex share.
+     the chapter caption  `SectionHead` — the level's word in the one
+                          uppercase style, with the count in the
+                          dealer's nouns. `.cat-band-lab` and
+                          `.cat-band-count`: deleted.
 
-   PHASE_TWO §3's scale-contrast row wants about 7x. This screen
-   had a THIRD of the contrast the home stage had (2.97x, measured
-   by the design-system pass), because every word on it —
-   48 model names, 7 series heads — was set at 15px on white cards
-   with hairline borders. That is the generic-admin-template look,
-   and it is one of the screens the owner named.
+   WHAT COULD NOT BE CONVERTED, AND IS KEPT LOCAL RATHER THAN
+   LAYERED: the density control (`.cat-lens`, a segmented pair
+   drawn from aria-pressed) and the facet chip (`.cat-facet`, a
+   toggle that takes the kind's hue when it is on). button.css has
+   no pressed state and no kind tone. Both are reported for the
+   layer to grow once, properly; neither of them restyles a
+   primitive from here, and nothing in this file matches a `ui-`
+   class.
+
+   ============================================================
+   THE DISPLAY TIER ON THIS SCREEN — `--t-display-xl` ON THE BAND
+   HEAD, WHICH IS THAT STEP'S OWN EXAMPLE.
+
+   The band head is the one element here that is full-width, one
+   per screenful, and names a thing the business sells. ds.css
+   defines `--t-display-xl` for exactly this: "a name that is one
+   of several and is the point of the screen — a door, a place, a
+   band head". 34px at 1280, 44px at 1920, in the display face. The
+   head is `position: sticky`, so however far you scroll exactly
+   one of them is on the glass — PHASE_TWO §3's "one thing
+   dominates per screen", met by the layout rather than asserted.
+
+   IT WAS `.ds-hero` (43.5px at 1280) AND IS ONE STEP DOWN, ON
+   PURPOSE. Hero is "the first line of a stage that IS the page,
+   ONE per stage"; Highfield draws seven band heads. A plural name
+   takes the plural step, which is what the step was cut for. The
+   count and the level's word moved off the name's line onto the
+   `SectionHead` above it, so the name has the whole column; a
+   series name over 48 characters steps down to `--t-display-lg`
+   whole (the threshold is in Catalogue.tsx beside the code).
 
    WHERE THE MARQUE DOES NOT GO, and this is the load-bearing
-   refusal. `--t-marque` (72→110px) is reserved by its own note in
-   ds.css for "the name of the thing being sold … ONE PER SCREEN",
-   the configurator's identity column. Two separate things bar it
-   here:
+   refusal. `--t-marque` (72→110px) is reserved by its own note for
+   "the name of the thing being sold … ONE PER SCREEN". A tile is
+   239px wide at 1280, and forty-eight headlines are not a
+   headline.
 
-     1. THE TIER'S OWN FLOOR RULE. "a column narrower than ~360px
-        … drops to --t-hero — the whole step". A tile is **239px**
-        at 1280 and 168px at 768. A grid cell cannot hold a marque
-        at any width this screen ever has.
-     2. FORTY-EIGHT HEADLINES ARE NOT A HEADLINE. §2 gives Archivo
-        "headlines and nothing else". Painting 48 of them per
-        screenful spends the face until it means nothing, and it
-        would cost the density this screen exists for.
-
-   WHERE IT DOES GO: the band head, which is the only element on
-   this screen that is full-width, one-per-screenful and names a
-   thing the business sells. It is `position: sticky`, so however
-   far you scroll exactly ONE of them is on the screen — which is
-   PHASE_TWO §3's "one thing dominates per screen", literally.
-   It takes `.ds-hero` — the system's class, not four loose tokens,
-   so the display face's own tracking correction and its
-   prefers-contrast width walk-back come with it.
-
-   AND THE CARD DOES NOT GROW AT ALL — that was tried, measured,
-   and put back. The name went to the title step (20px) and cost a
-   whole row of four boats on two of the five tables driven,
-   because 20px turns a one-line name into a two-line one. The note
-   above `.cat-tile-name` has the table. What the card loses
-   instead is its BOX: no border and no shadow until it is
-   pointed at.
-
-   MEASURED AFTER, at 1280x800, tiles counted fully inside the
-   viewport, against the same screens measured before:
-
-     table                  largest type        tiles
-     Highfield              30.7 -> 43.5px      8 -> 8
-     Stabicraft             30.7 -> 43.5px      5 -> 5
-     Dunbier Trailers       30.7 -> 43.5px      6 -> 6
-     Parts & Accessories    30.7 -> 43.5px      4 -> 4
-     Yamaha Outboards       30.7 -> 43.5px      8 -> 8
-
-   43.5px against an 11px label is **3.96x**, from 1.36x. Not the
-   7x §3 asks for — that number belongs to the configurator's
-   identity column, where one product owns a 400px column and can
-   carry `--t-marque`. It is what a screen holding 48 photographs
-   at once can afford, and it cost nothing.
-
-   The tile also came DOWN, 244.5px to 235.9px, because the words
-   no longer sit inside a 12px box inset.
-
-   Contrast re-measured with the full ancestor chain composited
-   (the method in tools/check-contrast.mjs): **1,000 text nodes
-   over those five tables at 1280, 1024 and 768, and 239 more over
-   three of them in dark — nothing below its threshold.** The
-   chapter head is 10.96:1 on light and 11.39:1 on dark against a
-   large-text requirement of 3; the card name and the price are
-   16.18:1, the spec label 7.32:1, the chapter's own eyebrow
-   6.39:1 over the kind wash it sits on.
+   THE TILE NAME STAYS AT THE HEADING STEP — taken whole this time
+   (size, weight, leading, tracking), where it used to borrow the
+   size and hand-write the other three. Raised to the title step it
+   turned a one-line name into two on every table whose names run
+   25–38 characters and cost a whole row of four boats at 1280,
+   measured across five tables. A card's hierarchy is the
+   photograph, then weight and ink; the SCREEN's scale contrast is
+   the chapter head, 34px against an 11px caption.
    ============================================================ */
 
 .cat-root {
@@ -114,37 +95,6 @@
   overflow: hidden;
   background: var(--bg);
 }
-
-/* ------------------------------------------------------------
-   THE HEAD IS `PageHead`, AND THAT IS THE WHOLE OF THIS SECTION.
-
-   WHAT WAS HERE, AND WHY IT WENT. This file used to draw a header
-   of its own: an eyebrow with the kind's symbol, the brand name in
-   Archivo at 52px in the gallery and 34px in the register, a fact
-   line, an 8% kind wash and a 4px kind rail, all inset `--s-5`.
-   Every part of it was argued for on this screen and the sum of it
-   was the sixth page header in an application that had just spent a
-   day reducing five to one. Measured at 1600 before the change:
-
-     the title's left edge        248px   (--s-5 + the 4px rail)
-     the first card's left edge   244px   (--s-5)
-     every other page's title     256px   (--page-gutter, 32)
-
-   Four pixels apart from its own content and eight from the rest of
-   the app. `PageHead tight` is now the header, so all three numbers
-   are one number and there is nothing here to keep them in step.
-
-   WHAT THE CHANGE COSTS, said out loud rather than discovered
-   later: the kind wash and the kind rail behind the title are gone,
-   and with them "you know you are in boats before reading a word"
-   at the very top of the page. The kind is not lost — the eyebrow
-   says BOATS, every card carries `.k-rail` in the hue, every band
-   head is `.k-band`, and a facet chip turns the kind's colour when
-   it is narrowing. That is §1's amendment landing on the things
-   that HAVE the kind rather than on the chrome above them, which is
-   what §1 asks for anyway. An 8% tint behind a title was the
-   weakest of the four and the only one that cost alignment.
-   ------------------------------------------------------------ */
 
 /* THE HOSTED HEAD — `heading={false}`, where a module has already
    spent the page's name on its own tab. One row: the counted fact
@@ -173,40 +123,47 @@
 /* WHY NOTHING HERE CAN BE CONFIGURED, in a host that has already
    spent the page's name. `PageHead` draws the same sentence in the
    same class inside its own gutter; this branch has no header to
-   sit in, so it takes the gutter directly. `.ph-line` carries every
-   other property, deliberately — a refusal that looked different
-   depending on who mounted the catalogue would be two refusals. */
+   sit in, so it takes the gutter directly. */
 .cat-why {
   flex: none;
   padding: 0 var(--page-gutter) var(--s-3);
   background: var(--surface-1);
 }
 
-/* -- gallery / list ------------------------------------------ */
+/* ------------------------------------------------------------
+   GALLERY / LIST — THE ONE LOCAL BUTTON THIS FILE STILL DRAWS.
 
+   A segmented pair whose pressed half is the state. `Button` has
+   no pressed tone, so this cannot be it without a class of its own
+   on the primitive, which is the thing the layer forbids. Kept,
+   on tokens only, and reported as the gap it is. Every metric here
+   is a token: the control height, the control radius, the caption
+   weight and body tracking button.css itself chose for a label.
+   ------------------------------------------------------------ */
 .cat-lens {
   display: inline-flex;
   flex: none;
   padding: 2px;
   gap: 2px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-control);
   background: var(--surface-1);
 }
 
 .cat-lens-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
+  gap: var(--s-2);
+  height: var(--h-sm);
+  padding: 0 var(--s-3);
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--r-control);
   background: transparent;
   color: var(--fg-secondary);
   font-family: var(--font-sans);
   font-size: var(--t-small-size);
-  font-weight: 550;
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-body-track);
   cursor: pointer;
   transition:
     background var(--d-fast) var(--ease),
@@ -221,7 +178,7 @@
   transform: scale(0.97);
 }
 .cat-lens-btn:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 .cat-lens-btn[aria-pressed='true'] {
@@ -234,29 +191,27 @@
 }
 
 /* ------------------------------------------------------------
-   THE RAIL — search, then one control per facet.
+   THE RAIL — the search field, then one control per facet.
 
-   IT NO LONGER OWNS A ROW; it fills the one `PageHead` gives it,
-   so the inset, the height and the rule beneath it are the page's
-   rather than this file's. What it keeps is the scroll: ONE ROW,
-   SCROLLED RATHER THAN CUT (§3) and rather than wrapped. Eight
+   It fills the row `PageHead` gives it, so the inset and the rule
+   beneath it are the page's. What it keeps is the scroll: ONE ROW,
+   SCROLLED RATHER THAN CUT (§3) and rather than wrapped — eight
    facets at 1024 do not fit, a facet you cannot reach is a filter
-   the app does not have, and wrapping — which is what `.ph-tools`
-   does for four chips — would make the gallery below start at a
-   different height on every table.
+   the app does not have, and wrapping would make the gallery start
+   at a different height on every table.
 
-   `flex: none` ON THE ROW IS LOAD-BEARING, and it is why this is
-   in the tools row rather than a child of `.cat-root`. As a plain
-   child of that flex column the rail had no `flex` of its own, so
-   the gallery's content basis — 588 cards — shrank it: measured at
-   1600, a 25.7px border box around a 37px scrollHeight, with every
-   pill and the search box sliced 2.6px top and bottom. `.ph-tools`
-   is `flex: none`, so the row is its content's height.
+   `flex: none` on the row is load-bearing: as a plain child of the
+   `.cat-root` column the gallery's content basis shrank it to a
+   25.7px box around 37px of content, measured at 1600.
+
+   THE ROW ALIGNS TO ITS END, NOT ITS CENTRE. The search box is a
+   `Field` now — a label over a control — and the chips stand level
+   with the control, not with the middle of the pair.
    ------------------------------------------------------------ */
 
 .cat-rail {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: var(--s-2);
   flex: 1 1 auto;
   min-width: 0;
@@ -264,47 +219,19 @@
   overflow-y: hidden;
   scrollbar-width: thin;
   /* `overflow-y: hidden` clips at the padding box, and this row
-     holds two different focus rings: the system's `--focus`
-     (ds.css) reaches 4px past a control's border box and lands on
-     the search field, and a facet chip's own outline reaches 3px
-     (2px of outline, 1px of offset). Without this clearance the
-     ring was cut flat along the top and bottom — the same failure
-     the squashed row had, arriving through the other axis. 4px is
-     the wider of the two, exactly.
-
-     DELIBERATELY NOT `--s-1`, WHICH IS ALSO 4px TODAY. This is ring
-     clearance, not rhythm. If the spacing scale is retuned this
-     number must NOT move with it; if `--focus` grows, it must. A
-     token here would couple it to the wrong thing and the coupling
-     would look correct. */
+     holds focus rings: the system's `--focus` reaches 4px past a
+     control's border box, a chip's outline 3px. 4px is the wider
+     of the two. Ring clearance, not rhythm — deliberately not a
+     spacing token, so a retuned scale cannot move it. */
   padding: 4px 0;
 }
 
-/* ------------------------------------------------------------
-   AND THE ROW SAYS WHICH WAY IT STILL HAS FACETS IN IT.
-
-   The measurement is in Catalogue.tsx beside the code that takes
-   it: on an eight-facet table the row hides 43px at 1280 and
-   415px at 768 — five of the eight filters entirely off-screen —
-   and `scrollbar-width: thin` contributed **0px** of scrollbar at
-   every width tested, because an overlay scrollbar draws nothing
-   until a gesture is already under way. Reachable is not findable.
-
-   `#000` HERE IS AN ALPHA CHANNEL AND NOT AN INK, which is the
-   ruling `build.css` already made for the same construction: a
-   mask reads only its own gradient, no theme colour can be
-   substituted for it, and rule 1 has nothing to say about it.
-
-   THE FADE IS 24px, ONE CHIP'S LEADING EDGE. Wide enough to read
-   as a fade rather than as a rendering fault, narrow enough that
-   the chip under it is still the chip you can see and press. And
-   there is no `transition` on it: the state changes while a
-   person is dragging the row, which is the definition of a
-   high-frequency action (§6).
-
-   `[data-over]` IS WRITTEN ONLY WHEN IT IS TRUE, so at 1440 —
-   where the eight facets fit — this file draws nothing at all.
-   ------------------------------------------------------------ */
+/* THE ROW SAYS WHICH WAY IT STILL HAS FACETS IN IT. The measurement
+   is in Catalogue.tsx: an eight-facet table hides 43px at 1280 and
+   415px at 768, and an overlay scrollbar draws nothing until a
+   gesture is under way. `#000` here is an alpha channel and not an
+   ink — a mask reads only its own gradient. 24px, one chip's
+   leading edge. No transition: the state changes under a drag. */
 .cat-rail[data-over='end'] {
   mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
 }
@@ -321,13 +248,11 @@
   );
 }
 
-/* WHERE A TABBED-TO CONTROL LANDS. `Catalogue.tsx` scrolls the
-   focused child into the row; without this it would land exactly
-   ON the edge, which is where the fade is, and the ring would
-   arrive dimmed. 28 is the 24px fade plus the 3px a chip's own
-   outline reaches (2px of outline, 1px of offset) and one to
-   spare. It moves with the fade above it, not with the spacing
-   scale — the same reasoning as the ring clearance in `.cat-rail`. */
+/* WHERE A TABBED-TO CONTROL LANDS. Catalogue.tsx scrolls the slot
+   into the row; without this it lands under the fade. 28 is the
+   24px fade plus a ring and one to spare — it moves with the fade,
+   not with the spacing scale. The search and Clear are primitives
+   inside these slots, which is why the slot carries the margin. */
 .cat-find,
 .cat-facet,
 .cat-clear {
@@ -336,11 +261,11 @@
 
 .cat-find {
   flex: none;
-  display: block;
   width: clamp(160px, 22vw, 280px);
 }
-.cat-find .field-input {
-  width: 100%;
+
+.cat-clear {
+  flex: none;
 }
 
 .cat-facets {
@@ -351,17 +276,25 @@
   min-width: 0;
 }
 
+/* ------------------------------------------------------------
+   THE FACET CHIP — the other local control, kept for the same
+   reason as the lens: a toggle whose on-state is the kind's hue,
+   which no tone in button.css draws. Ground, border and the
+   on-state come from ds.css's `.k-filter`; this rule is geometry
+   and type, on tokens.
+   ------------------------------------------------------------ */
 .cat-facet {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--s-1);
   flex: none;
-  height: 30px;
-  padding: 0 9px;
+  height: var(--h-sm);
+  padding: 0 var(--s-2);
   border-radius: var(--r-full);
   font-family: var(--font-sans);
   font-size: var(--t-small-size);
-  font-weight: 550;
+  font-weight: var(--t-caption-weight);
+  letter-spacing: var(--t-body-track);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -369,43 +302,18 @@
   transform: scale(0.97);
 }
 
-/* ------------------------------------------------------------
-   THE ON STATE, MEASURED — and this is the §1 warning happening
-   for real rather than in a footnote.
-
-   `.k-filter[aria-pressed='true']` in ds.css sets the ink to
-   `var(--kind)` over a 12% wash of the same hue. Measured in the
-   browser at 1600, on this very control:
-
-       boat     indigo   5.56 : 1   passes
-       motor    orange   4.26 : 1   FAILS
-
-   The eight hues are cut to roughly equal luminance ON WHITE; a
-   12% wash of a warm hue lifts the ground under it and the warm
-   ones fall through 4.5. That is exactly the mistake §1 records
-   from the redesign — "the tint counts" — one surface further on.
-
-   THE FIX KEEPS THE HUE AND MOVES THE INK. Mixed toward `--fg`,
-   the chip is still unmistakably its kind's colour and every one
-   of the eight clears the floor. Not a lighter tint, because the
-   tint is what makes the state visible at a glance; not `--fg`
-   alone, because then the kind stops carrying the state, which is
-   the whole point of the amendment.
-
-   MEASURED AGAIN AFTER THE FIX, on five tables, one per hue:
-
-       boat  7.16   motor  6.01   trailer  5.89
-       accessory  6.21   package  6.46
-
-   Local to this rail on purpose: ds.css belongs to the system and
-   this is a measurement, not a redesign — the same reading wants
-   taking to `.k-filter` itself, and is reported.
-   ------------------------------------------------------------ */
+/* THE ON STATE, MEASURED. `.k-filter[aria-pressed='true']` sets the
+   ink to `var(--kind)` over a wash of the same hue, and measured on
+   this control the warm hues fall through 4.5 (motor, orange:
+   4.26:1). Mixed toward `--fg` the chip is still its kind's colour
+   and every hue clears the floor — boat 7.16, motor 6.01, trailer
+   5.89, accessory 6.21, package 6.46. Local on purpose: ds.css is
+   the system's and this is a measurement, reported there. */
 .cat-facet[aria-pressed='true'] {
   color: color-mix(in srgb, var(--kind) 76%, var(--fg));
 }
 .cat-facet:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
@@ -420,35 +328,6 @@
   font-size: var(--t-caption-size);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
-}
-
-.cat-clear {
-  flex: none;
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-full);
-  background: var(--surface-1);
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  cursor: pointer;
-  transition:
-    color var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
-}
-.cat-clear:hover {
-  color: var(--fg);
-  border-color: var(--line-strong);
-}
-.cat-clear:active {
-  transform: scale(0.97);
-}
-.cat-clear:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
 }
 
 /* ------------------------------------------------------------
@@ -466,28 +345,21 @@
   min-height: 0;
 }
 
-/* THE GRID TAKES THE PAGE'S INSET AND NOT ONE OF ITS OWN. This is
-   the rule that was broken: the header was inset 24 (20 + a 4px
-   rail), the grid 20, and the rest of the application 32, so the
-   first photograph's left edge was four pixels short of the title
-   above it and twelve short of every other page. It is
-   `--page-gutter` on both, and the two edges are now one number —
-   measured at 1600 as 256 and 256. */
+/* THE GRID TAKES THE PAGE'S INSET AND NOT ONE OF ITS OWN, so the
+   first photograph's left edge is the title's left edge — one
+   number, `--page-gutter`, measured at 1600 as 256 and 256. */
 .cat-gallery {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--s-4) var(--page-gutter) var(--s-10);
+  padding: var(--s-3) var(--page-gutter) var(--s-10);
 }
 
-/* THE ENTRANCE IS THE SECTION'S. `.ds-rise` moved off the tile and
-   onto the band — the long note in Catalogue.tsx has the measurement
-   (16 tiles animating on one backspace, against 0 now), and the
-   travel the author chose for this screen moves with it. `--rise` is
-   `12px` at the root; 8 is the value a photographic grid was tuned to
-   and there is no reason for it to change because the animated
-   element got bigger. */
+/* THE ENTRANCE IS THE SECTION'S — `.ds-rise` on the band, not the
+   tile (the measurement is in Catalogue.tsx: 16 tiles animating on
+   one backspace, against 0 now). 8px is the travel a photographic
+   grid was tuned to. */
 .cat-band {
   --rise: 8px;
 }
@@ -497,135 +369,64 @@
 }
 
 /* ------------------------------------------------------------
-   THE CHAPTER HEAD — where the display tier lands, and the whole
-   argument is in the file header above. What is here is the
-   arithmetic that says it costs no rows.
+   THE CHAPTER HEAD — the display tier, two lines, sticky.
 
-   IT IS STICKY, SO IT IS ONE PER SCREEN. Scroll anywhere in 588
-   variants and exactly one series name is on the glass. That is
-   the condition `--t-marque`'s note attaches to the display tier
-   ("one per screen"), met by the layout rather than asserted.
+   Line one is a `SectionHead` (the level's word, the count). Line
+   two is the h2 wearing `.ds-display-xl`. The ground and the
+   chapter rule are ds.css's `.k-band` — a 10% kind wash and a 28%
+   kind rule along the bottom, opaque, which matters because
+   photographs scroll under this.
 
-   WHAT IT COSTS, measured at 1280x800 on Highfield Inflatables:
+   A STICKY OFFSET IS MEASURED FROM THE SCROLLPORT'S PADDING EDGE,
+   so `top: 0` parked the head 16px down with a strip of scrolling
+   photographs showing above it (measured at 1600: gallery top
+   166.4, head at 182.4). Pulled back by the gallery's own top
+   padding, it lands on the row of filters.
 
-     the scrollport                   625.1px
-     a row of tiles, before           244.5 + 12 gap = 256.5
-     a row of tiles, after            235.9 + 12 gap = 247.9
-     the head, before   15px name     36.4 + 12 margin = 48.4
-     the head, after    43.5px name   53.8 +  8 margin = 61.8
-
-     rows that fit, before   (625.1 - 48.4) / 256.5 = 2.25
-     rows that fit, after    (625.1 - 61.8) / 247.9 = 2.27
-
-   Two whole rows either way — **8 tiles fully visible before and
-   8 after**, and the same on Stabicraft (5), Dunbier (6), Parts
-   (4) and Yamaha (8). The head grew 17.4px and the tile gave 8.6
-   back, which is the only reason this size was affordable. A
-   `--t-marque` head would be 97px and take a row with it on every
-   table in the file.
-
-   THE 8px OF PADDING WAS THE MARGIN OF THE WHOLE THING, and that
-   is not a figure of speech. At `padding: 6px 12px 8px` the head
-   was 59.8px and Dunbier fell from 6 tiles to 2 — one band head
-   too many at the wrong height, and a whole row of trailers off
-   the bottom of the screen. Six compositions were driven before
-   this one held every table; the table is above `.cat-tile-name`.
-
-   THE FLOOR IS A WHOLE-STEP SWAP, NOT A SHRINK — ds.css's rule 6,
-   and on this screen it is not hypothetical. The level column is
-   whatever the business filed under, and it is not always a word:
-
-     Highfield   Series     "Roll-Up"                            7
-     Stabicraft  Series     "Frontier Series"                   15
-     Yamaha      Series     "Four Stroke Models"                18
-     Parts       Category   "PFD's - Personal Floatation …"     35
-     Dunbier     Series     "SPORT CENTRELINE WIDE SERIES
-                             (Width Between Guards 1790mm)"     58
-
-   58 characters at 43.5px is 1,260px of ink in a 992px column —
-   three lines, and a sticky head taller than a tile. So a name
-   over `BAND_HERO_MAX` characters takes the NEXT STEP DOWN whole
-   (`.ds-display-lg`, 26.9px at 1280), size, weight, leading,
-   tracking and width together. The threshold is written in
-   `Catalogue.tsx` beside the code that applies it.
+   WHAT IT COSTS, MEASURED at 1280x800 on Highfield Inflatables,
+   tiles counted fully inside the viewport. The first cut of this
+   head — 4px above, a 4px gap, the 28px caption line, the 36px
+   name, 8px below, a 12px margin — measured 81px, and the second
+   row of tiles ended 16px below the fold: FOUR tiles on a screen
+   the hero head had left eight on. The head is not allowed to cost
+   a row, so the air came out of it and out of the card: no gap
+   (the caption line already holds 7px of air either side of its
+   14px caption), 4px below, an 8px margin, the card's words at the
+   small inset, and the gallery's own top pad one step down. 72px,
+   and the row is back.
 
    SQUARE, NOT ROUNDED (PHASE_TWO §3, "square on large surfaces").
-   A 6px radius on a 992px-wide bar is what made this read as a
-   panel header in an admin template. The kind still carries the
-   section — `.k-band` is a 10% wash and a 28% kind rule along the
-   bottom, which at this size reads as a chapter rule rather than
-   as a filled strip.
    ------------------------------------------------------------ */
 .cat-band-head {
   position: sticky;
-  /* A STICKY OFFSET IS MEASURED FROM THE SCROLLPORT'S PADDING EDGE,
-     not from its border box — so `top: 0` parked this head 16px
-     down, and a 16px strip of scrolling photographs showed ABOVE
-     the head that is supposed to be covering them. Measured at
-     1600: gallery top 166.4, head parked at 182.4, cards visible
-     through the 16px between. Pulling the offset back by the
-     gallery's own top padding lands it at 166.4 and the band head
-     is the only thing under the filters. */
-  top: calc(var(--s-4) * -1);
+  top: calc(var(--s-3) * -1);
   z-index: 2;
   display: flex;
-  align-items: baseline;
-  gap: var(--s-2);
+  flex-direction: column;
   margin: 0 0 var(--s-2);
-  /* 6 ABOVE AND 2 BELOW, WHICH IS OPTICAL AND NOT SYMMETRICAL.
-     Archivo's ink at this step sits 2.5px below the line box's top
-     and its baseline 10.6px above the box's bottom, so equal
-     padding draws a head that is visibly bottom-heavy. 6/2 puts
-     ~8.5px of air over the caps and ~12.6px under the baseline,
-     which is as near as an 8px budget gets. And the budget is 8:
-     the whole head is 53.8px, and the measurements below are what
-     that number had to be. */
-  padding: 6px 12px 2px;
-  font-family: var(--font-sans);
-  color: var(--fg);
-}
-.cat-band-lab {
-  flex: none;
-  color: var(--fg-secondary);
+  padding: var(--s-1) var(--s-3);
 }
 
-/* NO TYPE DECLARED HERE, DELIBERATELY. The step is `.ds-hero` or
-   `.ds-display-lg`, written on this span by `Catalogue.tsx`, and
-   this file declares only layout — because catalogue.css loads
-   AFTER ds.css, so a `font-size` at equal specificity here would
-   silently beat the system's own step and the display face would
-   be defined in two places. That is the split ds.css already paid
-   for once with `--font-display`. */
+/* NO TYPE DECLARED HERE, DELIBERATELY. The step is `.ds-display-xl`
+   or `.ds-display-lg`, written on this element by Catalogue.tsx,
+   and this file declares only layout — catalogue.css loads after
+   ds.css, so a `font-size` at equal specificity here would silently
+   beat the system's own step.
+
+   TWO LINES IS THE CEILING ON A STICKY HEAD. The step swap keeps a
+   name under 48 characters on one line at 1280; the clamp catches
+   the stepped-down step at a narrow window. The full string stays
+   in the DOM. No `overflow-wrap`: `.ds-display-xl` says why —
+   "nothing truncates mid-word" holds at every size, and break-word
+   breaks precisely that promise on a one-word name. */
 .cat-band-name {
+  margin: 0;
   min-width: 0;
-  overflow-wrap: break-word;
-  /* TWO LINES IS THE CEILING ON A STICKY HEAD, and it is the one
-     place the step swap alone was not enough. `BAND_HERO_MAX`
-     guarantees the hero step is a single line — 24 characters at
-     43.5px is 542px in a 992px column, and 424px at 34px in the
-     narrower column a 768 window gives. So this clamp only ever
-     catches the stepped-down step, and mostly at a narrow
-     window. Measured before it existed: Dunbier's "STEEL LOADER
-     PRO SERIES (Suits Fibreglass Boats)" drew a THREE-line head
-     100.8px tall at 768, over a 229.6px tile; it is 66.2px now.
-     The full string stays in the DOM for a reader, as it does on a
-     tile name, and it never breaks mid-word. */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  /* AND WHEN IT DOES TAKE TWO LINES, THEY ARE EVEN. A one-word
-     orphan under a 43px head is visible from across the room —
-     `.ds-marque` takes `text-wrap: balance` for the same reason
-     and says so. It costs nothing when the head is one line,
-     which at 1280 it always is. */
   text-wrap: balance;
-}
-.cat-band-count {
-  flex: none;
-  margin-left: auto;
-  color: var(--fg-secondary);
-  font-size: var(--t-caption-size);
 }
 
 /* -- the grid ------------------------------------------------- */
@@ -639,155 +440,26 @@
   grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
 }
 
+/* the anchor for the hand-over slot, which is a SIBLING of the
+   card rather than a child of it — a button inside a button is
+   invalid HTML, and browsers repair it by un-nesting */
 .cat-tile {
   min-width: 0;
-  /* the anchor for the hand-over pill, which is a SIBLING of the
-     card rather than a child of it — a button inside a button is
-     invalid HTML, and browsers repair it by un-nesting */
   position: relative;
 }
 
-/* ------------------------------------------------------------
-   A CARD EARNS ITS SHADOW. It used to be issued one.
-
-   WHAT WAS ON THE SCREEN: 48 white rectangles, each with a
-   hairline border, each with `--e1` under it, each identical. An
-   elevation that every card on the screen has is not elevation —
-   it is a texture, and it is the single strongest tell of the
-   generic admin template. §3 says elevation is `--e1`/`--e2`/`--e3`
-   for a reason; the reason is that they are supposed to MEAN
-   something about which surface is above which.
-
-   SO AT REST THERE IS NO CARD. The photograph is the card — which
-   is PHASE_TWO §3's row for this exact surface, "the photograph is
-   the colour" — and it sits on the page ground with the words
-   under it and the kind's rail down its edge. On hover ONE of the
-   48 materialises: it takes `--surface-1`, its hairline, `--e4`
-   and the kind glow, and lifts a pixel. That is a card earning it.
-
-   THE BORDER IS `transparent`, NOT REMOVED. The 1px is still in
-   the box model, so nothing in the grid moves when the hairline
-   arrives on hover — and `.k-rail`'s 3px left edge still lands on
-   a border that exists. Removing the shorthand would have meant
-   the rail changing the card's width.
-
-   THE PHOTOGRAPH KEEPS `--radius`. §3's "square on large surfaces"
-   is about the 992px chapter head above; a 239px tile is not a
-   large surface, and a square photograph on a square page ground
-   would lose the edge that says where one boat stops.
-   ------------------------------------------------------------ */
-.cat-card {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  overflow: hidden;
-  text-align: left;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background: transparent;
-  cursor: pointer;
-  transition:
-    box-shadow var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
-}
-/* THE KIND RAIL IS RESTATED, NOT INHERITED. `.cat-card` sets a
-   whole `border` and this stylesheet is loaded after ds.css, so the
-   shorthand would quietly win over `.k-rail`'s left edge and the
-   card would come out with no hue at all — which is the exact
-   failure §1b is written about. One extra class of specificity, and
-   the colour is still the token. */
-.cat-card.k-rail {
-  border-left: 3px solid var(--kind);
-}
-.cat-card.s-held {
-  /* ds.css's own value, restated for the same cascade reason and
-     NOT changed: a held-back line is one appearance everywhere in
-     the app or it is not a state. The 2.6:1 rail carries no meaning
-     on its own, which is why the card also says "No longer sold" in
-     words — rule 10, in the place the thing is refused. */
-  border-left: 3px solid var(--fg-quaternary);
-}
-/* THE LIFT IS SCOPED TO THE TILE, NOT TO THE CARD, and that is the
-   hand-over pill's doing rather than a restyle. The pill sits over
-   the photograph as a SIBLING of the card, so pointing at the pill
-   is not pointing at the card: on `.cat-card:hover` the card stayed
-   flat while the pill — which has to travel with it or the two
-   visibly part — moved. One hover, on the tile, and both surfaces
-   answer it together. */
-/* AND THE HOVER RESTATES THREE EDGES RATHER THAN FOUR, which is a
-   defect this pass found rather than one it introduced. The rule
-   said `border-color: var(--line-strong)` — the shorthand, four
-   sides — at `.cat-tile:hover .cat-card`, which is three
-   compound selectors against `.cat-card.k-rail`'s two. So every
-   time the pointer crossed a tile the kind's own rail turned grey
-   and the card lost the one thing that said what it was. Named
-   sides, and the hue survives the hover it is supposed to explain.
-   `.s-held`'s grey rail survives it for the same reason. */
-.cat-tile:hover .cat-card {
-  transform: translateY(-1px);
-  background: var(--surface-1);
-  border-top-color: var(--line-strong);
-  border-right-color: var(--line-strong);
-  border-bottom-color: var(--line-strong);
-}
-
-/* AND THE ELEVATION WITH IT, WHICH IS `.k-lift:hover` RESTATED — the
-   third time this file restates a ds.css rule for a cascade reason,
-   and the same reason as the two above it.
-
-   `.k-lift:hover` is keyed on the CARD, so the moment the pointer
-   crossed onto the pill the card fell out of it. Read off the live
-   element at 1600 on Formosa, pointer on the card body and then on
-   the pill 30px away:
-
-     card body   --e4 + the lit hairline + a kind glow  (3 layers)
-     pill        --e1                                   (1 layer)
-
-   A card that drops two elevation rungs because the cursor moved
-   into its own button is the card flinching from the act. The
-   composition is ds.css's own, token for token; it is not a
-   hand-rolled shadow (§3) and it must be changed there, not here. */
-.cat-tile:hover .cat-card.k-lift {
-  box-shadow:
-    var(--e4),
-    inset 0 1px 0 var(--edge-light),
-    0 10px 30px -14px var(--kind);
-}
-
-/* A CARD PRESSES AT 0.994 (§4). 0.97 on a 240px card is a 7px shrink
-   and reads as a glitch; the hover lift goes at the same moment.
-   Stated three ways because both hover rules above outweigh a bare
-   `:active`, and the press must win over the hover it happens under. */
-.cat-card:active,
-.cat-tile:hover .cat-card:active,
-.cat-tile:hover .cat-card.k-lift:active {
-  transform: scale(0.994);
-  /* THE GROUND COMES WITH THE PRESS, because the card no longer
-     has one at rest. A `--e1` under a transparent element is a
-     shadow with nothing casting it — which is what a press from a
-     finger or a keyboard, neither of which raises `:hover`, would
-     otherwise have drawn. */
-  background: var(--surface-1);
-  box-shadow: var(--e1);
-}
-.cat-card:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
-}
-
+/* THE PHOTOGRAPH FILLS THE CARD TO ITS EDGE. The Card is unpadded
+   and clips nothing, so the shot rounds its own top corners to sit
+   inside the card's 1px border — the card radius less the border.
+   3:2 is the ratio the seed was shot at; the box is reserved before
+   the bytes land, so a late photograph never moves the grid. */
 .cat-shot {
   display: block;
   position: relative;
   width: 100%;
-  /* 3:2 — the ratio the seed was shot at. The box is reserved before
-     the bytes land, so a photograph arriving late never moves the
-     grid it is in. */
   aspect-ratio: 3 / 2;
   overflow: hidden;
+  border-radius: calc(var(--r-card) - 1px) calc(var(--r-card) - 1px) 0 0;
   background: var(--surface-3);
 }
 
@@ -813,66 +485,27 @@
   color: color-mix(in srgb, var(--kind) 52%, transparent);
 }
 
-/* THE WORDS SIT UNDER THE PHOTOGRAPH, NOT INSIDE A BOX. With the
-   card's ground gone at rest there is nothing for a 12px inset to
-   be an inset OF, and a name hanging 12px right of the
-   photograph's left edge is a misalignment you can see across four
-   columns. 6px is a caption's inset rather than a box's padding —
-   near enough to flush to read as one column of text under one
-   picture, and far enough that the last line's descenders clear
-   the card's 10px bottom corner radius, which flush would clip.
-   The bottom drops 12 to 2 for the same reason the border went:
-   there is no box below the words to leave room inside. */
+/* THE WORDS UNDER THE PHOTOGRAPH, inset by the card's own small
+   step — a card has a box now, and words inside a box take an
+   inset (§3). 8 above and below, 12 at the sides; the heading
+   step's own 1.35 leading is the air between the lines. */
 .cat-card-say {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 6px 2px;
+  gap: var(--s-1);
+  padding: var(--s-2) var(--s-3);
 }
 
-/* ------------------------------------------------------------
-   THE NAME STAYS AT 15px, AND THAT IS THE MEASUREMENT OVERRULING
-   THE INSTINCT. Written down because the next person will want to
-   raise it, as this pass did.
-
-   IT WAS RAISED TO THE TITLE STEP (20px) AND PUT BACK. Nine
-   compositions were driven at 1280x800 on five real tables,
-   counting tiles fully inside the viewport. Five of them:
-
-     composition                    Highfield  Stabi  Dunbier  Parts  Yamaha
-     before                             8        5       6       4      8
-     20px name + hero head              8      **1**   **2**     4      8
-     15px name + hero head              8        5     **2**     4      8
-     15px name + head one step down     8        5       6       4      8
-     15px name + hero head, tightened   8        5       6       4      8
-
-   The 20px name turns a ONE-line card name into a TWO-line one on
-   every table whose names are 25-38 characters — measured, the
-   name box went 18.8px to 50px on Stabicraft and Dunbier — and
-   that 31px is a whole row of four boats off the bottom of the
-   screen. Five tiles became one. Density wins over decoration on
-   this screen, and this is the place it had to be enforced.
-
-   SO THE CARD'S HIERARCHY IS NOT SIZE. It is the photograph, then
-   weight and ink: 15/600 `--fg` for the name, 15px mono 500 for
-   the price, 12px `--fg-tertiary` for the spec, 11px for the
-   label. The SCREEN's scale contrast lives on the chapter head,
-   which is full-width and one-per-screenful and can afford it.
-
-   THESE FOUR VALUES ARE NOT `--t-heading-*` AND ARE LEFT ALONE. A
-   card name wants 600 where the heading step is 570, and 1.25
-   where it is 1.35, because this box clamps to two lines and the
-   step's leading would cost 3px a card for nothing.
-   ------------------------------------------------------------ */
+/* THE HEADING STEP, WHOLE (§2: "card names, row heads — the thing
+   you scan for"). Two lines and then an ellipsis — never mid-word,
+   and the full name stays in the DOM for a reader (§3). */
 .cat-tile-name {
   font-family: var(--font-sans);
   font-size: var(--t-heading-size);
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.008em;
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
   color: var(--fg);
-  /* two lines and then an ellipsis — never mid-word, and the full
-     name stays in the DOM for a reader and a tooltip (§3) */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -883,7 +516,7 @@
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: var(--s-1) var(--s-3);
 }
 
 .cat-num {
@@ -892,27 +525,20 @@
   letter-spacing: 0;
 }
 
-/* THE PRICE STANDS LEVEL WITH THE NAME, NOT UNDER IT. It moves
-   off `--t-body-size` onto the mono ramp's own large step, which
-   at 1280 is the same 15px the name is — so the two are peers, and
-   what tells them apart is the face and the weight rather than a
-   size difference nobody reads as a rank. On a catalogue card the
-   model and the money ARE the two things a person came for; a
-   price ranked below a spec label was the old card's real fault.
-
-   Still mono, still tabular — §2's "if it is a number in a column,
-   it is mono" holds, and four of these line up across a grid row.
-   It costs 1.5px of card height, measured. */
+/* THE PRICE STANDS LEVEL WITH THE NAME: the mono ramp's own large
+   step, 15px, so the model and the money are peers and what tells
+   them apart is the face. Still mono, still tabular — §2's "if it
+   is a number in a column, it is mono" holds across a grid row. */
 .cat-price {
   font-size: var(--t-mono-lg-size);
-  font-weight: 500;
+  font-weight: var(--t-mono-weight);
   color: var(--fg);
 }
 
 .cat-spec {
   display: inline-flex;
   align-items: baseline;
-  gap: 5px;
+  gap: var(--s-1);
   font-size: var(--t-caption-size);
   color: var(--fg-tertiary);
 }
@@ -925,102 +551,32 @@
 }
 
 /* ------------------------------------------------------------
-   THE HAND-OVER — "Configure this one", on the photograph.
+   THE HAND-OVER SLOT — "Configure this one", on the photograph.
 
-   WHERE IT SITS AND WHY. Top right of the tile, which is the top
-   right of the photograph: the name, the price and the specs are
-   all below the shot, so the pill cannot cover a word of them at
-   any width. It is drawn ALWAYS rather than on hover — a control
-   that only exists while a mouse is over it is a control a person
-   with a finger, a keyboard or a screen reader does not have, and
-   this is the act the whole screen is for.
+   The BUTTON is src/ui's, neutral and small; this is only where it
+   sits. Top right of the tile, which is the top right of the
+   photograph: the name, the price and the specs are all below the
+   shot, so it covers no word at any width. Drawn always rather
+   than on hover — a control that only exists while a mouse is over
+   it is a control a finger, a keyboard or a screen reader does not
+   have, and this is the act the whole screen is for.
 
-   THE GROUND IS OPAQUE, WHICH IS A CONTRAST DECISION AND NOT A
-   style one. `--surface-1` over a photograph means the ink is
-   measured against one known colour instead of against turquoise
-   water, a white hull or a black outboard — §1's "the tint counts"
-   applied to the hardest ground in the app. Measured in the
-   browser on Formosa, compositing the whole ancestor chain and the
-   translucency in it:
-
-                    rest        hovered
-       light        17.41 : 1   6.12 : 1
-       dark         14.64 : 1   7.30 : 1
-
-   The pill is 102.2 x 28px at 1600, 1280, 1024, 768 and 600, on a
-   tile that narrows from 496 to 178.7 — so the widest it ever gets
-   is 57% of the narrowest card, and it never leaves the tile.
-
-   ONE ACCENT, AND IT IS NOT SPENT 48 TIMES. At rest the pill is
-   quiet chrome. It takes the accent on TILE hover — one tile at a
-   time — so the screen still holds §1's four accents and the card
-   the mouse is on says plainly what pressing it will do.
+   IT TRAVELS WITH THE CARD. `.ui-card--action:hover` lifts the card
+   a pixel; a slot that stayed put would slide a pixel down the
+   photograph every time the pointer crossed the tile. Same gate as
+   the card's own hover, so a touch does not move it alone.
    ------------------------------------------------------------ */
 .cat-go {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: var(--s-2);
+  right: var(--s-2);
   z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-full);
-  background: var(--surface-1);
-  box-shadow: var(--e1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
+  transition: transform var(--d-med) var(--ease);
 }
-
-/* IT TRAVELS WITH THE CARD. `.cat-tile:hover .cat-card` lifts one
-   pixel; a pill that stayed put would slide a pixel down the
-   photograph every time the mouse crossed the tile. */
-.cat-tile:hover .cat-go {
-  transform: translateY(-1px);
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-fg);
-}
-.cat-go:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-  color: var(--accent-fg);
-}
-/* A CONTROL PRESSES AT 0.97 (§4) — it is a control and not a card,
-   and 0.97 on a 100px pill is three pixels. The lift is restated
-   so the press does not drop it back onto the photograph. */
-.cat-go:active,
-.cat-tile:hover .cat-go:active {
-  transform: translateY(-1px) scale(0.97);
-}
-/* THE RING IS THE ONLY FOCUS SIGNAL, AND IT IS THE TWO-RING ONE.
-   The first correction here took the accent GROUND off focus and
-   left the ring `--blue` — which IS the accent — so the ring still
-   vanished whenever the pill wore the accent, and it wears it on
-   every tile hover. Rest the mouse on the tile you tabbed into and
-   the two are the same colour: measured, outline rgb(10,95,194) two
-   pixels off a rgb(10,95,194) ground.
-
-   `--focus` is the system's answer to exactly this and it is why it
-   is two rings: 2px of the page ground, then 2px of accent. It has
-   to be a BOX-SHADOW — it is a box-shadow value, and `outline: 2px
-   solid var(--focus)` is invalid and silently thrown away, which is
-   the fault this pass cleared out of 21 declarations in the quote
-   feature. */
-.cat-go:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
+@media (hover: hover) and (pointer: fine) {
+  .cat-tile:hover .cat-go {
+    transform: translateY(-1px);
+  }
 }
 
 /* -- more ------------------------------------------------------ */
@@ -1041,85 +597,23 @@
 /* ------------------------------------------------------------
    THE FACET SHEETS. They live inside `.tb-pop`, which brings the
    register's own sheet paint with it — one popover appearance in
-   this feature, not two.
+   this feature, not two. What is inside is src/ui: a Field, Rows,
+   Buttons. These four are the insets around them.
    ------------------------------------------------------------ */
 
 .cat-pop-find {
-  padding: 8px 10px 4px;
-}
-.cat-pop-find .field-input {
-  width: 100%;
+  padding: var(--s-2) var(--s-3) var(--s-1);
 }
 
 .cat-pop-list {
   max-height: 264px;
   overflow-y: auto;
-  padding: 4px;
-}
-
-.cat-pop-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.cat-pop-row:hover {
-  background: var(--surface-3);
-}
-.cat-pop-row:active {
-  background: var(--surface-4);
-}
-.cat-pop-row:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-
-.cat-pop-val {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  color: var(--fg);
-  overflow-wrap: break-word;
-}
-
-.cat-pop-count {
-  flex: none;
-  font-size: var(--t-caption-size);
-  color: var(--fg-tertiary);
-}
-
-.cat-pop-more {
-  width: 100%;
-  padding: 7px 8px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--accent);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  text-align: left;
-  cursor: pointer;
-}
-.cat-pop-more:hover {
-  background: var(--surface-3);
-}
-.cat-pop-more:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
+  padding: var(--s-1);
 }
 
 .cat-pop-none {
   margin: 0;
-  padding: 10px;
+  padding: var(--s-3);
   font-size: var(--t-small-size);
   color: var(--fg-secondary);
 }
@@ -1127,21 +621,11 @@
 .cat-pop-band {
   display: flex;
   gap: var(--s-2);
-  padding: 10px;
+  padding: var(--s-3);
 }
 .cat-pop-bound {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   flex: 1 1 0;
   min-width: 0;
-  color: var(--fg-secondary);
-}
-.cat-pop-bound--wide {
-  flex: 1 1 100%;
-}
-.cat-pop-bound .field-input {
-  width: 100%;
 }
 
 /* ------------------------------------------------------------
@@ -1156,13 +640,10 @@
   }
 }
 
-/* NO GUTTER OVERRIDES AT A BREAKPOINT. There were three — `--s-4`
-   under 1024 and `--s-3` under 768, applied to the head, the rail
-   and the grid — and every one of them re-opened the fault at a
-   narrower window: `--page-gutter` already steps to `--s-5` under
-   1100, and a second ladder beside it meant the grid and the title
-   parted company again the moment the window crossed 1024. One
-   ladder, declared in page.css, and this file reads it. */
+/* NO GUTTER OVERRIDES AT A BREAKPOINT. `--page-gutter` already steps
+   under 1100, and a second ladder beside it parted the grid and the
+   title again the moment the window crossed 1024. One ladder,
+   declared in page.css, and this file reads it. */
 @media (max-width: 1024px) {
   .cat-bare {
     align-items: flex-start;
@@ -1191,25 +672,13 @@
   }
 }
 
-/* MOVEMENT GOES, COLOUR AND OPACITY STAY (§4). The pill still turns
-   accent on hover and still shows its focus ring — what it loses is
-   the pixel it travels and the shrink under the finger. */
+/* MOVEMENT GOES, COLOUR STAYS (§4). The card's own press and lift
+   are card.css's to soften and it does; these are the two local
+   controls and the slot that follows the card. */
 @media (prefers-reduced-motion: reduce) {
-  .cat-tile:hover .cat-card,
-  .cat-card:active,
-  .cat-tile:hover .cat-card:active,
-  /* ALL THREE PRESS SELECTORS, NOT TWO. The press is stated three
-     ways so it wins under a hover; a reduced-motion block that
-     answers only two of them loses on specificity to the third —
-     measured under emulated `reduce`, pointer-down on a card still
-     gave matrix(0.994, 0, 0, 0.994, 0, 0). */
-  .cat-tile:hover .cat-card.k-lift:active,
   .cat-tile:hover .cat-go,
-  .cat-go:active,
-  .cat-tile:hover .cat-go:active,
   .cat-lens-btn:active,
-  .cat-facet:active,
-  .cat-clear:active {
+  .cat-facet:active {
     transform: none;
   }
 }

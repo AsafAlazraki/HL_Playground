@@ -65,6 +65,14 @@ import { CaretLeft, Gear, Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { accentVar, type ModuleDef, type RoleDef } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
+/* THE PRIMITIVES. The tally, the three panels, the void and every
+   job's card are `<Card>`; the captions are `<SectionHead>`; the
+   way out, the door and the repair are `<Button>`; the new-job field
+   is `<Field>`. The local rules that drew them are deleted from
+   modules.css. The map's column heads and the two chip rows stay
+   local — a two-line toggle head and a kind-dotted pill are shapes
+   the layer has no answer for yet — and are reported. */
+import { Button, Card, Field, SectionHead } from '@/ui'
 import { AccessGrid } from './AccessGrid'
 import { ACCESS_ENFORCEMENT, ROLE_IS } from './accessSay'
 import {
@@ -167,26 +175,31 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
         <div className="md-acc-page">
           <header className="md-acc-mast">
             <div className="md-acc-say">
-              <span className="mono-label md-acc-eyebrow">Settings</span>
+              <SectionHead level="none">Settings</SectionHead>
               <h1 className="ds-hero md-acc-title">Access &amp; roles</h1>
               <p className="md-acc-note">{ROLE_IS}</p>
             </div>
 
             <div className="md-acc-aside">
-              <dl className="md-acc-tally">
-                {tally.map((cell) => (
-                  <div className="md-acc-cell" key={cell.term}>
-                    <dt>{cell.term}</dt>
-                    <dd className="md-acc-fig">{grouped(cell.figure)}</dd>
-                  </div>
-                ))}
-              </dl>
+              <Card tone="raised" pad="md">
+                <dl className="md-acc-tally">
+                  {tally.map((cell) => (
+                    <div className="md-acc-cell" key={cell.term}>
+                      <dt>{cell.term}</dt>
+                      <dd className="md-acc-fig">{grouped(cell.figure)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
 
               <div className="md-acc-acts">
-                <button type="button" className="btn md-acc-leave" onClick={onPlaces}>
-                  <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                <Button
+                  tone="neutral"
+                  glyph={<CaretLeft size={ICON_SIZE.tiny} weight="bold" />}
+                  onClick={onPlaces}
+                >
                   The places
-                </button>
+                </Button>
               </div>
             </div>
           </header>
@@ -199,13 +212,15 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
           <p className="md-acc-real">{ACCESS_ENFORCEMENT}</p>
 
           {places.length === 0 ? (
-            <div className="md-acc-void">
-              <span className="mono-label md-acc-void-eyebrow">No places yet</span>
-              <p className="md-acc-void-say">
-                Access is granted in a place, and there are none yet. <em>The places</em> is
-                where one is made.
-              </p>
-            </div>
+            <Card tone="flat" pad="lg">
+              <div className="md-stack">
+                <SectionHead level="none">No places yet</SectionHead>
+                <p className="md-acc-void-say">
+                  Access is granted in a place, and there are none yet. <em>The places</em>{' '}
+                  is where one is made.
+                </p>
+              </div>
+            </Card>
           ) : (
             <>
               {orphans.length > 0 ? (
@@ -223,14 +238,10 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
                   <ul className="md-acc-orphans-list">
                     {orphans.map((o) => (
                       <li key={o.module.id}>
-                        <button
-                          type="button"
-                          className="md-linkbtn"
-                          onClick={() => setPicked(o.module.id)}
-                        >
+                        <Button tone="ghost" size="sm" onClick={() => setPicked(o.module.id)}>
                           {o.module.name} — {o.roleIds.length}{' '}
                           {o.roleIds.length === 1 ? 'grant' : 'grants'}
-                        </button>
+                        </Button>
                       </li>
                     ))}
                   </ul>
@@ -238,25 +249,31 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
               ) : null}
 
               {/* 1 · EVERY JOB, EVERY PLACE */}
-              <section className="md-acc-panel">
-                <h2 className="md-acc-panel-name mono-label">Every job, every place</h2>
+              <section aria-label="Every job, every place">
+                <Card tone="raised" pad="lg">
+                <div className="md-panel">
+                <SectionHead level="h2">Every job, every place</SectionHead>
                 {/* THE HEADING ABOVE ALREADY SAYS WHAT THE GRID IS.
                     What it cannot say is the default, which is the one
                     thing a person reads this grid wrongly without. */}
                 <p className="md-acc-panel-say">A place nobody has closed is open to everyone.</p>
 
                 {roles.length === 0 ? (
-                  <div className="md-acc-void">
-                    <span className="mono-label md-acc-void-eyebrow">No jobs yet</span>
-                    <p className="md-acc-void-say">Nothing is written down until you write it.</p>
-                    {/* THE TALLY ABOVE ALREADY SAYS BOTH NUMBERS. It
-                        prints Jobs 0 and Places 9 as figures; the
-                        eyebrow beside this said "No jobs yet"; and
-                        this line said "You have 9 places and no jobs"
-                        — the zero three ways and the nine twice, on
-                        one screen. The figures are the statement. */}
-                    <NewRole draft={draft} onDraft={setDraft} onAdd={addRole} first />
-                  </div>
+                  <Card tone="flat" pad="lg">
+                    <div className="md-stack">
+                      <SectionHead level="none">No jobs yet</SectionHead>
+                      <p className="md-acc-void-say">
+                        Nothing is written down until you write it.
+                      </p>
+                      {/* THE TALLY ABOVE ALREADY SAYS BOTH NUMBERS. It
+                          prints Jobs 0 and Places 9 as figures; the
+                          eyebrow beside this said "No jobs yet"; and
+                          this line said "You have 9 places and no jobs"
+                          — the zero three ways and the nine twice, on
+                          one screen. The figures are the statement. */}
+                      <NewRole draft={draft} onDraft={setDraft} onAdd={addRole} first />
+                    </div>
+                  </Card>
                 ) : (
                   <>
                     <ReachMap
@@ -273,29 +290,32 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
                     />
                   </>
                 )}
+                </div>
+                </Card>
               </section>
 
               {/* 2 · ONE PLACE, IN FULL */}
               {picked && roles.length > 0 ? (
                 <section
-                  className="md-acc-panel"
+                  aria-label="In one place"
                   style={{ '--md-accent': accentVar(picked.accent) } as CSSProperties}
                 >
+                  <Card tone="raised" pad="lg">
+                  <div className="md-panel">
                   <div className="md-acc-panel-head">
                     <div className="md-acc-panel-id">
-                      <h2 className="md-acc-panel-name mono-label">In one place</h2>
+                      <SectionHead level="h2">In one place</SectionHead>
                       <p className="md-acc-panel-say">Every column says what it hands over.</p>
                     </div>
                     {onSettings ? (
-                      <button
-                        type="button"
-                        className="md-acc-door"
+                      <Button
+                        tone="neutral"
+                        glyph={<Gear size={ICON_SIZE.small} weight="light" />}
                         title={`Set up ${picked.name} — its mark, its verbs and its tables`}
                         onClick={() => onSettings(picked.id)}
                       >
-                        <Gear size={ICON_SIZE.small} weight="light" aria-hidden="true" />
-                        <span>Set up {picked.name}</span>
-                      </button>
+                        Set up {picked.name}
+                      </Button>
                     ) : null}
                   </div>
 
@@ -346,13 +366,17 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
                   </p>
 
                   <AccessGrid module={picked} roles={roles} />
+                  </div>
+                  </Card>
                 </section>
               ) : null}
 
               {/* 3 · THE JOBS THEMSELVES */}
               {roles.length > 0 ? (
-                <section className="md-acc-panel">
-                  <h2 className="md-acc-panel-name mono-label">Where each job reaches</h2>
+                <section aria-label="Where each job reaches">
+                  <Card tone="raised" pad="lg">
+                  <div className="md-panel">
+                  <SectionHead level="h2">Where each job reaches</SectionHead>
                   <p className="md-acc-panel-say">
                     A job reaches a place it has been granted something in, and every place
                     nobody has closed.
@@ -367,6 +391,8 @@ export function AccessScreen({ onPlaces, onSettings }: AccessScreenProps): React
                       />
                     ))}
                   </ul>
+                  </div>
+                  </Card>
                 </section>
               ) : null}
             </>
@@ -533,7 +559,9 @@ function Job({
   )
 
   return (
-    <li className="md-acc-job">
+    <li>
+    <Card tone="flat" pad="md">
+    <div className="md-stack">
       <p className="md-acc-job-top">
         <span className="md-acc-job-name">{role.name}</span>
         <span className="md-acc-job-reach mono-label">
@@ -564,6 +592,8 @@ function Job({
             : 'Let into nowhere in particular. It works wherever nobody has closed the door.'}
         </p>
       )}
+    </div>
+    </Card>
     </li>
   )
 }
@@ -591,19 +621,21 @@ function NewRole({
         onAdd()
       }}
     >
-      <input
-        className="field-input"
-        type="text"
+      <Field
+        label="What this role is called"
         value={draft}
-        spellCheck={false}
+        onChange={onDraft}
         placeholder={first ? 'The first job at your dealership' : 'Another job'}
-        aria-label="What this role is called"
-        onChange={(e) => onDraft(e.target.value)}
+        autoComplete="off"
       />
-      <button type="submit" className="btn btn-primary" disabled={draft.trim() === ''}>
-        <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+      <Button
+        type="submit"
+        tone="primary"
+        glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
+        refusedBecause={draft.trim() === '' ? 'Give the job a name first.' : undefined}
+      >
         Add role
-      </button>
+      </Button>
     </form>
   )
 }

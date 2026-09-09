@@ -93,89 +93,6 @@
   z-index: 0;
 }
 
-/* -- the masthead --------------------------------------------
-   The business's name at the hero step, and two quiet controls.
-   THE COUNTED STRIP THAT USED TO STAND HERE IS GONE — "9 Places ·
-   6,074 Things in them · 24 Tables in use", in the largest figures
-   on the page, in its strongest position. A count belongs on the
-   thing it counts. */
-
-.md-dash-mast {
-  position: relative;
-  z-index: 1;
-  flex: none;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--s-4) var(--s-8);
-  padding: var(--s-6) var(--s-6) var(--s-4);
-  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
-}
-.md-dash-say {
-  min-width: 0;
-}
-.md-dash-eyebrow {
-  display: block;
-  margin-bottom: var(--s-2);
-  color: var(--fg-tertiary);
-}
-/* `.ds-hero` carries the whole step — size, weight, leading and
-   tracking together. Nothing here reaches in for one of them.
-
-   A TITLE ON A REGISTER HAS A CEILING, and the wide pass measured
-   where it is. Ramped without one, the old `--display-l-size` title
-   reached 38px at 1440 and 46px at 2560 — a marketing hero over a
-   list of data cards, and on a wide screen the largest thing on the
-   page by a factor of two. Established practice caps a dashboard's
-   page title around 28px, on the ground that an oversized heading
-   steals the room the data wanted. The hero step is the header
-   component's now, so the cap is enforced where the size is set:
-   `.md-idx-name` and `.md-set` below both take `min(…, 28px)`, and
-   `.ds-hero` answers for this one. `balance` is free and stops a
-   two-word business name breaking one word onto a second line. */
-.md-dash-org {
-  margin: 0;
-  max-width: 20ch;
-  text-wrap: balance;
-}
-
-.md-dash-acts {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-/* BUTTONS ARE NOT LABELS — DESIGN_PRINCIPLES rule 3. `.btn` in the
-   shared foundation stamps its text uppercase and every one of these
-   is an action, so they are corrected here beside the class rather
-   than by re-cutting `.btn`, which ~200 controls this pass has not
-   reached still depend on.
-
-   `.md-mark-addr .btn` JOINS THE LIST, from the pass that swept the
-   settings page: it shipped as "USE IT", and "ADD ROLE" beside it
-   wrapped onto two lines inside its own pill because an uppercase
-   run is wider than the sentence it is made from. Hence `nowrap` —
-   every name here is one or two words and none of them may break. */
-.md-order,
-.md-access,
-.md-acc-leave,
-.md-empty-do,
-.md-mark-addr .btn,
-.md-role-new .btn {
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 520;
-  letter-spacing: -0.003em;
-  text-transform: none;
-  white-space: nowrap;
-}
-.md-order.is-on {
-  color: var(--fg);
-  border-color: var(--line-strong);
-  background: var(--surface-3);
-}
-
 /* -- filter by type -------------------------------------------
    One chip per kind that is really present, in TABLE_KINDS' own
    order, each carrying its own count. `.k-filter` is the system's,
@@ -226,30 +143,6 @@
   color: var(--fg-secondary);
 }
 
-/* -- the empty state -----------------------------------------
-   THE ONE PLACE ON THIS SCREEN WHERE PROSE EARNS ITS SPACE. An
-   empty state keeps its sentence AND its act; a blank screen saying
-   "nothing here" would read as though the app had lost the 21
-   tables an admin just loaded, so it counts them. */
-
-.md-empty {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-3);
-  max-width: 620px;
-  margin: 0 var(--s-6);
-  padding: var(--s-6);
-  background: var(--grad-surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-}
-.md-empty-eyebrow {
-  color: var(--fg-tertiary);
-}
 .md-empty-say {
   margin: 0;
   font-size: var(--t-body-size);
@@ -267,23 +160,6 @@
   font-size: var(--t-mono-lg-size);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-}
-.md-empty-do {
-  margin-top: var(--s-2);
-}
-/* A THING THAT CANNOT BE DONE SAYS WHY, WHERE IT IS — rule 10. */
-.md-empty-why {
-  margin: 0;
-  max-width: 60ch;
-  font-size: var(--t-small-size);
-  line-height: 1.6;
-  color: var(--fg-secondary);
-  text-wrap: pretty;
-}
-.md-empty-why em {
-  font-style: normal;
-  font-weight: 560;
-  color: var(--fg);
 }
 
 /* -- the grid -------------------------------------------------
@@ -362,77 +238,16 @@
 
 /* THE SLOT, not the card. Two controls stand here — the card itself
    and the arrows that move its module — and a button inside a button
-   is invalid HTML a browser resolves by dropping one of them. */
+   is invalid HTML a browser resolves by dropping one of them.
+
+   `grid`, so the one card in it fills the slot on both axes. The
+   card is `<Card>` from src/ui now and takes no width or height of
+   its own; the slot is the surface that decides its size. */
 .md-grid-slot {
   position: relative;
-  display: flex;
+  display: grid;
   min-width: 0;
   min-height: 0;
-}
-
-/* -- one place ------------------------------------------------
-   THE KIND HUE CARRIES A FULL-HEIGHT RAIL, which is the amendment
-   DESIGN_PRINCIPLES §1 now carries and the thing phase one demoted
-   to a 7px dot when the navy chrome arrived. `.k-rail-thick` owns
-   the leading edge, so the three neutral edges are declared one at
-   a time rather than with the `border` shorthand — a shorthand here
-   would reset the rail depending on which stylesheet loaded last. */
-
-.md-place {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: grid;
-  /* the face takes its own aspect ratio rather than a share of a
-     fixed row height, so a photograph is never squeezed */
-  grid-template-rows: auto auto auto;
-  width: 100%;
-  min-width: 0;
-  text-align: left;
-  background: var(--grad-surface);
-  border-top: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  border-radius: var(--r-card);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  cursor: pointer;
-  /* EVERY PROPERTY THAT MOVES IS NAMED. This list was `--press-fx`
-     plus two colours, and a bundled shorthand is how a card ends up
-     transitioning something nobody chose; the three signals here are
-     the edge, the depth and the lift, each with its own curve. */
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
-}
-.md-place:hover,
-.md-grid-slot:hover .md-place {
-  border-top-color: var(--line-strong);
-  border-right-color: var(--line-strong);
-  border-bottom-color: var(--line-strong);
-}
-.md-place:hover {
-  transform: translateY(-2px);
-}
-/* A CARD PRESSES AT 0.994 AND LOSES ITS LIFT, and the press deepens
-   the hover rather than reversing it: the shadow drops back to the
-   resting step and the surface settles by a hair. 0.994 and not
-   0.97 — 0.97 is a 6px shrink on a 200px card and a 10px shrink on
-   the 349px one the wide layout draws, and at either size it reads
-   as a glitch. Press lands on pointer-down, which is what `:active`
-   is. */
-.md-place:active {
-  transform: translateY(0) scale(0.994);
-  box-shadow: var(--e1);
-  transition-duration: var(--d-press);
-}
-/* AN OUTLINE, NOT THE FOUNDATION'S RING. `.ds-root :focus-visible`
-   re-radiuses what it rings to `--r-control`, which squares a
-   card's corners the moment it is tabbed to. */
-.md-place:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: var(--r-card);
 }
 
 /* -- the face -------------------------------------------------
@@ -459,6 +274,11 @@
   aspect-ratio: 16 / 9;
   min-height: 0;
   overflow: hidden;
+  /* THE CARD IS `<Card pad="none">` AND CLIPS NOTHING, so the face
+     rounds its own top corners, one pixel inside the card's border —
+     a square photograph poking out of a 10px radius is the first
+     thing anyone sees on this grid. */
+  border-radius: calc(var(--r-card) - 1px) calc(var(--r-card) - 1px) 0 0;
   background: var(--surface-3);
   border-bottom: 1px solid var(--line-subtle);
 }
@@ -491,19 +311,14 @@
   object-fit: cover;
   object-position: center;
   /* the photographs are a mixed set — yard shots, studio cut-outs,
-     turquoise lifestyle. A whisper of desaturation at rest pulls
-     them into one page; hover gives the colour back. */
+     turquoise lifestyle. A whisper of desaturation pulls them into
+     one page. The hover zoom went with the card's own hover rule:
+     the card's answer to the pointer is the primitive's now (a lift
+     and a shadow step), and a second answer under it was two
+     surfaces moving at once. */
   filter: saturate(0.94);
-  transform: scale(1.02);
-  transition:
-    transform var(--d-scene) var(--ease-out-expo),
-    filter var(--d-med) var(--ease);
 }
-.md-place:hover .md-place-shot,
-.md-place:focus-visible .md-place-shot {
-  transform: scale(1.06);
-  filter: saturate(1.04);
-}
+
 /* THE MARK. On an empty face it is the face's subject, in the
    place's own hue. Over a photograph it steps into a chip on the
    app's own surface, because a glyph drawn straight onto a yard
@@ -596,78 +411,48 @@
   padding: var(--s-2) var(--s-3) 0;
   min-width: 0;
 }
-/* NOTHING TRUNCATES MID-WORD. Two lines, then a clamp, with the
+/* NOTHING TRUNCATES MID-WORD. Three lines, then a clamp, with the
    full name still in the DOM and on the card's accessible name. And
    the lines are BALANCED: an unbalanced "Parts &" / "Accessories"
    makes a whole row of the grid look ragged, and it costs nothing.
 
-   `.ds-display-lg` CARRIES THE STEP — see the note at the call site
-   for why the name went from 15px to it. This rule owns the clamp,
-   the wrap and the reserved box, and touches none of the step's own
-   values.
+   `.ds-display-xl` CARRIES THE STEP. This rule owns the clamp, the
+   wrap and the reserved box, and touches none of the step's own
+   values (rule 6).
 
-   THREE LINES NOW, NOT TWO. At 15px every name in this seed fitted
-   two; at 26.88px "Haines Signature Factory Packages" and "OBSOLETE
-   Trailers — No Longer Available" do not, and a door that says
-   "Haines Signature Factory" is worse than a door with a third line.
+   WHY THE MIDDLE STEP, AND NOT THE ONE BELOW OR ABOVE. The
+   2026-09-09 sweep measured this stage at 2.79x — the largest glyph
+   on it was `.ph-name`, the page header's word "Modules", at 30.72px,
+   3.84px ABOVE the twenty-five names it heads. Chrome outranking its
+   own subject. `--t-display-xl` was cut for exactly this case: "a
+   name that is one of several and is the point of the screen — a
+   door, a place". It resolves to 34.00px at 1280, which puts the
+   subject above the chrome again, and it is not the marque: ds.css
+   scopes that to ONE per screen, and the module WORKSPACE is the
+   screen that is one place (`.md-work-name`). A card here is a door
+   to it.
 
-   AND THE BOX IS RESERVED AT TWO. `min-height` of two lines so a
-   one-word place and a two-word place are the same card, which is
-   what keeps a row of the grid level; the third line is the
-   exception that stretches its own row rather than the budget every
-   card pays.
-
-   ------------------------------------------------------------
-   AND NO, THIS DOES NOT TAKE THE MARQUE. The 2026-09-09 visual
-   sweep measured this stage at 2.79x against the ~7x PHASE_TWO
-   §2.3 asks for, and the step above is the obvious-looking answer.
-   It is the wrong one twice over, and both refusals are measured
-   rather than felt.
-
-   ONE — THERE ARE TWENTY-FIVE OF THESE. ds.css scopes the marque to
-   "the name of the thing being sold. ONE per screen, and only where
-   the subject IS a product". A grid IS the plural case: the module
-   WORKSPACE is the screen that is one place, and that is where the
-   marque went (`.md-work-name`). A card here is a door to it.
-
-   TWO — THE CELL IS 258.5px AND THE NAMES DO NOT FIT. Measured at
-   1280x800 on the real seed, Archivo at each candidate step:
-
-     "Haines Signature Factory Packages"     26.9px   419px  2 lines
-                                             43.5px   678px  3 lines
-                                             82.9px  1255px  5 lines
-     "OBSOLETE Trailers — No Longer Avail…"  26.9px   504px  2 lines
-                                             43.5px   817px  4 lines
-
-   Four lines is past the three-line clamp above, so the hero step
-   would put an ellipsis on this grid — and the sweep records that
-   this app has exactly one truncation anywhere and that it is a
-   fault. The cell does not widen to rescue it either: the grid's
-   own note twelve rules up explains that 290px was measured so
-   1280 keeps THREE columns rather than inflating four cards to
-   457px, and a wider window answers with more columns, never with
-   wider cards.
-
-   WHAT IS ACTUALLY WRONG ON THIS STAGE IS NOT IN THIS FILE. Its
-   largest glyph is `.ph-name` at 30.72px — the shared page header,
-   `features/page/page.css:101` — which is 3.84px ABOVE the twenty
-   five names it heads. The chrome outranking its own subject is the
-   fault; the same sweep's finding 7 already records that rule as a
-   fifth, invented display step (`clamp(26px, 2.4vw, 34px)` / 660 /
-   1.08 / -0.028em, against display-lg's 2.1vw / 650 / 1.1 /
-   -0.026em). Settling it there settles it for the five stages that
-   share it, which is why it is not settled here. */
+   THE CELL, MEASURED. The grid's own note explains that 290px was
+   measured so 1280 keeps three columns; a track there is 322px and
+   the body inside it 298px. Archivo at 660 through canvas, the
+   longest single WORD in the seed's 25 places is "Inflatables",
+   which sets in 190px at 34px — so no name here can break mid-word,
+   and the longest NAME, "Haines Signature Factory Packages", takes
+   three balanced lines inside the clamp. ds.css's note on this step
+   says the surface that wears it must stop its grid adding columns
+   past the width where the name stops fitting: this grid's floor is
+   290px at every width above 1100, so the cell never shrinks
+   beneath the measurement, and at 1100 the whole step is swapped
+   for `--t-heading-*` (below), never shrunk. */
 .md-place-name {
   text-transform: none;
-  color: var(--fg);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   line-clamp: 3;
-  min-height: calc(2em * var(--t-display-lg-lead));
+  min-height: calc(2em * var(--t-display-xl-lead));
   overflow: hidden;
   overflow-wrap: break-word;
-  text-wrap: balance;
 }
 /* ============================================================
    WHERE THE MARK IS SAYING IT, THE NAME STOPS SHOUTING IT.
@@ -689,20 +474,26 @@
    on the corner of a photograph; a chip is not a hero and the name
    below it is still the card's subject.
 
-   The step is the workspace's own `.is-quiet` — body size, 500,
+   The step is the workspace's own `.is-quiet` — the body step,
    secondary ink — so a demoted name reads the same on both screens.
-   ============================================================ */
-.md-place:has(.md-place-mark:not(.is-over) .md-place-logo) .md-place-name {
+
+   ASKED OF THE FACE, NOT THE CARD. The card is `<Card>` and takes no
+   class of this feature's, so the question is put to the face and
+   answered on the body beside it (`+`). Both are this file's own
+   elements. */
+.md-place-face:has(.md-place-mark:not(.is-over) .md-place-logo) + .md-place-body .md-place-name {
   font-family: var(--font-sans);
+  font-variation-settings: normal;
   font-size: var(--t-body-size);
-  font-weight: 500;
-  line-height: 1.4;
-  letter-spacing: 0;
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
   min-height: 0;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   color: var(--fg-secondary);
 }
+
 .md-place-fact {
   display: flex;
   align-items: baseline;
@@ -743,11 +534,7 @@
   padding: var(--s-2) var(--s-3) var(--s-3);
   min-width: 0;
 }
-.md-place-type {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+
 /* WHO MAY WORK HERE, and only where a dealer has closed the door.
    Absent access is unrestricted, and unrestricted is not a decision
    anybody made. */
@@ -760,121 +547,11 @@
   white-space: nowrap;
 }
 
-/* -- new module, as a card in the grid ------------------------ */
-
-.md-place--new {
-  background: none;
-  border: 1px dashed var(--line-strong);
-  box-shadow: none;
-  align-content: center;
-  justify-items: center;
-  grid-template-rows: auto auto auto;
-  padding: var(--s-4);
-  text-align: center;
-  color: var(--fg-secondary);
-}
-.md-place--new:hover {
-  border-color: var(--accent);
-  color: var(--fg);
-  background: var(--surface-2);
-}
-.md-place-face--new {
-  background: none;
-  border-bottom: 0;
-  min-height: 0;
-}
-.md-place-face--new::before {
-  content: none;
-}
-/* NEW MODULE IS A CONTROL, NOT A PLACE. It borrows the card's shape
-   so creating one and opening one are the same gesture at the same
-   size, but its label is a verb — it takes neither the display step
-   nor the two-line box the names above reserve. */
-.md-place--new .md-place-name {
-  padding: var(--s-2) 0 0;
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  min-height: 0;
-  color: inherit;
-}
 .md-place-refused {
   max-width: 24ch;
   font-size: var(--t-caption-size);
   line-height: 1.45;
   color: var(--fg-secondary);
-}
-.md-place--new[aria-disabled='true'] {
-  cursor: default;
-}
-.md-place--new[aria-disabled='true']:hover {
-  border-color: var(--line-strong);
-  background: none;
-}
-
-/* -- reordering ------------------------------------------------
-   Reordering is a fact about MODULES, not about the brands inside
-   them: the seven Highfield-to-Haines cards are one module's run
-   and move together. So the arrows are drawn once per run, on the
-   card that leads it, and they name the module they move. */
-
-.md-place-order {
-  position: absolute;
-  top: var(--s-2);
-  right: var(--s-2);
-  z-index: 3;
-  display: flex;
-  gap: 2px;
-  padding: 2px;
-  background: var(--surface-1);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  box-shadow: var(--e1);
-}
-.md-place-move {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 0;
-  border-radius: var(--r-chip);
-  background: none;
-  color: var(--fg-secondary);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.md-place-move:hover {
-  background: var(--surface-3);
-  color: var(--fg);
-}
-/* PRESS IS SCOPED AWAY FROM THE REFUSAL rather than cancelled on it.
-   `:active { transform: none }` is the pattern the redesign removed —
-   three controls that cancelled their own feedback — so the arrow at
-   the end of the list simply never claims the press in the first
-   place. */
-.md-place-move:not([aria-disabled='true']):active {
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-/* THE END OF THE LIST. It says no by going quiet, by answering
-   neither hover nor press, and by carrying the sentence that explains
-   it — never by leaving the tab order.
-
-   IT STEPS DOWN TO `--fg-tertiary`, NOT TO `--fg-quaternary`. The
-   quaternary tier is 2.8:1 and ds.css's own line on it is that it is
-   barred from carrying meaning; a refused arrow carries WHICH WAY is
-   refused, which is meaning. Tertiary is the floor that clears 4.5:1
-   and it is still a visible step down from the live arrow's
-   `--fg-secondary`. */
-.md-place-move[aria-disabled='true'] {
-  color: var(--fg-tertiary);
-  cursor: default;
-}
-.md-place-move[aria-disabled='true']:hover {
-  background: none;
-  color: var(--fg-tertiary);
 }
 
 /* -- the one figure the cards cannot carry -------------------- */
@@ -930,22 +607,12 @@
     -webkit-line-clamp: 2;
     line-clamp: 2;
   }
-  .md-dash-mast,
-  .md-filters,
   .md-dash-spare {
     padding-left: var(--s-5);
     padding-right: var(--s-5);
   }
 }
 @media (max-width: 860px) {
-  .md-dash-mast {
-    align-items: flex-start;
-    padding-top: var(--s-5);
-  }
-  .md-dash-acts {
-    width: 100%;
-    justify-content: flex-start;
-  }
   .md-grid {
     grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
     grid-auto-rows: minmax(126px, 1fr);
@@ -957,45 +624,13 @@
   }
 }
 
-/* MOVEMENT GOES; LIGHT AND COLOUR STAY. Reduced motion means
-   gentler feedback, not no feedback — the card still answers a
-   press, the shadow drops. */
+/* MOVEMENT GOES; LIGHT AND COLOUR STAY. The card's and the arrows'
+   presses are the primitives' and carry their own arm; the filter
+   chip is the one press still drawn here. */
 @media (prefers-reduced-motion: reduce) {
-  .md-place:hover,
-  .md-place:active,
-  .md-filter:active,
-  /* the arrow's press is scoped away from the refused end of the
-     list, so this has to carry the same `:not()` to outweigh it */
-  .md-place-move:not([aria-disabled='true']):active {
+  .md-filter:active {
     transform: none;
   }
-  .md-place:hover .md-place-shot,
-  .md-place:focus-visible .md-place-shot {
-    transform: scale(1.02);
-  }
-}
-/* ============================================================
-   A VISIBLE STUB — a control that is drawn, disabled, and says
-   what it will do. The alternative is a control that looks
-   finished and is not, which is a lie told to whoever is looking.
-   ============================================================ */
-
-.md-stub {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3);
-  border: 1px dashed var(--hairline-strong);
-  border-radius: var(--radius);
-  background: var(--paper-sunken);
-}
-
-.md-stub-say {
-  margin: 0;
-  font-size: var(--ui-s-size);
-  letter-spacing: var(--ui-s-track);
-  line-height: var(--ui-s-lead);
-  color: var(--ink-soft);
 }
 
 /* ============================================================
@@ -1051,10 +686,6 @@
   min-height: 24px;
 }
 
-.md-dlg-eyebrow {
-  color: var(--ink-faint);
-}
-
 .md-dlg-q {
   margin: 0;
   font-size: 21px;
@@ -1062,27 +693,6 @@
   letter-spacing: 0.02em;
   text-transform: none;
   color: var(--ink);
-}
-
-.md-dlg-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--ink-faint);
-  cursor: pointer;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.md-dlg-close:hover {
-  color: var(--ink);
-  border-color: var(--hairline);
 }
 
 /* -- the two halves ----------------------------------------- */
@@ -1105,71 +715,10 @@
   margin-top: var(--sp-4);
 }
 
-.md-pick-grp-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--hairline);
-  color: var(--ink-soft);
-}
-
-.md-pick-grp-count {
-  color: var(--ink-faint);
-}
-
 .md-pick-list {
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.md-pick-row {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  align-items: center;
-  gap: 2px var(--sp-2);
-  width: 100%;
-  padding: 6px var(--sp-2);
-  text-align: left;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.md-pick-row:hover {
-  background: var(--paper-high);
-  border-color: var(--hairline);
-}
-.md-pick-row.is-picked {
-  background: var(--paper-high);
-  border-color: var(--row-accent, var(--ink));
-  box-shadow: inset 2px 0 0 var(--row-accent, var(--ink));
-}
-
-.md-pick-glyph {
-  grid-row: span 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--row-accent, var(--ink-soft));
-}
-
-.md-pick-name {
-  font-size: var(--ui-m-size);
-  letter-spacing: var(--ui-m-track);
-  color: var(--ink);
-}
-
-.md-pick-facts {
-  color: var(--ink-faint);
-  text-transform: none;
-  letter-spacing: 0.04em;
 }
 
 .md-pick-note {
@@ -1204,18 +753,6 @@
   gap: 5px;
 }
 
-/* -- the siblings ------------------------------------------- */
-
-.md-sibs {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper);
-}
-
 .md-sibs-say {
   margin: 0;
   font-size: var(--ui-s-size);
@@ -1231,30 +768,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.md-sib {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 4px 5px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.md-sib:hover {
-  background: var(--paper-high);
-}
-
-.md-sib-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: var(--ui-size);
-  letter-spacing: var(--ui-track);
-  color: var(--ink);
-}
-
-.md-sib-rows {
-  color: var(--ink-faint);
 }
 
 .md-dlg-foot {
@@ -1356,25 +869,6 @@
   color: var(--ink-soft);
 }
 
-.md-idx-find {
-  position: relative;
-  flex: 0 0 auto;
-  width: 240px;
-}
-
-.md-idx-find-mark {
-  position: absolute;
-  top: 50%;
-  left: 8px;
-  transform: translateY(-50%);
-  color: var(--ink-faint);
-  pointer-events: none;
-}
-
-.md-idx-find-input {
-  padding-left: 26px;
-}
-
 /* -- one table's run ---------------------------------------- */
 
 .md-sec {
@@ -1442,60 +936,6 @@
   list-style: none;
 }
 
-/* A CATALOGUE WITHOUT PICTURES IS A SPREADSHEET — and a tile with NO
-   picture says nothing about a picture. It shows the row label and
-   stops, because a broken-image glyph in front of a customer is worse
-   than a plain name.
-
-   ONE DECLARATION. This rule, its hover and its press were declared
-   twice — here, and again 700 lines down in a re-skin block that
-   re-typed them without deleting the originals. Reading what a tile
-   looked like meant holding both in your head. The surviving values
-   are the later ones; the reasons are written on the rule they belong
-   to rather than on the pass that happened to change them. */
-.md-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 5px;
-  width: 100%;
-  height: 100%;
-  padding: var(--sp-2);
-  overflow: hidden;
-  text-align: left;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec1);
-  cursor: pointer;
-  /* every property that moves is named — this list was `--press-fx`
-     and two colours, and `transform` is the lift and the press both */
-  transition:
-    border-color var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-med) var(--ease-draft),
-    transform var(--t-med) var(--ease-draft);
-}
-.md-tile:hover {
-  border-color: var(--hairline-strong);
-  box-shadow: var(--ec3);
-  transform: translateY(-2px);
-}
-/* A CARD PRESSES BY 0.994 AND LOSES ITS LIFT — 0.97 on a 200px tile
-   is a 6px shrink and reads as a glitch. */
-.md-tile:active {
-  transform: translateY(0) scale(0.994);
-}
-.md-tile:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
-}
-/* a module with `open` switched off lists but does not lead anywhere;
-   the face stops offering itself as a target */
-.md-tile.is-flat,
-.md-row.is-flat {
-  cursor: default;
-}
-
 /* THE PICTURE'S BOX IS RESERVED WHETHER OR NOT THERE IS A PICTURE.
    A catalogue where some tiles are short and some are tall reads as
    broken; a tile with no picture is simply a name on plain paper at
@@ -1543,44 +983,6 @@
   padding: 0;
   list-style: none;
   border-top: 1px solid var(--hairline);
-}
-
-.md-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: var(--sp-3);
-  width: 100%;
-  padding: 5px var(--sp-2);
-  text-align: left;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--hairline);
-  cursor: pointer;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    background var(--t-fast) var(--ease-draft);
-}
-.md-row:hover {
-  background: var(--paper-high);
-}
-.md-row:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-
-.md-row-name {
-  font-size: var(--ui-size);
-  letter-spacing: var(--ui-track);
-  color: var(--ink);
-}
-
-.md-row-price {
-  font-family: var(--font-mono);
-  font-size: var(--data-s-size);
-  letter-spacing: var(--data-s-track);
-  color: var(--ink-soft);
-  text-align: right;
 }
 
 /* -- what the page says when it is not drawing --------------- */
@@ -1641,27 +1043,6 @@
   animation: fade-in var(--t-fast) var(--ease-draft) both;
 }
 
-.md-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  background: var(--paper-sunken);
-  border: 1px solid var(--hairline);
-  border-left: 2px solid var(--md-accent, var(--ink));
-  border-radius: var(--radius);
-}
-
-/* WAS `--ink-faint`, WHICH FAILS ON `--paper-sunken`: 4.22:1, drawn
-   since the designer shipped, and behind the gear where the redesign's
-   nine-surface sweep never reached it. `.mono-label` already carries
-   `--ink-soft` (7.7:1 on white, 6.9:1 here); this declaration existed
-   only to step it down, and it stepped it below the floor. */
-.md-panel-name {
-  margin: 0;
-  color: var(--ink-soft);
-}
-
 /* A MEASURE, BECAUSE A SENTENCE IS NOT A LAYOUT.
 
    These sentences had no cap at all, so on a 2560px window the
@@ -1704,81 +1085,6 @@
   color: var(--ink);
 }
 
-/* -- a small square handle, used everywhere in here ---------- */
-
-.md-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--ink-faint);
-  cursor: pointer;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.md-icon-btn:hover:not(:disabled) {
-  color: var(--ink);
-  border-color: var(--hairline-strong);
-}
-.md-icon-btn--drop:hover:not(:disabled) {
-  color: var(--red);
-  border-color: var(--red);
-}
-.md-icon-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.md-linkbtn {
-  align-self: flex-start;
-  padding: 0;
-  border: none;
-  background: none;
-  font-family: var(--font-ui);
-  font-size: var(--ui-s-size);
-  letter-spacing: var(--ui-s-track);
-  color: var(--blue-deep);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-  transition:
-    color var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
-}
-
-/* RULE 8, AND IT WAS THE ONLY RULE THIS CLASS HAD. Six controls in
-   this feature carry `md-linkbtn` and it declared a focus ring and
-   nothing else — no hover, no press — which mattered more once "Why
-   it is what it is" became the sole route to a rule's 62-word
-   reason. A link's hover is its ink, not a ground. */
-.md-linkbtn:hover {
-  color: var(--accent-hover);
-}
-
-.md-linkbtn:active {
-  transform: scale(0.97);
-  color: var(--accent-hover);
-}
-
-.md-linkbtn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: var(--r-control);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .md-linkbtn:active {
-    transform: none;
-  }
-}
-
 /* -- the capability strip ------------------------------------ */
 
 .md-caps {
@@ -1788,19 +1094,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.md-cap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--sp-2);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-}
-.md-cap.is-refused {
-  background: var(--paper);
 }
 
 .md-switch {
@@ -1885,12 +1178,17 @@
   color: var(--ink);
 }
 
+/* `--ink-soft`, NOT `--ink-faint`: this is a sentence ("say what goes
+   with what"), and the ramp gives descriptions and help the soft ink.
+   It also sits on a SUNKEN `<Card>` when the verb is refused, where
+   the faint tier measures 4.22:1 and fails; the soft tier is 6.9:1
+   there and 7.7:1 on the flat card beside it. */
 .md-cap-says {
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-small-lead);
   letter-spacing: 0;
   text-transform: none;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 /* A CAPABILITY THAT CANNOT BE TURNED ON SAYS WHAT IS MISSING —
@@ -1928,29 +1226,6 @@
   flex-wrap: wrap;
 }
 
-.md-shape-btn {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex: 1 1 200px;
-  padding: var(--sp-2);
-  text-align: left;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.md-shape-btn:hover {
-  border-color: var(--hairline-strong);
-}
-.md-shape-btn.is-on {
-  border-color: var(--md-accent, var(--ink));
-  box-shadow: inset 2px 0 0 var(--md-accent, var(--ink));
-}
-
 .md-shape-word {
   font-size: var(--ui-size);
   letter-spacing: var(--ui-track);
@@ -1973,21 +1248,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.md-bind,
-.md-block {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: var(--sp-2);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-}
-.md-bind.is-gone,
-.md-block.is-gone {
-  border-color: var(--red);
 }
 
 .md-bind-top {
@@ -2154,26 +1414,6 @@
   color: var(--ink);
 }
 
-/* -- adding a table, or a list ------------------------------- */
-
-.md-add {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-2);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-}
-
-.md-add-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  color: var(--ink-soft);
-}
-
 .md-add-list {
   display: flex;
   flex-direction: column;
@@ -2183,51 +1423,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.md-add-row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  width: 100%;
-  padding: 4px 5px;
-  text-align: left;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-}
-.md-add-row:hover {
-  background: var(--paper-sunken);
-  border-color: var(--hairline);
-}
-
-.md-add-btn {
-  align-self: flex-start;
-}
-
-/* ── THE LAST THREE UPPERCASE BUTTONS IN THE APP ──────────────────
-   §2's list of what uppercase may never be ends with "a button", and
-   a sweep of every control on ten surfaces found exactly three that
-   still were: "USE IT", "ADD A TABLE TO THIS LIST" and "ADD A LIST
-   TO THIS PAGE", all 11px mono, all on this one panel. They are not
-   a modules decision — they are `base.css`'s original `.btn`, which
-   is 11px mono uppercase and which nothing on this panel had
-   overridden. Every other button in the app is overridden somewhere,
-   which is why the count is three and not three hundred. Given the
-   type the rest of the app's secondary buttons wear rather than a
-   bare `text-transform: none`, because a sentence-case 11px mono
-   button is neither thing. */
-.md-add-btn,
-.md-plain-btn {
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  letter-spacing: 0;
-  text-transform: none;
-  /* "Use it" sits beside a `flex: 1` address box, and two words wide
-     enough to wrap is a control that reads "Use / it". Two words. */
-  white-space: nowrap;
 }
 
 /* ============================================================
@@ -2249,22 +1444,11 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  .md-idx-find {
-    width: 100%;
-  }
+  
 }
 
 /* NARROW: the four facts stop being one line and become two, rather
    than the name being squeezed to nothing between three figures. */
-@media (max-width: 620px) {
-  .md-late {
-    flex-wrap: wrap;
-    gap: 2px var(--sp-2);
-  }
-  .md-late-what {
-    flex: 1 0 100%;
-  }
-}
 
 /* ============================================================
    A PICTURE HELD AS A LINK SAYS SO — the third outcome in a tile's
@@ -2317,123 +1501,19 @@
 }
 
 /* ============================================================
-   A DISABLED CONTROL STILL HAS TO BE READ.
-
-   `.btn:disabled` in src/styles/base.css is `opacity: 0.45`, and 45%
-   of `--ink` over this stub's `--paper-sunken` composites to
-   **3.14:1** — measured on the live dashboard at 1280 and 1920. That
-   is under `--fg-quaternary`'s 2.8:1 line by a hair and nowhere near
-   the 4.5:1 floor, and the words are the whole point of the control:
-   a person learns what is unavailable by READING it. "Reorder cards"
-   greyed to illegibility teaches nobody that reordering exists.
-
-   Opacity is the wrong instrument. It dims the LABEL, which is the one
-   part that has to survive, and it dims it by an amount that depends on
-   whatever happens to be behind the control. So the disabled state
-   drops the alpha and says its unavailability structurally instead:
-
-     the label stays legible   `--ink-soft`, 7.65:1 on the plate
-     the plate goes flat       `--paper-high` and a plain `--hairline`
-                               instead of the raised `--hairline-strong`
-                               bezel, so it reads as a slot rather than
-                               a thing to press
-     nothing answers the       `pointer-events: none` is already on
-     pointer                   `.btn:disabled`; no hover, no press
-
-   AND IT SAYS WHY, one gap away, which is rule 10 and which
-   `.md-stub-say` was already built to do: "Cards sit in the order they
-   were made. Dragging them into your own order arrives with the module
-   designer." The reason is a sentence in the place the thing is
-   refused — not a tooltip, and not a spec.
-
-   Scoped to `.md-stub` because that is where this feature draws a
-   disabled control. The foundation is not re-cut for ~200 buttons the
-   redesign has not reached; each feature answers for its own, which is
-   the same call table.css:3204 made for the register's four.
-   ============================================================ */
-.md-stub .btn:disabled {
-  opacity: 1;
-  color: var(--ink-soft);
-  background: var(--paper-high);
-  border-color: var(--hairline);
-}
-
-/* ============================================================
-   A VALUE IS A VALUE — the uppercase pass, modules.
-
-   A figure is read for its content exactly as a name is, and three
-   sites on the index and the module page were being uppercased.
-   Enumerated live, with the verdict for each (the dashboard card's own
-   count is set with the rest of that card, at the top of this file):
-
-     .md-idx-facts   FIXED, on the rule itself — "174 ITEMS · 7 TABLES"
-                     under a module's name.
-     .md-grp-trail   FIXED, on the rule itself — ×43 on one module page. This is the worst of
-                     them: it is the dealer's OWN grouping values,
-                     "Sport ▸ SP560", "Roll-Up ▸ RU230KAM", flattened
-                     into "SPORT ▸ SP560". shell.css:918 already fixed
-                     precisely this for `.shell-view-row-trail` and
-                     wrote the reason down: "THE TRAIL IS THE DEALER'S
-                     OWN WORDS, NOT A CAPTION." Their `PVC` and their
-                     `Pvc` are different facts about their data.
-     .md-stub .btn   FIXED here, because this is the rule's one and
-                     only declaration — a button, wherever a stub
-                     draws one.
-
-   THE FIRST TWO ARE NOT DECLARED HERE ANY MORE. They were, and each
-   was a second declaration of a selector three hundred lines above
-   it; the values are now on the rules themselves, where somebody
-   reading `.md-idx-facts` can see what it does without finding this
-   block first.
-
-   KEPT UPPERCASE: `.md-dash-eyebrow` ("YOUR BUSINESS") and
-   `.md-over-cap` ("INSIDE", "WHAT GOES WITH THESE") are section
-   captions; `.md-sec-count` and `.md-chip-n` are bare figures, where
-   the transform has no visible effect and the mono stamp is the
-   sanctioned use.
-   ============================================================ */
-.md-stub .btn {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-/* ============================================================
    THE RULES A MODULE GOES BY — the designer's fourth panel, and
    the door on the index that opens it.
 
    ONE DECISION GOVERNS THE WHOLE BLOCK: EVERYTHING NESTED HERE
-   DRAWS ON WHITE. `.md-panel` is `--paper-sunken` (#f1f2f5), and
-   `--ink-faint` over it measures 4.22:1 — it is 4.72:1 on white
-   and the contract names exactly this trap. The panel reuses the
-   rule cards, the sentence builder and the workbook list from
+   DRAWS ON WHITE. The panel and each well inside it are
+   `<Card tone="flat">` — `--surface-1` — because the block reuses
+   the rule cards, the sentence builder and the workbook list from
    `constraints.css`, every one of which carries `--ink-faint`
-   metadata, so each section sits in a `--paper-high` well rather
-   than being re-coloured one selector at a time. A well, not an
-   override layer: nothing here restyles a `cn-*` rule, it only
-   gives it the ground it was drawn for.
-
-   THE SAME PASS FIXED `.md-panel-name`, which had `--ink-faint`
-   on the sunken panel across all four panels — 4.22:1, drawn
-   since the designer shipped, and behind the gear where the
-   redesign's nine-surface sweep never reached it. That correction
-   now lives ON `.md-panel-name` rather than in a second declaration
-   down here, which is why this paragraph is a note and not a rule.
+   metadata, and `--ink-faint` measures 4.22:1 over a sunken ground
+   against 4.72:1 on white. The contract names exactly this trap.
+   Nothing here restyles a `cn-*` rule; the card only gives it the
+   ground it was drawn for.
    ------------------------------------------------------------- */
-
-.md-rules-well {
-  padding: var(--sp-4);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-}
-
-.md-rules-cap {
-  margin: 0 0 var(--sp-2);
-  color: var(--ink-soft);
-}
 
 .md-rules-say {
   margin: 0 0 var(--sp-3);
@@ -2495,16 +1575,6 @@
   list-style: none;
 }
 
-.md-flow {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: var(--sp-2);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-}
-
 /* THE REASON IS SEVERAL HUNDRED WORDS OF MEASUREMENT on the seeded
    rules, which is what makes them trustworthy and what cannot be
    dumped into a panel. Three lines, the whole of it in the DOM, and
@@ -2564,41 +1634,6 @@
   list-style: none;
 }
 
-.md-drawer {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 5px;
-  width: 100%;
-  min-width: 0;
-  padding: 10px 11px 11px;
-  text-align: left;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--ec1);
-  cursor: pointer;
-  transition:
-    box-shadow var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
-}
-.md-drawer:hover {
-  border-color: var(--hairline-strong);
-  box-shadow: var(--ec3);
-  transform: translateY(-1px);
-}
-/* press on pointer-down, at card scale — DESIGN_CONTRACT §5 */
-.md-drawer:active {
-  transform: translateY(0) scale(0.994);
-  box-shadow: var(--e1);
-}
-.md-drawer:focus-visible {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
 .md-drawer-top {
   display: flex;
   align-items: center;
@@ -2651,70 +1686,6 @@
   color: var(--ink-soft);
 }
 
-/* ------------------------------------------------------------- */
-/* The narrowing, named                                           */
-/* ------------------------------------------------------------- */
-
-/* hl-journeys.md §4's five parts in one band: what the rule is, in
-   the dealer's own column word; how many are drawn; how many were put
-   away; that Find looks past it; and one control that switches it
-   off. The band is `--blue-wash` because the narrowing IS a state of
-   this page and the accent is what says so — one of the four
-   appearances DESIGN_CONTRACT §1 budgets for a screen. */
-.md-narrow {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  margin: 0 0 var(--sp-3);
-  padding: 10px var(--sp-3);
-  background: var(--blue-wash);
-  border: 1px solid var(--blue);
-  border-radius: var(--radius-sm);
-}
-
-.md-narrow-say {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
-  /* --ink-soft AND NOT --ink-faint, and the reason is the one the
-     contract names: this is a tint, where --ink-faint measures 4.26:1
-     and fails. Measured here at 6.6:1 light, 6.0:1 dark. */
-  color: var(--ink-soft);
-  font-variant-numeric: tabular-nums;
-}
-
-.md-narrow-off {
-  flex: none;
-  height: 26px;
-  padding: 0 10px;
-  border: 1px solid var(--blue);
-  border-radius: 7px;
-  background: var(--paper-high);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    transform var(--t-fast) var(--ease-draft);
-}
-.md-narrow-off:hover {
-  background: var(--blue-wash);
-}
-.md-narrow-off:active {
-  background: var(--blue-wash-strong);
-  transform: scale(0.97);
-}
-.md-narrow-off:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
 /* ============================================================
    THE SETTINGS SURFACE — one page per module, where an admin says
    what that place is. See ModuleSettings.tsx for why it absorbed the
@@ -2753,44 +1724,6 @@
   display: block;
   margin-bottom: 3px;
   color: var(--ink-faint);
-}
-
-/* THE WAY BACK, IN SENTENCE CASE. `.md-gear` beside it stamps its
-   word in uppercase mono, which is a label style; this is a button
-   and takes the toolbar control's own type instead — the calibration
-   is `.shell-view-back`. */
-.md-set-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  height: 28px;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
-  font-family: var(--font-ui);
-  font-size: var(--ui-s-size);
-  font-weight: 500;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition:
-    transform var(--t-press) var(--ease-press),
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.md-set-back:hover {
-  border-color: var(--hairline-strong);
-  color: var(--ink);
-}
-.md-set-back:active {
-  transform: scale(0.97);
-}
-.md-set-back:focus-visible {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-wash);
 }
 
 /* The panel column. `.md-design` is one of its children — the
@@ -2996,12 +1929,11 @@
 
 .md-mark-addr {
   display: flex;
-  align-items: center;
+  /* the address is `<Field>` and carries its own label above the
+     control, so the button lines up with the control, not the label */
+  align-items: flex-end;
   gap: var(--sp-2);
   width: 100%;
-  min-width: 0;
-}
-.md-mark-addr .field-input {
   min-width: 0;
 }
 
@@ -3045,27 +1977,6 @@
   border-left-color: var(--hairline-strong);
 }
 
-/* The empty state, in the panel. Four parts, in the dashboard's own
-   order: eyebrow, what it IS, what you already have, one action. */
-/* IT DOES NOT GROW TO FILL THE PANEL. An empty state is a sentence,
-   a count and one control — around 500px of content — and stretching
-   its box to 1,840px only makes the emptiness bigger. */
-.md-set-void {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  max-width: 640px;
-  padding: var(--sp-4);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-}
-
-.md-set-void-eyebrow {
-  color: var(--ink-faint);
-}
-
 .md-set-void-say {
   margin: 0;
   max-width: 52ch;
@@ -3085,16 +1996,6 @@
   font-variant-numeric: tabular-nums;
   font-weight: 500;
   color: var(--ink);
-}
-
-/* THE GRID SCROLLS SIDEWAYS RATHER THAN SQUEEZING. Nine verbs on a
-   narrow window is wider than the panel, and a column of ticks that
-   overlapped its neighbour would be a permission read wrong. */
-.md-grid-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
 }
 
 .md-grid {
@@ -3224,17 +2125,12 @@
 
 .md-role-new {
   display: flex;
-  align-items: center;
+  /* the field is `<Field>` and carries its own label above the
+     control, so the button lines up with the control, not the label */
+  align-items: flex-end;
   gap: var(--sp-2);
   width: 100%;
   max-width: 420px;
-}
-.md-role-new .btn,
-.md-mark-addr .btn {
-  flex: 0 0 auto;
-}
-.md-role-new .field-input {
-  min-width: 0;
 }
 
 /* ---------------------------------------------------------- */
@@ -3248,16 +2144,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.md-att {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: var(--sp-3);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
 }
 
 .md-att-top {
@@ -3333,8 +2219,7 @@
     animation-duration: 1ms;
   }
   .md-grant,
-  .md-set-back,
-  .md-mark-file {
+.md-mark-file {
     transition: none;
   }
 }
@@ -3601,11 +2486,7 @@
 .md-acc-say {
   min-width: 0;
 }
-.md-acc-eyebrow {
-  display: block;
-  margin-bottom: var(--s-3);
-  color: var(--fg-tertiary);
-}
+
 /* `.ds-hero` carries the whole step — size, weight, leading and
    tracking together. Nothing here reaches in for one of them. */
 .md-acc-title {
@@ -3626,17 +2507,7 @@
   align-items: flex-end;
   gap: var(--s-4);
 }
-.md-acc-tally {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, auto);
-  margin: 0;
-  padding: var(--s-4) var(--s-5);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-}
+
 .md-acc-cell {
   display: flex;
   flex-direction: column-reverse;
@@ -3688,18 +2559,6 @@
   color: var(--fg-secondary);
 }
 
-/* -- the panels ----------------------------------------------- */
-
-.md-acc-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
-  padding: var(--s-5);
-  background: var(--grad-surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-}
 .md-acc-panel-head {
   display: flex;
   align-items: flex-start;
@@ -3713,10 +2572,7 @@
   gap: var(--s-3);
   min-width: 0;
 }
-.md-acc-panel-name {
-  margin: 0;
-  color: var(--fg-secondary);
-}
+
 .md-acc-panel-say {
   margin: 0;
   max-width: 74ch;
@@ -3732,59 +2588,6 @@
   color: var(--fg);
 }
 
-/* The door to one place's own set-up. Quiet at rest — it is the
-   second control in its panel, not the first. */
-.md-acc-door {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  height: 30px;
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 520;
-  letter-spacing: -0.003em;
-  color: var(--fg-secondary);
-  cursor: pointer;
-  transition:
-    var(--press-fx),
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.md-acc-door:hover {
-  border-color: var(--line-strong);
-  color: var(--fg);
-}
-.md-acc-door:active {
-  transform: scale(0.97);
-}
-.md-acc-door:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-wash);
-}
-
-/* -- the void states ------------------------------------------ */
-
-.md-acc-void {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-3);
-  max-width: 620px;
-  padding: var(--s-5);
-  background: var(--surface-1);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-}
-.md-acc-void-eyebrow {
-  color: var(--fg-tertiary);
-}
 .md-acc-void-say {
   margin: 0;
   font-size: var(--t-body-size);
@@ -4100,15 +2903,7 @@
   padding: 0;
   list-style: none;
 }
-.md-acc-job {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-4);
-  background: var(--surface-1);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-}
+
 .md-acc-job-top {
   display: flex;
   align-items: baseline;
@@ -4314,13 +3109,7 @@
   max-height: 32px;
   object-fit: contain;
 }
-.md-work-logo {
-  display: block;
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  border-radius: var(--r-chip);
-}
+
 .md-work-id {
   min-width: 0;
   flex: 1 1 auto;
@@ -4549,10 +3338,7 @@
   flex-direction: column;
   gap: var(--s-2);
 }
-.md-home-cap {
-  margin: 0;
-  color: var(--fg-tertiary);
-}
+
 .md-home-chips,
 .md-home-links {
   display: flex;
@@ -4635,53 +3421,7 @@
   padding: var(--s-5) var(--s-6) var(--s-8);
   list-style: none;
 }
-.md-q {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
-  align-items: baseline;
-  gap: var(--s-3);
-  width: 100%;
-  min-height: 40px;
-  padding: var(--s-2) var(--s-3);
-  text-align: left;
-  border: 0;
-  border-radius: var(--r-control);
-  background: none;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.md-q:hover {
-  background: var(--surface-2);
-}
-.md-q:active {
-  background: var(--surface-3);
-  transition-duration: var(--d-press);
-}
-.md-q.is-flat {
-  cursor: default;
-}
-.md-q.is-flat:hover {
-  background: none;
-}
-.md-q-what {
-  font-size: var(--t-body-size);
-  color: var(--fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.md-q-state {
-  color: var(--fg-tertiary);
-}
-/* MONO BECAUSE THEY ARE FIGURES — a reference and a day are values
-   a person reads back to somebody on the phone. */
-.md-q-ref,
-.md-q-when {
-  font-family: var(--font-mono);
-  font-size: var(--t-caption-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-secondary);
-}
+
 .md-qs-owner {
   padding: var(--s-3) var(--s-3) 0;
   color: var(--fg-tertiary);
@@ -4697,15 +3437,7 @@
   gap: var(--s-5);
   padding: var(--s-5) var(--s-6) var(--s-8);
 }
-.md-price-one {
-  padding: var(--s-4);
-  border-top: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  border-left: 3px solid var(--kind);
-  border-radius: var(--r-panel);
-  background: var(--surface-1);
-}
+
 .md-price-name {
   display: flex;
   align-items: center;
@@ -4735,24 +3467,7 @@
   padding: 0;
   list-style: none;
 }
-.md-price-level {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-3);
-  min-height: 32px;
-  padding: var(--s-2) 0;
-  border-top: 1px solid var(--line-subtle);
-}
-.md-price-level:first-child {
-  border-top: 0;
-}
-.md-price-level-name {
-  min-width: 8rem;
-  font-size: var(--t-body-size);
-  font-weight: 550;
-  color: var(--fg);
-}
+
 /* THE COLUMN IT IS, in the business's own words — mono, because it
    is an identifier and a person traces a number back through it. */
 .md-price-col {
@@ -4762,9 +3477,6 @@
 }
 .md-price-scope {
   color: var(--fg-tertiary);
-}
-.md-price-shown {
-  margin-left: auto;
 }
 
 /* -- the stock tab's own bar ---------------------------------- */
@@ -4832,14 +3544,9 @@
   .md-work-fact {
     width: 100%;
   }
-  /* THE ROW REFLOWS RATHER THAN TRUNCATING. Four columns at 560px
-     puts a reference under a subject instead of clipping it. */
-  .md-q {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .md-q-what {
-    white-space: normal;
-  }
+  
+  
+  
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4848,9 +3555,7 @@
   .md-density-one:active {
     transform: none;
   }
-  .md-home-plate:hover .md-home-shot {
-    transform: none;
-  }
+  
 }
 
 /* ============================================================
@@ -4894,61 +3599,6 @@
   }
 }
 
-.md-hcard {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-}
-
-.md-hcard-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-3);
-  margin-bottom: var(--s-3);
-}
-
-.md-hcard-name {
-  margin: 0;
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  letter-spacing: var(--t-heading-track);
-  color: var(--fg);
-}
-
-/* THE DOOR OUT OF THE CARD — the same word and the same place as
-   the dashboard's "Open", because it is the same idea and two
-   words for one control is two things to learn. */
-.md-hcard-all {
-  padding: 2px 4px;
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--accent);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 520;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--d-fast) var(--ease);
-}
-.md-hcard-all:hover {
-  background: var(--accent-wash);
-}
-.md-hcard-all:active {
-  background: var(--accent-wash-strong);
-  transition-duration: var(--d-press);
-}
-.md-hcard-all:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 /* ---- an empty card offers the act ------------------------- */
 
 .md-hcard-none {
@@ -4963,30 +3613,6 @@
   line-height: 1.5;
   color: var(--fg-secondary);
 }
-.md-hcard-go {
-  height: var(--h-md);
-  padding: 0 var(--s-4);
-  border: 0;
-  border-radius: var(--r-control);
-  background: var(--accent);
-  color: var(--accent-fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.md-hcard-go:hover {
-  background: var(--accent-strong);
-}
-.md-hcard-go:active {
-  transform: translateY(0.5px);
-  transition-duration: var(--d-press);
-}
-.md-hcard-go:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
 
 /* ---- a deal, at a glance ---------------------------------- */
 
@@ -4994,94 +3620,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-/* THE SUBJECT IS THE HEADING AND THE CUSTOMER IS UNDER IT, which
-   is the other way round from the board — and deliberately. On the
-   board you are asking "whose deal is this"; here you already know
-   the place and are asking "which boat". */
-.md-hq {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 1px var(--s-3);
-  width: 100%;
-  padding: var(--s-2) var(--s-2);
-  margin-left: calc(var(--s-2) * -1);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.md-hq:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-.md-hq:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-/* A FACT THAT CANNOT BE OPENED IS BETTER THAN A CONTROL THAT DOES
-   NOTHING — the shape this feature's item rows already take when
-   the shell hands down no route. */
-.md-hq:disabled {
-  cursor: default;
-}
-
-.md-hq-what {
-  min-width: 0;
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  line-height: 1.3;
-  color: var(--fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.md-hq-sum {
-  grid-column: 2;
-  grid-row: 1;
-  font-size: var(--t-small-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-  white-space: nowrap;
-}
-.md-hq-who {
-  grid-column: 1;
-  min-width: 0;
-  font-size: var(--t-caption-size);
-  color: var(--fg-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.md-hq-when {
-  grid-column: 2;
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
-  white-space: nowrap;
-}
-
-/* ---- the activity rows, inside this card ------------------ */
-
-/* `activity.css` draws the rows; here it is inside a card already,
-   so it takes the scroll and nothing else — no second border, no
-   second background. */
-.md-hcard > .ac-list {
-  min-height: 0;
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-/* ---- the range ------------------------------------------- */
-
-/* THE RANGE CARD sits in the grid now rather than under it, so it
-   has no margin of its own — the grid's own gap is the spacing, and
-   a margin here would be that gap plus a second one. */
-.md-hcard--wide {
-  min-width: 0;
 }
 
 /* A COUNTED FACT ON THIS CARD IS NOT A DOOR, so it is not drawn as
@@ -5122,67 +3660,6 @@
   list-style: none;
   margin: var(--s-3) 0 0;
   padding: 0;
-}
-
-.md-stock {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-3);
-  width: 100%;
-  padding: var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.md-stock:hover {
-  background: var(--surface-2);
-}
-.md-stock:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.md-stock-say {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.md-stock-name {
-  font-size: var(--t-small-size);
-  line-height: 1.3;
-  color: var(--fg);
-  /* IT CLAMPS TO TWO LINES; IT DOES NOT TRUNCATE MID-WORD. §3.
-     `nowrap` + `ellipsis` cut "Highfield - SP760WL(Windlass) (HYP)"
-     at "(HY…" — 284px of name in a 240px column — which is a model
-     code a person cannot read back over a phone. Two lines is the
-     rule's own answer and this range needs both of them. */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-}
-/* THE SERIES IT SITS IN. Highfield runs Series then Model then
-   Variant, so a bare variant code says almost nothing alone. */
-.md-stock-branch {
-  font-size: var(--t-caption-size);
-  color: var(--fg-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.md-stock-price {
-  flex: none;
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-secondary);
-  white-space: nowrap;
 }
 
 /* ============================================================
@@ -5320,14 +3797,6 @@
   min-width: 0;
 }
 
-/* THE RAIL'S CARDS DO NOT STRETCH. A log with two lines in it
-   should be two lines tall; stretching it to match the range
-   card beside it is how the empty state got to be 145px in the
-   first place. */
-.md-home-rail > .md-hcard {
-  flex: none;
-}
-
 /* ---- the series ------------------------------------------- */
 
 .md-home-series {
@@ -5337,110 +3806,6 @@
   list-style: none;
   margin: var(--s-3) 0 0;
   padding: 0;
-}
-
-.md-series {
-  display: grid;
-  /* name · count ....... band | caret.
-
-     THE COUNT SITS WITH THE NAME, not at the far end of the row.
-     Giving the name `1fr` pushed both figures to the right edge and
-     on an 835px card that is 500px of white between "Sport" and
-     "199" — a row you have to track across with a finger. The name
-     takes its own width, the count follows it, and only the money
-     is aligned right, where a column of money belongs. */
-  grid-template-columns: minmax(0, auto) auto minmax(0, 1fr) 16px;
-  align-items: baseline;
-  gap: var(--s-3);
-  width: 100%;
-  padding: var(--s-2) var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease);
-}
-
-.md-series:hover {
-  background: var(--surface-2);
-}
-.md-series:active {
-  background: var(--surface-3);
-}
-.md-series:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-
-.md-series-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--t-body-size);
-  font-weight: var(--t-body-weight);
-  line-height: var(--t-body-lead);
-  letter-spacing: var(--t-body-track);
-  color: var(--fg-primary);
-}
-
-/* HOW MANY, AND THE WORD IS IN THE COLUMN HEAD not on every row:
-   seven rows each ending "models" is the same word seven times.
-   A figure is never a hue. */
-.md-series-n {
-  font-size: var(--t-small-size);
-  font-weight: var(--t-small-weight);
-  line-height: var(--t-small-lead);
-  letter-spacing: var(--t-small-track);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-secondary);
-}
-
-.md-series-band {
-  justify-self: end;
-  font-size: var(--t-small-size);
-  font-weight: var(--t-small-weight);
-  line-height: var(--t-small-lead);
-  letter-spacing: var(--t-small-track);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  color: var(--fg-tertiary);
-}
-
-/* THE CARET IS THE AFFORDANCE and appears on approach. It holds
-   its column at all times so nothing shifts when it arrives. */
-.md-series-go {
-  justify-self: end;
-  align-self: center;
-  color: var(--fg-tertiary);
-  opacity: 0;
-  transition: opacity var(--d-fast) var(--ease);
-}
-.md-series:hover .md-series-go,
-.md-series:focus-visible .md-series-go {
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .md-series,
-  .md-series-go {
-    transition: none;
-  }
-}
-
-@media (max-width: 700px) {
-  /* THE BAND FOLDS AWAY FIRST. A name that has to ellipsise to
-     three characters to keep a price range on the line is a
-     worse row than one without the range. */
-  .md-series {
-    grid-template-columns: minmax(0, 1fr) auto 16px;
-  }
-  .md-series-band {
-    display: none;
-  }
 }
 
 /* ---- what this place has out ------------------------------ */
@@ -5472,17 +3837,6 @@
   line-height: var(--t-small-lead);
   letter-spacing: var(--t-small-track);
   color: var(--fg-secondary);
-}
-
-/* A LINE'S OWN MONEY. Mono and tabular so a column of them reads as
-   a column, and never coloured — see the figure rule. */
-.md-q-sum {
-  font-variant-numeric: tabular-nums;
-  font-size: var(--t-small-size);
-  font-weight: var(--t-small-weight);
-  line-height: var(--t-small-lead);
-  letter-spacing: var(--t-small-track);
-  color: var(--fg-primary);
 }
 
 /* ============================================================
@@ -5530,7 +3884,6 @@
 .md-none,
 .md-more,
 .md-design,
-.md-over,
 .md-set-body {
   max-width: var(--measure);
   margin-left: auto;
@@ -5565,7 +3918,6 @@
 .md-row-slot {
   position: relative;
 }
-
 
 /* ============================================================
    THE ACTS ON ONE FACE — ONE CLUSTER, NOT THREE SIBLINGS.
@@ -5681,112 +4033,6 @@
   }
 }
 
-/* -- the sale ------------------------------------------------ */
-
-.md-quote-it {
-  padding: 5px var(--s-3);
-  border: 1px solid var(--accent);
-  border-radius: var(--r-control);
-  background: var(--accent);
-  color: var(--accent-fg);
-  font-size: var(--t-caption-size);
-  font-weight: var(--t-caption-weight);
-  letter-spacing: var(--t-caption-track);
-  line-height: var(--t-caption-lead);
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-
-/* THE HOVER AND THE PRESS WERE BOTH DEAD. `--accent-strong` is
-   defined nowhere in this repository, so `var(--accent-strong,
-   var(--accent))` resolved to the resting colour and hovering this
-   button changed nothing — rule 8 says every pressable thing has
-   all three states and this one had focus only. `--accent-hover`
-   and `--accent-press` are the system's own two rungs and have
-   been there the whole time. */
-.md-quote-it:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-.md-quote-it:active {
-  background: var(--accent-press);
-  border-color: var(--accent-press);
-  transform: scale(0.97);
-}
-.md-quote-it:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-
-/* -- the two writes ------------------------------------------ */
-
-/* QUIET AT REST. These are structural acts on somebody's price
-   file and they are not what a person came to the catalogue to do,
-   so they carry the surface's own ink and the surface's own line
-   until they are approached. */
-/* TIGHTER THAN THE SALE, ON PURPOSE AND BY MEASUREMENT. At the same
-   padding as Quote it the three controls came to 235px on a 241px
-   tile — six pixels of clearance, and a wrap onto a second line over
-   the photograph as soon as anything grew. At `--s-2` they come to
-   219px, which is one line on a default tile and still wraps at the
-   grid's 200px floor where two lines is the honest answer. It also
-   reads correctly: the primary act is the larger one. */
-.md-face-act {
-  padding: 5px var(--s-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--ink-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-caption-size);
-  font-weight: var(--t-caption-weight);
-  letter-spacing: var(--t-caption-track);
-  line-height: var(--t-caption-lead);
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-/* `--surface-3` AND NOT `--surface-2`: in the light theme
-   `--surface-1` and `--surface-2` are both `#ffffff`, so a hover
-   painted with the second one changes nothing and rule 8 is only
-   two-thirds kept. `--surface-3` is the system's own "hover on
-   surface-2" rung and moves in both themes. */
-.md-face-act:hover {
-  background: var(--surface-3);
-  border-color: var(--ink-faint);
-  color: var(--ink);
-}
-.md-face-act:active {
-  transform: scale(0.97);
-}
-.md-face-act:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* TAKING A BOAT OUT OF SOMEBODY'S PRICE FILE SAYS SO ON APPROACH,
-   and not before: a red control at rest in a catalogue of 174
-   tiles would be the loudest thing on the page and the least
-   often wanted. The act is undoable and the toast carries UNDO —
-   see `@/store/notes` — which is why this is a button and not a
-   dialog. */
-.md-face-act.is-take-out:hover {
-  background: var(--danger-wash);
-  border-color: var(--danger);
-  color: var(--danger);
-}
-.md-face-act.is-take-out:focus-visible {
-  outline-color: var(--danger);
-}
-
 /* -- the name, open for typing -------------------------------- */
 
 /* IT SITS EXACTLY WHERE THE NAME SAT. The box takes the face's own
@@ -5832,68 +4078,163 @@
   gap: var(--s-3);
 }
 
-.md-idx-add {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 520;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.md-idx-add:hover:not([aria-disabled='true']) {
-  background: var(--accent-wash);
-  border-color: var(--accent-line);
-  color: var(--accent);
-}
-.md-idx-add:active:not([aria-disabled='true']) {
-  background: var(--accent-wash-strong);
-  transform: scale(0.97);
-}
-/* THE FOCUS RING IS DRAWN WHETHER OR NOT THE ACT CAN BE PERFORMED,
-   and that is the point of `aria-disabled` over `disabled`: the
-   control keeps its place in the tab order, so a person moving by
-   keyboard lands on it, meets the refusal and is handed the reason
-   through `aria-describedby`. A ring only on the working state
-   would put the control back out of reach for the one person the
-   sentence was written for. */
-.md-idx-add:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-/* REFUSED, AND THE REASON IS UNDER THE HEADER. The verb is granted
-   and the act still cannot be performed — the tables went to
-   history, or off the sheet — so the control stays where it is,
-   greyed, and the sentence saying why sits in the notes below
-   rather than in a tooltip nobody opens (rule 10).
-
-   `[aria-disabled='true']` AND NOT `:disabled`. The attribute this
-   used to carry took the button out of the tab order, which took the
-   refusal away from everybody not using a mouse. Same paint, same
-   cursor, one less thing hidden. */
-.md-idx-add[aria-disabled='true'] {
-  cursor: not-allowed;
-  color: var(--ink-faint);
-  border-color: var(--hairline);
-  background: transparent;
-}
-
 /* NARROW: the trailing group is the second line of a stacked
    header, and it wraps rather than pushing the find box off. */
 @media (max-width: 760px) {
   .md-idx-tools {
     flex-wrap: wrap;
   }
+}
+
+/* ============================================================
+   THE PRIMITIVES PASS — what this file no longer draws, and the
+   little it still has to.
+
+   Every button, card and row that had a treatment here is
+   `<Button>`, `<Card>` or `<Row>` from src/ui now, and every
+   uppercase caption is `<SectionHead>`. Adopting a primitive
+   meant DELETING the local rule, not layering under it — the
+   primitives take no className, so there was no way to half-adopt.
+   205 rules left this file in that pass. What follows is the
+   remainder: layout that sits INSIDE a primitive (a stack, a slot,
+   a figure in a row's meta) and the handful of surfaces the layer
+   has no answer for yet, each named in the report with what it is
+   missing — the segmented density switch, the filter chip, the
+   tablist, the switch, the grant tick, the file-picker label, the
+   inline rename box, and the two brand plates.
+
+   NOTHING HERE PAINTS A GROUND OR A BOX ON A PRIMITIVE'S ELEMENT.
+   Each rule below matches an element this feature renders as the
+   primitive's CHILD; none reaches the primitive itself.
+   ============================================================ */
+
+/* -- the modules grid ----------------------------------------- */
+
+/* The empty state's width and place; the card inside is `<Card>`. */
+.md-empty {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  margin: 0 var(--s-6);
+}
+.md-empty-in {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+/* NEW MODULE IS A CONTROL, NOT A PLACE. It borrows the card so
+   creating one and opening one are the same gesture at the same
+   size, but its word is a verb — it takes neither the display step
+   nor the reserved box the names take. */
+.md-place-new {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  text-align: center;
+  color: var(--fg-secondary);
+}
+.md-place-new-word {
+  font-size: var(--t-small-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+}
+
+/* THE ARROWS THAT MOVE A MODULE, on the card that leads its run.
+   Two `<Button>`s carry their own ground; this only places them. A
+   refused end of the list draws its reason beneath the arrow, which
+   is why the cluster aligns to the top rather than centring. */
+.md-place-order {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-1);
+}
+
+/* -- inside a card ------------------------------------------- */
+
+/* A `<Card>` is a flex column with no gap of its own. These two are
+   the stacks its children sit in: the panel gap for a settings or
+   access panel, the tighter one for a row-sized card. */
+.md-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.md-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* -- a figure inside a row --------------------------------------
+   `<Row>` has four slots and none of them is a trailing figure on
+   an ACTIVATING row (a button may not hold a button, so `trail` is
+   only on a still row). Until the layer grows a figure slot, a
+   price, a total or a day sits in `meta`, in mono, in FULL ink —
+   "a price is what the customer reads over a shoulder; it is not
+   metadata" — and `.md-meta` lets more than one fact share the
+   line. Reported as the gap it is. */
+.md-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-3);
+}
+.md-figure {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+/* -- the catalogue tile and the drawer, inside their `<Card>` ---- */
+.md-tile-slot,
+.md-drawer-slot {
+  display: grid;
+}
+/* THE FIND BOX'S WIDTH. `<Field>` fills what it is given; the header
+   gives it this much beside the density switch. */
+.md-idx-find {
+  flex: 0 0 auto;
+  width: 280px;
+}
+.md-tile-in {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+/* -- the activity log inside the dashboard card ---------------- */
+.md-home-log {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* -- the two tables that scroll sideways ----------------------- */
+/* Nine verbs on a narrow window is wider than the panel, and a
+   column of ticks that overlapped its neighbour would be a
+   permission read wrong. The well around it is `<Card>`. */
+.md-grid-wrap {
+  overflow-x: auto;
+}
+
+/* -- the access tally, inside its `<Card>` ---------------------- */
+.md-acc-tally {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, auto);
+  margin: 0;
 }

@@ -357,10 +357,6 @@
   max-width: 34ch;
 }
 
-.cx-one-drop {
-  flex: 0 0 auto;
-}
-
 /* IT IS REASSURANCE, NOT A WARNING, so it is ink rather than
    `--danger` — the act is undoable and already raises a note with
    UNDO on it. `--ink-faint` is the 4.7:1 floor and this sits on the
@@ -391,243 +387,59 @@
 }
 
 /* ============================================================
-   COUNTED FIGURES — the figure leads, the word sits under it.
+   THE CONTROLS ARE THE SYSTEM'S.
 
-   That is the reading order somebody scanning actually uses: they
-   are looking for the number and then checking what it was. A <dl>
-   in `column-reverse`, because the MARKUP order has to stay
-   term-then-value for it to be a description list at all.
+   Every button on these two screens is src/ui's `Button` — the
+   primary act, the ghost acts in the foot, the danger outline on
+   Remove — and the find box is its `Field`. What stood here was a
+   button drawn from scratch (with its own measured dark-theme ink,
+   its own press and its own focus ring) and a find box drawn from
+   scratch (with its own glyph and its own focus glow): 150 lines
+   that button.css and field.css say once for every screen. Adopting
+   the primitives meant deleting them, because neither takes a class.
+
+   WHAT THE TOOLS ROW HAS TO SAY FOR ITSELF is only alignment and
+   width. A `Field` is a label over a box, and the picker beside it
+   is a single line, so the row aligns on its BOTTOM edge — the box
+   and the picker — rather than on centres that would put the picker
+   level with the gap between the label and the box.
    ============================================================ */
 
-.cx-tally {
+.cx-tools {
   display: flex;
+  align-items: flex-end;
   flex-wrap: wrap;
-  gap: 0;
-  margin: var(--s-1) 0 var(--s-2);
-  padding: var(--s-3) var(--s-5);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-}
-
-.cx-tally--head {
-  margin: 0;
-  padding: var(--s-2) var(--s-4);
-}
-
-.cx-fig {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 2px;
-  padding: 0 var(--s-5);
-  border-left: 1px solid var(--line-subtle);
-}
-.cx-fig:first-child {
-  padding-left: 0;
-  border-left: 0;
-}
-.cx-fig:last-child {
-  padding-right: 0;
-}
-
-.cx-fig-n {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.018em;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.cx-tally--head .cx-fig-n {
-  font-size: var(--t-mono-lg-size);
-}
-
-.cx-fig-word {
-  font-size: var(--t-caption-size);
-  font-weight: 500;
-  letter-spacing: var(--t-caption-track);
-  color: var(--ink-faint);
-  white-space: nowrap;
-}
-
-/* ============================================================
-   THE CONTROLS
-
-   `.btn` in base.css still stamps `text-transform: uppercase` on
-   its label, and a button is one of the four things uppercase is
-   never allowed on. Every feature that draws one has already opted
-   out locally; this one stops inheriting from it altogether, which
-   is one class rather than an override of an override.
-   ============================================================ */
-
-.cx-act {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: var(--h-md);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  font-family: var(--font-ui);
-  font-size: var(--t-small-size);
-  font-weight: 540;
-  letter-spacing: -0.003em;
-  text-transform: none;
-  color: var(--ink);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
-}
-.cx-act:active {
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-.cx-act:focus-visible {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: var(--glow-sm);
-}
-
-/* THE ONE PRIMARY THING ON THE SCREEN, and its ink is MEASURED
-   rather than assumed.
-
-   It was drawn on `--grad-brand` with `--accent-fg` over it, and
-   that was wrong twice. First, ds.css says outright that the ramp's
-   two neighbour hues "exist ONLY to make a gradient out of it"
-   and that neither "may be used as a flat fill behind text" — the
-   cyan end (`--accent-2`) measures 3.5:1 against white on light.
-   Second, `--accent-fg` is #ffffff in BOTH themes, and on dark
-   `--accent` is a pale #58a6ff: white on it is 2.5:1, which is not
-   a weak button, it is an unreadable one.
-
-   So: one flat accent, and the ink flips with the theme. Measured
-   in the browser, compositing the whole chain —
-     light  white     on --accent        5.9:1
-            white     on --accent-hover  5.2:1
-     dark   --bg      on --accent        7.3:1
-            --bg      on --accent-hover  8.3:1
-            --bg      on --accent-press  5.6:1
-   The gradient is still in the app; it is on grounds that carry no
-   text, which is what it was drawn for. */
-.cx-act--primary {
-  border-color: transparent;
-  background: var(--accent);
-  color: var(--accent-fg);
-  box-shadow: var(--e1);
-}
-.cx-act--primary:hover {
-  background: var(--accent-hover);
-  box-shadow: var(--e2), var(--glow-md);
-}
-.cx-act--primary:active {
-  background: var(--accent-press);
-}
-.cx-act--primary:focus-visible {
-  border-color: transparent;
-  box-shadow: var(--focus);
-}
-
-/* ON DARK THE ACCENT IS A LIGHT BLUE, so the ink on it is the
-   ground, not white. Stated here because `--accent-fg` cannot say
-   it: ds.css sets that token to #ffffff in both themes, and this
-   file may not change ds.css. */
-[data-theme='dark'] .cx-act--primary {
-  color: var(--bg);
-}
-
-/* the quiet one — Remove. It is destructive and it is undoable, so
-   it is neither red nor primary until it is being pressed. */
-.cx-act--quiet {
-  border-color: transparent;
-  background: transparent;
-  color: var(--ink-soft);
-}
-.cx-act--quiet:hover {
-  border-color: var(--line);
-  background: var(--danger-wash);
-  color: var(--danger);
-}
-
-/* -- the find box -------------------------------------------- */
-
-.cx-find {
-  position: relative;
-  width: 220px;
-}
-
-.cx-find-mark {
-  position: absolute;
-  top: 50%;
-  left: 9px;
-  transform: translateY(-50%);
-  display: inline-flex;
-  color: var(--ink-faint);
-  pointer-events: none;
-  transition: color var(--d-fast) var(--ease);
-}
-.cx-find:focus-within .cx-find-mark {
-  color: var(--blue);
-}
-
-.cx-find-input {
+  gap: var(--s-3);
   width: 100%;
-  height: var(--h-md);
-  padding: 0 var(--s-3) 0 30px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--paper-sunken);
-  font-family: var(--font-ui);
-  font-size: var(--t-small-size);
-  letter-spacing: 0;
-  color: var(--ink);
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease);
 }
-.cx-find-input::placeholder {
-  color: var(--ink-faint);
-}
-.cx-find-input:hover {
-  border-color: var(--hairline-strong);
-}
-.cx-find-input:focus,
-.cx-find-input:focus-visible {
-  outline: none;
-  background: var(--paper-high);
-  border-color: var(--blue);
-  box-shadow: var(--glow-sm);
+
+/* the primitive takes no class, so the width sits on a box around it */
+.cx-find {
+  width: 260px;
 }
 
 /* ============================================================
    THE EMPTY STATES — a page, not a footnote
    ============================================================ */
 
+/* THE EMPTY STATE IS THE SYSTEM'S RAISED CARD at the large pad —
+   see CustomerList.tsx. This is where it sits: the `min()` replaces
+   the 20px the scroller used to hold back on every side. A card
+   centred at a fixed 680 had nothing keeping it off the edge once
+   that went. */
 .cx-empty {
+  max-width: min(680px, calc(100% - var(--page-gutter) * 2));
+  margin: var(--s-6) auto 0;
+}
+
+/* and this is the stack inside it — the primitive has no gap of its
+   own, and an eyebrow, a headline, a sentence, an act and a footnote
+   are five things that want air between them */
+.cx-empty-body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--s-4);
-  /* the `min()` replaces the 20px the scroller used to hold back on
-     every side. A card centred at a fixed 680 had nothing keeping it
-     off the edge once that went */
-  max-width: min(680px, calc(100% - var(--page-gutter) * 2));
-  margin: var(--s-6) auto 0;
-  padding: var(--s-8) var(--s-8) var(--s-6);
-  background: var(--grad-surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
 }
 
 /* AND IT IS CENTRED ONLY WHEN IT IS THE WHOLE PAGE. A project with
@@ -641,16 +453,6 @@
 .ph + .cx-empty,
 .ph-tools + .cx-empty {
   margin-inline: var(--page-gutter) 0;
-}
-
-.cx-empty-eyebrow {
-  font-family: var(--font-ui);
-  font-size: var(--t-label-size);
-  font-weight: var(--t-label-weight);
-  line-height: var(--t-label-lead);
-  letter-spacing: var(--t-label-track);
-  text-transform: uppercase;
-  color: var(--ink-faint);
 }
 
 /* THE LINE THE PAGE OPENS ON is `.cx-empty-title`, and it is
@@ -710,16 +512,26 @@
    The title above it does not move when the list stops growing, so
    the list must not move either: `--page-gutter` on the left, and
    whatever is left over stays margin. */
-.cx-rows {
+/* THE BOOK — the system's raised card with no pad, holding the rows
+   and the foot (see CustomerList.tsx). The card takes no class, so
+   the page's gutter and the register's ceiling sit on this box. */
+.cx-book {
   max-width: min(var(--measure), 1900px);
   margin: 0 var(--page-gutter);
+}
+
+.cx-rows {
+  margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  overflow: hidden;
+}
+
+/* THE FIRST ROW'S HOVER MUST NOT POKE PAST THE CARD'S TOP CORNERS.
+   The card draws its radius and does not clip; the row draws its own
+   ground on hover, so the top row rounds itself to sit inside. */
+.cx-rows > :first-child > .cx-row-open {
+  border-top-left-radius: calc(var(--r-card) - 1px);
+  border-top-right-radius: calc(var(--r-card) - 1px);
 }
 
 .cx-row + .cx-row {
@@ -937,23 +749,11 @@
   min-width: 0;
 }
 
-/* THE ONE UPPERCASE STYLE ON THIS SCREEN, and it is a section
-   caption, which is exactly what the style is for (§3). Two of
-   them, because there are two panes and an unlabelled column of
-   input boxes beside a labelled list of documents reads as one
-   thing with a stray form attached. */
-.cx-pane-head {
-  margin: 0 0 var(--s-3);
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--line-subtle);
-  font-family: var(--font-ui);
-  font-size: var(--t-label-size);
-  font-weight: var(--t-label-weight);
-  line-height: var(--t-label-lead);
-  letter-spacing: var(--t-label-track);
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
+/* THE TWO PANE HEADS ARE THE SYSTEM'S `SectionHead` — the one
+   uppercase style, drawn once, with its hairline. Two of them,
+   because there are two panes and an unlabelled column of input
+   boxes beside a labelled list of documents reads as one thing with
+   a stray form attached. */
 
 /* THE GAP BETWEEN GROUPS HAS TO BEAT THE GAP INSIDE ONE, or the
    caption under a run reads as a caption under its last field.
@@ -966,7 +766,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-6);
-  margin: 0;
+  margin: var(--s-3) 0 0;
 }
 
 /* A RUN OF COLUMNS THAT SHARE ONE SENTENCE. The fields sit closer
@@ -1012,30 +812,6 @@
   color: var(--ink-soft);
 }
 
-/* THE NAME COLUMN NEEDS NO SPECIAL WIDTH ANY MORE. It carried
-   `grid-column: 1 / -1` to break out of a four-across grid that no
-   longer exists; every field is now the pane's own width, and the
-   name is not wider than an address. The modifier stays because the
-   markup still marks which field is the display column — it is what
-   the placeholder hangs off.
-
-   WHAT "THE PANE'S WIDTH" IS, MEASURED, because it is not one
-   number. Above the 720px container fold the grid track supplies
-   it, and the track ramps: 340 at the fold, 394 in a 1376px well and
-   520 at the ceiling. Below the fold there is no track and
-   nothing here caps the measure, so a field is the whole column:
-   660 at a 900px window, 552 at 760. That is wider than the 340
-   this pass argued a phone number into, and it was left that way
-   deliberately. A single column IS the page at those widths, and a
-   340px form floating in a 700px well with the history full-width
-   beneath it spends the little width there is on nothing. The
-   measure is a two-column decision; full-width fields are the
-   one-column one. Both are the pane's width — the pane is just a
-   different width. */
-.cx-field--name {
-  max-width: none;
-}
-
 .cx-field--tick {
   flex-direction: row;
   align-items: center;
@@ -1079,17 +855,6 @@
    is FOR is still said in the column's own words; it is said once
    per run of columns that say it, as `.cx-group-say` above. */
 
-/* A COLUMN THIS PAGE WILL NOT PRETEND TO EDIT. Not a disabled text
-   box — an empty box with a grey border is a control that looks
-   broken. A recessed panel with the reason in it. */
-.cx-field--stub {
-  gap: var(--s-1);
-  padding: var(--s-2) var(--s-3);
-  background: var(--paper-sunken);
-  border: 1px dashed var(--hairline-strong);
-  border-radius: var(--r-control);
-}
-
 .cx-field-stub-say {
   margin: 0;
   font-size: var(--t-caption-size);
@@ -1112,15 +877,14 @@
    being a door. A panel rather than a loose paragraph, because it
    holds the pane's shape: an empty right-hand column that is
    literally empty makes the page look broken rather than new. */
+.cx-hist-well {
+  margin-top: var(--s-3);
+}
 .cx-hist-empty {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--s-4);
-  padding: var(--s-5);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--paper-sunken);
 }
 
 .cx-hist-none {
@@ -1146,65 +910,25 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  overflow: hidden;
 }
 
 .cx-hist-row + .cx-hist-row {
   border-top: 1px solid var(--line-subtle);
 }
 
-/* TWO LINES, NOT FIVE COLUMNS. The row was
-   `auto minmax(0,1fr) auto auto auto` — day, subject, state, money,
-   arrow — strung across the full page width. In a right-hand pane
-   that is 900px at 1600 and 400px at 1100, five columns is where a
-   boat's name starts being cut in half, and §3 is explicit that
-   nothing truncates.
-
-   So what the quote IS and what it COSTS take the first line, and
-   the two identifiers plus its state take the second. That reading
-   order is the one somebody scanning a history uses: which boat,
-   how much, then which document and when. */
-.cx-hist-open {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  grid-template-areas:
-    'what money go'
-    'meta state go';
-  align-items: center;
-  gap: 2px var(--s-3);
-  width: 100%;
-  padding: var(--s-3) var(--s-4);
-  text-align: left;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-
-.cx-hist-open:hover {
-  background: var(--paper-sunken);
-}
-
-.cx-hist-open:active {
-  background: var(--blue-wash);
-  transition-duration: var(--d-press);
-}
-
-.cx-hist-open:focus-visible {
-  outline: none;
-  background: var(--blue-wash);
-  box-shadow: inset 3px 0 0 0 var(--blue);
-}
-
-.cx-hist-open:disabled {
-  cursor: default;
-}
-.cx-hist-open:disabled:hover {
-  background: transparent;
+/* TWO LINES, NOT FIVE COLUMNS — and the two lines are the system's
+   `Row`: what the quote is and what it costs on the name line, the
+   two identifiers and the state on the meta line beneath. The row
+   was a five-track grid drawn here; in a right-hand pane that is
+   900px at 1600 and 400px at 1100, five columns is where a boat's
+   name starts being cut in half, and §3 is explicit that nothing
+   truncates. */
+.cx-hist-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-width: 0;
 }
 
 /* THE SECOND LINE: which document, and when it was written. Both
@@ -1229,7 +953,6 @@
    and returns '' rather than a flag, so this rule never has to know
    which case it is looking at. */
 .cx-hist-meta {
-  grid-area: meta;
   display: flex;
   align-items: baseline;
   gap: 6px;
@@ -1253,12 +976,7 @@
 }
 
 .cx-hist-what {
-  grid-area: what;
   min-width: 0;
-  font-size: var(--t-body-size);
-  font-weight: 520;
-  letter-spacing: var(--t-body-track);
-  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
@@ -1275,8 +993,7 @@
    column for; a draft is ink, because it is the resting state and
    not an alarm. */
 .cx-hist-state {
-  grid-area: state;
-  justify-self: end;
+  margin-left: auto;
   font-size: var(--t-caption-size);
   font-weight: 500;
   letter-spacing: var(--t-caption-track);
@@ -1291,21 +1008,9 @@
    money on every other row — 11ch holds $1,234,567 without the
    column moving when a row is added */
 .cx-hist-total {
-  grid-area: money;
-  justify-self: end;
+  flex: none;
   min-width: 11ch;
   text-align: right;
-}
-
-.cx-hist-go {
-  grid-area: go;
-  align-self: center;
-  color: var(--ink-faint);
-  transition: color var(--d-fast) var(--ease);
-}
-.cx-hist-open:hover .cx-hist-go,
-.cx-hist-open:focus-visible .cx-hist-go {
-  color: var(--blue);
 }
 
 /* ============================================================
@@ -1352,22 +1057,6 @@
    screen anybody opened it for.
    ============================================================ */
 
-/* THE PANE IS THE THING THAT GOT NARROW, not the window, so the
-   fold is a container query. Below 340 of pane the arrow goes: it
-   is an affordance for a row that is already a button, and the
-   money must not be the thing that yields. */
-@container crm-pane (max-width: 340px) {
-  .cx-hist-open {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'what money'
-      'meta state';
-  }
-  .cx-hist-go {
-    display: none;
-  }
-}
-
 /* ============================================================
    FIGURES LINE UP, AND PROSE WRAPS EVENLY.
 
@@ -1390,64 +1079,8 @@
 }
 
 /* ============================================================
-   MOTION GOES, FEEDBACK STAYS.
-   ============================================================ */
-@media (prefers-reduced-motion: reduce) {
-  .cx-act:active {
-    transform: none;
-  }
-}
-
-/* ============================================================
    THE REGISTER'S OWN CONTROLS — sort, and what a person is worth.
    ============================================================ */
-
-/* HOW THE BOOK IS ORDERED. Same shape as the board's sort, because
-   it is the same control answering the same kind of question, and
-   two different-looking sort controls in one application is two
-   things to learn. */
-.cx-order {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-2) 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-}
-.cx-order:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-wash);
-}
-/* IT DIMS RATHER THAN DISAPPEARS while a search is on. A control
-   that vanishes has to be re-found; one that is visibly inert has
-   explained itself. */
-.cx-order:has(select:disabled) {
-  opacity: 0.55;
-}
-/* "Sort" is a label — §3 — and the value beside it is not. */
-.cx-order-say {
-  font-size: var(--t-caption-size);
-  font-weight: 620;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fg-tertiary);
-}
-.cx-order-in {
-  border: 0;
-  background: transparent;
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  cursor: pointer;
-}
-.cx-order-in:focus {
-  outline: none;
-}
-.cx-order-in:disabled {
-  cursor: default;
-}
 
 /* WHAT THEY HAVE BEEN QUOTED. Mono and tabular so the column reads
    down, and never a hue — a figure is not decorative, and money
@@ -1603,13 +1236,6 @@
   margin: 0 auto;
 }
 
-/* ONE CUSTOMER IS ONE COLUMN OF SECTIONS, always. The split on this
-   screen is inside .cx-body, one level down, so the header stays a
-   header at every width. */
-.cx-page--one {
-  grid-template-columns: minmax(0, 1fr);
-}
-
 /* ============================================================
    THE WIDE WINDOW — a column beside the list, not a longer row
 
@@ -1712,19 +1338,10 @@
    be opaque anyway, because rows scroll under it.
    ============================================================ */
 
-/* THE CARD ENDS AT THE FOOT, NOT ABOVE IT. The list draws
-   `--r-card` on all four corners and the bar sits directly under
-   it, so without this the two meet as a rounded edge against a
-   square one — a 10px notch on each side of a seam that is
-   supposed to be invisible. The list only ever renders WITH the
-   foot (an empty result draws `.cx-none` instead of the `<ul>`), so
-   there is no state in which this squares a corner that is on
-   show. */
-.cx-rows {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
+/* THE FOOT IS INSIDE THE CARD, under the rows, so the card's corners
+   are the card's and the seam is a hairline. It is opaque because
+   rows scroll under it, and it rounds its own bottom corners to sit
+   inside the card's radius, which the card does not clip. */
 .cx-foot {
   position: sticky;
   /* NOT `bottom: 0`, AND THE 48 IS NOT A GUESS. `.cx-scroll` carries
@@ -1742,15 +1359,11 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s-3);
-  min-height: 30px;
-  margin: 0 var(--page-gutter);
-  max-width: min(var(--measure), 1900px);
+  min-height: 36px;
   padding: var(--s-1) var(--s-2) var(--s-1) var(--s-4);
-  border: 1px solid var(--line);
-  border-top: 0;
-  border-radius: 0 0 var(--r-card) var(--r-card);
+  border-top: 1px solid var(--line-subtle);
+  border-radius: 0 0 calc(var(--r-card) - 1px) calc(var(--r-card) - 1px);
   background: var(--surface-1);
-  box-shadow: var(--e1);
 }
 
 /* --ink-soft, not --ink-faint, and for the reason this file already
@@ -1800,60 +1413,9 @@
   flex: 0 0 auto;
 }
 
-/* A TEXT CONTROL, NOT A `.cx-act`. `.cx-act` is 32px tall and this
-   bar is 30, and a bar that has to grow to hold its own buttons is
-   a bar that pushes the list around. Hover, press and focus are
-   all here — §4 allows no exception. */
-.cx-foot-act {
-  height: 22px;
-  padding: 0 var(--s-2);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-  background: transparent;
-  font-family: var(--font-ui);
-  font-size: var(--t-caption-size);
-  font-weight: 540;
-  letter-spacing: var(--t-caption-track);
-  text-transform: none;
-  color: var(--ink-soft);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
-}
-
-.cx-foot-act:hover {
-  background: var(--paper-sunken);
-  color: var(--ink);
-}
-
-.cx-foot-act:active {
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-
-.cx-foot-act:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-/* WITH THE LETTERS TURNED OFF THE SWITCH SAYS SO IN INK, not only
-   in words — `aria-pressed` carries it to a screen reader and this
-   carries it to everybody else. */
-.cx-foot-act[aria-pressed='false'] {
-  color: var(--ink-faint);
-}
-
-/* MOTION GOES, FEEDBACK STAYS — the second half of the escape this
-   file already keeps for `.cx-act`, for the two surfaces added
-   here. The mark's opacity stays: §4 is explicit that reduced
-   motion means gentler feedback, not none, and an opacity change
-   is not movement. */
-@media (prefers-reduced-motion: reduce) {
-  .cx-foot-act:active {
-    transform: none;
-  }
-}
+/* THE FOOT'S TWO CONTROLS ARE THE SYSTEM'S GHOST BUTTONS at the
+   small size. The bar grew from 30 to 36px to hold them — one
+   height in both its states, still, which is the rule that matters:
+   the row under the cursor cannot move because the bar changed its
+   mind. What is lost is the ink that said "off" on the letter-key
+   switch; the words say it, and `aria-pressed` still carries it. */

@@ -236,682 +236,6 @@
 .shell-tick-br { bottom: -6px; right: -6px; }
 
 /* ============================================================
-   MASTHEAD — mark · organisation · industry · I/O
-   ============================================================ */
-/* THE MASTHEAD IS NOT GLASS, AND THAT IS A DECISION WITH A REASON.
-   It is the most tempting surface in the app and it fails on the
-   first test. apple-design §12 asks for translucent chrome "with
-   content scrolling underneath"; this bar is a flex SIBLING of the
-   stage (.shell-root is a column holding <TopBar /> then
-   .shell-body), so nothing scrolls under it and nothing ever will
-   without a layout change. Blur its backdrop and Chromium resolves
-   .shell-root's flat --paper at the full price of the blur: uniform
-   input, uniform output, no information, 1.07:1 of separation from
-   its own ground.
-
-   It is also the app's fixed datum — the title block of a drawing —
-   and a title block that floats is not a title block. It is the one
-   chrome present on all five --paper stages, where the material
-   would measure that same 1.07:1. One floating chrome layer and one
-   fixed frame is a hierarchy; two floating layers is a mood. Its
-   solidity is what makes .io-pop, which hangs off it, legal at all:
-   see io.css. */
-.shell-masthead {
-  flex: 0 0 56px;
-  height: 56px;
-  display: flex;
-  align-items: stretch;
-  min-width: 0;
-  background: var(--paper-high);
-  /* the hairline came down a step when the masthead stopped being a
-     title block; this was declared twice and the softer one won */
-  border-bottom: 1px solid var(--hairline);
-  /* 12 + 4 (mark pad) puts the brand on the shared x=16 line */
-  padding-left: var(--sp-3);
-  z-index: 40;
-}
-
-.shell-mark {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px; /* optical lockup, tighter than the sp scale */
-  padding: 0 var(--sp-5) 0 var(--sp-1);
-  border-right: 1px solid var(--hairline);
-  user-select: none;
-}
-.shell-mark-brand {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-.shell-mark-product {
-  font-size: 15px;
-  font-weight: 570;
-  letter-spacing: -0.009em;
-  text-transform: none;
-  line-height: 1.1;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-/* -- the organisation --------------------------------------- */
-.shell-org {
-  flex: 0 1 auto;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  /* 2px of the gutter moves into the name's own padding so its text
-     sits on the compartment line WITHOUT negative margins */
-  padding: 0 var(--sp-5) 0 calc(var(--sp-5) - 2px);
-}
-
-.shell-org-name {
-  min-width: 0;
-  border: none;
-  background: none;
-  margin: 0;
-  padding: 3px 2px;
-  font-size: 15px;
-  font-weight: 560;
-  letter-spacing: -0.009em;
-  text-transform: none;
-  line-height: 1.2;
-  color: var(--ink);
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: min(320px, 100%);
-  cursor: text;
-  border-radius: var(--radius-sm);
-  border-bottom: 1px dashed transparent;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.shell-org-name:hover {
-  background: var(--blue-wash);
-  border-bottom-color: var(--blue);
-}
-
-.shell-org-input {
-  width: 320px;
-  max-width: 100%;
-  border: none;
-  border-bottom: 1px solid var(--blue);
-  background: var(--blue-wash);
-  margin: 0;
-  padding: 3px 2px;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  font-size: 15px;
-  line-height: 1.2;
-  color: var(--ink);
-}
-.shell-org-input:focus {
-  outline: none;
-}
-
-/* the industry — a stamp, not a control: it is set once, in
-   onboarding, and only ever read here */
-.shell-org-industry {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  line-height: 1.5;
-  color: var(--ink-faint);
-  white-space: nowrap;
-  user-select: none;
-}
-.shell-org-mark {
-  flex: 0 0 auto;
-  opacity: 0.85;
-}
-
-/* -- actions ------------------------------------------------- */
-.shell-masthead-actions {
-  flex: none;
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 0 var(--sp-4);
-}
-
-/* the stamp is the first thing to go when the window narrows —
-   the name and the one action never are */
-@media (max-width: 900px) {
-  .shell-org-industry {
-    display: none;
-  }
-}
-
-/* ============================================================
-   PANEL — the table types, then your tables. One scroll.
-   ============================================================ */
-/* THE PANEL IS NOT GLASS YET, AND THE REASON IS THE SAME ARITHMETIC
-   AS THE MASTHEAD'S — but here the answer is a layout change rather
-   than a refusal. This is a flex TRACK, so the blueprint stops at
-   its left edge and there is nothing behind it to see: white glass
-   over --paper separates at 1.07:1, where the same material over
-   --canvas-bg-deep separates at 11.5:1. The material is not a
-   declaration this surface is missing, it is a layout it does not
-   have.
-
-   THE FIX IS TO FLOAT IT OVER THE STAGE, and it earns that three
-   ways: it is on screen whenever the sheet is, it is the largest
-   and most persistent chrome in the app at 260 × 844 ≈ 219k px²,
-   and a translucent sidebar over a document is the canonical
-   material moment apple-design §12 describes. It is NOT done here,
-   because floating it moves .shell-stage's box and three of the
-   consequences live in Whiteboard.tsx, which this slot does not
-   own:
-     · Whiteboard.tsx:505-517 decides whether a selected table is
-       already on screen from wrapRef.getBoundingClientRect(). Once
-       the container spans under the panel, rect.width grows by 260
-       and the visible region shrinks by 260 on the LEFT, so a node
-       hidden behind the panel reads as visible and the camera will
-       not fetch it. minX must gain the panel's width. Without that
-       line, floating the panel quietly undoes the doors-into-view
-       work (18 of 18) that landed today.
-     · FIT_VIEW_OPTIONS (Whiteboard.tsx:115) must carry per-side
-       padding so FIT stops framing nodes underneath the panel.
-     · The blur must suspend while the camera pans — §12 again, and
-       the same idiom tableLod.ts already uses on the same gesture.
-   The material tokens are defined and measured in base.css and are
-   waiting for those three. Do not add backdrop-filter to this rule
-   on its own. */
-/* IT FLOATS NOW, and the three consequences above are handled — see
-   `--panel-w` in Whiteboard.tsx for the camera arithmetic and
-   `.shell-body.is-panning` below for the blur suspension.
-
-   It is absolutely positioned rather than a flex track, so the stage
-   spans the full width and the blueprint runs underneath it. That is
-   the whole point: white glass over --paper separates at 1.07:1 and
-   is not a material at all, while the same glass over the navy
-   measures 11.5:1 and reads as one instantly.
-
-   Ink on this surface, measured over --canvas-bg-deep at alpha 0.86:
-     --ink       11.38:1
-     --ink-soft   6.47:1
-     --ink-faint  4.07:1   <- BELOW 4.5, so it is overridden below
-   0.86 is the floor that keeps the middle tier clear while the
-   material still reads as glass; --ink-faint needs 0.909 over that
-   ground, which is paint, so faint ink on this panel is promoted to
-   --ink-soft rather than the material being thickened for it. */
-.shell-panel {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 20;
-  width: var(--panel-w, 260px);
-  min-width: 0;
-  min-height: 0;
-  /* ONE region: the type rail and the list scroll together, so the
-     column never nests a scrollbar inside a scrollbar */
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-bottom: var(--sp-6);
-  /* PAINT, NOT GLASS. This was a translucent material with a bright
-     inner edge catching the light. Quiet Precision was chosen over
-     Glass & Depth, so the surface is opaque and the only edge is the
-     hairline. The blur token still resolves (to 0px) so nothing here
-     needs the declaration removed. */
-  background: var(--paper-high);
-  backdrop-filter: var(--mat-light-blur);
-  -webkit-backdrop-filter: var(--mat-light-blur);
-  border-right: 1px solid var(--hairline);
-}
-
-/* THE TIER THAT CANNOT RIDE ON GLASS. --ink-faint measures 4.07:1 on
-   this material over the deep navy and needs alpha 0.909 to clear the
-   floor — which is not glass. Promoting it here costs one step of
-   hierarchy on one surface; thickening the material to carry it would
-   cost the material everywhere. */
-.shell-panel .mono-label,
-.shell-panel .shell-tbl-rows,
-.shell-panel .shell-grp-count,
-.shell-panel .shell-panel-count {
-  color: var(--ink-soft);
-}
-
-/* BLUR SUSPENDS WHILE THE CAMERA MOVES. backdrop-filter re-samples
-   every frame, and the surface it samples is the one thing on screen
-   that is definitely moving. The canvas already drops to 12-24fps at
-   legible zoom; paying for a 260 x 844 blur on top of that is how a
-   material becomes a stutter. Same idiom tableLod.ts uses on the same
-   gesture: drop detail while moving, restore when it settles. */
-.shell-body.is-panning .shell-panel {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: var(--paper-high);
-}
-
-/* Reduced transparency is not a preference to nod at — for some people
-   the blur is the reason they cannot read it. */
-@media (prefers-reduced-transparency: reduce) {
-  .shell-panel {
-    background: var(--paper-high);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
-@media (prefers-contrast: more) {
-  .shell-panel {
-    background: var(--paper-high);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-right-color: var(--ink);
-  }
-}
-.shell-panel:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-
-/* THE RULES DOOR — a rule is about the whole sheet, so it sits above
-   the table list rather than inside it. Quiet at rest; it is a place
-   to go, not an action to take. */
-.shell-panel-rules {
-  display: flex;
-  /* the door was a two-line card and became a one-line nav row, so
-     the row direction is what renders and `flex-direction` is a
-     fossil of the card; kept because it is what the box computes */
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-2);
-  width: calc(100% - var(--sp-4) * 2);
-  margin: var(--sp-2) var(--sp-4) 0;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-/* THE HOVER AND THE FRONT DOOR are declared in QUIET PRECISION
-   below, and deliberately not here: `.is-open` sits between the two
-   at the same specificity, so which of them a person sees on an
-   open, hovered door is decided by source order. Moving them up
-   would silently swap the answer. */
-.shell-panel-rules:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-.shell-panel-rules.is-open {
-  background: var(--blue-wash);
-  border-color: var(--blue);
-}
-.shell-panel-rules-text {
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: -0.003em;
-  line-height: 1.2;
-  color: var(--ink);
-}
-/* THE FRONT DOOR — the same door, standing first.
-
-   It is the panel's first child, so it has nothing above it to take
-   its top margin from: without the line below it sits hard against
-   the masthead's hairline and reads as part of the chrome rather
-   than as something to press. The bottom margin and the rule under
-   it are the seam between what this app IS ABOUT (the places in the
-   business) and what it is MADE OF (the sheet, and the doors onto
-   it) — one hairline, because that is what this house uses to say
-   "different subject" and nothing louder is needed. The rule itself
-   is in QUIET PRECISION below, with the hover it has to outrank. */
-.shell-panel-rules.is-front::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--sp-4) / -2);
-  border-bottom: 1px solid var(--hairline);
-}
-
-/* -- the two folds -------------------------------------------
-   ONE IDIOM, TWO JOBS, AND THE SAME CARET EITHER WAY.
-
-   `.shell-fold` on its own is a SUBHEAD YOU CAN OPEN: it stands
-   where a `.shell-grp` head stands, carries the same mono label,
-   count and hairline, and adds the caret that says there is
-   something under it. That is Relationships and Retired — the
-   two groups that are not stock.
-
-   `.shell-fold--action` is the same control drawn as a door,
-   because it is one: it opens the type tray, and a tray is a
-   thing you go and get rather than a section of the list. One
-   line, 34px, against the 63px of the two-line doors around it —
-   it is the quietest thing in the column on purpose.
-
-   Both are buttons carrying `aria-expanded`, so the caret is
-   decoration and never the only statement of state. */
-.shell-fold {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  width: calc(100% - var(--sp-4) * 2);
-  margin: var(--sp-4) var(--sp-4) 0;
-  padding: 0 0 5px;
-  border: 0;
-  border-bottom: 1px solid var(--hairline);
-  border-radius: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  color: var(--ink-soft);
-  transition: color var(--t-fast) var(--ease-draft);
-}
-.shell-fold:hover {
-  color: var(--ink);
-}
-.shell-fold:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
-}
-/* the caret turns rather than swapping for a second glyph — the
-   same mark pointing at where the list will be */
-.shell-fold-mark {
-  flex: 0 0 auto;
-  color: var(--ink-faint);
-  transition: transform var(--t-fast) var(--ease-draft);
-}
-.shell-fold.is-open .shell-fold-mark {
-  transform: rotate(90deg);
-}
-@media (prefers-reduced-motion: reduce) {
-  .shell-fold-mark {
-    transition: none;
-  }
-}
-.shell-fold-text {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.shell-fold-count {
-  flex: 0 0 auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: var(--ink-faint);
-}
-
-/* the tray door: a one-line member of the `.shell-panel-rules`
-   family, sitting where the 370px rail used to start */
-.shell-fold--action {
-  margin: var(--sp-2) var(--sp-4) 0;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper-high);
-  color: var(--ink);
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.shell-fold--action:hover,
-.shell-fold--action.is-open {
-  background: var(--blue-wash);
-  border-color: var(--blue);
-}
-.shell-fold--action:focus-visible {
-  outline-offset: -2px;
-}
-.shell-fold-say {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-/* a shut fold's list is display:none, so the group under it must
-   not inherit the open list's spacing */
-.shell-fold + .shell-tbl-list {
-  padding-top: 5px;
-}
-
-.shell-panel-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  padding: var(--sp-5) var(--sp-4) var(--sp-2);
-}
-.shell-panel-count {
-  flex: 0 0 auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: var(--ink-faint);
-}
-
-/* nothing to list yet — the sheet is already saying what to do, so
-   this stays a whisper */
-.shell-panel-none {
-  margin: var(--sp-5) var(--sp-4) 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  line-height: 1.8;
-  color: var(--ink-faint);
-}
-
-.shell-tbl-list {
-  list-style: none;
-  margin: 0;
-  /* rows inset from the column edge: the accent bar of a selected row
-     needs air around it or it reads as a border on the panel */
-  padding: 0 var(--sp-2);
-}
-
-/* AIR UNDER A ROW THAT SCROLLS ITSELF INTO VIEW. Selecting a table
-   scrolls its <li> — doors included — into view (LeftPanel.tsx), and
-   `block: 'nearest'` moves the MINIMUM distance, which lands the last
-   door flush against the window edge: measured at 800.073px against
-   an 800px viewport, so it overshot by 0.073px and read as clipped.
-   `scroll-margin` is the mechanism built for exactly this — it pads
-   the box the scroller aims at without changing the box that is
-   drawn, so the row still sits on the panel's own rhythm. */
-.shell-tbl-list li {
-  scroll-margin-block: var(--sp-3);
-}
-
-/* A TABLE ROW IS A NAV ROW, NOT A STAMP. It was uppercase at 640
-   weight with letterspacing — a shout repeated 24 times down one
-   column. Sentence case, one weight, and the name is allowed to be
-   the loudest thing on its own row. Its HOVER is declared in QUIET
-   PRECISION below for the same reason the door's is: `.is-selected`
-   sits between the two declarations at the same specificity. */
-.shell-tbl {
-  width: 100%;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  margin: 0;
-  padding: 9px var(--sp-2) 9px var(--sp-3);
-  text-align: left;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 460;
-  letter-spacing: -0.002em;
-  text-transform: none;
-  color: var(--ink-soft);
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft);
-}
-.shell-tbl.is-selected {
-  background: var(--blue-wash);
-  box-shadow: inset 2px 0 0 var(--row-accent, var(--ink));
-}
-/* the row clips its own rounded corners — keep the ring inside */
-.shell-tbl:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-
-.shell-tbl-glyph {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  color: var(--row-accent, var(--ink));
-}
-/* a name keeps its own case — see the note in table.css */
-.shell-tbl-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 13px;
-  font-weight: 460;
-  letter-spacing: -0.003em;
-  text-transform: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.shell-tbl-rows {
-  flex: 0 0 auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--ink-faint);
-}
-
-/* -- kind subheads ------------------------------------------
-   The list is cut by KIND — Boats, Motors, Trailers,
-   Accessories, then Relationships. These are paragraphs in the
-   one scrolling column, NOT panes: nothing here scrolls on its
-   own, so the panel keeps exactly one scrollbar however many
-   groups there are. */
-.shell-grp {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  margin-top: var(--sp-4);
-  padding: 0 var(--sp-4) 5px;
-  border-bottom: 1px solid var(--hairline);
-}
-/* the first group sits under the TABLES head, which already
-   opened the space — do not open it twice */
-.shell-panel-head + .shell-grp {
-  margin-top: var(--sp-1);
-}
-/* THE GROUP HEADING is the one uppercase style in the system */
-.shell-grp-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-}
-.shell-grp-count {
-  flex: 0 0 auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--ink-faint);
-}
-/* said once, under the relationships head: a join is not stock */
-.shell-grp-note {
-  margin: 6px var(--sp-4) 0;
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--ink-faint);
-}
-.shell-grp + .shell-tbl-list,
-.shell-grp-note + .shell-tbl-list {
-  padding-top: 5px;
-}
-
-/* -- the door to the view page ------------------------------
-   Only ever drawn under the table you just clicked, and never
-   under a relationship. A SENTENCE, not a glyph: this is the
-   only way into the page, and nobody guesses an icon. */
-.shell-tbl-door {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: calc(100% - var(--sp-3));
-  margin: 2px 0 var(--sp-2) var(--sp-3);
-  padding: 6px var(--sp-2) 6px 9px;
-  border: 0;
-  border-left: 1px solid var(--hairline-strong);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: 11.5px;
-  font-weight: 560;
-  letter-spacing: 0.01em;
-  color: var(--blue-deep);
-  animation: door-in var(--t-fast) var(--ease-draft) both;
-}
-.shell-tbl-door:hover {
-  background: var(--blue-wash);
-  border-left-color: var(--blue);
-}
-.shell-tbl-door:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-.shell-tbl-door.is-open {
-  background: var(--blue-wash-strong);
-  border-left-color: var(--blue);
-}
-.shell-tbl-door-text {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-/* WHERE A DOOR WOULD BE, IF THERE WERE ONE. A link table is offered
-   neither of the two sub-doors; drawn in the same place and the same
-   indent, in quiet ink and without the hairline, this says why rather
-   than leaving the row silent. */
-.shell-tbl-note {
-  margin: 2px var(--sp-3) var(--sp-2) var(--sp-3);
-  padding: 4px 0 4px 9px;
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--ink-faint);
-  animation: door-in var(--t-fast) var(--ease-draft) both;
-}
-@keyframes door-in {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-}
-
-/* ============================================================
    THE VIEW STAGE — the box around `@/features/views`.
 
    It covers the sheet instead of replacing it, so React Flow
@@ -928,85 +252,88 @@
    `.win-body > .shell-viewstage` hands it back when a stage really
    is inside a window — see THE DESKTOP below. Three declarations,
    one rule, same computed box. */
+/* THE STAGE IS THE SURFACE. It is in flow, fills the content column,
+   and draws no frame of its own — no border, no radius, no shadow,
+   no entrance; `.surface` fades in once and the stage is simply
+   inside it. The Mac window that once gave it a frame is gone with
+   its component. */
 .shell-viewstage {
   position: relative;
-  inset: auto;
+  flex: 1;
   height: 100%;
-  z-index: 30;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  background: var(--paper-high);
-  box-shadow: var(--e3);
-  animation: fade-in var(--t-fast) var(--ease-draft) both;
+  background: var(--paper);
 }
-
-/* THE BAR ITSELF is declared once, at the foot of this file under
-   THE MASTHEAD LOSES ITS NAVY — four eras collapsed into one rule.
-   What stands here is what stands ON it. */
-.btn.shell-view-back {
-  flex: 0 0 auto;
-  padding: 6px 11px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-}
+/* ---- what stands on the bar --------------------------------
+   The bar's three tracks are declared once, at the foot of this
+   file (AND THE BAR IS A GRID AGAIN). Track 1 is `.shell-view-lead`
+   — a slot holding the primitive's ghost Button — and track 2 is
+   this crumb: the kind mark, the subject's name in the display
+   face, and one aside saying what SORT of place this is. */
 .shell-view-what {
+  grid-column: 2;
+  justify-self: center;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--s-2);
   min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--ink-faint);
+  max-width: 100%;
+  margin: 0;
+  pointer-events: none;
+  font-family: var(--font-sans);
+  color: var(--fg-secondary);
 }
-/* The four parts of the crumb. Each had two declarations — the
-   original mono stamp here, and the Mac window's re-typing of it
-   ninety rules later; both are folded in, later value winning. */
 .shell-view-what-mark {
   display: flex;
-  flex: 0 0 auto;
-  color: var(--ink-faint);
+  flex: none;
+  color: var(--view-accent, var(--fg-tertiary));
 }
+/* THE NAME WEARS `.ds-display-lg` — the step ds.css cut for "a stage
+   title with a page behind it" — and nothing here restates a size, a
+   weight, a leading or a tracking (rule 6). It wraps at a space to
+   two lines, never mid-word (§3), with the full text in the DOM. A
+   name over 28 characters steps DOWN a whole step, to the title step
+   in the reading face: the swap the display tier permits and the
+   shrink it forbids. */
 .shell-view-what-name {
   flex: 0 1 auto;
   min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.006em;
-  white-space: nowrap;
-  color: var(--ink);
+  text-wrap: balance;
 }
+.shell-view-what-name.is-long {
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+}
+/* a tick between two facts and nothing to read: the decoration tier */
 .shell-view-what-sep {
-  flex: 0 0 auto;
-  color: var(--ink-faint);
+  flex: none;
+  color: var(--fg-quaternary);
 }
 /* the aside is half sentence ("what goes with each one") and half
-   count ("26 models"), so it reads as Inter and takes tabular
-   figures rather than the mono face — the digits still line up
-   between one table and the next without a sentence being set in a
-   typewriter. */
+   count ("26 models"): the caption step, tabular so the digits line
+   up between one table and the next */
 .shell-view-what-say {
   flex: 0 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 12px;
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
   font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
   white-space: nowrap;
-  color: var(--ink-faint);
 }
 
 .shell-view-split {
@@ -1043,24 +370,9 @@
   border-right: 1px solid var(--hairline);
 }
 
+/* the find box is the Field primitive; this is only its room */
 .shell-view-find {
-  position: relative;
-  padding: var(--sp-3) var(--sp-3) var(--sp-2);
-}
-.shell-view-find-mark {
-  position: absolute;
-  top: 50%;
-  left: calc(var(--sp-3) + 9px);
-  transform: translateY(-42%);
-  color: var(--ink-faint);
-  pointer-events: none;
-}
-.field-input.shell-view-find-input {
-  padding-left: 26px;
-  font-size: 12px;
-}
-.shell-view-find-input::-webkit-search-cancel-button {
-  cursor: pointer;
+  padding: var(--s-3) var(--s-3) var(--s-2);
 }
 
 .shell-view-rows {
@@ -1068,114 +380,6 @@
   margin: 0;
   padding: 0 var(--sp-2);
 }
-.shell-view-row {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  padding: 7px var(--sp-2) 8px var(--sp-3);
-  border: 0;
-  border-radius: var(--radius);
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  color: var(--ink);
-  transition: background var(--t-fast) var(--ease-draft);
-}
-/* HOVER IS NOT CHOSEN, AND IT WAS DRAWN AS IF IT WERE. Both states
-   computed to exactly rgba(74, 86, 210, 0.09), so the moment a pointer
-   rested anywhere on this rail TWO rows read as the open one and the
-   page underneath belonged to neither of them by any visible sign. The
-   2px accent bar was carrying the whole distinction and it is 2px wide
-   at the far left of a 12px name.
-
-   The two states are now two different KINDS of mark, which is the only
-   way a person tells them apart without comparing: hover is a neutral
-   darken on the same paper (`--paper-sunken`, DESIGN_CONTRACT §1's
-   "hover on chrome", and §5's "a list row DARKENS instead of scaling"),
-   the open row is the accent wash plus its bar. Hovering the open row
-   deepens the wash rather than replacing it, so the pointer still gets
-   an answer on the row it is already on and the row never stops looking
-   chosen. */
-.shell-view-row:hover {
-  background: var(--paper-sunken);
-}
-.shell-view-row.is-open {
-  background: var(--blue-wash);
-  box-shadow: inset 2px 0 0 var(--view-accent, var(--ink));
-}
-.shell-view-row.is-open:hover {
-  background: var(--blue-wash-strong);
-}
-.shell-view-row:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-/* THE TRAIL IS THE DEALER'S OWN WORDS, NOT A CAPTION. It is the
-   group path a row sits under — "Ocean Ranger SDF (Hard Tops)" — read
-   straight off their sheet, so it was wearing `.mono-label` and
-   coming out "OCEAN RANGER SDF (HARD TOPS)". That is a value in a
-   label's clothes: the same flattening that makes their `PVC`
-   indistinguishable from their `Pvc`. `.mono-label` is gone from the
-   markup (it is the primitive for a CAPTION and it is right to stay
-   uppercase); the trail carries its own type here, Inter at the floor
-   with tracking back at 0. */
-.shell-view-row-trail {
-  display: block;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  line-height: 1.4;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink-faint);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* MEASURED WHILE THIS RULE WAS OPEN, AND IT WAS FAILING. --ink-faint
-   is 4.72:1 on white — the floor, exactly — and the OPEN row is lit
-   with --blue-wash, which composites to #eff0fb and takes the same
-   ink to 4.16:1. That is the trap DESIGN_CONTRACT §1 names in so many
-   words: "--ink-faint is 4.72:1 on white but 4.26:1 over a 3.5% tint,
-   which fails ... step up to --ink-soft". Measured by parsing
-   `color(srgb …)`, compositing the full ancestor chain to an opaque
-   base and compositing the text over that: 4.16:1 before, and
-   --ink-soft on the same lit row measures 6.74:1 after. It was wrong
-   before this pass too; it is fixed here because this is the rule
-   that was open. */
-.shell-view-row.is-open .shell-view-row-trail {
-  color: var(--ink-soft);
-}
-/* …and the same arithmetic for the neutral hover the rule above now
-   draws. `--ink-faint` measures 4.72:1 on white and 4.22:1 on
-   `--paper-sunken` #f1f2f5 — a fail introduced by the tint, not by the
-   ink, which is exactly the trap the note above records. The trail
-   steps up for the same reason on both lit states. */
-.shell-view-row:hover .shell-view-row-trail {
-  color: var(--ink-soft);
-}
-/* A NAME WRAPS. DESIGN_CONTRACT §3: "if a name does not fit it wraps or
-   clamps to two lines with the full text still in the DOM" — and this
-   was the one place in the app still cutting a name on one line, in the
-   list whose whole job is telling two boats apart. Two lines, clamped,
-   never mid-word (`overflow-wrap` is left alone deliberately: a break
-   inside "Coaster" would be worse than a second line), and the button
-   carries the whole string as its `title` for the rare row that is
-   still longer than two lines of a narrow rail. */
-.shell-view-row-name {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  font-size: 12px;
-  font-weight: 560;
-  line-height: 1.35;
-  letter-spacing: 0.03em;
-  overflow: hidden;
-}
-.shell-view-row-trail + .shell-view-row-name {
-  margin-top: 1px;
-}
-
 .shell-view-rail-none {
   margin: var(--sp-2) var(--sp-4) 0;
   font-size: 11.5px;
@@ -1475,14 +679,11 @@
    class. The +0.18em went with it — that tracking existed to make
    11px capitals legible at button size, and none of it is needed
    once the label is language. */
-.btn.shell-invite-go {
+/* the one primary act is the Button primitive; this is its room */
+.shell-invite-go {
+  display: flex;
+  justify-content: center;
   margin-top: var(--sp-5);
-  padding: 10px 22px;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 560;
-  letter-spacing: -0.004em;
-  text-transform: none;
 }
 
 /* THE SECOND DOOR — real data, one press. Deliberately NOT shaped like
@@ -1658,59 +859,19 @@
   gap: var(--sp-2);
 }
 
-/* BOARD OR LIST — a segmented pair, so it reads as ONE control with
-   two settings rather than as two unrelated buttons. The seam
-   between them is a single hairline: two adjacent 1px borders make
-   a 2px line, which is the detail that makes most segmented
-   controls look homemade. */
+/* BOARD | LIST | HISTORY — three of the primitive's buttons in a
+   row. The one that is on takes the neutral ground and `aria-pressed`
+   says so; History leaves the page, so it stands apart. Every
+   ground, border, radius, hover, press and ring is the primitive's;
+   nothing here draws a control. */
 .shell-quote-views {
-  display: inline-flex;
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
 }
-.shell-quote-views .shell-quote-act {
-  border-radius: 0;
-}
-.shell-quote-views .shell-quote-act:first-child {
-  border-radius: var(--r-control) 0 0 var(--r-control);
-}
-.shell-quote-views .shell-quote-act:last-child {
-  border-radius: 0 var(--r-control) var(--r-control) 0;
-  margin-left: -1px;
-}
-/* A CONTROL THAT LEAVES THE PAGE IS NOT PART OF THE SEGMENT. Board
-   and List swap what is under the header; History opens another
-   screen. Same row, because all three are ways of looking at the
-   same quotes — separated, because only two of them are a choice
-   about THIS page. */
 .shell-quote-away {
-  margin-left: var(--s-3);
-  border-radius: var(--r-control);
-}
-
-/* THE ONE THAT IS ON. `aria-pressed` is the truth and the class
-   follows it, so the two can never disagree. Raised above its
-   neighbour so its full border is drawn rather than half-covered
-   by the overlap above. */
-.shell-quote-views .shell-quote-act.is-on {
-  position: relative;
-  z-index: 1;
-  background: var(--accent-wash);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-/* A button, so sentence case, on the same control step as every
-   other control on a page toolbar. It was named for "All quotes",
-   which is gone — the quote stage has ONE way back now and §11 says
-   a way back is `.shell-view-back` with no `btn`. What still writes
-   this class is the Board | List | History switcher below the page
-   title, and the right-hand cluster on the Admin, Customer and
-   Module stages. */
-.btn.shell-quote-act {
-  padding: 6px 11px;
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+  display: inline-flex;
+  margin-left: var(--s-2);
 }
 
 /* -- the well the quote page sits in -------------------------
@@ -1838,798 +999,6 @@
   }
 }
 
-/* ============================================================
-   OFF THE DEFAULT PATH
-   ------------------------------------------------------------
-   Nothing below here is mounted by the shell. The components it
-   dresses — Rails.tsx (inspector / review / rule-results track),
-   Inspector.tsx, ViewSwitch.tsx, CheckStamp.tsx — are all still
-   importable and still correct; they are simply not on screen,
-   because a rail of schema controls beside a table you can type
-   into is the clutter this pass removed. Keeping their rules
-   here means reintroducing one is one line of JSX, not a
-   rebuild. Delete a block only when its component goes.
-   ============================================================ */
-
-/* -- title-block compartments (ViewSwitch / CheckStamp) ------ */
-.shell-cell {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px;
-  padding: 0 var(--sp-4);
-  border-right: 1px solid var(--hairline);
-  min-width: 0;
-}
-.shell-cell-caption {
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  color: var(--ink-faint);
-  white-space: nowrap;
-}
-/* -- VIEW switch — SHEET / TABLE instrument toggle ----------- */
-.shell-viewswitch {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: stretch;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-sm);
-  background: var(--paper-sunken);
-  overflow: hidden;
-}
-.shell-viewbtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: none;
-  background: none;
-  margin: 0;
-  padding: 3px var(--sp-2);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  line-height: 1.4;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.shell-viewbtn + .shell-viewbtn {
-  border-left: 1px solid var(--hairline);
-}
-.shell-viewbtn:hover {
-  background: var(--blue-wash);
-  color: var(--ink);
-}
-.shell-viewbtn.is-active {
-  background: var(--ink);
-  color: var(--paper-high);
-}
-.shell-viewbtn.is-active:hover {
-  background: var(--blue-deep);
-}
-.shell-viewbtn:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-.shell-viewbtn-glyph {
-  flex: 0 0 auto;
-  opacity: 0.7;
-  transition: opacity var(--t-fast) var(--ease-draft);
-}
-.shell-viewbtn:hover .shell-viewbtn-glyph,
-.shell-viewbtn.is-active .shell-viewbtn-glyph {
-  opacity: 1;
-}
-
-/* -- CHECK compartment — the reviewer's live tally ----------- */
-.shell-cell-check {
-  padding: 0 calc(var(--sp-4) - 5px);
-}
-.shell-cell-check .shell-cell-caption {
-  padding-left: 5px;
-}
-.shell-check {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: none;
-  margin: 0;
-  padding: 1px 4px;
-  font-family: var(--font-mono);
-  line-height: 1.4;
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft);
-}
-.shell-check:hover {
-  background: var(--blue-wash);
-  border-color: var(--hairline-strong);
-}
-.shell-check.has-marks:hover {
-  background: var(--red-wash);
-  border-color: var(--red);
-}
-.shell-check.is-open {
-  background: var(--paper-sunken);
-  border-color: var(--hairline-strong);
-}
-.shell-check.is-open:hover {
-  background: var(--blue-wash);
-}
-.shell-check.is-open.has-marks:hover {
-  background: var(--red-wash);
-  border-color: var(--red);
-}
-.shell-check-clean {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--accent-viridian);
-}
-.shell-check-count {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--red);
-}
-.shell-check-unit {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--red);
-  opacity: 0.75;
-}
-.shell-check-blockers {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 15px;
-  padding: 0 3px;
-  border-radius: var(--radius-sm);
-  background: var(--red);
-  color: var(--paper-high);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-/* -- the right rail — one 340px track, three claimants -------- */
-.shell-rail {
-  flex: 0 0 340px;
-  width: 340px;
-  min-width: 0;
-  max-width: 340px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 0;
-  background: var(--paper-high);
-  border-left: 1px solid var(--hairline);
-  box-shadow: var(--shadow-sheet);
-  animation: sheet-in var(--t-med) var(--ease-draft) both;
-  z-index: 20;
-}
-.shell-rail > * {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  width: 100%;
-}
-.shell-rail > *:not(.shell-yield) {
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-}
-.shell-rail--flush {
-  border-left-color: transparent;
-}
-.shell-rail-scroll {
-  min-width: 0;
-  overflow-y: auto;
-  overflow-x: auto;
-  overscroll-behavior: contain;
-}
-
-/* -- yield strip — what this rail is standing on ------------- */
-.shell-yield {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 7px var(--sp-3) 7px var(--sp-4);
-  background: var(--paper-sunken);
-  border-bottom: 1px solid var(--hairline);
-}
-.shell-yield-kicker {
-  flex: 0 0 auto;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  color: var(--ink-faint);
-}
-.shell-yield-dot {
-  flex: 0 0 auto;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--row-accent, var(--ink-faint));
-}
-.shell-yield-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11.5px;
-  font-weight: 560;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-.shell-yield-btn {
-  flex: 0 0 auto;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-  margin: 0;
-  padding: 2px 7px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.shell-yield-btn:hover {
-  background: var(--blue-wash);
-  border-color: var(--blue);
-  color: var(--ink);
-}
-.shell-yield-btn:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
-}
-
-/* -- RUN instrument — the rule's own controls, on the rail ---- */
-.shell-run {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 7px var(--sp-3) 8px var(--sp-4);
-  background: var(--paper-sunken);
-  border-bottom: 1px solid var(--hairline);
-}
-.shell-rail > .shell-run {
-  flex: 0 0 auto;
-  overflow: visible;
-}
-.shell-run-kicker {
-  flex: 0 0 auto;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  color: var(--ink-faint);
-}
-.shell-run-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11.5px;
-  font-weight: 560;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-.shell-run-go {
-  flex: 0 0 auto;
-  padding: 4px 13px;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-}
-.shell-run-meta {
-  flex: 1 0 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-.shell-run-check {
-  flex: 0 0 auto;
-  padding: 1px 6px;
-  border: 1px solid currentColor;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  transform: rotate(-1.2deg);
-}
-.shell-run-check.is-ok {
-  color: var(--accent-viridian);
-}
-.shell-run-check.is-blocked {
-  color: var(--red);
-}
-.shell-run-note {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--ink-soft);
-}
-.shell-run-note.is-idle {
-  color: var(--ink-faint);
-}
-.shell-run-note.is-bad {
-  color: var(--red);
-}
-.shell-run-n {
-  font-weight: 700;
-  color: var(--ink);
-}
-.shell-run-clear {
-  flex: 0 0 auto;
-  padding: 2px 8px;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-}
-
-/* -- Inspector — right sheet --------------------------------- */
-.shell-inspector {
-  flex: 0 0 340px;
-  width: 340px;
-  min-width: 0;
-  max-width: 340px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: var(--paper-high);
-  border-left: 1px solid var(--hairline);
-  box-shadow: var(--shadow-sheet);
-  animation: sheet-in var(--t-med) var(--ease-draft) both;
-  z-index: 20;
-}
-.shell-inspector-head {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
-  border-bottom: 1px solid var(--hairline);
-}
-.shell-inspector-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 13px;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.shell-inspector-kind {
-  flex: 0 0 auto;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  color: var(--ink-faint);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  padding: 2px 5px;
-}
-.shell-inspector-close {
-  flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  color: var(--ink-soft);
-  transition:
-    color var(--t-fast) var(--ease-draft),
-    border-color var(--t-fast) var(--ease-draft),
-    background var(--t-fast) var(--ease-draft);
-}
-.shell-inspector-close:hover {
-  color: var(--red);
-  border-color: var(--red);
-  background: var(--red-wash);
-}
-
-.shell-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-5);
-  min-width: 0;
-  padding: 0 var(--sp-4);
-  border-bottom: 1px solid var(--hairline);
-  background: var(--paper-high);
-}
-.shell-tab {
-  position: relative;
-  border: none;
-  background: none;
-  margin: 0;
-  padding: var(--sp-3) 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition: color var(--t-fast) var(--ease-draft);
-}
-.shell-tab:hover {
-  color: var(--ink);
-}
-.shell-tab.is-active {
-  color: var(--ink);
-  box-shadow: inset 0 -2px 0 var(--ink);
-}
-.shell-tab:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: -2px;
-}
-
-.shell-inspector-body {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: auto;
-  overscroll-behavior: contain;
-}
-
-/* -- accent dots (inspector heads) --------------------------- */
-.shell-dot {
-  flex: 0 0 auto;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--row-accent, var(--ink));
-}
-.shell-dot-zone {
-  border-radius: var(--radius-sm);
-  background: transparent;
-  border: 1.5px solid var(--row-accent, var(--ink));
-}
-.shell-dot-lg {
-  width: 10px;
-  height: 10px;
-}
-
-/* -- zone card ----------------------------------------------- */
-.shell-zone-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-5);
-  padding: var(--sp-4);
-}
-.shell-zone-block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-}
-.shell-zone-caption {
-  font-size: 11px;
-}
-.shell-zone-swatches {
-  display: flex;
-  gap: var(--sp-2);
-  padding: 2px 1px;
-}
-.shell-swatch {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  background: var(--swatch);
-  transition:
-    transform var(--t-fast) var(--ease-draft),
-    box-shadow var(--t-fast) var(--ease-draft);
-}
-.shell-swatch:hover {
-  transform: scale(1.15);
-}
-.shell-swatch.is-active {
-  box-shadow:
-    0 0 0 2px var(--paper-high),
-    0 0 0 3.5px var(--swatch);
-}
-.shell-zone-meta {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  border-top: 1px dashed var(--hairline);
-  padding-top: var(--sp-3);
-}
-.shell-zone-footer {
-  display: flex;
-}
-.shell-zone-footer .btn {
-  color: var(--red);
-  border-color: var(--red);
-}
-
-/* ============================================================
-   QUIET PRECISION - the panel and masthead
-
-   THIS BLOCK WAS THE PROBLEM IN MINIATURE. It was appended rather
-   than written into the rules it was correcting, so twelve
-   selectors from the panel and the masthead were declared twice —
-   one rule saying what the element IS a thousand lines up, another
-   saying what it LOOKS LIKE down here, and only the second one
-   true. Ten of the twelve have gone home: the masthead's hairline,
-   the mark, the org name and its stamp, the group heading and its
-   count, the table row, its name, the door and the door's text are
-   all declared once now, where they are built.
-
-   TWO STAYED, AND THE REASON IS ORDER. `.shell-tbl:hover` and
-   `.shell-panel-rules:hover` are each separated from their element
-   by a same-specificity state rule — `.is-selected` on the row,
-   `.is-open` on the door — so what a person sees on a selected row
-   they are pointing at is decided by which comes last in this file.
-   These two are last. Moving them would change the screen; that is
-   the whole reason they are worth a note instead of a move.
-   ============================================================ */
-
-/* the row and the door both DARKEN on hover rather than taking the
-   accent, so pointing at something never looks the same as having
-   opened it */
-.shell-tbl:hover {
-  background: var(--paper-sunken);
-  color: var(--ink);
-}
-.shell-tbl.is-front {
-  background: var(--blue-wash);
-  color: var(--ink);
-  font-weight: 540;
-}
-.shell-panel-rules:hover {
-  background: var(--paper-sunken);
-  border-color: var(--hairline);
-}
-/* THE FRONT DOOR — the same door, standing first, and it has to
-   outrank the hover above it for the same reason that hover has to
-   outrank `.is-open`. */
-.shell-panel-rules.is-front {
-  position: relative;
-  margin-top: var(--sp-4);
-  margin-bottom: var(--sp-4);
-  background: var(--blue-wash);
-  border-color: transparent;
-}
-
-/* the count on a door, where a sentence used to be */
-.shell-panel-rules-count {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-}
-
-/* the type tray sits at the foot now, on the far side of a rule, so
-   the table list ends where the list ends */
-.shell-panel-foot {
-  margin-top: var(--sp-5);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline);
-}
-
-
-/* ============================================================
-   THE MENU BAR, AND THE TABLE STAGE
-
-   The rail is gone; navigation lives on the bar. See MenuBar.tsx
-   for the argument. What follows is only its appearance.
-   ============================================================ */
-
-.shell-menubar {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: var(--sp-4);
-  min-width: 0;
-}
-
-.mb {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.mb-menu {
-  position: relative;
-}
-
-.mb-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: -0.003em;
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.mb-btn:hover {
-  background: var(--paper-sunken);
-  color: var(--ink);
-}
-.mb-btn.is-open {
-  background: var(--blue-wash);
-  color: var(--ink);
-}
-.mb-btn svg {
-  color: var(--ink-faint);
-}
-.mb-btn-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-}
-
-/* THE PANEL IS ANCHORED UNDER ITS OWN BUTTON, so what you pressed
-   and what appeared are obviously the same thing. It scales from
-   the top edge rather than its centre, for the same reason. */
-.mb-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 60;
-  min-width: 260px;
-  max-width: 340px;
-  max-height: min(70vh, 560px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--sp-2);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--e3);
-  transform-origin: top left;
-  animation: mb-in 140ms var(--ease-draft);
-}
-@keyframes mb-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .mb-panel {
-    animation: none;
-  }
-}
-
-.mb-group + .mb-group {
-  margin-top: var(--sp-2);
-  padding-top: var(--sp-2);
-  border-top: 1px solid var(--hairline);
-}
-.mb-group-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: var(--sp-2) var(--sp-2) 4px;
-}
-.mb-group-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-.mb-group-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-faint);
-}
-
-.mb-item {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  min-height: 34px;
-  padding: 0 var(--sp-2);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 460;
-  letter-spacing: -0.002em;
-  text-align: left;
-  cursor: pointer;
-}
-.mb-item:hover,
-.mb-item:focus-visible {
-  background: var(--blue-wash);
-  outline: none;
-}
-.mb-item:active {
-  background: var(--paper-sunken);
-}
-.mb-item-mark {
-  flex: none;
-  display: flex;
-  color: var(--ink-faint);
-}
-.mb-item-label {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.mb-item-count {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-}
-.mb-none {
-  margin: 0;
-  padding: var(--sp-3);
-  font-size: 13px;
-  color: var(--ink-faint);
-}
-
-/* ---------- the table stage --------------------------------- */
-
-/* THE FULL WIDTH. The design stage next door is a form and wants a
-   column; this is a register and wants every pixel. */
 .shell-tablestage {
   display: flex;
   flex-direction: column;
@@ -2684,15 +1053,6 @@
    `> .shell-stage { flex: 1 }` went with it: a grid track sizes
 
 
-
-
-
-
-
-
-
-
-
 /* ============================================================
    THE MAC WINDOW.
 
@@ -2722,89 +1082,6 @@
 
 /* ---------- the unified toolbar ----------------------------- */
 
-/* THE TITLE IS CENTRED, absolutely, so it stays centred in the
-   WINDOW no matter how wide the controls on either side grow —
-   which is exactly how a Mac titlebar behaves. */
-/* NOT `max-width: 46%`. A percentage max-width on a grid item whose
-   track is `auto` is a cycle — the track sizes to the item and the
-   item sizes to the track — and Chrome breaks the cycle by collapsing
-   toward min-content. With `overflow: hidden` above it, that rendered
-   "NORTHSIDE MARINE · 50 TABLES" as "NORT… · 21…" on a 1900px screen.
-   The cap belongs on the TRACK, where it resolves against a real
-   length; see `minmax(0, auto)` on the centre column. */
-/* A NAME IS A NAME. The rule the redesign wrote for itself is that
-   uppercase is a LABEL style — never a name, never a value, never a
-   sentence — and this bar was breaking it on every stage in the app.
-   `.shell-view-what` above (shell.css:811) is the outgoing crumb: an
-   11px mono stamp at +0.14em, uppercase. The redesign re-typed the
-   NAME on top of it and left the parent's transform, family and
-   tracking to inherit, so the org came out "NORTHSIDE MARINE", a
-   table came out "STACER" and "YAMAHA OUTBOARDS", and the aside —
-   which is a sentence, "what goes with each one" — came out shouting
-   in mono at +1.54px per letter.
-   Uppercasing content is lossy in this app specifically: a dealer's
-   `PVC` and a dealer's `Pvc` are different facts about their data,
-   and a crumb that flattens them teaches nobody anything. The three
-   sanctioned uppercase uses — group caption, mono stamp, card kind
-   eyebrow — are all still uppercase; a page title is none of them.
-   Reset here rather than at :811 because :811 also dresses the
-   pre-redesign window-titlebar crumb, and the three-track grid rule
-   is the redesign's own block for this bar. */
-.shell-viewstage .shell-view-bar .shell-view-what {
-  grid-column: 2;
-  justify-self: center;
-  position: static;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  max-width: 100%;
-  pointer-events: none;
-  font-family: var(--font-ui);
-  letter-spacing: 0;
-  text-transform: none;
-}
-/* the four parts of the crumb were re-typed here and are declared
-   once, with their originals, in THE VIEW STAGE above */
-
-/* ---------- Mac controls ------------------------------------ */
-
-/* the back control is a plain chevron affordance, left, like a
-   Mac toolbar's navigation segment */
-.shell-view-back {
-  grid-column: 1;
-  justify-self: start;
-  /* §4 rule 3 — a grid child floors at its own content width unless
-     it is told otherwise, and this is one of the two clusters the
-     contract names as missing it. */
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 10px 0 8px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  background: var(--paper-high);
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: var(--e1);
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    color var(--t-fast) var(--ease-draft);
-}
-.shell-view-back:hover {
-  background: var(--paper-sunken);
-  color: var(--ink);
-}
-.shell-view-back:active {
-  background: var(--paper-sunken);
-  transform: scale(0.98);
-}
 
 /* ---------- the band strip as a segmented control ----------- */
 
@@ -3064,50 +1341,6 @@
   margin-top: max(var(--s-12), var(--section-gap, 0px));
 }
 
-/* `.hm-board` — THE SHELF GRID, KEPT THOUGH NOTHING WRITES IT YET.
-   Home is laid out as bands of `.hm-grid` here, not as one dense
-   board; what the board carries that nothing else states is the
-   fluid layer's opinion about this page — a column of it is ONE
-   CARD and that card RAMPS, and the picture band on the card ramps
-   with it. The arithmetic is in HomeStage.tsx (`shelfFor`) if the
-   board comes back; the ramps are below either way. */
-.hm-board {
-  /* one column of the board is one card */
-  --hm-unit: clamp(230px, 16vw, 340px);
-  /* THE PICTURE BAND, IDENTICAL ON EVERY CARD so a table with a
-     photograph and a table without are the same height — and a
-     fixed height rather than an `aspect-ratio`, because the lead
-     card is twice as wide as its neighbours and a ratio would make
-     it twice as tall, which is the ragged row again. Ramped so the
-     band stays about 1:2.5 against the card at every width. */
-  --hm-shot: clamp(96px, 6.6vw, 140px);
-
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(var(--hm-unit), 100%), 1fr));
-  grid-auto-flow: row dense;
-  /* a short shelf ends where it ends rather than stretching to the
-     height of the tallest thing beside it */
-  align-items: start;
-  /* THE OUTER TIER. 32px between shelves against 12px between the
-     cards inside one, so a shelf reads as a group and not as six
-     cards that happen to be near each other. */
-  gap: var(--section-gap) var(--sp-6);
-  width: min(100%, var(--measure));
-  margin-inline: auto;
-}
-
-/* THE BAND STOPS AT THE MEASURE, AND THAT IS THE POINT OF THE WHOLE
-   FLUID LAYER. The board capped itself at `--measure` and centred
-   what was left; there is no board here — the SECTION is the band —
-   so the cap lands on the section. `min(100%, …)` keeps it honest
-   in a narrow window and the 100% fallback means a build without
-   response.css is unchanged. Below 1180 nothing moves; above it the
-   page keeps gaining columns until 2600 and then stops, rather than
-   running to the edge of a 2560 screen.
-
-   `grid-column` is the board's own line, kept and inert: `.hm-secs`
-   is not a grid here and `--hm-u` is never set, so it costs nothing
-   and records where the shelf arithmetic went. */
 .hm-sec {
   grid-column: span var(--hm-u, 1);
   min-width: 0;
@@ -3130,111 +1363,14 @@
    to the edge — the rule is what makes the group a band, and a rule
    cannot be a grid track of unknown width. The shelf's plate and its
    figures line are kept below for the same reason `.hm-board` is. */
+/* THE GROUP HEAD IS THE SECTION PRIMITIVE — caption, count, rule.
+   What this owns is its air and its place in the wave. */
 .hm-sec-head {
-  display: flex;
-  /* centre, not baseline: the kind dot beside the name is a circle and
-     has no baseline to sit on */
-  align-items: center;
-  gap: var(--s-2);
   margin-bottom: var(--s-4);
   animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
   animation-delay: calc(min(var(--i, 0), 14) * 26ms);
 }
 
-/* the plate stands on the PAGE, not inside a card, so it owes no
-   radius subtraction to anything */
-.hm-sec-mark {
-  grid-row: 1 / span 2;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border: 1px solid var(--hairline);
-  border-radius: 9px;
-  background: var(--paper-high);
-  /* the kind hue as a GLYPH, which is what §1 allows it for */
-  color: var(--tbn-accent, var(--ink-faint));
-}
-
-/* the heading step, not 13px: at 1600px the group name is the only
-   landmark on the page and 13px is a caption.
-
-   ALL FOUR NAMES, NOT THREE. §6 says a type step is a set and the
-   leading was the one that had been left off — `redesign` wrote a
-   hard `line-height: 1.15` here, but 1.15 was tuned against a 17px
-   step and this is the heading step, so the set's own
-   `--t-heading-lead` is what goes in that slot. The size is the only
-   one of the four response.css ramps (15 → 17.5px); the tracking is
-   already in `em`, so it stays proportional at every width without a
-   second set of numbers to keep in sync. */
-.hm-sec-name {
-  grid-column: 2;
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  line-height: var(--t-heading-lead);
-  letter-spacing: var(--t-heading-track);
-  color: var(--ink);
-  text-wrap: balance;
-}
-.hm-sec-count {
-  padding: 1px 7px;
-  border-radius: var(--r-full);
-  background: var(--chip-bg);
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
-}
-
-.hm-sec-figures {
-  grid-column: 2;
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  margin: 3px 0 0;
-  font-size: var(--micro-l-size);
-  color: var(--ink-faint);
-}
-.hm-sec-figures b {
-  font-family: var(--font-mono);
-  font-size: var(--data-size);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-  color: var(--ink-soft);
-}
-.hm-sec-figures i {
-  width: 1px;
-  height: 9px;
-  margin: 0 4px;
-  background: var(--hairline-strong);
-}
-
-/* ------------------------------------------------------------
-   THE CARDS INSIDE ONE SHELF. Exactly `--hm-u` columns — never
-   `auto-fill`, because auto-fill is what put the hole in the band.
-   The lead card takes `--hm-lead` of them, which is 2 when the
-   group holds an odd number of tables and 1 when it holds an even
-   one; that is the whole trick that makes the last row full.
-   ------------------------------------------------------------ */
-
-.hm-cells {
-  display: grid;
-  grid-template-columns: repeat(var(--hm-u, 1), minmax(0, 1fr));
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.hm-cell {
-  display: grid;
-  min-width: 0;
-}
-.hm-cell--lead {
-  grid-column: span var(--hm-lead, 1);
-}
 
 /* BIGGER, AND THE UNIT IS A CARD RATHER THAN A FRACTION OF THE
    WINDOW. The gallery was six 230px cards to a 1600px row, which is
@@ -3266,94 +1402,12 @@
   grid-template-columns: repeat(auto-fill, minmax(min(var(--hm-unit), 100%), 1fr));
 }
 
-/* THE SAME CARD THE SHEET DRAWS — kind rail, kind name, table
-   name, what is in it — so moving between the two never feels like
-   moving between two apps. What is new is the picture above it. */
-.hm-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  /* a grid item floors at its min-content width unless told not to —
-     the chain at the head of this file says why, and a card is the
-     last box on it */
-  min-width: 0;
-  min-height: 150px;
-  padding: var(--s-4) var(--s-4) var(--s-3) 18px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  text-align: left;
-  cursor: pointer;
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
-}
-.hm-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--tbn-accent, var(--ink-faint));
-  transition:
-    top var(--d-med) var(--ease-out-expo),
-    bottom var(--d-med) var(--ease-out-expo),
-    width var(--d-med) var(--ease-out-expo);
-}
-/* ONE COLOUR AND ONE SPATIAL SIGNAL, never two spatial: the lift is
-   the only thing that moves, and everything else that changes is
-   light. The glow is the KIND's hue, not the accent's — the one
-   place in the app a kind colour lifts off its 3px rail, and it does
-   it as light rather than as a fill behind text (§1). */
-.hm-card:hover {
-  border-color: var(--line-strong);
-  box-shadow:
-    var(--e4),
-    inset 0 1px 0 var(--edge-light),
-    0 10px 30px -14px var(--tbn-accent, transparent);
-  transform: translateY(-3px);
-}
-/* the press deepens the hover's direction rather than reversing it:
-   the card settles back down and shrinks by 0.5%, which on a 250px
-   card is a little over a pixel */
-.hm-card:active {
-  transform: translateY(0) scale(0.994);
-  box-shadow: var(--e1);
-  transition-duration: var(--d-press);
-}
-/* FOCUS HAS TO BE FINDABLE. The house ring — `.md-card`, `.md-tile`,
-   `.rl-chipbtn`, `.ob-primary` and every row in the shell draw the
-   same one. It is never animated. */
-.hm-card:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
-  border-color: var(--blue);
-}
-
-/* THE PHOTOGRAPH. Full-bleed, so the card's own `overflow: hidden`
-   gives it the card's corner and no radius is written twice. */
-.hm-card-shot {
-  display: block;
-  flex: none;
-  width: 100%;
-  height: var(--hm-shot);
-  border-bottom: 1px solid var(--hairline);
-  background: var(--paper);
-  object-fit: cover;
-  object-position: center;
-}
 
 .hm-card-kind {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: var(--tbn-accent, var(--ink-faint));
+  color: var(--kind, var(--fg-tertiary));
   /* the label step, taken whole with its own tracking (§6). It is
      `--t-label-size` here rather than `--ui-xs-size`; the two are
      the same ramp — response.css gives both clamp(11px … 12px) —
@@ -3441,22 +1495,6 @@
   background: var(--hairline-strong);
 }
 
-/* WHEN THE WINDOW IS NARROWER THAN TWO CARDS. Every shelf gives up
-   its width and takes the whole column; the cards inside fall back
-   to `auto-fill`, which is the right rule when there is only one
-   column to fill. Named for the content — two cards plus the gap
-   plus the page's own gutters — and not for a device. */
-@media (max-width: 600px) {
-  .hm-sec {
-    grid-column: 1 / -1;
-  }
-  .hm-cells {
-    grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
-  }
-  .hm-cell--lead {
-    grid-column: auto;
-  }
-}
 /* ============================================================
    THE FIRST SCREEN — Home with nothing on the sheet.
 
@@ -3497,9 +1535,6 @@
   max-width: 62ch;
 }
 
-.hm-first-eyebrow {
-  color: var(--ink-faint);
-}
 
 /* the page's own line, set at the dashboard's headline step — the same
    one `.md-dash-org` takes, so the two front doors of this app open at
@@ -3555,70 +1590,20 @@
   align-items: stretch;
 }
 
-/* THE SAME CARD THE GALLERY DRAWS, at the size a decision deserves:
-   `--ec1` at rest, `--ec3` and a 1px lift on hover, a 0.994 press. The
-   3px rail is on the left edge exactly as `.hm-card` puts it. */
-.hm-first-door {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 7px;
-  padding: var(--sp-5) var(--sp-5) var(--sp-4) calc(var(--sp-5) + 5px);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--grad-surface);
-  text-align: left;
-  cursor: pointer;
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
+/* THE TWO DOORS ARE THE CARD PRIMITIVE. The cell is the grid item,
+   and it carries the one thing a primitive cannot: the busy state
+   while the file is coming. Every ground, lift, press and ring is
+   card.css's. */
+.hm-first-cell {
+  display: grid;
+  min-width: 0;
 }
-.hm-first-door::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 13px;
-  bottom: 13px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--hairline-strong);
+.hm-first-cell[aria-busy='true'] {
+  cursor: progress;
 }
-/* ONE ACCENT, ON THE ONE PRIMARY THING. The prepared file is what a
-   person on this screen almost always wants, so it takes the accent
-   rail and the accent name; the blank-sheet door is the same card in
-   ink. That is one of the four appearances the accent gets on a
-   screen — the others here are the dock's lit Home item and whichever
-   control has focus. */
-.hm-first-door--data::before {
-  background: var(--blue);
-}
-.hm-first-door--data .hm-first-door-name {
-  color: var(--blue-deep);
-}
-/* and the other door is the same card in ink. Stated rather than left
-   to the base rule: the two readings sit next to each other in the
-   stylesheet the way they sit next to each other on the screen, and
-   which one is primary is a decision somebody can find. */
-.hm-first-door--blank::before {
-  background: var(--hairline-strong);
-}
-
-.hm-first-door:hover {
-  border-color: var(--hairline-strong);
-  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
-  transform: translateY(-3px);
-}
-.hm-first-door:active {
-  transform: translateY(0) scale(0.994);
-  box-shadow: var(--e1);
-}
-.hm-first-door:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
-  border-color: var(--blue);
+/* ONE ACCENT, ON THE ONE PRIMARY THING — the prepared file's name. */
+.hm-first-door-name.is-primary {
+  color: var(--accent);
 }
 
 /* read BEFORE the name, which is the whole point on the data door: a
@@ -3627,18 +1612,19 @@
    as a stamp and not as a heading. */
 .hm-first-door-tag {
   display: inline-block;
+  align-self: flex-start;
   padding: 2px 6px 1px;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
   color: var(--ink-faint);
 }
-.hm-first-door:hover .hm-first-door-tag,
-.hm-first-door:focus-visible .hm-first-door-tag {
+.hm-first-cell:hover .hm-first-door-tag {
   border-color: var(--hairline-strong);
   color: var(--ink-soft);
 }
 
 .hm-first-door-name {
+  margin-top: var(--s-2);
   font-family: var(--font-ui);
   font-size: 15px;
   font-weight: 570;
@@ -3648,6 +1634,7 @@
 }
 
 .hm-first-door-note {
+  margin-top: var(--s-1);
   font-size: 13px;
   line-height: 1.55;
   color: var(--ink-soft);
@@ -3702,32 +1689,6 @@
    refuses a second press; a `disabled` button would drop focus to
    the body mid-press and take the words with it.
    ============================================================ */
-.hm-first-door[aria-busy='true'] {
-  cursor: progress;
-}
-.hm-first-door[aria-busy='true']::before {
-  animation: door-wait 1.4s var(--ease-draft) infinite;
-}
-/* transform and opacity only — a rail that animated `top`/`bottom`
-   would relayout the card sixty times a second while a megabyte is
-   being fetched, which is the one moment the main thread is busy */
-@keyframes door-wait {
-  0%,
-  100% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scaleY(0.3);
-    opacity: 0.5;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hm-first-door[aria-busy='true']::before {
-    animation: none;
-    opacity: 0.55;
-  }
-}
 
 /* AND WHEN IT REFUSES. No second hue: what changes is that the
    sentence stops being a quiet provenance note and becomes the thing
@@ -3735,7 +1696,7 @@
    already had. DESIGN_CONTRACT §6.5: a refusal is a sentence with a
    reason, in the place where the thing was refused. The control
    stays pressable, because pressing it again is the retry. */
-.hm-first-door--failed .hm-first-door-note {
+.hm-first-door-note.is-failed {
   color: var(--ink);
 }
 
@@ -3935,7 +1896,6 @@
 }
 
 
-
 /* ---------- the app switcher (Cmd/Ctrl + Tab) --------------- */
 
 .sw-scrim {
@@ -4057,32 +2017,10 @@
 /* the animation itself is declared with `.win`, above */
 
 /* leaves the way it came (§7) */
-@keyframes win-out {
-  to {
-    opacity: 0;
-    transform: scale(0.955) translateY(8px);
-  }
-}
-.win.is-closing {
-  animation: win-out 180ms var(--ease-settle) forwards;
-  pointer-events: none;
-}
-
-/* ---------- 2 · minimise travels to the dock ----------------- */
-
-/* it shrinks toward the bottom of the screen, where the dock is,
-   so the window has somewhere it went */
-@keyframes win-min {
-  to {
-    opacity: 0;
-    transform: scale(0.18) translateY(70vh);
-  }
-}
-.win.is-minimising {
-  animation: win-min 300ms var(--ease-settle) forwards;
-  transform-origin: 50% 100%;
-  pointer-events: none;
-}
+/* `.win.is-closing` and `.win.is-minimising` STOOD HERE and are gone:
+   nothing writes either state, and a rule declared for a state no
+   component can enter is a dead rule the guard counted. Win.tsx
+   itself is kept unmounted, as the contract asks. */
 
 
 /* ---------- §14 · and none of it against the user's wishes --- */
@@ -4234,58 +2172,10 @@
   animation: ds-fade var(--d-fast) var(--ease) backwards;
 }
 
-/* a stage inside the surface is simply the surface */
-.surface > .shell-viewstage {
-  position: static;
-  inset: auto;
-  flex: 1;
-  min-height: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: var(--paper);
-}
-
-/* THE STAGE'S OWN BAR IS THE ONLY HEADER NOW, so it gets its
-   title back — there is no window titlebar above it any more.
-   The bar's own material is declared once, in THE MASTHEAD below;
-   this block used to state a first version of it and be overridden
-   by that one forty rules later. */
-.surface .shell-view-what {
-  display: flex;
-}
 
 /* the sheet is a section like any other and fills the surface —
    `.shell-sheet-layer` is declared once, at the head of this file,
    with the note about why it exists at all */
-
-
-/* ---------- a table page fills the surface ------------------- */
-
-/* THE TABLE PAGE KEEPS ITS BAR, and this rule used to hide it.
-   Back, the table name and the two doors all live in that bar, so
-   hiding it left a full-screen register with NO WAY OUT - the one
-   defect that makes a page unusable rather than ugly.
-
-   IT IS A NO-OP NOW and it is kept as one. `.shell-view-bar` says
-   `display: grid` for every stage at the foot of this file. This
-   rule said it for one stage and said nothing about TRACKS, so the
-   register's bar was a single-column grid — which stacks exactly
-   like the block the other five stages got. Deleting the rule would
-   say the fault it answered never happened. */
-.surface .shell-tablestage .shell-view-bar {
-  display: grid;
-}
-.surface .shell-tablestage {
-  padding: 0;
-}
-.surface .shell-table-body {
-  flex: 1;
-  min-height: 0;
-}
-
-
-
 
 
 /* ============================================================
@@ -4420,16 +2310,15 @@
    the reading order somebody scanning actually uses — they are
    looking for the number and then checking what it was.
    ------------------------------------------------------------ */
+/* the <dl> stands on the Card primitive; this is only its grid */
+.hm-tally-card {
+  min-width: 0;
+}
 .hm-tally {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, auto));
   gap: 0;
   margin: 0;
-  padding: var(--s-4) var(--s-5);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
 }
 .hm-tally-cell {
   display: flex;
@@ -4496,6 +2385,9 @@
    The dot and the rule are new here, so they are declared here.
    ------------------------------------------------------------ */
 .hm-sec-dot {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: var(--s-2);
   width: 7px;
   height: 7px;
   flex: none;
@@ -4511,46 +2403,8 @@
 .hm-sec-dot[data-kind='custom'] { background: var(--kind-custom); }
 .hm-sec-dot[data-kind='join'] { background: var(--kind-join); }
 
-.hm-sec-rule {
-  flex: 1;
-  height: 1px;
-  min-width: var(--s-4);
-  background: linear-gradient(90deg, var(--line) 0%, transparent 100%);
-}
+/* the rule to the edge is SectionHead's `rule`; nothing here draws one */
 
-/* ------------------------------------------------------------
-   THE CARD — the argument; the values went home.
-
-   The bones never changed — same rail, same three-line clamp, same
-   focus ring. What changed is that it reads as an object with a light
-   on it rather than a bordered rectangle: a gradient surface, a lit
-   top edge, a kind-tinted glow that arrives only on hover, and the
-   sheen from ds.css. The glow is the KIND's hue, not the accent's —
-   the one place a kind colour lifts off a 3px rail, and it does it as
-   light rather than as a fill behind text (§1).
-
-   `.hm-grid`, `.hm-card`, `.hm-card::before`, `.hm-card:hover`,
-   `.hm-card:active`, `.hm-card-kind`, `.hm-card-name`,
-   `.hm-card-stats` and `.hm-card-stats b` carry all of it, once each,
-   in HOME above.
-
-   THE RAIL GROWS INTO THE HOVER, and that rule is still here because
-   it is the only declaration of it. It is 3px at rest exactly as it
-   was; on hover it takes the full height of the card and widens by a
-   pixel, so the kind is what lights up rather than the whole surface
-   changing colour.
-   ------------------------------------------------------------ */
-.hm-card:hover::before,
-.hm-card:focus-visible::before {
-  top: 0;
-  bottom: 0;
-  width: 4px;
-}
-
-/* THE FIRST SCREEN took the same page treatment — the display step on
-   its title, the card's gradient surface and lit edge on its two
-   doors, the same -3px lift on hover. `.hm-first-title`,
-   `.hm-first-door` and `.hm-first-door:hover` carry it in HOME above. */
 
 /* ------------------------------------------------------------
    THE PICTURE ON A CARD.
@@ -4568,19 +2422,15 @@
    looking ragged, which is why the shot is a BAND rather than a
    full-bleed background.
    ------------------------------------------------------------ */
-.hm-card--shot {
-  padding-top: 0;
-  overflow: hidden;
-}
 .hm-card-shot {
   position: relative;
   display: block;
-  margin: 0 calc(var(--s-4) * -1) var(--s-3) -18px;
-  /* 16:9 was a banner. 3:2 is the ratio the photographs were actually
-     taken at — 1024x683 across the seed — so this crops almost
-     nothing. */
+  /* 3:2 is the ratio the photographs were actually taken at —
+     1024x683 across the seed — so this crops almost nothing */
   aspect-ratio: 3 / 2;
   overflow: hidden;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  border-bottom: 1px solid var(--line-subtle);
   background: var(--surface-3);
 }
 .hm-card-shot img {
@@ -4589,7 +2439,7 @@
   object-fit: cover;
   object-position: center;
   display: block;
-  /* the photographs are a mixed set -- yard shots, studio cut-outs,
+  /* the photographs are a mixed set — yard shots, studio cut-outs,
      turquoise lifestyle. A whisper of desaturation at rest pulls
      them into one page; hover gives the colour back. */
   filter: saturate(0.92);
@@ -4598,40 +2448,27 @@
     transform var(--d-scene) var(--ease-out-expo),
     filter var(--d-med) var(--ease);
 }
-.hm-card:hover .hm-card-shot img,
-.hm-card:focus-visible .hm-card-shot img {
+.hm-cell:hover .hm-card-shot img,
+.hm-cell:focus-within .hm-card-shot img {
   transform: scale(1.06);
   filter: saturate(1.04);
 }
-/* the surface climbing back over the foot of the picture, so the
-   band has no hard edge against the card */
-.hm-card-shot::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 38%;
-  background: linear-gradient(180deg, transparent 0%, var(--surface-1) 100%);
-  pointer-events: none;
+/* THE CELL IS THE GRID ITEM AND THE CARD PRIMITIVE FILLS IT. The
+   words sit in a body inset from a ground the photograph runs to
+   the bleed of. */
+.hm-cell {
+  display: grid;
+  min-width: 0;
 }
-/* the kind rail runs the whole card once there is a picture above
-   it, because a rail that starts below a photograph looks broken */
-.hm-card--shot::before {
-  top: 0;
-  bottom: 0;
+.hm-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 150px;
+  padding: var(--s-4);
 }
-.hm-card--shot .hm-card-kind {
-  padding-left: 18px;
-  padding-right: var(--s-4);
-}
-.hm-card--shot .hm-card-name,
-.hm-card--shot .hm-card-stats {
-  padding-left: 18px;
-  padding-right: var(--s-4);
-}
-.hm-card--shot .hm-card-stats {
-  padding-bottom: var(--s-3);
-}
-
 
 
 /* THE LABEL IS INSTANT, AND IT ARRIVES FOR THE KEYBOARD TOO.
@@ -4652,64 +2489,6 @@
    carrying this pass's type, material and curve. This block wrote
    them a second time and the navy pass wrote the tip a third. */
 
-/* THE TRANSLUCENT SURFACES MOVED WITH THE DOCK. This block turned
-   `.dk-rig` and `.dk-panel` opaque under
-   `prefers-reduced-transparency`; both are gone with the component.
-   The one surface that still floats over scrolling content is
-   `.pagebar`, and it carries its own rule for that preference at
-   the foot of actionbar.css. */
-.surface .shell-view-what-name {
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  line-height: var(--t-heading-lead);
-  letter-spacing: var(--t-heading-track);
-}
-/* the separator is a tick between two facts and nothing to read, so
-   it goes to the decoration tier while the aside stays at the floor */
-.surface .shell-view-what-sep {
-  color: var(--fg-quaternary);
-}
-.surface .shell-view-what-say {
-  font-size: var(--t-caption-size);
-  color: var(--fg-tertiary);
-}
-
-/* THE WAY BACK gets the three states rule 8 asks for and the shape
-   language of a dock item, so leaving a page looks like the rest of
-   the chrome rather than like a web page's button. */
-.surface .shell-view-back {
-  height: var(--h-sm);
-  border-radius: var(--r-control);
-  border-color: var(--line);
-  background: var(--surface-1);
-  color: var(--fg-secondary);
-  box-shadow: var(--e1);
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.surface .shell-view-back:hover {
-  background: var(--surface-3);
-  border-color: var(--line-strong);
-  color: var(--fg);
-}
-.surface .shell-view-back:active {
-  transform: scale(0.97);
-}
-.surface .shell-view-back:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .surface .shell-view-bar {
-    background: var(--surface-1);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
 
 /* ============================================================
    ARRIVING SOMEWHERE — AND THE ARRIVAL IS NOW 120ms OF OPACITY.
@@ -4799,8 +2578,6 @@
     -webkit-backdrop-filter: none;
   }
 }
-
-
 
 
 [data-theme='dark'] {
@@ -4904,48 +2681,17 @@
 }
 .shell-view-bar:not(:empty) {
   min-height: var(--h-lg);
+  padding-block: var(--s-2);
 }
 
-/* A STAGE TITLE IS A NAME (§3: uppercase is never a name style).
-   It was an 11px uppercase mono stamp, letterspaced because it had
-   to survive on white beside nothing; on its own bar it can simply
-   be a title. */
-.shell-view-bar .shell-view-what {
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  letter-spacing: -0.003em;
-  text-transform: none;
-  color: var(--fg-secondary);
-}
-.shell-view-bar .shell-view-what-name {
-  font-weight: 600;
-  color: var(--fg);
-}
-.shell-view-bar .shell-view-what-mark {
-  color: var(--view-accent, var(--fg-tertiary));
-}
-.shell-view-bar .shell-view-what-sep,
-.shell-view-bar .shell-view-what-say {
-  color: var(--fg-tertiary);
-}
-/* every control standing on the bar takes the bar's ink */
-.shell-view-bar .btn,
-.shell-view-bar .io-trigger {
-  color: var(--fg-secondary);
-  background: transparent;
-  border-color: var(--line);
-}
-.shell-view-bar .btn:hover,
-.shell-view-bar .io-trigger:hover {
-  color: var(--fg);
-  background: var(--surface-3);
-  border-color: var(--line-strong);
-}
-.shell-view-bar .btn:focus-visible,
-.shell-view-bar .io-trigger:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+/* TRACK 1 — a slot for the way back, which is the primitive's ghost
+   Button. §4 rule 2: every child of the bar claims its track. */
+.shell-view-lead {
+  grid-column: 1;
+  justify-self: start;
+  min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 
@@ -5099,62 +2845,6 @@
   gap: var(--s-1);
 }
 
-/* A CHIP IS A ROW OF THE STRIP, SO IT PRESSES LIKE ONE — it
-   darkens rather than scaling (§4: a row that scales makes its
-   neighbours look like they moved), and there are eight of them
-   in a line. Hover, press and focus, all three, and the press
-   lands on pointer-down. */
-.hm-jump {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-sm);
-  padding: 0 var(--s-3) 0 var(--s-2);
-  border: 1px solid transparent;
-  border-radius: var(--r-full);
-  background: transparent;
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  letter-spacing: 0;
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.hm-jump:hover {
-  background: var(--surface-3);
-  color: var(--fg);
-}
-.hm-jump:active {
-  background: var(--surface-4);
-  transition-duration: var(--d-press);
-}
-/* THE COUNT COMES UP A TIER WITH THE WORD. `--fg-tertiary` is the
-   ramp's floor and it measures 5.5:1 on the strip's white, 4.91 over
-   the hover ground and **4.46 over `--surface-4`**, which is the
-   press — a fail by four hundredths, and a tint counts. Composited
-   over the full chain on each state's real ground; `--fg-secondary`
-   reads 6.5 on the pressed one. */
-.hm-jump:hover .hm-jump-n,
-.hm-jump:active .hm-jump-n,
-.hm-jump:focus-visible .hm-jump-n {
-  color: var(--fg-secondary);
-}
-.hm-jump:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
-}
-/* WHERE YOU ARE, IN THE ACCENT — one of the four appearances §1
-   allows a screen, and the same one the nav rail spends it on. */
-.hm-jump.is-at {
-  border-color: var(--accent-line);
-  background: var(--accent-wash);
-  color: var(--fg);
-}
 .hm-jump-dot {
   width: 7px;
   height: 7px;
@@ -5180,9 +2870,6 @@
   font-variant-numeric: tabular-nums;
   font-size: var(--t-mono-sm-size);
   color: var(--fg-tertiary);
-}
-.hm-jump.is-at .hm-jump-n {
-  color: var(--fg-secondary);
 }
 
 /* The sections, and the clearance a pinned strip costs them: a
@@ -5225,18 +2912,8 @@
   transition: color var(--d-fast) var(--ease);
 }
 /* the card lighting up brings its contents with it */
-.hm-card:hover .hm-card-peek,
-.hm-card:focus-visible .hm-card-peek {
+.hm-cell:hover .hm-card-peek {
   color: var(--fg-secondary);
-}
-/* A CARD WITH A PHOTOGRAPH ON IT PULLS ITS OWN GUTTERS OFF the card
-   (`.hm-card--shot { padding-top: 0 }` and the negative-margin band
-   above), so every line of words inside one puts them back by hand.
-   The peek is a line of words inside one. Without this it would be
-   the only thing on the card running to the bleed. */
-.hm-card--shot .hm-card-peek {
-  padding-left: 18px;
-  padding-right: var(--s-4);
 }
 
 /* ------------------------------------------------------------
@@ -5275,113 +2952,56 @@
 }
 
 /* ============================================================
-   THE RAIL, THIRD PASS — four doors, and a colour it can carry.
+   THE RAIL, FOURTH PASS — paper, and the primitives.
 
-   The second rail was shaped like the schema: DATA (with a
-   fifty-one-item tree in it), MODULES, SELLING, SETTINGS —
-   fourteen rows at one weight, one size and one colour, 264px
-   wide, 69 visible words. Six faults were named against it and
-   SideNav.tsx's header answers each one by number; this file is
-   the half of the answer that is paint.
+   The third pass painted this column navy. To do it, it declared a
+   second palette (thirteen `--chrome-*` tokens), re-cut nine kind
+   hues for a dark ground, and wrote its own row, its own button,
+   its own search box and its own fold — six hundred lines that
+   restated hover, press, focus and lit-state for one column. Its
+   head note asked to be deleted the day the system declared them.
 
-   Everything below REPLACES the second-pass rule rather than
-   layering over it — the earlier `.sn-*` block was deleted in the
-   same commit, because two declarations of one selector is how a
-   stylesheet stops being a design.
+   The system declared `src/ui`. A door is `Row`, an act is
+   `Button`, and both draw on the ink ramp measured for the page
+   ground — so the rail comes back to paper, and the whole of what
+   this block still owns is the column, its head, its foot, and
+   the three widths it folds through. Every control is the
+   primitive's; nothing here paints one.
+
+   THE `--chrome-*` FAMILY IS STILL DECLARED ON :root, because the
+   sign-in panel, onboarding, the banner and the I/O menu read it.
+   On this element its five inks are re-pointed at the ramp, so the
+   person chip from `@/features/auth` — painted for navy — reads
+   here. Its hover, press and open grounds are literal whites and
+   are invisible on paper; that is auth.css's and is reported.
    ============================================================ */
-
 .sn {
   grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
   height: 100dvh;
-  background: var(--chrome);
-  color: var(--chrome-fg);
-  border-right: 1px solid var(--chrome-line-soft);
+  background: var(--surface-1);
+  border-right: 1px solid var(--line-subtle);
   /* the rail is the one element whose WIDTH animates, and it is a
      deliberate exception: it is a layout property, but it is a
      direct manipulation the person asked for and there is nothing
-     to interrupt. Inside the drawer budget. */
+     to interrupt. */
   transition: width var(--d-slow) var(--ease-out-expo);
-
-  /* ============================================================
-     THE KIND HUES, ON NAVY — and this is why the rail could not
-     simply take the ones the page uses.
-
-     `--kind-indigo` and its eight siblings are cut for WHITE. On
-     `--chrome` they measure, in order: indigo 2.4, cyan 3.0, teal
-     3.0, green 3.3, amber 3.3, orange 3.2, rose 2.6, violet 2.9,
-     slate 2.2. Every one of them fails, and half of them fail as
-     badly as the accent does (2.7), which is why the accent is
-     barred here at all.
-
-     ds.css already owns a set cut for a dark ground — its
-     `[data-theme='dark']` block — and the rail is navy in BOTH
-     themes, so it takes that set in both. Measured on --chrome:
-
-       indigo 6.8 · cyan 7.9 · teal 8.0 · green 8.4 · amber 7.7
-       orange 6.6 · rose 5.7 · violet 5.7 · slate 5.3
-
-     All nine clear 4.5, which is what lets a module's COUNT be set
-     in its own hue rather than in grey — the one figure in the app
-     that carries a hue, and it carries it because the hue IS the
-     kind of the thing being counted (§1b).
-
-     It is set on `.sn` rather than on `:root`, so it inherits down
-     the rail and nowhere else. The page keeps its own set. */
-  --kind-indigo: #6ea8ff;
-  --kind-cyan: #4fc3d9;
-  --kind-teal: #3fcba8;
-  --kind-green: #5fd07e;
-  --kind-amber: #e2a83e;
-  --kind-orange: #f08a4b;
-  --kind-rose: #f26d8b;
-  --kind-violet: #b182f5;
-  --kind-slate: #8a93a3;
-
-  /* AND THE MAPPING HAS TO BE RESTATED, which is not redundancy —
-     it is how custom properties actually resolve, and getting it
-     wrong is silent.
-
-     `--kind-boat: var(--kind-indigo)` is declared on `:root`, so it
-     SUBSTITUTES THERE, at computed-value time, against `:root`'s
-     indigo. The result — a literal `#1d4ed8` — is what inherits
-     down; re-declaring `--kind-indigo` further in has nothing left
-     to affect. Measured, on the rail's first module row:
-     `borderLeftColor` came back `rgb(29, 78, 216)`, the light hue
-     at 2.4:1 on navy, with the block above already in place and
-     apparently doing its job.
-
-     The mapping is restated, not rewritten: a boat is still indigo
-     and the product decision still lives in ds.css. This says only
-     WHICH indigo, on this one navy surface. */
-  --kind-boat: var(--kind-indigo);
-  --kind-motor: var(--kind-orange);
-  --kind-trailer: var(--kind-amber);
-  --kind-accessory: var(--kind-teal);
-  --kind-package: var(--kind-violet);
-  --kind-dealer: var(--kind-cyan);
-  --kind-custom: var(--kind-slate);
-  --kind-join: var(--kind-rose);
+  --chrome: var(--surface-1);
+  --chrome-raised: var(--surface-2);
+  --chrome-fg: var(--fg);
+  --chrome-fg-soft: var(--fg-secondary);
+  --chrome-fg-faint: var(--fg-tertiary);
 }
 
 /* ---- head — whose business this is, and nothing else --------- */
 .sn-head {
   display: flex;
   align-items: center;
-  /* 8px, not 12. The rail is 224px and the head spends 28 on the
-     crest and 24 on the fold before the name gets a pixel; four
-     more between them is the difference between "Northside Marine"
-     and "Northside Mari…". */
   gap: var(--s-2);
-  /* THE RAIL'S SPACING, MEASURED RATHER THAN GUESSED. Four doors
-     sat 104px from the top of a 1000px rail with 630px of nothing
-     under them, and every gap between the pieces above them was
-     the SAME gap — crest to search to doors — so the three
-     unrelated things read as one undifferentiated stack. The
-     business name is a header and gets a header's room; the
-     search is a control and gets a control's. */
+  /* the business name is a header and gets a header's room; the
+     search under it is a control and gets a control's */
   padding: var(--s-5) var(--s-3) var(--s-4);
 }
 .sn-crest {
@@ -5392,111 +3012,41 @@
   height: 28px;
   flex: none;
   border-radius: var(--r-control);
-  background: var(--chrome-wash-hover);
-  color: var(--chrome-fg);
+  background: var(--surface-3);
+  color: var(--fg-secondary);
 }
+/* the heading step, whole (rule 6). It wraps at a space; a name is
+   never cut mid-word (§3). */
 .sn-head-name {
   flex: 1;
   min-width: 0;
   font-size: var(--t-heading-size);
-  font-weight: 600;
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
   letter-spacing: var(--t-heading-track);
-  color: var(--chrome-fg);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sn-fold {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex: none;
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--chrome-fg-faint);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.sn-fold:hover {
-  background: var(--chrome-wash-hover);
-  color: var(--chrome-fg);
-}
-.sn-fold:active {
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-.sn-fold:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
+  color: var(--fg);
 }
 
-/* ---- find --------------------------------------------------- */
+/* ---- find — the one search in the app, as a neutral Button ---- */
 .sn-find {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  /* SEPARATED FROM THE DOORS, not floated between them and the
-     header. It is a different KIND of thing — a control, not a
-     destination — and the gap under it is what says so. */
   margin: 0 var(--s-3) var(--s-5);
-  padding: 0 var(--s-2);
-  height: var(--h-lg);
-  border: 1px solid var(--chrome-edge);
-  border-radius: var(--r-control);
-  background: var(--chrome-wash);
-  color: var(--chrome-fg-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.sn-find:hover {
-  background: var(--chrome-wash-hover);
-  border-color: var(--chrome-line-strong);
-  color: var(--chrome-fg);
-}
-.sn-find:active {
-  background: var(--chrome-wash-press);
-  transition-duration: var(--d-press);
-}
-.sn-find:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
-}
-.sn-find-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 16px;
-  line-height: 0;
 }
 .sn-find-say {
   flex: 1;
   min-width: 0;
   text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
+/* the key cap is a mono stamp, at the mono floor. --fg-secondary
+   over the neutral button's --surface-3: 7.1:1 measured. */
 .sn-kbd {
   flex: none;
+  margin-left: auto;
   font-family: var(--font-mono);
-  /* 11px, THE FLOOR. A key cap is a mono stamp and mono stamps
-     have a step; this was 10.5 once, which reads as a rounding
-     rather than as a decision, which is exactly how it got in. */
   font-size: var(--t-mono-sm-size);
+  font-weight: var(--t-mono-weight);
   letter-spacing: 0.04em;
-  color: var(--chrome-fg-faint);
-  border: 1px solid var(--chrome-edge);
+  color: var(--fg-secondary);
+  border: 1px solid var(--line);
   border-radius: var(--r-chip);
   padding: 1px 5px;
 }
@@ -5509,111 +3059,14 @@
   overflow-x: hidden;
   padding: 0 var(--s-3) var(--s-4);
   scrollbar-width: thin;
-  scrollbar-color: var(--chrome-wash-on) transparent;
 }
-.sn-row + .sn-row {
-  margin-top: 2px;
+.sn-grp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .sn-grp + .sn-grp {
   margin-top: var(--s-4);
-}
-
-/* ---- a door ------------------------------------------------- */
-/* 38px, and the module rows under them are 30. Fourteen rows at
-   one height was fault 3; four doors that are taller than the
-   list beneath them is a rail with a top and a bottom. */
-.sn-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-  /* 42, AND IT WAS 38. Four rows is the whole of this rail's
-     navigation and they had a denser rhythm than the search box
-     above them — a list of four things drawn at the density of a
-     list of forty. The glyph and the word also sat 8px apart at
-     a size where 12 is the gap the rest of the app uses. */
-  height: 42px;
-  padding: 0 var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--chrome-fg-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-body-size);
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.sn-row + .sn-row {
-  margin-top: 1px;
-}
-.sn-row:hover {
-  background: var(--chrome-wash);
-  color: var(--chrome-fg);
-}
-/* A LIST ROW PRESSES BY DARKENING (§4) — a row that scales makes
-   its neighbours look like they moved. */
-.sn-row:active {
-  background: var(--chrome-wash-press);
-  transition-duration: var(--d-press);
-}
-.sn-row:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: -2px;
-}
-.sn-row.is-on {
-  background: var(--chrome-wash-on);
-  color: var(--chrome-fg);
-  font-weight: 600;
-  box-shadow: inset 2px 0 0 var(--chrome-fg);
-}
-/* THE MARK SLOT — 20px, which is the size the brief measures
-   distinguishability at and the size at which a house, a grid of
-   squares, a sheet of paper and three people stop being four grey
-   smudges. */
-.sn-row-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  flex: none;
-  line-height: 0;
-  color: inherit;
-  opacity: 0.85;
-  transition: opacity var(--d-fast) var(--ease);
-}
-.sn-row:hover .sn-row-mark,
-.sn-row.is-on .sn-row-mark {
-  opacity: 1;
-}
-.sn-row-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* THE COUNT, AND IT IS A FIGURE AT EVERY WIDTH. It used to be a
-   pill of digits that turned into a 6px dot when the rail folded,
-   which threw away the half worth keeping (fault 4). It stays a
-   number; at 64px it moves under the mark. Mono and tabular,
-   because it is a figure (§2). */
-.sn-row-count {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--chrome-fg-faint);
-  background: var(--chrome-wash);
-  border-radius: var(--r-full);
-  padding: 1px 6px;
-}
-.sn-row.is-on .sn-row-count {
-  color: var(--chrome-fg);
 }
 
 /* ---- the foot ----------------------------------------------- */
@@ -5622,61 +3075,8 @@
   flex-direction: column;
   gap: var(--s-2);
   padding: var(--s-3);
-  border-top: 1px solid var(--chrome-line-soft);
+  border-top: 1px solid var(--line-subtle);
 }
-/* THE ONE PRIMARY ACT IN THE APP. It keeps the accent because it
-   sits on navy where white-on-accent is the pair that was
-   measured, and it is the only saturated thing on the rail. */
-.sn-new {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-2);
-  height: var(--h-lg);
-  border: 0;
-  border-radius: var(--r-control);
-  background: var(--accent);
-  color: var(--accent-fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-body-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.sn-new:hover {
-  background: var(--accent-hover);
-}
-.sn-new:active {
-  background: var(--accent-press);
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-.sn-new:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
-}
-.sn-new-mark,
-.sn-admin-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  line-height: 0;
-}
-
-/* THE PERSON, THEN THE WORKSHOP — stacked, which is what
-   PHASE_TWO §1 draws and what the arithmetic forces.
-
-   MEASURED SIDE BY SIDE, at the full 224px rail: the foot has
-   200px of room, "⚙ Admin" wants 85 and the gap 8, which leaves
-   the chip 107 — and inside that the initials disc takes 28 and
-   the wedge 8, so "Asaf Alazraki" was handed 41px of the 83 it
-   wants. Every width in the sweep truncated it, and a person's
-   own name cut mid-word in the corner of every screen is §3
-   broken in the one place a reader will always look.
-
-   Two rare acts, two doors, two lines: the chip is about ME, and
-   Admin is about the BUSINESS. */
 .sn-who {
   display: flex;
   flex-direction: column;
@@ -5687,75 +3087,15 @@
 .sn-who .who {
   min-width: 0;
 }
-.sn-admin {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  height: var(--h-md);
-  padding: 0 var(--s-2);
-  border: 1px solid var(--chrome-edge);
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--chrome-fg-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.sn-admin:hover {
-  background: var(--chrome-wash-hover);
-  border-color: var(--chrome-line-strong);
-  color: var(--chrome-fg);
-}
-.sn-admin:active {
-  background: var(--chrome-wash-press);
-  transition-duration: var(--d-press);
-}
-.sn-admin:focus-visible {
-  outline: 2px solid var(--chrome-fg);
-  outline-offset: 2px;
-}
-.sn-admin.is-on {
-  background: var(--chrome-wash-on);
-  border-color: var(--chrome-line-strong);
-  color: var(--chrome-fg);
-}
 
 /* ============================================================
    TIGHT — the rail gives its width back.
 
-   224px is 17% of a 1280 laptop. Collapsed it is 64px of marks
-   and FIGURES: the count is the half worth keeping when the words
-   go (fault 4), so it moves under the mark and stays an 11px
-   tabular number rather than becoming a 6px dot that says "there
-   are some".
-
-   WHAT GOES AND WHY, each one named:
-
-     the head's NAME       — a business name in 48px of column is
-                             an ellipsis, and the crest already
-                             says whose rail this is
-     the find box's WORDS  — the glyph and Ctrl K are the control
-     the row NAMES         — replaced by the mark, which is why
-                             the marks had to be four silhouettes
-     the RECENT SECTION    — an 11px uppercase caption with a
-                             disclosure, over rows whose whole
-                             content is a brand name. Reported
-                             honestly: this is the one thing the
-                             fold costs, and the alternative was
-                             abbreviating "Highfield" to "HI",
-                             which is a word cut in half (§3).
-     the Admin WORD        — the gear stays, labelled
-
-   Words are hidden with `display: none` rather than width or
-   opacity: the rail's WIDTH is what animates, and a word that
-   keeps its box while the column shrinks reflows on every frame.
-   The text goes on the first frame and the column glides.
+   64px of marks and FIGURES: the words are not rendered
+   (SideNav.tsx), the mark is the row's name, and the count stacks
+   under it as the row's meta — an 11px tabular number, on the
+   floor rather than under it. The column is what animates; the
+   words go on the first frame.
    ============================================================ */
 .shell-body:has(.sn.is-tight) {
   --rail: 64px;
@@ -5769,31 +3109,8 @@
   gap: var(--s-2);
   padding: var(--s-4) var(--s-2) var(--s-3);
 }
-.sn.is-tight .sn-head-name,
-.sn.is-tight .sn-find-say,
-.sn.is-tight .sn-kbd,
-.sn.is-tight .sn-row-name,
-.sn.is-tight .sn-new-say,
-.sn.is-tight .sn-admin-say {
-  display: none;
-}
 .sn.is-tight .sn-find {
-  justify-content: center;
   margin: 0 var(--s-2) var(--s-3);
-  padding: 0;
-}
-/* THE ROW BECOMES A STACK: the mark, and its figure under it. */
-.sn.is-tight .sn-row {
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px;
-  height: auto;
-  min-height: 46px;
-  padding: 5px 0;
-}
-.sn.is-tight .sn-row-count {
-  background: transparent;
-  padding: 0;
 }
 .sn.is-tight .sn-scroll {
   padding: 0 var(--s-2) var(--s-3);
@@ -5801,65 +3118,28 @@
 .sn.is-tight .sn-foot {
   padding: var(--s-2);
 }
-.sn.is-tight .sn-new {
-  padding: 0;
-}
-.sn.is-tight .sn-admin {
-  justify-content: center;
-  padding: 0;
-}
 
 /* MOVEMENT GOES; LIGHT AND COLOUR STAY (§4). The rail's WIDTH is
-   movement and it goes — the column snaps to 64px. Every ink
-   transition on every row is not movement and is kept. */
+   movement and it goes — the column snaps. */
 @media (prefers-reduced-motion: reduce) {
   .sn {
     transition: none;
   }
 }
 
-/* ============================================================
-   AND THE BUSINESS'S NAME HAS TO SURVIVE EVERY WIDTH.
-
-   Measured at 1024 x 768 against the second-pass rail: the head
-   handed `.sn-head-name` 111px and the name wanted 123, so the
-   first word on every screen in the app read `Northside Ma…` — a
-   name cut mid-word, which §3 forbids outright.
-
-   At 224px the head hands it 132px and the name wants 118, so the
-   base rule is already whole. Below 1100 the rail narrows again
-   (see RESPONSIVE below) and the name takes the BODY step rather
-   than the heading one — size and tracking together, as §2 asks,
-   with the local 600 weight kept because that is what separates
-   the name from the doors under it. 14px is three above the floor.
-
-   IT IS DOWN HERE RATHER THAN INSIDE THE QUERY IT BELONGS WITH,
-   and that is not filing: a media query adds no specificity, and
-   `.sn-head-name`'s base declaration is above, so an identical
-   selector written earlier loses the cascade and changes nothing.
-   Same rule, after the thing it answers, works.
-
-   `.sn.is-tight .sn-head` (0,2,1) outranks `.sn-head` (0,1,0), so
-   the 64px rail is untouched by this at any width.
-   ============================================================ */
 
 /* ============================================================
    RESPONSIVE — driven, not hoped for.
 
-   The brief's table, and what the rail does at each stop:
-
-     >= 1600  the full composition, 224px
-     1440     the same
-     1280     the same — 224 is 17.5% and the stage keeps 1056
-     1024     200px, and the name drops to the body step
-     768      168px, and the doors keep their marks and figures
-     <= 600   the rail becomes a strip: 64px, permanently, with
-              the same marks and the same figures the fold gives
+     >= 1280  the full composition, 224px
+     1100     200px, and the name drops to the body step
+     860      168px; the key cap and the crest go before a name does
+     <= 600   the rail is a strip: 64px, whatever the reader last
+              chose. SideNav.tsx reads the same query and folds the
+              words, so the query here moves only the width.
 
    Rules that hold at every one: nothing under 11px, nothing
-   truncates mid-word, and `.shell-root` scrollWidth ==
-   clientWidth. The rail is a grid COLUMN, so narrowing it is one
-   token and the stage takes back every pixel automatically.
+   truncates mid-word, and `.shell-root` scrollWidth == clientWidth.
    ============================================================ */
 @media (max-width: 1100px) {
   :root {
@@ -5873,13 +3153,10 @@
     font-size: var(--t-body-size);
     letter-spacing: var(--t-body-track);
   }
-  .sn-find,
-  .sn-scroll {
+  .sn-find {
     margin-inline: var(--s-2);
-    padding-inline: 0;
   }
   .sn-scroll {
-    margin-inline: 0;
     padding-inline: var(--s-2);
   }
   .sn-foot {
@@ -5891,111 +3168,20 @@
   :root {
     --rail: 168px;
   }
-  /* the key cap goes before the words do — Ctrl K is a reminder
-     about a shortcut, and the words are the control */
-  .sn-kbd {
-    display: none;
-  }
-  /* AND THE CREST GOES BEFORE THE NAME DOES. Measured at 768: the
-     head had 87px for a name wanting 117, so it read
-     "Northside Mar…". The crest is a decoration that says the same
-     thing the name says; the name is the fact. Without it the head
-     hands over 123px and the name is whole. */
+  /* the key cap is a reminder about a shortcut and the crest says
+     what the name says; both go before a word is cut */
+  .sn-kbd,
   .sn-crest {
     display: none;
   }
-  /* AND THE DOOR'S GAP COMES DOWN WITH THE COLUMN — because at 168
-     the twelve-pixel gap was costing a name.
-
-     MEASURED at 768, on the row that did not fit. The rail is 168
-     and its border takes 1, so `.sn-scroll` has 167; its own 8+8
-     leaves the row 151; the row spends 8+8 on padding, 20 on the
-     mark, 18.61 on the count pill and TWELVE TWICE on the gaps —
-     which hands `.sn-row-name` 72.39px for a word that wants 72.94
-     at weight 500 and 74.05 when the row is lit at 600. So
-     "Customers" drew as "Custom… 1" — measured on all seventeen
-     screens of this app at 768, and on the rail itself at 700 and
-     620, which take the same 168. The sweep that first looked for
-     it used a one-pixel threshold, called 72 < 73 noise, and
-     reported the rail clean while the screenshot showed the cut.
-
-     8px hands the name 80.39 — 6.34 of headroom on the lit weight,
-     which is the whole word plus room for a longer one. It is also
-     the gap `.sn-find` directly above already uses between its
-     glyph and its words, so at this width the control and the doors
-     under it agree rather than differ by four pixels nobody chose.
-     12 stays at 224 and 200, where it is affordable and where the
-     comment on `.sn-row` argues for it. */
-  .sn-row {
-    gap: var(--s-2);
-  }
 }
 
-/* AT 600 THE RAIL IS A STRIP, whatever the reader last chose.
-   `--rail` is overridden rather than the class forced, because the
-   collapse is a PREFERENCE and a width is not: widening the window
-   hands the reader's own choice straight back. Everything the
-   tight rules hide is hidden here by the same selectors, which is
-   why they are listed once, above, keyed on `.sn.is-tight` — this
-   query adds `.sn` to each of them rather than restating them. */
 @media (max-width: 600px) {
   :root {
     --rail: 64px;
   }
-  .sn {
-    align-items: stretch;
-    overflow: hidden;
-  }
-  .sn .sn-head {
-    flex-direction: column;
-    gap: var(--s-2);
-    padding: var(--s-3) var(--s-2) var(--s-2);
-  }
-  .sn .sn-head-name,
-  .sn .sn-find-say,
-  .sn .sn-kbd,
-  .sn .sn-row-name,
-  .sn .sn-new-say,
-  .sn .sn-admin-say {
-    display: none;
-  }
-  .sn .sn-find {
-    justify-content: center;
-    margin: 0 var(--s-2) var(--s-3);
-    padding: 0;
-  }
-  .sn .sn-row {
-    flex-direction: column;
-    justify-content: center;
-    gap: 1px;
-    height: auto;
-    min-height: 46px;
-    padding: 5px 0;
-  }
-  .sn .sn-row-count {
-    background: transparent;
-    padding: 0;
-  }
-  .sn .sn-admin {
-    justify-content: center;
-    padding: 0;
-  }
-  /* THE CHIP FOLDS WITH THE RAIL, and at 600 the rail is folded by
-     the WIDTH rather than by the reader — so `auth.css`'s
-     `.sn.is-tight .who-say` never fires and the person's name was
-     handed 0px. Scoped to `.sn`, which this stylesheet owns; the
-     chip's own appearance is still auth.css's. */
-  .sn .who-say,
-  .sn .who-wedge {
-    display: none;
-  }
-  .sn .who-chip {
-    justify-content: center;
-  }
-  .sn .sn-fold {
-    display: none;
-  }
 }
+
 
 /* ============================================================
    ADMIN — the workshop behind the shop.
@@ -6061,110 +3247,36 @@
 .ad-band + .ad-band {
   margin-top: var(--sp-6);
 }
-.ad-band-name {
+/* the band's caption is the SectionHead primitive; this is its air */
+.ad-band-head {
   margin: 0 0 var(--s-3);
-  color: var(--fg-tertiary);
 }
-/* THE COLUMN COUNT COMES FROM THE DOOR COUNT, NOT FROM THE WIDTH.
-
-   `repeat(auto-fill, minmax(230px, 1fr))` stood here, and auto-fill
-   answers one question — how many 230px columns fit — which is not
-   the question this grid asks. The bands hold SIX cells and THREE
-   (the drawing's door is worth two), and the width kept choosing
-   four. Four divides neither. Measured on the running Admin, the
-   space left blank on the row "All tables" sat on:
-
-     1920 · 1600 · 1440   band 1016   4 cols   771px blank
-     1280                 band  992   4 cols   753px blank
-     1100                 band  860   3 cols   581px blank
-     1024                 band  784   3 cols   531px blank
-      900                 band  660   3 cols   448px blank
-      768                 band  560   2 cols   286px blank
-      600                 band  496   1 col    none
-
-   — and at four columns BOTH other bands left a whole 257px column
-   empty as well, because three doors never fill four. It is not a
-   min-width that is wrong; 230 → 260 only moves which width the
-   hole appears at.
-
-   THREE IS THE COUNT THAT DIVIDES BOTH BANDS. Six cells is 2 rows,
-   three cells is 1, exactly, with nothing left over. Two divides
-   the six as well and leaves the organisation's third door on a
-   short last row — a trailing row, which every grid has, and not a
-   hole with a door marooned beside it.
-
-   THE BREAKS ARE WHERE THE CARD WOULD GET NARROWER THAN IT IS
-   TODAY. A door measures 245px at 1600 now; three columns hold
-   that until the band falls under 3 × 245 + 24 = 759px, which is
-   viewport 1024 (band 784, card 253). Below it, two. `minmax(0,
-   1fr)` rather than `1fr` so a long door name cannot push a column
-   past its share — `1fr` is `minmax(auto, 1fr)` and auto is the
-   name's own width. */
+/* TWO COLUMNS, AND THE NUMBER IS THE NAME'S. The door's name wears
+   `--t-display-xl` (34px at 1280), and the longest name a door
+   carries — "Saved configurations" — wants about 354px at that size.
+   Three columns hand a door 322px at 1280 and 253 at 1024; two hand
+   it 490 and 386, so the name fits whole at 1280 and wraps at its
+   space below that, never mid-word. Data's six cells (the drawing's
+   door is worth two) divide into three full rows of two; Admin's
+   three leave one trailing, which every grid has. */
 .ad-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s-3);
 }
 
-.ad-door {
+/* A DOOR IS THE CARD PRIMITIVE IN A CELL. The cell is the grid item —
+   the drawing's door is worth two — and everything the door LOOKS
+   like is card.css's: ground, hairline, radius, the lift on hover,
+   the 0.994 settle on press, the ring. Nothing here paints a card. */
+.ad-cell {
   display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  align-items: center;
-  gap: 2px var(--s-3);
-  min-height: 84px;
-  padding: var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--grad-surface);
-  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
+  min-width: 0;
 }
-.ad-door:hover {
-  border-color: var(--line-strong);
-  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
-  transform: translateY(-1px);
-}
-/* 0.994 ON A CARD, not 0.97 — a 7px shrink on a 236px card reads
-   as a glitch (§4). The hover lift goes at the same moment. */
-.ad-door:active {
-  transform: scale(0.994);
-  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
-  transition-duration: var(--d-press);
-}
-.ad-door:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-/* THE DRAWING'S DOOR IS THE WIDEST THING IN THE BAND because it is
-   the surface every other door is about — but `1 / -1` is what
-   marooned the door beside it. A full-width card ENDS its row, so
-   "All tables" could only ever start a new one and nothing was
-   allowed to join it. Two thirds instead of three: the pair fills
-   one row, and the drawing keeps the emphasis without becoming the
-   1016px card with a 40px mark in the corner that the note above
-   `.ad-well` was already complaining about. */
-.ad-door.is-wide {
+.ad-cell.is-wide {
   grid-column: span 2;
 }
-/* A DOOR WITH NO HONEST FIGURE carries none, and its name takes the
-   whole box rather than sitting above an empty line. */
-.ad-door.is-bare {
-  grid-template-rows: auto;
-}
-.ad-door.is-bare .ad-door-mark {
-  grid-row: 1;
-}
-.ad-door.is-bare .ad-door-name {
-  align-self: center;
-}
 .ad-door-mark {
-  grid-row: 1 / 3;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6176,91 +3288,31 @@
   color: var(--accent);
   line-height: 0;
 }
+/* THE NAME WEARS `.ds-display-xl` — one of several, and the point of
+   the screen, so the largest thing on it; the page title above stays
+   at the title step. Nothing here restates the step (rule 6). */
 .ad-door-name {
-  align-self: end;
+  display: block;
+  margin-top: var(--s-3);
   min-width: 0;
-  font-size: var(--t-heading-size);
-  font-weight: 600;
-  letter-spacing: var(--t-heading-track);
-  color: var(--fg);
 }
 /* THE ONE FACT. Mono and tabular, because most of them are
    figures and a column of facts that does not line up is a column
    somebody reads twice. */
+/* THE ONE FACT. Mono and tabular, because most of them are figures
+   and a column of facts that does not line up is a column somebody
+   reads twice. The import/export door's fact is its own trigger — a
+   menu keeps its own control, and the control keeps its own look. */
 .ad-door-fact {
-  align-self: start;
+  display: block;
+  margin-top: var(--s-2);
   min-width: 0;
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
   color: var(--fg-tertiary);
 }
-/* THE IMPORT/EXPORT DOOR IS A MENU, not a page, so it keeps its
-   own trigger — one control, one behaviour, one place that knows
-   what an import costs — and takes the door's shape around it. The
-   trigger's own frame goes: two borders inside one card reads as a
-   button somebody forgot to style, which is what it looked like the
-   first time this was driven. */
-.ad-door-io {
-  cursor: default;
-  align-items: center;
-}
-.ad-door-io .io-trigger {
-  grid-column: 2;
-  grid-row: 1 / 3;
-  justify-self: start;
-  padding: 0;
-  height: auto;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  font-family: var(--font-sans);
-  font-size: var(--t-heading-size);
-  font-weight: 600;
-  letter-spacing: var(--t-heading-track);
-  color: var(--fg);
-}
-.ad-door-io .io-trigger:hover {
-  background: transparent;
-  color: var(--accent);
-}
 
-/* 1023, NOT 900, AND THE NUMBER IS THE CARD'S. Three columns hold a
-   door at the 245px it measures at 1600 until the band falls under
-   3 × 245 + 24 = 759px. The band is the stage less two gutters, so
-   759 arrives just below viewport 1024 — where the band measures
-   784 and the door 253. At 900 (the old stop) three columns would
-   have drawn a 212px door, which is narrower than the one this
-   grid draws on a 1600 screen. */
-@media (max-width: 1023px) {
-  /* `.ad-well { padding: var(--sp-5) var(--sp-4) }` USED TO STAND
-     HERE — under a `max-width: 900px` query — and it was a second
-     gutter under a page that already has one, the exact thing
-     `.ad-well`'s own base rule forbids in writing, added later and
-     never measured against it.
-
-     MEASURED, `.ph-name`'s left edge on Admin against the same
-     edge on Modules, Quotes and Customers:
-
-       width    Admin    every other page
-       1024      220      220     (query not firing)
-        900      236      220
-        768      204      188
-
-     16px of it, at 900 and at every stop below — so Admin was the
-     one screen whose title, eyebrow, sentence and door grid all sat
-     further in than the "Back" bar directly above them, which takes
-     `--page-gutter` like everything else. Two left edges on one
-     page, on the screen a dealer opens to change how their business
-     works.
-
-     `--page-gutter` already narrows 32 → 20 at 1100, which is the
-     whole of what this query was reaching for. The base rule's
-     bottom padding is what should apply here and now does. */
-  .ad-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 @media (max-width: 700px) {
   .ad-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -6269,64 +3321,8 @@
      drawing's door would open an implicit second column and hang
      off the right edge of a phone — the grid does not clamp a span
      down to fit. */
-  .ad-door.is-wide {
+  .ad-cell.is-wide {
     grid-column: auto;
-  }
-}
-
-/* TOUCH TARGETS — see ds.css beside `.k-filter`. The rail's fold
-   is 24 x 24 and back is 71 x 28. */
-@media (pointer: coarse) {
-  .sn-fold,
-  .shell-view-back {
-    position: relative;
-  }
-  .sn-fold::after,
-  .shell-view-back::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: max(100%, 44px);
-    height: max(100%, 44px);
-    transform: translate(-50%, -50%);
-  }
-}
-
-/* ============================================================
-   THE DOCK ANSWERS THE WINDOW — added with the fluid layer.
-
-   It was `width: 44px` per item and nothing else, so it measured
-   520px on a 2304px window and 520px on a 1024px one, and there
-   was no @media rule anywhere in the app above 1180px for it to
-   respond to. A 44px target on a 2560px display is a physically
-   smaller thing than the same 44px on a laptop, and this is the
-   app's primary navigation.
-
-   The tokens are in src/styles/response.css; the rules are here
-   because this is the stylesheet that owns the dock.
-   ============================================================ */
-
-.dk {
-  gap: var(--dock-gap);
-  padding: var(--dock-pad);
-  /* it floats over the sheet — it may never be wider than the
-     window it floats over */
-  max-width: calc(100vw - var(--sp-4, 16px) * 2);
-}
-
-/* Below the tablet edge ten destinations do not fit at any target
-   size worth pressing, so the dock stops being a fixed lozenge and
-   becomes a rail that scrolls. A dock that silently clips its last
-   three items is worse than one that admits it scrolls. */
-@media (max-width: 720px) {
-  .dk {
-    overflow-x: auto;
-    scrollbar-width: none;
-    justify-content: flex-start;
-  }
-  .dk::-webkit-scrollbar {
-    display: none;
   }
 }
 

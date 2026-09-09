@@ -150,6 +150,14 @@ import { quoteTotals } from './totals'
 import { FlowFoot, FlowLine, RunningTotal } from './flow'
 import { PlaceMark } from '@/features/modules/PlaceMark'
 import { FrozenPhoto } from './photo'
+/* THE PRIMITIVES. Every button, the place card, the shut rows and
+   every uppercase caption on this screen are src/ui's, and the local
+   rules that drew them are gone from picker.css — adopting a
+   primitive is deleting the rule, because none of the five accepts a
+   className to layer under. What picker.css still draws itself is
+   the search combobox and the option row, and the reasons are on
+   the rules. */
+import { Button, Card, Row, SectionHead } from '@/ui'
 import './picker.css'
 
 export interface QuoteStartProps {
@@ -465,14 +473,14 @@ export function QuoteStart({
             </h2>
           ) : (
             <div className="qs-here">
-              <button
-                type="button"
-                className="qs-back"
+              <Button
+                tone="neutral"
                 onClick={() => setPlaceId(null)}
                 aria-label="Back to the modules"
+                title="Back to the modules (Esc)"
               >
                 <ArrowLeft size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
-              </button>
+              </Button>
               <span className="qs-here-mark" aria-hidden="true">
                 {door.module.logo ? (
                   <FrozenPhoto
@@ -502,15 +510,14 @@ export function QuoteStart({
             </div>
           )}
 
-          <button
-            type="button"
-            className="qs-close"
+          <Button
+            tone="ghost"
             onClick={() => closeRef.current()}
             aria-label="Close without starting a quote"
             title="Close (Esc)"
           >
             <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          </button>
+          </Button>
         </header>
 
         {door === null ? (
@@ -533,18 +540,22 @@ export function QuoteStart({
                     `bandsOf` CUTS the order rather than sorting it.
                     start.ts:186's rule holds untouched: nothing moves.
 
-                    The caption lives in a LEFT GUTTER rather than on a
-                    line of its own, so four headings cost no vertical
-                    space at all. Measured at 1280: the grid was 4 rows
-                    of 5, it is 6 rows of 4 in the gutter layout, and
-                    the shut band still lands above the fold. */}
+                    THE HEADING IS <SectionHead>, the system's one
+                    uppercase style, with the count in the dealer's
+                    noun and a hairline to the edge. It used to be a
+                    local caption block in a 72px left gutter — a
+                    gutter chosen to keep the shut band above the fold
+                    at 1280x800, which the cards' new display-tier
+                    names would have pushed below it anyway. The
+                    band's cards wear the subject's step and the
+                    heading sits above them, where a band head sits
+                    everywhere else in this app. */}
                 <ul className="qs-grid" aria-label="The places you can quote from">
                   {bands.map((b) => (
                     <li key={b.key} className="qs-band" role="presentation">
-                      <p className="qs-band-cap" role="presentation">
-                        <span className="mono-label qs-band-word">{b.label}</span>
-                        <span className="qs-band-n">{b.doors.length}</span>
-                      </p>
+                      <SectionHead count={placesSay(b.doors.length)} rule>
+                        {b.label}
+                      </SectionHead>
                       <ul className="qs-band-grid" aria-label={b.label}>
                         {b.doors.map((d) => (
                           <li key={d.key} className="qs-cell">
@@ -575,18 +586,21 @@ export function QuoteStart({
                     front of the nine cards that work. */}
                 {shut.length > 0 ? (
                   <div className="qs-shut">
-                    <button
-                      type="button"
-                      className="qs-shut-head"
+                    {/* A BUTTON, SO ITS LABEL IS SENTENCE CASE. Rule 3
+                        keeps uppercase for captions and stamps, and
+                        this one wore `.mono-label` on a control. */}
+                    <Button
+                      tone="ghost"
+                      size="sm"
                       aria-expanded={showShut}
                       onClick={() => setShowShut((v) => !v)}
                     >
-                      <span className="mono-label qs-shut-cap">No quoting here yet</span>
+                      <span className="qs-shut-cap">No quoting here yet</span>
                       <span className="qs-shut-n">{shut.length}</span>
                       <span className={`qs-shut-mark${showShut ? ' is-open' : ''}`} aria-hidden="true">
                         <CaretDown size={ICON_SIZE.tiny} weight="bold" />
                       </span>
-                    </button>
+                    </Button>
                     {showShut ? (
                       <ul className="qs-shut-list">
                         {shut.map((d) => (
@@ -648,16 +662,15 @@ export function QuoteStart({
                 them typing it is the fast way, before they scroll. */}
             {list ? (
               <div className="qs-bands">
-                <p className="qs-band-cap qs-band-cap--row" role="presentation">
-                  <span className="mono-label qs-band-word">Offered</span>
-                  <span className="qs-band-n">{offeredSay(list)}</span>
-                  {list.hidden > 0 ? (
-                    <span className="qs-band-say">
-                      The first {SUBJECT_CAP} are drawn — type a model or a series to reach the
-                      other {list.hidden.toLocaleString()}.
-                    </span>
-                  ) : null}
-                </p>
+                <SectionHead count={offeredSay(list)} rule>
+                  Offered
+                </SectionHead>
+                {list.hidden > 0 ? (
+                  <p className="qs-band-say">
+                    The first {SUBJECT_CAP} are drawn — type a model or a series to reach the
+                    other {list.hidden.toLocaleString()}.
+                  </p>
+                ) : null}
 
                 {/* ── AND WHAT THE CATALOGUE HELD BACK ───────────────
                     `buildEntries` refuses a discontinued row and every
@@ -669,14 +682,15 @@ export function QuoteStart({
                     none of them; a sheet that retires a hull gets the
                     number rather than a shorter list. */}
                 {door.census.held > 0 ? (
-                  <p className="qs-band-cap qs-band-cap--row" role="presentation">
-                    <span className="mono-label qs-band-word">Held back</span>
-                    <span className="qs-band-n">{door.census.held.toLocaleString()}</span>
-                    <span className="qs-band-say">
+                  <>
+                    <SectionHead count={door.census.held.toLocaleString()} rule>
+                      Held back
+                    </SectionHead>
+                    <p className="qs-band-say">
                       No longer sold. They stay on the sheet so the quotes already written against
                       them still open, and none of them is drawn here.
-                    </span>
-                  </p>
+                    </p>
+                  </>
                 ) : null}
               </div>
             ) : null}
@@ -836,10 +850,12 @@ export function QuoteStart({
                   )}
 
                   {barred === '' ? null : (
-                    <p className="qs-barred">
-                      <Warning size={ICON_SIZE.small} weight="fill" aria-hidden="true" />
-                      <span>{barred}</span>
-                    </p>
+                    <div className="qs-hold s-warned">
+                      <p className="qs-hold-say">
+                        <Warning size={ICON_SIZE.small} weight="fill" aria-hidden="true" />
+                        <span>{barred}</span>
+                      </p>
+                    </div>
                   )}
                 </>
               )}
@@ -905,26 +921,26 @@ export function QuoteStart({
                         twenty minutes ago is a lie about what just
                         happened, and the person would have to read the
                         reference to notice. */}
-                    <button type="button" className="qs-go qb-price-act" onClick={() => start(false)}>
-                      <span className="qs-go-name">
+                    {/* `.qb-price-act` is build.css's — the position of
+                        "whatever the screen's own last act is" on the
+                        bar it owns — and it sits on the group, because
+                        a Button takes no className of its own. */}
+                    <span className="qs-acts qb-price-act">
+                      <Button tone="primary" size="lg" onClick={() => start(false)}>
                         {standing ? 'Back to the quote you started' : 'Start the quote'}
-                      </span>
-                      <ArrowRight size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
-                    </button>
-                    {/* AND THE OTHER ONE STAYS POSSIBLE. Two quotes for
-                        one hull to two customers is an ordinary
-                        Tuesday; the draft is only offered back while
-                        NOBODY is named on it (see `unaddressedDraftFor`),
-                        so this is the door out of that one case. */}
-                    {standing ? (
-                      <button
-                        type="button"
-                        className="qs-again"
-                        onClick={() => start(true)}
-                      >
-                        Start another
-                      </button>
-                    ) : null}
+                        <ArrowRight size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
+                      </Button>
+                      {/* AND THE OTHER ONE STAYS POSSIBLE. Two quotes for
+                          one hull to two customers is an ordinary
+                          Tuesday; the draft is only offered back while
+                          NOBODY is named on it (see `unaddressedDraftFor`),
+                          so this is the door out of that one case. */}
+                      {standing ? (
+                        <Button tone="neutral" size="lg" onClick={() => start(true)}>
+                          Start another
+                        </Button>
+                      ) : null}
+                    </span>
                   </>
                 )}
               </div>
@@ -942,6 +958,11 @@ export function QuoteStart({
  *  dealer's own plural for the thing, and nothing else. */
 const countSay = (door: QuoteDoor): string =>
   `${door.census.items.toLocaleString()} ${door.census.noun}`
+
+/** A band head's count, in the noun the list's own label uses —
+ *  "The places you can quote from". §6: a figure with a noun, never
+ *  a bare number beside a caption. */
+const placesSay = (n: number): string => `${n} ${n === 1 ? 'place' : 'places'}`
 
 /* ============================================================
    THE BANDS OF LAYER ONE — a CUT of the order, never a sort.
@@ -1020,35 +1041,43 @@ function ModuleCard({
      fault against the fixture's `Road Gear` and says the fix
      belongs here. It is here. */
   const cat = door.moduleName === band || door.moduleName === door.name ? '' : door.moduleName
+  /* THE CARD IS <Card>. Its kind arrives as `data-kind`, which ds.css
+     resolves to `--kind` and card.css draws as a 6% ground and a 14%
+     border — the tint the module tile already measured at 4.5:1 for
+     a name on it. The 3px kind rail and the `.k-lift` hover glow went
+     with the local `.qs-card` rule: a Card takes no className, so
+     there is nothing to layer them under, and the primitive's own
+     hover, press, focus ring and button semantics are the card's. */
   return (
-    <button
-      type="button"
-      className="qs-card k-lift"
-      data-kind={door.kind}
-      aria-label={`${door.name}, ${countSay(door)}`}
-      onClick={onPick}
-    >
-      {/* THE BRAND'S MARK IS THE CARD, exactly as it is on the
-          dashboard tiles, and `PlaceMark` is the one implementation
-          of "what mark does this place get" — the dealer's upload,
-          then the bundled brand mark, then nothing. The kind symbol
-          is NOT the fallback here: this grid is coloured by kind
-          already and the eyebrow says the category in words.
+    <Card kind={door.kind} onActivate={onPick} label={`${door.name}, ${countSay(door)}`}>
+      {/* THE NAME IS THE SUBJECT OF THIS SCREEN and wears the display
+          tier — `.ds-display-xl`, the step ds.css writes for "a name
+          that is one of SEVERAL and is the point of the screen — a
+          kind door, A MODULE PLACE". The question above the grid is
+          `.ds-hero`, one per stage; the chrome around both is 11–12px.
+          picker.css derives the grid's column floor from the step's
+          own size token so a one-word name never runs out of cell.
 
-          The name is still in the markup and CSS hides it when a
+          THE BRAND'S MARK IS THE FACE WHEN THERE IS ONE, exactly as
+          on the dashboard tiles, and `PlaceMark` is the one
+          implementation of "what mark does this place get" — the
+          dealer's upload, then the bundled brand mark, then nothing.
+          The name is always in the markup; CSS hides it only when a
           mark was really painted, so a mark that cannot be drawn
           leaves a named card rather than an empty one. */}
-      <span className="qs-card-mark">
-        <PlaceMark
-          logo={door.module.logo}
-          name={door.name}
-          master={door.tables[0]}
-          size={22}
-          fallback="none"
-        />
-        <span className="qs-card-name">{door.name}</span>
+      <span className="qs-card-face">
+        <span className="qs-card-mark">
+          <PlaceMark
+            logo={door.module.logo}
+            name={door.name}
+            master={door.tables[0]}
+            size={22}
+            fallback="none"
+          />
+        </span>
+        <span className="qs-card-name ds-display-xl">{door.name}</span>
       </span>
-      {/* THE COUNT IS FIRST NOW, so the figure lands at the same x on
+      {/* THE COUNT IS FIRST, so the figure lands at the same x on
           every card in the band whether or not that card carries a
           second word. A column of counts that jogs sideways on two
           cards out of eighteen is the sort of thing nobody names and
@@ -1057,7 +1086,7 @@ function ModuleCard({
         <span className="qs-card-n">{countSay(door)}</span>
         {cat === '' ? null : <span className="qs-card-cat">{cat}</span>}
       </span>
-    </button>
+    </Card>
   )
 }
 
@@ -1076,19 +1105,22 @@ function ShutRow({
   door: QuoteDoor
   onOpenPlace?: (moduleId: string) => void
 }): ReactElement {
+  /* A <Row>: the place is the name, the refusal is the metadata
+     beside it, and the door out is a Button in the trail — a still
+     row, because a row with its own control cannot also be a target. */
   return (
-    <li className="qs-shut-row s-held">
-      <span className="qs-shut-name">{door.name}</span>
-      <span className="qs-shut-why s-say">{door.refusal}</span>
-      {onOpenPlace ? (
-        <button
-          type="button"
-          className="qs-shut-go"
-          onClick={() => onOpenPlace(door.moduleId)}
-        >
-          Open {door.name}
-        </button>
-      ) : null}
+    <li>
+      <Row
+        name={door.name}
+        meta={door.refusal}
+        trail={
+          onOpenPlace ? (
+            <Button size="sm" tone="neutral" onClick={() => onOpenPlace(door.moduleId)}>
+              Open {door.name}
+            </Button>
+          ) : undefined
+        }
+      />
     </li>
   )
 }
@@ -1108,14 +1140,10 @@ function Refusal({
     <div className="qs-refusal">
       <p className="qs-refusal-why">{door.refusal}</p>
       {onOpenPlace ? (
-        <button
-          type="button"
-          className="qs-refusal-go"
-          onClick={() => onOpenPlace(door.moduleId)}
-        >
-          <span>Open {door.name}</span>
+        <Button tone="neutral" onClick={() => onOpenPlace(door.moduleId)}>
+          Open {door.name}
           <ArrowRight size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
-        </button>
+        </Button>
       ) : null}
     </div>
   )
@@ -1263,14 +1291,14 @@ function Walk({ preview }: { preview: FlowPreview }): ReactElement {
 
 function Verdict({ verdict }: { verdict: SubjectVerdict }): ReactElement {
   return (
-    <div className="qs-verdict is-loud">
-      <p className="qs-verdict-say">
+    <div className="qs-hold s-warned">
+      <p className="qs-hold-say">
         <Info size={ICON_SIZE.small} weight="fill" aria-hidden="true" />
         <span>{verdict.say}</span>
       </p>
-      <ul className="qs-verdict-list">
+      <ul className="qs-hold-list">
         {verdict.problems.map((p) => (
-          <li className="qs-verdict-item qs-verdict-item--stop" key={p}>
+          <li className="qs-hold-item" key={p}>
             {p}
           </li>
         ))}

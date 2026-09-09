@@ -18,6 +18,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import type { ColumnSection, FieldType } from '@/types/model'
+import { Button, Row } from '@/ui'
 import { Popover } from './Popover'
 import { COLUMN_KINDS } from './columnKinds'
 import type { LinkTarget, NewColumn } from './useColumnCommands'
@@ -107,21 +108,32 @@ export function AddColumnPopover({
         />
       </div>
 
+      {/* EACH KIND IS A ROW — the src/ui line — with a real radio at
+          its head, the kind's name as that radio's label and its hint
+          as the metadata under it. Native radios sharing a name give
+          the arrow keys for free; `current` marks the chosen one. */}
       <div className="tb-kinds" role="radiogroup" aria-label="What the column holds">
         {kinds.map((k) => {
           const on = k.type === type
+          const id = `tb-newcol-kind-${k.type}`
           return (
-            <button
+            <Row
               key={k.type}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              className={'tb-kind' + (on ? ' tb-kind-on' : '')}
-              onClick={() => setType(k.type)}
-            >
-              <span className="tb-kind-label">{k.label}</span>
-              <span className="tb-kind-hint">{k.hint}</span>
-            </button>
+              dense
+              current={on}
+              lead={
+                <input
+                  className="tb-menu-check"
+                  type="radio"
+                  name="tb-newcol-kind"
+                  id={id}
+                  checked={on}
+                  onChange={() => setType(k.type)}
+                />
+              }
+              name={<label htmlFor={id}>{k.label}</label>}
+              meta={k.hint}
+            />
           )
         })}
       </div>
@@ -226,12 +238,12 @@ export function AddColumnPopover({
       )}
 
       <footer className="tb-menu-foot">
-        <button type="button" className="btn btn-ghost" onClick={onClose}>
+        <Button tone="ghost" size="sm" onClick={onClose}>
           Cancel
-        </button>
-        <button type="button" className="btn btn-primary" onClick={submit}>
+        </Button>
+        <Button tone="primary" size="sm" onClick={submit}>
           Add column
-        </button>
+        </Button>
       </footer>
     </Popover>
   )

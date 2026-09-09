@@ -106,7 +106,7 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
-import { ArrowSquareOut, Plus, Trash } from '@phosphor-icons/react'
+import { Plus, Trash } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import {
@@ -117,6 +117,7 @@ import {
   type RowData,
 } from '@/types/model'
 import { PageHead } from '@/features/page'
+import { Button, Card, Field, Row, SectionHead } from '@/ui'
 import { localDay, money, quoteTotals, useCustomerQuotes } from '@/features/quote'
 import { customerFormFields, customerRegister, readCustomer } from './customers'
 import { dayWorthSaying, groupByDescription } from './form'
@@ -232,17 +233,21 @@ export function CustomerPage({
                 explaining that documents survive would be furniture
                 on the screen of a customer who has no documents. */
             <div className="cx-one-dropbox">
-              <button
-                type="button"
-                className="cx-act cx-act--quiet cx-one-drop"
+              {/* THE SYSTEM'S DESTRUCTIVE TONE: an outline in the
+                  danger ink, never a red fill — button.css's own
+                  argument, and the same one this file made when it
+                  drew the control quiet: the act is undoable and does
+                  not need to shout. */}
+              <Button
+                tone="danger"
+                glyph={<Trash size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />}
                 onClick={() => {
                   removeCustomer(row.id)
                   onRemoved?.()
                 }}
               >
-                <Trash size={ICON_SIZE.tiny} weight="light" aria-hidden="true" />
                 Remove
-              </button>
+              </Button>
               {theirs.length > 0 ? (
                 <p className="cx-one-drop-say">
                   Their {theirs.length === 1 ? 'quote' : `${theirs.length} quotes`} still
@@ -274,9 +279,12 @@ export function CustomerPage({
           <div className="cx-rec-cols">
             {/* -- their details, from the table's own columns ------- */}
             <section className="cx-pane" aria-labelledby="crm-them-head">
-              <h2 className="cx-pane-head" id="crm-them-head">
+              {/* THE ONE UPPERCASE STYLE ON THIS SCREEN, drawn by the
+                  one component that draws it. The id lands on the
+                  head's box and the section is named by its text. */}
+              <SectionHead level="h2" id="crm-them-head" rule>
                 Their details
-              </h2>
+              </SectionHead>
               <div className="cx-form">
                 {groupByDescription(customerFormFields(table)).map((group) => (
                   <div className="cx-group" key={group.fields[0]?.id ?? group.say}>
@@ -302,9 +310,9 @@ export function CustomerPage({
 
             {/* -- the history with them ---------------------------- */}
             <section className="cx-pane" aria-labelledby="crm-hist-head">
-              <h2 className="cx-pane-head" id="crm-hist-head">
+              <SectionHead level="h2" id="crm-hist-head" rule>
                 Quotes to them
-              </h2>
+              </SectionHead>
 
               {theirs.length === 0 ? (
                 /* THE ROUTE WENT AND THE ACT ARRIVED. What stood here
@@ -313,25 +321,42 @@ export function CustomerPage({
                    button. When the shell hands this page a way to
                    start one, it is one press; when it does not, the
                    page says the true short thing and claims nothing
-                   it cannot do. */
-                <div className="cx-hist-empty">
-                  <p className="cx-hist-none">Nothing quoted to them yet.</p>
-                  {onNewQuote ? (
-                    <button
-                      type="button"
-                      className="cx-act cx-act--primary"
-                      onClick={() => onNewQuote()}
-                    >
-                      <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                      New quote
-                    </button>
-                  ) : (
-                    <p className="cx-hist-none">
-                      A quote written to them is filed here.
-                    </p>
-                  )}
+                   it cannot do.
+
+                   IT IS THE SYSTEM'S SUNKEN CARD — "an empty slot, a
+                   placeholder" is what card.css says that tone is for,
+                   and an empty history is exactly that: it holds the
+                   pane's shape so the page reads as new rather than
+                   broken. */
+                <div className="cx-hist-well">
+                  <Card tone="sunken" pad="md">
+                    <div className="cx-hist-empty">
+                      <p className="cx-hist-none">Nothing quoted to them yet.</p>
+                      {onNewQuote ? (
+                        <Button
+                          tone="primary"
+                          glyph={<Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />}
+                          onClick={() => onNewQuote()}
+                        >
+                          New quote
+                        </Button>
+                      ) : (
+                        <p className="cx-hist-none">
+                          A quote written to them is filed here.
+                        </p>
+                      )}
+                    </div>
+                  </Card>
                 </div>
               ) : (
+                /* THE HISTORY IS A CARD OF ROWS — the system's card,
+                   raised, with no pad, and the system's `Row` for each
+                   document. A row that can open is the activating
+                   `Row` (a real button); when the shell gives this page
+                   no way to open a quote the row is still, which is
+                   what the old `disabled` button was pretending to be. */
+                <div className="cx-hist-well">
+                <Card tone="raised" pad="none">
                 <ul className="cx-hist-list">
                   {theirs.map((q) => {
                     const totals = quoteTotals(q)
@@ -346,62 +371,66 @@ export function CustomerPage({
                        form.ts — the two were printing the same eight
                        digits an inch apart. */
                     const day = dayWorthSaying(q.reference, localDay(q.createdAt))
+                    /* WHAT THE QUOTE IS AND WHAT IT COSTS take the row's
+                       name line — that is the reading order somebody
+                       scanning a history uses. The money is a figure
+                       and stays mono at the end of the line. */
+                    const line = (
+                      <span className="cx-hist-line">
+                        <span className="cx-hist-what">
+                          {q.subjectLabel}
+                          {as !== '' && as !== read.name ? (
+                            <span className="cx-hist-as"> quoted as {as}</span>
+                          ) : null}
+                        </span>
+                        <span className="cx-num cx-hist-total">{money(totals.total)}</span>
+                      </span>
+                    )
+                    /* THE DOCUMENT'S OWN NUMBER — what a person reads
+                       back down a phone — and the day, when the number
+                       is not already carrying it. Mono, because both
+                       are identifiers. The state is a VALUE and keeps
+                       its own case: `mono-label` once uppercased it,
+                       which turned "Given" and "Draft" — two words a
+                       person reads — into two more stamps. */
+                    const meta = (
+                      <span className="cx-hist-meta">
+                        <span className="cx-num cx-hist-ref">{q.reference}</span>
+                        {day !== '' ? (
+                          <>
+                            <span className="cx-hist-dot" aria-hidden="true">
+                              ·
+                            </span>
+                            <span className="cx-num cx-hist-when">{day}</span>
+                          </>
+                        ) : null}
+                        <span
+                          className="cx-hist-state"
+                          data-state={q.state === 'issued' ? 'given' : 'draft'}
+                        >
+                          {q.state === 'issued' ? 'Given' : 'Draft'}
+                          {q.supersedesId ? ' · new version' : ''}
+                        </span>
+                      </span>
+                    )
                     return (
                       <li key={q.id} className="cx-hist-row">
-                        <button
-                          type="button"
-                          className="cx-hist-open"
-                          disabled={!onOpenQuote}
-                          onClick={() => onOpenQuote?.(q.id)}
-                          aria-label={`Quote ${q.reference} — ${q.subjectLabel}`}
-                        >
-                          <span className="cx-hist-what">
-                            {q.subjectLabel}
-                            {as !== '' && as !== read.name ? (
-                              <span className="cx-hist-as"> quoted as {as}</span>
-                            ) : null}
-                          </span>
-                          <span className="cx-num cx-hist-total">{money(totals.total)}</span>
-                          {/* THE DOCUMENT'S OWN NUMBER — what a person
-                              reads back down a phone — and the day,
-                              when the number is not already carrying
-                              it. Mono, because both are identifiers. */}
-                          <span className="cx-hist-meta">
-                            <span className="cx-num cx-hist-ref">{q.reference}</span>
-                            {day !== '' ? (
-                              <>
-                                <span className="cx-hist-dot" aria-hidden="true">
-                                  ·
-                                </span>
-                                <span className="cx-num cx-hist-when">{day}</span>
-                              </>
-                            ) : null}
-                          </span>
-                          {/* A STATE IS A VALUE, so it keeps its own
-                              case. `mono-label` uppercased it, which
-                              turned "Given" and "Draft" — two words a
-                              person reads — into two more stamps on a
-                              screen that already had enough. */}
-                          <span
-                            className="cx-hist-state"
-                            data-state={q.state === 'issued' ? 'given' : 'draft'}
-                          >
-                            {q.state === 'issued' ? 'Given' : 'Draft'}
-                            {q.supersedesId ? ' · new version' : ''}
-                          </span>
-                          {onOpenQuote ? (
-                            <ArrowSquareOut
-                              size={ICON_SIZE.small}
-                              weight="light"
-                              aria-hidden="true"
-                              className="cx-hist-go"
-                            />
-                          ) : null}
-                        </button>
+                        {onOpenQuote ? (
+                          <Row
+                            name={line}
+                            meta={meta}
+                            label={`Quote ${q.reference} — ${q.subjectLabel}`}
+                            onActivate={() => onOpenQuote(q.id)}
+                          />
+                        ) : (
+                          <Row name={line} meta={meta} />
+                        )}
                       </li>
                     )
                   })}
                 </ul>
+                </Card>
+                </div>
               )}
             </section>
           </div>
@@ -434,8 +463,12 @@ function CustomerCell({
   const write = (v: CellValue): void => setCustomerCell(row.id, field.id, v)
 
   if (!EDITABLE.has(field.type)) {
+    /* A COLUMN THIS PAGE WILL NOT PRETEND TO EDIT. Not a disabled
+       text box — an empty box with a grey border is a control that
+       looks broken. The system's sunken card, which card.css keeps
+       for exactly "a placeholder", with the reason in it. */
     return (
-      <div className="cx-field cx-field--stub">
+      <Card tone="sunken" pad="sm">
         <span className="cx-field-name">{field.name}</span>
         {/* THE BAR IT NAMED IS GONE. This sentence sent a person to
             "Tables on the bar" — the floating dock, which the
@@ -447,7 +480,7 @@ function CustomerCell({
           This column is edited on the {table.name} table — open it under{' '}
           <em>Tables</em> in the rail on the left.
         </p>
-      </div>
+      </Card>
     )
   }
 
@@ -488,36 +521,53 @@ function CustomerCell({
 
   const text = raw === null || raw === undefined ? '' : String(raw)
 
+  /* A DATE KEEPS THE BROWSER'S OWN CONTROL, because the system's
+     `Field` has no date type yet — reported, not painted around. A
+     text box with a format hint would drop the picker and invent a
+     format the column never declared. */
+  if (field.type === 'date') {
+    return (
+      <label className="cx-field">
+        <span className="cx-field-name">{field.name}</span>
+        <input
+          className="cx-input"
+          type="date"
+          value={text}
+          onChange={(e) => write(e.target.value === '' ? null : e.target.value)}
+        />
+      </label>
+    )
+  }
+
+  /* TEXT AND NUMBER ARE THE SYSTEM'S `Field`. A number is what
+     field.css says a figure is — a text box, mono, with the decimal
+     keyboard — never `type="number"`, for the three reasons
+     Field.tsx gives. */
   return (
-    <label className={`cx-field${isName ? ' cx-field--name' : ''}`}>
-      <span className="cx-field-name">{field.name}</span>
-      <input
-        className="cx-input"
-        type={field.type === 'date' ? 'date' : 'text'}
-        inputMode={field.type === 'number' ? 'decimal' : undefined}
-        value={text}
-        spellCheck={false}
-        /* NO PLACEHOLDER IS EVER A VALUE — the same rule the quote's
-           customer field keeps. A blank field says nothing rather
-           than suggesting a name nobody typed. */
-        placeholder={isName ? 'their name' : ''}
-        onChange={(e) => {
-          const v = e.target.value
-          if (field.type !== 'number') {
-            write(v === '' ? null : v)
-            return
-          }
-          if (v.trim() === '') {
-            write(null)
-            return
-          }
-          const n = Number(v)
-          /* what a person typed is kept when it is not yet a number —
-             half of "12." is not zero, and blanking it as they type
-             is how a field fights its typist */
-          write(Number.isFinite(n) ? n : v)
-        }}
-      />
-    </label>
+    <Field
+      label={field.name}
+      value={text}
+      mono={field.type === 'number'}
+      {...(field.type === 'number' ? { inputMode: 'decimal' as const } : {})}
+      /* NO PLACEHOLDER IS EVER A VALUE — the same rule the quote's
+         customer field keeps. A blank field says nothing rather
+         than suggesting a name nobody typed. */
+      {...(isName ? { placeholder: 'their name' } : {})}
+      onChange={(v) => {
+        if (field.type !== 'number') {
+          write(v === '' ? null : v)
+          return
+        }
+        if (v.trim() === '') {
+          write(null)
+          return
+        }
+        const n = Number(v)
+        /* what a person typed is kept when it is not yet a number —
+           half of "12." is not zero, and blanking it as they type
+           is how a field fights its typist */
+        write(Number.isFinite(n) ? n : v)
+      }}
+    />
   )
 }

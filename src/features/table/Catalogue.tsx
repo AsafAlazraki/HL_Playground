@@ -80,8 +80,9 @@ import {
 } from '@/features/views/columns'
 import { pictureField, rowPicture, Picture } from '@/features/views/pictures'
 import { PageHead } from '@/features/page'
+import { Button, Card, Field, SectionHead } from '@/ui'
 import type { ColumnFilter, SortState } from '@/features/table/core'
-import { TableSheet, SEARCH_LABEL } from './TableSheet'
+import { TableSheet, SEARCH_ID } from './TableSheet'
 import { NoMatchPlate } from './EmptyPlates'
 import { FacetRail } from './FacetRail'
 import { readFacets, type Facet } from './facets'
@@ -112,9 +113,10 @@ const PAGE = 48
    THE CHAPTER HEAD'S FLOOR, IN CHARACTERS.
 
    The band head is where this screen wears the display tier — the
-   long argument is at the top of `catalogue.css` — and it takes
-   `.ds-hero`, which resolves to 43.5px at 1280. That is the size a
-   SERIES NAME can be. It is not always a size the level column
+   argument is at the top of `catalogue.css` — and it takes
+   `.ds-display-xl`, the step ds.css names for "a name that is one
+   of several and is the point of the screen … a register's band
+   heads". 34px at 1280. It is not always a size the level column
    holds, because the level column is whatever the business filed
    under and this file did not write it:
 
@@ -126,23 +128,23 @@ const PAGE = 48
      Dunbier     Series     "SPORT CENTRELINE WIDE SERIES
                              (Width Between Guards 1790mm)"   58
 
-   MEASURED, at 1280 on the real seed: the content column is 992px
-   and Archivo at 43.5px averages 22.6px a character, so the head
-   holds about 40 characters on one line before the label and the
-   count are subtracted. 24 is that budget with the label
-   ("CATEGORY" is the longest in the file), the count and a gap
-   taken out of it, and it is the number at which every level value
-   in the seed sorts correctly: Dunbier's 23-character band stays
-   at hero, its 58-character one steps down, and nothing in between
+   THE BUDGET IS THE WHOLE COLUMN NOW. The level caption and the
+   count moved off the name's line and onto a `SectionHead` above
+   it, so nothing is subtracted from the 992px the content column
+   gives at 1280. Archivo at 34px averages 17.7px a character —
+   about 56 on one line. 48 is that with a margin for a wide glyph
+   run, and it is the number at which every level value in the seed
+   sorts correctly: Parts' 35-character category stays at the step,
+   Dunbier's 58-character series steps down, and nothing in between
    is close enough to the line to flicker.
 
    IT IS A WHOLE-STEP SWAP AND NOT A SHRINK (ds.css, §2 rule 6):
    the head takes `.ds-display-lg` — size, weight, leading,
    tracking and the width axis together — rather than reaching into
-   `.ds-hero` for a smaller font-size. That is the same floor rule
+   `.ds-display-xl` for a smaller font-size. That is the floor rule
    `--t-marque` states for a narrow column, applied one step down.
    ============================================================ */
-const BAND_HERO_MAX = 24
+const BAND_XL_MAX = 48
 
 /** A cell's display text, softened where the store shouts. A boolean
  *  is stored TRUE and the register draws it as a tick; a chip has to
@@ -549,7 +551,14 @@ export function Catalogue({
     (e: FocusEvent<HTMLDivElement>) => {
       const el = e.target
       if (!(el instanceof HTMLElement)) return
-      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
+      /* THE SLOT, NOT THE CONTROL. The search box and the Clear
+         button are `src/ui` primitives now, which take no class of
+         their own — so the `scroll-margin-inline` that lands a
+         focused control clear of the fade sits on the slot around
+         them, and the slot is what is scrolled. A facet chip is its
+         own slot. */
+      const slot = el.closest<HTMLElement>('.cat-find, .cat-clear') ?? el
+      slot.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
       readRail()
     },
     [readRail],
@@ -564,20 +573,21 @@ export function Catalogue({
        a different height per table. Scrolling keeps the header two
        rows tall whatever the table holds. */
     <div className="cat-rail" ref={attachRail} onScroll={readRail} onFocus={showInRail}>
-      <label className="cat-find">
-        <input
-          className="field-input"
+      <div className="cat-find">
+        {/* A LABELLED FIELD, NOT A PLACEHOLDER STANDING IN FOR ONE
+            — `Field`'s own argument. The '/' key finds this box by
+            its id (see SEARCH_ID in TableSheet.tsx), because a real
+            `<label for>` is not an `aria-label` and the old lookup
+            would have found nothing. */}
+        <Field
+          id={SEARCH_ID}
+          label="Search"
           type="search"
           value={search}
-          spellCheck={false}
-          placeholder={`Search every ${noun.one}…`}
-          /* the same accessible name the '/' key looks the box up
-             by, so the register's keyboard route still lands here
-             when the catalogue has taken the box off its bar */
-          aria-label={SEARCH_LABEL}
-          onChange={(e) => setSearch(e.target.value)}
+          placeholder={`Every ${noun.one}…`}
+          onChange={setSearch}
         />
-      </label>
+      </div>
 
       <FacetRail
         facets={facets}
@@ -585,12 +595,15 @@ export function Catalogue({
         onFilters={setFilters}
         say={say}
         print={print}
+        noun={noun}
       />
 
       {viewActive ? (
-        <button type="button" className="cat-clear" onClick={clearView}>
-          Clear
-        </button>
+        <span className="cat-clear">
+          <Button tone="neutral" size="sm" onClick={clearView}>
+            Clear
+          </Button>
+        </span>
       ) : null}
     </div>
   )
@@ -765,6 +778,8 @@ function Gallery({
   onConfigure?: (rowId: string) => void
 }): JSX.Element {
   const { viewRows, rowById, rows, viewActive } = data
+  const noun = leafNoun(entity)
+  const kind = kindOf(entity.kind)
 
   const shot = useMemo(() => pictureField(entity), [entity])
   const priceId = useMemo(() => priceColumnOf(entity), [entity])
@@ -814,7 +829,7 @@ function Gallery({
      needs one and nothing about it varies per row. */
   const crest = (
     <span className="cat-shot-none" aria-hidden="true">
-      <TableKindSymbol kind={kindOf(entity.kind)} size={ICON_SIZE.large} />
+      <TableKindSymbol kind={kind} size={ICON_SIZE.large} />
     </span>
   )
 
@@ -893,24 +908,31 @@ function Gallery({
           style={{ '--i': bandIdx } as CSSProperties}
         >
           {levelId && !sorted && band.name !== '' ? (
-            <h2 className="cat-band-head k-band">
-              <span className="mono-label cat-band-lab">{levelName}</span>
-              {/* THE STEP IS CHOSEN HERE AND DECLARED IN ds.css.
-                  Taking the system's class rather than restating
-                  four tokens in `catalogue.css` is what keeps the
-                  display face's tracking correction and its
-                  `prefers-contrast` width walk-back attached to
-                  it — ds.css's own instruction, and the reason
-                  `.cat-band-name` declares no type at all. */}
-              <span
+            /* THE CHAPTER HEAD, IN TWO LINES. The caption line is a
+               `SectionHead` — the level's own word ("Series") in the
+               one uppercase style the system has, with the count in
+               the dealer's nouns beside it, not a heading because
+               the name below it is the heading. The name is the h2
+               and wears the display tier.
+
+               THE STEP IS CHOSEN HERE AND DECLARED IN ds.css. Taking
+               the system's class rather than restating four tokens in
+               `catalogue.css` is what keeps the display face's
+               tracking correction and its `prefers-contrast` width
+               walk-back attached to it — ds.css's own instruction,
+               and the reason `.cat-band-name` declares no type. */
+            <div className="cat-band-head k-band">
+              <SectionHead level="none" count={countLabel(band.held, noun)}>
+                {levelName}
+              </SectionHead>
+              <h2
                 className={`cat-band-name ${
-                  band.name.length > BAND_HERO_MAX ? 'ds-display-lg' : 'ds-hero'
+                  band.name.length > BAND_XL_MAX ? 'ds-display-lg' : 'ds-display-xl'
                 }`}
               >
                 {band.name}
-              </span>
-              <span className="cat-band-count cat-num">{band.held}</span>
-            </h2>
+              </h2>
+            </div>
           ) : null}
           <ol className="cat-grid">
             {band.rows.map((row) => {
@@ -927,10 +949,17 @@ function Gallery({
                 : ''
               return (
                 <li key={row.id} className="cat-tile">
-                  <button
-                    type="button"
-                    className={`cat-card k-lift ${held ? 's-held' : 'k-rail'}`}
-                    onClick={() => onOpenRow(row.id)}
+                  {/* THE TILE IS A CARD — the primitive, flat and
+                      unpadded so the photograph runs to its edge.
+                      `kind` puts the kind's 6% wash on the surface,
+                      which is where §1 says a hue may sit; a row no
+                      longer sold loses the hue and says so in words
+                      below. `onActivate` makes it a real button. */}
+                  <Card
+                    tone="flat"
+                    pad="none"
+                    {...(held ? {} : { kind })}
+                    onActivate={() => onOpenRow(row.id)}
                   >
                     <span className="cat-shot">
                       {img ? (
@@ -990,7 +1019,7 @@ function Gallery({
                         <span className="cat-tile-held s-say">No longer sold</span>
                       ) : null}
                     </span>
-                  </button>
+                  </Card>
 
                   {/* ============================================
                       THE DOOR OUT OF THE CATALOGUE.
@@ -1015,20 +1044,26 @@ function Gallery({
                       is what `ViewStage` does for the same act.
                       ============================================ */}
                   {onConfigure && !held ? (
-                    <button
-                      type="button"
-                      className="cat-go"
-                      aria-label={`Configure ${name}`}
-                      onClick={() => onConfigure(row.id)}
-                    >
-                      <span>Configure</span>
-                      {/* FORWARD, NOT A TOOL. `SlidersHorizontal` is
-                          this application's Columns mark and it is on
-                          this very screen's action bar; the mark for
-                          going on to the next step is the picker's
-                          own. */}
-                      <ArrowRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                    </button>
+                    /* THE BUTTON IS THE PRIMITIVE; the slot is what
+                       puts it on the photograph. Neutral, not primary:
+                       forty-eight accents on one screen is no accent
+                       (rule 5). */
+                    <span className="cat-go">
+                      <Button
+                        tone="neutral"
+                        size="sm"
+                        aria-label={`Configure ${name}`}
+                        onClick={() => onConfigure(row.id)}
+                      >
+                        Configure
+                        {/* FORWARD, NOT A TOOL. `SlidersHorizontal` is
+                            this application's Columns mark and it is on
+                            this very screen's action bar; the mark for
+                            going on to the next step is the picker's
+                            own. */}
+                        <ArrowRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                      </Button>
+                    </span>
                   ) : null}
                 </li>
               )
@@ -1039,9 +1074,9 @@ function Gallery({
 
       {collected.length > painted.length ? (
         <div className="cat-more">
-          <button type="button" className="btn" onClick={onMore}>
+          <Button tone="neutral" onClick={onMore}>
             Show more
-          </button>
+          </Button>
           <p className="cat-more-say cat-num">
             {painted.length} of {collected.length}
           </p>

@@ -103,7 +103,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   TABLE_KINDS,
-  accentVar,
   isRetired,
   rowLabel,
   type EntityDef,
@@ -115,6 +114,8 @@ import { coverPhoto } from '@/features/table/coverPhoto'
 import { ICON_SIZE } from '@/lib/icons'
 import { realDemoSet, startingPointWords } from './demoLoad'
 import { useDemoLoad } from './useDemoLoad'
+import { Button, Card, SectionHead } from '@/ui'
+import type { CardKind } from '@/ui'
 import { useClipTitles } from './useClipTitles'
 
 const KIND_ORDER: TableKind[] = [
@@ -534,7 +535,7 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
              ============================================================ */
           <div className="hm-first">
             <div className="hm-first-say">
-              <span className="mono-label hm-first-eyebrow">Nothing on the sheet yet</span>
+              <SectionHead level="none">Nothing on the sheet yet</SectionHead>
 
               <h2 className="hm-first-title">
                 Home is every table you have, on one page.
@@ -576,64 +577,68 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                   register answers that (`realDemoSet`), so the screen
                   can never offer a button that loads nothing. */}
               {real && words ? (
-                <button
-                  type="button"
-                  className={`hm-first-door hm-first-door--data${
-                    phase === 'failed' ? ' hm-first-door--failed' : ''
-                  }`}
-                  /* the fetch is announced, so the wait is heard as well
-                     as seen */
+                /* THE DOOR IS THE CARD PRIMITIVE. The cell around it
+                   carries what the primitive cannot: `aria-busy` while
+                   the file is coming (the primitive passes no ARIA
+                   through — reported), and the pointer-and-focus warm-up
+                   that is the earliest honest evidence somebody wants
+                   the file — see useDemoLoad.ts. */
+                <div
+                  className="hm-first-cell"
                   aria-busy={phase === 'loading'}
-                  onClick={() => press(real)}
-                  /* a pointer or a focus ring on THIS control is the
-                     earliest honest evidence somebody wants the file —
-                     see useDemoLoad.ts for why it is not fetched sooner */
                   onPointerEnter={() => warm(real)}
                   onFocus={() => warm(real)}
                 >
-                  <span className="mono-label hm-first-door-tag">{words.tag}</span>
-                  <span className="hm-first-door-name">{words.label}</span>
-                  {/* where the numbers came from — the demos module's own
-                      sentence, because the demos module is what knows.
-                      While the file is coming, and if it never comes,
-                      this line says so instead: one sentence with a
-                      reason, on the control it is about. */}
-                  <span className="hm-first-door-note">{words.note}</span>
-                  {holds ? (
-                    <span className="hm-first-door-foot">
-                      <b>{holds.tables}</b>
-                      <span>tables</span>
-                      <i aria-hidden="true" />
-                      <b>{holds.rows.toLocaleString()}</b>
-                      <span>rows</span>
+                  <Card pad="lg" onActivate={() => press(real)}>
+                    <span className="mono-label hm-first-door-tag">{words.tag}</span>
+                    {/* ONE ACCENT, ON THE ONE PRIMARY THING: the prepared
+                        file is what a person on this screen almost always
+                        wants, so its name is the accent's one appearance
+                        in the doors. */}
+                    <span className="hm-first-door-name is-primary">{words.label}</span>
+                    {/* where the numbers came from — the demos module's own
+                        sentence. While the file is coming, and if it never
+                        comes, this line says so instead: one sentence with
+                        a reason, on the control it is about, in full ink. */}
+                    <span
+                      className={`hm-first-door-note${phase === 'failed' ? ' is-failed' : ''}`}
+                    >
+                      {words.note}
                     </span>
-                  ) : null}
-                </button>
+                    {holds ? (
+                      <span className="hm-first-door-foot">
+                        <b>{holds.tables}</b>
+                        <span>tables</span>
+                        <i aria-hidden="true" />
+                        <b>{holds.rows.toLocaleString()}</b>
+                        <span>rows</span>
+                      </span>
+                    ) : null}
+                  </Card>
+                </div>
               ) : null}
 
               {/* AND THE OTHER HONEST STARTING POINT. Drawn only when the
                   shell handed down the way to open the dialog, so this
                   never becomes an enabled control that does nothing. */}
               {onNewTable ? (
-                <button
-                  type="button"
-                  className="hm-first-door hm-first-door--blank"
-                  onClick={onNewTable}
-                >
-                  <span className="mono-label hm-first-door-tag">Blank sheet</span>
-                  <span className="hm-first-door-name">Start a table</span>
-                  <span className="hm-first-door-note">
-                    Pick what it holds and give it a name. Its columns arrive already
-                    drawn for that kind, and you can change any of them afterwards.
-                  </span>
-                  <span className="hm-first-door-foot">
-                    <b>{presets.length}</b>
-                    <span>presets</span>
-                    <i aria-hidden="true" />
-                    <b>0</b>
-                    <span>rows loaded</span>
-                  </span>
-                </button>
+                <div className="hm-first-cell">
+                  <Card pad="lg" onActivate={onNewTable}>
+                    <span className="mono-label hm-first-door-tag">Blank sheet</span>
+                    <span className="hm-first-door-name">Start a table</span>
+                    <span className="hm-first-door-note">
+                      Pick what it holds and give it a name. Its columns arrive already
+                      drawn for that kind, and you can change any of them afterwards.
+                    </span>
+                    <span className="hm-first-door-foot">
+                      <b>{presets.length}</b>
+                      <span>presets</span>
+                      <i aria-hidden="true" />
+                      <b>0</b>
+                      <span>rows loaded</span>
+                    </span>
+                  </Card>
+                </div>
               ) : null}
             </div>
           </div>
@@ -658,7 +663,9 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                 ============================================================ */}
             <header className="hm-mast">
               <div className="hm-mast-say">
-                <span className="mono-label hm-mast-eyebrow">Your sheet</span>
+                <div className="hm-mast-eyebrow">
+                  <SectionHead level="none">Your sheet</SectionHead>
+                </div>
                 <h1 className="ds-hero hm-mast-name">{org?.name ?? 'Your tables'}</h1>
                 {/* PRESSING A CARD OPENS IT EVERYWHERE IN THIS APP,
                     and the second sentence said so under a grid of
@@ -667,6 +674,10 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                 <p className="hm-mast-note">Every table you have, grouped by what it holds.</p>
               </div>
 
+              {/* THE TALLY STANDS ON THE CARD PRIMITIVE; the `<dl>` inside
+                  is what it is — four terms and their values. */}
+              <div className="hm-tally-card">
+              <Card tone="raised" pad="md">
               <dl className="hm-tally">
                 {/* NOT "Rows of stock", AND THE STRIP BELOW IS WHY.
                     The figure has always been every row on the sheet,
@@ -692,6 +703,8 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                   <dd className="hm-tally-fig">{tally.joins}</dd>
                 </div>
               </dl>
+              </Card>
+              </div>
             </header>
 
             {/* ============================================================
@@ -734,10 +747,14 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
 
               <div className="hm-scale-chips">
                 {kinds.list.map((k) => (
-                  <button
-                    type="button"
+                  /* A CHIP IS THE BUTTON PRIMITIVE. The band you are in
+                     takes the neutral ground so it reads as current; the
+                     rest are ghosts. The dot and the figure are this
+                     screen's own words inside it. */
+                  <Button
                     key={k.key}
-                    className={`hm-jump${atKind === k.key ? ' is-at' : ''}`}
+                    tone={atKind === k.key ? 'neutral' : 'ghost'}
+                    size="sm"
                     aria-current={atKind === k.key ? 'location' : undefined}
                     /* the visible words are the kind and its rows; the
                        accessible name says what pressing it DOES, and
@@ -750,7 +767,7 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                     <span className="hm-jump-dot" aria-hidden="true" data-kind={k.key} />
                     <span className="hm-jump-name">{k.label}</span>
                     <span className="hm-jump-n">{k.rows.toLocaleString()}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </nav>
@@ -797,12 +814,23 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                   can be compared across kinds, instead of seven times
                   where it cannot. What the head keeps is the kind's
                   colour, its name and how many tables are under it. */}
-              <header className="hm-sec-head">
-                <span className="hm-sec-dot" aria-hidden="true" data-kind={g.key} />
-                <h2 className="hm-sec-name">{g.label}</h2>
-                <span className="hm-sec-count">{g.items.length}</span>
-                <span className="hm-sec-rule" aria-hidden="true" />
-              </header>
+              {/* THE GROUP HEAD IS THE SECTION PRIMITIVE — the one
+                  uppercase style, the count in the dealer's noun, the rule
+                  to the edge — drawn once for every screen. The kind's dot
+                  rides inside the caption, so the eye can find the boats
+                  without reading the word. It is quiet on purpose: the
+                  cards are what this page is about, and a band head that
+                  outranked them was the fault the width pass measured. */}
+              <div className="hm-sec-head">
+                <SectionHead
+                  level="h2"
+                  count={`${g.items.length} ${g.items.length === 1 ? 'table' : 'tables'}`}
+                  rule
+                >
+                  <span className="hm-sec-dot" aria-hidden="true" data-kind={g.key} />
+                  {g.label}
+                </SectionHead>
+              </div>
 
               <div className="hm-grid">
                 {g.items.map((e, i) => {
@@ -843,32 +871,30 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                      them, and the depth is one number in
                      coverPhoto.ts if the deeper walk is ever wanted. */
                   const cover = coverPhoto(e, held)
+                  /* THE CARD IS THE PRIMITIVE'S. Ground, hairline, radius,
+                     lift, press and focus ring come from `src/ui/card.css`
+                     once; the kind arrives as `data-kind` and is drawn as
+                     the 6% tint the system already measured a name at
+                     4.5:1 over — a hue on a surface, never behind reading
+                     text. The cell around it carries the stagger index,
+                     capped in CSS at 14 steps and run across the whole
+                     page so the wave crosses the gallery once.
+
+                     NAMED EXPLICITLY, exactly as the module card next door
+                     is: the card is four spans, and a reader announcing
+                     them run together has not read a name. Every figure
+                     here is counted, not written. */
                   return (
-                    <button
-                      type="button"
+                    <div
+                      className="hm-cell ds-rise"
                       key={e.id}
-                      className={`hm-card ds-sheen ds-rise${cover ? ' hm-card--shot' : ''}`}
-                      style={{
-                        ['--tbn-accent' as string]: accentVar(e.accent),
-                        /* the stagger index, capped in CSS at 14 steps.
-                           It runs across the whole page rather than per
-                           section, so the wave crosses the gallery once
-                           instead of restarting at every heading. */
-                        ['--i' as string]: gi * 3 + i,
-                      }}
-                      /* NAMED EXPLICITLY, exactly as the module card next
-                         door is and for the same two reasons. One:
-                         DESIGN_CONTRACT §5 — the card is four spans and a
-                         reader announcing "Relationship Haines Signature ×
-                         Dunbier/Haines BMT — Trailer Fitment 16 trailers 4
-                         columns" run together has not read a name. Two:
-                         `.hm-card-name` clamps to two lines, which is the
-                         right answer for a 54-character join name in a
-                         230px card and the wrong answer for the reader who
-                         then cannot find out what the third line said.
-                         Every figure here is counted, not written. */
-                      aria-label={`Open ${e.name} — ${countLabel(rows, noun)}, ${e.fields.length === 1 ? '1 column' : `${e.fields.length} columns`}`}
-                      onClick={() => onOpenTable(e.id)}
+                      style={{ ['--i' as string]: gi * 3 + i }}
+                    >
+                    <Card
+                      kind={e.role === 'join' ? 'join' : (kindOf(e.kind) as CardKind)}
+                      pad="none"
+                      label={`Open ${e.name} — ${countLabel(rows, noun)}, ${e.fields.length === 1 ? '1 column' : `${e.fields.length} columns`}`}
+                      onActivate={() => onOpenTable(e.id)}
                     >
                       {/* A JOIN SAYS WHAT IT IS, WHICH IS WHAT ITS OWN
                           SECTION ALREADY CALLS IT. A join table's `kind`
@@ -893,6 +919,9 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                           />
                         </span>
                       ) : null}
+                      {/* the words, inset from a card whose photograph
+                          runs to the bleed */}
+                      <span className="hm-card-body">
                       <span className="hm-card-kind">
                         <TableKindSymbol
                           kind={kindOf(e.kind)}
@@ -922,7 +951,9 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                         <b>{e.fields.length}</b>
                         <span>columns</span>
                       </span>
-                    </button>
+                      </span>
+                    </Card>
+                    </div>
                   )
                 })}
               </div>

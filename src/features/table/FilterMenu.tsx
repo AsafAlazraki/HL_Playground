@@ -8,12 +8,12 @@
    this sheet's window coordinates against the node instead of the
    window and throw it clean off screen.
    ============================================================ */
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { JSX } from 'react'
 import type { FieldDef } from '@/types/model'
 import type { ColumnFilter } from '@/features/table/core'
-import { TickGlyph } from './glyphs'
+import { Button, Row } from '@/ui'
 import { columnKindOf } from './columnKinds'
 
 const VALUE_KINDS = new Set(['select', 'boolean', 'reference'])
@@ -37,6 +37,7 @@ export function FilterMenu({
 }): JSX.Element {
   const listMode = VALUE_KINDS.has(field.type)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const uid = useId()
 
   const [checked, setChecked] = useState<Set<string>>(() =>
     current && current.kind === 'values'
@@ -122,51 +123,50 @@ export function FilterMenu({
       {listMode ? (
         <>
           <div className="tb-menu-bulk">
-            <button
-              type="button"
-              className="tb-menu-link"
-              onClick={() => setChecked(new Set(values))}
-            >
+            <Button tone="ghost" size="sm" onClick={() => setChecked(new Set(values))}>
               All
-            </button>
+            </Button>
             <span className="tb-menu-dot" aria-hidden="true">
               ·
             </span>
-            <button
-              type="button"
-              className="tb-menu-link"
-              onClick={() => setChecked(new Set())}
-            >
+            <Button tone="ghost" size="sm" onClick={() => setChecked(new Set())}>
               None
-            </button>
+            </Button>
           </div>
+          {/* EACH VALUE IS A ROW — the src/ui line — with a real
+              checkbox at its head and the value as that box's label,
+              so the tick, the tab stop and Space all come from the
+              browser rather than from a button pretending. The hand-
+              drawn box this list used to carry is gone with its rule. */}
           <div className="tb-menu-list">
             {values.length === 0 && (
               <p className="tb-menu-empty">This column has no values yet.</p>
             )}
-            {values.map((v) => {
+            {values.map((v, i) => {
               const on = checked.has(v)
+              const id = `${uid}-${i}`
               return (
-                <button
+                <Row
                   key={v}
-                  type="button"
-                  role="checkbox"
-                  aria-checked={on}
-                  className="tb-menu-row"
-                  onClick={() =>
-                    setChecked((prev) => {
-                      const next = new Set(prev)
-                      if (next.has(v)) next.delete(v)
-                      else next.add(v)
-                      return next
-                    })
+                  dense
+                  lead={
+                    <input
+                      className="tb-menu-check"
+                      type="checkbox"
+                      id={id}
+                      checked={on}
+                      onChange={() =>
+                        setChecked((prev) => {
+                          const next = new Set(prev)
+                          if (next.has(v)) next.delete(v)
+                          else next.add(v)
+                          return next
+                        })
+                      }
+                    />
                   }
-                >
-                  <span className={'tb-menu-box' + (on ? ' tb-menu-box-on' : '')}>
-                    <TickGlyph />
-                  </span>
-                  <span className="tb-menu-val">{v === '' ? '(empty)' : v}</span>
-                </button>
+                  name={<label htmlFor={id}>{v === '' ? '(empty)' : v}</label>}
+                />
               )
             })}
           </div>
@@ -194,23 +194,19 @@ export function FilterMenu({
       )}
 
       <footer className="tb-menu-foot">
-        <button
-          type="button"
-          className="btn btn-ghost"
+        <Button
+          tone="ghost"
+          size="sm"
           onClick={() => {
             onApply(null)
             onClose()
           }}
         >
           Clear
-        </button>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={listMode ? commitList : commitText}
-        >
+        </Button>
+        <Button tone="primary" size="sm" onClick={listMode ? commitList : commitText}>
           Apply
-        </button>
+        </Button>
       </footer>
     </div>,
     document.body,

@@ -16,6 +16,7 @@ import type { ReactElement } from 'react'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { RulesPane } from '@/features/constraints'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -49,12 +50,13 @@ export function RulesStage({ onClose }: RulesStageProps): ReactElement {
             the calibration. `.btn` stamped this "BACK TO THE SHEET" in
             11px uppercase mono; uppercase is a label style and this is
             a button. */}
-        <button type="button" className="shell-view-back" onClick={onClose} aria-label="Back">
-          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-          <span>Back</span>
-        </button>
+        <div className="shell-view-lead">
+          <Button tone="ghost" size="sm" glyph={<ArrowLeft size={ICON_SIZE.small} />} onClick={onClose}>
+            Back
+          </Button>
+        </div>
         <p className="shell-view-what">
-          <span className="shell-view-what-name">Business rules</span>
+          <span className="ds-display-lg shell-view-what-name">Business rules</span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
           </span>

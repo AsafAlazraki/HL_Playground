@@ -48,6 +48,7 @@ import type { ReactElement } from 'react'
 import { CaretLeft } from '@phosphor-icons/react'
 import { CustomerList, CustomerPage } from '@/features/crm'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -142,15 +143,15 @@ export function CustomerStage({
             when the page below it can name itself. */}
         {openId ? (
           <div className="shell-quote-acts">
-            <button
-              type="button"
-              className="btn shell-quote-act"
+            <Button
+              tone="neutral"
+              size="sm"
               aria-label="Back to all customers"
+              glyph={<CaretLeft size={ICON_SIZE.tiny} weight="bold" />}
               onClick={() => onOpen(null)}
             >
-              <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
               All customers
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>

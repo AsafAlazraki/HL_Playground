@@ -34,6 +34,7 @@ import { useConstraints } from '@/features/constraints/constraintDefs'
 import { WORKBOOK_RULES } from '@/features/constraints'
 import { PageHead } from '@/features/page'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
+import { Card } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -66,18 +67,20 @@ function Door({
   wide?: boolean
   onPick: () => void
 }): ReactElement {
+  /* A DOOR IS A CARD — the primitive's — in a cell this stage owns.
+     The name wears `--t-display-xl`, the step cut for a name that is
+     one of several and the point of the screen; see the same door in
+     AdminStage.tsx for the measurement behind the two-column grid. */
   return (
-    <button
-      type="button"
-      className={`ad-door${wide ? ' is-wide' : ''}${fact ? '' : ' is-bare'}`}
-      onClick={onPick}
-    >
-      <span className="ad-door-mark" aria-hidden="true">
-        <Glyph size={MARK} weight={MARK_WEIGHT} />
-      </span>
-      <span className="ad-door-name">{name}</span>
-      {fact ? <span className="ad-door-fact">{fact}</span> : null}
-    </button>
+    <div className={`ad-cell${wide ? ' is-wide' : ''}`}>
+      <Card onActivate={onPick} pad="md">
+        <span className="ad-door-mark" aria-hidden="true">
+          <Glyph size={MARK} weight={MARK_WEIGHT} />
+        </span>
+        <span className="ds-display-xl ad-door-name">{name}</span>
+        {fact ? <span className="ad-door-fact">{fact}</span> : null}
+      </Card>
+    </div>
   )
 }
 

@@ -1,60 +1,51 @@
 /* ============================================================
-   THE ACTION BAR — a second, smaller bar, slightly above the dock.
+   THE ACTION BAR — what you can DO on this page, floating at the
+   foot of the content column.
 
-   THE DIVISION, AND IT HAS TO SURVIVE FIRST CONTACT: the dock is
+   THE DIVISION, AND IT HAS TO SURVIVE FIRST CONTACT: the rail is
    where you GO, the action bar is what you DO. If a control could
-   plausibly sit in either, it belongs here, because the dock is
-   already load-bearing — nine items and a nested menu of fifty
-   tables. Nothing is added to it by this file.
+   plausibly sit in either, it belongs here.
 
    WHY IT IS DRAWN HERE AND NOT IN THE STAGE. Chrome is charged to
    the page only when it is used. A bar inside the page costs the
    page its height on every screen; a bar floating over the window
-   costs it 50px only while there is something on it, and nothing at
-   all when there is not. `ActionBar` returns `null` on a page with no
-   actions and the shell gives the page its 50px back — see
-   `actionbar.css`, which owns that reservation in one place, beside
-   the dock's own 78px.
+   costs it only while there is something on it, and nothing at all
+   when there is not. `ActionBar` returns `null` on a page with no
+   actions and the shell gives the page the strip back — see
+   `actionbar.css`, which owns that reservation in one place.
 
-   IT IS SMALLER THAN THE DOCK, VISIBLY AND MEASURABLY. 40px against
-   the dock's 60, controls at the contract's 28px against the dock's
-   44px items, 18px radius against 20px. Subordinate, and of the same
-   family: it is the same material, because it is furniture floating
-   over the same page, and a second material here would read as a
-   second app.
+   EVERY CONTROL ON IT IS A PRIMITIVE. The bar used to declare its
+   own button — ground, border, radius, three tones, a latch, an
+   inert state, hover, press and focus — a second copy of what
+   `src/ui/button.css` draws once for every screen. It writes none
+   of that any more: a verb is `<Button>`, a filter chip is a
+   `<Button>` that removes itself, the popover is a `<Card>`. What
+   this file still owns is the row they stand in, the search field
+   (the `Field` primitive draws a visible label above its input and
+   a 36px toolbar has no room for one — reported, not forked), and
+   the fold.
 
-   THE LAYERING IS SOLVED ONCE, BY MEASUREMENT — AND THIS BAR NOW
-   DECLARES ITSELF. A previous round found toasts painted across the
-   dock, fixed it with an 84px constant, and then found the same
-   toasts across the Fitment palette. `UndoKeys` answers that by
-   MEASURING: anything that floats over a page and must never be
-   covered marks itself `[data-note-clear]`, and the note layer floors
-   itself above the highest such thing.
-
-   THE ATTRIBUTE USED TO BE INHERITED AND IS NOW WRITTEN HERE. This
-   bar was a child of `.dk-wrap`, which carried it — and the dock was
-   deleted. `.pagebar` is `position: fixed` at `bottom: var(--s-5)`
-   with nothing above it any more, so every undo note in the app came
-   up straight across the register's own Search, Fitment, Columns and
-   + Row controls: measured at 1280 x 860 the bar sits 786–836 and the
-   note came up at 776–818, over the whole left half of it. Nothing in
-   the note is clickable through (`.tb-toast` is `pointer-events:
-   none`), so the controls still worked — they were simply invisible
-   for the nine seconds a note stands, which is the fault the
-   measurement was written to end. One attribute, no arithmetic.
+   THE REFUSAL IS THE PRIMITIVE'S TOO — rule 10, "says why, where it
+   is". This bar used to keep its own `why` state, show the sentence
+   above the control on hover or focus, and clear it on every
+   reflow; forty lines of choreography for a sentence. `Button`'s
+   `refusedBecause` draws the reason beneath the control, always,
+   and keeps the control in the tab order with `aria-disabled` — so
+   a keyboard user and a touch user get the reason without having
+   to find a hover. The bar grows a line where a control refuses,
+   which is the honest height of a bar with a refusal on it.
 
    WHAT IT REFUSES TO BE. Not a place for facts — a count is not an
-   action, and DESIGN_CONTRACT's title block is where a page says what
-   is in it. Not a second stylesheet: the vocabulary in
-   `@/lib/actions` is closed, and every size, weight and state below
-   is written once for every page that will ever use it.
+   action. Not a second stylesheet: the vocabulary in `@/lib/actions`
+   is closed.
    ============================================================ */
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { MagnifyingGlass, X } from '@phosphor-icons/react'
 import { usePageActions } from '@/lib/actions'
 import type { ActionButton, ActionChip, ActionItem, ActionPanel, ActionSearch } from '@/lib/actions'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
+import { Button, Card } from '@/ui'
 import './actionbar.css'
 
 const MARK = ICON_SIZE.tiny
@@ -68,29 +59,12 @@ export function ActionBar(): JSX.Element | null {
      under it */
   const [openPanel, setOpenPanel] = useState<string | null>(null)
 
-  /* THE STANDING REFUSAL — rule 10. A control that cannot act says
-     why, in the bar, the moment it is reached for by pointer or by
-     keyboard, and on a press that could not land. It is not a
-     `title`: DESIGN_CONTRACT §6 rules that out by name, and a tooltip
-     never appears for a Tab. */
-  const [why, setWhy] = useState<{ id: string; text: string } | null>(null)
-
   /* Every id currently on the bar. A panel whose control has gone —
      the page changed, or the sheet stopped having sections — must not
      leave its popover standing over the page. */
   const ids = groups.flatMap((g) => g.items.map((i) => i.id)).join('|')
   useEffect(() => {
     setOpenPanel((cur) => (cur !== null && !ids.split('|').includes(cur) ? null : cur))
-    /* THE REASON GOES THE MOMENT THE BAR CHANGES SHAPE, not only when
-       its control disappears. The bar is centred, so one control
-       arriving slides every other control sideways — and a button that
-       moves out from under a stationary pointer does not reliably fire
-       `pointerleave`. Measured: type one letter into the search, the
-       Clear control appears, and the note explaining why Delete rows
-       cannot act is left standing over a button the pointer is no
-       longer on. A refusal is transient by nature; it comes straight
-       back the instant the control is reached for again. */
-    setWhy(null)
   }, [ids])
 
   useEffect(() => {
@@ -115,21 +89,19 @@ export function ActionBar(): JSX.Element | null {
     }
   }, [openPanel])
 
-  const clearWhy = useCallback((id: string) => {
-    setWhy((cur) => (cur?.id === id ? null : cur))
-  }, [])
-
   if (groups.length === 0) return null
 
   /* the fold window, in ActionGroup.rank's own scale — see the note
-     at the call site below */
+     at the fold below */
   const FOLD_FROM = 30
   const FOLD_TO = 49
   const FOLD_ID = 'ab-fold'
   const shown = groups.filter((g) => g.rank < FOLD_FROM || g.rank > FOLD_TO)
   const folded = groups.filter((g) => g.rank >= FOLD_FROM && g.rank <= FOLD_TO)
 
-  const renderItem = (item: ActionItem): JSX.Element => {
+  /* `inMenu`: inside the fold a control is a full-width row of a
+     menu rather than a chip in a strip */
+  const renderItem = (item: ActionItem, inMenu = false): JSX.Element => {
     switch (item.kind) {
       case 'search':
         return <SearchItem key={item.id} item={item} />
@@ -145,98 +117,76 @@ export function ActionBar(): JSX.Element | null {
           />
         )
       default:
-        return (
-          <ButtonItem
-            key={item.id}
-            item={item}
-            /* THE REASON STANDS OVER THE CONTROL THAT REFUSED, not
-               over the middle of the bar. Rule 10 is "says why, WHERE
-               IT IS", and a sentence 360px away from the button it is
-               about is a sentence about the bar. */
-            why={why?.id === item.id ? why.text : null}
-            onRefused={(text) => setWhy({ id: item.id, text })}
-            onLeave={() => clearWhy(item.id)}
-          />
-        )
+        return <ButtonItem key={item.id} item={item} block={inMenu} />
     }
   }
 
   return (
-    /* see THE LAYERING at the head of this file: the note layer
-       measures this, so a toast can never cover the bar again */
+    /* the note layer measures this, so a toast can never cover the bar */
     <div className="pagebar" data-note-clear="">
       <div className="ab-shell">
-      <div className="ab" role="toolbar" aria-label="What you can do here" ref={rootRef}>
-        {shown.map((g, i) => (
-          <Fragment key={g.id}>
-            {i > 0 ? <span className="ab-sep" aria-hidden="true" /> : null}
-            {/* THE ONE GROUP ALLOWED TO SCROLL. Chips carry the
-                dealer's own words — a filter can read "Series: 4
-                values" — so this group is the only part of the bar
-                whose width is not knowable in advance. It is capped
-                and scrolls inside itself, which is the contract's rule
-                for a strip that does not fit; everything else on the
-                bar keeps its full width so the primary never moves. */}
-            <div
-              className={
-                'ab-grp' +
-                (g.items.some((it) => it.kind === 'chip') ? ' ab-grp--chips' : '')
-              }
-            >
-              {g.items.map(renderItem)}
-            </div>
-          </Fragment>
-        ))}
+        <div className="ab" role="toolbar" aria-label="What you can do here" ref={rootRef}>
+          {shown.map((g, i) => (
+            <Fragment key={g.id}>
+              {i > 0 ? <span className="ab-sep" aria-hidden="true" /> : null}
+              {/* THE ONE GROUP ALLOWED TO SCROLL. Chips carry the
+                  dealer's own words, so this group is the only part of
+                  the bar whose width is not knowable in advance. It is
+                  capped and scrolls inside itself; everything else on
+                  the bar keeps its full width so the primary never
+                  moves. */}
+              <div
+                className={
+                  'ab-grp' + (g.items.some((it) => it.kind === 'chip') ? ' ab-grp--chips' : '')
+                }
+              >
+                {g.items.map((item) => renderItem(item))}
+              </div>
+            </Fragment>
+          ))}
 
-        {/* ============================================================
-            WHAT DOES NOT FIT ON A BAR, FOLDED BY RANK.
+          {/* ============================================================
+              WHAT DOES NOT FIT ON A BAR, FOLDED BY RANK.
 
-            The register published nine controls and a search field,
-            and the bar it stood on measured 1188 x 99 at 1600 wide —
-            74% of the window and a tenth of its height, floating over
-            the rows somebody came to read.
-
-            The fold is not a width calculation and not a per-page
-            list. `ActionGroup.rank` already carries the scale, in its
-            own words: 10 narrow it · 20 what is narrowing it · 30 see
-            all of it · 40 the round trip · 50 go somewhere · 90 change
-            it. Ranks 30 and 40 are, by that definition, the ones a
-            person reaches for occasionally and looks past the rest of
-            the time. They fold; the search, the chips, the doors and
-            the acts stay out.
-
-            So the rule is the SCALE's, not this component's, and a new
-            page that ranks its groups honestly gets the same bar for
-            free. FOLD_FROM/FOLD_TO are the whole policy.
-            ============================================================ */}
-        {folded.length > 0 ? (
-          <>
-            <span className="ab-sep" aria-hidden="true" />
-            <div className="ab-grp">
-              <span className="ab-hold">
-                <button
-                  type="button"
-                  className={'ab-btn' + (openPanel === FOLD_ID ? ' is-on' : '')}
-                  aria-haspopup="menu"
-                  aria-expanded={openPanel === FOLD_ID}
-                  onClick={() => setOpenPanel((c) => (c === FOLD_ID ? null : FOLD_ID))}
-                >
-                  <span>View</span>
-                </button>
-                {openPanel === FOLD_ID ? (
-                  <div className="ab-panel ab-panel--fold" role="menu" aria-label="View">
-                    {folded.map((g) => (
-                      <div className="ab-fold-grp" key={g.id}>
-                        {g.items.map(renderItem)}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </span>
-            </div>
-          </>
-        ) : null}
-      </div>
+              The fold is not a width calculation and not a per-page
+              list. `ActionGroup.rank` already carries the scale, in its
+              own words: 10 narrow it · 20 what is narrowing it · 30 see
+              all of it · 40 the round trip · 50 go somewhere · 90 change
+              it. Ranks 30 and 40 are the ones a person reaches for
+              occasionally and looks past the rest of the time. They
+              fold; the search, the chips, the doors and the acts stay
+              out. FOLD_FROM/FOLD_TO are the whole policy.
+              ============================================================ */}
+          {folded.length > 0 ? (
+            <>
+              <span className="ab-sep" aria-hidden="true" />
+              <div className="ab-grp">
+                <span className="ab-hold">
+                  <Button
+                    tone={openPanel === FOLD_ID ? 'neutral' : 'ghost'}
+                    size="sm"
+                    aria-haspopup="menu"
+                    aria-expanded={openPanel === FOLD_ID}
+                    onClick={() => setOpenPanel((c) => (c === FOLD_ID ? null : FOLD_ID))}
+                  >
+                    View
+                  </Button>
+                  {openPanel === FOLD_ID ? (
+                    <div className="ab-panel ab-panel--fold" role="menu" aria-label="View">
+                      <Card tone="raised" pad="sm">
+                        {folded.map((g) => (
+                          <div className="ab-fold-grp" key={g.id}>
+                            {g.items.map((item) => renderItem(item, true))}
+                          </div>
+                        ))}
+                      </Card>
+                    </div>
+                  ) : null}
+                </span>
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   )
@@ -246,78 +196,40 @@ export function ActionBar(): JSX.Element | null {
 /* one control                                                */
 /* ---------------------------------------------------------- */
 
-function ButtonItem({
-  item,
-  why,
-  onRefused,
-  onLeave,
-}: {
-  item: ActionButton
-  /** the reason, while it is standing for THIS control */
-  why: string | null
-  onRefused: (text: string) => void
-  onLeave: () => void
-}): JSX.Element {
-  const refused = item.refusal !== undefined
+function ButtonItem({ item, block }: { item: ActionButton; block: boolean }): JSX.Element {
   const Mark = item.icon
-  const tone = item.tone ?? 'plain'
-
+  /* THE TONE. A page's one primary and its one destructive act keep
+     their tones; a latched verb (`pressed`) takes the neutral ground
+     so the latch reads, and a plain verb is a ghost on the bar. The
+     primitive has no latch state of its own — that is reported. */
+  const tone =
+    item.tone === 'primary'
+      ? 'primary'
+      : item.tone === 'danger'
+        ? 'danger'
+        : item.pressed === true
+          ? 'neutral'
+          : 'ghost'
   return (
-    <span className="ab-hold">
-      {/* A rendered line with its own type and its own live region,
-          not a `title` — DESIGN_CONTRACT §6 rules that out by name,
-          and a tooltip never appears for a Tab. `pointer-events:
-          none`, so a sentence can never take a press from the page it
-          floats over. */}
-      {why !== null ? (
-        <p className="ab-why" role="status" aria-live="polite">
-          {why}
-        </p>
-      ) : null}
-      <button
-        type="button"
-        className={
-          'ab-btn' +
-          (tone === 'primary' ? ' ab-btn--primary' : '') +
-          (tone === 'danger' ? ' ab-btn--danger' : '') +
-          (item.pressed === true ? ' is-on' : '') +
-          (refused ? ' is-inert' : '')
-        }
-        /* a latch says so; a plain verb must not claim a state it has
-           no opinion about */
-        aria-pressed={item.pressed}
-        /* NOT `disabled`. See the note on `refusal` in @/lib/actions:
-           a disabled control leaves the tab order and takes its own
-           explanation with it. */
-        aria-disabled={refused ? true : undefined}
-        aria-label={
-          refused
-            ? `${item.say ?? item.label} — ${item.refusal ?? ''}`
-            : item.say
-        }
-        onPointerEnter={() => {
-          if (refused) onRefused(item.refusal ?? '')
-        }}
-        onPointerLeave={onLeave}
-        onFocus={() => {
-          if (refused) onRefused(item.refusal ?? '')
-        }}
-        onBlur={onLeave}
-        onClick={() => {
-          /* the press that cannot land does nothing and says why — the
-             same shape `BandStrip` uses for a chip that is already in
-             view */
-          if (refused) {
-            onRefused(item.refusal ?? '')
-            return
-          }
-          item.onPick()
-        }}
-      >
-        {Mark ? <Mark size={MARK} weight={weightFor(MARK)} aria-hidden="true" /> : null}
-        <span className="ab-btn-label">{item.label}</span>
-      </button>
-    </span>
+    <Button
+      tone={tone}
+      size="sm"
+      block={block}
+      /* a latch says so; a plain verb must not claim a state it has
+         no opinion about */
+      aria-pressed={item.pressed}
+      aria-label={item.say}
+      /* NOT `disabled`. The primitive keeps a refused control in the
+         tab order, marks it `aria-disabled`, blocks the press and
+         draws the sentence beneath it — see the note on `refusal` in
+         @/lib/actions for why a disabled control would take its own
+         explanation with it. */
+      refusedBecause={item.refusal}
+      glyph={Mark ? <Mark size={MARK} weight={weightFor(MARK)} /> : undefined}
+      onClick={item.onPick}
+    >
+      {item.label}
+    </Button>
   )
 }
 
@@ -347,31 +259,30 @@ function SearchItem({ item }: { item: ActionSearch }): JSX.Element {
         }}
       />
       {item.value !== '' ? (
-        <button
-          type="button"
-          className="ab-find-x"
+        <Button
+          tone="ghost"
+          size="sm"
           aria-label="Clear the search"
           onClick={() => item.onChange('')}
         >
-          <X size={11} weight="bold" aria-hidden="true" />
-        </button>
+          <X size={MARK} weight="bold" aria-hidden="true" />
+        </Button>
       ) : null}
     </label>
   )
 }
 
+/* A CHIP IS WHAT IS NARROWING THE PAGE, and pressing it stops that.
+   The key is the column, in sentence case — rule 3 bars uppercase on
+   a button, and this is one — and the value is the dealer's own
+   words exactly as typed. */
 function ChipItem({ item }: { item: ActionChip }): JSX.Element {
   return (
-    <button
-      type="button"
-      className="ab-chip"
-      aria-label={item.hint}
-      onClick={item.onRemove}
-    >
+    <Button tone="neutral" size="sm" aria-label={item.hint} onClick={item.onRemove}>
       <span className="ab-chip-key">{item.key}</span>
       <span className="ab-chip-val">{item.value}</span>
-      <X size={11} weight="bold" aria-hidden="true" />
-    </button>
+      <X size={MARK} weight="bold" aria-hidden="true" />
+    </Button>
   )
 }
 
@@ -387,69 +298,61 @@ function PanelItem({
   const Mark = item.icon
   return (
     <span className="ab-hold">
-      <button
-        type="button"
-        className={'ab-btn ab-btn--panel' + (open ? ' is-on' : '')}
+      <Button
+        tone={open ? 'neutral' : 'ghost'}
+        size="sm"
         aria-haspopup="dialog"
         aria-expanded={open}
+        glyph={Mark ? <Mark size={MARK} weight={weightFor(MARK)} /> : undefined}
         onClick={onToggle}
       >
-        {Mark ? <Mark size={MARK} weight={weightFor(MARK)} aria-hidden="true" /> : null}
-        <span className="ab-btn-label">{item.label}</span>
+        {item.label}
         {item.at !== undefined ? (
           <>
             <span className="ab-btn-sep" aria-hidden="true">
               ·
             </span>
+            {/* the live half of a map control — "Sections · Capacity".
+                A name, so it is sentence case and never a stamp, and it
+                is never cut mid-word (§3). */}
             <span className="ab-btn-at">{item.at}</span>
           </>
         ) : null}
-      </button>
+      </Button>
 
       {open ? (
         <div className="ab-panel" role="dialog" aria-label={item.panelLabel}>
-          <div className="ab-panel-head">
-            <span className="ab-panel-name">{item.panelLabel}</span>
-            {item.panelSay !== undefined ? (
-              <span className="ab-panel-say">{item.panelSay}</span>
-            ) : null}
-          </div>
-          <div
-            className="ab-panel-body"
-            /* A MAP CLOSES ONCE IT HAS PUT YOU SOMEWHERE. Delegated
-               rather than wired into every control inside, because the
-               contents belong to whoever published them — `BandStrip`
-               is shared with the blueprint's expanded card and must not
-               learn that a popover exists. A press that was refused
-               (`aria-disabled`) leaves the panel standing, so the chip
-               that says "already in view" can say it.
-
-               A PANEL WITH A STEP IN IT SAYS WHICH PRESSES ARE THE
-               STEP. `closeOnAct` reads every button as the act, which
-               is right for a map — every chip on it is a destination.
-               It is wrong for a panel whose first press only ASKS the
-               second question: the rule builder's "Relate two things"
-               picks a pair, and then offers the columns that bind it,
-               and a panel that shut on the first press would put a
-               person back where they started every time. So a control
-               that advances a panel rather than finishing with it
-               marks itself `data-ab-keep-open`, and the delegate
-               leaves the panel standing. The vocabulary stays closed:
-               this is one attribute the bar owns, not arbitrary JSX. */
-            onClick={
-              item.closeOnAct === true
-                ? (e) => {
-                    const hit = (e.target as HTMLElement).closest('button')
-                    if (!hit) return
-                    if (hit.getAttribute('aria-disabled') === 'true') return
-                    if (hit.closest('[data-ab-keep-open]') !== null) return
-                    onToggle()
-                  }
-                : undefined
-            }
-          >
-            {item.content}
-          </div>
+          <Card tone="raised" pad="sm">
+            <div className="ab-panel-head">
+              <span className="ab-panel-name">{item.panelLabel}</span>
+              {item.panelSay !== undefined ? (
+                <span className="ab-panel-say">{item.panelSay}</span>
+              ) : null}
+            </div>
+            <div
+              className="ab-panel-body"
+              /* A MAP CLOSES ONCE IT HAS PUT YOU SOMEWHERE. Delegated
+                 rather than wired into every control inside, because the
+                 contents belong to whoever published them. A press that
+                 was refused (`aria-disabled`) leaves the panel standing,
+                 so the chip that says "already in view" can say it; a
+                 control that advances a panel rather than finishing with
+                 it marks itself `data-ab-keep-open`. */
+              onClick={
+                item.closeOnAct === true
+                  ? (e) => {
+                      const hit = (e.target as HTMLElement).closest('button')
+                      if (!hit) return
+                      if (hit.getAttribute('aria-disabled') === 'true') return
+                      if (hit.closest('[data-ab-keep-open]') !== null) return
+                      onToggle()
+                    }
+                  : undefined
+              }
+            >
+              {item.content}
+            </div>
+          </Card>
         </div>
       ) : null}
     </span>

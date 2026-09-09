@@ -75,6 +75,7 @@ import type { AppUser } from '@/features/auth'
 import { PageHead } from '@/features/page'
 import { atLeast, ROLE_NAME } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
+import { Button, Card, SectionHead } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -121,21 +122,31 @@ function Door({
   wide?: boolean
   onPick: () => void
 }): ReactElement {
+  /* A DOOR IS A CARD, and the card is the primitive's: ground, hairline,
+     radius, lift, press and focus ring come from `src/ui`, once. What
+     this stage still owns is the cell it stands in (the drawing's door
+     is worth two) and what is on it.
+
+     THE NAME WEARS THE DISPLAY TIER'S MIDDLE STEP. `--t-display-xl` is
+     the step ds.css cut for "a name that is one of several and is the
+     point of the screen"; five doors are the point of this screen, and
+     the page's own title above them stays at the title step so the
+     chrome never outranks them. The grid is two columns so the longest
+     name a door carries — "Saved configurations" — fits at 34px at
+     1280 and wraps at a space, never mid-word, below it. */
   return (
-    <button
-      type="button"
-      className={`ad-door${wide ? ' is-wide' : ''}${fact ? '' : ' is-bare'}`}
-      onClick={onPick}
-    >
-      <span className="ad-door-mark" aria-hidden="true">
-        <Glyph size={MARK} weight={MARK_WEIGHT} />
-      </span>
-      <span className="ad-door-name">{name}</span>
-      {/* THE ONE FACT. Mono, tabular, because most of them are
-          figures and a column of facts that do not line up on the
-          decimal is a column somebody has to read twice. */}
-      {fact ? <span className="ad-door-fact">{fact}</span> : null}
-    </button>
+    <div className={`ad-cell${wide ? ' is-wide' : ''}`}>
+      <Card onActivate={onPick} pad="md">
+        <span className="ad-door-mark" aria-hidden="true">
+          <Glyph size={MARK} weight={MARK_WEIGHT} />
+        </span>
+        <span className="ds-display-xl ad-door-name">{name}</span>
+        {/* THE ONE FACT. Mono, tabular, because most of them are
+            figures and a column of facts that do not line up on the
+            decimal is a column somebody has to read twice. */}
+        {fact ? <span className="ad-door-fact">{fact}</span> : null}
+      </Card>
+    </div>
   )
 }
 
@@ -244,15 +255,18 @@ export function AdminStage({
       onKeyDown={stageKeys}
     >
       <div className="shell-view-bar">
-        <button
-          type="button"
-          className="shell-view-back"
-          onClick={showing === 'index' ? onClose : () => setShowing('index')}
-          aria-label="Back"
-        >
-          <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-          <span>Back</span>
-        </button>
+        {/* THE WAY BACK is the primitive's ghost button in the bar's
+            first track. `.shell-view-lead` is the track, not a look. */}
+        <div className="shell-view-lead">
+          <Button
+            tone="ghost"
+            size="sm"
+            glyph={<ArrowLeft size={ICON_SIZE.small} />}
+            onClick={showing === 'index' ? onClose : () => setShowing('index')}
+          >
+            Back
+          </Button>
+        </div>
         {/* THE BAR STOPPED SAYING THE PAGE'S NAME.
 
             It used to be the only heading these pages had, and it was
@@ -276,14 +290,14 @@ export function AdminStage({
             the act, and stops printing the title a second time. */}
         {showing === 'access' ? (
           <div className="shell-quote-acts">
-            <button
-              type="button"
-              className="btn shell-quote-act"
+            <Button
+              tone="neutral"
+              size="sm"
+              glyph={<CaretLeft size={ICON_SIZE.tiny} weight="bold" />}
               onClick={() => setShowing('index')}
             >
-              <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
               All of Admin
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>
@@ -324,9 +338,13 @@ export function AdminStage({
               day, and it was buried two levels down behind a 32px
               link. */}
           <section className="ad-band" aria-labelledby="ad-band-org">
-            <p className="mono-label ad-band-name" id="ad-band-org">
-              The organisation
-            </p>
+            {/* the band's caption is the section primitive — the one
+                uppercase style, drawn once; this owns only its air */}
+            <div className="ad-band-head">
+              <SectionHead level="h3" id="ad-band-org">
+                The organisation
+              </SectionHead>
+            </div>
             <div className="ad-grid">
               <Door
                 glyph={ShieldCheck}
@@ -349,11 +367,16 @@ export function AdminStage({
                   takes the door's shape around it rather than being
                   redrawn — one control, one behaviour, one place that
                   knows what an import costs. */}
-              <div className="ad-door ad-door-io">
-                <span className="ad-door-mark" aria-hidden="true">
-                  <ArrowsLeftRight size={MARK} weight={MARK_WEIGHT} />
-                </span>
-                <ImportExportMenu align="left" />
+              <div className="ad-cell">
+                <Card pad="md">
+                  <span className="ad-door-mark" aria-hidden="true">
+                    <ArrowsLeftRight size={MARK} weight={MARK_WEIGHT} />
+                  </span>
+                  <span className="ds-display-xl ad-door-name">Import / export</span>
+                  <span className="ad-door-fact">
+                    <ImportExportMenu align="left" />
+                  </span>
+                </Card>
               </div>
             </div>
           </section>

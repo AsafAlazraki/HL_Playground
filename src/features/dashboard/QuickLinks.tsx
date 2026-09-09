@@ -8,23 +8,41 @@
    hundred times. It is theirs to choose, to name in their own
    words, and to order.
 
+   IT IS DRAWN BY THE PRIMITIVES, NOT BY THIS FEATURE. Each fast
+   action at rest is a <Button>; while arranging it is a sunken
+   <Card> holding a grip, a mark, a <Field> for the name and a
+   remove Button. dashboard.css paints none of them — it lays the
+   row out and stops. `.dsh-fast-btn`, `.dsh-fast-edit` and the
+   dashed `.is-arranging` strip are gone with the rules that drew
+   them.
+
    ONE PRIMARY, AND IT IS "NEW QUOTE" WHEN IT IS THERE. §1: one
    accent, roughly four times a screen. A row of eight accent
-   buttons has no primary at all, so the accent goes on the one
-   act a dealer performs all day and every other button is a
-   surface with ink on it.
+   buttons has no primary at all, so the primary tone goes on the
+   one act a dealer performs all day and every other button is
+   neutral. (This file's earlier note said the primary tone failed
+   4.5:1 in dark; it was written against a white `--accent-fg`,
+   and the token is `#071522` there now — measured 7.30:1 on the
+   dark accent, 6.12:1 on the light one.)
+
+   WHAT THE PRIMITIVE HAS NO SLOT FOR, AND WHAT THAT COST. A fast
+   action used to carry a second line — "588 rows" under a table's
+   name, drawn only when it was a counted fact. Button is one line
+   by design, so that note is not drawn. Reported as the gap it
+   is, rather than solved by putting a two-line layout inside the
+   primitive's children.
 
    ARRANGING REPLACES THE BUTTON RATHER THAN DISABLING IT. A
    button that looks pressable and does nothing is the fault rule
    10 exists to prevent, and an <input> inside a <button> is not
-   valid markup in any case — so while the row is being arranged
-   each entry is a grip, a mark, a name FIELD and a remove, and
-   there is no button on it to press by mistake.
+   valid markup in any case.
 
    RENAMING IS COMMITTED ON BLUR, NOT PER KEYSTROKE. A rename is
    undoable, so rule 9 gives it a toast with UNDO — and a toast
    per letter typed is the reason that has to be said out loud.
-   Typing does not write; leaving the field does.
+   Field has no `onBlur` of its own (reported); focus events
+   bubble in React, so the wrapper span listens and the Field is
+   used exactly as it is.
 
    THE CAP IS EIGHT AND IT SAYS WHY, WHERE IT IS REFUSED
    (rule 10) — as a sentence in place of the Add control, never
@@ -32,7 +50,7 @@
    ============================================================ */
 
 import { useState } from 'react'
-import type { JSX } from 'react'
+import type { FocusEvent, JSX, KeyboardEvent } from 'react'
 import { motion } from 'motion/react'
 import {
   DotsSixVertical,
@@ -50,6 +68,7 @@ import {
 import type { Icon } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { SPRING, transitionFor, useStillness } from '@/features/views/stillness'
+import { Button, Card, Field } from '@/ui'
 import type { LinkTarget, QuickLink } from './arrangement'
 import { LINK_LIMIT } from './arrangement'
 import type { LinkMark, ResolvedLink } from './links'
@@ -146,7 +165,7 @@ export function QuickLinks({
   return (
     <section className="dsh-fast" aria-label="Fast actions">
       <div className="dsh-fast-row" ref={reorder.containerRef}>
-        {reorder.order.map((original, slot) => {
+        {reorder.order.map((original) => {
           const link = links[original]
           if (!link) return null
           const primary = link.target.kind === 'new-quote'
@@ -156,36 +175,37 @@ export function QuickLinks({
               transition={spring}
               key={link.id}
               data-dsh-link=""
-              className={`dsh-fast-item${arranging ? ' is-arranging' : ''}${
-                reorder.held === slot ? ' is-held' : ''
-              }`}
+              className="dsh-fast-item"
             >
               {arranging ? (
-                <>
-                  <button
-                    type="button"
-                    className="dsh-grip"
-                    aria-label={`Move ${link.label}. Arrow keys move it.`}
-                    {...reorder.handleProps(original)}
-                  >
-                    <DotsSixVertical size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                  </button>
-                  <span className="dsh-fast-mark" aria-hidden="true">
-                    <LinkMarkGlyph mark={link.mark} />
-                  </span>
-                  <span className="dsh-fast-say">
-                    <input
-                      className="dsh-fast-edit"
-                      value={drafts[link.id] ?? link.label}
-                      aria-label={`What to call ${link.subject}`}
-                      onChange={(e) =>
-                        setDrafts((d) => ({ ...d, [link.id]: e.target.value }))
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') e.currentTarget.blur()
+                <Card tone="sunken" pad="sm">
+                  <span className="dsh-fast-strip">
+                    <button
+                      type="button"
+                      className="dsh-grip"
+                      aria-label={`Move ${link.label}. Arrow keys move it.`}
+                      {...reorder.handleProps(original)}
+                    >
+                      <DotsSixVertical size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                    </button>
+                    <span className="dsh-fast-mark" aria-hidden="true">
+                      <LinkMarkGlyph mark={link.mark} />
+                    </span>
+                    {/* THE FIELD IS THE PRIMITIVE, UNTOUCHED. Enter
+                        leaves the field; leaving the field writes.
+                        Both listeners sit on this span because focus
+                        and key events bubble, and Field takes
+                        neither. */}
+                    <span
+                      className="dsh-fast-field"
+                      role="presentation"
+                      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+                        if (e.key === 'Enter' && e.target instanceof HTMLElement) e.target.blur()
                       }}
-                      onBlur={(e) => {
-                        const typed = e.target.value
+                      onBlur={(e: FocusEvent<HTMLSpanElement>) => {
+                        const field = e.target
+                        if (!(field instanceof HTMLInputElement)) return
+                        const typed = field.value
                         setDrafts((d) => {
                           const next = { ...d }
                           delete next[link.id]
@@ -195,49 +215,49 @@ export function QuickLinks({
                           onRename(link.id, typed, link.label)
                         }
                       }}
-                    />
-                    <span className="dsh-fast-note ds-caption">{link.subject}</span>
+                    >
+                      <Field
+                        label={`What to call ${link.subject}`}
+                        value={drafts[link.id] ?? link.label}
+                        onChange={(v) => setDrafts((d) => ({ ...d, [link.id]: v }))}
+                      />
+                    </span>
+                    <Button
+                      tone="danger"
+                      size="sm"
+                      aria-label={`Take ${link.label} off the dashboard`}
+                      onClick={() => onRemove(link.id, link.label)}
+                    >
+                      <X size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+                    </Button>
                   </span>
-                  <button
-                    type="button"
-                    className="dsh-drop"
-                    aria-label={`Take ${link.label} off the dashboard`}
-                    onClick={() => onRemove(link.id, link.label)}
-                  >
-                    <X size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
-                  </button>
-                </>
+                </Card>
               ) : (
-                <button
-                  type="button"
-                  className={`dsh-fast-btn${primary ? ' is-primary' : ''}`}
+                <Button
+                  size="lg"
+                  tone={primary ? 'primary' : 'neutral'}
+                  glyph={<LinkMarkGlyph mark={link.mark} />}
                   onClick={() => runLink(link.target, acts)}
                 >
-                  <span className="dsh-fast-mark" aria-hidden="true">
-                    <LinkMarkGlyph mark={link.mark} />
-                  </span>
-                  <span className="dsh-fast-say">
-                    <span className="dsh-fast-name">{link.label}</span>
-                    {/* ONLY WHEN IT IS A COUNTED FACT. See
-                        `ResolvedLink.counted` — "588 rows" earns its
-                        line, "Pick what you are selling" is the app
-                        explaining a button that already says New
-                        quote. */}
-                    {link.counted && link.note ? (
-                      <span className="dsh-fast-note ds-caption">{link.note}</span>
-                    ) : null}
-                  </span>
-                </button>
+                  {link.label}
+                </Button>
               )}
             </motion.div>
           )
         })}
 
         {arranging && !full ? (
-          <button type="button" className="dsh-fast-add" onClick={onAdd}>
-            <Plus size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />
+          /* the id is where the keyboard lands after a remove — see
+             `dropLink` in Dashboard.tsx */
+          <Button
+            id="dsh-fast-add"
+            tone="ghost"
+            size="lg"
+            glyph={<Plus size={ICON_SIZE.tiny} weight={MARK_WEIGHT} />}
+            onClick={onAdd}
+          >
             Add a fast action
-          </button>
+          </Button>
         ) : null}
 
         {arranging && full ? (

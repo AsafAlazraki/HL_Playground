@@ -19,15 +19,25 @@
    THE KIND CARRIES THE ON STATE. `.k-filter` — DESIGN_PRINCIPLES §1
    as amended: a filter chip may take the hue of the kind it filters,
    because everything in this catalogue IS that kind.
+
+   WHAT IS THE PRIMITIVES LAYER'S AND WHAT IS NOT. Everything inside
+   a sheet is src/ui now: the find box and the bound boxes are
+   `Field`, each value is a `Row` with a real checkbox at its head,
+   and every act is a `Button`. The one thing that is still this
+   file's own is the closed chip — a control with a pressed state
+   and a kind hue, which no tone in button.css draws. That is
+   reported rather than layered: the chip keeps its local rule until
+   the layer has a toggle, and nothing here restyles a primitive.
    ============================================================ */
-import { useCallback, useMemo, useRef, useState } from 'react'
-import type { Dispatch, JSX, SetStateAction } from 'react'
+import { useCallback, useId, useMemo, useRef, useState } from 'react'
+import type { Dispatch, FormEvent, JSX, SetStateAction } from 'react'
 import { CaretDown } from '@phosphor-icons/react'
 import type { ColumnFilter } from '@/features/table/core'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button, Field, Row } from '@/ui'
 import { Popover } from './Popover'
-import { TickGlyph } from './glyphs'
 import { bandWords, CHIPS_SHOWN, type Facet } from './facets'
+import { countLabel, type LeafNoun } from './grouping'
 
 const POP_W = 268
 
@@ -50,6 +60,9 @@ export interface FacetRailProps {
   /** how a figure prints in this column: money as money, a
    *  measurement with its unit */
   print: (fieldId: string, n: number) => string
+  /** the dealer's own word for a row, so a value's count reads
+   *  "12 variants" rather than a bare figure (§6) */
+  noun: LeafNoun
 }
 
 interface OpenAt {
@@ -63,6 +76,7 @@ export function FacetRail({
   onFilters,
   say,
   print,
+  noun,
 }: FacetRailProps): JSX.Element | null {
   const [open, setOpen] = useState<OpenAt | null>(null)
   const close = useCallback(() => setOpen(null), [])
@@ -134,6 +148,7 @@ export function FacetRail({
                     facet={facet}
                     current={byField.get(facet.fieldId)}
                     say={say}
+                    noun={noun}
                     onApply={(next) => setOne(facet.fieldId, next)}
                   />
                 ) : facet.kind === 'band' ? (
@@ -258,11 +273,13 @@ function ValuesBody({
   facet,
   current,
   say,
+  noun,
   onApply,
 }: {
   facet: Extract<Facet, { kind: 'values' }>
   current: ColumnFilter | undefined
   say: (fieldId: string, value: string) => string
+  noun: LeafNoun
   onApply: (next: ColumnFilter | null) => void
 }): JSX.Element {
   const all = facet.values
@@ -271,6 +288,7 @@ function ValuesBody({
   )
   const [find, setFind] = useState('')
   const [wide, setWide] = useState(false)
+  const uid = useId()
 
   const needle = find.trim().toLowerCase()
   const matching = useMemo(
@@ -309,63 +327,79 @@ function ValuesBody({
     <>
       {all.length > CHIPS_SHOWN ? (
         <div className="cat-pop-find">
-          <input
-            className="field-input"
+          <Field
+            label={`Find a ${facet.label.toLowerCase()}`}
             type="search"
             value={find}
-            spellCheck={false}
-            placeholder={`Find a ${facet.label.toLowerCase()}…`}
-            aria-label={`Find a value of ${facet.label}`}
-            onChange={(e) => setFind(e.target.value)}
-            onKeyDown={(e) => e.stopPropagation()}
+            placeholder="Type to match…"
+            onChange={setFind}
           />
         </div>
       ) : null}
 
+      {/* EACH VALUE IS A ROW with a real checkbox at its head and the
+          value as that box's label: the tick, the tab stop and Space
+          come from the browser, and the count is the row's metadata
+          in the dealer's own noun. The hand-drawn box and the button
+          pretending to be a checkbox are gone with their rules. */}
       <div className="cat-pop-list">
         {shown.length === 0 ? (
           <p className="cat-pop-none">Nothing here matches “{find.trim()}”.</p>
         ) : null}
-        {shown.map((v) => {
+        {shown.map((v, i) => {
           const on = chosen.has(v.value)
+          const id = `${uid}-${i}`
           return (
-            <button
+            <Row
               key={v.value}
-              type="button"
-              role="checkbox"
-              aria-checked={on}
-              className="cat-pop-row"
-              onClick={() => toggle(v.value)}
-            >
-              <span className={'tb-menu-box' + (on ? ' tb-menu-box-on' : '')}>
-                <TickGlyph />
-              </span>
-              <span className="cat-pop-val">{say(facet.fieldId, v.value)}</span>
-              <span className="cat-pop-count cat-num">{v.count}</span>
-            </button>
+              dense
+              lead={
+                <input
+                  className="tb-menu-check"
+                  type="checkbox"
+                  id={id}
+                  checked={on}
+                  onChange={() => toggle(v.value)}
+                />
+              }
+              name={<label htmlFor={id}>{say(facet.fieldId, v.value)}</label>}
+              meta={countLabel(v.count, noun)}
+            />
           )
         })}
         {hidden > 0 ? (
-          <button type="button" className="cat-pop-more" onClick={() => setWide(true)}>
+          <Button tone="ghost" size="sm" block onClick={() => setWide(true)}>
             {hidden} more
-          </button>
+          </Button>
         ) : null}
       </div>
 
       <footer className="tb-menu-foot">
-        <button
-          type="button"
-          className="btn btn-ghost"
+        <Button
+          tone="ghost"
+          size="sm"
           onClick={() => {
             setChosen(new Set())
             onApply(null)
           }}
         >
           Clear
-        </button>
+        </Button>
       </footer>
     </>
   )
+}
+
+/* ENTER APPLIES, AND IT IS THE FORM THAT SAYS SO. `Field` owns its
+   input and hands out no key handler — deliberately, so a feature
+   cannot bolt behaviour onto a control it did not draw. A bound box
+   is a form with one submit button, which is what the browser's own
+   implicit submission already means by Enter. */
+function submitting(commit: () => void) {
+  return (e: FormEvent<HTMLFormElement>): void => {
+    e.preventDefault()
+    commit()
+  }
 }
 
 function BandBody({
@@ -391,41 +425,33 @@ function BandBody({
   }
 
   return (
-    <>
+    <form onSubmit={submitting(commit)}>
       <div className="cat-pop-band">
-        <label className="cat-pop-bound">
-          <span className="mono-label">From</span>
-          <input
-            className="field-input cat-num"
+        <div className="cat-pop-bound">
+          <Field
+            label="From"
+            mono
             inputMode="decimal"
             value={lo}
             placeholder={print(facet.fieldId, facet.lo)}
-            onChange={(e) => setLo(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation()
-              if (e.key === 'Enter') commit()
-            }}
+            onChange={setLo}
           />
-        </label>
-        <label className="cat-pop-bound">
-          <span className="mono-label">To</span>
-          <input
-            className="field-input cat-num"
+        </div>
+        <div className="cat-pop-bound">
+          <Field
+            label="To"
+            mono
             inputMode="decimal"
             value={hi}
             placeholder={print(facet.fieldId, facet.hi)}
-            onChange={(e) => setHi(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation()
-              if (e.key === 'Enter') commit()
-            }}
+            onChange={setHi}
           />
-        </label>
+        </div>
       </div>
       <footer className="tb-menu-foot">
-        <button
-          type="button"
-          className="btn btn-ghost"
+        <Button
+          tone="ghost"
+          size="sm"
           onClick={() => {
             setLo('')
             setHi('')
@@ -433,12 +459,12 @@ function BandBody({
           }}
         >
           Clear
-        </button>
-        <button type="button" className="btn btn-primary" onClick={commit}>
+        </Button>
+        <Button tone="primary" size="sm" type="submit">
           Apply
-        </button>
+        </Button>
       </footer>
-    </>
+    </form>
   )
 }
 
@@ -473,39 +499,34 @@ function EnvelopeBody({
   }
 
   return (
-    <>
+    <form onSubmit={submitting(commit)}>
       <div className="cat-pop-band">
-        <label className="cat-pop-bound cat-pop-bound--wide">
-          <span className="mono-label">Fits</span>
-          <input
-            className="field-input cat-num"
+        <div className="cat-pop-bound">
+          <Field
+            label={`Fits ${facet.label}`}
+            mono
             inputMode="decimal"
             value={at}
             placeholder={`${print(facet.maxFieldId, facet.lo)} – ${print(facet.maxFieldId, facet.hi)}`}
-            aria-label={`${facet.label} to fit`}
-            onChange={(e) => setAt(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation()
-              if (e.key === 'Enter') commit()
-            }}
+            onChange={setAt}
           />
-        </label>
+        </div>
       </div>
       <footer className="tb-menu-foot">
-        <button
-          type="button"
-          className="btn btn-ghost"
+        <Button
+          tone="ghost"
+          size="sm"
           onClick={() => {
             setAt('')
             onApply(null)
           }}
         >
           Clear
-        </button>
-        <button type="button" className="btn btn-primary" onClick={commit}>
+        </Button>
+        <Button tone="primary" size="sm" type="submit">
           Apply
-        </button>
+        </Button>
       </footer>
-    </>
+    </form>
   )
 }

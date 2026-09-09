@@ -66,16 +66,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import {
-  ArrowsClockwise,
-  Check,
-  MagnifyingGlass,
-  Prohibit,
-  Warning,
-} from '@phosphor-icons/react'
+import { ArrowsClockwise, Check, Prohibit, Warning } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
+import { Button, Card, Field, Row, SectionHead } from '@/ui'
 import { accentVar } from '@/types/model'
 import type { CellValue } from '@/types/model'
 import { TableKindSymbol } from '@/features/tablekit'
@@ -104,14 +99,24 @@ const HULLS_DRAWN = 40
 
 const n = (v: number): string => v.toLocaleString()
 
-/* WRITTEN OUT, NEVER INTERPOLATED — `check-styles` trusts a string
-   literal inside a className and nothing else, and a class it cannot
-   read is a class nobody notices going unstyled. */
-const optClass = (state: OptionState): string => {
-  if (state === 'refused') return 'rg-opt is-refused'
-  if (state === 'flagged') return 'rg-opt is-flagged'
-  if (state === 'chosen') return 'rg-opt is-chosen'
-  return 'rg-opt'
+/* THE VERDICT MARK. §1: a status hue is a glyph, never a fill behind
+   text — so the three verdicts are three glyphs in three inks, and
+   the surface under each is the primitive's own. */
+function VerdictMark({ state }: { state: OptionState | RigCandidate['verdict'] }): ReactElement | null {
+  if (state === 'refused') {
+    return (
+      <Prohibit size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" className="rg-mark-refused" />
+    )
+  }
+  if (state === 'flagged') {
+    return (
+      <Warning size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" className="rg-mark-flagged" />
+    )
+  }
+  if (state === 'chosen') {
+    return <Check size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" className="rg-mark-chosen" />
+  }
+  return null
 }
 
 /** "It has taken nothing off this rig." — written out per case rather
@@ -130,10 +135,15 @@ function ranSentence(inForce: number, fired: number): string {
   return `${n(fired)} of them ${fired === 1 ? 'has' : 'have'} taken something off this rig`
 }
 
+/* WRITTEN OUT, NEVER INTERPOLATED — `check-styles` trusts a string
+   literal inside a className and nothing else. THE RAIL IS `ds.css`'s:
+   `.s-refused` and `.s-warned`, the same two `constraints.css` and the
+   fan-out's shortlist take for the same two verdicts, on the list item
+   so a verdict never changes the row's geometry. */
 const rowClass = (verdict: RigCandidate['verdict']): string => {
-  if (verdict === 'refused') return 'rg-row is-refused'
-  if (verdict === 'flagged') return 'rg-row is-flagged'
-  return 'rg-row'
+  if (verdict === 'refused') return 'rg-row-item s-refused'
+  if (verdict === 'flagged') return 'rg-row-item s-warned'
+  return 'rg-row-item'
 }
 
 export interface RigProps {
@@ -253,8 +263,9 @@ export function Rig({ reading }: RigProps): ReactElement | null {
 
   return (
     <section className="rg" aria-label="One rig, solved">
+      <Card tone="raised" pad="lg">
       <header className="rg-head">
-        <p className="rg-eyebrow">One at a time</p>
+        <SectionHead level="none">One at a time</SectionHead>
         <h3 className="rg-title">
           What still fits one {subjectNoun.one} — and what does not
         </h3>
@@ -285,24 +296,30 @@ export function Rig({ reading }: RigProps): ReactElement | null {
           still={still}
         />
       ) : (
-        <div
-          className="rg-hull"
-          style={{ '--rg-accent': accentVar(rig.hull.accent) } as CSSProperties}
-        >
-          <span className="rg-hull-mark">
-            <TableKindSymbol kind={rig.hull.kind} size={ICON_SIZE.small} />
-          </span>
-          <span className="rg-hull-said">
-            <span className="rg-hull-name">{rig.hull.label}</span>
-            <span className="rg-hull-table">{rig.hull.tableName}</span>
-          </span>
-          {rig.hull.price === null ? null : (
-            <span className="rg-hull-price">{money(rig.hull.price)}</span>
-          )}
-          <button type="button" className="rg-hull-change" onClick={() => setPicking(true)}>
-            <ArrowsClockwise size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-            <span>Another {subjectNoun.one}</span>
-          </button>
+        <div className="rg-hull">
+          {/* the hull the rig is solved for, on a Card of its kind */}
+          <Card tone="flat" pad="sm" kind={rig.hull.kind}>
+            <span className="rg-hull-line">
+              <span className="rg-hull-mark">
+                <TableKindSymbol kind={rig.hull.kind} size={ICON_SIZE.small} />
+              </span>
+              <span className="rg-hull-said">
+                <span className="rg-hull-name">{rig.hull.label}</span>
+                <span className="rg-hull-table">{rig.hull.tableName}</span>
+              </span>
+              {rig.hull.price === null ? null : (
+                <span className="rg-hull-price">{money(rig.hull.price)}</span>
+              )}
+              <Button
+                tone="neutral"
+                size="sm"
+                glyph={<ArrowsClockwise size={ICON_SIZE.tiny} weight="bold" />}
+                onClick={() => setPicking(true)}
+              >
+                Another {subjectNoun.one}
+              </Button>
+            </span>
+          </Card>
         </div>
       )}
 
@@ -353,15 +370,17 @@ export function Rig({ reading }: RigProps): ReactElement | null {
           {/* ---- what the last press did ---- */}
           <AnimatePresence initial={false}>
             {note === '' ? null : (
-              <motion.p
+              <motion.div
                 className="rg-note"
                 key={note}
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0, transition: transitionFor(still, SPRING) }}
                 exit={{ opacity: 0, y: -6, transition: transitionFor(still, SPRING_QUICK) }}
               >
-                {note}
-              </motion.p>
+                <Card tone="sunken" pad="sm">
+                  <p className="rg-note-say">{note}</p>
+                </Card>
+              </motion.div>
             )}
           </AnimatePresence>
 
@@ -376,9 +395,13 @@ export function Rig({ reading }: RigProps): ReactElement | null {
                 exit={{ opacity: 0, y: -6, transition: transitionFor(still, SPRING_QUICK) }}
               >
                 {rig.problems.map((problem) => (
-                  <li className="rg-problem" key={`${problem.constraintId}|${problem.message}`}>
-                    <Prohibit size={ICON_SIZE.small} weight="bold" aria-hidden="true" />
-                    <span>{problem.message}</span>
+                  <li key={`${problem.constraintId}|${problem.message}`}>
+                    <Card tone="sunken" pad="sm">
+                      <span className="rg-problem">
+                        <VerdictMark state="refused" />
+                        <span>{problem.message}</span>
+                      </span>
+                    </Card>
                   </li>
                 ))}
               </motion.ul>
@@ -428,14 +451,14 @@ export function Rig({ reading }: RigProps): ReactElement | null {
               {quiet === 0 ? null : (
                 <>
                   {' '}
-                  <button
-                    type="button"
-                    className="rg-quiet-door"
+                  <Button
+                    tone="ghost"
+                    size="sm"
                     aria-expanded={showEvery}
                     onClick={() => setShowEvery(!showEvery)}
                   >
                     {showEvery ? 'Show only what a rule reads' : 'Show every column'}
-                  </button>
+                  </Button>
                 </>
               )}
             </p>
@@ -461,6 +484,7 @@ export function Rig({ reading }: RigProps): ReactElement | null {
           </ul>
         </div>
       )}
+      </Card>
     </section>
   )
 }
@@ -510,22 +534,21 @@ function HullPicker({
 }): ReactElement {
   return (
     <div className="rg-pick">
+      <Card tone="sunken" pad="sm">
       <div className="rg-pick-bar">
-        <label className="rg-pick-search">
-          <MagnifyingGlass size={ICON_SIZE.small} aria-hidden="true" />
-          <input
-            className="rg-pick-input"
+        <div className="rg-pick-grow">
+          <Field
             type="search"
+            label={`Find a ${noun} by name, across all ${n(pool)}`}
             value={query}
             placeholder={`Find a ${noun} by name…`}
-            aria-label={`Find a ${noun} by name, across all ${n(pool)}`}
-            onChange={(e) => onQuery(e.target.value)}
+            onChange={onQuery}
           />
-        </label>
+        </div>
         {onCancel ? (
-          <button type="button" className="rg-pick-cancel" onClick={onCancel}>
+          <Button tone="neutral" onClick={onCancel}>
             Keep the one I have
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -538,7 +561,6 @@ function HullPicker({
         <ul className="rg-pick-list">
           {hulls.map((starter, i) => (
             <motion.li
-              className="rg-pick-item"
               key={`${starter.tableId}:${starter.rowId}`}
               initial={{ opacity: 0, y: 4 }}
               animate={{
@@ -547,18 +569,28 @@ function HullPicker({
                 transition: transitionFor(still, i < 12 ? SPRING : SPRING_QUICK),
               }}
             >
-              <button type="button" className="rg-pick-row" onClick={() => onTake(starter)}>
-                <span
-                  className="rg-pick-rail"
-                  aria-hidden="true"
-                  style={{ '--rg-accent': accentVar(starter.accent) } as CSSProperties}
-                />
-                <span className="rg-pick-name">{starter.label}</span>
-                <span className="rg-pick-table">{starter.tableName}</span>
-                {starter.price === null ? null : (
-                  <span className="rg-pick-price">{money(starter.price)}</span>
-                )}
-              </button>
+              {/* a Row that activates: the catalogue's own hue as a dot
+                  at the head of the line, the price at its end */}
+              <Row
+                dense
+                lead={
+                  <span
+                    className="rg-dot"
+                    aria-hidden="true"
+                    style={{ '--rg-accent': accentVar(starter.accent) } as CSSProperties}
+                  />
+                }
+                name={
+                  <span className="rg-line">
+                    <span>{starter.label}</span>
+                    {starter.price === null ? null : (
+                      <span className="rg-pick-price">{money(starter.price)}</span>
+                    )}
+                  </span>
+                }
+                meta={starter.tableName}
+                onActivate={() => onTake(starter)}
+              />
             </motion.li>
           ))}
         </ul>
@@ -576,6 +608,7 @@ function HullPicker({
           </>
         )}
       </p>
+      </Card>
     </div>
   )
 }
@@ -622,41 +655,42 @@ function Slot({
              button here is precisely the shape rule 10 forbids. */
           if (option.state === 'refused') {
             return (
-              <li className={optClass(option.state)} key={option.key}>
-                <span className="rg-opt-said">
-                  <Prohibit size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                  <span className="rg-opt-label">{option.label}</span>
-                </span>
-                <span className="rg-opt-why">
-                  Not offered on this rig
-                  {because(option.because, sentenceFor(option.constraintId))}
-                </span>
+              <li className="rg-opt" key={option.key}>
+                <Card tone="sunken" pad="sm">
+                  <span className="rg-opt-said">
+                    <VerdictMark state="refused" />
+                    <span className="rg-opt-label">{option.label}</span>
+                  </span>
+                  <span className="rg-opt-why">
+                    Not offered on this rig
+                    {because(option.because, sentenceFor(option.constraintId))}
+                  </span>
+                </Card>
               </li>
             )
           }
           const chosen = option.state === 'chosen'
           return (
-            <li className={optClass(option.state)} key={option.key}>
-              <button
-                type="button"
-                className="rg-opt-btn"
-                aria-pressed={chosen}
-                onClick={() => onPick(option.value)}
+            <li className="rg-opt" key={option.key}>
+              {/* a pressable Card; the chosen one is the CURRENT one of
+                  its set, and card.css draws that from `aria-current` */}
+              <Card
+                tone="flat"
+                pad="sm"
+                current={chosen}
+                onActivate={() => onPick(option.value)}
               >
-                {chosen ? (
-                  <Check size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                ) : null}
-                {option.state === 'flagged' ? (
-                  <Warning size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                ) : null}
-                <span className="rg-opt-label">{option.label}</span>
-              </button>
-              {option.state === 'flagged' ? (
-                <span className="rg-opt-why">
-                  Offered, and something disagrees
-                  {because(option.because, sentenceFor(option.constraintId))}
+                <span className="rg-opt-said">
+                  <VerdictMark state={option.state} />
+                  <span className="rg-opt-label">{option.label}</span>
                 </span>
-              ) : null}
+                {option.state === 'flagged' ? (
+                  <span className="rg-opt-why">
+                    Offered, and something disagrees
+                    {because(option.because, sentenceFor(option.constraintId))}
+                  </span>
+                ) : null}
+              </Card>
             </li>
           )
         })}
@@ -727,21 +761,29 @@ function Catalogue({
   const drawn = bands.flatMap((band) => band.drawn)
 
   return (
-    <li
-      className={open ? 'rg-cat is-open' : 'rg-cat'}
-      style={{ '--rg-accent': accentVar(catalogue.accent) } as CSSProperties}
-    >
-      <button type="button" className="rg-cat-door" aria-expanded={open} onClick={onOpen}>
-        <span className="rg-cat-mark">
-          <TableKindSymbol kind={catalogue.kind} size={ICON_SIZE.small} />
-        </span>
-        <span className="rg-cat-name">{catalogue.tableName}</span>
-        <span className="rg-cat-n">
-          <b>{n(catalogue.offered)}</b> of {n(catalogue.live)} offered
-          {catalogue.flagged > 0 ? <> · {n(catalogue.flagged)} flagged</> : null}
-          {catalogue.refused > 0 ? <> · {n(catalogue.refused)} refused</> : null}
-        </span>
-      </button>
+    <li className="rg-cat">
+      {/* A CARD OF ITS KIND, opened by the Row at its head — a card
+          cannot itself be the button when it holds a search box and
+          a list, so the door is a Row and the card is still. The open
+          one is the CURRENT one of the set. */}
+      <Card tone="flat" pad="none" kind={catalogue.kind}>
+      <Row
+        lead={
+          <span className="rg-cat-mark">
+            <TableKindSymbol kind={catalogue.kind} size={ICON_SIZE.small} />
+          </span>
+        }
+        name={catalogue.tableName}
+        meta={
+          <>
+            <b>{n(catalogue.offered)}</b> of {n(catalogue.live)} offered
+            {catalogue.flagged > 0 ? <> · {n(catalogue.flagged)} flagged</> : null}
+            {catalogue.refused > 0 ? <> · {n(catalogue.refused)} refused</> : null}
+          </>
+        }
+        current={open}
+        onActivate={onOpen}
+      />
 
       <AnimatePresence initial={false}>
         {!open ? null : (
@@ -752,17 +794,13 @@ function Catalogue({
             animate={{ opacity: 1, y: 0, transition: transitionFor(still, SPRING) }}
             exit={{ opacity: 0, y: -8, transition: transitionFor(still, SPRING_QUICK) }}
           >
-            <label className="rg-cat-search">
-              <MagnifyingGlass size={ICON_SIZE.small} aria-hidden="true" />
-              <input
-                className="rg-cat-input"
-                type="search"
-                value={query}
-                placeholder={`Find one in ${catalogue.tableName}…`}
-                aria-label={`Find a row in ${catalogue.tableName}, offered or not`}
-                onChange={(e) => onQuery(e.target.value)}
-              />
-            </label>
+            <Field
+              type="search"
+              label={`Find a row in ${catalogue.tableName}, offered or not`}
+              value={query}
+              placeholder={`Find one in ${catalogue.tableName}…`}
+              onChange={onQuery}
+            />
 
             {catalogue.narrowed ? null : (
               <p className="rg-cat-quiet">
@@ -787,70 +825,72 @@ function Catalogue({
                       initial={false}
                       transition={transitionFor(still, SPRING)}
                     >
-                      <span className="rg-row-said">
-                        {candidate.verdict === 'refused' ? (
-                          <Prohibit size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                        ) : null}
-                        {candidate.verdict === 'flagged' ? (
-                          <Warning size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-                        ) : null}
-                        <span className="rg-row-name">{candidate.label}</span>
-                      </span>
-                      {/* MONEY IS ITS OWN REFUSAL KIND AND IT WAS
-                          SAYING THE WRONG ONE. This read "no price on
-                          this table" for both of the two ways a figure
-                          can be missing, and on the Northside seed 26
-                          rows are the second way — Parts & Accessories
-                          25 of 2,238, Mackay Trailers 1 of 125 — where
-                          the table HAS a price column and the row's own
-                          cell is empty. Naming the column is what turns
-                          it into something a person can go and check,
-                          and the two fixes are different: set a column,
-                          or fill a cell. */}
-                      {candidate.price !== null ? (
-                        <span className="rg-row-price">{money(candidate.price)}</span>
-                      ) : catalogue.priced ? (
-                        <span className="rg-row-noprice">
-                          No price — {catalogue.priceColumn} is empty here
-                        </span>
-                      ) : (
-                        <span className="rg-row-noprice">
-                          No price — {catalogue.tableName} has no price column
-                        </span>
-                      )}
-                      {candidate.reasons.length === 0 ? null : (
-                        <span className="rg-row-why">
-                          {/* THE KIND'S OWN WORD, AND IT WAS MISSING
-                              HERE. The option chips above already open
-                              "Not offered on this rig" / "Offered, and
-                              something disagrees"; these rows are the
-                              same two verdicts out of the same solve and
-                              opened straight into the evidence, so one
-                              screen said a Rule refusal two different
-                              ways. §5's whole claim is five kinds that
-                              never share a word — which only holds if
-                              one kind never carries two. */}
-                          <b className="rg-row-word">
-                            {candidate.verdict === 'refused'
-                              ? 'Not offered'
-                              : 'Offered, and something disagrees'}
-                          </b>{' '}
-                          ·{' '}
-                          {/* THE CELL THE RULE READ, VERBATIM, so a
-                              reader can check the verdict against their
-                              own file rather than take it. */}
-                          <span className="rg-row-cell">
-                            {candidate.reasons[0].column} {candidate.reasons[0].value}
-                          </span>
-                          {because(
-                            candidate.reasons[0].because,
-                            sentenceFor(candidate.reasons[0].constraintId),
-                          )}
-                          {candidate.reasons.length > 1 ? (
-                            <> · and {n(candidate.reasons.length - 1)} more</>
-                          ) : null}
-                        </span>
-                      )}
+                      {/* A STILL ROW: the verdict's glyph leads, the
+                          name is never struck, the price sits at the
+                          end of the line and is struck when refused,
+                          and the reason is the row's second line. */}
+                      <Row
+                        dense
+                        lead={<VerdictMark state={candidate.verdict} />}
+                        name={candidate.label}
+                        trail={
+                          candidate.price === null ? undefined : (
+                            <span
+                              className={
+                                candidate.verdict === 'refused'
+                                  ? 'rg-row-price is-struck'
+                                  : 'rg-row-price'
+                              }
+                            >
+                              {money(candidate.price)}
+                            </span>
+                          )
+                        }
+                        meta={
+                          <>
+                            {/* MONEY IS ITS OWN REFUSAL KIND: two ways a
+                                figure can be missing, and naming the
+                                column is what turns it into something a
+                                person can go and check — set a column,
+                                or fill a cell. */}
+                            {candidate.price !== null ? null : catalogue.priced ? (
+                              <span className="rg-row-noprice">
+                                No price — {catalogue.priceColumn} is empty here
+                              </span>
+                            ) : (
+                              <span className="rg-row-noprice">
+                                No price — {catalogue.tableName} has no price column
+                              </span>
+                            )}
+                            {candidate.reasons.length === 0 ? null : (
+                              <span className="rg-row-why">
+                                {/* THE KIND'S OWN WORD, the same one the
+                                    option chips open with — one kind never
+                                    carries two words (§5). */}
+                                <b className="rg-row-word">
+                                  {candidate.verdict === 'refused'
+                                    ? 'Not offered'
+                                    : 'Offered, and something disagrees'}
+                                </b>{' '}
+                                ·{' '}
+                                {/* THE CELL THE RULE READ, VERBATIM, so a
+                                    reader can check the verdict against
+                                    their own file rather than take it. */}
+                                <span className="rg-row-cell">
+                                  {candidate.reasons[0].column} {candidate.reasons[0].value}
+                                </span>
+                                {because(
+                                  candidate.reasons[0].because,
+                                  sentenceFor(candidate.reasons[0].constraintId),
+                                )}
+                                {candidate.reasons.length > 1 ? (
+                                  <> · and {n(candidate.reasons.length - 1)} more</>
+                                ) : null}
+                              </span>
+                            )}
+                          </>
+                        }
+                      />
                     </motion.li>
                   ))}
                 </ul>
@@ -867,6 +907,7 @@ function Catalogue({
           </motion.div>
         )}
       </AnimatePresence>
+      </Card>
     </li>
   )
 }

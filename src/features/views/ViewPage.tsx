@@ -36,6 +36,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
 import { usePageActions, type ActionButton } from '@/lib/actions'
+import { Button, Card, Row, SectionHead } from '@/ui'
 import {
   bandOf,
   defaultColumns,
@@ -438,29 +439,36 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
 
           <div className="vw-hero-say">
             <div className="vw-hero-top">
+              {/* NAMES, so sentence case — the trail is the row's own
+                  group path and the table's name, off the dealer's sheet */}
               {trail.length > 0 ? (
-                <p className="vw-trail mono-label">
+                <p className="vw-trail">
                   {trail.map((t, i) => (
                     <span key={`${t}-${i}`} className="vw-trail-step">
-                      {i > 0 ? (
-                        <span className="vw-trail-sep" aria-hidden="true">
-                          ▸
-                        </span>
-                      ) : null}
+                      {i > 0 ? <span aria-hidden="true">▸</span> : null}
                       {t}
                     </span>
                   ))}
                 </p>
               ) : (
-                <p className="vw-trail mono-label">
+                <p className="vw-trail">
                   <KindMark entity={root} size={ICON_SIZE.tiny} />
                   {root.name}
                 </p>
               )}
 
-              <button
-                type="button"
-                className={`vw-gear${configuring ? ' is-on' : ''}`}
+              {/* THE ONE CONTROL on the clean page. Primary while the
+                  handles are out, so the way back is the one accent. */}
+              <Button
+                tone={configuring ? 'primary' : 'neutral'}
+                size="sm"
+                glyph={
+                  configuring ? (
+                    <Check size={ICON_SIZE.tiny} weight="bold" />
+                  ) : (
+                    <Gear size={ICON_SIZE.tiny} weight="bold" />
+                  )
+                }
                 aria-pressed={configuring}
                 title={configuring ? 'Done — back to the clean page' : 'Set up this page'}
                 onClick={() => {
@@ -470,15 +478,15 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
                   setRefusal(null)
                 }}
               >
-                {configuring ? <Check size={16} weight="bold" /> : <Gear size={16} weight="light" />}
-                <span className="vw-gear-word">{configuring ? 'Done' : 'Set up'}</span>
-              </button>
+                {configuring ? 'Done' : 'Set up'}
+              </Button>
             </div>
 
-            {/* THE ONE HERO STEP IN THIS FEATURE. `--t-hero-*` is the
-                step above display, and a rig's name in front of a
-                customer is what it is for. */}
-            <h1 className="ds-hero vw-name">{rowLabel(root, row)}</h1>
+            {/* THE MARQUE. The name of the thing being sold, one per
+                screen — the step is stated in views.css, where the rule
+                that owns this element also swaps it down to `--t-hero`
+                in a narrow sheet. */}
+            <h1 className="vw-name">{rowLabel(root, row)}</h1>
           </div>
 
           {/* FOUR GRID CHILDREN AND NO WRAPPERS, so the two columns
@@ -527,7 +535,7 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
               <label className="vw-levels-lab">
                 <span className="mono-label">Changes apply to</span>
                 <select
-                  className="field-input vw-select"
+                  className="field-input"
                   value={scope ?? deepest ?? 0}
                   onChange={(e) => setScope(Number(e.target.value))}
                 >
@@ -550,7 +558,7 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
 
         <AnimatePresence initial={false}>
           {refusal ? (
-            <motion.p
+            <motion.div
               key={refusal}
               className="vw-refusal"
               role="status"
@@ -562,17 +570,29 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
                  than overshoots (apple-design §4). Default response. */
               transition={transitionFor(still, SPRING)}
             >
-              <Warning size={14} weight="light" aria-hidden="true" />
-              <span className="vw-refusal-text">{refusal}</span>
-              <button
-                type="button"
-                className="vw-icon-btn"
-                title="Dismiss"
-                onClick={() => setRefusal(null)}
-              >
-                <X size={12} weight="bold" />
-              </button>
-            </motion.p>
+              {/* a sentence on a flat card; the hue is the mark and
+                  nothing else, which is what a glyph is for (§1) */}
+              <Card tone="flat" pad="sm">
+                <span className="vw-refusal-line">
+                  <Warning
+                    size={ICON_SIZE.small}
+                    weight="bold"
+                    aria-hidden="true"
+                    className="vw-refusal-mark"
+                  />
+                  <span className="vw-refusal-text">{refusal}</span>
+                  <Button
+                    tone="ghost"
+                    size="sm"
+                    aria-label="Dismiss"
+                    title="Dismiss"
+                    onClick={() => setRefusal(null)}
+                  >
+                    <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                  </Button>
+                </span>
+              </Card>
+            </motion.div>
           ) : null}
         </AnimatePresence>
 
@@ -700,7 +720,6 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
             >
               {picking ? (
                 <section
-                  className="vw-add vw-pickzone"
                   aria-label={`Add a table to this ${singular(root.name)}`}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') {
@@ -709,76 +728,89 @@ function ViewPageBody({ viewId, rowId }: ViewPageProps): ReactElement {
                     }
                   }}
                 >
-                  <div className="vw-add-bar">
-                    <span className="mono-label vw-add-lead">
-                      What else goes with {oneOf(root.name)}?
-                    </span>
-                    <button
-                      type="button"
-                      className="vw-icon-btn"
-                      title="Close"
-                      onClick={() => setPicking(false)}
-                    >
-                      <X size={13} weight="bold" />
-                    </button>
-                  </div>
+                  {/* A SET OF PLACES, NOT A DROPDOWN: the panel is the
+                      sunken paper and each place is a raised, pressable
+                      Card on it — a set you look over, not a menu you
+                      pick from and close. */}
+                  <Card tone="sunken" pad="none">
+                    <div className="vw-add-bar">
+                      <div className="vw-add-grow">
+                        {/* the caption is a group caption and the table's
+                            name rides beside it as a value — rule 3 keeps
+                            the dealer's noun out of the uppercase */}
+                        <SectionHead level="none" count={`for this ${singular(root.name)}`}>
+                          Add a table
+                        </SectionHead>
+                      </div>
+                      <Button
+                        tone="ghost"
+                        size="sm"
+                        aria-label="Close"
+                        title="Close"
+                        onClick={() => setPicking(false)}
+                      >
+                        <X size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+                      </Button>
+                    </div>
 
-                  {addable.length === 0 ? (
-                    <p className="vw-add-none">
-                      {retiredCount > 0
-                        ? retiredTablesSentence(retiredCount)
-                        : 'Every other table is already on this page.'}
-                    </p>
-                  ) : (
-                    <ul className="vw-add-list">
-                      {addable.map((e) => (
-                        <li key={e.id}>
-                          <button
-                            type="button"
-                            className="vw-add-row"
-                            title={`Show ${e.name} on this page`}
-                            onClick={() => {
-                              setPicking(false)
-                              offerDrop(null, e.id)
-                            }}
-                          >
-                            <span className="vw-add-plus" aria-hidden="true">
-                              <KindMark entity={e} />
-                            </span>
-                            <span className="vw-add-name">{e.name}</span>
-                            {/* WHAT IS IN THE PLACE, as a figure and the
-                                word for it — the figure is the data and
-                                reads first, the word is the label and
-                                recedes. It was a bare number in a 56px
-                                column, which is a number nobody can act
-                                on because nothing says what it counts. */}
-                            <span className="vw-place-count">
-                              <span className="vw-place-n">
-                                {(rowsByEntity[e.id] ?? []).length}
+                    {addable.length === 0 ? (
+                      <p className="vw-add-none">
+                        {retiredCount > 0
+                          ? retiredTablesSentence(retiredCount)
+                          : 'Every other table is already on this page.'}
+                      </p>
+                    ) : (
+                      <ul className="vw-places">
+                        {addable.map((e) => (
+                          <li key={e.id}>
+                            <Card
+                              tone="raised"
+                              pad="sm"
+                              kind={e.kind}
+                              label={`Show ${e.name} on this page`}
+                              onActivate={() => {
+                                setPicking(false)
+                                offerDrop(null, e.id)
+                              }}
+                            >
+                              <span className="vw-place">
+                                <KindMark entity={e} />
+                                <span className="vw-place-name">{e.name}</span>
+                                {/* WHAT IS IN THE PLACE, as a figure and
+                                    the word for it — the figure is the
+                                    data and reads first, the word is the
+                                    label and recedes */}
+                                <span className="vw-place-count">
+                                  <span className="vw-place-n">
+                                    {(rowsByEntity[e.id] ?? []).length}
+                                  </span>
+                                  <span className="vw-place-noun">rows</span>
+                                </span>
                               </span>
-                              <span className="mono-label vw-place-noun">rows</span>
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                            </Card>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
 
-                  {addable.length > 0 && retiredCount > 0 ? (
-                    <p className="vw-add-none">{retiredTablesSentence(retiredCount)}</p>
-                  ) : null}
+                    {addable.length > 0 && retiredCount > 0 ? (
+                      <p className="vw-add-none">{retiredTablesSentence(retiredCount)}</p>
+                    ) : null}
+                  </Card>
                 </section>
               ) : (
-                <button
-                  type="button"
-                  className={`vw-dropzone${dragOver ? ' is-over' : ''}`}
+                /* A REAL BUTTON, not a target you can only reach by
+                   dragging. The drag still lands on the page; this is
+                   what a person can press when it does not. */
+                <Button
+                  tone="neutral"
+                  size="lg"
+                  block
+                  glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
                   onClick={() => setPicking(true)}
                 >
-                  <Plus size={13} weight="bold" aria-hidden="true" />
-                  <span className="mono-label">
-                    Add a table — or drag one in from the left
-                  </span>
-                </button>
+                  Add a table — or drag one in from the left
+                </Button>
               )}
             </motion.div>
           ) : null}
@@ -863,123 +895,120 @@ function RigPanel({
   }
 
   const DoorIcon = door?.icon
+  const dot = <span className="vw-rig-dot" aria-hidden="true" />
 
   return (
     <section className="vw-rig" aria-label={`What this ${singular(root.name)} comes to`}>
-      <div className="vw-rig-head">
+      <Card tone="raised" pad="md">
         {/* THE CAPTION TELLS THE TRUTH WHEN THERE IS NO TOTAL. A panel
             headed "Added up" with nothing beside it has claimed an
             arithmetic it did not do. */}
-        <span className="mono-label vw-rig-lead">
+        <SectionHead level="none" rule>
           {rig.counted > 0 ? 'Added up' : 'Not added up yet'}
-        </span>
-        {/* NO `$0`. A page where nothing carries a price says so in
-            the lines below rather than stating a total nobody made. */}
-        {rig.counted > 0 ? <b className="vw-rig-total">{money(rig.total)}</b> : null}
-      </div>
+        </SectionHead>
+        {/* THE COMMITTED TOTAL — `.ds-figure-xl`, the one figure a
+            price bar exists to state, and the one place on this page
+            a figure is set in the display face. NO `$0`: a page where
+            nothing carries a price says so in the lines below rather
+            than stating a total nobody made. */}
+        {rig.counted > 0 ? (
+          <b className="ds-figure-xl vw-rig-total">{money(rig.total)}</b>
+        ) : null}
 
-      <ul className="vw-rig-lines">
-        {lines.map((l) => {
-          const what = l.blockId === '' ? singular(l.tableName) : l.label
-          const body = (
-            <>
-              <span className="vw-rig-dot" aria-hidden="true" />
-              <span className="vw-rig-what">{what}</span>
-              {/* the business's own word for the rung it was read at
-                  — `Sell inc Rego`, `Cash`. A name, so its case is
-                  its own. */}
-              <span className="vw-rig-rung">{l.rung}</span>
-              <span className="vw-rig-amt">{money(l.amount)}</span>
-            </>
-          )
-          return (
-            <li
-              key={`${l.blockId}-${l.tableId}-${l.label}`}
-              className={`vw-rig-line${l.recommended ? ' is-star' : ''}`}
-              /* THE SAME HUE THE BLOCK BELOW IT IS DRAWN IN. A
-                 trailer line in the roll-up and the trailer block it
-                 points at were two different ambers, which is what
-                 §1's "two things of one kind are one colour
-                 everywhere" is there to stop. A table with no kind
-                 keeps its own accent — see the same reasoning in
-                 BlockCard.tsx. */
-              data-kind={entities[l.tableId]?.kind ?? undefined}
-              style={
-                {
-                  '--vw-line-accent': entities[l.tableId]?.kind
-                    ? 'var(--kind)'
-                    : accentVar(entities[l.tableId]?.accent),
-                } as CSSProperties
-              }
-            >
-              {l.blockId === '' ? (
-                <span className="vw-rig-still">{body}</span>
-              ) : (
-                <button
-                  type="button"
-                  className="vw-rig-door"
-                  /* the words on the line are the row's name and its
-                     figure; this says what pressing it DOES */
-                  aria-label={`Show ${what} on ${l.tableName}, further down this page`}
-                  onClick={() => onGoTo(l.blockId)}
-                >
-                  {body}
-                </button>
-              )}
-            </li>
-          )
-        })}
-
-        {/* A DECISION NOBODY HAS MADE YET, IN ITS PLACE IN THE LEDGER
-            rather than in a paragraph under it. It carries no amount,
-            because there is none — not a nought. */}
-        {rig.open.map((o) => (
-          <li key={`open-${o.blockId}`} className="vw-rig-line is-open">
-            <button
-              type="button"
-              className="vw-rig-door"
-              aria-label={`Choose which ${singular(o.tableName)} goes on this ${singular(root.name)}`}
-              onClick={() => onGoTo(o.blockId)}
-            >
-              <span className="vw-rig-dot" aria-hidden="true" />
-              <span className="vw-rig-what">{o.tableName}</span>
-              <span className="vw-rig-rung">
-                {o.picked} picked, none recommended yet — nothing from that list is in
-                this figure
+        <ul className="vw-rig-lines">
+          {lines.map((l) => {
+            const what = l.blockId === '' ? singular(l.tableName) : l.label
+            /* the name and its figure share the row's name slot; the
+               rung — `Sell inc Rego`, `Cash`, the business's own word
+               for the column it was read at — is the row's meta */
+            const say = (
+              <span className="vw-rig-say">
+                <span>{what}</span>
+                <span className="vw-rig-amt">{money(l.amount)}</span>
               </span>
-              <span className="vw-rig-amt vw-rig-amt--none">Choose</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+            )
+            return (
+              <li
+                key={`${l.blockId}-${l.tableId}-${l.label}`}
+                className="vw-rig-line"
+                /* THE SAME HUE THE BLOCK BELOW IT IS DRAWN IN — §1's
+                   "two things of one kind are one colour everywhere".
+                   A table with no kind keeps its own accent. */
+                data-kind={entities[l.tableId]?.kind ?? undefined}
+                style={
+                  {
+                    '--vw-line-accent': entities[l.tableId]?.kind
+                      ? 'var(--kind)'
+                      : accentVar(entities[l.tableId]?.accent),
+                  } as CSSProperties
+                }
+              >
+                {/* THE RECOMMENDED LINE IS THE CURRENT ONE of the set —
+                    drawn from `aria-current`, so the look cannot exist
+                    without the announcement. The subject's own line is
+                    not a door: it is the thing already in view. */}
+                {l.blockId === '' ? (
+                  <Row lead={dot} name={say} meta={l.rung} current={l.recommended} />
+                ) : (
+                  <Row
+                    lead={dot}
+                    name={say}
+                    meta={l.rung}
+                    current={l.recommended}
+                    /* the words on the line are the row's name and its
+                       figure; this says what pressing it DOES */
+                    label={`Show ${what} on ${l.tableName}, further down this page`}
+                    onActivate={() => onGoTo(l.blockId)}
+                  />
+                )}
+              </li>
+            )
+          })}
 
-      {notes.length > 0 ? <p className="vw-rig-note">{notes.join(' ')}</p> : null}
+          {/* A DECISION NOBODY HAS MADE YET, IN ITS PLACE IN THE LEDGER
+              rather than in a paragraph under it. It carries no amount,
+              because there is none — not a nought. */}
+          {rig.open.map((o) => (
+            <li key={`open-${o.blockId}`} className="vw-rig-line is-open">
+              <Row
+                lead={dot}
+                name={
+                  <span className="vw-rig-say">
+                    <span>{o.tableName}</span>
+                    <span className="vw-rig-amt vw-rig-amt--none">Choose</span>
+                  </span>
+                }
+                meta={`${o.picked} picked, none recommended yet — nothing from that list is in this figure`}
+                label={`Choose which ${singular(o.tableName)} goes on this ${singular(root.name)}`}
+                onActivate={() => onGoTo(o.blockId)}
+              />
+            </li>
+          ))}
+        </ul>
 
-      {/* THE NEXT MOVE, UNDER THE FIGURE IT PRODUCES. Same record as
-          the bar's — see `usePrimaryDoor` — so there is one action and
-          two places it can be reached, never two actions. */}
-      {door ? (
-        <div className="vw-rig-go">
-          <button
-            type="button"
-            className="vw-rig-btn"
-            aria-label={door.say ?? door.label}
-            /* NOT `disabled`. A disabled control drops out of the tab
-               order and takes its own explanation with it, and the
-               explanation is the whole point — the same ruling the
-               action bar's own buttons keep. */
-            aria-disabled={door.refusal ? true : undefined}
-            onClick={() => {
-              if (door.refusal) return
-              door.onPick()
-            }}
-          >
-            {DoorIcon ? <DoorIcon size={16} weight="bold" aria-hidden="true" /> : null}
-            <span>{door.label}</span>
-          </button>
-          {door.refusal ? <p className="vw-rig-why">{door.refusal}</p> : null}
-        </div>
-      ) : null}
+        {notes.length > 0 ? <p className="vw-rig-note">{notes.join(' ')}</p> : null}
+
+        {/* THE NEXT MOVE, UNDER THE FIGURE IT PRODUCES. Same record as
+            the bar's — see `usePrimaryDoor` — so there is one action
+            and two places it can be reached, never two actions. The
+            refusal is the bar's own sentence, drawn under the control
+            by the Button itself, which stays in the tab order to say it. */}
+        {door ? (
+          <div className="vw-rig-go">
+            <Button
+              tone="primary"
+              size="lg"
+              block
+              glyph={DoorIcon ? <DoorIcon size={ICON_SIZE.small} weight="bold" /> : undefined}
+              aria-label={door.say ?? door.label}
+              refusedBecause={door.refusal}
+              onClick={() => door.onPick()}
+            >
+              {door.label}
+            </Button>
+          </div>
+        ) : null}
+      </Card>
     </section>
   )
 }
@@ -1060,7 +1089,8 @@ function SpecStrip({
     <dl className="vw-specs">
       {specs.map((s) => (
         <div key={s.label} className="vw-spec">
-          <dt className="mono-label">{s.label}</dt>
+          {/* the column's own name — a name, so its own case */}
+          <dt>{s.label}</dt>
           <dd className="vw-spec-val">{s.value}</dd>
         </div>
       ))}

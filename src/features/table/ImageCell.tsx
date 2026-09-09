@@ -95,6 +95,7 @@ import {
   seededCopy,
   useImageDisplay,
 } from '@/lib/imageSources'
+import { Button } from '@/ui'
 import { Popover } from './Popover'
 import { CrossGlyph, PlusGlyph } from './glyphs'
 
@@ -318,17 +319,15 @@ function AddPictures({
       <div className="tb-imgsheet">
         <div className="tb-imgsheet-scroll">
           <div className="tb-imgdoors">
-            <button
-              type="button"
-              className="tb-act tb-imgdoor"
+            <Button
+              tone="neutral"
+              block
               autoFocus
+              glyph={<FileDoorIcon size={ICON_SIZE.small} weight={weightFor(ICON_SIZE.small)} />}
               onClick={onChooseFiles}
             >
-              <span className="tb-imgdoor-mark" aria-hidden="true">
-                <FileDoorIcon size={ICON_SIZE.small} weight={weightFor(ICON_SIZE.small)} />
-              </span>
               Choose files from this computer
-            </button>
+            </Button>
             <span className="mono-label tb-imgdoor-note">
               Or drop them straight onto the cell
             </span>
@@ -378,12 +377,12 @@ function AddPictures({
         </div>
 
         <footer className="tb-menu-foot tb-imgsheet-foot">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
+          <Button tone="ghost" size="sm" onClick={onClose}>
             Close
-          </button>
-          <button type="button" className="btn btn-primary" onClick={submit}>
+          </Button>
+          <Button tone="primary" size="sm" onClick={submit}>
             Add
-          </button>
+          </Button>
         </footer>
       </div>
     </Popover>
@@ -1106,14 +1105,14 @@ export function ImageLightbox({
           {index === 0 ? (
             <span className="tb-lightbox-primary">The one that shows</span>
           ) : (
-            <button
-              type="button"
-              className="tb-lightbox-promote"
+            <Button
+              tone="neutral"
+              size="sm"
               title="Move this picture to the front of the strip — the first one is the one that shows"
               onClick={() => onPromote(index)}
             >
               Make this the one that shows
-            </button>
+            </Button>
           )}
           <button
             type="button"

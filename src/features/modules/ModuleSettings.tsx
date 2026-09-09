@@ -97,6 +97,17 @@ import {
   type LogoRead,
 } from './logo'
 import { brandLogoFor } from './brandLogos'
+/* THE PRIMITIVES. Every panel on this page is `<Card>`, every panel
+   head is `<SectionHead>`, every act is `<Button>` and the two
+   one-line text controls that carry no blur guard are `<Field>`;
+   the local rules that drew them are deleted from modules.css.
+
+   TWO TEXT CONTROLS STAY LOCAL, and the reason is a gap in the layer
+   rather than a preference: the name and the description restore
+   the last real value on BLUR (a module with no name is a card
+   nobody can point at), and `<Field>` has no `onBlur` and no
+   multi-line form. Reported. */
+import { Button, Card, Field, SectionHead } from '@/ui'
 import './modules.css'
 
 export interface ModuleSettingsProps {
@@ -168,10 +179,13 @@ export function ModuleSettings({
             for. `Catalogue` is a noun naming what is on the screen you
             land on, which is the same rule the dock's own items keep. */}
         {bare ? null : (
-          <button type="button" className="md-set-back" onClick={onDone}>
-            <ArrowLeft size={ICON_SIZE.small} aria-hidden="true" />
-            <span>Catalogue</span>
-          </button>
+          <Button
+            tone="neutral"
+            glyph={<ArrowLeft size={ICON_SIZE.small} />}
+            onClick={onDone}
+          >
+            Catalogue
+          </Button>
         )}
 
         <div className="md-idx-id">
@@ -230,8 +244,9 @@ function Identity({ module }: { module: ModuleDef }): ReactElement {
   if (module.name.trim() !== '') lastNamed.current = module.name
 
   return (
+    <Card tone="flat" pad="md">
     <section className="md-panel">
-      <h3 className="md-panel-name mono-label">What it is called</h3>
+      <SectionHead level="h3">What it is called</SectionHead>
       {/* THE PARAGRAPH THAT STOOD HERE IS GONE. It explained that a
           name is your words and is not worked out from anything —
           which is what a text field labelled Name already says, 18px
@@ -266,6 +281,7 @@ function Identity({ module }: { module: ModuleDef }): ReactElement {
         />
       </label>
     </section>
+    </Card>
   )
 }
 
@@ -331,8 +347,9 @@ function Mark({
   }
 
   return (
+    <Card tone="flat" pad="md">
     <section className="md-panel">
-      <h3 className="md-panel-name mono-label">Its mark</h3>
+      <SectionHead level="h3">Its mark</SectionHead>
       {/* No paragraph: the plate beside the control already shows
           what a module with no mark looks like, which is the whole of
           what the sentence here used to say. */}
@@ -384,32 +401,32 @@ function Mark({
           </label>
 
           <div className="md-mark-addr">
-            <input
-              className="field-input"
-              type="text"
+            <Field
+              type="url"
+              label={`…or paste a picture address for the ${module.name} mark`}
               value={address}
-              spellCheck={false}
-              placeholder="…or paste a picture address"
-              aria-label={`Picture address for the ${module.name} mark`}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={setAddress}
+              placeholder="https://"
+              inputMode="url"
             />
-            <button
-              type="button"
-              className="btn md-plain-btn"
-              disabled={address.trim() === ''}
+            {/* REFUSED UNTIL THERE IS SOMETHING TO USE, and it says so
+                beneath the control rather than greying out (rule 10). */}
+            <Button
+              tone="neutral"
+              refusedBecause={address.trim() === '' ? 'Paste an address first.' : undefined}
               onClick={() => {
                 take(logoFromAddress(address))
                 setAddress('')
               }}
             >
               Use it
-            </button>
+            </Button>
           </div>
 
           {module.logo ? (
-            <button type="button" className="md-linkbtn" onClick={clear}>
+            <Button tone="ghost" size="sm" onClick={clear}>
               Take the mark off
-            </button>
+            </Button>
           ) : bundled ? (
             /* NOT A BUTTON. There is nothing to take off — the mark
                is supplied rather than stored, and "Take the mark off"
@@ -448,6 +465,7 @@ function Mark({
         Under 96 KB kept as is · larger redrawn to {LOGO_MAX_EDGE}px
       </p>
     </section>
+    </Card>
   )
 }
 
@@ -513,8 +531,9 @@ function Access({ module }: { module: ModuleDef }): ReactElement {
   }
 
   return (
+    <Card tone="flat" pad="md">
     <section className="md-panel">
-      <h3 className="md-panel-name mono-label">Who may do what</h3>
+      <SectionHead level="h3">Who may do what</SectionHead>
 
       {/* THE STATE OF THE PLACE, IN A SENTENCE, BEFORE ANY CONTROL. A
           person who has never touched this must not be left wondering
@@ -540,18 +559,20 @@ function Access({ module }: { module: ModuleDef }): ReactElement {
       <p className="md-set-note">{ACCESS_ENFORCEMENT}</p>
 
       {roles.length === 0 ? (
-        <div className="md-set-void">
-          <span className="mono-label md-set-void-eyebrow">No roles yet</span>
-          <p className="md-set-void-say">{ROLE_IS}</p>
-          <p className="md-set-void-count">
-            You have{' '}
-            <strong>
-              {moduleCount} {moduleCount === 1 ? 'module' : 'modules'}
-            </strong>{' '}
-            and no roles.
-          </p>
-          <NewRole draft={draft} onDraft={setDraft} onAdd={addRole} first />
-        </div>
+        <Card tone="sunken" pad="md">
+          <div className="md-stack">
+            <SectionHead level="none">No roles yet</SectionHead>
+            <p className="md-set-void-say">{ROLE_IS}</p>
+            <p className="md-set-void-count">
+              You have{' '}
+              <strong>
+                {moduleCount} {moduleCount === 1 ? 'module' : 'modules'}
+              </strong>{' '}
+              and no roles.
+            </p>
+            <NewRole draft={draft} onDraft={setDraft} onAdd={addRole} first />
+          </div>
+        </Card>
       ) : (
         <>
           {/* THE ONE GRID. It is `AccessGrid`, the same component the
@@ -569,6 +590,7 @@ function Access({ module }: { module: ModuleDef }): ReactElement {
         </>
       )}
     </section>
+    </Card>
   )
 }
 
@@ -591,19 +613,21 @@ function NewRole({
         onAdd()
       }}
     >
-      <input
-        className="field-input"
-        type="text"
+      <Field
+        label="What this role is called"
         value={draft}
-        spellCheck={false}
+        onChange={onDraft}
         placeholder={first ? 'The first job at your dealership' : 'Another job'}
-        aria-label="What this role is called"
-        onChange={(e) => onDraft(e.target.value)}
+        autoComplete="off"
       />
-      <button type="submit" className="btn btn-primary" disabled={draft.trim() === ''}>
-        <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+      <Button
+        type="submit"
+        tone="primary"
+        glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
+        refusedBecause={draft.trim() === '' ? 'Give the job a name first.' : undefined}
+      >
         Add role
-      </button>
+      </Button>
     </form>
   )
 }
@@ -639,8 +663,9 @@ function Attached({ module }: { module: ModuleDef }): ReactElement {
   )
 
   return (
+    <Card tone="flat" pad="md">
     <section className="md-panel">
-      <h3 className="md-panel-name mono-label">What is attached to it</h3>
+      <SectionHead level="h3">What is attached to it</SectionHead>
       {/* No paragraph. Every line below is a counted fact off the
           sheet, and a list of counted facts does not need to be
           introduced as one. */}
@@ -650,13 +675,16 @@ function Attached({ module }: { module: ModuleDef }): ReactElement {
         ))}
       </ul>
     </section>
+    </Card>
   )
 }
 
 function Attachment({ thing }: { thing: LinkedThing }): ReactElement {
   const { shown, more } = namedFew(thing)
   return (
-    <li className="md-att">
+    <li>
+      <Card tone="flat" pad="sm">
+      <div className="md-stack">
       <p className="md-att-top">
         <span className="md-att-count mono-label">{thing.count}</span>
         <span className="md-att-name">{thing.name}</span>
@@ -681,6 +709,8 @@ function Attachment({ thing }: { thing: LinkedThing }): ReactElement {
       <p className={`md-att-where${thing.home === 'settings' ? '' : ' is-away'}`}>
         {thing.where}
       </p>
+      </div>
+      </Card>
     </li>
   )
 }

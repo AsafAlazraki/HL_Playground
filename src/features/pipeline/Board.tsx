@@ -36,11 +36,11 @@ import {
   CaretDoubleRight,
   ChatTeardropText,
   LockSimpleOpen,
-  MagnifyingGlass,
   Sliders,
 } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
+import { Button, Card, Field, Row } from '@/ui'
 import { useProjectStore } from '@/store/useProjectStore'
 import { placesOf } from '@/features/modules/places'
 import { Picker } from '@/features/picker'
@@ -87,6 +87,11 @@ export interface BoardProps {
    *  stage owns the header, so the stage has to be told. */
   onRecord?: ((open: boolean) => void) | undefined
 }
+
+/** THE DOM ID A DEAL'S CARD CARRIES, so the board can hand focus
+ *  back to it. Quote ids are nanoids — letters, digits, `_` and `-`
+ *  — so the id needs no escaping. */
+const dealDomId = (quoteId: string): string => `pb-deal-${quoteId}`
 
 /** shortest true form of a date on a card */
 function whenSay(iso: string, now = Date.now()): string {
@@ -254,17 +259,29 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
   const [over, setOver] = useState<StageId | null>(null)
   const boardRef = useRef<HTMLDivElement | null>(null)
 
+  /* THE PRESS THAT TRAVELLED IS NOT A CLICK. The card is a `Card`
+     now — a real <button> whose activation is the click the browser
+     synthesises after pointerup — and a drag that ends over the card
+     it started on still fires that click. This is the one bit the
+     old pointer code decided by hand ("a press that did not travel
+     opens the deal"), kept as a flag: set on pointerdown, raised by
+     a drag, read by the activation, and cleared a frame later so a
+     keyboard Enter after a drag is never swallowed. */
+  const dragged = useRef(false)
+
   /** Put focus back on the card a deal was opened from.
    *
    *  The popup takes focus when it opens (see `DealOverview`), so
    *  without this a keyboard user who pressed Escape would be left
    *  with focus on nothing and the next Tab would restart at the
    *  top of the page. The frame's wait is for React to have drawn
-   *  the card again before it is asked to take focus. */
+   *  the card again before it is asked to take focus. The card is
+   *  found by the id `Card` passes through — the one attribute the
+   *  primitive lets a caller set. */
   const focusCard = useCallback((id: string | null): void => {
     if (id === null) return
     requestAnimationFrame(() => {
-      boardRef.current?.querySelector<HTMLElement>(`[data-deal="${CSS.escape(id)}"]`)?.focus()
+      document.getElementById(dealDomId(id))?.focus()
     })
   }, [])
 
@@ -329,6 +346,7 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
       const startX = e.clientX
       const startY = e.clientY
       let dragging = false
+      dragged.current = false
 
       const onMove = (ev: PointerEvent): void => {
         /* A THRESHOLD, so a click is a click. Without it a press
@@ -348,14 +366,19 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
         if (dragging) {
           const to = columnAt(ev.clientX)
           if (to) move(q, to)
-        } else {
-          /* A PRESS THAT DID NOT TRAVEL OPENS THE DEAL'S PANE, not
-             the document. See `DealPane`: the board's answer is its
-             own arrangement, and leaving it to read four facts and
-             a thread throws that answer away. The document is one
-             named press further in. */
-          setOpen(q.id)
+          /* the click the browser is about to synthesise is the end
+             of a drag, not a press — see `dragged` */
+          dragged.current = true
+          requestAnimationFrame(() => {
+            dragged.current = false
+          })
         }
+        /* A PRESS THAT DID NOT TRAVEL OPENS THE DEAL'S PANE, not the
+           document — and it does so through the card's own
+           activation, which is the click. See `DealOverview`: the
+           board's answer is its own arrangement, and leaving it to
+           read four facts and a thread throws that answer away. The
+           document is one named press further in. */
         setHeld(null)
         setOver(null)
       }
@@ -421,17 +444,21 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
           views of it. What is left here is this view's own toolbar,
           which is the row every other page puts under its title. */}
       <div className="pb-tools">
-        <label className="pb-find">
-          <MagnifyingGlass size={ICON_SIZE.small} aria-hidden="true" />
-          <input
-            className="pb-find-in"
+        {/* THE SYSTEM'S FIELD, LABELLED. It was a glyph and a
+            placeholder standing in for a label; `Field` insists on
+            a real one, so the row grew a line and lost a magnifier.
+            The wrapper is width only — the primitive takes no class,
+            and a search box in a flex row needs to be told how wide
+            a search box is. */}
+        <div className="pb-find">
+          <Field
             type="search"
+            label="Search quotes"
+            placeholder="Reference, customer or what is being sold"
             value={query}
-            placeholder="Search quotes"
-            aria-label="Search quotes by reference, customer or what is being sold"
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={setQuery}
           />
-        </label>
+        </div>
 
         {/* THE APP'S OWN DROPDOWN, and this was a native
             `<select>`. A native select draws the operating system's
@@ -524,15 +551,13 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
             stages: what a card shows is behind the same button, and
             two buttons would make a person choose which half of one
             thought they were having. */}
-        <button
-          type="button"
-          className="pb-stages-go"
+        <Button
+          glyph={<Sliders size={ICON_SIZE.tiny} aria-hidden="true" />}
           aria-expanded={editing}
           onClick={() => setEditing((v) => !v)}
         >
-          <Sliders size={ICON_SIZE.tiny} aria-hidden="true" />
           Customise
-        </button>
+        </Button>
       </div>
 
       {editing ? (
@@ -611,83 +636,106 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                 data-wash={stage.wash}
                 aria-label={stage.name}
               >
+                {/* THE HEAD IS THE BOARD'S SUBJECT. The stage's name
+                    takes the display face on its own line — the five
+                    band heads are what a board is read by, and the
+                    figure line under it is what it is read FOR. The
+                    two handles sit at the end of the figure line, out
+                    of the name's way, because a 27px name and two
+                    22px controls do not share a 161px line. */}
                 <header className="pb-col-head">
                   <h3 className="pb-col-name">{stage.name}</h3>
-                  <span className="pb-col-n ds-mono">{deals.length}</span>
-                  {/* THIS COLUMN'S OWN ORDER. Quiet until the column is
-                      under the cursor or its menu is open, and lit
-                      whenever it differs from the board's — an override
-                      you cannot see is a board that has stopped
-                      explaining itself. */}
-                  <span className="pb-col-sort">
-                    <button
-                      type="button"
-                      className={`pb-col-sortgo${perCol[stage.id] ? ' is-set' : ''}`}
-                      aria-expanded={menu === stage.id}
-                      aria-label={`Order ${stage.name}. ${sortLabel(perCol[stage.id] ?? sort)}`}
-                      onClick={() => setMenu(menu === stage.id ? null : stage.id)}
-                    >
-                      <ArrowsDownUp size={ICON_SIZE.tiny} aria-hidden="true" />
-                    </button>
-                    {menu === stage.id ? (
-                      <ul className="pb-col-menu">
-                        {SORTS.map((o) => (
-                          <li key={o.id}>
-                            <button
-                              type="button"
-                              className={`pb-col-pick${
-                                (perCol[stage.id] ?? sort) === o.id ? ' is-on' : ''
-                              }`}
-                              onClick={() => {
-                                setPerCol((m) => ({ ...m, [stage.id]: o.id }))
-                                setMenu(null)
-                              }}
-                            >
-                              {o.label}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
+                  <div className="pb-col-fig">
+                    {deals.length > 0 ? (
+                      <span className="pb-col-sum ds-mono">{money(sum)}</span>
                     ) : null}
-                  </span>
-                  {/* FOLD IT AWAY. Quiet until the column is under the
-                      cursor, like the sort beside it — five fold
-                      handles lit at once is five controls competing
-                      with five column names. */}
-                  <button
-                    type="button"
-                    className="pb-col-shutgo"
-                    aria-expanded={true}
-                    aria-label={`Fold ${stage.name} away`}
-                    onClick={() => setShut((s) => [...s, stage.id])}
-                  >
-                    <CaretDoubleLeft size={ICON_SIZE.tiny} aria-hidden="true" />
-                  </button>
+                    <span className="pb-col-n">
+                      {deals.length} {deals.length === 1 ? 'deal' : 'deals'}
+                    </span>
+                    <span className="pb-col-acts">
+                      {/* THIS COLUMN'S OWN ORDER. Quiet until the column
+                          is under the cursor or its menu is open, and
+                          lit whenever it differs from the board's — an
+                          override you cannot see is a board that has
+                          stopped explaining itself. */}
+                      <span className="pb-col-sort">
+                        <button
+                          type="button"
+                          className={`pb-col-sortgo${perCol[stage.id] ? ' is-set' : ''}`}
+                          aria-expanded={menu === stage.id}
+                          aria-label={`Order ${stage.name}. ${sortLabel(perCol[stage.id] ?? sort)}`}
+                          onClick={() => setMenu(menu === stage.id ? null : stage.id)}
+                        >
+                          <ArrowsDownUp size={ICON_SIZE.tiny} aria-hidden="true" />
+                        </button>
+                        {menu === stage.id ? (
+                          <ul className="pb-col-menu">
+                            {/* A MENU IS A LIST OF ROWS, and the one
+                                the column is using is the current one
+                                of the set — which `Row` draws from
+                                `aria-current`, so the look and the
+                                announcement cannot part. */}
+                            {SORTS.map((o) => (
+                              <li key={o.id}>
+                                <Row
+                                  dense
+                                  name={o.label}
+                                  current={(perCol[stage.id] ?? sort) === o.id}
+                                  onActivate={() => {
+                                    setPerCol((m) => ({ ...m, [stage.id]: o.id }))
+                                    setMenu(null)
+                                  }}
+                                />
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </span>
+                      {/* FOLD IT AWAY. Quiet until the column is under
+                          the cursor, like the sort beside it — five
+                          fold handles lit at once is five controls
+                          competing with five column names. */}
+                      <button
+                        type="button"
+                        className="pb-col-shutgo"
+                        aria-expanded={true}
+                        aria-label={`Fold ${stage.name} away`}
+                        onClick={() => setShut((s) => [...s, stage.id])}
+                      >
+                        <CaretDoubleLeft size={ICON_SIZE.tiny} aria-hidden="true" />
+                      </button>
+                    </span>
+                  </div>
+                  {/* WHAT BELONGS IN THIS COLUMN, under its head. One
+                      field and two positions — the same sentence goes
+                      in the body when the column is empty, because the
+                      words do not change when the last card arrives.
+                      See `StageDef.about`. */}
+                  {deals.length > 0 && stage.about ? (
+                    <p className="pb-col-about">{stage.about}</p>
+                  ) : null}
                 </header>
-                {deals.length > 0 ? (
-                  <p className="pb-col-sum ds-mono">{money(sum)}</p>
-                ) : null}
-                {/* WHAT BELONGS IN THIS COLUMN, under its head. One
-                    field and two positions — the same sentence goes
-                    in the body when the column is empty, because the
-                    words do not change when the last card arrives.
-                    See `StageDef.about`. */}
-                {deals.length > 0 && stage.about ? (
-                  <p className="pb-col-about">{stage.about}</p>
-                ) : null}
 
-                <div className="pb-col-body">
-                  {deals.length === 0 ? (
-                    /* AN EMPTY COLUMN SAYS WHY IT IS EMPTY. What
-                       belongs here and "nothing matches what you
-                       typed" are different facts, and a column giving
-                       the first answer to the second question is
-                       simply wrong. */
-                    <p className="pb-none">
-                      {narrowed ? 'Nothing here matches.' : stage.about || 'Nothing here yet.'}
-                    </p>
-                  ) : (
-                    deals.map((q) => {
+                {/* THE WELL. A column's body is the system's sunken
+                    card — "an empty slot, a drop target, a
+                    placeholder" is card.css's own list of what that
+                    tone is for, and a board column is all three. It
+                    is what the cards sit in; the column around it is
+                    a lane, and carries the dealer's colour and tint
+                    on the head band above. */}
+                <Card tone="sunken" pad="sm">
+                  <div className="pb-col-body">
+                    {deals.length === 0 ? (
+                      /* AN EMPTY COLUMN SAYS WHY IT IS EMPTY. What
+                         belongs here and "nothing matches what you
+                         typed" are different facts, and a column giving
+                         the first answer to the second question is
+                         simply wrong. */
+                      <p className="pb-none">
+                        {narrowed ? 'Nothing here matches.' : stage.about || 'Nothing here yet.'}
+                      </p>
+                    ) : (
+                      deals.map((q) => {
                       const t = quoteTotals(q)
                       /* HOW LONG IT HAS STOOD HERE, and null when
                          nothing honest can be said — a deal moved by
@@ -732,33 +780,21 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                       const owner = shows('owner')
                         ? ownerInForce(owners, q.id, roles)
                         : null
-                      return (
-                        <button
-                          type="button"
-                          key={q.id}
-                          data-deal={q.id}
-                          className={`pb-card${held === q.id ? ' is-held' : ''}${
-                            open === q.id ? ' is-open' : ''
-                          }`}
-                          onPointerDown={(e) => begin(q, e)}
-                          /* THE KEYBOARD'S OWN WAY ACROSS THE BOARD.
-                             Left and right move a column; Enter opens.
-                             `preventDefault` so the arrows do not also
-                             scroll the board sideways underneath. */
-                          onKeyDown={(e) => {
-                            const i = stages.findIndex((s) => s.id === stage.id)
-                            if (e.key === 'ArrowRight' && i < stages.length - 1) {
-                              e.preventDefault()
-                              move(q, stages[i + 1].id)
-                            } else if (e.key === 'ArrowLeft' && i > 0) {
-                              e.preventDefault()
-                              move(q, stages[i - 1].id)
-                            } else if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault()
-                              setOpen(q.id)
-                            }
-                          }}
-                          aria-label={`${q.reference}, ${q.customer.name || 'no customer'}, in ${stage.name}${
+                      /* THE CARD IS THE SYSTEM'S `Card`, AND THE DRAG
+                         IS ON THE LANE AROUND IT. `Card` renders a real
+                         <button> for `onActivate` and passes nothing
+                         else through — no pointer handler, no key
+                         handler, no `data-*` — so the pointer capture
+                         and the arrow keys live on this wrapper, which
+                         the button's events bubble up to. The wrapper
+                         is also where a held card lifts: a transform on
+                         the lane moves the card inside it without a
+                         rule of this file ever naming a `ui-` class.
+                         What the primitive cannot say yet is reported,
+                         not painted around: the grab cursor, and the
+                         `data-deal` hook the old focus code used (the
+                         card's `id` does that job now). */
+                      const dealLabel = `${q.reference}, ${q.customer.name || 'no customer'}, in ${stage.name}${
                             /* WHOSE IT IS, IN THE LABEL. An
                                `aria-label` replaces the button's
                                text outright, so a fact drawn inside
@@ -780,7 +816,48 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                                to a screen reader — which is the
                                half of a mark most boards skip. */
                             unlocked ? ', prices not locked' : ''
-                          }. Left and right arrows move it.`}
+                          }. Left and right arrows move it.`
+                      return (
+                        <div
+                          key={q.id}
+                          className={`pb-deal${held === q.id ? ' is-held' : ''}`}
+                          /* PRESENTATION, BECAUSE IT HAS NO MEANING OF ITS
+                             OWN. The handlers here only hear events that
+                             bubble up from the button inside; the button
+                             is the thing with the role and the name. */
+                          role="presentation"
+                          onPointerDown={(e) => begin(q, e)}
+                          /* THE KEYBOARD'S OWN WAY ACROSS THE BOARD.
+                             Left and right move a column; Enter and
+                             Space open, because the card is a button
+                             and that is what a button does. Arrows
+                             `preventDefault` so they do not also scroll
+                             the board sideways underneath. */
+                          onKeyDown={(e) => {
+                            const i = stages.findIndex((s) => s.id === stage.id)
+                            if (e.key === 'ArrowRight' && i < stages.length - 1) {
+                              e.preventDefault()
+                              move(q, stages[i + 1].id)
+                            } else if (e.key === 'ArrowLeft' && i > 0) {
+                              e.preventDefault()
+                              move(q, stages[i - 1].id)
+                            }
+                          }}
+                        >
+                        <Card
+                          tone="raised"
+                          pad="sm"
+                          id={dealDomId(q.id)}
+                          label={dealLabel}
+                          /* THE CARD THE POPUP IS ABOUT is the current
+                             one of the set, and `Card` draws that from
+                             `aria-current` — the popup and the board
+                             cannot disagree about which deal is open. */
+                          current={open === q.id}
+                          onActivate={() => {
+                            if (dragged.current) return
+                            setOpen(q.id)
+                          }}
                         >
                           {/* THE METADATA ROW, drawn only when it has
                               something in it. Two of its three parts
@@ -894,11 +971,13 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                               <span className="pb-card-by">{q.preparedBy}</span>
                             ) : null}
                           </span>
-                        </button>
+                        </Card>
+                        </div>
                       )
                     })
                   )}
-                </div>
+                  </div>
+                </Card>
               </section>
             )
           })}

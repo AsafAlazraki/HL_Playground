@@ -113,74 +113,136 @@
   flex: 1 1 0;
   min-height: 0;
   min-width: 168px;
-  padding: var(--s-3);
-  border: 1px solid var(--line-subtle);
+  /* A LANE, NOT A CARD. The column used to draw its own surface —
+     a border, a radius, a ground and a padding — which is the card
+     treatment src/ui/card.css counted 612 of. The surface is the
+     system's sunken `Card` now (the well the deals sit in, see
+     Board.tsx), and what is left here is the lane around it: two
+     grid rows, the head and the well, with `minmax(0, 1fr)` on the
+     second so the well takes exactly the height that is left and
+     the list inside it scrolls. The radius stays so the dealer's
+     wash and the drop ring have a shape. */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   border-radius: var(--r-card);
-  background: var(--surface-2);
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease);
+  transition: background var(--d-fast) var(--ease);
 }
 
 /* CLOSED COLUMNS ARE QUIETER. Won and Lost are finished work and
-   should not compete with the three that still need doing. */
-.pb-col.is-closed {
-  background: none;
-  border-style: dashed;
+   should not compete with the three that still need doing: the
+   name gives up its hue and the cap keeps it. */
+.pb-col.is-closed .pb-col-name {
+  color: var(--fg-secondary);
 }
 
 /* THE COLUMN UNDER THE POINTER, while a card is held. This is the
    whole of the drop affordance: no ghost card, no insertion line,
    no animation — the target lights and the card follows on
-   release, which is legible at any drag speed. */
+   release, which is legible at any drag speed. The well is opaque,
+   so the light is a ring around the lane and a wash behind its
+   head. */
 .pb-col.is-over {
   background: var(--accent-wash);
-  border-color: var(--accent);
-  border-style: solid;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
+/* THE HEAD BAND. It carries the subject and the figure, on the
+   dealer's wash when there is one, and it is the only part of the
+   lane that draws on the page. */
 .pb-col-head {
   display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  flex: none;
-  padding: 0 var(--s-1) 2px var(--s-2);
-}
-/* A STAGE NAME IS A LABEL, so §3 lets it be uppercase — it is the
-   one uppercase thing on this screen, and it is what makes the
-   column heads read as a scale rather than as five headings. */
-.pb-col-name {
-  margin: 0;
-  font-size: var(--t-caption-size);
-  font-weight: 620;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fg-secondary);
-}
-.pb-col-n {
-  /* the count sits hard against the name and the sort control takes
-     the end of the row, so the head reads name-count … control
-     rather than as three things spread evenly across it */
-  margin-right: auto;
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+  padding: var(--s-3) var(--s-3) var(--s-2);
 }
 
+/* ============================================================
+   THE BOARD'S SUBJECT IS THE STAGE, AND IT WEARS THE DISPLAY FACE.
+
+   Five band heads are what a board is read by, and DESIGN_PRINCIPLES
+   rule 3 never allowed them to be the 12px uppercase stamp they were
+   — a stage's name is a NAME. ds.css's display tier lists "a band
+   head" as what `--t-display-xl` is for, so that step was measured
+   first, against the cell it would live in:
+
+     column at 1280 x 800, five shipped stages   185px, 161px inside
+     "Negotiating" at --t-display-xl 34.00px      about 187px
+
+   One word, and it does not fit; "nothing truncates mid-word" (§3)
+   rules out cutting it. The tier's own instruction is to swap a
+   WHOLE STEP down, which is `--t-display-lg` — 26.88px at 1280,
+   about 154px for the same word at `wdth` 103, which is the width
+   ladder's figure for this step. That is the largest thing on the
+   screen: the page title above it is `--t-title` (20px) by
+   page.css's own argument, so the chrome ranks below the subject.
+   Tokens rather than the class, as dashboard.css does for the doors,
+   because this rule owns the element and swaps the set under a
+   container query the class could not carry. */
+.pb-col-name {
+  margin: 0;
+  min-width: 0;
+  color: var(--fg);
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 103;
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
+  text-wrap: balance;
+}
+/* What `.ds-display-lg` owes under more contrast, owed here too:
+   the extension goes back to normal width. */
+@media (prefers-contrast: more) {
+  .pb-col-name {
+    font-variation-settings: 'wdth' 100;
+  }
+}
+
+/* THE FIGURE LINE: the money, the count, and the two handles at the
+   end. What the board is read FOR sits directly under what it is
+   read BY. */
+.pb-col-fig {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+}
 /* THE COLUMN'S MONEY — the figure a board is read for. Mono,
    tabular and never a hue: it is a figure, and a figure is not
-   decorative. */
+   decorative. The large mono step, because it is the column's
+   second line and not a footnote to it. */
 .pb-col-sum {
-  margin: 0 0 var(--s-2);
-  padding: 0 var(--s-2);
-  flex: none;
-  font-size: var(--t-small-size);
+  font-size: var(--t-mono-lg-size);
   font-variant-numeric: tabular-nums;
   color: var(--fg);
 }
+/* the count in the dealer's nouns — "3 deals", not "3" (§6) */
+.pb-col-n {
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+.pb-col-acts {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: var(--s-1);
+  margin-left: auto;
+}
 
+/* THE LIST INSIDE THE WELL. The well is a `Card` and takes no
+   class, so the scroll lives one element in: a flex child of the
+   card with `min-height: 0`, which is what lets it shrink to the
+   card's height and scroll instead of growing the column. The 1px
+   padding keeps a focus ring from being clipped by the scroller. */
 .pb-col-body {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--s-2);
   min-height: 0;
@@ -188,6 +250,10 @@
   padding: 1px;
 }
 
+/* THE EMPTY WELL SAYS WHAT BELONGS IN IT. `--fg-tertiary` on the
+   sunken ground measures 4.75:1 on light (#5a6b7c on #e9eff6) and
+   7.65:1 on dark — the ramp's own figure for the floor on
+   `--bg-sunken`. */
 .pb-none {
   margin: 0;
   padding: var(--s-2);
@@ -198,51 +264,25 @@
 
 /* ---- a deal ------------------------------------------------ */
 
-.pb-card {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 100%;
-  padding: var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  box-shadow: var(--e1);
-  text-align: left;
-  /* GRAB, NOT POINTER. The card can be opened and can be moved, and
-     the cursor says which is the primary gesture — the one that
-     changes the board. */
-  cursor: grab;
+/* THE DEAL IS THE SYSTEM'S `Card`; THIS IS THE LANE IT IS DRAGGED
+   IN. Card.tsx passes nothing through but `id` and `kind`, so the
+   pointer capture, the arrow keys and the held state live on a box
+   around it — see Board.tsx. The rules below never name a `ui-`
+   class: the lift is a transform on this box and the card inside
+   moves with it. */
+.pb-deal {
+  min-width: 0;
+  border-radius: var(--r-card);
   /* the browser's own scroll-and-pan must not fight the drag */
   touch-action: none;
   transition:
     box-shadow var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
     transform var(--d-fast) var(--ease);
 }
-.pb-card:hover {
-  border-color: var(--line-strong);
-  box-shadow: var(--e2);
-}
-.pb-card:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
 /* HELD: lifted, and the only card on the board that is. */
-.pb-card.is-held {
-  cursor: grabbing;
+.pb-deal.is-held {
   box-shadow: var(--e-float);
   transform: rotate(-0.6deg) scale(1.02);
-}
-/* THE CARD THE PANE IS ABOUT. A ring rather than a fill: the card
-   still has to be read, and a tint behind three tiers of ink is
-   the rule-4 failure this board avoids everywhere else. The pane
-   and the board can never disagree about which deal is open. */
-.pb-card.is-open {
-  border-color: var(--accent);
-  box-shadow:
-    0 0 0 1px var(--accent),
-    var(--e2);
 }
 
 .pb-card-top {
@@ -250,6 +290,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s-2);
+  margin-bottom: 2px;
 }
 .pb-card-ref {
   font-size: var(--t-mono-sm-size);
@@ -301,15 +342,20 @@
 }
 
 /* THE CUSTOMER IS THE HEADING. A deal is a person waiting on an
-   answer, and the reference is an index number. */
+   answer, and the reference is an index number. It takes the
+   heading step whole — "card names, row heads, the thing you scan
+   for" is that step's own definition — instead of the small step
+   with a hand-written weight and leading it wore. */
 .pb-card-who {
-  font-size: var(--t-small-size);
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
   color: var(--fg);
   overflow-wrap: anywhere;
 }
 .pb-card-what {
+  margin-top: 2px;
   font-size: var(--t-caption-size);
   line-height: 1.35;
   color: var(--fg-secondary);
@@ -412,83 +458,13 @@
 
 /* ---- search ------------------------------------------------ */
 
+/* THE SEARCH IS THE SYSTEM'S `Field`. What was here — a bordered
+   box with a glyph, an unstyled input inside it and a focus ring on
+   the box — is field.css's job now, and the only thing the row has
+   to say is how wide a search box is. The primitive takes no class,
+   so the width sits on a box around it. */
 .pb-find {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg-tertiary);
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease);
-}
-/* THE WHOLE FIELD TAKES THE FOCUS RING, not the bare input inside
-   it — a ring drawn around an input that has a border and a glyph
-   outside it reads as two nested boxes. */
-.pb-find:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-wash);
-  color: var(--accent);
-}
-.pb-find-in {
-  width: 168px;
-  border: 0;
-  background: transparent;
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-}
-.pb-find-in:focus {
-  outline: none;
-}
-.pb-find-in::placeholder {
-  color: var(--fg-tertiary);
-}
-/* the browser's own clear button in a `type="search"` is drawn in
-   its own grey and its own size; ours is Escape and the field */
-.pb-find-in::-webkit-search-cancel-button {
-  appearance: none;
-}
-
-/* ---- sort -------------------------------------------------- */
-
-.pb-sort {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-2) 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-}
-.pb-sort:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-wash);
-}
-/* "Sort" IS A LABEL, so §3 lets it be uppercase and tracked. The
-   value beside it is a value and is neither. */
-.pb-sort-say {
-  font-size: var(--t-caption-size);
-  font-weight: 620;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fg-tertiary);
-}
-.pb-sort-in {
-  border: 0;
-  background: transparent;
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  cursor: pointer;
-}
-.pb-sort-in:focus {
-  outline: none;
+  width: 240px;
 }
 
 /* ---- the type filters -------------------------------------- */
@@ -591,6 +567,11 @@
   background: var(--accent-wash);
 }
 
+/* THE MENU IS A FLOATING BOX OF ROWS. The rows are the system's
+   `Row` — dense, and the one the column is using is drawn from
+   `aria-current` — so nothing below says what a row looks like. The
+   box itself stays: a popover floats at `--e-float`, which is not a
+   tone the card primitive has, and a menu is not a card. */
 .pb-col-menu {
   position: absolute;
   top: calc(100% + 4px);
@@ -605,32 +586,6 @@
   background: var(--surface-1);
   box-shadow: var(--e-float);
 }
-.pb-col-pick {
-  display: block;
-  width: 100%;
-  padding: var(--s-2) var(--s-3);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.pb-col-pick:hover {
-  background: var(--surface-2);
-  color: var(--fg);
-}
-.pb-col-pick:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-.pb-col-pick.is-on {
-  color: var(--accent);
-  font-weight: 560;
-}
 
 /* ============================================================
    RESPONSIVE. Under a laptop the toolbar drops below the title
@@ -643,10 +598,8 @@
      to a box nobody can tell is a search box */
   .pb-find {
     flex: 1 1 auto;
+    width: auto;
     min-width: 140px;
-  }
-  .pb-find-in {
-    width: 100%;
   }
 }
 
@@ -790,8 +743,6 @@
 .pb-col[data-wash='full'] .pb-col-n,
 .pb-col[data-wash='soft'] .pb-col-about,
 .pb-col[data-wash='full'] .pb-col-about,
-.pb-col[data-wash='soft'] .pb-none,
-.pb-col[data-wash='full'] .pb-none,
 .pb-col[data-wash='soft'] .pb-col-sortgo,
 .pb-col[data-wash='full'] .pb-col-sortgo,
 .pb-col[data-wash='soft'] .pb-col-shutgo,
@@ -814,9 +765,7 @@
    — a caption that grows to five is a column head that has eaten
    the first card. */
 .pb-col-about {
-  margin: 0 0 var(--s-2);
-  padding: 0 var(--s-2);
-  flex: none;
+  margin: 0;
   font-size: var(--t-caption-size);
   line-height: 1.35;
   color: var(--fg-tertiary);
@@ -863,18 +812,19 @@
    screen to do this.
    ============================================================ */
 
+/* THE PANEL'S SURFACE IS THE SYSTEM'S `Card` (raised, large pad —
+   see BoardSetup.tsx). What is left here is where it sits: over the
+   board, in the page's gutter, in front of the column heads. */
 .se {
   position: relative;
   z-index: 3;
   flex: none;
   margin: 0 var(--page-gutter) var(--s-4);
-  padding: var(--s-4) var(--s-5) var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface-1);
-  box-shadow: var(--e-float);
 }
 
+/* The Done control is the system's button and takes no class; it
+   is auto-placed into the second column because the name and the
+   line each claim the first. */
 .se-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -899,34 +849,9 @@
   line-height: 1.45;
   color: var(--fg-secondary);
 }
-.se-shut {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-tertiary);
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.se-shut:hover {
-  background: var(--surface-2);
-  color: var(--fg);
-}
-.se-shut:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
 .se-list {
   list-style: none;
-  margin: 0;
+  margin: var(--s-2) 0 var(--s-5);
   padding: 0;
 }
 
@@ -957,7 +882,10 @@
      the last track where the row can still breathe. */
   grid-template-columns:
     auto minmax(140px, 320px) auto auto auto auto auto auto minmax(0, 1fr);
-  align-items: center;
+  /* `end`, not `center`: the name is a labelled `Field` now, and
+     the swatches, the tick boxes and the count belong on the line
+     of its INPUT, not on the gap between its label and its input. */
+  align-items: end;
   gap: var(--s-2) var(--s-3);
   padding: var(--s-2) 0;
   border-top: 1px solid var(--line-subtle);
@@ -1000,21 +928,10 @@
   cursor: default;
 }
 
-.se-in {
+/* THE NAME IS THE SYSTEM'S `Field`; this box is its grid cell and
+   the place its blur is heard (see BoardSetup.tsx). */
+.se-namebox {
   min-width: 0;
-  height: var(--h-md);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-body-size);
-}
-.se-in:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-wash);
 }
 
 .se-tones {
@@ -1073,31 +990,6 @@
   color: var(--fg-tertiary);
 }
 
-.se-drop {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-tertiary);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.se-drop:hover {
-  background: var(--danger-wash);
-  color: var(--danger);
-}
-.se-drop:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
 /* THE REASON, UNDER THE ROW IT BELONGS TO. Spans the full width so
    it reads as a sentence rather than as a caption on the last
    column. */
@@ -1113,86 +1005,17 @@
   color: var(--fg);
 }
 
+/* Both controls in the foot are the system's buttons — Add a stage
+   neutral, Start again ghost — so the foot only says that they sit
+   at opposite ends. */
 .se-foot {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--s-3);
   margin-top: var(--s-3);
   padding-top: var(--s-3);
   border-top: 1px solid var(--line-subtle);
-}
-.se-add {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition: background var(--d-fast) var(--ease);
-}
-.se-add:hover {
-  background: var(--surface-2);
-}
-.se-add:focus-visible,
-.se-reset:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-.se-reset {
-  margin-left: auto;
-  padding: 2px 4px;
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-tertiary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  cursor: pointer;
-}
-.se-reset:hover {
-  color: var(--fg);
-}
-
-/* ---- the door on the toolbar ------------------------------- */
-
-.pb-stages-go {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.pb-stages-go:hover {
-  background: var(--surface-2);
-  color: var(--fg);
-}
-.pb-stages-go[aria-expanded='true'] {
-  border-color: var(--accent);
-  background: var(--accent-wash);
-  color: var(--accent);
-}
-.pb-stages-go:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
 }
 
 @media (max-width: 1100px) {
@@ -1237,6 +1060,9 @@
 .pb-col.is-shut {
   flex: 0 0 44px;
   min-width: 0;
+  /* one track, the whole height: the fold has no well, only the
+     handle with the name turned on its side */
+  grid-template-rows: minmax(0, 1fr);
   padding: var(--s-2) 0;
   overflow: hidden;
 }
@@ -1450,36 +1276,6 @@
   color: var(--fg-secondary);
   overflow-wrap: anywhere;
 }
-.do-shut {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-tertiary);
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.do-shut:hover {
-  background: var(--surface-2);
-  color: var(--fg);
-}
-.do-shut:active {
-  transform: scale(0.97);
-}
-.do-shut:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
 /* TWO COLUMNS AND A FULL-WIDTH FOOT UNDER THEM. The facts are a
    dl of short pairs and want a narrow measure; the thread is prose
    and wants a wide one. Links and files run the whole width
@@ -1576,63 +1372,11 @@
   color: var(--fg-tertiary);
 }
 
-/* THE DOOR TO THE DOCUMENT, and it is deliberately NOT the accent
-   one. The pane exists for the conversation, so the accent is on
-   Add note; this is a way out of the pane, drawn like every other
-   secondary control on this screen. */
-/* THE TWO DOORS IN THE FOOT. `do-open` is the primary — the
-   document itself — and `do-more` is the lateral one to the whole
-   record. Same anatomy, different weight, so which is which is
-   readable without reading the words. */
-.do-open,
-.do-more {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.do-more {
-  border-color: transparent;
-  background: transparent;
-  color: var(--fg-secondary);
-  font-weight: 500;
-}
-.do-open:hover {
-  background: var(--surface-3);
-  border-color: var(--line-strong);
-}
-.do-more:hover {
-  background: var(--surface-3);
-  color: var(--fg);
-}
-.do-open:active,
-.do-more:active {
-  transform: scale(0.97);
-}
-.do-open:focus-visible,
-.do-more:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.dp-thread-say {
-  margin: 0 0 var(--s-2);
-  color: var(--fg-tertiary);
-}
+/* THE TWO DOORS IN THE FOOT are the system's buttons: the document
+   itself is neutral and the whole record is ghost, so which is
+   which is readable without reading the words. Neither is the
+   accent one — the pane exists for the conversation, and the accent
+   is on Add note. */
 
 .dp-none {
   margin: 0;
@@ -1641,6 +1385,7 @@
   color: var(--fg-tertiary);
 }
 
+/* Each note is the system's flat `Card`; the list only spaces them. */
 .dp-thread {
   display: flex;
   flex-direction: column;
@@ -1648,12 +1393,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-}
-.dp-note {
-  padding: var(--s-3);
-  border: 1px solid var(--line-subtle);
-  border-radius: var(--r-control);
-  background: var(--surface-2);
 }
 .dp-note-top {
   display: flex;
@@ -1757,47 +1496,10 @@
   font-size: var(--t-mono-sm-size);
   color: var(--fg-tertiary);
 }
-/* THE PANE'S ONE PRIMARY ACT. Never disabled: pressing it with an
-   empty box prints the reason under the box (rule 10), which is
-   the whole of why there is no `:disabled` rule here. */
-.dp-say-go {
-  height: var(--h-md);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--accent);
-  border-radius: var(--r-control);
-  background: var(--accent);
-  /* `--accent-fg`, NOT `--fg-on-accent`, and the difference is a
-     failure not a preference. Both tokens exist; `--fg-on-accent`
-     is still #ffffff in the dark theme, where the accent is a
-     BRIGHT blue — measured here at 2.53:1, which is the exact
-     figure ds.css records beside `--accent-fg` as the defect that
-     token was added to fix. `--accent-fg` is dark ink on dark's
-     bright accent and measures 7.30:1. This button was written
-     with the wrong one and a sweep caught it; the name that reads
-     right is the one that fails. */
-  color: var(--accent-fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.dp-say-go:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-.dp-say-go:active {
-  background: var(--accent-press);
-  border-color: var(--accent-press);
-  transform: scale(0.97);
-}
-.dp-say-go:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+/* THE PANE'S ONE PRIMARY ACT is the system's primary button, and
+   its ink is button.css's problem to have measured: `--accent-fg`,
+   dark on dark's bright accent, which this file once had to say
+   by hand. */
 
 /* ============================================================
    RESPONSIVE. The deal used to be a 360px pane sharing the row
@@ -1839,7 +1541,10 @@
    ============================================================ */
 .pb-tools {
   display: flex;
-  align-items: center;
+  /* the search is a labelled `Field` — a label over a box — and the
+     pickers, the chips and the door beside it line up with the BOX,
+     which is the bottom of the row */
+  align-items: flex-end;
   flex-wrap: wrap;
   gap: var(--s-3);
   flex: none;
@@ -1931,44 +1636,24 @@
 /* WHAT BELONGS IN THIS COLUMN. Under the name it belongs to rather
    than in a track of its own: it is a caption for that field, and
    a sentence sitting in the seventh column of a row would read as
-   a caption for the delete button. */
-.se-about {
+   a caption for the delete button. It is the system's `Field`, so
+   this box is only its cell. */
+.se-aboutbox {
   grid-column: 2 / -1;
   min-width: 0;
-  height: var(--h-sm);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line-subtle);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-}
-.se-about::placeholder {
-  color: var(--fg-tertiary);
-}
-.se-about:focus {
-  outline: none;
-  border-color: var(--accent);
-  color: var(--fg);
-  box-shadow: 0 0 0 3px var(--accent-wash);
 }
 
 /* ============================================================
-   WHAT EACH CARD SHOWS — the second half of the panel.
+   WHAT EACH CARD SHOWS — the second half of the panel. Each half is
+   headed by the system's `SectionHead`, which is the one uppercase
+   style, drawn once.
    ============================================================ */
 
-/* THE CAPTION FOR EACH HALF. A label style, which §3 allows: it
-   names a section rather than a thing. */
-.se-part {
-  margin: var(--s-4) 0 var(--s-2);
-  color: var(--fg-tertiary);
-}
 /* THE SPINE, SAID OUT LOUD. A person looking for "customer" in the
    list below and not finding it would conclude the board had lost
    it. */
 .se-spine {
-  margin: 0 0 var(--s-3);
+  margin: var(--s-2) 0 var(--s-3);
 }
 
 .se-fields {
@@ -2130,10 +1815,6 @@
 .dp-part {
   min-width: 0;
 }
-.dp-part-say {
-  margin: 0 0 var(--s-2);
-  color: var(--fg-tertiary);
-}
 /* HOW MUCH OF THE THREAD IS NOT SHOWN, and where the rest is. A
    popup that quietly dropped the first six notes would be a popup
    that lies about a conversation. */
@@ -2247,6 +1928,8 @@
 
 /* ---- links and files, which are one kind of list ----------- */
 
+/* Each link and each file is the system's `Row` — a still row with
+   its remove button in the trail — so the lists only space them. */
 .dp-links,
 .dp-files {
   display: flex;
@@ -2256,30 +1939,15 @@
   margin: 0 0 var(--s-3);
   padding: 0;
 }
-.dp-link,
-.dp-file {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  min-width: 0;
-  padding: 3px var(--s-1) 3px var(--s-2);
-  border-radius: var(--r-control);
-  transition: background var(--d-fast) var(--ease);
-}
-.dp-link:hover,
-.dp-file:hover {
-  background: var(--surface-2);
-}
+/* the link takes the row's own name step; only its ink and its
+   underline are this rule's */
 .dp-link-go {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
   min-width: 0;
-  flex: 1 1 auto;
-  padding: var(--s-1) 0;
   border-radius: var(--r-control);
   color: var(--accent);
-  font-size: var(--t-small-size);
   text-decoration: none;
 }
 .dp-link-go:hover {
@@ -2300,119 +1968,30 @@
   overflow-wrap: anywhere;
 }
 
-/* THE REMOVE HANDLE. Quiet until the row is under the cursor, the
-   rule the column head own two handles keep — a list of eight
-   links with eight lit bins is eight controls competing with eight
-   names. */
-.dp-drop {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-tertiary);
-  opacity: 0;
-  cursor: pointer;
-  transition:
-    opacity var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.dp-link:hover .dp-drop,
-.dp-file:hover .dp-drop,
-.dp-drop:focus-visible {
-  opacity: 1;
-}
-.dp-drop:hover {
-  background: var(--danger-wash);
-  color: var(--danger);
-}
-.dp-drop:active {
-  background: var(--danger-wash);
-  color: var(--danger);
-  transition-duration: var(--d-press);
-}
-.dp-drop:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-/* WITH NO POINTER THERE IS NO HOVER, and then "quiet until wanted"
-   means "invisible, permanently". The column head's own handles can
-   afford that — folding a column is a convenience with the whole
-   board as its alternative. Removing a link has no alternative at
-   all, so on a touch screen these are simply drawn. */
-@media (hover: none) {
-  .dp-drop {
-    opacity: 1;
-  }
-}
+/* THE REMOVE HANDLE is the system's ghost button in the row's
+   trail. It is always drawn: the old handle was quiet until the
+   row was under the cursor, and the primitive has no reveal — and
+   on a touch screen this file already had to draw it always,
+   because removing a link has no alternative at all. */
 
+/* ADDING A LINK: two labelled `Field`s and the system's button.
+   The fields are a label over a box, so the row aligns on the
+   BOXES — `flex-end` — and the button lands on the same line. The
+   child rule gives the two fields the room to grow; the primitive
+   takes no class, and a search box in a flex row has to be told
+   how wide it may be by whatever holds it. */
 .dp-add {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: var(--s-2);
 }
-.dp-add-in {
+.dp-add > * {
+  flex: 1 1 140px;
   min-width: 0;
-  flex: 1 1 120px;
-  height: var(--h-sm);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
 }
-.dp-add-url {
-  flex: 1 1 160px;
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-}
-.dp-add-in::placeholder {
-  color: var(--fg-tertiary);
-}
-.dp-add-in:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-wash);
-}
-.dp-add-go {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
+.dp-add > button {
   flex: none;
-  height: var(--h-sm);
-  padding: 0 var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.dp-add-go:hover {
-  background: var(--surface-3);
-  border-color: var(--line-strong);
-}
-.dp-add-go:active {
-  transform: scale(0.97);
-}
-.dp-add-go:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 .dp-attach {
   margin-top: var(--s-1);
@@ -2431,20 +2010,6 @@
   border: 0;
   clip-path: inset(50%);
   overflow: hidden;
-  white-space: nowrap;
-}
-.dp-file-name {
-  min-width: 0;
-  flex: 1 1 auto;
-  font-size: var(--t-small-size);
-  color: var(--fg);
-  overflow-wrap: anywhere;
-}
-.dp-file-size {
-  flex: none;
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-tertiary);
   white-space: nowrap;
 }
 .dp-file-thumb {
@@ -2509,6 +2074,8 @@
   outline-offset: -2px;
 }
 
+/* The way back (ghost) and the door out (neutral) are the system's
+   buttons; the bar only lays them out. */
 .dr-bar {
   display: flex;
   align-items: center;
@@ -2517,72 +2084,12 @@
   padding: var(--s-3) var(--page-gutter);
   border-bottom: 1px solid var(--line-subtle);
 }
-.dr-back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-3) 0 var(--s-2);
-  border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 550;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.dr-back:hover {
-  background: var(--surface-2);
-  color: var(--fg);
-}
-.dr-back:active {
-  transform: scale(0.97);
-}
-.dr-back:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
 /* THE REFERENCE IS THE CRUMB. It takes the middle and the door out
    takes the end, so the bar reads back — what this is — away. */
 .dr-ref {
   margin-right: auto;
   font-size: var(--t-mono-sm-size);
   color: var(--fg-tertiary);
-}
-.dr-open {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: var(--h-md);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 560;
-  cursor: pointer;
-  transition:
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease),
-    transform var(--d-press) var(--ease);
-}
-.dr-open:hover {
-  background: var(--surface-3);
-  border-color: var(--line-strong);
-}
-.dr-open:active {
-  transform: scale(0.97);
-}
-.dr-open:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 /* THE PAGE SCROLLS, NOT THE WINDOW — the contract every stage in
@@ -2715,21 +2222,11 @@
    rule below is for.
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .pb-card,
+  .pb-deal,
   .pb-col,
   .pb-col-open,
   .pb-col-shutgo,
   .pb-col-sortgo,
-  .do-open,
-  .do-more,
-  .do-shut,
-  .dp-say-go,
-  .dp-add-go,
-  .dp-drop,
-  .dp-link,
-  .dp-file,
-  .dr-back,
-  .dr-open,
   .se-field,
   .se-wash,
   .se-tone {
@@ -2739,14 +2236,7 @@
   .do-scrim {
     animation: none;
   }
-  .pb-card.is-held,
-  .do-open:active,
-  .do-more:active,
-  .do-shut:active,
-  .dp-say-go:active,
-  .dp-add-go:active,
-  .dr-back:active,
-  .dr-open:active,
+  .pb-deal.is-held,
   .se-field:active,
   .se-tone:hover {
     transform: none;

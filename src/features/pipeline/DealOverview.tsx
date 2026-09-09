@@ -51,6 +51,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import type { JSX, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { ArrowSquareOut, ArrowsOutSimple, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
+import { Button } from '@/ui'
 import type { QuoteDef } from '@/features/quote'
 import { useDealDesk } from './dealDesk'
 import {
@@ -164,9 +165,13 @@ export function DealOverview({
       >
         <header className="do-head">
           <span className="do-ref ds-mono">{quote.reference}</span>
-          <button type="button" className="do-shut" onClick={onClose} aria-label="Close">
+          {/* Auto-placed into the head grid's second column: the
+              primitive takes no class, and the three lines beside it
+              each claim column one, so the only empty cell is the
+              top-right one. */}
+          <Button tone="ghost" size="sm" onClick={onClose} aria-label="Close">
             <X size={ICON_SIZE.small} aria-hidden="true" />
-          </button>
+          </Button>
           {/* THE CUSTOMER IS THE HEADING, for the same reason it is
               on the card: a deal is a person waiting on an answer,
               and the reference is an index number. */}
@@ -246,14 +251,17 @@ export function DealOverview({
               is everything said and attached; the quote is the
               document itself. Naming both is cheaper than one
               button that has to guess which was meant. */}
-          <button type="button" className="do-more" onClick={onOpenRecord}>
-            <ArrowsOutSimple size={ICON_SIZE.tiny} aria-hidden="true" />
+          <Button
+            tone="ghost"
+            glyph={<ArrowsOutSimple size={ICON_SIZE.tiny} aria-hidden="true" />}
+            onClick={onOpenRecord}
+          >
             The whole record
-          </button>
-          <button type="button" className="do-open" onClick={() => onOpenQuote(quote.id)}>
+          </Button>
+          <Button onClick={() => onOpenQuote(quote.id)}>
             Open the quote
             <ArrowSquareOut size={ICON_SIZE.tiny} aria-hidden="true" />
-          </button>
+          </Button>
         </footer>
       </div>
     </div>
