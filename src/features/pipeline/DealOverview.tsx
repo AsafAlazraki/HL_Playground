@@ -53,7 +53,14 @@ import { ArrowSquareOut, ArrowsOutSimple, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import type { QuoteDef } from '@/features/quote'
 import { useDealDesk } from './dealDesk'
-import { DealFacts, DealFiles, DealLinks, DealPhoto, DealThread } from './dealParts'
+import {
+  DealFacts,
+  DealFiles,
+  DealHandovers,
+  DealLinks,
+  DealPhoto,
+  DealThread,
+} from './dealParts'
 import type { StageDef } from './stageStore'
 
 /** HOW MANY SPECS BELONG ON A GLANCE. The document prints all of
@@ -66,6 +73,12 @@ const SPECS = 4
 /** HOW MUCH OF THE THREAD. The last three are what "where is this
  *  up to" means; the rest is a record, and the record has a page. */
 const NOTES = 3
+
+/** HOW MUCH OF THE HANDOVER TRAIL. Two: the one that put it where
+ *  it is and the one before, which together answer "has this been
+ *  passed around". The whole chain is a record and the record has
+ *  a page. */
+const HANDS = 2
 
 export interface DealOverviewProps {
   orgSlug: string
@@ -169,6 +182,17 @@ export function DealOverview({
               stage={stage}
               arrived={desk.arrived}
               specLimit={SPECS}
+              /* WHOSE IT IS, AND THE ACT THAT CHANGES IT. Both
+                 surfaces pass the same object off the same desk, so
+                 reassigning from the glance and reassigning from the
+                 file are one code path with one toast. */
+              owner={{
+                at: desk.owner.at,
+                roles: desk.owner.roles,
+                last: desk.owner.trail[desk.owner.trail.length - 1],
+                why: desk.owner.why,
+                onAssign: desk.owner.assign,
+              }}
             />
           </div>
 
@@ -182,6 +206,12 @@ export function DealOverview({
               why={desk.note.why}
               unkept={desk.note.unkept}
               onAdd={desk.note.add}
+            />
+            <DealHandovers
+              quote={quote}
+              trail={desk.owner.trail}
+              roles={desk.owner.roles}
+              limit={HANDS}
             />
           </div>
 

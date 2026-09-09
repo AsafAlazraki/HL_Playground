@@ -49,6 +49,13 @@ export interface FieldSlot {
   col: number
   /** the band this column is in, when it is in one */
   section?: ColumnSection
+  /** THE PIN SURVIVED ITS OWN BAND'S FOLD. This column is the pinned
+   *  display column, its run is folded, and it is the only piece of
+   *  that run still drawn — `foldedRun` is how many columns the whole
+   *  run holds, so the header over it can say what is missing and the
+   *  fold control can say what a press would bring back. Absent on
+   *  every other column, folded or not. */
+  foldedRun?: number
 }
 
 export interface FoldSlot {
@@ -74,11 +81,45 @@ export interface SectionModel {
  *  Identity matters: when nothing is folded and nothing is banded the
  *  SAME `fields` array is handed straight back, so every memo
  *  downstream (`hasFormula`, `buildViewRows`, `viewRows`) keeps
- *  biting and a section-less table costs exactly nothing. */
+ *  biting and a section-less table costs exactly nothing.
+ *
+ *  THE FOLD MAY NOT TAKE THE NAME OF THE ROW WITH IT.
+ *
+ *  A folded band drops its columns out of the addressable set, and for
+ *  every band but one that is exactly right. The exception is the band
+ *  holding the pinned display column, and it is not an edge case:
+ *  measured on the real seed, the display column is inside a band on
+ *  **53 of 53** tables, so every one of them lost its identity column
+ *  the moment a band folded. Two ways to get there, both one press:
+ *
+ *    Rigging Kits, 44 columns, at 1280 — fold IDENTITY alone and the
+ *    sheet is still 5,444px wide with 4,164px of sideways scroll, and
+ *    nothing on screen says which kit a price belongs to.
+ *
+ *    COLLAPSE ALL then open the money band — the whole reason the
+ *    control exists — and the survivors are chips and figures. On
+ *    Highfield Inflatables that is 588 rows of dollars with no boat.
+ *
+ *  That is the failure the pin was built to prevent, arrived at
+ *  through the app's own shortcut for reaching a price. So a folded
+ *  run that holds the pin keeps the pin: one column, still sticky,
+ *  still the same cell, and the run's other columns fold away behind
+ *  it. The chip is not drawn for that run — the pinned column IS the
+ *  band's evidence on screen, and it already carries the band's header
+ *  and its fold control (`bandsOf`), so a second name beside it would
+ *  read as a second section.
+ *
+ *  It costs one column where there used to be one chip: 184px at the
+ *  text default against `FOLD_W`'s 132, and as much as
+ *  `NAME_MAX_SHARE` of the scroller once `nameColumnWidth` has grown
+ *  it — 306px on Stacer, measured in the running app. The note on
+ *  `FOLD_MIN_W` works out what that leaves the chips at the smallest
+ *  window this is promised on. */
 export function buildSections(
   fields: FieldDef[],
   sections: readonly ColumnSection[] | undefined,
   collapsed: ReadonlySet<string>,
+  pinFieldId?: string,
 ): SectionModel {
   if (!sections || sections.length === 0) {
     return { fields, slots: plainSlots(fields), banded: false }
@@ -113,7 +154,34 @@ export function buildSections(
     while (end < fields.length && sectionOf(fields[end])?.id === section?.id) end += 1
 
     if (section && collapsed.has(section.id)) {
-      slots.push({ kind: 'fold', section, count: end - i })
+      /* the pin, if this run holds it — see the note on the function */
+      let pinAt = -1
+      if (pinFieldId !== undefined) {
+        for (let k = i; k < end; k += 1) {
+          if (fields[k].id === pinFieldId) {
+            pinAt = k
+            break
+          }
+        }
+      }
+      if (pinAt < 0) {
+        slots.push({ kind: 'fold', section, count: end - i })
+      } else if (end - i === 1) {
+        /* a band whose ONLY column is the pin: folding it would hide
+           nothing, so it is drawn plainly rather than as a control
+           that reports a fold it did not perform. */
+        slots.push({ kind: 'field', field: fields[pinAt], col: kept.length, section })
+        kept.push(fields[pinAt])
+      } else {
+        slots.push({
+          kind: 'field',
+          field: fields[pinAt],
+          col: kept.length,
+          section,
+          foldedRun: end - i,
+        })
+        kept.push(fields[pinAt])
+      }
     } else {
       for (let k = i; k < end; k += 1) {
         slots.push({ kind: 'field', field: fields[k], col: kept.length, section })
@@ -170,8 +238,10 @@ function pinIndexOf(
 }
 
 /** How much width the pinned display column holds against the left
- *  edge — 0 when nothing is pinned (no display column, or its band is
- *  folded away).
+ *  edge — 0 only when the table has no display column at all. It USED
+ *  to be 0 whenever the pin's band was folded, which is the half of
+ *  the pin that was missing; `buildSections` now keeps the pin through
+ *  its own band's fold, so a folded sheet still charges for it.
  *
  *  Anything that scrolls a column to the left edge has to subtract
  *  this, or it parks the thing it just revealed UNDER the pin, which
@@ -204,7 +274,18 @@ export function pinWidthOf(
  *  the smallest window this is promised on. (It used to have to make
  *  room for a locked UID column in front of the reader's own as well;
  *  the register stopped drawing that — see useTableData.ts — so the
- *  floor now has more slack than it was set with, not less.) */
+ *  floor now has more slack than it was set with, not less.)
+ *
+ *  AND IT NOW HAS TO MAKE ROOM FOR THE PIN, which survives its own
+ *  band's fold. Re-measured rather than assumed, because that is a
+ *  column where there used to be a chip. Worst case: eleven bands at
+ *  1280 with the name column at its own ceiling of `NAME_MAX_SHARE`
+ *  (0.38 × 1280 = 486px) leaves (1280 − 48 − 40 − 486) ÷ 11 = 64.18px
+ *  a chip — exactly this floor, for a sheet of 1,278px. The promise
+ *  holds with 2px to spare and no more, so a TWELFTH band at a maximal
+ *  name is the first thing that would scroll. On the real file the
+ *  widest table has eight bands and COLLAPSE ALL measures 1,196px;
+ *  `pinnedColumn.test.ts` holds both figures. */
 export const FOLD_MIN_W = 64
 
 /** The width every folded chip is drawn at, given the window. Pure —
@@ -506,6 +587,12 @@ export interface HeaderBand {
   /** this run is exactly the pinned display column, and freezes with
    *  it — so the pin never sits under another section's name */
   pinned?: true
+  /** the pin is all that is left of a run its band folded away, and
+   *  this is how many columns that run holds. The piece is NOT
+   *  `collapsed` — it spans a real, addressable column — but its
+   *  control opens rather than folds, and its name carries the count
+   *  of what is missing. Only ever set beside `pinned`. */
+  folded?: number
   /** what is left of a run the pin cut in half: draws its section's
    *  ink and stays the fold control, but does NOT repeat the name.
    *  A section names itself ONCE, on the piece that is always on
@@ -560,6 +647,7 @@ export function bandsOf(
       x,
       w,
       ...(isPin ? { pinned: true as const } : {}),
+      ...(isPin && slot.foldedRun !== undefined ? { folded: slot.foldedRun } : {}),
     }
     out.push(band)
     /* a pinned run is closed the moment it opens: the column after it
@@ -584,8 +672,11 @@ export function bandsOf(
     }
     /* every piece names the whole run: the fold control on any of them
        folds all of it, and a tooltip that promised "1 column" while
-       folding eleven would be a lie about what the press does */
-    const runCount = pieces.reduce((n, p) => n + p.count, 0)
+       folding eleven would be a lie about what the press does.
+       A pinned piece that survived its run's fold already knows the
+       run's whole size — it stands for columns that are not drawn at
+       all, so `count` (which is 1) would undercount it. */
+    const runCount = pieces.reduce((n, p) => n + (p.folded ?? p.count), 0)
     for (const p of pieces) p.runCount = runCount
   }
 

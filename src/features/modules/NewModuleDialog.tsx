@@ -78,18 +78,56 @@ interface PickGroup {
   items: EntityDef[]
 }
 
+/** THE PANEL'S THREE ANSWERS, FILLED IN BEFORE IT OPENS.
+ *
+ *  The front door proposes modules off what the sheet already
+ *  declares — "You have 7 boat tables and 3 motor tables" — and a
+ *  proposal a person has read and pressed has ALREADY answered
+ *  clicks 1 and 2. Handing that answer over as a seed is what keeps
+ *  there being one create path in this application: the proposer
+ *  computes, this panel still performs, and the person still reads
+ *  the tables and presses Create.
+ *
+ *  IT IS NOT A SHORTCUT PAST THE PANEL. Everything arrives editable
+ *  and visible — the picked row is picked, the siblings are ticked,
+ *  the name is in the field — so the third click is the same
+ *  deliberate one it was, over a state the person can change or
+ *  abandon. See `proposals.ts` in the dashboard for what fills it. */
+export interface NewModuleDialogSeed {
+  /** the table the module is about. Ignored when it is not one this
+   *  panel would have offered — a join, a retired table, or a table
+   *  no longer on the sheet — because a seed may not widen what the
+   *  panel is willing to build from. */
+  tableId: string
+  /** siblings to arrive ticked. `create` filters them against the
+   *  panel's own offer, so a seed cannot smuggle in a table the
+   *  offer would not have listed. */
+  alsoIds?: readonly string[]
+  /** the name to arrive in the field. Omitted, the table's own. */
+  name?: string
+  /** the description to arrive in the field. Omitted, the table's
+   *  own — which is right when the module IS that table and wrong
+   *  the moment it is seven brands, so a proposal over many tables
+   *  passes '' rather than borrowing one member's line. */
+  description?: string
+}
+
 export interface NewModuleDialogProps {
   /** omit it and the panel is up: hosts that mount it on demand need no flag */
   open?: boolean
   onClose: () => void
   /** the module that was made, so the host can open it straight away */
   onCreated?: (moduleId: string) => void
+  /** what to arrive filled in, when something already knows the
+   *  answer. Absent, the panel opens blank exactly as it always has */
+  seed?: NewModuleDialogSeed
 }
 
 export function NewModuleDialog({
   open: openProp,
   onClose,
   onCreated,
+  seed,
 }: NewModuleDialogProps): ReactElement | null {
   const open = openProp ?? true
   const entities = useProjectStore((s) => s.entities)
@@ -102,20 +140,40 @@ export function NewModuleDialog({
   const closeRef = useRef(onClose)
   closeRef.current = onClose
 
-  const [pickedId, setPickedId] = useState<string | null>(null)
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [alsoIds, setAlsoIds] = useState<string[]>([])
+  /* A SEED MAY NOT WIDEN WHAT THIS PANEL BUILDS FROM. The same two
+     predicates `offered` below is built on, asked of the seed before
+     it is honoured — so a proposal naming a table that has since
+     been retired, turned into a join or deleted opens the blank
+     panel rather than one standing on a table it refuses to list. */
+  const asked = seed ? entities[seed.tableId] : undefined
+  const start = asked && canBeModuleMaster(asked) && !isRetired(asked) ? asked : undefined
+
+  /* THE SEED IS READ AT MOUNT, WHICH IS WHY IT IS AN INITIAL STATE
+     AND NOT AN EFFECT. An effect over a prop object would re-run
+     whenever a host rebuilt `{ tableId, alsoIds }` inline and wipe
+     the name field under somebody typing in it. A host that changes
+     the seed while the panel is up gives it a `key` — remounting is
+     what "a different answer" means here, and it is one word at the
+     call site instead of a resynchronising effect in this file. */
+  const [pickedId, setPickedId] = useState<string | null>(start?.id ?? null)
+  const [name, setName] = useState(start ? (seed?.name ?? start.name) : '')
+  const [description, setDescription] = useState(
+    start ? (seed?.description ?? start.description ?? '') : '',
+  )
+  const [alsoIds, setAlsoIds] = useState<string[]>(start ? [...(seed?.alsoIds ?? [])] : [])
 
   /* Every opening starts clean. A panel that remembers the last
-     answer is a panel you have to check before you trust it. */
+     answer is a panel you have to check before you trust it — and a
+     SEEDED panel is not remembering, it is holding the answer that
+     was just pressed, so it is the one opening this does not undo. */
   useEffect(() => {
     if (!open) return
+    if (seed) return
     setPickedId(null)
     setName('')
     setDescription('')
     setAlsoIds([])
-  }, [open])
+  }, [open, seed])
 
   useEffect(() => {
     if (!open) return

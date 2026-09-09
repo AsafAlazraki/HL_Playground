@@ -4746,3 +4746,523 @@
 .cn-conseq-note {
   text-wrap: pretty;
 }
+
+/* ============================================================
+   THE FIT SENTENCE — UX_PASS §11, drawn.
+
+   It shares every token style with the limit sentence above,
+   because it IS the limit sentence's surface with a different
+   vocabulary. What is added here is the four things a fit has
+   that a limit does not: a column of comparisons, a row of output
+   columns, a foot saying what happens when nothing fits, and the
+   live answer beside all three.
+
+   TWO COLOUR DECISIONS, AND THEY ARE THE SAME DECISION.
+
+   §11's fourth fix asks that `HP Rating` and `Min HP` cannot be
+   misread as two columns of one table, and the preview
+   (src/design/flow.css:189-196) drew that as a 10 % kind-tinted
+   fill behind each token. DESIGN_CONTRACT §11 forbids exactly
+   that — "kind hue is a rail, a dot or a glyph. Never a fill
+   behind text." So the hue lands in the two places the contract
+   names: the RAIL the live token already draws under itself, and
+   the DOT on each output chip. Nothing is filled, and no small
+   text is set on a tint.
+
+   The hue is `accentVar(entity.accent)` set inline as `--kind`,
+   which is what `RulesLedger` already does two thousand lines
+   above — and NOT `--kind-<kind>`, because a rule pairing
+   Highfield with Stacer is two BOAT tables and a kind would give
+   them one colour, which is the confusion this is meant to end.
+
+   THE ACCENT IS NOT SPENT HERE. Blue stays on the one primary
+   (`.cn-add`), on the chosen door and on the token being edited.
+   The comparison rail, the chips and the answer's chrome are all
+   hairline.
+
+   AND NOTHING ANIMATES. This sentence reflows as words are chosen
+   and a person types inside it, so the only transitions are the
+   hover/press/focus ones every pressable thing owes (§8) — no
+   arrival, no stagger, and no `animation` to need an escape.
+   ============================================================ */
+
+.cn-fit {
+  min-width: 0;
+}
+
+.cn-fit-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  /* the paragraph's own leading is what gives the tokens air; the
+     gap only keeps two adjacent tokens from touching */
+  gap: 0 4px;
+  min-width: 0;
+}
+
+/* THE COMPARISONS ARE A COLUMN, NOT A PARAGRAPH. Two limits on one
+   thing that do not line up read as two unrelated sentences rather
+   than a pair — which is why the preview indented them against a
+   rail, and it is right. */
+.cn-fit-clauses {
+  margin: var(--sp-2) 0 var(--sp-3) var(--sp-3);
+  padding-left: var(--sp-4);
+  border-left: 2px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.cn-fit-clause {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 4px;
+  min-width: 0;
+}
+
+/* Removing a comparison is a small, reversible act on a draft, so
+   it is a quiet mark that only colours on approach. */
+.cn-fit-x {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.cn-fit-x:hover {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+.cn-fit-x:active {
+  transition-duration: var(--t-press);
+}
+.cn-fit-x:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* A DASHED STUB, because it is an empty slot and not a verb. The
+   dashed edge is the same signal an unanswered token wears. */
+.cn-fit-add {
+  align-self: flex-start;
+  margin-top: 2px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.cn-fit-add:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.cn-fit-add:active {
+  transition-duration: var(--t-press);
+}
+.cn-fit-add:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.cn-fit-show {
+  margin-top: var(--sp-2);
+}
+
+.cn-fit-cols {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: var(--sp-1) 0 0 var(--sp-3);
+  min-width: 0;
+}
+
+.cn-fit-col {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  height: 26px;
+  padding: 0 4px 0 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-size: var(--ui-s-size);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* THE DOT IS THE HUE, and a dot is one of the three places the
+   contract allows it. A chip whose table has no accent falls back
+   to the hairline rather than borrowing somebody's colour. */
+.cn-fit-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--kind, var(--hairline-strong));
+}
+
+.cn-fit-col-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cn-fit-col-x {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft);
+}
+.cn-fit-col-x:hover {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+.cn-fit-col-x:active {
+  transition-duration: var(--t-press);
+}
+.cn-fit-col-x:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.cn-fit-foot {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+/* THE SIDE'S OWN HUE, AS A RAIL. `.cn-tok.is-live` already paints
+   its underline out of `--cn-tok-line`; this says only which
+   colour, at one step more specificity so it wins, and hands hover
+   and focus straight back to the accent — a token being edited is
+   the accent's job everywhere else in this file and this is not an
+   exception. */
+.cn-fit-side .cn-tok.is-live {
+  --cn-tok-line: var(--kind, var(--hairline-strong));
+}
+.cn-fit-side .cn-tok.is-live:hover,
+.cn-fit-side .cn-tok.is-live:has(.cn-tok-input:focus-visible),
+.cn-fit-side .cn-tok.is-live:has(.cn-tok-typed:focus-visible) {
+  --cn-tok-line: var(--blue);
+}
+
+/* ============================================================
+   THE ANSWER, WHILE YOU WRITE — §11's second fix.
+
+   It sits inside `.cn-new-effect` in the composer and directly
+   inside a card elsewhere, so it brings no frame of its own.
+   ============================================================ */
+
+.cn-fitres {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.cn-fitres-top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* A COUNT IS A FIGURE, so it is mono and tabular — and it never
+   animates, because a number that tweens cannot be read in
+   flight. */
+.cn-fitres-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+
+.cn-fitres-of {
+  min-width: 0;
+  font-size: var(--ui-s-size);
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* "live" is a state, not a decoration: it says the figure beside it
+   was computed on this render. --viridian is what this file already
+   uses for "being checked". */
+.cn-fitres-live {
+  margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--ui-xs-size);
+  color: var(--viridian);
+}
+.cn-fitres-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--viridian);
+}
+
+.cn-fitres-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-sm);
+  background: var(--warning-wash);
+  color: var(--ink);
+}
+.cn-fitres-note > svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--warning);
+}
+.cn-fitres-note-text {
+  min-width: 0;
+  font-size: var(--ui-s-size);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.cn-fitres-note-act {
+  margin-top: var(--sp-2);
+}
+
+/* A WIDE ANSWER SCROLLS INSIDE ITS OWN BOX. Seven columns of a real
+   fitment result do not fit a 360px rail, and a page that scrolls
+   sideways is the failure this avoids. */
+.cn-fitres-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+
+.cn-fitres-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ui-s-size);
+}
+.cn-fitres-table th {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper-sunken);
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+.cn-fitres-table td {
+  padding: 6px var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
+  color: var(--ink);
+}
+.cn-fitres-table tr:last-child td {
+  border-bottom: 0;
+}
+/* every figure in a column is mono and tabular, so the column lines
+   up on the decimal. The display tier's one exception is a
+   committed total, and this is not one. */
+.cn-fitres-table td.is-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.cn-fitres-foot {
+  margin: 0;
+  font-size: var(--ui-xs-size);
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+/* The two empty states — the sentence is not finished, or it is
+   finished and nothing fits. Each says what to do next. */
+.cn-fitres-void {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cn-fitres-void-title {
+  margin: 0;
+  font-size: var(--ui-m-size);
+  font-weight: 560;
+  line-height: 1.35;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.cn-fitres-void-note {
+  margin: 0;
+  font-size: var(--ui-s-size);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* ============================================================
+   ONE DOOR, TWO VERBS — §11's first fix.
+
+   Two cards, one chosen. It is a radio group and it is drawn as
+   one: the chosen card takes the accent's hairline and wash, the
+   other stays paper. No third state, and no hover that looks
+   chosen.
+   ============================================================ */
+
+.cn-door {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-5);
+}
+
+.cn-door-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  box-shadow: var(--ec1);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    box-shadow var(--t-fast) var(--ease-draft),
+    transform var(--t-press) var(--ease-draft);
+}
+.cn-door-card:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--ec3);
+}
+.cn-door-card:active {
+  transform: scale(0.994);
+  box-shadow: var(--e1);
+}
+.cn-door-card:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.cn-door-card.is-on {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+}
+
+.cn-door-verb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  font-size: var(--ui-l-size);
+  font-weight: 600;
+  letter-spacing: var(--ui-l-track);
+  color: var(--ink);
+}
+.cn-door-verb > svg {
+  flex: none;
+  color: var(--ink-soft);
+}
+.cn-door-card.is-on .cn-door-verb > svg {
+  color: var(--blue);
+}
+
+/* how many of this kind the business has written, counted on this
+   render — a figure, so mono and tabular */
+.cn-door-n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--ui-s-size);
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+
+.cn-door-makes {
+  font-size: var(--ui-s-size);
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* One of this business's own rules, said as a sentence. It is a
+   quotation of something already on this sheet, so it is clipped to
+   two lines rather than allowed to run the card. */
+.cn-door-eg {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--ui-xs-size);
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   A FIT ON A CARD, AND THE ONE THIS GRAMMAR CANNOT SAY
+   ============================================================ */
+
+.cn-card--fit .cn-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* The name of a rule that branches, loops or writes. It has no
+   sentence, so it is set as the prose it is and the line under it
+   says where it CAN be edited — rule 10, a refusal says why, where
+   it is refused. */
+.cn-card-prose {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--ui-l-size);
+  font-weight: 560;
+  line-height: 1.4;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* THE COMPOSER'S ANSWER RAIL holds a table rather than a meter, so
+   it may not be capped the way the consequence meter is. */
+.cn-new--fit .cn-new-effect {
+  min-width: 0;
+}

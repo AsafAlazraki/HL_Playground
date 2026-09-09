@@ -15,6 +15,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { FORMULA_FUNCTIONS, validateFormula } from '@/lib/formula'
 import { GuardNote } from './GuardNote'
 import { ConfirmRadius, ConfirmSamples, ConfirmSheet } from './ConfirmSheet'
+import { fieldViewers, nameList, retargetBreakage } from './dependents'
 /* Phosphor only, through the house icon module — see the note in
    FieldRow.tsx: this folder used to draw its own SVGs at its own
    stroke weight, a few hundred pixels from the app's. */
@@ -229,12 +230,41 @@ export function ReferenceEditor({
     for (const r of filled) updateCell(entityId, r.id, field.id, null)
   }
 
+  /* WHAT ELSE THIS LINK IS HOLDING UP, asked at the press and not on
+     every render: `retargetBreakage` validates every rule in the
+     project twice and `fieldViewers` walks every page's block tree.
+
+     A LINK IS NOT ONLY ITS CELLS. Re-pointing it empties the column —
+     which this sheet has always counted — and it also re-aims every
+     rule and every page that HOPS through it: a clause written
+     `{ viaFieldId: this, fieldId: something-on-the-old-target }` now
+     reads a column of a different table, which `validate.ts:169-172`
+     says in its own words. None of that was counted anywhere, and a
+     link is the one column whose whole job is to be hopped through. */
+  const [holders, setHolders] = useState<{
+    rules: ReturnType<typeof retargetBreakage>
+    pages: ReturnType<typeof fieldViewers>
+  }>({ rules: [], pages: [] })
+
   const retarget = (target: EntityDef) => {
     if (field.refEntityId === target.id) return
-    if (filled.length === 0) {
+    /* ONE READ OF THE STORE, so every figure on the sheet is a figure
+       about the same instant. */
+    const { entities: all, rowsByEntity, rules, views } = useProjectStore.getState()
+    const ctx = { entities: all, rowsByEntity }
+    const held = {
+      rules: retargetBreakage(ctx, rules, entityId, field.id, target.id),
+      pages: fieldViewers(views, all, entityId, field.id),
+    }
+    /* THE SILENT PATH USED TO READ THE CELLS AND NOTHING ELSE. A link
+       nobody has filled in can still be the hop a dozen rules and two
+       pages are written through, and re-aiming it broke every one of
+       them with no sheet, no count and no sentence. */
+    if (filled.length === 0 && held.rules.length === 0 && held.pages.length === 0) {
       commitRetarget(target)
       return
     }
+    setHolders(held)
     setPendingTarget(target)
   }
 
@@ -348,9 +378,59 @@ export function ReferenceEditor({
                     },
                   ]
                 : []),
+              /* AND WHAT HOPS THROUGH IT, which this sheet never said.
+                 The two lines above count cells. A link's other job is
+                 to be a route: a rule reading `{ viaFieldId: this,
+                 fieldId: … }` and a page block filtering across it are
+                 both aimed at columns of the OLD target, and re-pointing
+                 leaves them reading a table that does not have those
+                 columns. Same voice, same block, same order as the other
+                 three sheets — what leaves, then what breaks. */
+              ...(holders.rules.length > 0
+                ? [
+                    {
+                      figure: String(holders.rules.length),
+                      say: `${holders.rules.length === 1 ? 'business rule hops' : 'business rules hop'} through this link and ${holders.rules.length === 1 ? 'gains' : 'gain'} a blocker`,
+                      grave: true,
+                    },
+                  ]
+                : []),
+              ...(holders.pages.length > 0
+                ? [
+                    {
+                      figure: String(holders.pages.length),
+                      say: `${holders.pages.length === 1 ? 'page reads' : 'pages read'} across this link and ${holders.pages.length === 1 ? 'follows' : 'follow'} it to ${pendingTarget.name} instead`,
+                      grave: true,
+                    },
+                  ]
+                : []),
             ]}
           />
           <ConfirmSamples label="Linked to" values={filledLabels} />
+
+          {/* WHICH ONES, BY NAME — the other three sheets on this
+              surface have named their casualties for months, in the
+              engine's own words for the rules and the person's own
+              names for the pages. */}
+          {holders.rules.map((r) => (
+            <p className="ds-cs-line ds-cs-line-warn" key={r.ruleId}>
+              <span className="ds-cs-rule-name">{r.ruleName}</span> breaks:{' '}
+              {r.messages.join(' ')}
+            </p>
+          ))}
+          {holders.pages.length > 0 ? (
+            <p className="ds-cs-line ds-cs-line-warn">
+              {holders.pages.length === 1 ? 'This page reads' : 'These pages read'} across this
+              link —{' '}
+              {nameList(
+                holders.pages.map((p) =>
+                  p.uses === 1 ? p.viewName : `${p.viewName} (${p.uses} places)`,
+                ),
+              )}
+              . {holders.pages.length === 1 ? 'It follows' : 'They follow'} it to{' '}
+              {pendingTarget.name} from now on.
+            </p>
+          ) : null}
           {/* THE SENTENCE THAT USED TO BE FALSE. Measured in the running
               app on "Haines Signature × Dunbier/Haines BMT — Trailer
               Fitment": re-point Boat from Haines Signature to Formosa,

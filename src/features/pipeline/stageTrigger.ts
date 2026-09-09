@@ -6,19 +6,31 @@
    owner, lock the pricing, require a deposit field, notify
    somebody. This is the largest and least specified piece."*
 
-   THREE OF THOSE FOUR NAME A CONCEPT THIS APP DOES NOT HAVE, and
-   they are listed here rather than in a plan document because the
-   next person to open this file is the one who needs to know:
+   TWO OF THOSE FOUR STILL NAME A CONCEPT THIS APP DOES NOT HAVE,
+   and they are listed here rather than in a plan document because
+   the next person to open this file is the one who needs to know.
+   A THIRD WAS UNBLOCKED and is built; it is recorded first so
+   nobody rebuilds it:
 
-     · REASSIGN THE OWNER — a deal has no owner. `preparedBy` is a
-       NAME frozen onto the document when it was raised
-       (dashboard/cards.ts:287), not a pointer at a person, and
-       there is exactly one seeded account: "The app does not
-       pretend to have a team it does not have"
-       (auth/session.ts:28). Needs a people directory and an
-       `ownerId` beside the deal — a store shaped like `stages.ts`,
-       plus a picker, plus the answer to what happens to a deal
-       owned by somebody who has left.
+     · REASSIGN THE OWNER — BUILT, in `owners.ts`. This entry used
+       to read "a deal has no owner… needs a people directory and
+       an `ownerId` beside the deal — a store shaped like
+       `stages.ts`, plus a picker, plus the answer to what happens
+       to a deal owned by somebody who has left." DECISIONS.md §2
+       supplied the directory: roles are real, they are the
+       dealership's own words for its jobs, and they are the only
+       list of who does what here that this app did not invent. So
+       an owner names a JOB rather than a person, the store holds
+       the HANDOVERS and derives the current owner from the last of
+       them, the picker is the app's own, and a deal whose role has
+       been deleted reads as nobody's — `ownerInForce`. It is a
+       toast with UNDO like every other act on a deal.
+
+       IT IS NOT WIRED TO A STAGE, and that is this file's rule
+       rather than an omission: see below. A column that silently
+       moved a deal onto somebody else's desk would be the same
+       "fires on some deals and not others" fault the lock argument
+       is built on, with an owner instead of a document.
 
      · REQUIRE A DEPOSIT FIELD — deposits are on the list of what
        this build deliberately does not have, by name:

@@ -117,9 +117,16 @@ import { doorsOf, type Door } from './doors'
 import type { DashboardActs } from './acts'
 import { useRecentPicks } from './useRecentPicks'
 import { usePlaces } from './usePlaces'
+import { proposeModules, seedFor } from './proposals'
+import type { ModuleProposal, ProposalReading } from './proposals'
 import { useReorder } from './reorder'
 import { applyOrder, useTileOrder, type TileWho } from './tileOrder'
-import { PlaceMark, placeFilters, rememberPlace } from '@/features/modules'
+/* THE PANEL THAT MAKES A MODULE, MOUNTED FROM WHERE THE PROPOSAL
+   IS PRESSED. It portals itself to the body, so it can be raised
+   from a dashboard card as readily as from the modules screen —
+   which is what lets a proposal open the real create panel instead
+   of growing a second one. */
+import { NewModuleDialog, PlaceMark, placeFilters, rememberPlace } from '@/features/modules'
 import { ActivityList, useActivity } from '@/features/activity'
 
 const MARK = ICON_SIZE.small
@@ -193,12 +200,19 @@ function Nothing({
   say,
   act,
   onAct,
+  more,
 }: {
   id: CardId
   state?: string
   say?: string
   act?: string
   onAct?: () => void
+  /** WHAT THE CARD KNOWS THAT THE SENTENCE CANNOT SAY. One card
+   *  fills it — the modules card, with the modules its own tables
+   *  imply — and it sits under the count because it is a reading of
+   *  that count and not a fifth part of the paragraph. Everything
+   *  else leaves it empty and draws the four parts §6 asks for. */
+  more?: ReactNode
 }): JSX.Element {
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
@@ -227,6 +241,7 @@ function Nothing({
           that way and because the figure is the point of the
           line. */}
       {have ? <p className="dsh-empty-have ds-small">{splitCount(have)}</p> : null}
+      {more}
       {act && onAct ? (
         <button type="button" className="dsh-act" onClick={onAct}>
           {act}
@@ -602,6 +617,143 @@ function RecentlyOpened({ acts }: { acts: DashboardActs }): JSX.Element {
 }
 
 /* ---------------------------------------------------------- */
+/* What your tables suggest — the first-run moment            */
+/* ---------------------------------------------------------- */
+
+/* THE SCREEN THIS ANSWERS. A dealer imports their price file and
+   lands on a front door that does not know what they sell: 53
+   tables and 15,691 rows behind a card reading "No modules yet"
+   over one button called Modules. The app is not short of the
+   answer — `EntityDef.kind` records what each table holds and
+   `TABLE_KINDS` names it — it simply was not saying it.
+
+   THE PROPOSAL IS A READING, NEVER A VERDICT, which is the same
+   line `split.ts` draws for itself: it names the tables it would
+   hold and the rows under them, and a person presses it or does
+   not. `proposals.ts` holds the arithmetic and the argument for
+   every predicate in it.
+
+   AND PRESSING ONE OPENS THE PANEL THAT ALREADY EXISTS. There is
+   one create path in this application. `NewModuleDialog` is a
+   three-click create — pick a table, tick its siblings, Create —
+   and a proposal a person has read has already answered the first
+   two, so it hands them over as a seed and the panel opens on
+   them, editable and abandonable. Nothing here calls
+   `createModule`; a second create path would be a second set of
+   rules about what a module may be built from. */
+
+function useProposals(): ProposalReading {
+  const modules = useProjectStore((s) => s.modules)
+  const entities = useProjectStore((s) => s.entities)
+  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  return useMemo(
+    () => proposeModules(modules, entities, rowsByEntity),
+    [modules, entities, rowsByEntity],
+  )
+}
+
+function Proposals({
+  reading,
+  lead,
+  why,
+  acts,
+}: {
+  reading: ProposalReading
+  /** the label over the list. Two callers, two different facts:
+   *  an empty card is being told what its tables suggest, and a
+   *  card with places on it is being told what is left over */
+  lead: string
+  /** draw the refusal. Only where the count line it qualifies is
+   *  directly above it — under a grid of tiles it would be a
+   *  sentence about a number that is not on screen */
+  why: boolean
+  acts: DashboardActs
+}): JSX.Element | null {
+  /* WHICH PROPOSAL THE PANEL IS STANDING ON, and it is the panel's
+     `key` as well as its seed: a different answer is a different
+     panel, which is what stops a half-typed name surviving into a
+     proposal somebody pressed afterwards. */
+  const [asked, setAsked] = useState<ModuleProposal | null>(null)
+  if (reading.proposals.length === 0) return null
+
+  return (
+    <div className="dsh-propose">
+      <p className="dsh-propose-lead ds-label">{lead}</p>
+      <ul className="dsh-propose-list">
+        {reading.proposals.map((p) => {
+          const tables = plural(p.tables.length, 'table', 'tables')
+          const rows = plural(p.rows, 'row', 'rows')
+          const held = p.tables.map((t) => t.name)
+          return (
+            /* THE KIND CARRIES THE ROW, as it carries a tile and a
+               chip — `data-kind` sets `--kind` (ds.css) and this is
+               a thing that HAS that kind, which is the whole of the
+               rule in §1. */
+            <li key={p.kind} data-kind={p.kind}>
+              {/* EVERYTHING IT WOULD DO IS IN THE LABEL, because a
+                  proposal a person cannot check before pressing is
+                  a guess with a button on it — and a reader who
+                  cannot see the second line has to be able to check
+                  it too. */}
+              <button
+                type="button"
+                className="dsh-propose-row"
+                onClick={() => setAsked(p)}
+                aria-label={`Make ${p.name} from ${tables} — ${rows}: ${held.join(', ')}`}
+              >
+                <span className="dsh-propose-top">
+                  <span className="dsh-propose-mark" aria-hidden="true">
+                    <TableKindSymbol kind={p.kind} size={12} />
+                  </span>
+                  <span className="dsh-propose-name">{p.name}</span>
+                  {/* THE FIGURES ARE MONO AND THE NOUNS ARE NOT —
+                      the rule every other count on this page keeps */}
+                  <span className="dsh-propose-n" aria-hidden="true">
+                    <b className="dsh-propose-fig ds-mono">{p.tables.length}</b>{' '}
+                    {p.tables.length === 1 ? 'table' : 'tables'}
+                    {' · '}
+                    <b className="dsh-propose-fig ds-mono">{p.rows.toLocaleString()}</b>{' '}
+                    {p.rows === 1 ? 'row' : 'rows'}
+                  </span>
+                </span>
+                {/* THE TABLES IT WOULD HOLD, BY NAME. This line is
+                    the reason the proposal is allowed to exist:
+                    nothing is invented, and a person can read what
+                    they are about to agree to before they agree to
+                    it. It wraps rather than truncating — a list cut
+                    short with an ellipsis is the reduced count
+                    DESIGN_CONTRACT §5 refuses. */}
+                <span className="dsh-propose-holds" aria-hidden="true">
+                  {held.join(' · ')}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+
+      {/* RULE 10, WHERE THE THING IS REFUSED. The tables that
+          declare no kind are inside the count above and outside
+          every proposal below it, and a person who cannot see why
+          has been handed a number that does not add up. */}
+      {why && reading.why ? <p className="dsh-propose-why ds-small">{reading.why}</p> : null}
+
+      {asked ? (
+        <NewModuleDialog
+          key={asked.kind}
+          seed={seedFor(asked)}
+          onClose={() => setAsked(null)}
+          /* THE THIRD CLICK LANDS IN THE MODULE. A place you then
+             have to go and find is a fourth — the same reasoning
+             `ModuleStage` states where it mounts this panel. */
+          onCreated={(id) => acts.onOpenModule(id)}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+/* ---------------------------------------------------------- */
 /* My modules                                                 */
 /* ---------------------------------------------------------- */
 
@@ -640,6 +792,13 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
   const entities = useProjectStore((s) => s.entities)
   const { order, set } = useTileOrder(who)
   const everyPlace = usePlaces()
+  /* THE READING IS TAKEN WHETHER OR NOT THERE ARE PLACES, because
+     the answer matters in both states — it IS the empty card, and
+     it is what is left over on a card that has a place or two on
+     it. It walks the entity map once and is memoised on the three
+     objects the store swaps, so a card with everything placed pays
+     one pass over 53 tables to be told there is nothing to say. */
+  const proposals = useProposals()
 
   const places = useMemo(
     () => applyOrder(everyPlace, (p) => p.key, order),
@@ -672,7 +831,30 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
   )
 
   if (places.length === 0) {
-    return <Nothing id="my-modules" act="Modules" onAct={acts.onOpenModules} />
+    /* THE ACT IS NAMED OR IT IS NOT NAMED, AND NEVER BOTH.
+       §6 asks for ONE action, and where there are proposals the
+       proposals ARE it — five buttons plus a sixth called
+       "Modules" would be the same door twice, once with the answer
+       on it and once without. The card head already carries Open
+       for anybody who wants the modules screen whole (`openFor`),
+       so nothing is lost by dropping the generic one; where there
+       is nothing to propose it is the only door and stays. */
+    return (
+      <Nothing
+        id="my-modules"
+        {...(proposals.proposals.length > 0
+          ? {}
+          : { act: 'Modules', onAct: acts.onOpenModules })}
+        more={
+          <Proposals
+            reading={proposals}
+            lead="What your tables suggest"
+            why
+            acts={acts}
+          />
+        }
+      />
+    )
   }
 
   /* THE KEY, WHICH IS WHAT PAID FOR TAKING THE SYMBOLS OFF.
@@ -858,6 +1040,21 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
         )
       })}
     </div>
+
+      {/* AND THE NEAR-EMPTY CASE, WHICH IS THE SAME MOMENT A DAY
+          LATER. A dealer makes one module, comes back, and forty
+          tables are still standing outside it — the proposal is as
+          true then as it was on the blank card, so the same list
+          sits under the tiles rather than waiting for a screen
+          nobody will return to. It goes silent on its own: the
+          reading is over tables no module holds, so a sheet where
+          everything has a home draws nothing here.
+
+          THE REFUSAL DOES NOT COME WITH IT. It qualifies the count
+          in the empty state's third line, and that line is not on
+          this card — a sentence about a number a person cannot see
+          is worse than no sentence. */}
+      <Proposals reading={proposals} lead="Not in a module yet" why={false} acts={acts} />
     </>
   )
 }

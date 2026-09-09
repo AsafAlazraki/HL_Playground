@@ -34,7 +34,10 @@ import { money } from '@/lib/money'
 import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
 import { whenSay } from '@/features/activity'
 import { sizeSay } from '@/features/modules'
+import { Picker, type PickerOption } from '@/features/picker'
 import { quoteTotals, type QuoteDef } from '@/features/quote'
+import type { RoleDef } from '@/types/model'
+import { handoverSay, roleWord, NOBODY, type Handover } from './owners'
 import { notesFor, type NoteBag } from './dealNotes'
 import { linksFor, type DealLink, type LinkBag } from './dealLinks'
 import { isPicture, type DealFile } from './dealFiles'
@@ -69,6 +72,49 @@ export function waitedSay(from: number, now = Date.now()): string {
    THE FACTS
    ============================================================ */
 
+/** WHOSE DEAL IT IS, AND THE ONE ACT THAT CHANGES IT. Passed in
+ *  whole rather than assembled here, because this file owns no
+ *  store — `useDealDesk` reads the roles and the handovers and
+ *  hands them down, so the popup and the page cannot disagree
+ *  about who a deal is with. See `owners.ts` for why an owner
+ *  names a JOB and why that is not `preparedBy`. */
+export interface DealOwnerAsk {
+  /** the role id it is with, or `NOBODY` */
+  at: string
+  /** every job the dealership has written down */
+  roles: readonly RoleDef[]
+  /** the last handover, for the line under the control. Undefined
+   *  when nobody has ever been given this deal. */
+  last: Handover | undefined
+  /** why nobody can be given it, or null (rule 10) */
+  why: string | null
+  onAssign: (roleId: string) => void
+}
+
+/** The rows the picker offers: nobody first, then the dealership's
+ *  jobs in the order they were handed in.
+ *
+ *  "NOBODY" IS A ROW AND NOT AN ABSENCE. Taking a deal back off
+ *  somebody is a thing a sales manager does on purpose, and a
+ *  dropdown that can only ever assign is a control you cannot
+ *  reverse without inventing a spare job to park deals on. */
+function ownerRows(roles: readonly RoleDef[]): PickerOption<string>[] {
+  return [
+    { id: NOBODY, label: 'Nobody' },
+    ...roles.map((r) => ({
+      id: r.id,
+      label: r.name,
+      /* THE DEALER'S OWN LINE ABOUT THE JOB, where they wrote one.
+         Never generated: `RoleDef.description` is "who this is, in
+         the owner's words" and an invented one would be this app
+         explaining a business to itself. */
+      ...(r.description && r.description.trim() !== ''
+        ? { under: r.description.trim() }
+        : {}),
+    })),
+  ]
+}
+
 export interface DealFactsProps {
   quote: QuoteDef
   stage: StageDef | undefined
@@ -77,6 +123,10 @@ export interface DealFactsProps {
   arrived: number | null
   /** how many specs to print. Undefined prints all of them. */
   specLimit?: number
+  /** whose deal it is. Optional so a surface that draws these
+   *  facts without the act — there is none today — cannot be made
+   *  to grow one by accident. */
+  owner?: DealOwnerAsk
 }
 
 export function DealFacts({
@@ -84,6 +134,7 @@ export function DealFacts({
   stage,
   arrived,
   specLimit,
+  owner,
 }: DealFactsProps): JSX.Element {
   const totals = quoteTotals(quote)
   const specs =
@@ -182,6 +233,72 @@ export function DealFacts({
           <div className="dp-fact">
             <dt className="dp-fact-say">Contact</dt>
             <dd className="dp-fact-is">{quote.customer.contact.join(' · ')}</dd>
+          </div>
+        ) : null}
+        {/* WHOSE DEAL IT IS NOW — and it sits directly above "Prepared
+            by" on purpose. The two are the app's only two rows about
+            people and they are not the same fact: the one below is a
+            name frozen onto the document the customer received and it
+            never changes; this one is where the deal sits today.
+            Drawn apart, in different halves of the pane, a person
+            would read whichever they found first as "whose it is".
+
+            THE ONLY CONTROL IN THIS GRID, and it earns the exception:
+            the fact and the act are one thing here, and a "Reassign"
+            button somewhere else on the pane would be a second place
+            to look for an answer this row is already giving. */}
+        {owner ? (
+          <div className="dp-fact dp-own">
+            <dt className="dp-fact-say">Owner</dt>
+            <dd className="dp-fact-is">
+              <Picker
+                /* THE `dt` IS THE LABEL, so the picker draws none.
+                   Passing "Owner" here put the word in the markup
+                   TWICE — once in the `dt` and once in the control —
+                   and hiding the second in CSS would leave a
+                   duplicate that comes back the day the rule is
+                   deleted. A rendering test found it; see
+                   `owners.test.tsx`.
+
+                   THE ACCESSIBLE NAME THEREFORE HAS TO CARRY BOTH
+                   halves itself: with no label span to point at,
+                   `aria-labelledby` would name the control by its
+                   value alone — "Yard manager", with nothing saying
+                   what that is the answer to. */
+                label=""
+                ariaLabel={`Owner — ${roleWord(owner.at, owner.roles)}`}
+                value={owner.at}
+                options={ownerRows(owner.roles)}
+                onPick={owner.onAssign}
+                /* INERT, NOT ABSENT — picker.css's own words for
+                   this exact case. A business that has written down
+                   no jobs keeps the row and the control, dimmed,
+                   rather than having the Owner row appear out of
+                   nowhere the day somebody adds a role. A control
+                   that vanishes has to be re-found. */
+                {...(owner.why ? { disabledWhy: owner.why } : {})}
+              />
+              {/* AND THE REASON IS VISIBLE, not only in the `title`
+                  the picker puts it in. Rule 10 says a thing that
+                  cannot be done says why WHERE it is, and this
+                  file's own `.dp-demand` cites the playbook's
+                  "never a tooltip" for the sentence four rows up.
+                  The duplication is the picker's contract, not a
+                  second opinion: both strings are this one. */}
+              {owner.why ? <p className="dp-own-why">{owner.why}</p> : null}
+              {/* WHO CHANGED IT AND WHEN — never WHAT it changed to,
+                  which the control right above it is already saying.
+                  "Last changed" rather than "given" because the same
+                  line has to be true of a deal taken back off
+                  somebody. */}
+              {owner.last ? (
+                <span className="dp-own-when">
+                  {owner.last.who
+                    ? `Last changed by ${owner.last.who}, ${whenSay(owner.last.at)}`
+                    : `Last changed ${whenSay(owner.last.at)}`}
+                </span>
+              ) : null}
+            </dd>
           </div>
         ) : null}
         {quote.preparedBy ? (
@@ -386,6 +503,79 @@ export function DealThread({
           </button>
         </div>
       </form>
+    </section>
+  )
+}
+
+/* ============================================================
+   THE HANDOVERS — who has had this deal, in order.
+
+   THE OTHER HALF OF THE OWNER ROW. That row answers "whose is it";
+   this answers "whose has it been", which is the question a sales
+   manager asks when a deal has been sitting for a month. Both read
+   the one store — `owners.ts` keeps the trail AS the state and
+   derives the current owner from its last entry, so these two can
+   never disagree.
+
+   NOTHING IS DRAWN ON A DEAL NOBODY HAS HANDED ON. A section
+   headed "Handovers" saying "none yet" on every card in the
+   business is a heading that costs a line and reports nothing —
+   and the Owner row above already says "Nobody". Same rule the
+   note badge on the card keeps.
+   ============================================================ */
+
+export interface DealHandoversProps {
+  quote: QuoteDef
+  trail: readonly Handover[]
+  roles: readonly RoleDef[]
+  /** the newest N, with the rest counted. Undefined draws all —
+   *  the popup is a glance and the record is the file, exactly as
+   *  the thread above is limited. */
+  limit?: number
+}
+
+export function DealHandovers({
+  quote,
+  trail,
+  roles,
+  limit,
+}: DealHandoversProps): JSX.Element | null {
+  if (trail.length === 0) return null
+  const shown = limit === undefined ? trail : trail.slice(Math.max(0, trail.length - limit))
+  const older = trail.length - shown.length
+
+  return (
+    <section className="dp-part" aria-label={`Handovers on ${quote.reference}`}>
+      <h3 className="mono-label dp-part-say">Handovers</h3>
+      {older > 0 ? (
+        <p className="dp-older">
+          {older === 1
+            ? '1 earlier handover is on the whole record.'
+            : `${older} earlier handovers are on the whole record.`}
+        </p>
+      ) : null}
+      {/* OLDEST FIRST, so the list ends where the Owner row starts.
+          A trail read newest-first would put the current owner at
+          the top and the control saying the same thing four rows
+          above it, which reads as two answers to one question. */}
+      <ol className="dp-hands">
+        {shown.map((h) => (
+          <li className="dp-hand" key={h.id}>
+            {/* THE SENTENCE COMES FROM `owners.ts`, not from here.
+                The toast that announced the act uses the same
+                function, so a handover cannot be described one way
+                as it happens and another way afterwards. */}
+            <span className="dp-hand-said">{handoverSay(h, roles)}</span>
+            <span className="dp-hand-top">
+              {/* NO NAME WHERE THERE IS NO NAME — the rule the note
+                  above keeps. A handover made with nobody signed in
+                  still has a time. */}
+              {h.who ? <span className="dp-hand-who">{h.who}</span> : null}
+              <span className="dp-hand-when ds-mono">{whenSay(h.at)}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
     </section>
   )
 }

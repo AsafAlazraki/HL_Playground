@@ -2097,6 +2097,108 @@
   color: var(--fg-tertiary);
 }
 
+/* ============================================================
+   WHOSE DEAL IT IS — the Owner row, and the trail behind it.
+
+   THE ONE CONTROL IN THE FACTS GRID. Every other row is a value;
+   this one is a value you can change, because the fact and the act
+   are the same thing and a "Reassign" button elsewhere on the pane
+   would be a second place to look for an answer this row already
+   gives. It sits directly above "Prepared by" so the app's two
+   rows about people are read together — see `dealParts.tsx`.
+
+   THE PICKER DRAWS NO LABEL OF ITS OWN HERE. The `<dt>` beside it
+   already says "Owner" and two of the same word on one row is one
+   too many — so the component is passed an empty label and an
+   explicit `aria-label` instead of being trimmed in this file.
+   THIS RULE IS THEREFORE ONLY ABOUT THE HOLE: `.pk` is a flex box
+   with a gap, and an empty label span is still a flex item, so
+   without this the value sits eight pixels off the control's left
+   edge. Hiding a WORD in a stylesheet would have been the fragile
+   version — a duplicate that comes back the day the rule is
+   deleted — and `owners.test.tsx` is what found it.
+   ============================================================ */
+.dp-own .pk-label {
+  display: none;
+}
+
+/* WHO CHANGED IT AND WHEN — never what it changed to, which the
+   control above is already saying. Its own line rather than a
+   suffix, because a 250px pane would wrap "Yard manager Last
+   changed by Asaf Alazraki, 3 days ago" mid-name. */
+.dp-own-when {
+  display: block;
+  margin-top: var(--s-1);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* NOBODY TO GIVE IT TO — and this is NOT a warning, so it wears
+   none of the warning surface. `.dp-demand` earns its rail because
+   a column has asked for something and not got it; this is a
+   business that has not written its jobs down yet, which is a
+   normal state on a first afternoon. It is a sentence in secondary
+   ink, and it names the door (rule 10). */
+.dp-own-why {
+  margin: var(--s-1) 0 0;
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+}
+
+/* THE TRAIL. Lighter than a note — a handover is one line the app
+   wrote, not prose a person typed — so it takes a rule between
+   rows rather than a card each, which would make four handovers
+   look heavier than four things somebody actually said. */
+.dp-hands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dp-hand {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.dp-hand:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+/* THE SENTENCE IS THE ROW'S SUBJECT and takes the ink to match.
+   Sentence case, never uppercase: "given to Yard manager" carries
+   a name in it and rule 3 does not let a name be shouted. */
+.dp-hand-said {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--t-small-size);
+  line-height: 1.45;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.dp-hand-top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin-left: auto;
+}
+.dp-hand-who {
+  font-size: var(--t-caption-size);
+  font-weight: 620;
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+.dp-hand-when {
+  font-size: var(--t-mono-sm-size);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
 /* ---- links and files, which are one kind of list ----------- */
 
 .dp-links,
@@ -2515,6 +2617,25 @@
   font-size: var(--t-caption-size);
   color: var(--fg-tertiary);
   white-space: nowrap;
+}
+/* WHOSE DESK IT IS ON — a third fact of exactly this kind, and it
+   is drawn as text rather than as a chip. `k-chip` is the kind
+   vocabulary and a second chip beside it would read as a second
+   kind; a job is a name, and rule 5 keeps colour for the one thing
+   that already has it on this row.
+
+   IT TAKES SECONDARY INK, NOT TERTIARY. "How long it has been
+   here" beside it is a measurement and can sit quiet; whose deal
+   this is is the answer to a question somebody is scanning for,
+   and at 11px tertiary against a card ground it would be the
+   faintest thing on the card. */
+.pb-card-owner {
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* ============================================================

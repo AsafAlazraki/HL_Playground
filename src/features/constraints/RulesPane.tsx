@@ -84,10 +84,15 @@ import { SPRING_QUICK, transitionFor, useStillness } from '@/features/views/stil
 import type { ConstraintDef } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useConstraints } from './constraintDefs'
+import { describeConstraint } from './describe'
+import { FitCard } from './FitCard'
+import { describeFit, readFit } from './fit'
 import { LeftOutList } from './LeftOutList'
+import { NewFitSentence } from './NewFitSentence'
 import { NewRuleSentence } from './NewRuleSentence'
 import { RegistrationTheme } from './RegistrationTheme'
 import { RuleCard } from './RuleCard'
+import { TwoVerbs, type Verb } from './TwoVerbs'
 import { RulesLedger, type LiveReading } from './RulesLedger'
 import { TrailerFitmentPanel } from './TrailerFitmentPanel'
 import { DiscoveryPanel } from './DiscoveryPanel'
@@ -124,9 +129,24 @@ export function RulesPane(): ReactElement {
   const { still } = useStillness()
   const [openId, setOpenId] = useState<string | null>(null)
   const [view, setView] = useState<ViewId>('file')
+  /* WHICH VERB THE COMPOSER IS WRITING — see `TwoVerbs`. It is a
+     verb rather than a place, so it is state on this pane and never
+     a second door on the navigation bar. */
+  const [verb, setVerb] = useState<Verb>('limit')
 
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+
+  /* THE FITS THIS BUSINESS HAS WRITTEN. They live in the store as
+     `RuleDef`s — the same rules the canvas draws — and this pane says
+     them as sentences. UX_PASS §11: one authoring surface over an
+     unchanged model, and the canvas keeps every rule this grammar
+     cannot say. */
+  const rules = useProjectStore((s) => s.rules)
+  const fits = useMemo(
+    () => Object.values(rules).sort((a, b) => a.name.localeCompare(b.name)),
+    [rules],
+  )
 
   const statuses = useMemo(
     () => evaluateConstraints(constraints, ctx),
@@ -146,6 +166,17 @@ export function RulesPane(): ReactElement {
 
   const conflicts = Object.values(statuses).filter((s) => s.conflicts > 0).length
   const noColumns = ctx.concepts.length === 0
+
+  /* The first fit this business has, said as a sentence, for the
+     door's example. Reading it costs no row walk — `describeFit` is
+     words about columns, not a run. */
+  const fitExample = useMemo(() => {
+    for (const rule of fits) {
+      const draft = readFit(rule)
+      if (draft) return describeFit(ctx, draft)
+    }
+    return undefined
+  }, [fits, ctx])
 
   /* Which workbook seeds actually became rules. The seed's own
      `blocked` is only a default: the moment the contract grows what a
@@ -273,7 +304,9 @@ export function RulesPane(): ReactElement {
      disagree. Every figure is counted above, on this render. */
   const views: { id: ViewId; name: string; count: number }[] = [
     { id: 'file', name: 'From your price file', count: tally.total },
-    { id: 'mine', name: 'Rules you write', count: constraints.length },
+    /* both verbs, counted together, because the segment names one
+       PLACE and that place now holds limits and fits alike */
+    { id: 'mine', name: 'Rules you write', count: constraints.length + fits.length },
     { id: 'checks', name: 'What is checked', count: tally.checked },
   ]
 
@@ -449,11 +482,50 @@ export function RulesPane(): ReactElement {
                 )}
               </p>
 
-              <NewRuleSentence onAdded={setOpenId} showActions={view === 'mine'} />
+              {/* ONE DOOR, TWO VERBS — UX_PASS §11's first fix. A
+                  limit and a fit are different rules and always were;
+                  what was wrong was making a person choose a PLACE
+                  before they could write either one. The examples are
+                  this business's own rules, said as sentences, and
+                  they are absent when it has not written any — a
+                  plausible example of a rule nobody wrote is exactly
+                  how invented data reaches a screen. */}
+              <TwoVerbs
+                verb={verb}
+                onPick={setVerb}
+                limits={constraints.length}
+                fits={fits.length}
+                limitExample={list[0] && describeConstraint(list[0])}
+                fitExample={fitExample}
+              />
 
-              {list.length === 0 ? (
-                <NoRules />
+              {verb === 'limit' ? (
+                <NewRuleSentence onAdded={setOpenId} showActions={view === 'mine'} />
               ) : (
+                <NewFitSentence onAdded={setOpenId} />
+              )}
+
+              {/* THE FITS, SAID. Every one of them is a `RuleDef` the
+                  canvas can still open; the ones this grammar cannot
+                  say print their name and point at the canvas rather
+                  than pretending. */}
+              {fits.length > 0 && (
+                <ul className="cn-list">
+                  {fits.map((rule) => (
+                    <li key={rule.id} className="cn-list-item">
+                      <FitCard
+                        rule={rule}
+                        open={openId === rule.id}
+                        onOpen={(open) => setOpenId(open ? rule.id : null)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {list.length === 0 && fits.length === 0 ? (
+                <NoRules />
+              ) : list.length === 0 ? null : (
                 <ul className="cn-list">
                   {list.map((constraint, i) => (
                     <motion.li

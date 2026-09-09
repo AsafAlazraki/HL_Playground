@@ -57,7 +57,14 @@
 
 import { useCallback, useSyncExternalStore } from 'react'
 
-export type CardFieldId = 'reference' | 'subject' | 'touched' | 'by' | 'waiting' | 'kind'
+export type CardFieldId =
+  | 'reference'
+  | 'subject'
+  | 'touched'
+  | 'by'
+  | 'owner'
+  | 'waiting'
+  | 'kind'
 
 export interface CardFieldDef {
   id: CardFieldId
@@ -69,15 +76,34 @@ export interface CardFieldDef {
   under?: string
 }
 
-/** THE SIX A CARD CAN DRAW. Every one of them is a fact this app
+/** THE SEVEN A CARD CAN DRAW. Every one of them is a fact this app
  *  can already answer for every deal — nothing here needs a field
  *  somebody has to fill in first, because a card that draws blanks
- *  is worse than a card that draws less. */
+ *  is worse than a card that draws less.
+ *
+ *  TWO OF THEM ARE ABOUT PEOPLE AND THEY ARE NOT THE SAME FACT.
+ *  "Who prepared it" is a NAME frozen onto the document when it was
+ *  raised and printed on the paper the customer got; it never
+ *  changes. "Who owns it now" is where the deal sits TODAY and
+ *  changes every time somebody hands it on. A board that drew one
+ *  and called it the other would tell a sales manager that a deal
+ *  reassigned in March is still with the person who typed it in
+ *  January. See `owners.ts`, which holds the second and touches
+ *  the first nowhere. */
 export const CARD_FIELDS: readonly CardFieldDef[] = [
   { id: 'reference', label: 'Reference' },
   { id: 'subject', label: 'What is being sold' },
   { id: 'touched', label: 'When it was last touched' },
-  { id: 'by', label: 'Who prepared it' },
+  {
+    id: 'by',
+    label: 'Who prepared it',
+    under: 'The name on the document. It never changes.',
+  },
+  {
+    id: 'owner',
+    label: 'Who owns it now',
+    under: 'The job it has been handed to. Blank until somebody is given it.',
+  },
   {
     id: 'waiting',
     label: 'How long it has been here',

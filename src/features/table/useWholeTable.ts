@@ -29,7 +29,14 @@
    1. A folded band's columns are GONE from the addressable set (that
       is `useSectionedView`'s doing, upstream) — never hidden-but-
       focusable. So folding is also how you stop Tab, paste and fill
-      from walking through forty money columns.
+      from walking through forty money columns. THE ONE EXCEPTION is
+      the pinned display column, which survives its own band's fold:
+      COLLAPSE ALL is the fastest way in the app to reach the money
+      band, and until it kept the name it was also the fastest way to
+      arrive there reading dollars against rows with no names on them.
+      Measured on Highfield Inflatables at 1280, COLLAPSE ALL then
+      open the money band: 588 rows, twelve slots, zero of them the
+      boat. `buildSections` carries the numbers.
    2. While a fit is on, the sheet is re-shared the moment the drawn
       columns change: fold or reveal a band and the rest take the freed
       room back immediately.
@@ -253,8 +260,8 @@ export function useWholeTable({
      a layout pass. */
   const modelFor = useCallback(
     (nextCollapsed: ReadonlySet<string>) =>
-      buildSections(allFields, sections, nextCollapsed),
-    [allFields, sections],
+      buildSections(allFields, sections, nextCollapsed, pinFieldId),
+    [allFields, sections, pinFieldId],
   )
 
   /* ============================================================

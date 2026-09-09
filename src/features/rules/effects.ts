@@ -34,7 +34,7 @@ function blockedReason(effect: PendingEffect): string | undefined {
 
   const entityId = effect.kind === 'link' ? effect.joinEntityId : effect.entityId
   const entity = state.entities[entityId]
-  if (!entity) return 'that entity no longer exists'
+  if (!entity) return 'that table no longer exists'
 
   if (effect.kind === 'set') {
     const rows = state.rowsByEntity[entityId] ?? []

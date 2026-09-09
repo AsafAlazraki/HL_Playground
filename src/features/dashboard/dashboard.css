@@ -1575,6 +1575,194 @@
 }
 
 /* ============================================================
+   WHAT YOUR TABLES SUGGEST — the proposals on an empty card.
+
+   TWO HOSTS, ONE BLOCK. It sits inside `.dsh-empty` on a card with
+   no places on it, and under `.dsh-tiles` on a card that has a
+   place or two and tables still standing outside them. Same rows,
+   same press; only the label above them changes, and the footer
+   takes a rule the empty one does not need.
+
+   THE ROW IS A TILE'S GROUND AT A ROW'S HEIGHT. `.dsh-tile` is
+   `--kind` at 6% over `--surface-1` with a 14% edge, and these are
+   the same two mixes — a proposal for the boats and the tile it
+   would become are the same colour, which is the whole of §1's
+   rule about a hue only appearing on something that HAS that kind.
+
+   AND IT DARKENS RATHER THAN SCALING. DESIGN_CONTRACT §5: a list
+   row that shrinks under the finger makes its neighbours look like
+   they moved. Nothing in this block transforms, which is also why
+   it needs no reduced-motion escape — there is no motion in it to
+   escape from.
+   ============================================================ */
+
+.dsh-propose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: 100%;
+  min-width: 0;
+  flex: none;
+  margin-top: var(--s-2);
+}
+
+/* AS A FOOTER IT IS A SECOND SECTION AND SAYS SO. The colour key
+   above the grid takes a rule under it for the same reason: a
+   strip of small text with no line between it and a grid of tiles
+   reads as the last row of the grid. */
+.dsh-tiles + .dsh-propose {
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-subtle);
+  /* AND IT MAY NOT EAT THE GRID IT SITS UNDER — but it is not
+     capped either, because a footer clipped at two fifths of a
+     card with three fifths of room beneath it is worse than the
+     problem. `0 1 auto` is the same declaration `.dsh-list`
+     carries and for the same reason: it may SHRINK to whatever the
+     card had left and it may not GROW. Flex shrinks in proportion
+     to base size, so a 550px footer of six proposals gives up
+     nearly three times what a 200px grid of tiles does — which is
+     the right way round on a card whose subject is the places. */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* THE CAPTION IS SECONDARY INK RATHER THAN `.ds-label`'s OWN.
+   The label step is coloured for the page ground an empty card
+   sits directly on; this same block also draws on the CARD, which
+   is a lighter surface, so it takes the one step up that is legal
+   on both rather than being right in one place and thin in the
+   other. */
+.dsh-propose-lead {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+.dsh-propose-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.dsh-propose-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid color-mix(in srgb, var(--kind) 14%, var(--line-subtle));
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--kind) 6%, var(--surface-1));
+  color: var(--fg);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease),
+    border-color var(--d-fast) var(--ease);
+}
+
+.dsh-propose-row:hover {
+  background: color-mix(in srgb, var(--kind) 11%, var(--surface-1));
+  border-color: color-mix(in srgb, var(--kind) 30%, transparent);
+}
+
+/* PRESS LANDS ON POINTER-DOWN, and it is a darkening (§5). */
+.dsh-propose-row:active {
+  background: color-mix(in srgb, var(--kind) 18%, var(--surface-1));
+}
+
+.dsh-propose-top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.dsh-propose-mark {
+  display: inline-flex;
+  flex: none;
+  color: var(--kind);
+}
+
+.dsh-propose-name {
+  font-size: var(--t-small-size);
+  font-weight: 570;
+  color: var(--fg);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* THE COUNT KEEPS THE RIGHT EDGE however long the name is, which
+   is what lets three proposals be compared down a column rather
+   than read one at a time. */
+.dsh-propose-n {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--t-caption-size);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+/* AND THE FIGURES INSIDE IT ARE MONO — the same rule every other
+   number on this page keeps. `font-size: inherit` so they take the
+   caption step of the line they are in rather than `.ds-mono`'s
+   own, which is the pattern `.dsh-empty-n` already sets. */
+.dsh-propose-fig {
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* THE TABLES IT WOULD HOLD. It WRAPS and it is not clamped: this
+   line is the evidence a person checks the proposal against, and a
+   list of names cut off after two is the silently reduced count
+   DESIGN_CONTRACT §5 refuses. */
+.dsh-propose-holds {
+  width: 100%;
+  min-width: 0;
+  font-size: var(--t-caption-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+.dsh-propose-why {
+  margin: 0;
+  color: var(--fg-secondary);
+  max-width: 44ch;
+}
+
+/* AN EMPTY CARD THAT HAS SOMETHING TO PROPOSE STOPS CENTRING.
+   The sentence sits in the middle of a card with four lines in it;
+   a card holding four lines and five proposals has to start at the
+   top and scroll, or the first proposal is the one off the bottom
+   edge. */
+.dsh-empty:has(.dsh-propose) {
+  justify-content: flex-start;
+  overflow-y: auto;
+  /* AND THE SCROLLER IS VISIBLE, for the reason written at the
+     foot of this file: this platform paints an overlay scrollbar
+     that appears only once you are already scrolling, so a card
+     with a sixth proposal below the fold looks exactly like a card
+     with five. Measured at 1024x700 on the real sheet: 569px of
+     proposals in 498px of card. `.dsh-list` takes the same one
+     declaration for the same reason. */
+  scrollbar-width: thin;
+}
+
+/* ============================================================
    THE TWO SMALL CONTROLS THAT ONLY EXIST WHILE ARRANGING
    ============================================================ */
 

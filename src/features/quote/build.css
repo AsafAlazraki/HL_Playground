@@ -1969,9 +1969,10 @@
    §4 is one line and it carries no qualifier: "The money never
    animates… Motion on money reads as a slot machine. A dealer reads
    a price aloud." Everything in this file has kept that for the
-   value changing — `.qb-price-now` has no transition and no
-   animation, and the figure is replaced on the frame it changes. It
-   was not kept for the press: this control is a button whose entire
+   value changing — `.qb-price-now` now declares `transition: none`
+   and `animation: none` rather than trusting that nothing hands it
+   one, and the figure is replaced on the frame it changes. It was
+   not kept for the press: this control is a button whose entire
    content is the total, so base.css scaled 84,310 by 3% for 110ms
    every time somebody opened the ledger. Measured at 197.1px wide,
    2.96px of travel per edge.
@@ -2023,34 +2024,97 @@
   color: var(--fg-tertiary);
 }
 
-/* THE FIGURE DOES NOT ANIMATE. Mono, tabular, and replaced on the
-   frame it changes — a dealer reads this aloud.
+/* THE STEP IS `.ds-figure-xl`, AND IT IS WORN AT THE CALL SITE.
+   flow.tsx puts the class on the span; this rule declares no family,
+   no size, no weight, no leading and no tracking. That is the shape
+   `.qb-name-model` already uses for `.ds-marque` further up this
+   file, and ds.css's reason for it: a step defined in two places is
+   a split this project has already paid for once.
 
-   IT IS THE ONE RAMP IN THIS FILE WRITTEN BY HAND, and the wide pass
-   made one correction to it. It read `clamp(22px, 1.9vw, 30px)`: a
-   font-size in pure `vw` does not respond to browser zoom, which
-   turns a readability aid into a trap — response.css states the rule
-   and every ramp in that file carries a `rem` term for it. Half the
-   term is now `rem`, chosen so the figure is UNCHANGED at 1440,
-   where 0.855rem + 0.95vw resolves to the same 27.36px it always
-   did. It still floors at 22 and still tops out at 30.
+   WHAT WAS HERE, AND THE MEASUREMENT THAT ENDED IT. The total was
+   the one ramp in this file written by hand — IBM Plex Mono at
+   `clamp(22px, 0.855rem + 0.95vw, 30px)` — and it was still on it
+   after ds.css grew `--t-figure-xl` (30 → 42px, Archivo, tabular)
+   for this figure and nothing else. Measured in Chrome on the real
+   seed, `$242,866` on this bar:
 
-   `--data-xl-size` is the house token for a figure this size and it
-   is deliberately not used here: it resolves to 22px at 1440, which
-   would have shrunk this screen's headline number by five points to
-   buy a name. The total on this bar is bigger than the total on a
-   document on purpose. */
+                 before                 after
+     1280x800    25.84px  mono  119.48  33.43px  Archivo  136.19
+     1440x900    27.36px  mono  126.52  35.57px  Archivo  144.91
+     1920x1080   30.00px  mono  138.73  42.00px  Archivo  171.11
+     1024x768    23.41px  mono  108.20  30.00px  Archivo  122.27
+      600x900    22.00px  mono  101.73  30.00px  Archivo  122.27
+
+   NOT MONO, AND THE REASON IS ARITHMETIC RATHER THAN TASTE. IBM
+   Plex Mono is fixed-pitch, so at 33.43px the thousands comma takes
+   the same 20.05px cell as a digit and the total reads "$8 , 557".
+   ds.css carries the per-glyph measurement, including that no
+   OpenType feature closes it — default, `tnum` and `pnum` all render
+   `$8,557` at exactly 120.19px, because one advance is the point of
+   a fixed-pitch family. Archivo with `tabular-nums` puts every digit
+   on one 19.14px advance and the comma on 9.61px, so the figure
+   still cannot move as the price changes, which is the property §4
+   actually rests on. Measured on this bar after the swap, every
+   six-digit total is 136.19px wide at 1280 — `$111,111`, `$888,888`,
+   `$100,000`, `$999,999` and `$242,866` alike.
+
+   THE FLOOR NEEDED NO STEP-SWAP, AND THAT IS A MEASUREMENT. ds.css
+   warns that a display step's floor is a whole-step swap rather than
+   a shrink, so a `--data-xl` arm was written for narrow windows and
+   then deleted: the step's leading is 1.05 where the hand ramp
+   inherited 1.45, so the figure grew and the STRIP did not. The
+   price bar, build screen, before → after:
+
+     1280x800  102.47 → 100.08     1024x768   98.94 →  96.50
+     1440x900   73.66 →  71.33      600x900  201.13 → 200.73
+     1920x1080  77.50 →  78.09
+
+   Four of five widths came down; the fifth costs 0.59px. A
+   breakpoint that buys nothing is a breakpoint to keep in sync
+   forever, so there is none.
+
+   THE OLD RULE'S ARGUMENT AGAINST `--data-xl` STILL STANDS and is
+   worth keeping: it resolves to 22px at 1440 and would have shrunk
+   this screen's headline number to buy a name. The total on this bar
+   is bigger than the total on a document on purpose — it is now
+   bigger by a whole step rather than by a hand-tuned five points.
+
+   AND THE FIGURE DOES NOT ANIMATE — stated on the figure now, not
+   only in prose. §4 is one line with no qualifier ("the money never
+   animates … a dealer reads a price aloud") and this file has so far
+   kept it by nothing declaring a transition. That is not a guard: it
+   is the same assumption that let base.css scale `84,310` by 3% for
+   110ms on every press until `.qb-price-fig:active` above had to
+   claw the transform back. An inherited or later-added transition
+   cannot reach the money now. */
 .qb-price-now {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: clamp(22px, 0.855rem + 0.95vw, 30px);
-  font-weight: 600;
-  letter-spacing: -0.022em;
-  color: var(--fg);
+  transition: none;
+  animation: none;
 }
 
+/* THE EX-TAX READING IS MONEY TOO, AND IT WAS THE ONE FIGURE ON
+   THIS BAR THAT COULD MOVE. It carries `$220,787 ex · 10%` wherever
+   a person has typed a rate, in Inter, with proportional figures —
+   so its box changed width with the DIGITS and not only with the
+   digit count. Measured at 1280 on the build screen, same six-digit
+   value, same clause:
+
+     $111,111 ex · 10%   90.50      $100,000 ex · 10%  104.38
+     $888,888 ex · 10%  106.27      $999,999 ex · 10%  106.52
+
+   — a 16.02px swing on a figure that changes on every pick, in a
+   `flex-wrap` row, which slides the proposal chip, the level pills
+   and the handover button sideways under the pointer. That is the
+   jitter `.qb-price-now` is tabular to prevent, one slot to its
+   right. `tabular-nums` costs nothing on the strings that carry no
+   digits ("incl. tax", the draft's reference).
+
+   IT DOES NOT BECOME MONO. §2's rule is "if it is a number IN A
+   COLUMN, it is mono", and this is a caption-sized clause with words
+   in it standing under a headline, not a column. Inter, tabular. */
 .qb-price-tax {
   font-size: var(--t-caption-size);
+  font-variant-numeric: tabular-nums;
   color: var(--fg-secondary);
   white-space: nowrap;
 }
@@ -2059,9 +2123,10 @@
 
    §4 is two sentences and they are not the same sentence. "The
    money never animates" — the figure to the left of this chip is
-   replaced on the frame it changes, and nothing in this file gives
-   `.qb-price-now` a transition. "Deltas appear and fade" — this
-   chip is a report of an act, and an act's report is a toast.
+   replaced on the frame it changes, and `.qb-price-now` refuses a
+   transition out loud rather than by omission. "Deltas appear and
+   fade" — this chip is a report of an act, and an act's report is
+   a toast.
 
    IT HAD NO EXIT. It rose in over 180ms, held, and then vanished on
    the frame `useTotalDelta` cleared it: an entrance with a cut for
@@ -2176,6 +2241,24 @@
   color: var(--fg-tertiary);
 }
 
+/* THE PROPOSAL AND THE REPORT STAY MONO, AND THAT IS NOT AN
+   OVERSIGHT NOW THAT THE TOTAL IS NOT. ds.css closes its own
+   argument for Archivo with "every other figure is still mono …
+   this is one step, for one figure, at display size. Do not read
+   this as permission" — and both of the things that made Archivo
+   right for the total are absent here.
+
+   FIRST, THE COMMA. The fixed-pitch cell that reads "$8 , 557" at
+   33.43px is 7.8px at 13px, which is a comma in a chip and not a
+   gap in a headline.
+
+   SECOND, THE COLUMN. `.qb-weigh-fig` and `.qb-delta` are the SAME
+   quantity in two costumes, in one slot, one frame apart — hovering
+   a card reads WOULD BE $212,406 −$30,460 and clicking it reads
+   −$30,460 in the same place 2.6s later. Two readings that swap in
+   place ARE a column of one row, which is exactly §2's condition
+   for mono. A proportional face here would move the figure between
+   the proposal and the report of the same act. */
 .qb-weigh-fig {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

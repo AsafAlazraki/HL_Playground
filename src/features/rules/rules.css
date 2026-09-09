@@ -1196,6 +1196,82 @@
   opacity: 1;
   pointer-events: auto;
 }
+
+/* THE THIRD ANSWER: THE ROW YOU HAVE OPENED SHOWS ITS OWN.
+
+   O9 named the fault and rejected the obvious fix in the same breath:
+   a touch on this part of the row does nothing, and an always-visible
+   delete a thumb can hit is worse. Both halves are right. This cluster
+   is drawn OVER the row, so showing it on every row would cover 66px
+   of every name in a 191px rail — the exact fault the note above
+   lifted it out of the flow to cure — and would leave a delete under
+   the thumb of somebody who is only reading the list.
+
+   FIRST, WHAT THE FAULT ACTUALLY IS, measured on a coarse hoverless
+   pointer at 1280 x 800 with this block deleted from the CSSOM, which
+   is the tree as it stood. Tap a rule open: `:focus-within` is true,
+   the cluster is up, the delete is what `elementFromPoint` returns —
+   so on Chromium the controls exist for as long as the row's own
+   button holds focus. Then tap the canvas, which is the very next
+   thing anybody does: `:focus-within` false, `opacity: 0`,
+   `pointer-events: none`, and `elementFromPoint` over the delete
+   returns `SPAN.rl-rulename` again. The controls are not missing,
+   they are conditional on a focus a person cannot see and does not
+   know they are holding. On iOS Safari, which does not move focus to
+   a `<button>` on tap, they never appear at all.
+
+   NEITHER ANSWER WAS THE ONLY PAIR. The open row shows its two
+   controls; no other row does. The reveal is earned by an act that is
+   deliberate and harmless — tapping a rule opens it — so exactly one
+   delete is on the screen at a time, it is on the rule the person is
+   already working on, and the name it covers is the one printed in
+   full on the toolbar two inches away. Measured with this block live,
+   same device, after tapping away so nothing is hovered or focused:
+   the open row reads `opacity: 1`, `pointer-events: auto` and the
+   delete is what `elementFromPoint` returns; the row below it reads
+   `0` / `none` and a tap there returns `SPAN.rl-rulename` and opens
+   that rule. A fine pointer is untouched — the block does not apply.
+
+   SIZE, BECAUSE A REACHABLE CONTROL MUST BE HITTABLE. 20 x 20 fails
+   WCAG 2.5.8's 24 x 24 floor. ds.css:1948 grows a lone control with a
+   44px invisible `::after`; that is wrong for these two, because two
+   44px pads 1px apart overlap by 23px and the danger button, later in
+   the DOM, would take the presses aimed at rename. So the buttons
+   grow instead: 28 x 28 with a 4px gap. Measured at 1280: the cluster
+   goes 47 x 26 to 66 x 34 and, anchored `right: 26px` on a 175px row,
+   spans x 315–381 — still 4px clear of `.rl-dotstamp`, which starts
+   at 385. The invariant the note above this one measured is unchanged.
+
+   THE SLIP THAT IS LEFT, AND WHY IT IS SURVIVABLE. The name wraps to
+   two lines across x 254–377 and the cluster lands over x 315–381, so
+   a second tap in the same place can reach the delete. A 320ms
+   `pointer-events` transition-delay was written to gate exactly that
+   and then measured: it does not gate, because `:focus-within` — the
+   rule above, which is not in this block and carries no delay — makes
+   the cluster live on the same tap. It was removed rather than left
+   in place claiming a protection it does not give. The answer is the
+   one rule 9 already gives: `deleteRule` records an undo step, and
+   two taps produced `Deleted “Motor fitment — Highfield” — the flow
+   drawn on it went with it` with UNDO beside it. O9 reasoned in an
+   app that had no undo. The worst case of a mis-aimed thumb is now
+   one tap back, not a lost afternoon.
+
+   `hover: none` and not `pointer: coarse`: a touch laptop still has a
+   mouse, still hovers, and needs none of this. */
+@media (hover: none) {
+  .rl-ruleitem.is-active .rl-ruleacts {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .rl-ruleacts {
+    gap: 4px;
+  }
+  .rl-ruleacts .rl-icon {
+    width: 28px;
+    height: 28px;
+  }
+}
+
 .rl-rename {
   margin: 4px 6px;
 }

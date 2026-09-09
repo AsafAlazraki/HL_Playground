@@ -31,6 +31,16 @@
    column, and only ever in place — it is the SAME cell, so it is
    still selected, edited, filled and copied exactly as before.
 
+   AND IT SURVIVES A FOLD, which is the half that was missing. On all
+   53 seeded tables the display column lives inside a band, so folding
+   that band — one press, or COLLAPSE ALL, which is the app's own
+   shortcut to the money columns — used to take the pin with it and
+   leave the exact screen the pin was built to prevent. `buildSections`
+   now keeps the pinned column through its own band's fold and folds
+   the rest of the run away behind it; the band header over it reports
+   what went. `pinFieldId` below is therefore `undefined` only when the
+   table has no display column at all.
+
    Stacking, deliberately: cells 0 · overlays 2 · the active ring 3 ·
    pinned column and the frozen gutter 4 · pinned header 5 · frozen
    header 6 · corner 7. The active-cell ring can never draw over the
@@ -439,8 +449,11 @@ export function Grid(props: GridProps): JSX.Element {
      the thing a reader would say out loud to identify the row. It is
      resolved from the ENTITY, so the card, the FOCUS lens and every
      other place a grid is drawn freeze the same column.
-     `undefined` when the table has no display column at all, or when
-     its band is folded away — a chip cannot be pinned open. */
+     `undefined` only when the table has no display column at all. It
+     used to go undefined whenever the pin's band was folded — the
+     `fields.some` below was the whole of that — and `useSectionedView`
+     now keeps the pin through the fold, so the guard holds a column
+     that has genuinely left the table rather than one behind a chip. */
   const pinFieldId = useMemo(() => {
     const display = displayFieldOf(entity)
     if (!display) return undefined
@@ -1305,6 +1318,21 @@ export function Grid(props: GridProps): JSX.Element {
                   /* what the PRESS does, which is fold the whole run —
                      never the width of the piece it landed on */
                   const cols = plural(b.runCount ?? b.count, 'column', 'columns')
+                  /* SHUT MEANS "THIS BAND'S COLUMNS ARE FOLDED AWAY",
+                     which is true of a chip AND of the pinned column
+                     that survived its own band's fold (`folded` in
+                     `bandsOf`). The chip stands over nothing; the pin
+                     stands over a real, addressable column — so only
+                     the chip takes `tb-band-shut` and gives up its
+                     aria span, while both say the same thing about
+                     what a press would do. */
+                  const shut = b.collapsed || b.folded !== undefined
+                  /* the pin's own column is on screen, so what the
+                     fold took is one fewer than the run */
+                  const gone =
+                    b.folded === undefined
+                      ? cols
+                      : `${b.folded - 1} of ${plural(b.folded, 'column', 'columns')}`
                   return (
                     <div
                       key={b.key}
@@ -1326,25 +1354,34 @@ export function Grid(props: GridProps): JSX.Element {
                       <button
                         type="button"
                         className="tb-band-btn"
-                        aria-expanded={!b.collapsed}
+                        aria-expanded={!shut}
                         aria-label={
-                          b.collapsed
-                            ? `${section.name} — ${cols} folded away. Open them.`
+                          shut
+                            ? `${section.name} — ${gone} folded away. Open them.`
                             : `${section.name} — ${cols}. Fold them away.`
                         }
                         title={
-                          b.collapsed
-                            ? `${section.name} — ${cols} folded away. Click to bring them back.`
+                          shut
+                            ? `${section.name} — ${gone} folded away. Click to bring them back.`
                             : `${section.name} — ${cols}. Click to fold them away.`
                         }
                         onClick={() => onToggleSection(section.id)}
                       >
                         {/* the other half of a run the pin cut: the ink
                             and the fold control stay, the name does not
-                            repeat — see `muted` in `bandsOf` */}
+                            repeat — see `muted` in `bandsOf`.
+                            A pinned piece whose run is folded says the
+                            same thing a chip says — `IDENTITY · 5` —
+                            over the one column that stayed, so the
+                            reader is told what is missing in the place
+                            they would look for it. */}
                         {!b.muted && (
                           <span className="tb-band-name">
-                            {b.collapsed ? foldChipText(section, b.count) : section.name}
+                            {b.collapsed
+                              ? foldChipText(section, b.count)
+                              : b.folded !== undefined
+                                ? foldChipText(section, b.folded - 1)
+                                : section.name}
                           </span>
                         )}
                       </button>

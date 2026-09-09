@@ -4,7 +4,12 @@
 
    It takes the (already grouped) TableData and hands back the SAME
    shape, narrowed to the columns a banded table currently shows: the
-   columns of a folded band removed, everything else untouched.
+   columns of a folded band removed, everything else untouched — with
+   ONE exception, and it is the whole reason `pinFieldId` is threaded
+   through here. The pinned display column survives its own band's
+   fold, because a folded sheet with no name on it is the failure the
+   pin exists to prevent. The argument, with the measurements, is on
+   `buildSections`.
 
    Because the result is still a TableData, `useSheetCommands` needs
    no idea sections exist — every cell it addresses is a real cell in
@@ -16,7 +21,7 @@
    stays plain, array identity and all.
    ============================================================ */
 import { useCallback, useMemo } from 'react'
-import type { EntityDef } from '@/types/model'
+import { displayFieldOf, type EntityDef } from '@/types/model'
 import { buildSections, type ColumnSlot } from './sections'
 import { toggleSection, useCollapsedSections } from './tableSectionState'
 import type { TableData } from './useTableData'
@@ -39,9 +44,15 @@ export function useSectionedView(
   const collapsed = useCollapsedSections(entityId)
   const sections = entity?.sections
 
+  /* THE ONE COLUMN A FOLD MAY NOT TAKE WITH IT. Resolved from the
+     ENTITY, exactly as `Grid` and `useWholeTable` resolve it, so all
+     three agree about which column is the identity and no fold can
+     make them disagree. The argument is on `buildSections`. */
+  const pinFieldId = entity ? displayFieldOf(entity)?.id : undefined
+
   const model = useMemo(
-    () => buildSections(view.fields, sections, collapsed),
-    [view.fields, sections, collapsed],
+    () => buildSections(view.fields, sections, collapsed, pinFieldId),
+    [view.fields, sections, collapsed, pinFieldId],
   )
 
   const data = useMemo<TableData>(

@@ -150,6 +150,16 @@ export type { Door } from './doors'
 /* -- the places, counted once per paint ---------------------- */
 export { forgetPlacesHeld, usePlaces } from './usePlaces'
 
+/* -- the modules the data implies, and has not got yet --------
+   Exported for the same reason `placesOf` is: an import summary, a
+   review or a second surface that has to say which modules a sheet
+   implies must reach the answer this card draws rather than growing
+   a second opinion about it. `seedFor` is the hand-over to
+   `NewModuleDialog`, which is the only thing in this application
+   that makes a module. */
+export { proposeModules, seedFor } from './proposals'
+export type { ModuleProposal, ProposalReading, ProposalSeed, ProposedTable } from './proposals'
+
 /* -- resolving a stored link against the project as it stands - */
 export { BAND_NAME, linkOffers, resolveLink, resolveLinks } from './links'
 export type { LinkMark, LinkOffer, ResolvedLink, ResolvedLinks } from './links'

@@ -112,6 +112,67 @@ export type { RuleCardProps } from './RuleCard'
 export { NewRuleSentence, NEW_RULE_CAPTION } from './NewRuleSentence'
 export type { NewRuleSentenceProps } from './NewRuleSentence'
 
+/* -- THE OTHER VERB: A FIT (UX_PASS §11) ---------------------
+ *
+ *  A limit says what must be true of every row; a fit says what goes
+ *  with what. Same sentence surface, different vocabulary — this one
+ *  speaks in TABLES and FIELDS because a fit is about two named
+ *  tables, where a limit is about the whole business.
+ *
+ *  It reads and writes an ordinary `RuleDef` — the same rule
+ *  `src/features/rules`'s canvas draws and `@/lib/rules` runs. This
+ *  is a new authoring surface over an unchanged model, and NOT a
+ *  replacement for the canvas: `readFit` returns null for anything
+ *  that branches, loops, writes or hops a reference, and those stay
+ *  the canvas's to edit. Retiring the canvas is a separate decision
+ *  §11 deliberately did not take.
+ *
+ *  SHOWING ONE SOMEWHERE ELSE — a boat's Related block, the "why is
+ *  this here?" panel:
+ *
+ *      const draft = readFit(rule)
+ *      draft && <FitSentence draft={draft} ctx={useSentenceCtx()} />
+ *
+ *  …and `describeFit(ctx, draft)` is the same sentence as plain text.
+ *  `FitResult` is that rule's live answer, run over the first
+ *  `PREVIEW_ROWS` of the source table and honest about it. */
+
+export { FitSentence, fitColumnNames } from './FitSentence'
+export type { FitSentenceProps } from './FitSentence'
+export { FitResult, fitReach, PREVIEW_ROWS } from './FitResult'
+export type { FitResultProps } from './FitResult'
+export { FitCard } from './FitCard'
+export type { FitCardProps } from './FitCard'
+export { NewFitSentence } from './NewFitSentence'
+export type { NewFitSentenceProps } from './NewFitSentence'
+export { TwoVerbs } from './TwoVerbs'
+export type { TwoVerbsProps, Verb } from './TwoVerbs'
+export {
+  blankFit,
+  columnLabel,
+  compileFit,
+  defaultFitColumns,
+  describeFit,
+  fitMissing,
+  fitOps,
+  fitSay,
+  fitTables,
+  fitTrouble,
+  isFit,
+  readFit,
+} from './fit'
+export type {
+  FitClause,
+  FitClauseSay,
+  FitColumnSay,
+  FitCompiled,
+  FitDraft,
+  FitRight,
+  FitSay,
+  FitToken,
+  FitTrouble,
+} from './fit'
+
 /* -- the create half: where a rule starts, and what it would do --
 
    WHAT IT WOULD DO, BEFORE THE COMMIT. `previewConstraint` counts a

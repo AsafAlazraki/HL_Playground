@@ -131,6 +131,37 @@ export function literalOf(expr: ValueExpr | undefined): CellValue {
   return null
 }
 
+/* A <select> and an <input> only ever hand back a string, and every
+   sentence in this feature has to turn that back into a CellValue the
+   same way. These two were private to `RuleSentence.tsx` until the fit
+   sentence needed them as well; they live here, beside `valueWords`,
+   because this is where the sentence's value vocabulary already is —
+   two copies of a coercion is how a limit and a fit start disagreeing
+   about what "yes" means. */
+
+export function coerceValue(text: string, domain: ValueDomain | undefined): CellValue {
+  switch (domain?.control) {
+    case 'boolean':
+      return text === 'yes' || text === 'true'
+    case 'number': {
+      if (text.trim() === '') return null
+      const n = Number(text)
+      return Number.isFinite(n) ? n : text
+    }
+    default:
+      return text
+  }
+}
+
+/** The value as a control's `value` — the round trip back out of
+ *  `coerceValue`, and never a stringified image array. */
+export function valueText(v: CellValue, domain: ValueDomain | undefined): string {
+  if (v === null || v === undefined || Array.isArray(v)) return ''
+  if (typeof v === 'boolean') return v ? 'yes' : 'no'
+  if (domain?.control === 'boolean' && typeof v === 'string') return v
+  return String(v)
+}
+
 /** A value as it reads inside the sentence — never quoted, because
  *  quotation marks make prose look like code. */
 export function valueWords(v: CellValue, control?: ValueDomain['control']): string {

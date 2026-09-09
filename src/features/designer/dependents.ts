@@ -14,7 +14,7 @@
 
    So: before any of the three acts — and before the fourth, deleting
    the whole table — ask this module what is holding on. It answers in
-   four currencies —
+   eight currencies —
 
      formulaReaders    calculated columns on THIS table that name the
                        column in their expression
@@ -22,15 +22,38 @@
      ruleBreakage      rules that would gain a new blocker, asked of
                        the rule engine itself rather than a hand-rolled
                        scanner that would drift from it
+     retypeBreakage    the same question for a change of TYPE, which
+                       takes away what the column meant rather than the
+                       column, and breaks a rule just as thoroughly
+     retargetBreakage  and for re-aiming a LINK, where every column a
+                       rule hops to becomes a column of another table
      entityDependents  the same question about a whole table: which
                        link columns elsewhere the cascade removes, and
                        which rules are deleted outright rather than
                        merely marked
+     entityPages       the pages and the dashboard doors left pointing
+                       at a table that is gone — the two things
+                       `deleteEntity` does NOT cascade into
+     fieldViewers      the pages that name one column, and where
+
+   The last four are the newest and the argument for them is written
+   at the head of their own section: rules and formulas were counted
+   here for months while views and modules — the half a person is
+   least able to check for themselves — were not counted anywhere.
 
    Pure TypeScript: no React, no store, no DOM.
    ============================================================ */
 
-import type { EntityDef, FieldDef, RuleDef } from '@/types/model'
+import type {
+  EntityDef,
+  FieldDef,
+  FieldPath,
+  FieldType,
+  ModuleDef,
+  RuleDef,
+  ViewBlock,
+  ViewDef,
+} from '@/types/model'
 import { validateRule } from '@/lib/rules'
 import type { RuleRunContext } from '@/lib/rules'
 
@@ -314,4 +337,289 @@ export function entityDependents(
       (r) => r.rootEntityId === entityId,
     ),
   }
+}
+
+/* ---------------------------------------------------------- */
+/* What CHANGING a column would break in the rules            */
+/* ---------------------------------------------------------- */
+
+/*  A DELETE WAS THE ONLY ACT THAT ASKED. `ruleBreakage` has counted
+    the damage of removing a column since the sheets stopped being
+    `window.confirm`s — and removing it is not the only way to take it
+    away from a rule. `updateField({ type })` takes away what the
+    column MEANT; `updateField({ refEntityId })` re-aims it at a table
+    where every field a rule hops to is a different field. Both are
+    exactly as breaking and neither was counted anywhere.
+
+    Both go through one core for one reason: the alternative is three
+    near-identical schema-diff functions that drift, and the whole
+    argument of `ruleBreakage` above is that this file must never grow
+    a scanner of its own. `validate.ts` already refuses a Set aimed at
+    a calculated column (:441) and a hop through a link whose target
+    has lost the field (:169-172); this reports whichever of those the
+    act would newly cause, without naming either. */
+
+/** The shared half: the blockers a patched column would newly cause. */
+function patchBreakage(
+  ctx: RuleRunContext,
+  rules: Record<string, RuleDef>,
+  entityId: string,
+  fieldId: string,
+  patch: Partial<FieldDef>,
+): RuleBreak[] {
+  const entity = ctx.entities[entityId]
+  if (!entity) return []
+  const at = entity.fields.findIndex((f) => f.id === fieldId)
+  if (at < 0) return []
+
+  const fields = [...entity.fields]
+  fields[at] = { ...fields[at], ...patch }
+
+  return freshBlockers(rules, ctx, {
+    entities: { ...ctx.entities, [entityId]: { ...entity, fields } },
+    rowsByEntity: ctx.rowsByEntity,
+  })
+}
+
+/**
+ * Which rules would gain a blocker if `fieldId` on `entityId` stopped
+ * being the type it is and became `to`.
+ *
+ * Returns nothing when the type is not actually changing, so a caller
+ * may ask without checking first.
+ */
+export function retypeBreakage(
+  ctx: RuleRunContext,
+  rules: Record<string, RuleDef>,
+  entityId: string,
+  fieldId: string,
+  to: FieldType,
+): RuleBreak[] {
+  const from = ctx.entities[entityId]?.fields.find((f) => f.id === fieldId)
+  if (!from || from.type === to) return []
+  return patchBreakage(ctx, rules, entityId, fieldId, { type: to })
+}
+
+/**
+ * Which rules would gain a blocker if the link `fieldId` stopped
+ * pointing at the table it points at and pointed at `toEntityId`.
+ *
+ * A rule that hops through this link — `{ viaFieldId, fieldId }` — is
+ * reading a column of the OLD target, and the new one is a different
+ * table with different columns. `validate.ts:169-172` says so in its
+ * own words ("reads a field that is no longer on …"), which is why
+ * this asks rather than deciding.
+ *
+ * Returns nothing when the link already points there.
+ */
+export function retargetBreakage(
+  ctx: RuleRunContext,
+  rules: Record<string, RuleDef>,
+  entityId: string,
+  fieldId: string,
+  toEntityId: string,
+): RuleBreak[] {
+  const from = ctx.entities[entityId]?.fields.find((f) => f.id === fieldId)
+  if (!from || from.refEntityId === toEntityId) return []
+  return patchBreakage(ctx, rules, entityId, fieldId, { refEntityId: toEntityId })
+}
+
+/* ---------------------------------------------------------- */
+/* The PAGES and the PLACES — views and modules               */
+/* ---------------------------------------------------------- */
+
+/*  WHY THIS SECTION EXISTS, AND WHAT IT COST TO LEAVE IT OUT.
+
+    DESIGN_PRINCIPLES §7 asks a confirm to state its blast radius and
+    writes the example sentence itself — "3 business rules name this
+    column, 1 formula reads it, 38 of 40 rows hold a value" — and the
+    backlog's version of the same line says "26 rules AND 4 VIEWS read
+    it". Rules and formulas were answered above. Views were not, and
+    neither were modules, and they are the half a person is least able
+    to check for themselves: a broken rule eventually shows a red mark
+    on the rules stage, while a page and a dashboard door live behind
+    two more clicks and simply come up thinner than they were.
+
+    AND `deleteEntity` DOES NOT CASCADE INTO EITHER OF THEM. It
+    rewrites entities, rows and rules and returns them
+    (`useProjectStore.ts:1041-1047`); `views` and `modules` are not in
+    that object. So a page rooted on the deleted table keeps its record
+    and stops having a subject — `ViewPage.tsx:153` reads `root` as
+    `undefined` and there is nothing left to draw — and a module keeps
+    the dead id in `tableIds` and is quietly one table smaller
+    (`modules/read.ts:84-99`: "skipped rather than drawn as a hole").
+    Neither is a consequence a person can be asked to predict, and the
+    only moment either can still be avoided is before the press.
+
+    Pure, like everything above it: the store is read by the caller and
+    handed in. */
+
+/** A page that would be left holding a pointer to something gone. */
+export interface PageRef {
+  viewId: string
+  viewName: string
+}
+
+/** A place on the dashboard that stands on this table. */
+export interface PlaceRef {
+  moduleId: string
+  moduleName: string
+  /** this is the module's LAST table — it would have nothing to list */
+  last: boolean
+}
+
+export interface EntityPages {
+  /** pages whose subject IS this table; they lose what they are about */
+  rootedViews: PageRef[]
+  /** pages rooted elsewhere that draw a block from it; they lose a block */
+  blockViews: PageRef[]
+  /** modules that name it among the tables they stand on */
+  places: PlaceRef[]
+}
+
+/** Every block of a view, children included, in drawing order. */
+function eachBlock(blocks: ViewBlock[] | undefined, visit: (b: ViewBlock) => void): void {
+  for (const b of blocks ?? []) {
+    visit(b)
+    eachBlock(b.children, visit)
+  }
+}
+
+/** Sort by the name a person reads, so two runs list the same order —
+ *  `Object.values` over a rehydrated record is not ordered. */
+function byName<T>(key: (v: T) => string): (a: T, b: T) => number {
+  return (a, b) => key(a).localeCompare(key(b))
+}
+
+/**
+ * The pages and the dashboard doors that would be left pointing at
+ * `entityId` after it is deleted.
+ *
+ * A page counts once, under the worse of the two headings: a page
+ * ROOTED here loses its subject entirely, and saying in the same
+ * breath that it also loses a block would read as two losses where
+ * there is one page.
+ */
+export function entityPages(
+  views: Record<string, ViewDef>,
+  modules: Record<string, ModuleDef>,
+  entityId: string,
+): EntityPages {
+  const rootedViews: PageRef[] = []
+  const blockViews: PageRef[] = []
+
+  for (const v of Object.values(views)) {
+    const ref: PageRef = { viewId: v.id, viewName: v.name || 'an unnamed page' }
+    if (v.rootTableId === entityId) {
+      rootedViews.push(ref)
+      continue
+    }
+    let drawn = false
+    eachBlock(v.blocks, (b) => {
+      if (b.tableId === entityId || b.joinTableId === entityId) drawn = true
+    })
+    if (drawn) blockViews.push(ref)
+  }
+
+  const places: PlaceRef[] = Object.values(modules)
+    .filter((m) => m.tableIds.includes(entityId))
+    .map((m) => ({
+      moduleId: m.id,
+      moduleName: m.name || 'an unnamed module',
+      last: m.tableIds.length === 1,
+    }))
+
+  return {
+    rootedViews: rootedViews.sort(byName((p) => p.viewName)),
+    blockViews: blockViews.sort(byName((p) => p.viewName)),
+    places: places.sort(byName((p) => p.moduleName)),
+  }
+}
+
+/* ---------------------------------------------------------- */
+/* Which pages name one COLUMN                                */
+/* ---------------------------------------------------------- */
+
+/** One page that names the column, and how many places on it do. */
+export interface PageUse extends PageRef {
+  /** shown in a block, filtered on, or named by a block's own rule */
+  uses: number
+}
+
+/**
+ * The table a `FieldPath` finally lands on, given the table the side it
+ * is written on stands for. `undefined` when the hop cannot be followed
+ * — a link column since deleted, or one never pointed anywhere. An
+ * unfollowable hop is reported as nothing rather than as a match: a
+ * count that guesses is the thing this module exists to replace.
+ */
+function landsOn(
+  path: FieldPath,
+  sideId: string | undefined,
+  entities: Record<string, EntityDef>,
+): string | undefined {
+  if (!sideId) return undefined
+  if (!path.viaFieldId) return sideId
+  const via = entities[sideId]?.fields.find((f) => f.id === path.viaFieldId)
+  return via?.type === 'reference' ? via.refEntityId : undefined
+}
+
+/** How many times one clause path names `fieldId` of `entityId`. */
+function pathUses(
+  path: FieldPath,
+  sideId: string | undefined,
+  entities: Record<string, EntityDef>,
+  entityId: string,
+  fieldId: string,
+): number {
+  let n = 0
+  /* the hop itself is a column on THIS side, and taking it away breaks
+     the clause exactly as taking its destination away would */
+  if (path.viaFieldId === fieldId && sideId === entityId) n += 1
+  if (path.fieldId === fieldId && landsOn(path, sideId, entities) === entityId) n += 1
+  return n
+}
+
+/**
+ * Which pages name `fieldId`, and how many places on each.
+ *
+ * WHICH SIDE A CLAUSE IS WRITTEN ON IS NOT A GUESS. `evalPairRule`
+ * (`features/views/pairs.ts:288`) binds `left` to the CANDIDATE row and
+ * `right` to the SOURCE row, so a clause's left path is a column on the
+ * block's own table and its right path is a column on the table the
+ * block hangs under — the view's root for a top-level block, the parent
+ * block's table for a nested one. That is carried down the walk rather
+ * than assumed: a nested block read against the wrong table would count
+ * columns that are not there, and an over-count in a confirm is a
+ * finding a person cannot go and check.
+ */
+export function fieldViewers(
+  views: Record<string, ViewDef>,
+  entities: Record<string, EntityDef>,
+  entityId: string,
+  fieldId: string,
+): PageUse[] {
+  const walk = (block: ViewBlock, sourceId: string | undefined): number => {
+    let n = 0
+    if (block.tableId === entityId) {
+      if (block.columns?.includes(fieldId)) n += 1
+      for (const f of block.filters ?? []) if (f.fieldId === fieldId) n += 1
+    }
+    for (const c of block.rule?.clauses ?? []) {
+      n += pathUses(c.left, block.tableId, entities, entityId, fieldId)
+      if (c.right?.kind === 'field') {
+        n += pathUses(c.right.path, sourceId, entities, entityId, fieldId)
+      }
+    }
+    for (const child of block.children ?? []) n += walk(child, block.tableId)
+    return n
+  }
+
+  const out: PageUse[] = []
+  for (const v of Object.values(views)) {
+    let uses = 0
+    for (const b of v.blocks ?? []) uses += walk(b, v.rootTableId)
+    if (uses > 0) out.push({ viewId: v.id, viewName: v.name || 'an unnamed page', uses })
+  }
+  return out.sort(byName((p) => p.viewName))
 }

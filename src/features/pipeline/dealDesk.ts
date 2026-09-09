@@ -27,10 +27,12 @@
    Marcus must not arrive on Priya's card.
    ============================================================ */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { currentUser } from '@/features/auth'
 import { sizeSay } from '@/features/modules'
 import { say } from '@/store/notes'
+import { useProjectStore } from '@/store/useProjectStore'
+import type { RoleDef } from '@/types/model'
 import type { QuoteDef } from '@/features/quote'
 import { composeNote, dropNote, saveNote, useDealNotes, whyNotNote } from './dealNotes'
 import {
@@ -48,6 +50,20 @@ import {
   useDealFiles,
   type DealFile,
 } from './dealFiles'
+import {
+  composeHandover,
+  dropHandover,
+  handoverToast,
+  handoversFor,
+  ownerInForce,
+  ownerOf,
+  roleWord,
+  saveHandover,
+  useDealOwners,
+  whyNotOwner,
+  NOBODY,
+  type Handover,
+} from './owners'
 import { arrivedAt, useSince, useStages } from './stages'
 
 export interface DealDesk {
@@ -78,14 +94,47 @@ export interface DealDesk {
     choose: (chosen: FileList | null) => void
     drop: (file: DealFile) => void
   }
+  /** WHOSE DEAL IT IS — the one act on this desk that is about a
+   *  person rather than about a thing attached to the deal. See
+   *  `owners.ts` for why an owner names a JOB and why that is not
+   *  `preparedBy`. */
+  owner: {
+    /** the role id it is with, or `NOBODY` — a string either way,
+     *  because that is what the picker's value has to be */
+    at: string
+    /** the role itself, or null when nobody holds it OR when the
+     *  role that held it has since been deleted. `ownerInForce`
+     *  is what refuses to name a job that no longer exists. */
+    role: RoleDef | null
+    /** the dealership's jobs, for the picker to offer */
+    roles: RoleDef[]
+    /** every handover on this deal, oldest first */
+    trail: Handover[]
+    /** why nobody can be given it, or null. Rule 10: the pane
+     *  prints this where the control is. */
+    why: string | null
+    assign: (roleId: string) => void
+  }
 }
 
 export function useDealDesk(orgSlug: string, quote: QuoteDef): DealDesk {
   const notes = useDealNotes(orgSlug)
   const links = useDealLinks(orgSlug)
   const { list: files, again, ready: filesReady } = useDealFiles(orgSlug, quote.id)
+  const owners = useDealOwners(orgSlug)
   const at = useStages(orgSlug)
   const since = useSince(orgSlug)
+  /* THE DEALERSHIP'S JOBS, from the project store rather than from
+     a list of this feature's own. `owners.ts` argues at length that
+     the roles are the only directory of who does what here that
+     this app did not invent; reading them anywhere but the store
+     would be the second copy that argument is against. Sorted by
+     name so two people's panes offer the same order. */
+  const roleMap = useProjectStore((s) => s.roles)
+  const roles = useMemo(
+    () => Object.values(roleMap).sort((a, b) => a.name.localeCompare(b.name)),
+    [roleMap],
+  )
 
   const [text, setText] = useState('')
   const [noteWhy, setNoteWhy] = useState<string | null>(null)
@@ -252,6 +301,48 @@ export function useDealDesk(orgSlug: string, quote: QuoteDef): DealDesk {
     [quote, again],
   )
 
+  /** HAND THE DEAL TO A JOB, OR TAKE IT BACK OFF ONE.
+   *
+   *  IT IS A TOAST WITH UNDO LIKE EVERY OTHER ACT ON THIS DESK,
+   *  and that is not a formality here: a change of ownership made
+   *  silently is the one act on this screen a person could make by
+   *  brushing a dropdown and never find out about. `Board.tsx`
+   *  already argues that a stage move must announce itself; an
+   *  owner change is the same class of fact and the same rule 9
+   *  applies to it.
+   *
+   *  UNDO REMOVES THE HANDOVER rather than writing a second one
+   *  pointing back — see `withoutHandover`. It puts the trail back
+   *  exactly as it was found, which is the only thing an Undo on a
+   *  record can honestly mean. */
+  const assign = useCallback(
+    (roleId: string): void => {
+      const to = roleId === NOBODY ? null : roleId
+      /* A PRESS THAT CHANGES NOTHING SAYS NOTHING. Picking the row
+         that is already ticked is a normal thing to do in a
+         dropdown, and a toast reporting it would put an entry in
+         the activity log for an act that did not happen. */
+      if (ownerOf(owners, quote.id) === to) return
+      const h = composeHandover(orgSlug, quote.id, to)
+      const kept = saveHandover(orgSlug, quote.id, h)
+      const said = handoverToast(h, roles, quote.reference, quote.customer.name)
+      say({
+        /* WHAT A REFRESH WILL ACTUALLY SHOW, named rather than left
+           as "it failed" — the shape `addLink` uses one act up, and
+           the sentence a person needs: a deal they have just given
+           away is about to be back on the desk it came off. */
+        text: kept
+          ? said
+          : `${said} This browser refused to store it, so it will be back with ${roleWord(
+              h.from,
+              roles,
+            )} after a refresh.`,
+        act: { label: 'Undo', onPick: () => dropHandover(orgSlug, quote.id, h.id) },
+      })
+    },
+    [orgSlug, owners, quote, roles],
+  )
+
   return {
     notes,
     links,
@@ -275,5 +366,18 @@ export function useDealDesk(orgSlug: string, quote: QuoteDef): DealDesk {
       drop: removeLink,
     },
     file: { why: fileWhy, did: fileDid, choose: chooseFiles, drop: removeFile },
+    owner: {
+      /* THE PICKER'S VALUE IS THE STORED ID, NOT THE RESOLVED ROLE.
+         A deal standing on a role that has since been deleted shows
+         `Nobody` — `ownerInForce` refuses to name it — and picking
+         a real job from there is a normal reassignment rather than
+         a repair somebody has to know about. */
+      at: ownerInForce(owners, quote.id, roles)?.id ?? NOBODY,
+      role: ownerInForce(owners, quote.id, roles),
+      roles,
+      trail: handoversFor(owners, quote.id),
+      why: whyNotOwner(roles),
+      assign,
+    },
   }
 }

@@ -74,11 +74,27 @@
      wrote. Everything this feature says about a document is
      checkable against the document.
 
-     NO ACTIVITY / AUDIT LOG. The reference app has one, and it is
-     the right idea; it needs a record of edits that this app does
-     not keep. `updatedAt` is one timestamp, not a trail, and a log
-     built from it would be a list of one entry per quote claiming to
-     be a history of changes.
+     NO ACTIVITY / AUDIT LOG DRAWN HERE — and the reason changed,
+     so the sentence did. It used to read "it needs a record of
+     edits that this app does not keep". The app keeps two now:
+     `features/activity` writes down every act that raised a toast,
+     per organisation, and `pipeline/owners.ts` keeps each deal's
+     HANDOVERS — who gave it to which job, when, and who did the
+     giving.
+
+     Neither is drawn on this ledger, on purpose. Both are live
+     stores keyed beside the quote, and the one invariant below is
+     that no row here is computed from anything but the frozen
+     document. A ledger row that reached into a pipeline store
+     would be a row whose meaning changes on a Tuesday, which is
+     the whole property this feature exists to keep. The handover
+     trail is drawn where it belongs — on the deal's own record,
+     `pipeline/DealPage.tsx` — and this screen still answers only
+     what the documents say.
+
+     `updatedAt` remains one timestamp and not a trail, and a log
+     built from it would still be a list of one entry per quote
+     claiming to be a history of changes.
 
      NO EXPIRY, NO FOLLOW-UP DATES, NO REMINDERS. Each needs a field
      nobody writes and a runtime that does not exist.

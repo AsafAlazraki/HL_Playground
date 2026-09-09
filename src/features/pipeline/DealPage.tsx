@@ -34,7 +34,14 @@ import { ArrowLeft, ArrowSquareOut } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import type { QuoteDef } from '@/features/quote'
 import { useDealDesk } from './dealDesk'
-import { DealFacts, DealFiles, DealLinks, DealPhoto, DealThread } from './dealParts'
+import {
+  DealFacts,
+  DealFiles,
+  DealHandovers,
+  DealLinks,
+  DealPhoto,
+  DealThread,
+} from './dealParts'
 import type { StageDef } from './stageStore'
 
 export interface DealPageProps {
@@ -102,7 +109,18 @@ export function DealPage({
             <DealPhoto quote={quote} />
             {/* NO `specLimit`. This is the file: it prints all of
                 them, which is the one thing it is for. */}
-            <DealFacts quote={quote} stage={stage} arrived={desk.arrived} />
+            <DealFacts
+              quote={quote}
+              stage={stage}
+              arrived={desk.arrived}
+              owner={{
+                at: desk.owner.at,
+                roles: desk.owner.roles,
+                last: desk.owner.trail[desk.owner.trail.length - 1],
+                why: desk.owner.why,
+                onAssign: desk.owner.assign,
+              }}
+            />
           </div>
 
           <div className="dr-col dr-col-wide">
@@ -114,6 +132,13 @@ export function DealPage({
               why={desk.note.why}
               unkept={desk.note.unkept}
               onAdd={desk.note.add}
+            />
+            {/* NO `limit`. This is the file: every handover, the way
+                it prints every spec and every note. */}
+            <DealHandovers
+              quote={quote}
+              trail={desk.owner.trail}
+              roles={desk.owner.roles}
             />
             <DealLinks
               quote={quote}

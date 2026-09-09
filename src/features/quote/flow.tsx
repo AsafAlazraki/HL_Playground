@@ -219,6 +219,29 @@ export function FlowLine({ at, facts, onGo, reach = [] }: FlowLineProps): ReactE
 
    THE FIGURE DOES NOT ANIMATE, anywhere. build.css records why: a
    dealer reads this aloud, and motion on money is a slot machine.
+
+   AND THE STEP IT IS SET IN IS `.ds-figure-xl`, WORN HERE. The
+   total was on a ramp this feature wrote by hand — 25.84px of IBM
+   Plex Mono at 1280, measured — while ds.css carried
+   `--t-figure-xl` (30 → 42px, Archivo, tabular) for exactly this
+   figure and nothing else. The class is taken at the call site
+   rather than re-declared in build.css for the reason ds.css gives
+   about `.ds-marque`: a step defined in two places is a split this
+   project has already paid for once. build.css's `.qb-price-now`
+   keeps only what the step does not own.
+
+   IT IS NOT MONO ANY MORE, AND THAT IS THE POINT OF THE STEP.
+   IBM Plex Mono is fixed-pitch, so at this size the thousands comma
+   takes a whole digit cell and the total reads "$8 , 557"; ds.css
+   records the per-glyph measurement and that no OpenType feature
+   closes it. Archivo with `tabular-nums` puts every digit on one
+   advance, so the figure still cannot move as the price changes —
+   which is the property "money never animates" actually rests on.
+
+   EVERY OTHER FIGURE IN THIS BAR STAYS MONO. §2's rule is "if it
+   is a number IN A COLUMN, it is mono"; a committed total is a
+   headline that happens to be a number, and the proposal, the
+   delta and every line-item price are not.
    ============================================================ */
 
 export interface RunningTotalProps {
@@ -268,7 +291,7 @@ export function RunningTotal({
       {amount === null ? (
         <span className="qb-price-nil">{nil}</span>
       ) : (
-        <span className="qb-price-now">{money(amount)}</span>
+        <span className="qb-price-now ds-figure-xl">{money(amount)}</span>
       )}
       {sub === '' ? null : <span className="qb-price-tax">{sub}</span>}
       {onToggle ? (

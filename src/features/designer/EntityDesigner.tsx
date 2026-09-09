@@ -28,7 +28,7 @@ import { GuardNote } from './GuardNote'
 import { useNameGuard } from './useNameGuard'
 import { ConfirmRadius, ConfirmSheet } from './ConfirmSheet'
 import { draftColumnName } from './columnFacts'
-import { entityDependents, nameList } from './dependents'
+import { entityDependents, entityPages, nameList } from './dependents'
 /* THE APP'S ONE GROUPING VOCABULARY. `leafNoun` reads a table's own
    naming column and hands back the dealer's word for one of its rows;
    the register and the module census already ask it, so this panel
@@ -185,11 +185,27 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
      person would ever get about it. */
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   /* asked only while the sheet is up — `entityDependents` validates
-     every rule in the project twice */
+     every rule in the project twice, and `entityPages` walks every
+     page's block tree.
+
+     ONE READ OF THE STORE, so every figure on the sheet is a figure
+     about the same instant. Two `getState()` calls a few lines apart
+     can in principle straddle a write from another surface, and a
+     confirm whose five counts came from two different projects is
+     worse than a confirm with no counts at all.
+
+     `pages` is the half `deleteEntity` does NOT cascade into: it
+     rewrites entities, rows and rules and returns them, so a page
+     rooted here keeps its record and loses its subject, and a module
+     keeps a dead id and comes up one table shorter. See the section
+     head in dependents.ts. */
   const doomed = useMemo(() => {
     if (!confirmingDelete) return null
-    const { entities: all, rowsByEntity, rules } = useProjectStore.getState()
-    return entityDependents({ entities: all, rowsByEntity }, rules, entity.id)
+    const { entities: all, rowsByEntity, rules, views, modules } = useProjectStore.getState()
+    return {
+      ...entityDependents({ entities: all, rowsByEntity }, rules, entity.id),
+      pages: entityPages(views, modules, entity.id),
+    }
   }, [confirmingDelete, entity.id])
 
   /* the two stamps a collapsed column row can carry, explained once */
@@ -531,8 +547,18 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
           <span className="mono-label ds-sect-label">Danger</span>
           <span className="ds-sect-rule" aria-hidden="true" />
         </div>
+        {/* THIS LINE USED TO READ AS A COMPLETE LIST and named two of
+            the eight things the sheet behind the button now counts. It
+            is not the place to count them — the pages and the rules
+            cost a walk of every view and two validations of every rule,
+            and this note is drawn on every render of the column setup —
+            but a note that names two consequences and stops reads as
+            "and that is all", which is the one thing it must not say.
+            So it names the largest and hands the counting to the sheet
+            that can afford it. */}
         <p className="ds-danger-note mono-label">
-          Deleting removes its rows and any link columns aimed at it.
+          Deleting takes its rows with it, and more — the next screen counts
+          exactly what.
         </p>
         <button
           type="button"
@@ -625,6 +651,49 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
                     },
                   ]
                 : []),
+              /* THE TWO THE STORE LEAVES BEHIND. Everything above this
+                 goes WITH the table; these do not go anywhere, which is
+                 why they were invisible for so long. A page rooted here
+                 keeps its record and loses its subject, and a module
+                 keeps a dead id and comes up one table shorter. Said in
+                 the same figures-and-clause voice as the rest so a
+                 reader does not have to change gear halfway down. */
+              ...(doomed.pages.rootedViews.length > 0
+                ? [
+                    {
+                      figure: String(doomed.pages.rootedViews.length),
+                      say:
+                        doomed.pages.rootedViews.length === 1
+                          ? 'page is about this table and has nothing left to draw'
+                          : 'pages are about this table and have nothing left to draw',
+                      grave: true,
+                    },
+                  ]
+                : []),
+              ...(doomed.pages.blockViews.length > 0
+                ? [
+                    {
+                      figure: String(doomed.pages.blockViews.length),
+                      say:
+                        doomed.pages.blockViews.length === 1
+                          ? 'other page loses the block it draws from here'
+                          : 'other pages lose the block they draw from here',
+                      grave: true,
+                    },
+                  ]
+                : []),
+              ...(doomed.pages.places.length > 0
+                ? [
+                    {
+                      figure: String(doomed.pages.places.length),
+                      say:
+                        doomed.pages.places.length === 1
+                          ? 'module on the dashboard loses it from its list'
+                          : 'modules on the dashboard lose it from their lists',
+                      grave: true,
+                    },
+                  ]
+                : []),
             ]}
           />
 
@@ -657,6 +726,48 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             </p>
           ))}
 
+          {/* WHICH PAGES, BY NAME — a count says how much and only a
+              name says what, which is the rule the rest of this sheet
+              already follows. And the verb is deliberately not "goes":
+              `deleteEntity` never touches `views`, so the page is still
+              in the file afterwards with nothing to be about. Saying it
+              went would be the easier sentence and the false one. */}
+          {doomed.pages.rootedViews.length > 0 ? (
+            <p className="ds-cs-line ds-cs-line-warn">
+              {doomed.pages.rootedViews.length === 1 ? 'This page is' : 'These pages are'} about{' '}
+              {entity.name} and {doomed.pages.rootedViews.length === 1 ? 'is' : 'are'} left with
+              nothing to draw —{' '}
+              {nameList(doomed.pages.rootedViews.map((v) => v.viewName))}. Deleting the table does
+              not delete {doomed.pages.rootedViews.length === 1 ? 'it' : 'them'}.
+            </p>
+          ) : null}
+
+          {doomed.pages.blockViews.length > 0 ? (
+            <p className="ds-cs-line ds-cs-line-warn">
+              {doomed.pages.blockViews.length === 1
+                ? 'A page elsewhere draws a block from this table and loses it: '
+                : `${doomed.pages.blockViews.length} pages elsewhere draw a block from this table and lose it: `}
+              {nameList(doomed.pages.blockViews.map((v) => v.viewName))}.
+            </p>
+          ) : null}
+
+          {/* A MODULE WITH NO OTHER TABLE IS THE WORSE HALF OF THIS and
+              gets its own sentence: `moduleTables` skips an id that no
+              longer resolves, so a module standing on one table becomes
+              a door onto nothing rather than a door that is smaller. */}
+          {doomed.pages.places.length > 0 ? (
+            <p className="ds-cs-line ds-cs-line-warn">
+              {doomed.pages.places.length === 1 ? 'This module stands' : 'These modules stand'} on
+              it and would come up without it —{' '}
+              {nameList(
+                doomed.pages.places.map((m) =>
+                  m.last ? `${m.moduleName}, which has no other table to list` : m.moduleName,
+                ),
+              )}
+              .
+            </p>
+          ) : null}
+
           {/* THE SENTENCE THAT USED TO BE FALSE, and the largest of the
               four: this act takes a whole table AND cascades. Measured
               in the running app: delete "Surtees" — 19 rows, 30 columns,
@@ -671,7 +782,12 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
               snapshot as the table itself. */}
           <p className="ds-cs-line">
             Ctrl+Z brings the table back, with every row on it and every link
-            column and rule that went with it.
+            column and rule that went with it
+            {doomed.pages.rootedViews.length + doomed.pages.blockViews.length + doomed.pages.places.length >
+            0
+              ? ' — and the pages and modules above have their table again'
+              : ''}
+            .
           </p>
         </ConfirmSheet>
       ) : null}

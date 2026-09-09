@@ -63,6 +63,7 @@ import { DealPage } from './DealPage'
 import { waitedSay } from './dealParts'
 import { useCardFields, type CardFieldId } from './cardFields'
 import { countOf, useDealNotes } from './dealNotes'
+import { ownerInForce, useDealOwners } from './owners'
 import { arrivalClause, locksButOpen } from './stageTrigger'
 import {
   arrivedAt,
@@ -131,6 +132,16 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
      chose to draw it. Read once for the board, like the notes and
      for the same reason. */
   const since = useSince(orgSlug)
+
+  /* WHOSE EACH DEAL IS, and the dealership's jobs to resolve those
+     ids against. Both read once for the whole board, like the notes
+     above — and the roles come from the project store because they
+     are the dealership's own list rather than this feature's. See
+     `owners.ts`, which also says why a deal standing on a role that
+     has since been deleted draws nothing instead of a name. */
+  const owners = useDealOwners(orgSlug)
+  const roleMap = useProjectStore((st) => st.roles)
+  const roles = useMemo(() => Object.values(roleMap), [roleMap])
 
   /* WHAT THIS PERSON WANTS ON A CARD — theirs, not the business's.
      See `cardFields.ts`: the columns are shared and this is not,
@@ -710,6 +721,17 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                          the note badge keeps — never drawn where it
                          is not true. */
                       const unlocked = locksButOpen(stage, q)
+                      /* THE JOB THIS DEAL IS WITH, or null when
+                         nobody has been given it — and also null
+                         when the job it was given to has since been
+                         deleted, which is `ownerInForce` refusing to
+                         print a name for a role that is gone. Only
+                         resolved when the card asked for it: eighty
+                         cards times a role list is a lookup nobody
+                         chose to pay for. */
+                      const owner = shows('owner')
+                        ? ownerInForce(owners, q.id, roles)
+                        : null
                       return (
                         <button
                           type="button"
@@ -737,6 +759,17 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                             }
                           }}
                           aria-label={`${q.reference}, ${q.customer.name || 'no customer'}, in ${stage.name}${
+                            /* WHOSE IT IS, IN THE LABEL. An
+                               `aria-label` replaces the button's
+                               text outright, so a fact drawn inside
+                               the card is a fact a screen reader
+                               never hears unless it is named here.
+                               (The four chosen fields have the same
+                               problem and predate this line; naming
+                               the one being added is the half that
+                               is this change's to fix.) */
+                            owner !== null ? `, with ${owner.name}` : ''
+                          }${
                             said > 0
                               ? `, ${said} ${said === 1 ? 'note' : 'notes'}`
                               : ''
@@ -825,8 +858,21 @@ export function Board({ orgSlug, onOpen, onRecord }: BoardProps): JSX.Element {
                               foot stays a figure and a name — the
                               measurement that put the note badge up top
                               in the first place. */}
-                          {shows('kind') || (shows('waiting') && arrived !== null) ? (
+                          {shows('kind') ||
+                          owner !== null ||
+                          (shows('waiting') && arrived !== null) ? (
                             <span className="pb-card-tags">
+                              {/* WHOSE IT IS, AND NOT IN THE FOOT.
+                                  The foot is a figure and a name and
+                                  was measured as having no room for
+                                  a third thing — see the note on the
+                                  note badge. This row is the two
+                                  facts that are neither metadata nor
+                                  money, and whose desk a deal is on
+                                  is a third of exactly that kind. */}
+                              {owner !== null ? (
+                                <span className="pb-card-owner">{owner.name}</span>
+                              ) : null}
                               {shows('kind') ? (
                                 <span
                                   className="k-chip pb-card-kind"

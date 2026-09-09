@@ -310,3 +310,75 @@ describe('the sentences themselves', () => {
     }
   })
 })
+
+describe('every sheet still counts', () => {
+  /* ── THE PROPERTY, AND WHY IT IS GUARDED HERE ────────────────
+
+     DESIGN_PRINCIPLES §7: "a confirm states its blast radius,
+     computed." A sheet that loses its `ConfirmRadius` in a refactor
+     does not fail anything — it just goes back to asking "are you
+     sure?", which is the state this whole surface was built out of,
+     and the four sentences above would still pass while it did.
+
+     A TEXT GUARD IS THE HONEST ONE HERE for the same reason the
+     no-undo guard above is: nothing renders these dialogs (the two
+     `.test.ts` projects have no DOM, and the designer has no `.tsx`
+     suite), so the choice is between a guard on the source and no
+     guard at all. It asserts structure rather than wording — WHICH
+     figures a sheet shows is a judgement that will keep changing;
+     that it shows any at all is the rule. */
+  const withSheets: Record<string, string> = {
+    'FieldRow.tsx': fieldRowSrc,
+    'FieldTypeEditors.tsx': fieldTypeEditorsSrc,
+    'EntityDesigner.tsx': entityDesignerSrc,
+  }
+
+  /** Every `<ConfirmSheet …>…</ConfirmSheet>` body in one source. */
+  function sheetBodies(src: string): string[] {
+    const out: string[] = []
+    let at = src.indexOf('<ConfirmSheet')
+    while (at >= 0) {
+      const end = src.indexOf('</ConfirmSheet>', at)
+      out.push(src.slice(at, end < 0 ? src.length : end))
+      at = src.indexOf('<ConfirmSheet', end < 0 ? src.length : end)
+    }
+    return out
+  }
+
+  it('draws a counted blast radius inside every confirm on this surface', () => {
+    let sheets = 0
+    for (const [name, src] of Object.entries(withSheets)) {
+      for (const [i, body] of sheetBodies(src).entries()) {
+        sheets += 1
+        expect(
+          body.includes('<ConfirmRadius'),
+          `${name} — confirm ${i + 1} asks a destructive question with no counted radius in it`,
+        ).toBe(true)
+      }
+    }
+    /* the four acts this surface destroys something with: remove a
+       column, retype one, re-point a link, delete the table. A fifth
+       appearing is not a failure — it is a reminder to read this file
+       and decide whether rule 9 wanted a toast instead. */
+    expect(sheets).toBe(4)
+  })
+
+  /* THE FIGURES ARE READ, NEVER WRITTEN DOWN. A radius whose figure is
+     a string literal is a guess dressed as a measurement, and it is the
+     one failure mode that would look right on screen. Every figure on
+     this surface is `String(...)`, a template holding a `.length` or a
+     count, or the one honest constant — the '0' the empty-column line
+     is allowed, which is guarded by the clause beside it. */
+  it('never writes a figure into a radius by hand', () => {
+    for (const [name, src] of Object.entries(withSheets)) {
+      const figures = [...src.matchAll(/figure: ('[^']*'|`[^`]*`)/g)]
+      for (const m of figures) {
+        const written = m[1]
+        const computed = written.includes('${')
+        expect(computed || written === "'0'", `${name} — figure ${written} is not computed`).toBe(
+          true,
+        )
+      }
+    }
+  })
+})

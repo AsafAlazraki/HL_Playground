@@ -24,7 +24,16 @@ import { GuardNote } from './GuardNote'
 import { useNameGuard } from './useNameGuard'
 import { ConfirmRadius, ConfirmSamples, ConfirmSheet } from './ConfirmSheet'
 import { columnFacts, retypePlan, type ColumnFacts, type RetypePlan } from './columnFacts'
-import { formulaReaders, nameList, renameFieldRefs, ruleBreakage } from './dependents'
+import {
+  fieldViewers,
+  formulaReaders,
+  nameList,
+  renameFieldRefs,
+  retypeBreakage,
+  ruleBreakage,
+  type PageUse,
+  type RuleBreak,
+} from './dependents'
 /* PHOSPHOR ONLY, THROUGH `@/lib/icons`. This folder used to hand-draw
    eight SVGs of its own, so the same caret appeared here at 1.4px and
    everywhere else in the app at Phosphor's 'light' weight — a hairline
@@ -45,10 +54,30 @@ interface FieldRowProps {
   onToggle: () => void
 }
 
+/**
+ * WHAT ELSE IS HOLDING ON TO THIS COLUMN, read at the moment the act
+ * was asked for.
+ *
+ * Two of these were gathered for a DELETE and for nothing else, and
+ * the third was gathered nowhere. That left the retype sheet counting
+ * values and only values — and a retype takes away what the column
+ * MEANT, which breaks a rule as thoroughly as taking the column away
+ * does. So the readings travel with the pending act instead of hanging
+ * off it: whichever act is up, the sheet shows what THAT act costs.
+ */
+interface Holders {
+  /** calculated columns on this table naming it in their expression */
+  readers: FieldDef[]
+  /** rules that gain a blocker — the ENGINE's answer, not a scan */
+  rules: RuleBreak[]
+  /** pages that name it: shown, filtered on, or in a block's own rule */
+  pages: PageUse[]
+}
+
 /** what the sheet is asking about, while it is up */
 type Pending =
-  | { act: 'retype'; to: FieldType; plan: RetypePlan }
-  | { act: 'delete' }
+  | { act: 'retype'; to: FieldType; plan: RetypePlan; holders: Holders }
+  | { act: 'delete'; holders: Holders }
   | null
 
 export function FieldRow({
@@ -188,18 +217,29 @@ export function FieldRow({
 
   const label = field.name.trim() || 'this untitled column'
 
-  /* WHAT ELSE IS HOLDING ON — computed only while the sheet is up, so
-     the whole rules graph is not re-validated on every keystroke in
-     the name box. `ruleBreakage` asks the rule engine rather than
-     scanning the graph here; see the note on it. */
-  const holders = useMemo(() => {
-    if (pending?.act !== 'delete') return null
-    const { entities, rowsByEntity, rules } = useProjectStore.getState()
+  /* WHAT ELSE IS HOLDING ON — asked once, at the press that opens the
+     sheet, so the whole rules graph is not re-validated on every
+     keystroke in the name box. `ruleBreakage` and `retypeBreakage` ask
+     the rule engine rather than scanning the graph here; see the notes
+     on them.
+
+     `to` is the type a retype is heading for, and absent for a delete —
+     the two acts differ only in which question is put to the engine. */
+  const holdersFor = (to?: FieldType): Holders => {
+    const { entities, rowsByEntity, rules, views } = useProjectStore.getState()
+    const ctx = { entities, rowsByEntity }
     return {
       readers: formulaReaders(entity, field),
-      rules: ruleBreakage({ entities, rowsByEntity }, rules, entity.id, field.id),
+      rules: to
+        ? retypeBreakage(ctx, rules, entity.id, field.id, to)
+        : ruleBreakage(ctx, rules, entity.id, field.id),
+      /* A RETYPE DOES NOT TAKE THE COLUMN OFF A PAGE — the block still
+         shows it, still sorts by it, still filters on it. Only a delete
+         leaves a page naming a column that is not there, so only a
+         delete asks. */
+      pages: to ? [] : fieldViewers(views, entities, entity.id, field.id),
     }
-  }, [pending?.act, entity, field])
+  }
 
   return (
     <div className={expanded ? 'ds-frow ds-frow-open' : 'ds-frow'} ref={rowRef}>
@@ -310,7 +350,7 @@ export function FieldRow({
         <button
           type="button"
           className="ds-frow-del"
-          onClick={() => setPending({ act: 'delete' })}
+          onClick={() => setPending({ act: 'delete', holders: holdersFor() })}
           aria-label={`Delete the column ${field.name || 'untitled'}`}
           title="Delete this column"
         >
@@ -462,13 +502,29 @@ export function FieldRow({
                      Cancel path, which is the one path a modal cannot
                      assume it gets. */
                   el.value = field.type
-                  if (facts.filled === 0) {
-                    /* nothing to lose: a column nobody has filled in
-                       does not need a sheet of paper to change */
+                  /* AN EMPTY COLUMN IS NOT AN UNHELD ONE, and this
+                     branch used to assume it was: it read `filled` and
+                     nothing else, so retyping an empty column to
+                     `formula` — which `validate.ts:441` refuses every
+                     Set action against — silently invalidated every
+                     rule that writes to it, with no sheet, no count and
+                     no sentence anywhere. The rows are only one of the
+                     things a type change costs. */
+                  const holders = holdersFor(next)
+                  const held = holders.readers.length > 0 || holders.rules.length > 0
+                  if (facts.filled === 0 && !held) {
+                    /* nothing to lose and nothing holding on: a column
+                       nobody has filled in and nothing names does not
+                       need a sheet of paper to change */
                     updateField(entity.id, field.id, { type: next })
                     return
                   }
-                  setPending({ act: 'retype', to: next, plan: retypePlan(rows, field, next) })
+                  setPending({
+                    act: 'retype',
+                    to: next,
+                    plan: retypePlan(rows, field, next),
+                    holders,
+                  })
                 }}
               >
                 {TYPE_ORDER.map((t) => (
@@ -532,6 +588,8 @@ export function FieldRow({
           to={pending.to}
           plan={pending.plan}
           facts={facts}
+          readers={pending.holders.readers}
+          rules={pending.holders.rules}
           onCancel={() => setPending(null)}
           onChoose={(keep) => {
             setPending(null)
@@ -556,8 +614,9 @@ export function FieldRow({
           tableName={entity.name}
           facts={facts}
           groupLevel={groupLevel}
-          readers={holders?.readers ?? []}
-          rules={holders?.rules ?? []}
+          readers={pending.holders.readers}
+          rules={pending.holders.rules}
+          pages={pending.holders.pages}
           onCancel={() => setPending(null)}
           onConfirm={() => {
             setPending(null)
@@ -578,6 +637,8 @@ function RetypeSheet({
   to,
   plan,
   facts,
+  readers,
+  rules,
   onCancel,
   onChoose,
 }: {
@@ -585,6 +646,8 @@ function RetypeSheet({
   to: FieldType
   plan: RetypePlan
   facts: ColumnFacts
+  readers: FieldDef[]
+  rules: RuleBreak[]
   onCancel: () => void
   onChoose: (keep: boolean) => void
 }) {
@@ -631,10 +694,26 @@ function RetypeSheet({
           only the third is marked grave, because it is the only line
           that loses anything. `factLines` still words the empty case
           for every other caller of this sheet. */}
+      {/* AND WHAT IT COSTS OFF THE COLUMN, which this sheet never said.
+          The three lines above count rows, which is all a retype was
+          ever measured in — and a type is not a private property of a
+          column. A formula reading it is recomputed from whatever
+          survives; a rule written against the old type gains a blocker,
+          and that is the ENGINE's answer through `retypeBreakage`, not
+          a guess made here.
+
+          ONE LIST, NOT TWO. A second `ConfirmRadius` under this one
+          would read as the same idea and would not BE the same idea to
+          the layout: `.ds-cs-radius-list` sizes its figure column on
+          `max-content`, so two grids compute two gutters and the
+          figures stop sharing a right edge — the exact alignment the
+          block was gathered into one column to get. The delete sheet
+          asks these in one list too, in this order: what leaves the
+          rows, then what breaks elsewhere. */}
       <ConfirmRadius
         label="What the change costs"
-        facts={
-          facts.filled === 0
+        facts={[
+          ...(facts.filled === 0
             ? [{ figure: '0', say: `of ${facts.rows} rows hold a value — nothing to lose` }]
             : [
                 {
@@ -658,8 +737,26 @@ function RetypeSheet({
                       },
                     ]
                   : []),
+              ]),
+          ...(readers.length > 0
+            ? [
+                {
+                  figure: String(readers.length),
+                  say: `${readers.length === 1 ? 'calculation reads' : 'calculations read'} this column and ${readers.length === 1 ? 'is' : 'are'} recomputed from what survives`,
+                  grave: true,
+                },
               ]
-        }
+            : []),
+          ...(rules.length > 0
+            ? [
+                {
+                  figure: String(rules.length),
+                  say: `${rules.length === 1 ? 'business rule gains' : 'business rules gain'} a blocker from the new type`,
+                  grave: true,
+                },
+              ]
+            : []),
+        ]}
       />
       <ConfirmSamples
         label="In it now"
@@ -676,6 +773,23 @@ function RetypeSheet({
           values={plan.lostSamples}
         />
       ) : null}
+
+      {/* WHICH ONES, BY NAME — the delete sheet has answered this for
+          months and the retype sheet did not, for the same column. */}
+      {readers.length > 0 ? (
+        <p className="ds-cs-line ds-cs-line-warn">
+          {nameList(readers.map((r) => r.name || 'an untitled column'))}{' '}
+          {readers.length === 1 ? 'reads' : 'read'} this column, so{' '}
+          {readers.length === 1 ? 'its result changes' : 'their results change'} with the type.
+        </p>
+      ) : null}
+      {rules.map((r) => (
+        <p className="ds-cs-line ds-cs-line-warn" key={r.ruleId}>
+          <span className="ds-cs-rule-name">{r.ruleName}</span> breaks:{' '}
+          {r.messages.join(' ')}
+        </p>
+      ))}
+
       {/* THE SENTENCE THAT USED TO BE FALSE. It said "This app has no
           undo. Whatever is cleared here can only come back from a file
           you exported earlier." Measured in the running app on Surtees:
@@ -708,6 +822,7 @@ function DeleteSheet({
   groupLevel,
   readers,
   rules,
+  pages,
   onCancel,
   onConfirm,
 }: {
@@ -716,7 +831,8 @@ function DeleteSheet({
   facts: ColumnFacts
   groupLevel: number
   readers: FieldDef[]
-  rules: Array<{ ruleId: string; ruleName: string; messages: string[] }>
+  rules: RuleBreak[]
+  pages: PageUse[]
   onCancel: () => void
   onConfirm: () => void
 }) {
@@ -775,6 +891,22 @@ function DeleteSheet({
                 },
               ]
             : []),
+          /* THE PAGES, WHICH NOTHING COUNTED. `removeField` rewrites
+             the table's fields and nothing else, so a block still
+             lists this column, a filter still names it and a block's
+             own rule still tests it — the page simply comes up
+             narrower, two clicks away, with no mark to say why. It is
+             the "and 4 views read it" half of the sentence
+             DESIGN_PRINCIPLES §7 asks this sheet to say. */
+          ...(pages.length > 0
+            ? [
+                {
+                  figure: String(pages.length),
+                  say: `${pages.length === 1 ? 'page names' : 'pages name'} it and ${pages.length === 1 ? 'loses' : 'lose'} what it shows`,
+                  grave: true,
+                },
+              ]
+            : []),
           ...(groupLevel >= 0
             ? [
                 {
@@ -812,6 +944,23 @@ function DeleteSheet({
           {r.messages.join(' ')}
         </p>
       ))}
+
+      {/* WHICH PAGES, BY NAME, and how many places on each — a page
+          that names the column three times loses three things, and one
+          that names it once loses one. The count beside the name is
+          what stops "3 pages" reading as three equal losses. */}
+      {pages.length > 0 ? (
+        <p className="ds-cs-line ds-cs-line-warn">
+          {pages.length === 1 ? 'This page names' : 'These pages name'} it —{' '}
+          {nameList(
+            pages.map((p) => (p.uses === 1 ? p.viewName : `${p.viewName} (${p.uses} places)`)),
+          )}
+          . Removing the column does not change{' '}
+          {pages.length === 1 ? 'the page' : 'them'}; {pages.length === 1 ? 'it' : 'they'} just
+          stop showing it.
+        </p>
+      ) : null}
+
       {/* THE SENTENCE THAT USED TO BE FALSE, and the same one the
           register's own column menu already corrected — the two sheets
           remove the same column and must not answer differently.

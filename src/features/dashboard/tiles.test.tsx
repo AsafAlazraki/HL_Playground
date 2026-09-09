@@ -380,9 +380,9 @@ describe('the module tiles — nothing to draw', () => {
      asserted by TEXT, so it survives every rename of the classes
      that draw it and fails the day the count goes back to being
      absent. */
-  it('draws all four parts, and the count is the real one', async () => {
+  it('draws all four parts, and the count is the real one', () => {
     install({ noModules: true })
-    const a = draw()
+    draw()
 
     /* one — the state, as its own line */
     expect(screen.getByText('No modules yet')).toBeVisible()
@@ -393,9 +393,19 @@ describe('the module tiles — nothing to draw', () => {
     expect(screen.getByText(/You have/)).toHaveTextContent(
       'You have 3 tables and no modules.',
     )
-    /* four — exactly one action */
-    await userEvent.click(screen.getByRole('button', { name: 'Modules' }))
-    expect(a.onOpenModules).toHaveBeenCalledTimes(1)
+    /* FOUR — AND THE ACTION IS NAMED NOW.
+
+       It was one button called "Modules". On a sheet whose tables
+       already say what they hold, the fourth part is the modules
+       those tables imply, and each one is the same act with the
+       answer written on it — so the generic door goes rather than
+       standing beside five named ones saying the same word. It is
+       still ONE action (§6); it is the door out of the card, in the
+       card head, that a person takes to reach the modules screen
+       whole. The empty-project case above still draws the generic
+       button, because there is nothing to propose. */
+    expect(screen.queryByRole('button', { name: 'Modules' })).toBeNull()
+    expect(screen.getByRole('button', { name: /^Make Boats/ })).toBeVisible()
   })
 
   /* AND IT NEVER PRINTS A FIGURE TO FILL A HOLE. A project with no
@@ -406,6 +416,113 @@ describe('the module tiles — nothing to draw', () => {
     install({ empty: true })
     draw()
     expect(screen.queryByText(/You have/)).toBeNull()
+  })
+})
+
+/* ============================================================
+   THE MODULES THE DATA IMPLIES.
+
+   The first-run moment: a dealer has loaded a price file and the
+   front door does not yet know what they sell. It does — every
+   table declares its kind — so the empty card proposes, and the
+   whole of what is asserted here is the line between a proposal
+   and a guess:
+
+     · the tables it would hold are NAMED, and named in the
+       accessible label as well as on screen, or a person cannot
+       check the proposal before pressing it
+     · pressing one opens the panel that ALREADY makes modules,
+       standing on the proposal — not a second create path
+     · a table already in a module is not proposed again, so the
+       block empties itself as a person builds
+   ============================================================ */
+
+describe('the modules a sheet implies', () => {
+  it('names them, counts them, and lists what each one would hold', () => {
+    install({ noModules: true })
+    draw()
+
+    expect(screen.getByText('What your tables suggest')).toBeVisible()
+
+    const offers = screen.getAllByRole('button', { name: /^Make / })
+    expect(offers).toHaveLength(2)
+
+    /* THE WHOLE PROPOSAL IS IN THE ACCESSIBLE NAME. The second line
+       of the row is the evidence, and a person who cannot see it
+       has to be able to check the same fact — so the label carries
+       the count AND the table names rather than "Make Boats".
+       Biggest first: e-b has 12 rows and e-a has 3. */
+    expect(offers[0]).toHaveAccessibleName('Make Boats from 2 tables — 15 rows: Boats, Table A')
+    /* AND A PROPOSAL OVER ONE TABLE TAKES THAT TABLE'S OWN NAME
+       rather than the category — 'Trailer Stock', not 'Trailers'. */
+    expect(offers[1]).toHaveAccessibleName(
+      'Make Trailer Stock from 1 table — 7 rows: Trailer Stock',
+    )
+
+    /* and the same two facts are on the screen, not only in the
+       label: the count, and the tables by name */
+    expect(offers[0]).toHaveTextContent('2 tables · 15 rows')
+    expect(offers[0]).toHaveTextContent('Boats · Table A')
+  })
+
+  it('opens the panel that makes modules, standing on the proposal', async () => {
+    install({ noModules: true })
+    draw()
+
+    await userEvent.click(screen.getByRole('button', { name: /^Make Boats/ }))
+
+    /* THE REAL PANEL, not a second one. It is the only thing in
+       this application that calls `createModule`, and it arrives
+       with the two clicks a person would have made already made —
+       visible, and still theirs to change. */
+    const panel = screen.getByRole('dialog', { name: 'What is this module about?' })
+    expect(
+      within(panel).getByRole('button', { name: 'Make a module about Boats', pressed: true }),
+    ).toBeVisible()
+    expect(within(panel).getByRole('checkbox', { name: 'Include Table A' })).toBeChecked()
+    expect(within(panel).getByRole('textbox', { name: 'Module name' })).toHaveValue('Boats')
+  })
+
+  it('proposes nothing when every table already has a home', () => {
+    install()
+    draw()
+    expect(screen.queryByText('What your tables suggest')).toBeNull()
+    expect(screen.queryByText('Not in a module yet')).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Make / })).toBeNull()
+  })
+
+  /* THE NEAR-EMPTY CARD, which is the same moment a day later: one
+     module made, the rest of the sheet still standing outside it.
+     The proposal moves under the tiles and keeps its press. */
+  it('keeps proposing under the tiles while tables are still outside a module', () => {
+    install({ noModules: true })
+    useProjectStore.setState({ modules: { 'm-road': place('m-road', 'Road Gear', ['e-t'], 0) } })
+    forgetPlacesHeld()
+    draw()
+
+    expect(screen.getByRole('button', { name: 'Road Gear' })).toBeVisible()
+    expect(screen.getByText('Not in a module yet')).toBeVisible()
+    expect(screen.getByRole('button', { name: /^Make Boats/ })).toBeVisible()
+    /* the trailer table is inside Road Gear now, so nothing
+       proposes it a second time */
+    expect(screen.queryByRole('button', { name: /^Make Trailer Stock/ })).toBeNull()
+  })
+
+  /* DESIGN_CONTRACT §5 — "a count must say what it left out". The
+     line above says four tables; the proposals hold three; the
+     fourth is refused, in place, with the reason and the fix. */
+  it('accounts for the table it cannot propose, where the count is', () => {
+    install({ noModules: true })
+    const loose: EntityDef = { ...table('e-x', 'Labour Rates', 'boat') }
+    delete loose.kind
+    useProjectStore.setState({ entities: { 'e-a': A, 'e-b': B, 'e-t': T, 'e-x': loose } })
+    forgetPlacesHeld()
+    draw()
+
+    expect(screen.getByText(/You have/)).toHaveTextContent('You have 4 tables and no modules.')
+    expect(screen.getAllByRole('button', { name: /^Make / })).toHaveLength(2)
+    expect(screen.getByText(/1 table declares no kind/)).toBeVisible()
+    expect(screen.getByText(/a kind on the sheet/)).toBeVisible()
   })
 })
 

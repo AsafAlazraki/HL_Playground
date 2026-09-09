@@ -13,13 +13,15 @@
    ============================================================ */
 
 import type { ReactElement, ReactNode } from 'react'
-import type { CellValue, ConstraintDef } from '@/types/model'
+import type { ConstraintDef } from '@/types/model'
 import { conceptOptionLabel, kindLabel, type ColumnConcept, type ValueDomain } from './columns'
 import {
+  coerceValue,
   conceptOf,
   opLabel,
   opsFor,
   sentenceTokens,
+  valueText,
   type SentenceOp,
   type SentenceToken,
   type Side,
@@ -80,30 +82,11 @@ export interface RuleSentenceProps {
   soughtTokenId?: string | null
 }
 
-/* ---------------------------------------------------------- */
-/* Value coercion — a <select> only ever hands back a string   */
-/* ---------------------------------------------------------- */
-
-function coerceValue(text: string, domain: ValueDomain | undefined): CellValue {
-  switch (domain?.control) {
-    case 'boolean':
-      return text === 'yes' || text === 'true'
-    case 'number': {
-      if (text.trim() === '') return null
-      const n = Number(text)
-      return Number.isFinite(n) ? n : text
-    }
-    default:
-      return text
-  }
-}
-
-const asText = (v: CellValue, domain: ValueDomain | undefined): string => {
-  if (v === null || v === undefined || Array.isArray(v)) return ''
-  if (typeof v === 'boolean') return v ? 'yes' : 'no'
-  if (domain?.control === 'boolean' && typeof v === 'string') return v
-  return String(v)
-}
+/* Value coercion — a <select> only ever hands back a string — moved
+   to `describe.ts` when the fit sentence needed the same two
+   functions. One coercion, so a limit and a fit cannot end up
+   disagreeing about what "yes" means. */
+const asText = valueText
 
 /* ---------------------------------------------------------- */
 /* Pickers                                                    */

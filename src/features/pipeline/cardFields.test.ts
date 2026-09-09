@@ -62,6 +62,45 @@ describe('what the card actually draws', () => {
   })
 })
 
+describe('who prepared it and who owns it are two facts', () => {
+  /* THE ONE A BOARD WOULD BE QUIETLY WRONG ABOUT. `by` is a name
+     frozen onto the document when it was raised and never changes;
+     `owner` is the job the deal has been handed to and changes
+     every time somebody hands it on. Collapsing them into one
+     field would tell a sales manager that a deal reassigned in
+     March is still with whoever typed it in January. */
+  it('offers both, with different words', () => {
+    const ids = CARD_FIELDS.map((f) => f.id)
+    expect(ids).toContain('by')
+    expect(ids).toContain('owner')
+    expect(CARD_FIELDS.find((f) => f.id === 'by')?.label).toBe('Who prepared it')
+    expect(CARD_FIELDS.find((f) => f.id === 'owner')?.label).toBe('Who owns it now')
+  })
+
+  /* AND EACH SAYS WHICH IT IS, in the picker, where somebody is
+     choosing between two rows that both begin "Who". */
+  it('explains each of them under its own row', () => {
+    expect(CARD_FIELDS.find((f) => f.id === 'by')?.under).toContain('never changes')
+    expect(CARD_FIELDS.find((f) => f.id === 'owner')?.under).toContain('handed')
+  })
+
+  /* NEITHER IS IN THE DEFAULT'S PLACE BY ACCIDENT. The default is
+     the card this build already drew, and `owner` was added after
+     it — a feature that rearranges an existing board on first run
+     is a feature people switch off. */
+  it('leaves the shipped default alone', () => {
+    expect([...DEFAULT_CARD_FIELDS]).toEqual(['reference', 'subject', 'touched', 'by'])
+    expect(fieldsOf([])).not.toContain('owner')
+  })
+
+  /* BOTH CAN BE ON AT ONCE, and they draw in CARD_FIELDS order so
+     the preparer is never printed above the owner on one card and
+     below it on another. */
+  it('draws them in a fixed order when both are chosen', () => {
+    expect(fieldsOf(['owner', 'by'])).toEqual(['by', 'owner'])
+  })
+})
+
 describe('the cap says so rather than swapping', () => {
   const four = [...DEFAULT_CARD_FIELDS] as CardFieldId[]
 

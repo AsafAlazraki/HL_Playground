@@ -267,17 +267,29 @@ export function ChipToken({
 }
 
 /** The empty slot at the end of a set. Reads as "+", opens the list of
- *  values not yet chosen, and disappears when there are none left. */
+ *  values not yet chosen, and disappears when there are none left.
+ *
+ *  `groups` is the same escape `SelectToken` has and for the same
+ *  reason: the fit sentence's column list draws from BOTH tables, and
+ *  a flat list of forty columns with no heading is a list you read
+ *  twice. `options` stays the plain case a limit's `is one of` uses. */
 export function AddChipToken({
   options,
+  groups,
   onAdd,
   label,
+  face = '+',
+  prompt = 'add a value…',
 }: {
-  options: TokenOption[]
+  options?: TokenOption[]
+  groups?: TokenGroup[]
   onAdd: (value: string) => void
   label: string
+  face?: string
+  prompt?: string
 }): ReactElement | null {
-  if (options.length === 0) return null
+  const flat = groups ? groups.flatMap((g) => g.options) : (options ?? [])
+  if (flat.length === 0) return null
   return (
     <span className={cls('value', true, 'cn-tok--sel cn-chip cn-chip--add')}>
       <select
@@ -288,14 +300,24 @@ export function AddChipToken({
           if (e.target.value) onAdd(e.target.value)
         }}
       >
-        <option value="">add a value…</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
+        <option value="">{prompt}</option>
+        {groups
+          ? groups.map((g) => (
+              <optgroup key={g.label} label={g.label}>
+                {g.options.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+          : (options ?? []).map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
       </select>
-      <i className="cn-tok-face">+</i>
+      <i className="cn-tok-face">{face}</i>
     </span>
   )
 }

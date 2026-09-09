@@ -72,7 +72,7 @@ function resolveValues(
     if (!field) {
       eng.warn(
         site,
-        `${site.label}: writes to a field that is no longer on "${entity?.name ?? 'that entity'}" — skipped.`,
+        `${site.label}: writes to a field that is no longer on "${entity?.name ?? 'that table'}" — skipped.`,
       )
       continue
     }
@@ -155,7 +155,7 @@ export function buildEffect(params: EffectParams): PendingEffect | undefined {
     case 'create': {
       const entity = eng.entity(action.entityId)
       if (!entity) {
-        eng.warn(site, `${site.label}: creates rows in an entity that no longer exists — nothing written.`)
+        eng.warn(site, `${site.label}: creates rows in a table that no longer exists — nothing written.`)
         return undefined
       }
       const values = resolveValues(entity.id, action.values, source, match, eng, site)
@@ -172,7 +172,7 @@ export function buildEffect(params: EffectParams): PendingEffect | undefined {
     case 'link': {
       const join = eng.entity(action.joinEntityId)
       if (!join) {
-        eng.warn(site, `${site.label}: links into a join entity that no longer exists — nothing written.`)
+        eng.warn(site, `${site.label}: links into a link table that no longer exists — nothing written.`)
         return undefined
       }
       if (!match) {
@@ -182,7 +182,7 @@ export function buildEffect(params: EffectParams): PendingEffect | undefined {
       const sourceField = eng.fieldOf(join.id, action.sourceFieldId)
       const matchField = eng.fieldOf(join.id, action.matchFieldId)
       if (!sourceField || !matchField) {
-        eng.warn(site, `${site.label}: the join's link fields are missing — nothing written.`)
+        eng.warn(site, `${site.label}: the link table's link fields are missing — nothing written.`)
         return undefined
       }
       const values = resolveValues(join.id, action.values, source, match, eng, site)

@@ -217,7 +217,7 @@ function execute(rule: RuleDef, ctx: RuleRunContext): RuleRunResult {
   /* both are validateRule blockers; belt-and-braces so this is total */
   if (!start || !eng.entity(rootEntityId)) {
     result.ok = false
-    result.error = 'This rule has no Start node or no entity to run against.'
+    result.error = 'This rule has no Start node or no table to run against.'
     return result
   }
 
@@ -280,7 +280,7 @@ function execute(rule: RuleDef, ctx: RuleRunContext): RuleRunResult {
         const cfg = node.config
         const target = eng.entity(cfg?.targetEntityId)
         if (!target) {
-          eng.warn(site, `${site.label}: has no entity to search, so nothing could be matched.`)
+          eng.warn(site, `${site.label}: has no table to search, so nothing could be matched.`)
           return []
         }
         const out: Emission[] = []
@@ -406,7 +406,7 @@ function execute(rule: RuleDef, ctx: RuleRunContext): RuleRunResult {
     if (src.kind === 'entity') {
       const entity = eng.entity(src.entityId)
       if (!entity) {
-        eng.warn(site, `${site.label}: loops over an entity that no longer exists.`)
+        eng.warn(site, `${site.label}: loops over a table that no longer exists.`)
         return []
       }
       return eng

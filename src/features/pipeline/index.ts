@@ -70,6 +70,34 @@ export {
   type DealFile,
   type FilePlan,
 } from './dealFiles'
+/* WHOSE DEAL IT IS — a store beside the quote, holding the
+   HANDOVERS and deriving the current owner from the last of them.
+   An owner names one of the dealership's own jobs (`RoleDef`), and
+   `owners.ts` says at length why that is not `preparedBy` and why
+   this build has no people directory to point at instead. */
+export {
+  NOBODY,
+  composeHandover,
+  dropHandover,
+  forgetDealOwners,
+  handoverSay,
+  handoverToast,
+  handoversFor,
+  mintHandover,
+  mintHandoverId,
+  ownerInForce,
+  ownerOf,
+  ownersOf,
+  parseOwners,
+  roleWord,
+  saveHandover,
+  useDealOwners,
+  whyNotOwner,
+  withHandover,
+  withoutHandover,
+  type Handover,
+  type OwnerBag,
+} from './owners'
 /* WHAT ONE PERSON WANTS ON A CARD — a preference, keyed by them
    and their organisation, the way the dashboard's tile order is. */
 export {

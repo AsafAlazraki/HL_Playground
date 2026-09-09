@@ -408,27 +408,42 @@ button.qf-go:focus-visible {
    three at 1280 — `Back` is 70.5 wide, the heading 296.7, `All
    quotes` ~104: 471 of the 1,152 the bar has. Worth ~48px.
 
-   ── 3 · THE PRICE BAR WRAPS AT 1280 (28.81px) ────────────────
+   ── 3 · THE PRICE BAR WRAPS AT 1280 (28.75px) ────────────────
 
-   `.qb-price-bar` is 73.66 at 1440x900 and 102.47 at 1280x800 —
-   the same contents, wrapped. `.qb-price-fig` alone is 47.47 and
+   `.qb-price-bar` is 71.33 at 1440x900 and 100.08 at 1280x800 —
+   the same contents, wrapped. `.qb-price-fig` alone is 45.08 and
    the strip's `flex-wrap: wrap` puts the rest on a second row. That
    is build.css's measurement to make, not this file's; it is noted
    because it is the largest single row in the foot and it is only
    large on the smaller window, which is backwards.
 
+   THOSE FOUR FIGURES WERE 73.66 / 102.47 / 47.47 / 28.81 UNTIL THE
+   TOTAL MOVED ONTO `--t-figure-xl`. The figure got bigger — 25.84px
+   to 33.43px at 1280 — and the strip got SMALLER, because the
+   display step's leading is 1.05 where the hand-written ramp it
+   replaced inherited 1.45. build.css carries the full before/after
+   on `.qb-price-now`. The wrap itself is untouched: at 1280 this
+   bar still goes to two rows, and it is still the largest row in
+   the foot.
+
    ── WHAT THAT WOULD COME TO ──────────────────────────────────
 
    The first two columns are measured. The third is arithmetic on
    measured parts — 32.13 of one stage-bar row, this strip's 33.84,
-   the price bar's own 1px top border and its unwrapped 73.66 — and
+   the price bar's own 1px top border and its unwrapped 71.33 — and
    it is a projection, not a reading.
 
                           before    after this pass    all three
-     1280x800 chrome      275.88         254.08          140.63
-     1280x800 for work    524.13         545.92          659.37
-     1440x900 chrome      247.07         225.27          140.63
-     1440x900 for work    652.94         674.73          759.37
+     1280x800 chrome      273.49         251.69          138.30
+     1280x800 for work    526.51         548.31          661.70
+     1440x900 chrome      244.74         222.94          138.30
+     1440x900 for work    655.26         677.06          761.70
+
+   EVERY ROW IS 2.33–2.39px LIGHTER THAN IT WAS WRITTEN, and that is
+   the total's step change and nothing this pass planned: the price
+   bar came down 2.39 at 1280 and 2.33 at 1440. The columns are
+   otherwise untouched — none of the three deletions above has
+   happened, so "before" is still what the app draws today.
 
    ── AND ONE THING THAT IS NOT AVAILABLE ──────────────────────
 
